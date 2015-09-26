@@ -930,7 +930,11 @@ uLong VSIGZipHandle::getLong ()
     x += ((uLong)get_byte())<<8;
     x += ((uLong)get_byte())<<16;
     const int c = get_byte();
-    if (c == EOF) z_err = Z_DATA_ERROR;
+    if (c == EOF)
+    {
+        z_err = Z_DATA_ERROR;
+        return 0;
+    }
     x += ((uLong)c)<<24;
     return x;
 }
