@@ -679,7 +679,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
     CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
     
     /* Sort chucks from top to bottom, and for equal y, from left to right */
-    qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk), OrderWarpChunk); 
+    if( pasChunkList )
+        qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk), OrderWarpChunk); 
 
 /* -------------------------------------------------------------------- */
 /*      Total up output pixels to process.                              */
@@ -854,7 +855,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
 
     /* Sort chucks from top to bottom, and for equal y, from left to right */
-    qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk), OrderWarpChunk); 
+    if( pasChunkList )
+        qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk), OrderWarpChunk); 
 
 /* -------------------------------------------------------------------- */
 /*      Process them one at a time, updating the progress               */
