@@ -2456,10 +2456,14 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
             eErr = OGRGeometryFactory::createFromWkb(
                     (unsigned char*)(pabyData + 39 + nBytesConsumed + 1),
                     NULL, &poOriginalGeometry, nBytes - (39 + nBytesConsumed + 1 + 1));
+            delete *ppoGeometry;
             if( eErr == OGRERR_NONE )
             {
-                delete *ppoGeometry;
                 *ppoGeometry = poOriginalGeometry;
+            }
+            else
+            {
+                *ppoGeometry = NULL;
             }
         }
     }
