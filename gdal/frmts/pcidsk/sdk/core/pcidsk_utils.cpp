@@ -449,7 +449,7 @@ std::string PCIDSK::ProjParmsToText( std::vector<double> dparms )
             dvalue = 0.0;
 
         if( dvalue == floor(dvalue) )
-          snprintf( value, sizeof(value), "%d", (int) dvalue );
+            CPLsnprintf( value, sizeof(value), "%d", (int) dvalue );
         else
             CPLsnprintf( value, sizeof(value), "%.15g", dvalue );
 
