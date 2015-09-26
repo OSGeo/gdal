@@ -154,6 +154,7 @@ def jpeg_copy_icc_64K():
 
     # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds, options = ['COMMENT=foo'])
+    ds = None
     md = ds2.GetMetadata("COLOR_PROFILE")
     comment = ds2.GetMetadataItem('COMMENT')
     ds2 = None
