@@ -452,8 +452,15 @@ namespace tut
             oTestString.szString[sizeof(oTestString.szString) - 1] = '\0';
 
             // Compare each string with the reference one
+            CPLErrorReset();
             char    *pszDecodedString = CPLRecode( oTestString.szString,
                 oTestString.szEncoding, oReferenceString.szEncoding);
+            if( strstr(CPLGetLastErrorMsg(), "Recode from KOI8-R to UTF-8 not supported") != NULL )
+            {
+                CPLFree( pszDecodedString );
+                break;
+            }
+
             size_t  nLength =
                 MIN( strlen(pszDecodedString),
                      sizeof(oReferenceString.szEncoding) );
