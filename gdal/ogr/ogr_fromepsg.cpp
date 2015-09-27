@@ -32,13 +32,12 @@
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
 #include "cpl_csv.h"
+
 #include <vector>
+#define _USE_MATH_DEFINES  // For MSVC to get M_PI.
+#include <cmath>
 
 CPL_CVSID("$Id$");
-
-#ifndef PI
-#  define PI 3.14159265358979323846
-#endif
 
 void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
 
@@ -177,7 +176,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
     }
     else if( nUOMAngle == 9101 )                        /* radians */
     {
-        dfAngle = 180 * (CPLAtof(pszAngle ) / PI);
+        dfAngle = 180 * (CPLAtof(pszAngle ) / M_PI);
     }
     else if( nUOMAngle == 9103 )                        /* arc-minute */
     {
@@ -190,7 +189,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
     else /* decimal degrees ... some cases missing but seeminly never used */
     {
         CPLAssert( nUOMAngle == 9102 || nUOMAngle == 0 );
-        
+
         dfAngle = CPLAtof(pszAngle );
     }
 
@@ -250,7 +249,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
                               "FACTOR_C" ));
 
         if( dfFactorC != 0.0 )
-            dfInDegrees = (dfFactorB / dfFactorC) * (180.0 / PI);
+            dfInDegrees = (dfFactorB / dfFactorC) * (180.0 / M_PI);
 
         // For some reason, (FactorB) is not very precise in EPSG, use
         // a more exact form for grads.
@@ -267,7 +266,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
         {
           case 9101:
             pszUOMName = "radian";
-            dfInDegrees = 180.0 / PI;
+            dfInDegrees = 180.0 / M_PI;
             break;
 
           case 9103:
