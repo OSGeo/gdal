@@ -33,10 +33,6 @@
 
 CPL_CVSID("$Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif 
-
 /************************************************************************/
 /*                           ACTextUnescape()                           */
 /*                                                                      */
@@ -49,7 +45,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
 {
     CPLString osResult;
     CPLString osInput = pszRawInput;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Translate text from Win-1252 to UTF8.  We approximate this      */
 /*      by treating Win-1252 as Latin-1.  Note that we likely ought     */
@@ -516,4 +512,3 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
 
     poFeature->SetStyleString( osNewStyle );
 }
-

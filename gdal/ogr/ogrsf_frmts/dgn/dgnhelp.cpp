@@ -1327,7 +1327,7 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
 void DGNRotationToQuaternion( double dfRotation, int *panQuaternion )
 
 {
-    double dfRadianRot = (dfRotation / 180.0)  * PI;
+    double dfRadianRot = (dfRotation / 180.0)  * M_PI;
 
     panQuaternion[0] = (int) (cos(-dfRadianRot/2.0) * 2147483647);
     panQuaternion[1] = 0;

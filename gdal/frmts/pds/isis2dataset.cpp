@@ -39,10 +39,6 @@
 #define NULL2 -32768
 #define NULL3 -3.4028226550889044521e+38
 
-#ifndef PI
-#  define PI 3.1415926535897932384626433832795
-#endif
-
 #define RECORD_SIZE 512
 
 #include "rawdataset.h"
@@ -572,7 +568,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                                 semi_major, 0.0, 
                                 "Reference_Meridian", 0.0 );
             } else {  
-                radLat = center_lat * PI / 180;  // in radians
+                radLat = center_lat * M_PI / 180;  // in radians
                 localRadius = semi_major * semi_minor / sqrt(pow(semi_minor*cos(radLat),2)
                                                              + pow(semi_major*sin(radLat),2) );
                 sphere_name += "_localRadius";

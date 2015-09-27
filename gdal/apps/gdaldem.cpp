@@ -94,10 +94,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifndef M_PI
-# define M_PI  3.1415926535897932384626433832795
-#endif
-
 #define INTERPOL(a,b) ((bSrcHasNoData && (ARE_REAL_EQUAL(a, fSrcNoDataValue) || ARE_REAL_EQUAL(b, fSrcNoDataValue))) ? fSrcNoDataValue : 2 * (a) - (b))
 
 /************************************************************************/

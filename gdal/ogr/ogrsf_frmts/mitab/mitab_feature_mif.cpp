@@ -1331,17 +1331,17 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         double dYRadius = MIN(m_dRoundYRadius, (dYMax-dYMin)/2.0);
         TABGenerateArc(poRing, 45, 
                        dXMin + dXRadius, dYMin + dYRadius, dXRadius, dYRadius,
-                       PI, 3.0*PI/2.0);
+                       M_PI, 3.0*M_PI/2.0);
         TABGenerateArc(poRing, 45, 
                        dXMax - dXRadius, dYMin + dYRadius, dXRadius, dYRadius,
-                       3.0*PI/2.0, 2.0*PI);
+                       3.0*M_PI/2.0, 2.0*M_PI);
         TABGenerateArc(poRing, 45, 
                        dXMax - dXRadius, dYMax - dYRadius, dXRadius, dYRadius,
-                       0.0, PI/2.0);
+                       0.0, M_PI/2.0);
         TABGenerateArc(poRing, 45, 
                        dXMin + dXRadius, dYMax - dYRadius, dXRadius, dYRadius,
-                       PI/2.0, PI);
-                       
+                       M_PI/2.0, M_PI);
+
         TABCloseRing(poRing);
     }
     else
@@ -1507,7 +1507,7 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     TABGenerateArc(poRing, 180, 
                    m_dCenterX, m_dCenterY,
                    m_dXRadius, m_dYRadius,
-                   0.0, 2.0*PI);
+                   0.0, 2.0*M_PI);
     TABCloseRing(poRing);
 
     poPolygon->addRingDirectly(poRing);
@@ -1680,7 +1680,7 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     TABGenerateArc(poLine, numPts,
                    m_dCenterX, m_dCenterY,
                    m_dXRadius, m_dYRadius,
-                   m_dStartAngle*PI/180.0, m_dEndAngle*PI/180.0);
+                   m_dStartAngle*M_PI/180.0, m_dEndAngle*M_PI/180.0);
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
     SetGeometryDirectly(poLine);
@@ -1954,8 +1954,8 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
      * on the MBR after rotation, the text height and the rotation angle.
      *---------------------------------------------------------------- */
     double dCos, dSin, dX, dY;
-    dSin = sin(m_dAngle*PI/180.0);
-    dCos = cos(m_dAngle*PI/180.0);
+    dSin = sin(m_dAngle*M_PI/180.0);
+    dCos = cos(m_dAngle*M_PI/180.0);
     if (dSin > 0.0  && dCos > 0.0)
     {
         dX = dXMin + m_dHeight * dSin;

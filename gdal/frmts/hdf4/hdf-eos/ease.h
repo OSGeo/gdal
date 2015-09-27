@@ -8,7 +8,7 @@
 #define BCEA_RE_M 6371228.0 /* Earth radius used in GCTP projection tools for
 			       Behrmann Cylindrical Equal Area projection */
 #define DEFAULT_BCEA_LTRUESCALE 30.00  /*Latitude of true scale in DMS */
-#define BCEA_COS_PHI1 cos(DEFAULT_BCEA_LTRUESCALE *3.141592653589793238 /180.0)
+#define BCEA_COS_PHI1 cos(DEFAULT_BCEA_LTRUESCALE * 3.141592653589793238 /180.0)
 #define PI      3.141592653589793238
 #define EASE_GRID_DEFAULT_UPLEFT_LON -180.0
 #define EASE_GRID_DEFAULT_UPLEFT_LAT  86.72 

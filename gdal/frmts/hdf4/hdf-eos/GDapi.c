@@ -101,7 +101,6 @@ extern  void inv_init(int32, int32, float64 *, int32, char *, char *, int32 *,
 
 #define	GDIDOFFSET 4194304
 #define SQUARE(x)       ((x) * (x))   /* x**2 */
-#define M_PI1		3.14159265358979323846
 
 static int32 GDXSDcomb[512*5];
 static char  GDXSDname[HDFE_NAMBUFSIZE];
@@ -6461,8 +6460,8 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 		/* if time-line is paased */
 		if(lonrad < lonrad1)
 		  {
-		    if (lonrad < lonrad0) lonrad += 2.0 * M_PI1;
-		    if (lonrad > lonrad1) lonrad -= 2.0 * M_PI1;
+		    if (lonrad < lonrad0) lonrad += 2.0 * M_PI;
+		    if (lonrad > lonrad1) lonrad -= 2.0 * M_PI;
 		  }
 
 		/* Compute scaled distance to point from origin */
@@ -6754,13 +6753,13 @@ GDrs2ll(int32 projcode, float64 projparm[],
 		{
 		  errorcode = inv_trans[projcode] (xMtr, 0.0,
 						   &lonrad, &latrad);
-		  latrad = - M_PI1/2;
+		  latrad = - M_PI/2;
 		}
 	      else if( beta >= 1)
 		{
 		  errorcode = inv_trans[projcode] (xMtr, 0.0,
 						   &lonrad, &latrad);
-		  latrad = M_PI1/2;
+		  latrad = M_PI/2;
 		}
 	      else
 		{
@@ -10866,4 +10865,3 @@ GDsdid(int32 gridID, const char *fieldname, int32 *sdid)
 
     return (status);
 }
-

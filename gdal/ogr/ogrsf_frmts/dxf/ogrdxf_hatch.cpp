@@ -37,10 +37,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif
-
 /************************************************************************/
 /*                           TranslateHATCH()                           */
 /*                                                                      */
@@ -376,7 +372,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             dfMajorRadius = sqrt( dfMajorX * dfMajorX + dfMajorY * dfMajorY );
             dfMinorRadius = dfMajorRadius * dfRatio;
 
-            dfRotation = -1 * atan2( dfMajorY, dfMajorX ) * 180 / PI;
+            dfRotation = -1 * atan2( dfMajorY, dfMajorX ) * 180 / M_PI;
 
             OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles( 
                 dfCenterX, dfCenterY, 0.0,

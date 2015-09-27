@@ -127,10 +127,6 @@
 #define MITAB_VERSION      "2.0.0-dev (2008-10)"
 #define MITAB_VERSION_INT  2000000  /* version x.y.z -> xxxyyyzzz */
 
-#ifndef PI
-#  define PI 3.14159265358979323846
-#endif
-
 #ifndef ROUND_INT
 #  define ROUND_INT(dX) ((int)((dX) < 0.0 ? (dX)-0.5 : (dX)+0.5 ))
 #endif

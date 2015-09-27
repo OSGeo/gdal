@@ -40,10 +40,6 @@
 //#define NULL3 -340282346638528859811704183484516925440.0
 #define NULL3 -3.4028226550889044521e+38
 
-#ifndef PI
-#  define PI 3.1415926535897932384626433832795
-#endif
-
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h" 
@@ -639,7 +635,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
             //Calculate localRadius using ISIS3 simple elliptical method 
             //  not the more standard Radius of Curvature method
             //PI = 4 * atan(1);
-            radLat = center_lat * PI / 180;  // in radians
+            radLat = center_lat * M_PI / 180;  // in radians
             localRadius = semi_major * semi_minor / sqrt(pow(semi_minor*cos(radLat),2) 
                           + pow(semi_major*sin(radLat),2) );
             strcat(sphere_name, "_localRadius");

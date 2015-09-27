@@ -35,11 +35,6 @@
 
 CPL_CVSID("$Id: geoconcept_syscoord.c,v 1.0.0 2007-12-24 15:40:28 drichard Exp $")
 
-#ifndef PI
-#define PI 3.14159265358979323846
-#endif
-
-
 /* -------------------------------------------------------------------- */
 /*      GCSRS globals                                                   */
 /* -------------------------------------------------------------------- */
@@ -809,7 +804,7 @@ GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialRefe
     if( (v= OSRGetProjParm(poSR,SRS_PP_PSEUDO_STD_PARALLEL_1,0.0,NULL))!= 0.0 )
     {
       /* should be SRS_PT_EQUIRECTANGULAR : */
-      SetSysCoordScaleFactor_GCSRS(syscoord, cos(v*PI/180.0));
+      SetSysCoordScaleFactor_GCSRS(syscoord, cos(v*M_PI/180.0));
       SetSysCoordStandardParallel1_GCSRS(syscoord, v);/* allow keeping lat_ts sign */
     }
   }

@@ -2342,8 +2342,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
                             /* use Snyder eq. 15-4 to compute dfScale from dfStdP1 and dfCenterLat */
                             /* only tested for dfStdP1=dfCenterLat and (25,26), needs more data for testing */
                             /* other option: use the 2SP variant - how to compute new standard parallels? */
-                            dfScale = ( cos(dfStdP1) * pow( tan(NCDF_PI/4 + dfStdP1/2), sin(dfStdP1) ) ) /
-                                ( cos(dfCenterLat) * pow( tan(NCDF_PI/4 + dfCenterLat/2), sin(dfCenterLat) ) );
+                            dfScale = ( cos(dfStdP1) * pow( tan(M_PI/4 + dfStdP1/2), sin(dfStdP1) ) ) /
+                                ( cos(dfCenterLat) * pow( tan(M_PI/4 + dfCenterLat/2), sin(dfCenterLat) ) );
                         }
                         /* default is 1.0 */
                         else                    
@@ -2498,14 +2498,14 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
                 if ( papszStdParallels != NULL ) {
                     dfStdP1 = CPLAtofM( papszStdParallels[0] );
                     /* compute scale_factor from standard_parallel */
-                    /* this creates WKT that is inconsistent, don't write for now 
-                       also proj4 does not seem to use this parameter */                    
-                    // dfScale = ( 1.0 + fabs( sin( dfStdP1 * NCDF_PI / 180.0 ) ) ) / 2.0;
+                    /* this creates WKT that is inconsistent, don't write for now
+                       also proj4 does not seem to use this parameter */
+                    // dfScale = ( 1.0 + fabs( sin( dfStdP1 * M_PI / 180.0 ) ) ) / 2.0;
                 }
                 else {
                     if ( ! CPLIsEqual(dfScale,-1.0) ) {
                         /* compute standard_parallel from scale_factor */
-                        dfStdP1 = asin( 2*dfScale - 1 ) * 180.0 / NCDF_PI;
+                        dfStdP1 = asin( 2*dfScale - 1 ) * 180.0 / M_PI;
 
                         /* fetch latitude_of_projection_origin (+90/-90) 
                            used here for the sign of standard_parallel */

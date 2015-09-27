@@ -36,10 +36,6 @@
 #  define KvUserDefined 32767
 #endif
 
-#ifndef PI
-#  define PI 3.14159265358979323846
-#endif
-
 /* EPSG Codes for projection parameters.  Unfortunately, these bear no
    relationship to the GeoTIFF codes even though the names are so similar. */
 
@@ -311,7 +307,7 @@ double GTIFAngleStringToDD( const char * pszAngle, int nUOMAngle )
     }
     else if( nUOMAngle == 9101 )			/* radians */
     {
-        dfAngle = 180 * (GTIFAtof(pszAngle ) / PI);
+        dfAngle = 180 * (GTIFAtof(pszAngle ) / M_PI);
     }
     else if( nUOMAngle == 9103 )			/* arc-minute */
     {
@@ -905,7 +901,7 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
     {
       case 9101:
         pszUOMName = "radian";
-        dfInDegrees = 180.0 / PI;
+        dfInDegrees = 180.0 / M_PI;
         break;
 
       case 9102:
@@ -939,7 +935,7 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
 
       case 9109:
         pszUOMName = "microradian";
-        dfInDegrees = 180.0 / (PI * 1000000.0);
+        dfInDegrees = 180.0 / (M_PI * 1000000.0);
         break;
 
       default:
@@ -991,7 +987,7 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
         if( dfFactorC != 0.0 )
         {
             dfInRadians = (dfFactorB / dfFactorC);
-            dfInDegrees = dfInRadians * 180.0 / PI;
+            dfInDegrees = dfInRadians * 180.0 / M_PI;
         }
     }
     else

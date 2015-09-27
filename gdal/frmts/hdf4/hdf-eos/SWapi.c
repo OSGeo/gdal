@@ -100,7 +100,6 @@ static intn  timeflag = 0;
 ** for floating scene subsetting
 ** Jul 1999 DaW
 */
-#define PI      3.141592653589793238
 #define RADOE	6371.0		/* Radius of Earth in Km */
 
 #define NSWATH 200
@@ -7661,7 +7660,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
                                         /*  L7 float scene sub.              */
    float32	*buffer2;
    float32	*bufferc;
-   float32	deg2rad = PI/180.00;
+   float32	deg2rad = M_PI/180.00;
 
    float32	p1_long = 0.0;	/* point 1, longitude */
    float32	p2_long = 0.0;	/* point 2, longitude */
@@ -7871,7 +7870,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
 
    if (fieldflag == 1)
    {
-      pi_long = atan(y_pi/x_pi)*180.0/PI;
+      pi_long = atan(y_pi/x_pi)*180.0/M_PI;
       if (p1_long_l90_flag == 1 || p2_long_l90_flag == 1)
       {
          pi_long = pi_long - 180.0;
@@ -7934,7 +7933,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
     }
     if (fieldflag == 2)
     {
-      pi_lat = atan((sqrt(x_pi*x_pi + y_pi*y_pi)/z_pi))*180.0/PI;
+      pi_lat = atan((sqrt(x_pi*x_pi + y_pi*y_pi)/z_pi))*180.0/M_PI;
       switch(pos2)
       {
       case UL:
@@ -11425,4 +11424,3 @@ SWsdid(int32 swathID, const char *fieldname, int32 *sdid)
 
     return (status);
 }
-

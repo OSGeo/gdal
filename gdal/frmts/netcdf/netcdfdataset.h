@@ -81,7 +81,6 @@
 #define NCDF_DIMNAME_LON     "lon"
 #define NCDF_DIMNAME_LAT     "lat"
 #define NCDF_LONLAT          "lon lat"
-#define NCDF_PI              3.14159265358979323846
 
 /* netcdf file types, as in libcdi/cdo and compat w/netcdf.h */
 #define NCDF_FORMAT_NONE            0   /* Not a netCDF file */

@@ -32,10 +32,6 @@
 
 #include <math.h>
 
-#ifndef M_PI
-#define M_PI  3.1415926535897932384626433832795
-#endif
-
 namespace msg_native_format {
 
 const unsigned int      SATELLITESTATUS_RECORD_LENGTH   = 60134;
@@ -245,4 +241,3 @@ public:
 } // msg_native_format
 
 #endif
-
