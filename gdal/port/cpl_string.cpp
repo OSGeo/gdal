@@ -1841,37 +1841,37 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * reconstitued to it's original form.  The escaping will even preserve
  * zero bytes allowing preservation of raw binary data.
  *
- * CPLES_BackslashQuotable(0): This scheme turns a binary string into 
+ * CPLES_BackslashQuotable(0): This scheme turns a binary string into
  * a form suitable to be placed within double quotes as a string constant.
- * The backslash, quote, '\\0' and newline characters are all escaped in 
- * the usual C style. 
+ * The backslash, quote, '\\0' and newline characters are all escaped in
+ * the usual C style.
  *
  * CPLES_XML(1): This scheme converts the '<', '>', '"' and '&' characters into
  * their XML/HTML equivelent (&lt;, &gt;, &quot; and &amp;) making a string safe
- * to embed as CDATA within an XML element.  The '\\0' is not escaped and 
+ * to embed as CDATA within an XML element.  The '\\0' is not escaped and
  * should not be included in the input.
  *
- * CPLES_URL(2): Everything except alphanumerics and the underscore are 
+ * CPLES_URL(2): Everything except alphanumerics and the underscore are
  * converted to a percent followed by a two digit hex encoding of the character
  * (leading zero supplied if needed).  This is the mechanism used for encoding
  * values to be passed in URLs.
  *
- * CPLES_SQL(3): All single quotes are replaced with two single quotes.  
+ * CPLES_SQL(3): All single quotes are replaced with two single quotes.
  * Suitable for use when constructing literal values for SQL commands where
  * the literal will be enclosed in single quotes.
  *
- * CPLES_CSV(4): If the values contains commas, semicolons, tabs, double quotes, or newlines it 
- * placed in double quotes, and double quotes in the value are doubled.
- * Suitable for use when constructing field values for .csv files.  Note that
- * CPLUnescapeString() currently does not support this format, only 
+ * CPLES_CSV(4): If the values contains commas, semicolons, tabs, double quotes,
+ * or newlines it placed in double quotes, and double quotes in the value are
+ * doubled. Suitable for use when constructing field values for .csv files.
+ * Note that CPLUnescapeString() currently does not support this format, only
  * CPLEscapeString().  See cpl_csv.cpp for csv parsing support.
  *
- * @param pszInput the string to escape.  
+ * @param pszInput the string to escape.
  * @param nLength The number of bytes of data to preserve.  If this is -1
  * the strlen(pszString) function will be used to compute the length.
- * @param nScheme the encoding scheme to use.  
+ * @param nScheme the encoding scheme to use.
  *
- * @return an escaped, zero terminated string that should be freed with 
+ * @return an escaped, zero terminated string that should be freed with
  * CPLFree() when no longer needed.
  */
 
@@ -1914,27 +1914,6 @@ char *CPLEscapeString( const char *pszInput, int nLength,
         }
         pszOutput[iOut] = '\0';
     }
-    else if( nScheme == CPLES_URL ) /* Untested at implementation */
-    {
-        int iOut = 0, iIn;
-
-        for( iIn = 0; iIn < nLength; ++iIn )
-        {
-            if( (pszInput[iIn] >= 'a' && pszInput[iIn] <= 'z')
-                || (pszInput[iIn] >= 'A' && pszInput[iIn] <= 'Z')
-                || (pszInput[iIn] >= '0' && pszInput[iIn] <= '9')
-                || pszInput[iIn] == '_' || pszInput[iIn] == '.' )
-            {
-                pszOutput[iOut++] = pszInput[iIn];
-            }
-            else
-            {
-                CPLsprintf( pszOutput+iOut, "%%%02X", ((unsigned char*)pszInput)[iIn] );
-                iOut += 3;
-            }
-        }
-        pszOutput[iOut] = '\0';
-    }
     else if( nScheme == CPLES_XML || nScheme == CPLES_XML_BUT_QUOTES )
     {
         int iOut = 0, iIn;
@@ -1972,8 +1951,8 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 pszOutput[iOut++] = 't';
                 pszOutput[iOut++] = ';';
             }
-            /* Python 2 doesn't like displaying the UTF-8 character corresponding */
-            /* to BOM, so escape it */
+            /* Python 2 does not display the UTF-8 character corresponding */
+            /* to the byte-order mark (BOM), so escape it */
             else if( ((GByte*)pszInput)[iIn] == 0xEF &&
                      ((GByte*)pszInput)[iIn+1] == 0xBB &&
                      ((GByte*)pszInput)[iIn+2] == 0xBF )
@@ -1988,16 +1967,37 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 pszOutput[iOut++] = ';';
                 iIn += 2;
             }
-            else if( ((GByte*)pszInput)[iIn] < 0x20 
+            else if( ((GByte*)pszInput)[iIn] < 0x20
                      && pszInput[iIn] != 0x9
-                     && pszInput[iIn] != 0xA 
-                     && pszInput[iIn] != 0xD ) 
+                     && pszInput[iIn] != 0xA
+                     && pszInput[iIn] != 0xD )
             {
-                // These control characters are unrepresentable in XML format, 
+                // These control characters are unrepresentable in XML format,
                 // so we just drop them.  #4117
             }
             else
                 pszOutput[iOut++] = pszInput[iIn];
+        }
+        pszOutput[iOut] = '\0';
+    }
+    else if( nScheme == CPLES_URL ) /* Untested at implementation */
+    {
+        int iOut = 0, iIn;
+
+        for( iIn = 0; iIn < nLength; ++iIn )
+        {
+            if( (pszInput[iIn] >= 'a' && pszInput[iIn] <= 'z')
+                || (pszInput[iIn] >= 'A' && pszInput[iIn] <= 'Z')
+                || (pszInput[iIn] >= '0' && pszInput[iIn] <= '9')
+                || pszInput[iIn] == '_' || pszInput[iIn] == '.' )
+            {
+                pszOutput[iOut++] = pszInput[iIn];
+            }
+            else
+            {
+                CPLsprintf( pszOutput+iOut, "%%%02X", ((unsigned char*)pszInput)[iIn] );
+                iOut += 3;
+            }
         }
         pszOutput[iOut] = '\0';
     }
@@ -2023,8 +2023,8 @@ char *CPLEscapeString( const char *pszInput, int nLength,
             && strchr( pszInput, ',') == NULL
             && strchr( pszInput, ';') == NULL
             && strchr( pszInput, '\t') == NULL
-            && strchr( pszInput, 10) == NULL 
-            && strchr( pszInput, 13) == NULL )
+            && strchr( pszInput, 10) == NULL  // \n
+            && strchr( pszInput, 13) == NULL )  // \r
         {
             strcpy( pszOutput, pszInput );
         }
@@ -2072,15 +2072,15 @@ char *CPLEscapeString( const char *pszInput, int nLength,
  *
  * This function does the opposite of CPLEscapeString().  Given a string
  * with special values escaped according to some scheme, it will return a
- * new copy of the string returned to it's original form. 
+ * new copy of the string returned to it's original form.
  *
  * @param pszInput the input string.  This is a zero terminated string.
- * @param pnLength location to return the length of the unescaped string, 
+ * @param pnLength location to return the length of the unescaped string,
  * which may in some cases include embedded '\\0' characters.
  * @param nScheme the escaped scheme to undo (see CPLEscapeString() for a
- * list). 
+ * list).  Does not yet support CSV.
  *
- * @return a copy of the unescaped string that should be freed by the 
+ * @return a copy of the unescaped string that should be freed by the
  * application using CPLFree() when no longer needed.
  */
 
@@ -2089,11 +2089,32 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
 {
     int iOut=0, iIn;
 
+    // TODO: Why times 4?
     char *pszOutput = reinterpret_cast<char *>(
-        CPLMalloc(4 * strlen(pszInput)+1) );
+        CPLMalloc(4 * strlen(pszInput) + 1) );
     pszOutput[0] = '\0';
 
-    if( nScheme == CPLES_XML || nScheme == CPLES_XML_BUT_QUOTES  )
+    if( nScheme == CPLES_BackslashQuotable )
+    {
+        for( iIn = 0; pszInput[iIn] != '\0'; ++iIn )
+        {
+            if( pszInput[iIn] == '\\' )
+            {
+                ++iIn;
+                if( pszInput[iIn] == 'n' )
+                    pszOutput[iOut++] = '\n';
+                else if( pszInput[iIn] == '0' )
+                    pszOutput[iOut++] = '\0';
+                else
+                    pszOutput[iOut++] = pszInput[iIn];
+            }
+            else
+            {
+                pszOutput[iOut++] = pszInput[iIn];
+            }
+        }
+    }
+    else if( nScheme == CPLES_XML || nScheme == CPLES_XML_BUT_QUOTES  )
     {
         char ch;
         for( iIn = 0; (ch = pszInput[iIn]) != '\0'; ++iIn )
@@ -2182,7 +2203,8 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
             {
                 /* illegal escape sequence */
                 CPLDebug( "CPL",
-                          "Error unescaping CPLES_XML text, '&' character followed by unhandled escape sequence." );
+                          "Error unescaping CPLES_XML text, '&' character "
+                          "followed by unhandled escape sequence." );
                 break;
             }
         }
@@ -2191,8 +2213,8 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
     {
         for( iIn = 0; pszInput[iIn] != '\0'; ++iIn )
         {
-            if( pszInput[iIn] == '%' 
-                && pszInput[iIn+1] != '\0' 
+            if( pszInput[iIn] == '%'
+                && pszInput[iIn+1] != '\0'
                 && pszInput[iIn+2] != '\0' )
             {
                 int nHexChar = 0;
@@ -2204,7 +2226,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 else if( pszInput[iIn+1] >= '0' && pszInput[iIn+1] <= '9' )
                     nHexChar += 16 * (pszInput[iIn+1] - '0');
                 else
-                    CPLDebug( "CPL", 
+                    CPLDebug( "CPL",
                               "Error unescaping CPLES_URL text, percent not "
                               "followed by two hex digits." );
 
@@ -2215,7 +2237,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 else if( pszInput[iIn+2] >= '0' && pszInput[iIn+2] <= '9' )
                     nHexChar += pszInput[iIn+2] - '0';
                 else
-                    CPLDebug( "CPL", 
+                    CPLDebug( "CPL",
                               "Error unescaping CPLES_URL text, percent not "
                               "followed by two hex digits." );
 
@@ -2225,7 +2247,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
             else if( pszInput[iIn] == '+' )
             {
                 pszOutput[iOut++] = ' ';
-            }   
+            }
             else
             {
                 pszOutput[iOut++] = pszInput[iIn];
@@ -2247,25 +2269,15 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
             }
         }
     }
-    else /* if( nScheme == CPLES_BackslashQuoteable ) */
+    else if( nScheme == CPLES_CSV )
     {
-        for( iIn = 0; pszInput[iIn] != '\0'; ++iIn )
-        {
-            if( pszInput[iIn] == '\\' )
-            {
-                ++iIn;
-                if( pszInput[iIn] == 'n' )
-                    pszOutput[iOut++] = '\n';
-                else if( pszInput[iIn] == '0' )
-                    pszOutput[iOut++] = '\0';
-                else 
-                    pszOutput[iOut++] = pszInput[iIn];
-            }
-            else
-            {
-                pszOutput[iOut++] = pszInput[iIn];
-            }
-        }
+        CPLError( CE_Fatal, CPLE_NotSupported,
+                  "CSV Unescaping not yet implemented.");
+    }
+    else
+    {
+        CPLError( CE_Fatal, CPLE_NotSupported,
+                  "Unknown escaping style.");
     }
 
     pszOutput[iOut] = '\0';
@@ -2284,7 +2296,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
  * Binary to hexadecimal translation.
  *
  * @param nBytes number of bytes of binary data in pabyData.
- * @param pabyData array of data bytes to translate. 
+ * @param pabyData array of data bytes to translate.
  *
  * @return hexadecimal translation, zero terminated.  Free with CPLFree().
  */
