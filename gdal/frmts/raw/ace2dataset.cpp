@@ -39,13 +39,15 @@ CPL_C_END
 
 static const char * const apszCategorySource[] =
 {
-    "Pure SRTM (above 60deg N pure GLOBE data, below 60S pure ACE [original] data)",
+    "Pure SRTM (above 60deg N pure GLOBE data, below 60S pure ACE [original] "
+    "data)",
     "SRTM voids filled by interpolation and/or altimeter data",
     "SRTM data warped using the ERS-1 Geodetic Mission",
     "SRTM data warped using EnviSat & ERS-2 data",
     "Mean lake level data derived from Altimetry",
     "GLOBE/ACE data warped using combined altimetry (only above 60deg N)",
-    "Pure altimetry data (derived from ERS-1 Geodetic Mission, ERS-2 and EnviSat data using Delaunay Triangulation",
+    "Pure altimetry data (derived from ERS-1 Geodetic Mission, ERS-2 and "
+    "EnviSat data using Delaunay Triangulation",
     NULL
 };
 
@@ -100,7 +102,6 @@ class ACE2Dataset : public GDALPamDataset
     double       adfGeoTransform[6];
 
   public:
-
                 ACE2Dataset();
 
     virtual const char *GetProjectionRef(void);
@@ -189,8 +190,8 @@ const char *ACE2RasterBand::GetUnitType()
 {
     if (eDataType == GDT_Float32)
         return "m";
-    else
-        return "";
+
+    return "";
 }
 
 /************************************************************************/
@@ -199,16 +200,17 @@ const char *ACE2RasterBand::GetUnitType()
 
 char **ACE2RasterBand::GetCategoryNames()
 {
-    if (eDataType == GDT_Int16)
-    {
-        const char* pszName = poDS->GetDescription();
-        if (strstr(pszName, "_SOURCE_"))
-            return (char**) apszCategorySource;
-        else if (strstr(pszName, "_QUALITY_"))
-            return (char**) apszCategoryQuality;
-        else if (strstr(pszName, "_CONF_"))
-            return (char**) apszCategoryConfidence;
-    }
+    if (eDataType != GDT_Int16)
+        return NULL;
+
+    const char* pszName = poDS->GetDescription();
+
+    if (strstr(pszName, "_SOURCE_"))
+        return (char**) apszCategorySource;
+    if (strstr(pszName, "_QUALITY_"))
+        return (char**) apszCategoryQuality;
+    if (strstr(pszName, "_CONF_"))
+        return (char**) apszCategoryConfidence;
 
     return NULL;
 }
@@ -339,9 +341,8 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    ACE2Dataset  *poDS;
+    ACE2Dataset  *poDS = new ACE2Dataset();
 
-    poDS = new ACE2Dataset();
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
 
@@ -378,24 +379,22 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_ACE2()
 
 {
-    GDALDriver  *poDriver;
-
     if( GDALGetDriverByName( "ACE2" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+        return;
 
-        poDriver->SetDescription( "ACE2" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "ACE2" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#ACE2" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ACE2" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = ACE2Dataset::Open;
-        poDriver->pfnIdentify = ACE2Dataset::Identify;
+    poDriver->SetDescription( "ACE2" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "ACE2" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#ACE2" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ACE2" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = ACE2Dataset::Open;
+    poDriver->pfnIdentify = ACE2Dataset::Identify;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
