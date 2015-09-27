@@ -33,10 +33,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifndef PI
-#  define PI 3.14159265358979323846
-#endif
-
 CPL_C_START
 void	GDALRegister_GXF(void);
 CPL_C_END
@@ -205,8 +201,8 @@ CPLErr GXFDataset::GetGeoTransform( double * padfTransform )
     if( eErr != CE_None )
         return eErr;
 
-    // Transform to radians. 
-    dfRotation = (dfRotation / 360.0) * 2 * PI;
+    // Transform to radians.
+    dfRotation = (dfRotation / 360.0) * 2 * M_PI;
 
     padfTransform[1] = dfXSize * cos(dfRotation);
     padfTransform[2] = dfYSize * sin(dfRotation);

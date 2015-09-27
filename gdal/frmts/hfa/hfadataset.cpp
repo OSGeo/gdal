@@ -41,15 +41,11 @@ CPL_C_START
 void	GDALRegister_HFA(void);
 CPL_C_END
 
-#ifndef PI
-#  define PI 3.14159265358979323846
-#endif
-
 #ifndef R2D
-#  define R2D	(180/PI)
+#  define R2D	(180/M_PI)
 #endif
 #ifndef D2R
-#  define D2R	(PI/180)
+#  define D2R	(M_PI/180)
 #endif
 
 int WritePeStringIfNeeded(OGRSpatialReference* poSRS, HFAHandle hHFA);

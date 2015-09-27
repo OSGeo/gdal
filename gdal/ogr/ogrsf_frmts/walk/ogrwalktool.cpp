@@ -29,10 +29,6 @@
 
 #include "ogrwalk.h"
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif 
-
 /************************************************************************/
 /*                   OGRWalkArcCenterFromEdgePoints()                   */
 /*                                                                      */
@@ -122,15 +118,15 @@ OGRWalkArcToLineString( double dfStartX, double dfStartY,
 
     dfDeltaX = dfStartX - dfCenterX;
     dfDeltaY = dfStartY - dfCenterY;
-    dfStartAngle = -1 * atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+    dfStartAngle = -1 * atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
 
     dfDeltaX = dfAlongX - dfCenterX;
     dfDeltaY = dfAlongY - dfCenterY;
-    dfAlongAngle = -1 * atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+    dfAlongAngle = -1 * atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
 
     dfDeltaX = dfEndX - dfCenterX;
     dfDeltaY = dfEndY - dfCenterY;
-    dfEndAngle = -1 * atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+    dfEndAngle = -1 * atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
 
     // Try positive (clockwise?) winding.
     while( dfAlongAngle < dfStartAngle )

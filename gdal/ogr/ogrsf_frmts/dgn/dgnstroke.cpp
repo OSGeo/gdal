@@ -32,7 +32,7 @@
 
 CPL_CVSID("$Id$");
 
-#define DEG_TO_RAD (PI/180.0)
+#define DEG_TO_RAD (M_PI/180.0)
 
 /************************************************************************/
 /*                         ComputePointOnArc()                          */
@@ -314,8 +314,8 @@ int main( int argc, char ** argv )
 
     dfPrimary = CPLAtof(argv[1]);
     dfSecondary = CPLAtof(argv[2]);
-    dfAxisRotation = CPLAtof(argv[3]) / 180 * PI;
-    dfAngle = CPLAtof(argv[4]) / 180 * PI;
+    dfAxisRotation = CPLAtof(argv[3]) / 180 * M_PI;
+    dfAngle = CPLAtof(argv[4]) / 180 * M_PI;
 
     ComputePointOnArc2D( dfPrimary, dfSecondary, dfAxisRotation, dfAngle, 
                          &dfX, &dfY );

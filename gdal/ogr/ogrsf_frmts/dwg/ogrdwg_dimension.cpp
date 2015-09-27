@@ -37,10 +37,6 @@
 
 CPL_CVSID("$Id: ogrdxf_dimension.cpp 19643 2010-05-08 21:56:18Z rouault $");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif 
-
 /************************************************************************/
 /*                         TranslateDIMENSION()                         */
 /************************************************************************/
@@ -181,7 +177,7 @@ the approach is as above in all these cases.
 /* -------------------------------------------------------------------- */
     double dfAngle = 0.0;
 
-    dfAngle = atan2(dfVec2Y,dfVec2X) * 180.0 / PI;
+    dfAngle = atan2(dfVec2Y,dfVec2X) * 180.0 / M_PI;
 
 /* -------------------------------------------------------------------- */
 /*      Rescale the direction vectors so we can use them in             */

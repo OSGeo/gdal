@@ -48,11 +48,6 @@
 #include "ogr_p.h"
 #include "ogrsf_frmts/xplane/ogr_xplane_geo_utils.h"
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif
-
-
 /************************************************************************/
 /*                        GMLGetCoordTokenPos()                         */
 /************************************************************************/
@@ -1300,18 +1295,18 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         if (det < 0)
         {
             if (alpha1 > alpha0)
-                alpha1 -= 2 * PI;
+                alpha1 -= 2 * M_PI;
             if (alpha2 > alpha1)
-                alpha2 -= 2 * PI;
-            alpha3 = alpha0 - 2 * PI;
+                alpha2 -= 2 * M_PI;
+            alpha3 = alpha0 - 2 * M_PI;
         }
         else
         {
             if (alpha1 < alpha0)
-                alpha1 += 2 * PI;
+                alpha1 += 2 * M_PI;
             if (alpha2 < alpha1)
-                alpha2 += 2 * PI;
-            alpha3 = alpha0 + 2 * PI;
+                alpha2 += 2 * M_PI;
+            alpha3 = alpha0 + 2 * M_PI;
         }
 
         CPLAssert((alpha0 <= alpha1 && alpha1 <= alpha2 && alpha2 <= alpha3) ||
@@ -1320,29 +1315,29 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         int nSign = (det >= 0) ? 1 : -1;
 
         double alpha, dfRemainder;
-        double dfStep = CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4")) / 180 * PI;
+        double dfStep = CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4")) / 180 * M_PI;
 
         // make sure the segments are not too short
         double dfMinStepLength = CPLAtof( CPLGetConfigOption("OGR_ARC_MINLENGTH","0") );
         if ( dfMinStepLength > 0.0 && dfStep * R < dfMinStepLength )
         {
             CPLDebug( "GML", "Increasing arc step to %lf° (was %lf° with segment length %lf at radius %lf; min segment length is %lf)",
-                      dfMinStepLength * 180.0 / PI / R,
-                      dfStep * 180.0 / PI,
+                      dfMinStepLength * 180.0 / M_PI / R,
+                      dfStep * 180.0 / M_PI,
                       dfStep * R,
                       R,
                       dfMinStepLength );
             dfStep = dfMinStepLength / R;
         }
 
-        if (dfStep < 4. / 180 * PI)
+        if (dfStep < 4. / 180 * M_PI)
         {
             CPLDebug( "GML", "Increasing arc step to %lf° (was %lf° with length %lf at radius %lf).",
-                      4. / 180 * PI,
-                      dfStep * 180.0 / PI,
+                      4. / 180 * M_PI,
+                      dfStep * 180.0 / M_PI,
                       dfStep * R,
                       R );
-            dfStep = 4. / 180 * PI;
+            dfStep = 4. / 180 * M_PI;
         }
 
         poLine->setNumPoints(0);

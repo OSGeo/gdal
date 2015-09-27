@@ -39,10 +39,6 @@ CPL_CVSID("$Id$");
 static int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord **,
                                     NTFRecord * );
 
-#ifndef PI
-#  define PI 3.14159265358979323846
-#endif
-
 /************************************************************************/
 /*                            NTFFileReader                             */
 /************************************************************************/

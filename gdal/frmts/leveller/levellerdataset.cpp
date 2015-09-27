@@ -158,7 +158,7 @@ static const double kdays_per_year = 365.25;
 static const double kdLStoM = 299792458.0;
 static const double kdLYtoM = kdLStoM * kdays_per_year * 24 * 60 * 60;
 static const double kdInch = 0.3048 / 12;
-static const double kPI = 3.1415926535897932384626433832795;
+static const double kPI = M_PI;
 
 static const int kFirstLinearMeasureIdx = 9;
 

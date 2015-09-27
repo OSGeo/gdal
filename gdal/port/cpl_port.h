@@ -3,8 +3,8 @@
  *
  * Project:  CPL - Common Portability Library
  * Author:   Frank Warmerdam, warmerdam@pobox.com
- * Purpose:  Include file providing low level portability services for CPL.  
- *           This should be the first include file for any CPL based code.  
+ * Purpose:  Include file providing low level portability services for CPL.
+ *           This should be the first include file for any CPL based code.
  *
  ******************************************************************************
  * Copyright (c) 1998, 2005, Frank Warmerdam <warmerdam@pobox.com>
@@ -346,7 +346,8 @@ typedef int              GPtrDiff_t;
 #endif
 
 #ifndef M_PI
-# define M_PI		3.14159265358979323846	/* pi */
+# define M_PI		3.14159265358979323846
+/* 3.1415926535897932384626433832795 */
 #endif
 
 /* -------------------------------------------------------------------- */

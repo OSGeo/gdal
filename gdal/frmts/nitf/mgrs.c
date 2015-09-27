@@ -139,16 +139,15 @@
 #define TWOMIL        2000000.e0    /* TWO MILLION                           */
 #define TRUE                      1  /* CONSTANT VALUE FOR TRUE VALUE  */
 #define FALSE                     0  /* CONSTANT VALUE FOR FALSE VALUE */
-#define PI    3.14159265358979323e0  /* PI                             */
-#define PI_OVER_2  (PI / 2.0e0)
+#define PI_OVER_2  (M_PI / 2.0e0)
 
 #define MIN_EASTING  100000
 #define MAX_EASTING  900000
 #define MIN_NORTHING 0
 #define MAX_NORTHING 10000000
 #define MAX_PRECISION           5   /* Maximum precision of easting & northing */
-#define MIN_UTM_LAT      ( (-80 * PI) / 180.0 ) /* -80 degrees in radians    */
-#define MAX_UTM_LAT      ( (84 * PI) / 180.0 )  /* 84 degrees in radians     */
+#define MIN_UTM_LAT      ( (-80 * M_PI) / 180.0 ) /* -80 degrees in radians    */
+#define MAX_UTM_LAT      ( (84 * M_PI) / 180.0 )  /* 84 degrees in radians     */
 
 #define MIN_EAST_NORTH 0
 #define MAX_EAST_NORTH 4000000

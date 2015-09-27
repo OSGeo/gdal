@@ -149,7 +149,7 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints,
 
     // Adjust angles to go counterclockwise
     if (dEndAngle < dStartAngle)
-        dEndAngle += 2.0*PI;
+        dEndAngle += 2.0*M_PI;
 
     dAngleStep = (dEndAngle-dStartAngle)/(numPoints-1.0);
 
@@ -760,4 +760,3 @@ int TABUnitIdFromString(const char *pszName)
 
     return -1;
 }
-

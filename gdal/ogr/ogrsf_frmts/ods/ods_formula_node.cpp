@@ -5,7 +5,7 @@
  * Purpose: Implementation of the ods_formula_node class used to represent a
  *          node in a ODS expression.
  * Author: Even Rouault <even dot rouault at mines dash paris dot org>
- * 
+ *
  ******************************************************************************
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
@@ -31,10 +31,6 @@
 
 #include "cpl_conv.h"
 #include "ods_formula.h"
-
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif
 
 /************************************************************************/
 /*                          ods_formula_node()                          */
@@ -310,7 +306,7 @@ int ods_formula_node::Evaluate(IODSCellEvaluator* poEvaluator)
         case ODS_PI:
             eNodeType = SNT_CONSTANT;
             field_type = ODS_FIELD_TYPE_FLOAT;
-            float_value = PI;
+            float_value = M_PI;
             return TRUE;
 
         case ODS_LEN : return EvaluateLEN(poEvaluator);

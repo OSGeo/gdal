@@ -1515,12 +1515,12 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     diagonal=sqrt(length*length+height*height);
     sLowLeft.x=sMin.x;
     sLowLeft.y=sMin.y;
-    sLowRight.x=sMin.x+cos(psText->rotation*PI/180.0)*length;
-    sLowRight.y=sMin.y+sin(psText->rotation*PI/180.0)*length;
-    sUpRight.x=sMin.x+cos((psText->rotation*PI/180.0)+atan(height/length))*diagonal;
-    sUpRight.y=sMin.y+sin((psText->rotation*PI/180.0)+atan(height/length))*diagonal;
-    sUpLeft.x=sMin.x+cos((psText->rotation+90.0)*PI/180.0)*height;
-    sUpLeft.y=sMin.y+sin((psText->rotation+90.0)*PI/180.0)*height;
+    sLowRight.x=sMin.x+cos(psText->rotation*M_PI/180.0)*length;
+    sLowRight.y=sMin.y+sin(psText->rotation*M_PI/180.0)*length;
+    sUpRight.x=sMin.x+cos((psText->rotation*M_PI/180.0)+atan(height/length))*diagonal;
+    sUpRight.y=sMin.y+sin((psText->rotation*M_PI/180.0)+atan(height/length))*diagonal;
+    sUpLeft.x=sMin.x+cos((psText->rotation+90.0)*M_PI/180.0)*height;
+    sUpLeft.y=sMin.y+sin((psText->rotation+90.0)*M_PI/180.0)*height;
 
     //calculate new values for bounding box
     sMin.x=MIN(sLowLeft.x,MIN(sLowRight.x,MIN(sUpLeft.x,sUpRight.x)));
@@ -2080,9 +2080,9 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
     if( psInfo->dimension == 2 )
     {
         long anTrans[4];
-        double cos_a = cos(-dfRotation * PI / 180.0);
-        double sin_a = sin(-dfRotation * PI / 180.0);
-        
+        double cos_a = cos(-dfRotation * M_PI / 180.0);
+        double sin_a = sin(-dfRotation * M_PI / 180.0);
+
         anTrans[0] = (long) (cos_a * dfXScale * 214748);
         anTrans[1] = (long) (sin_a * dfYScale * 214748);
         anTrans[2] = (long)(-sin_a * dfXScale * 214748);
@@ -2098,10 +2098,10 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
         long anTrans[9];
 
         // NOTE: This is still just rotation in the plane
-        double cos_a = cos(-dfRotation * PI / 180.0);
-        double sin_a = sin(-dfRotation * PI / 180.0);
+        double cos_a = cos(-dfRotation * M_PI / 180.0);
+        double sin_a = sin(-dfRotation * M_PI / 180.0);
         double dfZScale = 1.0; // Should we get this from somewhere?
-        
+
         anTrans[0] = (long) ( cos_a * dfXScale * 214748);
         anTrans[1] = (long) ( sin_a * dfYScale * 214748);
         anTrans[2] = (long) ( sin_a * dfZScale * 214748);

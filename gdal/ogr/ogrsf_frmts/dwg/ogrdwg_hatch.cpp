@@ -43,9 +43,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif 
 
 static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                                       OGRGeometryCollection *poGC );
@@ -191,9 +188,9 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
         {
             OdGeCircArc2d* poCircArc = (OdGeCircArc2d*) poEdge;
             OdGePoint2d oCenter = poCircArc->center();
-            double dfStartAngle = poCircArc->startAng() * 180 / PI;
-            double dfEndAngle = poCircArc->endAng() * 180 / PI;
-            
+            double dfStartAngle = poCircArc->startAng() * 180 / M_PI;
+            double dfEndAngle = poCircArc->endAng() * 180 / M_PI;
+
             if( !poCircArc->isClockWise() )
             {
                 dfStartAngle *= -1;
@@ -221,11 +218,11 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
             double dfRotation;
             double dfStartAng, dfEndAng;
 
-            dfRotation = -1 * atan2( oMajorAxis.y, oMajorAxis.x ) * 180 / PI;
+            dfRotation = -1 * atan2( oMajorAxis.y, oMajorAxis.x ) * 180 / M_PI;
 
-            dfStartAng = poArc->startAng()*180/PI;
-            dfEndAng = poArc->endAng()*180/PI;
- 
+            dfStartAng = poArc->startAng()*180/M_PI;
+            dfEndAng = poArc->endAng()*180/M_PI;
+
             if( !poArc->isClockWise() )
             {
                 dfStartAng *= -1;
@@ -254,4 +251,3 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
 
     return OGRERR_NONE;
 }
-

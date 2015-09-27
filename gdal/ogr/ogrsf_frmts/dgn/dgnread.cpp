@@ -333,9 +333,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
                   psCell->rotation = acos(a / sqrt(a2 + c2));
 
               if (b <= 0)
-                  psCell->rotation = psCell->rotation * 180 / PI;
+                  psCell->rotation = psCell->rotation * 180 / M_PI;
               else
-                  psCell->rotation = 360 - psCell->rotation * 180 / PI;
+                  psCell->rotation = 360 - psCell->rotation * 180 / M_PI;
               }
           }
           else

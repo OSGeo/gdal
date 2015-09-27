@@ -39,10 +39,6 @@
 
 #include "pdfobject.h"
 
-#ifndef M_PI
-#define M_PI       3.14159265358979323846
-#endif
-
 /* Cf PDF reference v1.7, Appendix C, page 993 */
 #define MAXIMUM_SIZE_IN_UNITS   14400
 

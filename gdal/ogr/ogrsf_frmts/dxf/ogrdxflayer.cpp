@@ -35,10 +35,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif 
-
 /************************************************************************/
 /*                            OGRDXFLayer()                             */
 /************************************************************************/
@@ -444,7 +440,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
           case 21:
             dfYDirection = CPLAtof(szLineBuf);
-            dfAngle = atan2( dfYDirection, dfXDirection ) * 180.0 / PI;
+            dfAngle = atan2( dfYDirection, dfXDirection ) * 180.0 / M_PI;
             break;
 
           case 1:
@@ -1200,12 +1196,12 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 
           case 41:
             // These *seem* to always be in radians regardless of $AUNITS
-            dfEndAngle = -1 * CPLAtof(szLineBuf) * 180.0 / PI;
+            dfEndAngle = -1 * CPLAtof(szLineBuf) * 180.0 / M_PI;
             break;
 
           case 42:
             // These *seem* to always be in radians regardless of $AUNITS
-            dfStartAngle = -1 * CPLAtof(szLineBuf) * 180.0 / PI;
+            dfStartAngle = -1 * CPLAtof(szLineBuf) * 180.0 / M_PI;
             break;
 
           default:
@@ -1233,7 +1229,7 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 
     dfSecondaryRadius = dfRatio * dfPrimaryRadius;
 
-    dfRotation = -1 * atan2( dfAxisY, dfAxisX ) * 180 / PI;
+    dfRotation = -1 * atan2( dfAxisY, dfAxisX ) * 180 / M_PI;
 
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
@@ -1806,7 +1802,7 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
             dfAngle = CPLAtof(szLineBuf);
             // We want to transform this to radians. 
             // It is apparently always in degrees regardless of $AUNITS
-            oTransformer.dfAngle = dfAngle * PI / 180.0;
+            oTransformer.dfAngle = dfAngle * M_PI / 180.0;
             break;
 
           case 2: 
@@ -2090,4 +2086,3 @@ int OGRDXFLayer::TestCapability( const char * pszCap )
     else
         return FALSE;
 }
-

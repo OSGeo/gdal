@@ -34,8 +34,6 @@
 #include "cpl_csv.h"
 
 #include <vector>
-#define _USE_MATH_DEFINES  // For MSVC to get M_PI.
-#include <cmath>
 
 CPL_CVSID("$Id$");
 
@@ -291,7 +289,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
 
           case 9109:
             pszUOMName = "microradian";
-            dfInDegrees = 180.0 / (3.14159265358979 * 1000000.0);
+            dfInDegrees = 180.0 / (M_PI * 1000000.0);
             break;
 
           default:

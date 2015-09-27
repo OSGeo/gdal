@@ -36,10 +36,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif
-
 /************************************************************************/
 /*                     NTFArcCenterFromEdgePoints()                     */
 /*                                                                      */
@@ -157,15 +153,15 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
         dfDeltaX = dfStartX - dfCenterX;
         dfDeltaY = dfStartY - dfCenterY;
-        dfStartAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+        dfStartAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
 
         dfDeltaX = dfAlongX - dfCenterX;
         dfDeltaY = dfAlongY - dfCenterY;
-        dfAlongAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+        dfAlongAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
 
         dfDeltaX = dfEndX - dfCenterX;
         dfDeltaY = dfEndY - dfCenterY;
-        dfEndAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+        dfEndAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
 
 #ifdef notdef
         if( dfStartAngle > dfAlongAngle && dfAlongAngle > dfEndAngle )
@@ -228,10 +224,8 @@ NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
         
     for( iPoint=0; iPoint < nVertexCount; iPoint++ )
     {
-        double      dfAngle;
+        double dfAngle = (dfStartAngle + iPoint * dfSlice) * M_PI / 180.0;
 
-        dfAngle = (dfStartAngle + iPoint * dfSlice) * PI / 180.0;
-            
         dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
         dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
 
@@ -240,5 +234,3 @@ NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 
     return poLine;
 }
-
-

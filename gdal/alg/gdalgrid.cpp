@@ -40,7 +40,7 @@
 
 CPL_CVSID("$Id$");
 
-#define TO_RADIANS (3.14159265358979323846 / 180.0)
+#define TO_RADIANS (M_PI / 180.0)
 
 #ifndef DBL_MAX
 # ifdef __DBL_MAX__
