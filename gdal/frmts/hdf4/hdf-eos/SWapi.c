@@ -74,6 +74,7 @@ June 05, 2003 Abe Taaheri / Bruce Beaumont
 			      in SWgeomapinfo
 ******************************************************************************/
 
+#include "cpl_port.h" /* for M_PI */
 #include "mfhdf.h"
 #include "hcomp.h"
 #include "HdfEosDef.h"
