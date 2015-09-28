@@ -1675,7 +1675,7 @@ void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
     if (szWork != pszWork)
         CPLFree(pszWork);
 }
-                          
+
 /************************************************************************/
 /*        NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude()         */
 /*                                                                      */
@@ -1699,19 +1699,17 @@ double NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( double dfLat )
 
 {
     /* WGS84 Ellipsoid */
-    double a = 6378137.0;
-    double b = 6356752.3142;
-    /* TODO: Why is the dfPI used in place of M_PI? */
-    double dfPI = M_PI;
+    const double a = 6378137.0;
+    const double b = 6356752.3142;
 
     /* convert to radians */
-    dfLat = dfLat * dfPI / 180.0;
+    dfLat = dfLat * M_PI / 180.0;
 
     /* convert to geodetic */
     dfLat = atan( ((a*a)/(b*b)) * tan(dfLat) );
 
     /* convert back to degrees */
-    dfLat = dfLat * 180.0 / dfPI;
+    dfLat = dfLat * 180.0 / M_PI;
 
     return dfLat;
 }
