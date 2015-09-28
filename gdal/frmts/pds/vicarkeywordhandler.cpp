@@ -1,15 +1,15 @@
 /******************************************************************************
-* 
+*
 * Project:  VICAR Driver; JPL/MIPL VICAR Format
-* Purpose:  Implementation of VICARKeywordHandler - a class to read 
+* Purpose:  Implementation of VICARKeywordHandler - a class to read
 *           keyword data from VICAR data products.
 * Author:   Sebastian Walter <sebastian dot walter at fu-berlin dot de>
 *
 * NOTE: This driver code is loosely based on the ISIS and PDS drivers.
-* It is not intended to diminish the contribution of the authors 
+* It is not intended to diminish the contribution of the authors.
 ******************************************************************************
 * Copyright (c) 2014, Sebastian Walter <sebastian dot walter at fu-berlin dot de>
-* 
+*
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
 * to deal in the Software without restriction, including without limitation
@@ -70,36 +70,39 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
         return FALSE;
 
-    char *pch1, *pch2;
-    char keyval[100];
-
     // Find LBLSIZE Entry
-    char* pszLBLSIZE=strstr((char*)pabyHeader,"LBLSIZE");
+    char* pszLBLSIZE = strstr((char*)pabyHeader,"LBLSIZE");
     int nOffset = 0;
 
     if (pszLBLSIZE)
         nOffset = pszLBLSIZE - (const char *)pabyHeader;
-    pch1=strstr((char*)pabyHeader+nOffset,"=");
-    if( pch1 == NULL ) return FALSE;
-    pch1 ++;
-    pch2=strstr((char*)pabyHeader+nOffset," ");
-    if( pch2 == NULL ) return FALSE;
-    strncpy(keyval,pch1,MAX(pch2-pch1, 99));
-    keyval[MAX(pch2-pch1, 99)] = 0;
-    LabelSize=atoi(keyval);    
+
+    char *pch1 = strstr((char*)pabyHeader+nOffset, "=");
+    if( pch1 == NULL )
+        return FALSE;
+
+    ++pch1;
+    char *pch2 = strstr((char*)pabyHeader+nOffset, " ");
+    if( pch2 == NULL )
+        return FALSE;
+
+    char keyval[100];
+    strncpy( keyval, pch1, MAX( pch2-pch1, 99 ) );
+    keyval[MAX(pch2-pch1, 99)] = '\0';
+    LabelSize = atoi( keyval );
     if( LabelSize > 10 * 1024 * 124 )
         return FALSE;
 
-    char* pszChunk = (char*) VSIMalloc(LabelSize+1);
+    char* pszChunk = (char*) VSIMalloc( LabelSize + 1 );
     if( pszChunk == NULL )
         return FALSE;
     int nBytesRead = VSIFReadL( pszChunk, 1, LabelSize, fp );
     pszChunk[LabelSize] = 0;
 
     osHeaderText += pszChunk ;
-    VSIFree(pszChunk);
+    VSIFree( pszChunk );
     pszHeaderNext = osHeaderText.c_str();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Process name/value pairs, keeping track of a "path stack".      */
 /* -------------------------------------------------------------------- */
@@ -108,21 +111,18 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /* -------------------------------------------------------------------- */
 /*      Now check for the Vicar End-of-Dataset Label...                 */
 /* -------------------------------------------------------------------- */
-    const char *pszResult;
-
-    pszResult = CSLFetchNameValue( papszKeywordList, "EOL" );
-    
+    const char *pszResult = CSLFetchNameValue( papszKeywordList, "EOL" );
     if( pszResult == NULL )
         return FALSE;
 
-    if( !EQUAL(pszResult,"1") ) 
+    if( !EQUAL(pszResult,"1") )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      There is a EOL!   e.G.  h4231_0000.nd4.06                       */
 /* -------------------------------------------------------------------- */
 
-    long int	    nLineOffset=0, nPixelOffset=0, nBandOffset=0;
+    long int nPixelOffset=0;
     if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "BYTE" )) {
         nPixelOffset = 1;
     }
@@ -131,46 +131,53 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     }
     else if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "FULL" )) {
         nPixelOffset = 4;
-    } 
+    }
     else if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "REAL" )) {
         nPixelOffset = 4;
     }
-    long int nCols = atoi(CSLFetchNameValue(papszKeywordList,"NS")) ;
-    long int nRows = atoi(CSLFetchNameValue(papszKeywordList,"NL")) ;
-    int nBands = atoi(CSLFetchNameValue(papszKeywordList,"NB")) ;
-    int nBB = atoi(CSLFetchNameValue(papszKeywordList,"NBB")) ;
-    nLineOffset = nPixelOffset * nCols + nBB ;
-    nBandOffset = nLineOffset * nRows;
+
+    const long int nCols = atoi( CSLFetchNameValue( papszKeywordList, "NS" ) );
+    const long int nRows = atoi( CSLFetchNameValue( papszKeywordList, "NL" ) );
+    const int nBands = atoi( CSLFetchNameValue( papszKeywordList, "NB" ) );
+    const int nBB = atoi( CSLFetchNameValue( papszKeywordList, "NBB" ) );
+
+    long int nLineOffset = nPixelOffset * nCols + nBB ;
+    long int nBandOffset = nLineOffset * nRows;
+
     long int starteol = LabelSize + nBandOffset * nBands;
-    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 ) {
+    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
+    {
         printf("Error seeking to EOL!\n");
         return FALSE;
-        }
+    }
     char szChunk[100];
     nBytesRead = VSIFReadL( szChunk, 1, 30, fp );
     szChunk[nBytesRead] = '\0';
-    pszLBLSIZE=strstr(szChunk,"LBLSIZE");
-    nOffset=0;
-    
+    pszLBLSIZE = strstr( szChunk, "LBLSIZE" );
+    nOffset = 0;
+
     if (pszLBLSIZE)
         nOffset = pszLBLSIZE - (const char *)szChunk;
-    pch1=strstr((char*)szChunk+nOffset,"=")+1;
-    pch2=strstr((char*)szChunk+nOffset," ");
-    strncpy(keyval,pch1,pch2-pch1);
-    int EOLabelSize=atoi(keyval);
+    pch1 = strstr( (char*)szChunk + nOffset,"=" ) + 1;
+    pch2 = strstr( (char*)szChunk + nOffset, " " );
+    strncpy( keyval, pch1, pch2-pch1 );
+
+    int EOLabelSize = atoi( keyval );
     if( EOLabelSize > 99 )
         EOLabelSize = 99;
-    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 ) {
+    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
+    {
         printf("Error seeking again to EOL!\n");
         return FALSE;
-        }
+    }
+
     nBytesRead = VSIFReadL( szChunk, 1, EOLabelSize, fp );
     szChunk[nBytesRead] = '\0';
     osHeaderText += szChunk ;
     osHeaderText.append("END");
     pszHeaderNext = osHeaderText.c_str();
+
     return ReadGroup( "" );
-    
 }
 
 /************************************************************************/
@@ -180,15 +187,15 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 int VICARKeywordHandler::ReadGroup( CPL_UNUSED const char *pszPathPrefix ) {
     CPLString osName, osValue, osProperty;
 
-    for( ; TRUE; ) {
-        if( !ReadPair( osName, osValue ) ) {
-        //printf("Could not... \n");
-                return FALSE;
-                }
-            if( EQUAL(osName,"END") )
+    for( ; true; ) {
+        if( !ReadPair( osName, osValue ) )
+            return FALSE;
+
+        if( EQUAL(osName,"END") )
             return TRUE;
-            else if( EQUAL(osName,"PROPERTY") || EQUAL(osName,"HISTORY") || EQUAL(osName,"TASK"))
-                osProperty = osValue;
+
+        if( EQUAL(osName,"PROPERTY") || EQUAL(osName,"HISTORY") || EQUAL(osName,"TASK"))
+            osProperty = osValue;
         else {
             if ( !EQUAL(osProperty,"") )
                 osName = osProperty + "." + osName;
@@ -215,7 +222,7 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
     return FALSE;}
 
     SkipWhite();
-    
+
     // VICAR has no NULL string termination
     if( *pszHeaderNext == '\0') {
         osName="END";
@@ -223,9 +230,9 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
     }
 
     pszHeaderNext++;
-    
+
     SkipWhite();
-    
+
     osValue = "";
 
     if( *pszHeaderNext == '(' && pszHeaderNext[1] == '\'' )
@@ -257,9 +264,9 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
         if( !ReadWord( osValue ) ) return FALSE;
 
     }
-        
+
     SkipWhite();
-    
+
     return TRUE;
 }
 
@@ -275,11 +282,11 @@ int VICARKeywordHandler::ReadWord( CPLString &osWord )
 
     SkipWhite();
 
-    if( *pszHeaderNext == '\0') return TRUE;
-    
-    if( !( *pszHeaderNext != '='  && !isspace((unsigned char)*pszHeaderNext)) ) {
-    return FALSE;
-    }
+    if( *pszHeaderNext == '\0')
+        return TRUE;
+
+    if( !( *pszHeaderNext != '='  && !isspace((unsigned char)*pszHeaderNext)) )
+        return FALSE;
 
     if( *pszHeaderNext == '\'' )
     {
@@ -287,7 +294,8 @@ int VICARKeywordHandler::ReadWord( CPLString &osWord )
         while( *pszHeaderNext != '\'' )
         {
             //Skip Double Quotes
-                        if( *pszHeaderNext+1 == '\'' ) continue;
+            if( *pszHeaderNext+1 == '\'' )
+                continue;
             osWord += *(pszHeaderNext++);
         }
         pszHeaderNext++;
@@ -298,9 +306,8 @@ int VICARKeywordHandler::ReadWord( CPLString &osWord )
     {
         osWord += *pszHeaderNext;
         pszHeaderNext++;
-
     }
-    
+
     return TRUE;
 }
 
@@ -312,15 +319,15 @@ int VICARKeywordHandler::ReadWord( CPLString &osWord )
 void VICARKeywordHandler::SkipWhite()
 
 {
-    for( ; TRUE; )
+    for( ; true; )
     {
         if( isspace( (unsigned char)*pszHeaderNext ) )
         {
             pszHeaderNext++;
             continue;
         }
-        
-        // not white space, return. 
+
+        // not white space, return.
         return;
     }
 }
@@ -332,13 +339,12 @@ void VICARKeywordHandler::SkipWhite()
 const char *VICARKeywordHandler::GetKeyword( const char *pszPath, const char *pszDefault )
 
 {
-    const char *pszResult;
+    const char *pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
 
-    pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
-    if( pszResult == NULL ){
-        return pszDefault;}
-    else
-        return pszResult;
+    if( pszResult == NULL )
+        return pszDefault;
+
+    return pszResult;
 }
 
 /************************************************************************/
