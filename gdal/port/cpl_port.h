@@ -40,14 +40,6 @@
  */
 
 /* ==================================================================== */
-/*      We will use macos_pre10 to indicate compilation with MacOS      */
-/*      versions before MacOS X.                                        */
-/* ==================================================================== */
-#ifdef macintosh
-#  define macos_pre10
-#endif
-
-/* ==================================================================== */
 /*      We will use WIN32 as a standard windows define.                 */
 /* ==================================================================== */
 #if defined(_WIN32) && !defined(WIN32) && !defined(_WIN32_WCE)
@@ -391,12 +383,6 @@ CPL_C_END
 #  endif
 #  define EQUALN(a,b,n)           (STRNCASECMP(a,b,n)==0)
 #  define EQUAL(a,b)              (STRCASECMP(a,b)==0)
-#endif
-
-#ifdef macos_pre10
-int strcasecmp(char * str1, char * str2);
-int strncasecmp(char * str1, char * str2, int len);
-char * strdup (char *instr);
 #endif
 
 #ifndef CPL_THREADLOCAL

@@ -62,7 +62,7 @@
 #endif
 
 /* Windows */
-#if !defined(macos_pre10) && !defined(_WIN32_WCE)
+#if !defined(_WIN32_WCE)
 #  include <sys/stat.h>
 #endif
 
