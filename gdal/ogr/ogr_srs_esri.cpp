@@ -1718,6 +1718,14 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /* -------------------------------------------------------------------- */
     if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
     {
+        /* Such as found in #6134 */
+        if( GetAttrValue("PROJCS") != NULL &&
+            EQUAL(GetAttrValue("PROJCS"), "WGS_84_Pseudo_Mercator"))
+        {
+            CPLFree( pszDatumOrig );
+            return importFromEPSG(3857);
+        }
+
         SetNode( "PROJCS|PROJECTION", SRS_PT_MERCATOR_2SP );
         pszProjection = GetAttrValue("PROJECTION");
     }
