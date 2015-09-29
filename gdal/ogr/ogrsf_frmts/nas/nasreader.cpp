@@ -811,9 +811,7 @@ int NASReader::SaveClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Create in memory schema tree.                                   */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psRoot;
-
-    psRoot = CPLCreateXMLNode( NULL, CXT_Element, "GMLFeatureClassList" );
+    CPLXMLNode *psRoot = CPLCreateXMLNode( NULL, CXT_Element, "GMLFeatureClassList" );
 
     for( int iClass = 0; iClass < GetClassCount(); iClass++ )
     {
@@ -859,8 +857,6 @@ int NASReader::PrescanForSchema( int bGetExtents,
                                  CPL_UNUSED int bAnalyzeSRSPerFeature,
                                  CPL_UNUSED int bOnlyDetectSRS )
 {
-    GMLFeature  *poFeature;
-
     if( m_pszFilename == NULL )
         return FALSE;
 
@@ -871,6 +867,7 @@ int NASReader::PrescanForSchema( int bGetExtents,
         return FALSE;
 
     std::string osWork;
+    GMLFeature  *poFeature;
 
     while( (poFeature = NextFeature()) != NULL )
     {
@@ -979,11 +976,10 @@ void NASReader::CheckForFID( const Attributes &attrs,
                              char **ppszCurField )
 
 {
-    int nIndex;
     XMLCh  Name[100];
 
     tr_strcpy( Name, "fid" );
-    nIndex = attrs.getIndex( Name );
+    int nIndex = attrs.getIndex( Name );
 
     if( nIndex != -1 )
     {
@@ -1011,11 +1007,10 @@ void NASReader::CheckForRelations( const char *pszElement,
 
     CPLAssert( poFeature  != NULL );
 
-    int nIndex;
     XMLCh  Name[100];
 
     tr_strcpy( Name, "xlink:href" );
-    nIndex = attrs.getIndex( Name );
+    int nIndex = attrs.getIndex( Name );
 
     if( nIndex != -1 )
     {
