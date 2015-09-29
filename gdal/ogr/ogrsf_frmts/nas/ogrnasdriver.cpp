@@ -106,8 +106,6 @@ static int OGRNASDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRNASDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRNASDataSource    *poDS;
-
     if( poOpenInfo->eAccess == GA_Update ||
         !OGRNASDriverIdentify(poOpenInfo) )
         return NULL;
@@ -115,7 +113,7 @@ static GDALDataset *OGRNASDriverOpen( GDALOpenInfo* poOpenInfo )
     VSIFCloseL(poOpenInfo->fpL);
     poOpenInfo->fpL = NULL;
 
-    poDS = new OGRNASDataSource();
+    OGRNASDataSource *poDS = new OGRNASDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename )
         || poDS->GetLayerCount() == 0 )
@@ -123,8 +121,8 @@ static GDALDataset *OGRNASDriverOpen( GDALOpenInfo* poOpenInfo )
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -134,24 +132,22 @@ static GDALDataset *OGRNASDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRNAS()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "NAS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "NAS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "NAS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "NAS - ALKIS" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_nas.html" );
+    poDriver->SetDescription( "NAS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "NAS - ALKIS" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "drv_nas.html" );
 
-        poDriver->pfnOpen = OGRNASDriverOpen;
-        poDriver->pfnIdentify = OGRNASDriverIdentify;
-        poDriver->pfnUnloadDriver = OGRNASDriverUnload;
+    poDriver->pfnOpen = OGRNASDriverOpen;
+    poDriver->pfnIdentify = OGRNASDriverIdentify;
+    poDriver->pfnUnloadDriver = OGRNASDriverUnload;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
