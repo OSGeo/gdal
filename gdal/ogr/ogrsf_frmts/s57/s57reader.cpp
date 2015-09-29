@@ -1924,7 +1924,6 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
     DDFField    *poFSPT;
     int         nRCNM, nRCID;
     DDFRecord   *poSRecord;
-    
 
 /* -------------------------------------------------------------------- */
 /*      Feature the spatial record containing the point.                */
@@ -1935,7 +1934,7 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
 
     if( poFSPT->GetRepeatCount() != 1 )
         return;
-        
+
     nRCID = ParseName( poFSPT, 0, &nRCNM );
 
     if( nRCNM == RCNM_VI )
@@ -1959,13 +1958,17 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
     if( poField == NULL )
         poField = poSRecord->FindField( "SG3D" );
     if( poField == NULL )
+    {
+        delete poMP;
         return;
+    }
 
     poXCOO = poField->GetFieldDefn()->FindSubfieldDefn( "XCOO" );
     poYCOO = poField->GetFieldDefn()->FindSubfieldDefn( "YCOO" );
     if( poXCOO == NULL || poYCOO == NULL )
     {
         CPLDebug( "S57", "XCOO or YCOO are NULL" );
+        delete poMP;
         return;
     }
     poVE3D = poField->GetFieldDefn()->FindSubfieldDefn( "VE3D" );
@@ -1989,7 +1992,7 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
                                       &nBytesConsumed ) / (double) nCOMF;
         nBytesLeft -= nBytesConsumed;
         pachData += nBytesConsumed;
-        
+
         if( poVE3D != NULL )
         {
             dfZ = poYCOO->ExtractIntData( pachData, nBytesLeft,
