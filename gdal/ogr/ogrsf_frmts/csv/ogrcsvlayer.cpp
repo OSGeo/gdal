@@ -727,14 +727,16 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             if( !bKeepGeomColumns )
                 continue;
         }
-        else if( Matches(oField.GetNameRef(),papszXPossibleNames) )
+        else if( Matches(oField.GetNameRef(),papszXPossibleNames) &&
+                 poFeatureDefn->GetGeomFieldCount() == 0 )
         {
             oField.SetType(OFTReal);
             iLongitudeField = iField;
             if( !bKeepGeomColumns )
                 continue;
         }
-        else if( Matches(oField.GetNameRef(),papszYPossibleNames) )
+        else if( Matches(oField.GetNameRef(),papszYPossibleNames) &&
+                 poFeatureDefn->GetGeomFieldCount() == 0 )
         {
             oField.SetType(OFTReal);
             iLatitudeField = iField;
@@ -745,7 +747,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         /*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
         else if ( pszNfdcGeomField != NULL &&
                   EQUALN(oField.GetNameRef(), pszNfdcGeomField, strlen(pszNfdcGeomField)) &&
-                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LatitudeS") )
+                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LatitudeS") &&
+                 poFeatureDefn->GetGeomFieldCount() == 0  )
         {
             iNfdcLatitudeS = iField;
             if( !bKeepGeomColumns )
@@ -753,15 +756,9 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         }
         else if ( pszNfdcGeomField != NULL &&
                   EQUALN(oField.GetNameRef(), pszNfdcGeomField, strlen(pszNfdcGeomField)) &&
-                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LongitudeS") )
+                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LongitudeS") &&
+                 poFeatureDefn->GetGeomFieldCount() == 0  )
         {
-            if( ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 ) ||
-                ( iLatitudeField != -1 && iLongitudeField != -1 ) )
-            {
-                if( !bKeepGeomColumns )
-                    continue;
-            }
-
             iNfdcLongitudeS = iField;
             if( !bKeepGeomColumns )
                 continue;
@@ -772,15 +769,9 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                   EQUALN(oField.GetNameRef(), pszGeonamesGeomFieldPrefix, strlen(pszGeonamesGeomFieldPrefix)) &&
                   (EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LAT_DEC") ||
                    EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LATITUDE_DEC") ||
-                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LATITUDE")) )
+                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LATITUDE")) &&
+                 poFeatureDefn->GetGeomFieldCount() == 0  )
         {
-            if( ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 ) ||
-                ( iLatitudeField != -1 && iLongitudeField != -1 ) )
-            {
-                if( !bKeepGeomColumns )
-                    continue;
-            }
-
             oField.SetType(OFTReal);
             iLatitudeField = iField;
             if( !bKeepGeomColumns )
@@ -790,15 +781,9 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                   EQUALN(oField.GetNameRef(), pszGeonamesGeomFieldPrefix, strlen(pszGeonamesGeomFieldPrefix)) &&
                   (EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONG_DEC") ||
                    EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONGITUDE_DEC") ||
-                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONGITUDE")) )
+                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONGITUDE")) &&
+                 poFeatureDefn->GetGeomFieldCount() == 0  )
         {
-            if( ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 ) ||
-                ( iLatitudeField != -1 && iLongitudeField != -1 ) )
-            {
-                if( !bKeepGeomColumns )
-                    continue;
-            }
-
             oField.SetType(OFTReal);
             iLongitudeField = iField;
             if( !bKeepGeomColumns )
