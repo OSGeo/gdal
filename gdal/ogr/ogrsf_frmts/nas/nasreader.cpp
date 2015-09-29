@@ -825,20 +825,21 @@ int NASReader::SaveClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Serialize to disk.                                              */
 /* -------------------------------------------------------------------- */
-    FILE        *fp;
     int         bSuccess = TRUE;
     char        *pszWholeText = CPLSerializeXMLTree( psRoot );
 
     CPLDestroyXMLNode( psRoot );
 
-    fp = VSIFOpen( pszFile, "wb" );
+    FILE *fp = VSIFOpen( pszFile, "wb" );
 
     if( fp == NULL )
         bSuccess = FALSE;
-    else if( VSIFWrite( pszWholeText, strlen(pszWholeText), 1, fp ) != 1 )
-        bSuccess = FALSE;
     else
+    {
+        if( VSIFWrite( pszWholeText, strlen(pszWholeText), 1, fp ) != 1 )
+            bSuccess = FALSE;
         VSIFClose( fp );
+    }
 
     CPLFree( pszWholeText );
 
