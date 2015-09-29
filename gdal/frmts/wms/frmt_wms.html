@@ -402,6 +402,17 @@ Access to ArcGIS REST <a href="http://resources.arcgis.com/en/help/rest/apiref/m
      <pre>gdallocationinfo -wgs84 "&lt;GDAL_WMS&gt;&lt;Service name=\"AGS\"&gt;&lt;ServerUrl&gt;http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer&lt;/ServerUrl&gt;&lt;BBoxOrder&gt;xyXY&lt;/BBoxOrder&gt;&lt;SRS&gt;3857&lt;/SRS&gt;&lt;/Service&gt;&lt;DataWindow&gt;&lt;UpperLeftX&gt;-20037508.34&lt;/UpperLeftX&gt;&lt;UpperLeftY&gt;20037508.34&lt;/UpperLeftY&gt;&lt;LowerRightX&gt;20037508.34&lt;/LowerRightX&gt;&lt;LowerRightY&gt;-20037508.34&lt;/LowerRightY&gt;&lt;SizeX&gt;512&lt;/SizeX&gt;&lt;SizeY&gt;512&lt;/SizeY&gt;&lt;/DataWindow&gt;&lt;/GDAL_WMS&gt;" -75.704 39.75
     </pre>
 
+<h3>Internet Imaging Protocol (IIP) (GDAL 2.1 and later)</h3>
+<p>
+Access to images served through <a href="https://en.wikipedia.org/wiki/Internet_Imaging_Protocol">IIP protocol</a>. The server must support the
+JTL (Retrieve a tile as a complete JFIF image) extension of the IIP protocol.
+</p>
+<p>If using the XML syntax, the ServerURL must contain the FIF parameter.</p>
+<p>Otherwise it is also possible to use "IIP:http://foo.com/FIF=image_name" syntax
+as connection string, to retrieve from the server information on the full resolution
+dimension and the number of resolutions.</p>
+<p>The XML definition can then be generated with
+"gdal_translate IIP:http://foo.com/FIF=image_name out.xml -of WMS"</p>
 
 <h2>Examples</h2>
 
@@ -471,7 +482,10 @@ Access to ArcGIS REST <a href="http://resources.arcgis.com/en/help/rest/apiref/m
     <li><p>
      <a href="frmt_ags_arcgisonline.xml">ArcGIS online sample server layer</a> accessed with the ArcGIS Server REST API minidriver.
     </p></li>
-
+    
+    <li><p>
+     <a href="frmt_wms_iip.xml">IIP online sample server layer</a> accessed with the IIP minidriver.
+    </p></li>
 </ul>
 
 <h2>Open syntax</h2>
@@ -505,8 +519,13 @@ A list of subdatasets will be returned, resulting from the parsing of the GetTil
 </p></li>
 
 <li><p>
-(GDAL >= 1.9.0) the URL of a REST definition for a ArcGIS MapServer:
+(GDAL >= 2.0.0) the URL of a REST definition for a ArcGIS MapServer:
 <pre>gdalinfo "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&amp;pretty=true"</pre><p>
+</p></li>
+
+<li><p>
+(GDAL >= 2.1.0) the URL of a IIP image:
+<pre>gdalinfo "IIP:http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif"</pre><p>
 </p></li>
 </ul>
 

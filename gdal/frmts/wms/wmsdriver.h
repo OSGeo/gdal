@@ -118,6 +118,12 @@ public:
     bool m_valid;
 };
 
+typedef enum
+{
+    OVERVIEW_ROUNDED,
+    OVERVIEW_FLOOR
+} GDALWMSOverviewDimComputationMethod;
+
 class GDALWMSMiniDriverCapabilities {
 public:
   GDALWMSMiniDriverCapabilities() : 
@@ -125,7 +131,9 @@ public:
       m_has_image_request(0),
       m_has_tiled_image_requeset(0),
       m_has_arb_overviews(0),
-      m_max_overview_count(-1)
+      m_max_overview_count(-1),
+      m_overview_dim_computation_method(OVERVIEW_ROUNDED),
+      m_has_geotransform(true)
   {}
 
 /* Version N capabilities require all version N and earlier variables to be set to correct values */
@@ -136,6 +144,8 @@ public:
     int m_has_tiled_image_requeset;     // 1 if TiledImageRequest method is implemented
     int m_has_arb_overviews;            // 1 if ImageRequest method supports arbitrary overviews / resolutions
     int m_max_overview_count;               // Maximum number of overviews supported if known, -1 otherwise
+    GDALWMSOverviewDimComputationMethod m_overview_dim_computation_method;
+    bool m_has_geotransform;
 };
 
 /* All data returned by mini-driver as pointer should remain valid for mini-driver lifetime
