@@ -415,8 +415,11 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
                   cdata[out_char++] = *(vptr++);
           }
 
-          if( out_char < count-1 ) return StringError(message);
-          if( *vptr != '"' ) return StringError(message);
+          if( out_char < count-1 ||  *vptr != '"' )
+          {
+              _GTIFFree( cdata );
+              return StringError(message);
+          }
 
           cdata[count-1] = '\0';
           GTIFKeySet(gt,key,ktype,count,cdata);
@@ -424,7 +427,7 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
           _GTIFFree( cdata );
       }
       break;
-        
+
       case TYPE_DOUBLE: 
         outcount = count;
         for (dptr = data; count > 0; count-= vals_now)
