@@ -665,7 +665,19 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             }
         }
 
-        if( (EQUAL(oField.GetNameRef(),"WKT") ||
+        if( Matches(oField.GetNameRef(),papszZPossibleNames) )
+        {
+            oField.SetType(OFTReal);
+            iZField = iField;
+            if( !bKeepGeomColumns )
+                continue;
+        }
+        else if( ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 ) ||
+            ( iLatitudeField != -1 && iLongitudeField != -1 ) )
+        {
+            /* do nothing */
+        }
+        else if( (EQUAL(oField.GetNameRef(),"WKT") ||
              EQUALN(oField.GetNameRef(),"_WKT", 4) )
             && oField.GetType() == OFTString )
         {
@@ -729,16 +741,9 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             if( !bKeepGeomColumns )
                 continue;
         }
-        else if( Matches(oField.GetNameRef(),papszZPossibleNames) )
-        {
-            oField.SetType(OFTReal);
-            iZField = iField;
-            if( !bKeepGeomColumns )
-                continue;
-        }
 
         /*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
-        if ( pszNfdcGeomField != NULL &&
+        else if ( pszNfdcGeomField != NULL &&
                   EQUALN(oField.GetNameRef(), pszNfdcGeomField, strlen(pszNfdcGeomField)) &&
                   EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LatitudeS") )
         {
@@ -750,6 +755,13 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                   EQUALN(oField.GetNameRef(), pszNfdcGeomField, strlen(pszNfdcGeomField)) &&
                   EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LongitudeS") )
         {
+            if( ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 ) ||
+                ( iLatitudeField != -1 && iLongitudeField != -1 ) )
+            {
+                if( !bKeepGeomColumns )
+                    continue;
+            }
+
             iNfdcLongitudeS = iField;
             if( !bKeepGeomColumns )
                 continue;
@@ -762,6 +774,13 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                    EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LATITUDE_DEC") ||
                    EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LATITUDE")) )
         {
+            if( ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 ) ||
+                ( iLatitudeField != -1 && iLongitudeField != -1 ) )
+            {
+                if( !bKeepGeomColumns )
+                    continue;
+            }
+
             oField.SetType(OFTReal);
             iLatitudeField = iField;
             if( !bKeepGeomColumns )
@@ -773,6 +792,13 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                    EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONGITUDE_DEC") ||
                    EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONGITUDE")) )
         {
+            if( ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 ) ||
+                ( iLatitudeField != -1 && iLongitudeField != -1 ) )
+            {
+                if( !bKeepGeomColumns )
+                    continue;
+            }
+
             oField.SetType(OFTReal);
             iLongitudeField = iField;
             if( !bKeepGeomColumns )
@@ -794,14 +820,20 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
             poFeatureDefn->SetGeomType( wkbPoint );
         else
+        {
             iNfdcLatitudeS = iNfdcLongitudeS = -1;
+            iLatitudeField = iLongitudeField = -1;
+        }
     }
     else if ( iLatitudeField != -1 && iLongitudeField != -1 )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
             poFeatureDefn->SetGeomType( (iZField >= 0) ? wkbPoint25D : wkbPoint );
         else
+        {
+            iNfdcLatitudeS = iNfdcLongitudeS = -1;
             iLatitudeField = iLongitudeField = -1;
+        }
     }
     
     if( poFeatureDefn->GetGeomFieldCount() > 0 &&
