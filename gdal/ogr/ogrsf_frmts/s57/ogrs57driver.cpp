@@ -97,7 +97,7 @@ GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
     if( !OGRS57DriverIdentify(poOpenInfo) )
         return NULL;
 
-    OGRS57DataSource * = new OGRS57DataSource(poOpenInfo->papszOpenOptions);
+    OGRS57DataSource *poDS = new OGRS57DataSource(poOpenInfo->papszOpenOptions);
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
