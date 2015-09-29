@@ -1863,6 +1863,24 @@ def ogr_csv_40():
 
     gdal.Unlink('/vsimem/ogr_csv_40.csv')
 
+    gdal.FileFromMemBuffer('/vsimem/ogr_csv_40.csv',
+"""the_geom,latitude,longitude,id
+0101000020E61000004486E281C5C257C068B89DDA998F4640,49,2,1
+""")
+
+    ds = gdal.OpenEx('/vsimem/ogr_csv_40.csv', gdal.OF_VECTOR, \
+        open_options = ['X_POSSIBLE_NAMES=longitude', 'Y_POSSIBLE_NAMES=latitude', 'GEOM_POSSIBLE_NAMES=the_geom', 'KEEP_GEOM_COLUMNS=NO' ])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt().find('POINT (-95.04') < 0 or f['id'] != '1' or f['longitude'] != '2' or f['latitude'] != '49':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_40.csv')
+
     return 'success'
 
 ###############################################################################
