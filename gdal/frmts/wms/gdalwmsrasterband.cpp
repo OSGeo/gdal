@@ -41,8 +41,16 @@ GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, d
         poDS = parent_dataset;
     else
         poDS = NULL;
-    nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale + 0.5);
-    nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale + 0.5);
+    if( parent_dataset->m_mini_driver_caps.m_overview_dim_computation_method == OVERVIEW_ROUNDED )
+    {
+        nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale + 0.5);
+        nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale + 0.5);
+    }
+    else
+    {
+        nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale);
+        nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale);
+    }
     nBand = band;
     eDataType = m_parent_dataset->m_data_type;
     nBlockXSize = m_parent_dataset->m_block_size_x;

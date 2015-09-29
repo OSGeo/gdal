@@ -827,7 +827,39 @@ def wms_18():
     ds = None
         
     return 'success'
-    
+
+###############################################################################
+# Test a IIP server
+
+def wms_19():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'IIP:http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif' )
+
+    if ds is None:
+        if gdaltest.gdalurlopen('http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif&obj=Basic-Info') is None:
+            return 'skip'
+        gdaltest.post_reason( 'open failed.' )
+        return 'fail'
+
+    if ds.RasterXSize != 86400 \
+       or ds.RasterYSize != 43200 \
+       or ds.RasterCount != 3:
+        gdaltest.post_reason( 'wrong size or bands' )
+        return 'fail'
+
+    expected_cs = 48391
+    cs = ds.GetRasterBand(1).GetOverview(ds.GetRasterBand(1).GetOverviewCount()-1).Checksum()
+    if cs != expected_cs:
+        gdaltest.post_reason( 'Did not get expected SRTM checksum.' )
+        print(cs)
+        return 'fail'
+        
+    ds = None
+        
+    return 'success'
 ###############################################################################
 def wms_cleanup():
 
@@ -855,6 +887,7 @@ gdaltest_list = [
     wms_16,
     wms_17,
     wms_18,
+    wms_19,
     wms_cleanup ]
 
 if __name__ == '__main__':

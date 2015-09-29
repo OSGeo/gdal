@@ -6,7 +6,8 @@ OBJ =	gdalwmscache.o gdalwmsdataset.o gdalwmsrasterband.o \
 	wmsutils.o wmsdriver.o minidriver_wms.o \
 	minidriver_tileservice.o minidriver_worldwind.o \
 	minidriver_tms.o minidriver_tiled_wms.o wmsmetadataset.o \
-	minidriver_virtualearth.o minidriver_arcgis_server.o
+	minidriver_virtualearth.o minidriver_arcgis_server.o \
+	minidriver_iip.o
 
 CPPFLAGS	:=	 $(CPPFLAGS) $(CURL_INC)
 

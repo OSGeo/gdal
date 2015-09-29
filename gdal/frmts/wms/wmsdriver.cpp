@@ -39,6 +39,7 @@
 #include "minidriver_tiled_wms.h"
 #include "minidriver_virtualearth.h"
 #include "minidriver_arcgis_server.h"
+#include "minidriver_iip.h"
 
 /************************************************************************/
 /*              GDALWMSDatasetGetConfigFromURL()                        */
@@ -678,6 +679,11 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
     {
         return TRUE;
     }
+    else if (poOpenInfo->nHeaderBytes == 0 &&
+              EQUALN(pszFilename, "IIP:", 4))
+    {
+        return TRUE;
+    }
     else
         return FALSE;
 }
@@ -810,6 +816,50 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
 		return NULL;
     }
+    else if (poOpenInfo->nHeaderBytes == 0 &&
+              EQUALN(pszFilename, "IIP:", 4))
+    {
+        CPLString osURL(pszFilename + 4);
+        osURL += "&obj=Basic-Info";
+        CPLHTTPResult *psResult = CPLHTTPFetch(osURL.c_str(), NULL);
+        if (psResult == NULL)
+            return NULL;
+        if (psResult->pabyData == NULL)
+        {
+            CPLHTTPDestroyResult(psResult);
+            return NULL;
+        }
+        int nXSize, nYSize;
+        const char* pszMaxSize = strstr((const char*)psResult->pabyData, "Max-size:");
+        const char* pszResolutionNumber = strstr((const char*)psResult->pabyData, "Resolution-number:");
+        if( pszMaxSize &&
+            sscanf(pszMaxSize + strlen("Max-size:"), "%d %d", &nXSize, &nYSize) == 2 &&
+            pszResolutionNumber )
+        {
+            int nResolutions = atoi(pszResolutionNumber + strlen("Resolution-number:"));
+            char* pszEscapedURL = CPLEscapeString(pszFilename + 4, -1, CPLES_XML);
+            CPLString osXML = CPLSPrintf(
+            "<GDAL_WMS>"
+            "    <Service name=\"IIP\">"
+            "        <ServerUrl>%s</ServerUrl>"
+            "    </Service>"
+            "    <DataWindow>"
+            "        <SizeX>%d</SizeX>"
+            "        <SizeY>%d</SizeY>"
+            "        <TileLevel>%d</TileLevel>"
+            "    </DataWindow>"
+            "    <BlockSizeX>256</BlockSizeX>"
+            "    <BlockSizeY>256</BlockSizeY>"
+            "    <BandsCount>3</BandsCount>"
+            "    <Cache />"
+            "</GDAL_WMS>",
+                pszEscapedURL,
+                nXSize, nYSize, nResolutions - 1);
+            config = CPLParseXMLString(osXML);
+            CPLFree(pszEscapedURL);
+        }
+        CPLHTTPDestroyResult(psResult);
+    }
     else
         return NULL;
     if (config == NULL) return NULL;
@@ -925,5 +975,6 @@ void GDALRegister_WMS() {
         mdm->Register(new GDALWMSMiniDriverFactory_TiledWMS());
         mdm->Register(new GDALWMSMiniDriverFactory_VirtualEarth());
         mdm->Register(new GDALWMSMiniDriverFactory_AGS());
+        mdm->Register(new GDALWMSMiniDriverFactory_IIP());
     }
 }

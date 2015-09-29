@@ -593,6 +593,16 @@ CPLErr GDALWMSDataset::SetProjection(CPL_UNUSED const char *proj) {
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 CPLErr GDALWMSDataset::GetGeoTransform(double *gt) {
+    if( !(m_mini_driver_caps.m_has_geotransform) )
+    {
+        gt[0] = 0;
+        gt[1] = 1;
+        gt[2] = 0;
+        gt[3] = 0;
+        gt[4] = 0;
+        gt[5] = 1;
+        return CE_Failure;
+    }
     gt[0] = m_data_window.m_x0;
     gt[1] = (m_data_window.m_x1 - m_data_window.m_x0) / static_cast<double>(m_data_window.m_sx);
     gt[2] = 0.0;
