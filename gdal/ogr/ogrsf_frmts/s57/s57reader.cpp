@@ -131,7 +131,7 @@ char *S57Reader::RecodeByDSSI(const char *SourceString, bool LookAtAALL_NALL)
 
     if( RecodedString == NULL )
         RecodedString = CPLStrdup(SourceString);
-    
+
     return(RecodedString);
 }
 
@@ -181,7 +181,6 @@ S57Reader::S57Reader( const char * pszFilename )
     Aall=0;                 // see RecodeByDSSI() function
     Nall=0;                 // see RecodeByDSSI() function
     needAallNallSetup=true; // see RecodeByDSSI() function
-    
 }
 
 /************************************************************************/
@@ -192,7 +191,7 @@ S57Reader::~S57Reader()
 
 {
     Close();
-    
+
     CPLFree( pszModuleName );
     CSLDestroy( papszOptions );
 
@@ -249,7 +248,7 @@ int S57Reader::Open( int bTestOpen )
     nNextVEIndex = 0;
     nNextVFIndex = 0;
     nNextDSIDIndex = 0;
-    
+
     return TRUE;
 }
 
@@ -322,7 +321,7 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
     OGRPoint    *poSrcPoint;
 
     poPoint->SetFID( poMultiPoint->GetFID() );
-    
+
     for( int i = 0; i < poDefn->GetFieldCount(); i++ )
     {
         poPoint->SetField( i, poMultiPoint->GetRawFieldRef(i) );
@@ -347,12 +346,11 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
 int S57Reader::SetOptions( char ** papszOptionsIn )
 
 {
-    const char * pszOptionValue;
-    
     CSLDestroy( papszOptions );
     papszOptions = CSLDuplicate( papszOptionsIn );
 
-    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_SPLIT_MULTIPOINT );
+    const char *pszOptionValue
+        = CSLFetchNameValue( papszOptions, S57O_SPLIT_MULTIPOINT );
     if( pszOptionValue != NULL && CSLTestBoolean(pszOptionValue) )
         nOptionFlags |= S57M_SPLIT_MULTIPOINT;
     else
@@ -458,8 +456,6 @@ void S57Reader::Rewind()
 int S57Reader::Ingest()
 
 {
-    DDFRecord   *poRecord;
-    
     if( poModule == NULL || bFileIngested )
         return TRUE;
 
@@ -468,12 +464,13 @@ int S57Reader::Ingest()
 /*      appropriate indexes.                                            */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
+    DDFRecord *poRecord;
     while( (poRecord = poModule->ReadRecord()) != NULL )
     {
         DDFField        *poKeyField = poRecord->GetField(1);
         if (poKeyField == NULL)
             return FALSE;
-        
+
         if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"VRID") )
         {
             int         nRCNM = poRecord->GetIntSubfield( "VRID",0, "RCNM",0);
@@ -507,7 +504,7 @@ int S57Reader::Ingest()
         else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"FRID") )
         {
             int         nRCID = poRecord->GetIntSubfield( "FRID",0, "RCID",0);
-            
+
             oFE_Index.AddRecord( nRCID, poRecord->Clone() );
         }
 
@@ -583,7 +580,7 @@ void S57Reader::SetNextFEIndex( int nNewIndex, int nRCNM )
     {
         if( nNextFEIndex != nNewIndex )
             ClearPendingMultiPoint();
-        
+
         nNextFEIndex = nNewIndex;
     }
 }
@@ -643,7 +640,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
     {
         return ReadDSID();
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Next vector feature?                                            */
 /* -------------------------------------------------------------------- */
@@ -709,17 +706,14 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
             }
         }
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Next feature.                                                   */
 /* -------------------------------------------------------------------- */
     while( nNextFEIndex < oFE_Index.GetCount() )
     {
-        OGRFeature      *poFeature;
-        OGRFeatureDefn *poFeatureDefn;
-
-        poFeatureDefn = (OGRFeatureDefn *) 
-            oFE_Index.GetClientInfoByIndex( nNextFEIndex );
+        OGRFeatureDefn *poFeatureDefn
+            = (OGRFeatureDefn *) oFE_Index.GetClientInfoByIndex( nNextFEIndex );
 
         if( poFeatureDefn == NULL )
         {
@@ -733,7 +727,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
             continue;
         }
 
-        poFeature = ReadFeature( nNextFEIndex++, poTarget );
+        OGRFeature *poFeature = ReadFeature( nNextFEIndex++, poTarget );
         if( poFeature != NULL )
         {
             if( (nOptionFlags & S57M_SPLIT_MULTIPOINT)
@@ -762,12 +756,12 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 OGRFeature *S57Reader::ReadFeature( int nFeatureId, OGRFeatureDefn *poTarget )
 
 {
-    OGRFeature  *poFeature;
-
     if( nFeatureId < 0 || nFeatureId >= oFE_Index.GetCount() )
         return NULL;
 
-    if( (nOptionFlags & S57M_RETURN_DSID) 
+    OGRFeature  *poFeature;
+
+    if( (nOptionFlags & S57M_RETURN_DSID)
         && nFeatureId == 0 
         && (poTarget == NULL || EQUAL(poTarget->GetName(),"DSID")) )
     {
@@ -795,16 +789,13 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
                                         OGRFeatureDefn * poTarget )
 
 {
-    int         nPRIM, nOBJL;
-    OGRFeatureDefn *poFDefn;
-
 /* -------------------------------------------------------------------- */
 /*      Find the feature definition to use.  Currently this is based    */
 /*      on the primitive, but eventually this should be based on the    */
 /*      object class (FRID.OBJL) in some cases, and the primitive in    */
 /*      others.                                                         */
 /* -------------------------------------------------------------------- */
-    poFDefn = FindFDefn( poRecord );
+    OGRFeatureDefn *poFDefn = FindFDefn( poRecord );
     if( poFDefn == NULL )
         return NULL;
 
@@ -818,14 +809,12 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Create the new feature object.                                  */
 /* -------------------------------------------------------------------- */
-    OGRFeature          *poFeature;
-
-    poFeature = new OGRFeature( poFDefn );
+    OGRFeature *poFeature = new OGRFeature( poFDefn );
 
 /* -------------------------------------------------------------------- */
 /*      Assign a few standard feature attribues.                        */
 /* -------------------------------------------------------------------- */
-    nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
+    int nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
     poFeature->SetField( "OBJL", nOBJL );
 
     poFeature->SetField( "RCID",
@@ -866,7 +855,7 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Find and assign spatial component.                              */
 /* -------------------------------------------------------------------- */
-    nPRIM = poRecord->GetIntSubfield( "FRID", 0, "PRIM", 0 );
+    int nPRIM = poRecord->GetIntSubfield( "FRID", 0, "PRIM", 0 );
 
     if( nPRIM == PRIM_P )
     {
@@ -908,7 +897,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
     for( iAttr = 0; iAttr < nAttrCount; iAttr++ )
     {
         int     nAttrId = poRecord->GetIntSubfield("ATTF",0,"ATTL",iAttr);
-        
+
         if( poRegistrar->GetAttrInfo(nAttrId) == NULL )
         {
             if( !bAttrWarningIssued )
@@ -1037,7 +1026,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 
 {
     char        szLNAM[32];
-        
+
 /* -------------------------------------------------------------------- */
 /*      Apply the LNAM to the object.                                   */
 /* -------------------------------------------------------------------- */
@@ -1050,9 +1039,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Do we have references to other features.                        */
 /* -------------------------------------------------------------------- */
-    DDFField    *poFFPT;
-
-    poFFPT = poRecord->FindField( "FFPT" );
+    DDFField *poFFPT = poRecord->FindField( "FFPT" );
 
     if( poFFPT == NULL )
         return;
@@ -1068,7 +1055,10 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
     poLNAM = poFFPT->GetFieldDefn()->FindSubfieldDefn( "LNAM" );
     poRIND = poFFPT->GetFieldDefn()->FindSubfieldDefn( "RIND" );
     if( poLNAM == NULL || poRIND == NULL )
+    {
+        CPLFree( panRIND );
         return;
+    }
 
     for( int iRef = 0; iRef < nRefCount; iRef++ )
     {
@@ -1120,30 +1110,25 @@ void S57Reader::GenerateFSPTAttributes( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Feature the spatial record containing the point.                */
 /* -------------------------------------------------------------------- */
-    DDFField    *poFSPT;
-    int         nCount, i;
-
-    poFSPT = poRecord->FindField( "FSPT" );
+    DDFField *poFSPT = poRecord->FindField( "FSPT" );
     if( poFSPT == NULL )
         return;
-        
-    nCount = poFSPT->GetRepeatCount();
+
+    const int nCount = poFSPT->GetRepeatCount();
 
 /* -------------------------------------------------------------------- */
 /*      Allocate working lists of the attributes.                       */
 /* -------------------------------------------------------------------- */
-    int *panORNT, *panUSAG, *panMASK, *panRCNM, *panRCID;
-    
-    panORNT = (int *) CPLMalloc( sizeof(int) * nCount );
-    panUSAG = (int *) CPLMalloc( sizeof(int) * nCount );
-    panMASK = (int *) CPLMalloc( sizeof(int) * nCount );
-    panRCNM = (int *) CPLMalloc( sizeof(int) * nCount );
-    panRCID = (int *) CPLMalloc( sizeof(int) * nCount );
+    int *panORNT = (int *) CPLMalloc( sizeof(int) * nCount );
+    int *panUSAG = (int *) CPLMalloc( sizeof(int) * nCount );
+    int *panMASK = (int *) CPLMalloc( sizeof(int) * nCount );
+    int *panRCNM = (int *) CPLMalloc( sizeof(int) * nCount );
+    int *panRCID = (int *) CPLMalloc( sizeof(int) * nCount );
 
 /* -------------------------------------------------------------------- */
 /*      loop over all entries, decoding them.                           */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nCount; i++ )
+    for( int i = 0; i < nCount; i++ )
     {
         panRCID[i] = ParseName( poFSPT, i, panRCNM + i );
         panORNT[i] = poRecord->GetIntSubfield( "FSPT", 0, "ORNT",i);
@@ -1187,13 +1172,13 @@ OGRFeature *S57Reader::ReadDSID()
 
     for( int i = 0; i < nFDefnCount; i++ )
     {
-        if( EQUAL(papoFDefnList[i]->GetName(),"DSID") )              
+        if( EQUAL(papoFDefnList[i]->GetName(),"DSID") )
         {
             poFDefn = papoFDefnList[i];
             break;
         }
     }
-    
+
     if( poFDefn == NULL )
     {
         //CPLAssert( FALSE );
@@ -1223,7 +1208,7 @@ OGRFeature *S57Reader::ReadDSID()
         else
             poFeature->SetField( "DSID_UPDN",
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 ));
-        
+
         poFeature->SetField( "DSID_UADT",
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "UADT", 0 ));
         poFeature->SetField( "DSID_ISDT",
@@ -1327,12 +1312,12 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
         poIndex = &oVI_Index;
         pszFDName = OGRN_VI;
         break;
-        
+
       case RCNM_VC:
         poIndex = &oVC_Index;
         pszFDName = OGRN_VC;
         break;
-        
+
       case RCNM_VE:
         poIndex = &oVE_Index;
         pszFDName = OGRN_VE;
@@ -1342,7 +1327,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
         poIndex = &oVF_Index;
         pszFDName = OGRN_VF;
         break;
-        
+
       default:
         CPLAssert( FALSE );
         return NULL;
@@ -1366,7 +1351,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
             break;
         }
     }
-    
+
     if( poFDefn == NULL )
     {
         //CPLAssert( FALSE );
@@ -1377,7 +1362,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
 /*      Create feature, and assign standard fields.                     */
 /* -------------------------------------------------------------------- */
     OGRFeature *poFeature = new OGRFeature( poFDefn );
-    
+
     poFeature->SetFID( nFeatureId );
 
     poFeature->SetField( "RCNM", 
@@ -1425,7 +1410,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
                         / (double)nCOMF;
                     dfZ = poRecord->GetIntSubfield("SG3D",0,"VE3D",i)
                         / (double)nSOMF;
-                    
+
                     poMP->addGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
                 }
 
@@ -1488,7 +1473,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
                              poRecord->GetIntSubfield("VRPT",0,"TOPI",0) );
         poFeature->SetField( "MASK_0", 
                              poRecord->GetIntSubfield("VRPT",0,"MASK",0) );
-                             
+
         if( poVRPT != NULL && poVRPT->GetRepeatCount() == 1 )
         {
             // Only one row, need a second VRPT field
@@ -1506,7 +1491,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
                 return poFeature;
             }
         }
-        
+
         poFeature->SetField( "NAME_RCID_1", ParseName( poVRPT, iSubField ) );
         poFeature->SetField( "NAME_RCNM_1", RCNM_VC );
         poFeature->SetField( "ORNT_1", 
@@ -1537,7 +1522,7 @@ int S57Reader::FetchPoint( int nRCNM, int nRCID,
 
 {
     DDFRecord   *poSRecord;
-    
+
     if( nRCNM == RCNM_VI )
         poSRecord = oVI_Index.FindRecord( nRCID );
     else
@@ -1584,22 +1569,18 @@ S57StrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 
 {
     OGRLineString      *poLine = new OGRLineString;
-    double             dfArcX, dfArcY, dfSlice;
-    int                iPoint;
 
     nVertexCount = MAX(2,nVertexCount);
-    dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
+    double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
     poLine->setNumPoints( nVertexCount );
-        
-    for( iPoint=0; iPoint < nVertexCount; iPoint++ )
-    {
-        double      dfAngle;
 
-        dfAngle = (dfStartAngle + iPoint * dfSlice) * M_PI / 180.0;
-            
-        dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
-        dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
+    for( int iPoint=0; iPoint < nVertexCount; iPoint++ )
+    {
+        double dfAngle = (dfStartAngle + iPoint * dfSlice) * M_PI / 180.0;
+
+        double dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
+        double dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
 
         poLine->setPoint( iPoint, dfArcX, dfArcY );
     }
@@ -1617,7 +1598,7 @@ S57StrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                   double dfCenterX, double dfCenterY,
                                   double dfEndX, double dfEndY,
                                   int nVertexCount )
-    
+
 {
     double      dfStartAngle, dfEndAngle;
     double      dfRadius;
@@ -1674,7 +1655,7 @@ S57StrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
     dfRadius = sqrt( (dfCenterX - dfStartX) * (dfCenterX - dfStartX)
                      + (dfCenterY - dfStartY) * (dfCenterY - dfStartY) );
-    
+
     return S57StrokeArcToOGRGeometry_Angles( dfCenterX, dfCenterY, 
                                              dfRadius, 
                                              dfStartAngle, dfEndAngle,
@@ -1743,7 +1724,7 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
 /* -------------------------------------------------------------------- */
         if( nVCount == 0 )
             continue;
- 
+
 /* -------------------------------------------------------------------- */
 /*      Make sure out line is long enough to hold all the vertices      */
 /*      we will apply.                                                  */
@@ -1873,13 +1854,12 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
                                        OGRFeature * poFeature )
 
 {
-    DDFField    *poFSPT;
     int         nRCNM, nRCID;
 
 /* -------------------------------------------------------------------- */
 /*      Feature the spatial record containing the point.                */
 /* -------------------------------------------------------------------- */
-    poFSPT = poFRecord->FindField( "FSPT" );
+    DDFField *poFSPT = poFRecord->FindField( "FSPT" );
     if( poFSPT == NULL )
         return;
 
@@ -1893,7 +1873,7 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
         CPLDebug( "S57", 
            "Point feature encountered with other than one spatial linkage." );
     }
-        
+
     nRCID = ParseName( poFSPT, 0, &nRCNM );
 
     double      dfX = 0.0, dfY = 0.0, dfZ = 0.0;
@@ -1949,12 +1929,11 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
 /*      Extract vertices.                                               */
 /* -------------------------------------------------------------------- */
     OGRMultiPoint       *poMP = new OGRMultiPoint();
-    DDFField            *poField;
     int                 nPointCount, i, nBytesLeft;
     DDFSubfieldDefn    *poXCOO, *poYCOO, *poVE3D;
     const char         *pachData;
 
-    poField = poSRecord->FindField( "SG2D" );
+    DDFField *poField = poSRecord->FindField( "SG2D" );
     if( poField == NULL )
         poField = poSRecord->FindField( "SG3D" );
     if( poField == NULL )
