@@ -159,7 +159,7 @@ double CPLAtof(const char *nptr)
  * same as standard atof(), but it allows a variety of locale representations.
  * That is it supports numeric values with either a comma or a period for 
  * the decimal delimiter. 
- * 
+ *
  * PS. The M stands for Multi-lingual.
  *
  * @param nptr The string to convert.
@@ -170,10 +170,9 @@ double CPLAtof(const char *nptr)
 double CPLAtofM( const char *nptr )
 
 {
-    int i;
     const static int nMaxSearch = 50;
 
-    for( i = 0; i < nMaxSearch; i++ )
+    for( int i = 0; i < nMaxSearch; i++ )
     {
         if( nptr[i] == ',' )
             return CPLStrtodDelim( nptr, 0, ',' );
@@ -307,13 +306,10 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 /*  with the one, taken from locale settings and use standard strtod()  */
 /*  on that buffer.                                                     */
 /* -------------------------------------------------------------------- */
-    double      dfValue;
-    int         nError;
-
     char*       pszNumber = CPLReplacePointByLocalePoint(nptr, point);
 
-    dfValue = strtod( pszNumber, endptr );
-    nError = errno;
+    double dfValue = strtod( pszNumber, endptr );
+    int nError = errno;
 
     if ( endptr )
         *endptr = (char *)nptr + (*endptr - pszNumber);
