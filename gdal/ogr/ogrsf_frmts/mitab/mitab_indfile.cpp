@@ -1780,6 +1780,7 @@ int TABINDNode::SplitNode()
                 poTmpNode->SetPrevNodePtr(poNewNode->GetNodeBlockPtr()) != 0 ||
                 poTmpNode->CommitToFile() != 0)
             {
+                delete poTmpNode;
                 return -1;
             }
             delete poTmpNode;
@@ -1838,6 +1839,7 @@ int TABINDNode::SplitNode()
                 poTmpNode->SetNextNodePtr(poNewNode->GetNodeBlockPtr()) != 0 ||
                 poTmpNode->CommitToFile() != 0)
             {
+                delete poTmpNode;
                 return -1;
             }
             delete poTmpNode;
