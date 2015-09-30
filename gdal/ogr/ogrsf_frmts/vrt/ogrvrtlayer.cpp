@@ -43,18 +43,20 @@ CPL_CVSID("$Id$");
 /*                       OGRVRTGeomFieldProps()                         */
 /************************************************************************/
 
-OGRVRTGeomFieldProps::OGRVRTGeomFieldProps()
-{
-    eGeomType = wkbUnknown;
-    bUseSpatialSubquery = FALSE;
-    eGeometryStyle = VGS_Direct;
-    poSRS = NULL;
-    iGeomField = iGeomXField = iGeomYField = iGeomZField = -1;
-    bSrcClip = FALSE;
-    poSrcRegion = NULL;
-    bReportSrcColumn = TRUE;
-    bNullable = TRUE;
-}
+OGRVRTGeomFieldProps::OGRVRTGeomFieldProps() :
+    eGeomType(wkbUnknown),
+    poSRS(NULL),
+    bSrcClip(FALSE),
+    poSrcRegion(NULL),
+    eGeometryStyle(VGS_Direct),
+    iGeomField(-1),
+    iGeomXField(-1),
+    iGeomYField(-1),
+    iGeomZField(-1),
+    bReportSrcColumn(TRUE),
+    bUseSpatialSubquery(FALSE),
+    bNullable(TRUE)
+{ }
 
 /************************************************************************/
 /*                      ~OGRVRTGeomFieldProps()                         */
@@ -105,7 +107,7 @@ OGRVRTLayer::~OGRVRTLayer()
                   (int) m_nFeaturesRead, 
                   poFeatureDefn->GetName() );
     }
-    
+
     for(size_t i=0;i<apoGeomFieldProps.size();i++)
         delete apoGeomFieldProps[i];
 
@@ -710,7 +712,7 @@ try_again:
     {
         const char *pszSrcLayerName = CPLGetXMLValue( psLTree, "SrcLayer", 
                                                       osName );
-        
+
         poSrcLayer = poSrcDS->GetLayerByName( pszSrcLayerName );
         if( poSrcLayer == NULL )
         {
@@ -874,7 +876,7 @@ try_again:
              }
 
              OGRFieldDefn oFieldDefn( pszName, OFTString );
-             
+
 /* -------------------------------------------------------------------- */
 /*      Type                                                            */
 /* -------------------------------------------------------------------- */
@@ -1274,7 +1276,7 @@ int OGRVRTLayer::ResetSourceReading()
     {
         OGRGeometry* poSpatialGeom = NULL;
         OGRGeometry* poSrcRegion = apoGeomFieldProps[m_iGeomFieldFilter]->poSrcRegion;
-        int bToDelete = FALSE;
+        bool bToDelete = false;
 
         if (poSrcRegion == NULL)
             poSpatialGeom = m_poFilterGeom;
@@ -1307,7 +1309,7 @@ int OGRVRTLayer::ResetSourceReading()
                 if( bDoIntersection )
                 {
                     poSpatialGeom = m_poFilterGeom->Intersection(poSrcRegion);
-                    bToDelete = TRUE;
+                    bToDelete = true;
                 }
             }
         }
@@ -1331,8 +1333,10 @@ int OGRVRTLayer::ResetSourceReading()
 OGRFeature *OGRVRTLayer::GetNextFeature()
 
 {
-    if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return NULL;
+    if (!bHasFullInitialized)
+        FullInitialize();
+    if (!poSrcLayer || poDS->GetRecursionDetected())
+        return NULL;
     if( bError )
         return NULL;
 
@@ -1342,14 +1346,13 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
             return NULL;
     }
 
-    for( ; TRUE; )
+    for( ; true; )
     {
-        OGRFeature      *poSrcFeature, *poFeature;
-
-        poSrcFeature = poSrcLayer->GetNextFeature();
+        OGRFeature *poSrcFeature = poSrcLayer->GetNextFeature();
         if( poSrcFeature == NULL )
             return NULL;
 
+        OGRFeature *poFeature;
         if (poFeatureDefn == poSrcFeatureDefn)
         {
             poFeature = poSrcFeature;
@@ -1420,7 +1423,7 @@ retry:
         poDstFeat->SetFID( poSrcFeat->GetFID() );
     else
         poDstFeat->SetFID( poSrcFeat->GetFieldAsInteger64( iFIDField ) );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle style string.                                            */
 /* -------------------------------------------------------------------- */
@@ -1435,7 +1438,7 @@ retry:
         if( poSrcFeat->GetStyleString() != NULL )
             poDstFeat->SetStyleString(poSrcFeat->GetStyleString());
     }
-    
+
     for(int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
         OGRVRTGeometryStyle eGeometryStyle = apoGeomFieldProps[i]->eGeometryStyle;
@@ -1453,7 +1456,7 @@ retry:
         {
             char *pszWKT = (char *) poSrcFeat->GetFieldAsString(
                 iGeomField );
-            
+
             if( pszWKT != NULL )
             {
                 OGRGeometry *poGeom = NULL;
@@ -1470,7 +1473,7 @@ retry:
         {
             int nBytes;
             GByte *pabyWKB;
-            int bNeedFree = FALSE;
+            bool bNeedFree = false;
 
             if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() == OFTBinary )
             {
@@ -1481,9 +1484,9 @@ retry:
                 const char *pszWKT = poSrcFeat->GetFieldAsString( iGeomField );
 
                 pabyWKB = CPLHexToBinary( pszWKT, &nBytes );
-                bNeedFree = TRUE;
+                bNeedFree = true;
             }
-            
+
             if( pabyWKB != NULL )
             {
                 OGRGeometry *poGeom = NULL;
