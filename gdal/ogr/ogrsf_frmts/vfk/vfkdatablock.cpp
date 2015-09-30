@@ -139,7 +139,7 @@ void IVFKDataBlock::SetProperties(const char *poLine)
 
             /* add property */
             if (pszName && *pszName != '\0' &&
-                pszType && *pszType != '\0')
+                *pszType != '\0')
                 AddProperty(pszName, pszType);
 
             poProp = ++poChar;
@@ -155,7 +155,7 @@ void IVFKDataBlock::SetProperties(const char *poLine)
 
     /* add property */
     if (pszName && *pszName != '\0' &&
-        pszType && *pszType != '\0')
+        *pszType != '\0')
         AddProperty(pszName, pszType);
 
     CPLFree(pszName);
