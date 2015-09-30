@@ -171,7 +171,7 @@ class OGROpenFileGDBDataSource : public OGRDataSource
   void                AddLayer( const CPLString& osName,
                                 int nInterestTable,
                                 int& nCandidateLayers,
-                                int& nLayersSDC,
+                                int& nLayersSDCOrCDF,
                                 const CPLString& osDefinition,
                                 const CPLString& osDocumentation,
                                 const char* pszGeomName,
