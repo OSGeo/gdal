@@ -267,10 +267,23 @@ bool FGdbDataSource::OpenFGDBTables(const std::wstring &type,
         if (FAILED(hr = m_pGeodatabase->OpenTable(layers[i], *pTable)))
         {
             delete pTable;
+            
+            std::wstring fgdb_error_desc_w;
+            fgdbError er;
+            er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
+            const char* pszLikelyReason = "Might be due to unsupported spatial reference system. Using OpenFileGDB driver should solve it";
+            if ( er == S_OK )
+            {
+                std::string fgdb_error_desc = WStringToString(fgdb_error_desc_w);
+                if( fgdb_error_desc == "FileGDB compression is not installed." )
+                {
+                    pszLikelyReason = "Using FileGDB SDK 1.4 or later should solve this issue.";
+                }
+            }
+
             GDBErr(hr, "Error opening " + WStringToString(layers[i]),
                    CE_Warning,
-                   ". Skipping it. "
-                   "Might be due to unsupported spatial reference system. Using OpenFileGDB driver should solve it");
+                   (". Skipping it. " + CPLString(pszLikelyReason)).c_str());
             continue;
         }
         FGdbLayer* pLayer = new FGdbLayer();
