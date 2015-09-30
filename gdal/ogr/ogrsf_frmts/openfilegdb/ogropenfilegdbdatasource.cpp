@@ -269,7 +269,7 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
 void OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
                                          int nInterestTable,
                                          int& nCandidateLayers,
-                                         int& nLayersSDC,
+                                         int& nLayersSDCOrCDF,
                                          const CPLString& osDefinition,
                                          const CPLString& osDocumentation,
                                          const char* pszGeomName,
@@ -291,12 +291,22 @@ void OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
             if( m_papszFiles != NULL )
             {
                 const char* pszSDC = CPLResetExtension(pszFilename, "gdbtable.sdc");
-                if( FileExists(pszSDC) )
+                const char* pszCDF = CPLResetExtension(pszFilename, "gdbtable.cdf");
+                if( FileExists(pszSDC) || FileExists(pszCDF) )
                 {
-                    nLayersSDC ++;
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                            "%s layer has a %s file whose format is unhandled",
-                            osName.c_str(), pszSDC);
+                    nLayersSDCOrCDF ++;
+                    if( GDALGetDriverByName("FileGDB") == NULL )
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                "%s layer has a %s file whose format is unhandled",
+                                osName.c_str(), FileExists(pszSDC) ? pszSDC : pszCDF);
+                    }
+                    else
+                    {
+                        CPLDebug("OpenFileGDB",
+                                 "%s layer has a %s file whose format is unhandled",
+                                  osName.c_str(), FileExists(pszSDC) ? pszSDC : pszCDF);
+                    }
                     return;
                 }
             }
@@ -340,7 +350,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
         return FALSE;
     }
 
-    int nCandidateLayers = 0, nLayersSDC = 0;
+    int nCandidateLayers = 0, nLayersSDCOrCDF = 0;
     for(i=0;i<oTable.GetTotalRecordCount();i++)
     {
         if( !oTable.SelectRow(i) )
@@ -363,7 +373,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
             psField = oTable.GetFieldValue(iName);
             if( psField != NULL )
             {
-                AddLayer( psField->String, nInterestTable, nCandidateLayers, nLayersSDC,
+                AddLayer( psField->String, nInterestTable, nCandidateLayers, nLayersSDCOrCDF,
                           osDefinition, osDocumentation,
                           NULL, wkbUnknown );
             }
@@ -371,7 +381,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
     }
 
     if( m_apoLayers.size() == 0 && nCandidateLayers > 0 &&
-        nCandidateLayers == nLayersSDC )
+        nCandidateLayers == nLayersSDCOrCDF )
         return FALSE;
 
     return TRUE;
@@ -406,7 +416,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
     }
     
     std::vector< std::string > aosName;
-    int nCandidateLayers = 0, nLayersSDC = 0;
+    int nCandidateLayers = 0, nLayersSDCOrCDF = 0;
     for(i=0;i<oTable.GetTotalRecordCount();i++)
     {
         if( !oTable.SelectRow(i) )
@@ -428,7 +438,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
                 if( strcmp(psField->String, "{7A566981-C114-11D2-8A28-006097AFF44E}") == 0 )
                 {
                     aosName.push_back( "" );
-                    AddLayer( osName, nInterestTable, nCandidateLayers, nLayersSDC,
+                    AddLayer( osName, nInterestTable, nCandidateLayers, nLayersSDCOrCDF,
                               "", "", NULL, wkbNone );
                 }
                 else
@@ -499,13 +509,13 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
             aosName[idx-1].size() > 0 )
         {
             const std::string osName(aosName[idx-1]);
-            AddLayer( osName, nInterestTable, nCandidateLayers, nLayersSDC,
+            AddLayer( osName, nInterestTable, nCandidateLayers, nLayersSDCOrCDF,
                       "", "", osGeomFieldName.c_str(), eGeomType);
         }
     }
 
     if( m_apoLayers.size() == 0 && nCandidateLayers > 0 &&
-        nCandidateLayers == nLayersSDC )
+        nCandidateLayers == nLayersSDCOrCDF )
         return FALSE;
 
     return TRUE;
