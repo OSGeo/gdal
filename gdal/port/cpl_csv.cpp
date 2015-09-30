@@ -998,10 +998,12 @@ const char *CSVGetField( const char * pszFilename,
     if( iTargetField < 0 )
         return "";
 
-    if( iTargetField >= CSLCount( papszRecord ) )
-        return "";
-
-    return( papszRecord[iTargetField] );
+    for(int i=0; papszRecord[i] != NULL; ++i)
+    {
+        if( i == iTargetField )
+            return( papszRecord[iTargetField] );
+    }
+    return "";
 }
 
 /************************************************************************/
