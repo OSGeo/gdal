@@ -375,7 +375,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
             if (!bHasCenter)
             {
                 const char* pszVX = strstr(pszLine, "V X=");
-                bHasCenter = OGROpenAirGetLatLon(pszVX, dfCenterLat, dfCenterLon);
+                if( pszVX != NULL )
+                    bHasCenter = OGROpenAirGetLatLon(pszVX, dfCenterLat, dfCenterLon);
             }
             if (bHasCenter)
             {
