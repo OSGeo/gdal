@@ -1709,8 +1709,7 @@ CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
  * attaches the element to the passed parent.
  *
  * @param psParent the parent node to which the resulting node should
- * be attached.  May be NULL to keep as freestanding. 
- *
+ * be attached.  Must not be NULL. 
  * @param pszName the attribute name to create.
  * @param pszValue the text to attach to the attribute. Must not be NULL. 
  *
@@ -1721,6 +1720,7 @@ void CPLAddXMLAttributeAndValue( CPLXMLNode *psParent,
                                  const char *pszName,
                                  const char *pszValue )
 {
+    CPLAssert(psParent != NULL);
     CPLXMLNode *psAttributeNode
         = CPLCreateXMLNode( psParent, CXT_Attribute, pszName );
     CPLCreateXMLNode( psAttributeNode, CXT_Text, pszValue );
