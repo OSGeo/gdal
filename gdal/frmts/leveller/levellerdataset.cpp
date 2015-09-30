@@ -543,7 +543,7 @@ CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
            SEEK_SET))
     {
         CPLError( CE_Failure, CPLE_FileIO, 
-                  ".bt Seek failed:%s", VSIStrerror( errno ) );
+                  "Leveller seek failed: %s", VSIStrerror( errno ) );
         return CE_Failure;
     }
 
@@ -555,7 +555,7 @@ CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     if( VSIFReadL( pImage, rowbytes, 1, poGDS->m_fp ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
-                  "Leveller read failed:%s", VSIStrerror( errno ) );
+                  "Leveller read failed: %s", VSIStrerror( errno ) );
         return CE_Failure;
     }
 
@@ -1329,7 +1329,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
     m_dElevBase = 0.0;
 	strcpy(m_szElevUnits, "");
 
-	if(m_version == 7)
+	if(m_version >= 7)
 	{
 		// Read coordsys info.
 		int csclass = LEV_COORDSYS_RASTER;
@@ -1522,7 +1522,7 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     const int version = poOpenInfo->pabyHeader[4];
-    if(version < 4 || version > 7)
+    if(version < 4 || version > 9)
         return NULL;
 
 
