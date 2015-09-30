@@ -78,12 +78,8 @@ static int OGRVRTDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRVRTDataSource     *poDS;
-
     if( !OGRVRTDriverIdentify(poOpenInfo) )
         return NULL;
-
-    char *pszXML = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Are we being passed the XML definition directly?                */
@@ -93,7 +89,8 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
     while( *pszTestXML != '\0' && isspace( (unsigned char)*pszTestXML ) )
         pszTestXML++;
 
-    if( EQUALN(pszTestXML,"<OGRVRTDataSource>",18) )
+    char *pszXML = NULL;
+    if( EQUALN(pszTestXML, "<OGRVRTDataSource>", 18) )
     {
         pszXML = CPLStrdup(pszTestXML);
     }
@@ -173,7 +170,8 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a virtual datasource configured based on this XML input. */
 /* -------------------------------------------------------------------- */
-    poDS = new OGRVRTDataSource((GDALDriver*)GDALGetDriverByName( "OGR_VRT" ));
+    OGRVRTDataSource *poDS
+        = new OGRVRTDataSource((GDALDriver*)GDALGetDriverByName( "OGR_VRT" ));
 
     /* psTree is owned by poDS */
     if( !poDS->Initialize( psTree, poOpenInfo->pszFilename,
@@ -193,25 +191,23 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRVRT()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "OGR_VRT" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "OGR_VRT" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "OGR_VRT" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "VRT - Virtual Datasource" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vrt" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_vrt.html" );
+    poDriver->SetDescription( "OGR_VRT" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "VRT - Virtual Datasource" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vrt" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "drv_vrt.html" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRVRTDriverOpen;
-        poDriver->pfnIdentify = OGRVRTDriverIdentify;
+    poDriver->pfnOpen = OGRVRTDriverOpen;
+    poDriver->pfnIdentify = OGRVRTDriverIdentify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
