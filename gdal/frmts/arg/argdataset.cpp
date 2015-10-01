@@ -32,28 +32,13 @@
 #include "rawdataset.h"
 #include "cpl_string.h"
 #include <json.h>
+#include <limits>
+
 #include <ogr_spatialref.h>
 
 CPL_CVSID("$Id$");
 
 #define MAX_FILENAME_LEN 4096
-
-#ifndef NAN
-#  ifdef HUGE_VAL
-#    define NAN (HUGE_VAL * 0.0)
-#  else
-
-static float CPLNaN(void)
-{
-    float fNan;
-    int nNan = 0x7FC00000;
-    memcpy(&fNan, &nNan, 4);
-    return fNan;
-}
-
-#    define NAN CPLNaN()
-#  endif
-#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -171,14 +156,14 @@ double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
     char *pszTmp;
     double fTmp;
     if (pszJSONStr == NULL) {
-        return NAN;
+        return std::numeric_limits<double>::quiet_NaN();
     }
     pszTmp = (char *)pszJSONStr;
     fTmp = CPLStrtod(pszJSONStr, &pszTmp);
     if (pszTmp == pszJSONStr) {
         CPLDebug("ARGDataset", "GetJsonValueDbl(): "
             "Key value is not a numeric value: %s:%s", pszKey.c_str(), pszTmp);
-        return NAN;
+        return std::numeric_limits<double>::quiet_NaN();
     }
 
     return fTmp;
@@ -252,7 +237,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
     int nSrs = 3857;
     /***** items from the json metadata *****/
     int nPixelOffset = 0;
-    double fNoDataValue = NAN;
+    // TODO: Rename fNoDataValue to dfNoDataValue
+    double fNoDataValue = std::numeric_limits<double>::quiet_NaN();
 
     OGRSpatialReference oSRS;
     OGRErr nErr = OGRERR_NONE;
@@ -332,12 +318,12 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
     else if (EQUAL(pszJSONStr, "float32")) {
         eType = GDT_Float32;
         nPixelOffset = 4;
-        fNoDataValue = NAN;
+        fNoDataValue = std::numeric_limits<double>::quiet_NaN();
     }
     else if (EQUAL(pszJSONStr, "float64")) { 
         eType = GDT_Float64;
         nPixelOffset = 8;
-        fNoDataValue = NAN;
+        fNoDataValue = std::numeric_limits<double>::quiet_NaN();
     }
     else {
         if (EQUAL(pszJSONStr, "int64") ||
