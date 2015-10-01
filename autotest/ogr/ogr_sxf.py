@@ -39,7 +39,9 @@ from osgeo import ogr
 def ogr_sxf_1():
 
     gdaltest.sxf_ds = None
-    gdaltest.sxf_ds = ogr.Open( 'data/100_test.sxf' )
+    with gdaltest.error_handler():
+        # Expect Warning 0 and Warning 6.
+        gdaltest.sxf_ds = ogr.Open( 'data/100_test.sxf' )
 
     if gdaltest.sxf_ds is not None:
         return 'success'
