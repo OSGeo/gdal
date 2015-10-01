@@ -577,6 +577,8 @@ std::map< CPLString, CPLString> OGRMongoDBLayer::CollectGeomIndices()
     {
         std::auto_ptr<DBClientCursor> cursor =
             m_poDS->GetConn()->enumerateIndexes(m_osQualifiedCollection);
+        if( cursor.get() == NULL )
+            return oMapIndices;
         while( cursor->more() )
         {
             BSONObj obj = cursor->nextSafe();
