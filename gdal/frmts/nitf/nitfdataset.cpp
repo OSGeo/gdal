@@ -4329,6 +4329,8 @@ NITFDataset::NITFCreateCopy(
                 if (bStrict)
                 {
                     CSLDestroy(papszFullOptions);
+                    CSLDestroy(papszCgmMD);
+                    CSLDestroy(papszTextMD);
                     return NULL;
                 }
             }
@@ -4356,6 +4358,8 @@ NITFDataset::NITFCreateCopy(
                 if (bStrict)
                 {
                     CSLDestroy(papszFullOptions);
+                    CSLDestroy(papszCgmMD);
+                    CSLDestroy(papszTextMD);
                     return NULL;
                 }
                 papszFullOptions = 
