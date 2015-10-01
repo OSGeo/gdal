@@ -70,7 +70,8 @@ class ARGDataset : public RawDataset
 /************************************************************************/
 
 ARGDataset::ARGDataset() :
-    fpImage(NULL), pszFilename(NULL)
+    fpImage(NULL),
+    pszFilename(NULL)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -119,10 +120,10 @@ CPLString GetJsonFilename(CPLString pszFilename)
 /************************************************************************/
 json_object * GetJsonObject(CPLString pszFilename) 
 {
-    json_object * pJSONObject = NULL;
     CPLString osJSONFilename = GetJsonFilename(pszFilename);
 
-    pJSONObject = json_object_from_file((char *)osJSONFilename.c_str());
+    json_object * pJSONObject
+        = json_object_from_file(osJSONFilename.c_str());
     if (pJSONObject == NULL) {
         CPLDebug("ARGDataset", "GetJsonObject(): "
             "Could not parse JSON file.");
@@ -153,33 +154,31 @@ const char * GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
 double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey) 
 {
     const char *pszJSONStr = GetJsonValueStr(pJSONObject, pszKey.c_str());
-    char *pszTmp;
-    double fTmp;
     if (pszJSONStr == NULL) {
         return std::numeric_limits<double>::quiet_NaN();
     }
-    pszTmp = (char *)pszJSONStr;
-    fTmp = CPLStrtod(pszJSONStr, &pszTmp);
+    char *pszTmp = (char *)pszJSONStr;
+    double dfTmp = CPLStrtod(pszJSONStr, &pszTmp);
     if (pszTmp == pszJSONStr) {
         CPLDebug("ARGDataset", "GetJsonValueDbl(): "
             "Key value is not a numeric value: %s:%s", pszKey.c_str(), pszTmp);
         return std::numeric_limits<double>::quiet_NaN();
     }
 
-    return fTmp;
+    return dfTmp;
 }
 
 /************************************************************************/
 /*                           GetJsonValueInt()                          */
 /************************************************************************/
-int GetJsonValueInt(json_object * pJSONObject, CPLString pszKey) 
+int GetJsonValueInt(json_object * pJSONObject, CPLString pszKey)
 {
-    double fTmp = GetJsonValueDbl(pJSONObject, pszKey.c_str());
-    if (CPLIsNan(fTmp)) {
+    double dfTmp = GetJsonValueDbl(pJSONObject, pszKey.c_str());
+    if (CPLIsNan(dfTmp)) {
         return -1;
     }
 
-    return (int)fTmp;
+    return static_cast<int>(dfTmp);
 }
 
 /************************************************************************/
@@ -349,7 +348,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
         pJSONObject = NULL;
         return NULL;
     }
-    
+
     // get the ymin of the bounding box
     fYmin = GetJsonValueDbl(pJSONObject, "ymin");
     if (CPLIsNan(fYmin)) {
@@ -810,24 +809,22 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
 
 void GDALRegister_ARG()
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "ARG" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "ARG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "ARG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Azavea Raster Grid format" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#ARG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnIdentify = ARGDataset::Identify;
-        poDriver->pfnOpen = ARGDataset::Open;
-        poDriver->pfnCreateCopy = ARGDataset::CreateCopy;
+    poDriver->SetDescription( "ARG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Azavea Raster Grid format" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#ARG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnIdentify = ARGDataset::Identify;
+    poDriver->pfnOpen = ARGDataset::Open;
+    poDriver->pfnCreateCopy = ARGDataset::CreateCopy;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
