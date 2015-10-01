@@ -39,7 +39,8 @@ CPL_CVSID("$Id$");
 /*                            OGRHTFLayer()                             */
 /************************************************************************/
 
-OGRHTFLayer::OGRHTFLayer( const char* pszFilename, int nZone, int bIsNorth )
+OGRHTFLayer::OGRHTFLayer( const char* pszFilename, int nZone, int bIsNorth ) :
+    poFeatureDefn(NULL)
 
 {
     fpHTF = VSIFOpenL(pszFilename, "rb");
