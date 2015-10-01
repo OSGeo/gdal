@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 from osgeo import gdal
 
@@ -144,6 +145,9 @@ def pds_5():
 # driver mostly intended to support jpeg2000 files with PDS labels. 
 
 def pds_6():
+    
+    if os.path.exists('data/byte.tif.aux.xml'):
+        os.unlink('data/byte.tif.aux.xml')
 
     tst = gdaltest.GDALTest( 'PDS', 'ESP_013951_1955_RED.LBL', 1, 4672 )
 
@@ -161,6 +165,7 @@ def pds_6():
 
     if len(ds.GetFileList()) != 2:
         gdaltest.post_reason( 'failed to get expected file list.' )
+        print(ds.GetFileList())
         return 'fail'
 
     expected_wkt = 'PROJCS["EQUIRECTANGULAR MARS",GEOGCS["GCS_MARS",DATUM["D_MARS",SPHEROID["MARS_localRadius",3394839.8133163,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",180],PARAMETER["standard_parallel_1",15],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
