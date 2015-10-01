@@ -95,7 +95,7 @@ endif
 GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 			-I$(GDAL_ROOT)/alg \
                         -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts \
-                        -I$(GDAL_ROOT)/gnm
+                        -I$(GDAL_ROOT)/gnm -I$(GDAL_ROOT)/apps
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la
