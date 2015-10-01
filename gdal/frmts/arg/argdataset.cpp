@@ -38,8 +38,6 @@
 
 CPL_CVSID("$Id$");
 
-#define MAX_FILENAME_LEN 4096
-
 /************************************************************************/
 /* ==================================================================== */
 /*				ARGDataset                              */
@@ -109,7 +107,7 @@ CPLErr ARGDataset::GetGeoTransform( double * padfTransform )
 /************************************************************************/
 /*                         GetJsonFilename()                            */
 /************************************************************************/
-CPLString GetJsonFilename(CPLString pszFilename) 
+CPLString GetJsonFilename(CPLString pszFilename)
 {
     return CPLSPrintf( "%s/%s.json", CPLGetDirname(pszFilename), CPLGetBasename(pszFilename) );
 }
@@ -117,7 +115,7 @@ CPLString GetJsonFilename(CPLString pszFilename)
 /************************************************************************/
 /*                           GetJsonObject()                            */
 /************************************************************************/
-json_object * GetJsonObject(CPLString pszFilename) 
+json_object * GetJsonObject(CPLString pszFilename)
 {
     json_object * pJSONObject = NULL;
     CPLString osJSONFilename = GetJsonFilename(pszFilename);
@@ -150,36 +148,34 @@ const char * GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
 /************************************************************************/
 /*                          GetJsonValueDbl()                           */
 /************************************************************************/
-double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey) 
+double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
 {
     const char *pszJSONStr = GetJsonValueStr(pJSONObject, pszKey.c_str());
-    char *pszTmp;
-    double fTmp;
     if (pszJSONStr == NULL) {
         return std::numeric_limits<double>::quiet_NaN();
     }
-    pszTmp = (char *)pszJSONStr;
-    fTmp = CPLStrtod(pszJSONStr, &pszTmp);
+    char *pszTmp = (char *)pszJSONStr;
+    double dfTmp = CPLStrtod(pszJSONStr, &pszTmp);
     if (pszTmp == pszJSONStr) {
         CPLDebug("ARGDataset", "GetJsonValueDbl(): "
             "Key value is not a numeric value: %s:%s", pszKey.c_str(), pszTmp);
         return std::numeric_limits<double>::quiet_NaN();
     }
 
-    return fTmp;
+    return dfTmp;
 }
 
 /************************************************************************/
 /*                           GetJsonValueInt()                          */
 /************************************************************************/
-int GetJsonValueInt(json_object * pJSONObject, CPLString pszKey) 
+int GetJsonValueInt(json_object * pJSONObject, CPLString pszKey)
 {
-    double fTmp = GetJsonValueDbl(pJSONObject, pszKey.c_str());
-    if (CPLIsNan(fTmp)) {
+    double dfTmp = GetJsonValueDbl(pJSONObject, pszKey.c_str());
+    if (CPLIsNan(dfTmp)) {
         return -1;
     }
 
-    return (int)fTmp;
+    return static_cast<int>(dfTmp);
 }
 
 /************************************************************************/
@@ -300,7 +296,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
         fNoDataValue = -2e31;
     }
     else if (EQUAL(pszJSONStr, "uint8")) {
-        eType = GDT_Byte; 
+        eType = GDT_Byte;
         nPixelOffset = 1;
         fNoDataValue = 255;
     }
@@ -319,7 +315,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
         nPixelOffset = 4;
         fNoDataValue = std::numeric_limits<double>::quiet_NaN();
     }
-    else if (EQUAL(pszJSONStr, "float64")) { 
+    else if (EQUAL(pszJSONStr, "float64")) {
         eType = GDT_Float64;
         nPixelOffset = 8;
         fNoDataValue = std::numeric_limits<double>::quiet_NaN();
@@ -348,7 +344,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
         pJSONObject = NULL;
         return NULL;
     }
-    
+
     // get the ymin of the bounding box
     fYmin = GetJsonValueDbl(pJSONObject, "ymin");
     if (CPLIsNan(fYmin)) {
@@ -490,9 +486,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    ARGDataset *poDS;
-
-    poDS = new ARGDataset();
+    ARGDataset *poDS = new ARGDataset();
 
     poDS->pszFilename = CPLStrdup(poOpenInfo->pszFilename);
     poDS->SetMetadataItem("LAYER",pszLayer,NULL);
@@ -522,21 +516,20 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[3] = fYmax;
     poDS->adfGeoTransform[4] = fYSkew;
     poDS->adfGeoTransform[5] = -fCellheight;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    RawRasterBand *poBand;
-
 #ifdef CPL_LSB
     int bNative = FALSE;
 #else
     int bNative = TRUE;
 #endif
 
-    poBand = new RawRasterBand( poDS, 1, poDS->fpImage,
-                                0, nPixelOffset, nPixelOffset * nCols,
-                                eType, bNative, TRUE );
+    RawRasterBand *poBand
+        = new RawRasterBand( poDS, 1, poDS->fpImage,
+                             0, nPixelOffset, nPixelOffset * nCols,
+                             eType, bNative, TRUE );
     poDS->SetBand( 1, poBand );
 
     poBand->SetNoDataValue( fNoDataValue );
@@ -546,7 +539,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
@@ -568,8 +561,7 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
     int nBands = poSrcDS->GetRasterCount();
     int nXSize = poSrcDS->GetRasterXSize();
     int nYSize = poSrcDS->GetRasterYSize();
-    int nXBlockSize, nYBlockSize, nPixelOffset = 0;
-    GDALDataType eType;
+    int nPixelOffset = 0;
     CPLString osJSONFilename;
     CPLString pszDataType;
     json_object * poJSONObject = NULL;
@@ -577,7 +569,6 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
     GDALRasterBand * poSrcBand = NULL;
     RawRasterBand * poDstBand = NULL;
     VSILFILE * fpImage = NULL;
-    void * pabyData;
     OGRSpatialReference oSRS;
     char * pszWKT = NULL;
     char ** pszTokens = NULL;
@@ -588,19 +579,19 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
 
     if( nBands != 1 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
               "ARG driver doesn't support %d bands.  Must be 1 band.", nBands );
         return NULL;
     }
 
-    eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    if( eType == GDT_Unknown || 
-        eType == GDT_CInt16 || 
+    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    if( eType == GDT_Unknown ||
+        eType == GDT_CInt16 ||
         eType == GDT_CInt32 ||
-        eType == GDT_CFloat32 || 
+        eType == GDT_CFloat32 ||
         eType == GDT_CFloat64 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "ARG driver doesn't support data type %s.",
                   GDALGetDataTypeName(eType) );
         return NULL;
@@ -746,9 +737,10 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
                                    nPixelOffset * nXSize, eType, bNative,
                                    nXSize, nYSize, TRUE, FALSE);
 
+    int nXBlockSize, nYBlockSize;
     poSrcBand->GetBlockSize(&nXBlockSize, &nYBlockSize);
 
-    pabyData = CPLMalloc(nXBlockSize * nPixelOffset);
+    void *pabyData = CPLMalloc(nXBlockSize * nPixelOffset);
 
     // convert any blocks into scanlines
     for (int nYBlock = 0; nYBlock * nYBlockSize < nYSize; nYBlock++) {
