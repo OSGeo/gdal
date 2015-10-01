@@ -2,11 +2,11 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Common utility routines
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Purpose:  GDAL Utilities Private Declarations.
+ * Author:   Even Rouault <even.rouault at spatialys.com>
  *
- ******************************************************************************
- * Copyright (c) 2011-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * ****************************************************************************
+ * Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,18 +27,39 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _COMMONUTILS_H_
-#define _COMMONUTILS_H_
+#ifndef _GDAL_UTILS_PRIV_H_INCLUDED
+#define _GDAL_UTILS_PRIV_H_INCLUDED
 
 #include "cpl_port.h"
+#include "gdal_utils.h"
+
+/* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp files */
 
 CPL_C_START
 
-void CPL_DLL CheckExtensionConsistency(const char* pszDestFilename,
-                               const char* pszDriverName);
+struct GDALInfoOptionsForBinary
+{
+    /* Filename to open. */
+    char* pszFilename;
 
-void CPL_DLL EarlySetConfigOptions( int argc, char ** argv );
+    /* Open options. */
+    char** papszOpenOptions;
+
+    /* > for reporting on a particular subdataset */
+    int nSubdataset;
+};
+
+struct GDALTranslateOptionsForBinary
+{
+    char* pszSource;
+    char* pszDest;
+    int bQuiet;
+    int bCopySubDatasets;
+    char** papszOpenOptions;
+    int bFormatExplicitlySet;
+    char* pszFormat;
+};
 
 CPL_C_END
 
-#endif
+#endif /* _GDAL_UTILS_PRIV_H_INCLUDED */

@@ -148,6 +148,206 @@ def DontUseExceptions(*args):
 def VSIFReadL(*args):
   """VSIFReadL(int nMembSize, int nMembCount, VSILFILE * fp) -> int"""
   return _gdal.VSIFReadL(*args)
+def InfoOptions(options = [], format = 'text', deserialize = True,
+         computeMinMax = False, reportHistograms = False, reportProj4 = False,
+         stats = False, approxStats = False, computeChecksum = False,
+         showGCPs = True, showMetadata = True, showRAT = True, showColorTable = True,
+         listMDD = False, showFileList = True, allMetadata = False,
+         extraMDDomains = None):
+    """ Create a InfoOptions() object that can be passed to gdal.Info()
+        options can be be an array of strings, a string or let empty and filled from other keywords."""
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+        format = 'text'
+        if '-json' in new_options:
+            format = 'json'
+    else:
+        new_options = copy.copy(options)
+        if format == 'json':
+            new_options += ['-json']
+        if computeMinMax:
+            new_options += ['-mm']
+        if reportHistograms:
+            new_options += ['-hist']
+        if reportProj4:
+            new_options += ['-proj4']
+        if stats:
+            new_options += ['-stats']
+        if approxStats:
+            new_options += ['-approx_stats']
+        if computeChecksum:
+            new_options += ['-checksum']
+        if not showGCPs:
+            new_options += ['-nogcp']
+        if not showMetadata:
+            new_options += ['-nomd']
+        if not showRAT:
+            new_options += ['-norat']
+        if not showColorTable:
+            new_options += ['-noct']
+        if listMDD:
+            new_options += ['-listmdd']
+        if not showFileList:
+            new_options += ['-nofl']
+        if allMetadata:
+            new_options += ['-mdd', 'all']
+        if extraMDDomains is not None:
+            for mdd in extraMDDomains:
+                new_options += ['-mdd', mdd]
+
+    return (GDALInfoOptions(new_options), format, deserialize)
+
+def Info(ds, **kwargs):
+    """ Return information on a dataset.
+        Arguments are :
+          ds --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.InfoOptions()
+        If options is provided as a gdal.InfoOptions() object, other keywords are ignored. """
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, format, deserialize) = InfoOptions(**kwargs)
+    else:
+        (opts, format, deserialize) = kwargs['options']
+    if type(ds) == type(''):
+        ds = Open(ds)
+    ret = InfoInternal(ds, opts)
+    if format == 'json' and deserialize:
+        import json
+        ret = json.loads(ret)
+    return ret
+
+
+def TranslateOptions(options = [], format = 'GTiff',
+              outputType = GDT_Unknown, bandList = None, maskBand = None,
+              oXSizePixel = 0, oYSizePixel = 0, oXSizePct = 0.0, oYSizePct = 0.0,
+              xRes = 0.0, yRes = 0.0,
+              creationOptions = None, srcWin = None, projWin = None, projWinSRS = None, strict = False,
+              unscale = False, scaleParams = None, exponents = None,
+              assignedULLR = None, metadataOptions = None,
+              outputSRS = None, GCPs = None,
+              noData = None, rgbExpand = None,
+              stats = False, rat = True, resampling = None,
+              callback = None, callback_data = None):
+    """ Create a TranslateOptions() object that can be passed to gdal.Translate()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          outputType --- output type (gdal.GDT_Byte, etc...)
+          bandList --- array of band numbers (index start at 1)
+          maskBand --- mask band to generate or not ("none", "auto", "mask", 1, ...)
+          oXSizePixel --- width of the output raster in pixel
+          oYSizePixel --- height of the output raster in pixel
+          oXSizePct --- width of the output raster in percentage (100 = original size)
+          oYSizePct --- height of the output raster in percentage (100 = original size)
+          xRes --- output horizontal resolution
+          yRes --- output vertical resolution
+          creationOptions --- list of creation options
+          srcWin --- subwindow in pixels to extract: [left_x, top_y, width, height]
+          projWin --- subwindow in projected coordinates to extract: [ulx, uly, lrx, lry]
+          projWinSRS --- SRS in which projWin is expressed
+          strict --- strict mode
+          unscale --- unscale values with scale and offset metadata
+          scaleParams --- list of scale parameters, each of the form [src_min,src_max] or [src_min,src_max,dst_min,dst_max]
+          exponents --- list of exponentation parameters
+          assignedULLR --- assigned output bounds: [ulx, uly, lrx, lry]
+          metadataOptions --- list of metadata options
+          outputSRS --- assigned output SRS
+          GCPs --- list of GCPs
+          noData --- nodata value (or "none" to unset it)
+          rgbExpand --- Color palette expansion mode: "gray", "rgb", "rgba"
+          stats --- whether to calcule statistics
+          rat --- whether to write source RAT
+          resampling --- resampling mode
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-of', format]
+        if outputType != GDT_Unknown:
+            new_options += ['-ot', GetDataTypeName(outputType) ]
+        if maskBand != None:
+            new_options += ['-mask', str(maskBand) ]
+        if bandList != None:
+            for b in bandList:
+                new_options += ['-b', str(b) ]
+        if oXSizePixel != 0 or oYSizePixel != 0:
+            new_options += ['-outsize', str(oXSizePixel), str(oYSizePixel)]
+        elif oXSizePct != 0 and oYSizePct != 0:
+            new_options += ['-outsize', str(oXSizePct) + '%%', str(oYSizePct) + '%%']
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if srcWin is not None:
+            new_options += ['-srcwin', str(srcWin[0]), str(srcWin[1]), str(srcWin[2]), str(srcWin[3])]
+        if strict:
+            new_options += ['-strict']
+        if unscale:
+            new_options += ['-unscale']
+        if scaleParams:
+            for scaleParam in scaleParams:
+                new_options += ['-scale']
+                for v in scaleParam:
+                    new_options += [ str(v) ]
+        if exponents:
+            for exponent in exponents:
+                new_options += ['-exponent', str(exponent)]
+        if assignedULLR is not None:
+            new_options += ['-a_ullr', str(assignedULLR[0]), str(assignedULLR[1]), str(assignedULLR[2]), str(assignedULLR[3])]
+        if metadataOptions is not None:
+            for opt in metadataOptions:
+                new_options += ['-mo', opt ]
+        if outputSRS is not None:
+            new_options += ['-a_srs', str(outputSRS) ]
+        if GCPs is not None:
+            for gcp in GCPs:
+                new_options += ['-gcp', str(gcp.GCPX), str(gcp.GCPY), str(gcp.GCPZ), str(gcp.GCPPixel), str(gcp.GCPLine) ]
+        if projWin is not None:
+            new_options += ['-projwin', str(projWin[0]), str(projWin[1]), str(projWin[2]), str(projWin[3])]
+        if projWinSRS is not None:
+            new_options += ['-projwin_srs', str(projWinSRS) ]
+        if noData is not None:
+            new_options += ['-a_nodata', str(noData) ]
+        if rgbExpand is not None:
+            new_options += ['-expand', str(rgbExpand) ]
+        if stats:
+            new_options += ['-stats']
+        if not rat:
+            new_options += ['-norat']
+        if resampling is not None:
+            new_options += ['-r', str(resampling) ]
+        if xRes != 0 and yRes != 0:
+            new_options += ['-tr', str(xRes), str(yRes) ]
+
+    return (GDALTranslateOptions(new_options), callback, callback_data)
+
+def Translate(destName, srcDS, **kwargs):
+    """ Convert a dataset.
+        Arguments are :
+          destName --- Output dataset name
+          srcDS --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.TranslateOptions()
+        If options is provided as a gdal.TranslateOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = TranslateOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = Open(srcDS)
+
+    return TranslateInternal(destName, srcDS, opts, callback, callback_data)
+
+
 
 def Debug(*args):
   """Debug(char const * msg_class, char const * message)"""
@@ -322,6 +522,10 @@ def VSIFTruncateL(*args):
 def VSIFWriteL(*args):
   """VSIFWriteL(int nLen, int size, int memb, VSILFILE * f) -> int"""
   return _gdal.VSIFWriteL(*args)
+
+def ParseCommandLine(*args):
+  """ParseCommandLine(char const * commandLine) -> char **"""
+  return _gdal.ParseCommandLine(*args)
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class"""
     __swig_setmethods__ = {}
@@ -1823,6 +2027,53 @@ def GeneralCmdLineProcessor(*args):
 GeneralCmdLineProcessor = _gdal.GeneralCmdLineProcessor
 __version__ = _gdal.VersionInfo("RELEASE_NAME") 
 
+class GDALInfoOptions(_object):
+    """Proxy of C++ GDALInfoOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALInfoOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALInfoOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALInfoOptions self, char ** options) -> GDALInfoOptions"""
+        this = _gdal.new_GDALInfoOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALInfoOptions
+    __del__ = lambda self : None;
+GDALInfoOptions_swigregister = _gdal.GDALInfoOptions_swigregister
+GDALInfoOptions_swigregister(GDALInfoOptions)
+
+
+def InfoInternal(*args):
+  """InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> char *"""
+  return _gdal.InfoInternal(*args)
+InfoInternal = _gdal.InfoInternal
+class GDALTranslateOptions(_object):
+    """Proxy of C++ GDALTranslateOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALTranslateOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALTranslateOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALTranslateOptions self, char ** options) -> GDALTranslateOptions"""
+        this = _gdal.new_GDALTranslateOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALTranslateOptions
+    __del__ = lambda self : None;
+GDALTranslateOptions_swigregister = _gdal.GDALTranslateOptions_swigregister
+GDALTranslateOptions_swigregister(GDALTranslateOptions)
+
+
+def TranslateInternal(*args):
+  """
+    TranslateInternal(char const * dest, Dataset dataset, GDALTranslateOptions translateOptions, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> Dataset
+    """
+  return _gdal.TranslateInternal(*args)
+TranslateInternal = _gdal.TranslateInternal
 # This file is compatible with both classic and new-style classes.
 
 

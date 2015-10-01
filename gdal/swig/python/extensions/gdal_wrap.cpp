@@ -2946,32 +2946,34 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_GDALColorTableShadow swig_types[6]
 #define SWIGTYPE_p_GDALDatasetShadow swig_types[7]
 #define SWIGTYPE_p_GDALDriverShadow swig_types[8]
-#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[9]
-#define SWIGTYPE_p_GDALProgressFunc swig_types[10]
-#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[11]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[12]
-#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[13]
-#define SWIGTYPE_p_GDAL_GCP swig_types[14]
-#define SWIGTYPE_p_GIntBig swig_types[15]
-#define SWIGTYPE_p_GUIntBig swig_types[16]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[17]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[18]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[19]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[20]
-#define SWIGTYPE_p_StatBuf swig_types[21]
-#define SWIGTYPE_p_char swig_types[22]
-#define SWIGTYPE_p_double swig_types[23]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[24]
-#define SWIGTYPE_p_int swig_types[25]
-#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[26]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[27]
-#define SWIGTYPE_p_p_GUIntBig swig_types[28]
-#define SWIGTYPE_p_p_char swig_types[29]
-#define SWIGTYPE_p_p_void swig_types[30]
-#define SWIGTYPE_p_size_t swig_types[31]
-#define SWIGTYPE_p_void swig_types[32]
-static swig_type_info *swig_types[34];
-static swig_module_info swig_module = {swig_types, 33, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALInfoOptions swig_types[9]
+#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[10]
+#define SWIGTYPE_p_GDALProgressFunc swig_types[11]
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[12]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[13]
+#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[14]
+#define SWIGTYPE_p_GDALTranslateOptions swig_types[15]
+#define SWIGTYPE_p_GDAL_GCP swig_types[16]
+#define SWIGTYPE_p_GIntBig swig_types[17]
+#define SWIGTYPE_p_GUIntBig swig_types[18]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[19]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[20]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[21]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[22]
+#define SWIGTYPE_p_StatBuf swig_types[23]
+#define SWIGTYPE_p_char swig_types[24]
+#define SWIGTYPE_p_double swig_types[25]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[26]
+#define SWIGTYPE_p_int swig_types[27]
+#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[28]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[29]
+#define SWIGTYPE_p_p_GUIntBig swig_types[30]
+#define SWIGTYPE_p_p_char swig_types[31]
+#define SWIGTYPE_p_p_void swig_types[32]
+#define SWIGTYPE_p_size_t swig_types[33]
+#define SWIGTYPE_p_void swig_types[34]
+static swig_type_info *swig_types[36];
+static swig_module_info swig_module = {swig_types, 35, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -5857,6 +5859,33 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
         return papszArgv;
   }
 
+
+#include "gdal_utils.h"   
+
+SWIGINTERN GDALInfoOptions *new_GDALInfoOptions(char **options){
+        return GDALInfoOptionsNew(options, NULL);
+    }
+SWIGINTERN void delete_GDALInfoOptions(GDALInfoOptions *self){
+        GDALInfoOptionsFree( self );
+    }
+SWIGINTERN GDALTranslateOptions *new_GDALTranslateOptions(char **options){
+        return GDALTranslateOptionsNew(options, NULL);
+    }
+SWIGINTERN void delete_GDALTranslateOptions(GDALTranslateOptions *self){
+        GDALTranslateOptionsFree( self );
+    }
+
+GDALDatasetShadow* wrapper_GDALTranslate( const char* dest,
+                                      GDALDatasetShadow* dataset,
+                                      GDALTranslateOptions* translateOptions,
+                                      GDALProgressFunc callback=NULL,
+                                      void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    GDALTranslateOptionsSetProgress(translateOptions, callback, callback_data);
+    return GDALTranslate(dest, dataset, translateOptions, &usageError);    
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -7974,6 +8003,58 @@ fail:
       delete[] arg2;
     }
   }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ParseCommandLine(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char **result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ParseCommandLine",&obj0)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ParseCommandLine" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (char **)CSLParseCommandLine((char const *)arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -24796,6 +24877,397 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_new_GDALInfoOptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char **arg1 = (char **) 0 ;
+  PyObject * obj0 = 0 ;
+  GDALInfoOptions *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:new_GDALInfoOptions",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) char **options */
+    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj0)
+  #endif
+      ) {
+      PyErr_SetString(PyExc_TypeError,"not a sequence");
+      SWIG_fail;
+    }
+    
+    int size = PySequence_Size(obj0);
+    for (int i = 0; i < size; i++) {
+      PyObject* pyObj = PySequence_GetItem(obj0,i);
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg1 = CSLAddString( arg1, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
+#endif
+      else
+      {
+        Py_DECREF(pyObj);
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      Py_DECREF(pyObj);
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (GDALInfoOptions *)new_GDALInfoOptions(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALInfoOptions, SWIG_POINTER_NEW |  0 );
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_GDALInfoOptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALInfoOptions *arg1 = (GDALInfoOptions *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_GDALInfoOptions",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALInfoOptions, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_GDALInfoOptions" "', argument " "1"" of type '" "GDALInfoOptions *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALInfoOptions * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    delete_GDALInfoOptions(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *GDALInfoOptions_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_GDALInfoOptions, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_InfoInternal(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  GDALInfoOptions *arg2 = (GDALInfoOptions *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:InfoInternal",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "InfoInternal" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALInfoOptions, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "InfoInternal" "', argument " "2"" of type '" "GDALInfoOptions *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALInfoOptions * >(argp2);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (char *)GDALInfo(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_new_GDALTranslateOptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char **arg1 = (char **) 0 ;
+  PyObject * obj0 = 0 ;
+  GDALTranslateOptions *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:new_GDALTranslateOptions",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) char **options */
+    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj0)
+  #endif
+      ) {
+      PyErr_SetString(PyExc_TypeError,"not a sequence");
+      SWIG_fail;
+    }
+    
+    int size = PySequence_Size(obj0);
+    for (int i = 0; i < size; i++) {
+      PyObject* pyObj = PySequence_GetItem(obj0,i);
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg1 = CSLAddString( arg1, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
+#endif
+      else
+      {
+        Py_DECREF(pyObj);
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      Py_DECREF(pyObj);
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (GDALTranslateOptions *)new_GDALTranslateOptions(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALTranslateOptions, SWIG_POINTER_NEW |  0 );
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_GDALTranslateOptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALTranslateOptions *arg1 = (GDALTranslateOptions *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_GDALTranslateOptions",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALTranslateOptions, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_GDALTranslateOptions" "', argument " "1"" of type '" "GDALTranslateOptions *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALTranslateOptions * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    delete_GDALTranslateOptions(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *GDALTranslateOptions_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_GDALTranslateOptions, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_TranslateInternal(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  GDALDatasetShadow *arg2 = (GDALDatasetShadow *) 0 ;
+  GDALTranslateOptions *arg3 = (GDALTranslateOptions *) 0 ;
+  GDALProgressFunc arg4 = (GDALProgressFunc) NULL ;
+  void *arg5 = (void *) NULL ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  GDALDatasetShadow *result = 0 ;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg5 = psProgressInfo;
+  if (!PyArg_ParseTuple(args,(char *)"OOO|OO:TranslateInternal",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "TranslateInternal" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "TranslateInternal" "', argument " "2"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALDatasetShadow * >(argp2);
+  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_GDALTranslateOptions, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "TranslateInternal" "', argument " "3"" of type '" "GDALTranslateOptions *""'"); 
+  }
+  arg3 = reinterpret_cast< GDALTranslateOptions * >(argp3);
+  if (obj3) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj3 && obj3 != Py_None ) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj3, 
+          (void**)&cbfunction,
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg4 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj3)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj3;
+          arg4 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj4) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj4 ;
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (GDALDatasetShadow *)wrapper_GDALTranslate((char const *)arg1,arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return NULL;
+}
+
+
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
 	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, (char *)"GetUseExceptions() -> int"},
@@ -24845,6 +25317,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"VSIFTellL", _wrap_VSIFTellL, METH_VARARGS, (char *)"VSIFTellL(VSILFILE * arg1) -> GIntBig"},
 	 { (char *)"VSIFTruncateL", _wrap_VSIFTruncateL, METH_VARARGS, (char *)"VSIFTruncateL(VSILFILE * arg1, GIntBig arg2) -> int"},
 	 { (char *)"VSIFWriteL", _wrap_VSIFWriteL, METH_VARARGS, (char *)"VSIFWriteL(int nLen, int size, int memb, VSILFILE * f) -> int"},
+	 { (char *)"ParseCommandLine", _wrap_ParseCommandLine, METH_VARARGS, (char *)"ParseCommandLine(char const * commandLine) -> char **"},
 	 { (char *)"MajorObject_GetDescription", _wrap_MajorObject_GetDescription, METH_VARARGS, (char *)"MajorObject_GetDescription(MajorObject self) -> char const *"},
 	 { (char *)"MajorObject_SetDescription", _wrap_MajorObject_SetDescription, METH_VARARGS, (char *)"MajorObject_SetDescription(MajorObject self, char const * pszNewDesc)"},
 	 { (char *)"MajorObject_GetMetadataDomainList", _wrap_MajorObject_GetMetadataDomainList, METH_VARARGS, (char *)"MajorObject_GetMetadataDomainList(MajorObject self) -> char **"},
@@ -25211,6 +25684,17 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"OpenShared", _wrap_OpenShared, METH_VARARGS, (char *)"OpenShared(char const * utf8_path, GDALAccess eAccess=GA_ReadOnly) -> Dataset"},
 	 { (char *)"IdentifyDriver", _wrap_IdentifyDriver, METH_VARARGS, (char *)"IdentifyDriver(char const * utf8_path, char ** papszSiblings=None) -> Driver"},
 	 { (char *)"GeneralCmdLineProcessor", _wrap_GeneralCmdLineProcessor, METH_VARARGS, (char *)"GeneralCmdLineProcessor(char ** papszArgv, int nOptions=0) -> char **"},
+	 { (char *)"new_GDALInfoOptions", _wrap_new_GDALInfoOptions, METH_VARARGS, (char *)"new_GDALInfoOptions(char ** options) -> GDALInfoOptions"},
+	 { (char *)"delete_GDALInfoOptions", _wrap_delete_GDALInfoOptions, METH_VARARGS, (char *)"delete_GDALInfoOptions(GDALInfoOptions self)"},
+	 { (char *)"GDALInfoOptions_swigregister", GDALInfoOptions_swigregister, METH_VARARGS, NULL},
+	 { (char *)"InfoInternal", _wrap_InfoInternal, METH_VARARGS, (char *)"InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> char *"},
+	 { (char *)"new_GDALTranslateOptions", _wrap_new_GDALTranslateOptions, METH_VARARGS, (char *)"new_GDALTranslateOptions(char ** options) -> GDALTranslateOptions"},
+	 { (char *)"delete_GDALTranslateOptions", _wrap_delete_GDALTranslateOptions, METH_VARARGS, (char *)"delete_GDALTranslateOptions(GDALTranslateOptions self)"},
+	 { (char *)"GDALTranslateOptions_swigregister", GDALTranslateOptions_swigregister, METH_VARARGS, NULL},
+	 { (char *)"TranslateInternal", _wrap_TranslateInternal, METH_VARARGS, (char *)"\n"
+		"TranslateInternal(char const * dest, Dataset dataset, GDALTranslateOptions translateOptions, GDALProgressFunc callback=0, \n"
+		"    void * callback_data=None) -> Dataset\n"
+		""},
 	 { NULL, NULL, 0, NULL }
 };
 
@@ -25238,11 +25722,13 @@ static swig_type_info _swigt__p_GDALColorEntry = {"_p_GDALColorEntry", "GDALColo
 static swig_type_info _swigt__p_GDALColorTableShadow = {"_p_GDALColorTableShadow", "GDALColorTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALDriverShadow = {"_p_GDALDriverShadow", "GDALDriverShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALInfoOptions = {"_p_GDALInfoOptions", "GDALInfoOptions *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALProgressFunc = {"_p_GDALProgressFunc", "GDALProgressFunc *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterAttributeTableShadow = {"_p_GDALRasterAttributeTableShadow", "GDALRasterAttributeTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALTransformerInfoShadow = {"_p_GDALTransformerInfoShadow", "GDALTransformerInfoShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALTranslateOptions = {"_p_GDALTranslateOptions", "GDALTranslateOptions *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDAL_GCP = {"_p_GDAL_GCP", "GDAL_GCP *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GIntBig = {"_p_GIntBig", "GIntBig *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GUIntBig = {"_p_GUIntBig", "GUIntBig *", 0, 0, (void*)0, 0};
@@ -25273,11 +25759,13 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_GDALColorTableShadow,
   &_swigt__p_GDALDatasetShadow,
   &_swigt__p_GDALDriverShadow,
+  &_swigt__p_GDALInfoOptions,
   &_swigt__p_GDALMajorObjectShadow,
   &_swigt__p_GDALProgressFunc,
   &_swigt__p_GDALRasterAttributeTableShadow,
   &_swigt__p_GDALRasterBandShadow,
   &_swigt__p_GDALTransformerInfoShadow,
+  &_swigt__p_GDALTranslateOptions,
   &_swigt__p_GDAL_GCP,
   &_swigt__p_GIntBig,
   &_swigt__p_GUIntBig,
@@ -25308,11 +25796,13 @@ static swig_cast_info _swigc__p_GDALColorEntry[] = {  {&_swigt__p_GDALColorEntry
 static swig_cast_info _swigc__p_GDALColorTableShadow[] = {  {&_swigt__p_GDALColorTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDriverShadow[] = {  {&_swigt__p_GDALDriverShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALInfoOptions[] = {  {&_swigt__p_GDALInfoOptions, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_GDALDriverShadow, _p_GDALDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRLayerShadow, _p_OGRLayerShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALDatasetShadow, _p_GDALDatasetShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterBandShadow, _p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALProgressFunc[] = {  {&_swigt__p_GDALProgressFunc, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALTransformerInfoShadow[] = {  {&_swigt__p_GDALTransformerInfoShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALTranslateOptions[] = {  {&_swigt__p_GDALTranslateOptions, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDAL_GCP[] = {  {&_swigt__p_GDAL_GCP, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GIntBig[] = {  {&_swigt__p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GUIntBig[] = {  {&_swigt__p_GUIntBig, 0, 0, 0},{0, 0, 0, 0}};
@@ -25343,11 +25833,13 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_GDALColorTableShadow,
   _swigc__p_GDALDatasetShadow,
   _swigc__p_GDALDriverShadow,
+  _swigc__p_GDALInfoOptions,
   _swigc__p_GDALMajorObjectShadow,
   _swigc__p_GDALProgressFunc,
   _swigc__p_GDALRasterAttributeTableShadow,
   _swigc__p_GDALRasterBandShadow,
   _swigc__p_GDALTransformerInfoShadow,
+  _swigc__p_GDALTranslateOptions,
   _swigc__p_GDAL_GCP,
   _swigc__p_GIntBig,
   _swigc__p_GUIntBig,

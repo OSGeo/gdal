@@ -7,7 +7,8 @@
  *
  * ****************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2015, Even Rouault <even.rouault at spatialys.com>
+ * Copyright (c) 2015, Faza Mahamood
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,12 +34,79 @@
 #include "ogr_srs_api.h"
 #include "cpl_string.h"
 #include "cpl_conv.h"
-#include "cpl_multiproc.h"
 #include "commonutils.h"
 #include "json.h"
 #include "ogrgeojsonwriter.h"
+#include "gdal_utils_priv.h"
+#include "gdal_priv.h"
+#include "gdal_rat.h"
 
 CPL_CVSID("$Id$");
+
+/*! output format */
+typedef enum {
+    /*! output in text format */ GDALINFO_FORMAT_TEXT = 0,
+    /*! output in json format */ GDALINFO_FORMAT_JSON = 1
+} GDALInfoFormat;
+
+/************************************************************************/
+/*                           GDALInfoOptions                            */
+/************************************************************************/
+
+/** Options for use with GDALInfo(). GDALInfoOptions* must be allocated and freed with GDALInfoOptionsNew() and 
+ * GDALInfoOptionsFree() respectively.
+ */
+struct GDALInfoOptions
+{
+    /*! output format */
+    GDALInfoFormat eFormat;
+
+    int bComputeMinMax;
+
+    /*! report histogram information for all bands */
+    int bReportHistograms;
+
+    /*! report a PROJ.4 string corresponding to the file's coordinate system */
+    int bReportProj4;
+
+    /*! read and display image statistics. Force computation if no statistics are stored in an image */
+    int bStats;
+
+    /*! read and display image statistics. Force computation if no statistics are stored in an image.
+        However, they may be computed based on overviews or a subset of all tiles. Useful if you are
+        in a hurry and don't want precise stats. */
+    int bApproxStats;
+
+    int bSample;
+
+    /*! force computation of the checksum for each band in the dataset */
+    int bComputeChecksum;
+
+    /*! allow or suppress ground control points list printing. It may be useful for datasets with huge amount
+        of GCPs, such as L1B AVHRR or HDF4 MODIS which contain thousands of them. */
+    int bShowGCPs;
+
+    /*! allow or suppress metadata printing. Some datasets may contain a lot of metadata strings. */
+    int bShowMetadata;
+
+    /*! allow or suppress printing of raster attribute table */
+    int bShowRAT;
+
+    /*! allow or suppress printing of color table */
+    int bShowColorTable;
+
+    /*! list all metadata domains available for the dataset */
+    int bListMDD;
+
+    /*! display the file list or the first file of the file list */
+    int bShowFileList;
+
+    /*! report metadata for the specified domains. "all" can be used to report metadata
+        in all domains.
+        */
+    char **papszExtraMDDomains;
+};
+
 
 static int 
 GDALInfoReportCorner( GDALDatasetH hDataset, 
@@ -46,7 +114,8 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
                       const char * corner_name,
                       double x, double y,
                       int bJson, json_object *poCornerCoordinates,
-                      json_object *poWGS84ExtentCoordinates );
+                      json_object *poWGS84ExtentCoordinates,
+                      CPLString& osStr );
 
 static void
 GDALInfoReportMetadata( GDALMajorObjectH hObject,
@@ -55,233 +124,54 @@ GDALInfoReportMetadata( GDALMajorObjectH hObject,
                         char **papszExtraMDDomains,
                         int bIsBand,
                         int bJson,
-                        json_object *poMetadata );
-
-
+                        json_object *poMetadata,
+                        CPLString& osStr );
 
 /************************************************************************/
-/*                               Usage()                                */
+/*                             GDALInfo()                               */
 /************************************************************************/
 
-void Usage(const char* pszErrorMsg)
+/**
+ * Lists various information about a GDAL supported raster dataset.
+ *
+ * GDALInfoOptions* must be allocated and freed with GDALInfoOptionsNew()
+ * and GDALInfoOptionsFree() respectively.
+ *
+ * @param hDataset the dataset handle.
+ * @param psOptions the options structure returned by GDALInfoOptionsNew() or NULL.
+ * @return string corresponding to the information about the raster dataset.
+ * It must be freed using CPLFree().
+ *
+ * @since GDAL 2.1
+ */
 
+char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 {
-    printf( "Usage: gdalinfo [--help-general] [-json] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
-            "                [-norat] [-noct] [-nofl] [-checksum] [-proj4]\n"
-            "                [-listmdd] [-mdd domain|`all`]*\n"
-            "                [-sd subdataset] [-oo NAME=VALUE]* datasetname\n" );
+    if( hDataset == NULL )
+        return NULL;
 
-    if( pszErrorMsg != NULL )
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+    bool bFreeOptions = false;
+    GDALInfoOptions* psOptionsToFree = NULL;
+    if( psOptions == NULL )
+    {
+        bFreeOptions = true;
+        psOptionsToFree = GDALInfoOptionsNew(NULL, NULL);
+        psOptions = psOptionsToFree;
+    }
 
-    exit( 1 );
-}
-
-/************************************************************************/
-/*                                main()                                */
-/************************************************************************/
-
-#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
-    do { if (i + nExtraArg >= argc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
-
-int main( int argc, char ** argv ) 
-
-{
-    GDALDatasetH    hDataset = NULL;
     GDALRasterBandH hBand = NULL;
     int         i, iBand;
     double      adfGeoTransform[6];
     GDALDriverH     hDriver;
-    int                 bComputeMinMax = FALSE, bSample = FALSE;
-    int                 bShowGCPs = TRUE, bShowMetadata = TRUE, bShowRAT=TRUE;
-    int                 bStats = FALSE, bApproxStats = TRUE;
-    int                 bShowColorTable = TRUE, bComputeChecksum = FALSE;
-    int                 bReportHistograms = FALSE;
-    int                 bReportProj4 = FALSE;
-    int                 nSubdataset = -1;
-    const char          *pszFilename = NULL;
-    char              **papszExtraMDDomains = NULL, **papszFileList;
-    int                 bListMDD = FALSE;
+    char **papszFileList;
     const char  *pszProjection = NULL;
     OGRCoordinateTransformationH hTransform = NULL, hTransformWGS84 = NULL;
-    int             bShowFileList = TRUE;
-    char              **papszOpenOptions = NULL;
-
+    CPLString osStr;
     int bJson = FALSE;
     json_object *poJsonObject = NULL, *poBands = NULL, *poMetadata = NULL;
 
-    /* Check that we are running against at least GDAL 1.5 */
-    /* Note to developers : if we use newer API, please change the requirement */
-    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1500)
-    {
-        fprintf(stderr, "At least, GDAL >= 1.5.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
-        exit(1);
-    }
-
-    EarlySetConfigOptions(argc, argv);
-
-    GDALAllRegister();
-
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
-
-/* -------------------------------------------------------------------- */
-/*      Parse arguments.                                                */
-/* -------------------------------------------------------------------- */
-    for( i = 1; i < argc; i++ )
-    {
-        if( EQUAL(argv[i], "--utility_version") )
-        {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            return 0;
-        }
-        else if( EQUAL(argv[i],"--help") )
-            Usage(NULL);
-        else if( EQUAL(argv[i],"-json") )
-            bJson = TRUE;
-        else if( EQUAL(argv[i], "-mm") )
-            bComputeMinMax = TRUE;
-        else if( EQUAL(argv[i], "-hist") )
-            bReportHistograms = TRUE;
-        else if( EQUAL(argv[i], "-proj4") )
-            bReportProj4 = TRUE;
-        else if( EQUAL(argv[i], "-stats") )
-        {
-            bStats = TRUE;
-            bApproxStats = FALSE;
-        }
-        else if( EQUAL(argv[i], "-approx_stats") )
-        {
-            bStats = TRUE;
-            bApproxStats = TRUE;
-        }
-        else if( EQUAL(argv[i], "-sample") )
-            bSample = TRUE;
-        else if( EQUAL(argv[i], "-checksum") )
-            bComputeChecksum = TRUE;
-        else if( EQUAL(argv[i], "-nogcp") )
-            bShowGCPs = FALSE;
-        else if( EQUAL(argv[i], "-nomd") )
-            bShowMetadata = FALSE;
-        else if( EQUAL(argv[i], "-norat") )
-            bShowRAT = FALSE;
-        else if( EQUAL(argv[i], "-noct") )
-            bShowColorTable = FALSE;
-        else if( EQUAL(argv[i], "-listmdd") )
-            bListMDD = TRUE;
-        else if( EQUAL(argv[i], "-mdd") )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            papszExtraMDDomains = CSLAddString( papszExtraMDDomains,
-                                                argv[++i] );
-        }
-        else if( EQUAL(argv[i], "-oo") )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            papszOpenOptions = CSLAddString( papszOpenOptions,
-                                                argv[++i] );
-        }
-        else if( EQUAL(argv[i], "-nofl") )
-            bShowFileList = FALSE;
-        else if( EQUAL(argv[i], "-sd") )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            nSubdataset = atoi(argv[++i]);
-        }
-        else if( argv[i][0] == '-' )
-            Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
-        else if( pszFilename == NULL )
-            pszFilename = argv[i];
-        else
-            Usage("Too many command options.");
-    }
-
-    if( pszFilename == NULL )
-        Usage("No datasource specified.");
-
-/* -------------------------------------------------------------------- */
-/*      Open dataset.                                                   */
-/* -------------------------------------------------------------------- */
-    hDataset = GDALOpenEx( pszFilename, GDAL_OF_READONLY | GDAL_OF_RASTER, NULL,
-                           (const char* const* )papszOpenOptions, NULL );
-
-    if( hDataset == NULL )
-    {
-        fprintf( stderr,
-                 "gdalinfo failed - unable to open '%s'.\n",
-                 pszFilename );
-
-/* -------------------------------------------------------------------- */
-/*      If argument is a VSIFILE, then print its contents               */
-/* -------------------------------------------------------------------- */
-        if ( strncmp( pszFilename, "/vsizip/", 8 ) == 0 || 
-             strncmp( pszFilename, "/vsitar/", 8 ) == 0 ) 
-        {
-            papszFileList = VSIReadDirRecursive( pszFilename );
-            if ( papszFileList )
-            {
-                int nCount = CSLCount( papszFileList );
-                fprintf( stdout, 
-                         "Unable to open source `%s' directly.\n"
-                         "The archive contains %d files:\n", 
-                         pszFilename, nCount );
-                for ( i = 0; i < nCount; i++ )
-                {
-                    fprintf( stdout, "       %s/%s\n", pszFilename, papszFileList[i] );
-                }
-                CSLDestroy( papszFileList );
-                papszFileList = NULL;
-            }
-        }
-
-        CSLDestroy( argv );
-        CSLDestroy( papszExtraMDDomains );
-        CSLDestroy( papszOpenOptions );
-    
-        GDALDumpOpenDatasets( stderr );
-
-        GDALDestroyDriverManager();
-
-        CPLDumpSharedList( NULL );
-
-        exit( 1 );
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Read specified subdataset if requested.                         */
-/* -------------------------------------------------------------------- */
-    if ( nSubdataset > 0 )
-    {
-        char **papszSubdatasets = GDALGetMetadata( hDataset, "SUBDATASETS" );
-        int nSubdatasets = CSLCount( papszSubdatasets );
-
-        if ( nSubdatasets > 0 && nSubdataset <= nSubdatasets )
-        {
-            char szKeyName[1024];
-            char *pszSubdatasetName;
-
-            snprintf( szKeyName, sizeof(szKeyName),
-                      "SUBDATASET_%d_NAME", nSubdataset );
-            szKeyName[sizeof(szKeyName) - 1] = '\0';
-            pszSubdatasetName =
-                CPLStrdup( CSLFetchNameValue( papszSubdatasets, szKeyName ) );
-            GDALClose( hDataset );
-            hDataset = GDALOpen( pszSubdatasetName, GA_ReadOnly );
-            CPLFree( pszSubdatasetName );
-        }
-        else
-        {
-            fprintf( stderr,
-                     "gdalinfo warning: subdataset %d of %d requested. "
-                     "Reading the main dataset.\n",
-                     nSubdataset, nSubdatasets );
-
-        }
-    }
+    if(psOptions->eFormat == GDALINFO_FORMAT_JSON)
+        bJson = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Report general info.                                            */
@@ -302,10 +192,8 @@ int main( int argc, char ** argv )
     }
     else
     {
-        printf( "Driver: %s/%s\n",
-                GDALGetDriverShortName( hDriver ),
-                GDALGetDriverLongName( hDriver ) );
-
+        osStr += CPLOPrintf( "Driver: %s/%s\n", GDALGetDriverShortName( hDriver ), 
+            GDALGetDriverLongName( hDriver ) );
     }
 
     papszFileList = GDALGetFileList( hDataset );
@@ -318,30 +206,33 @@ int main( int argc, char ** argv )
             json_object_object_add(poJsonObject, "files", poFiles);
         }
         else
-            printf( "Files: none associated\n" );
+            osStr += CPLOPrintf( "Files: none associated\n" );
     }
     else
     {
         if(bJson)
         {
-            json_object *poFiles = json_object_new_array();
-
-            for(i = 0; papszFileList[i] != NULL; i++)
+            if( psOptions->bShowFileList )
             {
-                json_object *poFile = json_object_new_string(papszFileList[i]);
-                
-                json_object_array_add(poFiles, poFile);
-            }
+                json_object *poFiles = json_object_new_array();
             
-            json_object_object_add(poJsonObject, "files", poFiles);
+                for(i = 0; papszFileList[i] != NULL; i++)
+                {
+                    json_object *poFile = json_object_new_string(papszFileList[i]);
+                    
+                    json_object_array_add(poFiles, poFile);
+                }
+
+                json_object_object_add(poJsonObject, "files", poFiles);
+            }
         }
         else
         {
-            printf( "Files: %s\n", papszFileList[0] );
-            if( bShowFileList )
+            osStr += CPLOPrintf( "Files: %s\n", papszFileList[0] );
+            if( psOptions->bShowFileList )
             {
                 for( i = 1; papszFileList[i] != NULL; i++ )
-                    printf( "       %s\n", papszFileList[i] );
+                    osStr += CPLOPrintf( "       %s\n", papszFileList[i] );
             }
         }
 
@@ -359,8 +250,7 @@ int main( int argc, char ** argv )
         json_object_object_add(poJsonObject, "size", poSize);
     }
     else
-        printf( "Size is %d, %d\n",
-            GDALGetRasterXSize( hDataset ),
+        osStr += CPLOPrintf( "Size is %d, %d\n", GDALGetRasterXSize( hDataset ), 
             GDALGetRasterYSize( hDataset ) );
 
 /* -------------------------------------------------------------------- */
@@ -390,7 +280,7 @@ int main( int argc, char ** argv )
                 json_object_object_add(poCoordinateSystem, "wkt", poWkt);
             }
             else
-                printf( "Coordinate System is:\n%s\n", pszPrettyWkt );
+                osStr += CPLOPrintf( "Coordinate System is:\n%s\n", pszPrettyWkt );
             CPLFree( pszPrettyWkt );
         }
         else
@@ -401,12 +291,12 @@ int main( int argc, char ** argv )
                 json_object_object_add(poCoordinateSystem, "wkt", poWkt);
             }
             else
-                printf( "Coordinate System is `%s'\n",
+                osStr += CPLOPrintf( "Coordinate System is `%s'\n", 
                     GDALGetProjectionRef( hDataset ) );
 
         }
 
-        if ( bReportProj4 )
+        if ( psOptions->bReportProj4 )
         {
             char *pszProj4 = NULL;
             OSRExportToProj4( hSRS, &pszProj4 );
@@ -417,7 +307,7 @@ int main( int argc, char ** argv )
                 json_object_object_add(poCoordinateSystem, "proj4", proj4);
             }
             else
-                printf("PROJ.4 string is:\n\'%s\'\n",pszProj4);
+                osStr += CPLOPrintf("PROJ.4 string is:\n\'%s\'\n",pszProj4);
             CPLFree( pszProj4 );
         }
 
@@ -448,22 +338,22 @@ int main( int argc, char ** argv )
         {
             if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
             {
-                CPLprintf( "Origin = (%.15f,%.15f)\n",
-                        adfGeoTransform[0], adfGeoTransform[3] );
+                osStr += CPLOPrintf( "Origin = (%.15f,%.15f)\n", 
+                    adfGeoTransform[0], adfGeoTransform[3] );
 
-                CPLprintf( "Pixel Size = (%.15f,%.15f)\n",
-                        adfGeoTransform[1], adfGeoTransform[5] );
+                osStr += CPLOPrintf( "Pixel Size = (%.15f,%.15f)\n", 
+                    adfGeoTransform[1], adfGeoTransform[5] );
             }
             else
-                CPLprintf( "GeoTransform =\n"
-                        "  %.16g, %.16g, %.16g\n"
-                        "  %.16g, %.16g, %.16g\n",
-                        adfGeoTransform[0],
-                        adfGeoTransform[1],
-                        adfGeoTransform[2],
-                        adfGeoTransform[3],
-                        adfGeoTransform[4],
-                        adfGeoTransform[5] );
+                osStr += CPLOPrintf( "GeoTransform =\n"
+                    "  %.16g, %.16g, %.16g\n"
+                    "  %.16g, %.16g, %.16g\n",
+                    adfGeoTransform[0],
+                    adfGeoTransform[1],
+                    adfGeoTransform[2],
+                    adfGeoTransform[3],
+                    adfGeoTransform[4],
+                    adfGeoTransform[5] );
         }
 
     }
@@ -471,7 +361,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Report GCPs.                                                    */
 /* -------------------------------------------------------------------- */
-    if( bShowGCPs && GDALGetGCPCount( hDataset ) > 0 )
+    if( psOptions->bShowGCPs && GDALGetGCPCount( hDataset ) > 0 )
     {
         json_object *poGCPs = NULL, *poGCPList = NULL;
 
@@ -500,7 +390,7 @@ int main( int argc, char ** argv )
                     json_object_object_add(poGCPCoordinateSystem, "wkt", poWkt);
                 }
                 else
-                    printf( "GCP Projection = \n%s\n", pszPrettyWkt );
+                    osStr += CPLOPrintf( "GCP Projection = \n%s\n", pszPrettyWkt );
                 CPLFree( pszPrettyWkt );
             }
             else
@@ -513,7 +403,7 @@ int main( int argc, char ** argv )
                     json_object_object_add(poGCPCoordinateSystem, "wkt", poWkt);
                 }
                 else
-                    printf( "GCP Projection = %s\n",
+                    osStr += CPLOPrintf( "GCP Projection = %s\n",
                         GDALGetGCPProjection( hDataset ) );
 
             }
@@ -552,7 +442,7 @@ int main( int argc, char ** argv )
                 json_object_array_add(poGCPList, poGCP);
             }
             else
-                CPLprintf( "GCP[%3d]: Id=%s, Info=%s\n"
+                osStr += CPLOPrintf( "GCP[%3d]: Id=%s, Info=%s\n"
                     "          (%.15g,%.15g) -> (%.15g,%.15g,%.15g)\n",
                     i, psGCP->pszId, psGCP->pszInfo,
                     psGCP->dfGCPPixel, psGCP->dfGCPLine,
@@ -569,8 +459,9 @@ int main( int argc, char ** argv )
 /*      Report metadata.                                                */
 /* -------------------------------------------------------------------- */
 
-    GDALInfoReportMetadata( hDataset, bListMDD, bShowMetadata, papszExtraMDDomains, FALSE, bJson, poMetadata );
-    if(bJson && bShowMetadata)
+    GDALInfoReportMetadata( hDataset, psOptions->bListMDD, psOptions->bShowMetadata, 
+        psOptions->papszExtraMDDomains, FALSE, bJson, poMetadata, osStr );
+    if(bJson && psOptions->bShowMetadata)
         json_object_object_add( poJsonObject, "metadata", poMetadata );
 
 /* -------------------------------------------------------------------- */
@@ -629,19 +520,19 @@ int main( int argc, char ** argv )
         json_object *poWGS84ExtentCoordinates = json_object_new_array();
 
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "upperLeft",
-                              0.0, 0.0, bJson, poCornerCoordinates, poWGS84ExtentCoordinates );
+                              0.0, 0.0, bJson, poCornerCoordinates, poWGS84ExtentCoordinates, osStr );
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "lowerLeft",
-                              0.0, GDALGetRasterYSize(hDataset), bJson, poCornerCoordinates, poWGS84ExtentCoordinates );
+                              0.0, GDALGetRasterYSize(hDataset), bJson, poCornerCoordinates, poWGS84ExtentCoordinates, osStr );
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "upperRight",
-                              GDALGetRasterXSize(hDataset), 0.0, bJson, poCornerCoordinates, poWGS84ExtentCoordinates );
+                              GDALGetRasterXSize(hDataset), 0.0, bJson, poCornerCoordinates, poWGS84ExtentCoordinates, osStr );
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "lowerRight",
                               GDALGetRasterXSize(hDataset), GDALGetRasterYSize(hDataset),
-                              bJson, poCornerCoordinates, poWGS84ExtentCoordinates );
+                              bJson, poCornerCoordinates, poWGS84ExtentCoordinates, osStr );
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "center",
                               GDALGetRasterXSize(hDataset)/2.0, GDALGetRasterYSize(hDataset)/2.0,
-                              bJson, poCornerCoordinates, poWGS84ExtentCoordinates );
+                              bJson, poCornerCoordinates, poWGS84ExtentCoordinates, osStr );
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "upperLeft",
-                              0.0, 0.0, bJson, poCornerCoordinates, poWGS84ExtentCoordinates );
+                              0.0, 0.0, bJson, poCornerCoordinates, poWGS84ExtentCoordinates, osStr );
         
         json_object_object_add( poJsonObject, "cornerCoordinates", poCornerCoordinates );
         json_object_object_add( poWGS84Extent, "type", poWGS84ExtentType );
@@ -651,19 +542,19 @@ int main( int argc, char ** argv )
     }
     else
     {
-        printf( "Corner Coordinates:\n" );
+        osStr += CPLOPrintf( "Corner Coordinates:\n" );
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "Upper Left",
-                              0.0, 0.0, bJson, NULL, NULL );
+                              0.0, 0.0, bJson, NULL, NULL, osStr );
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "Lower Left",
-                              0.0, GDALGetRasterYSize(hDataset), bJson, NULL, NULL );
+                              0.0, GDALGetRasterYSize(hDataset), bJson, NULL, NULL, osStr );
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "Upper Right",
-                              GDALGetRasterXSize(hDataset), 0.0, bJson, NULL, NULL );
+                              GDALGetRasterXSize(hDataset), 0.0, bJson, NULL, NULL, osStr );
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "Lower Right",
                               GDALGetRasterXSize(hDataset),
-                              GDALGetRasterYSize(hDataset), bJson, NULL, NULL );
+                              GDALGetRasterYSize(hDataset), bJson, NULL, NULL, osStr );
         GDALInfoReportCorner( hDataset, hTransform, hTransformWGS84, "Center",
                               GDALGetRasterXSize(hDataset)/2.0,
-                              GDALGetRasterYSize(hDataset)/2.0, bJson, NULL, NULL );
+                              GDALGetRasterYSize(hDataset)/2.0, bJson, NULL, NULL, osStr );
 
     }
 
@@ -700,14 +591,14 @@ int main( int argc, char ** argv )
 
         hBand = GDALGetRasterBand( hDataset, iBand+1 );
 
-        if( bSample )
+        if( psOptions->bSample )
         {
             float afSample[10000];
             int   nCount;
 
             nCount = GDALGetRandomRasterSample( hBand, 10000, afSample );
             if(!bJson)
-                printf( "Got %d samples.\n", nCount );
+                osStr += CPLOPrintf( "Got %d samples.\n", nCount );
         }
         
         GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
@@ -727,7 +618,7 @@ int main( int argc, char ** argv )
             json_object_object_add(poBand, "colorInterpretation", poColorInterp);
         }
         else
-            printf( "Band %d Block=%dx%d Type=%s, ColorInterp=%s\n", iBand+1,
+            osStr += CPLOPrintf( "Band %d Block=%dx%d Type=%s, ColorInterp=%s\n", iBand+1,
                 nBlockXSize, nBlockYSize,
                 GDALGetDataTypeName(
                     GDALGetRasterDataType(hBand)),
@@ -743,15 +634,15 @@ int main( int argc, char ** argv )
                 json_object_object_add(poBand, "description", poBandDescription);
             }
             else
-                printf( "  Description = %s\n", GDALGetDescription(hBand) );
+                osStr += CPLOPrintf( "  Description = %s\n", GDALGetDescription(hBand) );
         }
 
         dfMin = GDALGetRasterMinimum( hBand, &bGotMin );
         dfMax = GDALGetRasterMaximum( hBand, &bGotMax );
-        if( bGotMin || bGotMax || bComputeMinMax )
+        if( bGotMin || bGotMax || psOptions->bComputeMinMax )
         {
             if(!bJson)
-                printf( "  " );
+                osStr += CPLOPrintf( "  " );
             if( bGotMin )
             {
                 if(bJson)
@@ -760,7 +651,7 @@ int main( int argc, char ** argv )
                     json_object_object_add(poBand, "min", poMin);
                 }
                 else
-                    CPLprintf( "Min=%.3f ", dfMin );
+                    osStr += CPLOPrintf( "Min=%.3f ", dfMin );
             }
             if( bGotMax )
             {
@@ -770,10 +661,10 @@ int main( int argc, char ** argv )
                     json_object_object_add(poBand, "max", poMax);
                 }
                 else
-                    CPLprintf( "Max=%.3f ", dfMax );
+                    osStr += CPLOPrintf( "Max=%.3f ", dfMax );
             }
 
-            if( bComputeMinMax )
+            if( psOptions->bComputeMinMax )
             {
                 CPLErrorReset();
                 GDALComputeRasterMinMax( hBand, FALSE, adfCMinMax );
@@ -787,15 +678,15 @@ int main( int argc, char ** argv )
                         json_object_object_add(poBand, "computedMax", poComputedMax);
                     }
                     else
-                        CPLprintf( "  Computed Min/Max=%.3f,%.3f",
+                        osStr += CPLOPrintf( "  Computed Min/Max=%.3f,%.3f",
                           adfCMinMax[0], adfCMinMax[1] );
                 }
             }
             if(!bJson)
-                printf( "\n" );
+                osStr += CPLOPrintf( "\n" );
         }
 
-        eErr = GDALGetRasterStatistics( hBand, bApproxStats, bStats, 
+        eErr = GDALGetRasterStatistics( hBand, psOptions->bApproxStats, psOptions->bStats, 
                                         &dfMin, &dfMax, &dfMean, &dfStdDev );
         if( eErr == CE_None )
         {
@@ -812,11 +703,11 @@ int main( int argc, char ** argv )
                 json_object_object_add(poBand, "stdDev", poStdDev);
             }
             else
-                CPLprintf( "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f\n",
+                osStr += CPLOPrintf( "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f\n",
                     dfMin, dfMax, dfMean, dfStdDev );
         }
 
-        if( bReportHistograms )
+        if( psOptions->bReportHistograms )
         {
             int nBucketCount;
             GUIntBig *panHistogram = NULL;
@@ -847,7 +738,7 @@ int main( int argc, char ** argv )
                     json_object_object_add(poHistogram, "max", poMax);
                 }
                 else
-                    printf( "  %d buckets from %g to %g:\n  ",
+                    osStr += CPLOPrintf( "  %d buckets from %g to %g:\n  ",
                         nBucketCount, dfMin, dfMax );
 
                 for( iBucket = 0; iBucket < nBucketCount; iBucket++ )
@@ -858,7 +749,7 @@ int main( int argc, char ** argv )
                         json_object_array_add(poBuckets, poBucket);
                     }
                     else
-                        printf( CPL_FRMT_GUIB " ", panHistogram[iBucket] );
+                        osStr += CPLOPrintf( CPL_FRMT_GUIB " ", panHistogram[iBucket] );
                 }
                 if(bJson)
                 {
@@ -866,12 +757,12 @@ int main( int argc, char ** argv )
                     json_object_object_add(poBand, "histogram", poHistogram);
                 }
                 else
-                    printf( "\n" );
+                    osStr += CPLOPrintf( "\n" );
                 CPLFree( panHistogram );
             }
         }
 
-        if ( bComputeChecksum)
+        if ( psOptions->bComputeChecksum)
         {
             int nBandChecksum = GDALChecksumImage(hBand, 0, 0,
                                       GDALGetRasterXSize(hDataset),
@@ -882,7 +773,7 @@ int main( int argc, char ** argv )
                 json_object_object_add(poBand, "checksum", poChecksum);
             }
             else
-                printf( "  Checksum=%d\n", nBandChecksum );
+                osStr += CPLOPrintf( "  Checksum=%d\n", nBandChecksum );
         }
 
         dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
@@ -896,7 +787,7 @@ int main( int argc, char ** argv )
                     json_object_object_add(poBand, "noDataValue", poNoDataValue);
                 }
                 else
-                    printf( "  NoData Value=nan\n" );
+                    osStr += CPLOPrintf( "  NoData Value=nan\n" );
             }
             else
             {
@@ -906,7 +797,7 @@ int main( int argc, char ** argv )
                     json_object_object_add(poBand, "noDataValue", poNoDataValue);
                 }
                 else
-                    CPLprintf( "  NoData Value=%.18g\n", dfNoData );
+                    osStr += CPLOPrintf( "  NoData Value=%.18g\n", dfNoData );
             }
         }
 
@@ -918,7 +809,7 @@ int main( int argc, char ** argv )
             if(bJson)
                 poOverviews = json_object_new_array();
             else
-                printf( "  Overviews: " );
+                osStr += CPLOPrintf( "  Overviews: " );
 
             for( iOverview = 0; 
                  iOverview < GDALGetOverviewCount(hBand);
@@ -930,7 +821,7 @@ int main( int argc, char ** argv )
 
                 if(!bJson)
                     if( iOverview != 0 )
-                        printf( ", " );
+                        osStr += CPLOPrintf( ", " );
 
                 hOverview = GDALGetOverview( hBand, iOverview );
                 if (hOverview != NULL)
@@ -946,7 +837,7 @@ int main( int argc, char ** argv )
                         json_object_array_add( poOverviewSize, poOverviewSizeY );
                         json_object_object_add( poOverview, "size", poOverviewSize );
 
-                        if(bComputeChecksum)
+                        if(psOptions->bComputeChecksum)
                         {
                             int nOverviewChecksum = GDALChecksumImage(hOverview, 0, 0,
                                         GDALGetRasterBandXSize(hOverview),
@@ -957,7 +848,7 @@ int main( int argc, char ** argv )
                         json_object_array_add(poOverviews, poOverview);
                     }
                     else
-                        printf( "%dx%d", 
+                        osStr += CPLOPrintf( "%dx%d", 
                             GDALGetRasterBandXSize( hOverview ),
                             GDALGetRasterBandYSize( hOverview ) );
 
@@ -966,20 +857,20 @@ int main( int argc, char ** argv )
 
                     if( pszResampling != NULL && !bJson 
                         && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
-                        printf( "*" );
+                        osStr += CPLOPrintf( "*" );
                 }
                 else
                     if(!bJson)
-                        printf( "(null)" );
+                        osStr += CPLOPrintf( "(null)" );
             }
             if(bJson)
                 json_object_object_add(poBand, "overviews", poOverviews);
             else
-                printf( "\n" );
+                osStr += CPLOPrintf( "\n" );
 
-            if ( bComputeChecksum && !bJson )
+            if ( psOptions->bComputeChecksum && !bJson )
             {
-                printf( "  Overviews checksum: " );
+                osStr += CPLOPrintf( "  Overviews checksum: " );
                 
                 for( iOverview = 0; 
                     iOverview < GDALGetOverviewCount(hBand);
@@ -988,28 +879,28 @@ int main( int argc, char ** argv )
                     GDALRasterBandH hOverview;
 
                     if( iOverview != 0 )
-                        printf( ", " );
+                        osStr += CPLOPrintf( ", " );
 
                     hOverview = GDALGetOverview( hBand, iOverview );
                     if (hOverview)
                     {
-                        printf( "%d",
+                        osStr += CPLOPrintf( "%d",
                                 GDALChecksumImage(hOverview, 0, 0,
                                         GDALGetRasterBandXSize(hOverview),
                                         GDALGetRasterBandYSize(hOverview)));
                     }
                     else
                     {
-                        printf( "(null)" );
+                        osStr += CPLOPrintf( "(null)" );
                     }
                 }
-                printf( "\n" );
+                osStr += CPLOPrintf( "\n" );
             }
         }
 
         if( GDALHasArbitraryOverviews( hBand ) && !bJson )
         {
-            printf( "  Overviews: arbitrary\n" );
+            osStr += CPLOPrintf( "  Overviews: arbitrary\n" );
         }
         
         nMaskFlags = GDALGetMaskFlags( hBand );
@@ -1024,7 +915,7 @@ int main( int argc, char ** argv )
                 poFlags = json_object_new_array(); 
             }
             else
-                printf( "  Mask Flags: " );
+                osStr += CPLOPrintf( "  Mask Flags: " );
             if( nMaskFlags & GMF_PER_DATASET )
             {
                 if(bJson)
@@ -1033,7 +924,7 @@ int main( int argc, char ** argv )
                     json_object_array_add( poFlags, poFlag );
                 }
                 else
-                    printf( "PER_DATASET " );
+                    osStr += CPLOPrintf( "PER_DATASET " );
             }
             if( nMaskFlags & GMF_ALPHA )
             {
@@ -1043,7 +934,7 @@ int main( int argc, char ** argv )
                     json_object_array_add( poFlags, poFlag );
                 }
                 else
-                    printf( "ALPHA " );
+                    osStr += CPLOPrintf( "ALPHA " );
             }
             if( nMaskFlags & GMF_NODATA )
             {
@@ -1053,7 +944,7 @@ int main( int argc, char ** argv )
                     json_object_array_add( poFlags, poFlag );
                 }
                 else
-                    printf( "NODATA " );
+                    osStr += CPLOPrintf( "NODATA " );
             }
             if( nMaskFlags & GMF_ALL_VALID )
             {
@@ -1063,12 +954,12 @@ int main( int argc, char ** argv )
                     json_object_array_add( poFlags, poFlag );
                 }
                 else
-                    printf( "ALL_VALID " );
+                    osStr += CPLOPrintf( "ALL_VALID " );
             }
             if(bJson)
                 json_object_object_add( poMask, "flags", poFlags );
             else
-                printf( "\n" );
+                osStr += CPLOPrintf( "\n" );
 
             if(bJson)
                 poMaskOverviews = json_object_new_array();
@@ -1079,7 +970,7 @@ int main( int argc, char ** argv )
                 int     iOverview;
                 
                 if(!bJson)
-                    printf( "  Overviews of mask band: " );
+                    osStr += CPLOPrintf( "  Overviews of mask band: " );
                 
                 for( iOverview = 0; 
                      iOverview < GDALGetOverviewCount(hMaskBand);
@@ -1097,7 +988,7 @@ int main( int argc, char ** argv )
                     else
                     {
                         if( iOverview != 0 )
-                            printf( ", " );
+                            osStr += CPLOPrintf( ", " );
                     }
 
                     hOverview = GDALGetOverview( hMaskBand, iOverview );
@@ -1112,12 +1003,12 @@ int main( int argc, char ** argv )
                         json_object_array_add(poMaskOverviews, poMaskOverview);
                     }
                     else
-                        printf( "%dx%d", 
+                        osStr += CPLOPrintf( "%dx%d", 
                             GDALGetRasterBandXSize( hOverview ),
                             GDALGetRasterBandYSize( hOverview ) );
                 }
                 if(!bJson)
-                    printf( "\n" );
+                    osStr += CPLOPrintf( "\n" );
             }
             if(bJson)
             {
@@ -1134,7 +1025,7 @@ int main( int argc, char ** argv )
                 json_object_object_add(poBand, "unit", poUnit);
             }
             else
-                printf( "  Unit Type: %s\n", GDALGetRasterUnitType(hBand) );
+                osStr += CPLOPrintf( "  Unit Type: %s\n", GDALGetRasterUnitType(hBand) );
         }
 
         if( GDALGetRasterCategoryNames(hBand) != NULL )
@@ -1146,7 +1037,7 @@ int main( int argc, char ** argv )
             if(bJson)
                 poCategories = json_object_new_array();           
             else
-                printf( "  Categories:\n" );
+                osStr += CPLOPrintf( "  Categories:\n" );
                 
             for( i = 0; papszCategories[i] != NULL; i++ )
             {
@@ -1156,7 +1047,7 @@ int main( int argc, char ** argv )
                     json_object_array_add(poCategories, poCategoryName);
                 }
                 else
-                    printf( "    %3d: %s\n", i, papszCategories[i] );
+                    osStr += CPLOPrintf( "    %3d: %s\n", i, papszCategories[i] );
             }
             if(bJson)
                 json_object_object_add(poBand, "categories", poCategories);
@@ -1173,13 +1064,14 @@ int main( int argc, char ** argv )
                 json_object_object_add(poBand, "scale", poScale);
             }
             else
-                CPLprintf( "  Offset: %.15g,   Scale:%.15g\n",
+                osStr += CPLOPrintf( "  Offset: %.15g,   Scale:%.15g\n",
                     GDALGetRasterOffset( hBand, &bSuccess ),
                     GDALGetRasterScale( hBand, &bSuccess ) );
         }
         
-        GDALInfoReportMetadata( hBand, bListMDD, bShowMetadata, papszExtraMDDomains, TRUE, bJson, poBandMetadata );
-        if(bJson && bShowMetadata)  
+        GDALInfoReportMetadata( hBand, psOptions->bListMDD, psOptions->bShowMetadata, psOptions->papszExtraMDDomains, 
+            TRUE, bJson, poBandMetadata, osStr );
+        if(bJson && psOptions->bShowMetadata)  
             json_object_object_add( poBand, "metadata", poBandMetadata );
 
         if( GDALGetRasterColorInterpretation(hBand) == GCI_PaletteIndex 
@@ -1199,12 +1091,12 @@ int main( int argc, char ** argv )
                 json_object_object_add(poColorTable, "count", poCount);
             }
             else
-                printf( "  Color Table (%s with %d entries)\n",
+                osStr += CPLOPrintf( "  Color Table (%s with %d entries)\n",
                     GDALGetPaletteInterpretationName(
                         GDALGetPaletteInterpretation( hTable )), 
                     GDALGetColorEntryCount( hTable ) );
 
-            if (bShowColorTable)
+            if (psOptions->bShowColorTable)
             {
                 json_object *poEntries = NULL;
                 
@@ -1232,7 +1124,7 @@ int main( int argc, char ** argv )
                         json_object_array_add(poEntries, poEntry);
                     }
                     else
-                        printf( "  %3d: %d,%d,%d,%d\n",
+                        osStr += CPLOPrintf( "  %3d: %d,%d,%d,%d\n",
                             i,
                             sEntry.c1,
                             sEntry.c2,
@@ -1247,7 +1139,7 @@ int main( int argc, char ** argv )
             }   
         }
 
-        if( bShowRAT && GDALGetDefaultRAT( hBand ) != NULL )
+        if( psOptions->bShowRAT && GDALGetDefaultRAT( hBand ) != NULL )
         {
             GDALRasterAttributeTableH hRAT = GDALGetDefaultRAT( hBand );
             
@@ -1258,7 +1150,11 @@ int main( int argc, char ** argv )
             }
             else
             {
-                GDALRATDumpReadable( hRAT, NULL );
+                CPLXMLNode *psTree = ((GDALRasterAttributeTable *) hRAT)->Serialize();
+                char *pszXMLText = CPLSerializeXMLTree( psTree );
+                CPLDestroyXMLNode( psTree );
+                osStr += CPLOPrintf( "%s\n", pszXMLText );
+                CPLFree( pszXMLText );
             }
         }
         if(bJson)
@@ -1268,24 +1164,14 @@ int main( int argc, char ** argv )
     if(bJson)
     {
         json_object_object_add(poJsonObject, "bands", poBands);
-        printf("%s\n", json_object_to_json_string_ext(poJsonObject, JSON_C_TO_STRING_PRETTY));
+        osStr += json_object_to_json_string_ext(poJsonObject, JSON_C_TO_STRING_PRETTY);
         json_object_put(poJsonObject);
     }
     
-    GDALClose( hDataset );
-    
-    CSLDestroy( papszExtraMDDomains );
-    CSLDestroy( papszOpenOptions );
-    CSLDestroy( argv );
-    
-    GDALDumpOpenDatasets( stderr );
+    if( bFreeOptions )
+        GDALInfoOptionsFree(psOptionsToFree);
+    return CPLStrdup(osStr);
 
-    GDALDestroyDriverManager();
-
-    CPLDumpSharedList( NULL );
-    CPLCleanupTLS();
-
-    exit( 0 );
 }
 
 /************************************************************************/
@@ -1297,7 +1183,8 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
                       OGRCoordinateTransformationH hTransform, OGRCoordinateTransformationH hTransformWGS84,
                       const char * corner_name,
                       double x, double y,
-                      int bJson, json_object *poCornerCoordinates, json_object *poWGS84ExtentCoordinates )
+                      int bJson, json_object *poCornerCoordinates, json_object *poWGS84ExtentCoordinates,
+                      CPLString& osStr )
 
 {
     double  dfGeoX, dfGeoY;
@@ -1305,7 +1192,7 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
     json_object *poCorner, *poX, *poY;
 
     if(!bJson)
-        printf( "%-11s ", corner_name );
+        osStr += CPLOPrintf( "%-11s ", corner_name );
 
 /* -------------------------------------------------------------------- */
 /*      Transform the point into georeferenced coordinates.             */
@@ -1330,7 +1217,7 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
             json_object_object_add( poCornerCoordinates, corner_name, poCorner );
         }
         else
-            CPLprintf( "(%7.1f,%7.1f)\n", x, y );
+            osStr += CPLOPrintf( "(%7.1f,%7.1f)\n", x, y );
         return FALSE;
     }
 
@@ -1349,7 +1236,7 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
             json_object_object_add( poCornerCoordinates, corner_name, poCorner );
         }
         else
-            CPLprintf( "(%12.7f,%12.7f) ", dfGeoX, dfGeoY );
+            osStr += CPLOPrintf( "(%12.7f,%12.7f) ", dfGeoX, dfGeoY );
     }
     else
     {
@@ -1363,7 +1250,7 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
             json_object_object_add( poCornerCoordinates, corner_name, poCorner );
         }
         else
-            CPLprintf( "(%12.3f,%12.3f) ", dfGeoX, dfGeoY );
+            osStr += CPLOPrintf( "(%12.3f,%12.3f) ", dfGeoX, dfGeoY );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1389,10 +1276,10 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
         if( hTransform != NULL 
         && OCTTransform(hTransform,1,&dfGeoX,&dfGeoY,&dfZ) )
         {
-            printf( "(%s,", GDALDecToDMS( dfGeoX, "Long", 2 ) );
-            printf( "%s)", GDALDecToDMS( dfGeoY, "Lat", 2 ) );
+            osStr += CPLOPrintf( "(%s,", GDALDecToDMS( dfGeoX, "Long", 2 ) );
+            osStr += CPLOPrintf( "%s)", GDALDecToDMS( dfGeoY, "Lat", 2 ) );
         }
-        printf( "\n" );
+        osStr += CPLOPrintf( "\n" );
     }
     
     return TRUE;
@@ -1407,7 +1294,8 @@ static void GDALInfoPrintMetadata( GDALMajorObjectH hObject,
                                    const char *pszDisplayedname,
                                    const char *pszIndent,
                                    int bJson,
-                                   json_object *poMetadata )
+                                   json_object *poMetadata,
+                                   CPLString& osStr )
 {
     int i;
     char **papszMetadata;
@@ -1426,7 +1314,7 @@ static void GDALInfoPrintMetadata( GDALMajorObjectH hObject,
             poDomain = json_object_new_object();
         
         if(!bJson)
-            printf( "%s%s:\n", pszIndent, pszDisplayedname );
+            osStr += CPLOPrintf( "%s%s:\n", pszIndent, pszDisplayedname );
         
         for( i = 0; papszMetadata[i] != NULL; i++ )
         {
@@ -1452,9 +1340,9 @@ static void GDALInfoPrintMetadata( GDALMajorObjectH hObject,
             else
             {
                 if (bIsxml)
-                    printf( "%s%s\n", pszIndent, papszMetadata[i] );
+                    osStr += CPLOPrintf( "%s%s\n", pszIndent, papszMetadata[i] );
                 else
-                    printf( "%s  %s\n", pszIndent, papszMetadata[i] );
+                    osStr += CPLOPrintf( "%s  %s\n", pszIndent, papszMetadata[i] );
             
             }
         }
@@ -1483,7 +1371,8 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
                                     char **papszExtraMDDomains,
                                     int bIsBand,
                                     int bJson,
-                                    json_object *poMetadata )
+                                    json_object *poMetadata,
+                                    CPLString& osStr )
 {
     const char* pszIndent = "";
     if( bIsBand )
@@ -1504,7 +1393,7 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
         if( papszMDDList != NULL )
         {
             if(!bJson)
-                printf( "%sMetadata domains:\n", pszIndent );
+                osStr += CPLOPrintf( "%sMetadata domains:\n", pszIndent );
         }
         
         while( papszIter != NULL && *papszIter != NULL )
@@ -1514,14 +1403,14 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
                 if(bJson)
                     poMDD = json_object_new_string( *papszIter );
                 else
-                    printf( "%s  (default)\n", pszIndent);
+                    osStr += CPLOPrintf( "%s  (default)\n", pszIndent);
             }
             else
             {
                 if(bJson)
                     poMDD = json_object_new_string( *papszIter );
                 else
-                    printf( "%s  %s\n", pszIndent, *papszIter );
+                    osStr += CPLOPrintf( "%s  %s\n", pszIndent, *papszIter );
             }
             if(bJson)
                 json_object_array_add( poListMDD, poMDD );
@@ -1538,7 +1427,7 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
     /* -------------------------------------------------------------------- */
     /*      Report default Metadata domain.                                 */
     /* -------------------------------------------------------------------- */
-    GDALInfoPrintMetadata( hObject, NULL, "Metadata", pszIndent, bJson, poMetadata );
+    GDALInfoPrintMetadata( hObject, NULL, "Metadata", pszIndent, bJson, poMetadata, osStr );
 
     /* -------------------------------------------------------------------- */
     /*      Report extra Metadata domains                                   */
@@ -1577,9 +1466,9 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
             char pszDisplayedname[256];
             snprintf(pszDisplayedname, 256, "Metadata (%s)", papszExtraMDDomainsExpanded[iMDD]);
             if(bJson)
-                GDALInfoPrintMetadata( hObject, papszExtraMDDomainsExpanded[iMDD], papszExtraMDDomainsExpanded[iMDD], pszIndent, bJson, poMetadata );
+                GDALInfoPrintMetadata( hObject, papszExtraMDDomainsExpanded[iMDD], papszExtraMDDomainsExpanded[iMDD], pszIndent, bJson, poMetadata, osStr );
             else
-                GDALInfoPrintMetadata( hObject, papszExtraMDDomainsExpanded[iMDD], pszDisplayedname, pszIndent, bJson, poMetadata );
+                GDALInfoPrintMetadata( hObject, papszExtraMDDomainsExpanded[iMDD], pszDisplayedname, pszIndent, bJson, poMetadata, osStr );
         }
 
         CSLDestroy(papszExtraMDDomainsExpanded);
@@ -1588,13 +1477,160 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
     /* -------------------------------------------------------------------- */
     /*      Report various named metadata domains.                          */
     /* -------------------------------------------------------------------- */
-    GDALInfoPrintMetadata( hObject, "IMAGE_STRUCTURE", "Image Structure Metadata", pszIndent, bJson, poMetadata );
+    GDALInfoPrintMetadata( hObject, "IMAGE_STRUCTURE", "Image Structure Metadata", pszIndent, bJson, poMetadata, osStr );
 
     if (!bIsBand)
     {
-        GDALInfoPrintMetadata( hObject, "SUBDATASETS", "Subdatasets", pszIndent, bJson, poMetadata );
-        GDALInfoPrintMetadata( hObject, "GEOLOCATION", "Geolocation", pszIndent, bJson, poMetadata );
-        GDALInfoPrintMetadata( hObject, "RPC", "RPC Metadata", pszIndent, bJson, poMetadata );
+        GDALInfoPrintMetadata( hObject, "SUBDATASETS", "Subdatasets", pszIndent, bJson, poMetadata, osStr );
+        GDALInfoPrintMetadata( hObject, "GEOLOCATION", "Geolocation", pszIndent, bJson, poMetadata, osStr );
+        GDALInfoPrintMetadata( hObject, "RPC", "RPC Metadata", pszIndent, bJson, poMetadata, osStr );
     }
 
+}
+
+/************************************************************************/
+/*                             GDALInfoOptionsNew()                     */
+/************************************************************************/
+
+/**
+ * Allocates a GDALInfoOptions struct.
+ *
+ * @param papszArgv NULL terminated list of options (potentially including filename and open options too)
+ *                  The accepted options are the one of the gdalinfo utility.
+ * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
+ *                           otherwise (gdalinfo_bin.cpp use case) must be allocated with
+ *                           GDALInfoOptionsForBinaryNew() prior to this function. Will be
+ *                           filled with potentially present filename, open options, subdataset number...
+ * @return pointer to the allocated GDALInfoOptions struct.
+ *
+ * @since GDAL 2.1
+ */
+
+GDALInfoOptions *GDALInfoOptionsNew(char** papszArgv,
+                                    GDALInfoOptionsForBinary* psOptionsForBinary)
+{
+    int bGotFilename = false;
+    GDALInfoOptions *psOptions = (GDALInfoOptions *) CPLCalloc( 1, sizeof(GDALInfoOptions) );
+
+    psOptions->eFormat = GDALINFO_FORMAT_TEXT;
+    psOptions->bComputeMinMax = FALSE;
+    psOptions->bReportHistograms = FALSE;
+    psOptions->bReportProj4 = FALSE;
+    psOptions->bStats = FALSE;
+    psOptions->bApproxStats = TRUE;
+    psOptions->bSample = FALSE;
+    psOptions->bComputeChecksum = FALSE;
+    psOptions->bShowGCPs = TRUE;
+    psOptions->bShowMetadata = TRUE;
+    psOptions->bShowRAT = TRUE;
+    psOptions->bShowColorTable = TRUE;
+    psOptions->bListMDD = FALSE;
+    psOptions->bShowFileList = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Parse arguments.                                                */
+/* -------------------------------------------------------------------- */
+    for( int i = 0; papszArgv != NULL && papszArgv[i] != NULL; i++ )
+    {
+        if( EQUAL(papszArgv[i],"-json") )
+            psOptions->eFormat = GDALINFO_FORMAT_JSON;
+        else if( EQUAL(papszArgv[i], "-mm") )
+            psOptions->bComputeMinMax = TRUE;
+        else if( EQUAL(papszArgv[i], "-hist") )
+            psOptions->bReportHistograms = TRUE;
+        else if( EQUAL(papszArgv[i], "-proj4") )
+            psOptions->bReportProj4 = TRUE;
+        else if( EQUAL(papszArgv[i], "-stats") )
+        {
+            psOptions->bStats = TRUE;
+            psOptions->bApproxStats = FALSE;
+        }
+        else if( EQUAL(papszArgv[i], "-approx_stats") )
+        {
+            psOptions->bStats = TRUE;
+            psOptions->bApproxStats = TRUE;
+        }
+        else if( EQUAL(papszArgv[i], "-sample") )
+            psOptions->bSample = TRUE;
+        else if( EQUAL(papszArgv[i], "-checksum") )
+            psOptions->bComputeChecksum = TRUE;
+        else if( EQUAL(papszArgv[i], "-nogcp") )
+            psOptions->bShowGCPs = FALSE;
+        else if( EQUAL(papszArgv[i], "-nomd") )
+            psOptions->bShowMetadata = FALSE;
+        else if( EQUAL(papszArgv[i], "-norat") )
+            psOptions->bShowRAT = FALSE;
+        else if( EQUAL(papszArgv[i], "-noct") )
+            psOptions->bShowColorTable = FALSE;
+        else if( EQUAL(papszArgv[i], "-listmdd") )
+            psOptions->bListMDD = TRUE;
+        else if( EQUAL(papszArgv[i], "-mdd") && papszArgv[i+1] != NULL )
+        {
+            psOptions->papszExtraMDDomains = CSLAddString(
+                psOptions->papszExtraMDDomains, papszArgv[++i] );
+        }
+        else if( EQUAL(papszArgv[i], "-oo") && papszArgv[i+1] != NULL )
+        {
+            i++;
+            if( psOptionsForBinary )
+            {
+                psOptionsForBinary->papszOpenOptions = CSLAddString(
+                     psOptionsForBinary->papszOpenOptions, papszArgv[i] );
+            }
+        }
+        else if( EQUAL(papszArgv[i], "-nofl") )
+            psOptions->bShowFileList = FALSE;
+        else if( EQUAL(papszArgv[i], "-sd") && papszArgv[i+1] != NULL )
+        {
+            i++;
+            if( psOptionsForBinary )
+            {
+                psOptionsForBinary->nSubdataset = atoi(papszArgv[i]);
+            }
+        }
+        else if( papszArgv[i][0] == '-' )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unknown option name '%s'", papszArgv[i]);
+            GDALInfoOptionsFree(psOptions);
+            return NULL;
+        }
+        else if( !bGotFilename )
+        {
+            bGotFilename = true;
+            if( psOptionsForBinary )
+                psOptionsForBinary->pszFilename = CPLStrdup(papszArgv[i]);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too many command options '%s'", papszArgv[i]);
+            GDALInfoOptionsFree(psOptions);
+            return NULL;
+        }
+    }
+
+    return psOptions;
+}
+
+/************************************************************************/
+/*                             GDALInfoOptionsFree()                    */
+/************************************************************************/
+
+/**
+ * Frees the GDALInfoOptions struct.
+ *
+ * @param psOptions the options struct for GDALInfo().
+ *
+ * @since GDAL 2.1
+ */
+
+void GDALInfoOptionsFree( GDALInfoOptions *psOptions )
+{
+    if( psOptions != NULL )
+    {
+        CSLDestroy( psOptions->papszExtraMDDomains );
+
+        CPLFree(psOptions);
+    }
 }
