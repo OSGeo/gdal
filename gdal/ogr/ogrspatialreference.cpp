@@ -6580,10 +6580,10 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
 /* -------------------------------------------------------------------- */
 /*      Compare projected coordinate system.                            */
 /* -------------------------------------------------------------------- */
-    if( IsProjected() )
+    const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+    if( poPROJCS != NULL )
     {
         const char *pszValue1, *pszValue2;
-        const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
 
         pszValue1 = this->GetAttrValue( "PROJECTION" );
         pszValue2 = poOtherSRS->GetAttrValue( "PROJECTION" );
