@@ -3893,7 +3893,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 /* -------------------------------------------------------------------- */
 /*      Save computed information.                                      */
 /* -------------------------------------------------------------------- */
-    double dfStdDev = sqrt(dfM2 / nSampleCount);
+    const double dfStdDev = (nSampleCount > 0) ? sqrt(dfM2 / nSampleCount) : 0.0;
 
     if( nSampleCount > 0 )
         SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
