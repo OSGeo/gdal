@@ -169,6 +169,8 @@ int main( int argc, char ** argv )
 
     GDALTranslateOptionsForBinary* psOptionsForBinary = GDALTranslateOptionsForBinaryNew();
     GDALTranslateOptions *psOptions = GDALTranslateOptionsNew(argv + 1, psOptionsForBinary);
+    CSLDestroy( argv );
+
     if( psOptions == NULL )
     {
         Usage(NULL);

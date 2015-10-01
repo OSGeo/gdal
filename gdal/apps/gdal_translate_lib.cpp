@@ -956,8 +956,6 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             pszGCPProjection = "";
 
         poVDS->SetGCPs( psOptions->nGCPCount, psOptions->pasGCPs, pszGCPProjection );
-
-        GDALDeinitGCPs( psOptions->nGCPCount, psOptions->pasGCPs );
     }
 
     else if( GDALGetGCPCount( hSrcDataset ) > 0 )
@@ -2189,6 +2187,8 @@ void GDALTranslateOptionsFree(GDALTranslateOptions *psOptions)
         CPLFree(psOptions->padfExponent);
         CSLDestroy(psOptions->papszMetadataOptions);
         CPLFree(psOptions->pszOutputSRS);
+        if( psOptions->nGCPCount )
+            GDALDeinitGCPs(psOptions->nGCPCount, psOptions->pasGCPs);
         CPLFree(psOptions->pasGCPs);
         CPLFree(psOptions->pszResampling);
         CPLFree(psOptions->pszProjSRS);
