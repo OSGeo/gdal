@@ -2661,3 +2661,21 @@ int GDAL_strncasecmp(const char *s1, const char *s2, size_t n)
 }
 
 #endif // defined(__linux__) && defined(DEBUG)
+
+/************************************************************************/
+/*                            CSLParseCommandLine()                     */
+/************************************************************************/
+
+/**
+ * Tokenize command line arguments in a list of strings.
+ *
+ * @param pszCommandLine  command line
+ *
+ * @return NULL terminated list of strings to free with CSLDestroy()
+ *
+ * @since GDAL 2.1
+ */
+char CPL_DLL ** CSLParseCommandLine(const char* pszCommandLine)
+{
+    return CSLTokenizeString(pszCommandLine);
+}

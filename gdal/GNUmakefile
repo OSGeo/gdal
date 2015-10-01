@@ -4,7 +4,10 @@ include GDALmake.opt
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/gcore/*.o \
 			$(GDAL_ROOT)/port/*.o \
-			$(GDAL_ROOT)/alg/*.o
+			$(GDAL_ROOT)/alg/*.o \
+ 			$(GDAL_ROOT)/apps/commonutils.o \
+			$(GDAL_ROOT)/apps/gdalinfo_lib.o \
+			$(GDAL_ROOT)/apps/gdal_translate_lib.o
 
 GDAL_OBJ += $(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
 
@@ -51,8 +54,11 @@ ifeq ($(MACOSX_FRAMEWORK),yes)
 	install_name_tool -id ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL .libs/libgdal.dylib
 endif
 
-check-lib:	port-target core-target frmts-target ogr-target gnm-target
+check-lib:	port-target core-target frmts-target ogr-target gnm-target appslib-target
 	$(MAKE) $(LIBGDAL-yes)
+
+appslib-target:
+	(cd apps; $(MAKE) appslib)
 
 port-target:
 	(cd port; $(MAKE))

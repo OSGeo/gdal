@@ -120,6 +120,8 @@ char CPL_DLL **
 void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList, 
                                        const char *pszSeparator );
 
+char CPL_DLL ** CSLParseCommandLine(const char* pszCommandLine);
+
 #define CPLES_BackslashQuotable 0
 #define CPLES_XML               1
 #define CPLES_URL               2

@@ -7,6 +7,8 @@ LIBS	=	$(GDAL_ROOT)\gdal_i.lib
 
 XTRAFLAGS =	-I..\gcore -I..\port -I..\frmts\vrt -I..\alg -I..\ogr -I..\ogr\ogrsf_frmts  $(GEOS_CFLAGS) -I..\ogr\ogrsf_frmts\geojson\libjson -I..\ogr\ogrsf_frmts\geojson
 
+EXTRAFLAGS =    -I..\frmts\vrt -I..\ogr\ogrsf_frmts\geojson\libjson -I..\ogr\ogrsf_frmts\geojson
+
 !INCLUDE ..\nmake.opt
 
 !IFDEF INCLUDE_OGR_FRMTS
@@ -27,10 +29,13 @@ default:	gdal_translate.exe gdalinfo.exe gdalserver.exe gdaladdo.exe gdalwarp.ex
 all:	default multireadtest.exe \
 			dumpoverviews.exe gdalwarpsimple.exe gdalflattenmask.exe \
 			gdaltorture.exe gdal2ogr.exe test_ogrsf.exe
+OBJ = commonutils.obj gdalinfo_lib.obj gdal_translate_lib.obj
 
-gdalinfo.exe:	gdalinfo.c commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gdalinfo.c commonutils.cpp $(XTRAOBJ) $(LIBS) \
-		/link $(LINKER_FLAGS)
+appslib: $(OBJ)
+
+gdalinfo.exe:	gdalinfo_bin.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gdalinfo_bin.cpp $(XTRAOBJ) $(LIBS) \
+		/Fe$@ /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdalserver.exe:	gdalserver.c $(GDALLIB) $(XTRAOBJ) 
@@ -38,9 +43,9 @@ gdalserver.exe:	gdalserver.c $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-gdal_translate.exe:	gdal_translate.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ)
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gdal_translate.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
-		/link $(LINKER_FLAGS)
+gdal_translate.exe:	gdal_translate_bin.cpp $(GDALLIB) $(XTRAOBJ)
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gdal_translate_bin.cpp $(XTRAOBJ) $(LIBS) \
+		/Fe$@ /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdaladdo.exe:	gdaladdo.cpp $(GDALLIB) $(XTRAOBJ)
@@ -63,13 +68,13 @@ gdallocationinfo.exe:	gdallocationinfo.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-gdalsrsinfo.exe:	gdalsrsinfo.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gdalsrsinfo.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+gdalsrsinfo.exe:	gdalsrsinfo.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gdalsrsinfo.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-gdalwarp.exe:	gdalwarp.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gdalwarp.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+gdalwarp.exe:	gdalwarp.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gdalwarp.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
@@ -78,23 +83,23 @@ gdal_contour.exe:	gdal_contour.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-nearblack.exe:	nearblack.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) nearblack.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+nearblack.exe:	nearblack.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) nearblack.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-gdalenhance.exe:	gdalenhance.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gdalenhance.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+gdalenhance.exe:	gdalenhance.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gdalenhance.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-gdaldem.exe:	gdaldem.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gdaldem.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+gdaldem.exe:	gdaldem.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gdaldem.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-gdal_grid.exe:	gdal_grid.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gdal_grid.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+gdal_grid.exe:	gdal_grid.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gdal_grid.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
@@ -108,8 +113,8 @@ gdaltindex.exe:	gdaltindex.c $(GDALLIB) $(XTRAOBJ)
 		$(XTRAOBJ) $(LIBS) /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-gdal_rasterize.exe:	gdal_rasterize.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gdal_rasterize.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+gdal_rasterize.exe:	gdal_rasterize.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gdal_rasterize.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
@@ -128,13 +133,13 @@ testreprojmulti.exe:	testreprojmulti.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-ogr2ogr.exe:	ogr2ogr.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) ogr2ogr.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+ogr2ogr.exe:	ogr2ogr.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) ogr2ogr.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-ogrinfo.exe:	ogrinfo.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) ogrinfo.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+ogrinfo.exe:	ogrinfo.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) ogrinfo.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
@@ -143,8 +148,8 @@ ogrtindex.exe:	ogrtindex.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
-ogrlineref.exe:	ogrlineref.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) ogrlineref.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+ogrlineref.exe:	ogrlineref.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) ogrlineref.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
@@ -153,8 +158,8 @@ testepsg.exe:	testepsg.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-test_ogrsf.exe:	test_ogrsf.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) test_ogrsf.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+test_ogrsf.exe:	test_ogrsf.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) test_ogrsf.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
@@ -183,13 +188,13 @@ gdal2ogr.exe:	gdal2ogr.c $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
     
-gnmmanage.exe:	gnmmanage.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gnmmanage.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+gnmmanage.exe:	gnmmanage.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gnmmanage.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1	
 
-gnmanalyse.exe:	gnmanalyse.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gnmanalyse.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
+gnmanalyse.exe:	gnmanalyse.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gnmanalyse.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	

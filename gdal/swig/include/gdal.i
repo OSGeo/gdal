@@ -930,3 +930,56 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
 __version__ = _gdal.VersionInfo("RELEASE_NAME") 
 %}
 #endif
+
+//************************************************************************
+//
+// GDAL Utilities
+//
+//************************************************************************
+
+%{
+#include "gdal_utils.h"   
+%}
+
+struct GDALInfoOptions {
+%extend {
+    GDALInfoOptions(char** options) {
+        return GDALInfoOptionsNew(options, NULL);
+    }
+
+    ~GDALInfoOptions() {
+        GDALInfoOptionsFree( self );
+    }
+}
+};
+
+%rename (InfoInternal) GDALInfo;
+char *GDALInfo( GDALDatasetShadow *hDataset, GDALInfoOptions *infoOptions );
+
+struct GDALTranslateOptions {
+%extend {
+    GDALTranslateOptions(char** options) {
+        return GDALTranslateOptionsNew(options, NULL);
+    }
+
+    ~GDALTranslateOptions() {
+        GDALTranslateOptionsFree( self );
+    }
+}
+};
+
+%rename (TranslateInternal) wrapper_GDALTranslate;
+%newobject wrapper_GDALTranslate;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALTranslate( const char* dest,
+                                      GDALDatasetShadow* dataset,
+                                      GDALTranslateOptions* translateOptions,
+                                      GDALProgressFunc callback=NULL,
+                                      void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    GDALTranslateOptionsSetProgress(translateOptions, callback, callback_data);
+    return GDALTranslate(dest, dataset, translateOptions, &usageError);    
+}
+%}

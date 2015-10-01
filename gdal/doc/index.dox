@@ -84,6 +84,7 @@ Download:
 <li> <a href="gdal_8h.html">gdal.h: Raster C API</a>
 <li> <a href="ogr__api_8h.html">ogr_api.h: Vector C API</a>
 <li> <a href="gdal__alg_8h.html">gdal_alg.h: GDAL Algorithms C API</a>
+<li> <a href="gdal__utils_8h.html">gdal_utils.h: GDAL Utilities C API</a>
 <li> <a href="classGDALDataset.html">GDALDataset C++ API</a>
 <li> <a href="classGDALRasterBand.html">GDALRasterBand C++ API</a>
 <li> <a href="classOGRLayer.html">OGRLayer C++ API</a>
