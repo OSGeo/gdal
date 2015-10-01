@@ -6,21 +6,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test PostGIS driver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -982,7 +982,7 @@ def ogr_pg_20():
     if layer is None:
         gdaltest.post_reason( 'did not get testgeom layer' )
         return 'fail'
- 
+
     for i in range(len(geometries)):
         feat = layer.GetFeature(i)
         geom = feat.GetGeometryRef()
@@ -4703,7 +4703,7 @@ def ogr_pg_77():
 
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_77_1' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_77_2' )
-    
+
     try:
         shutil.rmtree('tmp/ogr_pg_77')
     except:
@@ -4732,10 +4732,10 @@ def ogr_pg_77():
     if feat.GetField(0) != '2':
         return 'fail'
     ds = None
-    
+
     # Test fix for #6018
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" tmp/ogr_pg_77 -overwrite')
-   
+
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('ogr_pg_77_1')
     feat = lyr.GetNextFeature()
@@ -4847,7 +4847,7 @@ def ogr_pg_78():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def ogr_pg_table_cleanup():
 
@@ -4904,7 +4904,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_77_2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_78' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_78_2' )
-    
+
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.test41' )
@@ -5016,7 +5016,7 @@ gdaltest_list_internal = [
     ogr_pg_78,
     ogr_pg_cleanup ]
 
-DISABLED_gdaltest_list_internal = [ 
+DISABLED_gdaltest_list_internal = [
     ogr_pg_table_cleanup,
     ogr_pg_76,
     ogr_pg_cleanup ]
@@ -5053,4 +5053,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
