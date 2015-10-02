@@ -29,8 +29,10 @@
  ****************************************************************************/
 
 #include <locale.h>
-#include <errno.h>
-#include <stdlib.h>
+
+#include <cerrno>
+#include <cstdlib>
+#include <limits>
 
 #include "cpl_conv.h"
 
@@ -42,40 +44,6 @@ CPL_CVSID("$Id$");
 extern "C" {
 extern float strtof(const char *nptr, char **endptr);
 }
-#endif
-
-#ifndef NAN
-#  ifdef HUGE_VAL
-#    define NAN (HUGE_VAL * 0.0)
-#  else
-
-static float CPLNaN(void)
-{
-    float fNan;
-    int nNan = 0x7FC00000;
-    memcpy(&fNan, &nNan, 4);
-    return fNan;
-}
-
-#    define NAN CPLNan()
-#  endif
-#endif
-
-#ifndef INFINITY
-    static CPL_INLINE double CPLInfinity(void)
-    {
-        static double ZERO = 0;
-        return 1.0 / ZERO; /* MSVC doesn't like 1.0 / 0.0 */
-    }
-    #define INFINITY CPLInfinity()
-    static CPL_INLINE double CPLNegInfinity(void)
-    {
-        static double ZERO = 0;
-        return -1.0 / ZERO; /* MSVC doesn't like -1.0 / 0.0 */
-    }
-    #define NEG_INFINITY CPLNegInfinity()
-#else
-    #define NEG_INFINITY (-INFINITY)
 #endif
 
 /************************************************************************/
@@ -266,14 +234,14 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
             strcmp(nptr, "-1.#IND") == 0)
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
-            return NAN;
+            return -std::numeric_limits<double>::quiet_NaN();
         }
 
         if (strcmp(nptr,"-inf") == 0 ||
             EQUALN (nptr,"-1.#INF",strlen("-1.#INF")))
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
-            return NEG_INFINITY;
+            return -std::numeric_limits<double>::infinity();
         }
     }
     else if (nptr[0] == '1')
@@ -281,23 +249,23 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
         if (strcmp(nptr, "1.#QNAN") == 0)
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
-            return NAN;
+            return std::numeric_limits<double>::quiet_NaN();
         }
         if( EQUALN (nptr,"1.#INF",strlen("1.#INF")) )
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
-            return INFINITY;
+            return std::numeric_limits<double>::infinity();
         }
     }
     else if (nptr[0] == 'i' && strcmp(nptr,"inf") == 0)
     {
         if( endptr ) *endptr = (char*)nptr + strlen(nptr);
-        return INFINITY;
+        return std::numeric_limits<double>::infinity();
     }
     else if (nptr[0] == 'n' && strcmp(nptr,"nan") == 0)
     {
         if( endptr ) *endptr = (char*)nptr + strlen(nptr);
-        return NAN;
+        return std::numeric_limits<double>::quiet_NaN();
     }
 
 /* -------------------------------------------------------------------- */
@@ -306,10 +274,10 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 /*  with the one, taken from locale settings and use standard strtod()  */
 /*  on that buffer.                                                     */
 /* -------------------------------------------------------------------- */
-    char*       pszNumber = CPLReplacePointByLocalePoint(nptr, point);
+    char* pszNumber = CPLReplacePointByLocalePoint(nptr, point);
 
-    double dfValue = strtod( pszNumber, endptr );
-    int nError = errno;
+    const double dfValue = strtod( pszNumber, endptr );
+    const int nError = errno;
 
     if ( endptr )
         *endptr = (char *)nptr + (*endptr - pszNumber);
