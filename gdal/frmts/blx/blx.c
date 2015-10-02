@@ -11,10 +11,10 @@
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -136,12 +136,12 @@ STATIC int compress_chunk(unsigned char *inbuf, int inlen, unsigned char *outbuf
 	if(inlen) {
 	    next = *inbuf++;
 	    inlen--;
-	} else { 
+	} else {
 	    if(next == 0x100)
 		next = -1;
-	    else 
+	    else
 		next = 0x100;
-	}	
+	}
 	reg = (reg << table2[j][1]) | (table2[j][2] >> (13-table2[j][1]));
 	m += table2[j][1];
 
@@ -162,18 +162,18 @@ STATIC int compress_chunk(unsigned char *inbuf, int inlen, unsigned char *outbuf
 STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outbuf, int outbuflen) {
     int i,j,k,m=0, outlen=0;
     unsigned reg, newdata;
-    
+
     if (inlen < 4)
         return -1;
 
     reg = *(inbuf+3) | (*(inbuf+2)<<8) | (*(inbuf+1)<<16) | (*(inbuf+0)<<24);
     inbuf+=4; inlen-=4;
-    
+
     newdata = (reg>>19)&0x1fff;
 
     while(1) {
 	j = newdata >> 5;
-	
+
 	if(table1[j] == 0xff) {
 	    i=1;
 	    while((int)newdata >= table2[table3[i]][2]) i++;
@@ -181,7 +181,7 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
 	    j=table3[i-1];
 
             k = j + ((newdata-table2[j][2]) >> (13-table2[j][1]));
-	    
+
 	    if(table2[k][0] == 0x100) 
 		break;
 	    else {
@@ -197,7 +197,7 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
 	}
 
 	m += table2[j][1];
-	
+
 	if(m>=19) {
 	    if(m>=8) {	
 		for(i=m>>3; i; i--) {
@@ -209,7 +209,7 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
 		}
 	    }
 	    m = m&7;
-	}	
+	}
 	newdata = (reg >> (19-m)) & 0x1fff;
     }
     return outlen;
@@ -231,23 +231,20 @@ STATIC blxdata *reconstruct_horiz(blxdata *base, blxdata *diff, unsigned rows, u
     for(i=0; i<rows; i++)	
 	for(j=cols-2; j>0; j--)
 	    out[2*(cols*i+j)] = diff[cols*i+j] + (((short)(base[cols*i+j] + 2*(base[cols*i+j-1]-out[2*(cols*i+j+1)])-3*base[cols*i+j+1]+1))>>3);
-    
+
     /* First column */
     for(i=0; i<rows; i++)	
 	out[2*cols*i] = diff[cols*i] + (((short)(base[cols*i]-base[cols*i+1]+1))>>2);
-	
+
     for(i=0; i<rows; i++)
 	for(j=0; j<cols; j++) {
 	    tmp=base[cols*i+j]+(((short)(out[2*(cols*i+j)]+1))>>1);
 	    out[2*cols*i+2*j+1] = tmp-out[2*(cols*i+j)];
 	    out[2*cols*i+2*j] = tmp;
-	}	
-
+	}
 
     return out;
 }
-
-
 
 /*
   Reconstruct a new detail level with double resolution in the vertical direction 
@@ -256,7 +253,7 @@ STATIC blxdata *reconstruct_horiz(blxdata *base, blxdata *diff, unsigned rows, u
 STATIC blxdata *reconstruct_vert(blxdata *base, blxdata *diff, unsigned rows, unsigned cols, blxdata *out) {
     unsigned int i,j;
     blxdata tmp;
-    
+
     /* Last row */
     for(i=0; i<cols; i++)	
 	out[2*cols*(rows-1)+i] = diff[cols*(rows-1)+i] + (((short)(base[cols*(rows-2)+i]-base[cols*(rows-1)+i]-1))>>2);
@@ -265,17 +262,17 @@ STATIC blxdata *reconstruct_vert(blxdata *base, blxdata *diff, unsigned rows, un
     for(i=0; i<cols; i++)	
 	for(j=rows-2; j>0; j--)
 	    out[2*cols*j+i] = diff[cols*j+i] + ((short)((base[cols*j+i] + 2*(base[cols*(j-1)+i]-out[2*cols*(j+1)+i])-3*base[cols*(j+1)+i]+1))>>3);
-    
+
     /* First row */
     for(i=0; i<cols; i++)	
 	out[i] = diff[i] + (((short)(base[i]-base[i+cols]+1))>>2);
-	
+
     for(i=0; i<cols; i++)
 	for(j=0; j<rows; j++) {
 	    tmp = base[cols*j+i]+(((short)(out[2*cols*j+i]+1))>>1);
 	    out[cols*(2*j+1)+i] = tmp-out[2*cols*j+i];
 	    out[cols*2*j+i] = tmp;
-	}	
+	}
     return out;
 }
 
@@ -293,8 +290,7 @@ STATIC void decimate_horiz(blxdata *in, unsigned int rows, unsigned int cols, bl
 	    base[i*cols/2+j/2] = in[i*cols+j]-(((short)(tmp+1))>>1);
 	}
     }
-    
-    
+
     /* First column */
     for(i=0; i<rows; i++) {
 	diff[cols/2*i] -= ((short)(base[i*cols/2]-base[i*cols/2+1]+1))>>2;
@@ -304,7 +300,7 @@ STATIC void decimate_horiz(blxdata *in, unsigned int rows, unsigned int cols, bl
     for(i=0; i<rows; i++) 
 	for(j=1; j<cols/2-1; j++) 
 	    diff[cols/2*i+j] -= ((short)(base[cols/2*i+j] + 2*(base[cols/2*i+j-1]-diff[cols/2*i+j+1])-3*base[cols/2*i+j+1]+1))>>3;
-    
+
     /* Last column */
     for(i=0; i<rows; i++)	
 	diff[cols/2*i+cols/2-1] -= ((short)(base[i*cols/2+cols/2-2]-base[i*cols/2+cols/2-1]-1))>>2;
@@ -323,21 +319,20 @@ STATIC void decimate_vert(blxdata *in, unsigned int rows, unsigned int cols, blx
 	    diff[i/2*cols+j] = tmp;
 	    base[i/2*cols+j] = in[i*cols+j]-(((short)(tmp+1))>>1);
 	}
-    
+
     /* First row */
     for(j=0; j<cols; j++)
 	diff[j] -= ((short)(base[j]-base[cols+j]+1))>>2;
 
-    
+
     /* Intermediate rows */
-    for(i=1; i<rows/2-1; i++)	
+    for(i=1; i<rows/2-1; i++)
 	for(j=0; j<cols; j++)
 	    diff[cols*i+j] -= ((short)(base[cols*i+j] + 2*(base[cols*(i-1)+j]-diff[cols*(i+1)+j])-3*base[cols*(i+1)+j]+1))>>3;
-    
+
     /* Last row */
     for(j=0; j<cols; j++)
 	diff[cols*(rows/2-1)+j] -= ((short)(base[cols*(rows/2-2)+j]-base[cols*(rows/2-1)+j]-1))>>2;
-	     
 }
 
 typedef union
@@ -533,7 +528,7 @@ static void put_cellindex_entry(blxcontext_t *ctx, struct cellindex_s *ci, unsig
     put_unsigned_short(ctx, (unsigned short)ci->datasize, buffer);
     put_unsigned_short(ctx, (unsigned short)ci->compdatasize, buffer);
 }
-     
+
 /* Transpose matrix in-place */
 static void transpose(blxdata *data, int rows, int cols) {
     int i,j;
@@ -551,6 +546,7 @@ struct lutentry_s {
     blxdata value;
     int frequency;
 };	
+
 int lutcmp(const void *aa, const void *bb) {
     const struct lutentry_s *a=aa, *b=bb;
 
@@ -570,10 +566,10 @@ int blx_encode_celldata(blxcontext_t *ctx,
     struct lutentry_s lut[256];
     int lutsize=0;
 
-    int i,j;
-        
+    int i, j;
+
     *p++ = (unsigned char)(side/32-4); /* Resolution */
-    
+
     /* Allocated memory for buffers */
     indata_scaled = BLXmalloc(sizeof(blxdata)*side*side);
     vdec = BLXmalloc(sizeof(blxdata)*side*side/2);
@@ -591,7 +587,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
     }
 
     indata = indata_scaled;
-    
+
     cout = tmpdata;
 
     for(level=0; level < 5; level++) {
@@ -601,14 +597,14 @@ int blx_encode_celldata(blxcontext_t *ctx,
 	decimate_vert(indata, side, side, vdec, vdiff);
 	decimate_horiz(vdec, side/2, side, c[0], c[1]);
 	decimate_horiz(vdiff, side/2, side, c[2], c[3]);
-	
+
 	/* For some reason the matrix is transposed if the lut is used for vdec_hdiff */
 	for(i=0; i<side/2; i++)	
 	    for(j=0; j<side/2; j++) {
 		tc1[j*side/2+i] = c[1][i*side/2+j];
 		tc1[i*side/2+j] = c[1][j*side/2+i];
 	    }
-	
+
 	for(cn=1; cn<4; cn++) {
 	    /* Use the possibly transposed version of c when building lut */
 	    if(cn==1)
@@ -621,7 +617,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
 	    for(i=0; i<side*side/4; i++) {
 		/* Find element in lookup table */
 		for(j=0; (j<lutsize) && (lut[j].value != clut[i]); j++);
-		
+
 		if(clut[i] != 0) {
 		    if(j==lutsize) {	
 			lut[lutsize].value=clut[i];	
@@ -637,7 +633,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
                 /* Since the Huffman table is arranged to let smaller number occupy
 		   less bits after the compression, the lookup table is sorted on frequency */
 		qsort(lut, lutsize, sizeof(struct lutentry_s), lutcmp);
-		
+
 		zeros = 0;
 		for(i=0; i<side*side/4; i++) {
 		    if(clut[i] == 0) 
@@ -738,7 +734,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
     if(ctx->debug) {
 	BLXdebug0("==============================\n");
     }
-    
+
     base = BLXmalloc(2 * baseside[0] * baseside[0] * sizeof(blxdata));
     diff = BLXmalloc(2 * baseside[0] * baseside[0] * sizeof(blxdata));
     if (base == NULL || diff == NULL)
@@ -777,7 +773,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 	    } else {
 		linfo[level][c].dlen = 0;
 	    }
-	}		
+	}
     }
 
     for(level=0; level < 5; level++) {
@@ -801,7 +797,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 		    BLXdebug1("%d, ",linfo[level][c].lut[i]);
 		BLXdebug0("}\n");
 	    }
-	    
+
 	    linfo[level][c].data = BLXmalloc(baseside[level]*baseside[level]*sizeof(blxdata));
             if (linfo[level][c].data == NULL)
             {
@@ -860,12 +856,9 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 		    BLXdebug1("%d, ",linfo[level][c].data[i]);
 		BLXdebug0("}\n");
 	    }
-
-
 	}
-
     }
-    
+
     if (len < (int)sizeof(short) * baseside[4]*baseside[4])
     {
         BLXerror0("Cell corrupt");
@@ -875,7 +868,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
     for(i=0; i<baseside[4]*baseside[4]; i++)
 	linfo[4][0].data[i] = (blxdata)get_short(ctx, &inptr);
     len -=sizeof(short) * baseside[4]*baseside[4];
-    
+
     for(level=4; level >= overviewlevel; level--) {
 	if(ctx->debug) {
 	    BLXdebug1("baseside:%d\n",baseside[level]);
@@ -888,7 +881,6 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 		BLXdebug1("%d, ",linfo[level][1].data[i]);
 	    BLXdebug0("}\n");
 	}
-
 
 	reconstruct_horiz(linfo[level][0].data, linfo[level][1].data, baseside[level], baseside[level], base);
 	if(ctx->debug) {
@@ -909,7 +901,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 	    reconstruct_vert(base, diff, baseside[level], 2*baseside[level], linfo[level-1][0].data);
 	else	
 	    reconstruct_vert(base, diff, baseside[level], 2*baseside[level], outbuf);
-    }    
+    }
 
     if(overviewlevel == 0) {
         if (len < 1)
@@ -963,7 +955,6 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
             outbuf[i] = (blxdata)val;
     }
 
-
  error:
     if (base != NULL)
          BLXfree(base);
@@ -984,13 +975,13 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 
 blxcontext_t *blx_create_context() {
     blxcontext_t *c;
-    
+
     c = BLXmalloc(sizeof(blxcontext_t));
-    
+
     memset(c,0,sizeof(blxcontext_t));
-    
+
     c->cell_ysize = c->cell_xsize = 128;
-    
+
     c->minval = 32767;
     c->maxval = -32768;
 
@@ -1032,7 +1023,7 @@ int blx_checkheader(char *header) {
 
 void blx_generate_header(blxcontext_t *ctx, unsigned char *header) {
     unsigned char *hptr = header;
-    
+
     memset(header, 0, 102);
 
     /* Write signature */
@@ -1076,7 +1067,7 @@ int blx_writecell(blxcontext_t *ctx, blxdata *cell, int cellrow, int cellcol) {
 	    ctx->minval = cell[i];
 	if(cell[i]!=BLX_UNDEF)
 	    allundef=0;
-    }		
+    }
 
     if(allundef)
 	return status;
@@ -1093,11 +1084,11 @@ int blx_writecell(blxcontext_t *ctx, blxdata *cell, int cellrow, int cellcol) {
 	status=-2;
 	goto error;
     }
-    
+
     bufsize = sizeof(blxdata)*ctx->cell_xsize*ctx->cell_ysize+1024;
     uncompbuf = BLXmalloc(bufsize);
     outbuf = BLXmalloc(bufsize);
-    
+
     uncompsize = blx_encode_celldata(ctx, cell, ctx->cell_xsize, uncompbuf, bufsize);
     compsize = compress_chunk(uncompbuf, uncompsize, outbuf, bufsize);
     if (compsize < 0)
@@ -1109,16 +1100,16 @@ int blx_writecell(blxcontext_t *ctx, blxdata *cell, int cellrow, int cellcol) {
 
     if(uncompsize > ctx->maxchunksize)
 	ctx->maxchunksize = uncompsize;
-    
+
     ctx->cellindex[cellrow*ctx->cell_cols + cellcol].offset = BLXftell(ctx->fh);
     ctx->cellindex[cellrow*ctx->cell_cols + cellcol].datasize = uncompsize;
     ctx->cellindex[cellrow*ctx->cell_cols + cellcol].compdatasize = compsize;
-    
+
     if((int)BLXfwrite(outbuf, 1, compsize, ctx->fh) != compsize) {
 	status=-1;
 	goto error;
     }
-    
+
  error:
     if(uncompbuf) 
 	BLXfree(uncompbuf);
@@ -1148,7 +1139,7 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
     hptr = header;
     if(ctx->write) {
 	blx_generate_header(ctx, header);
-	
+
 	if(BLXfwrite(header, 1, 102, ctx->fh) != 102)
 	    goto error;
 
@@ -1157,7 +1148,7 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
 	    goto error;
 	}
 	memset(ctx->cellindex, 0, sizeof(struct cellindex_s) * ctx->cell_rows * ctx->cell_cols);
-	
+
 	/* Write the empty cell index (this will be overwritten when we have actual data)*/
 	for(i=0;i<ctx->cell_rows;i++)
 	    for(j=0;j<ctx->cell_cols;j++) {
@@ -1171,7 +1162,7 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
 	/* Read header */
 	if(BLXfread(header, 1, 102, ctx->fh) != 102)
 	    goto error;
-    
+
 	signature[0] = get_short_le(&hptr);
 	signature[1] = get_short_le(&hptr);
 
@@ -1219,7 +1210,7 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
 
 	ctx->pixelsize_lon = get_double(ctx, &hptr);
 	ctx->pixelsize_lat = -get_double(ctx, &hptr);
-    
+
 	ctx->minval = get_short(ctx, &hptr); 
 	ctx->maxval = get_short(ctx, &hptr);
 	ctx->zscale = get_short(ctx, &hptr);
@@ -1294,7 +1285,7 @@ short *blx_readcell(blxcontext_t *ctx, int row, int col, short *buffer, int bufs
     int tmpbufsize,i;
     short *result=NULL;
     int npoints;
-    
+
     if((ctx==NULL) || (row >= ctx->cell_rows) || (col >= ctx->cell_cols))
 	return NULL;
 
@@ -1315,10 +1306,10 @@ short *blx_readcell(blxcontext_t *ctx, int row, int col, short *buffer, int bufs
 
 	if((chunk == NULL) || (cchunk == NULL)) 
 	    goto error;
-    
+
 	if(BLXfread(cchunk, 1, ci->compdatasize, ctx->fh) != ci->compdatasize)
 	    goto error;
-    
+
         if((unsigned int)uncompress_chunk(cchunk, ci->compdatasize, chunk, ci->datasize) != ci->datasize)
 	    goto error;
 
@@ -1326,10 +1317,10 @@ short *blx_readcell(blxcontext_t *ctx, int row, int col, short *buffer, int bufs
 	tmpbuf = BLXmalloc(tmpbufsize);
         if (tmpbuf == NULL)
             goto error;
-    
+
 	if (decode_celldata(ctx, chunk, ci->datasize, NULL, tmpbuf, tmpbufsize, overviewlevel) == NULL)
             goto error;
-    
+
 	for(i=0; i<npoints; i++)
 	    buffer[i] = tmpbuf[i];
     }
