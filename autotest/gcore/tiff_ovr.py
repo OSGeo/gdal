@@ -1490,9 +1490,6 @@ def tiff_ovr_38():
 # Test external overviews on all datatypes
 
 def tiff_ovr_39():
-    import test_cli_utilities
-    if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
     src_ds.GetRasterBand(1).ReadRaster(0,0,20,20)
@@ -1510,7 +1507,7 @@ def tiff_ovr_39():
                      gdal.GDT_CFloat32,
                      gdal.GDT_CFloat64]:
 
-        gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' data/byte.tif tmp/ovr39.tif -ot ' + gdal.GetDataTypeName(datatype))
+        gdal.Translate('tmp/ovr39.tif', 'data/byte.tif', options = '-ot ' + gdal.GetDataTypeName(datatype))
 
         try:
             os.remove('tmp/ovr39.tif.ovr')
