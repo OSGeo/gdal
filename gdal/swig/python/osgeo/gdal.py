@@ -229,7 +229,7 @@ def TranslateOptions(options = [], format = 'GTiff',
               assignedULLR = None, metadataOptions = None,
               outputSRS = None, GCPs = None,
               noData = None, rgbExpand = None,
-              stats = False, rat = True, resampling = None,
+              stats = False, rat = True, resampleAlg = None,
               callback = None, callback_data = None):
     """ Create a TranslateOptions() object that can be passed to gdal.Translate()
         Keyword arguments are :
@@ -260,7 +260,7 @@ def TranslateOptions(options = [], format = 'GTiff',
           rgbExpand --- Color palette expansion mode: "gray", "rgb", "rgba"
           stats --- whether to calcule statistics
           rat --- whether to write source RAT
-          resampling --- resampling mode
+          resampleAlg --- resampling mode
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -308,7 +308,7 @@ def TranslateOptions(options = [], format = 'GTiff',
             new_options += ['-a_srs', str(outputSRS) ]
         if GCPs is not None:
             for gcp in GCPs:
-                new_options += ['-gcp', str(gcp.GCPX), str(gcp.GCPY), str(gcp.GCPZ), str(gcp.GCPPixel), str(gcp.GCPLine) ]
+                new_options += ['-gcp', str(gcp.GCPPixel), str(gcp.GCPLine), str(gcp.GCPX), str(gcp.GCPY), str(gcp.GCPZ) ]
         if projWin is not None:
             new_options += ['-projwin', str(projWin[0]), str(projWin[1]), str(projWin[2]), str(projWin[3])]
         if projWinSRS is not None:
@@ -321,8 +321,23 @@ def TranslateOptions(options = [], format = 'GTiff',
             new_options += ['-stats']
         if not rat:
             new_options += ['-norat']
-        if resampling is not None:
-            new_options += ['-r', str(resampling) ]
+        if resampleAlg is not None:
+            if resampleAlg == GRA_NearestNeighbour:
+                new_options += ['-r', 'near']
+            elif resampleAlg == GRA_Bilinear:
+                new_options += ['-r', 'bilinear']
+            elif resampleAlg == GRA_Cubic:
+                new_options += ['-r', 'cubic']
+            elif resampleAlg == GRA_CubicSpline:
+                new_options += ['-r', 'cubicspline']
+            elif resampleAlg == GRA_Lanczos:
+                new_options += ['-r', 'lanczos']
+            elif resampleAlg == GRRA_Average:
+                new_options += ['-r', 'average']
+            elif resampleAlg == GRA_Mode:
+                new_options += ['-r', 'mode']
+            else:
+                new_options += ['-r', str(resampleAlg) ]
         if xRes != 0 and yRes != 0:
             new_options += ['-tr', str(xRes), str(yRes) ]
 
@@ -346,6 +361,184 @@ def Translate(destName, srcDS, **kwargs):
         srcDS = Open(srcDS)
 
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
+
+def WarpOptions(options = [], format = 'GTiff', 
+         minX = None, minY = None, maxX = None, maxY = None,
+         xRes = None, yRes = None, targetAlignedPixels = False,
+         oXSizePixel = 0, oYSizePixel = 0,
+         srcSRS = None, dstSRS = None,
+         enableSrcAlpha = False, enableDstAlpha = False, 
+         warpOptions = None, errorThreshold = None,
+         warpMemoryLimit = None, creationOptions = None, outputType = GDT_Unknown,
+         workingType = GDT_Unknown, resampleAlg = None,
+         srcNodata = None, dstNodata = None, multithread = False,
+         tps = False, rpc = False, geoloc = False, polynomialOrder = None,
+         transformerOptions = None, cutlineDSName = None,
+         cutlineLayer = None, cutlineWhere = None, cutlineSQL = None, cropToCutline = False,
+         copyMetadata = True, MDConflictValue = None,
+         setColorInterpretation = False,
+         callback = None, callback_data = None):
+    """ Create a WarpOptions() object that can be passed to gdal.Warp()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          minX, minY, maxX, maxY --- output bounds in target SRS
+          xRes, yRes --- output resolution in target SRS
+          oXSizePixel --- width of the output raster in pixel
+          oYSizePixel --- height of the output raster in pixel
+          srcSRS --- source SRS
+          dstSRS --- output SRS
+          targetAlignedPixels --- whether to force output bounds to be multiple of output resolution
+          enableSrcAlpha --- whether to force the last band of the input dataset to be considered as an alpha band
+          enableDstAlpha --- whether to force the creation of an output alpha band
+          outputType --- output type (gdal.GDT_Byte, etc...)
+          workingType --- working type (gdal.GDT_Byte, etc...)
+          warpOptions --- list of warping options
+          errorThreshold --- error threshold for approximation transformer (in pixels)
+          warpMemoryLimit --- size of working buffer in bytes
+          resampleAlg --- resampling mode
+          creationOptions --- list of creation options
+          srcNodata --- source nodata value(s)
+          dstNodata --- output nodata value(s)
+          multithread --- whether to multithread computation and I/O operations
+          tps --- whether to use Thin Plate Spline GCP transformer
+          rpc --- whether to use RPC transformer
+          geoloc --- whether to use GeoLocation array transformer
+          polynomialOrder --- order of polynomial GCP interpolation
+          transformerOptions --- list of transformer options
+          cutlineDSName --- cutline dataset name
+          cutlineLayer --- cutline layer name
+          cutlineWhere --- cutline WHERE clause
+          cutlineSQL --- cutline SQL statement
+          cropToCutline --- whether to use cutline extent for output bounds
+          copyMetadata --- whether to copy source metadata
+          MDConflictValue --- metadata data conflict value
+          setColorInterpretation --- whether to force color interpretation of input bands to output bands
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-of', format]
+        if outputType != GDT_Unknown:
+            new_options += ['-ot', GetDataTypeName(outputType) ]
+        if workingType != GDT_Unknown:
+            new_options += ['-wt', GetDataTypeName(workingType) ]
+        if minX is not None and minY is not None and maxX is not None and maxY is not None:
+            new_options += ['-te', str(minX), str(minY), str(maxX), str(maxY) ]
+        if xRes is not None and yRes is not None:
+            new_options += ['-tr', str(xRes), str(yRes) ]
+        if oXSizePixel != 0 or oYSizePixel != 0:
+            new_options += ['-ts', str(oXSizePixel), str(oYSizePixel)]
+        if srcSRS is not None:
+            new_options += ['-s_srs', str(srcSRS) ]
+        if dstSRS is not None:
+            new_options += ['-t_srs', str(dstSRS) ]
+        if targetAlignedPixels:
+            new_options += ['-tap']
+        if enableSrcAlpha:
+            new_options += ['-srcalpha']
+        if enableDstAlpha:
+            new_options += ['-dstalpha']
+        if warpOptions is not None:
+            for opt in warpOptions:
+                new_options += ['-wo', str(opt)]
+        if errorThreshold is not None:
+            new_options += ['-et', str(errorThreshold)]
+        if resampleAlg is not None:
+            if resampleAlg == GRIORA_NearestNeighbour:
+                new_options += ['-r', 'near']
+            elif resampleAlg == GRIORA_Bilinear:
+                new_options += ['-rb']
+            elif resampleAlg == GRIORA_Cubic:
+                new_options += ['-rc']
+            elif resampleAlg == GRIORA_CubicSpline:
+                new_options += ['-rcs']
+            elif resampleAlg == GRIORA_Lanczos:
+                new_options += ['-r', 'lanczos']
+            elif resampleAlg == GRIORA_Average:
+                new_options += ['-r', 'average']
+            elif resampleAlg == GRIORA_Mode:
+                new_options += ['-r', 'mode']
+            elif resampleAlg == GRIORA_Gauss:
+                new_options += ['-r', 'gauss']
+            else:
+                new_options += ['-r', str(resampleAlg) ]
+        if warpMemoryLimit is not None:
+            new_options += ['-wm', str(warpMemoryLimit) ]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if srcNodata is not None:
+            new_options += ['-srcnodata', str(srcNodata) ]
+        if dstNodata is not None:
+            new_options += ['-dstnodata', str(dstNodata) ]
+        if multithread:
+            new_options += ['-multi']
+        if tps:
+            new_options += ['-tps']
+        if rpc:
+            new_options += ['-rpc']
+        if geoloc:
+            new_options += ['-geoloc']
+        if polynomialOrder is not None:
+            new_options += ['-order', str(polynomialOrder)]
+        if transformerOptions is not None:
+            for opt in transformerOptions:
+                new_options += ['-to', opt ]
+        if cutlineDSName is not None:
+            new_options += ['-cutline', str(cutlineDSName) ]
+        if cutlineLayer is not None:
+            new_options += ['-cl', str(cutlineLayer) ]
+        if cutlineWhere is not None:
+            new_options += ['-cwhere', str(cutlineWhere) ]
+        if cutlineSQL is not None:
+            new_options += ['-csql', str(cutlineSQL) ]
+        if cropToCutline:
+            new_options += ['-crop_to_cutline']
+        if not copyMetadata:
+            new_options += ['-nomd']
+        if MDConflictValue:
+            new_options += ['-cvmd', str(MDConflictValue) ]
+        if setColorInterpretation:
+            new_options += ['-setci']
+
+    return (GDALWarpAppOptions(new_options), callback, callback_data)
+
+def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
+    """ Warp one or several datasets.
+        Arguments are :
+          destNameOrDestDS --- Output dataset name or object
+          srcDSOrSrcDSTab --- an array of Dataset objects or filenames, or a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.WarpOptions()
+        If options is provided as a gdal.WarpOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = WarpOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDSOrSrcDSTab) == type(''):
+        srcDSTab = [Open(srcDSOrSrcDSTab)]
+    elif type(srcDSOrSrcDSTab) == type([]):
+        srcDSTab = []
+        for elt in srcDSOrSrcDSTab:
+            if type(elt) == type(''):
+                srcDSTab.append(Open(elt))
+            else:
+                srcDSTab.append(elt)
+    else:
+        srcDSTab = [ srcDSOrSrcDSTab ]
+
+    if type(destNameOrDestDS) == type(''):
+        return wrapper_GDALWarpDestName(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
+    else:
+        return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
 
 
 
@@ -2074,6 +2267,39 @@ def TranslateInternal(*args):
     """
   return _gdal.TranslateInternal(*args)
 TranslateInternal = _gdal.TranslateInternal
+class GDALWarpAppOptions(_object):
+    """Proxy of C++ GDALWarpAppOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALWarpAppOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALWarpAppOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALWarpAppOptions self, char ** options) -> GDALWarpAppOptions"""
+        this = _gdal.new_GDALWarpAppOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALWarpAppOptions
+    __del__ = lambda self : None;
+GDALWarpAppOptions_swigregister = _gdal.GDALWarpAppOptions_swigregister
+GDALWarpAppOptions_swigregister(GDALWarpAppOptions)
+
+
+def wrapper_GDALWarpDestDS(*args):
+  """
+    wrapper_GDALWarpDestDS(Dataset dstDS, int object_list_count, GDALWarpAppOptions warpAppOptions, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> int
+    """
+  return _gdal.wrapper_GDALWarpDestDS(*args)
+wrapper_GDALWarpDestDS = _gdal.wrapper_GDALWarpDestDS
+
+def wrapper_GDALWarpDestName(*args):
+  """
+    wrapper_GDALWarpDestName(char const * dest, int object_list_count, GDALWarpAppOptions warpAppOptions, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> Dataset
+    """
+  return _gdal.wrapper_GDALWarpDestName(*args)
+wrapper_GDALWarpDestName = _gdal.wrapper_GDALWarpDestName
 # This file is compatible with both classic and new-style classes.
 
 

@@ -1431,6 +1431,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 %enddef
 
 OBJECT_LIST_INPUT(GDALRasterBandShadow);
+OBJECT_LIST_INPUT(GDALDatasetShadow);
 
 /* ***************************************************************************
  *                       GetHistogram()

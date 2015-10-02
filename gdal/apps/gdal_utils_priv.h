@@ -60,6 +60,22 @@ struct GDALTranslateOptionsForBinary
     char* pszFormat;
 };
 
+struct GDALWarpAppOptionsForBinary
+{
+    char** papszSrcFiles;
+    char* pszDstFilename;
+    int bQuiet;
+    char** papszOpenOptions;
+
+    /*! output dataset open option (format specific) */
+    char **papszDestOpenOptions;
+
+    int bOverwrite;
+    int bCreateOutput;
+    int bFormatExplicitlySet;
+    char* pszFormat;
+};
+
 CPL_C_END
 
 #endif /* _GDAL_UTILS_PRIV_H_INCLUDED */
