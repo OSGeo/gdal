@@ -510,8 +510,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     pszSource = GDALGetDescription(hSrcDataset);
 
-
-    if ( strcmp(pszSource, pszDest) == 0)
+    if( strcmp(pszSource, pszDest) == 0 &&
+        GDALGetDatasetDriver(hSrcDataset) != GDALGetDriverByName("MEM") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Source and destination datasets must be different.");
         
