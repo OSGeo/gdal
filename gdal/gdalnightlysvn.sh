@@ -37,17 +37,17 @@ if test "${BRANCH}" = "stable"; then
   SVNBRANCH="branches/${VERSION_STABLE}"
 fi
 
-CWD=/osgeo/gdal
+CWD=/var/www/gdal
 DATE=`date +%Y%m%d`
 DATEVER=`date +%Y.%m.%d`
 NIGHTLYVER="svn-${BRANCH}-${DATEVER}"
-BUILDER="/osgeo/gdal/mkgdaldist.sh"
+BUILDER="/var/www/gdal/mkgdaldist.sh"
 GDALDIR="${CWD}/${GDAL}"
-DAILYDIR="/osgeo/gdal/gdal-web/daily"
+DAILYDIR="/var/www/gdal/gdal-web/daily"
 LOG="/dev/null"
 
 if test ${VERBOSE} = 1; then
-	LOG=/osgeo/gdal/nightly.log
+	LOG=/var/www/gdal/nightly.log
 	echo -n "Building GDAL Nightly: ${NIGHTLYVER}..."
 fi
 
