@@ -35,7 +35,6 @@ from osgeo import gdal
 sys.path.append( '../pymod' )
 
 import gdaltest
-import test_cli_utilities
 
 ###############################################################################
 # Verify reading from simple existing warp definition.
@@ -174,9 +173,6 @@ def vrtwarp_4():
 # Test implicit overviews with selection of the upper source overview level
 
 def vrtwarp_5():
-    
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_5.tif', src_ds)
@@ -188,11 +184,9 @@ def vrtwarp_5():
     tmp_ds.GetRasterBand(1).GetOverview(1).Checksum()
     tmp_ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/vrtwarp_5.tif -ovr NONE tmp/vrtwarp_5_tmp.tif -overwrite -ts 10 10')
-    ds = gdal.Open('tmp/vrtwarp_5_tmp.tif')
+    ds = gdal.Warp('', 'tmp/vrtwarp_5.tif', options = '-of MEM -ovr NONE -overwrite -ts 10 10')
     expected_cs_ov0 = ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.Unlink('tmp/vrtwarp_5_tmp.tif')
 
     ds = gdal.GetDriverByName('MEM').Create('', 5, 5, 1)
     ds.GetRasterBand(1).Fill(127)
@@ -281,9 +275,6 @@ def vrtwarp_6():
 
 def vrtwarp_7():
     
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
-    
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_7.tif', src_ds)
     cs_main = tmp_ds.GetRasterBand(1).Checksum()
@@ -310,9 +301,7 @@ def vrtwarp_7():
     cs_ov1 = tmp_ds.GetRasterBand(1).GetOverview(1).Checksum()
     tmp_ds = None
     
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/vrtwarp_7.tif tmp/vrtwarp_7.vrt -overwrite -of VRT -tps')
-    
-    vrtwarp_ds = gdal.Open( 'tmp/vrtwarp_7.vrt' )
+    vrtwarp_ds = gdal.Warp('tmp/vrtwarp_7.vrt', 'tmp/vrtwarp_7.tif', options = '-overwrite -of VRT -tps')
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 2:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -336,9 +325,6 @@ def vrtwarp_7():
 # Test implicit overviews with RPC
 
 def vrtwarp_8():
-    
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
 
     import shutil
     shutil.copy('../gcore/data/byte.tif', 'tmp/vrtwarp_8.tif')
@@ -347,15 +333,11 @@ def vrtwarp_8():
     ds.BuildOverviews( 'NEAR', overviewlist = [2] )
     ds = None
    
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/vrtwarp_8.tif tmp/vrtwarp_8_tmp.tif -overwrite -rpc')
-    ds = gdal.Open('tmp/vrtwarp_8_tmp.tif')
+    ds = gdal.Warp('', 'tmp/vrtwarp_8.tif', options = '-of MEM -rpc')
     expected_cs_main = ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.Unlink('tmp/vrtwarp_8_tmp.tif')
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/vrtwarp_8.tif tmp/vrtwarp_8.vrt -overwrite -of VRT -rpc')
-    
-    vrtwarp_ds = gdal.Open( 'tmp/vrtwarp_8.vrt' )
+    vrtwarp_ds = gdal.Warp('tmp/vrtwarp_8.vrt', 'tmp/vrtwarp_8.tif', options = '-overwrite -of VRT -rpc')
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -380,9 +362,6 @@ def vrtwarp_8():
 # Test implicit overviews with GEOLOCATION
 
 def vrtwarp_9():
-    
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
 
     import shutil
     shutil.copy('../gcore/data/sstgeo.tif', 'tmp/sstgeo.tif')
@@ -418,15 +397,11 @@ def vrtwarp_9():
     ds.BuildOverviews( 'NEAR', overviewlist = [2] )
     ds = None
     
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/sstgeo.vrt tmp/vrtwarp_9_tmp.tif -overwrite -geoloc')
-    ds = gdal.Open('tmp/vrtwarp_9_tmp.tif')
+    ds = gdal.Warp('', 'tmp/sstgeo.vrt', options = '-of MEM -geoloc')
     expected_cs_main = ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.Unlink('tmp/vrtwarp_9_tmp.tif')
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/sstgeo.vrt tmp/vrtwarp_9.vrt -overwrite -of VRT -geoloc')
-    
-    vrtwarp_ds = gdal.Open( 'tmp/vrtwarp_9.vrt' )
+    vrtwarp_ds = gdal.Warp('tmp/vrtwarp_9.vrt', 'tmp/sstgeo.vrt', options = '-overwrite -of VRT -geoloc')
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -452,9 +427,6 @@ def vrtwarp_9():
 # Test implicit overviews with selection of the full resolution level
 
 def vrtwarp_10():
-    
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_10.tif', src_ds)
@@ -466,17 +438,13 @@ def vrtwarp_10():
     tmp_ds.GetRasterBand(1).GetOverview(1).Checksum()
     tmp_ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/vrtwarp_10.tif -ovr NONE tmp/vrtwarp_10_tmp.tif -overwrite -ts 10 10')
-    ds = gdal.Open('tmp/vrtwarp_10_tmp.tif')
+    ds = gdal.Warp('', 'tmp/vrtwarp_10.tif', options = '-of MEM -ovr NONE -ts 10 10')
     expected_cs_ov0 = ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.Unlink('tmp/vrtwarp_10_tmp.tif')
-
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/vrtwarp_10.tif -ovr NONE tmp/vrtwarp_10_tmp.tif -overwrite -ts 5 5')
-    ds = gdal.Open('tmp/vrtwarp_10_tmp.tif')
+    
+    ds = gdal.Warp('', 'tmp/vrtwarp_10.tif', options = '-of MEM -ovr NONE -ts 5 5')
     expected_cs_ov1 = ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.Unlink('tmp/vrtwarp_10_tmp.tif')
     
     tmp_ds = gdal.Open('tmp/vrtwarp_10.tif')
     vrtwarp_ds = gdal.AutoCreateWarpedVRT( tmp_ds )
@@ -504,17 +472,13 @@ def vrtwarp_10():
 # Test implicit overviews with dest alpha band (#6081)
 
 def vrtwarp_11():
-    
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_11.tif', src_ds)
     tmp_ds.BuildOverviews( 'NEAR', overviewlist = [2] )
     tmp_ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/vrtwarp_11.tif tmp/vrtwarp_11.vrt -dstalpha -of VRT')
-    ds = gdal.Open('tmp/vrtwarp_11.vrt')
+    ds = gdal.Warp('tmp/vrtwarp_11.vrt', 'tmp/vrtwarp_11.tif', options = '-dstalpha -of VRT')
     cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
     cs2 = ds.GetRasterBand(2).GetOverview(0).Checksum()
     ds = None
