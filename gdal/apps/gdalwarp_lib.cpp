@@ -300,13 +300,13 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSr
         hSrcSRS = OSRNewSpatialReference(NULL);
         if( OSRImportFromWkt( hSrcSRS, (char **)&pszThisSourceSRS ) != OGRERR_NONE )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             return CE_Failure;
         }
     }
     else if( pahSrcDS[0] == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
         return CE_Failure;
     }
     else if( pahSrcDS[0] != NULL )
@@ -321,21 +321,21 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSr
 
         if( pszProjection == NULL )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             return CE_Failure;
         }
 
         hSrcSRS = OSRNewSpatialReference(NULL);
         if( OSRImportFromWkt( hSrcSRS, (char **)&pszProjection ) != OGRERR_NONE )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             return CE_Failure;
         }
 
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
         return CE_Failure;
     }
 
@@ -344,7 +344,7 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSr
         hDstSRS = OSRNewSpatialReference(NULL);
         if( OSRImportFromWkt( hDstSRS, (char **)&pszThisTargetSRS ) != OGRERR_NONE )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             return CE_Failure;
         }
     }
@@ -498,15 +498,25 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                         GDALWarpAppOptionsNew(NULL, NULL);
 
     if( EQUAL(psOptions->pszFormat,"VRT") )
+    {
+        if( hDstDS != NULL )
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "VRT output not compatible with existing dataset.");
+            GDALWarpAppOptionsFree(psOptions);
+            return NULL;
+        }
+
         bVRT = TRUE;
     
-    if( bVRT && nSrcCount > 1 )
-    {
-        CPLError(CE_Warning, CPLE_AppDefined, "gdalwarp -of VRT just takes into account "
-                        "the first source dataset.\nIf all source datasets "
-                        "are in the same projection, try making a mosaic of\n"
-                        "them with gdalbuildvrt, and use the resulting "
-                        "VRT file as the input of\ngdalwarp -of VRT.\n");
+        if( nSrcCount > 1 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "gdalwarp -of VRT just takes into account "
+                            "the first source dataset.\nIf all source datasets "
+                            "are in the same projection, try making a mosaic of\n"
+                            "them with gdalbuildvrt, and use the resulting "
+                            "VRT file as the input of\ngdalwarp -of VRT.");
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -535,9 +545,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if( !psOptions->bQuiet && !(psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 && psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0)  )
     {
         if( psOptions->dfMinX >= psOptions->dfMaxX )
-            CPLError(CE_Warning, CPLE_AppDefined, "-ts values have minx >= maxx. This will result in a horizontally flipped image.\n");
+            CPLError(CE_Warning, CPLE_AppDefined, "-ts values have minx >= maxx. This will result in a horizontally flipped image.");
         if( psOptions->dfMinY >= psOptions->dfMaxY )
-            CPLError(CE_Warning, CPLE_AppDefined, "-ts values have miny >= maxy. This will result in a vertically flipped image.\n");
+            CPLError(CE_Warning, CPLE_AppDefined, "-ts values have miny >= maxy. This will result in a vertically flipped image.");
     }
 
     if( psOptions->dfErrorThreshold < 0 )
@@ -556,7 +566,8 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     {
         if( psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 && psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0 )
         {
-            CPLError( CE_None, CPLE_None, "-te_srs ignored since -te is not specified.\n");
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "-te_srs ignored since -te is not specified.");
         }
         else
         {
@@ -584,7 +595,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
             if( !bOK )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, "-te_srs ignored since none of -t_srs, -s_srs is specified or the input dataset has no projection.\n");
+                CPLError( CE_Failure, CPLE_AppDefined, "-te_srs ignored since none of -t_srs, -s_srs is specified or the input dataset has no projection.");
                 GDALWarpAppOptionsFree(psOptions);
                 return NULL;
             }
@@ -597,7 +608,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 {
                     OGRCoordinateTransformation::DestroyCT(poCT);
 
-                    CPLError( CE_Failure, CPLE_AppDefined, "-te_srs ignored since coordinate transformation failed.\n");
+                    CPLError( CE_Failure, CPLE_AppDefined, "-te_srs ignored since coordinate transformation failed.");
                     GDALWarpAppOptionsFree(psOptions);
                     return NULL;
                 }
@@ -717,7 +728,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
         if ( GDALGetRasterCount(hSrcDS) == 0 )
         {     
-            CPLError(CE_Failure, CPLE_AppDefined, "Input file %s has no raster bands.\n", GDALGetDescription(hSrcDS) );
+            CPLError(CE_Failure, CPLE_AppDefined, "Input file %s has no raster bands.", GDALGetDescription(hSrcDS) );
             GDALWarpAppOptionsFree(psOptions);
             return NULL;
         }
@@ -762,7 +773,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 if ( CSLCount(papszMetadataNew) > 0 ) {
                     if ( GDALSetMetadata( hDstDS, papszMetadataNew, NULL ) != CE_None )
                          CPLError( CE_Warning, CPLE_AppDefined, 
-                                  "error copying metadata to destination dataset.\n" );
+                                  "error copying metadata to destination dataset." );
                 }
 
                 CSLDestroy(papszMetadataNew);
@@ -850,7 +861,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 CPLError( CE_Warning, CPLE_AppDefined, "Input file %s has a color table, which will likely lead to "
                         "bad results when using a resampling method other than "
                         "nearest neighbour or mode. Converting the dataset prior to 24/32 bit "
-                        "is advised.\n", GDALGetDescription(hSrcDS) );
+                        "is advised.", GDALGetDescription(hSrcDS) );
         }
 
 /* -------------------------------------------------------------------- */
@@ -936,7 +947,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 if( !psOptions->bQuiet )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined, "cannot get overview level %d for "
-                            "dataset %s. Defaulting to level %d\n",
+                            "dataset %s. Defaulting to level %d",
                             psOptions->nOvLevel, GDALGetDescription(hSrcDS), nOvCount - 1);
                 }
                 if( nOvCount > 0 )
@@ -1154,7 +1165,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                     }
                     else if ( papszTokens[i] == NULL ) // this shouldn't happen, but just in case
                     {
-                        CPLError( CE_Failure, CPLE_AppDefined, "Error parsing dstnodata arg #%d\n", i );
+                        CPLError( CE_Failure, CPLE_AppDefined, "Error parsing dstnodata arg #%d", i );
                         bDstNoDataNone = TRUE;
                         continue;
                     }
@@ -1216,14 +1227,16 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                     
                 if (bClamped)
                 {
-                    printf( "for band %d, destination nodata value has been clamped "
-                           "to %.0f, the original value being out of range.\n",
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "for band %d, destination nodata value has been clamped "
+                           "to %.0f, the original value being out of range.",
                            i + 1, psWO->padfDstNoDataReal[i]);
                 }
                 else if(bRounded)
                 {
-                    printf("for band %d, destination nodata value has been rounded "
-                           "to %.0f, %s being an integer datatype.\n",
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "for band %d, destination nodata value has been rounded "
+                           "to %.0f, %s being an integer datatype.",
                            i + 1, psWO->padfDstNoDataReal[i],
                            GDALGetDataTypeName(GDALGetRasterDataType(hBand)));
                 }
@@ -1392,7 +1405,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 {
 #ifndef OGR_ENABLED
     CPLError( CE_Failure, CPLE_AppDefined, 
-              "Request to load a cutline failed, this build does not support OGR features.\n" );
+              "Request to load a cutline failed, this build does not support OGR features." );
     return CE_Failure;
 #else // def OGR_ENABLED
     OGRRegisterAll();
@@ -1405,7 +1418,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
     hSrcDS = OGROpen( pszCutlineDSName, FALSE, NULL );
     if( hSrcDS == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Cannot open %s.\n", pszCutlineDSName);
+        CPLError( CE_Failure, CPLE_AppDefined, "Cannot open %s.", pszCutlineDSName);
         return CE_Failure;
     }
 
@@ -1423,7 +1436,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 
     if( hLayer == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to identify source layer from datasource.\n" );
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to identify source layer from datasource." );
         return CE_Failure;
     }
 
@@ -1448,7 +1461,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 
         if( hGeom == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "ERROR: Cutline feature without a geometry.\n" );
+            CPLError( CE_Failure, CPLE_AppDefined, "ERROR: Cutline feature without a geometry." );
             return CE_Failure;
         }
         
@@ -1468,7 +1481,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "ERROR: Cutline not of polygon type.\n" );
+            CPLError( CE_Failure, CPLE_AppDefined, "ERROR: Cutline not of polygon type." );
             return CE_Failure;
         }
 
@@ -1477,7 +1490,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 
     if( OGR_G_GetGeometryCount( hMultiPolygon ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "ERROR: Did not get any cutline features.\n" );
+        CPLError( CE_Failure, CPLE_AppDefined, "ERROR: Did not get any cutline features." );
         return CE_Failure;
     }
 
@@ -1602,7 +1615,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
 /* -------------------------------------------------------------------- */
         if ( GDALGetRasterCount(pahSrcDS[iSrc]) == 0 )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Input file %s has no raster bands.\n", GDALGetDescription(pahSrcDS[iSrc]) );
+            CPLError(CE_Failure, CPLE_AppDefined, "Input file %s has no raster bands.", GDALGetDescription(pahSrcDS[iSrc]) );
             return NULL;
         }
 
@@ -2099,13 +2112,13 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
         CPLError(CE_Warning, CPLE_AppDefined,
                 "the source raster dataset has a SRS, but the cutline features\n"
                 "not.  We assume that the cutline coordinates are expressed in the destination SRS.\n"
-                "If not, cutline results may be incorrect.\n");
+                "If not, cutline results may be incorrect.");
     }
     else if( hRasterSRS == NULL && hCutlineSRS != NULL )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                 "the input vector layer has a SRS, but the source raster dataset does not.\n"
-                "Cutline results may be incorrect.\n");
+                "Cutline results may be incorrect.");
     }
 
     if( hRasterSRS != NULL )

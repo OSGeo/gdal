@@ -188,7 +188,7 @@ def test_gdal_translate_lib_5():
 def test_gdal_translate_lib_6():
 
     ds = gdal.Open('../gcore/data/byte.tif')
-    ds = gdal.Translate('tmp/test6.tif', ds, oXSizePixel = 40, oYSizePixel = 40)
+    ds = gdal.Translate('tmp/test6.tif', ds, width = 40, height = 40)
     if ds is None:
         return 'fail'
 
@@ -206,7 +206,7 @@ def test_gdal_translate_lib_6():
 def test_gdal_translate_lib_7():
 
     ds = gdal.Open('../gcore/data/byte.tif')
-    ds = gdal.Translate('tmp/test7.tif', ds, oXSizePct = 200.0, oYSizePct = 200.0)
+    ds = gdal.Translate('tmp/test7.tif', ds, widthPct = 200.0, heightPct = 200.0)
     if ds is None:
         return 'fail'
 
@@ -305,12 +305,12 @@ def test_gdal_translate_lib_11():
     return 'success'
 
 ###############################################################################
-# Test assignedULLR option
+# Test outputBounds option
 
 def test_gdal_translate_lib_12():
 
     ds = gdal.Open('../gcore/data/byte.tif')
-    ds = gdal.Translate('tmp/test12.tif', ds, assignedULLR = [440720.000,3751320.000,441920.000,3750120.000])
+    ds = gdal.Translate('tmp/test12.tif', ds, outputBounds = [440720.000,3751320.000,441920.000,3750120.000])
     if ds is None:
         return 'fail'
 

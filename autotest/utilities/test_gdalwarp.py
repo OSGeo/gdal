@@ -333,7 +333,7 @@ def test_gdalwarp_12():
 
 
 ###############################################################################
-# Test -rsc
+# Test -rcs
 
 def test_gdalwarp_13():
     if test_cli_utilities.get_gdalwarp_path() is None:
