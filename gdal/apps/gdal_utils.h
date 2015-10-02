@@ -41,6 +41,7 @@
  */
 
 #include "cpl_port.h"
+#include "gdal.h"
 
 CPL_C_START
 
@@ -74,6 +75,27 @@ GDALDatasetH CPL_DLL GDALTranslate(const char *pszDestFilename,
                                    GDALDatasetH hSrcDataset,
                                    const GDALTranslateOptions *psOptions,
                                    int *pbUsageError);
+
+/*! Options for GDALWarp(). Opaque type */
+typedef struct GDALWarpAppOptions GDALWarpAppOptions;
+
+typedef struct GDALWarpAppOptionsForBinary GDALWarpAppOptionsForBinary;
+
+GDALWarpAppOptions CPL_DLL *GDALWarpAppOptionsNew(char** papszArgv,
+                                                      GDALWarpAppOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALWarpAppOptionsFree( GDALWarpAppOptions *psOptions );
+
+void CPL_DLL GDALWarpAppOptionsSetProgress( GDALWarpAppOptions *psOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData );
+void CPL_DLL GDALWarpAppOptionsSetWarpOption( GDALWarpAppOptions *psOptions,
+                                              const char* pszKey,
+                                              const char* pszValue );
+
+GDALDatasetH CPL_DLL GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
+                               GDALDatasetH *pahSrcDS,
+                               const GDALWarpAppOptions *psOptions, int *pbUsageError );
 
 CPL_C_END
 

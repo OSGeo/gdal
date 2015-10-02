@@ -983,3 +983,46 @@ GDALDatasetShadow* wrapper_GDALTranslate( const char* dest,
     return GDALTranslate(dest, dataset, translateOptions, &usageError);    
 }
 %}
+
+struct GDALWarpAppOptions {
+%extend {
+    GDALWarpAppOptions(char** options) {
+        return GDALWarpAppOptionsNew(options, NULL);
+    }
+
+    ~GDALWarpAppOptions() {
+        GDALWarpAppOptionsFree( self );
+    }
+}
+};
+
+/* Note: we must use 2 distinct names since there's a bug/feature in swig */
+/* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
+
+%inline %{
+int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
+                            int object_list_count, GDALDatasetShadow** poObjects,
+                            GDALWarpAppOptions* warpAppOptions,
+                            GDALProgressFunc callback=NULL,
+                            void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    GDALWarpAppOptionsSetProgress(warpAppOptions, callback, callback_data);
+    return GDALWarp(NULL, dstDS, object_list_count, poObjects, warpAppOptions, &usageError) != NULL;
+}
+%}
+
+%newobject wrapper_GDALWarpDestName;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALWarpDestName( const char* dest,
+                                             int object_list_count, GDALDatasetShadow** poObjects,
+                                             GDALWarpAppOptions* warpAppOptions,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    GDALWarpAppOptionsSetProgress(warpAppOptions, callback, callback_data);
+    return GDALWarp(dest, NULL, object_list_count, poObjects, warpAppOptions, &usageError);
+}
+%}
