@@ -222,11 +222,11 @@ def Info(ds, **kwargs):
 
 def TranslateOptions(options = [], format = 'GTiff',
               outputType = GDT_Unknown, bandList = None, maskBand = None,
-              oXSizePixel = 0, oYSizePixel = 0, oXSizePct = 0.0, oYSizePct = 0.0,
+              width = 0, height = 0, widthPct = 0.0, heightPct = 0.0,
               xRes = 0.0, yRes = 0.0,
               creationOptions = None, srcWin = None, projWin = None, projWinSRS = None, strict = False,
               unscale = False, scaleParams = None, exponents = None,
-              assignedULLR = None, metadataOptions = None,
+              outputBounds = None, metadataOptions = None,
               outputSRS = None, GCPs = None,
               noData = None, rgbExpand = None,
               stats = False, rat = True, resampleAlg = None,
@@ -238,10 +238,10 @@ def TranslateOptions(options = [], format = 'GTiff',
           outputType --- output type (gdal.GDT_Byte, etc...)
           bandList --- array of band numbers (index start at 1)
           maskBand --- mask band to generate or not ("none", "auto", "mask", 1, ...)
-          oXSizePixel --- width of the output raster in pixel
-          oYSizePixel --- height of the output raster in pixel
-          oXSizePct --- width of the output raster in percentage (100 = original size)
-          oYSizePct --- height of the output raster in percentage (100 = original size)
+          width --- width of the output raster in pixel
+          height --- height of the output raster in pixel
+          widthPct --- width of the output raster in percentage (100 = original width)
+          heightPct --- height of the output raster in percentage (100 = original height)
           xRes --- output horizontal resolution
           yRes --- output vertical resolution
           creationOptions --- list of creation options
@@ -252,7 +252,7 @@ def TranslateOptions(options = [], format = 'GTiff',
           unscale --- unscale values with scale and offset metadata
           scaleParams --- list of scale parameters, each of the form [src_min,src_max] or [src_min,src_max,dst_min,dst_max]
           exponents --- list of exponentation parameters
-          assignedULLR --- assigned output bounds: [ulx, uly, lrx, lry]
+          outputBounds --- assigned output bounds: [ulx, uly, lrx, lry]
           metadataOptions --- list of metadata options
           outputSRS --- assigned output SRS
           GCPs --- list of GCPs
@@ -278,10 +278,10 @@ def TranslateOptions(options = [], format = 'GTiff',
         if bandList != None:
             for b in bandList:
                 new_options += ['-b', str(b) ]
-        if oXSizePixel != 0 or oYSizePixel != 0:
-            new_options += ['-outsize', str(oXSizePixel), str(oYSizePixel)]
-        elif oXSizePct != 0 and oYSizePct != 0:
-            new_options += ['-outsize', str(oXSizePct) + '%%', str(oYSizePct) + '%%']
+        if width != 0 or height != 0:
+            new_options += ['-outsize', str(width), str(height)]
+        elif widthPct != 0 and heightPct != 0:
+            new_options += ['-outsize', str(widthPct) + '%%', str(heightPct) + '%%']
         if creationOptions is not None:
             for opt in creationOptions:
                 new_options += ['-co', opt ]
@@ -299,8 +299,8 @@ def TranslateOptions(options = [], format = 'GTiff',
         if exponents:
             for exponent in exponents:
                 new_options += ['-exponent', str(exponent)]
-        if assignedULLR is not None:
-            new_options += ['-a_ullr', str(assignedULLR[0]), str(assignedULLR[1]), str(assignedULLR[2]), str(assignedULLR[3])]
+        if outputBounds is not None:
+            new_options += ['-a_ullr', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
         if metadataOptions is not None:
             for opt in metadataOptions:
                 new_options += ['-mo', opt ]
@@ -363,34 +363,36 @@ def Translate(destName, srcDS, **kwargs):
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
 
 def WarpOptions(options = [], format = 'GTiff', 
-         minX = None, minY = None, maxX = None, maxY = None,
+         outputBounds = None,
+         outputBoundsSRS = None,
          xRes = None, yRes = None, targetAlignedPixels = False,
-         oXSizePixel = 0, oYSizePixel = 0,
+         width = 0, height = 0,
          srcSRS = None, dstSRS = None,
-         enableSrcAlpha = False, enableDstAlpha = False, 
+         srcAlpha = False, dstAlpha = False, 
          warpOptions = None, errorThreshold = None,
          warpMemoryLimit = None, creationOptions = None, outputType = GDT_Unknown,
          workingType = GDT_Unknown, resampleAlg = None,
          srcNodata = None, dstNodata = None, multithread = False,
          tps = False, rpc = False, geoloc = False, polynomialOrder = None,
          transformerOptions = None, cutlineDSName = None,
-         cutlineLayer = None, cutlineWhere = None, cutlineSQL = None, cropToCutline = False,
-         copyMetadata = True, MDConflictValue = None,
+         cutlineLayer = None, cutlineWhere = None, cutlineSQL = None, cutlineBlend = None, cropToCutline = False,
+         copyMetadata = True, metadataConflictValue = None,
          setColorInterpretation = False,
          callback = None, callback_data = None):
     """ Create a WarpOptions() object that can be passed to gdal.Warp()
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
           format --- output format ("GTiff", etc...)
-          minX, minY, maxX, maxY --- output bounds in target SRS
+          outputBounds --- output bounds as (minX, minY, maxX, maxY) in target SRS
+          outputBoundsSRS --- SRS in which output bounds are expressed, in the case they are not expressed in dstSRS
           xRes, yRes --- output resolution in target SRS
-          oXSizePixel --- width of the output raster in pixel
-          oYSizePixel --- height of the output raster in pixel
+          targetAlignedPixels --- whether to force output bounds to be multiple of output resolution
+          width --- width of the output raster in pixel
+          height --- height of the output raster in pixel
           srcSRS --- source SRS
           dstSRS --- output SRS
-          targetAlignedPixels --- whether to force output bounds to be multiple of output resolution
-          enableSrcAlpha --- whether to force the last band of the input dataset to be considered as an alpha band
-          enableDstAlpha --- whether to force the creation of an output alpha band
+          srcAlpha --- whether to force the last band of the input dataset to be considered as an alpha band
+          dstAlpha --- whether to force the creation of an output alpha band
           outputType --- output type (gdal.GDT_Byte, etc...)
           workingType --- working type (gdal.GDT_Byte, etc...)
           warpOptions --- list of warping options
@@ -410,9 +412,10 @@ def WarpOptions(options = [], format = 'GTiff',
           cutlineLayer --- cutline layer name
           cutlineWhere --- cutline WHERE clause
           cutlineSQL --- cutline SQL statement
+          cutlineBlend --- cutline blend distance in pixels
           cropToCutline --- whether to use cutline extent for output bounds
           copyMetadata --- whether to copy source metadata
-          MDConflictValue --- metadata data conflict value
+          metadataConflictValue --- metadata data conflict value
           setColorInterpretation --- whether to force color interpretation of input bands to output bands
           callback --- callback method
           callback_data --- user data for callback
@@ -428,21 +431,23 @@ def WarpOptions(options = [], format = 'GTiff',
             new_options += ['-ot', GetDataTypeName(outputType) ]
         if workingType != GDT_Unknown:
             new_options += ['-wt', GetDataTypeName(workingType) ]
-        if minX is not None and minY is not None and maxX is not None and maxY is not None:
-            new_options += ['-te', str(minX), str(minY), str(maxX), str(maxY) ]
+        if outputBounds is not None:
+            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3]) ]
+        if outputBoundsSRS is not None:
+            new_options += ['-te_srs', str(outputBoundsSRS) ]
         if xRes is not None and yRes is not None:
             new_options += ['-tr', str(xRes), str(yRes) ]
-        if oXSizePixel != 0 or oYSizePixel != 0:
-            new_options += ['-ts', str(oXSizePixel), str(oYSizePixel)]
+        if width != 0 or height != 0:
+            new_options += ['-ts', str(width), str(height)]
         if srcSRS is not None:
             new_options += ['-s_srs', str(srcSRS) ]
         if dstSRS is not None:
             new_options += ['-t_srs', str(dstSRS) ]
         if targetAlignedPixels:
             new_options += ['-tap']
-        if enableSrcAlpha:
+        if srcAlpha:
             new_options += ['-srcalpha']
-        if enableDstAlpha:
+        if dstAlpha:
             new_options += ['-dstalpha']
         if warpOptions is not None:
             for opt in warpOptions:
@@ -498,12 +503,14 @@ def WarpOptions(options = [], format = 'GTiff',
             new_options += ['-cwhere', str(cutlineWhere) ]
         if cutlineSQL is not None:
             new_options += ['-csql', str(cutlineSQL) ]
+        if cutlineBlend is not None:
+            new_options += ['-cblend', str(cutlineBlend) ]
         if cropToCutline:
             new_options += ['-crop_to_cutline']
         if not copyMetadata:
             new_options += ['-nomd']
-        if MDConflictValue:
-            new_options += ['-cvmd', str(MDConflictValue) ]
+        if metadataConflictValue:
+            new_options += ['-cvmd', str(metadataConflictValue) ]
         if setColorInterpretation:
             new_options += ['-setci']
 
