@@ -4312,14 +4312,12 @@ def tiff_write_102():
 
 def tiff_write_103():
     import test_cli_utilities
-    if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
     if test_cli_utilities.get_gdaladdo_path() is None:
         return 'skip'
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' data/rgbsmall.tif tmp/tiff_write_103_src.tif -outsize 260 260')
+    gdal.Translate('tmp/tiff_write_103_src.tif', 'data/rgbsmall.tif', options = '-outsize 260 260')
     gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -ro tmp/tiff_write_103_src.tif 2')
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/tiff_write_103_src.tif tmp/tiff_write_103_dst.tif -co COPY_SRC_OVERVIEWS=YES')
+    gdal.Translate('tmp/tiff_write_103_dst.tif', 'tmp/tiff_write_103_src.tif', options = '-co COPY_SRC_OVERVIEWS=YES')
 
     src_ds = gdal.Open('tmp/tiff_write_103_src.tif')
     dst_ds = gdal.Open('tmp/tiff_write_103_dst.tif')
