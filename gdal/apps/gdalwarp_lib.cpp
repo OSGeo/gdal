@@ -2304,8 +2304,9 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
                 CPLError(CE_Warning, CPLE_IllegalArg,
                          "Warning: only one METHOD can be used. -order %s option was specified, so it is likely that GCP_POLYNOMIAL was implied.",
                         pszMAX_GCP_ORDER);
-        }
-        else if( EQUAL(papszArgv[i],"-co") && i+1 < argc )
+        } /* do not add 'else' in front of the next line */
+
+        if( EQUAL(papszArgv[i],"-co") && i+1 < argc )
         {
             psOptions->papszCreateOptions = CSLAddString( psOptions->papszCreateOptions, papszArgv[++i] );
             psOptions->bCreateOutput = TRUE;
