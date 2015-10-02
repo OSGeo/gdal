@@ -42,7 +42,6 @@ from osgeo import gdal
 from osgeo import osr
 
 import gdaltest
-import test_cli_utilities
 
 ###############################################################################
 # Verify that we always getting the same image when warping.
@@ -674,7 +673,7 @@ def warp_19_internal(size, datatype, resampling_string):
     ds.GetRasterBand(1).Fill(10.1, 20.1)
     ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -r ' + resampling_string + ' tmp/test.tif tmp/testwarp.tif')
+    gdal.Warp('tmp/testwarp.tif', 'tmp/test.tif', options = '-r ' + resampling_string)
 
     ref_ds = gdal.Open( 'tmp/test.tif' )
     ds = gdal.Open( 'tmp/testwarp.tif' )
@@ -698,9 +697,6 @@ def warp_19_internal(size, datatype, resampling_string):
 # Test all data types and resampling methods for very small images
 # to test edge behaviour
 def warp_19():
-
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
@@ -773,9 +769,6 @@ def warp_21():
 
 def warp_22():
 
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
-
     # Generate source image with non uniform data
     w = 1001
     h = 1001
@@ -806,7 +799,7 @@ def warp_22():
             except:
                 pass
             # -wm should not be greater than 2 * w * h. Let's put it at its minimum value
-            gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/warp_22_src.tif tmp/warp_22_dst.tif -wm 100000 ' + option)
+            gdal.Warp('tmp/warp_22_dst.tif', 'tmp/warp_22_src.tif', options = '-wm 100000 ' + option)
             ds = gdal.Open('tmp/warp_22_dst.tif')
             cs = ds.GetRasterBand(1).Checksum()
             if cs != expected_cs:
@@ -829,9 +822,6 @@ def warp_22():
 
 def warp_23():
 
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
-    
     gcp1 = gdal.GCP()
     gcp1.GCPPixel = 3213
     gcp1.GCPLine = 2225
@@ -891,9 +881,7 @@ def warp_23():
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
     
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test3582.tif tmp/test3582_warped.tif')
-    
-    ds = gdal.Open('tmp/test3582_warped.tif')
+    ds = gdal.Warp('', 'tmp/test3582.tif', format = 'MEM')
     ret = 'success'
     if ds is None:
         gdaltest.post_reason('could not open output dataset')
@@ -901,11 +889,7 @@ def warp_23():
     ds = None
     
     os.remove('tmp/test3582.tif')
-    try:
-        os.remove('tmp/test3582_warped.tif')
-    except:
-        pass
-    
+
     return ret
 
 ###############################################################################
@@ -914,19 +898,10 @@ def warp_23():
 
 def warp_24():
 
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
-
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -r bilinear data/test3658.tif tmp/test3658.tif')
-    
     ds_ref = gdal.Open('data/test3658.tif')
     cs_ref = ds_ref.GetRasterBand(1).Checksum()
-    ds_ref = None
-    ds = gdal.Open('tmp/test3658.tif')
+    ds = gdal.Warp('', ds_ref, options = '-of MEM -r bilinear')
     cs = ds.GetRasterBand(1).Checksum()
-    ds = None
-
-    os.remove('tmp/test3658.tif')
 
     if cs != cs_ref:
         gdaltest.post_reason('did not get expected checksum')
@@ -954,14 +929,8 @@ def warp_25():
 
 def warp_26():
 
-    if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
-
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
-
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/byte.tif tmp/warp_25_gcp.vrt -of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 -gcp 20 0 20 20 -gcp 20 20 20 0')
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -of VRT -tps tmp/warp_25_gcp.vrt tmp/warp_25_warp.vrt')
+    gdal.Translate('tmp/warp_25_gcp.vrt', '../gcore/data/byte.tif' , options = '-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 -gcp 20 0 20 20 -gcp 20 20 20 0')
+    gdal.Warp('tmp/warp_25_warp.vrt', 'tmp/warp_25_gcp.vrt', options = '-of VRT -tps')
 
     ds = gdal.Open('tmp/warp_25_warp.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -985,9 +954,6 @@ def warp_27_progress_callback(pct, message, user_data):
     return 1 # 1 to continue, 0 to stop
 
 def warp_27():
-
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
 
     # Open source dataset
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -1040,8 +1006,7 @@ def warp_27():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -rb -t_srs EPSG:4326 ../gcore/data/byte.tif tmp/warp_27_ref.tif')
-    ds = gdal.Open('tmp/warp_27_ref.tif')
+    ds = gdal.Warp('tmp/warp_27_ref.tif', '../gcore/data/byte.tif', options = '-rb -t_srs EPSG:4326')
     ref_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -1367,9 +1332,6 @@ def warp_37():
 # Test a warp with GCPs on the *destination* image.
 def warp_38():
 
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
-
     # Create an output file with GCPs.
     out_file = 'tmp/warp_38.tif'
     ds = gdal.GetDriverByName('GTiff').Create(out_file, 50, 50, 3)
@@ -1384,11 +1346,7 @@ def warp_38():
     ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt('EPSG:32632'))
     ds = None
 
-    cmd = test_cli_utilities.get_gdalwarp_path()  \
-        + ' -to DST_METHOD=GCP_POLYNOMIAL' \
-        + ' data/test3658.tif ' \
-        + out_file
-    gdaltest.runexternal(cmd, display_live_on_parent_stdout = False)
+    gdal.Warp(out_file, 'data/test3658.tif', options = '-to DST_METHOD=GCP_POLYNOMIAL')
 
     ds = gdal.Open(out_file)
     cs = ds.GetRasterBand(1).Checksum()
@@ -1408,9 +1366,6 @@ def warp_38():
 # Test a warp with GCPs for TPS on the *destination* image.
 def warp_39():
 
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
-
     # Create an output file with GCPs.
     out_file = 'tmp/warp_39.tif'
     ds = gdal.GetDriverByName('GTiff').Create(out_file, 50, 50, 3)
@@ -1425,11 +1380,7 @@ def warp_39():
     ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt('EPSG:32632'))
     ds = None
 
-    cmd = test_cli_utilities.get_gdalwarp_path()  \
-        + ' -to DST_METHOD=GCP_TPS' \
-        + ' data/test3658.tif ' \
-        + out_file
-    gdaltest.runexternal(cmd, display_live_on_parent_stdout = False)
+    gdal.Warp(out_file, 'data/test3658.tif', options = '-to DST_METHOD=GCP_TPS')
 
     ds = gdal.Open(out_file)
     cs = ds.GetRasterBand(1).Checksum()
