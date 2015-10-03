@@ -95,8 +95,6 @@ static void CPLFixPath(char* pszPath)
 
 #ifdef HAS_VALIDATION_BUG
 
-static int bHasLibXMLBug = -1;
-
 /************************************************************************/
 /*                  CPLHasLibXMLBugWarningCallback()                    */
 /************************************************************************/
@@ -109,8 +107,10 @@ static void CPLHasLibXMLBugWarningCallback (void * ctx, const char * msg, ...)
 /*                          CPLHasLibXMLBug()                           */
 /************************************************************************/
 
-static int CPLHasLibXMLBug()
+static bool CPLHasLibXMLBug()
 {
+    static int bHasLibXMLBug = -1;
+
     if (bHasLibXMLBug >= 0)
         return bHasLibXMLBug;
 
@@ -228,7 +228,7 @@ static CPLXMLNode* CPLExtractSubSchema(CPLXMLNode* psSubXML, CPLXMLNode* psMainS
 /************************************************************************/
 
 /* Return TRUE if the current node must be destroyed */
-static int CPLWorkaroundLibXMLBug(CPLXMLNode* psIter)
+static bool CPLWorkaroundLibXMLBug(CPLXMLNode* psIter)
 {
     if (psIter->eType == CXT_Element &&
         strcmp(psIter->pszValue, "element") == 0 &&
@@ -276,7 +276,7 @@ static int CPLWorkaroundLibXMLBug(CPLXMLNode* psIter)
               strcmp(CPLGetXMLValue(psIter, "name", ""), "CategoryExtentType") == 0))
     {
         /* Destroy this element */
-        return TRUE;
+        return true;
     }
 
     /* For GML 3.2.1 */
@@ -324,7 +324,7 @@ static int CPLWorkaroundLibXMLBug(CPLXMLNode* psIter)
         psIter->psChild->psNext = psComplexType;
     }
 
-    return FALSE;
+    return false;
 }
 #endif
 
