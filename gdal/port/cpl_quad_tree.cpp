@@ -84,24 +84,24 @@ static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
 /*
 ** Returns TRUE if rectangle a is contained in rectangle b
 */
-static CPL_INLINE int CPL_RectContained(const CPLRectObj *a, const CPLRectObj *b)
+static CPL_INLINE bool CPL_RectContained(const CPLRectObj *a, const CPLRectObj *b)
 {
   if(a->minx >= b->minx && a->maxx <= b->maxx)
     if(a->miny >= b->miny && a->maxy <= b->maxy)
-      return(TRUE);
-  return(FALSE);  
+      return(true);
+  return(false);
 }
 
 /*
 ** Returns TRUE if rectangles a and b overlap
 */
-static CPL_INLINE int CPL_RectOverlap(const CPLRectObj *a, const CPLRectObj *b)
+static CPL_INLINE bool CPL_RectOverlap(const CPLRectObj *a, const CPLRectObj *b)
 {
-  if(a->minx > b->maxx) return(FALSE);
-  if(a->maxx < b->minx) return(FALSE);
-  if(a->miny > b->maxy) return(FALSE);
-  if(a->maxy < b->miny) return(FALSE);
-  return(TRUE);
+  if(a->minx > b->maxx) return(false);
+  if(a->maxx < b->minx) return(false);
+  if(a->miny > b->maxy) return(false);
+  if(a->maxy < b->miny) return(false);
+  return(true);
 }
 
 /************************************************************************/
@@ -682,23 +682,23 @@ void** CPLQuadTreeSearch(const CPLQuadTree *hQuadTree,
 /*                    CPLQuadTreeNodeForeach()                          */
 /************************************************************************/
 
-static int CPLQuadTreeNodeForeach(const QuadTreeNode *psNode,
+static bool CPLQuadTreeNodeForeach(const QuadTreeNode *psNode,
                                   CPLQuadTreeForeachFunc pfnForeach,
                                   void* pUserData)
 {
     for(int i=0; i<psNode->nNumSubNodes; i++ )
     {
         if (CPLQuadTreeNodeForeach(psNode->apSubNode[i], pfnForeach, pUserData) == FALSE)
-            return FALSE;
+            return false;
     }
 
     for(int i=0; i<psNode->nFeatures; i++)
     {
         if (pfnForeach(psNode->pahFeatures[i], pUserData) == FALSE)
-            return FALSE;
+            return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
