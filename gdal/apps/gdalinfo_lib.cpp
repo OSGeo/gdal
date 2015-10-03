@@ -1078,19 +1078,8 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             && (hTable = GDALGetRasterColorTable( hBand )) != NULL )
         {
             int         i;
-            json_object *poColorTable = NULL;
-            
-            if(bJson)
-            {
-                json_object *poPalette = json_object_new_string(GDALGetPaletteInterpretationName(
-                    GDALGetPaletteInterpretation(hTable)));
-                json_object *poCount = json_object_new_int(GDALGetColorEntryCount(hTable));
-                poColorTable = json_object_new_object();
 
-                json_object_object_add(poColorTable, "palette", poPalette);
-                json_object_object_add(poColorTable, "count", poCount);
-            }
-            else
+            if(!bJson)
                 osStr += CPLOPrintf( "  Color Table (%s with %d entries)\n",
                     GDALGetPaletteInterpretationName(
                         GDALGetPaletteInterpretation( hTable )), 
@@ -1099,9 +1088,22 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             if (psOptions->bShowColorTable)
             {
                 json_object *poEntries = NULL;
-                
+
                 if(bJson)
+                {
+                    json_object *poPalette = json_object_new_string(GDALGetPaletteInterpretationName(
+                        GDALGetPaletteInterpretation(hTable)));
+                    json_object *poCount = json_object_new_int(GDALGetColorEntryCount(hTable));
+
+                    json_object *poColorTable = json_object_new_object();
+
+                    json_object_object_add(poColorTable, "palette", poPalette);
+                    json_object_object_add(poColorTable, "count", poCount);
+
                     poEntries = json_object_new_array();
+                    json_object_object_add(poColorTable, "entries", poEntries);
+                    json_object_object_add(poBand, "colorTable", poColorTable);
+                }
 
                 for( i = 0; i < GDALGetColorEntryCount( hTable ); i++ )
                 {
@@ -1130,11 +1132,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                             sEntry.c2,
                             sEntry.c3,
                             sEntry.c4 );
-                }
-                if(bJson)
-                {
-                    json_object_object_add(poColorTable, "entries", poEntries);
-                    json_object_object_add(poBand, "colorTable", poColorTable);
                 }
             }   
         }
