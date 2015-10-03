@@ -15,10 +15,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -31,7 +31,7 @@
  * Independent Security Audit 2003/04/05 Andrey Kiselev:
  *   Completed audit of this module. Any documents may be parsed without
  *   buffer overflows and stack corruptions.
- * 
+ *
  * Security Audit 2003/03/28 warmerda:
  *   Completed security audit.  I believe that this module may be safely used 
  *   to parse, and serialize arbitrary documents provided by a potentially 
@@ -102,7 +102,7 @@ static CPL_INLINE char ReadChar( ParseContext *psContext )
         psContext->nInputOffset--;
     else if( chReturn == 10 )
         psContext->nInputLine++;
-    
+
     return chReturn;
 }
 
@@ -190,7 +190,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 
     psContext->nTokenSize = 0;
     psContext->pszToken[0] = '\0';
-    
+
     chNext = ReadChar( psContext );
     while( isspace((unsigned char)chNext) )
         chNext = ReadChar( psContext );
@@ -235,10 +235,10 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                           "Parse error in DOCTYPE on or before line %d, "
                           "reached end of file without '>'.", 
                           psContext->nInputLine );
-                
+
                 break;
             }
-            
+
             /* The markup declaration block within a DOCTYPE tag consists of:
              * - a left square bracket [
              * - a list of declarations
@@ -259,7 +259,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                 }
                 while( chNext != '\0'
                     && !EQUALN(psContext->pszInput+psContext->nInputOffset,"]>", 2) );
-                    
+
                 if (chNext == '\0')
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
@@ -359,7 +359,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
              && psContext->pszInput[psContext->nInputOffset] == '>' )
     {
         chNext = ReadChar( psContext );
-        
+
         CPLAssert( chNext == '>' );
 
         psContext->eTokenType = TQuestionClose;
@@ -376,7 +376,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         while( (chNext = ReadChar(psContext)) != '"' 
                && chNext != '\0' )
             AddToToken( psContext, chNext );
-        
+
         if( chNext != '"' )
         {
             psContext->eTokenType = TNone;
@@ -404,7 +404,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         while( (chNext = ReadChar(psContext)) != '\'' 
                && chNext != '\0' )
             AddToToken( psContext, chNext );
-        
+
         if( chNext != '\'' )
         {
             psContext->eTokenType = TNone;
@@ -450,7 +450,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
             psContext->nTokenSize = strlen(psContext->pszToken );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Collect a regular token terminated by white space, or           */
 /*      special character(s) like an equal sign.                        */
@@ -477,7 +477,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 
         UnreadChar(psContext, chNext);
     }
-    
+
     return psContext->eTokenType;
 
 fail:
@@ -523,7 +523,7 @@ static int PushNode( ParseContext *psContext, CPLXMLNode *psNode )
     psContext->nStackSize ++;
     return TRUE;
 }
-    
+
 /************************************************************************/
 /*                             AttachNode()                             */
 /*                                                                      */
@@ -714,7 +714,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
             psAttr = _CPLCreateXMLNode(NULL, CXT_Attribute, sContext.pszToken);
             if (!psAttr) break;
             AttachNode( &sContext, psAttr );
-            
+
             if( ReadToken(&sContext) != TEqual )
             {
                 // Parse stuff like <?valbuddy_schematron ../wmtsSimpleGetCapabilities.sch?>
@@ -921,7 +921,7 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 {
     if( psNode == NULL )
         return;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Ensure the buffer is plenty large to hold this additional       */
 /*      string.                                                         */
@@ -929,7 +929,7 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
     *pnLength += strlen(*ppszText + *pnLength);
     _GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent, 
                  ppszText, pnMaxLength );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Text is just directly emitted.                                  */
 /* -------------------------------------------------------------------- */
@@ -1029,7 +1029,7 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
             else
                 bHasNonAttributeChildren = TRUE;
         }
-        
+
         if( !bHasNonAttributeChildren )
         {
             _GrowBuffer( *pnLength + 40,
@@ -1062,7 +1062,7 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
                 CPLSerializeXMLNode( psChild, nIndent + 2, ppszText, pnLength, 
                                      pnMaxLength );
             }
-        
+
             *pnLength += strlen(*ppszText + *pnLength);
             _GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent, 
                          ppszText, pnMaxLength );
@@ -1079,7 +1079,7 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
         }
     }
 }
-                                
+
 /************************************************************************/
 /*                        CPLSerializeXMLTree()                         */
 /************************************************************************/
@@ -1342,7 +1342,7 @@ CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
                 return psResult;
         }
     }
-    
+
     return NULL;
 }
 
@@ -1661,7 +1661,7 @@ void CPLAddXMLSibling( CPLXMLNode *psOlderSibling, CPLXMLNode *psNewSibling )
  *
  *     psElementNode = CPLCreateXMLNode( psParent, CXT_Element, pszName );
  *     psTextNode = CPLCreateXMLNode( psElementNode, CXT_Text, pszValue );
- * 
+ *
  *     return psElementNode;
  * \endcode
  *
@@ -1856,7 +1856,7 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
 /* -------------------------------------------------------------------- */
 /*      Now set a value node under this node.                           */
 /* -------------------------------------------------------------------- */
-    
+
     if( psTextChild == NULL )
         CPLCreateXMLNode( psRoot, CXT_Text, pszValue );
     else 
@@ -2057,7 +2057,7 @@ int CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree, const char *pszFilename
  * Modififies a string in place to try and make it into a legal
  * XML token that can be used as an element name.   This is accomplished
  * by changing any characters not legal in a token into an underscore. 
- * 
+ *
  * NOTE: This function should implement the rules in section 2.3 of 
  * http://www.w3.org/TR/xml11/ but it doesn't yet do that properly.  We
  * only do a rough approximation of that.
