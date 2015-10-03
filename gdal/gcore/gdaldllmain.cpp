@@ -57,7 +57,7 @@ void CPLFinalizeTLS();
  * if GDAL is dynamically linked, since it is automatically called through
  * the unregistration mechanisms of dynamic library loading.
  *
- * Note: no GDAL/OGR code should be called after this call !
+ * Note: no GDAL/OGR code should be called after this call!
  *
  * @since GDAL 2.0
  */
@@ -158,7 +158,7 @@ extern "C" int WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRese
         GDALDestroy();
     }
 
-    return 1; // ignroed for all reasons but DLL_PROCESS_ATTACH
+    return 1; // ignored for all reasons but DLL_PROCESS_ATTACH
 }
 
 #endif // _MSC_VER
