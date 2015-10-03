@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Minixml services from Python.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -57,7 +57,7 @@ def minixml_1():
 
     # Check style attribute
     node = tree[2]
-    
+
     if node[0] != gdal.CXT_Attribute:
         gdaltest.post_reason( 'wrong node type.' )
         return 'fail'
@@ -76,7 +76,7 @@ def minixml_1():
 
     # Check <sub1> element
     node = tree[3]
-    
+
     if node[0] != gdal.CXT_Element:
         gdaltest.post_reason( 'wrong node type.' )
         return 'fail'
@@ -91,7 +91,7 @@ def minixml_1():
 
     # Check <sub2> element
     node = tree[4]
-    
+
     if node[0] != gdal.CXT_Element:
         gdaltest.post_reason( 'wrong node type.' )
         return 'fail'
@@ -108,7 +108,7 @@ def minixml_1():
         gdaltest.post_reason( 'Wrong element content.' )
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Serialize an XML Tree
@@ -147,7 +147,7 @@ def minixml_3():
     if node[1] != 'chapter':
         gdaltest.post_reason( 'Wrong element name' )
         return 'fail'
-    
+
     if len(node) != 7:
         gdaltest.post_reason( 'Wrong number of children.' )
         return 'fail'
@@ -203,6 +203,96 @@ def minixml_4():
     return 'success'
 
 ###############################################################################
+# Parse manformed xml.  Complains, but still makes a tree.
+
+def minixml_5():
+
+    test_pairs = (
+        ('<a></A>', 'case'),
+        ('<a b=c></a>', 'quoted'),
+    )
+
+    for xml_str, expect in test_pairs:
+        with gdaltest.error_handler():
+            tree = gdal.ParseXMLString( xml_str )
+
+        found = gdal.GetLastErrorMsg()
+        if expect not in found:
+            gdaltest.post_reason(
+                'Did not find expected error message: "%s"  '
+                'Found: "%s"  '
+                'For test string: "%s""' % (expect, found, xml_str) )
+            return 'fail'
+
+        if tree is None:
+            gdaltest.post_reason( 'Tree is None: "%s"' % tree )
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Parse manformed xml.
+
+def minixml_6():
+
+    test_pairs = (
+        ('<', 'element token after open angle bracket'),
+        ('<a>', 'not all elements have been closed'),
+        ('<a><b>', 'not all elements have been closed'),
+        ('<a><b></a></b>', 'have matching'),
+        ('<a foo=></a>', 'attribute value'),
+        ('<></>', 'element token'),
+        ('<&></&>', 'matching'),
+        ('<a></a', 'Missing close angle'),
+    )
+
+
+    for xml_str, expect in test_pairs:
+        with gdaltest.error_handler():
+            tree = gdal.ParseXMLString( xml_str )
+
+        found = gdal.GetLastErrorMsg()
+        if expect not in found:
+            gdaltest.post_reason(
+                'Did not find expected error message: "%s"  '
+                'Found: "%s"  '
+                'For test string: "%s""' % (expect, found, xml_str) )
+            return 'fail'
+
+        if tree is not None:
+            gdaltest.post_reason( 'Tree is not None: "%s"' % tree )
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Parse manformed xml.  Pass withou warning, but should not pass.
+
+def minixml_7():
+
+    test_strings = (
+        '<1></1>',
+        '<-></->',
+        '<.></.>',
+        '<![CDATA[',
+    )
+
+    for xml_str in test_strings:
+        tree = gdal.ParseXMLString( xml_str )
+
+        found = gdal.GetLastErrorMsg()
+        if found != '':
+            gdaltest.post_reason('Unexpected msg "%s"' % found)
+            return 'fail'
+
+        if tree is None:
+            gdaltest.post_reason( 'Tree is None: "%s"' % tree )
+            return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 def minixml_cleanup():
@@ -213,6 +303,9 @@ gdaltest_list = [
     minixml_2,
     minixml_3,
     minixml_4,
+    minixml_5,
+    minixml_6,
+    minixml_7,
     minixml_cleanup ]
 
 if __name__ == '__main__':
@@ -221,4 +314,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
