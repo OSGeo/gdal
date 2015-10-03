@@ -35,7 +35,7 @@ import os
 
 sys.path.append( '../pymod' )
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 import gdaltest
 
 ###############################################################################
@@ -628,6 +628,190 @@ def test_gdalwarp_lib_108():
     return 'success'
 
 ###############################################################################
+# Test wrong cutline name
+
+def test_gdalwarp_lib_109():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', cutlineDSName = '/does/not/exist')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test wrong cutline layer name
+
+def test_gdalwarp_lib_110():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'wrong_name')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test cutline SQL
+
+def test_gdalwarp_lib_111():
+
+    ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', cutlineDSName = 'data/cutline.vrt', cutlineSQL = 'SELECT * FROM cutline', cutlineWhere = '1 = 1')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 19139:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test cutline without geometry
+
+def test_gdalwarp_lib_112():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
+    lyr = ds.CreateLayer('cutline')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', cutlineDSName = '/vsimem/cutline.shp', cutlineSQL = 'SELECT * FROM cutline')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/cutline.shp')
+
+    return 'success'
+
+###############################################################################
+# Test cutline with non polygon geometry
+
+def test_gdalwarp_lib_113():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
+    lyr = ds.CreateLayer('cutline')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', cutlineDSName = '/vsimem/cutline.shp')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/cutline.shp')
+
+    return 'success'
+
+###############################################################################
+# Test cutline without feature
+
+def test_gdalwarp_lib_114():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
+    ds.CreateLayer('cutline')
+    ds = None
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', cutlineDSName = '/vsimem/cutline.shp')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/cutline.shp')
+
+    return 'success'
+
+###############################################################################
+# Test source dataset without band
+
+def test_gdalwarp_lib_115():
+
+    no_band_ds = gdal.GetDriverByName('MEM').Create('no band', 1, 1, 0)
+    out_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0)
+
+    with gdaltest.error_handler():
+        ret = gdal.Warp(out_ds, no_band_ds, cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'cutline')
+    if ret != 0:
+        gdaltest.post_reason('Expected failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test failed cropToCutline due to invalid SRC_SRS
+
+def test_gdalwarp_lib_116():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'cutline', cropToCutline = True, transformerOptions = ['SRC_SRS=invalid'])
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test failed cropToCutline due to invalid DST_SRS
+
+def test_gdalwarp_lib_117():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'cutline', cropToCutline = True, transformerOptions = ['DST_SRS=invalid'])
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test failed cropToCutline due to no source raster
+
+def test_gdalwarp_lib_118():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', [], format = 'MEM', cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'cutline', cropToCutline = True)
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test failed cropToCutline due to source raster without projection
+
+def test_gdalwarp_lib_119():
+
+    no_proj_ds = gdal.GetDriverByName('MEM').Create('no_proj_ds', 1, 1)
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', no_proj_ds, format = 'MEM', cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'cutline', cropToCutline = True)
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test failed cropToCutline due to source raster with dummy projection
+
+def test_gdalwarp_lib_120():
+
+    dummy_proj_ds = gdal.GetDriverByName('MEM').Create('no_proj_ds', 1, 1)
+    dummy_proj_ds.SetProjection('dummy')
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', dummy_proj_ds, format = 'MEM', cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'cutline', cropToCutline = True)
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -683,6 +867,18 @@ gdaltest_list = [
     test_gdalwarp_lib_106,
     test_gdalwarp_lib_107,
     test_gdalwarp_lib_108,
+    test_gdalwarp_lib_109,
+    test_gdalwarp_lib_110,
+    test_gdalwarp_lib_111,
+    test_gdalwarp_lib_112,
+    test_gdalwarp_lib_113,
+    test_gdalwarp_lib_114,
+    test_gdalwarp_lib_115,
+    test_gdalwarp_lib_116,
+    test_gdalwarp_lib_117,
+    test_gdalwarp_lib_118,
+    test_gdalwarp_lib_119,
+    test_gdalwarp_lib_120,
     test_gdalwarp_lib_cleanup,
     ]
 
