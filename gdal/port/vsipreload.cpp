@@ -349,17 +349,17 @@ static int VSIFopenHelper(const char *path, int flags)
 /*                    GET_DEBUG_VSIPRELOAD_COND()                             */
 /************************************************************************/
 
-static int GET_DEBUG_VSIPRELOAD_COND(const char* path)
+static bool GET_DEBUG_VSIPRELOAD_COND(const char* path)
 {
     return (DEBUG_VSIPRELOAD && (!DEBUG_VSIPRELOAD_ONLY_VSIL || strncmp(path, "/vsi", 4) == 0) );
 }
 
-static int GET_DEBUG_VSIPRELOAD_COND(VSILFILE* fpVSIL)
+static bool GET_DEBUG_VSIPRELOAD_COND(VSILFILE* fpVSIL)
 {
     return (DEBUG_VSIPRELOAD && (!DEBUG_VSIPRELOAD_ONLY_VSIL || fpVSIL != NULL));
 }
 
-static int GET_DEBUG_VSIPRELOAD_COND(VSIDIR* dirP)
+static bool GET_DEBUG_VSIPRELOAD_COND(VSIDIR* dirP)
 {
     return (DEBUG_VSIPRELOAD && (!DEBUG_VSIPRELOAD_ONLY_VSIL || oSetVSIDIR.find(dirP) != oSetVSIDIR.end()));
 }
@@ -1421,12 +1421,12 @@ DIR *opendir(const char *name)
 /*                             filldir()                                */
 /************************************************************************/
 
-static int filldir(VSIDIR* mydir)
+static bool filldir(VSIDIR* mydir)
 {
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(mydir);
     char* pszName = mydir->papszDir[mydir->nIter++];
     if( pszName == NULL )
-        return FALSE;
+        return false;
     mydir->ent.d_ino = 0;
     mydir->ent.d_off = 0;
     mydir->ent.d_reclen = sizeof(mydir->ent);
@@ -1447,7 +1447,7 @@ static int filldir(VSIDIR* mydir)
     mydir->ent64.d_type = mydir->ent.d_type;
     strcpy(mydir->ent64.d_name, mydir->ent.d_name);
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
