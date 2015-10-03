@@ -301,6 +301,7 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSr
         if( OSRImportFromWkt( hSrcSRS, (char **)&pszThisSourceSRS ) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
+            OSRDestroySpatialReference(hSrcSRS);
             return CE_Failure;
         }
     }
@@ -329,6 +330,7 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSr
         if( OSRImportFromWkt( hSrcSRS, (char **)&pszProjection ) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
+            OSRDestroySpatialReference(hSrcSRS);
             return CE_Failure;
         }
 
@@ -345,6 +347,7 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSr
         if( OSRImportFromWkt( hDstSRS, (char **)&pszThisTargetSRS ) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
+            OSRDestroySpatialReference(hSrcSRS);
             return CE_Failure;
         }
     }
