@@ -226,7 +226,6 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                       const char *pszFormat, char **papszTO,
                       char ***ppapszCreateOptions, GDALDataType eDT,
                       void ** phTransformArg,
-                      GDALDatasetH* phSrcDS,
                       int bSetColorInterpretation,
                       GDALWarpAppOptions *psOptions);
 
@@ -654,7 +653,6 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /*      If not, we need to create it.                                   */
 /* -------------------------------------------------------------------- */
     void* hUniqueTransformArg = NULL;
-    GDALDatasetH hUniqueSrcDS = NULL;
     int bInitDestSetByUser = ( CSLFetchNameValue( psOptions->papszWarpOptions, "INIT_DEST" ) != NULL );
 
     const char* pszWarpThreads = CSLFetchNameValue(psOptions->papszWarpOptions, "NUM_THREADS");
@@ -669,10 +667,12 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         hDstDS = GDALWarpCreateOutput( nSrcCount, pahSrcDS, pszDest,psOptions->pszFormat,
                                        psOptions->papszTO, &psOptions->papszCreateOptions, 
                                        psOptions->eOutputType, &hUniqueTransformArg,
-                                       &hUniqueSrcDS, psOptions->bSetColorInterpretation,
+                                       psOptions->bSetColorInterpretation,
                                        psOptions);
         if(hDstDS == NULL)
         {
+            if( hUniqueTransformArg )
+                GDALDestroyTransformer( hUniqueTransformArg );
             GDALWarpAppOptionsFree(psOptions);
             return NULL;
         }
@@ -715,11 +715,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
 /*      Open this file.                                                 */
 /* -------------------------------------------------------------------- */
-        if (hUniqueSrcDS)
-            hSrcDS = hUniqueSrcDS;
-        else
-            hSrcDS = pahSrcDS[iSrc];
-    
+        hSrcDS = pahSrcDS[iSrc];
         if( hSrcDS == NULL )
         {
             GDALWarpAppOptionsFree(psOptions);
@@ -1521,10 +1517,9 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 /*                                                                      */
 /*      Create the output file based on various commandline options,    */
 /*      and the input file.                                             */
-/*      If there's just one source file, then *phTransformArg and       */
-/*      *phSrcDS will be set, in order them to be reused by main        */
-/*      function. This saves dataset re-opening, and above all transform*/
-/*      recomputation, which can be expensive in the -tps case          */
+/*      If there's just one source file, then *phTransformArg will be   */
+/*      set in order them to be reused by main function. This saves     */
+/*      transform recomputation, which can be expensive in the -tps case*/
 /************************************************************************/
 
 static GDALDatasetH 
@@ -1532,7 +1527,6 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                       const char *pszFormat, char **papszTO, 
                       char ***ppapszCreateOptions, GDALDataType eDT,
                       void ** phTransformArg,
-                      GDALDatasetH* phSrcDS,
                       int bSetColorInterpretation,
                       GDALWarpAppOptions *psOptions)
 
@@ -1557,7 +1551,6 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                      !(psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 && psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0) );
 
     *phTransformArg = NULL;
-    *phSrcDS = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
@@ -1602,16 +1595,23 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
 /*      Loop over all input files to collect extents.                   */
 /* -------------------------------------------------------------------- */
     int     iSrc;
-    char    *pszThisTargetSRS = (char*)CSLFetchNameValue( papszTO, "DST_SRS" );
-    if( pszThisTargetSRS != NULL )
-        pszThisTargetSRS = CPLStrdup( pszThisTargetSRS );
+    CPLString osThisTargetSRS;
+    {
+        const char *pszThisTargetSRS = CSLFetchNameValue( papszTO, "DST_SRS" );
+        if( pszThisTargetSRS != NULL )
+            osThisTargetSRS = pszThisTargetSRS;
+    }
 
     for( iSrc = 0; iSrc < nSrcCount; iSrc++ )
     {
         const char *pszThisSourceSRS = CSLFetchNameValue(papszTO,"SRC_SRS");
 
         if( pahSrcDS[iSrc] == NULL )
+        {
+            if( hCT != NULL )
+                GDALDestroyColorTable( hCT );
             return NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Check that there's at least one raster band                     */
@@ -1619,6 +1619,8 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         if ( GDALGetRasterCount(pahSrcDS[iSrc]) == 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Input file %s has no raster bands.", GDALGetDescription(pahSrcDS[iSrc]) );
+            if( hCT != NULL )
+                GDALDestroyColorTable( hCT );
             return NULL;
         }
 
@@ -1671,8 +1673,8 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 pszThisSourceSRS = "";
         }
 
-        if( pszThisTargetSRS == NULL )
-            pszThisTargetSRS = CPLStrdup( pszThisSourceSRS );
+        if( osThisTargetSRS.size() == 0 )
+            osThisTargetSRS = pszThisSourceSRS;
         
 /* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
@@ -1683,7 +1685,8 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         
         if( hTransformArg == NULL )
         {
-            CPLFree( pszThisTargetSRS );
+            if( hCT != NULL )
+                GDALDestroyColorTable( hCT );
             return NULL;
         }
         
@@ -1704,7 +1707,9 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                                         &nThisPixels, &nThisLines, 
                                         adfExtent, 0 ) != CE_None )
             {
-                CPLFree( pszThisTargetSRS );
+                if( hCT != NULL )
+                    GDALDestroyColorTable( hCT );
+                GDALDestroyGenImgProjTransformer( hTransformArg );
                 return NULL;
             }
             
@@ -1757,7 +1762,9 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                                         &nThisPixels, &nThisLines, 
                                         adfExtent, 0 ) != CE_None )
                     {
-                        CPLFree( pszThisTargetSRS );
+                        if( hCT != NULL )
+                            GDALDestroyColorTable( hCT );
+                        GDALDestroyGenImgProjTransformer( hTransformArg );
                         return NULL;
                     }
                 }
@@ -1790,7 +1797,6 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         if (nSrcCount == 1)
         {
             *phTransformArg = hTransformArg;
-            *phSrcDS = pahSrcDS[iSrc];
         }
         else
         {
@@ -1805,7 +1811,8 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "No usable source images." );
-        CPLFree( pszThisTargetSRS );
+        if( hCT != NULL )
+            GDALDestroyColorTable( hCT );
         return NULL;
     }
 
@@ -1961,7 +1968,8 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
     
     if( hDstDS == NULL )
     {
-        CPLFree( pszThisTargetSRS );
+        if( hCT != NULL )
+            GDALDestroyColorTable( hCT );
         return NULL;
     }
 
@@ -1971,10 +1979,11 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
     const char *pszDstMethod = CSLFetchNameValue(papszTO,"DST_METHOD");
     if( pszDstMethod == NULL || !EQUAL(pszDstMethod, "NO_GEOTRANSFORM") )
     {
-        if( GDALSetProjection( hDstDS, pszThisTargetSRS ) == CE_Failure ||
+        if( GDALSetProjection( hDstDS, osThisTargetSRS.c_str() ) == CE_Failure ||
             GDALSetGeoTransform( hDstDS, adfDstGeoTransform ) == CE_Failure )
         {
-            CPLFree( pszThisTargetSRS );
+            if( hCT != NULL )
+                GDALDestroyColorTable( hCT );
             return NULL;
         }
     }
@@ -2027,7 +2036,6 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         GDALDestroyColorTable( hCT );
     }
 
-    CPLFree( pszThisTargetSRS );
     return hDstDS;
 }
 
