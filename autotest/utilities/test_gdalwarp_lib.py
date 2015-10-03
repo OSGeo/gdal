@@ -812,6 +812,33 @@ def test_gdalwarp_lib_120():
     return 'success'
 
 ###############################################################################
+# Test internal wrappers
+
+def test_gdalwarp_lib_121():
+
+    # No option
+    with gdaltest.error_handler():
+        gdal.wrapper_GDALWarpDestName('', [], None)
+
+    # Will create an implicit options structure
+    with gdaltest.error_handler():
+        gdal.wrapper_GDALWarpDestName('', [], None, gdal.TermProgress)
+
+    # Null dest name
+    with gdaltest.error_handler():
+        gdal.wrapper_GDALWarpDestName(None, [], None)
+
+    # No option
+    with gdaltest.error_handler():
+        gdal.wrapper_GDALWarpDestDS(gdal.GetDriverByName('MEM').Create('', 1, 1), [], None)
+
+    # Will create an implicit options structure
+    with gdaltest.error_handler():
+        gdal.wrapper_GDALWarpDestDS(gdal.GetDriverByName('MEM').Create('', 1, 1), [], None, gdal.TermProgress)
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -879,6 +906,7 @@ gdaltest_list = [
     test_gdalwarp_lib_118,
     test_gdalwarp_lib_119,
     test_gdalwarp_lib_120,
+    test_gdalwarp_lib_121,
     test_gdalwarp_lib_cleanup,
     ]
 

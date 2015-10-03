@@ -979,8 +979,20 @@ GDALDatasetShadow* wrapper_GDALTranslate( const char* dest,
                                       void* callback_data=NULL)
 {
     int usageError; /* ignored */
-    GDALTranslateOptionsSetProgress(translateOptions, callback, callback_data);
-    return GDALTranslate(dest, dataset, translateOptions, &usageError);    
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( translateOptions == NULL )
+        {
+            bFreeOptions = true;
+            translateOptions = GDALTranslateOptionsNew(NULL, NULL);
+        }
+        GDALTranslateOptionsSetProgress(translateOptions, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALTranslate(dest, dataset, translateOptions, &usageError);    
+    if( bFreeOptions )
+        GDALTranslateOptionsFree(translateOptions);
+    return hDSRet;
 }
 %}
 
@@ -1007,8 +1019,20 @@ int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
                             void* callback_data=NULL)
 {
     int usageError; /* ignored */
-    GDALWarpAppOptionsSetProgress(warpAppOptions, callback, callback_data);
-    return GDALWarp(NULL, dstDS, object_list_count, poObjects, warpAppOptions, &usageError) != NULL;
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( warpAppOptions == NULL )
+        {
+            bFreeOptions = true;
+            warpAppOptions = GDALWarpAppOptionsNew(NULL, NULL);
+        }
+        GDALWarpAppOptionsSetProgress(warpAppOptions, callback, callback_data);
+    }
+    int bRet = (GDALWarp(NULL, dstDS, object_list_count, poObjects, warpAppOptions, &usageError) != NULL);
+    if( bFreeOptions )
+        GDALWarpAppOptionsFree(warpAppOptions);
+    return bRet;
 }
 %}
 
@@ -1022,7 +1046,19 @@ GDALDatasetShadow* wrapper_GDALWarpDestName( const char* dest,
                                              void* callback_data=NULL)
 {
     int usageError; /* ignored */
-    GDALWarpAppOptionsSetProgress(warpAppOptions, callback, callback_data);
-    return GDALWarp(dest, NULL, object_list_count, poObjects, warpAppOptions, &usageError);
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( warpAppOptions == NULL )
+        {
+            bFreeOptions = true;
+            warpAppOptions = GDALWarpAppOptionsNew(NULL, NULL);
+        }
+        GDALWarpAppOptionsSetProgress(warpAppOptions, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALWarp(dest, NULL, object_list_count, poObjects, warpAppOptions, &usageError);
+    if( bFreeOptions )
+        GDALWarpAppOptionsFree(warpAppOptions);
+    return hDSRet;
 }
 %}
