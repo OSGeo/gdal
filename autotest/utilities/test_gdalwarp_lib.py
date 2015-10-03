@@ -529,6 +529,105 @@ def test_gdalwarp_lib_100():
     return 'success'
 
 ###############################################################################
+# Test with color table
+
+def test_gdalwarp_lib_101():
+
+    ds = gdal.Warp('', '../gdrivers/data/small_world_pct.tif', format = 'MEM')
+    if ds.GetRasterBand(1).GetColorTable() is None:
+        gdaltest.post_reason('Did not get color table')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test with a dataset with no bands
+
+def test_gdalwarp_lib_102():
+
+    no_band_ds = gdal.GetDriverByName('MEM').Create('no band', 1, 1, 0)
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', [ '../gdrivers/data/small_world_pct.tif', no_band_ds ], format = 'MEM')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test failed transformer
+
+def test_gdalwarp_lib_103():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', [ '../gdrivers/data/small_world_pct.tif', '../gcore/data/stefan_full_rgba.tif'], format = 'MEM')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test no usable source image
+
+def test_gdalwarp_lib_104():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', [], format = 'MEM')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test failure in GDALSuggestedWarpOutput2
+
+def test_gdalwarp_lib_105():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', [ '../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif' ], format = 'MEM', dstSRS = 'EPSG:32645')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test failure in creation
+
+def test_gdalwarp_lib_106():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('/not_existing_dir/not_existing_file', [ '../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif' ])
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test forced width only
+
+def test_gdalwarp_lib_107():
+
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', width = 20)
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test forced height only
+
+def test_gdalwarp_lib_108():
+
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', height = 20)
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -576,6 +675,14 @@ gdaltest_list = [
     test_gdalwarp_lib_45,
     test_gdalwarp_lib_46,
     test_gdalwarp_lib_100,
+    test_gdalwarp_lib_101,
+    test_gdalwarp_lib_102,
+    test_gdalwarp_lib_103,
+    test_gdalwarp_lib_104,
+    test_gdalwarp_lib_105,
+    test_gdalwarp_lib_106,
+    test_gdalwarp_lib_107,
+    test_gdalwarp_lib_108,
     test_gdalwarp_lib_cleanup,
     ]
 
