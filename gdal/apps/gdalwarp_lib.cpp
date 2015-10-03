@@ -283,7 +283,7 @@ static double GetAverageSegmentLength(OGRGeometryH hGeom)
 /*                           CropToCutline()                            */
 /************************************************************************/
 
-static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSrcDS,
+static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDALDatasetH *pahSrcDS,
                            double& dfMinX, double& dfMinY, double& dfMaxX, double &dfMaxY )
 {
     OGRGeometryH hCutlineGeom = OGR_G_Clone( (OGRGeometryH) hCutline );
@@ -301,15 +301,17 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSr
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             OSRDestroySpatialReference(hSrcSRS);
+            OGR_G_DestroyGeometry(hCutlineGeom);
             return CE_Failure;
         }
     }
-    else if( pahSrcDS[0] == NULL )
+    else if( nSrcCount == 0 || pahSrcDS[0] == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
+        OGR_G_DestroyGeometry(hCutlineGeom);
         return CE_Failure;
     }
-    else if( pahSrcDS[0] != NULL )
+    else
     {
         const char *pszProjection = NULL;
 
@@ -319,9 +321,10 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSr
         else if( GDALGetGCPProjection( pahSrcDS[0] ) != NULL )
             pszProjection = GDALGetGCPProjection( pahSrcDS[0] );
 
-        if( pszProjection == NULL )
+        if( pszProjection == NULL || pszProjection[0] == '\0' )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
+            OGR_G_DestroyGeometry(hCutlineGeom);
             return CE_Failure;
         }
 
@@ -330,14 +333,10 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSr
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             OSRDestroySpatialReference(hSrcSRS);
+            OGR_G_DestroyGeometry(hCutlineGeom);
             return CE_Failure;
         }
 
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
-        return CE_Failure;
     }
 
     if ( pszThisTargetSRS != NULL )
@@ -347,6 +346,8 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, GDALDatasetH *pahSr
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             OSRDestroySpatialReference(hSrcSRS);
+            OSRDestroySpatialReference(hDstSRS);
+            OGR_G_DestroyGeometry(hCutlineGeom);
             return CE_Failure;
         }
     }
@@ -488,6 +489,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if( pszDest == NULL )
         pszDest = GDALGetDescription(hDstDS);
 
+    int bMustCloseDstDSInCaseOfError = (hDstDS == NULL);
     GDALTransformerFunc pfnTransformer = NULL;
     void *hTransformArg = NULL;
     int bHasGotErr = FALSE;
@@ -589,7 +591,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
             else
             {
-                if( pahSrcDS[0] && GDALGetProjectionRef(pahSrcDS[0]) && GDALGetProjectionRef(pahSrcDS[0])[0] )
+                if( nSrcCount && pahSrcDS[0] && GDALGetProjectionRef(pahSrcDS[0]) && GDALGetProjectionRef(pahSrcDS[0])[0] )
                 {
                     oSRSDS.SetFromUserInput( GDALGetProjectionRef(pahSrcDS[0]) );
                     bOK = TRUE;
@@ -639,11 +641,12 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if ( psOptions->bCropToCutline && hCutline != NULL )
     {
         CPLErr eError;
-        eError = CropToCutline( hCutline, psOptions->papszTO, pahSrcDS,
+        eError = CropToCutline( hCutline, psOptions->papszTO, nSrcCount, pahSrcDS,
                        psOptions->dfMinX, psOptions->dfMinY, psOptions->dfMaxX, psOptions->dfMaxY );
         if(eError == CE_Failure)
         {
             GDALWarpAppOptionsFree(psOptions);
+            OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
             return NULL;
         }
     }
@@ -674,6 +677,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             if( hUniqueTransformArg )
                 GDALDestroyTransformer( hUniqueTransformArg );
             GDALWarpAppOptionsFree(psOptions);
+#ifdef OGR_ENABLED
+            if( hCutline != NULL )
+                OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+#endif
             return NULL;
         }
 
@@ -719,6 +726,12 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         if( hSrcDS == NULL )
         {
             GDALWarpAppOptionsFree(psOptions);
+#ifdef OGR_ENABLED
+            if( hCutline != NULL )
+                OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+#endif
+            if( bMustCloseDstDSInCaseOfError )
+                GDALClose(hDstDS);
             return NULL;
         }
 
@@ -729,6 +742,12 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         {     
             CPLError(CE_Failure, CPLE_AppDefined, "Input file %s has no raster bands.", GDALGetDescription(hSrcDS) );
             GDALWarpAppOptionsFree(psOptions);
+#ifdef OGR_ENABLED
+            if( hCutline != NULL )
+                OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+#endif
+            if( bMustCloseDstDSInCaseOfError )
+                GDALClose(hDstDS);
             return NULL;
         }
 
@@ -890,6 +909,12 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         if( hTransformArg == NULL )
         {
             GDALWarpAppOptionsFree(psOptions);
+#ifdef OGR_ENABLED
+            if( hCutline != NULL )
+                OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+#endif
+            if( bMustCloseDstDSInCaseOfError )
+                GDALClose(hDstDS);
             return NULL;
         }
 
@@ -1310,6 +1335,12 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             if(eError == CE_Failure)
             {
                 GDALWarpAppOptionsFree(psOptions);
+#ifdef OGR_ENABLED
+                if( hCutline != NULL )
+                    OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+#endif
+                if( bMustCloseDstDSInCaseOfError )
+                    GDALClose(hDstDS);
                 return NULL;
             }
         }
@@ -1325,6 +1356,12 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             if( GDALInitializeWarpedVRT( hDstDS, psWO ) != CE_None )
             {
                 GDALWarpAppOptionsFree(psOptions);
+#ifdef OGR_ENABLED
+                if( hCutline != NULL )
+                    OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+#endif
+                if( bMustCloseDstDSInCaseOfError )
+                    GDALClose(hDstDS);
                 return NULL;
             }
 
@@ -1436,6 +1473,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
     if( hLayer == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to identify source layer from datasource." );
+        OGR_DS_Destroy( hSrcDS );
         return CE_Failure;
     }
 
@@ -1460,10 +1498,11 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 
         if( hGeom == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "ERROR: Cutline feature without a geometry." );
-            return CE_Failure;
+            CPLError( CE_Failure, CPLE_AppDefined, "Cutline feature without a geometry." );
+            OGR_F_Destroy( hFeat );
+            goto error;
         }
-        
+
         OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
 
         if( eType == wkbPolygon )
@@ -1480,8 +1519,9 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "ERROR: Cutline not of polygon type." );
-            return CE_Failure;
+            CPLError( CE_Failure, CPLE_AppDefined, "Cutline not of polygon type." );
+            OGR_F_Destroy( hFeat );
+            goto error;
         }
 
         OGR_F_Destroy( hFeat );
@@ -1489,8 +1529,8 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 
     if( OGR_G_GetGeometryCount( hMultiPolygon ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "ERROR: Did not get any cutline features." );
-        return CE_Failure;
+        CPLError( CE_Failure, CPLE_AppDefined, "Did not get any cutline features." );
+        goto error;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1508,8 +1548,16 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
         OGR_DS_ReleaseResultSet( hSrcDS, hLayer );
 
     OGR_DS_Destroy( hSrcDS );
-#endif
+
     return CE_None;
+
+error:
+    OGR_G_DestroyGeometry(hMultiPolygon);
+    if( pszCSQL != NULL )
+        OGR_DS_ReleaseResultSet( hSrcDS, hLayer );
+    OGR_DS_Destroy( hSrcDS );
+    return CE_Failure;
+#endif
 }
 
 /************************************************************************/
@@ -1543,7 +1591,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
     int bVRT = FALSE;
 
     if( EQUAL(pszFormat,"VRT") )
-                bVRT = TRUE;
+        bVRT = TRUE;
 
     /* If (-ts and -te) or (-tr and -te) are specified, we don't need to compute the suggested output extent */
     int    bNeedsSuggestedWarpOutput = 
