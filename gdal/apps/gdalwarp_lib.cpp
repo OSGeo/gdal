@@ -2304,8 +2304,8 @@ char *SanitizeSRS( const char *pszUserInput )
 /**
  * Allocates a GDALWarpAppOptions struct.
  *
- * @param papszArgv NULL terminated list of options (potentially including filename and open options too)
- *                  The accepted options are the one of the gdal_translate utility.
+ * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
+ *                  The accepted options are the one of the gdalwarp utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALWarpAppOptionsForBinaryNew() prior to this function. Will be

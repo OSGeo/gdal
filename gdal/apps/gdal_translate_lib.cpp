@@ -1636,7 +1636,7 @@ int ArgIsNumeric( const char *pszArg )
 /**
  * Allocates a GDALTranslateOptions struct.
  *
- * @param papszArgv NULL terminated list of options (potentially including filename and open options too)
+ * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
  *                  The accepted options are the one of the gdal_translate utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
