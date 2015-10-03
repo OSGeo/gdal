@@ -365,6 +365,25 @@ def test_gdal_translate_lib_14():
     return 'success'
 
 ###############################################################################
+# Test internal wrappers
+
+def test_gdal_translate_lib_100():
+
+    # No option
+    with gdaltest.error_handler():
+        gdal.TranslateInternal('', gdal.Open('../gcore/data/byte.tif'), None)
+
+    # Will create an implicit options structure
+    with gdaltest.error_handler():
+        gdal.TranslateInternal('', gdal.Open('../gcore/data/byte.tif'), None, gdal.TermProgress)
+
+    # Null dest name
+    with gdaltest.error_handler():
+        gdal.TranslateInternal(None, gdal.Open('../gcore/data/byte.tif'), None)
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_lib_cleanup():
@@ -395,6 +414,7 @@ gdaltest_list = [
     test_gdal_translate_lib_12,
     test_gdal_translate_lib_13,
     test_gdal_translate_lib_14,
+    test_gdal_translate_lib_100,
     test_gdal_translate_lib_cleanup
     ]
 
