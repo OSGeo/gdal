@@ -1809,7 +1809,7 @@ static const char* const apszMonths[] = { "January", "February", "March",
                                           "August", "September", "October",
                                           "November", "December" };
 
-static int VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
+static bool VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
                                             struct tm& brokendowntime,
                                             GUIntBig& nFileSize,
                                             GIntBig& mTime)
@@ -1844,10 +1844,10 @@ static int VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
                     brokendowntime.tm_min = nMin;
                     mTime = CPLYMDHMSToUnixTime(&brokendowntime);
 
-                    return TRUE;
+                    return true;
                 }
             }
-            return FALSE;
+            return false;
         }
 
         /* Microsoft IIS */
@@ -1941,15 +1941,15 @@ static int VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
                     brokendowntime.tm_min = nMin;
                     mTime = CPLYMDHMSToUnixTime(&brokendowntime);
 
-                    return TRUE;
+                    return true;
                 }
                 nFileSize = 0;
             }
-            return FALSE;
+            return false;
         }
     }
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -2174,7 +2174,7 @@ lrwxrwxrwx    1 ftp      ftp            28 Jun 14 14:13 MPlayer -> mirrors/mplay
 drwxr-xr-x  280 1003  1003  6656 Aug 26 04:17 gnu
 */
 
-static int VSICurlParseFullFTPLine(char* pszLine,
+static bool VSICurlParseFullFTPLine(char* pszLine,
                                    char*& pszFilename,
                                    int& bSizeValid,
                                    GUIntBig& nSize,
@@ -2184,18 +2184,18 @@ static int VSICurlParseFullFTPLine(char* pszLine,
     char* pszNextToken = pszLine;
     char* pszPermissions = VSICurlGetToken(pszNextToken, &pszNextToken);
     if (pszPermissions == NULL || strlen(pszPermissions) != 10)
-        return FALSE;
+        return false;
     bIsDirectory = (pszPermissions[0] == 'd');
 
     for(int i = 0; i < 3; i++)
     {
         if (VSICurlGetToken(pszNextToken, &pszNextToken) == NULL)
-            return FALSE;
+            return false;
     }
 
     char* pszSize = VSICurlGetToken(pszNextToken, &pszNextToken);
     if (pszSize == NULL)
-        return FALSE;
+        return false;
 
     if (pszPermissions[0] == '-')
     {
@@ -2210,7 +2210,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
 
     char* pszMonth = VSICurlGetToken(pszNextToken, &pszNextToken);
     if (pszMonth == NULL || strlen(pszMonth) != 3)
-        return FALSE;
+        return false;
 
     int i;
     for(i = 0; i < 12; i++)
@@ -2225,7 +2225,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
 
     char* pszDay = VSICurlGetToken(pszNextToken, &pszNextToken);
     if (pszDay == NULL || (strlen(pszDay) != 1 && strlen(pszDay) != 2))
-        return FALSE;
+        return false;
     int nDay = atoi(pszDay);
     if (nDay >= 1 && nDay <= 31)
         brokendowntime.tm_mday = nDay;
@@ -2234,7 +2234,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
 
     char* pszHourOrYear = VSICurlGetToken(pszNextToken, &pszNextToken);
     if (pszHourOrYear == NULL || (strlen(pszHourOrYear) != 4 && strlen(pszHourOrYear) != 5))
-        return FALSE;
+        return false;
     if (strlen(pszHourOrYear) == 4)
     {
         brokendowntime.tm_year = atoi(pszHourOrYear) - 1900;
@@ -2256,7 +2256,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
         nUnixTime = 0;
 
     if (pszNextToken == NULL)
-        return FALSE;
+        return false;
 
     pszFilename = pszNextToken;
 
@@ -2272,7 +2272,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
     }
     *pszCurPtr = '\0';
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
