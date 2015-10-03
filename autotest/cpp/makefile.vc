@@ -69,7 +69,7 @@ CPPFLAGS = $(CFLAGS)
 
 GDAL_TEST_EXE = gdal_unit_test.exe
 
-default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe
+default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testdestroy.exe
 
 check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe
 	 $(GDAL_TEST_EXE)
@@ -79,6 +79,7 @@ check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe testblockcac
 	testblockcache.exe -check -memdriver
 	testblockcachewrite.exe --debug ON
 	testblockcachelimits.exe --debug ON
+	testdestroy.exe
 
 check-all:	 check testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
 	testcopywords.exe
@@ -117,6 +118,10 @@ testblockcachewrite.exe: testblockcachewrite.cpp
 testblockcachelimits.exe: testblockcachelimits.cpp
 	$(CC) testblockcachelimits.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testblockcachelimits.exe.manifest mt -manifest testblockcachelimits.exe.manifest -outputresource:testblockcachelimits.exe;1
+
+testdestroy.exe: testdestroy.cpp
+	$(CC) testdestroy.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testdestroy.exe.manifest mt -manifest testdestroy.exe.manifest -outputresource:testdestroy.exe;1
 
 copy-gdal-dll:	$(GDAL_DLL) 
 
