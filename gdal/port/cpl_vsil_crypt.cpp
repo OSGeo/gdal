@@ -372,10 +372,10 @@ class VSICryptFileHeader
 /*                         VSICryptReadError()                          */
 /************************************************************************/
 
-static int VSICryptReadError()
+static bool VSICryptReadError()
 {
     CPLError(CE_Failure, CPLE_FileIO, "Cannot read header");
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -1642,7 +1642,7 @@ char** VSICryptFilesystemHandler::ReadDir( const char *pszDirname )
 
 #include "gdal_priv.h"
 
-static int VSICryptIdentify(GDALOpenInfo* poOpenInfo)
+static bool VSICryptIdentify(GDALOpenInfo* poOpenInfo)
 {
     return poOpenInfo->nHeaderBytes > 8 &&
            memcmp(poOpenInfo->pabyHeader, VSICRYPT_SIGNATURE, 8) == 0;
