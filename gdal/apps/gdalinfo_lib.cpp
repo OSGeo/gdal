@@ -1492,7 +1492,7 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
 /**
  * Allocates a GDALInfoOptions struct.
  *
- * @param papszArgv NULL terminated list of options (potentially including filename and open options too)
+ * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
  *                  The accepted options are the one of the gdalinfo utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdalinfo_bin.cpp use case) must be allocated with
