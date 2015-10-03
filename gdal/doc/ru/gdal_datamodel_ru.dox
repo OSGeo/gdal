@@ -295,7 +295,7 @@ Coefficient). Эта геометрическая модель может быт
 (http://geotiff.maptools.org/rpc_prop.html), который в свою очередь следует
 определению NITF RPC00B.
 
-\subsubsection gdal_datamodel_ru_subdatasets Домен IMAGERY
+\subsubsection gdal_datamodel_ru_imagery Домен метаданных ДДЗ (IMAGERY)
 
 Для материалов воздушной или космической съемки может быть задан домен IMAGERY. 
 Наличие такого домена зависит от специальных файлов метаданных, которые обычно
