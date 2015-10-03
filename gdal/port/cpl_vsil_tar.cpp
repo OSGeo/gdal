@@ -84,7 +84,7 @@ class VSITarReader : public VSIArchiveReader
 /*                               VSIIsTGZ()                             */
 /************************************************************************/
 
-static int VSIIsTGZ(const char* pszFilename)
+static bool VSIIsTGZ(const char* pszFilename)
 {
     return (!EQUALN(pszFilename, "/vsigzip/", 9) &&
             ((strlen(pszFilename) > 4 &&
