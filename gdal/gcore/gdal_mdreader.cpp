@@ -30,7 +30,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #include "gdal_mdreader.h"
 #include "cpl_string.h"
 #include "cplkeywordparser.h"
@@ -270,14 +270,14 @@ bool GDALMDReaderBase::FillMetadata(GDALMultiDomainMetadata* poMDMD)
 {
     if(NULL == poMDMD)
         return false;
-        
+
     LoadMetadata();
 
     SETMETADATA(poMDMD, m_papszIMDMD, MD_DOMAIN_IMD );
     SETMETADATA(poMDMD, m_papszRPCMD, MD_DOMAIN_RPC );
     SETMETADATA(poMDMD, m_papszIMAGERYMD, MD_DOMAIN_IMAGERY );
     SETMETADATA(poMDMD, m_papszDEFAULTMD, MD_DOMAIN_DEFAULT );
-    
+
     return true;
 }
 
@@ -458,7 +458,7 @@ CPLString CPLStrip(const CPLString& sString, const char cChar)
 
     if(dCopyCount == 0)
         return CPLString();
-    
+
     return sString.substr(dCopyFrom, dCopyCount);
 }
 
@@ -846,7 +846,7 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
 /*      Translate AA version IMD file to R version.                     */
 /************************************************************************/
 
-static int GDAL_IMD_AA2R( char ***ppapszIMD )
+static bool GDAL_IMD_AA2R( char ***ppapszIMD )
 
 {
     char **papszIMD = *ppapszIMD;
@@ -857,10 +857,10 @@ static int GDAL_IMD_AA2R( char ***ppapszIMD )
     const char *pszValue = CSLFetchNameValue( papszIMD, "version" );
 
     if( pszValue == NULL )
-        return FALSE;
+        return false;
 
     if( EQUAL(pszValue,"\"R\"") )
-        return TRUE;
+        return true;
 
     if( !EQUAL(pszValue,"\"AA\"") )
     {
@@ -875,8 +875,6 @@ static int GDAL_IMD_AA2R( char ***ppapszIMD )
 /* -------------------------------------------------------------------- */
 /*      remove a bunch of fields.                                       */
 /* -------------------------------------------------------------------- */
-    int iKey;
-
     static const char *apszToRemove[] = {
         "productCatalogId",
         "childCatalogId",
@@ -889,7 +887,7 @@ static int GDAL_IMD_AA2R( char ***ppapszIMD )
         "productGSD",
         NULL };
 
-    for( iKey = 0; apszToRemove[iKey] != NULL; iKey++ )
+    for( int iKey = 0; apszToRemove[iKey] != NULL; iKey++ )
     {
         int iTarget = CSLFindName( papszIMD, apszToRemove[iKey] );
         if( iTarget != -1 )
@@ -911,7 +909,7 @@ static int GDAL_IMD_AA2R( char ***ppapszIMD )
         "OffNadirViewAngle",
         NULL };
 
-    for( iKey = 0; keylist[iKey] != NULL; iKey++ )
+    for( int iKey = 0; keylist[iKey] != NULL; iKey++ )
     {
         CPLString osTarget;
         int       iTarget;
@@ -945,7 +943,7 @@ static int GDAL_IMD_AA2R( char ***ppapszIMD )
     }
 
     *ppapszIMD = papszIMD;
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
