@@ -4,12 +4,12 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Misc tests of VRT driver 
+# Purpose:  Misc tests of VRT driver
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -56,7 +56,7 @@ def vrtmisc_1():
 # Test power scaling
 
 def vrtmisc_2():
-    
+
     ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale 74 255 0 255 -exponent 2.2')
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
@@ -230,7 +230,7 @@ def vrtmisc_9():
 # Test metadata serialization (#5944)
 
 def vrtmisc_10():
-    
+
     gdal.FileFromMemBuffer("/vsimem/vrtmisc_10.vrt",
 """<VRTDataset rasterXSize="1" rasterYSize="1">
   <Metadata>
@@ -290,7 +290,7 @@ def vrtmisc_10():
         print(ds.GetMetadata_List('xml:a_xml_domain'))
         return 'fail'
     ds = None
-    
+
     gdal.Unlink("/vsimem/vrtmisc_10.vrt")
 
     return "success"
@@ -299,7 +299,7 @@ def vrtmisc_10():
 # Test relativeToVRT is preserved during re-serialization (#5985)
 
 def vrtmisc_11():
-    
+
     f = open('tmp/vrtmisc_11.vrt', 'wt')
     f.write(
 """<VRTDataset rasterXSize="1" rasterYSize="1">
@@ -320,22 +320,22 @@ def vrtmisc_11():
     # to trigger a flush
     ds.SetMetadata(ds.GetMetadata())
     ds = None
-    
+
     data = open('tmp/vrtmisc_11.vrt', 'rt').read()
 
     gdal.Unlink("tmp/vrtmisc_11.vrt")
-    
+
     if data.find('<SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>') < 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
     return "success"
-    
+
 ###############################################################################
 # Test set/delete nodata
 
 def vrtmisc_12():
-    
+
     gdal.FileFromMemBuffer("/vsimem/vrtmisc_12.vrt",
 """<VRTDataset rasterXSize="1" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
@@ -368,7 +368,7 @@ def vrtmisc_12():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     gdal.Unlink("/vsimem/vrtmisc_12.vrt")
 
     return "success"
@@ -401,4 +401,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
