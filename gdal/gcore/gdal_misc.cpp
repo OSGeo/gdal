@@ -2710,8 +2710,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /*                          _FetchDblFromMD()                           */
 /************************************************************************/
 
-static int _FetchDblFromMD( char **papszMD, const char *pszKey, 
-                            double *padfTarget, int nCount, double dfDefault )
+static bool _FetchDblFromMD( char **papszMD, const char *pszKey,
+                             double *padfTarget, int nCount, double dfDefault )
 
 {
     char szFullKey[200];
@@ -2724,12 +2724,12 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
         padfTarget[i] = dfDefault;
 
     if( pszValue == NULL )
-        return FALSE;
+        return false;
 
     if( nCount == 1 )
     {
         *padfTarget = CPLAtofM( pszValue );
-        return TRUE;
+        return true;
     }
 
     char **papszTokens = CSLTokenizeStringComplex( pszValue, " ,", 
@@ -2738,7 +2738,7 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
     if( CSLCount( papszTokens ) != nCount )
     {
         CSLDestroy( papszTokens );
-        return FALSE;
+        return false;
     }
 
     for( int i = 0; i < nCount; i++ )
@@ -2746,7 +2746,7 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
 
     CSLDestroy( papszTokens );
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -2792,7 +2792,7 @@ int CPL_STDCALL GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
                      20, 0.0 );
     _FetchDblFromMD( papszMD, RPC_SAMP_DEN_COEFF, psRPC->adfSAMP_DEN_COEFF,
                      20, 0.0 );
-    
+
     _FetchDblFromMD( papszMD, "MIN_LONG", &(psRPC->dfMIN_LONG), 1, -180.0 );
     _FetchDblFromMD( papszMD, "MIN_LAT", &(psRPC->dfMIN_LAT), 1, -90.0 );
     _FetchDblFromMD( papszMD, "MAX_LONG", &(psRPC->dfMAX_LONG), 1, 180.0 );
