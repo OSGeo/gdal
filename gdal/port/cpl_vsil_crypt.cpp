@@ -14,10 +14,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -1642,7 +1642,17 @@ char** VSICryptFilesystemHandler::ReadDir( const char *pszDirname )
 
 #include "gdal_priv.h"
 
-static bool VSICryptIdentify(GDALOpenInfo* poOpenInfo)
+/**
+ * \brief Evaluate if this is a crypt file.
+ *
+ * The function signature must match GDALDataset::Identify.
+ *
+ * @param poOpenInfo The header bytes used for file identification.
+ *
+ * @return 1 if this is a crypt file or 0 otherwise.
+ */
+
+static int VSICryptIdentify(GDALOpenInfo* poOpenInfo)
 {
     return poOpenInfo->nHeaderBytes > 8 &&
            memcmp(poOpenInfo->pabyHeader, VSICRYPT_SIGNATURE, 8) == 0;
