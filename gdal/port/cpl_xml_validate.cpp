@@ -95,6 +95,8 @@ static void CPLFixPath(char* pszPath)
 
 #ifdef HAS_VALIDATION_BUG
 
+static int bHasLibXMLBug = -1;
+
 /************************************************************************/
 /*                  CPLHasLibXMLBugWarningCallback()                    */
 /************************************************************************/
@@ -109,8 +111,6 @@ static void CPLHasLibXMLBugWarningCallback (void * ctx, const char * msg, ...)
 
 static bool CPLHasLibXMLBug()
 {
-    static int bHasLibXMLBug = -1;
-
     if (bHasLibXMLBug >= 0)
         return bHasLibXMLBug;
 
