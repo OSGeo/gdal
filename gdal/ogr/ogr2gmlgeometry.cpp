@@ -141,7 +141,6 @@ static void AppendCoordinateList( OGRLineString *poLine,
     strcat( *ppszText + *pnLength, "<gml:coordinates>" );
     *pnLength += strlen(*ppszText + *pnLength);
 
-    
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
         MakeGMLCoordinate( szCoordinate, 
@@ -154,11 +153,11 @@ static void AppendCoordinateList( OGRLineString *poLine,
 
         if( iPoint != 0 )
             strcat( *ppszText + *pnLength, " " );
-            
+
         strcat( *ppszText + *pnLength, szCoordinate );
         *pnLength += strlen(*ppszText + *pnLength);
     }
-    
+
     _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );
     strcat( *ppszText + *pnLength, "</gml:coordinates>" );
     *pnLength += strlen(*ppszText + *pnLength);
@@ -168,10 +167,10 @@ static void AppendCoordinateList( OGRLineString *poLine,
 /*                       OGR2GMLGeometryAppend()                        */
 /************************************************************************/
 
-static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry, 
-                                  char **ppszText, int *pnLength, 
-                                  int *pnMaxLength,
-                                  int bIsSubGeometry )
+static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
+                                   char **ppszText, int *pnLength,
+                                   int *pnMaxLength,
+                                   int bIsSubGeometry )
 
 {
 
@@ -328,13 +327,13 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:outerBoundaryIs>" );
 
-            if( !OGR2GMLGeometryAppend( poPolygon->getExteriorRing(), 
+            if( !OGR2GMLGeometryAppend( poPolygon->getExteriorRing(),
                                         ppszText, pnLength, pnMaxLength,
                                         TRUE ) )
             {
-                return FALSE;
+                return false;
             }
-            
+
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:outerBoundaryIs>" );
         }
@@ -345,11 +344,11 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:innerBoundaryIs>" );
-            
-            if( !OGR2GMLGeometryAppend( poRing, ppszText, pnLength, 
+
+            if( !OGR2GMLGeometryAppend( poRing, ppszText, pnLength,
                                         pnMaxLength, TRUE ) )
-                return FALSE;
-            
+                return false;
+
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:innerBoundaryIs>" );
         }
@@ -416,14 +415,14 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
             AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
             AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
-            
-            if( !OGR2GMLGeometryAppend( poMember, 
+
+            if( !OGR2GMLGeometryAppend( poMember,
                                         ppszText, pnLength, pnMaxLength,
                                         TRUE ) )
             {
-                return FALSE;
+                return false;
             }
-            
+
             AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
             AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
         }
@@ -438,10 +437,10 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported geometry type %s",
                  OGRGeometryTypeToName(eType));
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -557,16 +556,16 @@ static void AppendGML3CoordinateList( const OGRSimpleCurve *poLine, int bCoordSw
 /*                      OGR2GML3GeometryAppend()                        */
 /************************************************************************/
 
-static int OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
-                                   const OGRSpatialReference* poParentSRS,
-                                   char **ppszText, int *pnLength,
-                                   int *pnMaxLength,
-                                   int bIsSubGeometry,
-                                   int bLongSRS,
-                                   int bLineStringAsCurve,
-                                   const char* pszGMLId,
-                                   int nSRSDimensionLocFlags,
-                                   int bForceLineStringAsLinearRing )
+static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
+                                    const OGRSpatialReference* poParentSRS,
+                                    char **ppszText, int *pnLength,
+                                    int *pnMaxLength,
+                                    int bIsSubGeometry,
+                                    int bLongSRS,
+                                    int bLineStringAsCurve,
+                                    const char* pszGMLId,
+                                    int nSRSDimensionLocFlags,
+                                    int bForceLineStringAsLinearRing )
 
 {
 
@@ -837,7 +836,7 @@ static int OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                          pnMaxLength, TRUE, bLongSRS,
                                          bLineStringAsCurve,
                                          NULL, nSRSDimensionLocFlags, FALSE) )
-                return FALSE;
+                return false;
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:curveMember>" );
         }
@@ -878,7 +877,7 @@ static int OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                          TRUE, bLongSRS, bLineStringAsCurve,
                                          NULL, nSRSDimensionLocFlags, TRUE) )
             {
-                return FALSE;
+                return false;
             }
 
             AppendString( ppszText, pnLength, pnMaxLength,
@@ -896,7 +895,7 @@ static int OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                          pnMaxLength, TRUE, bLongSRS,
                                          bLineStringAsCurve,
                                          NULL, nSRSDimensionLocFlags, TRUE) )
-                return FALSE;
+                return false;
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:interior>" );
@@ -977,7 +976,7 @@ static int OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                          pszGMLIdSub, nSRSDimensionLocFlags, FALSE ) )
             {
                 CPLFree(pszGMLIdSub);
-                return FALSE;
+                return false;
             }
 
             CPLFree(pszGMLIdSub);
@@ -996,10 +995,10 @@ static int OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported geometry type %s",
                  OGRGeometryTypeToName(eType));
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
