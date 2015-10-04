@@ -589,13 +589,13 @@ void GDALVirtualMem::Destroy(void* pUserData)
 /*                      GDALCheckBandParameters()                       */
 /************************************************************************/
 
-static int GDALCheckBandParameters( GDALDatasetH hDS,
-                                    int nBandCount, int* panBandMap )
+static bool GDALCheckBandParameters( GDALDatasetH hDS,
+                                     int nBandCount, int* panBandMap )
 {
     if( nBandCount == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "nBandCount == 0");
-        return FALSE;
+        return false;
     }
 
     if( panBandMap != NULL )
@@ -606,7 +606,7 @@ static int GDALCheckBandParameters( GDALDatasetH hDS,
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "panBandMap[%d]=%d",
                         i, panBandMap[i]);
-                return FALSE;
+                return false;
             }
         }
     }
@@ -614,9 +614,9 @@ static int GDALCheckBandParameters( GDALDatasetH hDS,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "nBandCount > GDALGetRasterCount(hDS)");
-        return FALSE;
+        return false;
     }
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
