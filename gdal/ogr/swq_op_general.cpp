@@ -5,7 +5,7 @@
  *          functions used to represent functions during evaluation and
  *          parsing.
  * Author: Frank Warmerdam <warmerdam@pobox.com>
- * 
+ *
  ******************************************************************************
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
@@ -257,7 +257,6 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
     if( sub_node_values[0]->field_type == SWQ_FLOAT 
         || (node->nSubExprCount > 1 
             && sub_node_values[1]->field_type == SWQ_FLOAT) )
-            
     {
         poRet = new swq_expr_node(0);
         poRet->field_type = node->field_type;
@@ -360,17 +359,17 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             poRet->float_value = sub_node_values[0]->float_value 
                 + sub_node_values[1]->float_value;
             break;
-            
+
           case SWQ_SUBTRACT:
             poRet->float_value = sub_node_values[0]->float_value 
                 - sub_node_values[1]->float_value;
             break;
-            
+
           case SWQ_MULTIPLY:
             poRet->float_value = sub_node_values[0]->float_value 
                 * sub_node_values[1]->float_value;
             break;
-            
+
           case SWQ_DIVIDE:
             if( sub_node_values[1]->float_value == 0 )
                 poRet->float_value = INT_MAX;
@@ -378,7 +377,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                 poRet->float_value = sub_node_values[0]->float_value 
                     / sub_node_values[1]->float_value;
             break;
-            
+
           case SWQ_MODULUS:
           {
             GIntBig nRight = (GIntBig) sub_node_values[1]->float_value;
@@ -434,16 +433,16 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             poRet->int_value = sub_node_values[0]->int_value 
                 && sub_node_values[1]->int_value;
             break;
-            
+
           case SWQ_OR:
             poRet->int_value = sub_node_values[0]->int_value 
                 || sub_node_values[1]->int_value;
             break;
-            
+
           case SWQ_NOT:
             poRet->int_value = !sub_node_values[0]->int_value;
             break;
-            
+
           case SWQ_EQ:
             poRet->int_value = sub_node_values[0]->int_value 
                 == sub_node_values[1]->int_value;
@@ -476,9 +475,8 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
 
           case SWQ_IN:
           {
-              int i;
               poRet->int_value = 0;
-              for( i = 1; i < node->nSubExprCount; i++ )
+              for( int i = 1; i < node->nSubExprCount; i++ )
               {
                   if( sub_node_values[0]->int_value 
                       == sub_node_values[i]->int_value )
@@ -505,17 +503,17 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             poRet->int_value = sub_node_values[0]->int_value 
                 + sub_node_values[1]->int_value;
             break;
-            
+
           case SWQ_SUBTRACT:
             poRet->int_value = sub_node_values[0]->int_value 
                 - sub_node_values[1]->int_value;
             break;
-            
+
           case SWQ_MULTIPLY:
             poRet->int_value = sub_node_values[0]->int_value 
                 * sub_node_values[1]->int_value;
             break;
-            
+
           case SWQ_DIVIDE:
             if( sub_node_values[1]->int_value == 0 )
                 poRet->int_value = INT_MAX;
@@ -523,7 +521,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                 poRet->int_value = sub_node_values[0]->int_value 
                     / sub_node_values[1]->int_value;
             break;
-            
+
           case SWQ_MODULUS:
             if( sub_node_values[1]->int_value == 0 )
                 poRet->int_value = INT_MAX;
@@ -531,7 +529,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                 poRet->int_value = sub_node_values[0]->int_value
                     % sub_node_values[1]->int_value;
             break;
-            
+
           default:
             CPLAssert( FALSE );
             delete poRet;
@@ -685,16 +683,15 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           case SWQ_ADD:
           {
               CPLString osResult = sub_node_values[0]->string_value;
-              int i;
 
-              for( i = 1; i < node->nSubExprCount; i++ )
+              for( int i = 1; i < node->nSubExprCount; i++ )
                   osResult += sub_node_values[i]->string_value;
-              
+
               poRet->string_value = CPLStrdup(osResult);
               poRet->is_null = sub_node_values[0]->is_null;
               break;
           }
-            
+
           case SWQ_SUBSTR:
           {
               int nOffset, nSize;
@@ -744,7 +741,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
               CPLString osResult = pszSrcStr + nOffset;
               if( (int)osResult.size() > nSize )
                   osResult.resize( nSize );
-              
+
               poRet->string_value = CPLStrdup(osResult);
               poRet->is_null = sub_node_values[0]->is_null;
               break;
@@ -782,12 +779,11 @@ static void SWQAutoPromoteIntegerToInteger64OrFloat( swq_expr_node *poNode )
         return;
 
     swq_field_type eArgType = poNode->papoSubExpr[0]->field_type;
-    int i;
 
     // We allow mixes of integer, integer64 and float, and string and dates.
     // When encountered, we promote integers/integer64 to floats, 
     // integer to integer64 and strings to dates.  We do that now.
-    for( i = 1; i < poNode->nSubExprCount; i++ )
+    for( int i = 1; i < poNode->nSubExprCount; i++ )
     {
         swq_expr_node *poSubNode = poNode->papoSubExpr[i];
         if( SWQ_IS_INTEGER(eArgType)
@@ -797,8 +793,8 @@ static void SWQAutoPromoteIntegerToInteger64OrFloat( swq_expr_node *poNode )
                  && poSubNode->field_type == SWQ_INTEGER64 )
             eArgType = SWQ_INTEGER64;
     }
-    
-    for( i = 0; i < poNode->nSubExprCount; i++ )
+
+    for( int i = 0; i < poNode->nSubExprCount; i++ )
     {
         swq_expr_node *poSubNode = poNode->papoSubExpr[i];
 
@@ -832,12 +828,11 @@ static void SWQAutoPromoteStringToDateTime( swq_expr_node *poNode )
         return;
 
     swq_field_type eArgType = poNode->papoSubExpr[0]->field_type;
-    int i;
 
     // We allow mixes of integer and float, and string and dates.
     // When encountered, we promote integers to floats, and strings to
     // dates.  We do that now.
-    for( i = 1; i < poNode->nSubExprCount; i++ )
+    for( int i = 1; i < poNode->nSubExprCount; i++ )
     {
         swq_expr_node *poSubNode = poNode->papoSubExpr[i];
 
@@ -847,8 +842,8 @@ static void SWQAutoPromoteStringToDateTime( swq_expr_node *poNode )
                 || poSubNode->field_type == SWQ_TIMESTAMP) )
             eArgType = SWQ_TIMESTAMP;
     }
-    
-    for( i = 0; i < poNode->nSubExprCount; i++ )
+
+    for( int i = 0; i < poNode->nSubExprCount; i++ )
     {
         swq_expr_node *poSubNode = poNode->papoSubExpr[i];
 
@@ -879,9 +874,8 @@ static void SWQAutoConvertStringToNumeric( swq_expr_node *poNode )
         return;
 
     swq_field_type eArgType = poNode->papoSubExpr[0]->field_type;
-    int i;
 
-    for( i = 1; i < poNode->nSubExprCount; i++ )
+    for( int i = 1; i < poNode->nSubExprCount; i++ )
     {
         swq_expr_node *poSubNode = poNode->papoSubExpr[i];
 
@@ -896,8 +890,8 @@ static void SWQAutoConvertStringToNumeric( swq_expr_node *poNode )
             break;
         }
     }
-    
-    for( i = 0; i < poNode->nSubExprCount; i++ )
+
+    for( int i = 0; i < poNode->nSubExprCount; i++ )
     {
         swq_expr_node *poSubNode = poNode->papoSubExpr[i];
 
@@ -1080,12 +1074,12 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
             return SWQ_ERROR;
         }
         break;
-        
+
       default:
       {
           const swq_operation *poOp = 
               swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
-          
+
           CPLError( CE_Failure, CPLE_AppDefined,
                     "SWQGeneralChecker() called on unsupported operation %s.",
                     poOp->pszName);
@@ -1213,7 +1207,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
             }
         }
         break;
-        
+
         case SWQ_INTEGER64:
         {
             poRetNode = new swq_expr_node( 0 );
@@ -1329,7 +1323,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
                     osRet = poSrcNode->string_value;
                     break;
             }
-         
+
             if( node->nSubExprCount > 2 )
             {
                 int nWidth;
@@ -1354,7 +1348,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
 swq_field_type SWQCastChecker( swq_expr_node *poNode,
                                CPL_UNUSED int bAllowMismatchTypeOnFieldComparison )
 
-{									
+{
     swq_field_type eType = SWQ_ERROR;
     const char *pszTypeName = poNode->papoSubExpr[1]->string_value;
 
