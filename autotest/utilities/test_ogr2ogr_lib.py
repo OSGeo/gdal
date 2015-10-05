@@ -135,7 +135,7 @@ def test_ogr2ogr_lib_4():
 def test_ogr2ogr_lib_5():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
-    ds = gdal.VectorTranslate('tmp/poly.shp', srcDS, format = 'Memory', dstSRS='EPSG:4326')
+    ds = gdal.VectorTranslate('', srcDS, format = 'Memory', dstSRS='EPSG:4326')
     if str(ds.GetLayer(0).GetSpatialRef()).find('1984') == -1:
         return 'fail'
 
@@ -186,7 +186,7 @@ def test_ogr2ogr_lib_7():
 def test_ogr2ogr_lib_8():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
-    ds = gdal.VectorTranslate('tmp/poly.shp', srcDS, format = 'Memory', layers=['poly'])
+    ds = gdal.VectorTranslate('', srcDS, format = 'Memory', layers=['poly'])
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
 
@@ -198,7 +198,7 @@ def test_ogr2ogr_lib_8():
 def test_ogr2ogr_lib_9():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
-    ds = gdal.VectorTranslate('tmp/poly.shp', srcDS, format = 'Memory', segmentizeMaxDist=100)
+    ds = gdal.VectorTranslate('', srcDS, format = 'Memory', segmentizeMaxDist=100)
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
     feat = ds.GetLayer(0).GetNextFeature()
