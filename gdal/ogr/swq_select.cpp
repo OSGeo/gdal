@@ -954,13 +954,13 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list,
 /*                       CheckCompatibleJoinExpr()                      */
 /************************************************************************/
 
-static int CheckCompatibleJoinExpr( swq_expr_node* poExpr,
+static bool CheckCompatibleJoinExpr( swq_expr_node* poExpr,
                                     int secondary_table,
                                     swq_field_list* field_list )
 {
     if( poExpr->eNodeType == SNT_CONSTANT )
-        return TRUE;
-    
+        return true;
+
     if( poExpr->eNodeType == SNT_COLUMN )
     {
         CPLAssert( poExpr->field_index != -1 );
@@ -976,10 +976,10 @@ static int CheckCompatibleJoinExpr( swq_expr_node* poExpr,
                 CPLError( CE_Failure, CPLE_AppDefined, 
                         "Field %s in JOIN clause does not correspond to the primary table nor the joint (secondary) table.", 
                         poExpr->string_value );
-            return FALSE;
+            return false;
         }
 
-        return TRUE;
+        return true;
     }
 
     if( poExpr->eNodeType == SNT_OPERATION )
@@ -989,12 +989,12 @@ static int CheckCompatibleJoinExpr( swq_expr_node* poExpr,
             if( !CheckCompatibleJoinExpr( poExpr->papoSubExpr[i],
                                           secondary_table,
                                           field_list ) )
-                return FALSE;
+                return false;
         }
-        return TRUE;
+        return true;
     }
-    
-    return FALSE;
+
+    return false;
 }
 
 /************************************************************************/
