@@ -565,7 +565,7 @@ static char* OGRGeocodeGetFromCache(OGRGeocodingSessionH hSession,
 /*                        OGRGeocodePutIntoCache()                      */
 /************************************************************************/
 
-static int OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
+static bool OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
                                   const char* pszURL,
                                   const char* pszContent)
 {
@@ -574,7 +574,7 @@ static int OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
     int nIdxBlob = -1;
     OGRLayer* poLayer = OGRGeocodeGetCacheLayer(hSession, TRUE, &nIdxBlob);
     if( poLayer == NULL )
-        return FALSE;
+        return false;
 
     OGRFeature* poFeature = new OGRFeature(poLayer->GetLayerDefn());
     poFeature->SetField(FIELD_URL, pszURL);
