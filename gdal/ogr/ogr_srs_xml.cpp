@@ -41,15 +41,13 @@
 /*      original string.                                                */
 /************************************************************************/
 
-static int parseURN( char *pszURN, 
-                     const char **ppszObjectType, 
-                     const char **ppszAuthority, 
-                     const char **ppszCode,
-                     const char **ppszVersion = NULL )
+static bool parseURN( char *pszURN,
+                      const char **ppszObjectType,
+                      const char **ppszAuthority,
+                      const char **ppszCode,
+                      const char **ppszVersion = NULL )
 
 {
-    int  i;
-
     if( ppszObjectType != NULL )
         *ppszObjectType = "";
     if( ppszAuthority != NULL )
@@ -63,7 +61,7 @@ static int parseURN( char *pszURN,
 /*      Verify prefix.                                                  */
 /* -------------------------------------------------------------------- */
     if( !EQUALN(pszURN,"urn:ogc:def:",12) )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Extract object type                                             */
@@ -71,12 +69,12 @@ static int parseURN( char *pszURN,
     if( ppszObjectType != NULL )
         *ppszObjectType = (const char *) pszURN + 12;
 
-    i = 12;
+    int  i = 12;
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
         i++;
 
     if( pszURN[i] == '\0' )
-        return FALSE;
+        return false;
 
     pszURN[i] = '\0';
     i++;
@@ -91,7 +89,7 @@ static int parseURN( char *pszURN,
         i++;
 
     if( pszURN[i] == '\0' )
-        return FALSE;
+        return false;
 
     pszURN[i] = '\0';
     i++;
@@ -106,7 +104,7 @@ static int parseURN( char *pszURN,
         i++;
 
     if( pszURN[i] == '\0' )
-        return FALSE;
+        return false;
 
     pszURN[i] = '\0';
     i++;
@@ -116,8 +114,8 @@ static int parseURN( char *pszURN,
 /* -------------------------------------------------------------------- */
     if( ppszCode != NULL )
         *ppszCode = (char *) pszURN + i;
-    
-    return TRUE;
+
+    return true;
 }
 
 /************************************************************************/
@@ -884,10 +882,10 @@ static void importXMLAuthority( CPLXMLNode *psSrcXML,
 /*        urn:ogc:def:parameter:EPSG:6.3:9707                           */
 /************************************************************************/
 
-static int ParseOGCDefURN( const char *pszURN, 
+static bool ParseOGCDefURN( const char *pszURN,
                            CPLString *poObjectType,
                            CPLString *poAuthority,
-                           CPLString *poVersion, 
+                           CPLString *poVersion,
                            CPLString *poValue )
 
 {
@@ -904,7 +902,7 @@ static int ParseOGCDefURN( const char *pszURN,
         *poValue = "";
 
     if( pszURN == NULL || !EQUALN(pszURN,"urn:ogc:def:",12) )
-        return FALSE;
+        return false;
 
     char **papszTokens = CSLTokenizeStringComplex( pszURN + 12, ":", 
                                                    FALSE, TRUE );
@@ -912,7 +910,7 @@ static int ParseOGCDefURN( const char *pszURN,
     if( CSLCount(papszTokens) != 4 )
     {
         CSLDestroy( papszTokens );
-        return FALSE;
+        return false;
     }
 
     if( poObjectType != NULL )
@@ -928,7 +926,7 @@ static int ParseOGCDefURN( const char *pszURN,
         *poValue = papszTokens[3];
 
     CSLDestroy( papszTokens );
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -946,14 +944,14 @@ static int getEPSGObjectCodeValue( CPLXMLNode *psNode,
 {
     if( psNode == NULL )
         return nDefault;
-    
+
     CPLString osObjectType, osAuthority, osValue;
     const char* pszHrefVal;
-    
+
     pszHrefVal = CPLGetXMLValue( psNode, "xlink:href", NULL );
     if (pszHrefVal == NULL)
         pszHrefVal = CPLGetXMLValue( psNode, "href", NULL );
-    
+
     if( !ParseOGCDefURN( pszHrefVal,
                          &osObjectType, &osAuthority, NULL, &osValue ) )
         return nDefault;
