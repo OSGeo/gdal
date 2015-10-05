@@ -2455,7 +2455,7 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     osCommand.Printf(
             "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s',%d)",
             OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
-            OGRPGEscapeString(hPGConn, poFeatureDefn->GetName()).c_str(),
+            OGRPGEscapeString(hPGConn, pszTableName).c_str(),
             OGRPGEscapeString(hPGConn, poGeomField->GetNameRef()).c_str(),
             nSRSId, pszGeometryType, nDimension );
 
