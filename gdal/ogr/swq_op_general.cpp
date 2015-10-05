@@ -929,18 +929,18 @@ static void SWQAutoConvertStringToNumeric( swq_expr_node *poNode )
 /*                   SWQCheckSubExprAreNotGeometries()                  */
 /************************************************************************/
 
-static int SWQCheckSubExprAreNotGeometries( swq_expr_node *poNode )
+static bool SWQCheckSubExprAreNotGeometries( swq_expr_node *poNode )
 {
     for( int i = 0; i < poNode->nSubExprCount; i++ )
     {
         if( poNode->papoSubExpr[i]->field_type == SWQ_GEOMETRY )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                         "Cannot use geometry field in this operation." );
-            return FALSE;
+            return false;
         }
     }
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
