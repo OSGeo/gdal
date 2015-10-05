@@ -1772,14 +1772,16 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 /* invert projection */
                 if (!bSuccess)
                 {
-                    CPLSetConfigOption( "CHECK_WITH_INVERT_PROJ", "TRUE" );
+                    CPLSetThreadLocalConfigOption( "CHECK_WITH_INVERT_PROJ", "TRUE" );
                     CPLDebug("WARP", "Recompute out extent with CHECK_WITH_INVERT_PROJ=TRUE");
 
-                    if( GDALSuggestedWarpOutput2( pahSrcDS[iSrc], 
+                    CPLErr eErr = GDALSuggestedWarpOutput2( pahSrcDS[iSrc], 
                                         psInfo->pfnTransform, hTransformArg, 
                                         adfThisGeoTransform, 
                                         &nThisPixels, &nThisLines, 
-                                        adfExtent, 0 ) != CE_None )
+                                        adfExtent, 0 );
+                    CPLSetThreadLocalConfigOption( "CHECK_WITH_INVERT_PROJ", NULL );
+                    if( eErr != CE_None )
                     {
                         if( hCT != NULL )
                             GDALDestroyColorTable( hCT );
