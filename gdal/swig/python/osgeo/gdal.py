@@ -548,6 +548,121 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
         return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
 
 
+def VectorTranslateOptions(options = [], format = 'ESRI Shapefile', 
+         accessMode = None,
+         srcSRS = None, dstSRS = None, reproject = True,
+         SQLStatement = None, SQLDialect = None, where = None, selectFields = None, spatFilter = None,
+         datasetCreationOptions = None,
+         layerCreationOptions = None,
+         layers = None,
+         layerName = None,
+         geometryType = None,
+         segmentizeMaxDist= None,
+         callback = None, callback_data = None):
+    """ Create a VectorTranslateOptions() object that can be passed to gdal.VectorTranslate()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("ESRI Shapefile", etc...)
+          accessMode --- None for creation, 'update', 'append', 'overwrite'
+          srcSRS --- source SRS
+          dstSRS --- output SRS (with reprojection if reproject = True)
+          reproject --- whether to do reprojection
+          SQLStatement --- SQL statement to apply to the source dataset
+          SQLDialect --- SQL dialect ('OGRSQL', 'SQLITE', ...)
+          where --- WHERE clause to apply to source layer(s)
+          selectFields --- list of fields to select
+          spatFilter --- spatial filter as (minX, minY, maxX, maxY) bounding box
+          datasetCreationOptions --- list of dataset creation options
+          layerCreationOptions --- list of layer creation options
+          layers --- list of layers to convert
+          layerName --- output layer name
+          geometryType --- output layer geometry type ('POINT', ....)
+          segmentizeMaxDist --- maximum distance between consecutive nodes of a line geometry
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-f', format]
+        if srcSRS is not None:
+            new_options += ['-s_srs', str(srcSRS) ]
+        if dstSRS is not None:
+            if reproject:
+                new_options += ['-t_srs', str(dstSRS) ]
+            else:
+                new_options += ['-a_srs', str(dstSRS) ]
+        if SQLStatement is not None:
+            new_options += ['-sql', str(SQLStatement) ]
+        if SQLDialect is not None:
+            new_options += ['-dialect', str(SQLDialect) ]
+        if where is not None:
+            new_options += ['-where', str(where) ]
+        if accessMode is not None:
+            if accessMode == 'update':
+                new_options += ['-update']
+            elif accessMode == 'append':
+                new_options += ['-append']
+            elif accessMode == 'overwrite':
+                new_options += ['-overwrite']
+            else:
+                raise Exception('unhandled accessMode')
+        if selectFields is not None:
+            val = ''
+            for item in selectFields:
+                if len(val)>0:
+                    val += ','
+                val += item
+            new_options += ['-select', val]
+        if datasetCreationOptions is not None:
+            for opt in datasetCreationOptions:
+                new_options += ['-dsco', opt ]
+        if layerCreationOptions is not None:
+            for opt in layerCreationOptions:
+                new_options += ['-lco', opt ]
+        if layers is not None:
+            for lyr in layers:
+                new_options += [ lyr ]
+        if segmentizeMaxDist is not None:
+            new_options += ['-segmentize', str(segmentizeMaxDist) ]
+        if spatFilter is not None:
+            new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3]) ]
+        if layerName is not None:
+            new_options += ['-nln', layerName]
+        if geometryType is not None:
+            new_options += ['-nlt', geometryType]
+
+    if callback is not None:
+        new_options += [ '-progress' ]
+
+    return (GDALVectorTranslateOptions(new_options), callback, callback_data)
+
+def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
+    """ Convert one vector dataset
+        Arguments are :
+          destNameOrDestDS --- Output dataset name or object
+          srcDS --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.VectorTranslateOptions()
+        If options is provided as a gdal.VectorTranslateOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = VectorTranslateOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = OpenEx(srcDS)
+
+    if type(destNameOrDestDS) == type(''):
+        return wrapper_GDALVectorTranslateDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    else:
+        return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+
+
 
 def Debug(*args):
   """Debug(char const * msg_class, char const * message)"""
@@ -2307,6 +2422,39 @@ def wrapper_GDALWarpDestName(*args):
     """
   return _gdal.wrapper_GDALWarpDestName(*args)
 wrapper_GDALWarpDestName = _gdal.wrapper_GDALWarpDestName
+class GDALVectorTranslateOptions(_object):
+    """Proxy of C++ GDALVectorTranslateOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALVectorTranslateOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALVectorTranslateOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALVectorTranslateOptions self, char ** options) -> GDALVectorTranslateOptions"""
+        this = _gdal.new_GDALVectorTranslateOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALVectorTranslateOptions
+    __del__ = lambda self : None;
+GDALVectorTranslateOptions_swigregister = _gdal.GDALVectorTranslateOptions_swigregister
+GDALVectorTranslateOptions_swigregister(GDALVectorTranslateOptions)
+
+
+def wrapper_GDALVectorTranslateDestDS(*args):
+  """
+    wrapper_GDALVectorTranslateDestDS(Dataset dstDS, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> int
+    """
+  return _gdal.wrapper_GDALVectorTranslateDestDS(*args)
+wrapper_GDALVectorTranslateDestDS = _gdal.wrapper_GDALVectorTranslateDestDS
+
+def wrapper_GDALVectorTranslateDestName(*args):
+  """
+    wrapper_GDALVectorTranslateDestName(char const * dest, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> Dataset
+    """
+  return _gdal.wrapper_GDALVectorTranslateDestName(*args)
+wrapper_GDALVectorTranslateDestName = _gdal.wrapper_GDALVectorTranslateDestName
 # This file is compatible with both classic and new-style classes.
 
 

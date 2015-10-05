@@ -344,7 +344,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             " -nln name: Assign an alternate name to the new layer\n"
             " -nlt type: Force a geometry type for new layer.  One of NONE, GEOMETRY,\n"
             "      POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT,\n"
-            "      MULTIPOLYGON, or MULTILINESTRING, or PROMOTE_TO_MULTI.  Add \"25D\" for 3D layers.\n"
+            "      MULTIPOLYGON, or MULTILINESTRING, or PROMOTE_TO_MULTI or CONVERT_TO_LINEAR.  Add \"25D\" for 3D layers.\n"
             "      Default is type of source layer.\n"
             " -dim dimension: Force the coordinate dimension to the specified value.\n"
             " -fieldTypeToString type1,...: Converts fields of specified types to\n"

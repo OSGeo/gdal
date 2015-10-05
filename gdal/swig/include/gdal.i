@@ -1062,3 +1062,70 @@ GDALDatasetShadow* wrapper_GDALWarpDestName( const char* dest,
     return hDSRet;
 }
 %}
+
+struct GDALVectorTranslateOptions {
+%extend {
+    GDALVectorTranslateOptions(char** options) {
+        return GDALVectorTranslateOptionsNew(options, NULL);
+    }
+
+    ~GDALVectorTranslateOptions() {
+        GDALVectorTranslateOptionsFree( self );
+    }
+}
+};
+
+/* Note: we must use 2 distinct names since there's a bug/feature in swig */
+/* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
+
+%inline %{
+int wrapper_GDALVectorTranslateDestDS( GDALDatasetShadow* dstDS,
+                                       GDALDatasetShadow* srcDS,
+                            GDALVectorTranslateOptions* options,
+                            GDALProgressFunc callback=NULL,
+                            void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALVectorTranslateOptionsNew(NULL, NULL);
+        }
+        GDALVectorTranslateOptionsSetProgress(options, callback, callback_data);
+    }
+    int bRet = (GDALVectorTranslate(NULL, dstDS, 1, &srcDS, options, &usageError) != NULL);
+    if( bFreeOptions )
+        GDALVectorTranslateOptionsFree(options);
+    return bRet;
+}
+%}
+
+%newobject wrapper_GDALVectorTranslateDestName;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALVectorTranslateDestName( const char* dest,
+                                             GDALDatasetShadow* srcDS,
+                                             GDALVectorTranslateOptions* options,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALVectorTranslateOptionsNew(NULL, NULL);
+        }
+        GDALVectorTranslateOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALVectorTranslate(dest, NULL, 1, &srcDS, options, &usageError);
+    if( bFreeOptions )
+        GDALVectorTranslateOptionsFree(options);
+    return hDSRet;
+}
+%}
