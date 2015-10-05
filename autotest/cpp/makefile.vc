@@ -68,10 +68,11 @@ CPPFLAGS = $(CFLAGS)
 
 GDAL_TEST_EXE = gdal_unit_test.exe
 
-default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
+default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe testdestroy.exe
 
 check:	 $(GDAL_TEST_EXE)
 	 $(GDAL_TEST_EXE)
+	testdestroy.exe
 
 check-all:	 $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
 	 $(GDAL_TEST_EXE)
@@ -99,6 +100,10 @@ testclosedondestroydm.exe: testclosedondestroydm.c
 testthreadcond.exe: testthreadcond.c
 	$(CC) testthreadcond.c $(CFLAGS) $(GDAL_LIB)
     if exist testthreadcond.exe.manifest mt -manifest testthreadcond.exe.manifest -outputresource:testthreadcond.exe;1
+
+testdestroy.exe: testdestroy.cpp
+	$(CC) testdestroy.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testdestroy.exe.manifest mt -manifest testdestroy.exe.manifest -outputresource:testdestroy.exe;1
 
 copy-gdal-dll:	$(GDAL_DLL) 
 
