@@ -76,6 +76,26 @@ struct GDALWarpAppOptionsForBinary
     char* pszFormat;
 };
 
+/* Access modes */
+typedef enum
+{
+    ACCESS_CREATION,
+    ACCESS_UPDATE, /* open existing output datasource in update mode rather than trying to create a new one */
+    ACCESS_APPEND, /* append to existing layer instead of creating new */
+    ACCESS_OVERWRITE /*  delete the output layer and recreate it empty */
+} GDALVectorTranslateAccessMode;
+
+struct GDALVectorTranslateOptionsForBinary
+{
+    char* pszDataSource;
+    char* pszDestDataSource;
+    int bQuiet;
+    char** papszOpenOptions;
+    int bFormatExplicitlySet;
+    char* pszFormat;
+    GDALVectorTranslateAccessMode eAccessMode;
+};
+
 CPL_C_END
 
 #endif /* _GDAL_UTILS_PRIV_H_INCLUDED */

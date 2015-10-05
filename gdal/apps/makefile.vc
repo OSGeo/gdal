@@ -29,7 +29,7 @@ default:	gdal_translate.exe gdalinfo.exe gdalserver.exe gdaladdo.exe gdalwarp.ex
 all:	default multireadtest.exe \
 			dumpoverviews.exe gdalwarpsimple.exe gdalflattenmask.exe \
 			gdaltorture.exe gdal2ogr.exe test_ogrsf.exe
-OBJ = commonutils.obj gdalinfo_lib.obj gdal_translate_lib.obj gdalwarp_lib.obj
+OBJ = commonutils.obj gdalinfo_lib.obj gdal_translate_lib.obj gdalwarp_lib.obj ogr2ogr_lib.obj
 
 appslib: $(OBJ)
 
@@ -133,9 +133,9 @@ testreprojmulti.exe:	testreprojmulti.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-ogr2ogr.exe:	ogr2ogr.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) ogr2ogr.cpp $(XTRAOBJ) $(LIBS) \
-		/link $(LINKER_FLAGS)
+ogr2ogr.exe:	ogr2ogr_bin.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) ogr2ogr_bin.cpp $(XTRAOBJ) $(LIBS) \
+		/Fe$@ /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 ogrinfo.exe:	ogrinfo.cpp $(GDALLIB) $(XTRAOBJ) 
