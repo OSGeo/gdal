@@ -3356,6 +3356,7 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
             poDstLayer->StartTransaction();
     }
 
+    int bRet = TRUE;
     while( TRUE )
     {
         OGRFeature      *poDstFeature = NULL;
@@ -3644,6 +3645,7 @@ end_loop:
 
         /* Report progress */
         nCount ++;
+        int bGoOn = TRUE;
         if (pfnProgress)
         {
             if (nSrcFileSize != 0)
@@ -3658,7 +3660,7 @@ end_loop:
                         {
                             const char* pszReadSize = poFeat->GetFieldAsString(0);
                             GUIntBig nReadSize = CPLScanUIntBig( pszReadSize, 32 );
-                            pfnProgress(nReadSize * 1.0 / nSrcFileSize, "", pProgressArg);
+                            bGoOn = pfnProgress(nReadSize * 1.0 / nSrcFileSize, "", pProgressArg);
                             OGRFeature::DestroyFeature( poFeat );
                         }
                     }
@@ -3667,8 +3669,13 @@ end_loop:
             }
             else
             {
-                pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressArg);
+                bGoOn = pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressArg);
             }
+        }
+        if( !bGoOn )
+        {
+            bRet = FALSE;
+            break;
         }
 
         if (pnReadFeatureCount)
@@ -3689,7 +3696,7 @@ end_loop:
     CPLDebug("GDALVectorTranslate", CPL_FRMT_GIB " features written in layer '%s'",
              nFeaturesWritten, poDstLayer->GetName());
 
-    return TRUE;
+    return bRet;
 }
 
 
