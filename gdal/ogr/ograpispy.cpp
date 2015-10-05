@@ -133,7 +133,7 @@ static void OGRAPISpyFileClose()
     }
 }
 
-static int OGRAPISpyEnabled()
+static bool OGRAPISpyEnabled()
 {
     const char* pszSpyFile = CPLGetConfigOption("OGR_API_SPY_FILE", NULL);
     bOGRAPISpyEnabled = (pszSpyFile != NULL);
@@ -141,10 +141,10 @@ static int OGRAPISpyEnabled()
     {
         osSpyFile.resize(0);
         aoSetCreatedDS.clear();
-        return FALSE;
+        return false;
     }
     if( osSpyFile.size() )
-        return TRUE;
+        return true;
 
     osSpyFile = pszSpyFile;
 
@@ -172,7 +172,7 @@ static int OGRAPISpyEnabled()
     fprintf(fpSpyFile, "shutil.copy\n"); // same here
     fprintf(fpSpyFile, "\n");
 
-    return TRUE;
+    return true;
 }
 
 static CPLString OGRAPISpyGetOptions(char** papszOptions)
