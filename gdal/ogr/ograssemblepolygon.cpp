@@ -42,35 +42,33 @@ CPL_CVSID("$Id$");
 /*      distance.  Update the current best distance if they are.        */
 /************************************************************************/
 
-static int CheckPoints( OGRLineString *poLine1, int iPoint1,
+static bool CheckPoints( OGRLineString *poLine1, int iPoint1,
                         OGRLineString *poLine2, int iPoint2,
                         double *pdfDistance )
 
 {
-    double      dfDeltaX, dfDeltaY, dfDistance;
-
     if( pdfDistance == NULL || *pdfDistance == 0 )
         return poLine1->getX(iPoint1) == poLine2->getX(iPoint2)
             && poLine1->getY(iPoint1) == poLine2->getY(iPoint2);
 
-    dfDeltaX = poLine1->getX(iPoint1) - poLine2->getX(iPoint2);
-    dfDeltaY = poLine1->getY(iPoint1) - poLine2->getY(iPoint2);
+    double dfDeltaX = poLine1->getX(iPoint1) - poLine2->getX(iPoint2);
+    double dfDeltaY = poLine1->getY(iPoint1) - poLine2->getY(iPoint2);
 
     dfDeltaX = ABS(dfDeltaX);
     dfDeltaY = ABS(dfDeltaY);
-    
+
     if( dfDeltaX > *pdfDistance || dfDeltaY > *pdfDistance )
-        return FALSE;
-    
-    dfDistance = sqrt(dfDeltaX*dfDeltaX + dfDeltaY*dfDeltaY);
+        return false;
+
+    double dfDistance = sqrt(dfDeltaX*dfDeltaX + dfDeltaY*dfDeltaY);
 
     if( dfDistance < *pdfDistance )
     {
         *pdfDistance = dfDistance;
-        return TRUE;
+        return true;
     }
     else
-        return FALSE;
+        return false;
 }
 
 /************************************************************************/
@@ -244,7 +242,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             // closer than any other option we will just close the loop.
 
             //CheckPoints(poRing,0,poRing,poRing->getNumPoints()-1,&dfBestDist);
-            
+
             // Find unused edge with end point closest to our loose end.
             for( iEdge = 0; iEdge < nEdges; iEdge++ )
             {
@@ -278,9 +276,9 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             {
                 poLine = (OGRLineString *) 
                     poLines->getGeometryRef(iBestEdge);
-                
+
                 AddEdgeToRing( poRing, poLine, bReverse );
-                    
+
                 panEdgeConsumed[iBestEdge] = TRUE;
                 nRemainingEdges--;
                 bWorkDone = true;
