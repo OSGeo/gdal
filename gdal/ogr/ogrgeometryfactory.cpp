@@ -3419,8 +3419,8 @@ static GUInt16 OGRGF_GetHiddenValue(double dfX, double dfY)
 
 /* We need to define a full ordering between starting point and ending point */
 /* whatever it is */
-static int OGRGF_NeedSwithArcOrder(double x0, double y0,
-                                   double x2, double y2)
+static bool OGRGF_NeedSwithArcOrder(double x0, double y0,
+                                    double x2, double y2)
 {
     return ( x0 < x2 || (x0 == x2 && y0 < y2) );
 }
