@@ -184,35 +184,6 @@ struct GDALWarpAppOptions
     int nOvLevel;
 };
 
-typedef enum
-{
-    GEOMOP_NONE,
-    GEOMOP_SEGMENTIZE,
-    GEOMOP_SIMPLIFY_PRESERVE_TOPOLOGY,
-} GeomOperation;
-
-typedef enum
-{
-    GEOMTYPE_DEFAULT,
-    GEOMTYPE_SET,
-    GEOMTYPE_PROMOTE_TO_MULTI,
-    GEOMTYPE_CONVERT_TO_LINEAR,
-    GEOMTYPE_CONVERT_TO_CURVE,
-} GeomType;
-
-/*! Access modes */
-typedef enum
-{
-    ACCESS_CREATION,
-    /*! open existing output datasource in update mode rather than trying
-    to create a new one */ ACCESS_UPDATE,
-    /*! append to existing layer instead of creating new */ ACCESS_APPEND,
-    /*! delete the output layer and recreate it empty */ ACCESS_OVERWRITE,
-} AccessMode;
-
-#define COORD_DIM_LAYER_DIM -2
-
-
 static CPLErr
 LoadCutline( const char *pszCutlineDSName, const char *pszCLayer, 
              const char *pszCWHERE, const char *pszCSQL, 

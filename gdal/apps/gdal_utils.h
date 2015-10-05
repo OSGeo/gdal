@@ -97,6 +97,24 @@ GDALDatasetH CPL_DLL GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSr
                                GDALDatasetH *pahSrcDS,
                                const GDALWarpAppOptions *psOptions, int *pbUsageError );
 
+/*! Options for GDALVectorTranslate(). Opaque type */
+typedef struct GDALVectorTranslateOptions GDALVectorTranslateOptions;
+
+typedef struct GDALVectorTranslateOptionsForBinary GDALVectorTranslateOptionsForBinary;
+
+GDALVectorTranslateOptions CPL_DLL *GDALVectorTranslateOptionsNew(char** papszArgv,
+                                                      GDALVectorTranslateOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALVectorTranslateOptionsFree( GDALVectorTranslateOptions *psOptions );
+
+void CPL_DLL GDALVectorTranslateOptionsSetProgress( GDALVectorTranslateOptions *psOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData );
+
+GDALDatasetH CPL_DLL GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
+                               GDALDatasetH *pahSrcDS,
+                               const GDALVectorTranslateOptions *psOptions, int *pbUsageError );
+
 CPL_C_END
 
 #endif /* _GDAL_UTILS_H_INCLUDED */

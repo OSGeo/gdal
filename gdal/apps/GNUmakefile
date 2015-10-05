@@ -13,7 +13,7 @@ BIN_LIST =	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) \
 		gdalenhance$(EXE) gdaltransform$(EXE) gdaldem$(EXE) \
 		gdallocationinfo$(EXE) gdalsrsinfo$(EXE) 
 
-OBJ = commonutils.o gdalinfo_lib.o gdal_translate_lib.o gdalwarp_lib.o
+OBJ = commonutils.o gdalinfo_lib.o gdal_translate_lib.o gdalwarp_lib.o ogr2ogr_lib.o
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST += 	gdal_contour$(EXE) \
@@ -140,7 +140,7 @@ ogrinfo$(EXE):	ogrinfo.$(OBJ_EXT)  $(DEP_LIBS)
 ogrlineref$(EXE):	ogrlineref.$(OBJ_EXT)  $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $<  $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-ogr2ogr$(EXE):	ogr2ogr.$(OBJ_EXT)  $(DEP_LIBS)
+ogr2ogr$(EXE):	ogr2ogr_bin.$(OBJ_EXT)  $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 testepsg$(EXE):	testepsg.$(OBJ_EXT) $(DEP_LIBS)
