@@ -191,7 +191,7 @@ static const char* GetProjLibraryName()
 /*                          LoadProjLibrary()                           */
 /************************************************************************/
 
-static int LoadProjLibrary_unlocked()
+static bool LoadProjLibrary_unlocked()
 
 {
     static bool bTriedToLoad = false;
@@ -227,9 +227,9 @@ static int LoadProjLibrary_unlocked()
     pfn_pj_init = (projPJ (*)(int, char**)) CPLGetSymbol( pszLibName,
                                                        "pj_init" );
     CPLPopErrorHandler();
-    
+
     if( pfn_pj_init == NULL )
-       return( FALSE );
+       return false;
 
     pfn_pj_init_plus = (projPJ (*)(const char *)) 
         CPLGetSymbol( pszLibName, "pj_init_plus" );
@@ -280,7 +280,7 @@ static int LoadProjLibrary_unlocked()
         pfn_pj_init_plus_ctx = NULL;
         pfn_pj_ctx_get_errno = NULL;
     }
-    
+
     if( bProjLocaleSafe )
         CPLDebug("OGRCT", "Using locale-safe proj version");
 
@@ -291,13 +291,13 @@ static int LoadProjLibrary_unlocked()
                   "Please upgrade to PROJ 4.1.2 or later.", 
                   pszLibName );
 
-        return FALSE;
+        return false;
     }
 
-    return( TRUE );
+    return true;
 }
 
-static int LoadProjLibrary()
+static bool LoadProjLibrary()
 
 {
     CPLMutexHolderD( &hPROJMutex );
@@ -437,7 +437,7 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
     }
 
     poCT = new OGRProj4CT();
-    
+
     if( !poCT->Initialize( poSource, poTarget ) )
     {
         delete poCT;
