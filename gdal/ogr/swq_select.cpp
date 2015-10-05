@@ -182,8 +182,6 @@ void swq_select::postpreparse()
 void swq_select::Dump( FILE *fp )
 
 {
-    int i;
-
     fprintf( fp, "SELECT Statement:\n" );
 
 /* -------------------------------------------------------------------- */
@@ -202,7 +200,7 @@ void swq_select::Dump( FILE *fp )
 /*      column_defs                                                     */
 /* -------------------------------------------------------------------- */
     fprintf( fp, "  Result Columns:\n" );
-    for( i = 0; i < result_columns; i++ )
+    for( int i = 0; i < result_columns; i++ )
     {
         swq_col_def *def = column_defs + i;
 
@@ -252,7 +250,7 @@ void swq_select::Dump( FILE *fp )
 /*      table_defs                                                      */
 /* -------------------------------------------------------------------- */
     fprintf( fp, "  Table Defs: %d\n", table_count );
-    for( i = 0; i < table_count; i++ )
+    for( int i = 0; i < table_count; i++ )
     {
         fprintf( fp, "    datasource=%s, table_name=%s, table_alias=%s\n",
                  table_defs[i].data_source,
@@ -266,7 +264,7 @@ void swq_select::Dump( FILE *fp )
     if( join_count > 0 )
         fprintf( fp, "  joins:\n" );
 
-    for( i = 0; i < join_count; i++ )
+    for( int i = 0; i < join_count; i++ )
     {
         fprintf( fp, "  %d:\n", i );
         join_defs[i].poExpr->Dump( fp, 4 );
@@ -287,7 +285,7 @@ void swq_select::Dump( FILE *fp )
 /*      Order by                                                        */
 /* -------------------------------------------------------------------- */
 
-    for( i = 0; i < order_specs; i++ )
+    for( int i = 0; i < order_specs; i++ )
     {
         fprintf( fp, "  ORDER BY: %s (%d/%d)",
                  order_defs[i].field_name,
@@ -306,12 +304,11 @@ void swq_select::Dump( FILE *fp )
 
 char* swq_select::Unparse()
 {
-    int i;
     CPLString osSelect("SELECT ");
     if( query_mode == SWQM_DISTINCT_LIST )
         osSelect += "DISTINCT ";
 
-    for( i = 0; i < result_columns; i++ )
+    for( int i = 0; i < result_columns; i++ )
     {
         swq_col_def *def = column_defs + i;
 
@@ -359,7 +356,7 @@ char* swq_select::Unparse()
         if( def->col_func != SWQCF_NONE )
             osSelect += ")";
     }
-    
+
     osSelect += " FROM ";
     if( table_defs[0].data_source != NULL )
     {
@@ -375,7 +372,7 @@ char* swq_select::Unparse()
         osSelect += swq_expr_node::QuoteIfNecessary(table_defs[0].table_alias, '"');
     }
 
-    for( i = 0; i < join_count; i++ )
+    for( int i = 0; i < join_count; i++ )
     {
         int iTable = join_defs[i].secondary_table;
         osSelect += " JOIN ";
@@ -406,7 +403,7 @@ char* swq_select::Unparse()
         CPLFree(pszTmp);
     }
 
-    for( i = 0; i < order_specs; i++ )
+    for( int i = 0; i < order_specs; i++ )
     {
         osSelect += " ORDER BY ";
         osSelect += swq_expr_node::QuoteIfNecessary(order_defs[i].field_name, '"');
@@ -571,7 +568,7 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
             result_columns--;
             return FALSE;
         }
-        
+
         if( col_def->target_type == SWQ_GEOMETRY ) 
         {
             if( poExpr->nSubExprCount > 2 )
@@ -681,7 +678,7 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
                 (swq_col_func) poExpr->nOperation;
 
             swq_expr_node *poSubExpr = poExpr->papoSubExpr[0];
-        
+
             poExpr->papoSubExpr[0] = NULL;
             poExpr->nSubExprCount = 0;
             delete poExpr;
@@ -781,16 +778,14 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list,
                                     int bAlwaysPrefixWithTableName )
 
 {
-    int isrc;
-
 /* ==================================================================== */
 /*      Check each pre-expansion field.                                 */
 /* ==================================================================== */
-    for( isrc = 0; isrc < result_columns; isrc++ )
+    for( int isrc = 0; isrc < result_columns; isrc++ )
     {
         const char *src_tablename = column_defs[isrc].table_name;
         const char *src_fieldname = column_defs[isrc].field_name;
-        int itable, new_fields, i, iout;
+        int itable, new_fields, iout;
 
         if( *src_fieldname == '\0'
             || src_fieldname[strlen(src_fieldname)-1] != '*' )
@@ -817,7 +812,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list,
                         field_list->table_defs[itable].table_alias ) == 0 )
                     break;
             }
-            
+
             if( itable == field_list->table_count )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -828,7 +823,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list,
 
             /* count the number of fields in this table. */
             new_fields = 0;
-            for( i = 0; i < field_list->count; i++ )
+            for( int i = 0; i < field_list->count; i++ )
             {
                 if( field_list->table_ids[i] == itable )
                     new_fields++;
@@ -855,7 +850,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list,
 /* -------------------------------------------------------------------- */
             if (new_fields != 1)
             {
-                for( i = result_columns-1; i > isrc; i-- )
+                for( int i = result_columns-1; i > isrc; i-- )
                 {
                     memcpy( column_defs + i + new_fields - 1,
                             column_defs + i,
@@ -891,8 +886,8 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list,
 /*      Assign the selected fields.                                     */
 /* -------------------------------------------------------------------- */
         iout = isrc;
-        
-        for( i = 0; i < field_list->count; i++ )
+
+        for( int i = 0; i < field_list->count; i++ )
         {
             swq_col_def *def;
             int compose = (itable != -1) || bAlwaysPrefixWithTableName;
@@ -1006,12 +1001,9 @@ static bool CheckCompatibleJoinExpr( swq_expr_node* poExpr,
 CPLErr swq_select::parse( swq_field_list *field_list,
                           swq_select_parse_options* poParseOptions )
 {
-    int  i;
-    CPLErr eError;
-
     int bAlwaysPrefixWithTableName = poParseOptions &&
                                      poParseOptions->bAlwaysPrefixWithTableName;
-    eError = expand_wildcard( field_list, bAlwaysPrefixWithTableName );
+    CPLErr eError = expand_wildcard( field_list, bAlwaysPrefixWithTableName );
     if( eError != CE_None )
         return eError;
 
@@ -1022,7 +1014,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 /* -------------------------------------------------------------------- */
 /*      Identify field information.                                     */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < result_columns; i++ )
+    for( int i = 0; i < result_columns; i++ )
     {
         swq_col_def *def = column_defs + i;
 
@@ -1033,7 +1025,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 
             if( def->expr->Check( field_list, TRUE, FALSE, poCustomFuncRegistrar ) == SWQ_ERROR )
                 return CE_Failure;
-                
+
             def->field_type = def->expr->field_type;
         }
         else
@@ -1045,10 +1037,10 @@ CPLErr swq_select::parse( swq_field_list *field_list,
                                                    def->field_name, field_list,
                                                    &this_type, 
                                                    &(def->table_index) );
-            
+
             /* record field type */
             def->field_type = this_type;
-            
+
             if( def->field_index == -1 && def->col_func != SWQCF_COUNT )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1094,7 +1086,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             return CE_Failure;
     }
 
-    for( i = 0; i < result_columns; i++ )
+    for( int i = 0; i < result_columns; i++ )
     {
         swq_col_def *def = column_defs + i;
         int this_indicator = -1;
@@ -1159,7 +1151,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 /* -------------------------------------------------------------------- */
 /*      Process column names in JOIN specs.                             */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < join_count; i++ )
+    for( int i = 0; i < join_count; i++ )
     {
         swq_join_def *def = join_defs + i;
         if( def->poExpr->Check( field_list, TRUE, TRUE, poCustomFuncRegistrar ) == SWQ_ERROR )
@@ -1171,7 +1163,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 /* -------------------------------------------------------------------- */
 /*      Process column names in order specs.                            */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < order_specs; i++ )
+    for( int i = 0; i < order_specs; i++ )
     {
         swq_order_def *def = order_defs + i;
 
@@ -1217,6 +1209,6 @@ CPLErr swq_select::parse( swq_field_list *field_list,
     {
         return CE_Failure;
     }
-    
+
     return CE_None;
 }
