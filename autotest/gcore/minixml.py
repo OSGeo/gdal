@@ -244,8 +244,11 @@ def minixml_6():
         ('<></>', 'element token'),
         ('<&></&>', 'matching'),
         ('<a></a', 'Missing close angle'),
+        ('<a foo=2\'> foo=2\'>', 'unexpected token'),
+        ('<a?>', 'without matching'),
+        ('<a/.', 'for value of attribute '),
+        ('<a\'>', 'reached EOF before closing quote'),
     )
-
 
     for xml_str, expect in test_pairs:
         with gdaltest.error_handler():
