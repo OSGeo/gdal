@@ -115,6 +115,27 @@ GDALDatasetH CPL_DLL GDALVectorTranslate( const char *pszDest, GDALDatasetH hDst
                                GDALDatasetH *pahSrcDS,
                                const GDALVectorTranslateOptions *psOptions, int *pbUsageError );
 
+
+/*! Options for GDALDEMProcessing(). Opaque type */
+typedef struct GDALDEMProcessingOptions GDALDEMProcessingOptions;
+
+typedef struct GDALDEMProcessingOptionsForBinary GDALDEMProcessingOptionsForBinary;
+
+GDALDEMProcessingOptions CPL_DLL *GDALDEMProcessingOptionsNew(char** papszArgv,
+                                                      GDALDEMProcessingOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALDEMProcessingOptionsFree( GDALDEMProcessingOptions *psOptions );
+
+void CPL_DLL GDALDEMProcessingOptionsSetProgress( GDALDEMProcessingOptions *psOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData );
+
+GDALDatasetH CPL_DLL GDALDEMProcessing(const char *pszDestFilename,
+                                       GDALDatasetH hSrcDataset,
+                                       const char* pszProcessing,
+                                       const char* pszColorFilename,
+                                       const GDALDEMProcessingOptions *psOptions,
+                                       int *pbUsageError);
 CPL_C_END
 
 #endif /* _GDAL_UTILS_H_INCLUDED */

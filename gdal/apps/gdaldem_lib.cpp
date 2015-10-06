@@ -90,67 +90,45 @@
 #include "cpl_string.h"
 #include "gdal.h"
 #include "gdal_priv.h"
-#include "commonutils.h"
+#include "gdal_utils_priv.h"
 
 CPL_CVSID("$Id$");
 
 #define INTERPOL(a,b) ((bSrcHasNoData && (ARE_REAL_EQUAL(a, fSrcNoDataValue) || ARE_REAL_EQUAL(b, fSrcNoDataValue))) ? fSrcNoDataValue : 2 * (a) - (b))
 
-/************************************************************************/
-/*                               Usage()                                */
-/************************************************************************/
-
-static void Usage(const char* pszErrorMsg = NULL)
-
+typedef enum
 {
-    printf( " Usage: \n"
-            " - To generate a shaded relief map from any GDAL-supported elevation raster : \n\n"
-            "     gdaldem hillshade input_dem output_hillshade \n"
-            "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
-            "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]\n"
-            "                 [-alg ZevenbergenThorne] [-combined]\n"
-            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
-            "\n"
-            " - To generates a slope map from any GDAL-supported elevation raster :\n\n"
-            "     gdaldem slope input_dem output_slope_map \n"
-            "                 [-p use percent slope (default=degrees)] [-s scale* (default=1)]\n"
-            "                 [-alg ZevenbergenThorne]\n"
-            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
-            "\n"
-            " - To generate an aspect map from any GDAL-supported elevation raster\n"
-            "   Outputs a 32-bit float tiff with pixel values from 0-360 indicating azimuth :\n\n"
-            "     gdaldem aspect input_dem output_aspect_map \n"
-            "                 [-trigonometric] [-zero_for_flat]\n"
-            "                 [-alg ZevenbergenThorne]\n"
-            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
-            "\n"
-            " - To generate a color relief map from any GDAL-supported elevation raster\n"
-            "     gdaldem color-relief input_dem color_text_file output_color_relief_map\n"
-            "                 [-alpha] [-exact_color_entry | -nearest_color_entry]\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
-            "     where color_text_file contains lines of the format \"elevation_value red green blue\"\n"
-            "\n"
-            " - To generate a Terrain Ruggedness Index (TRI) map from any GDAL-supported elevation raster\n"
-            "     gdaldem TRI input_dem output_TRI_map\n"
-            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
-            "\n"
-            " - To generate a Topographic Position Index (TPI) map from any GDAL-supported elevation raster\n"
-            "     gdaldem TPI input_dem output_TPI_map\n"
-            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
-            "\n"
-            " - To generate a roughness map from any GDAL-supported elevation raster\n"
-            "     gdaldem roughness input_dem output_roughness_map\n"
-            "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
-            "\n"
-            " Notes : \n"
-            "   Scale is the ratio of vertical units to horizontal\n"
-            "    for Feet:Latlong use scale=370400, for Meters:LatLong use scale=111120 \n\n");
+    COLOR_SELECTION_INTERPOLATE,
+    COLOR_SELECTION_NEAREST_ENTRY,
+    COLOR_SELECTION_EXACT_ENTRY
+} ColorSelectionMode;
 
-    if( pszErrorMsg != NULL )
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+struct GDALDEMProcessingOptions
+{
+    /*! output format. The default is GeoTIFF(GTiff). Use the short format name. */
+    char *pszFormat;
 
-    exit( 1 );
-}
+    /*! the progress function to use */
+    GDALProgressFunc pfnProgress;
+    
+    /*! pointer to the progress data variable */
+    void *pProgressData;
+
+    double z;
+    double scale;
+    double az;
+    double alt;
+    int slopeFormat; 
+    int bAddAlpha;
+    int bZeroForFlat;
+    int bAngleAsAzimuth ;
+    ColorSelectionMode eColorSelectionMode;
+    int bComputeAtEdges;
+    int bZevenbergenThorne;
+    int bCombined;
+    char** papszCreateOptions;
+    int nBand;
+};
 
 /************************************************************************/
 /*                          ComputeVal()                                */
@@ -194,6 +172,7 @@ static float ComputeVal(int bSrcHasNoData, float fSrcNoDataValue,
 /*                  GDALGeneric3x3Processing()                          */
 /************************************************************************/
 
+static
 CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
                                    GDALRasterBandH hDstBand,
                                    GDALGeneric3x3ProcessingAlg pfnAlg,
@@ -233,6 +212,10 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
     if (!bDstHasNoData)
         fDstNoDataValue = 0.0;
     int bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(fSrcNoDataValue);
+    
+    int nLine1Off = 0*nXSize;
+    int nLine2Off = 1*nXSize;
+    int nLine3Off = 2*nXSize;
 
     // Move a 3x3 pafWindow over each cell 
     // (where the cell in question is #4)
@@ -244,14 +227,18 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
     /* Preload the first 2 lines */
     for ( i = 0; i < 2 && i < nYSize; i++)
     {
-        GDALRasterIO(   hSrcBand,
+        if( GDALRasterIO(   hSrcBand,
                         GF_Read,
                         0, i,
                         nXSize, 1,
                         pafThreeLineWin + i * nXSize,
                         nXSize, 1,
                         GDT_Float32,
-                        0, 0);
+                        0, 0) != CE_None )
+        {
+            eErr = CE_Failure;
+            goto end;
+        }
     }
     
     if (bComputeAtEdges && nXSize >= 2 && nYSize >= 2)
@@ -277,7 +264,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
         }
-        GDALRasterIO(hDstBand, GF_Write,
+        eErr = GDALRasterIO(hDstBand, GF_Write,
                     0, 0, nXSize, 1,
                     pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
     }
@@ -288,21 +275,20 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         {
             pafOutputBuf[j] = fDstNoDataValue;
         }
-        GDALRasterIO(hDstBand, GF_Write,
+        eErr = GDALRasterIO(hDstBand, GF_Write,
                     0, 0, nXSize, 1,
                     pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
     
-        if (nYSize > 1)
+        if (eErr == CE_None && nYSize > 1)
         {
-            GDALRasterIO(hDstBand, GF_Write,
+            eErr = GDALRasterIO(hDstBand, GF_Write,
                         0, nYSize - 1, nXSize, 1,
                         pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
         }
     }
-    
-    int nLine1Off = 0*nXSize;
-    int nLine2Off = 1*nXSize;
-    int nLine3Off = 2*nXSize;
+    if( eErr != CE_None )
+        goto end;
+
 
     for ( i = 1; i < nYSize-1; i++)
     {
@@ -425,9 +411,11 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
         }
-        GDALRasterIO(hDstBand, GF_Write,
+        eErr = GDALRasterIO(hDstBand, GF_Write,
                      0, i, nXSize, 1,
                      pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
+        if( eErr != CE_None )
+            goto end;
     }
 
     pfnProgress( 1.0, NULL, pProgressData );
@@ -474,6 +462,7 @@ typedef struct
            cos(az * degreesToRadians - M_PI/2 - aspect);
 */
 
+static
 float GDALHillshadeAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
@@ -505,6 +494,7 @@ float GDALHillshadeAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pD
     return (float) cang;
 }
 
+static
 float GDALHillshadeCombinedAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
@@ -540,6 +530,7 @@ float GDALHillshadeCombinedAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, 
     return (float) cang;
 }
 
+static
 float GDALHillshadeZevenbergenThorneAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
@@ -569,6 +560,7 @@ float GDALHillshadeZevenbergenThorneAlg (float* afWin, CPL_UNUSED float fDstNoDa
     return (float) cang;
 }
 
+static
 float GDALHillshadeZevenbergenThorneCombinedAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
@@ -602,6 +594,7 @@ float GDALHillshadeZevenbergenThorneCombinedAlg (float* afWin, CPL_UNUSED float 
     return (float) cang;
 }
 
+static
 void*  GDALCreateHillshadeData(double* adfGeoTransform,
                                double z,
                                double scale,
@@ -637,6 +630,7 @@ typedef struct
     int    slopeFormat;
 } GDALSlopeAlgData;
 
+static
 float GDALSlopeHornAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     const double radiansToDegrees = 180.0 / M_PI;
@@ -657,6 +651,7 @@ float GDALSlopeHornAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pD
         return (float) (100*(sqrt(key) / (8*psData->scale)));
 }
 
+static
 float GDALSlopeZevenbergenThorneAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     const double radiansToDegrees = 180.0 / M_PI;
@@ -675,6 +670,7 @@ float GDALSlopeZevenbergenThorneAlg (float* afWin, CPL_UNUSED float fDstNoDataVa
         return (float) (100*(sqrt(key) / (2*psData->scale)));
 }
 
+static
 void*  GDALCreateSlopeData(double* adfGeoTransform,
                            double scale,
                            int slopeFormat)
@@ -698,6 +694,7 @@ typedef struct
     int bAngleAsAzimuth;
 } GDALAspectAlgData;
 
+static
 float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
 {
     const double degreesToRadians = M_PI / 180.0;
@@ -737,6 +734,7 @@ float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
     return aspect;
 }
 
+static
 float GDALAspectZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void* pData)
 {
     const double degreesToRadians = M_PI / 180.0;
@@ -773,6 +771,8 @@ float GDALAspectZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void*
 
     return aspect;
 }
+
+static
 void*  GDALCreateAspectData(int bAngleAsAzimuth)
 {
     GDALAspectAlgData* pData =
@@ -805,13 +805,6 @@ static int GDALColorReliefSortColors(const void* pA, const void* pB)
     return (pC1->dfVal < pC2->dfVal) ? -1 :
            (pC1->dfVal == pC2->dfVal) ? 0 : 1;
 }
-
-typedef enum
-{
-    COLOR_SELECTION_INTERPOLATE,
-    COLOR_SELECTION_NEAREST_ENTRY,
-    COLOR_SELECTION_EXACT_ENTRY
-} ColorSelectionMode;
 
 static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
                                    int nColorAssociation,
@@ -1746,6 +1739,7 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
 /*                         GDALTRIAlg()                                 */
 /************************************************************************/
 
+static
 float GDALTRIAlg (float* afWin,
                   CPL_UNUSED float fDstNoDataValue,
                   CPL_UNUSED void* pData)
@@ -1766,6 +1760,7 @@ float GDALTRIAlg (float* afWin,
 /*                         GDALTPIAlg()                                 */
 /************************************************************************/
 
+static
 float GDALTPIAlg (float* afWin,
                   CPL_UNUSED float fDstNoDataValue,
                   CPL_UNUSED void* pData)
@@ -1787,6 +1782,7 @@ float GDALTPIAlg (float* afWin,
 /*                     GDALRoughnessAlg()                               */
 /************************************************************************/
 
+static
 float GDALRoughnessAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, CPL_UNUSED void* pData)
 {
     // Roughness is the largest difference
@@ -2228,12 +2224,14 @@ static int ArgIsNumeric( const char *pszArg )
 {
     return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
 }
+
 /************************************************************************/
-/*                                main()                                */
+/*                            GetAlgorithm()                            */
 /************************************************************************/
 
 typedef enum
 {
+    INVALID,
     HILL_SHADE,
     SLOPE,
     ASPECT,
@@ -2243,298 +2241,166 @@ typedef enum
     ROUGHNESS
 } Algorithm;
 
-#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
-    do { if (i + nExtraArg >= argc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
-
-int main( int argc, char ** argv )
-
+static Algorithm GetAlgorithm(const char* pszProcessing)
 {
-    Algorithm eUtilityMode = HILL_SHADE;
-    double z = 1.0;
-    double scale = 1.0;
-    double az = 315.0;
-    double alt = 45.0;
-    // 0 = 'percent' or 1 = 'degrees'
-    int slopeFormat = 1; 
-    int bAddAlpha = FALSE;
-    int bZeroForFlat = FALSE;
-    int bAngleAsAzimuth = TRUE;
-    ColorSelectionMode eColorSelectionMode = COLOR_SELECTION_INTERPOLATE;
-    
-    int nBand = 1;
+    if ( EQUAL(pszProcessing, "shade") || EQUAL(pszProcessing, "hillshade") )
+    {
+        return HILL_SHADE;
+    }
+    else if ( EQUAL(pszProcessing, "slope") )
+    {
+        return SLOPE;
+    }
+    else if ( EQUAL(pszProcessing, "aspect") )
+    {
+        return ASPECT;
+    }
+    else if ( EQUAL(pszProcessing, "color-relief") )
+    {
+        return COLOR_RELIEF;
+    }
+    else if ( EQUAL(pszProcessing, "TRI") )
+    {
+        return TRI;
+    }
+    else if ( EQUAL(pszProcessing, "TPI") )
+    {
+        return TPI;
+    }
+    else if ( EQUAL(pszProcessing, "roughness") )
+    {
+        return ROUGHNESS;
+    }
+    else
+    {
+        return INVALID;
+    }
+}
+
+/************************************************************************/
+/*                            GDALDEMProcessing()                       */
+/************************************************************************/
+
+/**
+ * Apply a DEM processing.
+ *
+ * This is the equivalent of the <a href="gdaldem.html">gdaldem</a> utility.
+ *
+ * GDALDEMProcessingOptions* must be allocated and freed with GDALDEMProcessingOptionsNew()
+ * and GDALDEMProcessingOptionsFree() respectively.
+ *
+ * @param pszDest the destination dataset path.
+ * @param hSrcDataset the dataset handle.
+ * @param pszProcessing the processing to apply (one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", "Roughness")
+ * @param pszColorFilename color file (mandatory for "color-relief" processing, should be NULL otherwise)
+ * @param psOptions the options struct returned by GDALDEMProcessingOptionsNew() or NULL.
+ * @param pbUsageError the pointer to int variable to determine any usage error has occured or NULL.
+ * @return the converted dataset.
+ * It must be freed using GDALClose().
+ *
+ * @since GDAL 2.1
+ */
+
+GDALDatasetH GDALDEMProcessing(const char *pszDest,
+                               GDALDatasetH hSrcDataset,
+                               const char* pszProcessing,
+                               const char* pszColorFilename,
+                               const GDALDEMProcessingOptions *psOptionsIn,
+                               int *pbUsageError)
+{
+    if( hSrcDataset == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "No source dataset specified.");
+
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return NULL;
+    }
+    if( pszDest == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "No target dataset specified.");
+
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return NULL;
+    }
+    if( pszProcessing == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "No target dataset specified.");
+
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return NULL;
+    }
+
+    Algorithm eUtilityMode = GetAlgorithm(pszProcessing);
+    if( eUtilityMode == INVALID )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid processing");
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return NULL;
+    }
+
+    if( eUtilityMode == COLOR_RELIEF && pszColorFilename == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "pszColorFilename == NULL.");
+
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return NULL;
+    }
+    else if( eUtilityMode != COLOR_RELIEF && pszColorFilename != NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "pszColorFilename != NULL.");
+
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return NULL;
+    }
+
+
+    GDALDEMProcessingOptions* psOptionsToFree = NULL;
+    const GDALDEMProcessingOptions* psOptions;
+    if( psOptionsIn )
+        psOptions = psOptionsIn;
+    else
+    {
+        psOptionsToFree = GDALDEMProcessingOptionsNew(NULL, NULL);
+        psOptions = psOptionsToFree;
+    }
+
     double  adfGeoTransform[6];
 
-    const char *pszSrcFilename = NULL;
-    const char *pszDstFilename = NULL;
-    const char *pszColorFilename = NULL;
-    const char *pszFormat = "GTiff";
-    int bFormatExplicitlySet = FALSE;
-    char **papszCreateOptions = NULL;
-    
-    GDALDatasetH hSrcDataset = NULL;
     GDALDatasetH hDstDataset = NULL;
     GDALRasterBandH hSrcBand = NULL;
     GDALRasterBandH hDstBand = NULL;
     GDALDriverH hDriver = NULL;
 
-    GDALProgressFunc pfnProgress = GDALTermProgress;
-    
-    int nXSize = 0;
-    int nYSize = 0;
-    
-    int bComputeAtEdges = FALSE;
-    int bZevenbergenThorne = FALSE;
-    int bCombined = FALSE;
-    int bQuiet = FALSE;
-    
-    /* Check strict compilation and runtime library version as we use C++ API */
-    if (! GDAL_CHECK_VERSION(argv[0]))
-        exit(1);
+    int nXSize = GDALGetRasterXSize(hSrcDataset);
+    int nYSize = GDALGetRasterYSize(hSrcDataset);
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 2 )
+    if( psOptions->nBand <= 0 || psOptions->nBand > GDALGetRasterCount(hSrcDataset) )
     {
-        Usage("Not enough arguments.");
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Unable to fetch band #%d", psOptions->nBand );
+        GDALDEMProcessingOptionsFree(psOptionsToFree);
+        return NULL;
     }
-
-    if( EQUAL(argv[1], "--utility_version") || EQUAL(argv[1], "--utility-version") )
-    {
-        printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
-                argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-        return 0;
-    }
-    else if( EQUAL(argv[1],"--help") )
-        Usage();
-    else if ( EQUAL(argv[1], "shade") || EQUAL(argv[1], "hillshade") )
-    {
-        eUtilityMode = HILL_SHADE;
-    }
-    else if ( EQUAL(argv[1], "slope") )
-    {
-        eUtilityMode = SLOPE;
-    }
-    else if ( EQUAL(argv[1], "aspect") )
-    {
-        eUtilityMode = ASPECT;
-    }
-    else if ( EQUAL(argv[1], "color-relief") )
-    {
-        eUtilityMode = COLOR_RELIEF;
-    }
-    else if ( EQUAL(argv[1], "TRI") )
-    {
-        eUtilityMode = TRI;
-    }
-    else if ( EQUAL(argv[1], "TPI") )
-    {
-        eUtilityMode = TPI;
-    }
-    else if ( EQUAL(argv[1], "roughness") )
-    {
-        eUtilityMode = ROUGHNESS;
-    }
-    else
-    {
-        Usage("Missing valid sub-utility mention.");
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Parse arguments.                                                */
-/* -------------------------------------------------------------------- */
-    for(int i = 2; i < argc; i++ )
-    {
-        if( eUtilityMode == HILL_SHADE &&
-            (EQUAL(argv[i], "--z") || EQUAL(argv[i], "-z")))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            ++i;
-            if( !ArgIsNumeric(argv[i]) )
-                Usage();
-            z = CPLAtof(argv[i]);
-        }
-        else if ( eUtilityMode == SLOPE && EQUAL(argv[i], "-p"))
-        {
-            slopeFormat = 0;
-        }
-        else if ( (eUtilityMode == HILL_SHADE || eUtilityMode == SLOPE ||
-                   eUtilityMode == ASPECT) && EQUAL(argv[i], "-alg") )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            i ++;
-            if (EQUAL(argv[i], "ZevenbergenThorne"))
-                bZevenbergenThorne = TRUE;
-            else if (!EQUAL(argv[i], "Horn"))
-            {
-                Usage(CPLSPrintf("Wrong value for alg : %s.", argv[i]));
-            }
-        }
-        else if ( eUtilityMode == ASPECT && EQUAL(argv[i], "-trigonometric"))
-        {
-            bAngleAsAzimuth = FALSE;
-        }
-        else if ( eUtilityMode == ASPECT && EQUAL(argv[i], "-zero_for_flat"))
-        {
-            bZeroForFlat = TRUE;
-        }
-        else if ( eUtilityMode == COLOR_RELIEF && EQUAL(argv[i], "-exact_color_entry"))
-        {
-            eColorSelectionMode = COLOR_SELECTION_EXACT_ENTRY;
-        }
-        else if ( eUtilityMode == COLOR_RELIEF && EQUAL(argv[i], "-nearest_color_entry"))
-        {
-            eColorSelectionMode = COLOR_SELECTION_NEAREST_ENTRY;
-        }
-        else if( 
-            (EQUAL(argv[i], "--s") || 
-             EQUAL(argv[i], "-s") ||
-             EQUAL(argv[i], "--scale") ||
-             EQUAL(argv[i], "-scale"))
-          )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            ++i;
-            if( !ArgIsNumeric(argv[i]) )
-                Usage();
-            scale = CPLAtof(argv[i]);
-        }
-        else if( eUtilityMode == HILL_SHADE &&
-            (EQUAL(argv[i], "--az") || 
-             EQUAL(argv[i], "-az") ||
-             EQUAL(argv[i], "--azimuth") ||
-             EQUAL(argv[i], "-azimuth"))
-          )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            ++i;
-            if( !ArgIsNumeric(argv[i]) )
-                Usage();
-            az = CPLAtof(argv[i]);
-        }
-        else if( eUtilityMode == HILL_SHADE &&
-            (EQUAL(argv[i], "--alt") || 
-             EQUAL(argv[i], "-alt") ||
-             EQUAL(argv[i], "--alt") ||
-             EQUAL(argv[i], "-alt"))
-          )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            ++i;
-            if( !ArgIsNumeric(argv[i]) )
-                Usage();
-            alt = CPLAtof(argv[i]);
-        }
-        else if( eUtilityMode == HILL_SHADE &&
-            (EQUAL(argv[i], "-combined") || 
-             EQUAL(argv[i], "--combined"))
-          )
-        {
-            bCombined = TRUE;
-        }
-        else if( eUtilityMode == COLOR_RELIEF &&
-                 EQUAL(argv[i], "-alpha"))
-        {
-            bAddAlpha = TRUE;
-        }
-        else if( eUtilityMode != COLOR_RELIEF &&
-                 EQUAL(argv[i], "-compute_edges"))
-        {
-            bComputeAtEdges = TRUE;
-        }
-        else if( i + 1 < argc &&
-            (EQUAL(argv[i], "--b") || 
-             EQUAL(argv[i], "-b"))
-          )
-        {
-            nBand = atoi(argv[++i]);
-        }
-        else if ( EQUAL(argv[i], "-q") || EQUAL(argv[i], "-quiet") )
-        {
-            pfnProgress = GDALDummyProgress;
-            bQuiet = TRUE;
-        }
-        else if( EQUAL(argv[i],"-co") )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
-        }
-        else if( EQUAL(argv[i],"-of") )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszFormat = argv[++i];
-            bFormatExplicitlySet = TRUE;
-        }
-        else if( argv[i][0] == '-' )
-        {
-            Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
-        }
-        else if( pszSrcFilename == NULL )
-        {
-            pszSrcFilename = argv[i];
-        }
-        else if( eUtilityMode == COLOR_RELIEF && pszColorFilename == NULL )
-        {
-            pszColorFilename = argv[i];
-        }
-        else if( pszDstFilename == NULL )
-        {
-            pszDstFilename = argv[i];
-        }
-        else
-            Usage("Too many command options.");
-    }
-
-    if( pszSrcFilename == NULL )
-    {
-        Usage("Missing source.");
-    }
-    if ( eUtilityMode == COLOR_RELIEF && pszColorFilename == NULL )
-    {
-        Usage("Missing color file.");
-    }
-    if( pszDstFilename == NULL )
-    {
-        Usage("Missing destination.");
-    }
-
-    GDALAllRegister();
-
-    // Open Dataset and get raster band
-    hSrcDataset = GDALOpen( pszSrcFilename, GA_ReadOnly );
-    
-    if( hSrcDataset == NULL )
-    {
-        fprintf( stderr,
-                 "GDALOpen failed - %d\n%s\n",
-                 CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
-        GDALDestroyDriverManager();
-        exit( 1 );
-    }
-
-    nXSize = GDALGetRasterXSize(hSrcDataset);
-    nYSize = GDALGetRasterYSize(hSrcDataset);
-
-    if( nBand <= 0 || nBand > GDALGetRasterCount(hSrcDataset) )
-    {
-        fprintf( stderr,
-                 "Unable to fetch band #%d\n", nBand );
-        GDALDestroyDriverManager();
-        exit( 1 );
-    }
-    hSrcBand = GDALGetRasterBand( hSrcDataset, nBand );
+    hSrcBand = GDALGetRasterBand( hSrcDataset, psOptions->nBand );
 
     GDALGetGeoTransform(hSrcDataset, adfGeoTransform);
 
-    hDriver = GDALGetDriverByName(pszFormat);
+    hDriver = GDALGetDriverByName(psOptions->pszFormat);
     if( hDriver == NULL 
         || (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL &&
             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) == NULL))
     {
         int	iDr;
 
-        fprintf( stderr, "Output driver `%s' not recognised to have\n", 
-                 pszFormat );
-        fprintf( stderr, "output support.  The following format drivers are configured\n"
+        CPLError(CE_Failure, CPLE_AppDefined, "Output driver `%s' not recognised to have output support.", 
+                 psOptions->pszFormat );
+        fprintf( stderr, "The following format drivers are configured\n"
                 "and support output:\n" );
 
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
@@ -2545,17 +2411,14 @@ int main( int argc, char ** argv )
                 (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL ||
                  GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL) )
             {
-                printf( "  %s: %s\n",
+                fprintf( stderr, "  %s: %s\n",
                         GDALGetDriverShortName( hDriver  ),
                         GDALGetDriverLongName( hDriver ) );
             }
         }
-        GDALDestroyDriverManager();
-        exit( 1 );
+        GDALDEMProcessingOptionsFree(psOptionsToFree);
+        return NULL;
     }
-
-    if (!bQuiet && !bFormatExplicitlySet)
-        CheckExtensionConsistency(pszDstFilename, pszFormat);
 
     double dfDstNoDataValue = 0;
     int bDstHasNoData = FALSE;
@@ -2567,21 +2430,21 @@ int main( int argc, char ** argv )
         dfDstNoDataValue = 0;
         bDstHasNoData = TRUE;
         pData = GDALCreateHillshadeData   (adfGeoTransform,
-                                           z,
-                                           scale,
-                                           alt,
-                                           az,
-                                           bZevenbergenThorne);
-        if (bZevenbergenThorne)
+                                           psOptions->z,
+                                           psOptions->scale,
+                                           psOptions->alt,
+                                           psOptions->az,
+                                           psOptions->bZevenbergenThorne);
+        if (psOptions->bZevenbergenThorne)
         {
-            if(!bCombined)
+            if(!psOptions->bCombined)
                 pfnAlg = GDALHillshadeZevenbergenThorneAlg;
             else
                 pfnAlg = GDALHillshadeZevenbergenThorneCombinedAlg;
         }
         else
         {
-            if(!bCombined)
+            if(!psOptions->bCombined)
                 pfnAlg = GDALHillshadeAlg;
             else
                 pfnAlg = GDALHillshadeCombinedAlg;
@@ -2592,8 +2455,8 @@ int main( int argc, char ** argv )
         dfDstNoDataValue = -9999;
         bDstHasNoData = TRUE;
 
-        pData = GDALCreateSlopeData(adfGeoTransform, scale, slopeFormat);
-        if (bZevenbergenThorne)
+        pData = GDALCreateSlopeData(adfGeoTransform, psOptions->scale, psOptions->slopeFormat);
+        if (psOptions->bZevenbergenThorne)
             pfnAlg = GDALSlopeZevenbergenThorneAlg;
         else
             pfnAlg = GDALSlopeHornAlg;
@@ -2601,14 +2464,14 @@ int main( int argc, char ** argv )
 
     else if (eUtilityMode == ASPECT)
     {
-        if (!bZeroForFlat)
+        if (!psOptions->bZeroForFlat)
         {
             dfDstNoDataValue = -9999;
             bDstHasNoData = TRUE;
         }
 
-        pData = GDALCreateAspectData(bAngleAsAzimuth);
-        if (bZevenbergenThorne)
+        pData = GDALCreateAspectData(psOptions->bAngleAsAzimuth);
+        if (psOptions->bZevenbergenThorne)
             pfnAlg = GDALAspectZevenbergenThorneAlg;
         else
             pfnAlg = GDALAspectAlg;
@@ -2636,55 +2499,55 @@ int main( int argc, char ** argv )
                                  eUtilityMode == COLOR_RELIEF) ? GDT_Byte :
                                                                GDT_Float32;
 
-    if( EQUAL(pszFormat, "VRT") )
+    if( EQUAL(psOptions->pszFormat, "VRT") )
     {
         if (eUtilityMode == COLOR_RELIEF)
         {
-            GDALGenerateVRTColorRelief(pszDstFilename,
+            GDALGenerateVRTColorRelief(pszDest,
                                        hSrcDataset,
                                        hSrcBand,
                                        pszColorFilename,
-                                       eColorSelectionMode,
-                                       bAddAlpha);
-            GDALClose(hSrcDataset);
-        
+                                       psOptions->eColorSelectionMode,
+                                       psOptions->bAddAlpha);
+
             CPLFree(pData);
 
-            GDALDestroyDriverManager();
-            CSLDestroy( argv );
-            CSLDestroy( papszCreateOptions );
-        
-            return 0;
+            GDALDEMProcessingOptionsFree(psOptionsToFree);
+            return GDALOpen(pszDest, GA_Update);
         }
         else
         {
-            fprintf(stderr, "VRT driver can only be used with color-relief utility\n");
-            GDALDestroyDriverManager();
-
-            exit(1);
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "VRT driver can only be used with color-relief utility.");
+            GDALDEMProcessingOptionsFree(psOptionsToFree);
+            return NULL;
         }
     }
     
     // We might actually want to always go through the intermediate dataset
     int bForceUseIntermediateDataset = FALSE;
-    if( EQUAL(pszFormat, "GTiff") )
+    
+    GDALProgressFunc pfnProgress = psOptions->pfnProgress;
+    void* pProgressData = psOptions->pProgressData;
+    
+    if( EQUAL(psOptions->pszFormat, "GTiff") )
     {
-        if( !EQUAL(CSLFetchNameValueDef(papszCreateOptions, "COMPRESS", "NONE"), "NONE") &&
-            CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "TILED", "NO")) )
+        if( !EQUAL(CSLFetchNameValueDef(psOptions->papszCreateOptions, "COMPRESS", "NONE"), "NONE") &&
+            CSLTestBoolean(CSLFetchNameValueDef(psOptions->papszCreateOptions, "TILED", "NO")) )
         {
             bForceUseIntermediateDataset = TRUE;
         }
-        else if( strcmp(pszDstFilename, "/vsistdout/") == 0 )
+        else if( strcmp(pszDest, "/vsistdout/") == 0 )
         {
             bForceUseIntermediateDataset = TRUE;
             pfnProgress = GDALDummyProgress;
-            bQuiet = TRUE;
+            pProgressData = NULL;
         }
 #ifdef S_ISFIFO
         else
         {
             VSIStatBufL sStat;
-            if( VSIStatExL(pszDstFilename, &sStat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
+            if( VSIStatExL(pszDest, &sStat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
                 S_ISFIFO(sStat.st_mode) )
             {
                 bForceUseIntermediateDataset = TRUE;
@@ -2704,8 +2567,8 @@ int main( int argc, char ** argv )
                 new GDALColorReliefDataset (hSrcDataset,
                                             hSrcBand,
                                             pszColorFilename,
-                                            eColorSelectionMode,
-                                            bAddAlpha);
+                                            psOptions->eColorSelectionMode,
+                                            psOptions->bAddAlpha);
         else
             hIntermediateDataset = (GDALDatasetH)
                 new GDALGeneric3x3Dataset(hSrcDataset, hSrcBand,
@@ -2714,48 +2577,42 @@ int main( int argc, char ** argv )
                                           dfDstNoDataValue,
                                           pfnAlg,
                                           pData,
-                                          bComputeAtEdges);
+                                          psOptions->bComputeAtEdges);
 
         GDALDatasetH hOutDS = GDALCreateCopy(
-                                 hDriver, pszDstFilename, hIntermediateDataset, 
-                                 TRUE, papszCreateOptions, 
-                                 pfnProgress, NULL );
+                                 hDriver, pszDest, hIntermediateDataset, 
+                                 TRUE, psOptions->papszCreateOptions, 
+                                 pfnProgress, pProgressData );
 
-        if( hOutDS != NULL )
-            GDALClose( hOutDS );
         GDALClose(hIntermediateDataset);
-        GDALClose(hSrcDataset);
-        
+
         CPLFree(pData);
 
-        GDALDestroyDriverManager();
-        CSLDestroy( argv );
-        CSLDestroy( papszCreateOptions );
-        
-        return 0;
+        GDALDEMProcessingOptionsFree(psOptionsToFree);
+        return hOutDS;
     }
 
     int nDstBands;
     if (eUtilityMode == COLOR_RELIEF)
-        nDstBands = (bAddAlpha) ? 4 : 3;
+        nDstBands = (psOptions->bAddAlpha) ? 4 : 3;
     else
         nDstBands = 1;
 
     hDstDataset = GDALCreate(   hDriver,
-                                pszDstFilename,
+                                pszDest,
                                 nXSize,
                                 nYSize,
                                 nDstBands,
                                 eDstDataType,
-                                papszCreateOptions);
+                                psOptions->papszCreateOptions);
 
     if( hDstDataset == NULL )
     {
-        fprintf( stderr,
-                 "Unable to create dataset %s %d\n%s\n", pszDstFilename,
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to create dataset %s %d\n%s", pszDest,
                  CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
-        GDALDestroyDriverManager();
-        exit( 1 );
+        GDALDEMProcessingOptionsFree(psOptionsToFree);
+        return NULL;
     }
     
     hDstBand = GDALGetRasterBand( hDstDataset, 1 );
@@ -2769,30 +2626,303 @@ int main( int argc, char ** argv )
                          GDALGetRasterBand(hDstDataset, 1),
                          GDALGetRasterBand(hDstDataset, 2),
                          GDALGetRasterBand(hDstDataset, 3),
-                         (bAddAlpha) ? GDALGetRasterBand(hDstDataset, 4) : NULL,
+                         (psOptions->bAddAlpha) ? GDALGetRasterBand(hDstDataset, 4) : NULL,
                          pszColorFilename,
-                         eColorSelectionMode,
-                         pfnProgress, NULL);
+                         psOptions->eColorSelectionMode,
+                         pfnProgress, pProgressData);
     }
     else
     {
         if (bDstHasNoData)
             GDALSetRasterNoDataValue(hDstBand, dfDstNoDataValue);
-        
+
         GDALGeneric3x3Processing(hSrcBand, hDstBand,
                                  pfnAlg, pData,
-                                 bComputeAtEdges,
-                                 pfnProgress, NULL);
-                                    
+                                 psOptions->bComputeAtEdges,
+                                 pfnProgress, pProgressData);
+
     }
 
-    GDALClose(hSrcDataset);
-    GDALClose(hDstDataset);
     CPLFree(pData);
 
-    GDALDestroyDriverManager();
-    CSLDestroy( argv );
-    CSLDestroy( papszCreateOptions );
+    GDALDEMProcessingOptionsFree(psOptionsToFree);
+    return hDstDataset;
+}
 
-    return 0;
+/************************************************************************/
+/*                           GDALDEMProcessingOptionsNew()              */
+/************************************************************************/
+
+/**
+ * Allocates a GDALDEMProcessingOptions struct.
+ *
+ * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
+ *                  The accepted options are the ones of the <a href="gdal_translate.html">gdal_translate</a> utility.
+ * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
+ *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
+ *                           GDALDEMProcessingOptionsForBinaryNew() prior to this function. Will be
+ *                           filled with potentially present filename, open options,...
+ * @return pointer to the allocated GDALDEMProcessingOptions struct. Must be freed with GDALDEMProcessingOptionsFree().
+ *
+ * @since GDAL 2.1
+ */
+
+GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
+                                                      GDALDEMProcessingOptionsForBinary* psOptionsForBinary)
+{
+    GDALDEMProcessingOptions *psOptions = (GDALDEMProcessingOptions *) CPLCalloc( 1, sizeof(GDALDEMProcessingOptions) );
+    Algorithm eUtilityMode = INVALID;
+
+    psOptions->pszFormat = CPLStrdup("GTiff");
+    psOptions->pfnProgress = GDALDummyProgress;
+    psOptions->pProgressData = NULL;
+    psOptions->z = 1.0;
+    psOptions->scale = 1.0;
+    psOptions->az = 315.0;
+    psOptions->alt = 45.0;
+    // 0 = 'percent' or 1 = 'degrees'
+    psOptions->slopeFormat = 1; 
+    psOptions->bAddAlpha = FALSE;
+    psOptions->bZeroForFlat = FALSE;
+    psOptions->bAngleAsAzimuth = TRUE;
+    psOptions->eColorSelectionMode = COLOR_SELECTION_INTERPOLATE;
+    psOptions->bComputeAtEdges = FALSE;
+    psOptions->bZevenbergenThorne = FALSE;
+    psOptions->bCombined = FALSE;
+    psOptions->nBand = 1;
+    psOptions->papszCreateOptions = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Handle command line arguments.                                  */
+/* -------------------------------------------------------------------- */
+    int argc = CSLCount(papszArgv);
+    for( int i = 0; i < argc; i++ )
+    {
+        if( i == 0 && psOptionsForBinary )
+        {
+            eUtilityMode = GetAlgorithm(papszArgv[0]);
+            if(eUtilityMode == INVALID )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg, "Invalid utility mode");
+                GDALDEMProcessingOptionsFree(psOptions);
+                return NULL;
+            }
+            psOptionsForBinary->pszProcessing = CPLStrdup(papszArgv[0]);
+            continue;
+        }
+
+        if( EQUAL(papszArgv[i],"-of") && i < argc-1 )
+        {
+            ++i;
+            CPLFree(psOptions->pszFormat);
+            psOptions->pszFormat = CPLStrdup(papszArgv[i]);
+            if( psOptionsForBinary )
+            {
+                psOptionsForBinary->bFormatExplicitlySet = TRUE;
+            }
+        }
+
+        else if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
+        {
+            if( psOptionsForBinary )
+                psOptionsForBinary->bQuiet = TRUE;
+        }
+
+        else if( (EQUAL(papszArgv[i], "--z") || EQUAL(papszArgv[i], "-z")) && i+1<argc)
+        {
+            ++i;
+            if( !ArgIsNumeric(papszArgv[i]) )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg, "Numeric value expected for -z");
+                GDALDEMProcessingOptionsFree(psOptions);
+                return NULL;
+            }
+            psOptions->z = CPLAtof(papszArgv[i]);
+        }
+        else if ( EQUAL(papszArgv[i], "-p") )
+        {
+            psOptions->slopeFormat = 0;
+        }
+        else if ( EQUAL(papszArgv[i], "-alg") && i+1<argc)
+        {
+            i ++;
+            if (EQUAL(papszArgv[i], "ZevenbergenThorne"))
+                psOptions->bZevenbergenThorne = TRUE;
+            else if (!EQUAL(papszArgv[i], "Horn"))
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg, "Numeric value expected for %s", papszArgv[i-1]);
+                GDALDEMProcessingOptionsFree(psOptions);
+                return NULL;
+            }
+        }
+        else if ( EQUAL(papszArgv[i], "-trigonometric"))
+        {
+            psOptions->bAngleAsAzimuth = FALSE;
+        }
+        else if ( EQUAL(papszArgv[i], "-zero_for_flat"))
+        {
+            psOptions->bZeroForFlat = TRUE;
+        }
+        else if ( EQUAL(papszArgv[i], "-exact_color_entry"))
+        {
+            psOptions->eColorSelectionMode = COLOR_SELECTION_EXACT_ENTRY;
+        }
+        else if ( EQUAL(papszArgv[i], "-nearest_color_entry"))
+        {
+            psOptions->eColorSelectionMode = COLOR_SELECTION_NEAREST_ENTRY;
+        }
+        else if( 
+            (EQUAL(papszArgv[i], "--s") || 
+             EQUAL(papszArgv[i], "-s") ||
+             EQUAL(papszArgv[i], "--scale") ||
+             EQUAL(papszArgv[i], "-scale")) && i+1<argc
+          )
+        {
+            ++i;
+            if( !ArgIsNumeric(papszArgv[i]) )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg, "Numeric value expected for %s", papszArgv[i-1]);
+                GDALDEMProcessingOptionsFree(psOptions);
+                return NULL;
+            }
+            psOptions->scale = CPLAtof(papszArgv[i]);
+        }
+        else if( 
+            (EQUAL(papszArgv[i], "--az") || 
+             EQUAL(papszArgv[i], "-az") ||
+             EQUAL(papszArgv[i], "--azimuth") ||
+             EQUAL(papszArgv[i], "-azimuth")) && i+1<argc
+          )
+        {
+            ++i;
+            if( !ArgIsNumeric(papszArgv[i]) )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg, "Numeric value expected for %s", papszArgv[i-1]);
+                GDALDEMProcessingOptionsFree(psOptions);
+                return NULL;
+            }
+            psOptions->az = CPLAtof(papszArgv[i]);
+        }
+        else if( eUtilityMode == HILL_SHADE &&
+            (EQUAL(papszArgv[i], "--alt") || 
+             EQUAL(papszArgv[i], "-alt") ||
+             EQUAL(papszArgv[i], "--alt") ||
+             EQUAL(papszArgv[i], "-alt")) && i+1<argc
+          )
+        {
+            ++i;
+            if( !ArgIsNumeric(papszArgv[i]) )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg, "Numeric value expected for %s", papszArgv[i-1]);
+                GDALDEMProcessingOptionsFree(psOptions);
+                return NULL;
+            }
+            psOptions->alt = CPLAtof(papszArgv[i]);
+        }
+        else if( 
+            (EQUAL(papszArgv[i], "-combined") || 
+             EQUAL(papszArgv[i], "--combined"))
+          )
+        {
+            psOptions->bCombined = TRUE;
+        }
+        else if( 
+                 EQUAL(papszArgv[i], "-alpha"))
+        {
+            psOptions->bAddAlpha = TRUE;
+        }
+        else if( 
+                 EQUAL(papszArgv[i], "-compute_edges"))
+        {
+            psOptions->bComputeAtEdges = TRUE;
+        }
+        else if( i + 1 < argc &&
+            (EQUAL(papszArgv[i], "--b") || 
+             EQUAL(papszArgv[i], "-b"))
+          )
+        {
+            psOptions->nBand = atoi(papszArgv[++i]);
+        }
+        else if( EQUAL(papszArgv[i],"-co") && i+1<argc )
+        {
+            psOptions->papszCreateOptions = CSLAddString( psOptions->papszCreateOptions, papszArgv[++i] );
+        }
+        else if( papszArgv[i][0] == '-' )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unknown option name '%s'", papszArgv[i]);
+            GDALDEMProcessingOptionsFree(psOptions);
+            return NULL;
+        }
+        else if( psOptionsForBinary && psOptionsForBinary->pszSrcFilename == NULL )
+        {
+            psOptionsForBinary->pszSrcFilename = CPLStrdup(papszArgv[i]);
+        }
+        else if( psOptionsForBinary && eUtilityMode == COLOR_RELIEF && psOptionsForBinary->pszColorFilename == NULL )
+        {
+            psOptionsForBinary->pszColorFilename = CPLStrdup(papszArgv[i]);
+        }
+        else if( psOptionsForBinary && psOptionsForBinary->pszDstFilename == NULL )
+        {
+            psOptionsForBinary->pszDstFilename = CPLStrdup(papszArgv[i]);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too many command options '%s'", papszArgv[i]);
+            GDALDEMProcessingOptionsFree(psOptions);
+            return NULL;
+        }
+    }
+
+    if( psOptionsForBinary )
+    {
+        psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
+    }
+
+    return psOptions;
+}
+
+/************************************************************************/
+/*                       GDALDEMProcessingOptionsFree()                 */
+/************************************************************************/
+
+/**
+ * Frees the GDALDEMProcessingOptions struct.
+ *
+ * @param psOptions the options struct for GDALDEMProcessing().
+ *
+ * @since GDAL 2.1
+ */
+
+void GDALDEMProcessingOptionsFree(GDALDEMProcessingOptions *psOptions)
+{
+    if( psOptions )
+    {
+        CPLFree(psOptions->pszFormat);
+        CSLDestroy(psOptions->papszCreateOptions);
+
+        CPLFree(psOptions);
+    }
+}
+
+/************************************************************************/
+/*                 GDALDEMProcessingOptionsSetProgress()                */
+/************************************************************************/
+
+/**
+ * Set a progress function.
+ *
+ * @param psOptions the options struct for GDALDEMProcessing().
+ * @param pfnProgress the progress callback.
+ * @param pProgressData the user data for the progress callback.
+ *
+ * @since GDAL 2.1
+ */
+
+void GDALDEMProcessingOptionsSetProgress( GDALDEMProcessingOptions *psOptions,
+                                      GDALProgressFunc pfnProgress, void *pProgressData )
+{
+    psOptions->pfnProgress = pfnProgress;
+    psOptions->pProgressData = pProgressData;
 }
