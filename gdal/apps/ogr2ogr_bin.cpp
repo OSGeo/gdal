@@ -111,6 +111,15 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
 
 int main( int nArgc, char ** papszArgv )
 {
+    GDALDatasetH hDS = NULL;
+    GDALDatasetH hODS = NULL;
+    int bCloseODS = TRUE;
+    int bUsageError = FALSE;
+    GDALDatasetH hDstDS;
+    int nRetCode = 1;
+    GDALVectorTranslateOptionsForBinary* psOptionsForBinary;
+    GDALVectorTranslateOptions *psOptions;
+
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
         exit(1);
@@ -128,7 +137,7 @@ int main( int nArgc, char ** papszArgv )
     nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
     
     if( nArgc < 1 )
-        exit( -nArgc );
+        goto exit;
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
@@ -136,23 +145,29 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            return 0;
+            goto exit;
         }
         else if( EQUAL(papszArgv[iArg],"--help") )
+        {
             Usage();
+            goto exit;
+        }
         else if ( EQUAL(papszArgv[iArg], "--long-usage") )
         {
             Usage(FALSE);
+            goto exit;
         }
     }
 
-    GDALVectorTranslateOptionsForBinary* psOptionsForBinary = GDALVectorTranslateOptionsForBinaryNew();
-    GDALVectorTranslateOptions *psOptions = GDALVectorTranslateOptionsNew(papszArgv + 1, psOptionsForBinary);
+    psOptionsForBinary = GDALVectorTranslateOptionsForBinaryNew();
+    psOptions = GDALVectorTranslateOptionsNew(papszArgv + 1, psOptionsForBinary);
     CSLDestroy( papszArgv );
 
     if( psOptions == NULL )
     {
         Usage();
+        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
+        goto exit;
     }
 
     if( psOptionsForBinary->pszDataSource == NULL )
@@ -161,19 +176,21 @@ int main( int nArgc, char ** papszArgv )
             Usage("no target datasource provided");
         else
             Usage("no source datasource provided");
+        GDALVectorTranslateOptionsFree(psOptions);
+        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
+        goto exit;
     }
 
     if (!psOptionsForBinary->bQuiet && psOptionsForBinary->bFormatExplicitlySet)
-        CheckDestDataSourceNameConsistency(psOptionsForBinary->pszDestDataSource, psOptionsForBinary->pszFormat);
+    {
+        CheckDestDataSourceNameConsistency(psOptionsForBinary->pszDestDataSource,
+                                           psOptionsForBinary->pszFormat);
 
+    }
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
 
-    GDALDatasetH hDS = NULL;
-    GDALDatasetH hODS = NULL;
-    int bCloseODS = TRUE;
-    
     /* Avoid opening twice the same datasource if it is both the input and output */
     /* Known to cause problems with at least FGdb, SQlite and GPKG drivers. See #4270 */
     if (psOptionsForBinary->eAccessMode != ACCESS_CREATION &&
@@ -222,20 +239,22 @@ int main( int nArgc, char ** papszArgv )
             fprintf( stderr, "  -> %s\n", poR->GetDriver(iDriver)->GetDescription() );
         }
 
-        exit( 1 );
+        GDALVectorTranslateOptionsFree(psOptions);
+        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
+        goto exit;
     }
 
     if( !(psOptionsForBinary->bQuiet) )
     {
         GDALVectorTranslateOptionsSetProgress(psOptions, GDALTermProgress, NULL);
     }
-    
-    int bUsageError = FALSE;
-    GDALDatasetH hDstDS = GDALVectorTranslate(psOptionsForBinary->pszDestDataSource, hODS,
+
+    hDstDS = GDALVectorTranslate(psOptionsForBinary->pszDestDataSource, hODS,
                                               1, &hDS, psOptions, &bUsageError);
     if( bUsageError )
         Usage();
-    int nRetCode = (hDstDS) ? 0 : 1;
+    else
+        nRetCode = (hDstDS) ? 0 : 1;
 
     GDALVectorTranslateOptionsFree(psOptions);
     GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
@@ -245,6 +264,7 @@ int main( int nArgc, char ** papszArgv )
     if(bCloseODS)
         GDALClose(hODS);
 
+exit:
     OGRCleanupAll();
 
     return nRetCode;
@@ -370,6 +390,4 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
 
     if( pszAdditionalMsg )
         fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
-
-    exit( 1 );
 }
