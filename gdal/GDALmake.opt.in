@@ -73,13 +73,28 @@ CFLAGS		= @CFLAGS@ @C_WFLAGS@ $(USER_DEFS)
 CXXFLAGS	= @CXXFLAGS@ @CXX_WFLAGS@ $(USER_DEFS)
 
 # TODO(schwehr): Make these be configure flags.
+# CFLAGS += -Wextra
+# CFLAGS += -Werror
 # CFLAGS += -std=c11
+# CFLAGS += -fsanitize=address
+# CFLAGS += -D_FORTIFY_SOURCE=2
+# CFLAGS += -fPIE -pie
+# CFLAGS += -fstack-protector-all
+# CFLAGS += -Wformat -Werror=format-security
+# CFLAGS += -ftrapv -fwrapv
 
 # CXXFLAGS += -Wextra
 # CXXFLAGS += -Werror
 # CXXFLAGS += -std=c++11
+# CXXFLAGS += -fsanitize=address
+# CXXFLAGS += -D_FORTIFY_SOURCE=2
+# CXXFLAGS += -fPIE -pie
+# CXXFLAGS += -fstack-protector-all
+# CXXFLAGS += -Wformat -Werror=format-security
+# CXXFLAGS += -ftrapv -fwrapv
 
 LDFLAGS     = @LDFLAGS@
+# LDFLAGS += -fsanitize=address
 
 RANLIB		=	@RANLIB@
 SO_EXT		=	@SO_EXT@
