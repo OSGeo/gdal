@@ -283,10 +283,10 @@ int main( int argc, char ** argv )
         printf("Input file size is %d, %d\n", GDALGetRasterXSize(hDataset), GDALGetRasterYSize(hDataset));
 
     hOutDS = GDALTranslate(psOptionsForBinary->pszDest, hDataset, psOptions, &bUsageError);
-
     if(bUsageError == TRUE)
         Usage();
-
+    int nRetCode = (hOutDS) ? 0 : 1;
+    
     GDALClose(hDataset);
     GDALClose(hOutDS);
     GDALTranslateOptionsFree(psOptions);
@@ -294,5 +294,5 @@ int main( int argc, char ** argv )
     
     GDALDestroyDriverManager();
 
-    return 0;
+    return nRetCode;
 }
