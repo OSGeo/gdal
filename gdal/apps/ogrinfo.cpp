@@ -69,12 +69,12 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
 int main( int nArgc, char ** papszArgv )
 
 {
-    const char *pszWHERE = NULL;
+    char *pszWHERE = NULL;
     const char  *pszDataSource = NULL;
     char        **papszLayers = NULL;
     OGRGeometry *poSpatialFilter = NULL;
     int         nRepeatCount = 1, bAllLayers = FALSE;
-    const char  *pszSQLStatement = NULL;
+    char  *pszSQLStatement = NULL;
     const char  *pszDialect = NULL;
     int          nRet = 0;
     const char* pszGeomField = NULL;
@@ -145,12 +145,34 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-where") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszWHERE = papszArgv[++iArg];
+            iArg++;
+            CPLFree(pszWHERE);
+            GByte* pabyRet = NULL;
+            if( papszArgv[iArg][0] == '@' &&
+                VSIIngestFile( NULL, papszArgv[iArg] + 1, &pabyRet, NULL, 1024*1024) )
+            {
+                pszWHERE = (char*)pabyRet;
+            }
+            else
+            {
+                pszWHERE = CPLStrdup(papszArgv[iArg]);
+            }
         }
         else if( EQUAL(papszArgv[iArg],"-sql") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszSQLStatement = papszArgv[++iArg];
+            iArg++;
+            CPLFree(pszSQLStatement);
+            GByte* pabyRet = NULL;
+            if( papszArgv[iArg][0] == '@' &&
+                VSIIngestFile( NULL, papszArgv[iArg] + 1, &pabyRet, NULL, 1024*1024) )
+            {
+                pszSQLStatement = (char*)pabyRet;
+            }
+            else
+            {
+                pszSQLStatement = CPLStrdup(papszArgv[iArg]);
+            }
         }
         else if( EQUAL(papszArgv[iArg],"-dialect") )
         {
@@ -428,6 +450,8 @@ end:
         GDALClose( (GDALDatasetH)poDS );
     if (poSpatialFilter)
         OGRGeometryFactory::destroyGeometry( poSpatialFilter );
+    CPLFree(pszSQLStatement);
+    CPLFree(pszWHERE);
 
     OGRCleanupAll();
 
@@ -441,9 +465,9 @@ end:
 static void Usage(const char* pszErrorMsg)
 
 {
-    printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
+    printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|@filename]\n"
             "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
-            "               [-sql statement] [-dialect sql_dialect] [-al] [-so] [-fields={YES/NO}]\n"
+            "               [-sql statement|@filename] [-dialect sql_dialect] [-al] [-so] [-fields={YES/NO}]\n"
             "               [-geom={YES/NO/SUMMARY}] [-formats] [[-oo NAME=VALUE] ...]\n"
             "               [-nomd] [-listmdd] [-mdd domain|`all`]*\n"
             "               [-nocount] [-noextent]\n"

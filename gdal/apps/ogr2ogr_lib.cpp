@@ -42,6 +42,8 @@
 #include <map>
 #include <vector>
 
+CPL_CVSID("$Id$");
+
 typedef enum
 {
     GEOMOP_NONE,
@@ -3861,8 +3863,18 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         }
         else if( EQUAL(papszArgv[i],"-sql") && i+1 < nArgc )
         {
+            i++;
             CPLFree(psOptions->pszSQLStatement);
-            psOptions->pszSQLStatement = CPLStrdup(papszArgv[++i]);
+            GByte* pabyRet = NULL;
+            if( papszArgv[i][0] == '@' &&
+                VSIIngestFile( NULL, papszArgv[i] + 1, &pabyRet, NULL, 1024*1024) )
+            {
+                psOptions->pszSQLStatement = (char*)pabyRet;
+            }
+            else
+            {
+                psOptions->pszSQLStatement = CPLStrdup(papszArgv[i]);
+            }
         }
         else if( EQUAL(papszArgv[i],"-dialect") && i+1 < nArgc )
         {
@@ -4008,8 +4020,18 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         }
         else if( EQUAL(papszArgv[i],"-where") && i+1 < nArgc )
         {
+            i++;
             CPLFree(psOptions->pszWHERE);
-            psOptions->pszWHERE = CPLStrdup(papszArgv[++i]);
+            GByte* pabyRet = NULL;
+            if( papszArgv[i][0] == '@' &&
+                VSIIngestFile( NULL, papszArgv[i] + 1, &pabyRet, NULL, 1024*1024) )
+            {
+                psOptions->pszWHERE = (char*)pabyRet;
+            }
+            else
+            {
+                psOptions->pszWHERE = CPLStrdup(papszArgv[i]);
+            }
         }
         else if( EQUAL(papszArgv[i],"-select") && i+1 < nArgc )
         {
