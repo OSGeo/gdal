@@ -85,9 +85,6 @@ static void GDALInfoOptionsForBinaryFree( GDALInfoOptionsForBinary* psOptionsFor
 int main( int argc, char ** argv ) 
 
 {
-    GDALDatasetH hDataset = NULL;
-    GDALInfoOptions *psOptions = NULL;
-
     EarlySetConfigOptions(argc, argv);
 
     GDALAllRegister();
@@ -95,7 +92,7 @@ int main( int argc, char ** argv )
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
         exit( -argc );
-    
+
     for( int i = 0; argv != NULL && argv[i] != NULL; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
@@ -111,8 +108,9 @@ int main( int argc, char ** argv )
     }
 
     GDALInfoOptionsForBinary* psOptionsForBinary = GDALInfoOptionsForBinaryNew();
-    
-    psOptions = GDALInfoOptionsNew(argv + 1, psOptionsForBinary);
+
+    GDALInfoOptions *psOptions
+        = GDALInfoOptionsNew(argv + 1, psOptionsForBinary);
     if( psOptions == NULL )
         Usage();
 
@@ -122,8 +120,9 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Open dataset.                                                   */
 /* -------------------------------------------------------------------- */
-    hDataset = GDALOpenEx( psOptionsForBinary->pszFilename, GDAL_OF_READONLY | GDAL_OF_RASTER, NULL,
-                           (const char* const* )psOptionsForBinary->papszOpenOptions, NULL );
+    GDALDatasetH hDataset
+        = GDALOpenEx( psOptionsForBinary->pszFilename, GDAL_OF_READONLY | GDAL_OF_RASTER, NULL,
+                      (const char* const* )psOptionsForBinary->papszOpenOptions, NULL );
 
     if( hDataset == NULL )
     {
@@ -156,7 +155,7 @@ int main( int argc, char ** argv )
         CSLDestroy( argv );
 
         GDALInfoOptionsForBinaryFree(psOptionsForBinary);
-    
+
         GDALInfoOptionsFree( psOptions );
 
         GDALDumpOpenDatasets( stderr );
@@ -167,7 +166,7 @@ int main( int argc, char ** argv )
 
         exit( 1 );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read specified subdataset if requested.                         */
 /* -------------------------------------------------------------------- */
@@ -213,7 +212,7 @@ int main( int argc, char ** argv )
     GDALClose( hDataset );
 
     CSLDestroy( argv );
-    
+
     GDALDumpOpenDatasets( stderr );
 
     GDALDestroyDriverManager();
