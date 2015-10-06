@@ -134,6 +134,8 @@ GDALInfoReportMetadata( GDALMajorObjectH hObject,
 /**
  * Lists various information about a GDAL supported raster dataset.
  *
+ * This is the equivalent of the <a href="gdalinfo.html">gdalinfo</a> utility.
+ *
  * GDALInfoOptions* must be allocated and freed with GDALInfoOptionsNew()
  * and GDALInfoOptionsFree() respectively.
  *
@@ -1493,12 +1495,12 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
  * Allocates a GDALInfoOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the one of the gdalinfo utility.
+ *                  The accepted options are the ones of the <a href="gdalinfo.html">gdalinfo</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdalinfo_bin.cpp use case) must be allocated with
  *                           GDALInfoOptionsForBinaryNew() prior to this function. Will be
  *                           filled with potentially present filename, open options, subdataset number...
- * @return pointer to the allocated GDALInfoOptions struct.
+ * @return pointer to the allocated GDALInfoOptions struct. Must be freed with GDALInfoOptionsFree().
  *
  * @since GDAL 2.1
  */

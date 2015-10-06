@@ -446,12 +446,14 @@ GDALTranslateOptions* GDALTranslateOptionsClone(const GDALTranslateOptions *psOp
 /**
  * Converts raster data between different formats.
  *
+ * This is the equivalent of the <a href="gdal_translate.html">gdal_translate</a> utility.
+ *
  * GDALTranslateOptions* must be allocated and freed with GDALTranslateOptionsNew()
  * and GDALTranslateOptionsFree() respectively.
  *
  * @param pszDest the destination dataset path.
  * @param hSrcDataset the dataset handle.
- * @param psOptions the options struct for GDALTranslate() or NULL.
+ * @param psOptions the options struct returned by GDALTranslateOptionsNew() or NULL.
  * @param pbUsageError the pointer to int variable to determine any usage error has occured or NULL.
  * @return the converted dataset.
  * It must be freed using GDALClose().
@@ -1637,12 +1639,12 @@ int ArgIsNumeric( const char *pszArg )
  * Allocates a GDALTranslateOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the one of the gdal_translate utility.
+ *                  The accepted options are the ones of the <a href="gdal_translate.html">gdal_translate</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALTranslateOptionsForBinaryNew() prior to this function. Will be
  *                           filled with potentially present filename, open options,...
- * @return pointer to the allocated GDALTranslateOptions struct.
+ * @return pointer to the allocated GDALTranslateOptions struct. Must be freed with GDALTranslateOptionsFree().
  *
  * @since GDAL 2.1
  */
