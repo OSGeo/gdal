@@ -1253,7 +1253,7 @@ def ogr_sqlite_25():
     ds = ogr.Open('/vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db')
     gdal.SetConfigOption('GDAL_HTTP_TIMEOUT', None)
     if ds is None:
-        if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/sqlite3/polygon.db') is None:
+        if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/sqlite3/polygon.db', timeout = 4) is None:
             print('cannot open URL')
             return 'skip'
         return 'fail'
