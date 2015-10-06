@@ -1352,33 +1352,26 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     else
         osDestFilename = pszDest;
 
-    /* Avoid opening twice the same datasource if it is both the input and output */
-    /* Known to cause problems with at least FGdb and SQlite drivers. See #4270 */
-    if (bUpdate && strcmp(osDestFilename, poDS->GetDescription()) == 0)
+    /* Various tests to avoid overwriting the source layer(s) */
+    /* or to avoid appending a layer to itself */
+    if( bUpdate && strcmp(osDestFilename, poDS->GetDescription()) == 0 &&
+        (bOverwrite || bAppend) )
     {
-        if (poDS)
+        int bError = FALSE;
+        if (psOptions->pszNewLayerName == NULL)
+            bError = TRUE;
+        else if (CSLCount(psOptions->papszLayers) == 1)
+            bError = strcmp(psOptions->pszNewLayerName, psOptions->papszLayers[0]) == 0;
+        else if (psOptions->pszSQLStatement == NULL)
+            bError = TRUE;
+        if (bError)
         {
-            if (bOverwrite || bAppend)
-            {
-                /* Various tests to avoid overwriting the source layer(s) */
-                /* or to avoid appending a layer to itself */
-                int bError = FALSE;
-                if (psOptions->pszNewLayerName == NULL)
-                    bError = TRUE;
-                else if (CSLCount(psOptions->papszLayers) == 1)
-                    bError = strcmp(psOptions->pszNewLayerName, psOptions->papszLayers[0]) == 0;
-                else if (psOptions->pszSQLStatement == NULL)
-                    bError = TRUE;
-                if (bError)
-                {
-                    CPLError( CE_Failure, CPLE_IllegalArg,
-                             "-nln name must be specified combined with "
-                             "a single source layer name,\nor a -sql statement, and "
-                             "name must be different from an existing layer.");
-                    GDALVectorTranslateOptionsFree(psOptions);
-                    return NULL;
-                }
-            }
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                        "-nln name must be specified combined with "
+                        "a single source layer name,\nor a -sql statement, and "
+                        "name must be different from an existing layer.");
+            GDALVectorTranslateOptionsFree(psOptions);
+            return NULL;
         }
     }
 
