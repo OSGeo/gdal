@@ -1129,3 +1129,46 @@ GDALDatasetShadow* wrapper_GDALVectorTranslateDestName( const char* dest,
     return hDSRet;
 }
 %}
+
+struct GDALDEMProcessingOptions {
+%extend {
+    GDALDEMProcessingOptions(char** options) {
+        return GDALDEMProcessingOptionsNew(options, NULL);
+    }
+
+    ~GDALDEMProcessingOptions() {
+        GDALDEMProcessingOptionsFree( self );
+    }
+}
+};
+
+%rename (DEMProcessingInternal) wrapper_GDALDEMProcessing;
+%newobject wrapper_GDALDEMProcessing;
+%apply Pointer NONNULL { const char* pszProcessing };
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALDEMProcessing( const char* dest,
+                                      GDALDatasetShadow* dataset,
+                                      const char* pszProcessing,
+                                      const char* pszColorFilename,
+                                      GDALDEMProcessingOptions* options,
+                                      GDALProgressFunc callback=NULL,
+                                      void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALDEMProcessingOptionsNew(NULL, NULL);
+        }
+        GDALDEMProcessingOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALDEMProcessing(dest, dataset, pszProcessing, pszColorFilename, options, &usageError);    
+    if( bFreeOptions )
+        GDALDEMProcessingOptionsFree(options);
+    return hDSRet;
+}
+%}

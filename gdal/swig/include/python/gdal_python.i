@@ -1257,4 +1257,83 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
     else:
         return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
+def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
+              creationOptions = None, computeEdges = False, alg = 'Horn', band = 1,
+              zFactor = None, scale = None, azimuth = None, altitude = None, combined = False,
+              slopeFormat = None, trigonometric = False, zeroForFlat = False,
+              callback = None, callback_data = None):
+    """ Create a DEMProcessingOptions() object that can be passed to gdal.DEMProcessing()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          colorFilename --- (mandatory for "color-relief") name of file that contains palette definition for the "color-relief" processing.
+          format --- output format ("GTiff", etc...)
+          creationOptions --- list of creation options
+          computeEdges --- whether to compute values at raster edges.
+          alg --- 'ZevenbergenThorne' or 'Horn'
+          band --- source band number to use
+          zFactor --- (hillshade only) vertical exaggeration used to pre-multiply the elevations.
+          scale --- ratio of vertical units to horizontal.
+          azimuth --- (hillshade only) azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.
+          altitude ---(hillshade only) altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.
+          combined --- (hillshade only) whether to compute combined shading, a combination of slope and oblique shading.
+          slopeformat --- (slope only) "degree" or "percent".
+          trigonometric --- (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
+          zeroForFlat --- (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-of', format]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if computeEdges:
+            new_options += ['-compute_edges' ]
+        if alg ==  'ZevenbergenThorne':
+            new_options += ['-alg', 'ZevenbergenThorne']
+        new_options += ['-b', str(band) ]
+        if zFactor is not None:
+            new_options += ['-z', str(zFactor) ]
+        if scale is not None:
+            new_options += ['-s', str(scale) ]
+        if azimuth is not None:
+            new_options += ['-az', str(azimuth) ]
+        if altitude is not None:
+            new_options += ['-alt', str(altitude) ]
+        if combined:
+            new_options += ['-combined' ]
+        if slopeFormat == 'percent':
+            new_options += ['-p' ]
+        if trigonometric:
+            new_options += ['-trigonometric' ]
+        if zeroForFlat:
+            new_options += ['zero_for_flat' ]
+
+    return (GDALDEMProcessingOptions(new_options), colorFilename, callback, callback_data)
+
+def DEMProcessing(destName, srcDS, processing, **kwargs):
+    """ Apply a DEM processing.
+        Arguments are :
+          destName --- Output dataset name
+          srcDS --- a Dataset object or a filename
+          processing --- one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", "Roughness"
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.DEMProcessingOptions()
+        If options is provided as a gdal.DEMProcessingOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, colorFilename, callback, callback_data) = DEMProcessingOptions(**kwargs)
+    else:
+        (opts, colorFilename, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = Open(srcDS)
+
+    return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
+
 %}
