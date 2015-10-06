@@ -2126,7 +2126,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             {
                 poPassedLayer = new OGRSplitListFieldLayer(poPassedLayer, psOptions->nMaxSplitListSubFields);
 
-                if (psOptions->bDisplayProgress && psOptions->nMaxSplitListSubFields != 1)
+                if (psOptions->bDisplayProgress && psOptions->nMaxSplitListSubFields != 1 &&
+                    nCountLayersFeatures != 0)
                 {
                     pfnProgress = GDALScaledProgress;
                     pProgressArg = 
@@ -2162,7 +2163,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                     pfnProgress = psOptions->pfnProgress;
                     pProgressArg = psOptions->pProgressData;
                 }
-                else
+                else if( nCountLayersFeatures != 0 )
                 {
                     pfnProgress = GDALScaledProgress;
                     GIntBig nStart = 0;
@@ -3579,7 +3580,6 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                     }
 
                     poDstFeature->SetGeomFieldDirectly(iGeom, poClipped);
-                    poDstGeometry = poClipped;
                 }
 
                 if( eGType != -2 )
