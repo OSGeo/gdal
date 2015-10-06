@@ -13,7 +13,8 @@ BIN_LIST =	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) \
 		gdalenhance$(EXE) gdaltransform$(EXE) gdaldem$(EXE) \
 		gdallocationinfo$(EXE) gdalsrsinfo$(EXE) 
 
-OBJ = commonutils.o gdalinfo_lib.o gdal_translate_lib.o gdalwarp_lib.o ogr2ogr_lib.o
+OBJ = commonutils.o gdalinfo_lib.o gdal_translate_lib.o gdalwarp_lib.o ogr2ogr_lib.o \
+	gdaldem_lib.o
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST += 	gdal_contour$(EXE) \
@@ -64,6 +65,8 @@ gdalwarp_lib.$(OBJ_EXT): gdalwarp_lib.cpp
 ogr2ogr_lib.$(OBJ_EXT): ogr2ogr_lib.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
+gdaldem_lib.$(OBJ_EXT): gdaldem_lib.cpp
+	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 gdalinfo$(EXE):	gdalinfo_bin.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) $(CONFIG_LIB_UTILS) -o $@
@@ -107,7 +110,7 @@ dumpoverviews$(EXE):	dumpoverviews.$(OBJ_EXT) $(DEP_LIBS)
 gdalenhance$(EXE):	gdalenhance.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdaldem$(EXE): gdaldem.$(OBJ_EXT) $(DEP_LIBS)
+gdaldem$(EXE): gdaldem_bin.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdal_grid$(EXE):	gdal_grid.$(OBJ_EXT) $(DEP_LIBS)

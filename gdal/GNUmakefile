@@ -9,7 +9,8 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/apps/gdalinfo_lib.o \
 			$(GDAL_ROOT)/apps/gdal_translate_lib.o \
 			$(GDAL_ROOT)/apps/gdalwarp_lib.o \
-			$(GDAL_ROOT)/apps/ogr2ogr_lib.o
+			$(GDAL_ROOT)/apps/ogr2ogr_lib.o \
+			$(GDAL_ROOT)/apps/gdaldem_lib.o
 
 GDAL_OBJ += $(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
 
