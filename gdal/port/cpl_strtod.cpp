@@ -234,7 +234,10 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
             strcmp(nptr, "-1.#IND") == 0)
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
-            return -std::numeric_limits<double>::quiet_NaN();
+            // While it is possible on some platforms to flip the sign
+            // of NAN to negative, this function will always return a positive
+            // quiet (non-signalling) NaN.
+            return std::numeric_limits<double>::quiet_NaN();
         }
 
         if (strcmp(nptr,"-inf") == 0 ||
