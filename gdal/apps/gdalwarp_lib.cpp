@@ -430,6 +430,8 @@ GDALWarpAppOptions* GDALWarpAppOptionsClone(const GDALWarpAppOptions *psOptionsI
 /**
  * Image reprojection and warping function.
  *
+ * This is the equivalent of the <a href="gdal_warp.html">gdalwarp</a> utility.
+ *
  * GDALWarpAppOptions* must be allocated and freed with GDALWarpAppOptionsNew()
  * and GDALWarpAppOptionsFree() respectively.
  * pszDest and hDstDS cannot be used at the same time.
@@ -438,7 +440,7 @@ GDALWarpAppOptions* GDALWarpAppOptionsClone(const GDALWarpAppOptions *psOptionsI
  * @param hDstDS the destination dataset or NULL.
  * @param nSrcCount the number of input datasets.
  * @param pahSrcDS the list of input datasets.
- * @param psOptions the options struct for GDALWarp() or NULL.
+ * @param psOptions the options struct returned by GDALWarpAppOptionsNew() or NULL.
  * @param pbUsageError the pointer to int variable to determine any usage error has occured
  * @return the converted dataset.
  * It must be freed using GDALClose().
@@ -2278,12 +2280,12 @@ char *SanitizeSRS( const char *pszUserInput )
  * Allocates a GDALWarpAppOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the one of the gdalwarp utility.
+ *                  The accepted options are the ones of the <a href="gdal_warp.html">gdalwarp</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALWarpAppOptionsForBinaryNew() prior to this function. Will be
  *                           filled with potentially present filename, open options,...
- * @return pointer to the allocated GDALWarpAppOptions struct.
+ * @return pointer to the allocated GDALWarpAppOptions struct. Must be freed with GDALWarpAppOptionsFree().
  *
  * @since GDAL 2.1
  */
