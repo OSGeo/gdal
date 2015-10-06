@@ -170,7 +170,8 @@ int main( int nArgc, char ** papszArgv )
         goto exit;
     }
 
-    if( psOptionsForBinary->pszDataSource == NULL )
+    if( psOptionsForBinary->pszDataSource == NULL ||
+        psOptionsForBinary->pszDestDataSource == NULL )
     {
         if( psOptionsForBinary->pszDestDataSource == NULL )
             Usage("no target datasource provided");
