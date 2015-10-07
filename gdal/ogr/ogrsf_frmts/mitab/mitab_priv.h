@@ -1892,7 +1892,7 @@ class TABRelation
 class MIDDATAFile
 {
    public:
-      MIDDATAFile();
+	  MIDDATAFile( GBool bSkipLeadingSpaces = TRUE );
      ~MIDDATAFile();
 
      int         Open(const char *pszFname, const char *pszAccess);
@@ -1921,6 +1921,8 @@ class MIDDATAFile
        VSILFILE *m_fp;
        const char *m_pszDelimiter;
 
+	   //We must skip leading spaces only for feature file
+	   GBool       m_bSkipLeadingSpaces;
        // Set limit for the length of a line
 #define MIDMAXCHAR 10000
        char m_szLastRead[MIDMAXCHAR];

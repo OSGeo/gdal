@@ -396,7 +396,7 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
         TABAdjustFilenameExtension(pszTmpFname);
 #endif
 
-        m_poMIDFile = new MIDDATAFile;
+		m_poMIDFile = new MIDDATAFile( FALSE );
 
         if (m_poMIDFile->Open(pszTmpFname, pszAccess) !=0)
         {
