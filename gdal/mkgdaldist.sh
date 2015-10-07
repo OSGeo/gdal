@@ -138,8 +138,6 @@ cd ${CWD}
 # Make distribution packages
 #
 echo "* Making distribution packages..."
-rm -rf gdal/dist_docs
-
 rm -f gdal/VERSION
 echo $GDAL_VERSION > gdal/VERSION
 
