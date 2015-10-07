@@ -1229,11 +1229,19 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         return NULL;
     }
 
+    GDALDatasetH hSrcDS = pahSrcDS[0];
+    if( hSrcDS == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "hSrcDS == NULL");
+
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return NULL;
+    }
+
     GDALVectorTranslateOptions* psOptions =
         (psOptionsIn) ? GDALVectorTranslateOptionsClone(psOptionsIn) :
                         GDALVectorTranslateOptionsNew(NULL, NULL);
-
-    GDALDatasetH hSrcDS = pahSrcDS[0];
 
     if( psOptions->eAccessMode == ACCESS_UPDATE )
     {
