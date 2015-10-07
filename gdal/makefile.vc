@@ -56,7 +56,7 @@ BASE_INCLUDE =	/INCLUDE:$(SYM_PREFIX)GDALSimpleImageWarp \
 
 LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj $(VB6_OBJ) \
 	 apps\commonutils.obj apps\gdalinfo_lib.obj apps\gdal_translate_lib.obj apps\gdalwarp_lib.obj apps\ogr2ogr_lib.obj \
-	 apps\gdaldem_lib.obj
+	 apps\gdaldem_lib.obj apps\nearblack_lib.obj
 	
 DISTDIR	=	gdal_$(VERSION)
 

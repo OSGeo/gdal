@@ -107,6 +107,15 @@ struct GDALDEMProcessingOptionsForBinary
     char* pszFormat;
 };
 
+struct GDALNearblackOptionsForBinary
+{
+    char* pszInFile;
+    char* pszOutFile;
+    int bQuiet;
+    int bFormatExplicitlySet;
+    char* pszFormat;
+};
+
 CPL_C_END
 
 #endif /* _GDAL_UTILS_PRIV_H_INCLUDED */

@@ -136,6 +136,25 @@ GDALDatasetH CPL_DLL GDALDEMProcessing(const char *pszDestFilename,
                                        const char* pszColorFilename,
                                        const GDALDEMProcessingOptions *psOptions,
                                        int *pbUsageError);
+
+/*! Options for GDALNearblack(). Opaque type */
+typedef struct GDALNearblackOptions GDALNearblackOptions;
+
+typedef struct GDALNearblackOptionsForBinary GDALNearblackOptionsForBinary;
+
+GDALNearblackOptions CPL_DLL *GDALNearblackOptionsNew(char** papszArgv,
+                                                      GDALNearblackOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALNearblackOptionsFree( GDALNearblackOptions *psOptions );
+
+void CPL_DLL GDALNearblackOptionsSetProgress( GDALNearblackOptions *psOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData );
+
+GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
+                                    GDALDatasetH hSrcDS,
+                                    const GDALNearblackOptions *psOptions, int *pbUsageError );
+
 CPL_C_END
 
 #endif /* _GDAL_UTILS_H_INCLUDED */
