@@ -1172,3 +1172,70 @@ GDALDatasetShadow* wrapper_GDALDEMProcessing( const char* dest,
     return hDSRet;
 }
 %}
+
+struct GDALNearblackOptions {
+%extend {
+    GDALNearblackOptions(char** options) {
+        return GDALNearblackOptionsNew(options, NULL);
+    }
+
+    ~GDALNearblackOptions() {
+        GDALNearblackOptionsFree( self );
+    }
+}
+};
+
+/* Note: we must use 2 distinct names since there's a bug/feature in swig */
+/* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
+
+%inline %{
+int wrapper_GDALNearblackDestDS( GDALDatasetShadow* dstDS,
+                            GDALDatasetShadow* srcDS,
+                            GDALNearblackOptions* options,
+                            GDALProgressFunc callback=NULL,
+                            void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALNearblackOptionsNew(NULL, NULL);
+        }
+        GDALNearblackOptionsSetProgress(options, callback, callback_data);
+    }
+    int bRet = (GDALNearblack(NULL, dstDS, srcDS, options, &usageError) != NULL);
+    if( bFreeOptions )
+        GDALNearblackOptionsFree(options);
+    return bRet;
+}
+%}
+
+%newobject wrapper_GDALNearblackDestName;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALNearblackDestName( const char* dest,
+                                             GDALDatasetShadow* srcDS,
+                                             GDALNearblackOptions* options,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALNearblackOptionsNew(NULL, NULL);
+        }
+        GDALNearblackOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALNearblack(dest, NULL, srcDS, options, &usageError);
+    if( bFreeOptions )
+        GDALNearblackOptionsFree(options);
+    return hDSRet;
+}
+%}
