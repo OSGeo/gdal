@@ -148,10 +148,6 @@ Note: all the following are build options, not required.
 
 * copyright somewhat unclear, not actually part of software. 
 
-=== gdal/dist_docs ===
-
-* All written by me, not used any more.  
-
 === gdal/doc ===
 
 * no copyright messages in .dox files.

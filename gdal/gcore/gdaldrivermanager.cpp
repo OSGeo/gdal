@@ -45,10 +45,6 @@
 
 CPL_CVSID("$Id$");
 
-// Do not alter this string.  It is written to by burnpath in the install process.
-static const char *pszUpdatableINST_DATA =
-    "__INST_DATA_TARGET:                                                                                                                                      ";
-
 /************************************************************************/
 /* ==================================================================== */
 /*                           GDALDriverManager                          */
@@ -106,29 +102,21 @@ GDALDriverManager::GDALDriverManager() :
 /* -------------------------------------------------------------------- */
 /*      We want to push a location to search for data files             */
 /*      supporting GDAL/OGR such as EPSG csv files, S-57 definition     */
-/*      files, and so forth.  The static pszUpdateableINST_DATA         */
-/*      string can be updated within the shared library or              */
-/*      executable during an install to point installed data            */
-/*      directory.  If it isn't burned in here then we use the          */
-/*      INST_DATA macro (setup at configure time) if                    */
-/*      available. Otherwise we don't push anything and we hope         */
-/*      other mechanisms such as environment variables will have        */
-/*      been employed.                                                  */
+/*      files, and so forth.  Use the INST_DATA macro (setup at         */
+/*      configure time) if available. Otherwise we don't push anything  */
+/*      and we hope other mechanisms such as environment variables will */
+/*      have been employed.                                             */
 /* -------------------------------------------------------------------- */
     if( CPLGetConfigOption( "GDAL_DATA", NULL ) != NULL )
     {
         // this one is picked up automatically by finder initialization.
     }
-    else if( pszUpdatableINST_DATA[19] != ' ' )
-    {
-        CPLPushFinderLocation( pszUpdatableINST_DATA + 19 );
-    }
+#ifdef INST_DATA
     else
     {
-#ifdef INST_DATA
         CPLPushFinderLocation( INST_DATA );
-#endif
     }
+#endif
 }
 
 /************************************************************************/
