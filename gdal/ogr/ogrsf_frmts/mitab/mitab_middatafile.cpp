@@ -213,9 +213,9 @@ const char *MIDDATAFile::GetLine()
         }
         else
         {
-            // skip leading spaces
-            while(pszLine && (*pszLine == ' ' || *pszLine == '\t') )
-                pszLine++;
+            // skip leading spaces and tabs (except is the delimiter is tab)
+            while(pszLine && (*pszLine == ' ' || (*m_pszDelimiter != '\t' && *pszLine == '\t')) )
+                    pszLine++;
 
             strncpy(m_szLastRead,pszLine,MIDMAXCHAR);
         }
