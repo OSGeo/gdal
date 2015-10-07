@@ -452,11 +452,10 @@ GDALTranslateOptions* GDALTranslateOptionsClone(const GDALTranslateOptions *psOp
  * and GDALTranslateOptionsFree() respectively.
  *
  * @param pszDest the destination dataset path.
- * @param hSrcDataset the dataset handle.
+ * @param hSrcDataset the source dataset handle.
  * @param psOptions the options struct returned by GDALTranslateOptionsNew() or NULL.
  * @param pbUsageError the pointer to int variable to determine any usage error has occured or NULL.
- * @return the converted dataset.
- * It must be freed using GDALClose().
+ * @return the output dataset (new dataset that must be closed using GDALClose()) or NULL in case of error.
  *
  * @since GDAL 2.1
  */

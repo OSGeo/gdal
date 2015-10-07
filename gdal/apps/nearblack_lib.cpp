@@ -78,34 +78,34 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
  *
  * GDALNearblackOptions* must be allocated and freed with GDALNearblackOptionsNew()
  * and GDALNearblackOptionsFree() respectively.
+ * pszDest and hDstDS cannot be used at the same time.
  *
  * @param pszDest the destination dataset path or NULL.
  * @param hDstDS the destination dataset or NULL.
- * @param hSrcDataset the dataset handle.
+ * @param hSrcDataset the source dataset handle.
  * @param psOptions the options struct returned by GDALNearblackOptionsNew() or NULL.
  * @param pbUsageError the pointer to int variable to determine any usage error has occured or NULL.
- * @return the converted dataset.
- * It must be freed using GDALClose().
+ * @return the output dataset (new dataset that must be closed using GDALClose(), or hDstDS is not NULL) or NULL in case of error.
  *
  * @since GDAL 2.1
  */
 
-GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
-                                    GDALDatasetH hInDS,
+GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
+                                    GDALDatasetH hSrcDataset,
                                     const GDALNearblackOptions *psOptionsIn, int *pbUsageError )
 
 {
-    if( pszDest == NULL && hOutDS == NULL )
+    if( pszDest == NULL && hDstDS == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "pszDest == NULL && hOutDS == NULL");
+        CPLError( CE_Failure, CPLE_AppDefined, "pszDest == NULL && hDstDS == NULL");
 
         if(pbUsageError)
             *pbUsageError = TRUE;
         return NULL;
     }
-    if( hInDS == NULL )
+    if( hSrcDataset == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "hInDS== NULL");
+        CPLError( CE_Failure, CPLE_AppDefined, "hSrcDataset== NULL");
 
         if(pbUsageError)
             *pbUsageError = TRUE;
@@ -122,13 +122,13 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
         psOptions = psOptionsToFree;
     }
 
-    int bCloseOutDSOnError = (hOutDS == NULL);
+    int bCloseOutDSOnError = (hDstDS == NULL);
     if( pszDest == NULL )
-        pszDest = GDALGetDescription(hOutDS);
+        pszDest = GDALGetDescription(hDstDS);
 
-    int nXSize = GDALGetRasterXSize( hInDS );
-    int nYSize = GDALGetRasterYSize( hInDS );
-    int nBands = GDALGetRasterCount( hInDS );
+    int nXSize = GDALGetRasterXSize( hSrcDataset );
+    int nYSize = GDALGetRasterYSize( hSrcDataset );
+    int nBands = GDALGetRasterCount( hSrcDataset );
     int nDstBands = nBands;
 
     int nMaxNonBlack = psOptions->nMaxNonBlack;
@@ -141,7 +141,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need to create output file?                               */
 /* -------------------------------------------------------------------- */
-    if( hOutDS == NULL )
+    if( hDstDS == NULL )
     {
         GDALDriverH hDriver = GDALGetDriverByName( psOptions->pszFormat );
         if (hDriver == NULL)
@@ -165,10 +165,10 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
                 nDstBands = nBands = 3;
         }
 
-        hOutDS = GDALCreate( hDriver, pszDest, 
+        hDstDS = GDALCreate( hDriver, pszDest, 
                              nXSize, nYSize, nDstBands, GDT_Byte, 
                              psOptions->papszCreationOptions );
-        if( hOutDS == NULL )
+        if( hDstDS == NULL )
         {
             GDALNearblackOptionsFree(psOptionsToFree);
             return NULL;
@@ -176,10 +176,10 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
 
         double adfGeoTransform[6];
 
-        if( GDALGetGeoTransform( hInDS, adfGeoTransform ) == CE_None )
+        if( GDALGetGeoTransform( hSrcDataset, adfGeoTransform ) == CE_None )
         {
-            GDALSetGeoTransform( hOutDS, adfGeoTransform );
-            GDALSetProjection( hOutDS, GDALGetProjectionRef( hInDS ) );
+            GDALSetGeoTransform( hDstDS, adfGeoTransform );
+            GDALSetProjection( hDstDS, GDALGetProjectionRef( hSrcDataset ) );
         }
     }
     else
@@ -191,8 +191,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
         }
 
         /***** check the input and output datasets are the same size *****/
-        if (GDALGetRasterXSize(hOutDS) != nXSize ||
-            GDALGetRasterYSize(hOutDS) != nYSize)
+        if (GDALGetRasterXSize(hDstDS) != nXSize ||
+            GDALGetRasterYSize(hDstDS) != nYSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "The dimensions of the output dataset don't match "
@@ -205,7 +205,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
         {
             if (nBands != 4 &&
                 (nBands < 2 ||
-                 GDALGetRasterColorInterpretation(GDALGetRasterBand(hOutDS, nBands)) != GCI_AlphaBand))
+                 GDALGetRasterColorInterpretation(GDALGetRasterBand(hDstDS, nBands)) != GCI_AlphaBand))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "Last band is not an alpha band.");
@@ -253,14 +253,14 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
                   "-color args must have the same number of values as the non alpha input band count.\n" );
         GDALNearblackOptionsFree(psOptionsToFree);
         if( bCloseOutDSOnError )
-            GDALClose(hOutDS);
+            GDALClose(hDstDS);
         return NULL;
     }
 
     int iBand;
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        GDALRasterBandH hBand = GDALGetRasterBand(hInDS, iBand+1);
+        GDALRasterBandH hBand = GDALGetRasterBand(hSrcDataset, iBand+1);
         if (GDALGetRasterDataType(hBand) != GDT_Byte)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -280,10 +280,10 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
 
         /***** if there isn't already a mask band on the output file create one *****/
         
-        if ( GMF_PER_DATASET != GDALGetMaskFlags( GDALGetRasterBand(hOutDS, 1) ) )
+        if ( GMF_PER_DATASET != GDALGetMaskFlags( GDALGetRasterBand(hDstDS, 1) ) )
         {
 
-            if ( CE_None != GDALCreateDatasetMaskBand(hOutDS, GMF_PER_DATASET) ) {
+            if ( CE_None != GDALCreateDatasetMaskBand(hDstDS, GMF_PER_DATASET) ) {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Failed to create mask band on output DS");
                 bSetMask = FALSE;
@@ -291,7 +291,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
         }
 
         if (bSetMask) {
-            hMaskBand = GDALGetMaskBand(GDALGetRasterBand(hOutDS, 1));
+            hMaskBand = GDALGetMaskBand(GDALGetRasterBand(hDstDS, 1));
         }
     }
 
@@ -319,14 +319,14 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
     {
         CPLErr eErr;
 
-        eErr = GDALDatasetRasterIO( hInDS, GF_Read, 0, iLine, nXSize, 1, 
+        eErr = GDALDatasetRasterIO( hSrcDataset, GF_Read, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
                                     nBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
         {
             if( bCloseOutDSOnError )
-                GDALClose(hOutDS);
-            hOutDS = NULL;
+                GDALClose(hDstDS);
+            hDstDS = NULL;
             break;
         }
 
@@ -363,15 +363,15 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
                      FALSE  // bBottomUp
                     );
         
-        eErr = GDALDatasetRasterIO( hOutDS, GF_Write, 0, iLine, nXSize, 1, 
+        eErr = GDALDatasetRasterIO( hDstDS, GF_Write, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
                                     nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
 
         if( eErr != CE_None )
         {
             if( bCloseOutDSOnError )
-                GDALClose(hOutDS);
-            hOutDS = NULL;
+                GDALClose(hDstDS);
+            hDstDS = NULL;
             break;
         }
 
@@ -387,8 +387,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "ERROR writing out line to mask band.");
                 if( bCloseOutDSOnError )
-                    GDALClose(hOutDS);
-                hOutDS = NULL;
+                    GDALClose(hDstDS);
+                hDstDS = NULL;
                 break;
             }
         }
@@ -396,8 +396,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
         if( !(psOptions->pfnProgress( 0.5 * ((iLine+1) / (double) nYSize), NULL, psOptions->pProgressData )) )
         {
             if( bCloseOutDSOnError )
-                GDALClose(hOutDS);
-            hOutDS = NULL;
+                GDALClose(hDstDS);
+            hDstDS = NULL;
             break;
         }
     }
@@ -407,18 +407,18 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
 /* -------------------------------------------------------------------- */
     memset( panLastLineCounts, 0, sizeof(int) * nXSize);
     
-    for( iLine = nYSize-1; hOutDS != NULL && iLine >= 0; iLine-- )
+    for( iLine = nYSize-1; hDstDS != NULL && iLine >= 0; iLine-- )
     {
         CPLErr eErr;
 
-        eErr = GDALDatasetRasterIO( hOutDS, GF_Read, 0, iLine, nXSize, 1, 
+        eErr = GDALDatasetRasterIO( hDstDS, GF_Read, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
                                     nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
         {
             if( bCloseOutDSOnError )
-                GDALClose(hOutDS);
-            hOutDS = NULL;
+                GDALClose(hDstDS);
+            hDstDS = NULL;
             break;
         }
 
@@ -432,8 +432,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
             if( eErr != CE_None )
             {
                 if( bCloseOutDSOnError )
-                    GDALClose(hOutDS);
-                hOutDS = NULL;
+                    GDALClose(hDstDS);
+                hDstDS = NULL;
                 break;
             }
         }
@@ -454,14 +454,14 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
                      TRUE   // bBottomUp
                     );
         
-        eErr = GDALDatasetRasterIO( hOutDS, GF_Write, 0, iLine, nXSize, 1, 
+        eErr = GDALDatasetRasterIO( hDstDS, GF_Write, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
                                     nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
         {
             if( bCloseOutDSOnError )
-                GDALClose(hOutDS);
-            hOutDS = NULL;
+                GDALClose(hDstDS);
+            hDstDS = NULL;
             break;
         }
 
@@ -475,8 +475,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
             if( eErr != CE_None )
             {
                 if( bCloseOutDSOnError )
-                    GDALClose(hOutDS);
-                hOutDS = NULL;
+                    GDALClose(hDstDS);
+                hDstDS = NULL;
                 break;
             }
         }
@@ -485,8 +485,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
         if( !(psOptions->pfnProgress( 0.5 + 0.5 * (nYSize-iLine) / (double) nYSize, NULL, psOptions->pProgressData )) )
         {
             if( bCloseOutDSOnError )
-                GDALClose(hOutDS);
-            hOutDS = NULL;
+                GDALClose(hDstDS);
+            hDstDS = NULL;
             break;
         }
     }
@@ -497,7 +497,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hOutDS,
     
     CPLFree( panLastLineCounts );
 
-    return hOutDS;
+    return hDstDS;
 }
 
 /************************************************************************/
