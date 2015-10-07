@@ -266,8 +266,20 @@ class VSIIOStream : public CNCSJPCIOStream
             }
             CPLDebug( "ECW", "Using filename '%s' for temporary directory determination purposes.", osFilenameUsed.c_str() );
         }
-        return(CNCSJPCIOStream::Open((char *)osFilenameUsed.c_str(), 
-                                     (bool) bWrite));
+
+		if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+		{
+			wchar_t		*pwszFilename = CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+			CNCSError	oError;
+			oError = CNCSJPCIOStream::Open( pwszFilename, (bool) bWrite );
+			CPLFree( pwszFilename );
+			return oError;
+		}
+		else
+		{
+			return(CNCSJPCIOStream::Open((char *)osFilenameUsed.c_str(),
+										 (bool) bWrite));
+		}
     }
 
     virtual bool NCS_FASTCALL Seek() {
