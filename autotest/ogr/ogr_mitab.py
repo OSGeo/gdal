@@ -2077,6 +2077,21 @@ def ogr_mitab_37():
     return 'success'
 
 ###############################################################################
+# Open MIF with MID with TAB delimiter and empty first field (#5405)
+
+def ogr_mitab_38():
+
+    ds = ogr.Open('data/empty_first_field_with_tab_delimiter.mif')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['field1'] != '' or f['field2'] != 'foo':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2128,6 +2143,7 @@ gdaltest_list = [
     ogr_mitab_35,
     ogr_mitab_36,
     ogr_mitab_37,
+    ogr_mitab_38,
     ogr_mitab_cleanup
     ]
 
