@@ -87,8 +87,9 @@
  *
  *====================================================================*/
 
-MIDDATAFile::MIDDATAFile()
+MIDDATAFile::MIDDATAFile( GBool bSkipLeadingSpaces )
 {
+	m_bSkipLeadingSpaces = bSkipLeadingSpaces;
     m_fp = NULL;
     m_szLastRead[0] = '\0';
     m_szSavedLine[0] = '\0';
@@ -213,9 +214,12 @@ const char *MIDDATAFile::GetLine()
         }
         else
         {
-            // skip leading spaces
-            while(pszLine && (*pszLine == ' ' || *pszLine == '\t') )
-                pszLine++;
+			if( m_bSkipLeadingSpaces )
+			{
+				// skip leading spaces
+				while(pszLine && (*pszLine == ' ' || *pszLine == '\t') )
+					pszLine++;
+			}
 
             strncpy(m_szLastRead,pszLine,MIDMAXCHAR);
         }
