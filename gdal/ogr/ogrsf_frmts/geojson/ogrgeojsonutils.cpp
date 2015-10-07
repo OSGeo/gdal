@@ -78,25 +78,25 @@ int GeoJSONIsObject( const char* pszText )
 /************************************************************************/
 
 static
-int GeoJSONFileIsObject( GDALOpenInfo* poOpenInfo ) 
-{ 
+bool GeoJSONFileIsObject( GDALOpenInfo* poOpenInfo )
+{
     // by default read first 6000 bytes 
     // 6000 was chosen as enough bytes to  
     // enable all current tests to pass 
 
     if( poOpenInfo->fpL == NULL ||
-        !poOpenInfo->TryToIngest(6000) ) 
-    { 
-        return FALSE; 
-    } 
+        !poOpenInfo->TryToIngest(6000) )
+    {
+        return false;
+    }
 
     if( !GeoJSONIsObject((const char*)poOpenInfo->pabyHeader) )
     {
-        return FALSE;
+        return false;
     }
 
-    return TRUE; 
-} 
+    return true;
+}
 
 /************************************************************************/
 /*                           GeoJSONGetSourceType()                     */
@@ -255,7 +255,7 @@ OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
 
     OGRField sWrkField;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    int bSuccess = OGRParseDate( pszStr, &sWrkField, 0 );
+    const bool bSuccess = OGRParseDate( pszStr, &sWrkField, 0 );
     CPLPopErrorHandler();
     CPLErrorReset();
     if( bSuccess )
@@ -280,8 +280,8 @@ OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
 const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry )
 {
     CPLAssert( NULL != poGeometry );
-    
-    OGRwkbGeometryType eType = poGeometry->getGeometryType();
+
+    const OGRwkbGeometryType eType = poGeometry->getGeometryType();
 
     if( wkbPoint == eType || wkbPoint25D == eType )
         return "Point";
