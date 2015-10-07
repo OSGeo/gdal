@@ -941,6 +941,10 @@ __version__ = _gdal.VersionInfo("RELEASE_NAME")
 #include "gdal_utils.h"   
 %}
 
+
+#ifdef SWIGJAVA
+%rename (InfoOptions) GDALInfoOptions;
+#endif
 struct GDALInfoOptions {
 %extend {
     GDALInfoOptions(char** options) {
@@ -953,9 +957,14 @@ struct GDALInfoOptions {
 }
 };
 
+#ifdef SWIGPYTHON
 %rename (InfoInternal) GDALInfo;
+#endif
 char *GDALInfo( GDALDatasetShadow *hDataset, GDALInfoOptions *infoOptions );
 
+#ifdef SWIGJAVA
+%rename (TranslateOptions) GDALTranslateOptions;
+#endif
 struct GDALTranslateOptions {
 %extend {
     GDALTranslateOptions(char** options) {
@@ -968,7 +977,11 @@ struct GDALTranslateOptions {
 }
 };
 
+#ifdef SWIGPYTHON
 %rename (TranslateInternal) wrapper_GDALTranslate;
+#elif defined(SWIGJAVA)
+%rename (Translate) wrapper_GDALTranslate;
+#endif
 %newobject wrapper_GDALTranslate;
 
 %inline %{
@@ -996,6 +1009,9 @@ GDALDatasetShadow* wrapper_GDALTranslate( const char* dest,
 }
 %}
 
+#ifdef SWIGJAVA
+%rename (WarpOptions) GDALWarpAppOptions;
+#endif
 struct GDALWarpAppOptions {
 %extend {
     GDALWarpAppOptions(char** options) {
@@ -1007,6 +1023,10 @@ struct GDALWarpAppOptions {
     }
 }
 };
+
+#ifdef SWIGJAVA
+%rename (Warp) wrapper_GDALWarpDestDS;
+#endif
 
 /* Note: we must use 2 distinct names since there's a bug/feature in swig */
 /* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
@@ -1036,6 +1056,10 @@ int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
+#ifdef SWIGJAVA
+%rename (Warp) wrapper_GDALWarpDestName;
+#endif
+
 %newobject wrapper_GDALWarpDestName;
 
 %inline %{
@@ -1063,6 +1087,9 @@ GDALDatasetShadow* wrapper_GDALWarpDestName( const char* dest,
 }
 %}
 
+#ifdef SWIGJAVA
+%rename (VectorTranslateOptions) GDALVectorTranslateOptions;
+#endif
 struct GDALVectorTranslateOptions {
 %extend {
     GDALVectorTranslateOptions(char** options) {
@@ -1077,6 +1104,10 @@ struct GDALVectorTranslateOptions {
 
 /* Note: we must use 2 distinct names since there's a bug/feature in swig */
 /* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
+
+#ifdef SWIGJAVA
+%rename (VectorTranslate) wrapper_GDALVectorTranslateDestDS;
+#endif
 
 %inline %{
 int wrapper_GDALVectorTranslateDestDS( GDALDatasetShadow* dstDS,
@@ -1103,6 +1134,9 @@ int wrapper_GDALVectorTranslateDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
+#ifdef SWIGJAVA
+%rename (VectorTranslate) wrapper_GDALVectorTranslateDestName;
+#endif
 %newobject wrapper_GDALVectorTranslateDestName;
 
 %inline %{
@@ -1130,6 +1164,9 @@ GDALDatasetShadow* wrapper_GDALVectorTranslateDestName( const char* dest,
 }
 %}
 
+#ifdef SWIGJAVA
+%rename (DEMProcessingOptions) GDALDEMProcessingOptions;
+#endif
 struct GDALDEMProcessingOptions {
 %extend {
     GDALDEMProcessingOptions(char** options) {
@@ -1142,7 +1179,11 @@ struct GDALDEMProcessingOptions {
 }
 };
 
+#ifdef SWIGPYTHON
 %rename (DEMProcessingInternal) wrapper_GDALDEMProcessing;
+#elif defined(SWIGJAVA)
+%rename (DEMProcessing) wrapper_GDALDEMProcessing;
+#endif
 %newobject wrapper_GDALDEMProcessing;
 %apply Pointer NONNULL { const char* pszProcessing };
 
@@ -1173,6 +1214,9 @@ GDALDatasetShadow* wrapper_GDALDEMProcessing( const char* dest,
 }
 %}
 
+#ifdef SWIGJAVA
+%rename (NearblackOptions) GDALNearblackOptions;
+#endif
 struct GDALNearblackOptions {
 %extend {
     GDALNearblackOptions(char** options) {
@@ -1188,6 +1232,9 @@ struct GDALNearblackOptions {
 /* Note: we must use 2 distinct names since there's a bug/feature in swig */
 /* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
 
+#ifdef SWIGJAVA
+%rename (Nearblack) wrapper_GDALNearblackDestDS;
+#endif
 %inline %{
 int wrapper_GDALNearblackDestDS( GDALDatasetShadow* dstDS,
                             GDALDatasetShadow* srcDS,
@@ -1213,6 +1260,9 @@ int wrapper_GDALNearblackDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
+#ifdef SWIGJAVA
+%rename (Nearblack) wrapper_GDALNearblackDestName;
+#endif
 %newobject wrapper_GDALNearblackDestName;
 
 %inline %{
