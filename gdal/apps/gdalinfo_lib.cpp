@@ -141,8 +141,7 @@ GDALInfoReportMetadata( GDALMajorObjectH hObject,
  *
  * @param hDataset the dataset handle.
  * @param psOptions the options structure returned by GDALInfoOptionsNew() or NULL.
- * @return string corresponding to the information about the raster dataset.
- * It must be freed using CPLFree().
+ * @return string corresponding to the information about the raster dataset (must be freed with CPLFree()), or NULL in case of error.
  *
  * @since GDAL 2.1
  */
