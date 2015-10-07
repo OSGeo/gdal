@@ -56,7 +56,7 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
 {
     /* CPLAssert( NULL != poDS_ ); */
     CPLAssert( NULL != poFeatureDefn_ );
-    
+
     poFeatureDefn_->Reference();
     poFeatureDefn_->SetGeomType( eGType );
     if( poFeatureDefn_->GetGeomFieldCount() != 0 )
@@ -96,8 +96,8 @@ GIntBig OGRGeoJSONLayer::GetFeatureCount( int bForce )
 {
     if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
         return static_cast<int>( seqFeatures_.size() );
-    else
-        return OGRLayer::GetFeatureCount(bForce);
+
+    return OGRLayer::GetFeatureCount(bForce);
 }
 
 /************************************************************************/
@@ -120,7 +120,7 @@ OGRFeature* OGRGeoJSONLayer::GetNextFeature()
         OGRFeature* poFeature = (*iterCurrent_);
         CPLAssert( NULL != poFeature );
         ++iterCurrent_;
-        
+
         if((m_poFilterGeom == NULL
             || FilterGeometry( poFeature->GetGeometryRef() ) )
         && (m_poAttrQuery == NULL
@@ -160,7 +160,7 @@ int OGRGeoJSONLayer::TestCapability( const char* pszCap )
 /************************************************************************/
 /*                           GetFIDColumn                               */
 /************************************************************************/
-	
+
 const char* OGRGeoJSONLayer::GetFIDColumn()
 {
 	return sFIDColumn_.c_str();
@@ -205,7 +205,7 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
             poNewFeature->SetField( nField, nFID );
         }
     }
-    
+
     GIntBig nFID = poNewFeature->GetFID();    
     if( !CPL_INT64_FITS_ON_INT32(nFID) )
         SetMetadataItem(OLMD_FID64, "YES");
@@ -226,7 +226,7 @@ void OGRGeoJSONLayer::DetectGeometryType()
     OGRGeometry* poGeometry = NULL;
     FeaturesSeq::const_iterator it = seqFeatures_.begin();
     FeaturesSeq::const_iterator end = seqFeatures_.end();
-    
+
     if( it != end )
     {
         poGeometry = (*it)->GetGeometryRef();
