@@ -882,6 +882,66 @@
   }
 
 /***************************************************
+ *
+ *  Java typemaps for (int object_list_count, GDALDatasetShadow **poObjects)
+ *
+ ***************************************************/ 
+%typemap(in) (int object_list_count, GDALDatasetShadow **poObjects)
+{
+  /* %typemap(in)(int object_list_count, GDALDatasetShadow **poObjects) */
+  /* check if is List */
+  if ($input)
+  {
+    $1 = jenv->GetArrayLength($input);
+    if ($1 == 0)
+       $2 = NULL;
+    else
+    {
+        $2 = (GDALDatasetShadow**) malloc(sizeof(GDALDatasetShadow*) * $1);
+        int i;
+        for (i = 0; i<$1; i++) {
+            jobject obj = (jobject)jenv->GetObjectArrayElement($input, i);
+            if (obj == NULL)
+            {
+                free ($2 );
+                SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null object in array");
+                return $null;
+            }
+            const jclass klass = jenv->FindClass("org/gdal/gdal/Dataset");
+            const jmethodID getCPtr = jenv->GetStaticMethodID(klass, "getCPtr", "(Lorg/gdal/gdal/Dataset;)J");
+            $2[i] = (GDALDatasetShadow*) jenv->CallStaticLongMethod(klass, getCPtr, obj);
+        }
+    }
+  }
+  else
+  {
+    $1 = 0;
+    $2 = NULL;
+  }
+}
+
+%typemap(argout) (int object_list_count, GDALDatasetShadow **poObjects)
+{
+  /* %typemap(argout) (int object_list_count, GDALDatasetShadow **poObjects) */
+}
+
+%typemap(freearg) (int object_list_count, GDALDatasetShadow **poObjects)
+{
+  /* %typemap(freearg) (int object_list_count, GDALDatasetShadow **poObjects) */
+  if ($2) {
+    free((void*) $2);
+  }
+}
+
+%typemap(jni) (int object_list_count, GDALDatasetShadow **poObjects) "jobjectArray"
+%typemap(jtype) (int object_list_count, GDALDatasetShadow **poObjects) "Dataset[]"
+%typemap(jstype) (int object_list_count, GDALDatasetShadow **poObjects) "Dataset[]"
+%typemap(javain) (int object_list_count, GDALDatasetShadow **poObjects) "$javainput"
+%typemap(javaout) (int object_list_count, GDALDatasetShadow **poObjects) {
+    return $jnicall;
+  }
+
+/***************************************************
  * Typemaps converts the Hashtable to a char array *
  ***************************************************/
 
