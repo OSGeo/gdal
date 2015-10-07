@@ -1689,7 +1689,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         nParmCount = 3;
 
         if( ABS((ABS(parms[1]) - 90)) > 0.001 )
-            sTABProj.nProjId = 28;
+            sTABProj.nProjId = 29;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
