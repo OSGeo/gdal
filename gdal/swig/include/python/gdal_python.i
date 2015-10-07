@@ -1336,4 +1336,76 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
 
     return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
 
+
+def NearblackOptions(options = [], format = 'GTiff', 
+         creationOptions = None, white = False, colors = None,
+         maxNonBlack = None, nearDist = None, setAlpha = False, setMask = False,
+         callback = None, callback_data = None):
+    """ Create a NearblackOptions() object that can be passed to gdal.Nearblack()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          creationOptions --- list of creation options
+          white --- whether to search for nearly white (255) pixels instead of nearly black pixels.
+          colors --- list of colors  to search for, e.g. ((0,0,0),(255,255,255)). The pixels that are considered as the collar are set to 0
+          maxNonBlack --- number of non-black (or other searched colors specified with white / colors) pixels that can be encountered before the giving up search inwards. Defaults to 2. 
+          nearDist --- select how far from black, white or custom colors the pixel values can be and still considered near black, white or custom color.  Defaults to 15.
+          setAlpha --- adds an alpha band if the output file.
+          setMask --- adds a mask band to the output file.
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-of', format]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if white:
+            new_options += ['-white']
+        if colors is not None:
+            for color in colors:
+                color_str = ''
+                for cpt in color:
+                    if color_str != '':
+                        color_str += ','
+                    color_str += str(cpt)
+                new_options += ['-color',color_str]
+        if maxNonBlack is not None:
+            new_options += ['-nb', str(maxNonBlack) ]
+        if nearDist is not None:
+            new_options += ['-near', str(nearDist) ]
+        if setAlpha:
+            new_options += ['-setalpha']
+        if setMask:
+            new_options += ['-setmask']
+
+    return (GDALNearblackOptions(new_options), callback, callback_data)
+
+def Nearblack(destNameOrDestDS, srcDS, **kwargs):
+    """ Convert nearly black/white borders to exact value.
+        Arguments are :
+          destNameOrDestDS --- Output dataset name or object
+          srcDS --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.NearblackOptions()
+        If options is provided as a gdal.NearblackOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = NearblackOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = OpenEx(srcDS)
+
+    if type(destNameOrDestDS) == type(''):
+        return wrapper_GDALNearblackDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    else:
+        return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+
 %}

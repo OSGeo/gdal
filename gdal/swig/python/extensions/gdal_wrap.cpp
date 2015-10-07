@@ -2949,35 +2949,36 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_GDALDriverShadow swig_types[9]
 #define SWIGTYPE_p_GDALInfoOptions swig_types[10]
 #define SWIGTYPE_p_GDALMajorObjectShadow swig_types[11]
-#define SWIGTYPE_p_GDALProgressFunc swig_types[12]
-#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[13]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[14]
-#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[15]
-#define SWIGTYPE_p_GDALTranslateOptions swig_types[16]
-#define SWIGTYPE_p_GDALVectorTranslateOptions swig_types[17]
-#define SWIGTYPE_p_GDALWarpAppOptions swig_types[18]
-#define SWIGTYPE_p_GDAL_GCP swig_types[19]
-#define SWIGTYPE_p_GIntBig swig_types[20]
-#define SWIGTYPE_p_GUIntBig swig_types[21]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[22]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[23]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[24]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[25]
-#define SWIGTYPE_p_StatBuf swig_types[26]
-#define SWIGTYPE_p_char swig_types[27]
-#define SWIGTYPE_p_double swig_types[28]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[29]
-#define SWIGTYPE_p_int swig_types[30]
-#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[31]
-#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[32]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[33]
-#define SWIGTYPE_p_p_GUIntBig swig_types[34]
-#define SWIGTYPE_p_p_char swig_types[35]
-#define SWIGTYPE_p_p_void swig_types[36]
-#define SWIGTYPE_p_size_t swig_types[37]
-#define SWIGTYPE_p_void swig_types[38]
-static swig_type_info *swig_types[40];
-static swig_module_info swig_module = {swig_types, 39, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALNearblackOptions swig_types[12]
+#define SWIGTYPE_p_GDALProgressFunc swig_types[13]
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[14]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[15]
+#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[16]
+#define SWIGTYPE_p_GDALTranslateOptions swig_types[17]
+#define SWIGTYPE_p_GDALVectorTranslateOptions swig_types[18]
+#define SWIGTYPE_p_GDALWarpAppOptions swig_types[19]
+#define SWIGTYPE_p_GDAL_GCP swig_types[20]
+#define SWIGTYPE_p_GIntBig swig_types[21]
+#define SWIGTYPE_p_GUIntBig swig_types[22]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[23]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[24]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[25]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[26]
+#define SWIGTYPE_p_StatBuf swig_types[27]
+#define SWIGTYPE_p_char swig_types[28]
+#define SWIGTYPE_p_double swig_types[29]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[30]
+#define SWIGTYPE_p_int swig_types[31]
+#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[32]
+#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[33]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[34]
+#define SWIGTYPE_p_p_GUIntBig swig_types[35]
+#define SWIGTYPE_p_p_char swig_types[36]
+#define SWIGTYPE_p_p_void swig_types[37]
+#define SWIGTYPE_p_size_t swig_types[38]
+#define SWIGTYPE_p_void swig_types[39]
+static swig_type_info *swig_types[41];
+static swig_module_info swig_module = {swig_types, 40, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -6039,6 +6040,60 @@ GDALDatasetShadow* wrapper_GDALDEMProcessing( const char* dest,
     GDALDatasetH hDSRet = GDALDEMProcessing(dest, dataset, pszProcessing, pszColorFilename, options, &usageError);    
     if( bFreeOptions )
         GDALDEMProcessingOptionsFree(options);
+    return hDSRet;
+}
+
+SWIGINTERN GDALNearblackOptions *new_GDALNearblackOptions(char **options){
+        return GDALNearblackOptionsNew(options, NULL);
+    }
+SWIGINTERN void delete_GDALNearblackOptions(GDALNearblackOptions *self){
+        GDALNearblackOptionsFree( self );
+    }
+
+int wrapper_GDALNearblackDestDS( GDALDatasetShadow* dstDS,
+                            GDALDatasetShadow* srcDS,
+                            GDALNearblackOptions* options,
+                            GDALProgressFunc callback=NULL,
+                            void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALNearblackOptionsNew(NULL, NULL);
+        }
+        GDALNearblackOptionsSetProgress(options, callback, callback_data);
+    }
+    int bRet = (GDALNearblack(NULL, dstDS, srcDS, options, &usageError) != NULL);
+    if( bFreeOptions )
+        GDALNearblackOptionsFree(options);
+    return bRet;
+}
+
+
+GDALDatasetShadow* wrapper_GDALNearblackDestName( const char* dest,
+                                             GDALDatasetShadow* srcDS,
+                                             GDALNearblackOptions* options,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALNearblackOptionsNew(NULL, NULL);
+        }
+        GDALNearblackOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALNearblack(dest, NULL, srcDS, options, &usageError);
+    if( bFreeOptions )
+        GDALNearblackOptionsFree(options);
     return hDSRet;
 }
 
@@ -26411,6 +26466,340 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_new_GDALNearblackOptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char **arg1 = (char **) 0 ;
+  PyObject * obj0 = 0 ;
+  GDALNearblackOptions *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:new_GDALNearblackOptions",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) char **options */
+    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj0)
+  #endif
+      ) {
+      PyErr_SetString(PyExc_TypeError,"not a sequence");
+      SWIG_fail;
+    }
+    
+    int size = PySequence_Size(obj0);
+    for (int i = 0; i < size; i++) {
+      PyObject* pyObj = PySequence_GetItem(obj0,i);
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg1 = CSLAddString( arg1, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
+#endif
+      else
+      {
+        Py_DECREF(pyObj);
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      Py_DECREF(pyObj);
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (GDALNearblackOptions *)new_GDALNearblackOptions(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALNearblackOptions, SWIG_POINTER_NEW |  0 );
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_GDALNearblackOptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALNearblackOptions *arg1 = (GDALNearblackOptions *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_GDALNearblackOptions",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALNearblackOptions, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_GDALNearblackOptions" "', argument " "1"" of type '" "GDALNearblackOptions *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALNearblackOptions * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    delete_GDALNearblackOptions(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *GDALNearblackOptions_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_GDALNearblackOptions, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_wrapper_GDALNearblackDestDS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  GDALDatasetShadow *arg2 = (GDALDatasetShadow *) 0 ;
+  GDALNearblackOptions *arg3 = (GDALNearblackOptions *) 0 ;
+  GDALProgressFunc arg4 = (GDALProgressFunc) NULL ;
+  void *arg5 = (void *) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  int result;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg5 = psProgressInfo;
+  if (!PyArg_ParseTuple(args,(char *)"OOO|OO:wrapper_GDALNearblackDestDS",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "wrapper_GDALNearblackDestDS" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "wrapper_GDALNearblackDestDS" "', argument " "2"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALDatasetShadow * >(argp2);
+  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_GDALNearblackOptions, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "wrapper_GDALNearblackDestDS" "', argument " "3"" of type '" "GDALNearblackOptions *""'"); 
+  }
+  arg3 = reinterpret_cast< GDALNearblackOptions * >(argp3);
+  if (obj3) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj3 && obj3 != Py_None ) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj3, 
+          (void**)&cbfunction,
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg4 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj3)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj3;
+          arg4 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj4) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj4 ;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)wrapper_GDALNearblackDestDS(arg1,arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_wrapper_GDALNearblackDestName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  GDALDatasetShadow *arg2 = (GDALDatasetShadow *) 0 ;
+  GDALNearblackOptions *arg3 = (GDALNearblackOptions *) 0 ;
+  GDALProgressFunc arg4 = (GDALProgressFunc) NULL ;
+  void *arg5 = (void *) NULL ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  GDALDatasetShadow *result = 0 ;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg5 = psProgressInfo;
+  if (!PyArg_ParseTuple(args,(char *)"OOO|OO:wrapper_GDALNearblackDestName",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "wrapper_GDALNearblackDestName" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "wrapper_GDALNearblackDestName" "', argument " "2"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALDatasetShadow * >(argp2);
+  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_GDALNearblackOptions, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "wrapper_GDALNearblackDestName" "', argument " "3"" of type '" "GDALNearblackOptions *""'"); 
+  }
+  arg3 = reinterpret_cast< GDALNearblackOptions * >(argp3);
+  if (obj3) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj3 && obj3 != Py_None ) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj3, 
+          (void**)&cbfunction,
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg4 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj3)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj3;
+          arg4 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj4) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj4 ;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (GDALDatasetShadow *)wrapper_GDALNearblackDestName((char const *)arg1,arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return NULL;
+}
+
+
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
 	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, (char *)"GetUseExceptions() -> int"},
@@ -26868,6 +27257,17 @@ static PyMethodDef SwigMethods[] = {
 		"    GDALDEMProcessingOptions options, GDALProgressFunc callback=0, \n"
 		"    void * callback_data=None) -> Dataset\n"
 		""},
+	 { (char *)"new_GDALNearblackOptions", _wrap_new_GDALNearblackOptions, METH_VARARGS, (char *)"new_GDALNearblackOptions(char ** options) -> GDALNearblackOptions"},
+	 { (char *)"delete_GDALNearblackOptions", _wrap_delete_GDALNearblackOptions, METH_VARARGS, (char *)"delete_GDALNearblackOptions(GDALNearblackOptions self)"},
+	 { (char *)"GDALNearblackOptions_swigregister", GDALNearblackOptions_swigregister, METH_VARARGS, NULL},
+	 { (char *)"wrapper_GDALNearblackDestDS", _wrap_wrapper_GDALNearblackDestDS, METH_VARARGS, (char *)"\n"
+		"wrapper_GDALNearblackDestDS(Dataset dstDS, Dataset srcDS, GDALNearblackOptions options, GDALProgressFunc callback=0, \n"
+		"    void * callback_data=None) -> int\n"
+		""},
+	 { (char *)"wrapper_GDALNearblackDestName", _wrap_wrapper_GDALNearblackDestName, METH_VARARGS, (char *)"\n"
+		"wrapper_GDALNearblackDestName(char const * dest, Dataset srcDS, GDALNearblackOptions options, GDALProgressFunc callback=0, \n"
+		"    void * callback_data=None) -> Dataset\n"
+		""},
 	 { NULL, NULL, 0, NULL }
 };
 
@@ -26898,6 +27298,7 @@ static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GD
 static swig_type_info _swigt__p_GDALDriverShadow = {"_p_GDALDriverShadow", "GDALDriverShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALInfoOptions = {"_p_GDALInfoOptions", "GDALInfoOptions *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALNearblackOptions = {"_p_GDALNearblackOptions", "GDALNearblackOptions *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALProgressFunc = {"_p_GDALProgressFunc", "GDALProgressFunc *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterAttributeTableShadow = {"_p_GDALRasterAttributeTableShadow", "GDALRasterAttributeTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)0, 0};
@@ -26939,6 +27340,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_GDALDriverShadow,
   &_swigt__p_GDALInfoOptions,
   &_swigt__p_GDALMajorObjectShadow,
+  &_swigt__p_GDALNearblackOptions,
   &_swigt__p_GDALProgressFunc,
   &_swigt__p_GDALRasterAttributeTableShadow,
   &_swigt__p_GDALRasterBandShadow,
@@ -26980,6 +27382,7 @@ static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDataset
 static swig_cast_info _swigc__p_GDALDriverShadow[] = {  {&_swigt__p_GDALDriverShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALInfoOptions[] = {  {&_swigt__p_GDALInfoOptions, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_GDALDriverShadow, _p_GDALDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRLayerShadow, _p_OGRLayerShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALDatasetShadow, _p_GDALDatasetShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterBandShadow, _p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALNearblackOptions[] = {  {&_swigt__p_GDALNearblackOptions, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALProgressFunc[] = {  {&_swigt__p_GDALProgressFunc, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -27021,6 +27424,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_GDALDriverShadow,
   _swigc__p_GDALInfoOptions,
   _swigc__p_GDALMajorObjectShadow,
+  _swigc__p_GDALNearblackOptions,
   _swigc__p_GDALProgressFunc,
   _swigc__p_GDALRasterAttributeTableShadow,
   _swigc__p_GDALRasterBandShadow,
