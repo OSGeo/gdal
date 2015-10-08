@@ -2020,10 +2020,9 @@ def ecw_46():
 
 def ecw_47():
     
-    # Does not work at least on Linux with ECW 3.3
-    return 'skip'
-    
     if gdaltest.ecw_drv is None:
+        return 'skip'
+    if gdaltest.ecw_drv.major_version < 4:
         return 'skip'
 
     if sys.version_info >= (3,0,0):
