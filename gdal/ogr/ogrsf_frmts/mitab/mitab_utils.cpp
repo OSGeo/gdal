@@ -45,9 +45,6 @@
  * Revision 1.22  2008-07-21 16:04:58  dmorissette
  * Fixed const char * warnings with GCC 4.3 (GDAL ticket #2325)
  *
- * Revision 1.21  2006/12/01 16:53:15  dmorissette
- * Wrapped <mbctype.h> stuff with !defined(WIN32CE) (done by mloskot in OGR)
- *
  * Revision 1.20  2005/08/07 21:02:14  fwarmerdam
  * avoid warnings about testing for characters > 255.
  *
@@ -118,7 +115,7 @@
 #include <math.h>       /* sin()/cos() */
 #include <ctype.h>      /* toupper()/tolower() */
 
-#if defined(_WIN32) && !defined(unix) && !defined(WIN32CE)
+#if defined(_WIN32) && !defined(unix)
 #  include <mbctype.h>  /* Multibyte chars stuff */
 #endif
 
@@ -625,7 +622,7 @@ char *TABCleanFieldName(const char *pszSrcName)
                  "'%s' will be used instead.", pszSrcName, pszNewName);
     }
 
-#if defined(_WIN32) && !defined(unix) && !defined(WIN32CE)
+#if defined(_WIN32) && !defined(unix)
     /*-----------------------------------------------------------------
      * On Windows, check if we're using a double-byte codepage, and
      * if so then just keep the field name as is... 
