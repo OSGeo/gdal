@@ -39,7 +39,7 @@ void    GDALRegister_BMP(void);
 CPL_C_END
 
 // Enable if you want to see lots of BMP debugging output.
-// #define BMP_DEBUG    
+// #define BMP_DEBUG
 
 enum BMPType
 {
@@ -53,7 +53,7 @@ enum BMPType
 // BMPInfoHeader structure. An array of BMPColorEntry structures (also called
 // a colour table) follows the bitmap information header structure. The colour
 // table is followed by a second array of indexes into the colour table (the
-// actual bitmap data). Data may be comressed, for 4-bpp and 8-bpp used RLE
+// actual bitmap data). Data may be compressed, for 4-bpp and 8-bpp used RLE
 // compression.
 //
 // +---------------------+
@@ -130,7 +130,7 @@ typedef struct
                                 // If 0 then the number of bits per pixel is
                                 // specified or is implied by the JPEG or PNG format.
     BMPComprMethod iCompression; // Compression method
-    GUInt32     iSizeImage;     // Size of uncomressed image in bytes. May be 0
+    GUInt32     iSizeImage;     // Size of uncompressed image in bytes. May be 0
                                 // for BMPC_RGB bitmaps. If iCompression is BI_JPEG
                                 // or BI_PNG, iSizeImage indicates the size
                                 // of the JPEG or PNG image buffer.
@@ -331,7 +331,6 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 {
     BMPDataset  *poGDS = (BMPDataset *) poDS;
     GUInt32     iScanOffset;
-    int         i;
 
     if ( poGDS->sInfoHeader.iHeight > 0 )
         iScanOffset = poGDS->sFileHeader.iOffBits +
@@ -378,7 +377,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     {
         GByte *pabyTemp = pabyScan + 3 - nBand;
 
-        for ( i = 0; i < nBlockXSize; i++ )
+        for ( int i = 0; i < nBlockXSize; i++ )
         {
             // Colour triplets in BMP file organized in reverse order:
             // blue, green, red. When we have 32-bit BMP the forth byte
@@ -429,7 +428,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             return CE_Failure;
         }
 
-        for(i = 0; i < 3; i++)
+        for( int i = 0; i < 3; i++)
         {
             shift[i] = findfirstonbit(mask[i]);
             size[i]  = countonbits(mask[i]);
@@ -443,7 +442,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             fTo8bit[i] = 255.0f / ((1 << size[i])-1);
         }
 
-        for ( i = 0; i < nBlockXSize; i++ )
+        for( int i = 0; i < nBlockXSize; i++ )
         {
             ((GByte *) pImage)[i] = (GByte)
                 (0.5f + fTo8bit[nBand-1] * 
@@ -475,7 +474,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     {
         GByte *pabyTemp = pabyScan;
 
-        for ( i = 0; i < nBlockXSize; i++ )
+        for ( int i = 0; i < nBlockXSize; i++ )
         {
             // Most significant part of the byte represents leftmost pixel
             if ( i & 0x01 )
@@ -488,7 +487,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     {
         GByte *pabyTemp = pabyScan;
 
-        for ( i = 0; i < nBlockXSize; i++ )
+        for( int i = 0; i < nBlockXSize; i++ )
         {
             switch ( i & 0x7 )
             {
@@ -533,15 +532,13 @@ CPLErr BMPRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 {
     BMPDataset  *poGDS = (BMPDataset *)poDS;
-    int         iInPixel, iOutPixel;
-    GUInt32     iScanOffset;
 
     CPLAssert( poGDS != NULL
                && nBlockXOff >= 0
                && nBlockYOff >= 0
                && pImage != NULL );
 
-    iScanOffset = poGDS->sFileHeader.iOffBits +
+    GUInt32 iScanOffset = poGDS->sFileHeader.iOffBits +
             ( poGDS->GetRasterYSize() - nBlockYOff - 1 ) * nScanSize;
     if ( VSIFSeekL( poGDS->fp, iScanOffset, SEEK_SET ) < 0 )
     {
@@ -558,7 +555,7 @@ CPLErr BMPRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         VSIFSeekL( poGDS->fp, iScanOffset, SEEK_SET );
     }
 
-    for ( iInPixel = 0, iOutPixel = iBytesPerPixel - nBand;
+    for ( int iInPixel = 0, iOutPixel = iBytesPerPixel - nBand;
           iInPixel < nBlockXSize; iInPixel++, iOutPixel += poGDS->nBands )
     {
         pabyScan[iOutPixel] = ((GByte *) pImage)[iInPixel];
@@ -597,10 +594,6 @@ CPLErr BMPRasterBand::SetColorTable( GDALColorTable *poColorTable )
 
     if ( poColorTable )
     {
-        GDALColorEntry  oEntry;
-        GUInt32         iULong;
-        unsigned int    i;
-
         poGDS->sInfoHeader.iClrUsed = poColorTable->GetColorEntryCount();
         if ( poGDS->sInfoHeader.iClrUsed < 1 ||
              poGDS->sInfoHeader.iClrUsed > (1U << poGDS->sInfoHeader.iBitCount) )
@@ -608,15 +601,17 @@ CPLErr BMPRasterBand::SetColorTable( GDALColorTable *poColorTable )
 
         VSIFSeekL( poGDS->fp, BFH_SIZE + 32, SEEK_SET );
 
-        iULong = CPL_LSBWORD32( poGDS->sInfoHeader.iClrUsed );
+        GUInt32 iULong = CPL_LSBWORD32( poGDS->sInfoHeader.iClrUsed );
         VSIFWriteL( &iULong, 4, 1, poGDS->fp );
         poGDS->pabyColorTable = (GByte *) CPLRealloc( poGDS->pabyColorTable,
                         poGDS->nColorElems * poGDS->sInfoHeader.iClrUsed );
         if ( !poGDS->pabyColorTable )
             return CE_Failure;
 
-        for( i = 0; i < poGDS->sInfoHeader.iClrUsed; i++ )
+        for( unsigned int i = 0; i < poGDS->sInfoHeader.iClrUsed; i++ )
         {
+            GDALColorEntry  oEntry;
+
             poColorTable->GetColorEntryAsRGB( i, &oEntry );
             poGDS->pabyColorTable[i * poGDS->nColorElems + 3] = 0;
             poGDS->pabyColorTable[i * poGDS->nColorElems + 2] = 
@@ -697,11 +692,8 @@ class BMPComprRasterBand : public BMPRasterBand
 BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
     : BMPRasterBand( poDS, nBand )
 {
-    unsigned int    i, j, k, iLength = 0;
-    GUInt32         iComprSize, iUncomprSize;
-
-    iComprSize = poDS->sFileHeader.iSize - poDS->sFileHeader.iOffBits;
-    iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
+    GUInt32 iComprSize = poDS->sFileHeader.iSize - poDS->sFileHeader.iOffBits;
+    GUInt32 iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
 
 #ifdef DEBUG
     CPLDebug( "BMP", "RLE compression detected." );
@@ -734,8 +726,9 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
 
     VSIFSeekL( poDS->fp, poDS->sFileHeader.iOffBits, SEEK_SET );
     VSIFReadL( pabyComprBuf, 1, iComprSize, poDS->fp );
-    i = 0;
-    j = 0;
+    unsigned int k, iLength = 0;
+    unsigned int i = 0;
+    unsigned int j = 0;
     if ( poDS->sInfoHeader.iBitCount == 8 )         // RLE8
     {
         while( j < iUncomprSize && i < iComprSize )
@@ -843,8 +836,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
         }
     }
     // rcg, release compressed buffer here.
-    if ( pabyComprBuf )
-        CPLFree( pabyComprBuf );
+    CPLFree( pabyComprBuf );
     pabyComprBuf = NULL;
 
 }
@@ -855,10 +847,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
 
 BMPComprRasterBand::~BMPComprRasterBand()
 {
-    if ( pabyComprBuf )
-        CPLFree( pabyComprBuf );
-    if ( pabyUncomprBuf )
-        CPLFree( pabyUncomprBuf );
+    CPLFree( pabyComprBuf );
+    CPLFree( pabyUncomprBuf );
 }
 
 /************************************************************************/
@@ -949,12 +939,11 @@ CPLErr BMPDataset::GetGeoTransform( double * padfTransform )
 
 CPLErr BMPDataset::SetGeoTransform( double * padfTransform )
 {
-    CPLErr              eErr = CE_None;
-
     if ( pszFilename && bGeoTransformValid )
     {
         memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
 
+        CPLErr eErr = CE_None;
         if ( GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform )
              == FALSE )
         {
@@ -963,8 +952,8 @@ CPLErr BMPDataset::SetGeoTransform( double * padfTransform )
         }
         return eErr;
     }
-    else
-        return GDALPamDataset::SetGeoTransform( padfTransform );
+
+    return GDALPamDataset::SetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
@@ -1010,8 +999,8 @@ int BMPDataset::Identify( GDALOpenInfo *poOpenInfo )
         || poOpenInfo->pabyHeader[0] != 'B' 
         || poOpenInfo->pabyHeader[1] != 'M' )
         return FALSE;
-    else
-        return TRUE;
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -1026,10 +1015,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    BMPDataset      *poDS;
-    VSIStatBufL     sStat;
-
-    poDS = new BMPDataset();
+    BMPDataset *poDS = new BMPDataset();
     poDS->eAccess = poOpenInfo->eAccess;
 
     if( poOpenInfo->eAccess == GA_ReadOnly )
@@ -1042,6 +1028,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    VSIStatBufL sStat;
     if (VSIStatL(poOpenInfo->pszFilename, &sStat) != 0)
     {
         delete poDS;
@@ -1067,14 +1054,13 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the BMPInfoHeader.                                         */
 /* -------------------------------------------------------------------- */
-    BMPType         eBMPType;
-
     VSIFSeekL( poDS->fp, BFH_SIZE, SEEK_SET );
     VSIFReadL( &poDS->sInfoHeader.iSize, 1, 4, poDS->fp );
 #ifdef CPL_MSB
     CPL_SWAP32PTR( &poDS->sInfoHeader.iSize );
 #endif
 
+    BMPType eBMPType;
     if ( poDS->sInfoHeader.iSize == BIH_WIN4SIZE )
         eBMPType = BMPT_WIN4;
     else if ( poDS->sInfoHeader.iSize == BIH_OS21SIZE )
@@ -1126,12 +1112,12 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
         poDS->nColorElems = 4;
     }
-    
+
     if ( eBMPType == BMPT_OS22 )
     {
         poDS->nColorElems = 3; // FIXME: different info in different documents regarding this!
     }
-    
+
     if ( eBMPType == BMPT_OS21 )
     {
         GInt16  iShort;
@@ -1192,8 +1178,6 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         case 4:
         case 8:
         {
-            int     i;
-
             poDS->nBands = 1;
             // Allocate memory for colour table and read it
             if ( poDS->sInfoHeader.iClrUsed )
@@ -1215,7 +1199,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 
             GDALColorEntry oEntry;
             poDS->poColorTable = new GDALColorTable();
-            for( i = 0; i < poDS->nColorTableSize; i++ )
+            for( int i = 0; i < poDS->nColorTableSize; i++ )
             {
                 oEntry.c1 = poDS->pabyColorTable[i * poDS->nColorElems + 2]; // Red
                 oEntry.c2 = poDS->pabyColorTable[i * poDS->nColorElems + 1]; // Green
@@ -1239,12 +1223,10 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int             iBand;
-
     if ( poDS->sInfoHeader.iCompression == BMPC_RGB
     ||   poDS->sInfoHeader.iCompression == BMPC_BITFIELDS )
     {
-        for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+        for( int iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
             BMPRasterBand* band = new BMPRasterBand( poDS, iBand );
             poDS->SetBand( iBand, band );
@@ -1260,7 +1242,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
     else if ( poDS->sInfoHeader.iCompression == BMPC_RLE8
               || poDS->sInfoHeader.iCompression == BMPC_RLE4 )
     {
-        for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+        for( int iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
             BMPComprRasterBand* band = new BMPComprRasterBand( poDS, iBand );
             poDS->SetBand( iBand, band);
@@ -1336,9 +1318,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    BMPDataset      *poDS;
-
-    poDS = new BMPDataset();
+    BMPDataset *poDS = new BMPDataset();
 
     poDS->fp = VSIFOpenL( pszFilename, "wb+" );
     if( poDS->fp == NULL )
@@ -1355,8 +1335,6 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Fill the BMPInfoHeader                                          */
 /* -------------------------------------------------------------------- */
-    GUInt32         nScanSize;
-
     poDS->sInfoHeader.iSize = 40;
     poDS->sInfoHeader.iWidth = nXSize;
     poDS->sInfoHeader.iHeight = nYSize;
@@ -1373,8 +1351,8 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
      * formulae, but we should check for overflow conditions
      * during calculation.
      */
-    nScanSize =
-        (GUInt32)poDS->sInfoHeader.iWidth * poDS->sInfoHeader.iBitCount + 31;
+    GUInt32 nScanSize
+        = (GUInt32)poDS->sInfoHeader.iWidth * poDS->sInfoHeader.iBitCount + 31;
     if ( !poDS->sInfoHeader.iWidth
          || !poDS->sInfoHeader.iBitCount
          || (nScanSize - 31) / poDS->sInfoHeader.iBitCount
@@ -1397,14 +1375,12 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do we need colour table?                                        */
 /* -------------------------------------------------------------------- */
-    unsigned int    i;
-
     if ( nBands == 1 )
     {
         poDS->sInfoHeader.iClrUsed = 1 << poDS->sInfoHeader.iBitCount;
         poDS->pabyColorTable =
             (GByte *) CPLMalloc( poDS->nColorElems * poDS->sInfoHeader.iClrUsed );
-        for ( i = 0; i < poDS->sInfoHeader.iClrUsed; i++ )
+        for ( unsigned int i = 0; i < poDS->sInfoHeader.iClrUsed; i++ )
         {
             poDS->pabyColorTable[i * poDS->nColorElems] =
                 poDS->pabyColorTable[i * poDS->nColorElems + 1] =
@@ -1503,9 +1479,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int         iBand;
-
-    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+    for( int iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new BMPRasterBand( poDS, iBand ) );
     }
@@ -1526,31 +1500,29 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 void GDALRegister_BMP()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "BMP" ) != NULL )
+      return;
 
-    if( GDALGetDriverByName( "BMP" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "BMP" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "MS Windows Device Independent Bitmap" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_bmp.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bmp" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "BMP" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "MS Windows Device Independent Bitmap" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_bmp.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bmp" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='WORLDFILE' type='boolean' description='Write out world file'/>"
 "</CreationOptionList>" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = BMPDataset::Open;
-        poDriver->pfnCreate = BMPDataset::Create;
-        poDriver->pfnIdentify = BMPDataset::Identify;
+    poDriver->pfnOpen = BMPDataset::Open;
+    poDriver->pfnCreate = BMPDataset::Create;
+    poDriver->pfnIdentify = BMPDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
