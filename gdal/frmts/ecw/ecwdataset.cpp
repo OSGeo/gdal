@@ -2388,17 +2388,19 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
     //we always open in read only mode. This should be improved in the future.
     try
     {
-		if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
-		{
-			wchar_t *pwszDatasetName = CPLRecodeToWChar( pszDatasetName, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+#if ECWSDK_VERSION>=40    
+        if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+        {
+            wchar_t *pwszDatasetName = CPLRecodeToWChar( pszDatasetName, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
-			oErr = poFileView->Open( pwszDatasetName, bProgressive, false );
-			CPLFree( pwszDatasetName );
-		}
-		else
-		{
-			oErr = poFileView->Open( (char *) pszDatasetName, bProgressive, false );
-		}
+            oErr = poFileView->Open( pwszDatasetName, bProgressive, false );
+            CPLFree( pwszDatasetName );
+        }
+        else
+#endif //#if ECWSDK_VERSION>=40        
+        {
+            oErr = poFileView->Open( (char *) pszDatasetName, bProgressive, false );
+        }
     }
     catch(...)
     {

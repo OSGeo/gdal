@@ -993,7 +993,7 @@ CPLErr GDALECWCompressor::Initialize(
             return CE_Failure;
         }
 
-		m_OStream.Access( fpVSIL, TRUE, (BOOLEAN) bSeekable, pszFilename,
+        m_OStream.Access( fpVSIL, TRUE, (BOOLEAN) bSeekable, pszFilename,
 			  0, -1 );
     }    
 
@@ -1070,14 +1070,16 @@ CPLErr GDALECWCompressor::Initialize(
     {
         if( fpVSIL == NULL )
 		{
-			if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
-			{
-				wchar_t *pwszFilename = CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+#if ECWSDK_VERSION>=40		
+            if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+            {
+                wchar_t *pwszFilename = CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
-				oError = Open( pwszFilename, false, true );
-				CPLFree( pwszFilename );
-			}
-			else
+                oError = Open( pwszFilename, false, true );
+                CPLFree( pwszFilename );
+            }
+            else
+#endif//ECWSDK_VERSION>=40			
 			{
 				oError = Open( (char *) pszFilename, false, true );
 			}
