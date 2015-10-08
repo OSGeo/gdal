@@ -656,8 +656,6 @@ GDALDefaultOverviews::BuildOverviews(
 /*      produce the imagery.                                            */
 /* -------------------------------------------------------------------- */
 
-#ifndef WIN32CE
-
     if( bOvrIsAux )
     {
         if( nNewOverviews == 0 )
@@ -674,9 +672,7 @@ GDALDefaultOverviews::BuildOverviews(
                                      pszResampling, 
                                      pfnProgress, pProgressData );
 
-        int j;
-        
-        for( j = 0; j < nOverviews; j++ )
+        for( int j = 0; j < nOverviews; j++ )
         {
             if( panOverviewList[j] > 0 )
                 panOverviewList[j] *= -1;
@@ -688,7 +684,6 @@ GDALDefaultOverviews::BuildOverviews(
 /*      operate on it.                                                  */
 /* -------------------------------------------------------------------- */
     else
-#endif /* WIN32CE */
     {
         if( poODS != NULL )
         {
