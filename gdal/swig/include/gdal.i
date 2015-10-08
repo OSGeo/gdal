@@ -1289,3 +1289,50 @@ GDALDatasetShadow* wrapper_GDALNearblackDestName( const char* dest,
     return hDSRet;
 }
 %}
+
+#ifdef SWIGJAVA
+%rename (GridOptions) GDALGridOptions;
+#endif
+struct GDALGridOptions {
+%extend {
+    GDALGridOptions(char** options) {
+        return GDALGridOptionsNew(options, NULL);
+    }
+
+    ~GDALGridOptions() {
+        GDALGridOptionsFree( self );
+    }
+}
+};
+
+#ifdef SWIGPYTHON
+%rename (GridInternal) wrapper_GDALGrid;
+#elif defined(SWIGJAVA)
+%rename (Grid) wrapper_GDALGrid;
+#endif
+%newobject wrapper_GDALGrid;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALGrid( const char* dest,
+                                      GDALDatasetShadow* dataset,
+                                      GDALGridOptions* options,
+                                      GDALProgressFunc callback=NULL,
+                                      void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALGridOptionsNew(NULL, NULL);
+        }
+        GDALGridOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALGrid(dest, dataset, options, &usageError);    
+    if( bFreeOptions )
+        GDALGridOptionsFree(options);
+    return hDSRet;
+}
+%}

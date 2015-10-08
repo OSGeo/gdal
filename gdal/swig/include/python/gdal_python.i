@@ -1408,4 +1408,100 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
     else:
         return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
+
+def GridOptions(options = [], format = 'GTiff',
+              outputType = GDT_Unknown,
+              width = 0, height = 0,
+              creationOptions = None,
+              outputBounds = None,
+              outputSRS = None,
+              noData = None,
+              algorithm = None,
+              layers = None,
+              SQLStatement = None,
+              where = None,
+              spatFilter = None,
+              zfield = None,
+              z_increase = None,
+              z_multiply = None,
+              callback = None, callback_data = None):
+    """ Create a GridOptions() object that can be passed to gdal.Grid()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          outputType --- output type (gdal.GDT_Byte, etc...)
+          width --- width of the output raster in pixel
+          height --- height of the output raster in pixel
+          creationOptions --- list of creation options
+          outputBounds --- assigned output bounds: [ulx, uly, lrx, lry]
+          outputSRS --- assigned output SRS
+          noData --- nodata value
+          algorithm --- e.g "invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0"
+          layers --- list of layers to convert
+          SQLStatement --- SQL statement to apply to the source dataset
+          where --- WHERE clause to apply to source layer(s)
+          spatFilter --- spatial filter as (minX, minY, maxX, maxY) bounding box
+          zfield --- Identifies an attribute field on the features to be used to get a Z value from. This value overrides Z value read from feature geometry record.
+          z_increase --- Addition to the attribute field on the features to be used to get a Z value from. The addition should be the same unit as Z value. The result value will be Z value + Z increase value. The default value is 0.
+          z_multiply - Multiplication ratio for Z field. This can be used for shift from e.g. foot to meters or from  elevation to deep. The result value will be (Z value + Z increase value) * Z multiply value.  The default value is 1.
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-of', format]
+        if outputType != GDT_Unknown:
+            new_options += ['-ot', GetDataTypeName(outputType) ]
+        if width != 0 or height != 0:
+            new_options += ['-outsize', str(width), str(height)]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if outputBounds is not None:
+            new_options += ['-txe', str(outputBounds[0]), str(outputBounds[2]), '-tye', str(outputBounds[1]), str(outputBounds[3])]
+        if outputSRS is not None:
+            new_options += ['-a_srs', str(outputSRS) ]
+        if algorithm is not None:
+            new_options += ['-a', algorithm ]
+        if layers is not None:
+            for layer in layers:
+                new_options += ['-l', layer]
+        if SQLStatement is not None:
+            new_options += ['-sql', str(SQLStatement) ]
+        if where is not None:
+            new_options += ['-where', str(where) ]
+        if zfield is not None:
+            new_options += ['-zfield', zfield ]
+        if z_increase is not None:
+            new_options += ['-z_increase', str(z_increase) ]
+        if z_multiply is not None:
+            new_options += ['-z_multiply', str(z_multiply) ]
+        if spatFilter is not None:
+            new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3]) ]
+
+    return (GDALGridOptions(new_options), callback, callback_data)
+
+def Grid(destName, srcDS, **kwargs):
+    """ Create raster from the scattered data.
+        Arguments are :
+          destName --- Output dataset name
+          srcDS --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.GridOptions()
+        If options is provided as a gdal.GridOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = GridOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = OpenEx(srcDS, OF_VECTOR)
+
+    return GridInternal(destName, srcDS, opts, callback, callback_data)
+
 %}
