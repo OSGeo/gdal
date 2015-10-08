@@ -3178,38 +3178,37 @@ GDALColorInterp ECWGetColorInterpretationByName(const char *pszName)
 
 const char* ECWGetColorInterpretationName(GDALColorInterp eColorInterpretation, int nBandNumber)
 {
-    const char *result;
+    const char *pszResult;
     switch (eColorInterpretation){
     case GCI_AlphaBand: 
-        result = NCS_BANDDESC_AllOpacity;
+        pszResult = NCS_BANDDESC_AllOpacity;
         break;
     case GCI_GrayIndex: 
-        result = NCS_BANDDESC_Greyscale;
+        pszResult = NCS_BANDDESC_Greyscale;
         break;
     case GCI_RedBand:
     case GCI_GreenBand:
     case GCI_BlueBand: 
-        result = GDALGetColorInterpretationName(eColorInterpretation);
+        pszResult = GDALGetColorInterpretationName(eColorInterpretation);
         break;
     case GCI_Undefined:
-        if (nBandNumber <=3){
-            if (nBandNumber == 0 ) {
-                result = "Red";
-            }else if (nBandNumber == 1) {
-                result = "Green";
-            }else if (nBandNumber == 2) {
-                result = "Blue";
-            }
+        if (nBandNumber == 0 ) {
+            pszResult = "Red";
+        }else if (nBandNumber == 1) {
+            pszResult = "Green";
+        }else if (nBandNumber == 2) {
+            pszResult = "Blue";
         }
         else
         {
-            result = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
+            pszResult = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
         }
         break;
     default:
-        result = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
+        pszResult = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
+        break;
     }
-    return result;
+    return pszResult;
 }
 
 /************************************************************************/
