@@ -34,10 +34,6 @@
 #include "ogr_p.h"
 #include "cpl_time.h"
 
-#if defined(_WIN32_WCE)
-#  include <wce_errno.h>
-#endif
-
 #define FD_OPENED           0
 #define FD_CLOSED           1
 #define FD_CANNOT_REOPEN    2

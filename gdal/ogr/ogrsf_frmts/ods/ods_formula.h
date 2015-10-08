@@ -37,10 +37,8 @@
 
 #include <vector>
 
-#if defined(_WIN32) && !defined(_WIN32_WCE)
+#if defined(_WIN32)
 #  define strcasecmp stricmp
-#elif defined(_WIN32_WCE)
-#  define strcasecmp _stricmp
 #endif
 
 typedef enum {
