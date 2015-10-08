@@ -30,7 +30,7 @@ all:	default multireadtest.exe \
 			dumpoverviews.exe gdalwarpsimple.exe gdalflattenmask.exe \
 			gdaltorture.exe gdal2ogr.exe test_ogrsf.exe
 OBJ = commonutils.obj gdalinfo_lib.obj gdal_translate_lib.obj gdalwarp_lib.obj ogr2ogr_lib.obj \
-	gdaldem_lib.obj nearblack_lib.obj
+	gdaldem_lib.obj nearblack_lib.obj gdal_grid_lib.obj
 
 appslib: $(OBJ)
 
@@ -99,9 +99,9 @@ gdaldem.exe:	gdaldem_bin.cpp $(GDALLIB) $(XTRAOBJ)
 		/Fe$@ /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-gdal_grid.exe:	gdal_grid.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(XTRAFLAGS) $(CFLAGS) gdal_grid.cpp $(XTRAOBJ) $(LIBS) \
-		/link $(LINKER_FLAGS)
+gdal_grid.exe:	gdal_grid_bin.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(XTRAFLAGS) $(CFLAGS) gdal_grid_bin.cpp $(XTRAOBJ) $(LIBS) \
+		/Fe$@ /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 gdalmanage.exe:	gdalmanage.cpp $(GDALLIB) $(XTRAOBJ) 
