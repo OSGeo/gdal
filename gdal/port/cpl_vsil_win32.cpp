@@ -37,21 +37,11 @@ CPL_CVSID("$Id$");
 #include <windows.h>
 #include "cpl_string.h"
 
-
-#if !defined(WIN32CE)
-#  include <sys/types.h>
-#  include <sys/stat.h>
-#  include <io.h>
-#  include <fcntl.h>
-#  include <direct.h>
-#else
-#  include <wce_io.h>
-#  include <wce_errno.h>
-#  include <wce_stdio.h>
-#  include <wce_stat.h>
-#  include "cpl_win32ce_api.h"
-#endif
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <io.h>
+#include <fcntl.h>
+#include <direct.h>
 
 /************************************************************************/
 /* ==================================================================== */
@@ -444,12 +434,11 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 
     dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ) ? 
         FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      On Win32 consider treating the filename as utf-8 and            */
 /*      converting to wide characters to open.                          */
 /* -------------------------------------------------------------------- */
-#ifndef WIN32CE
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
@@ -469,15 +458,6 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
     }
-
-/* -------------------------------------------------------------------- */
-/*      On WinCE we only support plain ascii filenames.                 */
-/* -------------------------------------------------------------------- */
-#else /* def WIN32CE */
-    hFile = CE_CreateFileA( pszFilename, dwDesiredAccess, 
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, 
-                        NULL, dwCreationDisposition,  dwFlagsAndAttributes, NULL );
-#endif
 
     if( hFile == INVALID_HANDLE_VALUE )
     {
@@ -744,5 +724,3 @@ void VSIInstallLargeFileHandler()
 }
 
 #endif /* def WIN32 */
-
-

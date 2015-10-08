@@ -36,11 +36,7 @@
 
 #include "cpl_conv.h"
 
-#if !defined(WIN32CE)
-#  include <time.h>
-#else
-#  include <wce_time.h>
-#endif
+#include <time.h>
 
 CPL_CVSID("$Id$");
 
@@ -704,12 +700,6 @@ void CPLCleanupTLS()
 #define _WIN32_WINNT 0x0500
 
 #include <windows.h>
-
-/* windows.h header must be included above following lines. */
-#if defined(WIN32CE)
-#  include "cpl_win32ce_api.h"
-#  define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
-#endif
 
 /************************************************************************/
 /*                             CPLGetNumCPUs()                          */

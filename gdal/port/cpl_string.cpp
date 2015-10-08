@@ -52,11 +52,6 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-#if defined(WIN32CE)
-#  include <wce_errno.h>
-#  include <wce_string.h>
-#endif
-
 CPL_CVSID("$Id$");
 
 /*=====================================================================

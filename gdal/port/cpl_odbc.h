@@ -32,8 +32,6 @@
 
 #include "cpl_port.h"
 
-#ifndef WIN32CE /* ODBC is not supported on Windows CE. */
-
 #ifdef WIN32
 #  include <windows.h>
 #endif
@@ -281,8 +279,4 @@ class CPL_DLL CPLODBCStatement {
     int            CollectResultsInfo();
 };
 
-#endif /* #ifndef WIN32CE */
-
 #endif
-
-

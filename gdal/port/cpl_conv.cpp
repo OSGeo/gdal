@@ -42,10 +42,6 @@
 
 CPL_CVSID("$Id$");
 
-#if defined(WIN32CE)
-#  include "cpl_wince.h"
-#endif
-
 static CPLMutex *hConfigMutex = NULL;
 static volatile char **papszConfigOptions = NULL;
 
@@ -1425,8 +1421,6 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
  * @return Number of characters printed.
  */
 
-#ifndef WIN32CE /* XXX - mloskot - strftime is not available yet. */
-
 int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
                   const struct tm *poBrokenTime, const char *pszLocale )
 {
@@ -1446,7 +1440,7 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
 #else
     (void) pszLocale;
 #endif
-    
+
     if ( !strftime( pszTemp, nMaxLen + 1, pszFormat, poBrokenTime ) )
         memset( pszTemp, 0, nMaxLen + 1);
 
@@ -1462,8 +1456,6 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
 
     return nChars;
 }
-
-#endif
 
 /************************************************************************/
 /*                       CPLVerifyConfiguration()                       */
@@ -1630,10 +1622,8 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
         pszResult = CSLFetchNameValue( (char **) papszConfigOptions, pszKey );
     }
 
-#if !defined(WIN32CE)
     if( pszResult == NULL )
         pszResult = getenv( pszKey );
-#endif
 
     if( pszResult == NULL )
         return pszDefault;

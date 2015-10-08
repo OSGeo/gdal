@@ -35,11 +35,6 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 
-#if defined(WIN32CE)
-#  include "cpl_wince.h"
-#  include <wce_stdlib.h>
-#endif
- 
 #define TIMESTAMP_DEBUG
 //#define MEMORY_DEBUG
 

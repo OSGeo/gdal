@@ -42,19 +42,12 @@
 /* ==================================================================== */
 /*      We will use WIN32 as a standard windows define.                 */
 /* ==================================================================== */
-#if defined(_WIN32) && !defined(WIN32) && !defined(_WIN32_WCE)
+#if defined(_WIN32) && !defined(WIN32)
 #  define WIN32
 #endif
 
-#if defined(_WINDOWS) && !defined(WIN32) && !defined(_WIN32_WCE)
+#if defined(_WINDOWS) && !defined(WIN32)
 #  define WIN32
-#endif
-
-/* ==================================================================== */
-/*      We will use WIN32CE as a standard Windows CE (Mobile) define.   */
-/* ==================================================================== */
-#if defined(_WIN32_WCE)
-#  define WIN32CE
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -97,7 +90,6 @@
 
 #ifdef unix
 #  undef WIN32
-#  undef WIN32CE
 #endif
 
 #if defined(VSI_NEED_LARGEFILE64_SOURCE) && !defined(_LARGEFILE64_SOURCE)
@@ -141,17 +133,11 @@
 #include <ctype.h>
 #include <limits.h>
 
-#if !defined(WIN32CE)
-#  include <time.h>
-#else
-#  include <wce_time.h>
-#  include <wce_errno.h>
-#endif
-
+#include <time.h>
 
 #if defined(HAVE_ERRNO_H)
 #  include <errno.h>
-#endif 
+#endif
 
 #ifdef HAVE_LOCALE_H
 #  include <locale.h>
@@ -161,7 +147,7 @@
 #  include <direct.h>
 #endif
 
-#if !(defined(WIN32) || defined(WIN32CE))
+#if !defined(WIN32)
 #  include <strings.h>
 #endif
 
@@ -374,7 +360,7 @@ CPL_C_END
 
 #endif /* defined(__linux__) && defined(DEBUG) && defined(GDAL_COMPILATION) */
 
-#  if defined(WIN32) || defined(WIN32CE)
+#  if defined(WIN32)
 #    define STRCASECMP(a,b)         (stricmp(a,b))
 #    define STRNCASECMP(a,b,n)      (strnicmp(a,b,n))
 #  else

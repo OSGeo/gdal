@@ -28,21 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/* Remove annoying warnings in eVC++ and VC++ 6.0 */
-#if defined(WIN32CE)
-#  pragma warning(disable:4786)
-#endif
-
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include <time.h>
 #include <map>
-
-#if defined(WIN32CE)
-#  include <wce_errno.h>
-#endif
-
 
 CPL_CVSID("$Id$");
 

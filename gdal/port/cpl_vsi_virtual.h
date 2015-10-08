@@ -38,12 +38,6 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 
-#if defined(WIN32CE)
-#  include "cpl_wince.h"
-#  include <wce_errno.h>
-#  pragma warning(disable:4786) /* Remove annoying warnings in eVC++ and VC++ 6.0 */
-#endif
-
 #include <map>
 #include <vector>
 #include <string>

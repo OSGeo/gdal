@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 #define CPL_PATH_BUF_SIZE 2048
 #define CPL_PATH_BUF_COUNT  10
 
-#if defined(WIN32) || defined(WIN32CE)
+#if defined(WIN32)
 #define SEP_CHAR '\\'
 #define SEP_STRING "\\"
 #else
