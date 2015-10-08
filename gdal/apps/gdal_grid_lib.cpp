@@ -28,10 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cstdlib>
-#include <vector>
-#include <algorithm>
-
 #include "cpl_string.h"
 #include "gdal.h"
 #include "gdal_alg.h"
@@ -40,6 +36,10 @@
 #include "ogrsf_frmts.h"
 #include "gdalgrid.h"
 #include "gdal_utils_priv.h"
+
+#include <cstdlib>
+#include <vector>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
