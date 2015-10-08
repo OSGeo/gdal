@@ -37,6 +37,7 @@ sys.path.append( '../pymod' )
 from osgeo import gdal, ogr
 
 import gdaltest
+import ogrtest
 
 ###############################################################################
 # 
@@ -67,13 +68,17 @@ def test_gdal_grid_lib_1():
     shape_ds.ExecuteSQL('CREATE SPATIAL INDEX ON n43')
 
     shape_ds = None
+    
+    spatFilter = None
+    if ogrtest.have_geos():
+        spatFilter = [ -180, -90, 180, 90 ]
 
     # Create a GDAL dataset from the previous generated OGR grid
     ds2 = gdal.Grid('', '/vsimem/tmp/n43.shp', format = 'MEM', \
                     outputBounds = [ -80.0041667, 42.9958333, -78.9958333 , 44.0041667], \
                     width = 121, height = 121, outputType = gdal.GDT_Int16, \
                     algorithm = 'nearest:radius1=0.0:radius2=0.0:angle=0.0',
-                    spatFilter = [ -180, -90, 180, 90 ])
+                    spatFilter = spatFilter)
     # We should get the same values as in n43.td0
     if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
         print('bad checksum : got %d, expected %d' % (ds.GetRasterBand(1).Checksum() , ds2.GetRasterBand(1).Checksum()))
