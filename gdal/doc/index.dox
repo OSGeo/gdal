@@ -52,7 +52,6 @@ Download:
 <ul>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/BuildHints">Building GDAL From Source</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadSource">Downloads</a> - source code
-<li> <a href="wince.html">GDAL for Windows CE (unmaintained)</a>
 </ul>
 
 \subsection index_devdocs_tutorials Tutorials
