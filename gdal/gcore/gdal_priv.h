@@ -1241,8 +1241,6 @@ GDALDataType GDALGetOvrWorkDataType(const char* pszResampling,
 
 CPL_C_START
 
-#ifndef WIN32CE
-
 CPLErr CPL_DLL
 HFAAuxBuildOverviews( const char *pszOvrFilename, GDALDataset *poParentDS,
                       GDALDataset **ppoDS,
@@ -1251,8 +1249,6 @@ HFAAuxBuildOverviews( const char *pszOvrFilename, GDALDataset *poParentDS,
                       const char *pszResampling, 
                       GDALProgressFunc pfnProgress, 
                       void *pProgressData );
-
-#endif /* WIN32CE */
 
 CPLErr CPL_DLL 
 GTIFFBuildOverviews( const char * pszFilename,
