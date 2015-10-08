@@ -72,6 +72,7 @@ def test_ogrlineref_2():
     expected = '15977.724709'
     if ret != expected:
         gdaltest.post_reason('"%s" != %s' % (ret.strip(), expected))
+        print(ret)
         return 'fail'
 
     return 'success'
