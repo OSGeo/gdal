@@ -33,10 +33,6 @@
 #include "cpl_multiproc.h"
 #include <map>
 
-#if defined(WIN32CE)
-#  include <wce_errno.h>
-#endif
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/

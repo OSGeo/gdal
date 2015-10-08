@@ -229,17 +229,11 @@ CPL_C_END
 # define gdal_std_string std::string
 #endif 
 
-/* Remove annoying warnings in Microsoft eVC++ and Microsoft Visual C++ */
-#if defined(WIN32CE)
-#  pragma warning(disable:4251 4275 4786)
-#endif
-
 //! Convenient string class based on std::string.
 class CPL_DLL CPLString : public gdal_std_string
 {
 public:
 
-    
     CPLString(void) {}
     CPLString( const std::string &oStr ) : gdal_std_string( oStr ) {}
     CPLString( const char *pszStr ) : gdal_std_string( pszStr ) {}

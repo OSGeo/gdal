@@ -34,8 +34,6 @@
 #include "cpl_error.h"
 
 
-#ifndef WIN32CE /* ODBC is not supported on Windows CE. */
-
 CPL_CVSID("$Id$");
 
 #ifndef SQLColumns_TABLE_CAT 
@@ -1825,5 +1823,3 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
             return SQL_C_CHAR;
     }
 }
-
-#endif /* #ifndef WIN32CE */

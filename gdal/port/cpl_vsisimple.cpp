@@ -66,26 +66,16 @@ CPL_CVSID("$Id$");
 /* for stat() */
 
 /* Unix or Windows NT/2000/XP */
-#if !defined(WIN32) && !defined(WIN32CE)
+#if !defined(WIN32)
 #  include <unistd.h>
-#elif !defined(WIN32CE) /* not Win32 platform */
+#else
 #  include <io.h>
 #  include <fcntl.h>
 #  include <direct.h>
 #endif
 
-/* Windows CE or other platforms */
-#if defined(WIN32CE)
-#  include <wce_io.h>
-#  include <wce_stat.h>
-#  include <wce_stdio.h>
-#  include <wce_string.h>
-#  include <wce_time.h>
-# define time wceex_time
-#else
-#  include <sys/stat.h>
-#  include <time.h>
-#endif
+#include <sys/stat.h>
+#include <time.h>
 
 /************************************************************************/
 /*                              VSIFOpen()                              */
@@ -96,7 +86,7 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
 {
     FILE *fp = NULL;
 
-#if defined(WIN32) && !defined(WIN32CE)
+#if defined(WIN32)
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
@@ -863,7 +853,7 @@ void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 )
 int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 
 {
-#if defined(WIN32) && !defined(WIN32CE)
+#if defined(WIN32)
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {

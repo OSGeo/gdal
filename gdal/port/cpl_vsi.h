@@ -57,19 +57,12 @@
 /* -------------------------------------------------------------------- */
 
 /* Unix */
-#if !defined(_WIN32) && !defined(_WIN32_WCE)
+#if !defined(_WIN32)
 #  include <unistd.h>
 #endif
 
 /* Windows */
-#if !defined(_WIN32_WCE)
-#  include <sys/stat.h>
-#endif
-
-/* Windows CE */
-#if defined(_WIN32_WCE)
-#  include <wce_stat.h>
-#endif
+#include <sys/stat.h>
 
 CPL_C_START
 
