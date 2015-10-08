@@ -719,8 +719,6 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
 
     void *pabyData = CPLMalloc(nXBlockSize * nPixelOffset);
 
-    CPLErr eErr;
-
     // convert any blocks into scanlines
     for (int nYBlock = 0; nYBlock * nYBlockSize < nYSize; nYBlock++) {
         for (int nYScanline = 0; nYScanline < nYBlockSize; nYScanline++) {
@@ -736,7 +734,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
                 else
                     nXValid = nXBlockSize;
 
-                eErr = poSrcBand->RasterIO(GF_Read, nXBlock * nXBlockSize,
+                CPLErr eErr = poSrcBand->RasterIO(GF_Read, nXBlock * nXBlockSize,
                     nYBlock * nYBlockSize + nYScanline, nXValid, 1, pabyData, nXBlockSize,
                     1, eType, 0, 0, NULL);
 
