@@ -1069,7 +1069,20 @@ CPLErr GDALECWCompressor::Initialize(
     if( oError.GetErrorNumber() == NCS_SUCCESS )
     {
         if( fpVSIL == NULL )
-            oError = Open( (char *) pszFilename, false, true );
+        {
+#if ECWSDK_VERSION>=40 && defined(WIN32)
+            if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+            {
+                wchar_t *pwszFilename = CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+                oError = Open( pwszFilename, false, true );
+                CPLFree( pwszFilename );
+            }
+            else
+#endif
+            {
+                oError = Open( (char *) pszFilename, false, true );
+            }
+        }
         else
             oError = CNCSJP2FileView::Open( &(m_OStream) );
     }
