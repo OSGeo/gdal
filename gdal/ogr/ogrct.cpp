@@ -84,7 +84,7 @@ static bool      bProjLocaleSafe = PJ_LOCALE_SAFE;
 static bool      bProjLocaleSafe = false;
 #endif
 
-#if (defined(WIN32) || defined(WIN32CE)) && !defined(__MINGW32__)
+#if defined(WIN32) && !defined(__MINGW32__)
 #  define LIBNAME      "proj.dll"
 #elif defined(__MINGW32__)
 // XXX: If PROJ.4 library was properly built using libtool in Cygwin or MinGW
@@ -180,10 +180,8 @@ public:
 static const char* GetProjLibraryName()
 {
     const char *pszLibName = LIBNAME;
-#if !defined(WIN32CE)
     if( CPLGetConfigOption("PROJSO",NULL) != NULL )
         pszLibName = CPLGetConfigOption("PROJSO",NULL);
-#endif
     return pszLibName;
 }
 
