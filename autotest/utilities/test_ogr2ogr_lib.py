@@ -242,7 +242,7 @@ def test_ogr2ogr_lib_10():
         return 'fail'
     ds= None
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp/poly.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp')
     return 'success'
 
 ###############################################################################

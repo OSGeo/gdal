@@ -92,7 +92,7 @@ def test_gdal_grid_lib_1():
 
 def test_gdal_grid_lib_cleanup():
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp/n43.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp')
 
     return 'success'
 
