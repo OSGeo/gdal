@@ -2519,6 +2519,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "VRT driver can only be used with color-relief utility.");
             GDALDEMProcessingOptionsFree(psOptionsToFree);
+            CPLFree(pData);
             return NULL;
         }
     }
@@ -2611,6 +2612,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
                  "Unable to create dataset %s %d\n%s", pszDest,
                  CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
         GDALDEMProcessingOptionsFree(psOptionsToFree);
+        CPLFree(pData);
         return NULL;
     }
     
