@@ -160,11 +160,11 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
-BLXDataset::BLXDataset() {
-    blxcontext = NULL;
-    bIsOverview = FALSE;
-    nOverviewCount = 0;
-
+BLXDataset::BLXDataset() :
+    blxcontext(NULL),
+    nOverviewCount(0),
+    bIsOverview(FALSE)
+{
     for(int i=0; i < BLX_OVERVIEWLEVELS; i++)
 	papoOverviewDS[i]=NULL;
 }
@@ -270,8 +270,6 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    int endian = LITTLEENDIAN;
-
 // --------------------------------------------------------------------
 //      Some rudimentary checks
 // --------------------------------------------------------------------
@@ -295,8 +293,8 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
     if( (nXSize % 128 != 0) || (nYSize % 128 != 0) ) {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "BLX driver doesn't support dimensions that are not a multiple of 128.\n");
@@ -322,8 +320,6 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( CSLFetchNameValue(papszOptions,"FILLUNDEF") != NULL
                 && EQUAL(CSLFetchNameValue(papszOptions,"FILLUNDEF"),"NO") )
 	fillundef = 0;
-    else
-	fillundef = 1;
 
     int fillundefval = 0;
     if( CSLFetchNameValue(papszOptions,"FILLUNDEFVAL") != NULL ) {
@@ -335,6 +331,8 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
         }
     }
+
+    int endian = LITTLEENDIAN;
     if( CSLFetchNameValue(papszOptions,"BIGENDIAN") != NULL
 	&& !EQUAL(CSLFetchNameValue(papszOptions,"BIGENDIAN"),"NO") )
 	endian = BIGENDIAN;
