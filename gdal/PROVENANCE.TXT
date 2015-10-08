@@ -167,10 +167,6 @@ Note: all the following are build options, not required.
 * histrep.py: corrected copyright message (Atlantis to FrankW), change license to MIT/X.
 * various contributors, all under proper and compatible copyright headers.
 
-=== gdal/wince ===
-
-* all written by Mateusz Loskot.
-
 === gdal/vb6 ===
 
 * all written by FrankW, clean. 
