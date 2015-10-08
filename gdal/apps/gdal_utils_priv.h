@@ -116,6 +116,15 @@ struct GDALNearblackOptionsForBinary
     char* pszFormat;
 };
 
+struct GDALGridOptionsForBinary
+{
+    char* pszSource;
+    char* pszDest;
+    int bQuiet;
+    int bFormatExplicitlySet;
+    char* pszFormat;
+};
+
 CPL_C_END
 
 #endif /* _GDAL_UTILS_PRIV_H_INCLUDED */

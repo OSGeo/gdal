@@ -155,6 +155,24 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
                                     GDALDatasetH hSrcDS,
                                     const GDALNearblackOptions *psOptions, int *pbUsageError );
 
+/*! Options for GDALGrid(). Opaque type */
+typedef struct GDALGridOptions GDALGridOptions;
+
+typedef struct GDALGridOptionsForBinary GDALGridOptionsForBinary;
+
+GDALGridOptions CPL_DLL *GDALGridOptionsNew(char** papszArgv,
+                                                      GDALGridOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALGridOptionsFree( GDALGridOptions *psOptions );
+
+void CPL_DLL GDALGridOptionsSetProgress( GDALGridOptions *psOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData );
+
+GDALDatasetH CPL_DLL GDALGrid( const char *pszDest,
+                               GDALDatasetH hSrcDS,
+                               const GDALGridOptions *psOptions, int *pbUsageError );
+
 CPL_C_END
 
 #endif /* _GDAL_UTILS_H_INCLUDED */
