@@ -2239,17 +2239,11 @@ char *OGRGeometry::exportToGML( const char* const * papszOptions ) const
 
 char *OGRGeometry::exportToKML() const
 {
-#ifndef _WIN32_WCE
 #ifdef OGR_ENABLED
     return OGR_G_ExportToKML( (OGRGeometryH) this, NULL );
 #else
     CPLError( CE_Failure, CPLE_AppDefined,
               "OGRGeometry::exportToKML() not supported in builds without OGR drivers." );
-    return NULL;
-#endif
-#else
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "OGRGeometry::exportToKML() not supported in the WinCE build." );
     return NULL;
 #endif
 }
@@ -2272,18 +2266,12 @@ char *OGRGeometry::exportToKML() const
 
 char *OGRGeometry::exportToJson() const
 {
-#ifndef _WIN32_WCE
 #ifdef OGR_ENABLED
     OGRGeometry* poGeometry = const_cast<OGRGeometry*>(this);
     return OGR_G_ExportToJson( (OGRGeometryH) (poGeometry) );
 #else
     CPLError( CE_Failure, CPLE_AppDefined,
               "OGRGeometry::exportToJson() not supported in builds without OGR drivers." );
-    return NULL;
-#endif
-#else
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "OGRGeometry::exportToJson() not supported in the WinCE build." );
     return NULL;
 #endif
 }
