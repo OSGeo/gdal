@@ -68,7 +68,7 @@ class BSBDataset : public GDALPamDataset
   public:
                 BSBDataset();
 		~BSBDataset();
-    
+
     BSBInfo     *psInfo;
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -94,7 +94,7 @@ class BSBRasterBand : public GDALPamRasterBand
 
   public:
     		BSBRasterBand( BSBDataset * );
-    
+
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
@@ -155,8 +155,8 @@ CPLErr BSBRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
         return CE_None;
     }
-    else
-        return CE_Failure;
+
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -189,16 +189,16 @@ GDALColorInterp BSBRasterBand::GetColorInterpretation()
 /*                           BSBDataset()                               */
 /************************************************************************/
 
-BSBDataset::BSBDataset()
-
+BSBDataset::BSBDataset() :
+    nGCPCount(0),
+    pasGCPList(NULL),
+    bGeoTransformSet(FALSE)
 {
     psInfo = NULL;
 
-    bGeoTransformSet = FALSE;
 
-    nGCPCount = 0;
-    pasGCPList = NULL;
-    osGCPProjection = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4326]]";
+    osGCPProjection = 
+        "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4326]]";
 
     adfGeoTransform[0] = 0.0;     /* X Origin (top left corner) */
     adfGeoTransform[1] = 1.0;     /* X Pixel size */
@@ -234,11 +234,11 @@ CPLErr BSBDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-    
+
     if( bGeoTransformSet )
         return CE_None;
-    else
-        return CE_Failure;
+
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -250,8 +250,8 @@ const char *BSBDataset::GetProjectionRef()
 {
     if( bGeoTransformSet )
         return osGCPProjection;
-    else
-        return "";
+
+    return "";
 }
 
 /************************************************************************/
@@ -262,11 +262,6 @@ static void
 GDALHeuristicDatelineWrap( int nPointCount, double *padfX )
 
 {
-    int i;
-    /* Following inits are useless but keep GCC happy */
-    double dfX_PM_Min = 0, dfX_PM_Max = 0, dfX_Dateline_Min = 0, dfX_Dateline_Max = 0;
-    int    bUsePMWrap;
-
     if( nPointCount < 2 )
         return;
 
@@ -275,15 +270,16 @@ GDALHeuristicDatelineWrap( int nPointCount, double *padfX )
 /*      prime meridian (-180 to 180) and centering on the dateline      */
 /*      (0 to 360).                                                     */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nPointCount; i++ )
-    {
-        double dfX_PM, dfX_Dateline;
+    /* Following inits are useless but keep GCC happy */
+    double dfX_PM_Min = 0, dfX_PM_Max = 0, dfX_Dateline_Min = 0, dfX_Dateline_Max = 0;
 
-        dfX_PM = padfX[i];
+    for( int i = 0; i < nPointCount; i++ )
+    {
+        double dfX_PM = padfX[i];
         if( dfX_PM > 180 )
             dfX_PM -= 360.0;
 
-        dfX_Dateline = padfX[i];
+        double dfX_Dateline = padfX[i];
         if( dfX_Dateline < 0 )
             dfX_Dateline += 360.0;
 
@@ -320,24 +316,26 @@ GDALHeuristicDatelineWrap( int nPointCount, double *padfX )
 /* -------------------------------------------------------------------- */
 /*      Pick which way to transform things.                             */
 /* -------------------------------------------------------------------- */
+    bool bUsePMWrap;
+
     if( (dfX_PM_Max - dfX_PM_Min) > 270.0
         && (dfX_Dateline_Max - dfX_Dateline_Min) < 270.0 )
-        bUsePMWrap = FALSE;
+        bUsePMWrap = false;
     else
-        bUsePMWrap = TRUE;
+        bUsePMWrap = true;
 
 
 /* -------------------------------------------------------------------- */
 /*      Apply rewrapping.                                               */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nPointCount; i++ )
+    for( int i = 0; i < nPointCount; i++ )
     {
         if( bUsePMWrap )
         {
             if( padfX[i] > 180 )
                 padfX[i] -= 360.0;
         }
-        else 
+        else
         {
             if( padfX[i] < 0 )
                 padfX[i] += 360.0;
@@ -353,15 +351,14 @@ static void
 GDALHeuristicDatelineWrapGCPs( int nPointCount, GDAL_GCP *pasGCPList )
 {
     std::vector<double> oadfX;
-    int i;
 
     oadfX.resize( nPointCount );
-    for( i = 0; i < nPointCount; i++ )
+    for( int i = 0; i < nPointCount; i++ )
         oadfX[i] = pasGCPList[i].dfGCPX;
 
     GDALHeuristicDatelineWrap( nPointCount, &(oadfX[0]) );
 
-    for( i = 0; i < nPointCount; i++ )
+    for( int i = 0; i < nPointCount; i++ )
         pasGCPList[i].dfGCPX = oadfX[i];
 }
 
@@ -394,10 +391,9 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Collect coordinate system related parameters from header.       */
 /* -------------------------------------------------------------------- */
-    int i;
     const char *pszKNP=NULL, *pszKNQ=NULL;
 
-    for( i = 0; psInfo->papszHeader[i] != NULL; i++ )
+    for( int i = 0; psInfo->papszHeader[i] != NULL; i++ )
     {
         if( EQUALN(psInfo->papszHeader[i],"KNP/",4) )
         {
@@ -411,7 +407,6 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         }
     }
 
-    
 /* -------------------------------------------------------------------- */
 /*      Can we derive a reasonable coordinate system definition for     */
 /*      this file?  For now we keep it simple, just handling            */
@@ -425,14 +420,14 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         const char *pszValue, *pszEnd = NULL;
         const char *pszGEOGCS = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]";
         CPLString osPP;
-        
+
         // Capture the PP string.
         pszValue = strstr(pszKNP,"PP=");
         if( pszValue )
             pszEnd = strstr(pszValue,",");
         if( pszValue && pszEnd )
             osPP.assign(pszValue+3,pszEnd-pszValue-3);
-        
+
         // Look at the datum
         if( pszGD == NULL )
         {
@@ -461,7 +456,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         else if( EQUALN(pszPR,"PR=TRANSVERSE MERCATOR", 22)
                  && osPP.size() > 0 )
         {
-            
+
             osUnderlyingSRS.Printf( 
                 "PROJCS[\"unnamed\",%s,PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]",
                 pszGEOGCS, osPP.c_str() );
@@ -483,19 +478,19 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
                 "PROJCS[\"unnamed\",%s,PROJECTION[\"Polyconic\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]", 
                 pszGEOGCS, osPP.c_str() );
         }
-        
+
         else if( EQUALN(pszPR,"PR=LAMBERT CONFORMAL CONIC", 26) 
                  && osPP.size() > 0 && pszKNQ != NULL )
         {
             CPLString osP2, osP3;
-        
+
             // Capture the KNQ/P2 string.
             pszValue = strstr(pszKNQ,"P2=");
             if( pszValue )
                 pszEnd = strstr(pszValue,",");
             if( pszValue && pszEnd )
                 osP2.assign(pszValue+3,pszEnd-pszValue-3);
-            
+
             // Capture the KNQ/P3 string.
             pszValue = strstr(pszKNQ,"P3=");
             if( pszValue )
@@ -523,16 +518,16 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
     if( osUnderlyingSRS.length() > 0 )
     {
         OGRSpatialReference oGeog_SRS, oProjected_SRS;
-        OGRCoordinateTransformation *poCT;
-        
+
         oProjected_SRS.SetFromUserInput( osUnderlyingSRS );
         oGeog_SRS.CopyGeogCSFrom( &oProjected_SRS );
-        
-        poCT = OGRCreateCoordinateTransformation( &oGeog_SRS, 
-                                                  &oProjected_SRS );
+
+        OGRCoordinateTransformation *poCT
+            = OGRCreateCoordinateTransformation( &oGeog_SRS,
+                                                 &oProjected_SRS );
         if( poCT != NULL )
         {
-            for( i = 0; i < nGCPCount; i++ )
+            for( int i = 0; i < nGCPCount; i++ )
             {
                 poCT->Transform( 1, 
                                  &(pasGCPList[i].dfGCPX), 
@@ -571,14 +566,10 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 
 void BSBDataset::ScanForGCPsNos( const char *pszFilename )
 {
-    char **Tokens;
-    const char *geofile;
-    const char *extension;
-    int fileGCPCount=0;
-
-    extension = CPLGetExtension(pszFilename);
+    const char *extension = CPLGetExtension(pszFilename);
 
     // pseudointelligently try and guess whether we want a .geo or a .GEO
+    const char *geofile;
     if (extension[1] == 'O')
     {
         geofile = CPLResetExtension( pszFilename, "GEO");
@@ -597,6 +588,7 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
     char *thisLine = (char *) CPLMalloc( 80 ); // FIXME
 
     // Count the GCPs (reference points) and seek the file pointer 'gfp' to the starting point
+    int fileGCPCount=0;
     while (fgets(thisLine, 80, gfp))
     {
         if( EQUALN(thisLine, "Point", 5) )
@@ -612,7 +604,8 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
         if( EQUALN(thisLine, "Point", 5) )
         {
             // got a point line, turn it into a gcp
-            Tokens = CSLTokenizeStringComplex(thisLine, "= ", FALSE, FALSE);
+            char **Tokens
+                = CSLTokenizeStringComplex(thisLine, "= ", FALSE, FALSE);
             if (CSLCount(Tokens) >= 5)
             {
                 GDALInitGCPs( 1, pasGCPList + nGCPCount );
@@ -650,27 +643,24 @@ void BSBDataset::ScanForGCPsBSB()
 /*      REF/n,pixel,line,lat,long                                       */
 /* -------------------------------------------------------------------- */
     int fileGCPCount=0;
-    int i;
 
     // Count the GCPs (reference points) in psInfo->papszHeader
-    for( i = 0; psInfo->papszHeader[i] != NULL; i++ )
+    for( int i = 0; psInfo->papszHeader[i] != NULL; i++ )
         if( EQUALN(psInfo->papszHeader[i],"REF/",4) )
             fileGCPCount++;
 
     // Memory has not been allocated to fileGCPCount yet
     pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),fileGCPCount+1);
 
-    for( i = 0; psInfo->papszHeader[i] != NULL; i++ )
+    for( int i = 0; psInfo->papszHeader[i] != NULL; i++ )
     {
-        char	**papszTokens;
-        char	szName[50];
 
         if( !EQUALN(psInfo->papszHeader[i],"REF/",4) )
             continue;
 
-        papszTokens = 
-            CSLTokenizeStringComplex( psInfo->papszHeader[i]+4, ",", 
-                                      FALSE, FALSE );
+        char	**papszTokens
+            = CSLTokenizeStringComplex( psInfo->papszHeader[i]+4, ",",
+                                        FALSE, FALSE );
 
         if( CSLCount(papszTokens) > 4 )
         {
@@ -688,6 +678,7 @@ void BSBDataset::ScanForGCPsBSB()
             }
             else
             {
+                char szName[50];
                 sprintf( szName, "GCP_%d", nGCPCount+1 );
                 pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
             }
@@ -708,13 +699,13 @@ int BSBDataset::IdentifyInternal( GDALOpenInfo * poOpenInfo, bool& isNosOut )
 /* -------------------------------------------------------------------- */
 /*      Check for BSB/ keyword.                                         */
 /* -------------------------------------------------------------------- */
-    int     i;
     isNosOut = false;
 
     if( poOpenInfo->nHeaderBytes < 1000 )
         return FALSE;
 
-    for( i = 0; i < poOpenInfo->nHeaderBytes - 4; i++ )
+    int i = 0;
+    for( ; i < poOpenInfo->nHeaderBytes - 4; i++ )
     {
         if( poOpenInfo->pabyHeader[i+0] == 'B'
             && poOpenInfo->pabyHeader[i+1] == 'S'
@@ -767,7 +758,7 @@ int BSBDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    bool        isNos = false;
+    bool isNos = false;
     if (!IdentifyInternal(poOpenInfo, isNos))
         return NULL;
 
@@ -782,9 +773,7 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    BSBDataset 	*poDS;
-
-    poDS = new BSBDataset();
+    BSBDataset *poDS = new BSBDataset();
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -855,7 +844,7 @@ const GDAL_GCP *BSBDataset::GetGCPs()
 
 static int BSBIsSRSOK(const char *pszWKT)
 {
-    int bOK = FALSE;
+    bool bOK = false;
     OGRSpatialReference oSRS, oSRS_WGS84, oSRS_NAD83;
 
     if( pszWKT != NULL && pszWKT[0] != '\0' )
@@ -868,7 +857,7 @@ static int BSBIsSRSOK(const char *pszWKT)
         if ( (oSRS.IsSameGeogCS(&oSRS_WGS84) || oSRS.IsSameGeogCS(&oSRS_NAD83)) &&
               oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 )
         {
-            bOK = TRUE;
+            bOK = true;
         }
     }
 
@@ -891,13 +880,10 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
+    const int nBands = poSrcDS->GetRasterCount();
     if( nBands != 1 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -918,12 +904,13 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
+
 /* -------------------------------------------------------------------- */
 /*      Open the output file.                                           */
 /* -------------------------------------------------------------------- */
-    BSBInfo *psBSB;
-
-    psBSB = BSBCreate( pszFilename, 0, 200, nXSize, nYSize );
+    BSBInfo *psBSB = BSBCreate( pszFilename, 0, 200, nXSize, nYSize );
     if( psBSB == NULL )
         return NULL;
 
@@ -931,7 +918,6 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Prepare initial color table.colortable.                         */
 /* -------------------------------------------------------------------- */
     GDALRasterBand	*poBand = poSrcDS->GetRasterBand(1);
-    int			iColor;
     unsigned char       abyPCT[771];
     int                 nPCTSize;
     int                 anRemap[256];
@@ -943,7 +929,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( poBand->GetColorTable() == NULL )
     {
         /* map greyscale down to 63 grey levels. */
-        for( iColor = 0; iColor < 256; iColor++ )
+        for( int iColor = 0; iColor < 256; iColor++ )
         {
             int nOutValue = (int) (iColor / 4.1) + 1;
 
@@ -961,7 +947,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (nColorTableSize > 255)
             nColorTableSize = 255;
 
-        for( iColor = 0; iColor < nColorTableSize; iColor++ )
+        for( int iColor = 0; iColor < nColorTableSize; iColor++ )
         {
             GDALColorEntry	sEntry;
 
@@ -983,26 +969,20 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Boil out all duplicate entries.                                 */
 /* -------------------------------------------------------------------- */
-    int  i;
-
-    for( i = 1; i < nPCTSize-1; i++ )
+    for( int i = 1; i < nPCTSize-1; i++ )
     {
-        int  j;
-
-        for( j = i+1; j < nPCTSize; j++ )
+        for( int j = i+1; j < nPCTSize; j++ )
         {
             if( abyPCT[i*3+0] == abyPCT[j*3+0] 
                 && abyPCT[i*3+1] == abyPCT[j*3+1] 
                 && abyPCT[i*3+2] == abyPCT[j*3+2] )
             {
-                int   k;
-
                 nPCTSize--;
                 abyPCT[j*3+0] = abyPCT[nPCTSize*3+0];
                 abyPCT[j*3+1] = abyPCT[nPCTSize*3+1];
                 abyPCT[j*3+2] = abyPCT[nPCTSize*3+2];
 
-                for( k = 0; k < 256; k++ )
+                for( int k = 0; k < 256; k++ )
                 {
                     // merge matching entries.
                     if( anRemap[k] == j )
@@ -1034,11 +1014,9 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         // Find the closest pair of color table entries.
 
-        for( i = 1; i < nPCTSize-1; i++ )
+        for( int i = 1; i < nPCTSize-1; i++ )
         {
-            int  j;
-            
-            for( j = i+1; j < nPCTSize; j++ )
+            for( int j = i+1; j < nPCTSize; j++ )
             {
                 int nRange = ABS(abyPCT[i*3+0] - abyPCT[j*3+0])
                     + ABS(abyPCT[i*3+1] - abyPCT[j*3+1])
@@ -1059,12 +1037,12 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         abyPCT[iBestMatch2*3+1] = abyPCT[nPCTSize*3+1];
         abyPCT[iBestMatch2*3+2] = abyPCT[nPCTSize*3+2];
 
-        for( i = 0; i < 256; i++ )
+        for( int i = 0; i < 256; i++ )
         {
             // merge matching entries.
             if( anRemap[i] == iBestMatch2 )
                 anRemap[i] = iBestMatch1;
-            
+
             // shift the last PCT entry into the new hole.
             if( anRemap[i] == nPCTSize )
                 anRemap[i] = iBestMatch2;
@@ -1091,7 +1069,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if ( BSBIsSRSOK(pszGCPProjection) )
         {
             const GDAL_GCP * pasGCPList = poSrcDS->GetGCPs();
-            for( i = 0; i < nGCPCount; i++ )
+            for( int i = 0; i < nGCPCount; i++ )
             {
                 VSIFPrintfL( psBSB->fp, 
                             "REF/%d,%f,%f,%f,%f\n", 
@@ -1136,10 +1114,9 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    GByte 	*pabyScanline;
     CPLErr      eErr = CE_None;
 
-    pabyScanline = (GByte *) CPLMalloc( nXSize );
+    GByte *pabyScanline = (GByte *) CPLMalloc( nXSize );
 
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
@@ -1148,7 +1125,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                  nBands, nBands * nXSize );
         if( eErr == CE_None )
         {
-            for( i = 0; i < nXSize; i++ )
+            for( int i = 0; i < nXSize; i++ )
                 pabyScanline[i] = (GByte) anRemap[pabyScanline[i]];
 
             if( !BSBWriteScanline( psBSB, pabyScanline ) )
@@ -1168,8 +1145,8 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         VSIUnlink( pszFilename );
         return NULL;
     }
-    else
-        return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
 #endif
 
@@ -1180,28 +1157,26 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_BSB()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "BSB" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "BSB" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "BSB" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Maptech BSB Nautical Charts" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#BSB" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver	*poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "BSB" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Maptech BSB Nautical Charts" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#BSB" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #ifdef BSB_CREATE
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 #endif
-        poDriver->pfnOpen = BSBDataset::Open;
-        poDriver->pfnIdentify = BSBDataset::Identify;
+    poDriver->pfnOpen = BSBDataset::Open;
+    poDriver->pfnIdentify = BSBDataset::Identify;
 #ifdef BSB_CREATE
-        poDriver->pfnCreateCopy = BSBCreateCopy;
+    poDriver->pfnCreateCopy = BSBCreateCopy;
 #endif
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
