@@ -38,7 +38,7 @@ CPL_C_START
 void	GDALRegister_PALSARJaxa(void);
 CPL_C_END
 
-#if defined(WIN32) || defined(WIN32CE)
+#if defined(WIN32)
 #define SEP_STRING "\\"
 #else
 #define SEP_STRING "/"
