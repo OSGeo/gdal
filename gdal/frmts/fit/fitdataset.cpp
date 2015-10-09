@@ -36,7 +36,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
- 
+
 void	GDALRegister_FIT(void);
 CPL_C_END
 
@@ -57,11 +57,11 @@ class FITRasterBand;
 class FITDataset : public GDALPamDataset
 {
     friend class FITRasterBand;
-    
+
     VSILFILE	*fp;
     FITinfo	*info;
     double      adfGeoTransform[6];
-    
+
   public:
     FITDataset();
     ~FITDataset();
@@ -86,7 +86,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 class FITRasterBand : public GDALPamRasterBand
 {
     friend class FITDataset;
-    
+
     unsigned long recordSize; // number of bytes of a single page/block/record
     unsigned long numXBlocks; // number of pages in the X direction
     unsigned long numYBlocks; // number of pages in the Y direction
@@ -98,9 +98,9 @@ public:
 
     FITRasterBand( FITDataset *, int );
     ~FITRasterBand();
-    
+
     // should override RasterIO eventually.
-    
+
     virtual CPLErr IReadBlock( int, int, void * );
 //     virtual CPLErr WriteBlock( int, int, void * ); 
     virtual double GetMinimum( int *pbSuccess );
@@ -118,7 +118,7 @@ FITRasterBand::FITRasterBand( FITDataset *poDS, int nBand ) : tmpImage( NULL )
 {
     this->poDS = poDS;
     this->nBand = nBand;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the GDAL data type.                                         */
 /* -------------------------------------------------------------------- */
@@ -482,8 +482,6 @@ CPLErr FITRasterBand::ReadBlock( int nBlockXOff, int nBlockYOff,
 {
     FITDataset	*poFIT_DS = (FITDataset *) poDS;
 
-    
-
     return CE_None;
 }
 
@@ -496,8 +494,6 @@ CPLErr FITRasterBand::WriteBlock( int nBlockXOff, int nBlockYOff,
 
 {
     FITDataset	*poFIT_DS = (FITDataset *) poDS;
-
-    
 
     return CE_None;
 }
@@ -521,9 +517,8 @@ double FITRasterBand::GetMinimum( int *pbSuccess )
         EQUALN((const char *) &(poFIT_DS->info->version), "02", 2)) {
         return poFIT_DS->info->minValue;
     }
-    else {
-        return GDALRasterBand::GetMinimum( pbSuccess );
-    }
+
+    return GDALRasterBand::GetMinimum( pbSuccess );
 }
 
 /************************************************************************/
@@ -543,9 +538,8 @@ double FITRasterBand::GetMaximum( int *pbSuccess )
     if (EQUALN((const char *) &poFIT_DS->info->version, "02", 2)) {
         return poFIT_DS->info->maxValue;
     }
-    else {
-        return GDALRasterBand::GetMaximum( pbSuccess );
-    }
+
+    return GDALRasterBand::GetMaximum( pbSuccess );
 }
 
 /************************************************************************/
@@ -776,7 +770,6 @@ GDALColorInterp FITRasterBand::GetColorInterpretation()
 
 FITDataset::FITDataset() : fp( NULL ), info( NULL )
 {
-
     adfGeoTransform[0] = 0.0; // x origin (top left corner)
     adfGeoTransform[1] = 1.0; // x pixel size
     adfGeoTransform[2] = 0.0;
@@ -860,7 +853,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
 /*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/    
+/*	bytes.								*/
 /* -------------------------------------------------------------------- */
 
     if( poOpenInfo->nHeaderBytes < 5 )
@@ -882,9 +875,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    FITDataset 	*poDS;
-
-    poDS = new FITDataset();
+    FITDataset 	*poDS = new FITDataset();
     DeleteGuard<FITDataset> guard( poDS );
 
 	// re-open file for large file (64bit) access
@@ -1098,15 +1089,13 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    VSILFILE	*fpImage;
-
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
         return NULL;
     }
 
-    fpImage = VSIFOpenL( pszFilename, "wb" );
+    VSILFILE *fpImage = VSIFOpenL( pszFilename, "wb" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1297,7 +1286,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                          bytesPerComponent);
             } // switch
 #endif // swapping
-            
+
             VSIFWriteL(output, pageBytes, 1, fpImage);
 
             double perc = ((double) (y * maxx + x)) / (maxx * maxy);
@@ -1349,28 +1338,26 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 void GDALRegister_FIT()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "FIT" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "FIT" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "FIT" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "FIT Image" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = FITDataset::Open;
+    poDriver->SetDescription( "FIT" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "FIT Image" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->pfnOpen = FITDataset::Open;
 #ifdef FIT_WRITE
-        poDriver->pfnCreateCopy = FITCreateCopy;
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
+    poDriver->pfnCreateCopy = FITCreateCopy;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
 #endif // FIT_WRITE
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
