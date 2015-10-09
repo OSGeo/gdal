@@ -12,7 +12,8 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/apps/ogr2ogr_lib.o \
 			$(GDAL_ROOT)/apps/gdaldem_lib.o \
 			$(GDAL_ROOT)/apps/nearblack_lib.o \
-			$(GDAL_ROOT)/apps/gdal_grid_lib.o
+			$(GDAL_ROOT)/apps/gdal_grid_lib.o \
+			$(GDAL_ROOT)/apps/gdal_rasterize_lib.o
 
 GDAL_OBJ += $(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
 

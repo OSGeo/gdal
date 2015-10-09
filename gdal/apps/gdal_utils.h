@@ -173,6 +173,24 @@ GDALDatasetH CPL_DLL GDALGrid( const char *pszDest,
                                GDALDatasetH hSrcDS,
                                const GDALGridOptions *psOptions, int *pbUsageError );
 
+/*! Options for GDALRasterize(). Opaque type */
+typedef struct GDALRasterizeOptions GDALRasterizeOptions;
+
+typedef struct GDALRasterizeOptionsForBinary GDALRasterizeOptionsForBinary;
+
+GDALRasterizeOptions CPL_DLL *GDALRasterizeOptionsNew(char** papszArgv,
+                                                      GDALRasterizeOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALRasterizeOptionsFree( GDALRasterizeOptions *psOptions );
+
+void CPL_DLL GDALRasterizeOptionsSetProgress( GDALRasterizeOptions *psOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData );
+
+GDALDatasetH CPL_DLL GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
+                                    GDALDatasetH hSrcDS,
+                                    const GDALRasterizeOptions *psOptions, int *pbUsageError );
+
 CPL_C_END
 
 #endif /* _GDAL_UTILS_H_INCLUDED */

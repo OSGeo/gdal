@@ -511,7 +511,7 @@ int main( int argc, char ** argv )
         GDALWarpAppOptionsSetProgress(psOptions, GDALTermProgress, NULL);
     }
     
-    if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
+    if (hDstDS == NULL && !psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
         CheckExtensionConsistency(psOptionsForBinary->pszDstFilename, psOptionsForBinary->pszFormat);
 
     int bUsageError = FALSE;
