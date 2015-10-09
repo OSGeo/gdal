@@ -42,7 +42,7 @@ CPL_C_END
 /* -------------------------------------------------------------------- */
 /*
  * class ADSRange 
- * 
+ *
  * Range of ADS record matching the range of the MDS records. 
  *
  */
@@ -80,7 +80,7 @@ class ADSRange
         mjd_m_first(mjd_m_first), mjd_m_last(mjd_m_last) 
     { 
     } 
-    
+
     /* get count of matched records */
     inline int getDSRCount( void ) const 
     { 
@@ -136,12 +136,11 @@ class ADSRange
     { 
         return this->mjd_m_last ; 
     } 
-
-} ;  
+};
 
 
 /* -------------------------------------------------------------------- */
-/* 
+/*
  * NOTE: There are two kinds of ADS records: 
  *
  *  1) One ADS record appliable to all consequent MDS records until replaced 
@@ -151,7 +150,7 @@ class ADSRange
  *  2) Two ADS records applicable to all MDS records between them 
  *     (e.g., tiepoints ADS), i.e., last MDS record should be followed 
  *     by an ADS rescord having the same or later time-stamp.  
- *  
+ *
  *  The type of the ADS afects the way how the ADS records corresponding 
  *  to a set of MDS records should be selected. 
  */
@@ -160,14 +159,12 @@ class ADSRange
 class ADSRangeLastAfter: public ADSRange
 { 
 
-  public: 
+  public:
 
     /* CONSTRUCTOR */ 
     ADSRangeLastAfter( EnvisatFile & envfile, int  ads_idx , int mds_idx,
             const TimeDelta & line_interval ) ; 
-
-} ;  
+};
 
 
 #endif /*tiepointrange_hpp*/
-
