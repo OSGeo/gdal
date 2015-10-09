@@ -38,15 +38,13 @@ CPL_CVSID("$Id$");
 /*                             ERSHdrNode()                             */
 /************************************************************************/
 
-ERSHdrNode::ERSHdrNode()
-
-{
-    nItemMax = 0;
-    nItemCount = 0;
-    papszItemName = NULL;
-    papszItemValue = NULL;
-    papoItemChild = NULL;
-}
+ERSHdrNode::ERSHdrNode() :
+    nItemMax(0),
+    nItemCount(0),
+    papszItemName(NULL),
+    papszItemValue(NULL),
+    papoItemChild(NULL)
+{ }
 
 /************************************************************************/
 /*                            ~ERSHdrNode()                             */
@@ -55,9 +53,7 @@ ERSHdrNode::ERSHdrNode()
 ERSHdrNode::~ERSHdrNode()
 
 {
-    int i;
-
-    for( i = 0; i < nItemCount; i++ )
+    for( int i = 0; i < nItemCount; i++ )
     {
         if( papoItemChild[i] != NULL )
             delete papoItemChild[i];
@@ -110,18 +106,17 @@ int ERSHdrNode::ReadLine( VSILFILE * fp, CPLString &osLine )
     do
     {
         const char *pszNewLine = CPLReadLineL( fp );
-        
+
         if( pszNewLine == NULL )
             return FALSE;
 
         osLine += pszNewLine;
 
-        int  bInQuote = FALSE;
-        size_t  i;
+        bool bInQuote = false;
 
         nBracketLevel = 0;
 
-        for( i = 0; i < osLine.length(); i++ )
+        for( size_t i = 0; i < osLine.length(); i++ )
         {
             if( osLine[i] == '"' )
                 bInQuote = !bInQuote;
@@ -156,20 +151,21 @@ int ERSHdrNode::ReadLine( VSILFILE * fp, CPLString &osLine )
 int ERSHdrNode::ParseChildren( VSILFILE * fp )
 
 {
-    while( TRUE )
-    { 
-        size_t iOff;
-        CPLString osLine;
-
+    while( true )
+    {
 /* -------------------------------------------------------------------- */
 /*      Read the next line (or multi-line for bracketed value).         */
 /* -------------------------------------------------------------------- */
+        CPLString osLine;
+
         if( !ReadLine( fp, osLine ) )
             return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Got a Name=Value.                                               */
 /* -------------------------------------------------------------------- */
+        size_t iOff;
+
         if( (iOff = osLine.find_first_of( '=' )) != std::string::npos )
         {
             CPLString osName = osLine.substr(0,iOff-1);
@@ -193,14 +189,14 @@ int ERSHdrNode::ParseChildren( VSILFILE * fp )
         {
             CPLString osName = osLine.substr(0,iOff);
             osName.Trim();
-            
+
             MakeSpace();
             papszItemName[nItemCount] = CPLStrdup(osName);
             papszItemValue[nItemCount] = NULL;
             papoItemChild[nItemCount] = new ERSHdrNode();
 
             nItemCount++;
-            
+
             if( !papoItemChild[nItemCount-1]->ParseChildren( fp ) )
                 return FALSE;
         }
@@ -237,11 +233,10 @@ int ERSHdrNode::WriteSelf( VSILFILE * fp, int nIndent )
 
 {
     CPLString oIndent;
-    int i;
 
     oIndent.assign( nIndent, '\t' );
 
-    for( i = 0; i < nItemCount; i++ )
+    for( int i = 0; i < nItemCount; i++ )
     {
         if( papszItemValue[i] != NULL )
         {
@@ -276,15 +271,13 @@ int ERSHdrNode::WriteSelf( VSILFILE * fp, int nIndent )
 const char *ERSHdrNode::Find( const char *pszPath, const char *pszDefault )
 
 {
-    int i;
-
 /* -------------------------------------------------------------------- */
 /*      If this is the final component of the path, search for a        */
 /*      matching child and return the value.                            */
 /* -------------------------------------------------------------------- */
     if( strchr(pszPath,'.') == NULL )
     {
-        for( i = 0; i < nItemCount; i++ )
+        for( int i = 0; i < nItemCount; i++ )
         {
             if( EQUAL(pszPath,papszItemName[i]) )
             {
@@ -313,20 +306,19 @@ const char *ERSHdrNode::Find( const char *pszPath, const char *pszDefault )
 /*      and recurse.                                                    */
 /* -------------------------------------------------------------------- */
     CPLString osPathFirst, osPathRest, osPath = pszPath;
-    int iDot;
-    
-    iDot = osPath.find_first_of('.');
+
+    int iDot = osPath.find_first_of('.');
     osPathFirst = osPath.substr(0,iDot);
     osPathRest = osPath.substr(iDot+1);
 
-    for( i = 0; i < nItemCount; i++ )
+    for( int i = 0; i < nItemCount; i++ )
     {
         if( EQUAL(osPathFirst,papszItemName[i]) )
         {
             if( papoItemChild[i] != NULL )
                 return papoItemChild[i]->Find( osPathRest, pszDefault );
-            else
-                return pszDefault;
+
+            return pszDefault;
         }
     }
 
@@ -344,25 +336,25 @@ const char *ERSHdrNode::FindElem( const char *pszPath, int iElem,
 
 {
     const char *pszArray = Find( pszPath, NULL );
-    char **papszTokens;
-    int  bDefault = TRUE;
 
     if( pszArray == NULL )
         return pszDefault;
 
-    papszTokens = CSLTokenizeStringComplex( pszArray, "{ \t}", TRUE, FALSE );
+    bool bDefault = true;
+    char **papszTokens
+        = CSLTokenizeStringComplex( pszArray, "{ \t}", TRUE, FALSE );
     if( iElem >= 0 && iElem < CSLCount(papszTokens) )
     {
         osTempReturn = papszTokens[iElem];
-        bDefault = FALSE;
+        bDefault = false;
     }
-    
+
     CSLDestroy( papszTokens );
 
     if( bDefault )
         return pszDefault;
-    else
-        return osTempReturn;
+
+    return osTempReturn;
 }
 
 /************************************************************************/
@@ -374,11 +366,8 @@ const char *ERSHdrNode::FindElem( const char *pszPath, int iElem,
 ERSHdrNode *ERSHdrNode::FindNode( const char *pszPath )
 
 {
-    int i;
     CPLString osPathFirst, osPathRest, osPath = pszPath;
-    int iDot;
-    
-    iDot = osPath.find_first_of('.');
+    int iDot = osPath.find_first_of('.');
     if( iDot == -1 )
     {
         osPathFirst = osPath;
@@ -389,7 +378,7 @@ ERSHdrNode *ERSHdrNode::FindNode( const char *pszPath )
         osPathRest = osPath.substr(iDot+1);
     }
 
-    for( i = 0; i < nItemCount; i++ )
+    for( int i = 0; i < nItemCount; i++ )
     {
         if( EQUAL(osPathFirst,papszItemName[i]) )
         {
@@ -418,9 +407,7 @@ void ERSHdrNode::Set( const char *pszPath, const char *pszValue )
 
 {
     CPLString  osPath = pszPath;
-    int iDot;
-    
-    iDot = osPath.find_first_of('.');
+    int iDot = osPath.find_first_of('.');
 
 /* -------------------------------------------------------------------- */
 /*      We have an intermediate node, find or create it and             */
@@ -431,11 +418,11 @@ void ERSHdrNode::Set( const char *pszPath, const char *pszValue )
         CPLString osPathFirst = osPath.substr(0,iDot);
         CPLString osPathRest = osPath.substr(iDot+1);
         ERSHdrNode *poFirst = FindNode( osPathFirst );
-        
+
         if( poFirst == NULL )
         {
             poFirst = new ERSHdrNode();
-            
+
             MakeSpace();
             papszItemName[nItemCount] = CPLStrdup(osPathFirst);
             papszItemValue[nItemCount] = NULL;
@@ -450,9 +437,7 @@ void ERSHdrNode::Set( const char *pszPath, const char *pszValue )
 /* -------------------------------------------------------------------- */
 /*      This is the final item name.  Find or create it.                */
 /* -------------------------------------------------------------------- */
-    int i;
-
-    for( i = 0; i < nItemCount; i++ )
+    for( int i = 0; i < nItemCount; i++ )
     {
         if( EQUAL(osPath,papszItemName[i]) 
             && papszItemValue[i] != NULL )
