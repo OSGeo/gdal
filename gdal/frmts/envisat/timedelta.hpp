@@ -29,16 +29,16 @@
 
 #ifndef timedelta_hpp
 #define timedelta_hpp
-/* 
+/*
  * TimeDelta class represents the time difference. It is used to 
  * hold the Envisat MJD (Modified Julian Date - which is time 
  * since 2000-01-01T00:00:00.000000Z) 
  */
 
 class TimeDelta  
-{ 
+{
 
-  private: 
+  private:
 
     int days ;     /* number of days */
     int secs ;     /* number of seconds since day start */ 
@@ -71,7 +71,7 @@ class TimeDelta
         this->set( _days , _secs , _uscs ) ;
     } 
 
-  public: 
+  public:
 
     /* CONSTRUCTORS */
     TimeDelta( void ) : days(0), secs(0), usecs(0) {} 
@@ -112,9 +112,8 @@ class TimeDelta
         return (this->days*86400.0) + this->secs + (this->usecs*1e-6) ;
     } 
 
-
     /* OPERATORS */
-    
+
     /* difference */
     inline TimeDelta operator -( const TimeDelta & that ) const 
     { 
@@ -186,7 +185,6 @@ class TimeDelta
                 ) ;
     } 
 
-
     inline bool operator !=( const TimeDelta & that ) const 
     { 
         return !( *this == that ) ;
@@ -202,7 +200,7 @@ class TimeDelta
         return !( *this > that ) ;
     } 
 
-} ;  
+};
 
 /*
 #include <iostream>
@@ -215,7 +213,7 @@ std::ostream & operator<<( std::ostream & out, const TimeDelta & td )
         << "," << td.getMicroseconds() << ")" ; 
 
     return out ;
-} 
+}
 */
 
 #endif /*timedelta_hpp*/
