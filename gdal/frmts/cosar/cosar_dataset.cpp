@@ -20,7 +20,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-
 #include "gdal_priv.h"
 #include "cpl_port.h"
 #include "cpl_conv.h"
@@ -29,18 +28,19 @@
 #include <string.h>
 
 /* Various offsets, in bytes */
-#define BIB_OFFSET 	0  /* Bytes in burst, valid only for ScanSAR */
-#define RSRI_OFFSET 	4  /* Range Sample Relative Index */
-#define RS_OFFSET 	8  /* Range Samples, the length of a range line */
-#define AS_OFFSET 	12 /* Azimuth Samples, the length of an azimth column */
-#define BI_OFFSET	16 /* Burst Index, the index number of the burst */
-#define RTNB_OFFSET	20 /* Rangeline total number of bytes, incl. annot. */
-#define TNL_OFFSET	24 /* Total Number of Lines */
-#define MAGIC1_OFFSET	28 /* Magic number 1: 0x43534152 */
-#define MAGIC2_OFFSET	32 /* Magic number 2: Version number */ 
+// Commented out the unused defines.
+// #define BIB_OFFSET   0  /* Bytes in burst, valid only for ScanSAR */
+// #define RSRI_OFFSET  4  /* Range Sample Relative Index */
+const static int RS_OFFSET = 8;  /* Range Samples, the length of a range line */
+// #define AS_OFFSET    12 /* Azimuth Samples, the length of an azimth column */
+// #define BI_OFFSET    16 /* Burst Index, the index number of the burst */
+const static int RTNB_OFFSET = 20;  /* Rangeline total number of bytes, incl. annot. */
+// #define TNL_OFFSET	24 /* Total Number of Lines */
+const static int MAGIC1_OFFSET = 28; /* Magic number 1: 0x43534152 */
+// #define MAGIC2_OFFSET 32 /* Magic number 2: Version number */
 
-#define COSAR_MAGIC 	0x43534152 /* String CSAR */
-#define FILLER_MAGIC	0x7F7F7F7F /* Filler value, we'll use this for a test */
+// #define COSAR_MAGIC  0x43534152  /* String CSAR */
+// #define FILLER_MAGIC 0x7F7F7F7F  /* Filler value, we'll use this for a test */
 
 CPL_C_START
 void GDALRegister_COSAR(void);
@@ -70,9 +70,10 @@ public:
  * COSARRasterBand Implementation
  *****************************************************************************/
 
-COSARRasterBand::COSARRasterBand(COSARDataset *pDS, unsigned long nRTNB) {
+COSARRasterBand::COSARRasterBand(COSARDataset *pDS, unsigned long nRTNB) :
+    nBurstNumber(1)
+{
 	this->nRTNB = nRTNB;
-	nBurstNumber = 1;
 	nBlockXSize = pDS->GetRasterXSize();
 	nBlockYSize = 1;
 	eDataType = GDT_CInt16;
@@ -82,8 +83,6 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                                    int nBlockYOff,
                                    void *pImage) {
 
-    unsigned long nRSFV = 0;
-    unsigned long nRSLV = 0;
     COSARDataset *pCDS = (COSARDataset *) poDS;
 
     /* Find the line we want to be at */
@@ -95,8 +94,9 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
     VSIFSeekL(pCDS->fp,(this->nRTNB * (nBlockYOff + 4)), SEEK_SET);
 
-
     /* Read RSFV and RSLV (TX-GS-DD-3307) */
+    unsigned long nRSFV = 0;
+    unsigned long nRSLV = 0;
     VSIFReadL(&nRSFV,1,4,pCDS->fp);
     VSIFReadL(&nRSLV,1,4,pCDS->fp);
 
@@ -115,8 +115,7 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                  "RSLV/RSFV values are not sane... oh dear.\n");	
         return CE_Failure;
     }
-	
-	
+
     /* zero out the range line */
     for (int i = 0; i < this->nRasterXSize; i++)
     {
@@ -136,7 +135,6 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     // GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
     GDALSwapWords( pImage, 2, nBlockXSize * nBlockYSize * 2, 2 );
 #endif
-
 
     return CE_None;
 }
@@ -165,11 +163,10 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
                   " datasets.\n" );
         return NULL;
     }
-    
+
     /* this is a cosar dataset */
-    COSARDataset *pDS;
-    pDS = new COSARDataset();
-	
+    COSARDataset *pDS = new COSARDataset();
+
     /* steal fp */
     pDS->fp = pOpenInfo->fpL;
     pOpenInfo->fpL = NULL;
@@ -183,8 +180,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
 #ifdef CPL_LSB
     pDS->nRasterXSize = CPL_SWAP32(pDS->nRasterXSize);
 #endif
-	
-	
+
     VSIFReadL(&pDS->nRasterYSize, 1, 4, pDS->fp);
 #ifdef CPL_LSB
     pDS->nRasterYSize = CPL_SWAP32(pDS->nRasterYSize);
@@ -204,17 +200,17 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
 
 /* register the driver with GDAL */
 void GDALRegister_COSAR() {
-	GDALDriver *poDriver;
-	if (GDALGetDriverByName("cosar") == NULL) {
-		poDriver = new GDALDriver();
-		poDriver->SetDescription("COSAR");
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-		poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-			"COSAR Annotated Binary Matrix (TerraSAR-X)");
-		poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-			"frmt_cosar.html");
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-		poDriver->pfnOpen = COSARDataset::Open;
-		GetGDALDriverManager()->RegisterDriver(poDriver);
-	}
+    if (GDALGetDriverByName("cosar") != NULL)
+        return;
+
+    GDALDriver *poDriver = new GDALDriver();
+    poDriver->SetDescription("COSAR");
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "COSAR Annotated Binary Matrix (TerraSAR-X)");
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_cosar.html");
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = COSARDataset::Open;
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
