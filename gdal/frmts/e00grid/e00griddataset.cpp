@@ -40,11 +40,11 @@
 #define E00ReadRewind       GDALE00GRIDReadRewind
 #include "e00read.c"
 
-#define E00_INT_SIZE    10
-#define E00_INT14_SIZE  14
-#define E00_FLOAT_SIZE  14
-#define E00_DOUBLE_SIZE 21
-#define VALS_PER_LINE   5
+static const int E00_INT_SIZE = 10;
+// #define E00_INT14_SIZE  14
+static const int E00_FLOAT_SIZE = 14;
+static const int E00_DOUBLE_SIZE = 21;
+static const int VALS_PER_LINE = 5;
 
 CPL_CVSID("$Id$");
 
@@ -109,10 +109,10 @@ class E00GRIDDataset : public GDALPamDataset
   public:
                  E00GRIDDataset();
     virtual     ~E00GRIDDataset();
-    
+
     virtual CPLErr GetGeoTransform( double * );
     virtual const char* GetProjectionRef();
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 };
@@ -173,7 +173,6 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     char szVal[E00_FLOAT_SIZE+1];
     szVal[E00_FLOAT_SIZE] = 0;
 
-    int i;
     float* pafImage = (float*)pImage;
     int* panImage = (int*)pImage;
     const float fNoData = (const float)poGDS->dfNoData;
@@ -189,7 +188,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         if (poGDS->nLastYOff < 0)
         {
             E00ReadRewind(poGDS->e00ReadPtr);
-            for(i=0;i<6;i++)
+            for(int i=0;i<6;i++)
                 E00ReadNextLine(poGDS->e00ReadPtr);
         }
 
@@ -207,7 +206,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         else if (nBlockYOff > poGDS->nLastYOff + 1)
         {
             //CPLDebug("E00GRID", "Forward skip to %d from %d", nBlockYOff, poGDS->nLastYOff);
-            for(i=poGDS->nLastYOff + 1; i < nBlockYOff;i++)
+            for(int i=poGDS->nLastYOff + 1; i < nBlockYOff;i++)
                 IReadBlock(0, i, pImage);
         }
 
@@ -219,7 +218,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         }
 
         const char* pszLine = NULL;
-        for(i=0;i<nBlockXSize;i++)
+        for(int i=0;i<nBlockXSize;i++)
         {
             if ((i % VALS_PER_LINE) == 0)
             {
@@ -251,7 +250,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     vsi_l_offset nPos = poGDS->nDataStart + nLinesToSkip * nBytesPerLine;
     VSIFSeekL(poGDS->fp, nPos, SEEK_SET);
 
-    for(i=0;i<nBlockXSize;i++)
+    for(int i=0;i<nBlockXSize;i++)
     {
         if (VSIFReadL(szVal, E00_FLOAT_SIZE, 1, poGDS->fp) != 1)
             return CE_Failure;
@@ -288,8 +287,8 @@ double E00GRIDRasterBand::GetNoDataValue( int *pbSuccess )
 
     if (eDataType == GDT_Float32)
         return (double)(float) poGDS->dfNoData;
-    else
-        return (double)(int)poGDS->dfNoData;
+
+    return (double)(int)poGDS->dfNoData;
 }
 
 /************************************************************************/
@@ -404,36 +403,30 @@ CPLErr E00GRIDRasterBand::GetStatistics( int bApproxOK, int bForce,
 /*                           E00GRIDDataset()                           */
 /************************************************************************/
 
-E00GRIDDataset::E00GRIDDataset()
+E00GRIDDataset::E00GRIDDataset() :
+    e00ReadPtr(NULL),
+    fp(NULL),
+    nDataStart(0),
+    nBytesEOL(1),
+    nPosBeforeReadLine(0),
+    panOffsets(NULL),
+    nLastYOff(-1),
+    nMaxYOffset(-1),
+    dfNoData(0),
+    papszPrj(NULL),
+    bHasReadMetadata(FALSE),
+    bHasStats(FALSE),
+    dfMin(0),
+    dfMax(0),
+    dfMean(0),
+    dfStddev(0)
 {
-    e00ReadPtr = NULL;
-    fp = NULL;
-    nDataStart = 0;
-    nBytesEOL = 1;
-
-    nPosBeforeReadLine = 0;
-    panOffsets = NULL;
-    nLastYOff = -1;
-    nMaxYOffset = -1;
-
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
     adfGeoTransform[2] = 0;
     adfGeoTransform[3] = 0;
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = 1;
-
-    dfNoData = 0;
-
-    papszPrj = NULL;
-
-    bHasReadMetadata = FALSE;
-
-    bHasStats = FALSE;
-    dfMin = 0;
-    dfMax = 0;
-    dfMean = 0;
-    dfStddev = 0;
 }
 
 /************************************************************************/
@@ -499,9 +492,6 @@ void E00GRIDDataset::Rewind(void * ptr)
 GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int         i;
-    GDALDataType eDT = GDT_Float32;
-
     if (!Identify(poOpenInfo))
         return NULL;
 
@@ -524,23 +514,20 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    E00GRIDDataset         *poDS;
-
-    poDS = new E00GRIDDataset();
+    E00GRIDDataset *poDS = new E00GRIDDataset();
     if (strstr((const char*)poOpenInfo->pabyHeader, "\r\n") != NULL)
         poDS->nBytesEOL = 2;
     poDS->fp = fp;
 
-    const char* pszLine;
     /* read EXP  0 or EXP  1 line */
-    pszLine = CPLReadLine2L(fp, 81, NULL);
+    const char* pszLine = CPLReadLine2L(fp, 81, NULL);
     if (pszLine == NULL)
     {
         CPLDebug("E00GRID", "Bad 1st line");
         delete poDS;
         return NULL;
     }
-    int bCompressed = EQUALN(pszLine, "EXP  1", 6);
+    bool bCompressed = EQUALN(pszLine, "EXP  1", 6);
 
     E00ReadPtr e00ReadPtr = NULL;
     if (bCompressed)
@@ -583,14 +570,16 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    int nRasterXSize = atoi(pszLine);
-    int nRasterYSize = atoi(pszLine + E00_INT_SIZE);
+    const int nRasterXSize = atoi(pszLine);
+    const int nRasterYSize = atoi(pszLine + E00_INT_SIZE);
 
     if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
     {
         delete poDS;
         return NULL;
     }
+
+    GDALDataType eDT = GDT_Float32;
 
     if (EQUALN(pszLine + E00_INT_SIZE + E00_INT_SIZE, " 1", 2))
         eDT = GDT_Int32;
@@ -601,7 +590,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("E00GRID", "Unknown data type : %s", pszLine);
     }
 
-    double dfNoData = CPLAtof(pszLine + E00_INT_SIZE + E00_INT_SIZE + 2);
+    const double dfNoData = CPLAtof(pszLine + E00_INT_SIZE + E00_INT_SIZE + 2);
 
     /* read pixel size */
     if (e00ReadPtr)
@@ -630,8 +619,8 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    double dfMinX = CPLAtof(pszLine);
-    double dfMinY = CPLAtof(pszLine + E00_DOUBLE_SIZE);
+    const double dfMinX = CPLAtof(pszLine);
+    const double dfMinY = CPLAtof(pszLine + E00_DOUBLE_SIZE);
 
     /* read xmax, ymax */
     if (e00ReadPtr)
@@ -644,8 +633,8 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    double dfMaxX = CPLAtof(pszLine);
-    double dfMaxY = CPLAtof(pszLine + E00_DOUBLE_SIZE);
+    const double dfMaxX = CPLAtof(pszLine);
+    const double dfMaxY = CPLAtof(pszLine + E00_DOUBLE_SIZE);
 
     poDS->nRasterXSize = nRasterXSize;
     poDS->nRasterYSize = nRasterYSize;
@@ -671,7 +660,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = 1;
-    for( i = 0; i < poDS->nBands; i++ )
+    for( int i = 0; i < poDS->nBands; i++ )
         poDS->SetBand( i+1, new E00GRIDRasterBand( poDS, i+1, eDT ) );
 
 /* -------------------------------------------------------------------- */
@@ -708,8 +697,8 @@ const char* E00GRIDDataset::ReadLine()
 {
     if (e00ReadPtr)
         return E00ReadNextLine(e00ReadPtr);
-    else
-        return CPLReadLine2L(fp, 81, NULL);
+
+    return CPLReadLine2L(fp, 81, NULL);
 }
 
 /************************************************************************/
@@ -737,13 +726,13 @@ void E00GRIDDataset::ReadMetadata()
 
     if (e00ReadPtr == NULL)
     {
-        int nRoundedBlockXSize = ((nRasterXSize + VALS_PER_LINE - 1) /
+        const int nRoundedBlockXSize = ((nRasterXSize + VALS_PER_LINE - 1) /
                                                 VALS_PER_LINE) * VALS_PER_LINE;
-        vsi_l_offset nValsToSkip =
+        const vsi_l_offset nValsToSkip =
                                (vsi_l_offset)nRasterYSize * nRoundedBlockXSize;
-        vsi_l_offset nLinesToSkip = nValsToSkip / VALS_PER_LINE;
-        int nBytesPerLine = VALS_PER_LINE * E00_FLOAT_SIZE + nBytesEOL;
-        vsi_l_offset nPos = nDataStart + nLinesToSkip * nBytesPerLine;
+        const vsi_l_offset nLinesToSkip = nValsToSkip / VALS_PER_LINE;
+        const int nBytesPerLine = VALS_PER_LINE * E00_FLOAT_SIZE + nBytesEOL;
+        const vsi_l_offset nPos = nDataStart + nLinesToSkip * nBytesPerLine;
         VSIFSeekL(fp, nPos, SEEK_SET);
     }
     else
@@ -831,13 +820,13 @@ void E00GRIDDataset::ReadMetadata()
     }
 
     const char* pszLine;
-    int bPRJFound = FALSE;
-    int bStatsFound = FALSE;
+    bool bPRJFound = false;
+    bool bStatsFound = false;
     while((pszLine = ReadLine()) != NULL)
     {
         if (EQUALN(pszLine, "PRJ  2", 6))
         {
-            bPRJFound = TRUE;
+            bPRJFound = true;
             while((pszLine = ReadLine()) != NULL)
             {
                 if (EQUAL(pszLine, "EOP"))
@@ -865,7 +854,7 @@ void E00GRIDDataset::ReadMetadata()
         }
         else if (strcmp(pszLine, "STDV              8-1  254-1  15 3 60-1  -1  -1-1                   4-") == 0)
         {
-            bStatsFound = TRUE;
+            bStatsFound = true;
             pszLine = ReadLine();
             if (pszLine)
             {
@@ -899,26 +888,23 @@ void E00GRIDDataset::ReadMetadata()
 void GDALRegister_E00GRID()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "E00GRID" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "E00GRID" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "E00GRID" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Arc/Info Export E00 GRID" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#E00GRID" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "e00" );
+    GDALDriver *poDriver = new GDALDriver();
 
+    poDriver->SetDescription( "E00GRID" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Arc/Info Export E00 GRID" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#E00GRID" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "e00" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = E00GRIDDataset::Open;
-        poDriver->pfnIdentify = E00GRIDDataset::Identify;
+    poDriver->pfnOpen = E00GRIDDataset::Open;
+    poDriver->pfnIdentify = E00GRIDDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
