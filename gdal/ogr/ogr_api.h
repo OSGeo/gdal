@@ -79,27 +79,27 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt( char **, OGRSpatialReferenceH,
 OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *, OGRSpatialReferenceH, 
                                     OGRGeometryH *, int, int * );
 void   CPL_DLL OGR_G_DestroyGeometry( OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_CreateGeometry( OGRwkbGeometryType );
+OGRGeometryH CPL_DLL OGR_G_CreateGeometry( OGRwkbGeometryType ) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL 
 OGR_G_ApproximateArcAngles( 
     double dfCenterX, double dfCenterY, double dfZ,
     double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, 
     double dfStartAngle, double dfEndAngle,
-    double dfMaxAngleStepSizeDegrees );
+    double dfMaxAngleStepSizeDegrees ) CPL_WARN_UNUSED_RESULT;
 
-OGRGeometryH CPL_DLL OGR_G_ForceToPolygon( OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_ForceToLineString( OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_ForceToMultiPolygon( OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_ForceToMultiPoint( OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_ForceToMultiLineString( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_ForceToPolygon( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_ForceToLineString( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_ForceToMultiPolygon( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_ForceToMultiPoint( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_ForceToMultiLineString( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_ForceTo( OGRGeometryH hGeom,
                                     OGRwkbGeometryType eTargetType,
-                                    char** papszOptions );
+                                    char** papszOptions ) CPL_WARN_UNUSED_RESULT;
 
 int    CPL_DLL OGR_G_GetDimension( OGRGeometryH );
 int    CPL_DLL OGR_G_GetCoordinateDimension( OGRGeometryH );
 void   CPL_DLL OGR_G_SetCoordinateDimension( OGRGeometryH, int );
-OGRGeometryH CPL_DLL OGR_G_Clone( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_Clone( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 void   CPL_DLL OGR_G_GetEnvelope( OGRGeometryH, OGREnvelope * );
 void   CPL_DLL OGR_G_GetEnvelope3D( OGRGeometryH, OGREnvelope3D * );
 OGRErr CPL_DLL OGR_G_ImportFromWkb( OGRGeometryH, unsigned char *, int );
@@ -115,19 +115,19 @@ void   CPL_DLL OGR_G_DumpReadable( OGRGeometryH, FILE *, const char * );
 void   CPL_DLL OGR_G_FlattenTo2D( OGRGeometryH );
 void   CPL_DLL OGR_G_CloseRings( OGRGeometryH );
 
-OGRGeometryH CPL_DLL OGR_G_CreateFromGML( const char * );
-char   CPL_DLL *OGR_G_ExportToGML( OGRGeometryH );
-char   CPL_DLL *OGR_G_ExportToGMLEx( OGRGeometryH, char** papszOptions );
+OGRGeometryH CPL_DLL OGR_G_CreateFromGML( const char * ) CPL_WARN_UNUSED_RESULT;
+char   CPL_DLL *OGR_G_ExportToGML( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+char   CPL_DLL *OGR_G_ExportToGMLEx( OGRGeometryH, char** papszOptions ) CPL_WARN_UNUSED_RESULT;
 
-OGRGeometryH CPL_DLL OGR_G_CreateFromGMLTree( const CPLXMLNode * );
-CPLXMLNode CPL_DLL *OGR_G_ExportToGMLTree( OGRGeometryH );
-CPLXMLNode CPL_DLL *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_CreateFromGMLTree( const CPLXMLNode * ) CPL_WARN_UNUSED_RESULT;
+CPLXMLNode CPL_DLL *OGR_G_ExportToGMLTree( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+CPLXMLNode CPL_DLL *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 
-char   CPL_DLL *OGR_G_ExportToKML( OGRGeometryH, const char* pszAltitudeMode );
+char   CPL_DLL *OGR_G_ExportToKML( OGRGeometryH, const char* pszAltitudeMode ) CPL_WARN_UNUSED_RESULT;
 
-char   CPL_DLL *OGR_G_ExportToJson( OGRGeometryH );
-char   CPL_DLL *OGR_G_ExportToJsonEx( OGRGeometryH, char** papszOptions );
-OGRGeometryH CPL_DLL OGR_G_CreateGeometryFromJson( const char* );
+char   CPL_DLL *OGR_G_ExportToJson( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+char   CPL_DLL *OGR_G_ExportToJsonEx( OGRGeometryH, char** papszOptions ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_CreateGeometryFromJson( const char* ) CPL_WARN_UNUSED_RESULT;
 
 void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH, 
                                              OGRSpatialReferenceH );
@@ -135,9 +135,9 @@ OGRSpatialReferenceH CPL_DLL OGR_G_GetSpatialReference( OGRGeometryH );
 OGRErr CPL_DLL OGR_G_Transform( OGRGeometryH, OGRCoordinateTransformationH );
 OGRErr CPL_DLL OGR_G_TransformTo( OGRGeometryH, OGRSpatialReferenceH );
 
-OGRGeometryH CPL_DLL OGR_G_Simplify( OGRGeometryH hThis, double tolerance );
-OGRGeometryH CPL_DLL OGR_G_SimplifyPreserveTopology( OGRGeometryH hThis, double tolerance );
-OGRGeometryH CPL_DLL OGR_G_DelaunayTriangulation( OGRGeometryH hThis, double dfTolerance, int bOnlyEdges );
+OGRGeometryH CPL_DLL OGR_G_Simplify( OGRGeometryH hThis, double tolerance ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_SimplifyPreserveTopology( OGRGeometryH hThis, double tolerance ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_DelaunayTriangulation( OGRGeometryH hThis, double dfTolerance, int bOnlyEdges ) CPL_WARN_UNUSED_RESULT;
 
 void   CPL_DLL OGR_G_Segmentize(OGRGeometryH hGeom, double dfMaxLength );
 int    CPL_DLL OGR_G_Intersects( OGRGeometryH, OGRGeometryH );
@@ -150,24 +150,24 @@ int    CPL_DLL OGR_G_Within( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Contains( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Overlaps( OGRGeometryH, OGRGeometryH );
 
-OGRGeometryH CPL_DLL OGR_G_Boundary( OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_ConvexHull( OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_Buffer( OGRGeometryH, double, int );
-OGRGeometryH CPL_DLL OGR_G_Intersection( OGRGeometryH, OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_Union( OGRGeometryH, OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_UnionCascaded( OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_PointOnSurface( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_Boundary( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_ConvexHull( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_Buffer( OGRGeometryH, double, int ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_Intersection( OGRGeometryH, OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_Union( OGRGeometryH, OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_UnionCascaded( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_PointOnSurface( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 /*OGRGeometryH CPL_DLL OGR_G_Polygonize( OGRGeometryH *, int);*/
 /*OGRGeometryH CPL_DLL OGR_G_Polygonizer_getCutEdges( OGRGeometryH *, int);*/
 /*OGRGeometryH CPL_DLL OGR_G_LineMerge( OGRGeometryH );*/
 
-OGRGeometryH CPL_DLL OGR_G_Difference( OGRGeometryH, OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_SymDifference( OGRGeometryH, OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_Difference( OGRGeometryH, OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_SymDifference( OGRGeometryH, OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 double CPL_DLL OGR_G_Distance( OGRGeometryH, OGRGeometryH );
 double CPL_DLL OGR_G_Length( OGRGeometryH );
 double CPL_DLL OGR_G_Area( OGRGeometryH );
 int    CPL_DLL OGR_G_Centroid( OGRGeometryH, OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_Value( OGRGeometryH, double dfDistance );
+OGRGeometryH CPL_DLL OGR_G_Value( OGRGeometryH, double dfDistance ) CPL_WARN_UNUSED_RESULT;
 
 void   CPL_DLL OGR_G_Empty( OGRGeometryH );
 int    CPL_DLL OGR_G_IsEmpty( OGRGeometryH );
@@ -176,7 +176,7 @@ int    CPL_DLL OGR_G_IsValid( OGRGeometryH );
 int    CPL_DLL OGR_G_IsSimple( OGRGeometryH );
 int    CPL_DLL OGR_G_IsRing( OGRGeometryH );
  
-OGRGeometryH CPL_DLL OGR_G_Polygonize( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_Polygonize( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 
 /* backward compatibility (non-standard methods) */
 int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_Intersects() instead");
@@ -219,15 +219,15 @@ OGRErr CPL_DLL OGR_G_RemoveGeometry( OGRGeometryH, int, int );
 int CPL_DLL OGR_G_HasCurveGeometry( OGRGeometryH, int bLookForNonLinear );
 OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry( OGRGeometryH hGeom,
                                               double dfMaxAngleStepSizeDegrees,
-                                              char** papszOptions);
+                                              char** papszOptions) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry( OGRGeometryH hGeom,
-                                             char** papszOptions );
+                                             char** papszOptions ) CPL_WARN_UNUSED_RESULT;
 
 OGRGeometryH CPL_DLL OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
                                        int bBestEffort, 
                                        int bAutoClose, 
                                        double dfTolerance,
-                                       OGRErr * peErr );
+                                       OGRErr * peErr ) CPL_WARN_UNUSED_RESULT;
 
 OGRErr CPL_DLL OGRSetGenerate_DB2_V72_BYTE_ORDER( 
     int bGenerate_DB2_V72_BYTE_ORDER );
@@ -350,8 +350,8 @@ OGRFeatureDefnH CPL_DLL OGR_F_GetDefnRef( OGRFeatureH );
 OGRErr CPL_DLL OGR_F_SetGeometryDirectly( OGRFeatureH, OGRGeometryH );
 OGRErr CPL_DLL OGR_F_SetGeometry( OGRFeatureH, OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_F_GetGeometryRef( OGRFeatureH );
-OGRGeometryH CPL_DLL OGR_F_StealGeometry( OGRFeatureH );
-OGRFeatureH CPL_DLL OGR_F_Clone( OGRFeatureH );
+OGRGeometryH CPL_DLL OGR_F_StealGeometry( OGRFeatureH ) CPL_WARN_UNUSED_RESULT;
+OGRFeatureH CPL_DLL OGR_F_Clone( OGRFeatureH ) CPL_WARN_UNUSED_RESULT;
 int    CPL_DLL OGR_F_Equal( OGRFeatureH, OGRFeatureH );
 
 int    CPL_DLL OGR_F_GetFieldCount( OGRFeatureH );

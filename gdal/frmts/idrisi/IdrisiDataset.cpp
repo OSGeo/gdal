@@ -1246,9 +1246,13 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     //      Copy image data
     // --------------------------------------------------------------------
 
-    GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
+    if( GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
                                 (GDALDatasetH) poDS, NULL,
-                                pfnProgress, pProgressData );
+                                pfnProgress, pProgressData ) != CE_None )
+    {
+        delete poDS;
+        return NULL;
+    }
 
     // --------------------------------------------------------------------
     //      Finalize
