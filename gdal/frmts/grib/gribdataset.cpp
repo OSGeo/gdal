@@ -93,7 +93,7 @@ class GRIBDataset : public GDALPamDataset
 class GRIBRasterBand : public GDALPamRasterBand
 {
     friend class GRIBDataset;
-    
+
 public:
     GRIBRasterBand( GRIBDataset*, int, inventoryType* );
     virtual ~GRIBRasterBand();
@@ -193,12 +193,13 @@ void GRIBRasterBand::FindPDSTemplate()
 /*      this for us.                                                    */
 /* -------------------------------------------------------------------- */
     GIntBig nOffset = VSIFTellL( poGDS->fp );
-    GByte abyHead[5];
-    GUInt32 nSectSize;
 
     VSIFSeekL( poGDS->fp, start+16, SEEK_SET );
+
+    GByte abyHead[5];
     VSIFReadL( abyHead, 5, 1, poGDS->fp );
 
+    GUInt32 nSectSize;
     while( abyHead[4] != 4 )
     {
         memcpy( &nSectSize, abyHead, 4 );
@@ -208,31 +209,29 @@ void GRIBRasterBand::FindPDSTemplate()
             || VSIFReadL( abyHead, 5, 1, poGDS->fp ) != 1 )
             break;
     }
-        
+
     if( abyHead[4] == 4 )
     {
-        GUInt16 nCoordCount;
-        GUInt16 nPDTN;
-        CPLString osOctet;
-        int i;
-        GByte *pabyBody;
-
         memcpy( &nSectSize, abyHead, 4 );
         CPL_MSBPTR32( &nSectSize );
 
+        GByte *pabyBody;
         pabyBody = (GByte *) CPLMalloc(nSectSize-5);
         VSIFReadL( pabyBody, 1, nSectSize-5, poGDS->fp );
 
+        GUInt16 nCoordCount;
         memcpy( &nCoordCount, pabyBody + 5 - 5, 2 );
         CPL_MSBPTR16( &nCoordCount );
 
+        GUInt16 nPDTN;
         memcpy( &nPDTN, pabyBody + 7 - 5, 2 );
         CPL_MSBPTR16( &nPDTN );
 
         SetMetadataItem( "GRIB_PDS_PDTN",
                          CPLString().Printf( "%d", nPDTN ) );
 
-        for( i = 9; i < (int) nSectSize; i++ )
+        CPLString osOctet;
+        for( int i = 9; i < (int) nSectSize; i++ )
         {
             char szByte[10];
 
@@ -242,7 +241,7 @@ void GRIBRasterBand::FindPDSTemplate()
                 sprintf( szByte, " %d", pabyBody[i-5] );
             osOctet += szByte;
         }
-        
+
         SetMetadataItem( "GRIB_PDS_TEMPLATE_NUMBERS", osOctet );
 
         CPLFree( pabyBody );
@@ -259,10 +258,10 @@ const char * GRIBRasterBand::GetDescription() const
 {
     if( longFstLevel == NULL )
         return GDALPamRasterBand::GetDescription();
-    else
-        return longFstLevel;
+
+    return longFstLevel;
 }
- 
+
 /************************************************************************/
 /*                             LoadData()                               */
 /************************************************************************/
@@ -324,7 +323,9 @@ CPLErr GRIBRasterBand::LoadData()
             || nGribDataYSize != nRasterYSize )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Band %d of GRIB dataset is %dx%d, while the first band and dataset is %dx%d.  Georeferencing of band %d may be incorrect, and data access may be incomplete.", 
+                      "Band %d of GRIB dataset is %dx%d, while the first band "
+                      "and dataset is %dx%d.  Georeferencing of band %d may "
+                      "be incorrect, and data access may be incomplete.",
                       nBand, 
                       nGribDataXSize, nGribDataYSize, 
                       nRasterXSize, nRasterYSize, 
@@ -361,7 +362,7 @@ CPLErr GRIBRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         memcpy(pImage, 
                m_Grib_Data + nRasterXSize * (nRasterYSize - nBlockYOff - 1), 
                nRasterXSize * sizeof(double));
-        
+
         return CE_None;
     }
     else
@@ -376,7 +377,7 @@ CPLErr GRIBRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         memcpy( pImage, 
                 m_Grib_Data + nGribDataXSize*(nGribDataYSize-nBlockYOff-1),
                 nCopyWords * sizeof(double) );
-        
+
         return CE_None;
     }
 }
@@ -547,18 +548,17 @@ int GRIBDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     if (poOpenInfo->nHeaderBytes < 8)
         return FALSE;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Does a part of what ReadSECT0() but in a thread-safe way.       */
 /* -------------------------------------------------------------------- */
-    int i;
-    for(i=0;i<poOpenInfo->nHeaderBytes-3;i++)
+    for(int i=0;i<poOpenInfo->nHeaderBytes-3;i++)
     {
         if (EQUALN((const char*)poOpenInfo->pabyHeader + i, "GRIB", 4) ||
             EQUALN((const char*)poOpenInfo->pabyHeader + i, "TDLP", 4))
             return TRUE;
     }
-    
+
     return FALSE;
 }
 
@@ -571,7 +571,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     if( !Identify(poOpenInfo) )
         return NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      A fast "probe" on the header that is partially read in memory.  */
 /* -------------------------------------------------------------------- */
@@ -594,7 +594,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
     free(buff);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -608,27 +608,25 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GRIBDataset 	*poDS;
-
-    poDS = new GRIBDataset();
+    GRIBDataset *poDS = new GRIBDataset();
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
 
-	/* Check the return values */    
-	if (!poDS->fp) {
+    /* Check the return values */    
+    if (!poDS->fp) {
         // we have no FP, so we don't have anywhere to read from
         char * errMsg = errSprintf(NULL);
         if( errMsg != NULL )
             CPLDebug( "GRIB", "%s", errMsg );
         free(errMsg);
-		
-		CPLError( CE_Failure, CPLE_OpenFailed, "Error (%d) opening file %s", errno, poOpenInfo->pszFilename);
+
+        CPLError( CE_Failure, CPLE_OpenFailed, "Error (%d) opening file %s", errno, poOpenInfo->pszFilename);
         CPLReleaseMutex(hGRIBMutex); // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own hGRIBMutex
         delete poDS;
         CPLAcquireMutex(hGRIBMutex, 1000.0);
         return NULL;
-	}
-    
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
@@ -641,14 +639,14 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* The band-data that is read is stored into the first RasterBand,      */
 /* simply so that the same portion of the file is not read twice.       */
 /* -------------------------------------------------------------------- */
-    
+
     VSIFSeekL( poDS->fp, 0, SEEK_SET );
 
     FileDataSource grib_fp (poDS->fp);
 
     inventoryType *Inv = NULL;  /* Contains an GRIB2 message inventory of the file */
     uInt4 LenInv = 0;        /* size of Inv (also # of GRIB2 messages) */
-    int msgNum =0;          /* The messageNumber during the inventory. */
+    int msgNum = 0;          /* The messageNumber during the inventory. */
 
     if (GRIB2Inventory (grib_fp, &Inv, &LenInv, 0, &msgNum) <= 0 )
     {
@@ -725,7 +723,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    
+
     CPLReleaseMutex(hGRIBMutex); // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own hGRIBMutex
     poDS->TryLoadXML();
 
@@ -772,7 +770,6 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
                     meta->gds.meshLat, meta->gds.orientLon,
                     0.0, 0.0); // set projection
         break;
-			
 
       case GS3_ORTHOGRAPHIC:
 
@@ -847,10 +844,10 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
         {
             rMinX = 0.0;
             rMaxY = 0.0;
-            
+
             rPixelSizeX = 1.0;
             rPixelSizeY = -1.0;
-            
+
             oSRS.Clear();
 
             CPLError( CE_Warning, CPLE_AppDefined,
@@ -930,25 +927,23 @@ static void GDALDeregister_GRIB(GDALDriver* )
 void GDALRegister_GRIB()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "GRIB" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GRIB" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "GRIB" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "GRIdded Binary (.grb)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_grib.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grb" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = GRIBDataset::Open;
-        poDriver->pfnIdentify = GRIBDataset::Identify;
-        poDriver->pfnUnloadDriver = GDALDeregister_GRIB;
+    poDriver->SetDescription( "GRIB" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "GRIdded Binary (.grb)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_grib.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grb" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = GRIBDataset::Open;
+    poDriver->pfnIdentify = GRIBDataset::Identify;
+    poDriver->pfnUnloadDriver = GDALDeregister_GRIB;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
