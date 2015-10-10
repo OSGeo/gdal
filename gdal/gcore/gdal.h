@@ -565,7 +565,7 @@ GDALBeginAsyncReader(GDALDatasetH hDS, int nXOff, int nYOff,
                      void *pBuf, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount, int* panBandMap,
                      int nPixelSpace, int nLineSpace, int nBandSpace,
-                     char **papszOptions);
+                     char **papszOptions) CPL_WARN_UNUSED_RESULT;
 
 void  CPL_DLL CPL_STDCALL 
 GDALEndAsyncReader(GDALDatasetH hDS, GDALAsyncReaderH hAsynchReaderH);
@@ -575,7 +575,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIO(
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     void * pBuffer, int nBXSize, int nBYSize, GDALDataType eBDataType,
     int nBandCount, int *panBandCount, 
-    int nPixelSpace, int nLineSpace, int nBandSpace);
+    int nPixelSpace, int nLineSpace, int nBandSpace) CPL_WARN_UNUSED_RESULT;
 
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIOEx( 
     GDALDatasetH hDS, GDALRWFlag eRWFlag,
@@ -583,7 +583,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIOEx(
     void * pBuffer, int nBXSize, int nBYSize, GDALDataType eBDataType,
     int nBandCount, int *panBandCount, 
     GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
-    GDALRasterIOExtraArg* psExtraArg);
+    GDALRasterIOExtraArg* psExtraArg) CPL_WARN_UNUSED_RESULT;
 
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetAdviseRead( GDALDatasetH hDS, 
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
@@ -700,15 +700,15 @@ CPLErr CPL_DLL CPL_STDCALL
 GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
               int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
               void * pBuffer, int nBXSize, int nBYSize,GDALDataType eBDataType,
-              int nPixelSpace, int nLineSpace );
+              int nPixelSpace, int nLineSpace ) CPL_WARN_UNUSED_RESULT;
 CPLErr CPL_DLL CPL_STDCALL 
 GDALRasterIOEx( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
               int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
               void * pBuffer, int nBXSize, int nBYSize,GDALDataType eBDataType,
               GSpacing nPixelSpace, GSpacing nLineSpace,
-              GDALRasterIOExtraArg* psExtraArg );
-CPLErr CPL_DLL CPL_STDCALL GDALReadBlock( GDALRasterBandH, int, int, void * );
-CPLErr CPL_DLL CPL_STDCALL GDALWriteBlock( GDALRasterBandH, int, int, void * );
+              GDALRasterIOExtraArg* psExtraArg ) CPL_WARN_UNUSED_RESULT;
+CPLErr CPL_DLL CPL_STDCALL GDALReadBlock( GDALRasterBandH, int, int, void * ) CPL_WARN_UNUSED_RESULT;
+CPLErr CPL_DLL CPL_STDCALL GDALWriteBlock( GDALRasterBandH, int, int, void * ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPL_STDCALL GDALGetRasterBandXSize( GDALRasterBandH );
 int CPL_DLL CPL_STDCALL GDALGetRasterBandYSize( GDALRasterBandH );
 GDALAccess CPL_DLL CPL_STDCALL GDALGetRasterAccess( GDALRasterBandH );
