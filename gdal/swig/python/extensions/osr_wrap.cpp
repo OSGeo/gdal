@@ -11025,8 +11025,12 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj1);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj1,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -11263,7 +11267,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromPCI(PyObject *SWIGUNUSEDPA
         PyErr_SetString(PyExc_TypeError, "not a sequence");
         SWIG_fail;
       }
-      int seq_size = PySequence_Size(obj3);
+      Py_ssize_t seq_size = PySequence_Size(obj3);
       if ( seq_size != 17 ) {
         PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
         SWIG_fail;
@@ -11369,7 +11373,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromUSGS(PyObject *SWIGUNUSEDP
         PyErr_SetString(PyExc_TypeError, "not a sequence");
         SWIG_fail;
       }
-      int seq_size = PySequence_Size(obj3);
+      Py_ssize_t seq_size = PySequence_Size(obj3);
       if ( seq_size != 15 ) {
         PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
         SWIG_fail;
@@ -11674,8 +11678,12 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromOzi(PyObject *SWIGUNUSEDPA
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj1);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj1,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -12850,7 +12858,7 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoint__SWIG_0(PyObj
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int seq_size = PySequence_Size(obj1);
+    Py_ssize_t seq_size = PySequence_Size(obj1);
     if ( seq_size != 3 ) {
       PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
       SWIG_fail;
@@ -13051,7 +13059,12 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoints(PyObject *SW
       SWIG_fail;
     }
     
-    arg2 = PySequence_Size(obj1);
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg2 = (int)size;
     arg3 = (double*) VSIMalloc(arg2*sizeof(double));
     arg4 = (double*) VSIMalloc(arg2*sizeof(double));
     arg5 = (double*) VSIMalloc(arg2*sizeof(double));
