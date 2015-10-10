@@ -3218,9 +3218,13 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                 return CE_Failure;
             }
 
-            poOverview->RasterIO( GF_Read, 0, iLine, nWidth, 1,
+            if( poOverview->RasterIO( GF_Read, 0, iLine, nWidth, 1,
                                   pafData, nWidth, 1, eWrkType,
-                                  0, 0, NULL );
+                                  0, 0, NULL ) != CE_None )
+            {
+                CPLFree( pafData );
+                return CE_Failure;
+            }
 
             for( int iPixel = 0; iPixel < nWidth; iPixel++ )
             {
@@ -3237,9 +3241,13 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                 }
             }
 
-            poOverview->RasterIO( GF_Write, 0, iLine, nWidth, 1,
+            if( poOverview->RasterIO( GF_Write, 0, iLine, nWidth, 1,
                                   pafData, nWidth, 1, eWrkType,
-                                  0, 0, NULL );
+                                  0, 0, NULL ) != CE_None )
+            {
+                CPLFree( pafData );
+                return CE_Failure;
+            }
         }
 
         if( !pfnProgress( 1.0, NULL, pProgressData ) )
