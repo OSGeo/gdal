@@ -185,6 +185,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, pszSQL, NULL, NULL);
 
     OGRFeatureH hFeat = hSQLLyr ? OGR_L_GetNextFeature(hSQLLyr) : NULL;
+    CPLErr eErr = CE_None;
     if (hFeat != NULL)
     {
         CPLString osMemFileName;
@@ -232,7 +233,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                     memset(pImage, 255, nBlockXSize * nBlockYSize);
                 else
                 {
-                    GDALRasterIO(GDALGetRasterBand(hDSTile, iBand), GF_Read,
+                    eErr = GDALRasterIO(GDALGetRasterBand(hDSTile, iBand), GF_Read,
                                 0, 0, nBlockXSize, nBlockYSize,
                                 pImage, nBlockXSize, nBlockYSize, eDataType, 0, 0);
                 }
@@ -267,7 +268,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                     }
                 }
 
-                for(int iOtherBand=1;iOtherBand<=poGDS->nBands;iOtherBand++)
+                for(int iOtherBand=1;iOtherBand<=poGDS->nBands && eErr == CE_None;iOtherBand++)
                 {
                     GDALRasterBlock *poBlock;
 
@@ -313,7 +314,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                     }
                     else
                     {
-                        GDALRasterIO(GDALGetRasterBand(hDSTile, iOtherBand), GF_Read,
+                        eErr = GDALRasterIO(GDALGetRasterBand(hDSTile, iOtherBand), GF_Read,
                             0, 0, nBlockXSize, nBlockYSize,
                             pabySrcBlock, nBlockXSize, nBlockYSize, eDataType, 0, 0);
                     }
@@ -330,7 +331,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                 bGotTile = TRUE;
 
                 GByte* pabyRGBImage = (GByte*)CPLMalloc(3 * nBlockXSize * nBlockYSize);
-                GDALDatasetRasterIO(hDSTile, GF_Read,
+                eErr = GDALDatasetRasterIO(hDSTile, GF_Read,
                                     0, 0, nBlockXSize, nBlockYSize,
                                     pabyRGBImage, nBlockXSize, nBlockYSize, eDataType,
                                     3, NULL, 3, 3 * nBlockXSize, 1);
@@ -390,7 +391,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
         }
     }
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
