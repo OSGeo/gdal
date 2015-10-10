@@ -3349,7 +3349,10 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
     if( psOptions->nGroupTransactions )
     {
         if( psOptions->bLayerTransaction )
-            poDstLayer->StartTransaction();
+        {
+            if( poDstLayer->StartTransaction() != OGRERR_NONE )
+                return FALSE;
+        }
     }
 
     int bRet = TRUE;
@@ -3404,13 +3407,21 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
             {
                 if( psOptions->bLayerTransaction )
                 {
-                    poDstLayer->CommitTransaction();
-                    poDstLayer->StartTransaction();
+                    if( poDstLayer->CommitTransaction() != OGRERR_NONE ||
+                        poDstLayer->StartTransaction() != OGRERR_NONE )
+                    {
+                        OGRFeature::DestroyFeature( poFeature );
+                        return FALSE;
+                    }
                 }
                 else
                 {
-                    poODS->CommitTransaction();
-                    poODS->StartTransaction(psOptions->bForceTransaction);
+                    if( poODS->CommitTransaction() != OGRERR_NONE ||
+                        poODS->StartTransaction(psOptions->bForceTransaction) != OGRERR_NONE )
+                    {
+                        OGRFeature::DestroyFeature( poFeature );
+                        return FALSE;
+                    }
                 }
                 nFeaturesInTransaction = 0;
             }
@@ -3439,7 +3450,13 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                 {
                     if( psOptions->bLayerTransaction )
                     {
-                        poDstLayer->CommitTransaction();
+                        if( poDstLayer->CommitTransaction() != OGRERR_NONE )
+                        {
+                            OGRFeature::DestroyFeature( poFeature );
+                            OGRFeature::DestroyFeature( poDstFeature );
+                            OGRGeometryFactory::destroyGeometry( poStolenGeometry );
+                            return FALSE;
+                        }
                     }
                 }
 
@@ -3540,7 +3557,13 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                         {
                             if( psOptions->bLayerTransaction )
                             {
-                                poDstLayer->CommitTransaction();
+                                if( poDstLayer->CommitTransaction() != OGRERR_NONE &&
+                                    !psOptions->bSkipFailures )
+                                {
+                                    OGRFeature::DestroyFeature( poFeature );
+                                    OGRFeature::DestroyFeature( poDstFeature );
+                                    return FALSE;
+                                }
                             }
                         }
 
@@ -3684,7 +3707,8 @@ end_loop:
     {
         if( psOptions->bLayerTransaction )
         {
-            poDstLayer->CommitTransaction();
+            if( poDstLayer->CommitTransaction() != OGRERR_NONE )
+                bRet = FALSE;
         }
     }
 
