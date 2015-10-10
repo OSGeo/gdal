@@ -721,9 +721,14 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     for( int iY = 0; iY < psDTED->nYSize; iY++ )
     {
-        poSrcBand->RasterIO( GF_Read, 0, iY, psDTED->nXSize, 1, 
+        if( poSrcBand->RasterIO( GF_Read, 0, iY, psDTED->nXSize, 1, 
                             (void *) (panData + iY * psDTED->nXSize), psDTED->nXSize, 1, 
-                            GDT_Int16, 0, 0, NULL );
+                            GDT_Int16, 0, 0, NULL ) != CE_None )
+        {
+            DTEDClose( psDTED );
+            CPLFree( panData );
+            return NULL;
+        }
 
         if( pfnProgress && !pfnProgress(0.5 * (iY+1) / (double) psDTED->nYSize, NULL, pProgressData ) )
         {

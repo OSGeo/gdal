@@ -133,7 +133,8 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Read till we get our target line.                               */
 /* -------------------------------------------------------------------- */
-    while( poGDS->nLastLineRead < nBlockYOff )
+    CPLErr eErr = CE_None;
+    while( poGDS->nLastLineRead < nBlockYOff && eErr == CE_None )
     {
         if( DGifGetLine( poGDS->hGifFile, (GifPixelType*)pImage, 
                          nBlockXSize ) == GIF_ERROR )
@@ -147,14 +148,14 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
         if( poGDS->poWorkDS != NULL )
         {
-            poGDS->poWorkDS->RasterIO( GF_Write, 
+            eErr = poGDS->poWorkDS->RasterIO( GF_Write, 
                                        0, poGDS->nLastLineRead, nBlockXSize, 1, 
                                        pImage, nBlockXSize, 1, GDT_Byte, 
                                        1, NULL, 0, 0, 0, NULL );
         }
     }
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/

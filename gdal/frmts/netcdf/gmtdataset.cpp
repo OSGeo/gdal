@@ -557,8 +557,13 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     for( iLine = 0; iLine < nYSize; iLine++ )
     {
         start[0] = iLine * nXSize;
-        poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                          padfData, nXSize, 1, GDT_Float64, 0, 0, NULL );
+        if( poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                          padfData, nXSize, 1, GDT_Float64, 0, 0, NULL ) != CE_None )
+        {
+            nc_close (cdfid);
+            CPLFree( padfData );
+            return( NULL );
+        }
         err = nc_put_vara_double( cdfid, z_id, start, edge, padfData );
         if( err != NC_NOERR )
         {
@@ -566,6 +571,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       "nc_put_vara_double(%s): %s", 
                       pszFilename, nc_strerror( err ) );
             nc_close (cdfid);
+            CPLFree( padfData );
             return( NULL );
         }
     }
