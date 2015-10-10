@@ -8644,8 +8644,12 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
     /* %typemap(in) char **dict */
     arg2 = NULL;
     if ( PySequence_Check( obj1 ) ) {
-      int size = PySequence_Size(obj1);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj1);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj1,i);
         int bFreeStr;
         char* pszStr = GDALPythonObjectToCStr(pyObj, &bFreeStr);
@@ -8661,10 +8665,10 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
     }
     else if ( PyMapping_Check( obj1 ) ) {
       /* We need to use the dictionary form. */
-      int size = PyMapping_Length( obj1 );
-      if ( size > 0 ) {
+      Py_ssize_t size = PyMapping_Length( obj1 );
+      if ( size > 0 && size == (int)size) {
         PyObject *item_list = PyMapping_Items( obj1 );
-        for( int i=0; i<size; i++ ) {
+        for( int i=0; i<(int)size; i++ ) {
           PyObject *it = PySequence_GetItem( item_list, i );
           
           PyObject *k, *v;
@@ -9219,8 +9223,12 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj6);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj6);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj6,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -9367,8 +9375,12 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj4);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj4);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj4,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -9802,7 +9814,7 @@ SWIGINTERN PyObject *_wrap_ColorEntry_c1_set(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj0);
+    Py_ssize_t size = PySequence_Size(obj0);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -9845,7 +9857,7 @@ SWIGINTERN PyObject *_wrap_ColorEntry_c1_get(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj0);
+    Py_ssize_t size = PySequence_Size(obj0);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -9886,7 +9898,7 @@ SWIGINTERN PyObject *_wrap_ColorEntry_c2_set(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj0);
+    Py_ssize_t size = PySequence_Size(obj0);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -9929,7 +9941,7 @@ SWIGINTERN PyObject *_wrap_ColorEntry_c2_get(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj0);
+    Py_ssize_t size = PySequence_Size(obj0);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -9970,7 +9982,7 @@ SWIGINTERN PyObject *_wrap_ColorEntry_c3_set(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj0);
+    Py_ssize_t size = PySequence_Size(obj0);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -10013,7 +10025,7 @@ SWIGINTERN PyObject *_wrap_ColorEntry_c3_get(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj0);
+    Py_ssize_t size = PySequence_Size(obj0);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -10054,7 +10066,7 @@ SWIGINTERN PyObject *_wrap_ColorEntry_c4_set(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj0);
+    Py_ssize_t size = PySequence_Size(obj0);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -10097,7 +10109,7 @@ SWIGINTERN PyObject *_wrap_ColorEntry_c4_get(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj0);
+    Py_ssize_t size = PySequence_Size(obj0);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -10164,7 +10176,7 @@ SWIGINTERN PyObject *_wrap_delete_ColorEntry(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj0);
+    Py_ssize_t size = PySequence_Size(obj0);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -11495,7 +11507,12 @@ SWIGINTERN PyObject *_wrap_GCPsToGeoTransform(PyObject *SWIGUNUSEDPARM(self), Py
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg1 = PySequence_Size(obj0);
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg1 = (int)size;
     tmpGCPList1 = (GDAL_GCP*) malloc(arg1*sizeof(GDAL_GCP));
     arg2 = tmpGCPList1;
     for( int i = 0; i<arg1; i++ ) {
@@ -11648,42 +11665,42 @@ SWIGINTERN PyObject *_wrap_VirtualMem_GetAddr(PyObject *SWIGUNUSEDPARM(self), Py
     }
     if( *(arg4) == GDT_Byte )
     {
-      buf->format = "B";
+      buf->format = (char*) "B";
       buf->itemsize = 1;
     }
     else if( *(arg4) == GDT_Int16 )
     {
-      buf->format = "h";
+      buf->format = (char*) "h";
       buf->itemsize = 2;
     }
     else if( *(arg4) == GDT_UInt16 )
     {
-      buf->format = "H";
+      buf->format = (char*) "H";
       buf->itemsize = 2;
     }
     else if( *(arg4) == GDT_Int32 )
     {
-      buf->format = "i";
+      buf->format = (char*) "i";
       buf->itemsize = 4;
     }
     else if( *(arg4) == GDT_UInt32 )
     {
-      buf->format = "I";
+      buf->format = (char*) "I";
       buf->itemsize = 4;
     }
     else if( *(arg4) == GDT_Float32 )
     {
-      buf->format = "f";
+      buf->format = (char*) "f";
       buf->itemsize = 4;
     }
     else if( *(arg4) == GDT_Float64 )
     {
-      buf->format = "F";
+      buf->format = (char*) "F";
       buf->itemsize = 8;
     }
     else
     {
-      buf->format = "B";
+      buf->format = (char*) "B";
       buf->itemsize = 1;
     }
     resultobj = PyMemoryView_FromBuffer(buf);
@@ -12446,7 +12463,7 @@ SWIGINTERN PyObject *_wrap_Dataset_SetGeoTransform(PyObject *SWIGUNUSEDPARM(self
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int seq_size = PySequence_Size(obj1);
+    Py_ssize_t seq_size = PySequence_Size(obj1);
     if ( seq_size != 6 ) {
       PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
       SWIG_fail;
@@ -12543,7 +12560,12 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
         PyErr_SetString(PyExc_TypeError, "not a sequence");
         SWIG_fail;
       }
-      arg3 = PySequence_Size(obj2);
+      Py_ssize_t size = PySequence_Size(obj2);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      arg3 = (int)size;
       arg4 = (int*) malloc(arg3*sizeof(int));
       for( int i = 0; i<arg3; i++ ) {
         PyObject *o = PySequence_GetItem(obj2,i);
@@ -12789,7 +12811,12 @@ SWIGINTERN PyObject *_wrap_Dataset_SetGCPs(PyObject *SWIGUNUSEDPARM(self), PyObj
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg2 = PySequence_Size(obj1);
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg2 = (int)size;
     tmpGCPList2 = (GDAL_GCP*) malloc(arg2*sizeof(GDAL_GCP));
     arg3 = tmpGCPList2;
     for( int i = 0; i<arg2; i++ ) {
@@ -12928,8 +12955,12 @@ SWIGINTERN PyObject *_wrap_Dataset_AddBand(PyObject *SWIGUNUSEDPARM(self), PyObj
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj2);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj2);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj2,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -13269,7 +13300,12 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
         PyErr_SetString(PyExc_TypeError, "not a sequence");
         SWIG_fail;
       }
-      arg11 = PySequence_Size(obj9);
+      Py_ssize_t size = PySequence_Size(obj9);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      arg11 = (int)size;
       arg12 = (int*) malloc(arg11*sizeof(int));
       for( int i = 0; i<arg11; i++ ) {
         PyObject *o = PySequence_GetItem(obj9,i);
@@ -13521,7 +13557,12 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
         PyErr_SetString(PyExc_TypeError, "not a sequence");
         SWIG_fail;
       }
-      arg12 = PySequence_Size(obj9);
+      Py_ssize_t size = PySequence_Size(obj9);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      arg12 = (int)size;
       arg13 = (int*) malloc(arg12*sizeof(int));
       for( int i = 0; i<arg12; i++ ) {
         PyObject *o = PySequence_GetItem(obj9,i);
@@ -13568,8 +13609,12 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj13);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj13);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj13,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -13794,7 +13839,12 @@ SWIGINTERN PyObject *_wrap_Dataset_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self),
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg10 = PySequence_Size(obj9);
+    Py_ssize_t size = PySequence_Size(obj9);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg10 = (int)size;
     arg11 = (int*) malloc(arg10*sizeof(int));
     for( int i = 0; i<arg10; i++ ) {
       PyObject *o = PySequence_GetItem(obj9,i);
@@ -13834,8 +13884,12 @@ SWIGINTERN PyObject *_wrap_Dataset_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self),
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj13);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj13);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj13,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -14015,7 +14069,12 @@ SWIGINTERN PyObject *_wrap_Dataset_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(s
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg10 = PySequence_Size(obj9);
+    Py_ssize_t size = PySequence_Size(obj9);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg10 = (int)size;
     arg11 = (int*) malloc(arg10*sizeof(int));
     for( int i = 0; i<arg10; i++ ) {
       PyObject *o = PySequence_GetItem(obj9,i);
@@ -14050,8 +14109,12 @@ SWIGINTERN PyObject *_wrap_Dataset_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(s
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj12);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj12);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj12,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -14186,8 +14249,12 @@ SWIGINTERN PyObject *_wrap_Dataset_CreateLayer(PyObject *SWIGUNUSEDPARM(self), P
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj4);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj4);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj4,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -14304,8 +14371,12 @@ SWIGINTERN PyObject *_wrap_Dataset_CopyLayer(PyObject *SWIGUNUSEDPARM(self), PyO
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj3);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj3);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj3,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -15096,7 +15167,12 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
         PyErr_SetString(PyExc_TypeError, "not a sequence");
         SWIG_fail;
       }
-      arg10 = PySequence_Size(obj8);
+      Py_ssize_t size = PySequence_Size(obj8);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      arg10 = (int)size;
       arg11 = (int*) malloc(arg10*sizeof(int));
       for( int i = 0; i<arg10; i++ ) {
         PyObject *o = PySequence_GetItem(obj8,i);
@@ -15967,8 +16043,12 @@ SWIGINTERN PyObject *_wrap_Band_SetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj1);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj1,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -17998,7 +18078,12 @@ SWIGINTERN PyObject *_wrap_Band_SetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg4 = PySequence_Size(obj3);
+    Py_ssize_t size = PySequence_Size(obj3);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg4 = (int)size;
     arg5 = (GUIntBig*) malloc(arg4*sizeof(GUIntBig));
     for( int i = 0; i<arg4; i++ ) {
       PyObject *o = PySequence_GetItem(obj3,i);
@@ -18152,8 +18237,12 @@ SWIGINTERN PyObject *_wrap_Band_SetCategoryNames(PyObject *SWIGUNUSEDPARM(self),
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj1);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj1,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -18333,8 +18422,12 @@ SWIGINTERN PyObject *_wrap_Band_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self), Py
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj11);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj11);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj11,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -18434,8 +18527,12 @@ SWIGINTERN PyObject *_wrap_Band_GetVirtualMemAuto(PyObject *SWIGUNUSEDPARM(self)
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj2);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj2);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj2,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -18607,8 +18704,12 @@ SWIGINTERN PyObject *_wrap_Band_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(self
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj10);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj10);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj10,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -19245,7 +19346,7 @@ SWIGINTERN PyObject *_wrap_ColorTable_GetColorEntryAsRGB(PyObject *SWIGUNUSEDPAR
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj2);
+    Py_ssize_t size = PySequence_Size(obj2);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -19311,7 +19412,7 @@ SWIGINTERN PyObject *_wrap_ColorTable_SetColorEntry(PyObject *SWIGUNUSEDPARM(sel
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj2);
+    Py_ssize_t size = PySequence_Size(obj2);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -19384,7 +19485,7 @@ SWIGINTERN PyObject *_wrap_ColorTable_CreateColorRamp(PyObject *SWIGUNUSEDPARM(s
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj2);
+    Py_ssize_t size = PySequence_Size(obj2);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -19411,7 +19512,7 @@ SWIGINTERN PyObject *_wrap_ColorTable_CreateColorRamp(PyObject *SWIGUNUSEDPARM(s
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int size = PySequence_Size(obj4);
+    Py_ssize_t size = PySequence_Size(obj4);
     if ( size > 4 ) {
       PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
       SWIG_fail;
@@ -20950,8 +21051,12 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj9);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj9);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj9,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -21088,8 +21193,12 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj2);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj2);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj2,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -21256,7 +21365,12 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg2 = PySequence_Size(obj1);
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg2 = (int)size;
     arg3 = (int*) malloc(arg2*sizeof(int));
     for( int i = 0; i<arg2; i++ ) {
       PyObject *o = PySequence_GetItem(obj1,i);
@@ -21293,7 +21407,12 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
         PyErr_SetString(PyExc_TypeError, "not a sequence");
         SWIG_fail;
       }
-      arg7 = PySequence_Size(obj5);
+      Py_ssize_t size = PySequence_Size(obj5);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      arg7 = (int)size;
       arg8 = (double*) malloc(arg7*sizeof(double));
       for( int i = 0; i<arg7; i++ ) {
         PyObject *o = PySequence_GetItem(obj5,i);
@@ -21319,8 +21438,12 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj6);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj6);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj6,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -21528,8 +21651,12 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj4);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj4);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj4,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -21713,8 +21840,12 @@ SWIGINTERN PyObject *_wrap_FPolygonize(PyObject *SWIGUNUSEDPARM(self), PyObject 
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj4);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj4);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj4,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -21898,8 +22029,12 @@ SWIGINTERN PyObject *_wrap_FillNodata(PyObject *SWIGUNUSEDPARM(self), PyObject *
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj4);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj4);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj4,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -22089,8 +22224,12 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj5);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj5);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj5,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -22246,7 +22385,12 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg2 = PySequence_Size(obj1);
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg2 = (int)size;
     arg3 = (GDALRasterBandShadow**) CPLMalloc(arg2*sizeof(GDALRasterBandShadow*));
     
     for( int i = 0; i<arg2; i++ ) {
@@ -22554,7 +22698,12 @@ SWIGINTERN PyObject *_wrap_ContourGenerate(PyObject *SWIGUNUSEDPARM(self), PyObj
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg4 = PySequence_Size(obj3);
+    Py_ssize_t size = PySequence_Size(obj3);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg4 = (int)size;
     arg5 = (double*) malloc(arg4*sizeof(double));
     for( int i = 0; i<arg4; i++ ) {
       PyObject *o = PySequence_GetItem(obj3,i);
@@ -22798,7 +22947,12 @@ SWIGINTERN PyObject *_wrap_CreatePansharpenedVRT(PyObject *SWIGUNUSEDPARM(self),
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg3 = PySequence_Size(obj2);
+    Py_ssize_t size = PySequence_Size(obj2);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg3 = (int)size;
     arg4 = (GDALRasterBandShadow**) CPLMalloc(arg3*sizeof(GDALRasterBandShadow*));
     
     for( int i = 0; i<arg3; i++ ) {
@@ -22890,8 +23044,12 @@ SWIGINTERN PyObject *_wrap_new_Transformer(PyObject *SWIGUNUSEDPARM(self), PyObj
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj2);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj2);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj2,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -23014,7 +23172,7 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoint__SWIG_0(PyObject *SWIGUNUS
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int seq_size = PySequence_Size(obj2);
+    Py_ssize_t seq_size = PySequence_Size(obj2);
     if ( seq_size != 3 ) {
       PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
       SWIG_fail;
@@ -23249,7 +23407,12 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoints(PyObject *SWIGUNUSEDPARM(
       SWIG_fail;
     }
     
-    arg3 = PySequence_Size(obj2);
+    Py_ssize_t size = PySequence_Size(obj2);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg3 = (int)size;
     arg4 = (double*) VSIMalloc(arg3*sizeof(double));
     arg5 = (double*) VSIMalloc(arg3*sizeof(double));
     arg6 = (double*) VSIMalloc(arg3*sizeof(double));
@@ -23418,8 +23581,12 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformGeolocations(PyObject *SWIGUNUSE
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj6);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj6);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj6,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -23542,7 +23709,7 @@ SWIGINTERN PyObject *_wrap_ApplyGeoTransform(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int seq_size = PySequence_Size(obj0);
+    Py_ssize_t seq_size = PySequence_Size(obj0);
     if ( seq_size != 6 ) {
       PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
       SWIG_fail;
@@ -23621,7 +23788,7 @@ SWIGINTERN PyObject *_wrap_InvGeoTransform(PyObject *SWIGUNUSEDPARM(self), PyObj
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int seq_size = PySequence_Size(obj0);
+    Py_ssize_t seq_size = PySequence_Size(obj0);
     if ( seq_size != 6 ) {
       PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
       SWIG_fail;
@@ -24317,8 +24484,12 @@ SWIGINTERN PyObject *_wrap_GetJPEG2000Structure(PyObject *SWIGUNUSEDPARM(self), 
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj1);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj1);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj1,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -24441,8 +24612,12 @@ SWIGINTERN PyObject *_wrap_GetJPEG2000StructureAsString(PyObject *SWIGUNUSEDPARM
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj1);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj1);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj1,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -24723,8 +24898,12 @@ SWIGINTERN PyObject *_wrap_OpenEx(PyObject *SWIGUNUSEDPARM(self), PyObject *args
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj2);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj2);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj2,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -24769,8 +24948,12 @@ SWIGINTERN PyObject *_wrap_OpenEx(PyObject *SWIGUNUSEDPARM(self), PyObject *args
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj3);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj3);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj3,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -24815,8 +24998,12 @@ SWIGINTERN PyObject *_wrap_OpenEx(PyObject *SWIGUNUSEDPARM(self), PyObject *args
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj4);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj4);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj4,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -24996,8 +25183,12 @@ SWIGINTERN PyObject *_wrap_IdentifyDriver(PyObject *SWIGUNUSEDPARM(self), PyObje
         SWIG_fail;
       }
       
-      int size = PySequence_Size(obj1);
-      for (int i = 0; i < size; i++) {
+      Py_ssize_t size = PySequence_Size(obj1);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
         PyObject* pyObj = PySequence_GetItem(obj1,i);
         if (PyUnicode_Check(pyObj))
         {
@@ -25092,8 +25283,12 @@ SWIGINTERN PyObject *_wrap_GeneralCmdLineProcessor(PyObject *SWIGUNUSEDPARM(self
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj0);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj0,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -25193,8 +25388,12 @@ SWIGINTERN PyObject *_wrap_new_GDALInfoOptions(PyObject *SWIGUNUSEDPARM(self), P
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj0);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj0,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -25352,8 +25551,12 @@ SWIGINTERN PyObject *_wrap_new_GDALTranslateOptions(PyObject *SWIGUNUSEDPARM(sel
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj0);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj0,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -25584,8 +25787,12 @@ SWIGINTERN PyObject *_wrap_new_GDALWarpAppOptions(PyObject *SWIGUNUSEDPARM(self)
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj0);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj0,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -25720,7 +25927,12 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALWarpDestDS(PyObject *SWIGUNUSEDPARM(self)
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg2 = PySequence_Size(obj1);
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg2 = (int)size;
     arg3 = (GDALDatasetShadow**) CPLMalloc(arg2*sizeof(GDALDatasetShadow*));
     
     for( int i = 0; i<arg2; i++ ) {
@@ -25857,7 +26069,12 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALWarpDestName(PyObject *SWIGUNUSEDPARM(sel
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    arg2 = PySequence_Size(obj1);
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg2 = (int)size;
     arg3 = (GDALDatasetShadow**) CPLMalloc(arg2*sizeof(GDALDatasetShadow*));
     
     for( int i = 0; i<arg2; i++ ) {
@@ -25976,8 +26193,12 @@ SWIGINTERN PyObject *_wrap_new_GDALVectorTranslateOptions(PyObject *SWIGUNUSEDPA
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj0);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj0,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -26310,8 +26531,12 @@ SWIGINTERN PyObject *_wrap_new_GDALDEMProcessingOptions(PyObject *SWIGUNUSEDPARM
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj0);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj0,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -26571,8 +26796,12 @@ SWIGINTERN PyObject *_wrap_new_GDALNearblackOptions(PyObject *SWIGUNUSEDPARM(sel
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj0);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj0,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -26905,8 +27134,12 @@ SWIGINTERN PyObject *_wrap_new_GDALGridOptions(PyObject *SWIGUNUSEDPARM(self), P
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj0);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj0,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -27137,8 +27370,12 @@ SWIGINTERN PyObject *_wrap_new_GDALRasterizeOptions(PyObject *SWIGUNUSEDPARM(sel
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj0);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj0,i);
       if (PyUnicode_Check(pyObj))
       {

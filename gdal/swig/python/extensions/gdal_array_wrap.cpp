@@ -4276,42 +4276,42 @@ SWIGINTERN PyObject *_wrap_VirtualMem_GetAddr(PyObject *SWIGUNUSEDPARM(self), Py
     }
     if( *(arg4) == GDT_Byte )
     {
-      buf->format = "B";
+      buf->format = (char*) "B";
       buf->itemsize = 1;
     }
     else if( *(arg4) == GDT_Int16 )
     {
-      buf->format = "h";
+      buf->format = (char*) "h";
       buf->itemsize = 2;
     }
     else if( *(arg4) == GDT_UInt16 )
     {
-      buf->format = "H";
+      buf->format = (char*) "H";
       buf->itemsize = 2;
     }
     else if( *(arg4) == GDT_Int32 )
     {
-      buf->format = "i";
+      buf->format = (char*) "i";
       buf->itemsize = 4;
     }
     else if( *(arg4) == GDT_UInt32 )
     {
-      buf->format = "I";
+      buf->format = (char*) "I";
       buf->itemsize = 4;
     }
     else if( *(arg4) == GDT_Float32 )
     {
-      buf->format = "f";
+      buf->format = (char*) "f";
       buf->itemsize = 4;
     }
     else if( *(arg4) == GDT_Float64 )
     {
-      buf->format = "F";
+      buf->format = (char*) "F";
       buf->itemsize = 8;
     }
     else
     {
-      buf->format = "B";
+      buf->format = (char*) "B";
       buf->itemsize = 1;
     }
     resultobj = PyMemoryView_FromBuffer(buf);
