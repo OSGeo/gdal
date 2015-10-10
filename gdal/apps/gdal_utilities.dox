@@ -994,7 +994,7 @@ The value will be burned into all output bands.</dd>
 
 <dt> <b>-3d</b>: </dt><dd> 
 Indicates that a burn value should be extracted from the "Z" values of the 
-feature. These values are adjusted by the burn value given by "-burn value" or
+feature. These values are added to the burn value given by "-burn value" or
 "-a attribute_name" if provided. As of now, only points and lines are drawn in
 3D.</dd>
 
