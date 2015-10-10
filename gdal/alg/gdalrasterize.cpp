@@ -1060,9 +1060,9 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /*      Write out the image once for all layers if user requested       */
 /*      to render the whole raster in single chunk.                     */
 /* -------------------------------------------------------------------- */
-    if ( nYChunkSize == poDS->GetRasterYSize() )
+    if ( eErr == CE_None && nYChunkSize == poDS->GetRasterYSize() )
     {
-        poDS->RasterIO( GF_Write, 0, 0,
+        eErr = poDS->RasterIO( GF_Write, 0, 0,
                                 poDS->GetRasterXSize(), nYChunkSize, 
                                 pabyChunkBuf,
                                 poDS->GetRasterXSize(), nYChunkSize, 

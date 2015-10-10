@@ -86,7 +86,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     VALIDATE_POINTER1( hSrcDS, "GDALSimpleImageWarp", 0 );
     VALIDATE_POINTER1( hDstDS, "GDALSimpleImageWarp", 0 );
 
-    int		iBand, bCancelled = FALSE;
+    int		iBand, bError = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If no bands provided assume we should process all bands.        */
@@ -137,10 +137,16 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     {
         papabySrcData[iBand] = (GByte *) VSIMalloc(nSrcXSize*nSrcYSize);
         
-        GDALRasterIO( GDALGetRasterBand(hSrcDS,panBandList[iBand]), GF_Read,
+        if( GDALRasterIO( GDALGetRasterBand(hSrcDS,panBandList[iBand]), GF_Read,
                       0, 0, nSrcXSize, nSrcYSize, 
                       papabySrcData[iBand], nSrcXSize, nSrcYSize, GDT_Byte, 
-                      0, 0 );
+                      0, 0 ) != CE_None )
+        {
+            for( int i=0;i<=iBand;i++)
+                VSIFree(papabySrcData[i]);
+            CPLFree(papabySrcData);
+            return FALSE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -219,10 +225,16 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         for( iBand = 0; iBand < nBandCount; iBand++ )
         {
             if( panBandInit[iBand] == -1 )
-                GDALRasterIO( GDALGetRasterBand(hDstDS,iBand+1), GF_Read,
+            {
+                if( GDALRasterIO( GDALGetRasterBand(hDstDS,iBand+1), GF_Read,
                               0, iDstY, nDstXSize, 1, 
                               papabyDstLine[iBand], nDstXSize, 1, GDT_Byte, 
-                              0, 0 );
+                              0, 0 ) != CE_None )
+                {
+                    bError = TRUE;
+                    break;
+                }
+            }
             else
                 memset( papabyDstLine[iBand], panBandInit[iBand], nDstXSize );
         }
@@ -269,9 +281,13 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         // Write scanline to disk. 
         for( iBand = 0; iBand < nBandCount; iBand++ )
         {
-            GDALRasterIO( GDALGetRasterBand(hDstDS,iBand+1), GF_Write,
+            if( GDALRasterIO( GDALGetRasterBand(hDstDS,iBand+1), GF_Write,
                           0, iDstY, nDstXSize, 1, 
-                          papabyDstLine[iBand], nDstXSize, 1, GDT_Byte, 0, 0 );
+                          papabyDstLine[iBand], nDstXSize, 1, GDT_Byte, 0, 0 ) != CE_None )
+            {
+                bError = TRUE;
+                break;
+            }
         }
 
         if( pfnProgress != NULL )
@@ -280,7 +296,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                               "", pProgressArg ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-                bCancelled = TRUE;
+                bError = TRUE;
                 break;
             }
         }
@@ -303,7 +319,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     CPLFree( padfZ );
     CPLFree( pabSuccess );
     
-    return !bCancelled;
+    return !bError;
 }
 
 /************************************************************************/

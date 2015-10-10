@@ -429,12 +429,16 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
             goto end_and_cleanup;
         }
 
-        GDALRasterIO( hRed, GF_Read, 0, iLine, nXSize, 1, 
+        err = GDALRasterIO( hRed, GF_Read, 0, iLine, nXSize, 1, 
                       pabyRedLine, nXSize, 1, GDT_Byte, 0, 0 );
-        GDALRasterIO( hGreen, GF_Read, 0, iLine, nXSize, 1, 
+        if( err == CE_None )
+            err = GDALRasterIO( hGreen, GF_Read, 0, iLine, nXSize, 1, 
                       pabyGreenLine, nXSize, 1, GDT_Byte, 0, 0 );
-        GDALRasterIO( hBlue, GF_Read, 0, iLine, nXSize, 1, 
+        if( err == CE_None )
+            err = GDALRasterIO( hBlue, GF_Read, 0, iLine, nXSize, 1, 
                       pabyBlueLine, nXSize, 1, GDT_Byte, 0, 0 );
+        if( err != CE_None )
+            goto end_and_cleanup;
 
         for( iPixel = 0; iPixel < nXSize; iPixel++ )
         {

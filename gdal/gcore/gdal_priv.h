@@ -70,6 +70,8 @@ class GDALAsyncReader;
 #define GMO_MD_DIRTY             0x0010
 #define GMO_PAM_CLASS            0x0020
 
+template<class T> static void IGNORE_RET_VAL(T) {} 
+
 /************************************************************************/
 /*                       GDALMultiDomainMetadata                        */
 /************************************************************************/

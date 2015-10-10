@@ -1102,7 +1102,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             nSpectralYOff -= nYOffExtract;
             sExtraArg.dfXOff -= nXOffExtract;
             sExtraArg.dfYOff -= nYOffExtract;
-            poMEMDS->RasterIO(GF_Read,
+            IGNORE_RET_VAL(poMEMDS->RasterIO(GF_Read,
                               nSpectralXOff,
                               nSpectralYOff,
                               nSpectralXSize, nSpectralYSize,
@@ -1110,7 +1110,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                               eWorkDataType,
                               psOptions->nInputSpectralBands, NULL,
                               0, 0, 0,
-                              &sExtraArg);
+                              &sExtraArg));
         }
         else
         {
@@ -1360,7 +1360,7 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
     sExtraArg.dfXSize = psJob->dfXSize;
     sExtraArg.dfYSize = psJob->dfYSize;
 
-    psJob->poMEMDS->RasterIO(GF_Read,
+    IGNORE_RET_VAL(psJob->poMEMDS->RasterIO(GF_Read,
                              psJob->nXOff,
                              psJob->nYOff,
                              psJob->nXSize,
@@ -1372,7 +1372,7 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
                              psJob->nBandCount,
                              NULL,
                              0, 0, psJob->nBandSpace,
-                             &sExtraArg);
+                             &sExtraArg));
 #endif
 
 #ifdef DEBUG_TIMING

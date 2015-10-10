@@ -322,12 +322,16 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 /* -------------------------------------------------------------------- */
 /*      Read source data.                                               */
 /* -------------------------------------------------------------------- */
-        GDALRasterIO( hRed, GF_Read, 0, iScanline, nXSize, 1, 
+        err = GDALRasterIO( hRed, GF_Read, 0, iScanline, nXSize, 1, 
                       pabyRed, nXSize, 1, GDT_Byte, 0, 0 );
-        GDALRasterIO( hGreen, GF_Read, 0, iScanline, nXSize, 1, 
+        if( err == CE_None )
+            err = GDALRasterIO( hGreen, GF_Read, 0, iScanline, nXSize, 1, 
                       pabyGreen, nXSize, 1, GDT_Byte, 0, 0 );
-        GDALRasterIO( hBlue, GF_Read, 0, iScanline, nXSize, 1, 
+        if( err == CE_None )
+            err = GDALRasterIO( hBlue, GF_Read, 0, iScanline, nXSize, 1, 
                       pabyBlue, nXSize, 1, GDT_Byte, 0, 0 );
+        if( err != CE_None )
+            goto end_and_cleanup;
 
 /* -------------------------------------------------------------------- */
 /*	Apply the error from the previous line to this one.		*/
@@ -498,8 +502,10 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 /* -------------------------------------------------------------------- */
 /*      Write results.                                                  */
 /* -------------------------------------------------------------------- */
-        GDALRasterIO( hTarget, GF_Write, 0, iScanline, nXSize, 1, 
+        err = GDALRasterIO( hTarget, GF_Write, 0, iScanline, nXSize, 1, 
                       pabyIndex, nXSize, 1, GDT_Byte, 0, 0 );
+        if( err != CE_None )
+            break;
     }
 
     pfnProgress( 1.0, NULL, pProgressArg );
