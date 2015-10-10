@@ -311,7 +311,7 @@ void OGRIDFDataSource::Parse()
                     poLSNew->addPoint(poLS->getX(1), poLS->getY(1));
                     poLSNew->assignSpatialReference(poSRS);
                     poFeat->SetGeometryDirectly(poLSNew);
-                    poLinkLyr->SetFeature(poFeat);
+                    IGNORE_RET_VAL(poLinkLyr->SetFeature(poFeat));
                 }
                 delete poFeat;
             }

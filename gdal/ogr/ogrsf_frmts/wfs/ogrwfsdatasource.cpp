@@ -296,7 +296,7 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
         poLayerGetCapabilitiesLayer->CreateField(&oFDefn);
         OGRFeature* poFeature = new OGRFeature(poLayerGetCapabilitiesLayer->GetLayerDefn());
         poFeature->SetField(0, osGetCapabilities);
-        poLayerGetCapabilitiesLayer->CreateFeature(poFeature);
+        IGNORE_RET_VAL(poLayerGetCapabilitiesLayer->CreateFeature(poFeature));
         delete poFeature;
 
         return poLayerGetCapabilitiesLayer;
@@ -2148,7 +2148,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             const CPLString& osFID = *iter;
             OGRFeature* poFeature = new OGRFeature(poMEMLayer->GetLayerDefn());
             poFeature->SetField(0, osFID);
-            poMEMLayer->CreateFeature(poFeature);
+            IGNORE_RET_VAL(poMEMLayer->CreateFeature(poFeature));
             delete poFeature;
             iter ++;
         }

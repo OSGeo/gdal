@@ -608,7 +608,7 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
                 psIter->psNext = psNext;
 
                 poFeature->SetField(0, pszXML);
-                poLyr->CreateFeature(poFeature);
+                IGNORE_RET_VAL(poLyr->CreateFeature(poFeature));
                 CPLFree(pszXML);
                 delete poFeature;
             }

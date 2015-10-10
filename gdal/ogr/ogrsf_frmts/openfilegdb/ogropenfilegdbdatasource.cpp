@@ -1031,7 +1031,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                     {
                         poMemLayer = new OGRMemLayer("SELECT", NULL, wkbNone);
                         OGRFeature* poFeature = new OGRFeature(poMemLayer->GetLayerDefn());
-                        poMemLayer->CreateFeature(poFeature);
+                        IGNORE_RET_VAL(poMemLayer->CreateFeature(poFeature));
                         delete poFeature;
                     }
 
@@ -1049,7 +1049,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                     {
                         OGRFeature* poFeature = poMemLayer->GetFeature(0);
                         poFeature->SetField(oFieldDefn.GetNameRef(), (OGRField*) psField);
-                        poMemLayer->SetFeature(poFeature);
+                        IGNORE_RET_VAL(poMemLayer->SetFeature(poFeature));
                         delete poFeature;
                     }
                 }
