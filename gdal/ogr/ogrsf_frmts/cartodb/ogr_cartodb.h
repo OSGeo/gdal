@@ -223,6 +223,8 @@ class OGRCARTODBDataSource : public OGRDataSource
     CPLString           osCurrentSchema;
     
     int                 bHasOGRMetadataFunction;
+    
+    int                 nPostGISMajor, nPostGISMinor;
 
   public:
                         OGRCARTODBDataSource();
@@ -267,6 +269,9 @@ class OGRCARTODBDataSource : public OGRDataSource
                                                     OGRGeometry *poSpatialFilter = NULL,
                                                     const char *pszDialect = NULL,
                                                     int bRunDeferedActions = FALSE );
+
+    int                         GetPostGISMajor() const { return nPostGISMajor; }
+    int                         GetPostGISMinor() const { return nPostGISMinor; }
 };
 
 #endif /* ndef _OGR_CARTODB_H_INCLUDED */
