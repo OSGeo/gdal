@@ -1908,18 +1908,19 @@ CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
         (nBandCount == nBands || ( nBandCount == 3 && poIORequest != NULL && nBands == 4) ) &&
         nPixelSpace == nDataTypeSize && nLineSpace == nPixelSpace * nRasterXSize )
     {
+        CPLErr eErr = CE_None;
         GByte* pabyData = (GByte*)pData;
         for(int iY = 0; iY < nYSize; iY ++)
         {
-            for(int iBand = 0; iBand < nBandCount; iBand ++)
+            for(int iBand = 0; iBand < nBandCount && eErr == CE_None; iBand ++)
             {
-                GetRasterBand(panBandMap[iBand])->WriteBlock(0, iY + nYOff,
+                eErr = GetRasterBand(panBandMap[iBand])->WriteBlock(0, iY + nYOff,
                     pabyData + iY * nLineSpace + iBand * nBandSpace);
             }
 
-            if( poIORequest != NULL )
+            if( poIORequest != NULL && eErr == CE_None )
             {
-                po4thBand->WriteBlock(0, iY + nYOff,
+                eErr = po4thBand->WriteBlock(0, iY + nYOff,
                     poIORequest->pabyData + iY * nDataTypeSize * nXSize);
             }
         }
@@ -1930,7 +1931,7 @@ CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
             po4thBand->poIORequest = NULL;
         }
 
-        return CE_None;
+        return eErr;
     }
     else
         return GDALDataset::IRasterIO(eRWFlag,

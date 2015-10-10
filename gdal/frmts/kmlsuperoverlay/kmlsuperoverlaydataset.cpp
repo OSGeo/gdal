@@ -139,8 +139,8 @@ void GenerateTiles(std::string filename,
             if (!bReadFailed)
             {
                 GDALRasterBand* poBandtmp = poTmpDataset->GetRasterBand(band);
-                poBandtmp->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
-                                    0, 0, NULL);
+                IGNORE_RET_VAL( poBandtmp->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
+                                    0, 0, NULL) );
             }
         }
 
@@ -161,8 +161,8 @@ void GenerateTiles(std::string filename,
                     }
                 }
 
-                alphaBand->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
-                                    0, 0, NULL);
+                IGNORE_RET_VAL( alphaBand->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
+                                    0, 0, NULL) );
             }
         }
     }
@@ -1395,8 +1395,9 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
     void             *pProgressDataGlobal = psExtraArg->pProgressData;
+    CPLErr eErr = CE_None;
 
-    for(int iBandIdx = 0; iBandIdx < nBandCount; iBandIdx++ )
+    for(int iBandIdx = 0; iBandIdx < nBandCount && eErr == CE_None; iBandIdx++ )
     {
         int nBand = panBandMap[iBandIdx];
 
@@ -1430,7 +1431,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                       pfnProgressGlobal,
                                       pProgressDataGlobal );
 
-        poDSIcon->GetRasterBand(nIconBand)->RasterIO( eRWFlag,
+        eErr = poDSIcon->GetRasterBand(nIconBand)->RasterIO( eRWFlag,
                                                       nReqXOff,
                                                       nReqYOff,
                                                       nReqXSize,
@@ -1446,7 +1447,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
     psExtraArg->pfnProgress = pfnProgressGlobal;
     psExtraArg->pProgressData = pProgressDataGlobal;
 
-    return CE_None;
+    return eErr;
 
 }
 

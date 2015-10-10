@@ -977,9 +977,13 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 	// Read the unique block from the in memory file and release it
     // ----------------------------------------------------------------
 
-    poGDS->hVirtual.poBand->RasterIO( GF_Read, 0, 0, 
+    if( poGDS->hVirtual.poBand->RasterIO( GF_Read, 0, 0, 
         nVirtualXSize, nVirtualYSize, pImage, 
-        nVirtualXSize, nVirtualYSize, GDT_Byte, 0, 0, NULL );
+        nVirtualXSize, nVirtualYSize, GDT_Byte, 0, 0, NULL) != CE_None )
+    {
+        INGR_ReleaseVirtual( &poGDS->hVirtual );
+        return CE_Failure;
+    }
 
     // --------------------------------------------------------------------
     // Reshape blocks if needed

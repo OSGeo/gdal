@@ -1789,12 +1789,12 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                 INIT_RASTERIO_EXTRA_ARG(sExtraArgTmp);
                 sExtraArgTmp.eResampleAlg = psExtraArg->eResampleAlg;
 
-                poMEMDS->RasterIO(GF_Read, 0, 0, dims.size.x, dims.size.y,
+                IGNORE_RET_VAL(poMEMDS->RasterIO(GF_Read, 0, 0, dims.size.x, dims.size.y,
                                   pData, nBufXSize, nBufYSize,
                                   eBufType,
                                   nBandCount, NULL,
                                   nPixelSpace, nLineSpace, nBandSpace,
-                                  &sExtraArgTmp);
+                                  &sExtraArgTmp));
 
                 GDALClose(poMEMDS);
             }
