@@ -1147,7 +1147,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                         }
                         poGeom->assignSpatialReference(poCurLayer->GetSpatialRef());
                         poFeature->SetGeometryDirectly(poGeom);
-                        poCurLayer->CreateFeature(poFeature);
+                        IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
                         delete poFeature;
                     }
 

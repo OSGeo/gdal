@@ -568,13 +568,16 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
             OGRFeatureH hFeat = OGR_F_Create( OGR_L_GetLayerDefn(hRasterLayer) );
             OGR_F_SetFieldBinary(hFeat, 0, (int)nDataLength, pabyData);
             
-            OGR_L_CreateFeature(hRasterLayer, hFeat);
+            if( OGR_L_CreateFeature(hRasterLayer, hFeat) != OGRERR_NONE )
+                eErr = CE_Failure;
             /* Query raster ID to set it as the ID of the associated metadata */
             int nRasterID = (int)OGR_F_GetFID(hFeat);
             
             OGR_F_Destroy(hFeat);
             
             VSIUnlink(osTempFileName.c_str());
+            if( eErr == CE_Failure )
+                break;
             
 /* -------------------------------------------------------------------- */
 /*      Insert new entry into metadata table                            */
@@ -610,7 +613,8 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
             
             OGR_F_SetGeometryDirectly(hFeat, hRectangle);
             
-            OGR_L_CreateFeature(hMetadataLayer, hFeat);
+            if( OGR_L_CreateFeature(hMetadataLayer, hFeat) != OGRERR_NONE )
+                eErr = CE_Failure;
             OGR_F_Destroy(hFeat);
             
             nBlocks++;
@@ -702,7 +706,8 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
             OGR_F_SetFieldDouble(hFeat, OGR_FD_GetFieldIndex(hFDefn, "pixel_x_size"), padfXResolutions[0]);
             OGR_F_SetFieldDouble(hFeat, OGR_FD_GetFieldIndex(hFDefn, "pixel_y_size"), padfYResolutions[0]);
             OGR_F_SetFieldInteger(hFeat, OGR_FD_GetFieldIndex(hFDefn, "tile_count"), nBlocksMainRes);
-            OGR_L_CreateFeature(hRasterPyramidsLyr, hFeat);
+            if( OGR_L_CreateFeature(hRasterPyramidsLyr, hFeat) != OGRERR_NONE )
+                eErr = CE_Failure;
             OGR_F_Destroy(hFeat);
         }
 
@@ -711,7 +716,8 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
         OGR_F_SetFieldDouble(hFeat, OGR_FD_GetFieldIndex(hFDefn, "pixel_x_size"), dfXResolution);
         OGR_F_SetFieldDouble(hFeat, OGR_FD_GetFieldIndex(hFDefn, "pixel_y_size"), dfYResolution);
         OGR_F_SetFieldInteger(hFeat, OGR_FD_GetFieldIndex(hFDefn, "tile_count"), nTotalBlocks);
-        OGR_L_CreateFeature(hRasterPyramidsLyr, hFeat);
+        if( OGR_L_CreateFeature(hRasterPyramidsLyr, hFeat) != OGRERR_NONE )
+            eErr = CE_Failure;
         OGR_F_Destroy(hFeat);
     }
 

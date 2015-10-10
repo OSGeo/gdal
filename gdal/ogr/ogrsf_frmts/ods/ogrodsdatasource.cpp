@@ -646,7 +646,7 @@ void OGRODSDataSource::endElementTable(CPL_UNUSED const char *pszName)
             {
                 SetField(poFeature, i, apoFirstLineValues[i].c_str());
             }
-            poCurLayer->CreateFeature(poFeature);
+            IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
             delete poFeature;
         }
 
@@ -782,7 +782,7 @@ void OGRODSDataSource::endElementRow(CPL_UNUSED const char *pszName)
             for(i = 0; i < (size_t)nEmptyRowsAccumulated; i++)
             {
                 poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
-                poCurLayer->CreateFeature(poFeature);
+                IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
                 delete poFeature;
             }
             nCurLine += nEmptyRowsAccumulated;
@@ -847,7 +847,7 @@ void OGRODSDataSource::endElementRow(CPL_UNUSED const char *pszName)
                 {
                     SetField(poFeature, i, apoFirstLineValues[i].c_str());
                 }
-                poCurLayer->CreateFeature(poFeature);
+                IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
                 delete poFeature;
             }
         }
@@ -926,7 +926,7 @@ void OGRODSDataSource::endElementRow(CPL_UNUSED const char *pszName)
                 {
                     SetField(poFeature, i, apoCurLineValues[i].c_str());
                 }
-                poCurLayer->CreateFeature(poFeature);
+                IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
                 delete poFeature;
             }
         }

@@ -655,14 +655,17 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             OGRFeatureH hFeat = OGR_F_Create( OGR_L_GetLayerDefn(hRasterLayer) );
             OGR_F_SetFieldBinary(hFeat, 0, (int)nDataLength, pabyData);
             
-            OGR_L_CreateFeature(hRasterLayer, hFeat);
+            if( OGR_L_CreateFeature(hRasterLayer, hFeat) != OGRERR_NONE )
+                eErr = CE_Failure;
             /* Query raster ID to set it as the ID of the associated metadata */
             int nRasterID = (int)OGR_F_GetFID(hFeat);
             
             OGR_F_Destroy(hFeat);
             
             VSIUnlink(osTempFileName.c_str());
-            
+            if( eErr == CE_Failure )
+                break;
+
 /* -------------------------------------------------------------------- */
 /*      Insert new entry into metadata table                            */
 /* -------------------------------------------------------------------- */
@@ -696,7 +699,8 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             
             OGR_F_SetGeometryDirectly(hFeat, hRectangle);
             
-            OGR_L_CreateFeature(hMetadataLayer, hFeat);
+            if( OGR_L_CreateFeature(hMetadataLayer, hFeat) != OGRERR_NONE )
+                eErr = CE_Failure;
             OGR_F_Destroy(hFeat);
             
             nBlocks++;
@@ -716,7 +720,9 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSIFree(pabyMEMDSBuffer);
     
     OGRReleaseDataSource(hDS);
-        
+
+    if( eErr == CE_Failure )
+        return NULL;
     return (GDALDataset*) GDALOpen(pszFilename, GA_Update);
 }
 

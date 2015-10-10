@@ -691,7 +691,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   }
 
   SetFieldValues(feature, elem);
-  curLayer->SetFeature(feature);
+  IGNORE_RET_VAL(curLayer->SetFeature(feature));
   
   CPLFree(pszName);
 
