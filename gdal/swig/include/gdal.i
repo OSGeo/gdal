@@ -941,6 +941,9 @@ __version__ = _gdal.VersionInfo("RELEASE_NAME")
 #include "gdal_utils.h"   
 %}
 
+//************************************************************************
+// gdal.Info()
+//************************************************************************
 
 #ifdef SWIGJAVA
 %rename (InfoOptions) GDALInfoOptions;
@@ -977,6 +980,10 @@ struct GDALTranslateOptions {
 }
 };
 
+//************************************************************************
+// gdal.Translate()
+//************************************************************************
+
 #ifdef SWIGPYTHON
 %rename (TranslateInternal) wrapper_GDALTranslate;
 #elif defined(SWIGJAVA)
@@ -1009,6 +1016,10 @@ GDALDatasetShadow* wrapper_GDALTranslate( const char* dest,
 }
 %}
 
+//************************************************************************
+// gdal.Warp()
+//************************************************************************
+
 #ifdef SWIGJAVA
 %rename (WarpOptions) GDALWarpAppOptions;
 #endif
@@ -1028,8 +1039,7 @@ struct GDALWarpAppOptions {
 %rename (Warp) wrapper_GDALWarpDestDS;
 #endif
 
-/* Note: we must use 2 distinct names since there's a bug/feature in swig */
-/* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
+/* Note: we must use 2 distinct names due to different ownership of the result */
 
 %inline %{
 int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
@@ -1087,6 +1097,10 @@ GDALDatasetShadow* wrapper_GDALWarpDestName( const char* dest,
 }
 %}
 
+//************************************************************************
+// gdal.VectorTranslate()
+//************************************************************************
+
 #ifdef SWIGJAVA
 %rename (VectorTranslateOptions) GDALVectorTranslateOptions;
 #endif
@@ -1102,8 +1116,7 @@ struct GDALVectorTranslateOptions {
 }
 };
 
-/* Note: we must use 2 distinct names since there's a bug/feature in swig */
-/* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
+/* Note: we must use 2 distinct names due to different ownership of the result */
 
 #ifdef SWIGJAVA
 %rename (VectorTranslate) wrapper_GDALVectorTranslateDestDS;
@@ -1164,6 +1177,10 @@ GDALDatasetShadow* wrapper_GDALVectorTranslateDestName( const char* dest,
 }
 %}
 
+//************************************************************************
+// gdal.DEMProcessing()
+//************************************************************************
+
 #ifdef SWIGJAVA
 %rename (DEMProcessingOptions) GDALDEMProcessingOptions;
 #endif
@@ -1214,6 +1231,10 @@ GDALDatasetShadow* wrapper_GDALDEMProcessing( const char* dest,
 }
 %}
 
+//************************************************************************
+// gdal.NearBlack()
+//************************************************************************
+
 #ifdef SWIGJAVA
 %rename (NearblackOptions) GDALNearblackOptions;
 #endif
@@ -1229,8 +1250,7 @@ struct GDALNearblackOptions {
 }
 };
 
-/* Note: we must use 2 distinct names since there's a bug/feature in swig */
-/* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
+/* Note: we must use 2 distinct names due to different ownership of the result */
 
 #ifdef SWIGJAVA
 %rename (Nearblack) wrapper_GDALNearblackDestDS;
@@ -1290,6 +1310,10 @@ GDALDatasetShadow* wrapper_GDALNearblackDestName( const char* dest,
 }
 %}
 
+//************************************************************************
+// gdal.Grid()
+//************************************************************************
+
 #ifdef SWIGJAVA
 %rename (GridOptions) GDALGridOptions;
 #endif
@@ -1333,6 +1357,85 @@ GDALDatasetShadow* wrapper_GDALGrid( const char* dest,
     GDALDatasetH hDSRet = GDALGrid(dest, dataset, options, &usageError);    
     if( bFreeOptions )
         GDALGridOptionsFree(options);
+    return hDSRet;
+}
+%}
+
+//************************************************************************
+// gdal.Rasterize()
+//************************************************************************
+
+#ifdef SWIGJAVA
+%rename (RasterizeOptions) GDALRasterizeOptions;
+#endif
+struct GDALRasterizeOptions {
+%extend {
+    GDALRasterizeOptions(char** options) {
+        return GDALRasterizeOptionsNew(options, NULL);
+    }
+
+    ~GDALRasterizeOptions() {
+        GDALRasterizeOptionsFree( self );
+    }
+}
+};
+
+/* Note: we must use 2 distinct names due to different ownership of the result */
+
+#ifdef SWIGJAVA
+%rename (Rasterize) wrapper_GDALRasterizeDestDS;
+#endif
+%inline %{
+int wrapper_GDALRasterizeDestDS( GDALDatasetShadow* dstDS,
+                            GDALDatasetShadow* srcDS,
+                            GDALRasterizeOptions* options,
+                            GDALProgressFunc callback=NULL,
+                            void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALRasterizeOptionsNew(NULL, NULL);
+        }
+        GDALRasterizeOptionsSetProgress(options, callback, callback_data);
+    }
+    int bRet = (GDALRasterize(NULL, dstDS, srcDS, options, &usageError) != NULL);
+    if( bFreeOptions )
+        GDALRasterizeOptionsFree(options);
+    return bRet;
+}
+%}
+
+#ifdef SWIGJAVA
+%rename (Rasterize) wrapper_GDALRasterizeDestName;
+#endif
+%newobject wrapper_GDALRasterizeDestName;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALRasterizeDestName( const char* dest,
+                                             GDALDatasetShadow* srcDS,
+                                             GDALRasterizeOptions* options,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALRasterizeOptionsNew(NULL, NULL);
+        }
+        GDALRasterizeOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALRasterize(dest, NULL, srcDS, options, &usageError);
+    if( bFreeOptions )
+        GDALRasterizeOptionsFree(options);
     return hDSRet;
 }
 %}

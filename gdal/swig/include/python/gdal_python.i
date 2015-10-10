@@ -1468,8 +1468,11 @@ def GridOptions(options = [], format = 'GTiff',
         if algorithm is not None:
             new_options += ['-a', algorithm ]
         if layers is not None:
-            for layer in layers:
-                new_options += ['-l', layer]
+            if type(layers) == type(()) or type(layers) == type([]):
+                for layer in layers:
+                    new_options += ['-l', layer]
+            else:
+                new_options += ['-l', layers]
         if SQLStatement is not None:
             new_options += ['-sql', str(SQLStatement) ]
         if where is not None:
@@ -1503,5 +1506,125 @@ def Grid(destName, srcDS, **kwargs):
         srcDS = OpenEx(srcDS, OF_VECTOR)
 
     return GridInternal(destName, srcDS, opts, callback, callback_data)
+
+def RasterizeOptions(options = [], format = None, 
+         creationOptions = None, noData = None, initValues = None,
+         outputBounds = None, outputSRS = None,
+         width = None, height = None,
+         xRes = None, yRes = None, targetAlignedPixels = False,
+         bands = None, inverse = False, allTouched = False,
+         burnValues = None, attribute = None, useZ = False, layers = None,
+         SQLStatement = None, SQLDialect = None, where = None,
+         callback = None, callback_data = None):
+    """ Create a RasterizeOptions() object that can be passed to gdal.Rasterize()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          creationOptions --- list of creation options
+          outputBounds --- assigned output bounds: [minx, miny, maxx, maxy]
+          outputSRS --- assigned output SRS
+          width --- width of the output raster in pixel
+          height --- height of the output raster in pixel
+          xRes, yRes --- output resolution in target SRS
+          targetAlignedPixels --- whether to force output bounds to be multiple of output resolution
+          noData --- nodata value
+          initValues --- Value or list of values to pre-initialize the output image bands with.  However, it is not marked as the nodata value in the output file.  If only one value is given, the same value is used in all the bands.
+          bands --- list of output bands to burn values into
+          inverse --- whether to invert rasterization, ie burn the fixed burn value, or the burn value associated  with the first feature into all parts of the image not inside the provided a polygon.
+          allTouched -- whether to enable the ALL_TOUCHED rasterization option so that all pixels touched by lines or polygons will be updated, not just those on the line render path, or whose center point is within the polygon.
+          burnValues -- list of fixed values to burn into each band for all objects. Excusive with attribute.
+          attribute --- identifies an attribute field on the features to be used for a burn-in value. The value will be burned into all output bands. Excusive with burnValues.
+          useZ --- whether to indicate that a burn value should be extracted from the "Z" values of the feature. These values are added to the burn value given by burnValues or attribute if provided. As of now, only points and lines are drawn in 3D.
+          layers --- list of layers from the datasource that will be used for input features.
+          SQLStatement --- SQL statement to apply to the source dataset
+          SQLDialect --- SQL dialect ('OGRSQL', 'SQLITE', ...)
+          where --- WHERE clause to apply to source layer(s)
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        if format is not None:
+            new_options += ['-of', format]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if bands is not None:
+            for b in bands:
+                new_options += ['-b', str(b) ]
+        if noData is not None:
+            new_options += ['-a_nodata', str(noData) ]
+        if initValues is not None:
+            if type(initValues) == type(()) or type(initValues) == type([]):
+                for val in initValues:
+                    new_options += ['-init', str(val) ]
+            else:
+                new_options += ['-init', str(initValues) ]
+        if outputBounds is not None:
+            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
+        if outputSRS is not None:
+            new_options += ['-a_srs', str(outputSRS) ]
+        if width is not None and height is not None:
+            new_options += ['-ts', str(width), str(height)]
+        if xRes is not None and yRes is not None:
+            new_options += ['-tr', str(xRes), str(yRes)]
+        if targetAlignedPixels:
+            new_options += ['-tap']
+        if inverse:
+            new_options += ['-i']
+        if allTouched:
+            new_options += ['-at']
+        if burnValues is not None:
+            if attribute is not None:
+                raise Exception('burnValues and attribute option are exclusive.')
+            if type(burnValues) == type(()) or type(burnValues) == type([]):
+                for val in burnValues:
+                    new_options += ['-burn', str(val) ]
+            else:
+                new_options += ['-burn', str(burnValues) ]
+        if attribute is not None:
+            new_options += ['-a', attribute]
+        if useZ:
+            new_options += ['-3d']
+        if layers is not None:
+            if type(layers) == type(()) or type(layers) == type([]):
+                for layer in layers:
+                    new_options += ['-l', layer]
+            else:
+                new_options += ['-l', layers]
+        if SQLStatement is not None:
+            new_options += ['-sql', str(SQLStatement) ]
+        if SQLDialect is not None:
+            new_options += ['-dialect', str(SQLDialect) ]
+        if where is not None:
+            new_options += ['-where', str(where) ]
+
+    return (GDALRasterizeOptions(new_options), callback, callback_data)
+
+def Rasterize(destNameOrDestDS, srcDS, **kwargs):
+    """ Burns vector geometries into a raster
+        Arguments are :
+          destNameOrDestDS --- Output dataset name or object
+          srcDS --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.RasterizeOptions()
+        If options is provided as a gdal.RasterizeOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = RasterizeOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = OpenEx(srcDS)
+
+    if type(destNameOrDestDS) == type(''):
+        return wrapper_GDALRasterizeDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    else:
+        return wrapper_GDALRasterizeDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 %}
