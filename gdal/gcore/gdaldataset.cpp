@@ -4255,7 +4255,8 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         while( !bStopTransaction )
         {
             bStopTransaction = true;
-            poDstLayer->StartTransaction();
+            if( poDstLayer->StartTransaction() != OGRERR_NONE )
+                break;
             for( int i = 0; i < nFeaturesToAdd; i++ )
             {
                 if( poDstLayer->CreateFeature( papoDstFeature[i] ) != OGRERR_NONE )
@@ -4266,7 +4267,10 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                 }
             }
             if( bStopTransaction )
-                poDstLayer->CommitTransaction();
+            {
+                if( poDstLayer->CommitTransaction() != OGRERR_NONE )
+                    break;
+            }
             else
                 poDstLayer->RollbackTransaction();
         }

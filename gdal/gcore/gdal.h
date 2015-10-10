@@ -607,7 +607,7 @@ int CPL_DLL CPL_STDCALL GDALDereferenceDataset( GDALDatasetH );
 
 CPLErr CPL_DLL CPL_STDCALL
 GDALBuildOverviews( GDALDatasetH, const char *, int, int *,
-                    int, int *, GDALProgressFunc, void * );
+                    int, int *, GDALProgressFunc, void * ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **hDS, int *pnCount );
 int CPL_DLL CPL_STDCALL GDALGetAccess( GDALDatasetH hDS );
 void CPL_DLL CPL_STDCALL GDALFlushCache( GDALDatasetH hDS );
@@ -617,11 +617,11 @@ CPLErr CPL_DLL CPL_STDCALL
 
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetCopyWholeRaster(
     GDALDatasetH hSrcDS, GDALDatasetH hDstDS, char **papszOptions, 
-    GDALProgressFunc pfnProgress, void *pProgressData );
+    GDALProgressFunc pfnProgress, void *pProgressData ) CPL_WARN_UNUSED_RESULT;
 
 CPLErr CPL_DLL CPL_STDCALL GDALRasterBandCopyWholeRaster(
     GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand, char **papszOptions,
-    GDALProgressFunc pfnProgress, void *pProgressData );
+    GDALProgressFunc pfnProgress, void *pProgressData ) CPL_WARN_UNUSED_RESULT;
 
 CPLErr CPL_DLL 
 GDALRegenerateOverviews( GDALRasterBandH hSrcBand, 
@@ -932,7 +932,7 @@ typedef struct
     short      c4;      
 } GDALColorEntry;
 
-GDALColorTableH CPL_DLL CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp );
+GDALColorTableH CPL_DLL CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL GDALDestroyColorTable( GDALColorTableH );
 GDALColorTableH CPL_DLL CPL_STDCALL GDALCloneColorTable( GDALColorTableH );
 GDALPaletteInterp CPL_DLL CPL_STDCALL GDALGetPaletteInterpretation( GDALColorTableH );
@@ -979,7 +979,7 @@ typedef enum {
 } GDALRATFieldUsage;
 
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
-                                           GDALCreateRasterAttributeTable(void);
+                                           GDALCreateRasterAttributeTable(void) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL GDALDestroyRasterAttributeTable(
     GDALRasterAttributeTableH );
 
@@ -1039,7 +1039,7 @@ GDALRasterAttributeTableH CPL_DLL CPL_STDCALL
     GDALRATClone( GDALRasterAttributeTableH );
 
 void CPL_DLL* CPL_STDCALL 
-    GDALRATSerializeJSON( GDALRasterAttributeTableH );
+    GDALRATSerializeJSON( GDALRasterAttributeTableH ) CPL_WARN_UNUSED_RESULT;
 
 int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH , double );
 
@@ -1074,7 +1074,7 @@ CPLVirtualMem CPL_DLL* GDALDatasetGetVirtualMem( GDALDatasetH hDS,
                                                  size_t nCacheSize,
                                                  size_t nPageSizeHint,
                                                  int bSingleThreadUsage,
-                                                 char **papszOptions );
+                                                 char **papszOptions ) CPL_WARN_UNUSED_RESULT;
 
 CPLVirtualMem CPL_DLL* GDALRasterBandGetVirtualMem( GDALRasterBandH hBand,
                                          GDALRWFlag eRWFlag,
@@ -1087,13 +1087,13 @@ CPLVirtualMem CPL_DLL* GDALRasterBandGetVirtualMem( GDALRasterBandH hBand,
                                          size_t nCacheSize,
                                          size_t nPageSizeHint,
                                          int bSingleThreadUsage,
-                                         char **papszOptions );
+                                         char **papszOptions ) CPL_WARN_UNUSED_RESULT;
 
 CPLVirtualMem CPL_DLL* GDALGetVirtualMemAuto( GDALRasterBandH hBand,
                                               GDALRWFlag eRWFlag,
                                               int *pnPixelSpace,
                                               GIntBig *pnLineSpace,
-                                              char **papszOptions );
+                                              char **papszOptions ) CPL_WARN_UNUSED_RESULT;
 
 typedef enum
 {
@@ -1115,7 +1115,7 @@ CPLVirtualMem CPL_DLL* GDALDatasetGetTiledVirtualMem( GDALDatasetH hDS,
                                                       GDALTileOrganization eTileOrganization,
                                                       size_t nCacheSize,
                                                       int bSingleThreadUsage,
-                                                      char **papszOptions );
+                                                      char **papszOptions ) CPL_WARN_UNUSED_RESULT;
 
 CPLVirtualMem CPL_DLL* GDALRasterBandGetTiledVirtualMem( GDALRasterBandH hBand,
                                                          GDALRWFlag eRWFlag,
@@ -1125,7 +1125,7 @@ CPLVirtualMem CPL_DLL* GDALRasterBandGetTiledVirtualMem( GDALRasterBandH hBand,
                                                          GDALDataType eBufType,
                                                          size_t nCacheSize,
                                                          int bSingleThreadUsage,
-                                                         char **papszOptions );
+                                                         char **papszOptions ) CPL_WARN_UNUSED_RESULT;
 
 /* ==================================================================== */
 /*      VRTPansharpenedDataset class.                                   */
@@ -1134,14 +1134,14 @@ CPLVirtualMem CPL_DLL* GDALRasterBandGetTiledVirtualMem( GDALRasterBandH hBand,
 GDALDatasetH CPL_DLL GDALCreatePansharpenedVRT( const char* pszXML,
                                             GDALRasterBandH hPanchroBand,
                                             int nInputSpectralBands,
-                                            GDALRasterBandH* pahInputSpectralBands );
+                                            GDALRasterBandH* pahInputSpectralBands ) CPL_WARN_UNUSED_RESULT;
 
 /* =================================================================== */
 /*      Misc API                                                        */
 /* ==================================================================== */
 
 CPLXMLNode CPL_DLL* GDALGetJPEG2000Structure(const char* pszFilename,
-                                             char** papszOptions);
+                                             char** papszOptions) CPL_WARN_UNUSED_RESULT;
 
 CPL_C_END
 

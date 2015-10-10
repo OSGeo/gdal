@@ -294,7 +294,7 @@ class CPL_DLL OGRFeature
     OGRErr              SetGeometryDirectly( OGRGeometry * );
     OGRErr              SetGeometry( OGRGeometry * );
     OGRGeometry        *GetGeometryRef();
-    OGRGeometry        *StealGeometry();
+    OGRGeometry        *StealGeometry() CPL_WARN_UNUSED_RESULT;
 
     int                 GetGeomFieldCount()
                                 { return poDefn->GetGeomFieldCount(); }
@@ -309,7 +309,7 @@ class CPL_DLL OGRFeature
     OGRErr              SetGeomFieldDirectly( int iField, OGRGeometry * );
     OGRErr              SetGeomField( int iField, OGRGeometry * );
 
-    OGRFeature         *Clone();
+    OGRFeature         *Clone() CPL_WARN_UNUSED_RESULT;
     virtual OGRBoolean  Equal( OGRFeature * poFeature );
 
     int                 GetFieldCount() { return poDefn->GetFieldCount(); }
