@@ -768,6 +768,31 @@ def ogr_pgdump_10():
     return ogr_pgdump_9('NO')
 
 ###############################################################################
+# Export POINT EMPTY for PostGIS 2.2
+
+def ogr_pgdump_11():
+
+    ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_11.sql', options = [ 'LINEFORMAT=LF' ] )
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint, options = [ 'POSTGIS_VERSION=2.2' ])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT EMPTY'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_11.sql', 'rb')
+    sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_pgdump_11.sql')
+    
+    if sql.find('0101000000000000000000F87F000000000000F87F') < 0:
+        print(sql)
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_pgdump_cleanup():
@@ -793,6 +818,7 @@ gdaltest_list = [
     ogr_pgdump_8,
     ogr_pgdump_9,
     ogr_pgdump_10,
+    ogr_pgdump_11,
     ogr_pgdump_cleanup ]
 
 

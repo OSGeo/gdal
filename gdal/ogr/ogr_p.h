@@ -151,7 +151,7 @@ OGRGeometry CPL_DLL *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSR
 OGRGeometry CPL_DLL *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID,
                                              int bIsPostGIS1_EWKB );
 char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
-                                     int bIsPostGIS1_EWKB );
+                                     int nPostGISMajor, int nPostGISMinor );
 
 /************************************************************************/
 /*                        WKB Type Handling encoding                    */
