@@ -229,9 +229,9 @@ int OGRPoint::getCoordinateDimension() const
 void OGRPoint::setCoordinateDimension( int nNewDimension )
 
 {
-    nCoordDimension = nNewDimension;
+    nCoordDimension = (nCoordDimension < 0 ) ? -nNewDimension : nNewDimension;
     
-    if( nCoordDimension == 2 )
+    if( nNewDimension == 2 )
         z = 0;
 }
 

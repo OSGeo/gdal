@@ -106,7 +106,8 @@ class OGRPGDumpLayer : public OGRLayer
     int                 nUnknownSRSId;
     int                 nForcedSRSId;
     int                 bCreateSpatialIndexFlag;
-    int                 bPostGIS2;
+    int                 nPostGISMajor;
+    int                 nPostGISMinor;
 
     int                 iNextShapeId;
     int                 iFIDAsRegularColumnIndex;
@@ -157,8 +158,8 @@ class OGRPGDumpLayer : public OGRLayer
                                 { nForcedSRSId = nForcedSRSIdIn; }
     void                SetCreateSpatialIndexFlag( int bFlag )
                                 { bCreateSpatialIndexFlag = bFlag; }
-    void                SetPostGIS2( int bFlag )
-                                { bPostGIS2 = bFlag; }
+    void                SetPostGISVersion(int nPostGISMajorIn, int nPostGISMinorIn)
+                                { nPostGISMajor = nPostGISMajorIn; nPostGISMinor = nPostGISMinorIn; }
     OGRErr              EndCopy();
 
     static char*        GByteArrayToBYTEA( const GByte* pabyData, int nLen);

@@ -68,7 +68,10 @@ def ogr_cartodb_vsimem():
     ogrtest.cartodb_api_key_ori = gdal.GetConfigOption('CARTODB_API_KEY')
     gdal.SetConfigOption('CARTODB_API_URL', '/vsimem/cartodb')
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
-    
+
+    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT postgis_version() LIMIT 500 OFFSET 0&api_key=foo',
+"""{"rows":[{"postgis_version":"2.1 USE_GEOS=1 USE_PROJ=1 USE_STATS=1"}],"time":0.001,"fields":{"postgis_version":{"type":"string"}},"total_rows":1}""")
+
     gdal.PushErrorHandler()
     ds = ogr.Open('CARTODB:foo')
     gdal.PopErrorHandler()

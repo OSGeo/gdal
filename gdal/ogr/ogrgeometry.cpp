@@ -4869,7 +4869,7 @@ OGRGeometry *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID,
 /************************************************************************/
 
 char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
-                            int bIsPostGIS1_EWKB  )
+                            int nPostGISMajor, int nPostGISMinor )
 {
     GByte       *pabyWKB;
     char        *pszTextBuf;
@@ -4879,8 +4879,18 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     int nWkbSize = poGeometry->WkbSize();
     pabyWKB = (GByte *) CPLMalloc(nWkbSize);
 
-    if( poGeometry->exportToWkb( wkbNDR, pabyWKB,
-            bIsPostGIS1_EWKB ? wkbVariantPostGIS1 : wkbVariantOldOgc ) != OGRERR_NONE )
+    if( (nPostGISMajor > 2 || (nPostGISMajor == 2 && nPostGISMinor >= 2)) &&
+        wkbFlatten(poGeometry->getGeometryType()) == wkbPoint &&
+        poGeometry->IsEmpty() )
+    {
+        if( poGeometry->exportToWkb( wkbNDR, pabyWKB, wkbVariantIso ) != OGRERR_NONE )
+        {
+            CPLFree( pabyWKB );
+            return CPLStrdup("");
+        }
+    }
+    else if( poGeometry->exportToWkb( wkbNDR, pabyWKB,
+            (nPostGISMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc ) != OGRERR_NONE )
     {
         CPLFree( pabyWKB );
         return CPLStrdup("");

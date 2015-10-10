@@ -1134,7 +1134,9 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
             {
                 if( !bWkbAsOid  )
                 {
-                    char    *pszBytea = GeometryToBYTEA( poGeom, poDS->sPostGISVersion.nMajor < 2 );
+                    char    *pszBytea = GeometryToBYTEA( poGeom,
+                                                         poDS->sPostGISVersion.nMajor,
+                                                         poDS->sPostGISVersion.nMinor );
 
                     if( pszBytea != NULL )
                     {
@@ -1182,7 +1184,8 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                 if ( poGeom != NULL )
                 {
                     char* pszHexEWKB = OGRGeometryToHexEWKB( poGeom, poGeomFieldDefn->nSRSId,
-                                                             poDS->sPostGISVersion.nMajor < 2 );
+                                                             poDS->sPostGISVersion.nMajor,
+                                                             poDS->sPostGISVersion.nMinor);
                     if ( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
                         osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
                     else
@@ -1629,7 +1632,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
             {
                 char    *pszHexEWKB = OGRGeometryToHexEWKB( poGeom, nSRSId,
-                                                            poDS->sPostGISVersion.nMajor < 2 );
+                                                            poDS->sPostGISVersion.nMajor,
+                                                            poDS->sPostGISVersion.nMinor );
                 if ( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
                     osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
                 else
@@ -1664,7 +1668,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         }
         else if( !bWkbAsOid )
         {
-            char    *pszBytea = GeometryToBYTEA( poGeom, poDS->sPostGISVersion.nMajor < 2 );
+            char    *pszBytea = GeometryToBYTEA( poGeom,
+                                                 poDS->sPostGISVersion.nMajor,
+                                                 poDS->sPostGISVersion.nMinor );
 
             if( pszBytea != NULL )
             {
@@ -1799,10 +1805,13 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             poGeom->setCoordinateDimension( poGeomFieldDefn->nCoordDimension );
 
             if( poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB )
-                pszGeom = GeometryToBYTEA( poGeom, poDS->sPostGISVersion.nMajor < 2 );
+                pszGeom = GeometryToBYTEA( poGeom,
+                                           poDS->sPostGISVersion.nMajor,
+                                           poDS->sPostGISVersion.nMinor );
             else
                 pszGeom = OGRGeometryToHexEWKB( poGeom, poGeomFieldDefn->nSRSId,
-                                                poDS->sPostGISVersion.nMajor < 2 );
+                                                poDS->sPostGISVersion.nMajor,
+                                                poDS->sPostGISVersion.nMinor );
         }
 
         if (osCommand.size() > 0)

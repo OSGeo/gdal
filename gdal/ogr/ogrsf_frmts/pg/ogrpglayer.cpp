@@ -1755,7 +1755,7 @@ char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
 /*                          GeometryToBYTEA()                           */
 /************************************************************************/
 
-char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry, int bIsPostGIS1 )
+char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry, int nPostGISMajor, int nPostGISMinor )
 
 {
     int         nWkbSize = poGeometry->WkbSize();
@@ -1763,8 +1763,18 @@ char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry, int bIsPostGIS1 )
     char        *pszTextBuf;
 
     pabyWKB = (GByte *) CPLMalloc(nWkbSize);
-    if( poGeometry->exportToWkb( wkbNDR, pabyWKB,
-                                 (bIsPostGIS1) ? wkbVariantPostGIS1 : wkbVariantOldOgc ) != OGRERR_NONE )
+    if( (nPostGISMajor > 2 || (nPostGISMajor == 2 && nPostGISMinor >= 2)) &&
+        wkbFlatten(poGeometry->getGeometryType()) == wkbPoint &&
+        poGeometry->IsEmpty() )
+    {
+        if( poGeometry->exportToWkb( wkbNDR, pabyWKB, wkbVariantIso ) != OGRERR_NONE )
+        {
+            CPLFree( pabyWKB );
+            return CPLStrdup("");
+        }
+    }
+    else if( poGeometry->exportToWkb( wkbNDR, pabyWKB,
+                                 (nPostGISMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc ) != OGRERR_NONE )
     {
         CPLFree(pabyWKB);
         return CPLStrdup("");
