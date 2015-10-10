@@ -77,7 +77,6 @@ class GIFDataset : public GIFAbstractDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-
 };
 
 /************************************************************************/
@@ -166,14 +165,11 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Ingest.                                                         */
 /* -------------------------------------------------------------------- */
-    GifFileType 	*hGifFile;
-    VSILFILE                *fp;
-    int                  nGifErr;
-
-    fp = poOpenInfo->fpL;
+    VSILFILE *fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
 
-    hGifFile = GIFAbstractDataset::myDGifOpen( fp, GIFAbstractDataset::ReadFunc );
+    GifFileType *hGifFile
+        = GIFAbstractDataset::myDGifOpen( fp, GIFAbstractDataset::ReadFunc );
     if( hGifFile == NULL )
     {
         VSIFCloseL( fp );
@@ -246,7 +242,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    nGifErr = DGifSlurp( hGifFile );
+    int nGifErr = DGifSlurp( hGifFile );
 
     if( nGifErr != GIF_OK || hGifFile->SavedImages == NULL )
     {
@@ -274,9 +270,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GIFDataset 	*poDS;
-
-    poDS = new GIFDataset();
+    GIFDataset *poDS = new GIFDataset();
 
     poDS->fp = fp;
     poDS->eAccess = GA_ReadOnly;
@@ -501,7 +495,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         VSIFCloseL( fp );
         return NULL;
     }
-    
+
     GifFreeMapObject(psGifCT);
     psGifCT = NULL;
 
@@ -621,7 +615,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
     {
     	double      adfGeoTransform[6];
-	
+
 	if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
             GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
@@ -700,35 +694,33 @@ static int VSIGIFWriteFunc( GifFileType *psGFile,
 void GDALRegister_GIF()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "GIF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GIF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "GIF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Graphics Interchange Format (.gif)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_gif.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+    poDriver->SetDescription( "GIF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Graphics Interchange Format (.gif)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_gif.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
+    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
 "   <Option name='INTERLACING' type='boolean'/>\n"
 "   <Option name='WORLDFILE' type='boolean'/>\n"
 "</CreationOptionList>\n" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = GIFDataset::Open;
-        poDriver->pfnCreateCopy = GIFDataset::CreateCopy;
-        poDriver->pfnIdentify = GIFAbstractDataset::Identify;
+    poDriver->pfnOpen = GIFDataset::Open;
+    poDriver->pfnCreateCopy = GIFDataset::CreateCopy;
+    poDriver->pfnIdentify = GIFAbstractDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
