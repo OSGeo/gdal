@@ -741,11 +741,15 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
             {
                 OGRMultiPolygon* poNewGeom = new OGRMultiPolygon();
                 poNewGeom->addGeometry(poGeom);
-                pszEWKB = OGRGeometryToHexEWKB(poNewGeom, nSRID, FALSE);
+                pszEWKB = OGRGeometryToHexEWKB(poNewGeom, nSRID,
+                                               poDS->GetPostGISMajor(),
+                                               poDS->GetPostGISMinor());
                 delete poNewGeom;
             }
             else
-                pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
+                pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID,
+                                               poDS->GetPostGISMajor(),
+                                               poDS->GetPostGISMinor());
             osSQL += "'";
             osSQL += pszEWKB;
             osSQL += "'";
@@ -946,7 +950,9 @@ OGRErr OGRCARTODBTableLayer::ISetFeature( OGRFeature *poFeature )
             int nSRID = poGeomFieldDefn->nSRID;
             if( nSRID == 0 )
                 nSRID = 4326;
-            char* pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
+            char* pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID,
+                                               poDS->GetPostGISMajor(),
+                                               poDS->GetPostGISMinor());
             osSQL += "'";
             osSQL += pszEWKB;
             osSQL += "'";

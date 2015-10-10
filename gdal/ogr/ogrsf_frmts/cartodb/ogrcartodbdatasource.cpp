@@ -51,6 +51,8 @@ OGRCARTODBDataSource::OGRCARTODBDataSource()
 
     bMustCleanPersistant = FALSE;
     bHasOGRMetadataFunction = -1;
+    nPostGISMajor = 2;
+    nPostGISMinor = 0;
 }
 
 /************************************************************************/
@@ -192,6 +194,32 @@ int OGRCARTODBDataSource::Open( const char * pszFilename,
     }
     if( osCurrentSchema.size() == 0 )
         return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Find out PostGIS version                                        */
+/* -------------------------------------------------------------------- */
+    if( bReadWrite )
+    {
+        OGRLayer* poPostGISVersionLayer = ExecuteSQLInternal("SELECT postgis_version()");
+        if( poPostGISVersionLayer )
+        {
+            OGRFeature* poFeat = poPostGISVersionLayer->GetNextFeature();
+            if( poFeat )
+            {
+                if( poFeat->GetFieldCount() == 1 )
+                {
+                    const char* pszVersion = poFeat->GetFieldAsString(0);
+                    nPostGISMajor = atoi(pszVersion);
+                    const char* pszDot = strchr(pszVersion, '.');
+                    nPostGISMinor = 0;
+                    if( pszDot )
+                        nPostGISMinor = atoi(pszDot + 1);
+                }
+                delete poFeat;
+            }
+            ReleaseResultSet(poPostGISVersionLayer);
+        }
+    }
 
     if( osAPIKey.size() && bUpdateIn )
     {
