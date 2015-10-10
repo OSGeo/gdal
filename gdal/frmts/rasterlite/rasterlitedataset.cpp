@@ -164,7 +164,8 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 #endif
 
     OGRFeatureH hFeat;
-    while( (hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL )
+    CPLErr eErr = CE_None;
+    while( (hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL && eErr == CE_None )
     {
         OGRGeometryH hGeom = OGR_F_GetGeometryRef(hFeat);
         if (hGeom == NULL)
@@ -310,7 +311,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 /* -------------------------------------------------------------------- */
 /*      Read tile data                                                  */
 /* -------------------------------------------------------------------- */
-                GDALRasterIO(GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
+                eErr = GDALRasterIO(GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
                              nSrcXOff, nSrcYOff, nReqXSize, nReqYSize,
                              ((char*) pImage) + (nDstXOff + nDstYOff * nBlockXSize) * nDataTypeSize,
                              nReqXSize, nReqYSize,
@@ -372,7 +373,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                 if (nBand == 1 && poGDS->nBands > 1)
                 {
                     int iOtherBand;
-                    for(iOtherBand=2;iOtherBand<=poGDS->nBands;iOtherBand++)
+                    for(iOtherBand=2;iOtherBand<=poGDS->nBands && eErr == CE_None;iOtherBand++)
                     {
                         GDALRasterBlock *poBlock;
 
@@ -400,7 +401,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 /* -------------------------------------------------------------------- */
 /*      Read tile data                                                  */
 /* -------------------------------------------------------------------- */
-                        GDALRasterIO(GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
+                        eErr = GDALRasterIO(GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
                                      nSrcXOff, nSrcYOff, nReqXSize, nReqYSize,
                                      ((char*) pabySrcBlock) +
                                      (nDstXOff + nDstYOff * nBlockXSize) * nDataTypeSize,
@@ -474,7 +475,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
         printf("\n");
 #endif
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
