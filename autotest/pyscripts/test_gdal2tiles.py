@@ -38,11 +38,6 @@ from osgeo import gdal
 import gdaltest
 import test_py_scripts
 
-import numpy
-import osgeo.gdal_array as gdalarray
-numpy.__version__
-gdalarray.BandReadAsArray
-
 ###############################################################################
 # Simple test
 
