@@ -499,6 +499,24 @@ class GDAL2Tiles(object):
         gdal.TermProgress_nocb(complete)
 
     # -------------------------------------------------------------------------
+    def gettempfilename(self, suffix):
+        """Returns a temporary filename"""
+        if '_' in os.environ:
+            # tempfile.mktemp() crashes on some Wine versions (the one of Ubuntu 12.04 particularly)
+            if os.environ['_'].find('wine') >= 0:
+                tmpdir = '.'
+                if 'TMP' in os.environ:
+                    tmpdir = os.environ['TMP']
+                import time
+                import random
+                random.seed(time.time())
+                random_part = 'file%d' % random.randint(0,1000000000)
+                return os.path.join(tmpdir, random_part + suffix)
+
+        import tempfile
+        return tempfile.mktemp(suffix)
+
+    # -------------------------------------------------------------------------
     def stop(self):
         """Stop the rendering immediately"""
         self.stopped = True
@@ -824,8 +842,7 @@ gdal2tiles temp.vrt""" % self.input )
 
                     # Correction of AutoCreateWarpedVRT for NODATA values
                     if self.in_nodata != []:
-                        import tempfile
-                        tempfilename = tempfile.mktemp('-gdal2tiles.vrt')
+                        tempfilename = self.gettempfilename('-gdal2tiles.vrt')
                         self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
                         # open as a text file
                         s = open(tempfilename).read()
@@ -859,8 +876,7 @@ gdal2tiles temp.vrt""" % self.input )
                     # Correction of AutoCreateWarpedVRT for Mono (1 band) and RGB (3 bands) files without NODATA:
                     # equivalent of gdalwarp -dstalpha
                     if self.in_nodata == [] and self.out_ds.RasterCount in [1,3]:
-                        import tempfile
-                        tempfilename = tempfile.mktemp('-gdal2tiles.vrt')
+                        tempfilename = self.gettempfilename('-gdal2tiles.vrt')
                         self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
                         # open as a text file
                         s = open(tempfilename).read()
