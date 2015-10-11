@@ -184,6 +184,11 @@ def test_gdal_merge_4():
 # Test merging with alpha band (#3669)
 
 def test_gdal_merge_5():
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.BandRasterIONumPy
+    except:
+        return 'skip'
 
     script_path = test_py_scripts.get_py_script('gdal_merge')
     if script_path is None:
