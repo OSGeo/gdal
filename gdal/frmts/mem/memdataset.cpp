@@ -1097,6 +1097,13 @@ GDALDataset *MEMDataset::Create( CPL_UNUSED const char * pszFilename,
     int         nWordSize = GDALGetDataTypeSize(eType) / 8;
     int         bAllocOK = TRUE;
 
+    if( nBands > 0 && (nBands > INT_MAX / nWordSize ||
+        (GIntBig)nXSize * nYSize > GINTBIG_MAX / (nWordSize * nBands)) )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, "Multiplication overflow");
+        return NULL;
+    }
+
     GUIntBig nGlobalBigSize = (GUIntBig)nWordSize * nBands * nXSize * nYSize;
     size_t nGlobalSize = (size_t)nGlobalBigSize;
 #if SIZEOF_VOIDP == 4
