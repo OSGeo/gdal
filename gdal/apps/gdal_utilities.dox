@@ -1483,7 +1483,7 @@ generates directory with TMS tiles, KMLs and simple web viewers
 
 \verbatim
 gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
-              [-e] [-a nodata] [-v] [-h] [-k] [-n] [-u url]
+              [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u url]
               [-w webviewer] [-t title] [-c copyright]
               [-g googlekey] [-b bingkey] input_file [output_dir]
 \endverbatim
@@ -1518,6 +1518,8 @@ can publish a picture without proper georeferencing too.
   <dd>NODATA transparency value to assign to the input data.</dd>
 <dt> <b>-v, --verbose</b></dt>
   <dd>Generate verbose output of tile generation.</dd>
+<dt> <b>-q, --quiet</b></dt>
+  <dd>Disable messages and status to stdout (GDAL &gt;= 2.1).</dd>
 <dt> <b>-h, --help</b></dt>
   <dd>Show help message and exit.</dd>
 <dt> <b>--version</b></dt>
