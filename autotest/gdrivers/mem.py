@@ -314,7 +314,7 @@ def mem_6():
 
     # Out of memory error
     with gdaltest.error_handler():
-        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1, gdal.GDT_Float64 )
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1 )
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
