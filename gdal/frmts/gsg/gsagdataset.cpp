@@ -133,7 +133,7 @@ class GSAGRasterBand : public GDALPamRasterBand
 
     		GSAGRasterBand( GSAGDataset *, int, vsi_l_offset );
     		~GSAGRasterBand();
-    
+
     CPLErr IReadBlock( int, int, void * );
     CPLErr IWriteBlock( int, int, void * );
 
@@ -195,8 +195,8 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
 	return;
     }
 
-	panLineOffset[poDS->nRasterYSize-1] = nDataStart;
-	nLastReadLine = poDS->nRasterYSize;
+    panLineOffset[poDS->nRasterYSize-1] = nDataStart;
+    nLastReadLine = poDS->nRasterYSize;
 }
 
 /************************************************************************/
@@ -206,10 +206,8 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
 GSAGRasterBand::~GSAGRasterBand()
 {
     CPLFree( panLineOffset );
-    if( padfRowMinZ != NULL )
-	CPLFree( padfRowMinZ );
-    if( padfRowMaxZ != NULL )
-	CPLFree( padfRowMaxZ );
+    CPLFree( padfRowMinZ );
+    CPLFree( padfRowMaxZ );
 }
 
 /************************************************************************/
@@ -893,12 +891,6 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     const char *szStart = pabyHeader + 5;
     char *szEnd;
     double dfTemp;
-    double dfMinX;
-    double dfMaxX;
-    double dfMinY;
-    double dfMaxY;
-    double dfMinZ;
-    double dfMaxZ;
 
     /* Parse number of X axis grid rows */
     long nTemp = strtol( szStart, &szEnd, 10 );
@@ -949,6 +941,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     szStart = szEnd;
 
     /* Parse the minimum X value of the grid */
+    double dfMinX;
     dfTemp = CPLStrtod( szStart, &szEnd );
     if( szStart == szEnd )
     {
@@ -962,6 +955,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     szStart = szEnd;
 
     /* Parse the maximum X value of the grid */
+    double dfMaxX;
     dfTemp = CPLStrtod( szStart, &szEnd );
     if( szStart == szEnd )
     {
@@ -975,6 +969,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     szStart = szEnd;
 
     /* Parse the minimum Y value of the grid */
+    double dfMinY;
     dfTemp = CPLStrtod( szStart, &szEnd );
     if( szStart == szEnd )
     {
@@ -988,6 +983,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     szStart = szEnd;
 
     /* Parse the maximum Y value of the grid */
+    double dfMaxY;
     dfTemp = CPLStrtod( szStart, &szEnd );
     if( szStart == szEnd )
     {
@@ -1005,6 +1001,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 	szStart++;
     poDS->nMinMaxZOffset = szStart - pabyHeader;
 
+    double dfMinZ;
     dfTemp = CPLStrtod( szStart, &szEnd );
     if( szStart == szEnd )
     {
@@ -1018,6 +1015,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     szStart = szEnd;
 
     /* Parse the maximum Z value of the grid */
+    double dfMaxZ;
     dfTemp = CPLStrtod( szStart, &szEnd );
     if( szStart == szEnd )
     {
@@ -1155,10 +1153,10 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
     // if( eErr != CE_None )
     //     return eErr;
 
-    double dfOldMinX = poGRB->dfMinX;
-    double dfOldMaxX = poGRB->dfMaxX;
-    double dfOldMinY = poGRB->dfMinY;
-    double dfOldMaxY = poGRB->dfMaxY;
+    const double dfOldMinX = poGRB->dfMinX;
+    const double dfOldMaxX = poGRB->dfMaxX;
+    const double dfOldMinY = poGRB->dfMinY;
+    const double dfOldMaxY = poGRB->dfMaxY;
 
     poGRB->dfMinX = padfGeoTransform[0] + padfGeoTransform[1] / 2;
     poGRB->dfMaxX =
@@ -1550,8 +1548,8 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
         return NULL;
     }
 
-    int          nXSize = poSrcDS->GetRasterXSize();
-    int          nYSize = poSrcDS->GetRasterYSize();
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
     double	 adfGeoTransform[6];
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
@@ -1746,28 +1744,25 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
 void GDALRegister_GSAG()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "GSAG" ) != NULL )
+        return;
+    GDALDriver *poDriver = new GDALDriver();
 
-    if( GDALGetDriverByName( "GSAG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "GSAG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Golden Software ASCII Grid (.grd)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#GSAG" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
-	poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-				   "Byte Int16 UInt16 Int32 UInt32 "
-				   "Float32 Float64" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "GSAG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Golden Software ASCII Grid (.grd)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#GSAG" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+    			   "Byte Int16 UInt16 Int32 UInt32 "
+    			   "Float32 Float64" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = GSAGDataset::Identify;
-        poDriver->pfnOpen = GSAGDataset::Open;
-        poDriver->pfnCreateCopy = GSAGDataset::CreateCopy;
+    poDriver->pfnIdentify = GSAGDataset::Identify;
+    poDriver->pfnOpen = GSAGDataset::Open;
+    poDriver->pfnCreateCopy = GSAGDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
