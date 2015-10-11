@@ -1876,7 +1876,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             INIT_RASTERIO_EXTRA_ARG(sExtraArgTmp);
             sExtraArgTmp.eResampleAlg = psExtraArg->eResampleAlg;
 
-            IGNORE_RET_VAL(poMEMDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize,
+            CPL_IGNORE_RET_VAL(poMEMDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize,
                                 pData, nBufXSize, nBufYSize,
                                 eBufType,
                                 nBandCount, NULL,
