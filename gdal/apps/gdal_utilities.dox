@@ -1492,7 +1492,7 @@ gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
 
 This utility generates a directory with small tiles and metadata, following
 the OSGeo Tile Map Service Specification. Simple web pages with viewers based on
-Google Maps and OpenLayers are generated as well - so anybody can comfortably
+Google Maps, OpenLayers and Leaflet are generated as well - so anybody can comfortably
 explore your maps on-line and you do not need to install or configure any
 special software (like MapServer) and the map displays very fast in the
 web browser. You only need to upload the generated directory onto a web server.
@@ -1541,7 +1541,7 @@ Options for generated Google Earth SuperOverlay metadata
 Options for generated HTML viewers a la Google Maps
 <dl>
 <dt> <b>-w</b> <i>WEBVIEWER</i>, --webviewer=<i>WEBVIEWER</i>:</dt>
-  <dd>Web viewer to generate (all,google,openlayers,none) - default 'all'.</dd>
+  <dd>Web viewer to generate (all,google,openlayers,leaflet,none) - default 'all'.</dd>
 <dt> <b>-t</b> <i>TITLE</i>, --title=<i>TITLE</i>:</dt>
   <dd>Title of the map.</dd>
 <dt> <b>-c</b> <i>COPYRIGHT</i>, --copyright=<i>COPYRIGHT</i>:</dt>
