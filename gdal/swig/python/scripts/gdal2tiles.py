@@ -56,7 +56,7 @@ __version__ = "$Id$"
 
 resampling_list = ('average','near','bilinear','cubic','cubicspline','lanczos','antialias')
 profile_list = ('mercator','geodetic','raster') #,'zoomify')
-webviewer_list = ('all','google','openlayers','none')
+webviewer_list = ('all','google','openlayers','leaflet','none')
 
 # =============================================================================
 # =============================================================================
@@ -1093,6 +1093,13 @@ gdal2tiles temp.vrt""" % self.input )
                     f.write( self.generate_openlayers() )
                     f.close()
 
+            # Generate leaflet.html
+            if self.options.webviewer in ('all','leaflet'):
+                if not self.options.resume or not os.path.exists(os.path.join(self.output, 'leaflet.html')):
+                    f = open(os.path.join(self.output, 'leaflet.html'), 'w')
+                    f.write( self.generate_leaflet() )
+                    f.close()
+
         elif self.options.profile == 'geodetic':
 
             west, south = self.ominx, self.ominy
@@ -1934,6 +1941,139 @@ gdal2tiles temp.vrt""" % self.input )
                    <div id="map"></div>
               </body>
             </html>
+        """ % args
+
+        return s
+
+
+    # -------------------------------------------------------------------------
+    def generate_leaflet(self):
+        """
+        Template for leaflet.html implementing overlay of tiles for 'mercator' profile.
+        It returns filled string. Expected variables:
+        title, north, south, east, west, minzoom, maxzoom, tilesize, tileformat, publishurl
+        """
+
+        args = {}
+        args['title'] = self.options.title.replace('"', '\\"')
+        args['htmltitle'] = self.options.title
+        args['south'], args['west'], args['north'], args['east'] = self.swne
+        args['centerlon'] = (args['north'] + args['south']) / 2.
+        args['centerlat'] = (args['west'] + args['east']) / 2.
+        args['minzoom'] = self.tminz
+        args['maxzoom'] = self.tmaxz
+        args['beginzoom'] = self.tmaxz
+        args['tilesize'] = self.tilesize  # not used
+        args['tileformat'] = self.tileext
+        args['publishurl'] = self.options.url  # not used
+        args['copyright'] = self.options.copyright.replace('"', '\\"')
+        
+        s = """<!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
+            <title>%(htmltitle)s</title>
+
+            <!-- Leaflet -->
+            <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
+            <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+
+            <style>
+                body { margin:0; padding:0; }
+                body, table, tr, td, th, div, h1, h2, input { font-family: "Calibri", "Trebuchet MS", "Ubuntu", Serif; font-size: 11pt; }
+                #map { position:absolute; top:0; bottom:0; width:100%%; } /* full size */
+                .ctl { 
+                    padding: 2px 10px 2px 10px;
+                    background: white;
+                    background: rgba(255,255,255,0.9);
+                    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+                    border-radius: 5px;
+                    text-align: right;
+                }
+                .title {
+                    font-size: 18pt;
+                    font-weight: bold;
+                }
+                .src {
+                    font-size: 10pt;
+                }
+
+            </style>
+
+        </head>
+        <body>
+
+        <div id="map"></div>
+
+        <script>
+        /* **** Leaflet **** */
+
+        // Base layers
+        //  .. OpenStreetMap
+        var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'});
+
+        //  .. CartoDB Positron
+        var cartodb = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'});
+
+        //  .. OSM Toner
+        var toner = L.tileLayer('http://{s}.tile.stamen.com/toner/{z}/{x}/{y}.png', {attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'});
+
+        //  .. White background
+        var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==");
+
+        // Overlay layers (TMS)
+        var lyr = L.tileLayer('./{z}/{x}/{y}.%(tileformat)s', {tms: true, opacity: 0.7, attribution: "%(copyright)s"});
+
+        // Map
+        var map = L.map('map', {
+            center: [%(centerlon)s, %(centerlat)s],
+            zoom: %(beginzoom)s,
+            minZoom: %(minzoom)s,
+            maxZoom: %(maxzoom)s,
+            layers: [osm]
+        });
+
+        var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "Stamen Toner": toner, "Without background": white}
+        var overlaymaps = {"Layer": lyr}
+
+        // Title
+        var title = L.control();
+        title.onAdd = function(map) {
+	        this._div = L.DomUtil.create('div', 'ctl title');
+	        this.update();
+	        return this._div;
+        };
+        title.update = function(props) {
+	        this._div.innerHTML = "%(title)s";
+        };
+        title.addTo(map);
+
+        // Note
+        var src = 'Generated by <a href="http://www.klokan.cz/projects/gdal2tiles/">GDAL2Tiles</a>, Copyright &copy; 2008 <a href="http://www.klokan.cz/">Klokan Petr Pridal</a>,  <a href="http://www.gdal.org/">GDAL</a> &amp; <a href="http://www.osgeo.org/">OSGeo</a> <a href="http://code.google.com/soc/">GSoC</a>';
+        var title = L.control({position: 'bottomleft'});
+        title.onAdd = function(map) {
+	        this._div = L.DomUtil.create('div', 'ctl src');
+	        this.update();
+	        return this._div;
+        };
+        title.update = function(props) {
+	        this._div.innerHTML = src;
+        };
+        title.addTo(map);
+
+
+        // Add base layers
+        L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
+
+        // Fit to overlayer bounds (SW and NE points with (lat, lon))
+        map.fitBounds([[%(south)s, %(east)s], [%(north)s, %(west)s]]);
+
+        </script>
+
+        </body>
+        </html>
+
         """ % args
 
         return s
