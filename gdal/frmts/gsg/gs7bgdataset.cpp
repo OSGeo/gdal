@@ -193,10 +193,8 @@ GS7BGRasterBand::GS7BGRasterBand( GS7BGDataset *poDS, int nBand ) :
 GS7BGRasterBand::~GS7BGRasterBand( )
 
 {
-    if( pafRowMinZ != NULL )
-        CPLFree( pafRowMinZ );
-    if( pafRowMaxZ != NULL )
-        CPLFree( pafRowMaxZ );
+    CPLFree( pafRowMinZ );
+    CPLFree( pafRowMaxZ );
 }
 
 /************************************************************************/
@@ -594,9 +592,6 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     GInt32 nTag;
-    GInt32 nSize;
-    GInt32 nVersion;
-
     if( VSIFReadL( (void *)&nTag, sizeof(GInt32), 1, poDS->fp ) != 1 )
     {
         delete poDS;
@@ -613,6 +608,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    GInt32 nSize;
     if( VSIFReadL( (void *)&nSize, sizeof(GInt32), 1, poDS->fp ) != 1 )
     {
         delete poDS;
@@ -623,6 +619,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPL_LSBPTR32( &nSize );
 
+    GInt32 nVersion;
     if( VSIFReadL( (void *)&nVersion, sizeof(GInt32), 1, poDS->fp ) != 1 )
     {
         delete poDS;
@@ -910,7 +907,6 @@ CPLErr GS7BGDataset::SetGeoTransform( double *padfGeoTransform )
         return CE_Failure;
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */
-    CPLErr eErr = CE_None;
     /*if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0
     || padfGeoTransform[1] < 0.0 || padfGeoTransform[5] < 0.0 )
     eErr = GDALPamDataset::SetGeoTransform( padfGeoTransform );
@@ -923,7 +919,7 @@ CPLErr GS7BGDataset::SetGeoTransform( double *padfGeoTransform )
     double dfMinY = padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
     double dfMaxY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
 
-    eErr = WriteHeader( fp, poGRB->nRasterXSize, poGRB->nRasterYSize,
+    CPLErr eErr = WriteHeader( fp, poGRB->nRasterXSize, poGRB->nRasterYSize,
             dfMinX, dfMaxX, dfMinY, dfMaxY,
             poGRB->dfMinZ, poGRB->dfMaxZ );
 
@@ -1223,7 +1219,7 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
     }
 
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( 1 );
-    
+
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated\n" );
@@ -1356,28 +1352,26 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
 void GDALRegister_GS7BG()
 
 {
-    GDALDriver    *poDriver;
+    if( GDALGetDriverByName( "GS7BG" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GS7BG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GS7BG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Golden Software 7 Binary Grid (.grd)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#GS7BG" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-            "Byte Int16 UInt16 Float32 Float64" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "GS7BG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Golden Software 7 Binary Grid (.grd)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#GS7BG" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+        "Byte Int16 UInt16 Float32 Float64" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = GS7BGDataset::Identify;
-        poDriver->pfnOpen = GS7BGDataset::Open;
-        poDriver->pfnCreate = GS7BGDataset::Create;
-        poDriver->pfnCreateCopy = GS7BGDataset::CreateCopy;
+    poDriver->pfnIdentify = GS7BGDataset::Identify;
+    poDriver->pfnOpen = GS7BGDataset::Open;
+    poDriver->pfnCreate = GS7BGDataset::Create;
+    poDriver->pfnCreateCopy = GS7BGDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
