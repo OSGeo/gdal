@@ -663,6 +663,9 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
         p.add_option("-v", "--verbose",
                           action="store_true", dest="verbose",
                           help="Print status messages to stdout")
+        p.add_option("-q", "--quiet",
+                          action="store_true", dest="quiet",
+                          help="Disable messages and status to stdout")
 
         # KML options 
         g = OptionGroup(p, "KML (Google Earth) options", "Options for generated Google Earth SuperOverlay metadata")
@@ -1155,7 +1158,8 @@ gdal2tiles temp.vrt""" % self.input )
     def generate_base_tiles(self):
         """Generation of the base tiles (the lowest in the pyramid) directly from the input raster"""
 
-        print("Generating Base Tiles:")
+        if not self.options.quiet:
+            print("Generating Base Tiles:")
 
         if self.options.verbose:
             #mx, my = self.out_gt[0], self.out_gt[3] # OriginX, OriginY
@@ -1308,14 +1312,15 @@ gdal2tiles temp.vrt""" % self.input )
                         f.write( self.generate_kml( tx, ty, tz ))
                         f.close()
 
-                if not self.options.verbose:
+                if not self.options.verbose and not self.options.quiet:
                     self.progressbar( ti / float(tcount) )
 
     # -------------------------------------------------------------------------
     def generate_overview_tiles(self):
         """Generation of the overview tiles (higher in the pyramid) based on existing tiles"""
 
-        print("Generating Overview Tiles:")
+        if not self.options.quiet:
+            print("Generating Overview Tiles:")
 
         tilebands = self.dataBandsCount + 1
 
@@ -1402,7 +1407,7 @@ gdal2tiles temp.vrt""" % self.input )
                         f.write( self.generate_kml( tx, ty, tz, children ) )
                         f.close()
 
-                    if not self.options.verbose:
+                    if not self.options.verbose and not self.options.quiet:
                         self.progressbar( ti / float(tcount) )
 
 
@@ -2405,8 +2410,11 @@ gdal2tiles temp.vrt""" % self.input )
 # =============================================================================
 # =============================================================================
 
-if __name__=='__main__':
+def main():
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
     if argv:
         gdal2tiles = GDAL2Tiles( argv[1:] )
         gdal2tiles.process()
+
+if __name__=='__main__':
+    main()
