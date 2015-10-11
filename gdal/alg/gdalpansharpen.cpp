@@ -1102,7 +1102,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             nSpectralYOff -= nYOffExtract;
             sExtraArg.dfXOff -= nXOffExtract;
             sExtraArg.dfYOff -= nYOffExtract;
-            IGNORE_RET_VAL(poMEMDS->RasterIO(GF_Read,
+            CPL_IGNORE_RET_VAL(poMEMDS->RasterIO(GF_Read,
                               nSpectralXOff,
                               nSpectralYOff,
                               nSpectralXSize, nSpectralYSize,
@@ -1360,7 +1360,7 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
     sExtraArg.dfXSize = psJob->dfXSize;
     sExtraArg.dfYSize = psJob->dfYSize;
 
-    IGNORE_RET_VAL(psJob->poMEMDS->RasterIO(GF_Read,
+    CPL_IGNORE_RET_VAL(psJob->poMEMDS->RasterIO(GF_Read,
                              psJob->nXOff,
                              psJob->nYOff,
                              psJob->nXSize,

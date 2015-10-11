@@ -40,7 +40,7 @@ void thread_func(void* /* unused */)
     CPLSetThreadLocalConfigOption("GDAL_RB_INTERNALIZE_SLEEP_AFTER_DROP_LOCK", "0.6");
     GDALDatasetH hDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
     char buf[20*20];
-    IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
+    CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
     CPLSetThreadLocalConfigOption("GDAL_RB_INTERNALIZE_SLEEP_AFTER_DROP_LOCK", "0");
     GDALClose(hDS);
     printf("end of thread\n\n");
@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
 
     char buf[20*20];
     printf("cache fill\n");
-    IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
+    CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
     printf("end of cache fill\n");
     printf("buf[0]=%d\n\n", (int)buf[0]);
 
@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
     CPLSleep(0.3);
 
     printf("re read block\n");
-    IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
+    CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
     printf("end of re read block\n");
     printf("buf[0]=%d\n", (int)buf[0]);
     CPLJoinThread(hThread);
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
     CPLSleep(0.3);
 
     printf("re read block\n");
-    IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
+    CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
     printf("end of re read block\n");
     printf("buf[0]=%d\n", (int)buf[0]);
     CPLJoinThread(hThread);
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
 
     printf("re read block\n");
     CPLSetThreadLocalConfigOption("GDAL_RB_TRYGET_SLEEP_AFTER_TAKE_LOCK", "0.6");
-    IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
+    CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
     CPLSetThreadLocalConfigOption("GDAL_RB_TRYGET_SLEEP_AFTER_TAKE_LOCK", "0");
     printf("end of re read block\n");
     printf("buf[0]=%d\n", (int)buf[0]);
@@ -133,14 +133,14 @@ int main(int argc, char* argv[])
     CPLJoinThread(hThread);
     assert( GDALGetCacheUsed64() == 0 );
 
-    IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
+    CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
     hThread = CPLCreateJoinableThread(thread_func2, NULL);
     CPLSleep(0.3);
     GDALClose(hDS);
     CPLJoinThread(hThread);
 
     hDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
-    IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
+    CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
     hThread = CPLCreateJoinableThread(thread_func4, NULL);
     CPLSleep(0.3);
     GDALClose(hDS);

@@ -96,11 +96,11 @@ int main(int argc, char* argv[])
     MyDataset* poDS = new MyDataset();
 
     char buf1[] = { 1 } ;
-    IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(poDS, 1), GF_Write, 0, 0, 1, 1, buf1, 1, 1, GDT_Byte, 0, 0));
+    CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(poDS, 1), GF_Write, 0, 0, 1, 1, buf1, 1, 1, GDT_Byte, 0, 0));
 
     hThread = CPLCreateJoinableThread(thread_func, NULL);
     CPLSleep(0.3);
-    IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(poDS, 1), GF_Write, 1, 0, 1, 1, buf1, 1, 1, GDT_Byte, 0, 0));
+    CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(poDS, 1), GF_Write, 1, 0, 1, 1, buf1, 1, 1, GDT_Byte, 0, 0));
     GDALFlushCacheBlock();
 
     CPLJoinThread(hThread);

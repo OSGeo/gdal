@@ -139,7 +139,7 @@ void GenerateTiles(std::string filename,
             if (!bReadFailed)
             {
                 GDALRasterBand* poBandtmp = poTmpDataset->GetRasterBand(band);
-                IGNORE_RET_VAL( poBandtmp->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
+                CPL_IGNORE_RET_VAL( poBandtmp->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
                                     0, 0, NULL) );
             }
         }
@@ -161,7 +161,7 @@ void GenerateTiles(std::string filename,
                     }
                 }
 
-                IGNORE_RET_VAL( alphaBand->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
+                CPL_IGNORE_RET_VAL( alphaBand->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
                                     0, 0, NULL) );
             }
         }

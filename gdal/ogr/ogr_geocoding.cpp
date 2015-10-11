@@ -597,7 +597,7 @@ static OGRLayerH OGRGeocodeMakeRawLayer(const char* pszContent)
     poLayer->CreateField(&oFieldDefnRaw);
     OGRFeature* poFeature = new OGRFeature(poFDefn);
     poFeature->SetField("raw", pszContent);
-    IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
+    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
     delete poFeature;
     return (OGRLayerH) poLayer;
 }
@@ -728,7 +728,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
             if( poFeature->GetGeometryRef() == NULL && bFoundLon && bFoundLat )
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
             delete poFeature;
         }
         psPlace = psPlace->psNext;
@@ -858,7 +858,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(CPLXMLNode* psReverseGeoco
     if( poFeature->GetGeometryRef() == NULL && bFoundLon && bFoundLat )
         poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-    IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
+    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
     delete poFeature;
 
     return (OGRLayerH) poLayer;
@@ -987,7 +987,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
             if( bFoundLon && bFoundLat )
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
             delete poFeature;
         }
         psPlace = psPlace->psNext;
@@ -1145,7 +1145,7 @@ static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
             if( bFoundLon && bFoundLat )
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
             delete poFeature;
         }
         psPlace = psPlace->psNext;

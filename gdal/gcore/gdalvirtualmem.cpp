@@ -300,7 +300,7 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
             bandEnd = nBandCount;
 
         // Finish reading/writing the remaining bands for that pixel
-        IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
+        CPL_IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
                             nXOff + x, nYOff + y, 1, 1,
                             (char*)pPage + nOffsetShift,
                             1, 1, eBufType,
@@ -331,7 +331,7 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
 
         if( x < xEnd )
         {
-            IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
+            CPL_IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
                                 nXOff + x, nYOff + y, xEnd - x, 1,
                                 (char*) pPage + nOffsetShift,
                                 xEnd - x, 1, eBufType,
@@ -351,7 +351,7 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
             if( bandEnd >= nBandCount )
                 bandEnd = nBandCount;
 
-            IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
+            CPL_IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
                                 nXOff + x, nYOff + y, 1, 1,
                                 (char*) pPage + nOffsetShift,
                                 1, 1, eBufType,
@@ -365,7 +365,7 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
     // Yes, enough place to read/write until end of line
     if( x > 0 || nBytes - nOffsetShift < (size_t)nLineSpace )
     {
-        IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
+        CPL_IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
                     nXOff + x, nYOff + y, nBufXSize - x, 1,
                     (char*)pPage + nOffsetShift,
                     nBufXSize - x, 1, eBufType,
@@ -389,7 +389,7 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
         nLineCount = nBufYSize - y;
     if( nLineCount > 0 )
     {
-        IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
+        CPL_IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
                              nXOff + 0, nYOff + y, nBufXSize, nLineCount,
                              (GByte*) pPage + nOffsetShift,
                              nBufXSize, nLineCount, eBufType,
@@ -457,7 +457,7 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
         GetXYBand(nOffset + nBytes, xEnd, yEnd, bandEnd);
         CPLAssert(y == yEnd);
         CPLAssert(band == bandEnd);
-        IGNORE_RET_VAL(GDALRasterIO( (hBand) ? hBand : GDALGetRasterBand(hDS, panBandMap[band]), eRWFlag,
+        CPL_IGNORE_RET_VAL(GDALRasterIO( (hBand) ? hBand : GDALGetRasterBand(hDS, panBandMap[band]), eRWFlag,
                       nXOff + x, nYOff + y, xEnd - x, 1,
                       (char*)pPage + nOffsetShift,
                       xEnd - x, 1, eBufType,
@@ -469,7 +469,7 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
     // Yes, enough place to read/write until end of line
     if( x > 0 || nBytes - nOffsetShift < (size_t)nLineSpace )
     {
-        IGNORE_RET_VAL(GDALRasterIO( (hBand) ? hBand : GDALGetRasterBand(hDS, panBandMap[band]), eRWFlag,
+        CPL_IGNORE_RET_VAL(GDALRasterIO( (hBand) ? hBand : GDALGetRasterBand(hDS, panBandMap[band]), eRWFlag,
                     nXOff + x, nYOff + y, nBufXSize - x, 1,
                     (char*)pPage + nOffsetShift,
                     nBufXSize - x, 1, eBufType,
@@ -491,7 +491,7 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
         nLineCount = nBufYSize - y;
     if( nLineCount > 0 )
     {
-        IGNORE_RET_VAL(GDALRasterIO( (hBand) ? hBand : GDALGetRasterBand(hDS, panBandMap[band]), eRWFlag,
+        CPL_IGNORE_RET_VAL(GDALRasterIO( (hBand) ? hBand : GDALGetRasterBand(hDS, panBandMap[band]), eRWFlag,
                     nXOff + 0, nYOff + y, nBufXSize, nLineCount,
                     (GByte*) pPage + nOffsetShift,
                     nBufXSize, nLineCount, eBufType,
@@ -1162,7 +1162,7 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
         memset(pPage, 0, nBytes);
     if( hDS != NULL )
     {
-        IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
+        CPL_IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
                             nXOff + nXTile * nTileXSize, nYOff + nYTile * nTileYSize,
                             nReqXSize, nReqYSize,
                             pPage,
@@ -1174,7 +1174,7 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
     }
     else
     {
-        IGNORE_RET_VAL(GDALRasterIO(hBand, eRWFlag,
+        CPL_IGNORE_RET_VAL(GDALRasterIO(hBand, eRWFlag,
                      nXOff + nXTile * nTileXSize, nYOff + nYTile * nTileYSize,
                      nReqXSize, nReqYSize,
                      pPage,

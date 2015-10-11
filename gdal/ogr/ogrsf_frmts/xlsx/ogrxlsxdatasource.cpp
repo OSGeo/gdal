@@ -643,7 +643,7 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszName)
                 SetField(poFeature, i, apoFirstLineValues[i].c_str(),
                          apoFirstLineTypes[i].c_str());
             }
-            IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
+            CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
             delete poFeature;
         }
 
@@ -791,7 +791,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszName)
                     SetField(poFeature, i, apoFirstLineValues[i].c_str(),
                              apoFirstLineTypes[i].c_str());
                 }
-                IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
+                CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
                 delete poFeature;
             }
         }
@@ -869,7 +869,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszName)
                 SetField(poFeature, i, apoCurLineValues[i].c_str(),
                          apoCurLineTypes[i].c_str());
             }
-            IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
+            CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
             delete poFeature;
        }
 
