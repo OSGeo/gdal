@@ -51,22 +51,20 @@ static bool IsValidXMLFile( const char *pszPath, const char *pszLut)
 {
     /* Return true for valid xml file, false otherwise */
 
-    CPLXMLNode *psLut;
-    char *pszLutFile;
     bool retVal = false;
 
-    pszLutFile = VSIStrdup(CPLFormFilename(pszPath, pszLut, NULL));
+    char *pszLutFile
+        = VSIStrdup(CPLFormFilename(pszPath, pszLut, NULL));
 
-    psLut = CPLParseXMLFile(pszLutFile);
-    
-    if (psLut != NULL)
+    CPLXMLTreeCloser psLut(CPLParseXMLFile(pszLutFile));
+
+    if (psLut.get() != NULL)
     {
-        CPLDestroyXMLNode(psLut);
         retVal = true;
     }
 
     CPLFree(pszLutFile);
-    
+
     return retVal;
 }
 
