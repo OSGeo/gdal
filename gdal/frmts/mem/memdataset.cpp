@@ -858,7 +858,7 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
 {
     int nBandId = GetRasterCount() + 1;
     GByte *pData;
-    int   nPixelSize = (GDALGetDataTypeSize(eType) / 8);
+    GSpacing nPixelSize = (GDALGetDataTypeSize(eType) / 8);
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to allocate the memory ourselves?  This is the       */
@@ -866,9 +866,13 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( papszOptions, "DATAPOINTER" ) == NULL )
     {
-
-        pData = (GByte *) 
-            VSICalloc(nPixelSize * GetRasterXSize(), GetRasterYSize() );
+        GSpacing nTmp = nPixelSize * GetRasterXSize();
+#if SIZEOF_VOIDP == 4
+        if( nTmp > INT_MAX )
+            pData = NULL;
+        else
+#endif
+            pData = (GByte *) VSICalloc((size_t)nTmp, GetRasterYSize() );
 
         if( pData == NULL )
         {
