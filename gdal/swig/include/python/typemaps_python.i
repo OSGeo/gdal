@@ -170,7 +170,6 @@
 {
   /* %typemap(ret) OGRErr */
   if (resultobj == Py_None ) {
-    Py_DECREF(resultobj);
     resultobj = 0;
   }
   if (resultobj == 0) {
