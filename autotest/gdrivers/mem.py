@@ -292,6 +292,7 @@ def mem_6():
     ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16, options = ['INTERLEAVE=PIXEL'] )
     gdal.PopErrorHandler()
     if ds is not None:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -299,8 +300,22 @@ def mem_6():
     ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16, gdal.GDT_Float64 )
     gdal.PopErrorHandler()
     if ds is not None:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
+    
+    # 32 bit overflow on 32-bit builds, or possible out of memory error
+    ds = drv.Create( '', 0x7FFFFFFF, 1, 0 )
+    with gdaltest.error_handler():
+        ds.AddBand(gdal.GDT_Float64)
+
+    # Will raise out of memory error in all cases
+    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 0 )
+    with gdaltest.error_handler():
+        ret = ds.AddBand(gdal.GDT_Float64)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
