@@ -279,7 +279,7 @@ def mem_5():
     return 'success'
 
 ###############################################################################
-# Test out-of-memory situations (simulated by multiplication overflows)
+# Test out-of-memory situations
 
 def mem_6():
     
@@ -288,17 +288,33 @@ def mem_6():
 
     drv = gdal.GetDriverByName('MEM')
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16, options = ['INTERLEAVE=PIXEL'] )
-    gdal.PopErrorHandler()
+    # Multiplication overflow
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 1, 1, 0x7FFFFFFF, gdal.GDT_Float64 )
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16, gdal.GDT_Float64 )
-    gdal.PopErrorHandler()
+    # Multiplication overflow
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16 )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Out of memory error
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1, options = ['INTERLEAVE=PIXEL'] )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Out of memory error
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1, gdal.GDT_Float64 )
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
