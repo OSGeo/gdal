@@ -3476,6 +3476,12 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     psResult = PyEval_CallObject( psInfo->psPyCallback, psArgs);
     Py_XDECREF(psArgs);
 
+    if( PyErr_Occurred() != NULL )
+    {
+        PyErr_Clear();
+        return FALSE;
+    }
+
     if( psResult == NULL )
     {
         return TRUE;
@@ -3483,13 +3489,14 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
     if( psResult == Py_None )
     {
-	Py_XDECREF(Py_None);
         return TRUE;
     }
 
     if( !PyArg_Parse( psResult, "i", &bContinue ) )
     {
-        PyErr_SetString(PyExc_ValueError, "bad progress return value");
+        PyErr_Clear();
+        CPLError(CE_Failure, CPLE_AppDefined, "bad progress return value");
+        Py_XDECREF(psResult);
 	return FALSE;
     }
 
@@ -14487,7 +14494,6 @@ SWIGINTERN PyObject *_wrap_Dataset_DeleteLayer(PyObject *SWIGUNUSEDPARM(self), P
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -14908,7 +14914,6 @@ SWIGINTERN PyObject *_wrap_Dataset_StartTransaction(PyObject *SWIGUNUSEDPARM(sel
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -14957,7 +14962,6 @@ SWIGINTERN PyObject *_wrap_Dataset_CommitTransaction(PyObject *SWIGUNUSEDPARM(se
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -15006,7 +15010,6 @@ SWIGINTERN PyObject *_wrap_Dataset_RollbackTransaction(PyObject *SWIGUNUSEDPARM(
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
