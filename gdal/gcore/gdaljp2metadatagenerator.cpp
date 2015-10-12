@@ -867,7 +867,7 @@ static void GDALGMLJP2XPathUUID(xmlXPathParserContextPtr ctxt, int nargs)
 /************************************************************************/
 
 CPLXMLNode* GDALGMLJP2GenerateMetadata(
-#ifdef HAVE_LIBXML_2
+#ifdef HAVE_LIBXML2
     const CPLString& osTemplateFile,
     const CPLString& osSourceFile
 #else
