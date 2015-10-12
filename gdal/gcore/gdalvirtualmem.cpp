@@ -1233,11 +1233,11 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
                                               GDALTileOrganization eTileOrganization,
                                               size_t nCacheSize,
                                               int bSingleThreadUsage,
-                                              char ** /*papszOptions*/s )
+                                              char ** /* papszOptions */ )
 {
     CPLVirtualMem* view;
     GDALTiledVirtualMem* psParams;
-    
+
     size_t nPageSize = CPLGetPageSize();
     if( nPageSize == 0 )
     {
