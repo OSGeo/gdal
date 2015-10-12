@@ -56,6 +56,9 @@ class wkb_wkt_unit:
         geom_wkt = ogr.CreateGeometryFromWkt( raw_wkt )
         normal_wkt = geom_wkt.ExportToWkt()
 
+        #print(wkb_wkt)
+        #print(normal_wkt)
+        #print(raw_wkt)
         if wkb_wkt != normal_wkt:
             gdaltest.post_reason( 'WKT from WKB (%s) does not match clean WKT (%s).' % (wkb_wkt, normal_wkt) )
             return 'fail'
@@ -124,8 +127,7 @@ def ogr_wkbwkt_geom_bigexponents():
     geom = ogr.Geometry( ogr.wkbPoint )
     geom.SetPoint( 0, bigx, bigy )
 
-    #expect = 'POINT (0 0 0)'
-    expect = 'POINT (too_big too_big 0)'
+    expect = 'POINT (-1.79769313486e+308 -1.12345678901e+308 0)'
     wkt = geom.ExportToWkt()
 
     if str(wkt) != str(expect):
