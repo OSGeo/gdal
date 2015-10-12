@@ -7,7 +7,7 @@
  *
  * This code was provided by Gilad Ronnen (gro at visrt dot com) with
  * permission to reuse under the following license.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2004, VIZRT Inc.
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
@@ -38,9 +38,9 @@
 
 #include "thinplatespline.h"
 
-/////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 //// vizGeorefSpline2D
-/////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 
 #define A(r,c) _AA[ _nof_eqs * (r) + (c) ]
 #define Ainv(r,c) _Ainv[ _nof_eqs * (r) + (c) ]

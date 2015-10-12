@@ -59,9 +59,11 @@ class VizGeorefSpline2D
         _nof_points(0),
         _max_nof_points(0),
         _nof_eqs(0),
+#if 0
         _tx(0.0),
         _ty(0.0),
         _ta(10.0),
+#endif
         _dx(0.0),
         _dy(0.0),
         x(NULL),
@@ -160,8 +162,12 @@ class VizGeorefSpline2D
     int _max_nof_points;
     int _nof_eqs;
 
+#if 0
+    // Disabled because the methods that use there is disabled.
     double _tx, _ty;
     double _ta;
+#endif
+
     double _dx, _dy;
 
     double *x; // [VIZ_GEOREF_SPLINE_MAX_POINTS+3];
