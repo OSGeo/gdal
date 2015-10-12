@@ -1222,6 +1222,12 @@ end:
 
     return psDT;
 #else /* HAVE_INTERNAL_OR_EXTERNAL_QHULL */
+
+    /* Suppress unused argument warnings. */
+    (void)nPoints;
+    (void)padfX;
+    (void)padfY;
+
     CPLError(CE_Failure, CPLE_NotSupported,
              "GDALTriangulationCreateDelaunay() unavailable since GDAL built without QHull support");
     return NULL;
