@@ -74,6 +74,8 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
     int i;
     char* pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
 
+    if( EQUAL(pszDriverName, "GMT") )
+        pszDriverName = "OGR_GMT";
     CheckExtensionConsistency(pszDestFilename, pszDriverName);
 
     static const char* apszBeginName[][2] =  { { "PG:"      , "PostgreSQL" },
