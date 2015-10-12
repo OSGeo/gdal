@@ -11,6 +11,57 @@ toolkit:
 <li> \ref ogrlineref - Create linear reference and provide some calculations using it
 </ul>
 
+\section gdal_utilities_switches General Command Line Switches
+All GDAL OGR command line utility programs support the following 
+"general" options.<p>
+
+<dl>
+<dt> <b>\-\-version</b></dt><dd> Report the version of GDAL and exit.</dd>
+
+<dt> <b>\-\-formats</b></dt><dd> List all vector formats supported by this
+GDAL build (read-only and read-write) and exit. The format support is indicated
+ as follows: 'ro' is read-only driver; 
+'rw' is read or write (ie. supports CreateCopy);
+'rw+' is read, write and update (ie. supports Create).
+A 'v' is appended for formats supporting virtual IO (/vsimem, /vsigzip, /vsizip, etc).
+A 's' is appended for formats supporting subdatasets.
+</dd>
+
+<dt> <b>\-\-format</b> <i>format</i></dt><dd>
+List detailed information about a single format driver.  The <i>format</i> 
+should be the short name reported in the <b>\-\-formats</b> list, such as 
+GML.</dd>
+
+<dt> <b>\-\-optfile</b> <i>file</i></dt><dd>
+Read the named file and substitute the contents into the commandline
+options list.  Lines beginning with # will be ignored.  Multi-word arguments
+may be kept together with double quotes. 
+</dd>
+
+<dt> <b>\-\-config</b> <i>key value</i></dt><dd>
+Sets the named <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">
+configuration keyword</a> to the given value, as opposed to 
+setting them as environment variables.  Some common configuration keywords
+are SHAPE_ENCODING (force shapefile driver to read DBF files with the given
+character encoding) and CPL_TEMPDIR (define the location of temporary files).
+Individual drivers may be influenced by other configuration options.  
+</dd>
+
+<dt> <b>\-\-debug</b> <i>value</i></dt><dd>
+Control what debugging messages are emitted.  A value of <i>ON</i> will
+enable all debug messages.  A value of <i>OFF</i> will disable all debug
+messages.  Another value will select only debug messages containing that
+string in the debug prefix code.  
+</dd>
+
+<dt> <b>\-\-help-general</b></dt><dd>
+Gives a brief usage message for the generic GDAL OGR commandline options 
+and exit.
+</dd>
+
+</dl>
+
+
 */
 
 /*! \page ogrinfo ogrinfo
@@ -80,7 +131,7 @@ of metadata strings.</dd>
 "all" can be used to report metadata in all domains</dd>
 <dt> <b>-nocount</b></dt><dd>(starting with GDAL 2.0)  Suppress feature count printing.</dd>
 <dt> <b>-noextent</b></dt><dd>(starting with GDAL 2.0)  Suppress spatial extent printing.</dd>
-<dt> <b>--formats</b>:</dt><dd> List the format drivers that are
+<dt> <b>\-\-formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
 directory or other virtual name.  See the <a href="ogr/ogr_formats.html">OGR Vector
@@ -539,7 +590,7 @@ required the M or Z values in geometry. The results can be stored in any OGR sup
 format. Also some information writed to the stdout.  
 
 <dl>
-<dt><b>--help-general</b>:</dt><dd> Show the usage.</dd>
+<dt><b>\-\-help-general</b>:</dt><dd> Show the usage.</dd>
 <dt><b>-progress</b>:</dt><dd> Show progress.</dd>
 <dt><b>-quiet</b>:</dt><dd> Suppress all messages except errors and results.</dd>
 <dt><b>-f</b> <em>format_name</em>:</dt><dd> Select an output format name.
