@@ -47,12 +47,13 @@ CPL_CVSID("$Id$");
 /*                        OGRFormatDouble()                             */
 /************************************************************************/
 
-void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDecimalSep, int nPrecision )
+void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
+                      char chDecimalSep, int nPrecision, char chConversionSpecifier )
 {
     int i;
     int nTruncations = 0;
     char szFormat[16];
-    sprintf(szFormat, "%%.%df", nPrecision);
+    sprintf(szFormat, "%%.%d%c", nPrecision, chConversionSpecifier);
 
     int ret = CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
     /* Windows CRT doesn't conform with C99 and return -1 when buffer is truncated */
@@ -61,6 +62,9 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
         CPLsnprintf(pszBuffer, nBufferLen, "%s", "too_big");
         return;
     }
+    
+    if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
+        return;
 
     while(nPrecision > 0)
     {
@@ -69,7 +73,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
         int iDotPos = -1;
         while( pszBuffer[i] != '\0' )
         {
-            if ((pszBuffer[i] == '.' || pszBuffer[i] == ',') && chDecimalSep != '\0')
+            if (pszBuffer[i] == '.' && chDecimalSep != '\0')
             {
                 iDotPos = i;
                 pszBuffer[i] = chDecimalSep;
@@ -78,11 +82,13 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
                 nCountBeforeDot ++;
             i++;
         }
+        if( iDotPos < 0 )
+            break;
 
     /* -------------------------------------------------------------------- */
     /*      Trim trailing 00000x's as they are likely roundoff error.       */
     /* -------------------------------------------------------------------- */
-        if( i > 10 && iDotPos >=0 )
+        if( i > 10 )
         {
             if (/* && pszBuffer[i-1] == '1' &&*/
                 pszBuffer[i-2] == '0' 
@@ -120,7 +126,6 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
     /*      Detect trailing 99999X's as they are likely roundoff error.     */
     /* -------------------------------------------------------------------- */
         if( i > 10 &&
-            iDotPos >= 0 &&
             nPrecision + nTruncations >= 15)
         {
             if (/*pszBuffer[i-1] == '9' && */
@@ -132,8 +137,10 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
             {
                 nPrecision --;
                 nTruncations ++;
-                sprintf(szFormat, "%%.%df", nPrecision);
+                sprintf(szFormat, "%%.%d%c", nPrecision, chConversionSpecifier);
                 CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
+                if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
+                    return;
                 continue;
             }
             else if (i - 9 > iDotPos && /*pszBuffer[i-1] == '9' && */
@@ -148,8 +155,10 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
             {
                 nPrecision --;
                 nTruncations ++;
-                sprintf(szFormat, "%%.%df", nPrecision);
+                sprintf(szFormat, "%%.%d%c", nPrecision, chConversionSpecifier);
                 CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
+                if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
+                    return;
                 continue;
             }
         }
@@ -176,6 +185,8 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 {
     const size_t bufSize = 75;
     const size_t maxTargetSize = 75; /* Assumed max length of the target buffer. */
+    const char chDecimalSep = '.';
+    const int nPrecision = 15;
 
     char szX[bufSize];
     char szY[bufSize];
@@ -192,8 +203,12 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
     }
     else
     {
-        OGRFormatDouble( szX, bufSize, x, '.' );
-        OGRFormatDouble( szY, bufSize, y, '.' );
+        OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision, fabs(x) < 1 ? 'f' : 'g' );
+        if( strchr(szX, '.') == NULL && strchr(szX, 'e') == NULL && strlen(szX) < bufSize - 2 )
+            strcat(szX, ".0");
+        OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision, fabs(y) < 1 ? 'f' : 'g' );
+        if( strchr(szY, '.') == NULL && strchr(szY, 'e') == NULL && strlen(szY) < bufSize - 2 )
+            strcat(szY, ".0");
     }
 
     nLenX = strlen(szX);
@@ -207,7 +222,7 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
         }
         else
         {
-            OGRFormatDouble( szZ, bufSize, z, '.' );
+            OGRFormatDouble( szZ, bufSize, z, chDecimalSep, nPrecision, 'g' );
         }
     }
 
