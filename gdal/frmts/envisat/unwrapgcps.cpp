@@ -38,7 +38,7 @@ static const int NEMPY = 7;
 
 // WGS84 bounds
 static const double XMIN = -180.0;
-static const double XMAX = 180.0;
+// static const double XMAX = 180.0;
 static const double XDIF = 360.0;
 static const double XCNT = 0.0;
 
