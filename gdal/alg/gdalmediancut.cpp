@@ -47,7 +47,9 @@ CPL_CVSID("$Id$");
 
 #define MAKE_COLOR_CODE(r,g,b) ((r)+(g)*256+(b)*256*256)
 
-typedef struct /* NOTE: if changing the size of this structure, edit MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536 */
+/* NOTE: if changing the size of this structure, edit */
+/* MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536 in gdal_alg_priv.h and take into account ColorIndex in gdaldither.cpp */
+typedef struct
 {
     GUInt32 nColorCode;
     int     nCount;

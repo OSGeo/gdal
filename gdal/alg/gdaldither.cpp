@@ -78,7 +78,9 @@ static int FindNearestColor( int nColors, int *panPCT,
                              int nRedValue, int nGreenValue, int nBlueValue );
 
 /* Structure for a hashmap from a color code to a color index of the color table */
-typedef struct  /* NOTE: if changing the size of this structure, edit MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536 */
+/* NOTE: if changing the size of this structure, edit */
+/* MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536 in gdal_alg_priv.h and take into account HashHistogram in gdalmediancut.cpp */
+typedef struct
 {
     GUInt32 nColorCode;
     GUInt32 nColorCode2;
