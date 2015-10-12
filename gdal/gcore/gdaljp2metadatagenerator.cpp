@@ -866,8 +866,15 @@ static void GDALGMLJP2XPathUUID(xmlXPathParserContextPtr ctxt, int nargs)
 /*                      GDALGMLJP2GenerateMetadata()                    */
 /************************************************************************/
 
-CPLXMLNode* GDALGMLJP2GenerateMetadata(const CPLString& osTemplateFile,
-                                       const CPLString& osSourceFile)
+CPLXMLNode* GDALGMLJP2GenerateMetadata(
+#ifdef HAVE_LIBXML_2
+    const CPLString& osTemplateFile,
+    const CPLString& osSourceFile
+#else
+    const CPLString& /* osTemplateFile */,
+    const CPLString& /* osSourceFile */
+#endif
+)
 {
 #ifndef HAVE_LIBXML2
     return NULL;
@@ -877,12 +884,12 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(const CPLString& osTemplateFile,
         return NULL;
     CPLString osTemplate((const char*)pabyStr);
     CPLFree(pabyStr);
-    
+
     if( !VSIIngestFile( NULL, osSourceFile, &pabyStr, NULL, -1 ) )
         return NULL;
     CPLString osSource((const char*)pabyStr);
     CPLFree(pabyStr);
-    
+
     xmlDocPtr pDoc = xmlParseDoc((const xmlChar *)osSource.c_str());
     if( pDoc == NULL )
     {
