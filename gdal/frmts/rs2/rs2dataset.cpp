@@ -276,7 +276,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 class RS2CalibRasterBand : public GDALPamRasterBand {
 private:
-    eCalibration m_eCalib;
+    // eCalibration m_eCalib;
     GDALDataset *m_poBandDataset;
     GDALDataType m_eType; /* data type of data being ingested */
     float *m_nfTable;
@@ -330,8 +330,9 @@ void RS2CalibRasterBand::ReadLUT() {
 
 RS2CalibRasterBand::RS2CalibRasterBand(
     RS2Dataset *poDataset, const char *pszPolarization, GDALDataType eType,
-    GDALDataset *poBandDataset, eCalibration eCalib, const char *pszLUT ) :
-    m_eCalib(eCalib),
+    GDALDataset *poBandDataset, eCalibration /* eCalib */,
+    const char *pszLUT ) :
+    // m_eCalib(eCalib),
     m_poBandDataset(poBandDataset),
     m_eType(eType),
     m_nfTable(NULL),
