@@ -49,26 +49,24 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
                           OGRwkbGeometryType eLayerGeomType,
                           int bWriter,
                           OGRBNADataSource* poDS,
-                          int nIDs)
-
+                          int nIDs) :
+    eof(FALSE),
+    failed(FALSE),
+    curLine(0),
+    nNextFID(0),
+    nFeatures(0),
+    partialIndexTable(TRUE),
+    offsetAndLineFeaturesTable(NULL)
 {
-    eof = FALSE;
-    failed = FALSE;
-    curLine = 0;
-    nNextFID = 0;
-    
     this->bWriter = bWriter;
     this->poDS = poDS;
     this->nIDs = nIDs;
 
-    nFeatures = 0;
-    partialIndexTable = TRUE;
-    offsetAndLineFeaturesTable = NULL;
-
-    const char* iKnowHowToCount[] = { "Primary", "Secondary", "Third", "Fourth", "Fifth" };
+    const char* iKnowHowToCount[]
+        = { "Primary", "Secondary", "Third", "Fourth", "Fifth" };
     char tmp[32];
 
-    poFeatureDefn = new OGRFeatureDefn( CPLSPrintf("%s_%s", 
+    poFeatureDefn = new OGRFeatureDefn( CPLSPrintf("%s_%s",
                                                    CPLGetBasename( pszFilename ) , 
                                                    layerName ));
     poFeatureDefn->Reference();
@@ -78,8 +76,7 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
 
     if (! bWriter )
     {
-        int i;
-        for(i=0;i<nIDs;i++)
+        for(int i=0;i<nIDs;i++)
         {
             if (i < (int) (sizeof(iKnowHowToCount)/sizeof(iKnowHowToCount[0])) )
             {
