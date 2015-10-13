@@ -144,7 +144,7 @@ int VSIStdoutHandle::Eof()
 int VSIStdoutHandle::Close()
 
 {
-    return 0;
+    return Flush();
 }
 
 /************************************************************************/
