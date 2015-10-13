@@ -317,7 +317,7 @@ static long GCIOAPI_CALL _get_GCIO (
   if (GetGCStatus_GCIO(hGXT)==vEof_GCIO)
   {
     SetGCCache_GCIO(hGXT,"");
-    SetGCWhatIs_GCIO(hGXT, vUnknownIO_ItemType_GCIO);
+    SetGCWhatIs_GCIO(hGXT, (GCTypeKind)vUnknownIO_ItemType_GCIO);
     return EOF;
   }
   if (GetGCStatus_GCIO(hGXT)==vMemoStatus_GCIO)
@@ -327,22 +327,22 @@ static long GCIOAPI_CALL _get_GCIO (
   }
   if (_read_GCIO(hGXT)==EOF)
   {
-    SetGCWhatIs_GCIO(hGXT, vUnknownIO_ItemType_GCIO);
+    SetGCWhatIs_GCIO(hGXT, (GCTypeKind)vUnknownIO_ItemType_GCIO);
     return EOF;
   }
-  SetGCWhatIs_GCIO(hGXT, vStdCol_GCIO);
+  SetGCWhatIs_GCIO(hGXT, (GCTypeKind)vStdCol_GCIO);
   if (strstr(GetGCCache_GCIO(hGXT),kCom_GCIO)==GetGCCache_GCIO(hGXT))
   { /* // */
-    SetGCWhatIs_GCIO(hGXT, vComType_GCIO);
+    SetGCWhatIs_GCIO(hGXT, (GCTypeKind)vComType_GCIO);
     if (strstr(GetGCCache_GCIO(hGXT),kHeader_GCIO)==GetGCCache_GCIO(hGXT))
     { /* //# */
-      SetGCWhatIs_GCIO(hGXT, vHeader_GCIO);
+      SetGCWhatIs_GCIO(hGXT, (GCTypeKind)vHeader_GCIO);
     }
     else
     {
       if (strstr(GetGCCache_GCIO(hGXT),kPragma_GCIO)==GetGCCache_GCIO(hGXT))
       { /* //$ */
-        SetGCWhatIs_GCIO(hGXT, vPragma_GCIO);
+        SetGCWhatIs_GCIO(hGXT, (GCTypeKind)vPragma_GCIO);
       }
     }
   }
@@ -995,7 +995,7 @@ static void GCIOAPI_CALL _Init_GCIO (
   SetGCMeta_GCIO(H, NULL);
   SetGCMode_GCIO(H, vNoAccess_GCIO);
   SetGCStatus_GCIO(H, vNoStatus_GCIO);
-  SetGCWhatIs_GCIO(H, vUnknownIO_ItemType_GCIO);
+  SetGCWhatIs_GCIO(H, (GCTypeKind)vUnknownIO_ItemType_GCIO);
 }/* _Init_GCIO */
 
 /* -------------------------------------------------------------------- */
