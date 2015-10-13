@@ -140,10 +140,7 @@ class OGRSVGDataSource : public OGRDataSource
 
 #ifdef HAVE_EXPAT
     OGRSVGValidity      eValidity;
-#endif
     int                 bIsCloudmade;
-
-#ifdef HAVE_EXPAT
     XML_Parser          oCurrentParser;
     int                 nDataHandlerCounter;
 #endif
