@@ -78,6 +78,17 @@ def test_ogr2ogr_lib_2():
         return 'fail'
     gdal.Unlink('/vsimem/sql.txt')
 
+    # Test @filename syntax with a UTF-8 BOM
+    if sys.version_info >= (3,0,0):
+        gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly'.encode('LATIN1'))
+    else:
+        gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly')
+    ds = gdal.VectorTranslate('', srcDS, format = 'Memory', SQLStatement='@/vsimem/sql.txt')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/sql.txt')
+
     return 'success'
 
 ###############################################################################
