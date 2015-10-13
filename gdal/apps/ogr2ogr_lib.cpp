@@ -3718,6 +3718,18 @@ end_loop:
     return bRet;
 }
 
+/************************************************************************/
+/*                             RemoveBOM()                              */
+/************************************************************************/
+
+/* Remove potential UTF-8 BOM from data (must be NUL terminated) */
+static void RemoveBOM(GByte* pabyData)
+{
+    if( pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF )
+    {
+        memmove(pabyData, pabyData + 3, strlen((const char*)pabyData) + 1);
+    }
+}
 
 /************************************************************************/
 /*                       GDALVectorTranslateOptionsNew()                */
@@ -3884,6 +3896,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             if( papszArgv[i][0] == '@' &&
                 VSIIngestFile( NULL, papszArgv[i] + 1, &pabyRet, NULL, 1024*1024) )
             {
+                RemoveBOM(pabyRet);
                 psOptions->pszSQLStatement = (char*)pabyRet;
             }
             else
@@ -4041,6 +4054,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             if( papszArgv[i][0] == '@' &&
                 VSIIngestFile( NULL, papszArgv[i] + 1, &pabyRet, NULL, 1024*1024) )
             {
+                RemoveBOM(pabyRet);
                 psOptions->pszWHERE = (char*)pabyRet;
             }
             else

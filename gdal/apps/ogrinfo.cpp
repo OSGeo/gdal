@@ -59,6 +59,19 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
                                     char **papszExtraMDDomains );
 
 /************************************************************************/
+/*                             RemoveBOM()                              */
+/************************************************************************/
+
+/* Remove potential UTF-8 BOM from data (must be NUL terminated) */
+static void RemoveBOM(GByte* pabyData)
+{
+    if( pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF )
+    {
+        memmove(pabyData, pabyData + 3, strlen((const char*)pabyData) + 1);
+    }
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -151,6 +164,7 @@ int main( int nArgc, char ** papszArgv )
             if( papszArgv[iArg][0] == '@' &&
                 VSIIngestFile( NULL, papszArgv[iArg] + 1, &pabyRet, NULL, 1024*1024) )
             {
+                RemoveBOM(pabyRet);
                 pszWHERE = (char*)pabyRet;
             }
             else
@@ -167,6 +181,7 @@ int main( int nArgc, char ** papszArgv )
             if( papszArgv[iArg][0] == '@' &&
                 VSIIngestFile( NULL, papszArgv[iArg] + 1, &pabyRet, NULL, 1024*1024) )
             {
+                RemoveBOM(pabyRet);
                 pszSQLStatement = (char*)pabyRet;
             }
             else
