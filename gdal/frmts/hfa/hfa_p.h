@@ -75,7 +75,7 @@ typedef struct hfainfo {
     GUInt32     nEndOfFile;
     GUInt32	nRootPos;
     GUInt32	nDictionaryPos;
-    
+
     GInt16	nEntryHeaderLength;
     GInt32	nVersion;
 
@@ -134,7 +134,7 @@ class HFABand
     int         nLayerStackCount;
     int         nLayerStackIndex;
 
-#define BFLG_VALID	0x01    
+#define BFLG_VALID	0x01
 #define BFLG_COMPRESSED	0x02
 
     int		nPCTColors;
@@ -143,7 +143,7 @@ class HFABand
 
     CPLErr	LoadBlockInfo();
     CPLErr	LoadExternalBlockInfo();
-    
+
     void ReAllocBlock( int iBlock, int nSize );
     void NullBlock( void * );
 
@@ -152,11 +152,11 @@ class HFABand
   public:
     		HFABand( HFAInfo_t *, HFAEntry * );
                 ~HFABand();
-                
+
     HFAInfo_t	*psInfo;
 
     VSILFILE	*fpExternal;
-                         
+
     int		nDataType;
     HFAEntry	*poNode;
 
@@ -175,10 +175,10 @@ class HFABand
     int         bOverviewsPending;
     int		nOverviews;
     HFABand     **papoOverviews;
-    
+
     CPLErr	GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDataSize );
     CPLErr	SetRasterBlock( int nXBlock, int nYBlock, void * pData );
-    
+
     const char * GetBandName();
     void SetBandName(const char *pszName);
 
@@ -206,14 +206,14 @@ class HFAEntry
 {
     int         bDirty;
     GUInt32	nFilePos;
-    
+
     HFAInfo_t	*psHFA;
     HFAEntry	*poParent;
     HFAEntry	*poPrev;
 
     GUInt32	nNextPos;
     HFAEntry	*poNext;
-    
+
     GUInt32	nChildPos;
     HFAEntry	*poChild;
 
@@ -255,9 +255,8 @@ public:
                           const char *pszTypeName,
                           HFAEntry *poParent );
 
-                          
-    virtual     ~HFAEntry();                
-    
+    virtual     ~HFAEntry();
+
     static HFAEntry*  BuildEntryFromMIFObject( HFAEntry *poContainer, const char *pszMIFObjectPath );
 
     CPLErr      RemoveAndDestroy();
@@ -266,7 +265,7 @@ public:
 
     const char	*GetName() { return szName; }
     void SetName( const char *pszNodeName );
-    
+
     const char  *GetType() { return szType; }
     HFAType     *GetTypeObject();
 
@@ -309,7 +308,7 @@ class HFAField
 {
   public:
     int		nBytes;
-    
+
     int		nItemCount;
     char	chPointer; 	/* '\0', '*' or 'p' */
     char	chItemType;	/* 1|2|4|e|... */
@@ -343,7 +342,7 @@ class HFAField
     void	DumpInstValue( FILE *fpOut, 
                      GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                      const char *pszPrefix = NULL );
-    
+
     int		GetInstBytes( GByte *, int );
     int		GetInstCount( GByte * pabyData, int nDataSize );
 };
@@ -361,7 +360,7 @@ class HFAType
 
   public:
     int		nBytes;
-    
+
     int		nFields;
     HFAField	**papoFields;
 
@@ -369,7 +368,7 @@ class HFAType
 
     		HFAType();
                 ~HFAType();
-                
+
     const char *Initialize( const char * );
 
     void	CompleteDefn( HFADictionary * );
@@ -427,7 +426,7 @@ class HFACompress
 public:
   HFACompress( void *pData, GUInt32 nBlockSize, int nDataType );
   ~HFACompress();
-  
+
   // This is the method that does the work.
   bool compressBlock();
 
@@ -442,7 +441,7 @@ public:
   GUInt32 getMin()        { return m_nMin; };
   GUInt32 getNumRuns()    { return m_nNumRuns; };
   GByte   getNumBits()    { return m_nNumBits; };
-  
+
 private:
   void makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount );
   GUInt32 findMin( GByte *pNumBits );
@@ -454,19 +453,19 @@ private:
   GUInt32 m_nBlockCount;
   int m_nDataType;
   int m_nDataTypeNumBits; // the number of bits the datatype we are trying to compress takes
-  
+
   GByte   *m_pCounts;
   GByte   *m_pCurrCount;
   GUInt32  m_nSizeCounts;
-  
+
   GByte   *m_pValues;
   GByte   *m_pCurrValues;
   GUInt32  m_nSizeValues;
-  
+
   GUInt32  m_nMin;
   GUInt32  m_nNumRuns;
   GByte    m_nNumBits; // the number of bits needed to compress the range of values in the block
-  
+
 };
 
 #endif /* ndef _HFA_P_H_INCLUDED */
