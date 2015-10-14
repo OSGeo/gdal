@@ -1603,7 +1603,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
             CPLSetXMLValue( psSrc, "NODATA", "nan");
         else
             CPLSetXMLValue( psSrc, "NODATA", 
-                            CPLSPrintf("%g", dfNoDataValue) );
+                            CPLSPrintf("%.16g", dfNoDataValue) );
     }
         
     switch( eScalingType )

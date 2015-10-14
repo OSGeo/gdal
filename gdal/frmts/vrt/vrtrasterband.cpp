@@ -552,7 +552,7 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
             CPLSetXMLValue( psTree, "NoDataValue", "nan");
         else
             CPLSetXMLValue( psTree, "NoDataValue", 
-                            CPLSPrintf( "%.14E", dfNoDataValue ) );
+                            CPLSPrintf( "%.16g", dfNoDataValue ) );
     }
     
     if( bHideNoDataValue )
