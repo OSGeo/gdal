@@ -839,6 +839,17 @@ def test_gdalwarp_lib_121():
     return 'success'
 
 ###############################################################################
+# Test unnamed output VRT
+
+def test_gdalwarp_lib_122():
+
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'VRT')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -907,6 +918,7 @@ gdaltest_list = [
     test_gdalwarp_lib_119,
     test_gdalwarp_lib_120,
     test_gdalwarp_lib_121,
+    test_gdalwarp_lib_122,
     test_gdalwarp_lib_cleanup,
     ]
 

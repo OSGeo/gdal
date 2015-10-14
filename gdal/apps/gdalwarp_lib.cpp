@@ -1341,6 +1341,11 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
             // We need to close it before destroying poSrcOvrDS and warping options
             CPLString osDstFilename(GDALGetDescription(hDstDS));
+
+            char** papszContent = NULL;
+            if( osDstFilename.size() == 0 )
+                papszContent = CSLDuplicate(GDALGetMetadata(hDstDS, "xml:VRT"));
+
             GDALClose(hDstDS);
 
             if( poSrcOvrDS )
@@ -1349,7 +1354,14 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             GDALDestroyWarpOptions( psWO );
         
             GDALWarpAppOptionsFree(psOptions);
-            return GDALOpen(osDstFilename, GA_Update);
+            if( papszContent == NULL )
+                return GDALOpen(osDstFilename, GA_Update);
+            else
+            {
+                GDALDatasetH hDSRet = GDALOpen(papszContent[0], GA_ReadOnly);
+                CSLDestroy(papszContent);
+                return hDSRet;
+            }
         }
 
 /* -------------------------------------------------------------------- */
