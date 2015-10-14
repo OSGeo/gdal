@@ -1097,7 +1097,7 @@ GDALDataset *MEMDataset::Create( CPL_UNUSED const char * pszFilename,
     int         nWordSize = GDALGetDataTypeSize(eType) / 8;
     int         bAllocOK = TRUE;
 
-    if( nBands > 0 && (nBands > INT_MAX / nWordSize ||
+    if( nBands > 0 && nWordSize > 0 && (nBands > INT_MAX / nWordSize ||
         (GIntBig)nXSize * nYSize > GINTBIG_MAX / (nWordSize * nBands)) )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, "Multiplication overflow");
