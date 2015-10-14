@@ -140,21 +140,44 @@ void VRTDataset::FlushCache()
     /* -------------------------------------------------------------------- */
     /*      Convert tree to a single block of XML text.                     */
     /* -------------------------------------------------------------------- */
-    char *pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
-    CPLXMLNode *psDSTree = SerializeToXML( pszVRTPath );
-    char *pszXML = CPLSerializeXMLTree( psDSTree );
-
-    CPLDestroyXMLNode( psDSTree );
-
-    CPLFree( pszVRTPath );
-
-    /* -------------------------------------------------------------------- */
-    /*      Write to disk.                                                  */
-    /* -------------------------------------------------------------------- */
-    VSIFWriteL( pszXML, 1, strlen(pszXML), fpVRT );
+    char** papszContent = GetMetadata("xml:VRT");
+    if( papszContent && papszContent[0] )
+    {
+        /* -------------------------------------------------------------------- */
+        /*      Write to disk.                                                  */
+        /* -------------------------------------------------------------------- */
+        VSIFWriteL( papszContent[0], 1, strlen(papszContent[0]), fpVRT );
+    }
     VSIFCloseL( fpVRT );
+}
 
-    CPLFree( pszXML );
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char** VRTDataset::GetMetadata( const char *pszDomain )
+{
+    if( pszDomain != NULL && EQUAL(pszDomain, "xml:VRT") )
+    {
+        /* -------------------------------------------------------------------- */
+        /*      Convert tree to a single block of XML text.                     */
+        /* -------------------------------------------------------------------- */
+        char *pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
+        CPLXMLNode *psDSTree = SerializeToXML( pszVRTPath );
+        char *pszXML = CPLSerializeXMLTree( psDSTree );
+
+        CPLDestroyXMLNode( psDSTree );
+
+        CPLFree( pszVRTPath );
+        
+        char* apszContent[2];
+        apszContent[0] = pszXML;
+        apszContent[1] = NULL;
+        GDALDataset::SetMetadata(apszContent, "xml:VRT");
+        CPLFree(pszXML);
+    }
+
+    return GDALDataset::GetMetadata(pszDomain);
 }
 
 /************************************************************************/

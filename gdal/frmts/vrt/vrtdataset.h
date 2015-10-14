@@ -170,6 +170,8 @@ class CPL_DLL VRTDataset : public GDALDataset
     virtual CPLErr SetMetadataItem( const char *pszName, const char *pszValue,
                                     const char *pszDomain = "" );
 
+    virtual char** GetMetadata( const char *pszDomain = "" );
+
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
