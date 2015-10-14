@@ -1884,6 +1884,30 @@ def ogr_csv_40():
     return 'success'
 
 ###############################################################################
+# Test GEOM_POSSIBLE_NAMES and KEEP_GEOM_COLUMNS=NO together with empty content in geom column (#6152)
+
+def ogr_csv_41():
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_csv_41.csv',
+"""id,the_geom,foo
+1,,bar
+""")
+
+    ds = gdal.OpenEx('/vsimem/ogr_csv_41.csv', gdal.OF_VECTOR, \
+        open_options = ['GEOM_POSSIBLE_NAMES=the_geom', 'KEEP_GEOM_COLUMNS=NO' ])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef() is not None or f['id'] != '1' or f['foo'] != 'bar':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_41.csv')
+    
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -1958,6 +1982,7 @@ gdaltest_list = [
     ogr_csv_38,
     ogr_csv_39,
     ogr_csv_40,
+    ogr_csv_41,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':

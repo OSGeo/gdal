@@ -1341,36 +1341,39 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
             continue;
         }
         int iGeom = panGeomFieldIndex[iAttr];
-        if( iGeom >= 0 && papszTokens[iAttr][0] != '\0'&&
-            !(poFeatureDefn->GetGeomFieldDefn(iGeom)->IsIgnored()) )
+        if( iGeom >= 0 )
         {
-            const char* pszStr = papszTokens[iAttr];
-            while( *pszStr == ' ' )
-                pszStr ++;
-            char *pszWKT = (char*)pszStr;
-            OGRGeometry *poGeom = NULL;
+            if ( papszTokens[iAttr][0] != '\0'&&
+                 !(poFeatureDefn->GetGeomFieldDefn(iGeom)->IsIgnored()) )
+            {
+                const char* pszStr = papszTokens[iAttr];
+                while( *pszStr == ' ' )
+                    pszStr ++;
+                char *pszWKT = (char*)pszStr;
+                OGRGeometry *poGeom = NULL;
 
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            if( OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeom )
-                == OGRERR_NONE )
-            {
-                poGeom->assignSpatialReference(
-                    poFeatureDefn->GetGeomFieldDefn(iGeom)->GetSpatialRef());
-                poFeature->SetGeomFieldDirectly( iGeom, poGeom );
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                if( OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeom )
+                    == OGRERR_NONE )
+                {
+                    poGeom->assignSpatialReference(
+                        poFeatureDefn->GetGeomFieldDefn(iGeom)->GetSpatialRef());
+                    poFeature->SetGeomFieldDirectly( iGeom, poGeom );
+                }
+                else if( *pszStr == '{' &&
+                    (poGeom = (OGRGeometry*)OGR_G_CreateGeometryFromJson(pszStr)) != NULL )
+                {
+                    poFeature->SetGeomFieldDirectly( iGeom, poGeom );
+                }
+                else if( ((*pszStr >= '0' && *pszStr <= '9') ||
+                        (*pszStr >= 'a' && *pszStr <= 'z') ||
+                        (*pszStr >= 'A' && *pszStr <= 'Z') ) &&
+                        (poGeom = OGRGeometryFromHexEWKB(pszStr, NULL, FALSE)) != NULL )
+                {
+                    poFeature->SetGeomFieldDirectly( iGeom, poGeom );
+                }
+                CPLPopErrorHandler();
             }
-            else if( *pszStr == '{' &&
-                (poGeom = (OGRGeometry*)OGR_G_CreateGeometryFromJson(pszStr)) != NULL )
-            {
-                poFeature->SetGeomFieldDirectly( iGeom, poGeom );
-            }
-            else if( ((*pszStr >= '0' && *pszStr <= '9') ||
-                      (*pszStr >= 'a' && *pszStr <= 'z') ||
-                      (*pszStr >= 'A' && *pszStr <= 'Z') ) &&
-                     (poGeom = OGRGeometryFromHexEWKB(pszStr, NULL, FALSE)) != NULL )
-            {
-                poFeature->SetGeomFieldDirectly( iGeom, poGeom );
-            }
-            CPLPopErrorHandler();
             if( !bKeepGeomColumns )
                 continue;
         }
