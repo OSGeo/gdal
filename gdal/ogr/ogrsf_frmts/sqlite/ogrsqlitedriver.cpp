@@ -71,6 +71,23 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 
     if( EQUAL(poOpenInfo->pszFilename, ":memory:") )
         return TRUE;
+
+#ifdef SQLITE_OPEN_URI
+    // this code enables support for named mememory databases in sqlite. 
+    // Named memory databses use file name format file:name?mode=memory&cache=shared
+    // SQLITE_USE_URI is checked only to enable backward compatibility, in case we accidently hijacked some other format
+    if( strncmp(poOpenInfo->pszFilename, "file:", strlen("file:")) == 0 &&
+        CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
+    {
+        char * queryparams = strchr(poOpenInfo->pszFilename, '?');
+        if( queryparams )
+        {
+            if( strstr(queryparams, "mode=memory") != NULL )
+                return TRUE;
+        }
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Verify that the target is a real file, and has an               */
 /*      appropriate magic string at the beginning.                      */

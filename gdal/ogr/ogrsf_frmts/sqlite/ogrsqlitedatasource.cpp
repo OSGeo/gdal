@@ -553,7 +553,7 @@ const struct sqlite3_mem_methods sDebugMemAlloc =
 /*                            OpenOrCreateDB()                          */
 /************************************************************************/
 
-int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flags, int bRegisterOGR2SQLiteExtensions)
+int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLiteExtensions)
 {
     int rc;
 
@@ -565,6 +565,17 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flags, int bRegisterOGR2SQLiteEx
 #ifdef HAVE_SQLITE_VFS
     if( bRegisterOGR2SQLiteExtensions )
         OGR2SQLITE_Register();
+ 
+    int flags = flagsIn;
+#ifdef SQLITE_OPEN_URI
+    // this code enables support for named mememory databases in sqlite. 
+    // SQLITE_USE_URI is checked only to enable backward compatibility, in case we accidently hijacked some other format
+    if( strncmp(m_pszFilename, "file:", strlen("file:")) == 0 &&
+        CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
+    {
+        flags |= SQLITE_OPEN_URI;
+    }
+#endif
 
     int bUseOGRVFS = CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
     if (bUseOGRVFS || strncmp(m_pszFilename, "/vsi", 4) == 0)
