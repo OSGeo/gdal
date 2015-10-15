@@ -1,9 +1,9 @@
-#ifndef DOXYGEN_SKIP                                                            
-/* $Id$ */               
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
 Translation corresponds to index.dox 14537 2008-05-27 17:12:02Z
 Translator Andrey Kiselev <dron@ak4719.spb.edu>
 Translator Dmitry Baryshnikov <polimax@mail.ru>
-#endif /* DOXYGEN_SKIP */                                                       
+#endif /* DOXYGEN_SKIP */
 
 /*! \page index_ru GDAL - Geospatial Data Abstraction Library
 
@@ -13,14 +13,14 @@ Translator Dmitry Baryshnikov <polimax@mail.ru>
 --- это библиотека для работы с растровыми географическими форматами файлов
 данных. GDAL распространяется
 <a href="http://www.osgeo.org/">Open Source Geospatial Foundation</a>
-на условиях лицензии 
+на условиях лицензии
 <a href="http://trac.osgeo.org/gdal/wiki/FAQGeneral#WhatlicensedoesGDALOGRuse">X/MIT</a>
 , то есть является
 проектом с <a href="http://www.opensource.org/">открытым исходным кодом</a>.
 Как библиотека GDAL предоставляет вызывающему приложению
 \link gdal_datamodel_ru.html единую обобщённую модель данных\endlink для всех
 поддерживаемых форматов файлов данных. Помимо этого в состав GDAL входит
-<a class="el" href="gdal_utilities.html"> 
+<a class="el" href="gdal_utilities.html">
 набор вспомогательных программ</a>, вызываемых
 из командной строки, для преобразования и обработки данных. Описание выпуска
 GDAL/OGR 2.0.1 (сентябрь 2015) можно найти на странице
@@ -34,7 +34,7 @@ GDAL/OGR 2.0.1 (сентябрь 2015) можно найти на страниц
 <p>
 
 Главная страница: http://www.gdal.org<br>
-Загрузить: 
+Загрузить:
 <a href="ftp://ftp.remotesensing.org/gdal"> по протоколу ftp из remotesensing.org</a>,
 <a href="http://download.osgeo.org/gdal"> по протоколу http из download.osgeo.org</a>.
 
@@ -62,7 +62,6 @@ GDAL/OGR 2.0.1 (сентябрь 2015) можно найти на страниц
 <ul>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/BuildHints">Сборка GDAL из исходных текстов</a>.
 <li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadSource">Загрузить</a> исходные тексты.
-<li> <a href="wince.html">GDAL для Windows CE (не поддерживается)</a>
 </ul>
 
 \subsection index_devdocs_tutorials Tutorials
@@ -114,11 +113,11 @@ or <a href="http://home.gdal.org/projects/opengis/wkt_prop.doc">doc</a> format.
 \section foss4g Конференция
 
 \htmlonly
-<table border="0" cellspacing="4" cellpadding="4"> 
+<table border="0" cellspacing="4" cellpadding="4">
 
-<tr><td><a href="http://2015.foss4g.org/"> 
-<img src="foss4g2015.png" alt="FOSS4G 2015" border="0" width="150" height="75"> 
-</a></td> 
+<tr><td><a href="http://2015.foss4g.org/">
+<img src="foss4g2015.png" alt="FOSS4G 2015" border="0" width="150" height="75">
+</a></td>
 
 <td><a href="http://2015.foss4g.org">FOSS4G 2015</a> основная ежегодная
 конференция разработчиков открытого и свободного географического программного
@@ -127,7 +126,7 @@ or <a href="http://home.gdal.org/projects/opengis/wkt_prop.doc">doc</a> format.
 событие для всех, кто интересуется GDAL/OGR и другими свободными технологиями
 в области географии и картографии и хочет познакомиться с участниками этого
 сообщества. <strong>Сеул, Южная Корея с 14 по 19 сентября</strong>.</td>
-</table> 
+</table>
 \endhtmlonly
 
 \section index_maillist_ru Список рассылки
@@ -163,7 +162,7 @@ http://news.gmane.org/gmane.comp.gis.gdal.devel</a>.
 
 \section index_bindings_ru Интерфейсы для различных языков программирования
 
-Список интерфейсов для различных языков программирования находится в 
+Список интерфейсов для различных языков программирования находится в
 <a href="http://trac.osgeo.org/gdal/#GDALOGRInOtherLanguages">Вики GDAL</a>.
 
 
