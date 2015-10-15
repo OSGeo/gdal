@@ -3345,6 +3345,25 @@ def ogr_sqlite_42():
     return 'success'
 
 ###############################################################################
+# Test file:foo?mode=memory&cache=shared (#6150)
+
+def ogr_sqlite_43():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    # Only available since sqlite 3.7.7
+    version = ogrtest.sqlite_version.split('.')
+    if not (len(version) >= 3 and int(version[0])*10000 + int(version[1])*100 + int(version[2]) >= 30707):
+        return 'skip'
+
+    ds = ogr.Open('file:foo?mode=memory&cache=shared')
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -3527,6 +3546,7 @@ gdaltest_list = [
     ogr_sqlite_40,
     ogr_sqlite_41,
     ogr_sqlite_42,
+    ogr_sqlite_43,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
 ]
