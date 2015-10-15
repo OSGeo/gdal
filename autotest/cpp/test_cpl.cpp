@@ -33,6 +33,7 @@
 #include "cpl_list.h"
 #include "cpl_hash_set.h"
 #include "cpl_string.h"
+#include "cpl_sha256.h"
 
 namespace tut
 {
@@ -681,6 +682,32 @@ namespace tut
         ensure( "9e", EQUAL(oNVL.FetchNameValue("B"),"BB") );
         ensure( "9f", EQUAL(oNVL.FetchNameValue("C"),"CC") );
         ensure( "9g", EQUAL(oNVL.FetchNameValue("D"),"DD") );
+    }
+
+    template<>
+    template<>
+    void object::test<10>()
+    {
+        GByte abyDigest[CPL_SHA256_HASH_SIZE];
+        char szDigest[2*CPL_SHA256_HASH_SIZE+1];
+
+        CPL_HMAC_SHA256("key", 3,
+                        "The quick brown fox jumps over the lazy dog", strlen("The quick brown fox jumps over the lazy dog"),
+                        abyDigest);
+        for(int i=0;i<CPL_SHA256_HASH_SIZE;i++)
+            sprintf(szDigest + 2 * i, "%02x", abyDigest[i]);
+        //fprintf(stderr, "%s\n", szDigest);
+        ensure( "10.1", EQUAL(szDigest, "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8") );
+
+
+        CPL_HMAC_SHA256("mysupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersuperlongkey",
+                        strlen("mysupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersuperlongkey"),
+                        "msg", 3,
+                        abyDigest);
+        for(int i=0;i<CPL_SHA256_HASH_SIZE;i++)
+            sprintf(szDigest + 2 * i, "%02x", abyDigest[i]);
+        //fprintf(stderr, "%s\n", szDigest);
+        ensure( "10.2", EQUAL(szDigest, "a3051520761ed3cb43876b35ce2dd93ac5b332dc3bad898bb32086f7ac71ffc1") );
     }
 
 } // namespace tut
