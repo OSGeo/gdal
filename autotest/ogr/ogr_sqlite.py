@@ -3352,9 +3352,9 @@ def ogr_sqlite_43():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    # Only available since sqlite 3.7.7
+    # Only available since sqlite 3.8.0
     version = ogrtest.sqlite_version.split('.')
-    if not (len(version) >= 3 and int(version[0])*10000 + int(version[1])*100 + int(version[2]) >= 30707):
+    if not (len(version) >= 3 and int(version[0])*10000 + int(version[1])*100 + int(version[2]) >= 30800):
         return 'skip'
 
     ds = ogr.Open('file:foo?mode=memory&cache=shared')
