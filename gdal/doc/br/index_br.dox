@@ -1,13 +1,13 @@
-#ifndef DOXYGEN_SKIP                                                            
-/* $Id: index_br.dox $ */               
+#ifndef DOXYGEN_SKIP
+/* $Id: index_br.dox $ */
 Translation corresponds to index.dox "11836 2007-08-02 21:24:45Z warmerdam"
 Translator Ivan Lucena <ivan.lucena@pmldnet.com>
-#endif /* DOXYGEN_SKIP */                                                       
+#endif /* DOXYGEN_SKIP */
 
 /*! \page index_br GDAL - Biblioteca de Abstracoes de Dados Geo-Espaciais
 
 <center>
-<b>Selecione o idioma</b>: 
+<b>Selecione o idioma</b>:
 <a href="index.html">[English] </a>
 <a href="index_ru.html">[Russian] </a>
 [Portuguese]
@@ -15,25 +15,25 @@ Translator Ivan Lucena <ivan.lucena@pmldnet.com>
 </center>
 
 \htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL \endlatexonly
-&eacute; uma bibliot&eacute;ca para tradu&ccedil;&atilde;o de formatos de dados geogr&aacute;ficos distribu&iacute;da pela 
-<a href="http://www.osgeo.org/">Open Source Geospatial Foundation</a> sob a licen&ccedil;a 
+&eacute; uma bibliot&eacute;ca para tradu&ccedil;&atilde;o de formatos de dados geogr&aacute;ficos distribu&iacute;da pela
+<a href="http://www.osgeo.org/">Open Source Geospatial Foundation</a> sob a licen&ccedil;a
 <a href="http://trac.osgeo.org/gdal/wiki/FAQGeneral#WhatlicensedoesGDALOGRuse">X/MIT</a> estilo
-<a href="http://www.opensource.org/"> Open Source</a>. 
-As aplica&ccedil;&otilde;es que &agrave; utilizam acessam todos os formats 
-supportados pela biblioteca atrav&eacute;s de 
+<a href="http://www.opensource.org/"> Open Source</a>.
+As aplica&ccedil;&otilde;es que &agrave; utilizam acessam todos os formats
+supportados pela biblioteca atrav&eacute;s de
 \link gdal_datamodel_br.html um &uacute;nico modelo de dados abstrato\endlink.
-A bilioteca GDAL tamb&eacute;m conta com uma variadade de programas 
+A bilioteca GDAL tamb&eacute;m conta com uma variadade de programas
 <a class="el" href="gdal_utilities.html"> utilit&aacute;rios de linha de comando</a>
-para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute;rie de outras fun&ccedil;&otilde;es. 
-A p&aacute;gina 
-<a href="http://trac.osgeo.org/gdal/wiki/Release/1.9.0-News">novidades</a> descreve o 
+para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute;rie de outras fun&ccedil;&otilde;es.
+A p&aacute;gina
+<a href="http://trac.osgeo.org/gdal/wiki/Release/1.9.0-News">novidades</a> descreve o
 lan&ccedil;amento em Abril de 2013 da release 1.10.0 da biblioteca GDAL/OGR.
 
 A bilioteca <a href="ogr">OGR</a> (cujo c&oacute;digo fonte esta inclu&iacute;do na GDAL) possue
 funcionalidades semelhantes &agrave;s da GDAL para datos vetorias (Simple Features).
 
 P&aacute;gina Principal: http://www.gdal.org<br>
-Download: 
+Download:
  <a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
  <a href="http://download.osgeo.org/gdal">http at download.osgeo.org</a>
 
@@ -64,31 +64,30 @@ Download:
 <li> <a href="gdal_8h.html">GDAL API para C</a>
 <li> <a href="classGDALDataset.html">GDALDataset</a>
 <li> <a href="classGDALRasterBand.html">GDALRasterBand</a>
-<li> <a href="wince.html">GDAL para Windows CE</a>
 </ul>
 
 \section index_maillist Lista de discussao por correio eletronico
 
 A lista <a href="http://lists.osgeo.org/mailman/listinfo/gdal-announce">gdal-announce</a>
-&eacute; uma lista de pequeno volume de mensagens usada somente para anunciar lan&ccedil;amento de 
+&eacute; uma lista de pequeno volume de mensagens usada somente para anunciar lan&ccedil;amento de
 vers&otilde;es e desenvolvimentos significativos.
 
 A lista <a href="mailto:gdal-dev@lists.maptools.org">gdal-dev@lists.maptools.org</a>
 pode ser usada para a discuss&atilde;o sobre o desenvolvimento e uso da GDAL e tecnologias relaciadas.
-A inscri&ccedil;&atilde;o e o acesso aos arquivo da lista podem ser feitos 
-<a href="http://lists.maptools.org/mailman/listinfo/gdal-dev/"> nesta p&aacute;gina</a>. 
+A inscri&ccedil;&atilde;o e o acesso aos arquivo da lista podem ser feitos
+<a href="http://lists.maptools.org/mailman/listinfo/gdal-dev/"> nesta p&aacute;gina</a>.
 Os arquivos da lista tamb&eacute;m est&atilde;o dispon&iacute;veis (somente para leitura) atrav&eacute;s do
 <a href="news://news.gmane.org/gmane.comp.gis.gdal.devel">news://news.gmane.org/gmane.comp.gis.gdal.devel</a>
-ou na p&aacute;gina 
+ou na p&aacute;gina
 <a href="http://news.gmane.org/gmane.comp.gis.gdal.devel">http://news.gmane.org/gmane.comp.gis.gdal.devel</a>.<p>
 
-Usu&aacute;rios e desenvolvedores da GDAL/OGR podem constantemente ser achados no canal IRC 
+Usu&aacute;rios e desenvolvedores da GDAL/OGR podem constantemente ser achados no canal IRC
 <a href="irc://irc.freenode.net/#gdal">#gdal</a> do irc.freenode.net.<p>
 
 \section index_bugs Como Reportar Problemas (Bugs)
 
-Bugs em GDAL podem ser 
-<a href="http://trac.osgeo.org/gdal/newticket">reportados</a> e tamb&eacute;m 
+Bugs em GDAL podem ser
+<a href="http://trac.osgeo.org/gdal/newticket">reportados</a> e tamb&eacute;m
 <a href="http://trac.osgeo.org/gdal/report/1?sort=ticket&asc=0">listados</a> atrav&eacute;s do software Trac.<p>
 
 \section index_bindings GDAL em outras linguagens
