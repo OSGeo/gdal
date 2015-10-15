@@ -393,28 +393,6 @@ char** OGRAmigoCloudDataSource::AddHTTPOptions()
     return CSLAddString(NULL, CPLSPrintf("PERSISTENT=AMIGOCLOUD:%p", this));
 }
 
-static std::string url_encode(const std::string &value) {
-    std::stringstream escaped;
-    escaped.fill('0');
-    escaped << std::hex;
-
-    for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
-        std::string::value_type c = (*i);
-
-        // Keep alphanumeric and other accepted characters intact
-        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
-            escaped << c;
-            continue;
-        }
-
-        // Any other characters are percent-encoded
-        escaped << '%' << int((unsigned char) c);
-    }
-
-    return escaped.str();
-}
-
-
 /************************************************************************/
 /*                               RunPOST()                               */
 /************************************************************************/
@@ -625,7 +603,6 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
 
     osSQL += "&query=";
 
-//    std::string escaped = url_encode(pszUnescapedSQL);
     char * pszEscaped = CPLEscapeString( pszUnescapedSQL, -1, CPLES_URL );
     std::string escaped = pszEscaped;
     CPLFree( pszEscaped );
