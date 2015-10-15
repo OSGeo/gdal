@@ -2,7 +2,7 @@
  * $Id
  *
  * Project:  AmigoCloud Translator
- * Purpose:  Implements OGRAMIGOCLOUDResultLayer class.
+ * Purpose:  Implements OGRAmigoCloudResultLayer class.
  * Author:   Victor Chernetsky, <victor at amigocloud dot com>
  *
  ******************************************************************************
@@ -32,12 +32,12 @@
 CPL_CVSID("$Id");
 
 /************************************************************************/
-/*                          OGRAMIGOCLOUDResultLayer()                     */
+/*                          OGRAmigoCloudResultLayer()                     */
 /************************************************************************/
 
-OGRAMIGOCLOUDResultLayer::OGRAMIGOCLOUDResultLayer( OGRAMIGOCLOUDDataSource* poDS,
+OGRAmigoCloudResultLayer::OGRAmigoCloudResultLayer( OGRAmigoCloudDataSource* poDS,
                                               const char * pszRawQueryIn ) :
-                                              OGRAMIGOCLOUDLayer(poDS)
+                                              OGRAmigoCloudLayer(poDS)
 {
     osBaseSQL = pszRawQueryIn;
     SetDescription( "result" );
@@ -45,10 +45,10 @@ OGRAMIGOCLOUDResultLayer::OGRAMIGOCLOUDResultLayer( OGRAMIGOCLOUDDataSource* poD
 }
 
 /************************************************************************/
-/*                       ~OGRAMIGOCLOUDResultLayer()                       */
+/*                       ~OGRAmigoCloudResultLayer()                       */
 /************************************************************************/
 
-OGRAMIGOCLOUDResultLayer::~OGRAMIGOCLOUDResultLayer()
+OGRAmigoCloudResultLayer::~OGRAmigoCloudResultLayer()
 
 {
     delete poFirstFeature;
@@ -58,7 +58,7 @@ OGRAMIGOCLOUDResultLayer::~OGRAMIGOCLOUDResultLayer()
 /*                          GetLayerDefnInternal()                      */
 /************************************************************************/
 
-OGRFeatureDefn * OGRAMIGOCLOUDResultLayer::GetLayerDefnInternal(json_object* poObjIn)
+OGRFeatureDefn * OGRAmigoCloudResultLayer::GetLayerDefnInternal(json_object* poObjIn)
 {
     if( poFeatureDefn != NULL )
         return poFeatureDefn;
@@ -72,7 +72,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDResultLayer::GetLayerDefnInternal(json_object* poO
 /*                           GetNextRawFeature()                        */
 /************************************************************************/
 
-OGRFeature  *OGRAMIGOCLOUDResultLayer::GetNextRawFeature()
+OGRFeature  *OGRAmigoCloudResultLayer::GetNextRawFeature()
 {
     if( poFirstFeature )
     {
@@ -81,14 +81,14 @@ OGRFeature  *OGRAMIGOCLOUDResultLayer::GetNextRawFeature()
         return poRet;
     }
     else
-        return OGRAMIGOCLOUDLayer::GetNextRawFeature();
+        return OGRAmigoCloudLayer::GetNextRawFeature();
 }
 
 /************************************************************************/
 /*                                IsOK()                                */
 /************************************************************************/
 
-int  OGRAMIGOCLOUDResultLayer::IsOK()
+int  OGRAmigoCloudResultLayer::IsOK()
 {
     CPLErrorReset();
     poFirstFeature = GetNextFeature();
@@ -99,7 +99,7 @@ int  OGRAMIGOCLOUDResultLayer::IsOK()
 /*                             GetSRS_SQL()                             */
 /************************************************************************/
 
-CPLString OGRAMIGOCLOUDResultLayer::GetSRS_SQL(const char* pszGeomCol)
+CPLString OGRAmigoCloudResultLayer::GetSRS_SQL(const char* pszGeomCol)
 {
     CPLString osSQL;
     CPLString osLimitedSQL;

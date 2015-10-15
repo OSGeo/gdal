@@ -29,8 +29,6 @@
 
 #include "ogr_amigocloud.h"
 
-// g++ -g -Wall -fPIC -shared -o ogr_AMIGOCLOUD.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/amigocloud ogr/ogrsf_frmts/amigocloud/*.c* -L. -lgdal -Iogr/ogrsf_frmts/geojson/libjson 
-
 CPL_CVSID("$Id$");
 
 extern "C" void RegisterOGRAmigoCloud();
@@ -54,7 +52,7 @@ static GDALDataset *OGRAmigoCloudDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !OGRAmigoCloudDriverIdentify(poOpenInfo) )
         return NULL;
 
-    OGRAMIGOCLOUDDataSource   *poDS = new OGRAMIGOCLOUDDataSource();
+    OGRAmigoCloudDataSource   *poDS = new OGRAmigoCloudDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions,
                      poOpenInfo->eAccess == GA_Update ) )
@@ -78,7 +76,7 @@ static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
                                             CPL_UNUSED char **papszOptions )
 
 {
-    OGRAMIGOCLOUDDataSource   *poDS = new OGRAMIGOCLOUDDataSource();
+    OGRAmigoCloudDataSource   *poDS = new OGRAmigoCloudDataSource();
 
     if( !poDS->Open( pszName, NULL, TRUE ) )
     {

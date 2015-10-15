@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  AmigoCloud Translator
- * Purpose:  Implements OGRAMIGOCLOUDLayer class.
+ * Purpose:  Implements OGRAmigoCloudLayer class.
  * Author:   Victor Chernetsky, <victor at amigocloud dot com>
  *
  ******************************************************************************
@@ -33,10 +33,10 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                         OGRAMIGOCLOUDLayer()                            */
+/*                         OGRAmigoCloudLayer()                            */
 /************************************************************************/
 
-OGRAMIGOCLOUDLayer::OGRAMIGOCLOUDLayer(OGRAMIGOCLOUDDataSource* poDS)
+OGRAmigoCloudLayer::OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDS)
 
 {
     this->poDS = poDS;
@@ -53,10 +53,10 @@ OGRAMIGOCLOUDLayer::OGRAMIGOCLOUDLayer(OGRAMIGOCLOUDDataSource* poDS)
 }
 
 /************************************************************************/
-/*                         ~OGRAMIGOCLOUDLayer()                           */
+/*                         ~OGRAmigoCloudLayer()                           */
 /************************************************************************/
 
-OGRAMIGOCLOUDLayer::~OGRAMIGOCLOUDLayer()
+OGRAmigoCloudLayer::~OGRAmigoCloudLayer()
 
 {
     if( poCachedObj != NULL )
@@ -73,7 +73,7 @@ OGRAMIGOCLOUDLayer::~OGRAMIGOCLOUDLayer()
 /*                            ResetReading()                            */
 /************************************************************************/
 
-void OGRAMIGOCLOUDLayer::ResetReading()
+void OGRAmigoCloudLayer::ResetReading()
 
 {
     if( poCachedObj != NULL )
@@ -89,7 +89,7 @@ void OGRAMIGOCLOUDLayer::ResetReading()
 /*                           GetLayerDefn()                             */
 /************************************************************************/
 
-OGRFeatureDefn * OGRAMIGOCLOUDLayer::GetLayerDefn()
+OGRFeatureDefn * OGRAmigoCloudLayer::GetLayerDefn()
 {
     return GetLayerDefnInternal(NULL);
 }
@@ -98,7 +98,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDLayer::GetLayerDefn()
 /*                            BuildFeature()                            */
 /************************************************************************/
 
-OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
+OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
 {
     OGRFeature* poFeature = NULL;
     if( poRowObj != NULL &&
@@ -179,7 +179,7 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
 /*                        FetchNewFeatures()                            */
 /************************************************************************/
 
-json_object* OGRAMIGOCLOUDLayer::FetchNewFeatures(GIntBig iNext)
+json_object* OGRAmigoCloudLayer::FetchNewFeatures(GIntBig iNext)
 {
     CPLString osSQL = osBaseSQL;
     if( osSQL.ifind("SELECT") != std::string::npos &&
@@ -197,7 +197,7 @@ json_object* OGRAMIGOCLOUDLayer::FetchNewFeatures(GIntBig iNext)
 /*                       GetNextRawFeature()                            */
 /************************************************************************/
 
-OGRFeature *OGRAMIGOCLOUDLayer::GetNextRawFeature()
+OGRFeature *OGRAmigoCloudLayer::GetNextRawFeature()
 {
     if( bEOF ) 
         return NULL;
@@ -267,7 +267,7 @@ OGRFeature *OGRAMIGOCLOUDLayer::GetNextRawFeature()
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-OGRFeature *OGRAMIGOCLOUDLayer::GetNextFeature()
+OGRFeature *OGRAmigoCloudLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
@@ -293,7 +293,7 @@ OGRFeature *OGRAMIGOCLOUDLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAMIGOCLOUDLayer::TestCapability( const char * pszCap )
+int OGRAmigoCloudLayer::TestCapability( const char * pszCap )
 
 {
     if ( EQUAL(pszCap, OLCStringsAsUTF8) )
@@ -305,7 +305,7 @@ int OGRAMIGOCLOUDLayer::TestCapability( const char * pszCap )
 /*                          EstablishLayerDefn()                        */
 /************************************************************************/
 
-void OGRAMIGOCLOUDLayer::EstablishLayerDefn(const char* pszLayerName,
+void OGRAmigoCloudLayer::EstablishLayerDefn(const char* pszLayerName,
                                          json_object* poObjIn)
 {
     poFeatureDefn = new OGRFeatureDefn(pszLayerName);
@@ -438,7 +438,7 @@ void OGRAMIGOCLOUDLayer::EstablishLayerDefn(const char* pszLayerName,
 /*                               GetSRS()                               */
 /************************************************************************/
 
-OGRSpatialReference* OGRAMIGOCLOUDLayer::GetSRS(const char* pszGeomCol,
+OGRSpatialReference* OGRAmigoCloudLayer::GetSRS(const char* pszGeomCol,
                                              int *pnSRID)
 {
     json_object* poObj = poDS->RunSQL(GetSRS_SQL(pszGeomCol));

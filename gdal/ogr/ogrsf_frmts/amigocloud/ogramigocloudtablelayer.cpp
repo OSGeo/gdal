@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  AmigoCloud Translator
- * Purpose:  Implements OGRAMIGOCLOUDTableLayer class.
+ * Purpose:  Implements OGRAmigoCloudTableLayer class.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -96,12 +96,12 @@ static std::string json_encode(const std::string &value) {
 }
 
 /************************************************************************/
-/*                        OGRAMIGOCLOUDTableLayer()                        */
+/*                        OGRAmigoCloudTableLayer()                        */
 /************************************************************************/
 
-OGRAMIGOCLOUDTableLayer::OGRAMIGOCLOUDTableLayer(OGRAMIGOCLOUDDataSource* poDS,
+OGRAmigoCloudTableLayer::OGRAmigoCloudTableLayer(OGRAmigoCloudDataSource* poDS,
                                            const char* pszName) :
-                                           OGRAMIGOCLOUDLayer(poDS)
+                                           OGRAmigoCloudLayer(poDS)
 
 {
     osDatasetId = CPLString(pszName);
@@ -114,10 +114,10 @@ OGRAMIGOCLOUDTableLayer::OGRAMIGOCLOUDTableLayer(OGRAMIGOCLOUDDataSource* poDS,
 }
 
 /************************************************************************/
-/*                    ~OGRAMIGOCLOUDTableLayer()                           */
+/*                    ~OGRAmigoCloudTableLayer()                           */
 /************************************************************************/
 
-OGRAMIGOCLOUDTableLayer::~OGRAMIGOCLOUDTableLayer()
+OGRAmigoCloudTableLayer::~OGRAmigoCloudTableLayer()
 
 {
     if( bDeferedCreation ) RunDeferedCreationIfNecessary();
@@ -128,7 +128,7 @@ OGRAMIGOCLOUDTableLayer::~OGRAMIGOCLOUDTableLayer()
 /*                        GetLayerDefnInternal()                        */
 /************************************************************************/
 
-OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object* poObjIn)
+OGRFeatureDefn * OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object* poObjIn)
 {
     if( poFeatureDefn != NULL )
     {
@@ -216,7 +216,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
 /*                        FetchNewFeatures()                            */
 /************************************************************************/
 
-json_object* OGRAMIGOCLOUDTableLayer::FetchNewFeatures(GIntBig iNext)
+json_object* OGRAmigoCloudTableLayer::FetchNewFeatures(GIntBig iNext)
 {
     if( osFIDColName.size() > 0 )
     {
@@ -234,26 +234,26 @@ json_object* OGRAMIGOCLOUDTableLayer::FetchNewFeatures(GIntBig iNext)
         return poDS->RunSQL(osSQL);
     }
     else
-        return OGRAMIGOCLOUDLayer::FetchNewFeatures(iNext);
+        return OGRAmigoCloudLayer::FetchNewFeatures(iNext);
 }
 
 /************************************************************************/
 /*                           GetNextRawFeature()                        */
 /************************************************************************/
 
-OGRFeature  *OGRAMIGOCLOUDTableLayer::GetNextRawFeature()
+OGRFeature  *OGRAmigoCloudTableLayer::GetNextRawFeature()
 {
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return NULL;
     FlushDeferedInsert();
-    return OGRAMIGOCLOUDLayer::GetNextRawFeature();
+    return OGRAmigoCloudLayer::GetNextRawFeature();
 }
 
 /************************************************************************/
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRAMIGOCLOUDTableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRAmigoCloudTableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
     GetLayerDefn();
@@ -278,7 +278,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::SetAttributeFilter( const char *pszQuery )
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRAMIGOCLOUDTableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
+void OGRAmigoCloudTableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
 {
     if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
@@ -305,7 +305,7 @@ void OGRAMIGOCLOUDTableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * po
 /*                         FlushDeferedInsert()                          */
 /************************************************************************/
 
-void OGRAMIGOCLOUDTableLayer::FlushDeferedInsert()
+void OGRAmigoCloudTableLayer::FlushDeferedInsert()
 
 {
     if(vsDeferedInsertChangesets.size()==0)
@@ -349,7 +349,7 @@ void OGRAMIGOCLOUDTableLayer::FlushDeferedInsert()
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRAMIGOCLOUDTableLayer::CreateField( OGRFieldDefn *poFieldIn,
+OGRErr OGRAmigoCloudTableLayer::CreateField( OGRFieldDefn *poFieldIn,
                                           CPL_UNUSED int bApproxOK )
 {
     GetLayerDefn();
@@ -396,7 +396,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRAMIGOCLOUDTableLayer::ICreateFeature( OGRFeature *poFeature )
+OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     int i;
@@ -515,7 +515,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::ICreateFeature( OGRFeature *poFeature )
 /*                            ISetFeature()                              */
 /************************************************************************/
 
-OGRErr OGRAMIGOCLOUDTableLayer::ISetFeature( OGRFeature *poFeature )
+OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
     int i;
@@ -649,7 +649,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::ISetFeature( OGRFeature *poFeature )
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
+OGRErr OGRAmigoCloudTableLayer::DeleteFeature( GIntBig nFID )
 
 {
     OGRErr eRet = OGRERR_FAILURE;
@@ -699,7 +699,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
 /*                             GetSRS_SQL()                             */
 /************************************************************************/
 
-CPLString OGRAMIGOCLOUDTableLayer::GetSRS_SQL(const char* pszGeomCol)
+CPLString OGRAmigoCloudTableLayer::GetSRS_SQL(const char* pszGeomCol)
 {
     CPLString osSQL;
 
@@ -719,7 +719,7 @@ CPLString OGRAMIGOCLOUDTableLayer::GetSRS_SQL(const char* pszGeomCol)
 /*      criteria (spatial and attribute queries).                       */
 /************************************************************************/
 
-void OGRAMIGOCLOUDTableLayer::BuildWhere()
+void OGRAmigoCloudTableLayer::BuildWhere()
 
 {
     osWHERE = "";
@@ -771,7 +771,7 @@ void OGRAMIGOCLOUDTableLayer::BuildWhere()
 /*                              GetFeature()                            */
 /************************************************************************/
 
-OGRFeature* OGRAMIGOCLOUDTableLayer::GetFeature( GIntBig nFeatureId )
+OGRFeature* OGRAmigoCloudTableLayer::GetFeature( GIntBig nFeatureId )
 {
 
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
@@ -781,7 +781,7 @@ OGRFeature* OGRAMIGOCLOUDTableLayer::GetFeature( GIntBig nFeatureId )
     GetLayerDefn();
     
     if( osFIDColName.size() == 0 )
-        return OGRAMIGOCLOUDLayer::GetFeature(nFeatureId);
+        return OGRAmigoCloudLayer::GetFeature(nFeatureId);
 
     CPLString osSQL = osSELECTWithoutWHERE;
     osSQL += " WHERE ";
@@ -795,7 +795,7 @@ OGRFeature* OGRAMIGOCLOUDTableLayer::GetFeature( GIntBig nFeatureId )
     {
         if( poObj != NULL )
             json_object_put(poObj);
-        return OGRAMIGOCLOUDLayer::GetFeature(nFeatureId);
+        return OGRAmigoCloudLayer::GetFeature(nFeatureId);
     }
 
     OGRFeature* poFeature = BuildFeature(poRowObj);
@@ -808,7 +808,7 @@ OGRFeature* OGRAMIGOCLOUDTableLayer::GetFeature( GIntBig nFeatureId )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRAMIGOCLOUDTableLayer::GetFeatureCount(int bForce)
+GIntBig OGRAmigoCloudTableLayer::GetFeatureCount(int bForce)
 {
 
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
@@ -831,14 +831,14 @@ GIntBig OGRAMIGOCLOUDTableLayer::GetFeatureCount(int bForce)
     {
         if( poObj != NULL )
             json_object_put(poObj);
-        return OGRAMIGOCLOUDLayer::GetFeatureCount(bForce);
+        return OGRAmigoCloudLayer::GetFeatureCount(bForce);
     }
 
     json_object* poCount = json_object_object_get(poRowObj, "count");
     if( poCount == NULL || json_object_get_type(poCount) != json_type_int )
     {
         json_object_put(poObj);
-        return OGRAMIGOCLOUDLayer::GetFeatureCount(bForce);
+        return OGRAmigoCloudLayer::GetFeatureCount(bForce);
     }
 
     GIntBig nRet = (GIntBig)json_object_get_int64(poCount);
@@ -855,7 +855,7 @@ GIntBig OGRAMIGOCLOUDTableLayer::GetFeatureCount(int bForce)
 /*      in other cases we use standard OGRLayer::GetExtent()            */
 /************************************************************************/
 
-OGRErr OGRAMIGOCLOUDTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce )
+OGRErr OGRAmigoCloudTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce )
 {
     CPLString   osSQL;
 
@@ -954,7 +954,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAMIGOCLOUDTableLayer::TestCapability( const char * pszCap )
+int OGRAmigoCloudTableLayer::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap, OLCFastFeatureCount) )
@@ -978,14 +978,14 @@ int OGRAMIGOCLOUDTableLayer::TestCapability( const char * pszCap )
         return poDS->IsReadWrite();
     }
 
-    return OGRAMIGOCLOUDLayer::TestCapability(pszCap);
+    return OGRAmigoCloudLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
 /*                        SetDeferedCreation()                          */
 /************************************************************************/
 
-void OGRAMIGOCLOUDTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
+void OGRAmigoCloudTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
                                      OGRSpatialReference *poSRS,
                                      int bGeomNullable)
 {
@@ -1017,7 +1017,7 @@ void OGRAMIGOCLOUDTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
                      OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
 }
 
-CPLString OGRAMIGOCLOUDTableLayer::GetAmigoCloudType(OGRFieldDefn& oField,
+CPLString OGRAmigoCloudTableLayer::GetAmigoCloudType(OGRFieldDefn& oField,
                                   int bPreservePrecision,
                                   int bApproxOK)
 {
@@ -1074,7 +1074,7 @@ CPLString OGRAMIGOCLOUDTableLayer::GetAmigoCloudType(OGRFieldDefn& oField,
     return szFieldType;
 }
 
-bool OGRAMIGOCLOUDTableLayer::IsDatasetExists()
+bool OGRAmigoCloudTableLayer::IsDatasetExists()
 {
     std::stringstream url;
 
@@ -1109,7 +1109,7 @@ bool OGRAMIGOCLOUDTableLayer::IsDatasetExists()
 /*                      RunDeferedCreationIfNecessary()                 */
 /************************************************************************/
 
-OGRErr OGRAMIGOCLOUDTableLayer::RunDeferedCreationIfNecessary()
+OGRErr OGRAmigoCloudTableLayer::RunDeferedCreationIfNecessary()
 {
     if( !bDeferedCreation )
         return OGRERR_NONE;

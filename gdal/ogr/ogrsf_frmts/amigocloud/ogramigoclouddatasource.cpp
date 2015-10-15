@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  AmigoCloud Translator
- * Purpose:  Implements OGRAMIGOCLOUDDataSource class
+ * Purpose:  Implements OGRAmigoCloudDataSource class
  * Author:   Victor Chernetsky, <victor at amigocloud dot com>
  *
  ******************************************************************************
@@ -34,10 +34,10 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                        OGRAMIGOCLOUDDataSource()                        */
+/*                        OGRAmigoCloudDataSource()                        */
 /************************************************************************/
 
-OGRAMIGOCLOUDDataSource::OGRAMIGOCLOUDDataSource()
+OGRAmigoCloudDataSource::OGRAmigoCloudDataSource()
 
 {
     papoLayers = NULL;
@@ -54,10 +54,10 @@ OGRAMIGOCLOUDDataSource::OGRAMIGOCLOUDDataSource()
 }
 
 /************************************************************************/
-/*                       ~OGRAMIGOCLOUDDataSource()                        */
+/*                       ~OGRAmigoCloudDataSource()                        */
 /************************************************************************/
 
-OGRAMIGOCLOUDDataSource::~OGRAMIGOCLOUDDataSource()
+OGRAmigoCloudDataSource::~OGRAmigoCloudDataSource()
 
 {
     for( int i = 0; i < nLayers; i++ )
@@ -80,7 +80,7 @@ OGRAMIGOCLOUDDataSource::~OGRAMIGOCLOUDDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAMIGOCLOUDDataSource::TestCapability( const char * pszCap )
+int OGRAmigoCloudDataSource::TestCapability( const char * pszCap )
 
 {
     if( bReadWrite && EQUAL(pszCap,ODsCCreateLayer) )
@@ -95,7 +95,7 @@ int OGRAMIGOCLOUDDataSource::TestCapability( const char * pszCap )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRAMIGOCLOUDDataSource::GetLayer( int iLayer )
+OGRLayer *OGRAmigoCloudDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
@@ -108,7 +108,7 @@ OGRLayer *OGRAMIGOCLOUDDataSource::GetLayer( int iLayer )
 /*                          GetLayerByName()                            */
 /************************************************************************/
 
-OGRLayer *OGRAMIGOCLOUDDataSource::GetLayerByName(const char * pszLayerName)
+OGRLayer *OGRAmigoCloudDataSource::GetLayerByName(const char * pszLayerName)
 {
     OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszLayerName);
     return poLayer;
@@ -138,7 +138,7 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
+int OGRAmigoCloudDataSource::Open( const char * pszFilename,
                                 char** papszOpenOptions,
                                 int bUpdateIn )
 
@@ -165,7 +165,7 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
     osAPIKey = CSLFetchNameValueDef(papszOpenOptions, "API_KEY",
                                     CPLGetConfigOption("AMIGOCLOUD_API_KEY", ""));
 
-    CPLString osTables = OGRAMIGOCLOUDGetOptionValue(pszFilename, "tables");
+    CPLString osDatasets = OGRAMIGOCLOUDGetOptionValue(pszFilename, "datasets");
     
     bUseHTTPS = CSLTestBoolean(CPLGetConfigOption("AMIGOCLOUD_HTTPS", "YES"));
 
@@ -186,14 +186,14 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
     if( osCurrentSchema.size() == 0 )
         return FALSE;
 
-    if (osTables.size() != 0)
+    if (osDatasets.size() != 0)
     {
-        char** papszTables = CSLTokenizeString2(osTables, ",", 0);
+        char** papszTables = CSLTokenizeString2(osDatasets, ",", 0);
         for(int i=0;papszTables && papszTables[i];i++)
         {
-            papoLayers = (OGRAMIGOCLOUDTableLayer**) CPLRealloc(
-                papoLayers, (nLayers + 1) * sizeof(OGRAMIGOCLOUDTableLayer*));
-            papoLayers[nLayers ++] = new OGRAMIGOCLOUDTableLayer(this, papszTables[i]);
+            papoLayers = (OGRAmigoCloudTableLayer**) CPLRealloc(
+                papoLayers, (nLayers + 1) * sizeof(OGRAmigoCloudTableLayer*));
+            papoLayers[nLayers ++] = new OGRAmigoCloudTableLayer(this, papszTables[i]);
         }
         CSLDestroy(papszTables);
         return TRUE;
@@ -206,7 +206,7 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
 /*                            GetAPIURL()                               */
 /************************************************************************/
 
-const char* OGRAMIGOCLOUDDataSource::GetAPIURL() const
+const char* OGRAmigoCloudDataSource::GetAPIURL() const
 {
     const char* pszAPIURL = CPLGetConfigOption("AMIGOCLOUD_API_URL", NULL);
     if (pszAPIURL)
@@ -222,7 +222,7 @@ const char* OGRAMIGOCLOUDDataSource::GetAPIURL() const
 /*                             FetchSRSId()                             */
 /************************************************************************/
 
-int OGRAMIGOCLOUDDataSource::FetchSRSId( OGRSpatialReference * poSRS )
+int OGRAmigoCloudDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
     const char*         pszAuthorityName;
@@ -278,7 +278,7 @@ int OGRAMIGOCLOUDDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRAMIGOCLOUDDataSource::ICreateLayer( const char *pszName,
+OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszName,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )
@@ -318,11 +318,11 @@ OGRLayer   *OGRAMIGOCLOUDDataSource::ICreateLayer( const char *pszName,
     
     CPLString osName(pszName);
 
-    OGRAMIGOCLOUDTableLayer* poLayer = new OGRAMIGOCLOUDTableLayer(this, osName);
+    OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
     int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
     poLayer->SetDeferedCreation(eGType, poSpatialRef, bGeomNullable);
-    papoLayers = (OGRAMIGOCLOUDTableLayer**) CPLRealloc(
-                    papoLayers, (nLayers + 1) * sizeof(OGRAMIGOCLOUDTableLayer*));
+    papoLayers = (OGRAmigoCloudTableLayer**) CPLRealloc(
+                    papoLayers, (nLayers + 1) * sizeof(OGRAmigoCloudTableLayer*));
     papoLayers[nLayers ++] = poLayer;
 
     return poLayer;
@@ -332,7 +332,7 @@ OGRLayer   *OGRAMIGOCLOUDDataSource::ICreateLayer( const char *pszName,
 /*                            DeleteLayer()                             */
 /************************************************************************/
 
-OGRErr OGRAMIGOCLOUDDataSource::DeleteLayer(int iLayer)
+OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
 {
     if (!bReadWrite)
     {
@@ -386,7 +386,7 @@ OGRErr OGRAMIGOCLOUDDataSource::DeleteLayer(int iLayer)
 /*                          AddHTTPOptions()                            */
 /************************************************************************/
 
-char** OGRAMIGOCLOUDDataSource::AddHTTPOptions()
+char** OGRAmigoCloudDataSource::AddHTTPOptions()
 {
     bMustCleanPersistant = TRUE;
 
@@ -419,7 +419,7 @@ static std::string url_encode(const std::string &value) {
 /*                               RunPOST()                               */
 /************************************************************************/
 
-json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders)
+json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders)
 {
     CPLString osURL(pszURL);
 
@@ -517,7 +517,7 @@ json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *psz
 /*                               RunGET()                               */
 /************************************************************************/
 
-json_object* OGRAMIGOCLOUDDataSource::RunGET(const char*pszURL)
+json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
 {
     CPLString osURL(pszURL);
 
@@ -609,7 +609,7 @@ json_object* OGRAMIGOCLOUDDataSource::RunGET(const char*pszURL)
 /*                               RunSQL()                               */
 /************************************************************************/
 
-json_object* OGRAMIGOCLOUDDataSource::RunSQL(const char* pszUnescapedSQL)
+json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
 {
     CPLString osSQL;
     osSQL = "/users/0/projects/" + CPLString(pszProjetctId) + "/sql";
@@ -625,7 +625,10 @@ json_object* OGRAMIGOCLOUDDataSource::RunSQL(const char* pszUnescapedSQL)
 
     osSQL += "&query=";
 
-    std::string escaped = url_encode(pszUnescapedSQL);
+//    std::string escaped = url_encode(pszUnescapedSQL);
+    char * pszEscaped = CPLEscapeString( pszUnescapedSQL, -1, CPLES_URL );
+    std::string escaped = pszEscaped;
+    CPLFree( pszEscaped );
     osSQL += escaped;
 
 /* -------------------------------------------------------------------- */
@@ -749,7 +752,7 @@ json_object* OGRAMIGOCLOUDGetSingleRow(json_object* poObj)
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
-OGRLayer * OGRAMIGOCLOUDDataSource::ExecuteSQL( const char *pszSQLCommand,
+OGRLayer * OGRAmigoCloudDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         OGRGeometry *poSpatialFilter,
                                         const char *pszDialect )
 
@@ -758,7 +761,7 @@ OGRLayer * OGRAMIGOCLOUDDataSource::ExecuteSQL( const char *pszSQLCommand,
                               TRUE);
 }
 
-OGRLayer * OGRAMIGOCLOUDDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
+OGRLayer * OGRAmigoCloudDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
                                                      OGRGeometry *poSpatialFilter,
                                                      const char *pszDialect,
                                                      int bRunDeferedActions )
@@ -786,7 +789,7 @@ OGRLayer * OGRAMIGOCLOUDDataSource::ExecuteSQLInternal( const char *pszSQLComman
         return NULL;
     }
 
-    OGRAMIGOCLOUDResultLayer* poLayer = new OGRAMIGOCLOUDResultLayer( this, pszSQLCommand );
+    OGRAmigoCloudResultLayer* poLayer = new OGRAmigoCloudResultLayer( this, pszSQLCommand );
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
@@ -804,7 +807,7 @@ OGRLayer * OGRAMIGOCLOUDDataSource::ExecuteSQLInternal( const char *pszSQLComman
 /*                          ReleaseResultSet()                          */
 /************************************************************************/
 
-void OGRAMIGOCLOUDDataSource::ReleaseResultSet( OGRLayer * poLayer )
+void OGRAmigoCloudDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
     delete poLayer;
