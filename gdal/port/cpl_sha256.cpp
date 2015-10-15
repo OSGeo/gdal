@@ -411,6 +411,15 @@ void CPL_SHA256Final(CPL_SHA256Context * sc, GByte hash[CPL_SHA256_HASH_SIZE])
         }
 }
 
+void CPL_SHA256(const void *data, size_t len, GByte hash[CPL_SHA256_HASH_SIZE])
+{
+    CPL_SHA256Context sSHA256Ctxt;
+    CPL_SHA256Init(&sSHA256Ctxt);
+    CPL_SHA256Update(&sSHA256Ctxt, data, len);
+    CPL_SHA256Final(&sSHA256Ctxt, hash);
+    memset(&sSHA256Ctxt, 0, sizeof(sSHA256Ctxt));
+}
+
 #define CPL_HMAC_SHA256_BLOCKSIZE 64U
 
 /* See https://en.wikipedia.org/wiki/Hash-based_message_authentication_code#Implementation */
@@ -418,13 +427,10 @@ void CPL_HMAC_SHA256(const void *pKey, size_t nKeyLen,
                      const void *pabyMessage, size_t nMessageLen,
                      GByte abyDigest[CPL_SHA256_HASH_SIZE])
 {
-    CPL_SHA256Context sSHA256Ctxt;
     GByte abyPad[CPL_HMAC_SHA256_BLOCKSIZE];
     if( nKeyLen > CPL_HMAC_SHA256_BLOCKSIZE )
     {
-        CPL_SHA256Init(&sSHA256Ctxt);
-        CPL_SHA256Update(&sSHA256Ctxt, pKey, nKeyLen);
-        CPL_SHA256Final(&sSHA256Ctxt, abyPad);
+        CPL_SHA256(pKey, nKeyLen, abyPad);
         memset(abyPad + CPL_SHA256_HASH_SIZE, 0,
                CPL_HMAC_SHA256_BLOCKSIZE - CPL_SHA256_HASH_SIZE);
     }
@@ -438,6 +444,7 @@ void CPL_HMAC_SHA256(const void *pKey, size_t nKeyLen,
     for( size_t i = 0; i < CPL_HMAC_SHA256_BLOCKSIZE; i++ )
         abyPad[i] = 0x36 ^ abyPad[i];
 
+    CPL_SHA256Context sSHA256Ctxt;
     CPL_SHA256Init(&sSHA256Ctxt);
     CPL_SHA256Update(&sSHA256Ctxt, abyPad, CPL_HMAC_SHA256_BLOCKSIZE);
     CPL_SHA256Update(&sSHA256Ctxt, pabyMessage, nMessageLen);
