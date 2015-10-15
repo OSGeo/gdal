@@ -57,6 +57,7 @@ void CPL_DLL CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t l
 
 void CPL_DLL CPL_SHA256Final(CPL_SHA256Context * sc, GByte hash[CPL_SHA256_HASH_SIZE]);
 
+void CPL_DLL CPL_SHA256(const void *data, size_t len, GByte hash[CPL_SHA256_HASH_SIZE]);
 
 void CPL_DLL CPL_HMAC_SHA256(const void *pKey, size_t nKeyLen,
                              const void *pabyMessage, size_t nMessageLen,
