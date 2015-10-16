@@ -1276,6 +1276,30 @@ def ogr_sql_42():
 
     return 'success'
 
+
+###############################################################################
+# Test NULL sorting (#6155)
+
+def ogr_sql_47():
+    
+    ds = ogr.Open('data/sort_test.dbf')
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM sort_test ORDER BY text_value')
+    prec_val = ''
+    for f in sql_lyr:
+        if f.IsFieldSet('text_value'):
+            new_val = f['text_value']
+        else:
+            new_val = ''
+        if new_val < prec_val:
+            gdaltest.post_reason('fail')
+            print("new_val = '%s', prec_val = '%s'" % (new_val, prec_val))
+            return 'fail'
+        prec_val = new_val
+    ds.ReleaseResultSet(sql_lyr)
+    
+    return 'success'
+
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1327,6 +1351,7 @@ gdaltest_list = [
     ogr_sql_40,
     ogr_sql_41,
     ogr_sql_42,
+    ogr_sql_47,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
