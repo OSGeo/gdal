@@ -52,6 +52,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_worker_thread_pool.obj \
 		cpl_vsil_crypt.obj \
 		cpl_sha256.obj \
+		cpl_aws.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib

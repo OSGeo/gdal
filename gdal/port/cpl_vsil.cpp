@@ -1160,6 +1160,8 @@ VSIFileManager *VSIFileManager::Get()
 #ifdef HAVE_CURL
         VSIInstallCurlFileHandler();
         VSIInstallCurlStreamingFileHandler();
+        VSIInstallS3FileHandler();
+        VSIInstallS3StreamingFileHandler();
 #endif
         VSIInstallStdinHandler();
         VSIInstallStdoutHandler();
