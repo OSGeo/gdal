@@ -343,8 +343,8 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
 
 void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
 {
-        size_t bufferBytesLeft;
-        size_t bytesToCopy;
+        GUInt32 bufferBytesLeft;
+        GUInt32 bytesToCopy;
         int needBurn = 0;
 
         if (sc->bufferLength) {
@@ -352,7 +352,7 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
 
                 bytesToCopy = bufferBytesLeft;
                 if (bytesToCopy > len)
-                        bytesToCopy = len;
+                        bytesToCopy = (GUInt32)len;
 
                 memcpy(&sc->buffer.bytes[sc->bufferLength], data, bytesToCopy);
 
@@ -382,9 +382,9 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
         if (len) {
                 memcpy(&sc->buffer.bytes[sc->bufferLength], data, len);
 
-                sc->totalLength += len * 8L;
+                sc->totalLength += (GUInt32)len * 8L;
 
-                sc->bufferLength += len;
+                sc->bufferLength += (GUInt32)len;
         }
 
         if (needBurn)
