@@ -214,6 +214,54 @@ def vsis3_2():
         print(data)
         return 'fail'
 
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/non_xml_error', 'rb')
+    if f is not None or gdal.GetLastErrorMsg().find('bla') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/invalid_xml_error', 'rb')
+    if f is not None or gdal.GetLastErrorMsg().find('<oops>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/no_code_in_error', 'rb')
+    if f is not None or gdal.GetLastErrorMsg().find('<Error/>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/no_region_in_AuthorizationHeaderMalformed_error', 'rb')
+    if f is not None or gdal.GetLastErrorMsg().find('<Error>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/no_endpoint_in_PermanentRedirect_error', 'rb')
+    if f is not None or gdal.GetLastErrorMsg().find('<Error>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL('/vsis3_streaming/s3_fake_bucket/no_message_in_error', 'rb')
+    if f is not None or gdal.GetLastErrorMsg().find('<Error>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
