@@ -202,8 +202,6 @@ class VSICurlHandle;
 
 class VSICurlFilesystemHandler : public VSIFilesystemHandler 
 {
-    CPLMutex       *hMutex;
-
     CachedRegion  **papsRegions;
     int             nRegions;
 
@@ -221,6 +219,8 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
                                           int* pbGotFileList);
 
 protected:
+    CPLMutex       *hMutex;
+
     virtual CPLString GetFSPrefix() { return "/vsicurl/"; }
     virtual VSICurlHandle* CreateFileHandle(const char* pszURL);
     virtual char** GetFileList(const char *pszFilename, int* pbGotFileList);
@@ -263,9 +263,11 @@ public:
 
 class VSICurlHandle : public VSIVirtualHandle
 {
-  private:
+
+  protected:
     VSICurlFilesystemHandler* poFS;
 
+  private:
     char*           pszURL;
 
     vsi_l_offset    curOffset;
@@ -2816,6 +2818,13 @@ int VSICurlUninstallReadCbk(VSILFILE* fp)
 
 class VSIS3FSHandler: public VSICurlFilesystemHandler
 {
+    std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
+
+    void AnalyseS3FileList( const CPLString& osBaseURL,
+                            const char* pszXML,
+                            CPLStringList& osFileList,
+                            CPLString& osNextMarker );
+
 protected:
     virtual CPLString GetFSPrefix() { return "/vsis3/"; }
     virtual VSICurlHandle* CreateFileHandle(const char* pszURL);
@@ -2823,6 +2832,9 @@ protected:
 
 public:
         VSIS3FSHandler() {}
+
+        void UpdateMapFromHandle(VSIS3HandleHelper * poS3HandleHelper);
+        void UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper);
 };
 
 /************************************************************************/
@@ -2851,12 +2863,94 @@ class VSIS3Handle: public VSICurlHandle
 VSICurlHandle* VSIS3FSHandler::CreateFileHandle(const char* pszURL)
 {
     VSIS3HandleHelper* poS3HandleHelper =
-            VSIS3HandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
+            VSIS3HandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str(), false);
     if( poS3HandleHelper )
+    {
+        UpdateHandleFromMap(poS3HandleHelper);
         return new VSIS3Handle(this, poS3HandleHelper);
+    }
     return NULL;
 }
 
+/************************************************************************/
+/*                          AnalyseS3FileList()                         */
+/************************************************************************/
+
+#include "cpl_minixml.h"
+void VSIS3FSHandler::AnalyseS3FileList( const CPLString& osBaseURL,
+                                        const char* pszXML,
+                                        CPLStringList& osFileList,
+                                        CPLString& osNextMarker )
+{
+    //CPLDebug("S3", "%s", pszXML);
+    osNextMarker = "";
+    CPLXMLNode* psTree = CPLParseXMLString(pszXML);
+    if( psTree == NULL )
+        return;
+    CPLXMLNode* psListBucketResult = CPLGetXMLNode(psTree, "=ListBucketResult");
+    if( psListBucketResult )
+    {
+        CPLString osPrefix = CPLGetXMLValue(psListBucketResult, "Prefix", "");
+        CPLXMLNode* psIter = psListBucketResult->psChild;
+        for( ; psIter != NULL; psIter = psIter->psNext )
+        {
+            if( psIter->eType != CXT_Element )
+                continue;
+            if( strcmp(psIter->pszValue, "Contents") == 0 )
+            {
+                const char* pszKey = CPLGetXMLValue(psIter, "Key", NULL);
+                if( pszKey )
+                {
+                    CPLString osCachedFilename = osBaseURL + pszKey;
+
+                    CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
+                    cachedFileProp->eExists = EXIST_YES;
+                    cachedFileProp->bHastComputedFileSize = TRUE;
+                    cachedFileProp->fileSize = (GUIntBig)CPLAtoGIntBig(CPLGetXMLValue(psIter, "Size", "0"));
+                    cachedFileProp->bIsDirectory = FALSE;
+                    cachedFileProp->mTime = 0;
+
+                    int nYear, nMonth, nDay, nHour, nMin, nSec;
+                    if( sscanf( CPLGetXMLValue(psIter, "LastModified", ""),
+                                "%04d-%02d-%02dT%02d:%02d:%02d",
+                                &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec ) == 6 )
+                    {
+                        struct tm brokendowntime;
+                        brokendowntime.tm_year = nYear - 1900;
+                        brokendowntime.tm_mon = nMonth - 1;
+                        brokendowntime.tm_mday = nDay;
+                        brokendowntime.tm_hour = nHour;
+                        brokendowntime.tm_min = nMin;
+                        brokendowntime.tm_sec = nSec;
+                        cachedFileProp->mTime = CPLYMDHMSToUnixTime(&brokendowntime);
+                    }
+
+                    osFileList.AddString(pszKey + osPrefix.size());
+                }
+            }
+            else if( strcmp(psIter->pszValue, "CommonPrefixes") == 0 )
+            {
+                const char* pszKey = CPLGetXMLValue(psIter, "Prefix", NULL);
+                if( pszKey && strncmp(pszKey, osPrefix, osPrefix.size()) == 0  )
+                {
+                    CPLString osKey = pszKey;
+                    if( osKey.size() && osKey[osKey.size()-1] == '/' )
+                        osKey.resize(osKey.size()-1);
+                    CPLString osCachedFilename = osBaseURL + osKey;
+
+                    CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
+                    cachedFileProp->eExists = EXIST_YES;
+                    cachedFileProp->bIsDirectory = TRUE;
+                    cachedFileProp->mTime = 0;
+
+                    osFileList.AddString(osKey.c_str() + osPrefix.size());
+                }
+            }
+        }
+        osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
+    }
+    CPLDestroyXMLNode(psTree);
+}
 
 /************************************************************************/
 /*                           GetFileList()                              */
@@ -2866,9 +2960,143 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname, int* pbGotFileList )
 {
     // TODO: to implement
     if (ENABLE_DEBUG)
-        CPLDebug("S3", "GetFileList(%s) - unimplemented" , pszDirname);
+        CPLDebug("S3", "GetFileList(%s)" , pszDirname);
     *pbGotFileList = FALSE;
-    return NULL;
+    
+    pszDirname += GetFSPrefix().size();
+
+    VSIS3HandleHelper* poS3HandleHelper =
+            VSIS3HandleHelper::BuildFromURI(pszDirname, GetFSPrefix().c_str(), true);
+    if( poS3HandleHelper == NULL )
+    {
+        return NULL;
+    }
+    UpdateHandleFromMap(poS3HandleHelper);
+
+    CPLString osObjectKey = poS3HandleHelper->GetObjectKey();
+    poS3HandleHelper->SetObjectKey("");
+
+    WriteFuncStruct sWriteFuncData;
+
+    CPLStringList osFileList;
+    CPLString osNextMarker;
+    
+    CPLString osMaxKeys = CPLGetConfigOption("AWS_MAX_KEYS", "");
+    
+    while(TRUE)
+    {
+        poS3HandleHelper->ResetQueryParameters();
+        CPLString osBaseURL(poS3HandleHelper->GetURL());
+
+    #if LIBCURL_VERSION_NUM < 0x070B00
+        /* Curl 7.10.X doesn't manage to unset the CURLOPT_RANGE that would have been */
+        /* previously set, so we have to reinit the connection handle */
+        GetCurlHandleFor("");
+    #endif
+
+        CURL* hCurlHandle = GetCurlHandleFor(osBaseURL);
+
+        poS3HandleHelper->AddQueryParameter("delimiter", "/");
+        if( osNextMarker.size() )
+            poS3HandleHelper->AddQueryParameter("marker", osNextMarker);
+        if( osMaxKeys.size() )
+             poS3HandleHelper->AddQueryParameter("max-keys", osMaxKeys);
+        if( osObjectKey.size() )
+             poS3HandleHelper->AddQueryParameter("prefix", osObjectKey + "/");
+
+        VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL());
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
+
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+
+        char szCurlErrBuf[CURL_ERROR_SIZE+1];
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
+        struct curl_slist* headers = poS3HandleHelper->GetCurlHeaders("GET");
+        if( headers != NULL )
+            curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+        curl_easy_perform(hCurlHandle);
+
+        if( headers != NULL )
+            curl_slist_free_all(headers);
+
+        if (sWriteFuncData.pBuffer == NULL)
+        {
+            delete poS3HandleHelper;
+            return NULL;
+        }
+
+        long response_code = 0;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+        if( response_code != 200 )
+        {
+            if( poS3HandleHelper->CanRestartOnError( (const char*)sWriteFuncData.pBuffer) )
+            {
+                UpdateMapFromHandle(poS3HandleHelper);
+                CPLFree(sWriteFuncData.pBuffer);
+            }
+            else
+            {
+                CPLDebug("S3", "%s", (const char*)sWriteFuncData.pBuffer);
+                CPLFree(sWriteFuncData.pBuffer);
+                delete poS3HandleHelper;
+                return NULL;
+            }
+        }
+        else
+        {
+            *pbGotFileList = TRUE;
+            AnalyseS3FileList( osBaseURL,
+                               (const char*)sWriteFuncData.pBuffer,
+                               osFileList,
+                               osNextMarker );
+
+            CPLFree(sWriteFuncData.pBuffer);
+
+            if( osNextMarker.size() == 0 )
+            {
+                delete poS3HandleHelper;
+                return osFileList.StealList();
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                         UpdateMapFromHandle()                        */
+/************************************************************************/
+
+void VSIS3FSHandler::UpdateMapFromHandle(VSIS3HandleHelper * poS3HandleHelper)
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    oMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
+        VSIS3UpdateParams ( poS3HandleHelper->GetAWSRegion(),
+                      poS3HandleHelper->GetAWSS3Endpoint(),
+                      poS3HandleHelper->GetVirtualHosting() );
+}
+
+/************************************************************************/
+/*                         UpdateHandleFromMap()                        */
+/************************************************************************/
+
+void VSIS3FSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper)
+{
+    CPLMutexHolder oHolder( &hMutex );
+    
+    std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
+        oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
+    if( oIter != oMapBucketsToS3Params.end() )
+    {
+        poS3HandleHelper->SetAWSRegion( oIter->second.osAWSRegion );
+        poS3HandleHelper->SetAWSS3Endpoint( oIter->second.osAWSS3Endpoint );
+        poS3HandleHelper->SetVirtualHosting( oIter->second.bUseVirtualHosting );
+    }
 }
 
 /************************************************************************/
@@ -2907,6 +3135,8 @@ bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg)
 {
     if( poS3HandleHelper->CanRestartOnError(pszErrorMsg) )
     {
+        ((VSIS3FSHandler*) poFS)->UpdateMapFromHandle(poS3HandleHelper);
+
         SetURL(poS3HandleHelper->GetURL());
         return true;
     }

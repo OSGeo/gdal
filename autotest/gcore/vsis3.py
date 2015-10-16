@@ -265,6 +265,32 @@ def vsis3_2():
     return 'success'
 
 ###############################################################################
+# Test ReadDir() with a fake AWS server
+
+def vsis3_3():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin', 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFCloseL(f)
+    dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
+    if dir_contents != ['resource3.bin', 'resource4.bin', 'subdir']:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
+        return 'fail'
+    if gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin').size != 123456:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin').mtime != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def vsis3_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -348,6 +374,7 @@ gdaltest_list = [ vsis3_init,
                   vsis3_1,
                   vsis3_start_webserver,
                   vsis3_2,
+                  vsis3_3,
                   vsis3_stop_webserver,
                   vsis3_cleanup ]
 gdaltest_list_extra = [ vsis3_extra_1, vsis3_cleanup ]

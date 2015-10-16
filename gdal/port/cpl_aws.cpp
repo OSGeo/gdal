@@ -32,8 +32,11 @@
 #include "cpl_sha256.h"
 #include "cpl_time.h"
 #include "cpl_minixml.h"
+#include <algorithm>
 
 CPL_CVSID("$Id$");
+
+//#define VERBOSE_DEBUG 1
 
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
@@ -77,6 +80,36 @@ CPLString CPLGetLowerCaseHexSHA256( const void *pabyData, size_t nBytes )
 CPLString CPLGetLowerCaseHexSHA256( const CPLString& osStr )
 {
     return CPLGetLowerCaseHexSHA256(osStr.c_str(), osStr.size());
+}
+
+/************************************************************************/
+/*                       CPLAWSURLEncode()                              */
+/************************************************************************/
+
+CPLString CPLAWSURLEncode(const CPLString& osURL, bool bEncodeSlash)
+{
+    CPLString osRet;
+    for( size_t i = 0; i < osURL.size(); i++ )
+    {
+        char ch = osURL[i];
+        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+            (ch >= '0' && ch <= '9') || ch == '_' || ch == '-' || ch == '~' || ch == '.')
+        {
+            osRet += ch;
+        }
+        else if (ch == '/')
+        {
+            if( bEncodeSlash )
+                osRet += "%2F";
+            else
+                osRet += ch;
+        }
+        else
+        {
+            osRet += CPLSPrintf("%02X", ch);
+        }
+    }
+    return osRet;
 }
 
 /************************************************************************/
@@ -298,10 +331,58 @@ CPLString VSIS3HandleHelper::BuildURL(const CPLString& osAWSS3Endpoint,
 }
 
 /************************************************************************/
+/*                           RebuildURL()                               */
+/************************************************************************/
+
+void VSIS3HandleHelper::RebuildURL()
+{
+    osURL = BuildURL(osAWSS3Endpoint, osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting);
+    std::map<CPLString, CPLString>::iterator oIter = oMapQueryParameters.begin();
+    for( ; oIter != oMapQueryParameters.end(); ++oIter )
+    {
+        if( oIter == oMapQueryParameters.begin() )
+            osURL += "?";
+        else
+            osURL += "&";
+        osURL += oIter->first;
+        osURL += "=";
+        osURL += oIter->second;
+    }
+}
+
+/************************************************************************/
+/*                        GetBucketAndObjectKey()                       */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetBucketAndObjectKey(const char* pszURI, const char* pszFSPrefix,
+                                              bool bAllowNoObject,
+                                              CPLString &osBucket, CPLString &osObjectKey)
+{
+    osBucket = pszURI;
+    size_t nPos = osBucket.find('/');
+    if( nPos == std::string::npos )
+    {
+        if( bAllowNoObject )
+        {
+            osObjectKey = "";
+            return true;
+        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Filename should be of the form %sbucket/key", pszFSPrefix);
+        return false;
+    }
+    osBucket.resize(nPos);
+    osObjectKey = pszURI + nPos + 1;
+    return true;
+}
+
+/************************************************************************/
 /*                          BuildFromURI()                              */
 /************************************************************************/
 
-VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI, const char* pszFSPrefix)
+VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI,
+                                                   const char* pszFSPrefix,
+                                                   bool bAllowNoObject)
 {
     CPLString osSecretAccessKey = CPLGetConfigOption("AWS_SECRET_ACCESS_KEY", "");
     if( osSecretAccessKey.size() == 0 )
@@ -319,21 +400,36 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI, const cha
     }
     CPLString osAWSS3Endpoint = CPLGetConfigOption("AWS_S3_ENDPOINT", "s3.amazonaws.com");
     CPLString osAWSRegion = CPLGetConfigOption("AWS_REGION", "us-east-1");
-    CPLString osBucket(pszURI);
-    size_t nPos = osBucket.find('/');
-    if( nPos == std::string::npos )
+    CPLString osBucket, osObjectKey;
+    if( !GetBucketAndObjectKey(pszURI, pszFSPrefix, bAllowNoObject, osBucket, osObjectKey) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Filename should be of the form %sbucket/key", pszFSPrefix);
         return NULL;
     }
-    osBucket.resize(nPos);
-    CPLString osObjectKey(pszURI + nPos + 1);
     int bUseHTTPS = (bool)CSLTestBoolean(CPLGetConfigOption("AWS_HTTPS", "YES"));
     int bUseVirtualHosting = (bool)CSLTestBoolean(CPLGetConfigOption("AWS_VIRTUAL_HOSTING", "YES"));
     return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId,
                                     osAWSS3Endpoint, osAWSRegion,
                                     osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting);
+}
+
+/************************************************************************/
+/*                       ResetQueryParameters()                         */
+/************************************************************************/
+
+void VSIS3HandleHelper::ResetQueryParameters()
+{
+    oMapQueryParameters.clear();
+    RebuildURL();
+}
+
+/************************************************************************/
+/*                         AddQueryParameter()                          */
+/************************************************************************/
+
+void VSIS3HandleHelper::AddQueryParameter(const CPLString& osKey, const CPLString& osValue)
+{
+    oMapQueryParameters[osKey] = osValue;
+    RebuildURL();
 }
 
 /************************************************************************/
@@ -345,7 +441,20 @@ struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb)
     CPLString osXAMZDate = CPLGetConfigOption("AWS_TIMESTAMP", "");
     if( osXAMZDate.size() == 0 )
         osXAMZDate = CPLGetAWS_SIGN4_Timestamp();
+
     CPLString osXAMZContentSHA256 = CPLGetLowerCaseHexSHA256("");
+
+    CPLString osCanonicalQueryString;
+    std::map<CPLString, CPLString>::iterator oIter = oMapQueryParameters.begin();
+    for( ; oIter != oMapQueryParameters.end(); ++oIter )
+    {
+        if( osCanonicalQueryString.size() )
+            osCanonicalQueryString += "&";
+        osCanonicalQueryString += oIter->first;
+        osCanonicalQueryString += "=";
+        osCanonicalQueryString += CPLAWSURLEncode(oIter->second);
+    }
+
     CPLString osAuthorization = CPLGetAWS_SIGN4_Authorization(
             osSecretAccessKey,
             osAccessKeyId,
@@ -354,9 +463,10 @@ struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb)
             osVerb,
             (bUseVirtualHosting) ? osBucket + "." + osAWSS3Endpoint : osAWSS3Endpoint,
             (bUseVirtualHosting) ? ("/" + osObjectKey).c_str() : ("/" + osBucket + "/" + osObjectKey).c_str(),
-            "",
+            osCanonicalQueryString,
             osXAMZContentSHA256,
             osXAMZDate);
+
     struct curl_slist *headers=NULL; 
     headers = curl_slist_append(headers,
                                 CPLSPrintf("x-amz-date: %s", osXAMZDate.c_str()));
@@ -373,6 +483,10 @@ struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb)
 
 bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
 {
+#ifdef VERBOSE_DEBUG
+    CPLDebug("S3", "%s", pszErrorMsg);
+#endif
+
     if( strncmp(pszErrorMsg, "<?xml", 5) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
@@ -403,7 +517,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
             CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
             return false;
         }
-        osAWSRegion = pszRegion;
+        SetAWSRegion(pszRegion);
         CPLDebug("S3", "Switching to region %s", osAWSRegion.c_str());
         CPLDestroyXMLNode(psTree);
         return true;
@@ -420,9 +534,15 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
             CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
             return false;
         }
-        osAWSS3Endpoint = (bUseVirtualHosting) ? pszEndpoint + osBucket.size() + 1 : pszEndpoint;
+        if( !bUseVirtualHosting &&
+            strncmp(pszEndpoint, osBucket.c_str(), osBucket.size()) == 0 &&
+            pszEndpoint[osBucket.size()] == '.' )
+        {
+            bUseVirtualHosting = true;
+            CPLDebug("S3", "Switching to virtual hosting");
+        }
+        SetAWSS3Endpoint((bUseVirtualHosting) ? pszEndpoint + osBucket.size() + 1 : pszEndpoint);
         CPLDebug("S3", "Switching to endpoint %s", osAWSS3Endpoint.c_str());
-        osURL = BuildURL(osAWSS3Endpoint, osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting);
         CPLDestroyXMLNode(psTree);
         return true;
     }
@@ -439,6 +559,44 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
     CPLDestroyXMLNode(psTree);
 
     return false;
+}
+
+/************************************************************************/
+/*                          SetAWSS3Endpoint()                          */
+/************************************************************************/
+
+void VSIS3HandleHelper::SetAWSS3Endpoint(const CPLString &osStr)
+{
+    osAWSS3Endpoint = osStr;
+    RebuildURL();
+}
+
+/************************************************************************/
+/*                           SetAWSRegion()                             */
+/************************************************************************/
+
+void VSIS3HandleHelper::SetAWSRegion(const CPLString &osStr)
+{
+    osAWSRegion = osStr;
+}
+/************************************************************************/
+/*                         SetVirtualHosting()                          */
+/************************************************************************/
+
+void VSIS3HandleHelper::SetVirtualHosting(bool b)
+{
+    bUseVirtualHosting = b;
+    RebuildURL();
+}
+
+/************************************************************************/
+/*                           SetObjectKey()                             */
+/************************************************************************/
+
+void VSIS3HandleHelper::SetObjectKey(const CPLString &osStr)
+{
+    osObjectKey = osStr;
+    RebuildURL();
 }
 
 #endif

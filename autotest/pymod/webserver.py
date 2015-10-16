@@ -170,6 +170,14 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 return
 
             if self.path == '/s3_fake_bucket/non_xml_error':
+
+                # /vsis3_streaming/ should have remembered the change of region and endpoint
+                if self.headers['Authorization'].find('us-west-2') < 0 or \
+                   not self.headers['Host'].startswith('localhost'):
+                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                    self.send_response(403)
+
+                self.protocol_version = 'HTTP/1.1'
                 self.send_response(400)
                 response = 'bla'
                 response = '%x\r\n%s' % (len(response), response)
@@ -180,6 +188,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 return
 
             if self.path == '/s3_fake_bucket/invalid_xml_error':
+                self.protocol_version = 'HTTP/1.1'
                 self.send_response(400)
                 response = '<?xml version="1.0" encoding="UTF-8"?><oops>'
                 response = '%x\r\n%s' % (len(response), response)
@@ -190,6 +199,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 return
 
             if self.path == '/s3_fake_bucket/no_code_in_error':
+                self.protocol_version = 'HTTP/1.1'
                 self.send_response(400)
                 response = '<?xml version="1.0" encoding="UTF-8"?><Error/>'
                 response = '%x\r\n%s' % (len(response), response)
@@ -200,6 +210,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 return
 
             if self.path == '/s3_fake_bucket/no_region_in_AuthorizationHeaderMalformed_error':
+                self.protocol_version = 'HTTP/1.1'
                 self.send_response(400)
                 response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>AuthorizationHeaderMalformed</Code></Error>'
                 response = '%x\r\n%s' % (len(response), response)
@@ -210,6 +221,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 return
 
             if self.path == '/s3_fake_bucket/no_endpoint_in_PermanentRedirect_error':
+                self.protocol_version = 'HTTP/1.1'
                 self.send_response(400)
                 response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>PermanentRedirect</Code></Error>'
                 response = '%x\r\n%s' % (len(response), response)
@@ -220,6 +232,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 return
 
             if self.path == '/s3_fake_bucket/no_message_in_error':
+                self.protocol_version = 'HTTP/1.1'
                 self.send_response(400)
                 response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>bla</Code></Error>'
                 response = '%x\r\n%s' % (len(response), response)
@@ -228,6 +241,77 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(response.encode('ascii'))
                 return
+
+            if self.path == '/s3_fake_bucket2/?delimiter=/&prefix=a_dir/':
+                self.protocol_version = 'HTTP/1.1'
+                if self.headers['Authorization'].find('us-east-1') >= 0:
+                    self.send_response(400)
+                    response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>AuthorizationHeaderMalformed</Code><Region>us-west-2</Region></Error>'
+                    response = '%x\r\n%s' % (len(response), response)
+                    self.send_header('Content-type', 'application/xml')
+                    self.send_header('Transfer-Encoding', 'chunked')
+                    self.end_headers()
+                    self.wfile.write(response.encode('ascii'))
+                elif self.headers['Authorization'].find('us-west-2') >= 0:
+                    if self.headers['Host'].startswith('127.0.0.1'):
+                        self.send_response(301)
+                        response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>PermanentRedirect</Code><Endpoint>localhost:%d</Endpoint></Error>' % self.server.port
+                        response = '%x\r\n%s' % (len(response), response)
+                        self.send_header('Content-type', 'application/xml')
+                        self.send_header('Transfer-Encoding', 'chunked')
+                        self.end_headers()
+                        self.wfile.write(response.encode('ascii'))
+                    elif self.headers['Host'].startswith('localhost'):
+                        self.send_response(200)
+                        self.send_header('Content-type', 'application/xml')
+                        response = """<?xml version="1.0" encoding="UTF-8"?>
+                            <ListBucketResult>
+                                <Prefix>a_dir/</Prefix>
+                                <NextMarker>bla</NextMarker>
+                                <Contents>
+                                    <Key>a_dir/resource3.bin</Key>
+                                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                                    <Size>123456</Size>
+                                </Contents>
+                            </ListBucketResult>
+                        """
+                        self.send_header('Content-Length', len(response))
+                        self.end_headers()
+                        self.wfile.write(response.encode('ascii'))
+                    else:
+                        sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                        self.send_response(403)
+                else:
+                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                    self.send_response(403)
+
+            if self.path == '/s3_fake_bucket2/?delimiter=/&marker=bla&prefix=a_dir/':
+
+                # /vsis3/ should have remembered the change of region and endpoint
+                if self.headers['Authorization'].find('us-west-2') < 0 or \
+                   not self.headers['Host'].startswith('localhost'):
+                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                    self.send_response(403)
+
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'application/xml')
+                response = """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix>a_dir/</Prefix>
+                        <Contents>
+                            <Key>a_dir/resource4.bin</Key>
+                            <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                            <Size>456789</Size>
+                        </Contents>
+                        <CommonPrefixes>
+                            <Prefix>a_dir/subdir/</Prefix>
+                        </CommonPrefixes>
+                    </ListBucketResult>
+                """
+                self.send_header('Content-Length', len(response))
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
 
             if self.path == '/index.html':
                 self.send_response(200)
