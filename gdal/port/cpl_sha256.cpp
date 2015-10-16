@@ -125,14 +125,18 @@ void CPL_SHA256Init(CPL_SHA256Context * sc)
         sc->bufferLength = 0L;
 }
 
-static void burnStack(int size)
+static GUInt32 burnStack(int size)
 {
-        char buf[128];
+        GByte buf[128];
+        GUInt32 ret = 0;
 
-        memset(buf, 0, sizeof(buf));
+        memset(buf, (GByte)(size & 0xff), sizeof(buf));
+        for( size_t i = 0; i < sizeof(buf); i++ )
+            ret += ret * buf[i];
         size -= sizeof(buf);
         if (size > 0)
-                burnStack(size);
+                ret += burnStack(size);
+        return ret;
 }
 
 static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
@@ -384,8 +388,15 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
         }
 
         if (needBurn)
-                burnStack(sizeof(GUInt32[74]) + sizeof(GUInt32 *[6]) +
-                          sizeof(int));
+        {
+                // Clean stack state of CPL_SHA256Guts()
+                // We add dummy side effects to avoid burnStack() to be optimized away (#6157)
+                static GUInt32 CPL_SHA256_unused = 0;
+                CPL_SHA256_unused += burnStack(sizeof(GUInt32[74]) + sizeof(GUInt32 *[6]) +
+                                    sizeof(int) + (len%2) ? sizeof(int) : 0);
+                if( len == 0xDEADBEEFU && CPL_SHA256_unused == 0xDEADBEEF )
+                    fprintf(stderr, "%s", "");
+        }
 }
 
 void CPL_SHA256Final(CPL_SHA256Context * sc, GByte hash[CPL_SHA256_HASH_SIZE])
