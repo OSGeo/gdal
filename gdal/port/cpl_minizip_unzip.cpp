@@ -993,10 +993,10 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
                 /* Disk Start Number */
                 if( file_info.disk_num_start == 0xFFFF )
                 {
-                    uLong uL;
-                    if (unzlocal_getLong(&s->z_filefunc, s->filestream,&uL) != UNZ_OK)
+                    uLong uLstart;
+                    if (unzlocal_getLong(&s->z_filefunc, s->filestream,&uLstart) != UNZ_OK)
                         err=UNZ_ERRNO;
-                    file_info.disk_num_start = uL;
+                    file_info.disk_num_start = uLstart;
                 }
             }
             /* Info-ZIP Unicode Path Extra Field (0x7075) */
