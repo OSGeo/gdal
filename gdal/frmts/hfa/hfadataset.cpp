@@ -4982,6 +4982,25 @@ CPLErr HFADataset::ReadProjection()
         CPLFree( pszPE_COORDSYS );
 
         oSRS.morphFromESRI();
+
+        // Copy TOWGS84 clause from HFA SRS to PE SRS
+        if( pszProjection != NULL )
+        {
+            OGRSpatialReference oSRS_HFA(pszProjection);
+            double adfCoeffs[7];
+            if( oSRS_HFA.GetTOWGS84(adfCoeffs, 7) == OGRERR_NONE &&
+                oSRS.GetAttrNode("TOWGS84") == NULL )
+            {
+                oSRS.SetTOWGS84(adfCoeffs[0],
+                                adfCoeffs[1],
+                                adfCoeffs[2],
+                                adfCoeffs[3],
+                                adfCoeffs[4],
+                                adfCoeffs[5],
+                                adfCoeffs[6]);
+            }
+        }
+
         oSRS.Fixup();
 
         CPLFree( pszProjection );
