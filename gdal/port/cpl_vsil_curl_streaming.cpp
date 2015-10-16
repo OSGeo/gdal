@@ -162,11 +162,11 @@ class VSICurlStreamingHandle;
 
 class VSICurlStreamingFSHandler : public VSIFilesystemHandler
 {
-    CPLMutex           *hMutex;
-
     std::map<CPLString, CachedFileProp*>   cacheFileSize;
 
 protected:
+    CPLMutex           *hMutex;
+
     virtual CPLString GetFSPrefix() { return "/vsicurl_streaming/"; }
     virtual VSICurlStreamingHandle* CreateFileHandle(const char* pszURL);
 
@@ -190,8 +190,10 @@ public:
 
 class VSICurlStreamingHandle : public VSIVirtualHandle
 {
-  private:
+  protected:
     VSICurlStreamingFSHandler* poFS;
+
+  private:
 
     char*           pszURL;
 
@@ -1575,13 +1577,50 @@ void VSIInstallCurlStreamingFileHandler(void)
 
 class VSIS3StreamingFSHandler: public VSICurlStreamingFSHandler
 {
+    std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
+
 protected:
     virtual CPLString GetFSPrefix() { return "/vsis3_streaming/"; }
     virtual VSICurlStreamingHandle* CreateFileHandle(const char* pszURL);
 
 public:
         VSIS3StreamingFSHandler() {}
+
+        void UpdateMapFromHandle(VSIS3HandleHelper * poS3HandleHelper);
+        void UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper);
 };
+
+/************************************************************************/
+/*                         UpdateMapFromHandle()                        */
+/************************************************************************/
+
+void VSIS3StreamingFSHandler::UpdateMapFromHandle(VSIS3HandleHelper * poS3HandleHelper)
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    oMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
+        VSIS3UpdateParams ( poS3HandleHelper->GetAWSRegion(),
+                      poS3HandleHelper->GetAWSS3Endpoint(),
+                      poS3HandleHelper->GetVirtualHosting() );
+}
+
+/************************************************************************/
+/*                         UpdateHandleFromMap()                        */
+/************************************************************************/
+
+void VSIS3StreamingFSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper)
+{
+    CPLMutexHolder oHolder( &hMutex );
+    
+    std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
+        oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
+    if( oIter != oMapBucketsToS3Params.end() )
+    {
+        poS3HandleHelper->SetAWSRegion( oIter->second.osAWSRegion );
+        poS3HandleHelper->SetAWSS3Endpoint( oIter->second.osAWSS3Endpoint );
+        poS3HandleHelper->SetVirtualHosting( oIter->second.bUseVirtualHosting );
+    }
+}
 
 /************************************************************************/
 /*                            VSIS3StreamingHandle                      */
@@ -1610,9 +1649,12 @@ class VSIS3StreamingHandle: public VSICurlStreamingHandle
 VSICurlStreamingHandle* VSIS3StreamingFSHandler::CreateFileHandle(const char* pszURL)
 {
     VSIS3HandleHelper* poS3HandleHelper =
-            VSIS3HandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
+            VSIS3HandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str(), false);
     if( poS3HandleHelper )
+    {
+        UpdateHandleFromMap(poS3HandleHelper);
         return new VSIS3StreamingHandle(this, poS3HandleHelper);
+    }
     return NULL;
 }
 
@@ -1653,6 +1695,8 @@ bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg)
 {
     if( poS3HandleHelper->CanRestartOnError(pszErrorMsg) )
     {
+        ((VSIS3StreamingFSHandler*) poFS)->UpdateMapFromHandle(poS3HandleHelper);
+
         SetURL(poS3HandleHelper->GetURL());
         return true;
     }
