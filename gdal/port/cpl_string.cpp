@@ -2172,7 +2172,6 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
             }
             else if( EQUALN(pszInput+iIn,"&#",2) )
             {
-                char ch;
                 wchar_t anVal[2] = {0 , 0};
                 iIn += 2;
 

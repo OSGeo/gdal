@@ -208,10 +208,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
                 pszEOL = strchr(pszContentType, '\n');
             if( pszEOL )
             {
-                int nLength = pszEOL - pszContentType;
-                psResult->pszContentType = (char*)CPLMalloc(nLength + 1);
-                memcpy(psResult->pszContentType, pszContentType, nLength);
-                psResult->pszContentType[nLength] = 0;
+                size_t nContentLength = pszEOL - pszContentType;
+                psResult->pszContentType = (char*)CPLMalloc(nContentLength + 1);
+                memcpy(psResult->pszContentType, pszContentType, nContentLength);
+                psResult->pszContentType[nContentLength] = 0;
             }
         }
 
