@@ -169,6 +169,66 @@ class GDAL_Handler(BaseHTTPRequestHandler):
 
                 return
 
+            if self.path == '/s3_fake_bucket/non_xml_error':
+                self.send_response(400)
+                response = 'bla'
+                response = '%x\r\n%s' % (len(response), response)
+                self.send_header('Content-type', 'application/xml')
+                self.send_header('Transfer-Encoding', 'chunked')
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            if self.path == '/s3_fake_bucket/invalid_xml_error':
+                self.send_response(400)
+                response = '<?xml version="1.0" encoding="UTF-8"?><oops>'
+                response = '%x\r\n%s' % (len(response), response)
+                self.send_header('Content-type', 'application/xml')
+                self.send_header('Transfer-Encoding', 'chunked')
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            if self.path == '/s3_fake_bucket/no_code_in_error':
+                self.send_response(400)
+                response = '<?xml version="1.0" encoding="UTF-8"?><Error/>'
+                response = '%x\r\n%s' % (len(response), response)
+                self.send_header('Content-type', 'application/xml')
+                self.send_header('Transfer-Encoding', 'chunked')
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            if self.path == '/s3_fake_bucket/no_region_in_AuthorizationHeaderMalformed_error':
+                self.send_response(400)
+                response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>AuthorizationHeaderMalformed</Code></Error>'
+                response = '%x\r\n%s' % (len(response), response)
+                self.send_header('Content-type', 'application/xml')
+                self.send_header('Transfer-Encoding', 'chunked')
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            if self.path == '/s3_fake_bucket/no_endpoint_in_PermanentRedirect_error':
+                self.send_response(400)
+                response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>PermanentRedirect</Code></Error>'
+                response = '%x\r\n%s' % (len(response), response)
+                self.send_header('Content-type', 'application/xml')
+                self.send_header('Transfer-Encoding', 'chunked')
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            if self.path == '/s3_fake_bucket/no_message_in_error':
+                self.send_response(400)
+                response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>bla</Code></Error>'
+                response = '%x\r\n%s' % (len(response), response)
+                self.send_header('Content-type', 'application/xml')
+                self.send_header('Transfer-Encoding', 'chunked')
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
             if self.path == '/index.html':
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
