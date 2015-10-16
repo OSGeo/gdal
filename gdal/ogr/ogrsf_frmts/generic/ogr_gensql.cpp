@@ -2055,11 +2055,20 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
             poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
                 psKeyDef->field_index );
         
-        if( (pasFirstTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
-             && pasFirstTuple[iKey].Set.nMarker2 == OGRUnsetMarker)
-            || (pasSecondTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
-                && pasSecondTuple[iKey].Set.nMarker2 == OGRUnsetMarker) )
-            nResult = 0;
+        if( pasFirstTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
+             && pasFirstTuple[iKey].Set.nMarker2 == OGRUnsetMarker )
+        {
+            if( pasSecondTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
+                && pasSecondTuple[iKey].Set.nMarker2 == OGRUnsetMarker )
+                nResult = 0;
+            else
+                nResult = -1;
+        }
+        else if ( pasSecondTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
+                && pasSecondTuple[iKey].Set.nMarker2 == OGRUnsetMarker )
+        {
+            nResult = 1;
+        }
         else if ( poFDefn == NULL )
         {
             switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
