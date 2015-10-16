@@ -217,9 +217,9 @@ public:
 
 VSIGZipHandle* VSIGZipHandle::Duplicate()
 {
-    CPLAssert (offset == 0);
+    CPLAssert (m_offset == 0);
     CPLAssert (compressed_size != 0);
-    CPLAssert (pszBaseFileName != NULL);
+    CPLAssert (m_pszBaseFileName != NULL);
 
     VSIFilesystemHandler *poFSHandler = 
         VSIFileManager::GetHandler( m_pszBaseFileName );
