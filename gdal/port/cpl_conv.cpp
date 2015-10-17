@@ -1473,20 +1473,9 @@ void CPLVerifyConfiguration()
 /* -------------------------------------------------------------------- */
 /*      Verify data types.                                              */
 /* -------------------------------------------------------------------- */
-#if __cplusplus >= 201103L
-    static_assert(sizeof(GInt32) == 4, "GInt32 must be 4 bytes");
-    static_assert(sizeof(GInt16) == 2, "GInt16 must be 2 bytes");
-    static_assert(sizeof(GByte) == 1, "GInt32 must be 1 byte");
-#else
-    if( sizeof(GInt32) != 4 )
-        CPLError( CE_Fatal, CPLE_AppDefined,
-                  "sizeof(GInt32) == %d ... yow!\n",
-                  (int) sizeof(GInt32) );
-
-    CPLAssert( sizeof(GInt32) == 4 );
-    CPLAssert( sizeof(GInt16) == 2 );
-    CPLAssert( sizeof(GByte) == 1 );
-#endif
+    CPL_STATIC_ASSERT( sizeof(GInt32) == 4 );
+    CPL_STATIC_ASSERT( sizeof(GInt16) == 2 );
+    CPL_STATIC_ASSERT( sizeof(GByte) == 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Verify byte order                                               */
