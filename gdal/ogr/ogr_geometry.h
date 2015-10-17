@@ -52,7 +52,7 @@ class OGRRawPoint
                   x = y = 0.0;
           }
 
-          OGRRawPoint(double x, double y) : x(x), y(y) {}
+          OGRRawPoint(double xIn, double yIn) : x(xIn), y(yIn) {}
     double      x;
     double      y;
 };
