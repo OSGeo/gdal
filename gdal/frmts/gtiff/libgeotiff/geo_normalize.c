@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2595 2014-12-27 22:59:32Z rouault $
+ * $Id: geo_normalize.c 2677 2015-10-17 10:27:53Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -34,6 +34,10 @@
 
 #ifndef KvUserDefined
 #  define KvUserDefined 32767
+#endif
+
+#ifndef M_PI
+#  define M_PI 3.14159265358979323846
 #endif
 
 /* EPSG Codes for projection parameters.  Unfortunately, these bear no
@@ -580,8 +584,6 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
 
         if( *pdfSemiMinor == 0.0 )
         {
-            double	dfInvFlattening;
-            
             dfInvFlattening = 
                 GTIFAtof(CSVGetField( CSVFilename("ellipsoid.csv"),
                                   "ELLIPSOID_CODE", szSearchKey, CC_Integer,

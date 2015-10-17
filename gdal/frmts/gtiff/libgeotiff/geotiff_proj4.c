@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geotiff_proj4.c 2594 2014-12-27 16:46:35Z rouault $
+ * $Id: geotiff_proj4.c 2653 2015-05-02 12:07:17Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -33,6 +33,7 @@
 #include "geotiff.h"
 #include "geo_normalize.h"
 #include "geovalues.h"
+#include "geo_tiffp.h"
 
 /************************************************************************/
 /*                          OSRProj4Tokenize()                          */
@@ -1277,6 +1278,43 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
                  psDefn->ProjParm[6] );
     }
 
+    else if( psDefn->CTProjection == CT_HotineObliqueMercatorAzimuthCenter )
+    {
+        /* special case for swiss oblique mercator : see GDAL bug 423 */
+        if( fabs(psDefn->ProjParm[2] - 90.0) < 0.0001 
+            && fabs(psDefn->ProjParm[3]-90.0) < 0.0001 )
+        {
+            sprintf( szProjection+strlen(szProjection),
+                     "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
+                     " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
+                     psDefn->ProjParm[0],
+                     psDefn->ProjParm[1],
+                     psDefn->ProjParm[4],
+                     psDefn->ProjParm[5],
+                     psDefn->ProjParm[6] );
+        }
+        else
+        {
+            sprintf( szProjection+strlen(szProjection),
+                     "+proj=omerc +lat_0=%.16g +lonc=%.16g +alpha=%.16g"
+                     " +k=%.16g +x_0=%.16g +y_0=%.16g ",
+                     psDefn->ProjParm[0],
+                     psDefn->ProjParm[1],
+                     psDefn->ProjParm[2],
+                     psDefn->ProjParm[4],
+                     psDefn->ProjParm[5],
+                     psDefn->ProjParm[6] );
+
+            /* RSO variant - http://trac.osgeo.org/proj/ticket/62 */
+            /* Note that gamma is only supported by PROJ 4.8.0 and later. */
+            /* FIXME: how to detect that gamma isn't set to default value */
+            /*if( psDefn->ProjParm[3] != 0.0 )
+            {
+                sprintf( szProjection+strlen(szProjection), "+gamma=%.16g ",
+                         psDefn->ProjParm[3] );
+            }*/
+        }
+    }
 /* ==================================================================== */
 /*      Handle ellipsoid information.                                   */
 /* ==================================================================== */
