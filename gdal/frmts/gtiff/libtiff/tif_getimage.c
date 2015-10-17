@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.90 2015-06-17 01:34:08 bfriesen Exp $ */
+/* $Id: tif_getimage.c,v 1.91 2015-10-17 10:13:14 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -1678,15 +1678,15 @@ DECLARESepPutFunc(putRGBUAseparate16bittile)
 	uint16 *wa = (uint16*) a;
 	(void) img; (void) y;
 	while (h-- > 0) {
-		uint32 r,g,b,a;
+		uint32 r2,g2,b2,a2;
 		uint8* m;
 		for (x = w; x-- > 0;) {
-			a = img->Bitdepth16To8[*wa++];
-			m = img->UaToAa+(a<<8);
-			r = m[img->Bitdepth16To8[*wr++]];
-			g = m[img->Bitdepth16To8[*wg++]];
-			b = m[img->Bitdepth16To8[*wb++]];
-			*cp++ = PACK4(r,g,b,a);
+			a2 = img->Bitdepth16To8[*wa++];
+			m = img->UaToAa+(a2<<8);
+			r2 = m[img->Bitdepth16To8[*wr++]];
+			g2 = m[img->Bitdepth16To8[*wg++]];
+			b2 = m[img->Bitdepth16To8[*wb++]];
+			*cp++ = PACK4(r2,g2,b2,a2);
 		}
 		SKEW4(wr, wg, wb, wa, fromskew);
 		cp += toskew;
