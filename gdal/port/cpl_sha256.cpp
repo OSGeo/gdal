@@ -391,10 +391,11 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
         {
                 // Clean stack state of CPL_SHA256Guts()
                 // We add dummy side effects to avoid burnStack() to be optimized away (#6157)
-                static GUInt32 CPL_SHA256_unused = 0;
-                CPL_SHA256_unused += burnStack(sizeof(GUInt32[74]) + sizeof(GUInt32 *[6]) +
-                                    sizeof(int) + (len%2) ? sizeof(int) : 0);
-                if( len == 0xDEADBEEFU && CPL_SHA256_unused == 0xDEADBEEF )
+                static GUInt32 accumulator = 0;
+                accumulator += burnStack(
+                        sizeof(GUInt32[74]) + sizeof(GUInt32 *[6]) +
+                        sizeof(int) + ((len%2) ? sizeof(int) : 0));
+                if( accumulator == 0xDEADBEEF )
                     fprintf(stderr, "%s", "");
         }
 }
@@ -439,16 +440,14 @@ void CPL_HMAC_SHA256(const void *pKey, size_t nKeyLen,
                      GByte abyDigest[CPL_SHA256_HASH_SIZE])
 {
     GByte abyPad[CPL_HMAC_SHA256_BLOCKSIZE];
+    memset(abyPad, 0, CPL_HMAC_SHA256_BLOCKSIZE);
     if( nKeyLen > CPL_HMAC_SHA256_BLOCKSIZE )
     {
         CPL_SHA256(pKey, nKeyLen, abyPad);
-        memset(abyPad + CPL_SHA256_HASH_SIZE, 0,
-               CPL_HMAC_SHA256_BLOCKSIZE - CPL_SHA256_HASH_SIZE);
     }
     else
     {
         memcpy(abyPad, pKey, nKeyLen);
-        memset(abyPad + nKeyLen, 0, CPL_HMAC_SHA256_BLOCKSIZE - nKeyLen);
     }
 
     /* Compute ipad */
