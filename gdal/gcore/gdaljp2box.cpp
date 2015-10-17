@@ -442,7 +442,7 @@ GDALJP2Box *GDALJP2Box::CreateSuperBox( const char* pszType,
     {
         GUInt32   nLBox;
 
-        nLBox = CPL_MSBWORD32(papoBoxes[iBox]->nBoxLength);
+        nLBox = CPL_MSBWORD32((GUInt32)papoBoxes[iBox]->nBoxLength);
         memcpy( pabyNext, &nLBox, 4 );
         pabyNext += 4;
 

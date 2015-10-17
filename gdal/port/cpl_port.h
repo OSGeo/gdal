@@ -421,6 +421,27 @@ CPL_C_END
 #  define CPL_IS_LSB 0
 #endif
 
+#ifdef __cplusplus
+
+extern "C++" {
+
+template <bool b> struct CPLStaticAssert {};
+template<> struct CPLStaticAssert<true>
+{
+    static void my_function() {}
+};
+
+} /* extern "C++" */
+
+#define CPL_STATIC_ASSERT(x) CPLStaticAssert<x>::my_function()
+#define CPL_STATIC_ASSERT_IF_AVAILABLE(x) CPL_STATIC_ASSERT(x)
+
+#else  /* __cplusplus */
+
+#define CPL_STATIC_ASSERT_IF_AVAILABLE(x) 
+
+#endif  /* __cplusplus */
+
 /*---------------------------------------------------------------------
  *        Little endian <==> big endian byte swap macros.
  *--------------------------------------------------------------------*/
@@ -433,6 +454,7 @@ CPL_C_END
 #define CPL_SWAP16PTR(x) \
 {                                                                 \
     GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
+    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2); \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
     _pabyDataT[0] = _pabyDataT[1];                                \
@@ -449,6 +471,7 @@ CPL_C_END
 #define CPL_SWAP32PTR(x) \
 {                                                                 \
     GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
+    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4);  \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
     _pabyDataT[0] = _pabyDataT[3];                                \
@@ -461,6 +484,7 @@ CPL_C_END
 #define CPL_SWAP64PTR(x) \
 {                                                                 \
     GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
+    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
     _pabyDataT[0] = _pabyDataT[7];                                \
@@ -500,22 +524,22 @@ CPL_C_END
 #  define CPL_LSBWORD16(x)      CPL_SWAP16(x)
 #  define CPL_MSBWORD32(x)      (x)
 #  define CPL_LSBWORD32(x)      CPL_SWAP32(x)
-#  define CPL_MSBPTR16(x)       
+#  define CPL_MSBPTR16(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2)
 #  define CPL_LSBPTR16(x)       CPL_SWAP16PTR(x)
-#  define CPL_MSBPTR32(x)       
+#  define CPL_MSBPTR32(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4)
 #  define CPL_LSBPTR32(x)       CPL_SWAP32PTR(x)
-#  define CPL_MSBPTR64(x)       
+#  define CPL_MSBPTR64(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8)
 #  define CPL_LSBPTR64(x)       CPL_SWAP64PTR(x)
 #else
 #  define CPL_LSBWORD16(x)      (x)
 #  define CPL_MSBWORD16(x)      CPL_SWAP16(x)
 #  define CPL_LSBWORD32(x)      (x)
 #  define CPL_MSBWORD32(x)      CPL_SWAP32(x)
-#  define CPL_LSBPTR16(x)       
+#  define CPL_LSBPTR16(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2)
 #  define CPL_MSBPTR16(x)       CPL_SWAP16PTR(x)
-#  define CPL_LSBPTR32(x)       
+#  define CPL_LSBPTR32(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4)
 #  define CPL_MSBPTR32(x)       CPL_SWAP32PTR(x)
-#  define CPL_LSBPTR64(x)       
+#  define CPL_LSBPTR64(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8)
 #  define CPL_MSBPTR64(x)       CPL_SWAP64PTR(x)
 #endif
 
@@ -659,16 +683,7 @@ int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WAR
 
 extern "C++" {
 template<class T> static void CPL_IGNORE_RET_VAL(T) {} 
-
-template <bool b> struct CPLStaticAssert {};
-template<> struct CPLStaticAssert<true>
-{
-    static void my_function() {}
-};
-
 } /* extern "C++" */
-
-#define CPL_STATIC_ASSERT(x) CPLStaticAssert<x>::my_function()
 
 #endif  /* __cplusplus */
 

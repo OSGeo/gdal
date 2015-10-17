@@ -1299,7 +1299,7 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
                     dfMinZ = pfData[iCol];
             }
 
-            CPL_LSBPTR32( pfData+iCol );
+            CPL_LSBPTR64( pfData+iCol );
         }
 
         if( VSIFWriteL( (void *)pfData, sizeof( double ), nXSize,
