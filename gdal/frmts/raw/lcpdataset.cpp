@@ -1193,7 +1193,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
         nLinearUnits = 2;
     }
     int bCalculateLatitude = TRUE;
-    int nLatitude;
+    int nLatitude = 0;
     if( CSLFetchNameValue( papszOptions, "LATITUDE" ) != NULL )
     {
         bCalculateLatitude = FALSE;
@@ -1423,14 +1423,14 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 
     nTemp = bHaveCrownFuels ? 21 : 20;
-    CPL_LSBINT32PTR( &nTemp );
+    CPL_LSBPTR32( &nTemp );
     VSIFWriteL( &nTemp, 4, 1, fp );
     nTemp = bHaveGroundFuels ? 21 : 20;
-    CPL_LSBINT32PTR( &nTemp );
+    CPL_LSBPTR32( &nTemp );
     VSIFWriteL( &nTemp, 4, 1, fp );
 
     nTemp = (GInt32)( dfLatitude + 0.5 );
-    CPL_LSBINT32PTR( &nTemp );
+    CPL_LSBPTR32( &nTemp );
     VSIFWriteL( &nTemp, 4, 1, fp );
     dfLongitude = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
     CPL_LSBPTR64( &dfLongitude );
@@ -1470,10 +1470,10 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
                 VSIFSeekL( fp, 3340, SEEK_SET );
             }
             nTemp = (GInt32)padfMin[i];
-            CPL_LSBINT32PTR( &nTemp );
+            CPL_LSBPTR32( &nTemp );
             VSIFWriteL( &nTemp, 4, 1, fp );
             nTemp = (GInt32)padfMax[i];
-            CPL_LSBINT32PTR( &nTemp );
+            CPL_LSBPTR32( &nTemp );
             VSIFWriteL( &nTemp, 4, 1, fp );
             if( bClassifyData )
             {
@@ -1486,7 +1486,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             else
             {
                 nTemp = -1;
-                CPL_LSBINT32PTR( &nTemp );
+                CPL_LSBPTR32( &nTemp );
                 VSIFWriteL( &nTemp, 4, 1, fp );
                 VSIFSeekL( fp, 400, SEEK_CUR );
             }
@@ -1511,10 +1511,10 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 
     /* Image size */
     nTemp = (GInt32)nXSize;
-    CPL_LSBINT32PTR( &nTemp );
+    CPL_LSBPTR32( &nTemp );
     VSIFWriteL( &nTemp, 4, 1, fp );
     nTemp = (GInt32)nYSize;
-    CPL_LSBINT32PTR( &nTemp );
+    CPL_LSBPTR32( &nTemp );
     VSIFWriteL( &nTemp, 4, 1, fp );
 
     /* X and Y boundaries */
@@ -1536,7 +1536,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     VSIFWriteL( &dfTemp, 8, 1, fp );
 
     nTemp = nLinearUnits;
-    CPL_LSBINT32PTR( &nTemp );
+    CPL_LSBPTR32( &nTemp );
     VSIFWriteL( &nTemp, 4, 1, fp );
 
     /* Resolution */
