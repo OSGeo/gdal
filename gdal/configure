@@ -4328,6 +4328,41 @@ else
   :
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wmissing-field-initializers" >&5
+$as_echo_n "checking whether C compiler accepts -Wmissing-field-initializers... " >&6; }
+if ${ax_cv_check_cflags___Wmissing_field_initializers+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Wmissing-field-initializers"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Wmissing_field_initializers=yes
+else
+  ax_cv_check_cflags___Wmissing_field_initializers=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Wmissing_field_initializers" >&5
+$as_echo "$ax_cv_check_cflags___Wmissing_field_initializers" >&6; }
+if test "x$ax_cv_check_cflags___Wmissing_field_initializers" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wmissing-field-initializers" CXX_WFLAGS="$CXX_WFLAGS -Wmissing-field-initializers"
+else
+  :
+fi
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'

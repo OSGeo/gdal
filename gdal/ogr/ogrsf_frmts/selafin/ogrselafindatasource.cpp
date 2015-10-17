@@ -456,7 +456,8 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                     return FALSE;
                 }
                 if (poHeader->panStartDate==0) snprintf(szTemp,29,"%li",i); else {
-                  struct tm sDate={0};
+                    struct tm sDate;
+                    memset(&sDate, 0, sizeof(sDate));
                     sDate.tm_year=poHeader->panStartDate[0]-1900;
                     sDate.tm_mon=poHeader->panStartDate[1]-1;
                     sDate.tm_mday=poHeader->panStartDate[2];
