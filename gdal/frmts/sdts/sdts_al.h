@@ -376,12 +376,10 @@ class SDTSAttrRecord : public SDTSFeature
 
 class SDTSAttrReader : public SDTSIndexedReader
 {
-    SDTS_IREF   *poIREF;
-
     int         bIsSecondary;
     
   public:
-                SDTSAttrReader( SDTS_IREF * );
+                SDTSAttrReader();
    virtual     ~SDTSAttrReader();
 
     int         Open( const char * );

@@ -1511,8 +1511,7 @@ CPLErr netCDFRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 /*                           netCDFDataset()                            */
 /************************************************************************/
 
-netCDFDataset::netCDFDataset() :
-    bChunking(FALSE)
+netCDFDataset::netCDFDataset()
 {
     /* basic dataset vars */
     cdfid            = -1;
@@ -1550,6 +1549,9 @@ netCDFDataset::netCDFDataset() :
     papszCreationOptions = NULL;
     nCompress = NCDF_COMPRESS_NONE;
     nZLevel = NCDF_DEFLATE_LEVEL;
+#ifdef NETCDF_HAS_NC4
+    bChunking = FALSE;
+#endif
     nCreateMode = NC_CLOBBER;
     bSignedData = TRUE;
 }

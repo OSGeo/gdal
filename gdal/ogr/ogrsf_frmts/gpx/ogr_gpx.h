@@ -64,11 +64,9 @@ class OGRGPXLayer : public OGRLayer
     int                nGPXFields;
 
     int                bWriteMode;
-    int                nFeatures;
     int                eof;
     int                nNextFID;
     VSILFILE*          fpGPX; /* Large file API */
-    const char*        pszElementToScan;
 #ifdef HAVE_EXPAT
     XML_Parser         oParser;
     XML_Parser         oSchemaParser;

@@ -56,10 +56,8 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
                           GPXGeometryType gpxGeomType,
                           OGRGPXDataSource* poDS,
                           int bWriteMode) :
-    nFeatures(0),
     eof(FALSE),
     nNextFID(0),
-    pszElementToScan(pszLayerName),
 #ifdef HAVE_EXPAT
     oSchemaParser(NULL),
 #endif
