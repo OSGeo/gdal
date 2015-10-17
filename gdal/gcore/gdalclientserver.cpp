@@ -271,7 +271,7 @@ typedef enum
     INSTR_END
 } InstrEnum;
 
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
 static const char* apszInstr[] =
 {
     "INVALID",
@@ -2035,7 +2035,9 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             break;
         }
 
-        //fprintf(stderr, "[%d] %s\n", (int)getpid(), (instr >= 0 && instr < INSTR_END) ? apszInstr[instr] : "unknown");
+#ifdef DEBUG_VERBOSE
+        fprintf(stderr, "[%d] %s\n", (int)getpid(), (instr >= 0 && instr < INSTR_END) ? apszInstr[instr] : "unknown");
+#endif
 
         GDALRasterBand* poBand = NULL;
 
@@ -6344,11 +6346,11 @@ GDALDriver* GDALGetAPIPROXYDriver()
     CPLMutexHolderD(GDALGetphDMMutex());
     if( poAPIPROXYDriver == NULL )
     {
-#ifdef DEBUG
-        CPLAssert(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
+#ifdef DEBUG_VERBOSE
+        CPL_STATIC_ASSERT(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
 #endif
         /* If asserted, change GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR */
-        CPLAssert(INSTR_END + 1 == 81);
+        CPL_STATIC_ASSERT(INSTR_END + 1 == 81);
 
         const char* pszConnPool = CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");
         if( atoi(pszConnPool) > 0 )

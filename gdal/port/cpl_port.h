@@ -659,8 +659,18 @@ int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WAR
 
 extern "C++" {
 template<class T> static void CPL_IGNORE_RET_VAL(T) {} 
-}
+
+template <bool b> struct CPLStaticAssert {};
+template<> struct CPLStaticAssert<true>
+{
+    static void assert() {}
+};
+
+} /* extern "C++" */
+
+#define CPL_STATIC_ASSERT(x) CPLStaticAssert<x>::assert()
 
 #endif  /* __cplusplus */
+
 
 #endif /* ndef CPL_BASE_H_INCLUDED */
