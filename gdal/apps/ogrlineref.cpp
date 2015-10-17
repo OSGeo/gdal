@@ -663,7 +663,7 @@ OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkL
     //If first point is not at the beginning of the path
     //The first part should be from the beginning of the path to the first point. length == part.getLength
     OGRPoint *pPtBeg(NULL), *pPtEnd(NULL);
-    double dfPtBegPosition, dfPtEndPosition;
+    double dfPtBegPosition = 0.0, dfPtEndPosition = 0.0;
 
     if (dfDistance1 > DELTA)
     {
@@ -1050,7 +1050,7 @@ OGRErr GetPosition(OGRLayer* const poPkLayer,
 
     poPkLayer->ResetReading();
     OGRLineString *pCloserPart = NULL;
-    double dfBeg, dfScale;
+    double dfBeg = 0.0, dfScale = 0.0;
     double dfMinDistance = std::numeric_limits<double>::max();
     OGRFeature* pFeature = NULL;
     while ((pFeature = poPkLayer->GetNextFeature()) != NULL)
