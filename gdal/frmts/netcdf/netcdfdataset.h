@@ -697,7 +697,9 @@ class netCDFDataset : public GDALPamDataset
     char         **papszCreationOptions;
     int          nCompress;
     int          nZLevel;
+#ifdef NETCDF_HAS_NC4
     int          bChunking;
+#endif
     int          nCreateMode;
     int          bSignedData;
 

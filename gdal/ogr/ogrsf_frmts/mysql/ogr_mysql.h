@@ -203,8 +203,6 @@ class OGRMySQLDataSource : public OGRDataSource
 
     int                 bDSUpdate;
 
-    int                 nSoftTransactionLevel;
-
     MYSQL              *hConn;
 
     OGRErr              DeleteLayer( int iLayer );

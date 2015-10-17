@@ -75,7 +75,6 @@ class GRIBDataset : public GDALPamDataset
     void SetGribMetaData(grib_MetaData* meta);
     VSILFILE	*fp;
     char  *pszProjection;
-    OGRCoordinateTransformation *poTransform;
     double adfGeoTransform[6]; // Calculate and store once as GetGeoTransform may be called multiple times
 
     GIntBig  nCachedBytes;
@@ -489,7 +488,7 @@ GRIBRasterBand::~GRIBRasterBand()
 /************************************************************************/
 
 GRIBDataset::GRIBDataset() :
-    fp(NULL), poTransform(NULL), nCachedBytes(0),
+    fp(NULL), nCachedBytes(0),
     bCacheOnlyOneBand(FALSE), poLastUsedBand(NULL)
 {
   pszProjection = CPLStrdup("");

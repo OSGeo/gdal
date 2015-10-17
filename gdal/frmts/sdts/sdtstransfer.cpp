@@ -334,7 +334,7 @@ SDTSAttrReader *SDTSTransfer::GetLayerAttrReader( int iEntry )
     }
 
     
-    poAttrReader = new SDTSAttrReader( &oIREF );
+    poAttrReader = new SDTSAttrReader();
     
     if( !poAttrReader->Open(
                         oCATD.GetEntryFilePath( panLayerCATDEntry[iEntry] ) ) )

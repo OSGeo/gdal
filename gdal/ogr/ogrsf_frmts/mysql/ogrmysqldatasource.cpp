@@ -47,7 +47,6 @@ OGRMySQLDataSource::OGRMySQLDataSource() :
     nLayers(0),
     pszName(NULL),
     bDSUpdate(FALSE),
-    nSoftTransactionLevel(0),
     hConn(0),
     nKnownSRID(0),
     panSRID(NULL),
