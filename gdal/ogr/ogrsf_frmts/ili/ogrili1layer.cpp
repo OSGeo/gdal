@@ -156,8 +156,8 @@ OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 
 GIntBig OGRILI1Layer::GetFeatureCount( int bForce )
 {
-    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
-        1 /*poAreaLineLayer == NULL*/)
+    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL
+        /* && poAreaLineLayer == NULL*/)
     {
         return nFeatures;
     }
