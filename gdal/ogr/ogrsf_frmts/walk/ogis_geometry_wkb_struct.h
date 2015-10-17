@@ -40,9 +40,9 @@
 
 #define CPL_LSBPTRPOINT(p) \
 {                                                                 \
-    CPL_LSBPTR32(&p.x);                                           \
-    CPL_LSBPTR32(&p.y);                                           \
-    CPL_LSBPTR32(&p.z);                                           \
+    CPL_LSBPTR64(&p.x);                                           \
+    CPL_LSBPTR64(&p.y);                                           \
+    CPL_LSBPTR64(&p.z);                                           \
 }
 
 #ifdef CPL_MSB

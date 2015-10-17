@@ -966,8 +966,9 @@ bool LevellerDataset::write(int n)
 
 bool LevellerDataset::write(size_t n)
 {
-	CPL_LSBPTR32(&n);
-	return (1 == VSIFWriteL(&n, sizeof(n), 1, m_fp));
+        GUInt32 n32 = (GUInt32)n;
+	CPL_LSBPTR32(&n32);
+	return (1 == VSIFWriteL(&n32, sizeof(n32), 1, m_fp));
 }
 
 
