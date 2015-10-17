@@ -663,12 +663,12 @@ template<class T> static void CPL_IGNORE_RET_VAL(T) {}
 template <bool b> struct CPLStaticAssert {};
 template<> struct CPLStaticAssert<true>
 {
-    static void assert() {}
+    static void my_function() {}
 };
 
 } /* extern "C++" */
 
-#define CPL_STATIC_ASSERT(x) CPLStaticAssert<x>::assert()
+#define CPL_STATIC_ASSERT(x) CPLStaticAssert<x>::my_function()
 
 #endif  /* __cplusplus */
 
