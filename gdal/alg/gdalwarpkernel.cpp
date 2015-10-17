@@ -1231,37 +1231,27 @@ static void GWKOverlayDensity( GDALWarpKernel *poWK, int iDstOffset,
 }
 
 /************************************************************************/
-/*                          GWKRoundValueT()                           */
+/*                          GWKRoundValueT()                            */
 /************************************************************************/
 
-template<class T>
-static CPL_INLINE T GWKRoundValueT(double dfValue);
-
-template<class T>
-static CPL_INLINE T GWKRoundValueT_signed(double dfValue)
+template<class T, bool is_signed> struct sGWKRoundValueT
 {
-    return (T)floor(dfValue + 0.5);
-}
+    static T eval(double);
+};
 
-template<class T>
-static CPL_INLINE T GWKRoundValueT_unsigned(double dfValue)
+template<class T> struct sGWKRoundValueT<T, true> /* signed */
 {
-    return (T)(dfValue + 0.5);
-}
+    static T eval(double dfValue) { return (T)floor(dfValue + 0.5); }
+};
 
-template<> GByte GWKRoundValueT<GByte>(double dfValue)
+template<class T> struct sGWKRoundValueT<T, false> /* unsigned */
 {
-    return GWKRoundValueT_unsigned<GByte>(dfValue);
-}
+    static T eval(double dfValue) { return (T)(dfValue + 0.5); }
+};
 
-template<> GInt16 GWKRoundValueT<GInt16>(double dfValue)
+template<class T> T GWKRoundValueT(double dfValue)
 {
-    return GWKRoundValueT_signed<GInt16>(dfValue);
-}
-
-template<> GUInt16 GWKRoundValueT<GUInt16>(double dfValue)
-{
-    return GWKRoundValueT_unsigned<GUInt16>(dfValue);
+    return sGWKRoundValueT<T, std::numeric_limits<T>::is_signed>::eval(dfValue);
 }
 
 template<> float GWKRoundValueT<float>(double dfValue)
