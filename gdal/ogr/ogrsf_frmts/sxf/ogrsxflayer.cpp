@@ -250,7 +250,7 @@ int OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset,
                         }
                         GUInt32 scale2;
                         VSIFReadL(&scale2, sizeof(GUInt32), 1, fpSXF);
-                        CPL_LSBUINT32PTR(&scale2);
+                        CPL_LSBPTR32(&scale2);
 
                         offset += scale2;
                         nCurrOff = scale2;
@@ -440,9 +440,9 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
             return 0;
         GInt16 x, y;
         memcpy(&y, psBuff, 2);
-        CPL_LSBINT16PTR(&y);
+        CPL_LSBPTR16(&y);
         memcpy(&x, psBuff + 2, 2);
-        CPL_LSBINT16PTR(&x);
+        CPL_LSBPTR16(&x);
 
         if (stSXFMapDescription.bIsRealCoordinates)
         {
@@ -1025,7 +1025,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                         break;
                     }
                     memcpy(&scale2, psSemanticsdBuf + offset, sizeof(GUInt32));
-                    CPL_LSBUINT32PTR(&scale2);
+                    CPL_LSBPTR32(&scale2);
                     /* FIXME add ?: offset += sizeof(GUInt32); */
                     if( scale2 > nSemanticsSize - 1 || nSemanticsSize - (scale2 + 1) < offset )
                     {
@@ -1105,11 +1105,11 @@ OGRFeature *OGRSXFLayer::TranslatePoint(const SXFRecordDescription& certifInfo,
 
         GUInt16 nSubObj;
         memcpy(&nSubObj, psRecordBuf + nOffset, 2);
-        CPL_LSBUINT16PTR(&nSubObj);
+        CPL_LSBPTR16(&nSubObj);
 
         GUInt16 nCoords;
         memcpy(&nCoords, psRecordBuf + nOffset + 2, 2);
-        CPL_LSBUINT16PTR(&nCoords);
+        CPL_LSBPTR16(&nCoords);
 
         nOffset +=4;
 
@@ -1205,11 +1205,11 @@ OGRFeature *OGRSXFLayer::TranslateLine(const SXFRecordDescription& certifInfo,
 
         GUInt16 nSubObj;
         memcpy(&nSubObj, psRecordBuf + nOffset, 2);
-        CPL_LSBUINT16PTR(&nSubObj);
+        CPL_LSBPTR16(&nSubObj);
 
         GUInt16 nCoords;
         memcpy(&nCoords, psRecordBuf + nOffset + 2, 2);
-        CPL_LSBUINT16PTR(&nCoords);
+        CPL_LSBPTR16(&nCoords);
 
         nOffset +=4;
 
@@ -1371,11 +1371,11 @@ OGRFeature *OGRSXFLayer::TranslatePolygon(const SXFRecordDescription& certifInfo
 
         GUInt16 nSubObj;
         memcpy(&nSubObj, psRecordBuf + nOffset, 2);
-        CPL_LSBUINT16PTR(&nSubObj);
+        CPL_LSBPTR16(&nSubObj);
 
         GUInt16 nCoords;
         memcpy(&nCoords, psRecordBuf + nOffset + 2, 2);
-        CPL_LSBUINT16PTR(&nCoords);
+        CPL_LSBPTR16(&nCoords);
 
         // TODO: Is this really what the buffer size should be?
         if (nCoords * nDelta != nBufLen - nOffset + 2  - 6)
