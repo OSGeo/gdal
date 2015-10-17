@@ -80,7 +80,7 @@ GTIF *GTIFNewSimpleTags( void *tif )
 GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
 {
     GTIF* gt=(GTIF*)0;
-    int count,bufcount,index;
+    int count,bufcount,nIndex;
     GeoKey *keyptr;
     pinfo_t *data;
     KeyEntry *entptr;
@@ -178,13 +178,13 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
     keyptr = gt->gt_keys;
     gt->gt_keymin = MAX_KEYINDEX;
     gt->gt_keymax = 0;
-    for (index=1; index<=count; index++,entptr++)
+    for (nIndex=1; nIndex<=count; nIndex++,entptr++)
     {
         if (!ReadKey(gt, &tempData, entptr, ++keyptr))
             goto failure;
 			
         /* Set up the index (start at 1, since 0=unset) */
-        gt->gt_keyindex[entptr->ent_key] = index;		
+        gt->gt_keyindex[entptr->ent_key] = nIndex;		
     }
 
     if( tempData.tk_asciiParams != NULL )
