@@ -390,7 +390,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             if (LC_GetTransEx(&nMask,&oTrans) == UT_FALSE) {
                 CPLError( CE_Failure, CPLE_OpenFailed, 
                           "TRANSPAR section not found - No reference system information available.");
-                return NULL;
+                return FALSE;
             }
             poSRS = new OGRSpatialReference();
 
@@ -399,7 +399,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             if (poSRS->importFromEPSG(nEPSG) != OGRERR_NONE) {
 				CPLError( CE_Failure, CPLE_OpenFailed, 
                           "OGR could not load coordinate system definition EPSG:%i.", nEPSG);
-                return NULL;
+                return FALSE;
             }
 
             /* Get character encoding from SOSI header. */
