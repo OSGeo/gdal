@@ -753,7 +753,7 @@ vsi_l_offset VSIGZipHandle::Tell()
 /*                              Read()                                  */
 /************************************************************************/
 
-size_t VSIGZipHandle::Read( void *buf, size_t nSize, size_t nMemb )
+size_t VSIGZipHandle::Read( void * const buf, size_t const nSize, size_t const nMemb )
 {
     if (ENABLE_DEBUG) CPLDebug("GZIP", "Read(%p, %d, %d)", buf, (int)nSize, (int)nMemb);
 
@@ -1149,8 +1149,8 @@ size_t VSIGZipWriteHandle::Read( CPL_UNUSED void *pBuffer,
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIGZipWriteHandle::Write( const void *pBuffer, 
-                                  size_t nSize, size_t nMemb )
+size_t VSIGZipWriteHandle::Write( const void * const pBuffer, 
+                                  size_t const nSize, size_t const nMemb )
 
 {
     int nBytesToWrite = (int) (nSize * nMemb);
