@@ -1249,7 +1249,7 @@ template<class T> struct sGWKRoundValueT<T, false> /* unsigned */
     static T eval(double dfValue) { return (T)(dfValue + 0.5); }
 };
 
-template<class T> T GWKRoundValueT(double dfValue)
+template<class T> static T GWKRoundValueT(double dfValue)
 {
     return sGWKRoundValueT<T, std::numeric_limits<T>::is_signed>::eval(dfValue);
 }
