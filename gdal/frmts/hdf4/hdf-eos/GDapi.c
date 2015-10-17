@@ -1089,7 +1089,7 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 
 	/* Build metadata string */
 	/* --------------------- */
-	if ((projcode == GCTP_GEO))
+	if (projcode == GCTP_GEO)
 	{
 	    sprintf(utlbuf,
 		    "%s%s%s",
