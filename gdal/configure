@@ -851,6 +851,7 @@ LIBTOOL
 OBJDUMP
 DLLTOOL
 AS
+NO_UNKNOWN_PRAGMAS_FLAG
 C_WFLAGS
 CXX_WFLAGS
 ac_ct_CXX
@@ -4257,9 +4258,82 @@ case ".$ac_cv_cxxflags_warn_all" in
  ;;
 esac
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Winit-self" >&5
+$as_echo_n "checking whether C compiler accepts -Winit-self... " >&6; }
+if ${ax_cv_check_cflags___Winit_self+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Winit-self"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Winit_self=yes
+else
+  ax_cv_check_cflags___Winit_self=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Winit_self" >&5
+$as_echo "$ax_cv_check_cflags___Winit_self" >&6; }
+if test "x$ax_cv_check_cflags___Winit_self" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Winit-self" CXX_WFLAGS="$CXX_WFLAGS -Winit-self"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wno-unknown-pragmas" >&5
+$as_echo_n "checking whether C compiler accepts -Wno-unknown-pragmas... " >&6; }
+if ${ax_cv_check_cflags___Wno_unknown_pragmas+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Wno-unknown-pragmas"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Wno_unknown_pragmas=yes
+else
+  ax_cv_check_cflags___Wno_unknown_pragmas=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Wno_unknown_pragmas" >&5
+$as_echo "$ax_cv_check_cflags___Wno_unknown_pragmas" >&6; }
+if test "x$ax_cv_check_cflags___Wno_unknown_pragmas" = xyes; then :
+  NO_UNKNOWN_PRAGMAS_FLAG="-Wno-unknown-pragmas"
+else
+  :
+fi
+
+
 CXX_WFLAGS=$CXX_WFLAGS
 
 C_WFLAGS=$C_WFLAGS
+
+NO_UNKNOWN_PRAGMAS_FLAG=$NO_UNKNOWN_PRAGMAS_FLAG
 
 
 ac_ext=c

@@ -13,6 +13,7 @@
 
 m4_include([m4/acinclude.m4])
 m4_include([m4/ax_cflags_warn_all.m4])
+m4_include([m4/ax_check_compile_flag.m4])
 m4_include([m4/ax_lib_expat.m4])
 m4_include([m4/ax_lib_libkml.m4])
 m4_include([m4/ax_lib_sqlite3.m4])
