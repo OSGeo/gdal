@@ -1079,7 +1079,7 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
+size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, size_t const nMemb )
 {
     GByte* pabyBuffer = (GByte*)pBuffer;
     const size_t nBufferRequestSize = nSize * nMemb;

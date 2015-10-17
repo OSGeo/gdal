@@ -1040,8 +1040,9 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
+size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t const  nMemb )
 {
+    void* pBuffer = pBufferIn;
     size_t nBufferRequestSize = nSize * nMemb;
     if (nBufferRequestSize == 0)
         return 0;
@@ -1134,9 +1135,9 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
 /*                           ReadMultiRange()                           */
 /************************************************************************/
 
-int VSICurlHandle::ReadMultiRange( int nRanges, void ** ppData,
-                                   const vsi_l_offset* panOffsets,
-                                   const size_t* panSizes )
+int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
+                                   const vsi_l_offset* const panOffsets,
+                                   const size_t* const panSizes )
 {
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
