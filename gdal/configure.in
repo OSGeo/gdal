@@ -51,6 +51,7 @@ AX_CHECK_COMPILE_FLAG([-Winit-self],[C_WFLAGS="$C_WFLAGS -Winit-self" CXX_WFLAGS
 AX_CHECK_COMPILE_FLAG([-Wno-unknown-pragmas],[NO_UNKNOWN_PRAGMAS_FLAG="-Wno-unknown-pragmas"])
 AX_CHECK_COMPILE_FLAG([-Wmissing-field-initializers], [C_WFLAGS="$C_WFLAGS -Wmissing-field-initializers" CXX_WFLAGS="$CXX_WFLAGS -Wmissing-field-initializers"])
 AX_CHECK_COMPILE_FLAG([-Wignored-qualifiers], [C_WFLAGS="$C_WFLAGS -Wignored-qualifiers" CXX_WFLAGS="$CXX_WFLAGS -Wignored-qualifiers"])
+AX_CHECK_COMPILE_FLAG([-Wtype-limits], [C_WFLAGS="$C_WFLAGS -Wtype-limits" CXX_WFLAGS="$CXX_WFLAGS -Wtype-limits"])
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"])
 AC_LANG_POP([C++])

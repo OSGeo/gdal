@@ -1235,10 +1235,33 @@ static void GWKOverlayDensity( GDALWarpKernel *poWK, int iDstOffset,
 /************************************************************************/
 
 template<class T>
-static CPL_INLINE T GWKRoundValueT(double dfValue)
+static CPL_INLINE T GWKRoundValueT(double dfValue);
+
+template<class T>
+static CPL_INLINE T GWKRoundValueT_signed(double dfValue)
 {
-    return (std::numeric_limits<T>::min() < 0) ? (T)floor(dfValue + 0.5) :
-                                                 (T)(dfValue + 0.5);
+    return (T)floor(dfValue + 0.5);
+}
+
+template<class T>
+static CPL_INLINE T GWKRoundValueT_unsigned(double dfValue)
+{
+    return (T)(dfValue + 0.5);
+}
+
+template<> GByte GWKRoundValueT<GByte>(double dfValue)
+{
+    return GWKRoundValueT_unsigned<GByte>(dfValue);
+}
+
+template<> GInt16 GWKRoundValueT<GInt16>(double dfValue)
+{
+    return GWKRoundValueT_signed<GInt16>(dfValue);
+}
+
+template<> GUInt16 GWKRoundValueT<GUInt16>(double dfValue)
+{
+    return GWKRoundValueT_unsigned<GUInt16>(dfValue);
 }
 
 template<> float GWKRoundValueT<float>(double dfValue)

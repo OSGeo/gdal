@@ -5241,7 +5241,7 @@ OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType )
 {
     if( OGR_GT_HasZ(eType) || eType == wkbNone )
         return eType;
-    if( eType >= wkbUnknown && eType <= wkbGeometryCollection )
+    if( eType <= wkbGeometryCollection )
         return (OGRwkbGeometryType)(eType | wkb25DBitInternalUse);
     else
         return (OGRwkbGeometryType)(eType + 1000);
