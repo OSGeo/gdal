@@ -123,7 +123,7 @@ public:
    protected:
    double getMaxValue();
    double nodatavalue;
-   virtual const bool ElementPassesFilter(const PointData &, size_t);
+   virtual bool ElementPassesFilter(const PointData &, size_t);
    template<typename DTYPE>
    CPLErr   doReadBlock(int, int, void *);
    CPLXMLNode *poxmlBand;
@@ -311,7 +311,7 @@ const DTYPE GetChannelElement(const ChannelData &channel, size_t idx)
 }
 
 
-const bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t i)
+bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t i)
 {
    bool bClassificationOK = true;
    bool bReturnNumOK = true;
