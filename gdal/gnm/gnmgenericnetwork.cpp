@@ -86,7 +86,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         if(EQUAL(pFeatureClass, pszLayerName))
         {
             anGFIDs.insert(poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID));
-            m_poFeaturesLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poFeaturesLayer->DeleteFeature(poFeature->GetFID()));
         }
         OGRFeature::DestroyFeature(poFeature);
     }
@@ -100,7 +100,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         it = anGFIDs.find(nGFID);
         if( it != anGFIDs.end())
         {
-            m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
@@ -109,7 +109,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         it = anGFIDs.find(nGFID);
         if( it != anGFIDs.end())
         {
-            m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
@@ -118,7 +118,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         it = anGFIDs.find(nGFID);
         if( it != anGFIDs.end())
         {
-            m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
@@ -410,7 +410,7 @@ CPLErr GNMGenericNetwork::DisconnectAll()
     m_poGraphLayer->ResetReading();
     while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
     {
-        m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+        CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
         OGRFeature::DestroyFeature( poFeature );
     }
 
@@ -501,7 +501,7 @@ CPLErr GNMGenericNetwork::DeleteAllRules()
     m_poMetadataLayer->SetAttributeFilter(NULL);
     for(size_t i = 0; i < aFIDs.size(); ++i)
     {
-        m_poMetadataLayer->DeleteFeature(aFIDs[i]);
+        CPL_IGNORE_RET_VAL(m_poMetadataLayer->DeleteFeature(aFIDs[i]));
     }
 
     return CE_None;
