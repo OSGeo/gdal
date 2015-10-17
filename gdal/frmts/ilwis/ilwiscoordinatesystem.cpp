@@ -29,7 +29,8 @@
 #include "ilwisdataset.h"
 
 #include <string>
-using namespace std;
+
+using std::string;
 
 typedef struct 
 {
@@ -259,18 +260,16 @@ double ReadPrjParms(string section, string entry, string filename)
     //string str="";
     if (str.length() != 0)
         return CPLAtof(str.c_str());
-    else
-        return 0;
+
+    return 0.0;
 }
 
 static int fetchParms(string csyFileName, double * padfPrjParams)
 {
-    int     i;
-
     //Fill all projection parameters with zero
-    for ( i = 0; i < 13; i++ )
+    for ( int i = 0; i < 13; i++ )
         padfPrjParams[i] = 0.0;
-		
+
     string pszProj = ReadElement("CoordSystem", "Projection", csyFileName);
     string pszEllips = ReadElement("CoordSystem", "Ellipsoid", csyFileName);
 
@@ -386,22 +385,22 @@ static void scaleFromLATTS( string sEllips, double phits, double &scale )
  * and datum/ellipsoid specified in the padfPrjParams array. 
  *
  * @param csyFileName Name of .csy file
-**/ 
+**/
 
 CPLErr ILWISDataset::ReadProjection( string csyFileName )
 {
     string pszEllips;
     string pszDatum;
     string pszProj;
-		
+
     //translate ILWIS pre-defined coordinate systems
     if( EQUALN( csyFileName.c_str(), "latlon.csy", 10 )) 
     {
         pszProj = "LatLon";
         pszDatum = "";
         pszEllips = "Sphere";
-    }	
-    else if ( EQUALN( csyFileName.c_str(), "LatlonWGS84.csy", 15 ))			
+    }
+    else if ( EQUALN( csyFileName.c_str(), "LatlonWGS84.csy", 15 ))
     {
         pszProj = "LatLon";
         pszDatum = "WGS 1984";
@@ -421,7 +420,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
 /* -------------------------------------------------------------------- */
     double     padfPrjParams[13];
     fetchParms(csyFileName, padfPrjParams);
-		
+
     OGRSpatialReference oSRS;
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
@@ -436,7 +435,6 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         oSRS.SetACEA( padfPrjParams[7], padfPrjParams[8],
                       padfPrjParams[5], padfPrjParams[6],
                       padfPrjParams[3], padfPrjParams[4] );
-                 
     }
     else if( EQUALN( pszProj.c_str(), "Azimuthal Equidistant", 21 ) )
     {
@@ -466,7 +464,6 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         oSRS.SetStereographic  (  52.156160556,  5.387638889,
                                   0.9999079,  
                                   155000,  463000);
-																	 
     }
     else if( EQUALN( pszProj.c_str(), "Equidistant Conic", 17 ) )
     {
@@ -568,7 +565,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     {
         // set 0.0 for CenterLat for Plate Carree projection
         // skipp Latitude_Of_True_Scale for Plate Rectangle projection definition
-        oSRS.SetProjCS(pszProj.c_str());				
+        oSRS.SetProjCS(pszProj.c_str());
         oSRS.SetEquirectangular(	padfPrjParams[5], padfPrjParams[6], 
                                         padfPrjParams[3], padfPrjParams[4] );
     }
@@ -597,7 +594,6 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         oSRS.SetStereographic(	padfPrjParams[5], padfPrjParams[6],
                                 padfPrjParams[9],
                                 padfPrjParams[3], padfPrjParams[4] );
-	
     }
     else if( EQUALN( pszProj.c_str(), "Transverse Mercator", 19 ) )
     {
@@ -667,8 +663,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         const IlwisEllips *piwEllips =  iwEllips;
         if (pszEllips.length() == 0)
             pszEllips="Sphere";
-        if ( !piwDatum->pszIlwisDatum )  
-																				 
+        if ( !piwDatum->pszIlwisDatum )
         {
             while ( piwEllips->pszIlwisEllips )
             {
@@ -690,13 +685,13 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                                     piwEllips->invFlattening,
                                     NULL, 0.0, NULL, 0.0 );
                     oSRS.SetAuthority( "SPHEROID", "EPSG", piwEllips->nEPSGCode );
-										
+
                     break;
                 }
                 piwEllips++;
             } //end of searching for matching ellipsoid
-        } 
-				
+        }
+
 /* -------------------------------------------------------------------- */
 /*      If no matching for ellipsoid definition, fetch info about an    */
 /*			user defined ellipsoid. If cannot find, default to WGS 84       */
@@ -706,7 +701,6 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
 
             if( EQUALN( pszEllips.c_str(), "User Defined", 12 ) )
             {
-                
                 oSRS.SetGeogCS( "Unknown datum based upon the custom ellipsoid",
                                 "Not specified (based on custom ellipsoid)",
                                 "Custom ellipsoid",
@@ -721,7 +715,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         }
 
     } // end of if ( !IsLocal() )
-		
+
 /* -------------------------------------------------------------------- */
 /*      Units translation                                          */
 /* -------------------------------------------------------------------- */
@@ -732,17 +726,16 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     oSRS.FixupOrdering();
     CPLFree(pszProjection);
     oSRS.exportToWkt( &pszProjection );
-    
 
     return CE_None;
 }
 
 void WriteFalseEastNorth(string csFileName, OGRSpatialReference oSRS)
 {
-			WriteElement("Projection", ILW_False_Easting, csFileName, 
-										oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0));
-			WriteElement("Projection", ILW_False_Northing, csFileName, 
-										oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0));
+    WriteElement("Projection", ILW_False_Easting, csFileName,
+                 oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0));
+    WriteElement("Projection", ILW_False_Northing, csFileName,
+                 oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0));
 }
 
 void WriteProjectionName(string csFileName, string stProjection)
@@ -753,9 +746,9 @@ void WriteProjectionName(string csFileName, string stProjection)
 
 void WriteUTM(string csFileName, OGRSpatialReference oSRS)
 {
-    int	bNorth, nZone;
+    int	bNorth;
 
-    nZone = oSRS.GetUTMZone( &bNorth );
+    int nZone = oSRS.GetUTMZone( &bNorth );
     WriteElement("CoordSystem", "Type", csFileName, "Projection");
     WriteElement("CoordSystem", "Projection", csFileName, "UTM");
     if (bNorth)
@@ -778,6 +771,7 @@ void WriteAlbersConicEqualArea(string csFileName, OGRSpatialReference oSRS)
     WriteElement("Projection", ILW_Standard_Parallel_2, csFileName, 
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
 }
+
 void WriteAzimuthalEquidistant(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Azimuthal Equidistant");
@@ -788,6 +782,7 @@ void WriteAzimuthalEquidistant(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
     WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
 }
+
 void WriteCylindricalEqualArea(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Central Cylindrical");
@@ -992,31 +987,31 @@ void WriteGeoStatSat(string csFileName, OGRSpatialReference oSRS)
  *
  * Converts the loaded coordinate reference system into ILWIS projection
  * definition to the extent possible.	
- */	
+ */
 CPLErr ILWISDataset::WriteProjection() 
 
 {
     OGRSpatialReference oSRS;
     OGRSpatialReference *poGeogSRS = NULL;
-    int                 bHaveSRS;
     char		*pszP = pszProjection;
-		
+
     string csFileName = CPLResetExtension(osFileName, "csy" );
     string pszBaseName = string(CPLGetBasename( osFileName ));
     string pszPath = string(CPLGetPath( osFileName ));
     bool fProjection = ((strlen(pszProjection)>0) && (pszProjection != NULL));
+    bool bHaveSRS;
     if( fProjection && (oSRS.importFromWkt( &pszP ) == OGRERR_NONE) )
     {
-        bHaveSRS = TRUE;
+        bHaveSRS = true;
     }
     else
-        bHaveSRS = FALSE;
-		
+        bHaveSRS = false;
+
     const IlwisDatums   *piwDatum = iwDatums;
     string pszEllips;
     string pszDatum;
     string pszProj;
-		
+
 /* -------------------------------------------------------------------- */
 /*      Collect datum/ellips information.                                      */
 /* -------------------------------------------------------------------- */
@@ -1045,11 +1040,10 @@ CPLErr ILWISDataset::WriteProjection()
             piwDatum++;
         } //end of searchong for matching datum
         WriteElement("CoordSystem", "Width", csFileName, 28);
-        double a, /* b, */f;
         pszEllips = poGeogSRS->GetAttrValue( "GEOGCS|DATUM|SPHEROID" );
-        a = poGeogSRS->GetSemiMajor();
+        double a = poGeogSRS->GetSemiMajor();
         /* b = */ poGeogSRS->GetSemiMinor();
-        f = poGeogSRS->GetInvFlattening();
+        double f = poGeogSRS->GetInvFlattening();
         WriteElement("CoordSystem", "Ellipsoid", csFileName, "User Defined");
         WriteElement("Ellipsoid", "a", csFileName, a);
         WriteElement("Ellipsoid", "1/f", csFileName, f);
@@ -1175,7 +1169,6 @@ CPLErr ILWISDataset::WriteProjection()
     else
     {
         // Projection unknown by ILWIS
-				
     }
 
 /* -------------------------------------------------------------------- */
