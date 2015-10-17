@@ -428,6 +428,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
 {
     GByte abySignature[8];
     fp->Seek(0, SEEK_SET);
+    CPL_STATIC_ASSERT(sizeof(VSICRYPT_SIGNATURE) == 8+1);
     if( fp->Read(abySignature, 8, 1) == 0 ||
         memcmp(abySignature, VSICRYPT_SIGNATURE, 8) != 0 )
     {
