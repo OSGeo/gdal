@@ -148,8 +148,6 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
                         CPL_UNUSED const int nRestart,
                         const int nQuality )
 {
-    int i;
-
     GByte *pabNext = pabyBuffer;
 
     // ------------------------------------------------------------------------
@@ -196,7 +194,7 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
         ADJUST( abQuantTables[1], *, 0.5 );
     }
 
-    for( i = 0; i < 2 && i < nComponents; i++ )
+    for( int i = 0; i < 2 && i < nComponents; i++ )
     {
         *( pabNext++ )  = 0xFF;         // Tag Mark
         *( pabNext++ )  = 0xDB;         // DQT
@@ -263,14 +261,13 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
     pnHTs[1][2]         = sizeof(JPGHLP_2DC_Symbols);
     pnHTs[1][3]         = sizeof(JPGHLP_2AC_Symbols);
 
-    int j, k;
-    for( i = 0; i < 2 && i < nComponents; i++ )
+    for( int i = 0; i < 2 && i < nComponents; i++ )
     {
-        for( j = 0; j < 2; j++ )
+        for( int j = 0; j < 2; j++ )
         {
-            k = j + 2;
-            int nCodes  = pnHTs[i][j];
-            int nSymbols = pnHTs[i][k];
+            const int k = j + 2;
+            const int nCodes  = pnHTs[i][j];
+            const int nSymbols = pnHTs[i][k];
             *( pabNext++ ) = 0xFF;                  // Tag Mark
             *( pabNext++ ) = 0xc4;                  // DHT 
             *( pabNext++ ) = 0;                     // Segment Length (msb)
