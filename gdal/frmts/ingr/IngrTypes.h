@@ -35,7 +35,7 @@
 #include "cpl_port.h"
 #include "gdal.h"
 #include "gdal_priv.h"
-#include "math.h"
+#include <cmath>
 
 CPL_C_START
 #include "tiffio.h"
@@ -84,10 +84,10 @@ typedef struct {
 
 typedef union 
 {
-    uint8   AsUint8;          
-    uint16  AsUint16;          
-    uint32  AsUint32;          
-    real32  AsReal32;          
+    uint8   AsUint8;
+    uint16  AsUint16;
+    uint32  AsUint32;
+    real32  AsReal32;
     real64  AsReal64;
 } INGR_MinMax;
 

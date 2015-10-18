@@ -172,12 +172,9 @@ static const double INGR_LRH_Flip[16] =
 
 void INGR_MultiplyMatrix( double *padfA, real64 *padfB, const double *padfC )
 {
-    int i;
-    int j;
-
-    for( i = 0; i < 4; i++ )
+    for( int i = 0; i < 4; i++ )
     {
-        for( j = 0; j < 4; j++ )
+        for( int j = 0; j < 4; j++ )
         {
             padfA[(i * 4) + j] = (double)
                 padfB[(i * 4) + 0] * padfC[(0 * 4) + j] +
@@ -194,9 +191,7 @@ void INGR_MultiplyMatrix( double *padfA, real64 *padfB, const double *padfC )
 
 GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
 {
-    unsigned int i;
-
-    for( i = 0; i < FORMAT_TAB_COUNT; i++ )
+    for( unsigned int i = 0; i < FORMAT_TAB_COUNT; i++ )
     {
 		if( eCode == INGR_FormatTable[i].eFormatCode )
         {
@@ -213,9 +208,7 @@ GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
 
 const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode )
 {
-    unsigned int i;
-
-    for( i = 0; i < FORMAT_TAB_COUNT; i++ )
+    for( unsigned int i = 0; i < FORMAT_TAB_COUNT; i++ )
     {
         if( eCode == INGR_FormatTable[i].eFormatCode )
         {
@@ -234,8 +227,8 @@ const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex )
 {
     if (nIndex < sizeof(IngrOrientation) / sizeof(IngrOrientation[0]))
         return IngrOrientation[nIndex];
-    else
-        return "invalid orientation";
+
+    return "invalid orientation";
 }
 
 // -----------------------------------------------------------------------------
@@ -261,9 +254,7 @@ INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType,
         }
     }
 
-    unsigned int i;
-
-    for( i = 0; i < FORMAT_TAB_COUNT; i++ )
+    for( unsigned int i = 0; i < FORMAT_TAB_COUNT; i++ )
     {
         if( EQUAL( pszCompression, INGR_FormatTable[i].pszName ) )
         {
@@ -306,13 +297,12 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
     // -------------------------------------------------------------
 
     double adfConcat[16];
-   
+
     switch( (INGR_Orientation ) pHeaderOne->ScanlineOrientation )
     {
         case UpperLeftVertical:
             {
-                unsigned int i = 0;
-                for(i = 0; i < 16; i++)
+                for(unsigned int i = 0; i < 16; i++)
                 {
                     adfConcat[i] = (double) pHeaderOne->TransformationMatrix[i];
                 }
@@ -359,9 +349,7 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
 
 void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransform )
 {
-    unsigned int i;
-
-    for( i = 0; i < 15; i++ )
+    for( unsigned int i = 0; i < 15; i++ )
     {
         padfMatrix[i] = 0.0;
     }
@@ -478,9 +466,7 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
         return 0;
     }
 
-    unsigned int i;
-
-    for( i = 1; i < nTiles; i++ )
+    for( unsigned int i = 1; i < nTiles; i++ )
     {
         INGR_TileItemDiskToMem( &((*pahTiles)[i]), 
                                 &pabyBuf[ (i - 1) * SIZEOF_TILE] );
@@ -525,10 +511,9 @@ void CPL_STDCALL INGR_GetIGDSColors( VSILFILE *fp,
         return;
     }
 
-    unsigned int i = 0;
     unsigned int n = 0;
 
-    for( i = 0; i < nEntries; i++ )
+    for( unsigned int i = 0; i < nEntries; i++ )
     {
         BUF2STRC( pabyBuf, n, hIGDSColors.Entry[i].v_red );
         BUF2STRC( pabyBuf, n, hIGDSColors.Entry[i].v_green );
@@ -545,7 +530,7 @@ void CPL_STDCALL INGR_GetIGDSColors( VSILFILE *fp,
 
     oEntry.c4 = 255;
 
-    for( i = 0; i < nEntries; i++ )
+    for( unsigned int i = 0; i < nEntries; i++ )
     {
         oEntry.c1 = hIGDSColors.Entry[i].v_red;
         oEntry.c2 = hIGDSColors.Entry[i].v_green;
@@ -621,10 +606,9 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
         return;
     }
 
-    unsigned int i = 0;
     unsigned int n = 0;
 
-    for( i = 0; i < nEntries; i++ )
+    for( unsigned int i = 0; i < nEntries; i++ )
     {
         BUF2STRC( pabyBuf, n, hVLTColors.Entry[i].v_slot );
         BUF2STRC( pabyBuf, n, hVLTColors.Entry[i].v_red );
@@ -636,7 +620,7 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
 
 
 #if defined(CPL_MSB)
-    for (i = 0; i < nEntries; i++)
+    for ( unsigned int i = 0; i < nEntries; i++)
     {
         CPL_LSBPTR16(&hVLTColors.Entry[i].v_slot);
         CPL_LSBPTR16(&hVLTColors.Entry[i].v_red);
@@ -653,7 +637,7 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
     real32 fMaxGreen    = 0.0;
     real32 fMaxBlues    = 0.0;
 
-    for( i = 0; i < nEntries; i++ )
+    for( unsigned int i = 0; i < nEntries; i++ )
     {
         fMaxRed   = MAX( fMaxRed  , hVLTColors.Entry[i].v_red );
         fMaxGreen = MAX( fMaxGreen, hVLTColors.Entry[i].v_green );
@@ -664,12 +648,10 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
     // Calculate Normalization Factor
     // -------------------------------------------------------------
 
-    real32 fNormFactor  = 0.0;
-
-    fNormFactor  = ( fMaxRed > fMaxGreen ? fMaxRed : fMaxGreen );
+    real32 fNormFactor  = ( fMaxRed > fMaxGreen ? fMaxRed : fMaxGreen );
     fNormFactor  = ( fNormFactor > fMaxBlues ? fNormFactor : fMaxBlues );
     if (fNormFactor)
-        fNormFactor  = 255 / fNormFactor;
+        fNormFactor = 255 / fNormFactor;
 
     // -------------------------------------------------------------
     // Loads GDAL Color Table ( filling the wholes )
@@ -677,7 +659,7 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
 
     GDALColorEntry oEntry;
 
-    for( i = 0;  i < nEntries; i++ )
+    for( unsigned int i = 0;  i < nEntries; i++ )
     {
         oEntry.c1 = (short) ( hVLTColors.Entry[i].v_red   * fNormFactor );
         oEntry.c2 = (short) ( hVLTColors.Entry[i].v_green * fNormFactor );
@@ -764,14 +746,12 @@ uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
         VSIStatL( pszFilename, &sStat );
         return (uint32) (sStat.st_size - nDataOffset);
     }
-    else
-    {
-        // -------------------------------------------------------------
-        // Until the end of the band
-        // -------------------------------------------------------------
 
-        return nBandOffset - nDataOffset;
-    }
+    // -------------------------------------------------------------
+    // Until the end of the band
+    // -------------------------------------------------------------
+
+    return nBandOffset - nDataOffset;
 }
 
 // -----------------------------------------------------------------------------
@@ -852,7 +832,7 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
 }
 
 // -----------------------------------------------------------------------------
-//                                                            INGR_ReleaseVirtual()
+//                                                       INGR_ReleaseVirtual()
 // -----------------------------------------------------------------------------
 
 void CPL_STDCALL INGR_ReleaseVirtual( INGR_VirtualFile *poTiffMem )
@@ -862,7 +842,7 @@ void CPL_STDCALL INGR_ReleaseVirtual( INGR_VirtualFile *poTiffMem )
 }
 
 // -----------------------------------------------------------------------------
-//                                                            INGR_ReleaseVirtual()
+//                                                       INGR_ReadJpegQuality()
 // -----------------------------------------------------------------------------
 
 int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
@@ -894,7 +874,7 @@ int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
         {
             return INGR_JPEGQDEFAULT;
         }
-    } 
+    }
     while( ! ( hJpegData.ApplicationType == 2 &&
         hJpegData.SubTypeCode == 12 ) );
 
@@ -909,7 +889,7 @@ int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
 //  Pass NULL as pabyDstData to obtain pnBytesConsumed and bypass decompression.
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL 
+int CPL_STDCALL
 INGR_Decode( INGR_Format eFormat, GByte *pabySrcData, GByte *pabyDstData,
              uint32 nSrcBytes, uint32 nBlockSize, uint32 *pnBytesConsumed )
 
@@ -941,53 +921,47 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
                                       uint32 nSrcBytes, uint32 nBlockSize,
                                       uint32 *pnBytesConsumed )
 {
-    signed char cAtomHead;
-
-    unsigned int nRun;
-    unsigned int i; 
-    unsigned int iInput;
-    unsigned int iOutput;
-    unsigned int inc;
-
-    iInput = 0;
-    iOutput = 0;
+    unsigned int iInput = 0;
+    unsigned int iOutput = 0;
 
     while( ( iInput < nSrcBytes ) && ( iOutput < nBlockSize ) )
     {
-        cAtomHead = (char) pabySrcData[iInput++];
+        const signed char cAtomHead = (char) pabySrcData[iInput++];
 
         if( cAtomHead > 0 )
         {
-            nRun = cAtomHead;
-            
+            const unsigned int nRun = cAtomHead;
+
             if (pabyDstData)
             {
-                for( i = 0; i < nRun && iInput < nSrcBytes && iOutput < nBlockSize; i++ )
+                for( unsigned int i = 0; i < nRun && iInput < nSrcBytes && iOutput < nBlockSize; i++ )
                 {
                     pabyDstData[iOutput++] = pabySrcData[iInput++];
                 }
             }
             else
             {
-                inc = MIN(nRun, MIN(nSrcBytes - iInput, nBlockSize - iOutput));
+                const unsigned int inc
+                    = MIN(nRun, MIN(nSrcBytes - iInput, nBlockSize - iOutput));
                 iInput += inc;
                 iOutput += inc;
             }
         }
         else if( cAtomHead < 0 )
         {
-            nRun = abs( cAtomHead );
+            const unsigned int nRun = abs( cAtomHead );
 
             if (pabyDstData)
             {
-                for( i = 0; i < nRun && iInput < nSrcBytes && iOutput < nBlockSize; i++ )
+                for( unsigned int i = 0; i < nRun && iInput < nSrcBytes && iOutput < nBlockSize; i++ )
                 {
                     pabyDstData[iOutput++] = pabySrcData[iInput];
                 }
             }
             else
             {
-                inc = MIN(nRun, MIN(nSrcBytes - iInput, nBlockSize - iOutput));
+                const unsigned int inc
+                    = MIN(nRun, MIN(nSrcBytes - iInput, nBlockSize - iOutput));
                 iOutput += inc;
             }
             iInput++;
@@ -1004,31 +978,25 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
 //                                                INGR_DecodeRunLengthPaletted()
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL 
+int CPL_STDCALL
 INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
                               uint32 nSrcBytes, uint32 nBlockSize, 
                               uint32 *pnBytesConsumed )
 {
-    unsigned short nColor;
-    unsigned short nCount;
-
-    unsigned int i; 
-    unsigned int iInput;
-    unsigned int iOutput;
-
-    unsigned short *pauiSrc = (unsigned short *) pabySrcData;
     unsigned int nSrcShorts = nSrcBytes / 2;
-
-    iInput = 0;
-    iOutput = 0;
 
     if ( nSrcShorts == 0 )
         return 0;
 
+    unsigned int iInput = 0;
+    unsigned int iOutput = 0;
+
+    unsigned short *pauiSrc = (unsigned short *) pabySrcData;
+
     do
     {
-        nCount = 0;
-        nColor = CPL_LSBWORD16( pauiSrc[ iInput ] );
+        unsigned int nCount = 0;
+        unsigned int nColor = CPL_LSBWORD16( pauiSrc[ iInput ] );
         iInput++;
 
         if( nColor == 0x5900 ||
@@ -1046,7 +1014,7 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
 
         if (pabyDstData)
         {
-            for( i = 0; i < nCount && iOutput < nBlockSize; i++ )
+            for( unsigned int i = 0; i < nCount && iOutput < nBlockSize; i++ )
             {
                 pabyDstData[iOutput++] = (unsigned char) nColor;
             }
@@ -1068,31 +1036,23 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
 //                                                INGR_DecodeRunLengthBitonal()
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL 
+int CPL_STDCALL
 INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
                              uint32 nSrcBytes, uint32 nBlockSize,
                              uint32 *pnBytesConsumed )
 {
-    unsigned short i;
-    unsigned int   j;
-    unsigned int   iInput = 0;
-    unsigned int   iOutput = 0;
-    unsigned short *pauiSrc = (unsigned short *) pabySrcData;
-    unsigned int   nSrcShorts = nSrcBytes / 2;
-    unsigned short nRun;
-    unsigned char  nValue = 0;
-    bool bHeader = true;
-
+    const unsigned int nSrcShorts = nSrcBytes / 2;
     if (nSrcShorts == 0)
         return 0;
 
+    unsigned int   iInput = 0;
+    unsigned int   iOutput = 0;
+    unsigned short *pauiSrc = (unsigned short *) pabySrcData;
+    bool bHeader = true;
 
     // Check for scanline header
     do
     {
-        unsigned int nWordsInScanline;
-        unsigned int nTotal;
-
         if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
         {
             bHeader = false;
@@ -1131,7 +1091,8 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             break;
         }
 
-        nWordsInScanline = ((unsigned int) CPL_LSBWORD16(pauiSrc[1])) + 2;
+        unsigned int nWordsInScanline
+            = ((unsigned int) CPL_LSBWORD16(pauiSrc[1])) + 2;
         if (nSrcShorts >= nWordsInScanline + 5)
         {
             // Do some quick extra tests on next scanline.
@@ -1159,10 +1120,10 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
         }
 
         // If we get here, we add all the span values and see if they add up to the nBlockSize.
-        j = 0;
-        nTotal = 0;
 
-        for(;j < nWordsInScanline - 4; j++)
+        unsigned int nTotal = 0;
+
+        for( unsigned int j = 0; j < nWordsInScanline - 4; j++)
         {
             nTotal += (unsigned int) CPL_LSBWORD16(pauiSrc[j+4]);
         }
@@ -1180,14 +1141,15 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
     if (iInput >= nSrcShorts)
         return 0;
 
+    unsigned char nValue = 0;
     do
     {
-        nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
+        unsigned short nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
         iInput++;
-               
+
         if (pabyDstData)
         {
-            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            for( unsigned short i = 0; i < nRun && iOutput < nBlockSize; i++ )
             {
                 pabyDstData[ iOutput++ ] = nValue;
             }
@@ -1198,7 +1160,6 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
         {
             iOutput += MIN(nRun, nBlockSize - iOutput);
         }
-        
     }
     while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
 
@@ -1229,22 +1190,22 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
 //                                           INGR_DecodeRunLengthBitonalTiled()
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL 
+int CPL_STDCALL
 INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
                                   uint32 nSrcBytes, uint32 nBlockSize,
                                   uint32 *pnBytesConsumed )
 {
-    unsigned short i; 
+    unsigned int   nSrcShorts = nSrcBytes / 2;
+    if (nSrcShorts == 0)
+        return 0;
+
     unsigned int   iInput = 0;
     unsigned int   iOutput = 0;
     unsigned short *pauiSrc = (unsigned short *) pabySrcData;
-    unsigned int   nSrcShorts = nSrcBytes / 2;
     unsigned short nRun = 0;
     unsigned char  nValue = 0;
     unsigned short previous = 0;
 
-    if (nSrcShorts == 0)
-        return 0;
 
     if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
     {
@@ -1257,17 +1218,17 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
 
             nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
             iInput++;
-            
+
             if( nRun == 0 && previous == 0 ) // new line
             {
                 nValue = 0; 
             }
 
-            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            for( unsigned short i = 0; i < nRun && iOutput < nBlockSize; i++ )
             {
                 pabyDstData[ iOutput++ ] = nValue;
             }
-            
+
             if( nRun != 0 )
             {
                 nValue = ( nValue == 1 ? 0 : 1 );
@@ -1281,18 +1242,18 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
         {
             nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
             iInput++;
-            
+
             if( nRun == 0x5900 )
             {
                 iInput+=3; // line id, data size, skip offset
                 continue;
             }
-            
-            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+
+            for( unsigned short i = 0; i < nRun && iOutput < nBlockSize; i++ )
             {
                 pabyDstData[ iOutput++ ] = nValue;
             }
-            
+
             nValue = ( nValue == 1 ? 0 : 1 );
         }
         while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
@@ -1398,9 +1359,7 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, const GByte
         INGR_DGN2IEEEDouble( &pHeaderOne->RotationAngle );
         INGR_DGN2IEEEDouble( &pHeaderOne->SkewAngle );
 
-        uint8 i;
-
-        for( i = 0; i < 16; i++ )
+        for( uint8 i = 0; i < 16; i++ )
         {
             INGR_DGN2IEEEDouble( &pHeaderOne->TransformationMatrix[i]);
         }
@@ -1417,9 +1376,7 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, const GByte
         CPL_LSBPTR64( &pHeaderOne->RotationAngle );
         CPL_LSBPTR64( &pHeaderOne->SkewAngle );
 
-        uint8 i;
-
-        for( i = 0; i < 16; i++ )
+        for( uint8 i = 0; i < 16; i++ )
         {
             CPL_LSBPTR64( &pHeaderOne->TransformationMatrix[i]);
         }
@@ -1473,9 +1430,7 @@ void CPL_STDCALL INGR_HeaderOneMemToDisk(const INGR_HeaderOne* pHeaderOne, GByte
         CPL_LSBPTR64( &pLSBHeaderOne->RotationAngle );
         CPL_LSBPTR64( &pLSBHeaderOne->SkewAngle );
 
-        uint8 i;
-
-        for( i = 0; i < 16; i++ )
+        for( uint8 i = 0; i < 16; i++ )
         {
             CPL_LSBPTR64( &pLSBHeaderOne->TransformationMatrix[i]);
         }
@@ -1654,7 +1609,6 @@ void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData, const
 #endif
 }
 
-
 //  ------------------------------------------------------------------
 //    Pasted from the DNG OGR Driver to avoid dependency on OGR
 //  ------------------------------------------------------------------
@@ -1710,7 +1664,7 @@ void    INGR_DGN2IEEEDouble(void * dbl)
     sign         = dt.hi & 0x80000000;
 
 /* -------------------------------------------------------------------- */
-/*      Adjust the exponent so that we may work with it                 */      
+/*      Adjust the exponent so that we may work with it                 */
 /* -------------------------------------------------------------------- */
     exponent = dt.hi >> 23;
     exponent = exponent & 0x000000ff;
@@ -1722,7 +1676,7 @@ void    INGR_DGN2IEEEDouble(void * dbl)
 /*      Save the bits that we are discarding so we can round properly   */
 /* -------------------------------------------------------------------- */
     rndbits = dt.lo & 0x00000007;
-        
+
     dt.lo = dt.lo >> 3;
     dt.lo = (dt.lo & 0x1fffffff) | (dt.hi << 29);
 
@@ -1735,8 +1689,6 @@ void    INGR_DGN2IEEEDouble(void * dbl)
     dt.hi = dt.hi >> 3;
     dt.hi = dt.hi & 0x000fffff;
     dt.hi = dt.hi | (exponent << 20) | sign;
-
-
 
 #ifdef CPL_LSB
 /* -------------------------------------------------------------------- */
