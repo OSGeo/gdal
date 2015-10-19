@@ -265,7 +265,7 @@ int main( int nArgc, char ** papszArgv )
     if(hDS)
         GDALClose(hDS);
     if(bCloseODS)
-        GDALClose(hODS);
+        GDALClose(hDstDS);
 
 exit:
     OGRCleanupAll();
