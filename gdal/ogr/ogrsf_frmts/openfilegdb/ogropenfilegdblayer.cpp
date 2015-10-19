@@ -1610,7 +1610,7 @@ const OGRField* OGROpenFileGDBLayer::GetMinMaxValue(OGRFieldDefn* poFieldDefn,
                                                     int bIsMin,
                                                     int& eOutType)
 {
-    eOutType = OFTMaxType;
+    eOutType = -1;
     if( !BuildLayerDefinition() )
         return NULL;
 
