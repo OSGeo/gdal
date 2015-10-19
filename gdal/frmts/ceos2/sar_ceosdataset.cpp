@@ -1706,7 +1706,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     psVolume->ImagryOptionsFile = TRUE;
-    if( ProcessData( fp, __CEOS_IMAGRY_OPT_FILE, psVolume, 4, -1) != CE_None )
+    if( ProcessData( fp, __CEOS_IMAGRY_OPT_FILE, psVolume, 4, VSI_L_OFFSET_MAX) != CE_None )
     {
         delete poDS;
         VSIFCloseL(fp);

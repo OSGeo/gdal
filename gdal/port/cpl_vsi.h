@@ -117,6 +117,7 @@ int CPL_DLL VSIStat( const char *, VSIStatBuf * );
 /*      otherwise redefine to use the regular api.                      */
 /* ==================================================================== */
 typedef GUIntBig vsi_l_offset;
+#define VSI_L_OFFSET_MAX GUINTBIG_MAX
 
 /* Make VSIL_STRICT_ENFORCE active in DEBUG builds */
 #ifdef DEBUG

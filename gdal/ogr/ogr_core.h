@@ -514,7 +514,7 @@ typedef enum
  * Used by OGR_F_Validate().
  * @since GDAL 2.0
  */
-#define OGR_F_VAL_ALL            0xFFFFFFFF
+#define OGR_F_VAL_ALL            0x7FFFFFFF
 
 /************************************************************************/
 /*                  ogr_feature.h related definitions.                  */

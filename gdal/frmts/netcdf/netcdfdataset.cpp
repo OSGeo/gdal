@@ -5435,9 +5435,9 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     char **papszExtraDimNames =  
         NCDFTokenizeArray( poSrcDS->GetMetadataItem("NETCDF_DIM_EXTRA","") );
     char **papszExtraDimValues = NULL;
-    size_t nDimSize = -1;
-    size_t nDimSizeTot = 1;
     if ( papszExtraDimNames != NULL && ( CSLCount( papszExtraDimNames )> 0 ) ) {
+        size_t nDimSize = 0;
+        size_t nDimSizeTot = 1;
         // first make sure dimensions lengths compatible with band count
         // for ( int i=0; i<CSLCount( papszExtraDimNames ); i++ ) {
         for ( int i=CSLCount( papszExtraDimNames )-1; i>=0; i-- ) {
@@ -5474,7 +5474,7 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             poDS->papszDimName.AddString( papszExtraDimNames[i] );
             sprintf( szTemp, "NETCDF_DIM_%s_DEF", papszExtraDimNames[i] );
             papszExtraDimValues = NCDFTokenizeArray( poSrcDS->GetMetadataItem(szTemp,"") );
-            nDimSize = atol( papszExtraDimValues[0] );
+            int nDimSize = atoi( papszExtraDimValues[0] );
             /* nc_type is an enum in netcdf-3, needs casting */
             nVarType = (nc_type) atol( papszExtraDimValues[1] );
             CSLDestroy( papszExtraDimValues );
