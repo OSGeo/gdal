@@ -199,6 +199,7 @@ typedef unsigned __int64 GUIntBig;
 
 #define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
 #define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
+#define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
 #elif HAVE_LONG_LONG
 
@@ -207,6 +208,7 @@ typedef unsigned long long GUIntBig;
 
 #define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
 #define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
+#define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFF) << 32) | 0xFFFFFFFFU)
 
 #else
 
@@ -215,6 +217,7 @@ typedef unsigned long    GUIntBig;
 
 #define GINTBIG_MIN     INT_MIN
 #define GINTBIG_MAX     INT_MAX
+#define GUINTBIG_MAX     UINT_MAX
 #endif
 
 #if SIZEOF_VOIDP == 8

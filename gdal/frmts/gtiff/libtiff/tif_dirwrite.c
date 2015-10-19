@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.78 2015-05-31 00:38:46 bfriesen Exp $ */
+/* $Id: tif_dirwrite.c,v 1.79 2015-10-19 12:04:24 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -778,7 +778,7 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 				goto bad;
 		}
 		else
-			tif->tif_diroff=(TIFFSeekFile(tif,0,SEEK_END)+1)&(~1);
+			tif->tif_diroff=(TIFFSeekFile(tif,0,SEEK_END)+1)&(~1U);
 		if (pdiroff!=NULL)
 			*pdiroff=tif->tif_diroff;
 		if (!(tif->tif_flags&TIFF_BIGTIFF))
@@ -2368,7 +2368,7 @@ TIFFLinkDirectory(TIFF* tif)
 {
 	static const char module[] = "TIFFLinkDirectory";
 
-	tif->tif_diroff = (TIFFSeekFile(tif,0,SEEK_END)+1) &~ 1;
+	tif->tif_diroff = (TIFFSeekFile(tif,0,SEEK_END)+1) &~ 1U;
 
 	/*
 	 * Handle SubIFDs

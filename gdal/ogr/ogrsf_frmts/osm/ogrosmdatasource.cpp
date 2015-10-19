@@ -1330,7 +1330,7 @@ static void WriteVarInt(unsigned int nVal, GByte** ppabyData)
     GByte* pabyData = *ppabyData;
     while(TRUE)
     {
-        if( (nVal & (~0x7f)) == 0 )
+        if( (nVal & (~0x7fU)) == 0 )
         {
             *pabyData = (GByte)nVal;
             *ppabyData = pabyData + 1;
@@ -1352,7 +1352,7 @@ static void WriteVarInt64(GUIntBig nVal, GByte** ppabyData)
     GByte* pabyData = *ppabyData;
     while(TRUE)
     {
-        if( (nVal & (~0x7f)) == 0 )
+        if( (nVal & (~0x7fU)) == 0 )
         {
             *pabyData = (GByte)nVal;
             *ppabyData = pabyData + 1;

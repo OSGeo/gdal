@@ -179,10 +179,15 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Extract size, and geotransform.                                 */
 /* -------------------------------------------------------------------- */
-    GUInt32 nRasterXSize, nRasterYSize;
-    
+    int nRasterXSize, nRasterYSize;
     memcpy( &nRasterXSize, achHeader + 128, 4 );
     memcpy( &nRasterYSize, achHeader + 132, 4 );
+    if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
+    {
+        delete poDS;
+        return NULL;
+    }
+    
     poDS->nRasterXSize = nRasterXSize;
     poDS->nRasterYSize = nRasterYSize;
 

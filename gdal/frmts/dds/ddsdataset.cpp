@@ -225,7 +225,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
 
     // Set pitch/linearsize field (some DDS readers require this field to be non-zero).
     uint bits_per_pixel = crn_get_format_bits_per_texel(fmt);
-    ddsDesc.lPitch = (((ddsDesc.dwWidth + 3) & ~3) * ((ddsDesc.dwHeight + 3) & ~3) * bits_per_pixel) >> 3;
+    ddsDesc.lPitch = (((ddsDesc.dwWidth + 3) & ~3U) * ((ddsDesc.dwHeight + 3) & ~3U) * bits_per_pixel) >> 3;
     ddsDesc.dwFlags |= DDSD_LINEARSIZE;
 
     /* Endianness problems when serializing structure?? dds on-disk format

@@ -1365,7 +1365,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 
         return NULL;
     }
-    nScanSize = (nScanSize & ~31) / 8;
+    nScanSize = (nScanSize & ~31U) / 8;
 
     poDS->sInfoHeader.iSizeImage = nScanSize * poDS->sInfoHeader.iHeight;
     poDS->sInfoHeader.iXPelsPerMeter = 0;

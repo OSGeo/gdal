@@ -328,7 +328,7 @@ class VSICurlHandle : public VSIVirtualHandle
 VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandler* poFSIn, const char* pszURLIn) :
     poFS(poFSIn),
     curOffset(0),
-    lastDownloadedOffset(-1),
+    lastDownloadedOffset(VSI_L_OFFSET_MAX),
     nBlocksToDownload(1),
     bEOF(FALSE),
     pfnReadCbk(NULL),
