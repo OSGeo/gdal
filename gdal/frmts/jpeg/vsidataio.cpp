@@ -49,8 +49,7 @@ typedef struct {
 
 typedef my_source_mgr * my_src_ptr;
 
-#define INPUT_BUF_SIZE  4096	/* choose an efficiently fread'able size */
-
+const size_t INPUT_BUF_SIZE = 4096; /* choose an efficiently fread'able size */
 
 /*
  * Initialize source --- called by jpeg_read_header
@@ -107,9 +106,7 @@ METHODDEF(boolean)
 fill_input_buffer (j_decompress_ptr cinfo)
 {
   my_src_ptr src = (my_src_ptr) cinfo->src;
-  size_t nbytes;
-
-  nbytes = VSIFReadL(src->buffer, 1, INPUT_BUF_SIZE, src->infile);
+  size_t nbytes = VSIFReadL(src->buffer, 1, INPUT_BUF_SIZE, src->infile);
 
   if (nbytes <= 0) {
     if (src->start_of_file)	/* Treat empty input file as fatal error */
@@ -128,7 +125,7 @@ fill_input_buffer (j_decompress_ptr cinfo)
   return TRUE;
 }
 
-/* 
+/*
  * The Intel IPP performance libraries do not necessarily read the 
  * entire contents of the buffer with each pass, so each re-fill
  * copies the remaining buffer bytes to the front of the buffer,
@@ -141,7 +138,6 @@ fill_input_buffer_ipp (j_decompress_ptr cinfo)
   my_src_ptr src = (my_src_ptr) cinfo->src;
   size_t bytes_left = src->pub.bytes_in_buffer;
   size_t bytes_to_read = INPUT_BUF_SIZE - bytes_left;
-  size_t nbytes;
 
   if(src->start_of_file || cinfo->progressive_mode)
   {
@@ -150,7 +146,8 @@ fill_input_buffer_ipp (j_decompress_ptr cinfo)
 
   memmove(src->buffer,src->pub.next_input_byte,bytes_left);
 
-  nbytes = VSIFReadL(src->buffer + bytes_left, 1, bytes_to_read, src->infile);
+  size_t nbytes
+      = VSIFReadL(src->buffer + bytes_left, 1, bytes_to_read, src->infile);
 
   if(nbytes <= 0)
   {
@@ -184,7 +181,6 @@ fill_input_buffer_ipp (j_decompress_ptr cinfo)
   return TRUE;
 }
 #endif /* IPPJ_HUFF */
-
 
 /*
  * Skip data --- used to skip over a potentially large amount of
@@ -220,7 +216,6 @@ skip_input_data (j_decompress_ptr cinfo, long num_bytes)
   }
 }
 
-
 /*
  * An additional method that can be provided by data source modules is the
  * resync_to_restart method for error recovery in the presence of RST markers.
@@ -228,7 +223,6 @@ skip_input_data (j_decompress_ptr cinfo, long num_bytes)
  * provided by the JPEG library.  That method assumes that no backtracking
  * is possible.
  */
-
 
 /*
  * Terminate source --- called by jpeg_finish_decompress
@@ -244,7 +238,6 @@ term_source (CPL_UNUSED j_decompress_ptr cinfo)
 {
   /* no work necessary here */
 }
-
 
 /*
  * Prepare for input from a stdio stream.
@@ -304,8 +297,8 @@ typedef struct {
 
 typedef my_destination_mgr * my_dest_ptr;
 
-#define OUTPUT_BUF_SIZE  4096	/* choose an efficiently fwrite'able size */
-
+/* choose an efficiently fwrite'able size */
+const size_t OUTPUT_BUF_SIZE = 4096;
 
 /*
  * Initialize destination --- called by jpeg_start_compress
