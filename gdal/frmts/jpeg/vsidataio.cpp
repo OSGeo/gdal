@@ -49,7 +49,7 @@ typedef struct {
 
 typedef my_source_mgr * my_src_ptr;
 
-const size_t INPUT_BUF_SIZE = 4096; /* choose an efficiently fread'able size */
+static const size_t INPUT_BUF_SIZE = 4096; /* choose an efficiently fread'able size */
 
 /*
  * Initialize source --- called by jpeg_read_header
@@ -298,7 +298,7 @@ typedef struct {
 typedef my_destination_mgr * my_dest_ptr;
 
 /* choose an efficiently fwrite'able size */
-const size_t OUTPUT_BUF_SIZE = 4096;
+static const size_t OUTPUT_BUF_SIZE = 4096;
 
 /*
  * Initialize destination --- called by jpeg_start_compress
