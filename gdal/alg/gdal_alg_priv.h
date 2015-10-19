@@ -153,7 +153,8 @@ void CPL_DLL * GDALCloneTransformer( void *pTranformerArg );
 /*      Color table related                                             */
 /************************************************************************/
 
-int
+/* definitions exists for T = GUInt32 and T = GUIntBig */
+template<class T> int
 GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed, 
                            GDALRasterBandH hGreen, 
                            GDALRasterBandH hBlue, 
@@ -163,7 +164,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
                            int (*pfnIncludePixel)(int,int,void*),
                            int nColors, 
                            int nBits,
-                           int* panHistogram,
+                           T* panHistogram,
                            GDALColorTableH hColorTable,
                            GDALProgressFunc pfnProgress, 
                            void * pProgressArg );

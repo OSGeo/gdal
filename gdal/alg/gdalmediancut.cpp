@@ -40,6 +40,7 @@
 #include "gdal_priv.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+#include <limits>
 
 CPL_CVSID("$Id$");
 
@@ -64,19 +65,23 @@ typedef	struct colorbox {
 	int	rmin, rmax;
 	int	gmin, gmax;
 	int	bmin, bmax;
-	int	total;
+	GUIntBig	total;
 } Colorbox;
 
-static void splitbox(Colorbox* ptr, const int* histogram,
+template<class T>
+static void splitbox(Colorbox* ptr, const T* histogram,
                      const HashHistogram* psHashHistogram,
                      int nCLevels,
                      Colorbox **pfreeboxes, Colorbox **pusedboxes,
                      GByte* pabyRedBand,
                      GByte* pabyGreenBand,
-                     GByte* pabyBlueBand, int nPixels);
+                     GByte* pabyBlueBand, T nPixels);
+
+template<class T>
 static void shrinkbox(Colorbox* box,
-                      const int* histogram,
+                      const T* histogram,
                       int nCLevels);
+
 static Colorbox* largest_box(Colorbox *usedboxes);
 
 /************************************************************************/
@@ -130,13 +135,31 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
                          void * pProgressArg )
 
 {
-    return GDALComputeMedianCutPCTInternal(hRed, hGreen, hBlue,
-                                     NULL, NULL, NULL,
-                                     pfnIncludePixel, nColors,
-                                     5,
-                                     NULL,
-                                     hColorTable,
-                                     pfnProgress, pProgressArg);
+    VALIDATE_POINTER1( hRed, "GDALComputeMedianCutPCT", CE_Failure );
+    int nXSize = GDALGetRasterBandXSize( hRed );
+    int nYSize = GDALGetRasterBandYSize( hRed );
+    if( nYSize == 0 )
+        return CE_Failure;
+    if( (GUInt32)nXSize < UINT_MAX / (GUInt32)nYSize )
+    {
+        return GDALComputeMedianCutPCTInternal(hRed, hGreen, hBlue,
+                                        NULL, NULL, NULL,
+                                        pfnIncludePixel, nColors,
+                                        5,
+                                        (GUInt32*)NULL,
+                                        hColorTable,
+                                        pfnProgress, pProgressArg);
+    }
+    else
+    {
+        return GDALComputeMedianCutPCTInternal(hRed, hGreen, hBlue,
+                                        NULL, NULL, NULL,
+                                        pfnIncludePixel, nColors,
+                                        5,
+                                        (GUIntBig*)NULL,
+                                        hColorTable,
+                                        pfnProgress, pProgressArg);
+    }
 }
 
 /*static int nMaxCollisions = 0;*/
@@ -255,7 +278,7 @@ static inline int* FindAndInsertColorCount(HashHistogram* psHashHistogram,
     }
 }
 
-int
+template<class T> int
 GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed, 
                            GDALRasterBandH hGreen, 
                            GDALRasterBandH hBlue, 
@@ -265,7 +288,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
                            int (*pfnIncludePixel)(int,int,void*),
                            int nColors, 
                            int nBits,
-                           int* panHistogram, /* NULL, or at least of size (1<<nBits)^3 * sizeof(int) bytes */
+                           T* panHistogram, /* NULL, or at least of size (1<<nBits)^3 * sizeof(T) bytes */
                            GDALColorTableH hColorTable,
                            GDALProgressFunc pfnProgress, 
                            void * pProgressArg )
@@ -328,25 +351,31 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
     int	     i;
     Colorbox *box_list, *ptr;
-    int* histogram;
+    T* histogram;
     Colorbox *freeboxes;
     Colorbox *usedboxes;
     int nCLevels = 1 << nBits;
     int nColorShift = 8 - nBits;
     int nColorCounter = 0;
     GByte anRed[256], anGreen[256], anBlue[256];
-    int nPixels = 0;
+    T nPixels = 0;
     HashHistogram* psHashHistogram = NULL;
     
-    if( nBits == 8 && pabyRedBand != NULL && pabyGreenBand != NULL &&
-        pabyBlueBand != NULL && nXSize < INT_MAX / nYSize )
+    if( (GUInt32)nXSize > std::numeric_limits<T>::max() / (GUInt32)nYSize )
     {
-        nPixels = nXSize * nYSize;
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "GDALComputeMedianCutPCTInternal() not called with large enough type");
+    }
+
+    if( nBits == 8 && pabyRedBand != NULL && pabyGreenBand != NULL &&
+        pabyBlueBand != NULL && (GUInt32)nXSize <= std::numeric_limits<T>::max() / (GUInt32)nYSize )
+    {
+        nPixels = (T)nXSize * (T)nYSize;
     }
 
     if( panHistogram )
     {
-        if( nBits == 8 && (GIntBig)nXSize * nYSize <= 65536 )
+        if( nBits == 8 && (GUIntBig)nXSize * nYSize <= 65536 )
         {
             /* If the image is small enough, then the number of colors */
             /* will be limited and using a hashmap, rather than a full table */
@@ -358,12 +387,12 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
         else
         {
             histogram = panHistogram;
-            memset(histogram, 0, nCLevels*nCLevels*nCLevels * sizeof(int));
+            memset(histogram, 0, nCLevels*nCLevels*nCLevels * sizeof(T));
         }
     }
     else
     {
-        histogram = (int*) VSICalloc(nCLevels*nCLevels*nCLevels,sizeof(int));
+        histogram = (T*) VSICalloc(nCLevels*nCLevels*nCLevels,sizeof(T));
         if( histogram == NULL )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -402,7 +431,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 
     ptr->rmin = ptr->gmin = ptr->bmin = 999;
     ptr->rmax = ptr->gmax = ptr->bmax = -1;
-    ptr->total = nXSize * nYSize;
+    ptr->total = (GUIntBig)nXSize * (GUIntBig)nYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Collect histogram.                                              */
@@ -457,17 +486,21 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
             ptr->gmax = MAX(ptr->gmax, nGreen);
             ptr->bmax = MAX(ptr->bmax, nBlue);
 
-            int* pnColor;
+            bool bFirstOccurrence;
             if( psHashHistogram )
             {
-                pnColor = FindAndInsertColorCount(psHashHistogram,
+                int* pnColor = FindAndInsertColorCount(psHashHistogram,
                                          MAKE_COLOR_CODE(nRed, nGreen, nBlue));
+                bFirstOccurrence = ( *pnColor == 0 );
+                (*pnColor) ++;
             }
             else
             {
-                pnColor = &HISTOGRAM(histogram, nCLevels, nRed, nGreen, nBlue);
+                T* pnColor = &HISTOGRAM(histogram, nCLevels, nRed, nGreen, nBlue);
+                bFirstOccurrence = ( *pnColor == 0 );
+                (*pnColor) ++;
             }
-            if( *pnColor == 0 )
+            if( bFirstOccurrence) 
             {
                 if( nColorShift == 0 && nColorCounter < nColors )
                 {
@@ -477,7 +510,6 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
                 }
                 nColorCounter++;
             }
-            (*pnColor) ++;
         }
     }
 
@@ -552,27 +584,28 @@ end_and_cleanup:
 static Colorbox *
 largest_box(Colorbox *usedboxes)
 {
-    Colorbox *p, *b;
-    int size;
+    Colorbox *b = NULL;
 
-    b = NULL;
-    size = -1;
-    for (p = usedboxes; p != NULL; p = p->next)
+    for (Colorbox* p = usedboxes; p != NULL; p = p->next)
+    {
         if ((p->rmax > p->rmin || p->gmax > p->gmin ||
-             p->bmax > p->bmin) &&  p->total > size)
-            size = (b = p)->total;
+             p->bmax > p->bmin) && (b == NULL || p->total > b->total))
+        {
+            b = p;
+        }
+    }
     return (b);
 }
 
 static void shrinkboxFromBand(Colorbox* ptr,
                               const GByte* pabyRedBand,
                               const GByte* pabyGreenBand,
-                              const GByte* pabyBlueBand, int nPixels)
+                              const GByte* pabyBlueBand, GUIntBig nPixels)
 {
     int rmin_new = 255, rmax_new = 0,
         gmin_new = 255, gmax_new = 0,
         bmin_new = 255, bmax_new = 0;
-    for(int i=0;i<nPixels;i++)
+    for(GUIntBig i=0;i<nPixels;i++)
     {
         int iR = pabyRedBand[i];
         int iG = pabyGreenBand[i];
@@ -723,23 +756,23 @@ static void shrinkboxFromHashHistogram(Colorbox* box,
 /************************************************************************/
 /*                              splitbox()                              */
 /************************************************************************/
-static void
-splitbox(Colorbox* ptr, const int* histogram,
+template<class T> static void
+splitbox(Colorbox* ptr, const T* histogram,
          const HashHistogram* psHashHistogram,
          int nCLevels,
          Colorbox **pfreeboxes, Colorbox **pusedboxes,
          GByte* pabyRedBand,
          GByte* pabyGreenBand,
-         GByte* pabyBlueBand, int nPixels)
+         GByte* pabyBlueBand, T nPixels)
 {
-    int		hist2[256];
+    T		hist2[256];
     int		first=0, last=0;
     Colorbox	*new_cb;
-    const int	*iptr;
-    int *histp;
+    const T	*iptr;
+    T *histp;
     int	i, j;
     int	ir,ig,ib;
-    int sum, sum1, sum2;
+    T sum, sum1, sum2;
     enum { RED, GREEN, BLUE } axis;
 
     /*
@@ -755,7 +788,7 @@ splitbox(Colorbox* ptr, const int* histogram,
     else
         axis = BLUE;
     /* get histogram along longest axis */
-    int nIters = (ptr->rmax - ptr->rmin + 1) * (ptr->gmax - ptr->gmin + 1) *
+    GUInt32 nIters = (ptr->rmax - ptr->rmin + 1) * (ptr->gmax - ptr->gmin + 1) *
                  (ptr->bmax - ptr->bmin + 1);
     //printf("nIters = %d\n", nIters);
     switch (axis) {
@@ -770,7 +803,7 @@ splitbox(Colorbox* ptr, const int* histogram,
                                 gmax = ptr->gmax,
                                 bmin = ptr->bmin,
                                 bmax = ptr->bmax;
-            for(int i=0;i<nPixels;i++)
+            for(T i=0;i<nPixels;i++)
             {
                 int iR = pabyRedBand[i];
                 int iG = pabyGreenBand[i];
@@ -826,7 +859,7 @@ splitbox(Colorbox* ptr, const int* histogram,
                                 gmax = ptr->gmax,
                                 bmin = ptr->bmin,
                                 bmax = ptr->bmax;
-            for(int i=0;i<nPixels;i++)
+            for(T i=0;i<nPixels;i++)
             {
                 int iR = pabyRedBand[i];
                 int iG = pabyGreenBand[i];
@@ -882,7 +915,7 @@ splitbox(Colorbox* ptr, const int* histogram,
                                 gmax = ptr->gmax,
                                 bmin = ptr->bmin,
                                 bmax = ptr->bmax;
-            for(int i=0;i<nPixels;i++)
+            for(T i=0;i<nPixels;i++)
             {
                 int iR = pabyRedBand[i];
                 int iG = pabyGreenBand[i];
@@ -977,7 +1010,7 @@ splitbox(Colorbox* ptr, const int* histogram,
         break;
     }
     if( nPixels != 0 &&
-        (new_cb->rmax - new_cb->rmin + 1) * (new_cb->gmax - new_cb->gmin + 1) *
+        (GUInt32)(new_cb->rmax - new_cb->rmin + 1) * (new_cb->gmax - new_cb->gmin + 1) *
         (new_cb->bmax - new_cb->bmin + 1) > nPixels )
     {
         shrinkboxFromBand(new_cb, pabyRedBand, pabyGreenBand, pabyBlueBand, nPixels);
@@ -991,7 +1024,7 @@ splitbox(Colorbox* ptr, const int* histogram,
         shrinkbox(new_cb, histogram, nCLevels);
     }
     if( nPixels != 0 &&
-        (ptr->rmax - ptr->rmin + 1) * (ptr->gmax - ptr->gmin + 1) *
+        (GUInt32)(ptr->rmax - ptr->rmin + 1) * (ptr->gmax - ptr->gmin + 1) *
         (ptr->bmax - ptr->bmin + 1) > nPixels )
     {
         shrinkboxFromBand(ptr, pabyRedBand, pabyGreenBand, pabyBlueBand, nPixels);
@@ -1009,10 +1042,10 @@ splitbox(Colorbox* ptr, const int* histogram,
 /************************************************************************/
 /*                             shrinkbox()                              */
 /************************************************************************/
-static void
-shrinkbox(Colorbox* box, const int* histogram, int nCLevels)
+template<class T> static void
+shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
 {
-    const int *histp;
+    const T *histp;
     int ir, ig, ib;
     //int count_iter;
 
