@@ -79,14 +79,14 @@ static GDALDataset *OGRPGDriverCreate( const char * pszName,
                                           CPL_UNUSED int nXSize,
                                           CPL_UNUSED int nYSize,
                                           CPL_UNUSED GDALDataType eDT,
-                                          CPL_UNUSED char **papszOptions )
+                                          char **papszOptions )
 
 {
     OGRPGDataSource     *poDS;
 
     poDS = new OGRPGDataSource();
 
-    if( !poDS->Open( pszName, TRUE, TRUE, NULL ) )
+    if( !poDS->Open( pszName, TRUE, TRUE, papszOptions ) )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -133,6 +133,8 @@ void RegisterOGRPG()
 "  <Option name='SCHEMAS' type='string' description='Restricted sets of schemas to explore (comma separated)'/>"
 "  <Option name='TABLES' type='string' description='Restricted set of tables to list (comma separated)'/>"
 "  <Option name='LIST_ALL_TABLES' type='boolean' description='Whether all tables, including non-spatial ones, should be listed' default='NO'/>"
+"  <Option name='PRELUDE_STATEMENTS' type='string' description='SQL statement(s) to send on the PostgreSQL client connection before any other ones'/>"
+"  <Option name='CLOSING_STATEMENTS' type='string' description='SQL statements() to send on the PostgreSQL client connection after any other ones'/>"
 "</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");

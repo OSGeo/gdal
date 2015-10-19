@@ -4847,6 +4847,89 @@ def ogr_pg_78():
     return 'success'
 
 ###############################################################################
+# Test PRELUDE_STATEMENTS and CLOSING_STATEMENTS open options
+
+def ogr_pg_79():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    # PRELUDE_STATEMENTS starting with BEGIN (use case: pg_bouncer in transaction pooling)
+    ds = gdal.OpenEx( 'PG:' + gdaltest.pg_connection_string, \
+        gdal.OF_VECTOR | gdal.OF_UPDATE, \
+        open_options = ['PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO "1h";',
+                        'CLOSING_STATEMENTS=COMMIT;'] )
+    sql_lyr = ds.ExecuteSQL('SHOW statement_timeout')
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != '1h':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ret = ds.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    ds = None
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # random PRELUDE_STATEMENTS
+    ds = gdal.OpenEx( 'PG:' + gdaltest.pg_connection_string, \
+        gdal.OF_VECTOR | gdal.OF_UPDATE, \
+        open_options = ['PRELUDE_STATEMENTS=SET statement_timeout TO "1h"' ] )
+    sql_lyr = ds.ExecuteSQL('SHOW statement_timeout')
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != '1h':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ret = ds.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    ds = None
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test wrong PRELUDE_STATEMENTS
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx( 'PG:' + gdaltest.pg_connection_string, \
+            gdal.OF_VECTOR | gdal.OF_UPDATE, \
+            open_options = ['PRELUDE_STATEMENTS=BEGIN;error SET LOCAL statement_timeout TO "1h";',
+                            'CLOSING_STATEMENTS=COMMIT;'] )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test wrong CLOSING_STATEMENTS
+    ds = gdal.OpenEx( 'PG:' + gdaltest.pg_connection_string, \
+        gdal.OF_VECTOR | gdal.OF_UPDATE, \
+        open_options = ['PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO "1h";',
+                        'CLOSING_STATEMENTS=COMMIT;error'] )
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = None
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_pg_table_cleanup():
@@ -5014,11 +5097,12 @@ gdaltest_list_internal = [
     ogr_pg_76,
     ogr_pg_77,
     ogr_pg_78,
+    ogr_pg_79,
     ogr_pg_cleanup ]
 
 DISABLED_gdaltest_list_internal = [
     ogr_pg_table_cleanup,
-    ogr_pg_76,
+    ogr_pg_79,
     ogr_pg_cleanup ]
 
 ###############################################################################

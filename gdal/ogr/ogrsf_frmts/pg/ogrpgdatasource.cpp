@@ -93,7 +93,7 @@ OGRPGDataSource::~OGRPGDataSource()
 {
     int         i;
 
-    FlushSoftTransaction();
+    FlushCache();
 
     CPLFree( pszName );
     CPLFree( pszDBName );
@@ -107,6 +107,21 @@ OGRPGDataSource::~OGRPGDataSource()
 
     if( hPGConn != NULL )
     {
+        /* If there are prelude statements we don't want to mess with transactions */
+        if( CSLFetchNameValue(papszOpenOptions, "PRELUDE_STATEMENTS") == NULL )
+            FlushSoftTransaction();
+
+/* -------------------------------------------------------------------- */
+/*      Send closing statements                                         */
+/* -------------------------------------------------------------------- */
+        const char* pszClosingStatements = CSLFetchNameValue(papszOpenOptions,
+                                                             "CLOSING_STATEMENTS");
+        if( pszClosingStatements != NULL )
+        {
+            PGresult    *hResult = OGRPG_PQexec( hPGConn, pszClosingStatements, TRUE );
+            OGRPGClearResult(hResult);
+        }
+
         /* XXX - mloskot: After the connection is closed, valgrind still
          * reports 36 bytes definitely lost, somewhere in the libpq.
          */
@@ -321,10 +336,21 @@ static PGTableEntry* OGRPGAddTableEntry(CPLHashSet* hSetTables,
 /************************************************************************/
 
 int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
-                           int bTestOpen, char** papszOpenOptions )
+                           int bTestOpen, char** papszOpenOptionsIn )
 
 {
     CPLAssert( nLayers == 0 );
+    papszOpenOptions = CSLDuplicate(papszOpenOptionsIn);
+
+    const char* pszPreludeStatements = CSLFetchNameValue(papszOpenOptions,
+                                                         "PRELUDE_STATEMENTS");
+    if( pszPreludeStatements )
+    {
+        // If the prelude statements starts with BEGIN, then don't emit one
+        // in our code.
+        if( EQUALN(pszPreludeStatements, "BEGIN", 5) )
+            nSoftTransactionLevel = 1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Verify postgresql prefix.                                       */
@@ -488,6 +514,21 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     bDSUpdate = bUpdate;
+
+/* -------------------------------------------------------------------- */
+/*      Send prelude statements                                         */
+/* -------------------------------------------------------------------- */
+    if( pszPreludeStatements != NULL )
+    {
+        PGresult    *hResult = OGRPG_PQexec( hPGConn, pszPreludeStatements, TRUE );
+        if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            OGRPGClearResult( hResult );
+            return FALSE;
+        }
+
+        OGRPGClearResult(hResult);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set the encoding to UTF8 as the driver advertizes UTF8          */
@@ -2497,16 +2538,12 @@ OGRErr OGRPGDataSource::SoftRollbackTransaction()
 OGRErr OGRPGDataSource::FlushSoftTransaction()
 
 {
-    FlushCache(); 
-    
     /*CPLDebug("PG", "poDS=%p FlushSoftTransaction() nSoftTransactionLevel=%d",
              this, nSoftTransactionLevel);*/
 
     if( nSoftTransactionLevel <= 0 )
         return OGRERR_NONE;
 
-    for(int i=0;i<nLayers;i++)
-        papoLayers[i]->InvalidateCursor();
     bSavePointActive = FALSE;
 
     OGRErr eErr = OGRERR_NONE;

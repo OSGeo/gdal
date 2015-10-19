@@ -131,6 +131,8 @@ OGRPGLayer::~OGRPGLayer()
         poFeatureDefn->UnsetLayer();
         poFeatureDefn->Release();
     }
+
+    CloseCursor();
 }
 
 /************************************************************************/
