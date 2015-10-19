@@ -88,8 +88,26 @@ Errors can be catched by enclosing this command with a CPLPushErrorHandler()/CPL
 (GDAL &gt;= 2.0)
 
 <ul>
+<li> <b>DBNAME</b>=string: Database name.<p>
+<li> <b>PORT</b>=integer: Port.<p>
+<li> <b>USER</b>=string: User name.<p>
+<li> <b>PASSWORD</b>=string: Password.<p>
+<li> <b>HOST</b>=string: Server hostname.<p>
+<li> <b>ACTIVE_SCHEMA</b>=string: Active schema.<p>
+<li> <b>SCHEMAS</b>=string: Restricted sets of schemas to explore (comma separated).<p>
+<li> <b>TABLES</b>=string: Restricted set of tables to list (comma separated).<p>
 <li> <b>LIST_ALL_TABLES</b>=YES/NO: This may be "YES" to force all tables,
 including non-spatial ones, to be listed.<p>
+<li> <b>PRELUDE_STATEMENTS</b>=string (GDAL &gt;= 2.1). SQL statement(s) to send on the
+PostgreSQL client connection before any other ones. In case of several statement,
+they must be separated with the semi-column (;) sign. The driver will specifically
+recognize BEGIN as the first statement to avoid emitting BEGIN/COMMIT itself.
+This option may be useful when using the driver with pg_bouncer in transaction pooling,
+e.g. 'BEGIN; SET LOCAL statement_timeout TO "1h";'<p>
+<li> <b>CLOSING_STATEMENTS</b>=string (GDAL &gt;= 2.1). SQL statement(s) to send on the
+PostgreSQL client connection after any other ones. In case of several statement,
+they must be separated with the semi-column (;) sign. With the above example value
+for PRELUDE_STATEMENTS, the appropriate CLOSING_STATEMENTS would be "COMMIT".<p>
 </ul>
 
 <h3>Dataset Creation Options</h3>
