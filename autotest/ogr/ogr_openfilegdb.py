@@ -700,9 +700,10 @@ def ogr_openfilegdb_6():
     ds.ReleaseResultSet(sql_lyr)
 
     # No index
-    sql_lyr = ds.ExecuteSQL("select min(id) from multipoint")
+    sql_lyr = ds.ExecuteSQL("select min(id),  avg(id) from multipoint")
     feat = sql_lyr.GetNextFeature()
-    if feat.GetField('MIN_id') != 1:
+    if feat.GetField('MIN_id') != 1 or \
+       feat.GetField('AVG_id') != 3.0:
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
         return 'fail'
