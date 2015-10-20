@@ -323,6 +323,9 @@ def vsis3_extra_1():
         return 'skip'
 
     f = gdal.VSIFOpenL('/vsis3/' + gdal.GetConfigOption('S3_RESOURCE'), 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     
@@ -333,6 +336,9 @@ def vsis3_extra_1():
 
     # Same with /vsis3_streaming/
     f = gdal.VSIFOpenL('/vsis3_streaming/' + gdal.GetConfigOption('S3_RESOURCE'), 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     
