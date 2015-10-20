@@ -7,14 +7,12 @@
 
 <h1>NetCDF: Network Common Data Form</h1>
 
-
 This format is supported for read and write access. 
 
 NetCDF is an interface for 
 array-oriented data access and is used for representing scientific data.<p>
 
-
-The fill value metadata or missing_value backward compatibililty is preserved 
+The fill value metadata or missing_value backward compatibility is preserved 
 as NODATA value when available.
 <p>
 
@@ -22,23 +20,23 @@ NOTE: Implemented as <tt>gdal/frmts/netcdf/netcdfdataset.cpp</tt>.<p>
 
 <h2> Multiple Image Handling (Subdatasets)</h2>
 
-Nework Command Data Form is a container for several different arrays most
-used for storing scientific dataset. One netCDF file may 
+Network Command Data Form is a container for several different arrays most
+used for storing scientific dataset. One NetCDF file may 
 contain several datasets. They may differ in size, number of dimensions and 
 may represent data for different regions.
 <p>
-If the file contains only one netCDF array which appears to be an image, 
+If the file contains only one NetCDF array which appears to be an image, 
 it may be accessed directly, but if the file contains multiple images it may 
 be necessary to import the file via a two step process. <p>
 <p>
 The first step is to get a report of the components images (dataset) in the 
 file using gdalinfo, and then to import the desired images using 
 gdal_translate.  The gdalinfo utility lists all multidimensional subdatasets 
-from the input netCDF file. 
+from the input NetCDF file. 
 <p>
 The name of individual images are assigned to the SUBDATASET_n_NAME 
 metadata item. The description for each image is found in the 
-SUBDATASET_n_DESC metadata item. For netCDF images will follow this format:
+SUBDATASET_n_DESC metadata item. For NetCDF images will follow this format:
 
 <i>NETCDF:filename:variable_name</i><p>
 
@@ -50,7 +48,7 @@ about the dataset or
 
 <b>gdal_translate</b> to read dataset.<p>
 
-For example, we want to read data from a netCDF file:<p>
+For example, we want to read data from a NetCDF file:<p>
 <pre>
 $ gdalinfo sst.nc
 Driver: netCDF/Network Common Data Format
@@ -86,7 +84,7 @@ Lower Right (  512.0,  512.0)
 Center      (  256.0,  256.0)
 </pre>
 
-This netCDF files contain 4 datasets, lon_bnds, lat_bnds, tim_bnds and tos.
+This NetCDF files contain 4 datasets, lon_bnds, lat_bnds, tim_bnds and tos.
 
 Now select the subdataset, described as:
 
@@ -156,7 +154,7 @@ Band 24 Block=180x1 Type=Float32, ColorInterp=Undefined
     NETCDF_time_units=days since 2001-1-1
 </pre>
 
-gdalinfo display the number of bands into this subdataset.  
+gdalinfo displays the number of bands into this subdataset.  
 There are metadata attached to each band. 
 
 In this example, the metadata informs us
@@ -168,15 +166,15 @@ You may also use <b>gdal_translate</b> for reading the subdataset.<p>
 Note that you should provide exactly the contents of the line marked 
 <b>SUBDATASET_n_NAME</b> to GDAL, including the <b>NETCDF:</b> prefix.<p>
 
-The <b>NETCDF</b> prefix must be first.  It triggers the subdataset netCDF driver.
+The <b>NETCDF</b> prefix must be first.  It triggers the subdataset NetCDF driver.
 
 This driver is intended only for importing remote sensing and geospatial 
 datasets in form of raster images. If you want explore all data contained in 
-netCDF file you should use another tools. 
+NetCDF file you should use another tools. 
 
 <h2>Dimension</h2>
 
-The netCDF driver assume that data follows the CF-1 convention from 
+The NetCDF driver assume that data follows the CF-1 convention from 
 <a href="http://www.unidata.ucar.edu/software/netcdf/docs/conventions.html">UNIDATA </A>
 
 The dimensions inside the NetCDF file use the following rules: (Z,Y,X).  
@@ -189,7 +187,7 @@ will be displayed on each band with its corresponding T and P values.
 
 <h2>Georeference</h2>
 
-There is no universal way of storing georeferencing in netCDF files. 
+There is no universal way of storing georeferencing in NetCDF files. 
 
 The driver first tries to follow the CF-1 Convention from UNIDATA looking for
 the Metadata named "grid_mapping". 
@@ -198,7 +196,7 @@ If "grid_mapping" is not present, the driver will try to find an
 lat/lon grid array to set geotransform array.  The NetCDF driver verifies 
 that the Lat/Lon array is equally space.<p>
 
-If those 2 mehtods fail, NetCDF driver will try to read the following 
+If those 2 methods fail, NetCDF driver will try to read the following 
 metadata directly and set up georefenrencing.
 <ul>
     <li>spatial_ref (Well Known Text)
@@ -216,7 +214,7 @@ or,
 
 <h2>Creation Issues</h2>
 
-This driver supports creation of netCDF file following the CF-1 convention. 
+This driver supports creation of NetCDF file following the CF-1 convention. 
 You may create set of 2D datasets.  Each variable array is named
 Band1, Band2, ... BandN. <p>
 
@@ -226,10 +224,10 @@ the data it contains.
 
 <h2>GDAL NetCDF Metadata</h2>
 
-All netCDF attributes are transparently translated as GDAL metadata. <p>
+All NetCDF attributes are transparently translated as GDAL metadata. <p>
 The translation follow these directives:<p>
 <ul>
-<li>Global NetCDF metatadata have a <b>NC_GLOBAL</b> tag prefixed.<p>
+<li>Global NetCDF metadata have a <b>NC_GLOBAL</b> tag prefixed.<p>
 <li>Dataset metadata have their <b>variable name</b> prefixed.<p>
 <li>Each prefix is followed by a <b>#</b> sign. <p>
 <li>The NetCDF attribute follows the form: <b>name=value</b>.<p>
@@ -304,7 +302,7 @@ The driver has undergone significant changes in GDAL 1.9.0, see NEWS file and <a
 <li><p>Added support for DEFLATE compression (reading and writing) and szip (reading) - requires NetCDF-4 support</p></li>
 <li><p>Added support for valid_range/valid_min/valid_max</p></li>
 <li><p>Proper handling of signed/unsigned byte data</p></li>
-<li><p>Added support for Create() function - enables to use netcdf directly with gdalwarp</p></li>
+<li><p>Added support for Create() function - enables to use NetCDF directly with gdalwarp</p></li>
 <li><p>Added support for CF two-dimensional coordinate variables (see <a href="http://cfconventions.org/1.6.html#idp5559280">CF Conventions</a>) via GDAL GEOLOCATION arrays (see <a href="https://trac.osgeo.org/gdal/wiki/rfc4_geolocate">RFC 4: Geolocation Arrays</a>) (GDAL >= 1.10)</p></li>
 </ul>
 
@@ -312,10 +310,10 @@ The driver has undergone significant changes in GDAL 1.9.0, see NEWS file and <a
 
 <ul>
 
-<li><p><b>FORMAT=[NC/NC2/NC4/NC4C]</b>: Set the netcdf file format to use, NC is the default. NC2 is normally supported by recent netcdf installations, but NC4 and NC4C are available if netcdf was compiled with NetCDF-4 (and HDF5) support. 
-<li><p><b>COMPRESS=[NONE/DEFLATE]</b>: Set the compression to use.  DEFLATE is only available if netcdf has been compiled with NetCDF-4 support. NC4C format is the default if DEFLATE compression is used.</p></li>
+<li><p><b>FORMAT=[NC/NC2/NC4/NC4C]</b>: Set the NetCDF file format to use, NC is the default. NC2 is normally supported by recent NetCDF installations, but NC4 and NC4C are available if NetCDF was compiled with NetCDF-4 (and HDF5) support. 
+<li><p><b>COMPRESS=[NONE/DEFLATE]</b>: Set the compression to use.  DEFLATE is only available if NetCDF has been compiled with NetCDF-4 support. NC4C format is the default if DEFLATE compression is used.</p></li>
 <li><p><b>ZLEVEL=[1-9]</b>: Set the level of compression when using DEFLATE compression. A value of 9 is best, and 1 is least compression. The default is 1, which offers the best time/compression ratio.</p></li>
-<li><p><b>WRITE_BOTTOMUP=[YES/NO]</b>: Set the y-axis order for export, overriding the order detected by the driver. NetCDF files are usually assumed "bottom-up", contrary to GDAL's model which is "north up". This normally does not create a problem in the y-axis order, unless there is no y axis geo-referencing. Files without geo-referencing information will be exported in the netcdf default "bottom-up" order, and the contrary for files with geo-referencing. For import see Configuration Option GDAL_NETCDF_BOTTOMUP below.</p></li>
+<li><p><b>WRITE_BOTTOMUP=[YES/NO]</b>: Set the y-axis order for export, overriding the order detected by the driver. NetCDF files are usually assumed "bottom-up", contrary to GDAL's model which is "north up". This normally does not create a problem in the y-axis order, unless there is no y axis geo-referencing. Files without geo-referencing information will be exported in the NetCDF default "bottom-up" order, and the contrary for files with geo-referencing. For import see Configuration Option GDAL_NETCDF_BOTTOMUP below.</p></li>
 <li><p><b>WRITE_GDAL_TAGS=[YES/NO]</b>: Define if GDAL tags used for georeferencing (spatial_ref and GeoTransform) should be exported, in addition to CF tags. Not all information is stored in the CF tags (such as named datums and EPSG codes), therefore the driver exports these variables by default.  In import the CF "grid_mapping" variable takes precedence and the GDAL tags are used if they do not conflict with CF metadata.</p></li>
 <li><p><b>WRITE_LONLAT=[YES/NO/IF_NEEDED]</b>: Define if CF lon/lat variables are written to file. Default is YES for geographic SRS and NO for projected SRS. This is normally not necessary for projected SRS as GDAL and many applications use the X/Y dimension variables and CF projection information.  Use of IF_NEEDED option creates lon/lat variables if the projection is not part of the CF-1.5 standard.</p></li>
 <li><p><b>TYPE_LONLAT=[float/double]</b>: Set the variable type to use for lon/lat variables. Default is double for geographic SRS and float for projected SRS. If lon/lat variables are written for a projected SRS, the file is considerably large (each variable uses X*Y space), therefore TYPE_LONLAT=float and COMPRESS=DEFLATE are advisable in order to save space.</p></li>
@@ -331,12 +329,11 @@ The driver has undergone significant changes in GDAL 1.9.0, see NEWS file and <a
 
 <h2>Driver building</h2>
 
-This driver is compiled with the UNIDATA netCDF library.<p>
+This driver is compiled with the UNIDATA NetCDF library.<p>
 
-You need to download or compile the netCDF library before configuring  GDAL with netCDF support. <p>
+You need to download or compile the NetCDF library before configuring GDAL with NetCDF support. <p>
 
-See <a href="http://trac.osgeo.org/gdal/wiki/NetCDF">NetCDF GDAL wiki</a> for build instructions and information regarding HDF4, NetCDF-4 and HDF5. 
-
+See <a href="http://trac.osgeo.org/gdal/wiki/NetCDF">NetCDF GDAL wiki</a> for build instructions and information regarding HDF4, NetCDF-4 and HDF5.
 
 <h2>See Also:</h2>
 <ul>
@@ -347,7 +344,6 @@ See <a href="http://trac.osgeo.org/gdal/wiki/NetCDF">NetCDF GDAL wiki</a> for bu
 </ul>
 <hr>
 <a href="formats_list.html">Full list of GDAL Raster Formats</a>
-
 
 </body>
 </html>

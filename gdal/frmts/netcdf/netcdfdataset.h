@@ -30,13 +30,14 @@
 #ifndef _NETCDFDATASET_H_INCLUDED_
 #define _NETCDFDATASET_H_INCLUDED_
 
-#include <float.h>
+#include <cfloat>
+
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
-#include "gdal_frmts.h"
-#include "cpl_string.h"
-#include "ogr_spatialref.h"
 #include "netcdf.h"
+#include "ogr_spatialref.h"
 
 
 /************************************************************************/
@@ -72,7 +73,7 @@
 /* -------------------------------------------------------------------- */
 
 /* NETCDF driver defs */
-#define NCDF_MAX_STR_LEN     8192
+static const size_t NCDF_MAX_STR_LEN = 8192;
 #define NCDF_CONVENTIONS_CF  "CF-1.5"
 #define NCDF_SPATIAL_REF     "spatial_ref"
 #define NCDF_GEOTRANSFORM    "GeoTransform"
@@ -83,25 +84,25 @@
 #define NCDF_LONLAT          "lon lat"
 
 /* netcdf file types, as in libcdi/cdo and compat w/netcdf.h */
-#define NCDF_FORMAT_NONE            0   /* Not a netCDF file */
-#define NCDF_FORMAT_NC              1   /* netCDF classic format */
-#define NCDF_FORMAT_NC2             2   /* netCDF version 2 (64-bit)  */
-#define NCDF_FORMAT_NC4             3   /* netCDF version 4 */
-#define NCDF_FORMAT_NC4C            4   /* netCDF version 4 (classic) */
-#define NCDF_FORMAT_UNKNOWN         10  /* Format not determined (yet) */
+static const int NCDF_FORMAT_NONE    = 0;   /* Not a netCDF file */
+static const int NCDF_FORMAT_NC      = 1;   /* netCDF classic format */
+static const int NCDF_FORMAT_NC2     = 2;   /* netCDF version 2 (64-bit)  */
+static const int NCDF_FORMAT_NC4     = 3;   /* netCDF version 4 */
+static const int NCDF_FORMAT_NC4C    = 4;   /* netCDF version 4 (classic) */
+static const int NCDF_FORMAT_UNKNOWN = 10;  /* Format not determined (yet) */
 /* HDF files (HDF5 or HDF4) not supported because of lack of support */
 /* in libnetcdf installation or conflict with other drivers */
-#define NCDF_FORMAT_HDF5            5   /* HDF4 file, not supported */
-#define NCDF_FORMAT_HDF4            6   /* HDF4 file, not supported */
+static const int NCDF_FORMAT_HDF5    = 5;   /* HDF4 file, not supported */
+static const int NCDF_FORMAT_HDF4    = 6;   /* HDF4 file, not supported */
 
 /* compression parameters */
-#define NCDF_COMPRESS_NONE            0   
+static const int NCDF_COMPRESS_NONE    = 0;
 /* TODO */
 /* http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html#Packed%20Data%20Values */
-#define NCDF_COMPRESS_PACKED          1
-#define NCDF_COMPRESS_DEFLATE         2
-#define NCDF_DEFLATE_LEVEL            1  /* best time/size ratio */
-#define NCDF_COMPRESS_SZIP            3  /* no support for writing */
+static const int NCDF_COMPRESS_PACKED  = 1;
+static const int NCDF_COMPRESS_DEFLATE = 2;
+static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
+static const int NCDF_COMPRESS_SZIP    = 3;  /* no support for writing */
 
 /* helper for libnetcdf errors */
 #define NCDF_ERR(status) if ( status != NC_NOERR ){ \
@@ -201,7 +202,7 @@ static const char* papszCFLongitudeAttribValues[] = { "degrees_east", "longitude
 static const char* papszCFLatitudeVarNames[] = { "lat", "latitude", NULL };
 static const char* papszCFLatitudeAttribNames[] = { "units", CF_STD_NAME, "axis", NULL };
 static const char* papszCFLatitudeAttribValues[] = { "degrees_north", "latitude", "Y", NULL };
- 
+
 static const char* papszCFProjectionXVarNames[] = { "x", "xc", NULL };
 static const char* papszCFProjectionXAttribNames[] = { CF_STD_NAME, NULL };
 static const char* papszCFProjectionXAttribValues[] = { CF_PROJ_X_COORD, NULL };
@@ -265,12 +266,12 @@ typedef struct {
 // default mappings, for the generic case
 /* These 'generic' mappings are based on what was previously in the  
    poNetCDFSRS struct. They will be used as a fallback in case none 
-   of the others match (ie you are exporting a projection that has 
+   of the others match (i.e. you are exporting a projection that has
    no CF-1 equivalent). 
    They are not used for known CF-1 projections since there is not a 
    unique 2-way projection-independent 
    mapping between OGC WKT params and CF-1 ones: it varies per-projection. 
-*/ 
+*/
 
 static const oNetcdfSRS_PP poGenericMappings[] = {
     /* scale_factor is handled as a special case, write 2 values */
@@ -482,7 +483,7 @@ static const oNetcdfSRS_PP poOrthoMappings[] = {
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },  
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
     {NULL, NULL}
- }; 
+ };
 
 // Polar stereographic
 //
@@ -497,7 +498,7 @@ static const oNetcdfSRS_PP poOrthoMappings[] = {
 //    * false_easting
 //    * false_northing
 
-/* 
+/*
    (http://www.remotesensing.org/geotiff/proj_list/polar_stereographic.html)
 
    Note: Projection parameters for this projection are quite different in CF-1 from
@@ -654,7 +655,7 @@ static const oNetcdfSRS_PT poNetcdfSRS_PT[] = {
 
 /************************************************************************/
 /* ==================================================================== */
-/*			     netCDFDataset		                             		*/
+/*                           netCDFDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -737,7 +738,7 @@ class netCDFDataset : public GDALPamDataset
 
     netCDFDataset( );
     ~netCDFDataset( );
-    
+
     /* Projection/GT */
     CPLErr 	GetGeoTransform( double * );    
     CPLErr 	SetGeoTransform (double *);
@@ -764,7 +765,6 @@ class netCDFDataset : public GDALPamDataset
     static GDALDataset* CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
                                     int bStrict, char ** papszOptions, 
                                     GDALProgressFunc pfnProgress, void * pProgressData );
-        
 };
 
 #endif
