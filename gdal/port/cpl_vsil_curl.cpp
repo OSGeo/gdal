@@ -96,15 +96,15 @@ typedef enum
 typedef struct
 {
     ExistStatus     eExists;
-    int             bHastComputedFileSize;
+    bool            bHasComputedFileSize;
     vsi_l_offset    fileSize;
-    int             bIsDirectory;
+    bool            bIsDirectory;
     time_t          mTime;
 } CachedFileProp;
 
 typedef struct
 {
-    int             bGotFileList;
+    bool            bGotFileList;
     char**          papszFileList; /* only file name without path */
 } CachedDirList;
 
@@ -216,14 +216,14 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
 
     char**              ParseHTMLFileList(const char* pszFilename,
                                           char* pszData,
-                                          int* pbGotFileList);
+                                          bool* pbGotFileList);
 
 protected:
     CPLMutex       *hMutex;
 
     virtual CPLString GetFSPrefix() { return "/vsicurl/"; }
     virtual VSICurlHandle* CreateFileHandle(const char* pszURL);
-    virtual char** GetFileList(const char *pszFilename, int* pbGotFileList);
+    virtual char** GetFileList(const char *pszFilename, bool* pbGotFileList);
 
 public:
     VSICurlFilesystemHandler();
@@ -237,7 +237,7 @@ public:
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
-    virtual char   **ReadDir( const char *pszDirname, int* pbGotFileList );
+            char   **ReadDir( const char *pszDirname, bool* pbGotFileList );
 
 
     const CachedRegion* GetRegion(const char*     pszURL,
@@ -272,21 +272,21 @@ class VSICurlHandle : public VSIVirtualHandle
 
     vsi_l_offset    curOffset;
     vsi_l_offset    fileSize;
-    int             bHastComputedFileSize;
+    bool            bHasComputedFileSize;
     ExistStatus     eExists;
-    int             bIsDirectory;
+    bool            bIsDirectory;
     time_t          mTime;
 
     vsi_l_offset    lastDownloadedOffset;
     int             nBlocksToDownload;
-    int             bEOF;
+    bool            bEOF;
 
-    int             DownloadRegion(vsi_l_offset startOffset, int nBlocks);
+    bool            DownloadRegion(vsi_l_offset startOffset, int nBlocks);
 
     VSICurlReadCbkFunc  pfnReadCbk;
     void               *pReadCbkUserData;
-    int                 bStopOnInterrruptUntilUninstall;
-    int                 bInterrupted;
+    bool                bStopOnInterrruptUntilUninstall;
+    bool                bInterrupted;
 
   protected:
     virtual struct curl_slist* GetCurlHeaders(const CPLString& ) { return NULL; }
@@ -309,10 +309,10 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual int          Flush();
     virtual int          Close();
 
-    int                  IsKnownFileSize() const { return bHastComputedFileSize; }
+    bool                 IsKnownFileSize() const { return bHasComputedFileSize; }
     vsi_l_offset         GetFileSize();
-    int                  Exists();
-    int                  IsDirectory() const { return bIsDirectory; }
+    bool                 Exists();
+    bool                 IsDirectory() const { return bIsDirectory; }
     time_t               GetMTime() const { return mTime; }
 
     int                  InstallReadCbk(VSICurlReadCbkFunc pfnReadCbk,
@@ -330,17 +330,17 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandler* poFSIn, const char* pszUR
     curOffset(0),
     lastDownloadedOffset(VSI_L_OFFSET_MAX),
     nBlocksToDownload(1),
-    bEOF(FALSE),
+    bEOF(false),
     pfnReadCbk(NULL),
     pReadCbkUserData(NULL),
-    bStopOnInterrruptUntilUninstall(FALSE),
-    bInterrupted(FALSE)
+    bStopOnInterrruptUntilUninstall(false),
+    bInterrupted(false)
 {
     pszURL = CPLStrdup(pszURLIn);
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     eExists = cachedFileProp->eExists;
     fileSize = cachedFileProp->fileSize;
-    bHastComputedFileSize = cachedFileProp->bHastComputedFileSize;
+    bHasComputedFileSize = cachedFileProp->bHasComputedFileSize;
     bIsDirectory = cachedFileProp->bIsDirectory;
     mTime = cachedFileProp->mTime;
 }
@@ -378,7 +378,7 @@ int   VSICurlHandle::InstallReadCbk(VSICurlReadCbkFunc pfnReadCbkIn,
     pfnReadCbk = pfnReadCbkIn;
     pReadCbkUserData = pfnUserDataIn;
     bStopOnInterrruptUntilUninstall = bStopOnInterrruptUntilUninstallIn;
-    bInterrupted = FALSE;
+    bInterrupted = false;
     return TRUE;
 }
 
@@ -393,8 +393,8 @@ int VSICurlHandle::UninstallReadCbk()
 
     pfnReadCbk = NULL;
     pReadCbkUserData = NULL;
-    bStopOnInterrruptUntilUninstall = FALSE;
-    bInterrupted = FALSE;
+    bStopOnInterrruptUntilUninstall = false;
+    bInterrupted = false;
     return TRUE;
 }
 
@@ -416,7 +416,7 @@ int VSICurlHandle::Seek( vsi_l_offset nOffset, int nWhence )
     {
         curOffset = GetFileSize() + nOffset;
     }
-    bEOF = FALSE;
+    bEOF = false;
     return 0;
 }
 
@@ -462,21 +462,21 @@ typedef struct
 {
     char*           pBuffer;
     size_t          nSize;
-    int             bIsHTTP;
-    int             bIsInHeader;
-    int             bMultiRange;
+    bool            bIsHTTP;
+    bool            bIsInHeader;
+    bool            bMultiRange;
     vsi_l_offset    nStartOffset;
     vsi_l_offset    nEndOffset;
     int             nHTTPCode;
     vsi_l_offset    nContentLength;
-    int             bFoundContentRange;
-    int             bError;
-    int             bDownloadHeaderOnly;
+    bool            bFoundContentRange;
+    bool            bError;
+    bool            bDownloadHeaderOnly;
 
     VSILFILE           *fp; 
     VSICurlReadCbkFunc  pfnReadCbk;
     void               *pReadCbkUserData;
-    int                 bInterrupted;
+    bool                bInterrupted;
 } WriteFuncStruct;
 
 /************************************************************************/
@@ -490,21 +490,21 @@ static void VSICURLInitWriteFuncStruct(WriteFuncStruct   *psStruct,
 {
     psStruct->pBuffer = NULL;
     psStruct->nSize = 0;
-    psStruct->bIsHTTP = FALSE;
-    psStruct->bIsInHeader = TRUE;
-    psStruct->bMultiRange = FALSE;
+    psStruct->bIsHTTP = false;
+    psStruct->bIsInHeader = true;
+    psStruct->bMultiRange = false;
     psStruct->nStartOffset = 0;
     psStruct->nEndOffset = 0;
     psStruct->nHTTPCode = 0;
     psStruct->nContentLength = 0;
-    psStruct->bFoundContentRange = FALSE;
-    psStruct->bError = FALSE;
-    psStruct->bDownloadHeaderOnly = FALSE;
+    psStruct->bFoundContentRange = false;
+    psStruct->bError = false;
+    psStruct->bDownloadHeaderOnly = false;
 
     psStruct->fp = fp;
     psStruct->pfnReadCbk = pfnReadCbk;
     psStruct->pReadCbkUserData = pReadCbkUserData;
-    psStruct->bInterrupted = FALSE;
+    psStruct->bInterrupted = false;
 }
 
 /************************************************************************/
@@ -533,7 +533,7 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
                 psStruct->nContentLength = CPLScanUIntBig(pszLine + 16,
                                                           strlen(pszLine + 16));
             else if (EQUALN(pszLine, "Content-Range: ", 15))
-                psStruct->bFoundContentRange = TRUE;
+                psStruct->bFoundContentRange = true;
 
             /*if (nSize > 2 && pszLine[nSize - 2] == '\r' &&
                 pszLine[nSize - 1] == '\n')
@@ -553,7 +553,7 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
                 }
                 else
                 {
-                    psStruct->bIsInHeader = FALSE;
+                    psStruct->bIsInHeader = false;
 
                     /* Detect servers that don't support range downloading */
                     if (psStruct->nHTTPCode == 200 &&
@@ -564,7 +564,7 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                 "Range downloading not supported by this server !");
-                        psStruct->bError = TRUE;
+                        psStruct->bError = true;
                         return 0;
                     }
                 }
@@ -577,7 +577,7 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
                 if ( ! psStruct->pfnReadCbk(psStruct->fp, buffer, nSize,
                                             psStruct->pReadCbkUserData) )
                 {
-                    psStruct->bInterrupted = TRUE;
+                    psStruct->bInterrupted = true;
                     return 0;
                 }
             }
@@ -601,10 +601,10 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
 
-    if (bHastComputedFileSize)
+    if (bHasComputedFileSize)
         return fileSize;
 
-    bHastComputedFileSize = TRUE;
+    bHasComputedFileSize = true;
 
     /* Consider that only the files whose extension ends up with one that is */
     /* listed in CPL_VSIL_CURL_ALLOWED_EXTENSIONS exist on the server */
@@ -645,7 +645,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
             fileSize = 0;
 
             CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-            cachedFileProp->bHastComputedFileSize = TRUE;
+            cachedFileProp->bHasComputedFileSize = true;
             cachedFileProp->fileSize = fileSize;
             cachedFileProp->eExists = eExists;
 
@@ -693,7 +693,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
 
         sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
-        sWriteFuncHeaderData.bDownloadHeaderOnly = TRUE;
+        sWriteFuncHeaderData.bDownloadHeaderOnly = true;
         osVerb = "GET";
     }
     else
@@ -780,7 +780,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
             if( UseLimitRangeGetInsteadOfHead() && sWriteFuncData.pBuffer != NULL &&
                 CanRestartOnError((const char*)sWriteFuncData.pBuffer) )
             {
-                bHastComputedFileSize = FALSE;
+                bHasComputedFileSize = false;
                 CPLFree(sWriteFuncData.pBuffer);
                 CPLFree(sWriteFuncHeaderData.pBuffer);
                 return GetFileSize();
@@ -799,7 +799,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
         {
             eExists = EXIST_YES;
             fileSize = 0;
-            bIsDirectory = TRUE;
+            bIsDirectory = true;
         }
 
         if (ENABLE_DEBUG)
@@ -811,7 +811,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     CPLFree(sWriteFuncHeaderData.pBuffer);
 
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-    cachedFileProp->bHastComputedFileSize = TRUE;
+    cachedFileProp->bHasComputedFileSize = true;
     cachedFileProp->fileSize = fileSize;
     cachedFileProp->eExists = eExists;
     cachedFileProp->bIsDirectory = bIsDirectory;
@@ -823,7 +823,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 /*                                 Exists()                             */
 /************************************************************************/
 
-int VSICurlHandle::Exists()
+bool VSICurlHandle::Exists()
 {
     if (eExists == EXIST_UNKNOWN)
         GetFileSize();
@@ -843,17 +843,17 @@ vsi_l_offset VSICurlHandle::Tell()
 /*                          DownloadRegion()                            */
 /************************************************************************/
 
-int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
+bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
 {
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
 
     if (bInterrupted && bStopOnInterrruptUntilUninstall)
-        return FALSE;
+        return false;
 
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     if (cachedFileProp->eExists == EXIST_NO)
-        return FALSE;
+        return false;
 
     CURL* hCurlHandle = poFS->GetCurlHandleFor(pszURL);
     VSICurlSetOptions(hCurlHandle, pszURL);
@@ -869,7 +869,7 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     sWriteFuncHeaderData.nStartOffset = startOffset;
     sWriteFuncHeaderData.nEndOffset = startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE - 1;
     /* Some servers don't like we try to read after end-of-file (#5786) */
-    if( cachedFileProp->bHastComputedFileSize && 
+    if( cachedFileProp->bHasComputedFileSize && 
         sWriteFuncHeaderData.nEndOffset >= cachedFileProp->fileSize )
     {
         sWriteFuncHeaderData.nEndOffset = cachedFileProp->fileSize - 1;
@@ -904,12 +904,12 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
 
     if (sWriteFuncData.bInterrupted)
     {
-        bInterrupted = TRUE;
+        bInterrupted = true;
 
         CPLFree(sWriteFuncData.pBuffer);
         CPLFree(sWriteFuncHeaderData.pBuffer);
 
-        return FALSE;
+        return false;
     }
 
     long response_code = 0;
@@ -941,18 +941,18 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
             else
                 CPLError(CE_Failure, CPLE_AppDefined, "%d: %s", (int)response_code, szCurlErrBuf);
         }
-        if (!bHastComputedFileSize && startOffset == 0)
+        if (!bHasComputedFileSize && startOffset == 0)
         {
-            cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
+            cachedFileProp->bHasComputedFileSize = bHasComputedFileSize = true;
             cachedFileProp->fileSize = fileSize = 0;
             cachedFileProp->eExists = eExists = EXIST_NO;
         }
         CPLFree(sWriteFuncData.pBuffer);
         CPLFree(sWriteFuncHeaderData.pBuffer);
-        return FALSE;
+        return false;
     }
 
-    if (!bHastComputedFileSize && sWriteFuncHeaderData.pBuffer)
+    if (!bHasComputedFileSize && sWriteFuncHeaderData.pBuffer)
     {
         /* Try to retrieve the filesize from the HTTP headers */
         /* if in the form : "Content-Range: bytes x-y/filesize" */
@@ -1002,7 +1002,7 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
                 CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
                         pszURL, fileSize, (int)response_code);
 
-            bHastComputedFileSize = cachedFileProp->bHastComputedFileSize = TRUE;
+            bHasComputedFileSize = cachedFileProp->bHasComputedFileSize = true;
             cachedFileProp->fileSize = fileSize;
             cachedFileProp->eExists = eExists;
         }
@@ -1033,7 +1033,7 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     CPLFree(sWriteFuncData.pBuffer);
     CPLFree(sWriteFuncHeaderData.pBuffer);
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -1096,17 +1096,17 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
             if( nBlocksToDownload > N_MAX_REGIONS )
                 nBlocksToDownload = N_MAX_REGIONS;
 
-            if (DownloadRegion(nOffsetToDownload, nBlocksToDownload) == FALSE)
+            if (DownloadRegion(nOffsetToDownload, nBlocksToDownload) == false)
             {
                 if (!bInterrupted)
-                    bEOF = TRUE;
+                    bEOF = true;
                 return 0;
             }
             psRegion = poFS->GetRegion(pszURL, iterOffset);
         }
         if (psRegion == NULL || psRegion->pData == NULL)
         {
-            bEOF = TRUE;
+            bEOF = true;
             return 0;
         }
         int nToCopy = (int) MIN(nBufferRequestSize, psRegion->nSize - (iterOffset - psRegion->nFileOffsetStart));
@@ -1123,7 +1123,7 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
 
     size_t ret = (size_t) ((iterOffset - curOffset) / nSize);
     if (ret != nMemb)
-        bEOF = TRUE;
+        bEOF = true;
 
     curOffset = iterOffset;
 
@@ -1237,7 +1237,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
 
     if (sWriteFuncData.bInterrupted)
     {
-        bInterrupted = TRUE;
+        bInterrupted = true;
 
         CPLFree(sWriteFuncData.pBuffer);
         CPLFree(sWriteFuncHeaderData.pBuffer);
@@ -1264,9 +1264,9 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
                 CPLError(CE_Failure, CPLE_AppDefined, "%d: %s", (int)response_code, szCurlErrBuf);
         }
         /*
-        if (!bHastComputedFileSize && startOffset == 0)
+        if (!bHasComputedFileSize && startOffset == 0)
         {
-            cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
+            cachedFileProp->bHasComputedFileSize = bHasComputedFileSize = true;
             cachedFileProp->fileSize = fileSize = 0;
             cachedFileProp->eExists = eExists = EXIST_NO;
         }
@@ -1367,7 +1367,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
 /* -------------------------------------------------------------------- */
 /*      Collect headers.                                                */
 /* -------------------------------------------------------------------- */
-        int bExpectedRange = FALSE;
+        bool bExpectedRange = false;
 
         while( *pszNext != '\n' && *pszNext != '\r' && *pszNext != '\0' )
         {
@@ -1381,16 +1381,16 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
             }
 
             *pszEOL = '\0';
-            int bRestoreAntislashR = FALSE;
+            bool bRestoreAntislashR = false;
             if (pszEOL - pszNext > 1 && pszEOL[-1] == '\r')
             {
-                bRestoreAntislashR = TRUE;
+                bRestoreAntislashR = true;
                 pszEOL[-1] = '\0';
             }
 
             if (EQUALN(pszNext, "Content-Range: bytes ", strlen("Content-Range: bytes ")))
             {
-                bExpectedRange = TRUE; /* FIXME */
+                bExpectedRange = true; /* FIXME */
             }
 
             if (bRestoreAntislashR)
@@ -1615,7 +1615,7 @@ CURL* VSICurlFilesystemHandler::GetCurlHandleFor(CPLString osURL)
             pszEndOfServ = strchr(pszEndOfServ, '/');
         if (pszEndOfServ == NULL)
             pszURL = pszURL + strlen(pszURL);
-        int bReinitConnection = strncmp(psCachedConnection->osURL,
+        bool bReinitConnection = strncmp(psCachedConnection->osURL,
                                         pszURL, pszEndOfServ-pszURL) != 0;
 
         if (bReinitConnection)
@@ -1817,9 +1817,9 @@ CachedFileProp*  VSICurlFilesystemHandler::GetCachedFileProp(const char* pszURL)
     {
         cachedFileProp = (CachedFileProp*) CPLMalloc(sizeof(CachedFileProp));
         cachedFileProp->eExists = EXIST_UNKNOWN;
-        cachedFileProp->bHastComputedFileSize = FALSE;
+        cachedFileProp->bHasComputedFileSize = false;
         cachedFileProp->fileSize = 0;
-        cachedFileProp->bIsDirectory = FALSE;
+        cachedFileProp->bIsDirectory = false;
         cacheFileSize[pszURL] = cachedFileProp;
     }
 
@@ -1856,7 +1856,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
                               CSLTestBoolean(pszOptionVal);
 
     CPLString osFilename(pszFilename);
-    int bGotFileList = TRUE;
+    bool bGotFileList = true;
     if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
         strncmp(CPLGetExtension(osFilename), "zip", 3) != 0 && !bSkipReadDir)
     {
@@ -2008,7 +2008,7 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
                     brokendowntime.tm_min = nMin;
                     mTime = CPLYMDHMSToUnixTime(&brokendowntime);
 
-                    return TRUE;
+                    return true;
                 }
                 nFileSize = 0;
             }
@@ -2069,9 +2069,9 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
 
 char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                                                    char* pszData,
-                                                   int* pbGotFileList)
+                                                   bool* pbGotFileList)
 {
-    *pbGotFileList = FALSE;
+    *pbGotFileList = false;
 
     const char* pszDir;
     if (EQUALN(pszFilename, "/vsicurl/http://", strlen("/vsicurl/http://")))
@@ -2132,7 +2132,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
             nCountTable ++;
             if (nCountTable == 2)
             {
-                *pbGotFileList = FALSE;
+                *pbGotFileList = false;
                 return NULL;
             }
         }
@@ -2145,7 +2145,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
              (osExpectedString_unescaped.size() != 0 && strstr(pszLine, osExpectedString_unescaped.c_str()))))
         {
             bIsHTMLDirList = true;
-            *pbGotFileList = TRUE;
+            *pbGotFileList = true;
         }
         /* Subversion HTTP listing */
         /* or Microsoft-IIS/6.0 listing (e.g. http://ortho.linz.govt.nz/tifs/2005_06/) */
@@ -2170,7 +2170,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                     if (strstr(pszDir, pszSubDir))
                     {
                         bIsHTMLDirList = true;
-                        *pbGotFileList = TRUE;
+                        *pbGotFileList = true;
                     }
                 }
             }
@@ -2201,10 +2201,10 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
 
                 /* Remove trailing slash, that are returned for directories by */
                 /* Apache */
-                int bIsDirectory = FALSE;
+                bool bIsDirectory = false;
                 if (endQuote[-1] == '/')
                 {
-                    bIsDirectory = TRUE;
+                    bIsDirectory = true;
                     endQuote[-1] = 0;
                 }
                 
@@ -2221,7 +2221,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                     cachedFileProp->eExists = EXIST_YES;
                     cachedFileProp->bIsDirectory = bIsDirectory;
                     cachedFileProp->mTime = mTime;
-                    cachedFileProp->bHastComputedFileSize = nFileSize > 0;
+                    cachedFileProp->bHasComputedFileSize = nFileSize > 0;
                     cachedFileProp->fileSize = nFileSize;
 
                     oFileList.AddString( beginFilename );
@@ -2285,9 +2285,9 @@ drwxr-xr-x  280 1003  1003  6656 Aug 26 04:17 gnu
 
 static bool VSICurlParseFullFTPLine(char* pszLine,
                                    char*& pszFilename,
-                                   int& bSizeValid,
+                                   bool& bSizeValid,
                                    GUIntBig& nSize,
-                                   int& bIsDirectory,
+                                   bool& bIsDirectory,
                                    GIntBig& nUnixTime)
 {
     char* pszNextToken = pszLine;
@@ -2309,7 +2309,7 @@ static bool VSICurlParseFullFTPLine(char* pszLine,
     if (pszPermissions[0] == '-')
     {
         /* Regular file */
-        bSizeValid = TRUE;
+        bSizeValid = true;
         nSize = CPLScanUIntBig(pszSize, strlen(pszSize));
     }
 
@@ -2388,12 +2388,12 @@ static bool VSICurlParseFullFTPLine(char* pszLine,
 /*                          GetFileList()                               */
 /************************************************************************/
 
-char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotFileList)
+char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGotFileList)
 {
     if (ENABLE_DEBUG)
         CPLDebug("VSICURL", "GetFileList(%s)" , pszDirname);
 
-    *pbGotFileList = FALSE;
+    *pbGotFileList = false;
 
     /* HACK (optimization in fact) for MBTiles driver */
     if (strstr(pszDirname, ".tiles.mapbox.com") != NULL)
@@ -2455,7 +2455,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
             else if (iTry == 0)
             {
                 CPLStringList oFileList;
-                *pbGotFileList = TRUE;
+                *pbGotFileList = true;
 
                 while( (c = strchr(pszLine, '\n')) != NULL)
                 {
@@ -2464,9 +2464,9 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
                         c[-1] = 0;
 
                     char* pszFilename = NULL;
-                    int bSizeValid = FALSE;
+                    bool bSizeValid = false;
                     GUIntBig nFileSize = 0;
-                    int bIsDirectory = FALSE;
+                    bool bIsDirectory = false;
                     GIntBig mUnixTime = 0;
                     if (!VSICurlParseFullFTPLine(pszLine, pszFilename,
                                                  bSizeValid, nFileSize,
@@ -2480,7 +2480,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
                             CPLSPrintf("%s/%s", pszDirname + strlen("/vsicurl/"), pszFilename);
                         CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
                         cachedFileProp->eExists = EXIST_YES;
-                        cachedFileProp->bHastComputedFileSize = bSizeValid;
+                        cachedFileProp->bHasComputedFileSize = bSizeValid;
                         cachedFileProp->fileSize = nFileSize;
                         cachedFileProp->bIsDirectory = bIsDirectory;
                         cachedFileProp->mTime = mUnixTime;
@@ -2511,7 +2511,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
             else
             {
                 CPLStringList oFileList;
-                *pbGotFileList = TRUE;
+                *pbGotFileList = true;
 
                 while( (c = strchr(pszLine, '\n')) != NULL)
                 {
@@ -2626,7 +2626,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
              strstr(osFilename, ".ZIP.") != NULL &&
              !bSkipReadDir)
     {
-        int bGotFileList;
+        bool bGotFileList;
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
         const bool bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
@@ -2693,7 +2693,7 @@ int VSICurlFilesystemHandler::Rmdir( CPL_UNUSED const char *pszDirname )
 /*                             ReadDir()                                */
 /************************************************************************/
 
-char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname, int* pbGotFileList )
+char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname, bool* pbGotFileList )
 {
     CPLString osDirname(pszDirname);
     while (osDirname[strlen(osDirname) - 1] == '/')
@@ -2718,7 +2718,7 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname, int* pbGotFile
     if (cachedFileProp->eExists == EXIST_YES && !cachedFileProp->bIsDirectory)
     {
         if (pbGotFileList)
-            *pbGotFileList = TRUE;
+            *pbGotFileList = true;
         return NULL;
     }
 
@@ -2829,7 +2829,7 @@ class VSIS3FSHandler: public VSICurlFilesystemHandler
 protected:
     virtual CPLString GetFSPrefix() { return "/vsis3/"; }
     virtual VSICurlHandle* CreateFileHandle(const char* pszURL);
-    virtual char** GetFileList(const char *pszFilename, int* pbGotFileList);
+    virtual char** GetFileList(const char *pszFilename, bool* pbGotFileList);
 
 public:
         VSIS3FSHandler() {}
@@ -2906,9 +2906,9 @@ void VSIS3FSHandler::AnalyseS3FileList( const CPLString& osBaseURL,
 
                     CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
                     cachedFileProp->eExists = EXIST_YES;
-                    cachedFileProp->bHastComputedFileSize = TRUE;
+                    cachedFileProp->bHasComputedFileSize = true;
                     cachedFileProp->fileSize = (GUIntBig)CPLAtoGIntBig(CPLGetXMLValue(psIter, "Size", "0"));
-                    cachedFileProp->bIsDirectory = FALSE;
+                    cachedFileProp->bIsDirectory = false;
                     cachedFileProp->mTime = 0;
 
                     int nYear, nMonth, nDay, nHour, nMin, nSec;
@@ -2941,7 +2941,7 @@ void VSIS3FSHandler::AnalyseS3FileList( const CPLString& osBaseURL,
 
                     CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
                     cachedFileProp->eExists = EXIST_YES;
-                    cachedFileProp->bIsDirectory = TRUE;
+                    cachedFileProp->bIsDirectory = true;
                     cachedFileProp->mTime = 0;
 
                     osFileList.AddString(osKey.c_str() + osPrefix.size());
@@ -2957,12 +2957,12 @@ void VSIS3FSHandler::AnalyseS3FileList( const CPLString& osBaseURL,
 /*                           GetFileList()                              */
 /************************************************************************/
 
-char** VSIS3FSHandler::GetFileList( const char *pszDirname, int* pbGotFileList )
+char** VSIS3FSHandler::GetFileList( const char *pszDirname, bool* pbGotFileList )
 {
     // TODO: to implement
     if (ENABLE_DEBUG)
         CPLDebug("S3", "GetFileList(%s)" , pszDirname);
-    *pbGotFileList = FALSE;
+    *pbGotFileList = false;
     
     pszDirname += GetFSPrefix().size();
 
@@ -2984,7 +2984,7 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname, int* pbGotFileList )
     
     CPLString osMaxKeys = CPLGetConfigOption("AWS_MAX_KEYS", "");
     
-    while(TRUE)
+    while(true)
     {
         poS3HandleHelper->ResetQueryParameters();
         CPLString osBaseURL(poS3HandleHelper->GetURL());
@@ -3051,7 +3051,7 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname, int* pbGotFileList )
         }
         else
         {
-            *pbGotFileList = TRUE;
+            *pbGotFileList = true;
             AnalyseS3FileList( osBaseURL,
                                (const char*)sWriteFuncData.pBuffer,
                                osFileList,
