@@ -772,24 +772,19 @@ double BiCubicKernel(double dfVal)
 
 static
 int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
-                      double dfX, double dfY, double* pdfDEMH )
+                         const double dfXIn, const double dfYIn, double* pdfDEMH )
 {
-    
-    int bGotNoDataValue = FALSE;
-    double dfNoDataValue = 0;
     int nRasterXSize = psTransform->poDS->GetRasterXSize();
     int nRasterYSize = psTransform->poDS->GetRasterYSize();
-    dfNoDataValue = psTransform->poDS->GetRasterBand(1)->GetNoDataValue( &bGotNoDataValue );
-
+    int bGotNoDataValue = FALSE;
+    double dfNoDataValue = psTransform->poDS->GetRasterBand(1)->GetNoDataValue( &bGotNoDataValue );
     int bands[1] = {1};
-
-    double dfDEMH(0);
 
     if(psTransform->eResampleAlg == DRA_Cubic)
     {
         // convert from upper left corner of pixel coordinates to center of pixel coordinates:
-        dfX -= 0.5;
-        dfY -= 0.5;
+        double dfX = dfXIn - 0.5;
+        double dfY = dfYIn - 0.5;
         int dX = int(dfX);
         int dY = int(dfY);
         double dfDeltaX = dfX - dX;
@@ -799,7 +794,7 @@ int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
         int dYNew = dY - 1;
         if (!(dXNew >= 0 && dYNew >= 0 && dXNew + 4 <= nRasterXSize && dYNew + 4 <= nRasterYSize))
         {
-            return FALSE;
+            goto bilinear_fallback;
         }
         //cubic interpolation
         double adfElevData[16] = {0};
@@ -839,13 +834,17 @@ int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
         {
             return FALSE;
         }
-        dfDEMH = dfSumH / dfSumWeight;
+
+        *pdfDEMH = dfSumH / dfSumWeight;
+
+        return TRUE;
     }
     else if(psTransform->eResampleAlg == DRA_Bilinear)
     {
+bilinear_fallback:
         // convert from upper left corner of pixel coordinates to center of pixel coordinates:
-        dfX -= 0.5;
-        dfY -= 0.5;
+        double dfX = dfXIn - 0.5;
+        double dfY = dfYIn - 0.5;
         int dX = int(dfX);
         int dY = int(dfY);
         double dfDeltaX = dfX - dX;
@@ -853,7 +852,7 @@ int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
 
         if (!(dX >= 0 && dY >= 0 && dX + 2 <= nRasterXSize && dY + 2 <= nRasterYSize))
         {
-            return FALSE;
+            goto near_fallback;
         }
         //bilinear interpolation
         double adfElevData[4] = {0,0,0,0};
@@ -885,30 +884,35 @@ int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
         double dfXZ1 = adfElevData[0] * dfDeltaX1 + adfElevData[1] * dfDeltaX;
         double dfXZ2 = adfElevData[2] * dfDeltaX1 + adfElevData[3] * dfDeltaX;
         double dfYZ = dfXZ1 * dfDeltaY1 + dfXZ2 * dfDeltaY;
-        dfDEMH = dfYZ;
+
+        *pdfDEMH = dfYZ;
+
+        return TRUE;
     }
     else
     {
-        int dX = (int) (dfX);
-        int dY = (int) (dfY);
+near_fallback:
+        int dX = (int) (dfXIn);
+        int dY = (int) (dfYIn);
         if (!(dX >= 0 && dY >= 0 && dX < nRasterXSize && dY < nRasterYSize))
         {
             return FALSE;
         }
+        double dfDEMH(0);
         CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 1, 1,
                                                     &dfDEMH, 1, 1,
                                                     GDT_Float64, 1, bands, 0, 0, 0,
-                                                  NULL);
+                                                    NULL);
         if(eErr != CE_None ||
             (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfDEMH)) )
         {
             return FALSE;
         }
-    }
-    
-    *pdfDEMH = dfDEMH;
 
-    return TRUE;
+        *pdfDEMH = dfDEMH;
+
+        return TRUE;
+    }
 }
 
 /************************************************************************/
