@@ -1010,8 +1010,8 @@ splitbox(Colorbox* ptr, const T* histogram,
         break;
     }
     if( nPixels != 0 &&
-        (GUInt32)(new_cb->rmax - new_cb->rmin + 1) * (new_cb->gmax - new_cb->gmin + 1) *
-        (new_cb->bmax - new_cb->bmin + 1) > nPixels )
+        (T)(new_cb->rmax - new_cb->rmin + 1) * (T)(new_cb->gmax - new_cb->gmin + 1) *
+        (T)(new_cb->bmax - new_cb->bmin + 1) > nPixels )
     {
         shrinkboxFromBand(new_cb, pabyRedBand, pabyGreenBand, pabyBlueBand, nPixels);
     }
@@ -1024,8 +1024,8 @@ splitbox(Colorbox* ptr, const T* histogram,
         shrinkbox(new_cb, histogram, nCLevels);
     }
     if( nPixels != 0 &&
-        (GUInt32)(ptr->rmax - ptr->rmin + 1) * (ptr->gmax - ptr->gmin + 1) *
-        (ptr->bmax - ptr->bmin + 1) > nPixels )
+        (T)(ptr->rmax - ptr->rmin + 1) * (T)(ptr->gmax - ptr->gmin + 1) *
+        (T)(ptr->bmax - ptr->bmin + 1) > nPixels )
     {
         shrinkboxFromBand(ptr, pabyRedBand, pabyGreenBand, pabyBlueBand, nPixels);
     }
