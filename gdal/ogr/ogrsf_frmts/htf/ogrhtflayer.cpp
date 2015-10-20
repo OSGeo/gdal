@@ -343,7 +343,7 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
     const char* pszLine;
 
     OGRLinearRing oLR;
-    int bHastFirstCoord = FALSE;
+    bool bHasFirstCoord = false;
     double dfFirstEasting = 0, dfFirstNorthing = 0;
     double dfIslandEasting = 0, dfIslandNorthing = 0;
     int bInIsland = FALSE;
@@ -403,9 +403,9 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
             {
                 double dfEasting = CPLAtof(papszTokens[2]);
                 double dfNorthing = CPLAtof(papszTokens[3]);
-                if (!bHastFirstCoord)
+                if (!bHasFirstCoord)
                 {
-                    bHastFirstCoord = TRUE;
+                    bHasFirstCoord = true;
                     dfFirstEasting = dfEasting;
                     dfFirstNorthing = dfNorthing;
                     oLR.addPoint(dfEasting, dfNorthing);
