@@ -146,7 +146,7 @@ typedef enum
 typedef struct
 {
     ExistStatus     eExists;
-    int             bHastComputedFileSize;
+    int             bHasComputedFileSize;
     vsi_l_offset    fileSize;
     int             bIsDirectory;
 #ifdef notdef
@@ -202,7 +202,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 #endif
     vsi_l_offset    curOffset;
     vsi_l_offset    fileSize;
-    int             bHastComputedFileSize;
+    int             bHasComputedFileSize;
     ExistStatus     eExists;
     int             bIsDirectory;
     
@@ -266,7 +266,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     int                  ReceivedBytes(GByte *buffer, size_t count, size_t nmemb);
     int                  ReceivedBytesHeader(GByte *buffer, size_t count, size_t nmemb);
 
-    int                  IsKnownFileSize() const { return bHastComputedFileSize; }
+    int                  IsKnownFileSize() const { return bHasComputedFileSize; }
     vsi_l_offset         GetFileSize();
     int                  Exists();
     int                  IsDirectory() const { return bIsDirectory; }
@@ -291,7 +291,7 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, 
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     eExists = cachedFileProp->eExists;
     fileSize = cachedFileProp->fileSize;
-    bHastComputedFileSize = cachedFileProp->bHastComputedFileSize;
+    bHasComputedFileSize = cachedFileProp->bHasComputedFileSize;
     bIsDirectory = cachedFileProp->bIsDirectory;
     poFS->ReleaseMutex();
 
@@ -386,7 +386,7 @@ int VSICurlStreamingHandle::Seek( vsi_l_offset nOffset, int nWhence )
         pCachedData = NULL;
         nCachedSize = 0;
         AcquireMutex();
-        bHastComputedFileSize = FALSE;
+        bHasComputedFileSize = FALSE;
         fileSize = 0;
         ReleaseMutex();
     }
@@ -488,7 +488,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     WriteFuncStruct sWriteFuncHeaderData;
 
     AcquireMutex();
-    if (bHastComputedFileSize)
+    if (bHasComputedFileSize)
     {
         vsi_l_offset nRet = fileSize;
         ReleaseMutex();
@@ -558,7 +558,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     AcquireMutex();
 
     eExists = EXIST_UNKNOWN;
-    bHastComputedFileSize = TRUE;
+    bHasComputedFileSize = TRUE;
 
     if (strncmp(pszURL, "ftp", 3) == 0)
     {
@@ -624,7 +624,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
     poFS->AcquireMutex();
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-    cachedFileProp->bHastComputedFileSize = TRUE;
+    cachedFileProp->bHasComputedFileSize = TRUE;
 #ifdef notdef
     cachedFileProp->nChecksumOfFirst1024Bytes = nRecomputedChecksumOfFirst1024Bytes;
 #endif
@@ -683,7 +683,7 @@ int VSICurlStreamingHandle::Exists()
 
                 poFS->AcquireMutex();
                 CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-                cachedFileProp->bHastComputedFileSize = TRUE;
+                cachedFileProp->bHasComputedFileSize = TRUE;
                 cachedFileProp->fileSize = fileSize;
                 cachedFileProp->eExists = eExists;
                 poFS->ReleaseMutex();
@@ -733,12 +733,12 @@ int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nm
     if (ENABLE_DEBUG)
         CPLDebug("VSICURL", "Receiving %d bytes...", (int)nSize);
 
-    if( bHasCandidateFileSize && bCanTrustCandidateFileSize && !bHastComputedFileSize )
+    if( bHasCandidateFileSize && bCanTrustCandidateFileSize && !bHasComputedFileSize )
     {
         poFS->AcquireMutex();
         CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
         cachedFileProp->fileSize = fileSize = nCandidateFileSize;
-        cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
+        cachedFileProp->bHasComputedFileSize = bHasComputedFileSize = TRUE;
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
         poFS->ReleaseMutex();
@@ -872,7 +872,7 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
             }
         }
 
-        if ( !(InterpretRedirect() && (nHTTPCode == 301 || nHTTPCode == 302)) && !bHastComputedFileSize)
+        if ( !(InterpretRedirect() && (nHTTPCode == 301 || nHTTPCode == 302)) && !bHasComputedFileSize)
         {
             /* Caution: when gzip compression is enabled, the content-length is the compressed */
             /* size, which we are not interested in, so we must not take it into account. */
@@ -965,12 +965,12 @@ void VSICurlStreamingHandle::DownloadInThread()
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
 
     AcquireMutex();
-    if (!bAskDownloadEnd && eRet == 0 && !bHastComputedFileSize)
+    if (!bAskDownloadEnd && eRet == 0 && !bHasComputedFileSize)
     {
         poFS->AcquireMutex();
         CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
         cachedFileProp->fileSize = fileSize = nBodySize;
-        cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
+        cachedFileProp->bHasComputedFileSize = bHasComputedFileSize = TRUE;
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
         poFS->ReleaseMutex();
@@ -1090,11 +1090,11 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
     size_t nRemaining = nBufferRequestSize;
 
     AcquireMutex();
-    const int bHastComputedFileSizeLocal = bHastComputedFileSize;
+    const int bHasComputedFileSizeLocal = bHasComputedFileSize;
     const vsi_l_offset fileSizeLocal = fileSize;
     ReleaseMutex();
 
-    if (bHastComputedFileSizeLocal && curOffset >= fileSizeLocal)
+    if (bHasComputedFileSizeLocal && curOffset >= fileSizeLocal)
     {
         CPLDebug("VSICURL", "Read attempt beyond end of file");
         bEOF = TRUE;
@@ -1120,7 +1120,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
             nRecomputedChecksumOfFirst1024Bytes += nVal;
         }
 
-        if( bHastComputedFileSizeLocal )
+        if( bHasComputedFileSizeLocal )
         {
             poFS->AcquireMutex();
             CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
@@ -1132,8 +1132,8 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
             {
                 CPLDebug("VSICURL", "Invalidating previously cached file size. First bytes of file have changed!");
                 AcquireMutex();
-                bHastComputedFileSize = FALSE;
-                cachedFileProp->bHastComputedFileSize = FALSE;
+                bHasComputedFileSize = FALSE;
+                cachedFileProp->bHasComputedFileSize = FALSE;
                 cachedFileProp->nChecksumOfFirst1024Bytes = 0;
                 ReleaseMutex();
             }
@@ -1156,7 +1156,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
     }
 
     /* Is the request partially covered by the cache and going beyond file size ? */
-    if ( pCachedData != NULL && bHastComputedFileSizeLocal &&
+    if ( pCachedData != NULL && bHasComputedFileSizeLocal &&
          curOffset <= nCachedSize &&
          curOffset + nRemaining > fileSizeLocal &&
          fileSize == nCachedSize )
@@ -1304,13 +1304,13 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
             bEOF = FALSE;
             AcquireMutex();
             eExists = EXIST_UNKNOWN;
-            bHastComputedFileSize = FALSE;
+            bHasComputedFileSize = FALSE;
             fileSize = 0;
             ReleaseMutex();
             nCachedSize = 0;
             poFS->AcquireMutex();
             CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-            cachedFileProp->bHastComputedFileSize = FALSE;
+            cachedFileProp->bHasComputedFileSize = FALSE;
             cachedFileProp->fileSize = 0;
             cachedFileProp->eExists = EXIST_UNKNOWN;
             poFS->ReleaseMutex();
@@ -1453,7 +1453,7 @@ CachedFileProp*  VSICurlStreamingFSHandler::GetCachedFileProp(const char* pszURL
     {
         cachedFileProp = (CachedFileProp*) CPLMalloc(sizeof(CachedFileProp));
         cachedFileProp->eExists = EXIST_UNKNOWN;
-        cachedFileProp->bHastComputedFileSize = FALSE;
+        cachedFileProp->bHasComputedFileSize = FALSE;
         cachedFileProp->fileSize = 0;
         cachedFileProp->bIsDirectory = FALSE;
 #ifdef notdef
