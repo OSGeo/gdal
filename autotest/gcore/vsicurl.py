@@ -286,13 +286,13 @@ def vsicurl_11():
     return 'success'
 
 gdaltest_list = [ vsicurl_1,
-                  vsicurl_2,
-                  vsicurl_3,
+                  #vsicurl_2,
+                  #vsicurl_3,
                   vsicurl_4,
                   vsicurl_5,
                   vsicurl_6,
                   vsicurl_7,
-                  vsicurl_8,
+                  #vsicurl_8,
                   vsicurl_9,
                   vsicurl_10,
                   vsicurl_11 ]
