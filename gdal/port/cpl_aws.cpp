@@ -359,6 +359,10 @@ bool VSIS3HandleHelper::GetBucketAndObjectKey(const char* pszURI, const char* ps
                                               CPLString &osBucket, CPLString &osObjectKey)
 {
     osBucket = pszURI;
+    if( osBucket.size() == 0 )
+    {
+        return false;
+    }
     size_t nPos = osBucket.find('/');
     if( nPos == std::string::npos )
     {
@@ -405,8 +409,11 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI,
     {
         return NULL;
     }
-    int bUseHTTPS = (bool)CSLTestBoolean(CPLGetConfigOption("AWS_HTTPS", "YES"));
-    int bUseVirtualHosting = (bool)CSLTestBoolean(CPLGetConfigOption("AWS_VIRTUAL_HOSTING", "YES"));
+    bool bUseHTTPS = (bool)CSLTestBoolean(CPLGetConfigOption("AWS_HTTPS", "YES"));
+    bool bIsValidNameForVirtualHosting = (osBucket.find('.') == std::string::npos);
+    bool bUseVirtualHosting = (bool)CSLTestBoolean(
+            CPLGetConfigOption("AWS_VIRTUAL_HOSTING",
+                               bIsValidNameForVirtualHosting ? "TRUE" : "FALSE"));
     return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId,
                                     osAWSS3Endpoint, osAWSRegion,
                                     osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting);
