@@ -515,11 +515,11 @@ int main( int argc, char ** argv )
         CheckExtensionConsistency(psOptionsForBinary->pszDstFilename, psOptionsForBinary->pszFormat);
 
     int bUsageError = FALSE;
-    hDstDS = GDALWarp(psOptionsForBinary->pszDstFilename, hDstDS,
+    GDALDatasetH hOutDS = GDALWarp(psOptionsForBinary->pszDstFilename, hDstDS,
                       nSrcCount, pahSrcDS, psOptions, &bUsageError);
     if( bUsageError )
         Usage();
-    int nRetCode = (hDstDS) ? 0 : 1;
+    int nRetCode = (hOutDS) ? 0 : 1;
 
     GDALWarpAppOptionsFree(psOptions);
     GDALWarpAppOptionsForBinaryFree(psOptionsForBinary);
@@ -529,7 +529,7 @@ int main( int argc, char ** argv )
         GDALClose(pahSrcDS[i]);
     }
     CPLFree(pahSrcDS);
-    GDALClose( hDstDS );
+    GDALClose( hOutDS ? hOutDS : hDstDS );
 
     GDALDumpOpenDatasets( stderr );
 
