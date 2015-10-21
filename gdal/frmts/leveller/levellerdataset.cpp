@@ -5,7 +5,7 @@
  * Purpose:  Reader for Leveller TER documents
  * Author:   Ray Gardener, Daylon Graphics Ltd.
  *
- * Portions of this module derived from GDAL drivers by 
+ * Portions of this module derived from GDAL drivers by
  * Frank Warmerdam, see http://www.gdal.org
  *
  ******************************************************************************
@@ -41,15 +41,13 @@ CPL_C_START
 void	GDALRegister_Leveller(void);
 CPL_C_END
 
-#if 1
-
-#define str_equal(_s1, _s2)	(0 == strcmp((_s1),(_s2)))
-#define array_size(_a)		(sizeof(_a) / sizeof(_a[0]))
+static bool str_equal(const char *_s1, const char *_s2) {
+    return 0 == strcmp(_s1, _s2);
+}
 
 /*GDALDataset *LevellerCreateCopy( const char *, GDALDataset *, int, char **,
                                 GDALProgressFunc pfnProgress, 
                                 void * pProgressData );
-
 */
 
 /************************************************************************/
@@ -303,7 +301,7 @@ class LevellerDataset : public GDALPamDataset
 public:
     LevellerDataset();
     ~LevellerDataset();
-    
+
     static GDALDataset* Open( GDALOpenInfo* );
 	static int Identify( GDALOpenInfo* );
     static GDALDataset* Create( const char* pszFilename,
@@ -409,9 +407,9 @@ class LevellerRasterBand : public GDALPamRasterBand
 
 public:
 
-    LevellerRasterBand(LevellerDataset*);
+    explicit LevellerRasterBand(LevellerDataset*);
     ~LevellerRasterBand();
-    
+
     // Geomeasure support.
     virtual const char* GetUnitType();
     virtual double GetScale(int* pbSuccess = NULL);
@@ -419,7 +417,7 @@ public:
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
-	virtual CPLErr SetUnitType( const char* );
+    virtual CPLErr SetUnitType( const char* );
 };
 
 
@@ -427,10 +425,9 @@ public:
 /*                         LevellerRasterBand()                         */
 /************************************************************************/
 
-LevellerRasterBand::LevellerRasterBand( LevellerDataset *poDS )
-	:
-	m_pLine(NULL),
-	m_bFirstTime(true)
+LevellerRasterBand::LevellerRasterBand( LevellerDataset *poDS ) :
+    m_pLine(NULL),
+    m_bFirstTime(true)
 {
     this->poDS = poDS;
     this->nBand = 1;
@@ -438,16 +435,16 @@ LevellerRasterBand::LevellerRasterBand( LevellerDataset *poDS )
     eDataType = GDT_Float32;
 
     nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = 1;//poDS->GetRasterYSize();
+    nBlockYSize = 1; // poDS->GetRasterYSize();
 
-	m_pLine = (float*)CPLMalloc(sizeof(float) * nBlockXSize);
+    m_pLine = reinterpret_cast<float*>(
+        CPLMalloc( sizeof(float) * nBlockXSize) );
 }
 
 
 LevellerRasterBand::~LevellerRasterBand()
 {
-	if(m_pLine != NULL)
-		CPLFree(m_pLine);
+    CPLFree(m_pLine);
 }
 
 /************************************************************************/
@@ -456,7 +453,7 @@ LevellerRasterBand::~LevellerRasterBand()
 
 CPLErr LevellerRasterBand::IWriteBlock
 (
-    CPL_UNUSED int nBlockXOff,
+    int /* nBlockXOff */,
     int nBlockYOff,
     void* pImage
 )
@@ -471,7 +468,7 @@ CPLErr LevellerRasterBand::IWriteBlock
 */
 	const size_t pixelsize = sizeof(float);
 
-	LevellerDataset& ds = *(LevellerDataset*)poDS;
+	LevellerDataset& ds = *reinterpret_cast<LevellerDataset*>( poDS );
 	if(m_bFirstTime)
 	{
 		m_bFirstTime = false;
@@ -480,17 +477,17 @@ CPLErr LevellerRasterBand::IWriteBlock
 		ds.m_nDataOffset = VSIFTellL(ds.m_fp);
 	}
 	const size_t rowbytes = nBlockXSize * pixelsize;
-	const float* pfImage = (float*)pImage;
+	const float* pfImage = reinterpret_cast<float *>( pImage );
 
 	if(0 == VSIFSeekL(
-       ds.m_fp, ds.m_nDataOffset + nBlockYOff * rowbytes, 
-       SEEK_SET))
+               ds.m_fp, ds.m_nDataOffset + nBlockYOff * rowbytes,
+               SEEK_SET))
 	{
 		for(size_t x = 0; x < (size_t)nBlockXSize; x++)
 		{
 			// Convert logical elevations to physical.
-                    m_pLine[x] = (float) 
-				((pfImage[x] - ds.m_dElevBase) / ds.m_dElevScale);
+                    m_pLine[x] = static_cast<float>(
+                        (pfImage[x] - ds.m_dElevBase) / ds.m_dElevScale );
 		}
 
 #ifdef CPL_MSB 
@@ -506,7 +503,7 @@ CPLErr LevellerRasterBand::IWriteBlock
 
 CPLErr LevellerRasterBand::SetUnitType( const char* psz )
 {
-	LevellerDataset& ds = *(LevellerDataset*)poDS;
+    LevellerDataset& ds = *reinterpret_cast<LevellerDataset *>( poDS );
 
 	if(strlen(psz) >= sizeof(ds.m_szElevUnits))
 		return CE_Failure;
@@ -530,7 +527,7 @@ CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     CPLAssert( nBlockXOff == 0  );
     CPLAssert( pImage != NULL );
 
-    LevellerDataset *poGDS = (LevellerDataset *) poDS;
+    LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>( poDS );
 
 /* -------------------------------------------------------------------- */
 /*      Seek to scanline.                                               */
@@ -546,7 +543,6 @@ CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                   "Leveller seek failed: %s", VSIStrerror( errno ) );
         return CE_Failure;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Read the scanline into the image buffer.                        */
@@ -564,18 +560,18 @@ CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB 
     GDALSwapWords( pImage, 4, nRasterXSize, 4 );
-#endif    
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Convert from legacy-format fixed-point if necessary.            */
 /* -------------------------------------------------------------------- */
-    float* pf = (float*)pImage;
+    float* pf = reinterpret_cast<float *>( pImage );
 
     if(poGDS->m_version < 6)
     {
-        GInt32* pi = (int*)pImage;
+        GInt32* pi = reinterpret_cast<int *>( pImage );
         for(size_t i = 0; i < (size_t)nBlockXSize; i++)
-            pf[i] = (float)pi[i] / 65536;
+            pf[i] = static_cast<float>( pi[i] ) / 65536;
     }
 
 
@@ -590,8 +586,6 @@ CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     return CE_None;
 }
 
-
-
 /************************************************************************/
 /*                            GetUnitType()                             */
 /************************************************************************/
@@ -599,11 +593,10 @@ const char *LevellerRasterBand::GetUnitType()
 {
     // Return elevation units.
 
-    LevellerDataset *poGDS = (LevellerDataset *) poDS;
+    LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>( poDS );
 
     return poGDS->m_szElevUnits;
 }
-
 
 /************************************************************************/
 /*                              GetScale()                              */
@@ -611,7 +604,7 @@ const char *LevellerRasterBand::GetUnitType()
 
 double LevellerRasterBand::GetScale(int* pbSuccess)
 {
-    LevellerDataset *poGDS = (LevellerDataset *) poDS;
+    LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>( poDS );
 	if(pbSuccess != NULL)
 		*pbSuccess = TRUE;
 	return poGDS->m_dElevScale;
@@ -623,12 +616,11 @@ double LevellerRasterBand::GetScale(int* pbSuccess)
 
 double LevellerRasterBand::GetOffset(int* pbSuccess)
 {
-    LevellerDataset *poGDS = (LevellerDataset *) poDS;
+    LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>( poDS );
 	if(pbSuccess != NULL)
 		*pbSuccess = TRUE;
 	return poGDS->m_dElevBase;
 }
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -706,13 +698,12 @@ bool LevellerDataset::compute_elev_scaling
 		const double kdEarthCircumPolar = 40007849;
 		const double kdEarthCircumEquat = 40075004;
 
-		double xr, yr;
-		xr = 0.5 * this->nRasterXSize;
-		yr = 0.5 * this->nRasterYSize;
+		const double xr = 0.5 * nRasterXSize;
+		const double yr = 0.5 * nRasterYSize;
 
 		double xg[2], yg[2];
-		this->raw_to_proj(xr, yr, xg[0], yg[0]);
-		this->raw_to_proj(xr+1, yr+1, xg[1], yg[1]);
+		raw_to_proj(xr, yr, xg[0], yg[0]);
+		raw_to_proj(xr+1, yr+1, xg[1], yg[1]);
 
 		// The earths' circumference shrinks using a sin()
 		// curve as we go up in latitude.
@@ -721,8 +712,8 @@ bool LevellerDataset::compute_elev_scaling
 
 		// Derive meter distance between geolongitudes
 		// in xg[0] and xg[1].
-		double dx = fabs(xg[1] - xg[0]) / 360.0 * dLatCircum;
-		double dy = fabs(yg[1] - yg[0]) / 360.0 * kdEarthCircumPolar;
+		const double dx = fabs(xg[1] - xg[0]) / 360.0 * dLatCircum;
+		const double dy = fabs(yg[1] - yg[0]) / 360.0 * kdEarthCircumPolar;
 
 		m_dElevScale = average(dx, dy);
 	}
@@ -745,63 +736,62 @@ bool LevellerDataset::compute_elev_scaling
 
 bool LevellerDataset::write_header()
 {
-	char szHeader[5];
-	strcpy(szHeader, "trrn");
-	szHeader[4] = 7; // TER v7 introduced w/ Lev 2.6.
+    char szHeader[5];
+    strcpy(szHeader, "trrn");
+    szHeader[4] = 7; // TER v7 introduced w/ Lev 2.6.
 
-	if(1 != VSIFWriteL(szHeader, 5, 1, m_fp)
-		|| !this->write_tag("hf_w", (size_t)nRasterXSize)
-		|| !this->write_tag("hf_b", (size_t)nRasterYSize))
-	{
+    if(1 != VSIFWriteL(szHeader, 5, 1, m_fp)
+       || !this->write_tag("hf_w", (size_t)nRasterXSize)
+       || !this->write_tag("hf_b", (size_t)nRasterYSize))
+    {
         CPLError( CE_Failure, CPLE_FileIO, "Could not write header" );
         return false;
-	}
+    }
 
-	m_dElevBase = 0.0;
-	m_dElevScale = 1.0;
+    m_dElevBase = 0.0;
+    m_dElevScale = 1.0;
 
-	if(m_pszProjection == NULL || m_pszProjection[0] == 0)
-	{
-		this->write_tag("csclass", LEV_COORDSYS_RASTER);
-	}
-	else
-	{
-		this->write_tag("coordsys_wkt", m_pszProjection);
-		const UNITLABEL units_elev = this->id_to_code(m_szElevUnits);
+    if(m_pszProjection == NULL || m_pszProjection[0] == 0)
+    {
+        write_tag("csclass", LEV_COORDSYS_RASTER);
+    }
+    else
+    {
+        write_tag("coordsys_wkt", m_pszProjection);
+        const UNITLABEL units_elev = this->id_to_code(m_szElevUnits);
 
-		const int bHasECS = 
-			(units_elev != UNITLABEL_PIXEL && units_elev != UNITLABEL_UNKNOWN);
+        const int bHasECS =
+            (units_elev != UNITLABEL_PIXEL && units_elev != UNITLABEL_UNKNOWN);
 
-		this->write_tag("coordsys_haselevm", bHasECS);
+	write_tag("coordsys_haselevm", bHasECS);
 
-	    OGRSpatialReference sr(m_pszProjection);
+        OGRSpatialReference sr(m_pszProjection);
 
-		if(bHasECS)
-		{
-			if(!this->compute_elev_scaling(sr))
-				return false;
+        if(bHasECS)
+        {
+            if(!this->compute_elev_scaling(sr))
+                return false;
 
-			// Raw-to-real units scaling.
-			this->write_tag("coordsys_em_scale", m_dElevScale);
+            // Raw-to-real units scaling.
+            write_tag("coordsys_em_scale", m_dElevScale);
 
-			//elev offset, in real units.
-			this->write_tag("coordsys_em_base", m_dElevBase);
+            // Elev offset, in real units.
+            write_tag("coordsys_em_base", m_dElevBase);
+            write_tag("coordsys_em_units", units_elev);
+        }
 
-			this->write_tag("coordsys_em_units", units_elev);
-		}
 
+        if(sr.IsLocal())
+        {
+            write_tag("csclass", LEV_COORDSYS_LOCAL);
 
-		if(sr.IsLocal())
-		{
-			this->write_tag("csclass", LEV_COORDSYS_LOCAL);
-
-			const double dfLinear = sr.GetLinearUnits();
-			const int n = this->meter_measure_to_code(dfLinear);
-			this->write_tag("coordsys_units", n);
+            const double dfLinear = sr.GetLinearUnits();
+            const int n = this->meter_measure_to_code(dfLinear);
+            write_tag("coordsys_units", n);
 		}
 		else
 		{
-			this->write_tag("csclass", LEV_COORDSYS_GEO);
+            write_tag("csclass", LEV_COORDSYS_GEO);
 		}
 
 		if( m_adfTransform[2] != 0.0 || m_adfTransform[4] != 0.0)
@@ -816,16 +806,16 @@ bool LevellerDataset::write_header()
 		// We need to look into this and adjust accordingly.
 
 		// Write north-south digital axis.
-		this->write_tag("coordsys_da0_style", LEV_DA_PIXEL_SIZED);
-		this->write_tag("coordsys_da0_fixedend", 0);
-		this->write_tag("coordsys_da0_v0", m_adfTransform[3]);
-		this->write_tag("coordsys_da0_v1", m_adfTransform[5]);
+	    write_tag("coordsys_da0_style", LEV_DA_PIXEL_SIZED);
+            write_tag("coordsys_da0_fixedend", 0);
+            write_tag("coordsys_da0_v0", m_adfTransform[3]);
+            write_tag("coordsys_da0_v1", m_adfTransform[5]);
 
 		// Write east-west digital axis.
-		this->write_tag("coordsys_da1_style", LEV_DA_PIXEL_SIZED);
-		this->write_tag("coordsys_da1_fixedend", 0);
-		this->write_tag("coordsys_da1_v0", m_adfTransform[0]);
-		this->write_tag("coordsys_da1_v1", m_adfTransform[1]);
+	    write_tag("coordsys_da1_style", LEV_DA_PIXEL_SIZED);
+            write_tag("coordsys_da1_fixedend", 0);
+            write_tag("coordsys_da1_v0", m_adfTransform[0]);
+            write_tag("coordsys_da1_v1", m_adfTransform[1]);
 	}
 
 
@@ -842,8 +832,7 @@ bool LevellerDataset::write_header()
 
 CPLErr LevellerDataset::SetGeoTransform( double *padfGeoTransform )
 {
-	memcpy(m_adfTransform, padfGeoTransform, 
-		sizeof(m_adfTransform));
+    memcpy(m_adfTransform, padfGeoTransform, sizeof(m_adfTransform));
 
 	return CE_None;
 }
@@ -855,8 +844,7 @@ CPLErr LevellerDataset::SetGeoTransform( double *padfGeoTransform )
 
 CPLErr LevellerDataset::SetProjection( const char * pszNewProjection )
 {
-	if(m_pszProjection != NULL)
-		CPLFree(m_pszProjection);
+    CPLFree(m_pszProjection);
 
 	m_pszProjection = CPLStrdup(pszNewProjection);
 
@@ -916,7 +904,6 @@ GDALDataset* LevellerDataset::Create
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
 
-
     const char* pszValue = CSLFetchNameValue( 
 		papszOptions,"MINUSERPIXELVALUE");
     if( pszValue != NULL )
@@ -952,15 +939,15 @@ GDALDataset* LevellerDataset::Create
 
 bool LevellerDataset::write_byte(size_t n)
 {
-	unsigned char uch = (unsigned char)n;
-	return (1 == VSIFWriteL(&uch, 1, 1, m_fp));
+    unsigned char uch = static_cast<unsigned char>( n );
+    return 1 == VSIFWriteL(&uch, 1, 1, m_fp);
 }
 
 
 bool LevellerDataset::write(int n)
 {
 	CPL_LSBPTR32(&n);
-	return (1 == VSIFWriteL(&n, sizeof(n), 1, m_fp));
+    return 1 == VSIFWriteL(&n, sizeof(n), 1, m_fp);
 }
 
 
@@ -1092,7 +1079,7 @@ bool LevellerDataset::get(int& n, VSILFILE* fp, const char* psz)
         if(1 == VSIFReadL(&value, sizeof(value), 1, fp))
         {
             CPL_LSBPTR32(&value);
-            n = (int)value;
+            n = static_cast<int>( value );
             return true;
         }
     }	
@@ -1182,7 +1169,7 @@ const char* LevellerDataset::code_to_id(UNITLABEL code) const
 
 const measurement_unit* LevellerDataset::get_uom(const char* pszUnits) const
 {
-    for(size_t i = 0; i < array_size(kUnits); i++)
+    for(size_t i = 0; i < CPL_ARRAYSIZE(kUnits); i++)
     {
         if(strcmp(pszUnits, kUnits[i].pszID) == 0)
             return &kUnits[i];
@@ -1195,7 +1182,7 @@ const measurement_unit* LevellerDataset::get_uom(const char* pszUnits) const
 
 const measurement_unit* LevellerDataset::get_uom(UNITLABEL code) const
 {
-    for(size_t i = 0; i < array_size(kUnits); i++)
+    for(size_t i = 0; i < CPL_ARRAYSIZE(kUnits); i++)
     {
         if(kUnits[i].oemCode == code)
             return &kUnits[i];
@@ -1208,7 +1195,7 @@ const measurement_unit* LevellerDataset::get_uom(UNITLABEL code) const
 
 const measurement_unit* LevellerDataset::get_uom(double dM) const
 {
-    for(size_t i = kFirstLinearMeasureIdx; i < array_size(kUnits); i++)
+    for(size_t i = kFirstLinearMeasureIdx; i < CPL_ARRAYSIZE(kUnits); i++)
     {
 		if(dM >= 1.0e-4)
 		{
@@ -1237,7 +1224,7 @@ bool LevellerDataset::convert_measure
 {
     // Convert a measure to meters.
 
-    for(size_t i = kFirstLinearMeasureIdx; i < array_size(kUnits); i++)
+    for(size_t i = kFirstLinearMeasureIdx; i < CPL_ARRAYSIZE(kUnits); i++)
     {
         if(str_equal(pszSpace, kUnits[i].pszID))
 		{
@@ -1257,20 +1244,17 @@ bool LevellerDataset::make_local_coordsys(const char* pszName, const char* pszUn
 
 	sr.SetLocalCS(pszName);
 	double d;
-	return ( this->convert_measure(1.0, d, pszUnits)
-		&& OGRERR_NONE == sr.SetLinearUnits(pszUnits, d) 
-		&& OGRERR_NONE == sr.exportToWkt(&m_pszProjection) );
+    return ( convert_measure(1.0, d, pszUnits)
+             && OGRERR_NONE == sr.SetLinearUnits(pszUnits, d)
+             && OGRERR_NONE == sr.exportToWkt(&m_pszProjection) );
 }
 
 
 bool LevellerDataset::make_local_coordsys(const char* pszName, UNITLABEL code)
 {
-	const char* pszUnitID = this->code_to_id(code);
-	return ( pszUnitID != NULL
-		&& this->make_local_coordsys(pszName, pszUnitID));
+    const char* pszUnitID = code_to_id(code);
+    return pszUnitID != NULL && make_local_coordsys(pszName, pszUnitID);
 }
-
-
 
 /************************************************************************/
 /*                            load_from_file()                            */
@@ -1279,14 +1263,14 @@ bool LevellerDataset::make_local_coordsys(const char* pszName, UNITLABEL code)
 bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 {
     // get hf dimensions
-    if(!this->get(nRasterXSize, file, "hf_w"))
+    if(!get(nRasterXSize, file, "hf_w"))
 	{
 		CPLError( CE_Failure, CPLE_OpenFailed,
 					  "Cannot determine heightfield width." );
         return false;
 	}
 
-    if(!this->get(nRasterYSize, file, "hf_b"))
+    if(!get(nRasterYSize, file, "hf_b"))
 	{
 		CPLError( CE_Failure, CPLE_OpenFailed,
 					  "Cannot determine heightfield breadth." );
@@ -1302,7 +1286,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 
     // Record start of pixel data
     size_t datalen;
-    if(!this->locate_data(m_nDataOffset, datalen, file, "hf_data"))
+    if(!locate_data(m_nDataOffset, datalen, file, "hf_data"))
 	{
 		CPLError( CE_Failure, CPLE_OpenFailed,
 					  "Cannot locate elevation data." );
@@ -1330,79 +1314,78 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
     m_dElevBase = 0.0;
 	strcpy(m_szElevUnits, "");
 
-	if(m_version >= 7)
-	{
-		// Read coordsys info.
-		int csclass = LEV_COORDSYS_RASTER;
-	    (void)this->get(csclass, file, "csclass");
+    if(m_version >= 7)
+    {
+        // Read coordsys info.
+        int csclass = LEV_COORDSYS_RASTER;
+        /* (void) */ get(csclass, file, "csclass");
 
-		if(csclass != LEV_COORDSYS_RASTER)
-		{
-			// Get projection details and units.
+        if(csclass != LEV_COORDSYS_RASTER)
+        {
+            // Get projection details and units.
+            CPLAssert(m_pszProjection == NULL);
 
-			CPLAssert(m_pszProjection == NULL);
+            if(csclass == LEV_COORDSYS_LOCAL)
+            {
+                UNITLABEL unitcode;
+                // char szLocalUnits[8];
+                int unitcode_int;
+                if(!get(unitcode_int, file, "coordsys_units"))
+                    unitcode_int = UNITLABEL_M;
+                unitcode = static_cast<UNITLABEL>( unitcode_int );
 
-			if(csclass == LEV_COORDSYS_LOCAL)
-			{
-				UNITLABEL unitcode;
-				//char szLocalUnits[8];
-                                int unitcode_int;
-				if(!this->get(unitcode_int, file, "coordsys_units"))
-					unitcode_int = UNITLABEL_M;
-                                unitcode = (UNITLABEL) unitcode_int;
+                if( !make_local_coordsys("Leveller", unitcode) )
+                {
+                    CPLError( CE_Failure, CPLE_OpenFailed,
+                              "Cannot define local coordinate system." );
+                    return false;
+                }
+            }
+            else if(csclass == LEV_COORDSYS_GEO)
+            {
+                char szWKT[1024];
+                if(!get(szWKT, 1023, file, "coordsys_wkt"))
+                    return 0;
 
-				if(!this->make_local_coordsys("Leveller", unitcode))
-				{
-					CPLError( CE_Failure, CPLE_OpenFailed,
-								  "Cannot define local coordinate system." );
-					return false;
-				}
-			}
-			else if(csclass == LEV_COORDSYS_GEO)
-			{
-				char szWKT[1024];
-				if(!this->get(szWKT, 1023, file, "coordsys_wkt"))
-					return 0;
+                m_pszProjection = reinterpret_cast<char *>( CPLMalloc(strlen(szWKT) + 1) );
+                strcpy(m_pszProjection, szWKT);
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                          "Unknown coordinate system type in %s.",
+                          pszFilename );
+                return false;
+            }
 
-				m_pszProjection = (char*)CPLMalloc(strlen(szWKT) + 1);
-				strcpy(m_pszProjection, szWKT);
-			}
-			else
-			{
-				CPLError( CE_Failure, CPLE_OpenFailed,
-						  "Unknown coordinate system type in %s.",
-						  pszFilename );
-				return false;
-			}
+            // Get ground extents.
+            digital_axis axis_ns, axis_ew;
 
-			// Get ground extents.
-			digital_axis axis_ns, axis_ew;
+            if(axis_ns.get(*this, file, 0)
+               && axis_ew.get(*this, file, 1))
+            {
+                m_adfTransform[0] = axis_ew.origin(nRasterXSize);
+                m_adfTransform[1] = axis_ew.scaling(nRasterXSize);
+                m_adfTransform[2] = 0.0;
 
-			if(axis_ns.get(*this, file, 0)
-				&& axis_ew.get(*this, file, 1))
-			{
-				m_adfTransform[0] = axis_ew.origin(nRasterXSize);
-				m_adfTransform[1] = axis_ew.scaling(nRasterXSize);
-				m_adfTransform[2] = 0.0;
-
-				m_adfTransform[3] = axis_ns.origin(nRasterYSize);
-				m_adfTransform[4] = 0.0;
-				m_adfTransform[5] = axis_ns.scaling(nRasterYSize);
-			}
-		}
+                m_adfTransform[3] = axis_ns.origin(nRasterYSize);
+                m_adfTransform[4] = 0.0;
+                m_adfTransform[5] = axis_ns.scaling(nRasterYSize);
+            }
+        }
 
 		// Get vertical (elev) coordsys.
 		int bHasVertCS = FALSE;
 		if(this->get(bHasVertCS, file, "coordsys_haselevm") && bHasVertCS)
 		{
-			this->get(m_dElevScale, file, "coordsys_em_scale");
-			this->get(m_dElevBase, file, "coordsys_em_base");
+                    get(m_dElevScale, file, "coordsys_em_scale");
+                    get(m_dElevBase, file, "coordsys_em_base");
 			UNITLABEL unitcode;
                         int unitcode_int;
-			if(this->get(unitcode_int, file, "coordsys_em_units"))
+			if(get(unitcode_int, file, "coordsys_em_units"))
 			{
-                                unitcode = (UNITLABEL) unitcode_int;
-				const char* pszUnitID = this->code_to_id(unitcode);
+                            unitcode = static_cast<UNITLABEL>( unitcode_int );
+                            const char* pszUnitID = code_to_id(unitcode);
 				if(pszUnitID != NULL)
                                 {
                                     strncpy(m_szElevUnits, pszUnitID, sizeof(m_szElevUnits));
@@ -1421,17 +1404,17 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 	}
 	else
 	{
-		// Legacy files use world units.
+            // Legacy files use world units.
 	    char szWorldUnits[32];
-		strcpy(szWorldUnits, "m");
+            strcpy(szWorldUnits, "m");
 
 	    double dWorldscale = 1.0;
 
-		if(this->get(dWorldscale, file, "hf_worldspacing"))
-		{
+            if(get(dWorldscale, file, "hf_worldspacing"))
+            {
 			//m_bHasWorldscale = true;
-			if(this->get(szWorldUnits, sizeof(szWorldUnits)-1, file, 
-				"hf_worldspacinglabel"))
+                    if(get(szWorldUnits, sizeof(szWorldUnits)-1, file,
+                           "hf_worldspacinglabel"))
 			{
 				// Drop long name, if present.
 				char* p = strchr(szWorldUnits, ' ');
@@ -1464,7 +1447,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 		// some callers may want both the raw pixels and the 
 		// transform to get real elevs.
 
-		if(!this->make_local_coordsys("Leveller world space", szWorldUnits))
+        if(!make_local_coordsys("Leveller world space", szWorldUnits))
 		{
 			CPLError( CE_Failure, CPLE_OpenFailed,
 						  "Cannot define local coordinate system." );
@@ -1481,7 +1464,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 
 const char*	LevellerDataset::GetProjectionRef(void)
 {
-    return (m_pszProjection == NULL ? "" : m_pszProjection);
+    return m_pszProjection == NULL ? "" : m_pszProjection;
 }
 
 /************************************************************************/
@@ -1491,7 +1474,7 @@ const char*	LevellerDataset::GetProjectionRef(void)
 CPLErr LevellerDataset::GetGeoTransform(double* padfTransform)
 
 {
-	memcpy(padfTransform, m_adfTransform, sizeof(m_adfTransform));
+    memcpy(padfTransform, m_adfTransform, sizeof(m_adfTransform));
     return CE_None;
 }
 
@@ -1504,7 +1487,7 @@ int LevellerDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 4 )
         return FALSE;
 
-    return EQUALN((const char *) poOpenInfo->pabyHeader, "trrn", 4);
+    return EQUALN(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ), "trrn", 4);
 }
 
 /************************************************************************/
@@ -1525,7 +1508,6 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
     const int version = poOpenInfo->pabyHeader[4];
     if(version < 4 || version > 9)
         return NULL;
-
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -1582,15 +1564,6 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
-#else
-// stub so that module compiles
-class LevellerDataset : public GDALPamDataset
-{
-	public:
-		static GDALDataset* Open( GDALOpenInfo* ) { return NULL; }
-};
-#endif
-
 /************************************************************************/
 /*                        GDALRegister_Leveller()                       */
 /************************************************************************/
@@ -1598,24 +1571,23 @@ class LevellerDataset : public GDALPamDataset
 void GDALRegister_Leveller()
 
 {
+    if( GDALGetDriverByName( "Leveller" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "Leveller" ) == NULL )
-    {
-        GDALDriver *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "Leveller" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, 
-                                   "ter" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Leveller heightfield" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_leveller.html" );
+    poDriver->SetDescription( "Leveller" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION,
+                               "ter" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Leveller heightfield" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_leveller.html" );
 
-        poDriver->pfnIdentify = LevellerDataset::Identify;
-        poDriver->pfnOpen = LevellerDataset::Open;
-        poDriver->pfnCreate = LevellerDataset::Create;
+    poDriver->pfnIdentify = LevellerDataset::Identify;
+    poDriver->pfnOpen = LevellerDataset::Open;
+    poDriver->pfnCreate = LevellerDataset::Create;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

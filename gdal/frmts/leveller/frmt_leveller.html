@@ -17,7 +17,7 @@ at the top (north) edge of the DEM, and adjacent pixels on each line
 increasing from left to right (west to east).<p>
 
 The band type is always Float32, even though format versions 4 and 5 
-physically use 16.16 fixed-point. The driver autoconverts them to 
+physically use 16.16 fixed-point. The driver auto-converts them to 
 floating-point.<p>
 
 
@@ -26,7 +26,7 @@ floating-point.<p>
 for file versions 4 through 6.<p>
 
 <tt>dataset::GetGeoTransform()</tt> returns a simple world scaling with a centered 
-origin for formats 4 through 6. For versions 7 and higher, it returns a realworld transform 
+origin for formats 4 through 6. For versions 7 and higher, it returns a real-world transform 
 except for rotations. The identity transform is not considered an error condition; 
 Leveller documents often use them.<p>
 
@@ -35,7 +35,7 @@ by the file instead of converting unusual types to meters.
 A list of unit types is in the <tt>levellerdataset.cpp</tt> module.<p>
 
 <tt>band::GetScale()</tt> and <tt>band::GetOffset()</tt> will 
-return the physical-to-logical (i.e., raw to realworld) transform 
+return the physical-to-logical (i.e., raw to real-world) transform 
 for the elevation data.<p>
 
 
@@ -48,7 +48,7 @@ in the <tt>levellerdataset.cpp</tt> module.<p>
 <tt>dataset::SetGeoTransform()</tt> should not include rotation data.<p>
 
 As with the Terragen driver, the <tt>MINUSERPIXELVALUE</tt> option must be 
-specified. This lets the driver correctly map from logical (realworld) elevations 
+specified. This lets the driver correctly map from logical (real-world) elevations 
 to physical elevations.<p>
 
 Header information is written out on the first call to <tt>band::IWriteBlock</tt>.<p>
