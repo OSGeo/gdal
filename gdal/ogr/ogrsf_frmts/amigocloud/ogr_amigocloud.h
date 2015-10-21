@@ -163,6 +163,7 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
         ~OGRAmigoCloudTableLayer();
 
         virtual const char        *GetName() { return osTableName.c_str(); }
+                const char        *GetDatasetId() { return osDatasetId.c_str(); }
         virtual OGRFeatureDefn    *GetLayerDefnInternal(json_object* poObjIn);
         virtual json_object       *FetchNewFeatures(GIntBig iNext);
 
@@ -191,9 +192,7 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
                                    OGRSpatialReference *poSRS,
                                    int bGeomNullable);
 
-        CPLString           GetAmigoCloudType(OGRFieldDefn& oField,
-                                    int bPreservePrecision,
-                                    int bApproxOK);
+        CPLString           GetAmigoCloudType(OGRFieldDefn& oField);
 
         OGRErr              RunDeferedCreationIfNecessary();
         int                 GetDeferedCreation() const { return bDeferedCreation; }
@@ -280,6 +279,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         char**                      AddHTTPOptions();
         json_object*                RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders="HEADERS=Content-Type: application/json");
         json_object*                RunGET(const char*pszURL);
+        json_object*                RunDELETE(const char*pszURL);
         json_object*                RunSQL(const char* pszUnescapedSQL);
         const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
         int                         FetchSRSId( OGRSpatialReference * poSRS );

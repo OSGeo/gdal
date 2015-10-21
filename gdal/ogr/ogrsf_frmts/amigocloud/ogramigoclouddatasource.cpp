@@ -295,27 +295,6 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszName,
 /* -------------------------------------------------------------------- */
     int iLayer;
 
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
-    {
-        if( EQUAL(pszName,papoLayers[iLayer]->GetName()) )
-        {
-            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
-                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
-            {
-                DeleteLayer( iLayer );
-            }
-            else
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Layer %s already exists, CreateLayer failed.\n"
-                          "Use the layer creation option OVERWRITE=YES to "
-                          "replace it.",
-                          pszName );
-                return NULL;
-            }
-        }
-    }
-    
     CPLString osName(pszName);
 
     OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
@@ -353,9 +332,9 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
 /* -------------------------------------------------------------------- */
-    CPLString osLayerName = papoLayers[iLayer]->GetLayerDefn()->GetName();
+    CPLString osDatasetId = papoLayers[iLayer]->GetDatasetId();
 
-    CPLDebug( "AMIGOCLOUD", "DeleteLayer(%s)", osLayerName.c_str() );
+    CPLDebug( "AMIGOCLOUD", "DeleteLayer(%s)", osDatasetId.c_str() );
 
     int bDeferedCreation = papoLayers[iLayer]->GetDeferedCreation();
     papoLayers[iLayer]->CancelDeferedCreation();
@@ -364,16 +343,16 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
              sizeof(void *) * (nLayers - iLayer - 1) );
     nLayers--;
 
-    if (osLayerName.size() == 0)
+    if (osDatasetId.size() == 0)
         return OGRERR_NONE;
 
     if( !bDeferedCreation )
     {
-        CPLString osSQL;
-        osSQL.Printf("DROP TABLE %s",
-                    OGRAMIGOCLOUDEscapeIdentifier(osLayerName).c_str());
+        std::stringstream url;
+        url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjetcId()) + "/datasets/"+ osDatasetId.c_str();
+        json_object *poObj = RunDELETE(url.str().c_str());
 
-        json_object* poObj = RunSQL(osSQL);
+//        json_object* poObj = RunSQL(osSQL);
         if( poObj == NULL )
             return OGRERR_FAILURE;
         json_object_put(poObj);
@@ -442,8 +421,101 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
         return NULL;
     }
 
-    if( strlen((const char*)psResult->pabyData) < 1000 )
-        CPLDebug( "AMIGOCLOUD", "RunPOST Response:%s", psResult->pabyData );
+    CPLDebug( "AMIGOCLOUD", "RunPOST Response:%s", psResult->pabyData );
+
+    json_tokener* jstok = NULL;
+    json_object* poObj = NULL;
+
+    jstok = json_tokener_new();
+    poObj = json_tokener_parse_ex(jstok, (const char*) psResult->pabyData, -1);
+    if( jstok->err != json_tokener_success)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "JSON parsing error: %s (at offset %d)",
+                  json_tokener_error_desc(jstok->err), jstok->char_offset);
+        json_tokener_free(jstok);
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+    json_tokener_free(jstok);
+
+    CPLHTTPDestroyResult(psResult);
+
+    if( poObj != NULL )
+    {
+        if( json_object_get_type(poObj) == json_type_object )
+        {
+            json_object* poError = json_object_object_get(poObj, "error");
+            if( poError != NULL && json_object_get_type(poError) == json_type_array &&
+                json_object_array_length(poError) > 0 )
+            {
+                poError = json_object_array_get_idx(poError, 0);
+                if( poError != NULL && json_object_get_type(poError) == json_type_string )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Error returned by server : %s", json_object_get_string(poError));
+                    json_object_put(poObj);
+                    return NULL;
+                }
+            }
+        }
+        else
+        {
+            json_object_put(poObj);
+            return NULL;
+        }
+    }
+
+    return poObj;
+}
+
+/************************************************************************/
+/*                               RunDELETE()                               */
+/************************************************************************/
+
+json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
+{
+    CPLString osURL(pszURL);
+
+    /* -------------------------------------------------------------------- */
+    /*      Provide the API Key                                             */
+    /* -------------------------------------------------------------------- */
+    if( osAPIKey.size() > 0 )
+    {
+        osURL += "?token=";
+        osURL += osAPIKey;
+    }
+    char** papszOptions=NULL;
+    CPLString osPOSTFIELDS("CUSTOMREQUEST=DELETE");
+    papszOptions = CSLAddString(papszOptions, osPOSTFIELDS);
+
+    CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
+
+    if (psResult && psResult->pszContentType &&
+        strncmp(psResult->pszContentType, "text/html", 9) == 0)
+    {
+        CPLDebug( "AMIGOCLOUD", "RunDELETE HTML Response:%s", psResult->pabyData );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HTML error page returned by server:%s", psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+    if (psResult && psResult->pszErrBuf != NULL)
+    {
+        CPLDebug( "AMIGOCLOUD", "RunDELETE Error Message:%s", psResult->pszErrBuf );
+    }
+    else if (psResult && psResult->nStatus != 0)
+    {
+        CPLDebug( "AMIGOCLOUD", "RunDELETE Error Status:%d", psResult->nStatus );
+    }
+
+    if( psResult->pabyData == NULL )
+    {
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+
+    CPLDebug( "AMIGOCLOUD", "RunDELETE Response:%s", psResult->pabyData );
 
     json_tokener* jstok = NULL;
     json_object* poObj = NULL;
@@ -534,8 +606,7 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
         return NULL;
     }
 
-    if( strlen((const char*)psResult->pabyData) < 1000 )
-        CPLDebug( "AMIGOCLOUD", "RunGET Response:%s", psResult->pabyData );
+    CPLDebug( "AMIGOCLOUD", "RunGET Response:%s", psResult->pabyData );
 
     json_tokener* jstok = NULL;
     json_object* poObj = NULL;
@@ -648,8 +719,7 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
         return NULL;
     }
     
-    if( strlen((const char*)psResult->pabyData) < 1000 )
-        CPLDebug( "AMIGOCLOUD", "RunSQL Response:%s", psResult->pabyData );
+    CPLDebug( "AMIGOCLOUD", "RunSQL Response:%s", psResult->pabyData );
     
     json_tokener* jstok = NULL;
     json_object* poObj = NULL;

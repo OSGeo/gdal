@@ -81,7 +81,7 @@ static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
     if( !poDS->Open( pszName, NULL, TRUE ) )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "AmigoCloud driver doesn't support database creation." );
         return NULL;
     }
@@ -121,12 +121,10 @@ void RegisterOGRAmigoCloud()
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
     "<LayerCreationOptionList>"
     "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
-    "  <Option name='LAUNDER' type='boolean' description='Whether layer and field names will be laundered' default='YES'/>"
     "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
-    "  <Option name='AMIGOCLOUDFY' alias='AMIGOCLOUDIFY' type='boolean' description='Whether the created layer should be \"AmigoCloudifi&apos;ed\" (i.e. registered in dashboard)' default='YES'/>"
     "</LayerCreationOptionList>");
         
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Text Number Decimal Date" );
         poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );

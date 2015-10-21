@@ -1017,18 +1017,20 @@ void OGRAmigoCloudTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
                      OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
 }
 
-CPLString OGRAmigoCloudTableLayer::GetAmigoCloudType(OGRFieldDefn& oField,
-                                  int bPreservePrecision,
-                                  int bApproxOK)
+CPLString OGRAmigoCloudTableLayer::GetAmigoCloudType(OGRFieldDefn& oField)
 {
     char                szFieldType[256];
 
 /* -------------------------------------------------------------------- */
 /*      AmigoCloud supported types.                                   */
 /* -------------------------------------------------------------------- */
-    if( oField.GetType() == OFTInteger ||  oField.GetType() == OFTInteger64 )
+    if( oField.GetType() == OFTInteger )
     {
             strcpy( szFieldType, "integer" );
+    }
+    else if( oField.GetType() == OFTInteger64 )
+    {
+        strcpy( szFieldType, "bigint" );
     }
     else if( oField.GetType() == OFTReal )
     {
@@ -1048,21 +1050,8 @@ CPLString OGRAmigoCloudTableLayer::GetAmigoCloudType(OGRFieldDefn& oField,
     }
     else if( oField.GetType() == OFTDateTime )
     {
-        strcpy( szFieldType, "timestamp with time zone" );
-    }
-    else if( oField.GetType() == OFTBinary )
-    {
-        strcpy( szFieldType, "bytea" );
-    }
-    else if( bApproxOK )
-    {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                  "Can't create field %s with type %s on PostgreSQL layers.  Creating as VARCHAR.",
-                  oField.GetNameRef(),
-                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR" );
-    }
-    else
+        strcpy( szFieldType, "datetime" );
+    } else
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Can't create field %s with type %s on PostgreSQL layers.",
@@ -1156,7 +1145,7 @@ OGRErr OGRAmigoCloudTableLayer::RunDeferedCreationIfNecessary()
                 json << ",";
 
             json << "{\\\"name\\\":\\\"" << poFieldDefn->GetNameRef() << "\\\",";
-            json << "\\\"type\\\":\\\"" << GetAmigoCloudType(*poFieldDefn, FALSE, TRUE) << "\\\",";
+            json << "\\\"type\\\":\\\"" << GetAmigoCloudType(*poFieldDefn) << "\\\",";
             if( !poFieldDefn->IsNullable() )
                 json << "\\\"nullable\\\":false,";
             else
