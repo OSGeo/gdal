@@ -93,7 +93,7 @@ class CPL_DLL MEMDataset : public GDALDataset
                                GSpacing nLineSpaceBuf,
                                GSpacing nBandSpaceBuf,
                                GDALRasterIOExtraArg* psExtraArg);
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -122,7 +122,7 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
 
     char           *pszUnitType;
     char           **papszCategoryNames;
-    
+
     double         dfOffset;
     double         dfScale;
 
@@ -177,4 +177,3 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
 };
 
 #endif /* ndef MEMDATASET_H_INCLUDED */
-
