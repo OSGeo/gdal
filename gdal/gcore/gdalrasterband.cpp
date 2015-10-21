@@ -1102,8 +1102,21 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
 
         poBlock->AddLock();
 
+        /* We need to temporarily drop the read-write lock in the following */
+        /*scenario. Imagine 2 threads T1 and T2 that respectively write dataset */
+        /* D1 and D2. T1 will take the mutex on D1 and T2 on D2. Now when the */
+        /* block cache fills, T1 might need to flush dirty blocks of D2 in the */
+        /* below Internalize(), which will cause GDALRasterBlock::Write() to be */
+        /* called and attempt at taking the lock on T2 (already taken). Similarly */
+        /* for T2 with D1, hence a deadlock situation (#6163) */
+        /* But this may open the door to other problems... */
+        if( poDS )
+            poDS->TemporarilyDropReadWriteLock();
         /* allocate data space */
-        if( poBlock->Internalize() != CE_None )
+        CPLErr eErr = poBlock->Internalize();
+        if( poDS )
+            poDS->ReacquireReadWriteLock();
+        if( eErr != CE_None )
         {
             poBlock->DropLock();
             delete poBlock;
