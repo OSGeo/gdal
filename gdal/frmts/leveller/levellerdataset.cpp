@@ -453,7 +453,7 @@ LevellerRasterBand::~LevellerRasterBand()
 
 CPLErr LevellerRasterBand::IWriteBlock
 (
-    int /* nBlockXOff */,
+    CPL_UNUSED int nBlockXOff,
     int nBlockYOff,
     void* pImage
 )
