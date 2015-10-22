@@ -383,6 +383,11 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
     dfMinX = -180.0 + nX * dfFrameLongWidth;
     dfMaxX = dfMinX + dfFrameLongWidth;
 
+#ifdef DEBUG_VERBOSE
+    CPLDebug("ECRG", "Frame %s : minx=%.16g, maxy=%.16g, maxx=%.16g, miny=%.16g",
+             pszFrameName, dfMinX, dfMaxY, dfMaxX, dfMinY);
+#endif
+
     return TRUE;
 }
 
