@@ -236,7 +236,7 @@ def transformer_5():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32652)
     ds_dem.SetProjection(sr.ExportToWkt())
-    ds_dem.SetGeoTransform([213300,1,0,4418700,0,-1])
+    ds_dem.SetGeoTransform([213300,200,0,4418700,0,-200])
     ds_dem.GetRasterBand(1).Fill(15)
     ds_dem = None
 
@@ -313,7 +313,7 @@ def transformer_5():
     # Test outside DEM extent : default behaviour --> error
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif' ] )
 
-    (success,pnt) = tr.TransformPoint( 0, -100, 0, 0 )
+    (success,pnt) = tr.TransformPoint( 0, 40000, 0, 0 )
     if success != 0:
         gdaltest.post_reason( 'fail' )
         return 'fail'
@@ -326,6 +326,13 @@ def transformer_5():
     tr = None
 
     # Test outside DEM extent with RPC_DEM_MISSING_VALUE=0
+    ds_dem = gdal.GetDriverByName('GTiff').Create('/vsimem/dem.tif', 100, 100, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32652)
+    ds_dem.SetProjection(sr.ExportToWkt())
+    ds_dem.SetGeoTransform([213300,1,0,4418700,0,-1])
+    ds_dem.GetRasterBand(1).Fill(15)
+    ds_dem = None
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEM_MISSING_VALUE=0' ] )
 
     (success,pnt) = tr.TransformPoint( 0, -99.5, 0.5, 0 )
@@ -588,9 +595,17 @@ def transformer_11():
     ]
     ds.SetMetadata(rpc, 'RPC')
 
-    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT=1150' ] )
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT=4000' ] )
     (success,pnt) = tr.TransformPoint( 0, 0, 0, 0 )
     if success:
+        print(pnt)
+        return 'fail'
+
+    # But this one should succeed
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT=1150' ] )
+    (success,pnt) = tr.TransformPoint( 0, 0, 0, 0 )
+    if not success or abs(pnt[0] - 77.350939956024618) > 1e-7 or abs(pnt[1] - 38.739703990877814) > 1e-7:
+        print(pnt)
         return 'fail'
 
     return 'success'
