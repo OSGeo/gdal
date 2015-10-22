@@ -199,6 +199,7 @@ typedef struct {
     GDALRPCInfo sRPC;
 
     double      adfPLToLatLongGeoTransform[6];
+    double      dfRefZ;
 
     int         bReversed;
 
@@ -390,6 +391,59 @@ void* GDALCreateSimilarRPCTransformer( void *hTransformArg, double dfRatioX, dou
     CSLDestroy(papszOptions);
 
     return psInfo;
+}
+
+/************************************************************************/
+/*                      GDALRPCGetHeightAtLongLat()                     */
+/************************************************************************/
+
+static
+int GDALRPCGetDEMHeight( const GDALRPCTransformInfo *psTransform,
+                         const double dfXIn, const double dfYIn, double* pdfDEMH );
+
+static bool GDALRPCGetHeightAtLongLat( const GDALRPCTransformInfo *psTransform,
+                                       const double dfXIn, const double dfYIn,
+                                       double* pdfHeight )
+{
+    double dfVDatumShift = 0.0;
+    double dfDEMH = 0;
+    if(psTransform->poDS)
+    {
+        double dfX, dfY;
+        double dfXTemp = dfXIn;
+        double dfYTemp = dfYIn;
+        //check if dem is not in WGS84 and transform points padfX[i], padfY[i]
+        if(psTransform->poCT)
+        {
+            double dfZ = 0;
+            if (!psTransform->poCT->Transform(1, &dfXTemp, &dfYTemp, &dfZ))
+            {
+                return false;
+            }
+
+            // We must take the opposite since poCT transforms from
+            // WGS84 to geoid. And we are going to do the reverse:
+            // take an elevation over the geoid and transforms it to WGS84
+            if( psTransform->bApplyDEMVDatumShift )
+                dfVDatumShift = -dfZ;
+        }
+
+        GDALApplyGeoTransform( (double*)(psTransform->adfDEMReverseGeoTransform),
+                                dfXTemp, dfYTemp, &dfX, &dfY );
+
+        if( !GDALRPCGetDEMHeight( psTransform, dfX, dfY, &dfDEMH) )
+        {
+            if( psTransform->bHasDEMMissingValue )
+                dfDEMH = psTransform->dfDEMMissingValue;
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    *pdfHeight = dfVDatumShift + (psTransform->dfHeightOffset + dfDEMH * psTransform->dfHeightScale);
+    return true;
 }
 
 /************************************************************************/
@@ -607,8 +661,22 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
         dfRefLong = (psRPCInfo->dfMIN_LONG + psRPCInfo->dfMAX_LONG) * 0.5;
         dfRefLat  = (psRPCInfo->dfMIN_LAT  + psRPCInfo->dfMAX_LAT ) * 0.5;
 
-        RPCTransformPoint( psTransform, dfRefLong, dfRefLat, 0.0, 
-                           &dfRefPixel, &dfRefLine );
+        double dfX = dfRefLong;
+        double dfY = dfRefLat;
+        double dfZ = 0;
+        int nSuccess;
+        // Try with DEM first
+        if( GDALRPCTransform( psTransform, !(psTransform->bReversed), 1,
+                          &dfX, &dfY, &dfZ, &nSuccess) )
+        {
+            dfRefPixel = dfX;
+            dfRefLine = dfY;
+        }
+        else
+        {
+            RPCTransformPoint( psTransform, dfRefLong, dfRefLat, 0.0, 
+                               &dfRefPixel, &dfRefLine );
+        }
     }
 
     // Try with scale and offset if we don't can't use bounds or
@@ -619,9 +687,26 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
         dfRefLong = psRPCInfo->dfLONG_OFF;
         dfRefLat  = psRPCInfo->dfLAT_OFF;
 
-        RPCTransformPoint( psTransform, dfRefLong, dfRefLat, 0.0, 
-                           &dfRefPixel, &dfRefLine );
+        double dfX = dfRefLong;
+        double dfY = dfRefLat;
+        double dfZ = 0;
+        int nSuccess;
+        // Try with DEM first
+        if( GDALRPCTransform( psTransform, !(psTransform->bReversed), 1,
+                               &dfX, &dfY, &dfZ, &nSuccess) )
+        {
+            dfRefPixel = dfX;
+            dfRefLine = dfY;
+        }
+        else
+        {
+            RPCTransformPoint( psTransform, dfRefLong, dfRefLat, 0.0, 
+                               &dfRefPixel, &dfRefLine );
+        }
     }
+
+    psTransform->dfRefZ = 0.0;
+    GDALRPCGetHeightAtLongLat(psTransform, dfRefLong, dfRefLat, &psTransform->dfRefZ);
 
 /* -------------------------------------------------------------------- */
 /*      Transform nearby locations to establish affine direction        */
@@ -629,12 +714,12 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /* -------------------------------------------------------------------- */
     double dfRefPixelDelta, dfRefLineDelta, dfLLDelta = 0.0001;
 
-    RPCTransformPoint( psTransform, dfRefLong+dfLLDelta, dfRefLat, 0.0, 
+    RPCTransformPoint( psTransform, dfRefLong+dfLLDelta, dfRefLat, psTransform->dfRefZ, 
                        &dfRefPixelDelta, &dfRefLineDelta );
     adfGTFromLL[1] = (dfRefPixelDelta - dfRefPixel) / dfLLDelta;
     adfGTFromLL[4] = (dfRefLineDelta - dfRefLine) / dfLLDelta;
     
-    RPCTransformPoint( psTransform, dfRefLong, dfRefLat+dfLLDelta, 0.0, 
+    RPCTransformPoint( psTransform, dfRefLong, dfRefLat+dfLLDelta, psTransform->dfRefZ, 
                        &dfRefPixelDelta, &dfRefLineDelta );
     adfGTFromLL[2] = (dfRefPixelDelta - dfRefPixel) / dfLLDelta;
     adfGTFromLL[5] = (dfRefLineDelta - dfRefLine) / dfLLDelta;
@@ -679,13 +764,9 @@ void GDALDestroyRPCTransformer( void *pTransformAlg )
 /*                      RPCInverseTransformPoint()                      */
 /************************************************************************/
 
-static
-int GDALRPCGetDEMHeight( const GDALRPCTransformInfo *psTransform,
-                         const double dfXIn, const double dfYIn, double* pdfDEMH );
-
 static bool 
 RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
-                          double dfPixel, double dfLine, double dfHeight, 
+                          double dfPixel, double dfLine, double dfUserHeight, 
                           double *pdfLong, double *pdfLat )
 
 {
@@ -709,43 +790,35 @@ RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
 /*      back transform to the indicated pixel and line.                 */
 /* -------------------------------------------------------------------- */
     double dfPixelDeltaX=0.0, dfPixelDeltaY=0.0;
+    double dfPrevError = 0.0;
+    double dfDEMH = 0.0;
+    bool bForceDEMHUpdate = false;
+    bool bFistTimeBelowThreshold = true;
 
-    for( iIter = 0; iIter < 10; iIter++ )
+    for( iIter = 0; iIter < 20; iIter++ )
     {
         double dfBackPixel, dfBackLine;
 
-        double dfDEMH = 0;
-        if(psTransform->poDS)
+        // Update DEMH, but not too often to avoid too many oscillations
+        if( bForceDEMHUpdate || ((iIter % 5) == 0) )
         {
-            double dfX, dfY;
-            double dfResultXTemp = dfResultX;
-            double dfResultYTemp = dfResultY;
-            //check if dem is not in WGS84 and transform points padfX[i], padfY[i]
-            if(psTransform->poCT)
+            bForceDEMHUpdate = false;
+            dfDEMH = 0;
+            if( !GDALRPCGetHeightAtLongLat(psTransform, dfResultX, dfResultY,
+                                           &dfDEMH) )
             {
-                double dfZ = 0;
-                if (!psTransform->poCT->Transform(1, &dfResultXTemp, &dfResultYTemp, &dfZ))
-                {
-                    return false;
-                }
-            }
-
-            GDALApplyGeoTransform( (double*)(psTransform->adfDEMReverseGeoTransform),
-                                   dfResultXTemp, dfResultYTemp, &dfX, &dfY );
-
-            if( !GDALRPCGetDEMHeight( psTransform, dfX, dfY, &dfDEMH) )
-            {
-                if( psTransform->bHasDEMMissingValue )
-                    dfDEMH = psTransform->dfDEMMissingValue;
+                // The first time, the guess might be completely out of the
+                // validity of the DEM, so pickup the "reference Z" as the
+                // first guess
+                if( iIter == 0 )
+                    dfDEMH = psTransform->dfRefZ;
                 else
-                {
                     return false;
-                }
             }
         }
 
         RPCTransformPoint( psTransform, dfResultX, dfResultY,
-                           dfHeight + dfDEMH * psTransform->dfHeightScale, 
+                           dfUserHeight + dfDEMH, 
                            &dfBackPixel, &dfBackLine );
 
         dfPixelDeltaX = dfBackPixel - dfPixel;
@@ -761,10 +834,25 @@ RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
         if( ABS(dfPixelDeltaX) < psTransform->dfPixErrThreshold
             && ABS(dfPixelDeltaY) < psTransform->dfPixErrThreshold )
         {
+            if( psTransform->poDS && bFistTimeBelowThreshold && (iIter % 5) != 0 )
+            {
+                bFistTimeBelowThreshold = false;
+                bForceDEMHUpdate = true;
+                continue;
+            }
             iIter = -1;
             //CPLDebug( "RPC", "Converged!" );
             break;
         }
+        double dfError = MAX(ABS(dfPixelDeltaX), ABS(dfPixelDeltaY));
+        // After 10 iterations, still allow for 10 more but only if the
+        // error decreases
+        if( iIter >= 10 && dfError >= dfPrevError )
+        {
+            //CPLDebug( "RPC", "No convergence" ); 
+            break;
+        }
+        dfPrevError = dfError;
     }
 
     if( iIter != -1 )
@@ -1346,59 +1434,17 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
         
         for( i = 0; i < nPointCount; i++ )
         {
-            double dfVDatumShift = 0.0;
-
-            if(psTransform->poDS)
+            double dfHeight = 0.0;
+            if( !GDALRPCGetHeightAtLongLat( psTransform, padfX[i], padfY[i],
+                                            &dfHeight ) )
             {
-                double dfX, dfY;
-                //check if dem is not in WGS84 and transform points padfX[i], padfY[i]
-                if(psTransform->poCT)
-                {
-                    double dfXOrig = padfX[i];
-                    double dfYOrig = padfY[i];
-                    double dfZ = 0.0;
-                    if (!psTransform->poCT->Transform(
-                                                1, &dfXOrig, &dfYOrig, &dfZ))
-                    {
-                        panSuccess[i] = FALSE;
-                        continue;
-                    }
-                    GDALApplyGeoTransform( psTransform->adfDEMReverseGeoTransform,
-                                           dfXOrig, dfYOrig, &dfX, &dfY );
-
-                    // We must take the opposite since poCT transforms from
-                    // WGS84 to geoid. And we are going to do the reverse:
-                    // take an elevation over the geoid and transforms it to WGS84
-                    if( psTransform->bApplyDEMVDatumShift )
-                        dfVDatumShift = -dfZ;
-                }
-                else
-                    GDALApplyGeoTransform( psTransform->adfDEMReverseGeoTransform,
-                                           padfX[i], padfY[i], &dfX, &dfY );
-
-                double dfDEMH(0);
-                if( !GDALRPCGetDEMHeight( psTransform, dfX, dfY, &dfDEMH) )
-                {
-                    if( psTransform->bHasDEMMissingValue )
-                        dfDEMH = psTransform->dfDEMMissingValue;
-                    else
-                    {
-                        panSuccess[i] = FALSE;
-                        continue;
-                    }
-                }
-
-                RPCTransformPoint( psTransform, padfX[i], padfY[i], 
-                                   padfZ[i] + dfVDatumShift +
-                                   (psTransform->dfHeightOffset + dfDEMH) *
-                                                psTransform->dfHeightScale, 
-                                   padfX + i, padfY + i );
+                panSuccess[i] = FALSE;
+                continue;
             }
-            else
-                RPCTransformPoint( psTransform, padfX[i], padfY[i], 
-                                   padfZ[i] + psTransform->dfHeightOffset *
-                                              psTransform->dfHeightScale, 
-                                   padfX + i, padfY + i );
+
+            RPCTransformPoint( psTransform, padfX[i], padfY[i], 
+                                padfZ[i] + dfHeight, 
+                                padfX + i, padfY + i );
             panSuccess[i] = TRUE;
         }
 
@@ -1415,8 +1461,7 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
         double dfResultX, dfResultY;
 
         if( !RPCInverseTransformPoint( psTransform, padfX[i], padfY[i], 
-                    padfZ[i] + psTransform->dfHeightOffset *
-                                psTransform->dfHeightScale,
+                    padfZ[i],
                     &dfResultX, &dfResultY ) )
         {
             panSuccess[i] = FALSE;
