@@ -114,9 +114,9 @@ class NITFDataset : public GDALPamDataset
 
     char       **papszTextMDToWrite;
     char       **papszCgmMDToWrite;
-    
+
     int          bInLoadXML;
-    
+
     int          bExposeUnderlyingJPEGDatasetOverviews;
     int          ExposeUnderlyingJPEGDatasetOverviews() const { return bExposeUnderlyingJPEGDatasetOverviews; }
 
@@ -218,7 +218,7 @@ class NITFRasterBand : public GDALPamRasterBand
 /* This class is potentially of general interest and could be moved to gdal_proxy.h */
 /* We don't proxy all methods. Generally speaking, the getters go to PAM first and */
 /* then to the underlying band if no value exist in PAM. The setters aren't */
-/* overriden, so they go to PAM */
+/* overridden, so they go to PAM */
 
 class NITFProxyPamRasterBand : public GDALPamRasterBand
 {
@@ -341,11 +341,11 @@ class NITFWrapperRasterBand : public NITFProxyPamRasterBand
                                           GDALRasterBand* poBaseBand,
                                           int nBand);
                   ~NITFWrapperRasterBand();
-    
+
     /* Methods from GDALRasterBand we want to override */
     virtual GDALColorInterp GetColorInterpretation();
     virtual CPLErr          SetColorInterpretation( GDALColorInterp );
-    
+
     virtual GDALColorTable *GetColorTable();
 
     virtual int             GetOverviewCount();
@@ -354,4 +354,3 @@ class NITFWrapperRasterBand : public NITFProxyPamRasterBand
     /* Specific method */
     void                    SetColorTableFromNITFBandInfo(); 
 };
-

@@ -44,10 +44,10 @@ CPL_C_START
 #endif
 CPL_C_END
 
-/*  
+/*
 * Do we want to do special processing suitable for when JSAMPLE is a 
 * 16bit value?   
-*/ 
+*/
 #if defined(JPEG_LIB_MK1)
 #  define JPEG_LIB_MK1_OR_12BIT 1
 #elif BITS_IN_JSAMPLE == 12
@@ -92,9 +92,6 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
     }
 #endif
 
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
     int  anBandList[3] = {1,2,3};
 
 /* -------------------------------------------------------------------- */
@@ -102,14 +99,16 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
 /* -------------------------------------------------------------------- */
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
-    
+
     sCInfo.err = jpeg_std_error( &sJErr );
     jpeg_create_compress( &sCInfo );
 
     jpeg_vsiio_dest( &sCInfo, fp );
-    
+
     sCInfo.image_width = nBlockXSize;
     sCInfo.image_height = nBlockYSize;
+
+    const int nBands = poSrcDS->GetRasterCount();
     sCInfo.input_components = nBands;
 
     if( nBands == 1 )
@@ -122,7 +121,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
     }
 
     jpeg_set_defaults( &sCInfo );
-    
+
 #if defined(JPEG_LIB_MK1_OR_12BIT)
     if( eDT == GDT_UInt16 )
     {
@@ -175,13 +174,15 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    GByte 	*pabyScanline;
-    CPLErr      eErr = CE_None;
-    int         nWorkDTSize = GDALGetDataTypeSize(eWorkDT) / 8;
+    const int nWorkDTSize = GDALGetDataTypeSize(eWorkDT) / 8;
 
-    pabyScanline = (GByte *) CPLMalloc( nBands * nBlockXSize * nWorkDTSize );
+    GByte *pabyScanline = reinterpret_cast<GByte *>(
+        CPLMalloc( nBands * nBlockXSize * nWorkDTSize ) );
 
-    double nTotalPixels = (double)nXSize * nYSize;
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
+
+    const double nTotalPixels = static_cast<double>( nXSize * nYSize );
 
     int nBlockXSizeToRead = nBlockXSize;
     if (nBlockXSize * nBlockXOff + nBlockXSize > nXSize)
@@ -193,12 +194,11 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
     {
         nBlockYSizeToRead = nYSize - nBlockYSize * nBlockYOff;
     }
-    
+
     bool bClipWarn = false;
+    CPLErr eErr = CE_None;
     for( int iLine = 0; iLine < nBlockYSize && eErr == CE_None; iLine++ )
     {
-        JSAMPLE      *ppSamples;
-
         if (iLine < nBlockYSizeToRead)
         {
             eErr = poSrcDS->RasterIO( GF_Read, nBlockXSize * nBlockXOff, iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1, 
@@ -226,10 +226,9 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
         // clamp 16bit values to 12bit.
         if( eDT == GDT_UInt16 )
         {
-            GUInt16 *panScanline = (GUInt16 *) pabyScanline;
-            int iPixel;
+            GUInt16 *panScanline = reinterpret_cast<GUInt16 *>( pabyScanline );
 
-            for( iPixel = 0; iPixel < nXSize*nBands; iPixel++ )
+            for( int iPixel = 0; iPixel < nXSize*nBands; iPixel++ )
             {
                 if( panScanline[iPixel] > 4095 )
                 {
@@ -244,13 +243,15 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
             }
         }
 
-        ppSamples = (JSAMPLE *) pabyScanline;
+        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>( pabyScanline );
 
         if( eErr == CE_None )
             jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
 
-        double nCurPixels = (double)nBlockYOff * nBlockYSize * nXSize +
-                            (double)nBlockXOff * nBlockYSize * nBlockXSize + (iLine + 1) * nBlockXSizeToRead;
+        double nCurPixels =
+            static_cast<double>( nBlockYOff ) * nBlockYSize * nXSize +
+            static_cast<double>( nBlockXOff ) * nBlockYSize * nBlockXSize +
+            (iLine + 1) * nBlockXSizeToRead;
         if( eErr == CE_None 
             && !pfnProgress( nCurPixels / nTotalPixels, NULL, pProgressData ) )
         {
