@@ -2994,6 +2994,7 @@ CPLString VSIS3FSHandler::GetURLFromDirname( const CPLString& osDirname )
     CPLString osBaseURL(poS3HandleHelper->GetURL());
     if( osBaseURL.size() && osBaseURL[osBaseURL.size()-1] == '/' )
         osBaseURL.resize(osBaseURL.size()-1);
+    delete poS3HandleHelper;
 
     return osBaseURL;
 }
