@@ -5585,7 +5585,7 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
 
     if( bHasDiscardedLsb != 0 )
     {
-        int iBand = (nPlanarConfig == PLANARCONFIG_SEPARATE ) ? tile / nBlocksPerBand : -1;
+        int iBand = (nPlanarConfig == PLANARCONFIG_SEPARATE ) ? (int)tile / nBlocksPerBand : -1;
         DiscardLsb(pabyData, cc, iBand);
     }
 
@@ -5660,7 +5660,7 @@ int  GTiffDataset::WriteEncodedStrip(uint32 strip, GByte* pabyData,
 
     if( bHasDiscardedLsb != 0 )
     {
-        int iBand = (nPlanarConfig == PLANARCONFIG_SEPARATE ) ? strip / nBlocksPerBand : -1;
+        int iBand = (nPlanarConfig == PLANARCONFIG_SEPARATE ) ? (int)strip / nBlocksPerBand : -1;
         DiscardLsb(pabyData, cc, iBand);
     }
 
