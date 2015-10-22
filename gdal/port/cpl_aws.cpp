@@ -36,7 +36,7 @@
 
 CPL_CVSID("$Id$");
 
-//#define VERBOSE_DEBUG 1
+//#define DEBUG_VERBOSE 1
 
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
@@ -156,7 +156,7 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
     
     osCanonicalRequest += osXAMZContentSHA256;
 
-#ifdef VERBOSE_DEBUG
+#ifdef DEBUG_VERBOSE
     CPLDebug("S3", "osCanonicalRequest='%s'\n", osCanonicalRequest.c_str());
 #endif
 
@@ -176,8 +176,8 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
     osScope += "/aws4_request";
     osStringToSign += osScope + "\n";
     osStringToSign += CPLGetLowerCaseHexSHA256(osCanonicalRequest);
-    
-#ifdef VERBOSE_DEBUG
+
+#ifdef DEBUG_VERBOSE
     CPLDebug("S3", "osStringToSign='%s'\n", osStringToSign.c_str());
 #endif
 
@@ -208,7 +208,7 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
                      abySigningKeyOut );
     memcpy(abySigningKeyIn, abySigningKeyOut, CPL_SHA256_HASH_SIZE);
 
-#ifdef VERBOSE_DEBUG
+#ifdef DEBUG_VERBOSE
     CPLString osSigningKey(CPLGetLowerCaseHex(abySigningKeyIn, CPL_SHA256_HASH_SIZE));
     CPLDebug("S3", "osSigningKey='%s'\n", osSigningKey.c_str());
 #endif
@@ -221,8 +221,8 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
                      osStringToSign, osStringToSign.size(),
                      abySignature);
     CPLString osSignature(CPLGetLowerCaseHex(abySignature, CPL_SHA256_HASH_SIZE));
-    
-#ifdef VERBOSE_DEBUG
+
+#ifdef DEBUG_VERBOSE
     CPLDebug("S3", "osSignature='%s'\n", osSignature.c_str());
 #endif
 
@@ -246,8 +246,8 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
     osAuthorization += ",";
     osAuthorization += "Signature=";
     osAuthorization += osSignature;
-    
-#ifdef VERBOSE_DEBUG
+
+#ifdef DEBUG_VERBOSE
     CPLDebug("S3", "osAuthorization='%s'\n", osAuthorization.c_str());
 #endif
 
@@ -490,7 +490,7 @@ struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb)
 
 bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
 {
-#ifdef VERBOSE_DEBUG
+#ifdef DEBUG_VERBOSE
     CPLDebug("S3", "%s", pszErrorMsg);
 #endif
 
