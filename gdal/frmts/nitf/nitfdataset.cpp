@@ -5498,8 +5498,10 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
     {
         for( int nBlockXOff=0;nBlockXOff<nNBPR;nBlockXOff++ )
         {
-            /*CPLDebug("NITF", "nBlockXOff=%d/%d, nBlockYOff=%d/%d",
-                     nBlockXOff, nNBPR, nBlockYOff, nNBPC);*/
+#ifdef DEBUG_VERBOSE
+            CPLDebug("NITF", "nBlockXOff=%d/%d, nBlockYOff=%d/%d",
+                     nBlockXOff, nNBPR, nBlockYOff, nNBPC);
+#endif
             if (EQUAL(pszIC, "M3"))
             {
                 /* Write block offset for current block */
