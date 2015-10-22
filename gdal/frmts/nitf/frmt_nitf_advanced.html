@@ -34,7 +34,7 @@ The SLOC_ROW and SLOC_COL values are the placement of the CGM object relative
 to the base (SALVL) image.  The CCS_ROW/COL values are relative to the common
 coordinate system.  The _SDLVL is the display level.  
 The DATA is the raw CGM data with "backslash quotable" escaping 
-applied.  All occurances of ASCII zero will be translated to '\0', and all 
+applied.  All occurrences of ASCII zero will be translated to '\0', and all 
 backslashes and double quotes will be backslashed escaped.  The 
 CPLUnescapeString() function can be used to unescape the data into binary
 format using scheme CPLES_BackslashQuotable. <p>
@@ -51,9 +51,7 @@ Since GDAL 1.8.0, to add CGM data to a NITF image, you can pass creation options
 </pre> 
 
 Notice that passing CGM as creation options will overwrite existing CGM segment read in the CGM metadata domain.
-
 <p>
-
 
 While GDAL does not support parsing or rendering CGM data, at least one user 
 has found the <a href="http://sk1project.org/modules.php?name=Products&product=uniconvertor">UniConverter</a> 
@@ -110,7 +108,7 @@ The argument to DATA_n
 is the raw text of the n'th (zero based) text segment with no escaping of any
 kind applied. <p>
 
-Since GDAL 1.8.0, the TEXT segment header data is preserved in HEADER_n metdata item.
+Since GDAL 1.8.0, the TEXT segment header data is preserved in HEADER_n metadata item.
 
 The CreateCopy() method on the NITF driver also supports creating 
 text segments on the output file as long as the input file has metadata
@@ -136,7 +134,7 @@ TRE which will have the name of the TRE as the name, and the data of the TRE
 as the contents.  The data contents will be "backslash escaped" like CGM
 data above. <p>
 
-In case of multiple occurences of the same TRE, the second occurence will be
+In case of multiple occurrences of the same TRE, the second occurrence will be
 named "TRENAME_2", the third "TRENAME_3" where TRENAME is the TRE name.<p>
 
 <pre>
@@ -228,6 +226,3 @@ header is the length (decoded) in bytes, followed by one space.  <p>
 
 </body>
 </html>
-
-
-

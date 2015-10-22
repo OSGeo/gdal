@@ -43,7 +43,7 @@ system.  Pseudo-color tables may be written for 8bit images.<P>
 
 In addition to the export oriented CreateCopy() API, it is also possible to
 create a blank NITF file using Create() and write imagery on demand.  However,
-using this methology writing of pseudocolor tables and georeferencing is
+using this methodology writing of pseudocolor tables and georeferencing is
 not supported unless appropriate IREP and ICORDS creation options are supplied.
 <p>
 
@@ -54,7 +54,7 @@ Creation Options:<p>
 <li> Most file header, imagery header metadata and security fields can
 be set with appropriate <b>creation options</b> (although they are reported as metadata
 item, but must not be set as metadata).  For instance setting 
-<tt>"FTITLE=Image of abandoned missle silo south west of Karsk"</tt> in the
+<tt>"FTITLE=Image of abandoned missile silo south west of Karsk"</tt> in the
 creation option list would result in setting of the FTITLE field in the NITF
 file header.  Use the official field names from the NITF specification 
 document; do not put the "NITF_" prefix that is reported when asking the metadata
@@ -130,7 +130,7 @@ TREs. <p>
 <li> <b>TRE=tre-name=tre-contents</b>: One or more TRE creation options may 
 be used provided to write arbitrary user defined TREs to the image header.  The
 tre-name should be at most six characters, and the tre-contents should be 
-"backslash escaped" if it contains blackslashes or zero bytes.  The argument
+"backslash escaped" if it contains backslashes or zero bytes.  The argument
 is the same format as returned in the TRE metadata domain when reading.<p>
 
 <li> <b>FILE_TRE=tre-name=tre-contents</b>: (GDAL >= 1.8.0) Similar to above options,
@@ -162,6 +162,3 @@ Steve Rawlinson (JPEG), Reiner Beck (BLOCKA) for assistance adding features.<p>
 
 </body>
 </html>
-
-
-

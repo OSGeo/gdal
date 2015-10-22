@@ -28,11 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_conv.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
 #include "gdal.h"
 #include "nitflib.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
 
 CPL_C_START
 #include "tiffio.h"
@@ -51,11 +51,11 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
                            GByte *pabyOutputImage )
 
 {
-    int nOutputBytes= (psImage->nBlockWidth * psImage->nBlockHeight + 7)/8;
-
 /* -------------------------------------------------------------------- */
 /*      Write memory TIFF with the bilevel data.                        */
 /* -------------------------------------------------------------------- */
+    const int nOutputBytes= (psImage->nBlockWidth * psImage->nBlockHeight + 7)/8;
+
     CPLString osFilename;
 
     osFilename.Printf( "/vsimem/nitf-wrk-%ld.tif", (long) CPLGetPID() );
@@ -81,7 +81,7 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
     TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
     TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
     TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_CCITTFAX3 );
-    
+
     if( psImage->szCOMRAT[0] == '2' )
         TIFFSetField( hTIFF, TIFFTAG_GROUP3OPTIONS, GROUP3OPT_2DENCODING );
 
@@ -93,7 +93,7 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
 /* -------------------------------------------------------------------- */
 /*      Now open and read it back.                                      */
 /* -------------------------------------------------------------------- */
-    int bResult = TRUE;
+    bool bResult = true;
 
     hTIFF = VSI_TIFFOpen( osFilename, "r", fpL );
     if (hTIFF == NULL)
@@ -102,11 +102,10 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
         return FALSE;
     }
 
-
     if( TIFFReadEncodedStrip( hTIFF, 0, pabyOutputImage, nOutputBytes ) == -1 )
     {
         memset( pabyOutputImage, 0, nOutputBytes );
-        bResult = FALSE;
+        bResult = false;
     }
 
     TIFFClose( hTIFF );
