@@ -64,6 +64,7 @@ CPL_C_END
 typedef struct
 {
     CPLMutex* hMutex;
+    int       nMutexTakenCount;
 } GDALDatasetPrivate;
 
 typedef struct
@@ -5758,6 +5759,7 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
     if( eAccess == GA_Update && (eRWFlag == GF_Write || psPrivate->hMutex != NULL) )
     {
         CPLCreateOrAcquireMutex(&psPrivate->hMutex, 1000.0);
+        psPrivate->nMutexTakenCount ++; /* not sure if we can have recursive calls, so ...*/
         return TRUE;
     }
     return FALSE;
@@ -5770,5 +5772,28 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 void GDALDataset::LeaveReadWrite()
 {
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    psPrivate->nMutexTakenCount --;
     CPLReleaseMutex(psPrivate->hMutex);
+}
+
+/************************************************************************/
+/*                      TemporarilyDropReadWriteLock()                  */
+/************************************************************************/
+
+void GDALDataset::TemporarilyDropReadWriteLock()
+{
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    for(int i=0;i<psPrivate->nMutexTakenCount;i++)
+        CPLReleaseMutex(psPrivate->hMutex);
+}
+
+/************************************************************************/
+/*                       ReacquireReadWriteLock()                       */
+/************************************************************************/
+
+void GDALDataset::ReacquireReadWriteLock()
+{
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    for(int i=0;i<psPrivate->nMutexTakenCount;i++)
+        CPLAcquireMutex(psPrivate->hMutex, 1000.0);
 }
