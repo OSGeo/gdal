@@ -13428,8 +13428,6 @@ int GTiffOneTimeInit()
     TIFFSetWarningHandler( GTiffWarningHandler );
     TIFFSetErrorHandler( GTiffErrorHandler );
 
-    // This only really needed if we are linked to an external libgeotiff
-    // with its own (lame) file searching logic. 
     LibgeotiffOneTimeInit();
 
     return TRUE;
