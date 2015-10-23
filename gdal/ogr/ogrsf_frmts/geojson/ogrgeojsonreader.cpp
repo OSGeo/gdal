@@ -670,7 +670,7 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
 
         bSuccess = true; // SUCCESS
     }
-    else
+    else if( poObj != NULL && json_object_get_type(poObj) == json_type_object )
     {
         json_object_iter it;
         it.key = NULL;
