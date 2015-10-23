@@ -430,7 +430,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     void ReportError(CPLErr eErrClass, int err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 
 private:
-    CPLMutex        *m_hMutex;
+    void           *m_hPrivateData;
 
     OGRLayer*       BuildLayerFromSelectInfo(swq_select* psSelectInfo,
                                              OGRGeometry *poSpatialFilter,
