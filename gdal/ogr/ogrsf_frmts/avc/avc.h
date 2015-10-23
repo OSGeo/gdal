@@ -118,7 +118,12 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#ifdef GDAL_COMPILATION
+#include "shapefil.h"
+#else
 #include "dbfopen.h"
+#endif
+
 #include "avc_mbyte.h"
 
 CPL_C_START
