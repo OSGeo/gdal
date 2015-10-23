@@ -137,7 +137,7 @@ double NWT_GRDRasterBand::GetNoDataValue( int *pbSuccess )
         if( pbSuccess != NULL )
             *pbSuccess = TRUE;
 
-        return (float)-1.e37;
+        return -1.e37f;
     }
 
     if( pbSuccess != NULL )
@@ -168,28 +168,33 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                       int nBlockYOff,
                                       void *pImage )
 {
-    NWT_GRDDataset *poGDS = (NWT_GRDDataset *) poDS;
-    int nRecordSize = nBlockXSize * 2;
+    NWT_GRDDataset *poGDS = reinterpret_cast<NWT_GRDDataset *>( poDS );
+    const int nRecordSize = nBlockXSize * 2;
     unsigned short raw1;
 
-    VSIFSeekL( poGDS->fp, 1024 + nRecordSize * (vsi_l_offset)nBlockYOff, SEEK_SET );
+    VSIFSeekL( poGDS->fp,
+               1024 + nRecordSize
+               * static_cast<vsi_l_offset>( nBlockYOff ),
+               SEEK_SET );
 
-    char *pszRecord = (char *) CPLMalloc( nRecordSize );
+    char *pszRecord = reinterpret_cast<char *>( CPLMalloc( nRecordSize ) );
     VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp );
 
     if( nBand == 4 )                //Z values
     {
         for( int i = 0; i < nBlockXSize; i++ )
         {
-            memcpy( (void *) &raw1, (void *)(pszRecord + 2 * i), 2 );
+            memcpy( reinterpret_cast<void *>( &raw1 ),
+                    reinterpret_cast<void *>(pszRecord + 2 * i), 2 );
             CPL_LSBPTR16(&raw1);
             if( raw1 == 0 )
             {
-                ((float *)pImage)[i] = (float)-1.e37;    // null value
+              reinterpret_cast<float *>( pImage )[i] = -1.e37f;    // null value
             }
             else
             {
-                ((float *)pImage)[i] = (float) (dfOffset + ((raw1 - 1) * dfScale));
+                reinterpret_cast<float *>( pImage )[i]
+                  = static_cast<float>( dfOffset + ((raw1 - 1) * dfScale) );
             }
         }
     }
@@ -197,27 +202,34 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     {
         for( int i = 0; i < nBlockXSize; i++ )
         {
-            memcpy( (void *) &raw1, (void *)(pszRecord + 2 * i), 2 );
+            memcpy( reinterpret_cast<void *>( &raw1 ),
+                    reinterpret_cast<void *>(pszRecord + 2 * i),
+                    2 );
             CPL_LSBPTR16(&raw1);
-            ((char *)pImage)[i] = poGDS->ColorMap[raw1 / 16].r;
+            reinterpret_cast<char *>( pImage )[i]
+                = poGDS->ColorMap[raw1 / 16].r;
         }
     }
     else if( nBand == 2 )            // green
     {
         for( int i = 0; i < nBlockXSize; i++ )
         {
-            memcpy( (void *) &raw1, (void *)(pszRecord + 2 * i), 2 );
+            memcpy( reinterpret_cast<void *> ( &raw1 ),
+                    reinterpret_cast<void *> ( pszRecord + 2 * i ),
+                    2 );
             CPL_LSBPTR16(&raw1);
-            ((char *) pImage)[i] = poGDS->ColorMap[raw1 / 16].g;
+            reinterpret_cast<char *>( pImage )[i] = poGDS->ColorMap[raw1 / 16].g;
         }
     }
     else if( nBand == 3 )            // blue
     {
         for( int i = 0; i < nBlockXSize; i++ )
         {
-            memcpy( (void *) &raw1, (void *) (pszRecord + 2 * i), 2 );
+            memcpy( reinterpret_cast<void *>( &raw1 ),
+                    reinterpret_cast<void *>( pszRecord + 2 * i ),
+                    2 );
             CPL_LSBPTR16(&raw1);
-            ((char *) pImage)[i] = poGDS->ColorMap[raw1 / 16].b;
+            reinterpret_cast<char *>( pImage )[i] = poGDS->ColorMap[raw1 / 16].b;
         }
     }
     else
@@ -241,6 +253,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                             NWT_GRDDataset                           */
 /* ==================================================================== */
 /************************************************************************/
+
 NWT_GRDDataset::NWT_GRDDataset() :
     fp(NULL),
     pGrd(NULL),
@@ -280,6 +293,7 @@ NWT_GRDDataset::~NWT_GRDDataset()
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
+
 CPLErr NWT_GRDDataset::GetGeoTransform( double *padfTransform )
 {
     padfTransform[0] = pGrd->dfMinX - ( pGrd->dfStepSize * 0.5 );
@@ -296,6 +310,7 @@ CPLErr NWT_GRDDataset::GetGeoTransform( double *padfTransform )
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
+
 const char *NWT_GRDDataset::GetProjectionRef()
 {
 #ifdef OGR_ENABLED
@@ -310,7 +325,7 @@ const char *NWT_GRDDataset::GetProjectionRef()
         }
     }
 #endif
-    return( (const char *)pszProjection );
+    return reinterpret_cast<const char *>( pszProjection );
 }
 
 /************************************************************************/
@@ -362,11 +377,11 @@ GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     VSIFSeekL( poDS->fp, 0, SEEK_SET );
     VSIFReadL( poDS->abyHeader, 1, 1024, poDS->fp );
-    poDS->pGrd = (NWT_GRID *) malloc(sizeof(NWT_GRID));
+    poDS->pGrd = reinterpret_cast<NWT_GRID *>( malloc( sizeof( NWT_GRID ) ) );
 
     poDS->pGrd->fp = poDS->fp;
 
-    if (!nwt_ParseHeader( poDS->pGrd, (char *) poDS->abyHeader ) ||
+    if (!nwt_ParseHeader( poDS->pGrd, reinterpret_cast<char *>( poDS->abyHeader ) ) ||
         !GDALCheckDatasetDimensions(poDS->pGrd->nXSide, poDS->pGrd->nYSide) )
     {
         delete poDS;
@@ -376,10 +391,10 @@ GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = poDS->pGrd->nXSide;
     poDS->nRasterYSize = poDS->pGrd->nYSide;
 
-// create a colorTable
-  // if( poDS->pGrd->iNumColorInflections > 0 )
-  //   poDS->CreateColorTable();
-  nwt_LoadColors( poDS->ColorMap, 4096, poDS->pGrd );
+    // create a colorTable
+    // if( poDS->pGrd->iNumColorInflections > 0 )
+    //   poDS->CreateColorTable();
+    nwt_LoadColors( poDS->ColorMap, 4096, poDS->pGrd );
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -397,7 +412,8 @@ GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
+                                 poOpenInfo->GetSiblingFiles() );
 
     return (poDS);
 }
@@ -417,7 +433,7 @@ void GDALRegister_NWT_GRD()
     poDriver->SetDescription( "NWT_GRD" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                             "Northwood Numeric Grid Format .grd/.tab" );
+                               "Northwood Numeric Grid Format .grd/.tab" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#grd");
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

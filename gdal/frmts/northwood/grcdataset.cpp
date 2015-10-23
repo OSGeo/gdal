@@ -106,7 +106,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
 {
     this->poDS = poDS;
     this->nBand = nBand;
-    NWT_GRCDataset *poGDS =( NWT_GRCDataset * ) poDS;
+    NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
 
     if( poGDS->pGrd->nBitsPerPixel == 8 )
         eDataType = GDT_Byte;
@@ -130,8 +130,9 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
 
     poGDS->poColorTable->SetColorEntry( 0, &oEntry );
 
-    int i;
-    for( i=0; i < (int) poGDS->pGrd->stClassDict->nNumClassifiedItems; i++ )
+    for( int i = 0;
+         i < static_cast<int>( poGDS->pGrd->stClassDict->nNumClassifiedItems );
+         i++ )
     {
         oEntry.c1 = poGDS->pGrd->stClassDict->stClassifedItem[i]->r;
         oEntry.c2 = poGDS->pGrd->stClassDict->stClassifedItem[i]->g;
@@ -145,7 +146,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
 
     // find the max value used in the grc
     int maxValue = 0;
-    for( i=0; i < (int) poDS->pGrd->stClassDict->nNumClassifiedItems; i++ )
+    for( int i=0; i < static_cast<int>( poDS->pGrd->stClassDict->nNumClassifiedItems ); i++ )
     {
         if( poDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal > maxValue )
             maxValue = poDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal;
@@ -158,11 +159,13 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
     // are not defined
     for( int val = 1; val <= maxValue; val++ )
     {
-        int i;
+        int i = 0;
         // loop throught the GRC dictionary to see if the value is defined
-        for( i=0; i < (int) poDS->pGrd->stClassDict->nNumClassifiedItems; i++ )
+        for( ;
+             i < static_cast<int>( poDS->pGrd->stClassDict->nNumClassifiedItems );
+             i++ )
         {
-            if( (int) poDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal ==
+            if( static_cast<int>( poDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal ) ==
                 val )
             {
                 poGDS->papszCategories =
@@ -172,28 +175,26 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
                 break;
             }
         }
-        if( i >= (int) poDS->pGrd->stClassDict->nNumClassifiedItems )
+        if( i >= static_cast<int>( poDS->pGrd->stClassDict->nNumClassifiedItems ) )
             poGDS->papszCategories = CSLAddString( poGDS->papszCategories, "" );
 
     }
 }
 
-NWT_GRCRasterBand::~NWT_GRCRasterBand()
-{
-}
+NWT_GRCRasterBand::~NWT_GRCRasterBand() {}
 
 double NWT_GRCRasterBand::GetNoDataValue( int *pbSuccess )
 {
     if( pbSuccess != NULL )
         *pbSuccess = TRUE;
 
-    return 0;                        //Northwood grid 0 is always null
+    return 0.0;  // Northwood grid 0 is always null.
 }
 
 // return an array of null terminated strings for the class names
 char **NWT_GRCRasterBand::GetCategoryNames()
 {
-    NWT_GRCDataset *poGDS = (NWT_GRCDataset *) poDS;
+    NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
 
     return poGDS->papszCategories;
 }
@@ -201,7 +202,7 @@ char **NWT_GRCRasterBand::GetCategoryNames()
 // return the color table
 GDALColorTable *NWT_GRCRasterBand::GetColorTable()
 {
-    NWT_GRCDataset *poGDS = (NWT_GRCDataset *) poDS;
+    NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
 
     return poGDS->poColorTable;
 }
@@ -210,8 +211,8 @@ GDALColorInterp NWT_GRCRasterBand::GetColorInterpretation()
 {
     if( nBand == 1 )
         return GCI_PaletteIndex;
-    else
-        return GCI_Undefined;
+
+    return GCI_Undefined;
 }
 
 /************************************************************************/
@@ -221,8 +222,8 @@ CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                       int nBlockYOff,
                                       void *pImage )
 {
-    NWT_GRCDataset *poGDS =(NWT_GRCDataset *) poDS;
-    int nRecordSize = nBlockXSize *( poGDS->pGrd->nBitsPerPixel / 8 );
+    NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
+    const int nRecordSize = nBlockXSize *( poGDS->pGrd->nBitsPerPixel / 8 );
 
     if( nBand == 1 )
     {                            //grc's are just one band of indices
@@ -292,8 +293,8 @@ const char *NWT_GRCDataset::GetProjectionRef()
 #ifdef OGR_ENABLED
     if (pszProjection == NULL)
     {
-        OGRSpatialReference *poSpatialRef;
-        poSpatialRef = MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
+        OGRSpatialReference *poSpatialRef
+          = MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
         if (poSpatialRef)
         {
             poSpatialRef->exportToWkt( &pszProjection );
@@ -338,9 +339,7 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    NWT_GRCDataset *poDS;
-
-    poDS = new NWT_GRCDataset();
+    NWT_GRCDataset *poDS = new NWT_GRCDataset();
 
     poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
     if (poDS->fp == NULL)
@@ -354,11 +353,11 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     VSIFSeekL( poDS->fp, 0, SEEK_SET );
     VSIFReadL( poDS->abyHeader, 1, 1024, poDS->fp );
-    poDS->pGrd = (NWT_GRID *) malloc( sizeof (NWT_GRID) );
+    poDS->pGrd = reinterpret_cast<NWT_GRID *>( malloc( sizeof (NWT_GRID) ) );
 
     poDS->pGrd->fp = poDS->fp;
 
-    if (!nwt_ParseHeader( poDS->pGrd, (char *) poDS->abyHeader ) ||
+    if (!nwt_ParseHeader( poDS->pGrd, reinterpret_cast<char *>( poDS->abyHeader ) ) ||
         !GDALCheckDatasetDimensions(poDS->pGrd->nXSide, poDS->pGrd->nYSide) ||
         poDS->pGrd->stClassDict == NULL)
     {
@@ -383,7 +382,9 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
+    poDS->oOvManager.Initialize( poDS,
+                                 poOpenInfo->pszFilename,
+                                 poOpenInfo->GetSiblingFiles() );
 
     return (poDS);
 }
@@ -396,24 +397,22 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 void
 GDALRegister_NWT_GRC()
 {
-    GDALDriver *poDriver;
+    if( GDALGetDriverByName( "NWT_GRC" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "NWT_GRC" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "NWT_GRC" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                 "Northwood Classified Grid Format .grc/.tab");
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                 "frmt_various.html#northwood_grc" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grc" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "NWT_GRC" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                             "Northwood Classified Grid Format .grc/.tab");
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                             "frmt_various.html#northwood_grc" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grc" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = NWT_GRCDataset::Open;
-        poDriver->pfnIdentify = NWT_GRCDataset::Identify;
+    poDriver->pfnOpen = NWT_GRCDataset::Open;
+    poDriver->pfnIdentify = NWT_GRCDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
