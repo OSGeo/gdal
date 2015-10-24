@@ -25,11 +25,11 @@
 ## @ignore GeometryType
 ## @ignore GetFieldSubTypeName
 
-## @cmethod @GeometryTypes()
+## @sub @GeometryTypes()
 # @return a list of all geometry types, currently:
 # +list Geo::OGR wkb 25DBit,25Bit,NDR,XDR
 
-## @cmethod list ByteOrders
+## @sub list ByteOrders
 # @return a list of byte order types, XDR and NDR. XDR denotes
 # big-endian and NDR denotes little-endian.
 
@@ -97,9 +97,9 @@
 ## @ignore Deregister
 
 ## @method @Capabilities()
-# Both a class and an object method.
+# Both a package subroutine and an object method.
 # @return a list of capabilities. The object method returns a list of
-# the capabilities the driver has. The class method returns a list of
+# the capabilities the driver has. The package subroutine returns a list of
 # all potential capabilities a driver may have. These are currently:
 # +list Geo::OGR ODrC
 #
@@ -172,9 +172,9 @@
 ## @ignore SyncToDisk
 
 ## @method @Capabilities()
-# Both a class and an object method.
+# Both a package subroutine and an object method.
 # @return a list of capabilities. The object method returns a list of
-# all capabilities the data source has. The class method returns a
+# all capabilities the data source has. The package subroutine returns a
 # list of all potential capabilities a data source may have. These are
 # currently:
 # +list Geo::OGR ODsC
@@ -184,7 +184,7 @@
 # @return a boolean value indicating whether the data source has the
 # specified capability.
 
-## @cmethod Geo::OGR::DataSource Open($name, $update = 0)
+## @sub Geo::OGR::DataSource Open($name, $update = 0)
 # An example:
 # \code
 # use Geo::GDAL;
@@ -194,7 +194,7 @@
 # @param update Whether to open the data source in update mode.
 # @return a new Geo::OGR::DataSource object.
 
-## @cmethod Geo::OGR::DataSource OpenShared($name, $update = 0)
+## @sub Geo::OGR::DataSource OpenShared($name, $update = 0)
 # @param name The data source name (directory, filename, etc.).
 # @param update Whether to open the data source in update mode.
 # @return a new Geo::OGR::DataSource object.
@@ -296,15 +296,15 @@
 # @isa (Geo::OGR)
 
 ## @method @Capabilities()
-# Both a class and an object method.
+# Both a package subroutine and an object method.
 # @return a list of capabilities. The object method returns a list of
-# the capabilities the layer has. The class method returns a list of
+# the capabilities the layer has. The package subroutine returns a list of
 # all potential capabilities a layer may have. These are currently:
 # +list Geo::OGR OLC
 #
 # Examples:
 # \code
-# @cap = Geo::OGR::Layer::Capabilities(); # the class method
+# @cap = Geo::OGR::Layer::Capabilities(); # the package subroutine
 # @cap = $layer->Capabilities(); # the object method
 # \endcode
 
@@ -965,11 +965,11 @@
 # @brief A definition of a non-spatial attribute.
 # @isa (Geo::OGR)
 
-## @cmethod list Types
+## @sub list Types
 # Field types supported by GDAL. Current list is
 # +list Geo::OGR OFT
 
-## @cmethod list JustifyValues
+## @sub list JustifyValues
 # Justify values supported by GDAL. Current list is
 # +list Geo::OGR OJ
 
@@ -1111,7 +1111,7 @@
 ## @method Type
 # @return the type of this geometry field. One of Geo::OGR::GeomFieldDefn::Types
 
-## @cmethod Types
+## @sub Types
 # @return a list of all geometry types, currently:
 # +list Geo::OGR wkb 25DBit,25Bit,NDR,XDR
 
@@ -1166,10 +1166,10 @@
 # @note Most spatial analysis methods require <a
 # href="http://geos.osgeo.org/doxygen/">GEOS</a> to work rigorously.
 
-## @cmethod @GeometryTypes()
+## @sub @GeometryTypes()
 # Same as Geo::OGR::GeometryTypes
 
-## @cmethod list ByteOrders
+## @sub list ByteOrders
 # Same as Geo::OGR::ByteOrders
 
 ## @cmethod Geo::OGR::Geometry new(%params)
@@ -1197,7 +1197,7 @@
 # $g = Geo::OGR::Geometry->new(...arguments...);
 # \endcode
 
-## @cmethod Geo::OGR::Geometry ApproximateArcAngles(%params)
+## @sub Geo::OGR::Geometry ApproximateArcAngles(%params)
 # Create a line string, which approximates an arc. 
 # @note All angles are in degrees.
 #
