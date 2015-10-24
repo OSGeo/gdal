@@ -798,10 +798,12 @@ RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
     for( iIter = 0; iIter < 20; iIter++ )
     {
         double dfBackPixel, dfBackLine;
+        bool bHasJustAdjustedDEMH = false;
 
         // Update DEMH, but not too often to avoid too many oscillations
         if( bForceDEMHUpdate || ((iIter % 5) == 0) )
         {
+            bHasJustAdjustedDEMH = true;
             bForceDEMHUpdate = false;
             dfDEMH = 0;
             if( !GDALRPCGetHeightAtLongLat(psTransform, dfResultX, dfResultY,
@@ -847,7 +849,7 @@ RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
         double dfError = MAX(ABS(dfPixelDeltaX), ABS(dfPixelDeltaY));
         // After 10 iterations, still allow for 10 more but only if the
         // error decreases
-        if( iIter >= 10 && dfError >= dfPrevError )
+        if( iIter >= 10 && dfError >= dfPrevError && !bHasJustAdjustedDEMH )
         {
             //CPLDebug( "RPC", "No convergence" ); 
             break;
