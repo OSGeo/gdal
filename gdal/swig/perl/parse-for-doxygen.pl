@@ -118,7 +118,7 @@ for my $dox (@dox) {
             $package{$package}{dox}{$sub}{ignore} = 1;
             next;
         }
-        if ($w eq '@cmethod' or $w eq '@method') {
+        if ($w eq '@cmethod' or $w eq '@method' or $w eq '@sub') {
             $sub = $_;
             $sub =~ s/^(\S+)\s+//;
             my $d = $sub;
@@ -198,7 +198,7 @@ for my $package (sort keys %package) {
         next if $package{$package}{dox}{$sub}{ignore};
         next if $sub =~ /^_/; # no use showing these
         next if $sub =~ /swig_/; # skip attribute setters and getters
-        next if $sub =~ /GDAL_GCP_/; # skip GDAL::GCP class methods from class GDAL
+        next if $sub =~ /GDAL_GCP_/; # skip GDAL::GCP package subroutines from class GDAL
 
         next if $sub =~ /GT_/; # done in methods geometry type test and modify
 
@@ -245,6 +245,9 @@ for my $package (sort keys %package) {
         }
         if ($package{$package}{dox}{$sub}{at} eq '@cmethod') {
             print "# Class method.\n";
+        }
+        if ($package{$package}{dox}{$sub}{at} eq '@sub') {
+            print "# Package subroutine.\n";
         }
         for my $c (@{$package{$package}{dox}{$sub}{c}}) {
             if ($c =~ /^\+list/) {
