@@ -274,12 +274,12 @@ static int fetchParms(string csyFileName, double * padfPrjParams)
     string pszEllips = ReadElement("CoordSystem", "Ellipsoid", csyFileName);
 
     //fetch info about a custom ellipsoid
-    if( EQUALN( pszEllips.c_str(), "User Defined", 12 ) )
+    if( STARTS_WITH_CI(pszEllips.c_str(), "User Defined") )
     {
         padfPrjParams[0] = ReadPrjParms("Ellipsoid", "a", csyFileName);
         padfPrjParams[2] = ReadPrjParms("Ellipsoid", "1/f", csyFileName);
     }
-    else if( EQUALN( pszEllips.c_str(), "Sphere", 6 ) )
+    else if( STARTS_WITH_CI(pszEllips.c_str(), "Sphere") )
     {
         padfPrjParams[0] = ReadPrjParms("CoordSystem", "Sphere Radius", csyFileName);
     }
@@ -312,13 +312,13 @@ static int fetchParms(string csyFileName, double * padfPrjParams)
 **/
 static int mapTMParms(string sProj, double dfZone, double &dfFalseEasting, double &dfCentralMeridian)
 {
-    if( EQUALN( sProj.c_str(), "Gauss-Krueger Germany", 21 ) )
+    if( STARTS_WITH_CI(sProj.c_str(), "Gauss-Krueger Germany") )
     {
         //Zone number must be in the range 1 to 3
         dfCentralMeridian = 6.0 + (dfZone - 1) * 3;
         dfFalseEasting = 2500000 + (dfZone - 1) * 1000000; 
     }
-    else if( EQUALN( sProj.c_str(), "Gauss-Boaga Italy", 17 ) )
+    else if( STARTS_WITH_CI(sProj.c_str(), "Gauss-Boaga Italy") )
     {
         if ( dfZone == 1)
         {
@@ -333,7 +333,7 @@ static int mapTMParms(string sProj, double dfZone, double &dfFalseEasting, doubl
         else
             return false;
     }
-    else if( EQUALN( sProj.c_str(), "Gauss Colombia", 14 ) )
+    else if( STARTS_WITH_CI(sProj.c_str(), "Gauss Colombia") )
     {
         //Zone number must be in the range 1 to 4
         dfCentralMeridian = -77.08097220 + (dfZone - 1) * 3;
@@ -350,7 +350,7 @@ static int mapTMParms(string sProj, double dfZone, double &dfFalseEasting, doubl
 **/
 static void scaleFromLATTS( string sEllips, double phits, double &scale )
 {
-    if( EQUALN( sEllips.c_str(), "Sphere", 6 ) ) 
+    if( STARTS_WITH_CI(sEllips.c_str(), "Sphere") ) 
     {
         scale = cos(phits);
     }
@@ -394,13 +394,13 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     string pszProj;
 
     //translate ILWIS pre-defined coordinate systems
-    if( EQUALN( csyFileName.c_str(), "latlon.csy", 10 )) 
+    if( STARTS_WITH_CI(csyFileName.c_str(), "latlon.csy")) 
     {
         pszProj = "LatLon";
         pszDatum = "";
         pszEllips = "Sphere";
     }
-    else if ( EQUALN( csyFileName.c_str(), "LatlonWGS84.csy", 15 ))
+    else if ( STARTS_WITH_CI(csyFileName.c_str(), "LatlonWGS84.csy"))
     {
         pszProj = "LatLon";
         pszDatum = "WGS 1984";
@@ -429,20 +429,20 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     {
         //set datum later
     }
-    else if( EQUALN( pszProj.c_str(), "Albers EqualArea Conic", 22  ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Albers EqualArea Conic") )
     {
         oSRS.SetProjCS("Albers EqualArea Conic");
         oSRS.SetACEA( padfPrjParams[7], padfPrjParams[8],
                       padfPrjParams[5], padfPrjParams[6],
                       padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Azimuthal Equidistant", 21 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Azimuthal Equidistant") )
     {
         oSRS.SetProjCS("Azimuthal Equidistant");
         oSRS.SetAE( padfPrjParams[5], padfPrjParams[6],
                     padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Central Cylindrical", 19 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Central Cylindrical") )
     {
         //Use Central Parallel for dfStdP1
         //padfPrjParams[5] is always to zero
@@ -450,7 +450,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         oSRS.SetCEA( padfPrjParams[5], padfPrjParams[6],
                      padfPrjParams[3], padfPrjParams[4] ); 
     }
-    else if( EQUALN( pszProj.c_str(), "Cassini", 7 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Cassini") )
     {
         //Use Latitude_Of_True_Scale for dfCenterLat 
         //Scale Factor 1.0 should always be defined
@@ -458,21 +458,21 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         oSRS.SetCS(  padfPrjParams[10], padfPrjParams[6],  
                      padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "DutchRD", 7 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "DutchRD") )
     {
         oSRS.SetProjCS("DutchRD");
         oSRS.SetStereographic  (  52.156160556,  5.387638889,
                                   0.9999079,  
                                   155000,  463000);
     }
-    else if( EQUALN( pszProj.c_str(), "Equidistant Conic", 17 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Equidistant Conic") )
     {
         oSRS.SetProjCS("Equidistant Conic");
         oSRS.SetEC(  padfPrjParams[7], padfPrjParams[8],
                      padfPrjParams[5], padfPrjParams[6],	
                      padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Gauss-Krueger Germany", 21 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Gauss-Krueger Germany") )
     {
         //FalseNorthing and CenterLat are always set to 0
         //Scale 1.0 is defined
@@ -484,7 +484,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                      1.0, 	
                      padfPrjParams[3], 0 );
     }
-    else if ( EQUALN( pszProj.c_str(),"Gauss-Boaga Italy", 17 ) )
+    else if ( STARTS_WITH_CI(pszProj.c_str(), "Gauss-Boaga Italy") )
     {
         //FalseNorthing and CenterLat are always set to 0
         //Scale 0.9996 is defined
@@ -496,7 +496,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                      0.9996, 	
                      padfPrjParams[3], 0 );
     }
-    else if ( EQUALN( pszProj.c_str(),"Gauss Colombia", 14 ))
+    else if ( STARTS_WITH_CI(pszProj.c_str(), "Gauss Colombia"))
     {
         // 1000000 used for FalseNorthing and FalseEasting
         // 1.0 used for scale 
@@ -509,13 +509,13 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                      1.0, 	
                      1000000, 1000000 );
     }
-    else if( EQUALN( pszProj.c_str(), "Gnomonic", 8 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Gnomonic") )
     {
         oSRS.SetProjCS("Gnomonic");
         oSRS.SetGnomonic( padfPrjParams[5], padfPrjParams[6],
                           padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Lambert Conformal Conic", 23 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Lambert Conformal Conic") )
     {
         // should use 1.0 for scale factor in Ilwis definition 
         oSRS.SetProjCS("Lambert Conformal Conic");
@@ -523,7 +523,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                         padfPrjParams[5], padfPrjParams[6],
                         padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Lambert Cylind EqualArea", 24 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Lambert Cylind EqualArea") )
     {
         // Latitude_Of_True_Scale used for dfStdP1 ?
         oSRS.SetProjCS("Lambert Conformal Conic");
@@ -531,7 +531,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                         padfPrjParams[6], 
                         padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Mercator", 8 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Mercator") )
     {
         // use 0 for CenterLat, scale is computed from the 
         // Latitude_Of_True_Scale
@@ -541,27 +541,27 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                                 padfPrjParams[9], 
                                 padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Miller", 6 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Miller") )
     {
         // use 0 for CenterLat
         oSRS.SetProjCS("Miller");
         oSRS.SetMC(	0, padfPrjParams[6], 
                         padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Mollweide", 9 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Mollweide") )
     {
         oSRS.SetProjCS("Mollweide");
         oSRS.SetMollweide(	padfPrjParams[6], 
                                 padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Orthographic", 12 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Orthographic") )
     {
         oSRS.SetProjCS("Orthographic");
         oSRS.SetOrthographic (	padfPrjParams[5], padfPrjParams[6], 
                                 padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Plate Carree", 12 ) ||
-             EQUALN( pszProj.c_str(), "Plate Rectangle", 15 ))
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Plate Carree") ||
+             STARTS_WITH_CI(pszProj.c_str(), "Plate Rectangle"))
     {
         // set 0.0 for CenterLat for Plate Carree projection
         // skipp Latitude_Of_True_Scale for Plate Rectangle projection definition
@@ -569,61 +569,61 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         oSRS.SetEquirectangular(	padfPrjParams[5], padfPrjParams[6], 
                                         padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "PolyConic", 9 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "PolyConic") )
     {
         // skipp scale factor
         oSRS.SetProjCS("PolyConic");
         oSRS.SetPolyconic(	padfPrjParams[5], padfPrjParams[6], 
                                 padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Robinson", 8 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Robinson") )
     {
         oSRS.SetProjCS("Robinson");
         oSRS.SetRobinson(	padfPrjParams[6],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Sinusoidal", 10 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Sinusoidal") )
     {
         oSRS.SetProjCS("Sinusoidal");	
         oSRS.SetSinusoidal(	padfPrjParams[6], 
                                 padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Stereographic", 13 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Stereographic") )
     {
         oSRS.SetProjCS("Stereographic");	
         oSRS.SetStereographic(	padfPrjParams[5], padfPrjParams[6],
                                 padfPrjParams[9],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "Transverse Mercator", 19 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "Transverse Mercator") )
     {
         oSRS.SetProjCS("Transverse Mercator");	
         oSRS.SetStereographic(	padfPrjParams[5], padfPrjParams[6],
                                 padfPrjParams[9],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "UTM", 3 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "UTM") )
     {
         string pszNH = ReadElement("Projection", "Northern Hemisphere", csyFileName);
         oSRS.SetProjCS("UTM");
-        if( EQUALN( pszNH.c_str(), "Yes", 3 ) )
+        if( STARTS_WITH_CI(pszNH.c_str(), "Yes") )
             oSRS.SetUTM( (int) padfPrjParams[11], 1);  
         else
             oSRS.SetUTM( (int) padfPrjParams[11], 0);  
     }
-    else if( EQUALN( pszProj.c_str(), "VanderGrinten", 13 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "VanderGrinten") )
     {
         oSRS.SetVDG(	padfPrjParams[6],
                         padfPrjParams[3], padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "GeoStationary Satellite", 23 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "GeoStationary Satellite") )
     {
         oSRS.SetGEOS( padfPrjParams[6], 
                       padfPrjParams[12], 
                       padfPrjParams[3], 
                       padfPrjParams[4] );
     }
-    else if( EQUALN( pszProj.c_str(), "MSG Perspective", 15 ) )
+    else if( STARTS_WITH_CI(pszProj.c_str(), "MSG Perspective") )
     {
         oSRS.SetGEOS( padfPrjParams[6], 
                       padfPrjParams[12], 
@@ -670,7 +670,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                 if( EQUALN( pszEllips.c_str(), piwEllips->pszIlwisEllips, strlen(piwEllips->pszIlwisEllips) ) )
                 {
                     double dfSemiMajor = piwEllips->semiMajor;
-                    if( EQUALN( pszEllips.c_str(), "Sphere", 6 ) && padfPrjParams[0] != 0 )
+                    if( STARTS_WITH_CI(pszEllips.c_str(), "Sphere") && padfPrjParams[0] != 0 )
                     {	
                         dfSemiMajor = padfPrjParams[0];
                     }
@@ -699,7 +699,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         if ( !piwEllips->pszIlwisEllips )      
         {
 
-            if( EQUALN( pszEllips.c_str(), "User Defined", 12 ) )
+            if( STARTS_WITH_CI(pszEllips.c_str(), "User Defined") )
             {
                 oSRS.SetGeogCS( "Unknown datum based upon the custom ellipsoid",
                                 "Not specified (based on custom ellipsoid)",

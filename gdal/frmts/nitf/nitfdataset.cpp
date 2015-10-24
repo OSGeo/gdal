@@ -281,7 +281,7 @@ static char **ExtractEsriMD( char **papszMD )
             while( ( strlen(szField) > 0 ) && ( szField[strlen(szField)-1] == ' ' ) )
                 szField[strlen(szField)-1] = '\0';
 
-            if ((strlen(szField) == 2) && (EQUALN(szField, "CC", 2))) ccSegment.assign("true");
+            if ((strlen(szField) == 2) && (STARTS_WITH_CI(szField, "CC"))) ccSegment.assign("true");
         }
 
         const char *pAcquisitionDate   = CSLFetchNameValue( papszMD, "NITF_FDT" );
@@ -298,7 +298,7 @@ static char **ExtractEsriMD( char **papszMD )
         const char *pImgSegFieldICAT = CSLFetchNameValue( papszMD, "NITF_ICAT" );
 
         const char *pDataType = NULL;
-        if( ( pImgSegFieldICAT != NULL ) && ( EQUALN(pImgSegFieldICAT, "DTEM", 4) ) )
+        if( ( pImgSegFieldICAT != NULL ) && ( STARTS_WITH_CI(pImgSegFieldICAT, "DTEM") ) )
             pDataType = "Elevation";
         else
             pDataType = "Generic";
@@ -307,7 +307,7 @@ static char **ExtractEsriMD( char **papszMD )
             pAngleToNorth = CSLFetchNameValue( papszMD, "NITF_USE00A_ANGLE_TO_NORTH" );
 
         // Percent cloud cover == 999 means that the information is not available.
-        if( (pPercentCloudCover != NULL) &&  (EQUALN(pPercentCloudCover, "999", 3)) )
+        if( (pPercentCloudCover != NULL) &&  (STARTS_WITH_CI(pPercentCloudCover, "999")) )
             pPercentCloudCover = NULL;
 
         pAngleToNorth = CSLFetchNameValue( papszMD, "NITF_USE00A_ANGLE_TO_NORTH" );
@@ -407,7 +407,7 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Is this a dataset selector? If so, it is obviously NITF.        */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszFilename, "NITF_IM:",8) )
+    if( STARTS_WITH_CI(pszFilename, "NITF_IM:") )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -416,7 +416,7 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      'JPEG_SUBFILE:x,y,z,data' is considered as a (valid) directory  */
 /*      and thus the whole filename is evaluated as tmp/foo.ntf         */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszFilename,"JPEG_SUBFILE:",13) )
+    if( STARTS_WITH_CI(pszFilename, "JPEG_SUBFILE:") )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -426,9 +426,9 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 4 )
         return FALSE;
 
-    if( !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) 
-        && !EQUALN((char *) poOpenInfo->pabyHeader,"NSIF",4)
-        && !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) )
+    if( !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NITF") 
+        && !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NSIF")
+        && !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NITF") )
         return FALSE;
 
     /* Check that it's not in fact a NITF A.TOC file, which is handled by the RPFTOC driver */
@@ -437,7 +437,7 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
              - static_cast<int>( strlen("A.TOC") );
          i++ )
     {
-        if (EQUALN((const char*)poOpenInfo->pabyHeader + i, "A.TOC", strlen("A.TOC")))
+        if (STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader + i, "A.TOC"))
             return FALSE;
     }
 
@@ -467,7 +467,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
 /*      Select a specific subdataset.                                   */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszFilename, "NITF_IM:",8) )
+    if( STARTS_WITH_CI(pszFilename, "NITF_IM:") )
     {
         pszFilename += 8;
         nIMIndex = atoi(pszFilename);
@@ -965,9 +965,8 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                     }
                 }
 
-                if( (EQUALN(papszLines[7],
-                            "Selected Projection: Universal Transverse Mercator",50)) &&
-                    (EQUALN(papszLines[8],"Zone: ",6)) &&
+                if( (STARTS_WITH_CI(papszLines[7], "Selected Projection: Universal Transverse Mercator")) &&
+                    (STARTS_WITH_CI(papszLines[8], "Zone: ")) &&
                     (strlen(papszLines[8]) >= 7))
                 {
                     CPLFree( poDS->pszProjection );
@@ -1623,7 +1622,7 @@ static OGRErr LoadDODDatum( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
 /*      The most common case...                                         */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszDatumName,"WGE ",4) )
+    if( STARTS_WITH_CI(pszDatumName, "WGE ") )
     {
         poSRS->SetWellKnownGeogCS( "WGS84" );
         return OGRERR_NONE;
@@ -1752,82 +1751,82 @@ void NITFDataset::CheckGeoSDEInfo()
 /*      Try to handle the projection.                                   */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
-    if( EQUALN(pszPRJPSB+80,"AC",2) )
+    if( STARTS_WITH_CI(pszPRJPSB+80, "AC") )
         oSRS.SetACEA( adfParm[1], adfParm[2], adfParm[3], adfParm[0], 
                       dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"AK",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "AK") )
         oSRS.SetLAEA( adfParm[1], adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"AL",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "AL") )
         oSRS.SetAE( adfParm[1], adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"BF",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "BF") )
         oSRS.SetBonne( adfParm[1], adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"CP",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "CP") )
         oSRS.SetEquirectangular( adfParm[1], adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"CS",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "CS") )
         oSRS.SetCS( adfParm[1], adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"EF",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "EF") )
         oSRS.SetEckertIV( adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"ED",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "ED") )
         oSRS.SetEckertVI( adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"GN",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "GN") )
         oSRS.SetGnomonic( adfParm[1], adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"HX",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "HX") )
         oSRS.SetHOM2PNO( adfParm[1], 
                          adfParm[3], adfParm[2],
                          adfParm[5], adfParm[4],
                          adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"KA",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "KA") )
         oSRS.SetEC( adfParm[1], adfParm[2], adfParm[3], adfParm[0], 
                     dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"LE",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "LE") )
         oSRS.SetLCC( adfParm[1], adfParm[2], adfParm[3], adfParm[0], 
                      dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"LI",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "LI") )
         oSRS.SetCEA( adfParm[1], adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"MC",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "MC") )
         oSRS.SetMercator( adfParm[2], adfParm[1], 1.0, dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"MH",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "MH") )
         oSRS.SetMC( 0.0, adfParm[1], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"MP",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "MP") )
         oSRS.SetMollweide( adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"NT",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "NT") )
         oSRS.SetNZMG( adfParm[1], adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"OD",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "OD") )
         oSRS.SetOrthographic( adfParm[1], adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"PC",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "PC") )
         oSRS.SetPolyconic( adfParm[1], adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"PG",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "PG") )
         oSRS.SetPS( adfParm[1], adfParm[0], 1.0, dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"RX",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "RX") )
         oSRS.SetRobinson( adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"SA",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "SA") )
         oSRS.SetSinusoidal( adfParm[0], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"TC",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "TC") )
         oSRS.SetTM( adfParm[2], adfParm[0], adfParm[1], dfFE, dfFN );
 
-    else if( EQUALN(pszPRJPSB+80,"VA",2) )
+    else if( STARTS_WITH_CI(pszPRJPSB+80, "VA") )
         oSRS.SetVDG( adfParm[0], dfFE, dfFN );
 
     else
@@ -1858,17 +1857,17 @@ void NITFDataset::CheckGeoSDEInfo()
     }
 
     double dfMeterPerUnit = 1.0;
-    if( EQUALN(pszMAPLOB+0,"DM ",3) )
+    if( STARTS_WITH_CI(pszMAPLOB+0, "DM ") )
         dfMeterPerUnit = 0.1;
-    else if( EQUALN(pszMAPLOB+0,"CM ",3) )
+    else if( STARTS_WITH_CI(pszMAPLOB+0, "CM ") )
         dfMeterPerUnit = 0.01;
-    else if( EQUALN(pszMAPLOB+0,"MM ",3) )
+    else if( STARTS_WITH_CI(pszMAPLOB+0, "MM ") )
         dfMeterPerUnit = 0.001;
-    else if( EQUALN(pszMAPLOB+0,"UM ",3) )
+    else if( STARTS_WITH_CI(pszMAPLOB+0, "UM ") )
         dfMeterPerUnit = 0.000001;
-    else if( EQUALN(pszMAPLOB+0,"KM ",3) )
+    else if( STARTS_WITH_CI(pszMAPLOB+0, "KM ") )
         dfMeterPerUnit = 1000.0;
-    else if( EQUALN(pszMAPLOB+0,"M  ",3) )
+    else if( STARTS_WITH_CI(pszMAPLOB+0, "M  ") )
         dfMeterPerUnit = 1.0;
     else
     {
@@ -2220,7 +2219,7 @@ void NITFDataset::InitializeNITFDESMetadata()
             pszData[nDataLen] = 0;
         }
 
-        if ( nDataLen > 2 + sizeXmlDataContent && EQUALN(pszData, "DE", 2) )
+        if ( nDataLen > 2 + sizeXmlDataContent && STARTS_WITH_CI(pszData, "DE") )
         {
             // Check to see if this is a XML_DATA_CONTENT DES.
             if ( EQUALN(pszData + 2, pszXmlDataContent, sizeXmlDataContent) &&
@@ -3726,12 +3725,12 @@ static char **NITFJP2ECWOptions( char **papszOptions )
 
     for( int i = 0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
     {
-        if( EQUALN(papszOptions[i],"PROFILE=",8) )
+        if( STARTS_WITH_CI(papszOptions[i], "PROFILE=") )
         {
             CPLFree(papszJP2Options[0]);
             papszJP2Options[0] = CPLStrdup(papszOptions[i]);
         }
-        else if( EQUALN(papszOptions[i],"TARGET=",7) )
+        else if( STARTS_WITH_CI(papszOptions[i], "TARGET=") )
             papszJP2Options = CSLAddString(papszJP2Options, papszOptions[i]);
     }
 
@@ -3751,19 +3750,19 @@ static char **NITFJP2KAKOptions( char **papszOptions )
 
     for( int i = 0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
     {
-       if(      EQUALN(papszOptions[i],"QUALITY=", 8) )
+       if(      STARTS_WITH_CI(papszOptions[i], "QUALITY=") )
           papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (EQUALN(papszOptions[i],"BLOCKXSIZE=", 11) )
+       else if (STARTS_WITH_CI(papszOptions[i], "BLOCKXSIZE=") )
           papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (EQUALN(papszOptions[i],"BLOCKYSIZE=", 11) )
+       else if (STARTS_WITH_CI(papszOptions[i], "BLOCKYSIZE=") )
           papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (EQUALN(papszOptions[i],"GMLPJ2=", 7) )
+       else if (STARTS_WITH_CI(papszOptions[i], "GMLPJ2=") )
           papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (EQUALN(papszOptions[i],"GeoJP2=", 7) )
+       else if (STARTS_WITH_CI(papszOptions[i], "GeoJP2=") )
           papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (EQUALN(papszOptions[i],"LAYERS=", 7) )
+       else if (STARTS_WITH_CI(papszOptions[i], "LAYERS=") )
           papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (EQUALN(papszOptions[i],"ROI=", 4) )
+       else if (STARTS_WITH_CI(papszOptions[i], "ROI=") )
           papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
     }
 
@@ -3803,7 +3802,7 @@ static char** NITFExtractTEXTAndCGMCreationOption( GDALDataset* poSrcDS,
          papszTextMD != NULL && papszTextMD[iOpt] != NULL; 
          iOpt++ )
     {
-        if( !EQUALN(papszTextMD[iOpt],"DATA_",5) )
+        if( !STARTS_WITH_CI(papszTextMD[iOpt], "DATA_") )
             continue;
 
         nNUMT++;
@@ -4098,8 +4097,8 @@ NITFDataset::NITFCreateCopy(
 
     for( int iMD = 0; papszSrcMD && papszSrcMD[iMD]; iMD++ )
     {
-        if( EQUALN(papszSrcMD[iMD],"NITF_BLOCKA",11) 
-            || EQUALN(papszSrcMD[iMD],"NITF_FHDR",9) )
+        if( STARTS_WITH_CI(papszSrcMD[iMD], "NITF_BLOCKA") 
+            || STARTS_WITH_CI(papszSrcMD[iMD], "NITF_FHDR") )
         {
             char *pszName = NULL;
             const char *pszValue = CPLParseNameValue( papszSrcMD[iMD], 
@@ -4121,9 +4120,9 @@ NITFDataset::NITFCreateCopy(
     {
         CPLString osTRE;
 
-        if (EQUALN(papszSrcMD[iMD], "RPFHDR", 6) ||
-            EQUALN(papszSrcMD[iMD], "RPFIMG", 6) ||
-            EQUALN(papszSrcMD[iMD], "RPFDES", 6))
+        if (STARTS_WITH_CI(papszSrcMD[iMD], "RPFHDR") ||
+            STARTS_WITH_CI(papszSrcMD[iMD], "RPFIMG") ||
+            STARTS_WITH_CI(papszSrcMD[iMD], "RPFDES"))
         {
             /* Do not copy RPF TRE. They contain absolute offsets */
             /* No chance that they make sense in the new NITF file */
@@ -5009,7 +5008,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
     for( int iOpt = 0; papszList != NULL && papszList[iOpt] != NULL; iOpt++ )
     {
-        if( EQUALN(papszList[iOpt],"DATA_",5) )
+        if( STARTS_WITH_CI(papszList[iOpt], "DATA_") )
             nNUMT++;
     }
 
@@ -5075,7 +5074,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
         return;
     }
 
-    if( !EQUALN(pachLT,"         ",9) )
+    if( !STARTS_WITH_CI(pachLT, "         ") )
     {
         CPLFree( pachLT );
         // presumably the text segments are already written, do nothing.
@@ -5096,7 +5095,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
     for( int iOpt = 0; papszList != NULL && papszList[iOpt] != NULL; iOpt++ )
     {
-        if( !EQUALN(papszList[iOpt],"DATA_",5) )
+        if( !STARTS_WITH_CI(papszList[iOpt], "DATA_") )
             continue;
 
         const char *pszTextToWrite = CPLParseNameValue( papszList[iOpt], NULL );
@@ -5109,7 +5108,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
         const char *pszHeaderBuffer = NULL;
         for( int iOpt2 = 0; papszList != NULL && papszList[iOpt2] != NULL; iOpt2++ ) {
-            if( !EQUALN(papszList[iOpt2],"HEADER_",7) )
+            if( !STARTS_WITH_CI(papszList[iOpt2], "HEADER_") )
                 continue;
 
             char *pszHeaderKey = NULL;

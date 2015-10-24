@@ -92,7 +92,7 @@ NTFRecord::NTFRecord( FILE * fp )
         }
         else
         {
-            if( !EQUALN(szLine,"00",2) )
+            if( !STARTS_WITH_CI(szLine, "00") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "Invalid line");
                 VSIFree(pszData);

@@ -1147,7 +1147,7 @@ int RPFTOCDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      Is this a sub-dataset selector? If so, it is obviously RPFTOC.  */
 /* -------------------------------------------------------------------- */
 
-    if( EQUALN(pszFilename, "NITF_TOC_ENTRY:",strlen("NITF_TOC_ENTRY:")))
+    if( STARTS_WITH_CI(pszFilename, "NITF_TOC_ENTRY:"))
         return TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -1160,9 +1160,9 @@ int RPFTOCDataset::Identify( GDALOpenInfo * poOpenInfo )
     if ( IsNonNITFFileTOC( poOpenInfo, pszFilename) )
         return TRUE;
 
-    if( !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) 
-        && !EQUALN((char *) poOpenInfo->pabyHeader,"NSIF",4)
-        && !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) )
+    if( !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NITF") 
+        && !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NSIF")
+        && !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NITF") )
         return FALSE;
 
     /* If it's a NITF A.TOC file, it must contain A.TOC in it's header */
@@ -1171,7 +1171,7 @@ int RPFTOCDataset::Identify( GDALOpenInfo * poOpenInfo )
              - static_cast<int>( strlen( "A.TOC" ) );
          i++ )
     {
-        if (EQUALN((const char*)poOpenInfo->pabyHeader + i, "A.TOC", strlen("A.TOC")))
+        if (STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader + i, "A.TOC"))
             return TRUE;
     }
 
@@ -1191,7 +1191,7 @@ GDALDataset *RPFTOCDataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszFilename = poOpenInfo->pszFilename;
     char* entryName = NULL;
 
-    if( EQUALN(pszFilename, "NITF_TOC_ENTRY:",strlen("NITF_TOC_ENTRY:")))
+    if( STARTS_WITH_CI(pszFilename, "NITF_TOC_ENTRY:"))
     {
         pszFilename += strlen("NITF_TOC_ENTRY:");
         entryName = CPLStrdup(pszFilename);

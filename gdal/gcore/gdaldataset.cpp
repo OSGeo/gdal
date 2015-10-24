@@ -5203,7 +5203,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Handle CREATE INDEX statements specially.                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszStatement,"CREATE INDEX",12) )
+    if( STARTS_WITH_CI(pszStatement, "CREATE INDEX") )
     {
         ProcessSQLCreateIndex( pszStatement );
         return NULL;
@@ -5212,7 +5212,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Handle DROP INDEX statements specially.                         */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszStatement,"DROP INDEX",10) )
+    if( STARTS_WITH_CI(pszStatement, "DROP INDEX") )
     {
         ProcessSQLDropIndex( pszStatement );
         return NULL;
@@ -5221,7 +5221,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Handle DROP TABLE statements specially.                         */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszStatement,"DROP TABLE",10) )
+    if( STARTS_WITH_CI(pszStatement, "DROP TABLE") )
     {
         ProcessSQLDropTable( pszStatement );
         return NULL;
@@ -5230,7 +5230,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Handle ALTER TABLE statements specially.                        */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszStatement,"ALTER TABLE",11) )
+    if( STARTS_WITH_CI(pszStatement, "ALTER TABLE") )
     {
         char **papszTokens = CSLTokenizeString( pszStatement );
         if( CSLCount(papszTokens) >= 4 &&

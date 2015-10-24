@@ -7209,7 +7209,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
     int nOvBitsPerSample = nBitsPerSample;
 
-    if( EQUALN(pszResampling,"AVERAGE_BIT2",12) )
+    if( STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2") )
         nOvBitsPerSample = 8;
 
 /* -------------------------------------------------------------------- */
@@ -7393,7 +7393,7 @@ CPLErr GTiffDataset::IBuildOverviews(
     if (nPlanarConfig == PLANARCONFIG_CONTIG &&
         GDALDataTypeIsComplex(GetRasterBand( panBandList[0] )->GetRasterDataType()) == FALSE &&
         GetRasterBand( panBandList[0] )->GetColorTable() == NULL &&
-        (EQUALN(pszResampling, "NEAR", 4) || EQUAL(pszResampling, "AVERAGE") ||
+        (STARTS_WITH_CI(pszResampling, "NEAR") || EQUAL(pszResampling, "AVERAGE") ||
          EQUAL(pszResampling, "GAUSS") || EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") || EQUAL(pszResampling, "LANCZOS") ||
          EQUAL(pszResampling, "BILINEAR")))
@@ -7853,7 +7853,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             && CSLTestBoolean(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
             continue; // handled elsewhere
 
-        if( EQUALN(papszDomainList[iDomain], "xml:",4 ) )
+        if( STARTS_WITH_CI(papszDomainList[iDomain], "xml:") )
             bIsXML = TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -7883,7 +7883,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 /*      Convert into XML item or handle as a special TIFF tag.          */
 /* -------------------------------------------------------------------- */
             if( strlen(papszDomainList[iDomain]) == 0
-                && nBand == 0 && EQUALN(pszItemName,"TIFFTAG_",8) )
+                && nBand == 0 && STARTS_WITH_CI(pszItemName, "TIFFTAG_") )
             {
                 if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") ) {
                     /* ResolutionUnit can't be 0, which is the default if atoi() fails.
@@ -8230,10 +8230,9 @@ void GTiffDataset::PushMetadataToPam()
 
             for( i = CSLCount(papszMD)-1; i >= 0; i-- )
             {
-                if( EQUALN(papszMD[i],"TIFFTAG_",8)
+                if( STARTS_WITH_CI(papszMD[i], "TIFFTAG_")
                     || EQUALN(papszMD[i],GDALMD_AREA_OR_POINT,
-                              strlen(GDALMD_AREA_OR_POINT)) )
-                    papszMD = CSLRemoveStrings( papszMD, i, 1, NULL );
+                              strlen(GDALMD_AREA_OR_POINT)) )                    papszMD = CSLRemoveStrings( papszMD, i, 1, NULL );
             }
 
             if( nBand == 0 )
@@ -8493,7 +8492,7 @@ int GTiffDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
     const char  *pszFilename = poOpenInfo->pszFilename;
-    if( EQUALN(pszFilename,"GTIFF_RAW:", strlen("GTIFF_RAW:")) )
+    if( STARTS_WITH_CI(pszFilename, "GTIFF_RAW:") )
     {
         pszFilename += strlen("GTIFF_RAW:");
         GDALOpenInfo oOpenInfo( pszFilename, poOpenInfo->eAccess );
@@ -8504,7 +8503,7 @@ int GTiffDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      We have a special hook for handling opening a specific          */
 /*      directory of a TIFF file.                                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszFilename,"GTIFF_DIR:",strlen("GTIFF_DIR:")) )
+    if( STARTS_WITH_CI(pszFilename, "GTIFF_DIR:") )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -8795,7 +8794,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo))
         return NULL;
 
-    if( EQUALN(pszFilename,"GTIFF_RAW:", strlen("GTIFF_RAW:")) )
+    if( STARTS_WITH_CI(pszFilename, "GTIFF_RAW:") )
     {
         bAllowRGBAInterface = FALSE;
         pszFilename +=  strlen("GTIFF_RAW:");
@@ -8805,7 +8804,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      We have a special hook for handling opening a specific          */
 /*      directory of a TIFF file.                                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszFilename,"GTIFF_DIR:",strlen("GTIFF_DIR:")) )
+    if( STARTS_WITH_CI(pszFilename, "GTIFF_DIR:") )
         return OpenDir( poOpenInfo );
 
     if (!GTiffOneTimeInit())
@@ -9201,7 +9200,7 @@ void GTiffDataset::LookForProjection()
             pszProjection = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
             
             // Should we simplify away vertical CS stuff?
-            if( EQUALN(pszProjection,"COMPD_CS",8)
+            if( STARTS_WITH_CI(pszProjection, "COMPD_CS")
                 && !CSLTestBoolean( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
                                                        "NO") ) )
             {
@@ -9386,13 +9385,13 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 {
     int bAllowRGBAInterface = TRUE;
     const char* pszFilename = poOpenInfo->pszFilename;
-    if( EQUALN(pszFilename,"GTIFF_RAW:", strlen("GTIFF_RAW:")) )
+    if( STARTS_WITH_CI(pszFilename, "GTIFF_RAW:") )
     {
         bAllowRGBAInterface = FALSE;
         pszFilename += strlen("GTIFF_RAW:");
     }
 
-    if( !EQUALN(pszFilename,"GTIFF_DIR:",strlen("GTIFF_DIR:")) )
+    if( !STARTS_WITH_CI(pszFilename, "GTIFF_DIR:") )
         return NULL;
     
 /* -------------------------------------------------------------------- */
@@ -9402,7 +9401,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     int        bAbsolute = FALSE;
     toff_t     nOffset;
     
-    if( EQUALN(pszFilename,"off:",4) )
+    if( STARTS_WITH_CI(pszFilename, "off:") )
     {
         bAbsolute = TRUE;
         pszFilename += 4;
@@ -9474,7 +9473,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     poDS->fpL = fpL;
 
     if( !EQUAL(pszFilename,poOpenInfo->pszFilename) 
-        && !EQUALN(poOpenInfo->pszFilename,"GTIFF_RAW:",10) )
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "GTIFF_RAW:") )
     {
         poDS->SetPhysicalFilename( pszFilename );
         poDS->SetSubdatasetName( poOpenInfo->pszFilename );
@@ -10548,7 +10547,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
             bool bIsXML = false;
 
-            if( EQUALN(pszDomain,"xml:",4) )
+            if( STARTS_WITH_CI(pszDomain, "xml:") )
                 bIsXML = TRUE;
 
             char *pszUnescapedValue
@@ -13183,11 +13182,11 @@ CPLErr GTiffDataset::SetProjection( const char * pszNewProjection )
     
     LookForProjection();
 
-    if( !EQUALN(pszNewProjection,"GEOGCS",6)
-        && !EQUALN(pszNewProjection,"PROJCS",6)
-        && !EQUALN(pszNewProjection,"LOCAL_CS",8)
-        && !EQUALN(pszNewProjection,"COMPD_CS",8)
-        && !EQUALN(pszNewProjection,"GEOCCS",6)
+    if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
+        && !STARTS_WITH_CI(pszNewProjection, "PROJCS")
+        && !STARTS_WITH_CI(pszNewProjection, "LOCAL_CS")
+        && !STARTS_WITH_CI(pszNewProjection, "COMPD_CS")
+        && !STARTS_WITH_CI(pszNewProjection, "GEOCCS")
         && !EQUAL(pszNewProjection,"") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,

@@ -541,7 +541,7 @@ int main( int nArgc, char ** papszArgv )
 
             // NITF 2.0. (also works for NITF 2.1)
             nSTYPEOffset = 200;
-            if( EQUALN(achSubheader+193,"999998",6) )
+            if( STARTS_WITH_CI(achSubheader+193, "999998") )
                 nSTYPEOffset += 40;
 
 /* -------------------------------------------------------------------- */

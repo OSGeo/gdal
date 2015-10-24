@@ -573,7 +573,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
         if( eErr != OGRERR_NONE )
             goto error;
 
-        CPLAssert( EQUALN(papszRings[iRing],"LINEARRING (", 12) );
+        CPLAssert( STARTS_WITH_CI(papszRings[iRing], "LINEARRING (") );
         nCumulativeLength += strlen(papszRings[iRing] + 11);
 
         nNonEmptyRings++;

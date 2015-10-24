@@ -308,7 +308,7 @@ const char * E00GRIDRasterBand::GetUnitType()
     const char* pszRet = "";
     while(*papszIter)
     {
-        if (EQUALN(*papszIter, "Zunits", 6))
+        if (STARTS_WITH_CI(*papszIter, "Zunits"))
         {
             char** papszTokens = CSLTokenizeString(*papszIter);
             if (CSLCount(papszTokens) == 2)
@@ -453,8 +453,8 @@ int E00GRIDDataset::Identify( GDALOpenInfo * poOpenInfo )
     if (poOpenInfo->nHeaderBytes == 0)
         return FALSE;
 
-    if (!(EQUALN((const char*)poOpenInfo->pabyHeader, "EXP  0", 6) ||
-          EQUALN((const char*)poOpenInfo->pabyHeader, "EXP  1", 6)))
+    if (!(STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "EXP  0") ||
+          STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "EXP  1")))
         return FALSE;
 
     /* FIXME: handle GRD  3 if that ever exists ? */
@@ -527,7 +527,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    bool bCompressed = EQUALN(pszLine, "EXP  1", 6);
+    bool bCompressed = STARTS_WITH_CI(pszLine, "EXP  1");
 
     E00ReadPtr e00ReadPtr = NULL;
     if (bCompressed)
@@ -550,7 +550,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         pszLine = E00ReadNextLine(e00ReadPtr);
     else
         pszLine = CPLReadLine2L(fp, 81, NULL);
-    if (pszLine == NULL || !EQUALN(pszLine, "GRD  2", 6))
+    if (pszLine == NULL || !STARTS_WITH_CI(pszLine, "GRD  2"))
     {
         CPLDebug("E00GRID", "Bad 2nd line");
         delete poDS;
@@ -581,9 +581,9 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
     GDALDataType eDT = GDT_Float32;
 
-    if (EQUALN(pszLine + E00_INT_SIZE + E00_INT_SIZE, " 1", 2))
+    if (STARTS_WITH_CI(pszLine + E00_INT_SIZE + E00_INT_SIZE, " 1"))
         eDT = GDT_Int32;
-    else if (EQUALN(pszLine + E00_INT_SIZE + E00_INT_SIZE, " 2", 2))
+    else if (STARTS_WITH_CI(pszLine + E00_INT_SIZE + E00_INT_SIZE, " 2"))
         eDT = GDT_Float32;
     else
     {
@@ -824,7 +824,7 @@ void E00GRIDDataset::ReadMetadata()
     bool bStatsFound = false;
     while((pszLine = ReadLine()) != NULL)
     {
-        if (EQUALN(pszLine, "PRJ  2", 6))
+        if (STARTS_WITH_CI(pszLine, "PRJ  2"))
         {
             bPRJFound = true;
             while((pszLine = ReadLine()) != NULL)

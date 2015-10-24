@@ -218,11 +218,11 @@ std::vector<double> CPCIDSKGeoref::GetParameters()
 
         if( EQUALN(grid_units.c_str(),"DEGREE",3) )
             parms[17] = (double) (int) UNIT_DEGREE;
-        else if( EQUALN(grid_units.c_str(),"MET",3) )
+        else if( STARTS_WITH_CI(grid_units.c_str(), "MET") )
             parms[17] = (double) (int) UNIT_METER;
-        else if( EQUALN(grid_units.c_str(),"FOOT",4) )
+        else if( STARTS_WITH_CI(grid_units.c_str(), "FOOT") )
             parms[17] = (double) (int) UNIT_US_FOOT;
-        else if( EQUALN(grid_units.c_str(),"FEET",4) )
+        else if( STARTS_WITH_CI(grid_units.c_str(), "FEET") )
             parms[17] = (double) (int) UNIT_US_FOOT;
         else if( EQUALN(grid_units.c_str(),"INTL FOOT",5) )
             parms[17] = (double) (int) UNIT_INTL_FOOT;
@@ -251,13 +251,13 @@ void CPCIDSKGeoref::WriteSimple( std::string const& geosys,
 /* -------------------------------------------------------------------- */
     std::string units_code = "METER";
 
-    if( EQUALN(geosys_clean.c_str(),"FOOT",4) )
+    if( STARTS_WITH_CI(geosys_clean.c_str(), "FOOT") )
         units_code = "FOOT";
-    else if( EQUALN(geosys_clean.c_str(),"SPAF",4) )
+    else if( STARTS_WITH_CI(geosys_clean.c_str(), "SPAF") )
         units_code = "FOOT";
-    else if( EQUALN(geosys_clean.c_str(),"SPIF",4) )
+    else if( STARTS_WITH_CI(geosys_clean.c_str(), "SPIF") )
         units_code = "INTL FOOT";
-    else if( EQUALN(geosys_clean.c_str(),"LONG",4) )
+    else if( STARTS_WITH_CI(geosys_clean.c_str(), "LONG") )
         units_code = "DEEGREE";
         
 /* -------------------------------------------------------------------- */
@@ -458,11 +458,11 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosys )
     int zone, ups_zone;
     char zone_code = ' ';
 
-    if( EQUALN(local_buf,"PIX",3) )
+    if( STARTS_WITH_CI(local_buf, "PIX") )
     {
         strcpy( local_buf, "PIXEL           " );
     }
-    else if( EQUALN(local_buf,"UTM",3) )
+    else if( STARTS_WITH_CI(local_buf, "UTM") )
     {
         /* Attempt to find a zone and ellipsoid */
         for( ptr=local_buf+3; isspace(*ptr); ptr++ ) {}
@@ -504,33 +504,33 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosys )
         if( local_buf[13] == ' ' )
             local_buf[13] = '0';
     }
-    else if( EQUALN(local_buf,"MET",3) )
+    else if( STARTS_WITH_CI(local_buf, "MET") )
     {
         sprintf( local_buf, "METRE       %4s", earthmodel );
     }
-    else if( EQUALN(local_buf,"FEET",4) || EQUALN(local_buf,"FOOT",4))
+    else if( STARTS_WITH_CI(local_buf, "FEET") || STARTS_WITH_CI(local_buf, "FOOT"))
     {
         sprintf( local_buf, "FOOT        %4s", earthmodel );
     }
-    else if( EQUALN(local_buf,"LAT",3) ||
-             EQUALN(local_buf,"LON",3) )
+    else if( STARTS_WITH_CI(local_buf, "LAT") ||
+             STARTS_WITH_CI(local_buf, "LON") )
     {
         sprintf( local_buf, 
                  "LONG/LAT    %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"SPCS ",5) ||
-             EQUALN(local_buf,"SPAF ",5) ||
-             EQUALN(local_buf,"SPIF ",5) )
+    else if( STARTS_WITH_CI(local_buf, "SPCS ") ||
+             STARTS_WITH_CI(local_buf, "SPAF ") ||
+             STARTS_WITH_CI(local_buf, "SPIF ") )
     {
         int nSPZone = 0;
 
         for( ptr=local_buf+4; isspace(*ptr); ptr++ ) {}
         nSPZone = atoi(ptr);
 
-        if      ( EQUALN(local_buf,"SPCS ",5) ) 
+        if      ( STARTS_WITH_CI(local_buf, "SPCS ") ) 
             strcpy( local_buf, "SPCS " );
-        else if ( EQUALN(local_buf,"SPAF ",5) ) 
+        else if ( STARTS_WITH_CI(local_buf, "SPAF ") ) 
             strcpy( local_buf, "SPAF " );
         else
             strcpy( local_buf, "SPIF " );
@@ -541,151 +541,151 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosys )
             sprintf( local_buf + 5, "       %4s",earthmodel);
 
     }
-    else if( EQUALN(local_buf,"ACEA ",5) )
+    else if( STARTS_WITH_CI(local_buf, "ACEA ") )
     {
         sprintf( local_buf, 
                  "ACEA        %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"AE ",3) )
+    else if( STARTS_WITH_CI(local_buf, "AE ") )
     {
         sprintf( local_buf, 
                  "AE          %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"EC ",3) )
+    else if( STARTS_WITH_CI(local_buf, "EC ") )
     {
         sprintf( local_buf, 
                  "EC          %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"ER ",3) )
+    else if( STARTS_WITH_CI(local_buf, "ER ") )
     {
         sprintf( local_buf, 
                  "ER          %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"GNO ",4) )
+    else if( STARTS_WITH_CI(local_buf, "GNO ") )
     {
         sprintf( local_buf, 
                  "GNO         %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"GVNP",4) )
+    else if( STARTS_WITH_CI(local_buf, "GVNP") )
     {
         sprintf( local_buf, 
                  "GVNP        %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"LAEA_ELL",8) )
+    else if( STARTS_WITH_CI(local_buf, "LAEA_ELL") )
     {
         sprintf( local_buf, 
                  "LAEA_ELL    %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"LAEA",4) )
+    else if( STARTS_WITH_CI(local_buf, "LAEA") )
     {
         sprintf( local_buf, 
                  "LAEA        %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"LCC_1SP",7) )
+    else if( STARTS_WITH_CI(local_buf, "LCC_1SP") )
     {
         sprintf( local_buf, 
                  "LCC_1SP     %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"LCC ",4) )
+    else if( STARTS_WITH_CI(local_buf, "LCC ") )
     {
         sprintf( local_buf, 
                  "LCC         %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"MC ",3) )
+    else if( STARTS_WITH_CI(local_buf, "MC ") )
     {
         sprintf( local_buf, 
                  "MC          %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"MER ",4) )
+    else if( STARTS_WITH_CI(local_buf, "MER ") )
     {
         sprintf( local_buf, 
                  "MER         %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"MSC ",4) )
+    else if( STARTS_WITH_CI(local_buf, "MSC ") )
     {
         sprintf( local_buf, 
                  "MSC         %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"OG ",3) )
+    else if( STARTS_WITH_CI(local_buf, "OG ") )
     {
         sprintf( local_buf, 
                  "OG          %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"OM ",3) )
+    else if( STARTS_WITH_CI(local_buf, "OM ") )
     {
         sprintf( local_buf, 
                  "OM          %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"PC ",3) )
+    else if( STARTS_WITH_CI(local_buf, "PC ") )
     {
         sprintf( local_buf, 
                  "PC          %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"PS ",3) )
+    else if( STARTS_WITH_CI(local_buf, "PS ") )
     {
         sprintf( local_buf, 
                  "PS          %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"ROB ",4) )
+    else if( STARTS_WITH_CI(local_buf, "ROB ") )
     {
         sprintf( local_buf, 
                  "ROB         %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"SG ",3) )
+    else if( STARTS_WITH_CI(local_buf, "SG ") )
     {
         sprintf( local_buf, 
                  "SG          %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"SIN ",4) )
+    else if( STARTS_WITH_CI(local_buf, "SIN ") )
     {
         sprintf( local_buf, 
                  "SIN         %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"SOM ",4) )
+    else if( STARTS_WITH_CI(local_buf, "SOM ") )
     {
         sprintf( local_buf, 
                  "SOM         %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"TM ",3) )
+    else if( STARTS_WITH_CI(local_buf, "TM ") )
     {
         sprintf( local_buf, 
                  "TM          %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"VDG ",4) )
+    else if( STARTS_WITH_CI(local_buf, "VDG ") )
     {
         sprintf( local_buf, 
                  "VDG         %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"UPSA",4) )
+    else if( STARTS_WITH_CI(local_buf, "UPSA") )
     {
         sprintf( local_buf, 
                  "UPSA        %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"UPS ",4) )
+    else if( STARTS_WITH_CI(local_buf, "UPS ") )
     {
         /* Attempt to find UPS zone */
         for( ptr=local_buf+3; isspace(*ptr); ptr++ ) {}
@@ -700,63 +700,63 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosys )
                  "UPS       %c %4s",
                  ups_zone, earthmodel );
     }
-    else if( EQUALN(local_buf,"GOOD",4) )
+    else if( STARTS_WITH_CI(local_buf, "GOOD") )
     {
         sprintf( local_buf, 
                  "GOOD        %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"NZMG",4) )
+    else if( STARTS_WITH_CI(local_buf, "NZMG") )
     {
         sprintf( local_buf, 
                  "NZMG        %4s",
                  earthmodel );
     }
-    else if( EQUALN(local_buf,"CASS",4) )
+    else if( STARTS_WITH_CI(local_buf, "CASS") )
     {
-        if( EQUALN( earthmodel, "D000", 4 ) )
+        if( STARTS_WITH_CI(earthmodel, "D000") )
             sprintf( local_buf,  "CASS        %4s", "E010" );
         else
             sprintf( local_buf,  "CASS        %4s", earthmodel );
     }
-    else if( EQUALN(local_buf,"RSO ",4) )
+    else if( STARTS_WITH_CI(local_buf, "RSO ") )
     {
-        if( EQUALN( earthmodel, "D000", 4 ) )
+        if( STARTS_WITH_CI(earthmodel, "D000") )
             sprintf( local_buf,  "RSO         %4s", "E010" );
         else
             sprintf( local_buf,  "RSO         %4s", earthmodel );
     }
-    else if( EQUALN(local_buf,"KROV",4) )
+    else if( STARTS_WITH_CI(local_buf, "KROV") )
     {
-        if( EQUALN( earthmodel, "D000", 4 ) )
+        if( STARTS_WITH_CI(earthmodel, "D000") )
             sprintf( local_buf,  "KROV        %4s", "E002" );
         else
             sprintf( local_buf,  "KROV        %4s", earthmodel );
     }
-    else if( EQUALN(local_buf,"KRON",4) )
+    else if( STARTS_WITH_CI(local_buf, "KRON") )
     {
-        if( EQUALN( earthmodel, "D000", 4 ) )
+        if( STARTS_WITH_CI(earthmodel, "D000") )
             sprintf( local_buf,  "KRON        %4s", "E002" );
         else
             sprintf( local_buf,  "KRON        %4s", earthmodel );
     }
-    else if( EQUALN(local_buf,"SGDO",4) )
+    else if( STARTS_WITH_CI(local_buf, "SGDO") )
     {
-        if( EQUALN( earthmodel, "D000", 4 ) )
+        if( STARTS_WITH_CI(earthmodel, "D000") )
             sprintf( local_buf,  "SGDO        %4s", "E910" );
         else
             sprintf( local_buf,  "SGDO        %4s", earthmodel );
     }
-    else if( EQUALN(local_buf,"LBSG",4) )
+    else if( STARTS_WITH_CI(local_buf, "LBSG") )
     {
-        if( EQUALN( earthmodel, "D000", 4 ) )
+        if( STARTS_WITH_CI(earthmodel, "D000") )
             sprintf( local_buf,  "LBSG        %4s", "E202" );
         else
             sprintf( local_buf,  "LBSG        %4s", earthmodel );
     }
-    else if( EQUALN(local_buf,"ISIN",4) )
+    else if( STARTS_WITH_CI(local_buf, "ISIN") )
     {
-        if( EQUALN( earthmodel, "D000", 4 ) )
+        if( STARTS_WITH_CI(earthmodel, "D000") )
             sprintf( local_buf,  "ISIN        %4s", "E700" );
         else
             sprintf( local_buf,  "ISIN        %4s", earthmodel );
@@ -917,19 +917,19 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     std::string grid_units;
     seg_data.Get(64,16,grid_units);
 
-    if( EQUALN(grid_units.c_str(),"MET",3) )
+    if( STARTS_WITH_CI(grid_units.c_str(), "MET") )
         UnitsCode = GCTP_UNIT_METRE;
-    else if( EQUALN( grid_units.c_str(), "FOOT", 4 ) )
+    else if( STARTS_WITH_CI(grid_units.c_str(), "FOOT") )
     {
         UnitsCode = GCTP_UNIT_US_FOOT;
         IOmultiply = 1.0 / 0.3048006096012192;
     }
-    else if( EQUALN( grid_units.c_str(), "INTL FOOT", 9 ) )
+    else if( STARTS_WITH_CI(grid_units.c_str(), "INTL FOOT") )
     {
         UnitsCode = GCTP_UNIT_INTL_FOOT;
         IOmultiply = 1.0 / 0.3048;
     }
-    else if( EQUALN( grid_units.c_str(), "DEGREE", 6 ) )
+    else if( STARTS_WITH_CI(grid_units.c_str(), "DEGREE") )
         UnitsCode = GCTP_UNIT_DEGREE;
     
 /* -------------------------------------------------------------------- */

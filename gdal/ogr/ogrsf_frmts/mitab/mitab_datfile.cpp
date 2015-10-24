@@ -168,9 +168,9 @@ TABDATFile::~TABDATFile()
 
 int TABDATFile::Open(const char *pszFname, const char* pszAccess, TABTableType eTableType)
 {
-    if( EQUALN(pszAccess, "r", 1) )
+    if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead, eTableType);
-    else if( EQUALN(pszAccess, "w", 1) )
+    else if( STARTS_WITH_CI(pszAccess, "w") )
         return Open(pszFname, TABWrite, eTableType);
     else
     {
@@ -2166,7 +2166,7 @@ int TABDATFile::WriteLogicalField(const char *pszValue,
         return -1;
     }
 
-    if (EQUALN(pszValue, "T", 1))
+    if (STARTS_WITH_CI(pszValue, "T"))
         bValue = 1;
     else
         bValue = 0;

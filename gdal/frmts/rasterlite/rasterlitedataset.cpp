@@ -834,7 +834,7 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
     GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
     
     if (nDataSize > 32 &&
-        EQUALN((const char*)pabyData, "StartWaveletsImage$$", strlen("StartWaveletsImage$$")))
+        STARTS_WITH_CI((const char*)pabyData, "StartWaveletsImage$$"))
     {
         if (GDALGetDriverByName("EPSILON") == NULL)
         {
@@ -932,12 +932,12 @@ int RasterliteDataset::Identify(GDALOpenInfo* poOpenInfo)
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GPKG") &&
         poOpenInfo->nHeaderBytes >= 1024 &&
-        EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
+        STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3"))
     {
         // Could be a SQLite/Spatialite file as well
         return -1;
     }
-    else if (EQUALN(poOpenInfo->pszFilename, "RASTERLITE:", 11))
+    else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "RASTERLITE:"))
     {
         return TRUE;
     }
@@ -966,7 +966,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      Parse "file name"                                               */
 /* -------------------------------------------------------------------- */
     if (poOpenInfo->nHeaderBytes >= 1024 &&
-        EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
+        STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3"))
     {
         osFileName = poOpenInfo->pszFilename;
     }
@@ -986,31 +986,31 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         int i;
         for(i=1;i<nTokens;i++)
         {
-            if (EQUALN(papszTokens[i], "table=", 6))
+            if (STARTS_WITH_CI(papszTokens[i], "table="))
                 osTableName = papszTokens[i] + 6;
-            else if (EQUALN(papszTokens[i], "level=", 6))
+            else if (STARTS_WITH_CI(papszTokens[i], "level="))
                 nLevel = atoi(papszTokens[i] + 6);
-            else if (EQUALN(papszTokens[i], "minx=", 5))
+            else if (STARTS_WITH_CI(papszTokens[i], "minx="))
             {
                 bMinXSet = TRUE;
                 minx = CPLAtof(papszTokens[i] + 5);
             }
-            else if (EQUALN(papszTokens[i], "miny=", 5))
+            else if (STARTS_WITH_CI(papszTokens[i], "miny="))
             {
                 bMinYSet = TRUE;
                 miny = CPLAtof(papszTokens[i] + 5);
             }
-            else if (EQUALN(papszTokens[i], "maxx=", 5))
+            else if (STARTS_WITH_CI(papszTokens[i], "maxx="))
             {
                 bMaxXSet = TRUE;
                 maxx = CPLAtof(papszTokens[i] + 5);
             }
-            else if (EQUALN(papszTokens[i], "maxy=", 5))
+            else if (STARTS_WITH_CI(papszTokens[i], "maxy="))
             {
                 bMaxYSet = TRUE;
                 maxy = CPLAtof(papszTokens[i] + 5);
             }
-            else if (EQUALN(papszTokens[i], "bands=", 6))
+            else if (STARTS_WITH_CI(papszTokens[i], "bands="))
             {
                 nReqBands = atoi(papszTokens[i] + 6);
             }
@@ -1066,7 +1066,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
                     }
                         
                     CPLString osSubdatasetName;
-                    if (!EQUALN(poOpenInfo->pszFilename, "RASTERLITE:", 11))
+                    if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "RASTERLITE:"))
                         osSubdatasetName += "RASTERLITE:";
                     osSubdatasetName += poOpenInfo->pszFilename;
                     osSubdatasetName += ",table=";

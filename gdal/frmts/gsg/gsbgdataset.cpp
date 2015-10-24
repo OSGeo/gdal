@@ -530,7 +530,7 @@ int GSBGDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     /* Check for signature */
     if( poOpenInfo->nHeaderBytes < 4
-        || !EQUALN((const char *) poOpenInfo->pabyHeader,"DSBB",4) )
+        || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "DSBB") )
     {
         return FALSE;
     }

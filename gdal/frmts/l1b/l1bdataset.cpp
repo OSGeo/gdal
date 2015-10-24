@@ -1392,13 +1392,13 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
         }
 
         // Determine processing center where the dataset was created
-        if ( EQUALN(szDatasetName, "CMS", 3) )
+        if ( STARTS_WITH_CI(szDatasetName, "CMS") )
              eProcCenter = CMS;
-        else if ( EQUALN(szDatasetName, "DSS", 3) )
+        else if ( STARTS_WITH_CI(szDatasetName, "DSS") )
              eProcCenter = DSS;
-        else if ( EQUALN(szDatasetName, "NSS", 3) )
+        else if ( STARTS_WITH_CI(szDatasetName, "NSS") )
              eProcCenter = NSS;
-        else if ( EQUALN(szDatasetName, "UKM", 3) )
+        else if ( STARTS_WITH_CI(szDatasetName, "UKM") )
              eProcCenter = UKM;
         else
              eProcCenter = UNKNOWN_CENTER;
@@ -1421,17 +1421,13 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
         }
 
         // Determine data format (10-bit packed or 8/16-bit unpacked)
-        if ( EQUALN((const char *)abyTBMHeader + L1B_NOAA9_HDR_WORD_OFF,
-                    "10", 2) )
+        if ( STARTS_WITH_CI((const char *)abyTBMHeader + L1B_NOAA9_HDR_WORD_OFF, "10") )
             iDataFormat = PACKED10BIT;
-        else if ( EQUALN((const char *)abyTBMHeader + L1B_NOAA9_HDR_WORD_OFF,
-                         "16", 2) )
+        else if ( STARTS_WITH_CI((const char *)abyTBMHeader + L1B_NOAA9_HDR_WORD_OFF, "16") )
             iDataFormat = UNPACKED16BIT;
-        else if ( EQUALN((const char *)abyTBMHeader + L1B_NOAA9_HDR_WORD_OFF,
-                         "08", 2) )
+        else if ( STARTS_WITH_CI((const char *)abyTBMHeader + L1B_NOAA9_HDR_WORD_OFF, "08") )
             iDataFormat = UNPACKED8BIT;
-        else if ( EQUALN((const char *)abyTBMHeader + L1B_NOAA9_HDR_WORD_OFF,
-                         "  ", 2)
+        else if ( STARTS_WITH_CI((const char *)abyTBMHeader + L1B_NOAA9_HDR_WORD_OFF, "  ")
                   || abyTBMHeader[L1B_NOAA9_HDR_WORD_OFF] == '\0' )
             /* Empty string can be found in the following samples : 
                 http://www2.ncdc.noaa.gov/docs/podug/data/avhrr/franh.1b (10 bit)
@@ -1581,14 +1577,11 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
             }
 
             // Determine data format (10-bit packed or 8/16-bit unpacked)
-            if ( EQUALN((const char *)abyARSHeader + L1B_NOAA15_HDR_WORD_OFF,
-                        "10", 2) )
+            if ( STARTS_WITH_CI((const char *)abyARSHeader + L1B_NOAA15_HDR_WORD_OFF, "10") )
                 iDataFormat = PACKED10BIT;
-            else if ( EQUALN((const char *)abyARSHeader + L1B_NOAA15_HDR_WORD_OFF,
-                             "16", 2) )
+            else if ( STARTS_WITH_CI((const char *)abyARSHeader + L1B_NOAA15_HDR_WORD_OFF, "16") )
                 iDataFormat = UNPACKED16BIT;
-            else if ( EQUALN((const char *)abyARSHeader + L1B_NOAA15_HDR_WORD_OFF,
-                             "08", 2) )
+            else if ( STARTS_WITH_CI((const char *)abyARSHeader + L1B_NOAA15_HDR_WORD_OFF, "08") )
                 iDataFormat = UNPACKED8BIT;
             else
             {
@@ -1624,17 +1617,17 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
         szDatasetName[L1B_DATASET_NAME_SIZE] = '\0';
 
         // Determine processing center where the dataset was created
-        if ( EQUALN((const char *)abyRecHeader
-                    + L1B_NOAA15_HDR_REC_SITE_OFF, "CMS", 3) )
+        if ( STARTS_WITH_CI((const char *)abyRecHeader
+                    + L1B_NOAA15_HDR_REC_SITE_OFF, "CMS") )
              eProcCenter = CMS;
-        else if ( EQUALN((const char *)abyRecHeader
-                         + L1B_NOAA15_HDR_REC_SITE_OFF, "DSS", 3) )
+        else if ( STARTS_WITH_CI((const char *)abyRecHeader
+                         + L1B_NOAA15_HDR_REC_SITE_OFF, "DSS") )
              eProcCenter = DSS;
-        else if ( EQUALN((const char *)abyRecHeader
-                         + L1B_NOAA15_HDR_REC_SITE_OFF, "NSS", 3) )
+        else if ( STARTS_WITH_CI((const char *)abyRecHeader
+                         + L1B_NOAA15_HDR_REC_SITE_OFF, "NSS") )
              eProcCenter = NSS;
-        else if ( EQUALN((const char *)abyRecHeader
-                         + L1B_NOAA15_HDR_REC_SITE_OFF, "UKM", 3) )
+        else if ( STARTS_WITH_CI((const char *)abyRecHeader
+                         + L1B_NOAA15_HDR_REC_SITE_OFF, "UKM") )
              eProcCenter = UKM;
         else
              eProcCenter = UNKNOWN_CENTER;
@@ -3085,15 +3078,15 @@ L1BFileFormat L1BDataset::DetectFormat( const char* pszFilename,
 int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-    if ( EQUALN( poOpenInfo->pszFilename, "L1BGCPS:", strlen("L1BGCPS:") ) )
+    if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "L1BGCPS:") )
         return TRUE;
-    if ( EQUALN( poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:", strlen("L1BGCPS_INTERPOL:") ) )
+    if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:") )
         return TRUE;
-    if ( EQUALN( poOpenInfo->pszFilename, "L1B_SOLAR_ZENITH_ANGLES:", strlen("L1B_SOLAR_ZENITH_ANGLES:") ) )
+    if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_SOLAR_ZENITH_ANGLES:") )
         return TRUE;
-    if ( EQUALN( poOpenInfo->pszFilename, "L1B_ANGLES:", strlen("L1B_ANGLES:") ) )
+    if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_ANGLES:") )
         return TRUE;
-    if ( EQUALN( poOpenInfo->pszFilename, "L1B_CLOUDS:", strlen("L1B_CLOUDS:") ) )
+    if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_CLOUDS:") )
         return TRUE;
 
     if ( DetectFormat(CPLGetFilename(poOpenInfo->pszFilename),
@@ -3121,31 +3114,31 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     int bAskCloudsDS = FALSE;
     L1BFileFormat eL1BFormat;
 
-    if ( EQUALN( poOpenInfo->pszFilename, "L1BGCPS:", strlen("L1BGCPS:") ) ||
-         EQUALN( poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:", strlen("L1BGCPS_INTERPOL:") ) ||
-         EQUALN( poOpenInfo->pszFilename, "L1B_SOLAR_ZENITH_ANGLES:", strlen("L1B_SOLAR_ZENITH_ANGLES:") )||
-         EQUALN( poOpenInfo->pszFilename, "L1B_ANGLES:", strlen("L1B_ANGLES:") )||
-         EQUALN( poOpenInfo->pszFilename, "L1B_CLOUDS:", strlen("L1B_CLOUDS:") ) )
+    if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "L1BGCPS:") ||
+         STARTS_WITH_CI(poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:") ||
+         STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_SOLAR_ZENITH_ANGLES:")||
+         STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_ANGLES:")||
+         STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_CLOUDS:") )
     {
         GByte abyHeader[1024];
         const char* pszFilename;
-        if( EQUALN( poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:", strlen("L1BGCPS_INTERPOL:")) )
+        if( STARTS_WITH_CI(poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:") )
         {
             bAskGeolocationDS = TRUE;
             bInterpolGeolocationDS = TRUE;
             pszFilename = poOpenInfo->pszFilename + strlen("L1BGCPS_INTERPOL:");
         }
-        else if (EQUALN( poOpenInfo->pszFilename, "L1BGCPS:", strlen("L1BGCPS:") ) )
+        else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "L1BGCPS:") )
         {
             bAskGeolocationDS = TRUE;
             pszFilename = poOpenInfo->pszFilename + strlen("L1BGCPS:");
         }
-        else if (EQUALN( poOpenInfo->pszFilename, "L1B_SOLAR_ZENITH_ANGLES:", strlen("L1B_SOLAR_ZENITH_ANGLES:") ) )
+        else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_SOLAR_ZENITH_ANGLES:") )
         {
             bAskSolarZenithAnglesDS = TRUE;
             pszFilename = poOpenInfo->pszFilename + strlen("L1B_SOLAR_ZENITH_ANGLES:");
         }
-        else if (EQUALN( poOpenInfo->pszFilename, "L1B_ANGLES:", strlen("L1B_ANGLES:") ) )
+        else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_ANGLES:") )
         {
             bAskAnglesDS = TRUE;
             pszFilename = poOpenInfo->pszFilename + strlen("L1B_ANGLES:");

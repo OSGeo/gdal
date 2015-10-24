@@ -584,7 +584,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         else if( abValidProjInfo[i] && apszProjection[i] != NULL )
         {
             /* Anything else than a LOCAL_CS will probably be better */
-            if( EQUALN(apszProjection[iBestIndex], "LOCAL_CS", strlen("LOCAL_CS")) )
+            if( STARTS_WITH_CI(apszProjection[iBestIndex], "LOCAL_CS") )
                 iBestIndex = i;
         }
     }
@@ -700,11 +700,11 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
     int i;
 
 
-    if( EQUALN(pszURN,"urn:jp2k:xml:", 13) )
+    if( STARTS_WITH_CI(pszURN, "urn:jp2k:xml:") )
         pszLabel = CPLStrdup( pszURN + 13 );
-    else if( EQUALN(pszURN,"urn:ogc:tc:gmljp2:xml:", 22) )
+    else if( STARTS_WITH_CI(pszURN, "urn:ogc:tc:gmljp2:xml:") )
         pszLabel = CPLStrdup( pszURN + 22 );
-    else if( EQUALN(pszURN,"gmljp2://xml/",13) )
+    else if( STARTS_WITH_CI(pszURN, "gmljp2://xml/") )
         pszLabel = CPLStrdup( pszURN + 13 );
     else
         pszLabel = CPLStrdup( pszURN );
@@ -995,19 +995,17 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     if( bSuccess && pszSRSName != NULL 
         && (pszProjection == NULL || strlen(pszProjection) == 0) )
     {
-        if( EQUALN(pszSRSName,"epsg:",5) )
+        if( STARTS_WITH_CI(pszSRSName, "epsg:") )
         {
             if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
                 oSRS.exportToWkt( &pszProjection );
         }
-        else if( (EQUALN(pszSRSName,"urn:",4) 
+        else if( (STARTS_WITH_CI(pszSRSName, "urn:") 
                  && strstr(pszSRSName,":def:") != NULL
                  && oSRS.importFromURN(pszSRSName) == OGRERR_NONE) ||
                  /* GMLJP2 v2.0 uses CRS URL instead of URN */
                  /* See e.g. http://schemas.opengis.net/gmljp2/2.0/examples/minimalInstance.xml */
-                 (EQUALN(pszSRSName,"http://www.opengis.net/def/crs/",
-                         strlen("http://www.opengis.net/def/crs/")) 
-                 && oSRS.importFromCRSURL(pszSRSName) == OGRERR_NONE) )
+                 (STARTS_WITH_CI(pszSRSName, "http://www.opengis.net/def/crs/")                  && oSRS.importFromCRSURL(pszSRSName) == OGRERR_NONE) )
         {
             oSRS.exportToWkt( &pszProjection );
 
@@ -1073,14 +1071,14 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                 psIter->psChild != NULL && psIter->psChild->eType == CXT_Text )
             {
                 if( nAxisCount == 0 && 
-                    (EQUALN(psIter->psChild->pszValue, "EAST", 4) ||
-                     EQUALN(psIter->psChild->pszValue, "LONG", 4) ) )
+                    (STARTS_WITH_CI(psIter->psChild->pszValue, "EAST") ||
+                     STARTS_WITH_CI(psIter->psChild->pszValue, "LONG") ) )
                 {
                     bFirstAxisIsEastOrLong = TRUE;
                 }
                 else if( nAxisCount == 1 &&
-                         (EQUALN(psIter->psChild->pszValue, "NORTH", 5) ||
-                          EQUALN(psIter->psChild->pszValue, "LAT", 3)) )
+                         (STARTS_WITH_CI(psIter->psChild->pszValue, "NORTH") ||
+                          STARTS_WITH_CI(psIter->psChild->pszValue, "LAT")) )
                 {
                     bSecondAxisIsNorthOrLat = TRUE;
                 }
@@ -2952,7 +2950,7 @@ CPLXMLNode* GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(
             if( !EQUAL(*papszMDListIter, "") &&
                 !EQUAL(*papszMDListIter, "IMAGE_STRUCTURE") &&
                 !EQUAL(*papszMDListIter, "JPEG2000") &&
-                !EQUALN(*papszMDListIter, "xml:BOX_", strlen("xml:BOX_")) &&
+                !STARTS_WITH_CI(*papszMDListIter, "xml:BOX_") &&
                 !EQUAL(*papszMDListIter, "xml:gml.root-instance") &&
                 !EQUAL(*papszMDListIter, "xml:XMP") &&
                 !EQUAL(*papszMDListIter, "xml:IPR") )
@@ -3017,7 +3015,7 @@ GDALJP2Box** GDALJP2Metadata::CreateXMLBoxes( GDALDataset* poSrcDS,
     {
         /* Write metadata that look like originating from JP2 XML boxes */
         /* as a standalone JP2 XML box */
-        if( EQUALN(*papszMDListIter, "xml:BOX_", strlen("xml:BOX_")) )
+        if( STARTS_WITH_CI(*papszMDListIter, "xml:BOX_") )
         {
             char** papszSrcMD = poSrcDS->GetMetadata(*papszMDListIter);
             if( papszSrcMD && *papszSrcMD )

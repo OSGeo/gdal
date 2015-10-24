@@ -112,7 +112,7 @@ OGRLayer* OGRPLScenesDataset::ExecuteSQL( const char *pszSQLCommand,
                                           OGRGeometry *poSpatialFilter,
                                           const char *pszDialect )
 {
-    if( EQUALN(pszSQLCommand, "SELECT ", strlen("SELECT ")) )
+    if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") )
     {
         swq_select oSelect;
         CPLString osSQLCommand(pszSQLCommand);
@@ -183,7 +183,7 @@ void OGRPLScenesDataset::ReleaseResultSet( OGRLayer * poResultsSet )
 
 int OGRPLScenesDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
-    return EQUALN(poOpenInfo->pszFilename, "PLSCENES:", strlen("PLSCENES:"));
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "PLSCENES:");
 }
 
 /************************************************************************/

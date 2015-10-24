@@ -1431,7 +1431,7 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeature )
                     /* defintion, we assume that the order is lon/lat */
                     const char* pszAxisName = poSRS->GetAxis(NULL, 0, NULL);
                     if (poSRS->IsGeographic() &&
-                        (pszAxisName == NULL || EQUALN(pszAxisName, "Lon", 3)))
+                        (pszAxisName == NULL || STARTS_WITH_CI(pszAxisName, "Lon")))
                     {
                         bSwapCoordinates = TRUE;
                     }

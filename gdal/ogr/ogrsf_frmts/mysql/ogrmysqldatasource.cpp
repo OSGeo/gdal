@@ -164,15 +164,15 @@ int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptions,
 
     for( i = 1; papszItems[i] != NULL; i++ )
     {
-        if( EQUALN(papszItems[i],"user=",5) )
+        if( STARTS_WITH_CI(papszItems[i], "user=") )
             oUser = papszItems[i] + 5;
-        else if( EQUALN(papszItems[i],"password=",9) )
+        else if( STARTS_WITH_CI(papszItems[i], "password=") )
             oPassword = papszItems[i] + 9;
-        else if( EQUALN(papszItems[i],"host=",5) )
+        else if( STARTS_WITH_CI(papszItems[i], "host=") )
             oHost = papszItems[i] + 5;
-        else if( EQUALN(papszItems[i],"port=",5) )
+        else if( STARTS_WITH_CI(papszItems[i], "port=") )
             nPort = atoi(papszItems[i] + 5);
-        else if( EQUALN(papszItems[i],"tables=",7) )
+        else if( STARTS_WITH_CI(papszItems[i], "tables=") )
         {
             papszTableNames = CSLTokenizeStringComplex( 
                 papszItems[i] + 7, ";", FALSE, FALSE );
@@ -648,7 +648,7 @@ OGRLayer * OGRMySQLDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
 #ifdef notdef
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 

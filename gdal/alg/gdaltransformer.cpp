@@ -1009,7 +1009,7 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
 
 {								        
-    if( !EQUALN(osWKT.c_str(), "GEOGCS[", 7) )
+    if( !STARTS_WITH_CI(osWKT.c_str(), "GEOGCS[") )
         return osWKT;
     
     if( strstr(osWKT,"EXTENSION[\"CENTER_LONG") != NULL )

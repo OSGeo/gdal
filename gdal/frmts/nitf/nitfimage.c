@@ -185,7 +185,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         GetMD( psImage, pachHeader, 264,  20, ISCTLN );
         GetMD( psImage, pachHeader, 284,   6, ISDWNG );
         
-        if( EQUALN(pachHeader+284,"999998",6) )
+        if( STARTS_WITH_CI(pachHeader+284, "999998") )
         {
             if (psSegInfo->nSegmentHeaderSize < 370 + 40 + 1)
                 GOTO_header_too_small();
@@ -208,14 +208,14 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     nOffset = 333;
 
-    if( EQUALN(psFile->szVersion,"NITF01.",7) 
-        || EQUALN(pachHeader+284,"999998",6) )
+    if( STARTS_WITH_CI(psFile->szVersion, "NITF01.") 
+        || STARTS_WITH_CI(pachHeader+284, "999998") )
         nOffset += 40;
 
 /* -------------------------------------------------------------------- */
 /*      Read lots of header fields.                                     */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(psFile->szVersion,"NITF01.",7) )
+    if( !STARTS_WITH_CI(psFile->szVersion, "NITF01.") )
     {
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 35+2)
             GOTO_header_too_small();
@@ -248,8 +248,8 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     psImage->chICORDS = pachHeader[nOffset++];
     psImage->bHaveIGEOLO = FALSE;
 
-    if( (EQUALN(psFile->szVersion,"NITF02.0",8)
-         || EQUALN(psFile->szVersion,"NITF01.",7))
+    if( (STARTS_WITH_CI(psFile->szVersion, "NITF02.0")
+         || STARTS_WITH_CI(psFile->szVersion, "NITF01."))
         && psImage->chICORDS == 'N' )
         psImage->chICORDS = ' ';
 
@@ -476,8 +476,8 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                     psBandInfo->nSignificantLUTEntries );
             nOffset += psBandInfo->nSignificantLUTEntries;
         }
-        else if( (nLUTS == 2) && (EQUALN(psImage->szIREP,"MONO",4)) &&
-          ((EQUALN(psBandInfo->szIREPBAND, "M", 1)) || (EQUALN(psBandInfo->szIREPBAND, "LU", 2))) )
+        else if( (nLUTS == 2) && (STARTS_WITH_CI(psImage->szIREP, "MONO")) &&
+          ((STARTS_WITH_CI(psBandInfo->szIREPBAND, "M")) || (STARTS_WITH_CI(psBandInfo->szIREPBAND, "LU"))) )
         {
             int             iLUTEntry;
             double          scale          = 255.0/65535.0;
@@ -628,7 +628,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
 /*      Override nCols and nRows for NITF 1.1 (not sure why!)           */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(psFile->szVersion,"NITF01.",7) )
+    if( STARTS_WITH_CI(psFile->szVersion, "NITF01.") )
     {
         psImage->nCols = psImage->nBlocksPerRow * psImage->nBlockWidth;
         psImage->nRows = psImage->nBlocksPerColumn * psImage->nBlockHeight;
@@ -3264,7 +3264,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
         /* You can define NITF_DISABLE_RPF_LOCATION_TABLE_SANITY_TESTS to TRUE */
         /* to blindly trust the RPF location table even if it doesn't look */
         /* sane. Necessary for dataset attached to http://trac.osgeo.org/gdal/ticket/3930 */
-        if( !EQUALN(achHeaderChunk,"RPFHDR",6) &&
+        if( !STARTS_WITH_CI(achHeaderChunk, "RPFHDR") &&
             !CSLTestBoolean(CPLGetConfigOption("NITF_DISABLE_RPF_LOCATION_TABLE_SANITY_TESTS", "FALSE")) )
         {
             /* Image of http://trac.osgeo.org/gdal/ticket/3848 has incorrect */
@@ -3531,7 +3531,7 @@ GUIntBig NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
         psImage->psFile->pasSegmentInfo[psImage->iSegment].nSegmentHeaderStart;
 
     // We only support files we created.
-    if( !EQUALN(psImage->psFile->szVersion,"NITF02.1",8) )
+    if( !STARTS_WITH_CI(psImage->psFile->szVersion, "NITF02.1") )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "NITFIHFieldOffset() only works with NITF 2.1 images");

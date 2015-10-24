@@ -121,7 +121,7 @@ GeoJSONSourceType GeoJSONGetSourceType( GDALOpenInfo* poOpenInfo )
     else if( EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "geojson" )
              || EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "json" )
              || EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "topojson" )
-             || ((EQUALN( poOpenInfo->pszFilename, "/vsigzip/", 9) || EQUALN( poOpenInfo->pszFilename, "/vsizip/", 8)) &&
+             || ((STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/") || STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsizip/")) &&
                  (strstr( poOpenInfo->pszFilename, ".json") || strstr( poOpenInfo->pszFilename, ".JSON") ||
                   strstr( poOpenInfo->pszFilename, ".geojson") || strstr( poOpenInfo->pszFilename, ".GEOJSON")) ))
     {
@@ -148,11 +148,11 @@ GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource )
 {
     GeoJSONProtocolType ptclType = eGeoJSONProtocolUnknown;
 
-    if( EQUALN( pszSource, "http:", 5 ) )
+    if( STARTS_WITH_CI(pszSource, "http:") )
         ptclType = eGeoJSONProtocolHTTP;
-    else if( EQUALN( pszSource, "https:", 6 ) )
+    else if( STARTS_WITH_CI(pszSource, "https:") )
         ptclType = eGeoJSONProtocolHTTPS;
-    else if( EQUALN( pszSource, "ftp:", 4 ) )
+    else if( STARTS_WITH_CI(pszSource, "ftp:") )
         ptclType = eGeoJSONProtocolFTP;
 
     return ptclType;

@@ -97,9 +97,9 @@ retry:
         return NULL;
     }
 
-    if (!EQUALN(pachHeader, "DE", 2))
+    if (!STARTS_WITH_CI(pachHeader, "DE"))
     {
-        if (EQUALN(pachHeader + 4, "DERegistered", 12))
+        if (STARTS_WITH_CI(pachHeader + 4, "DERegistered"))
         {
             /* BAO_46_Ed1/rpf/conc/concz10/000fz010.ona and cie are buggy */
             CPLDebug("NITF", "Patching nSegmentHeaderStart and nSegmentStart for DE segment %d", iSegment);
@@ -161,7 +161,7 @@ retry:
     /* For NITF < 02.10, we cannot rely on DESID=TRE_OVERFLOW to detect */
     /* if DESOFLW and DESITEM are present. So if the next 4 bytes are non */
     /* numeric, we'll assume that DESOFLW is there */
-    bHasDESOFLW = EQUALN(szDESID, "TRE_OVERFLOW", strlen("TRE_OVERFLOW")) ||
+    bHasDESOFLW = STARTS_WITH_CI(szDESID, "TRE_OVERFLOW") ||
        (!((pachHeader[nOffset+0] >= '0' && pachHeader[nOffset+0] <= '9') &&
           (pachHeader[nOffset+1] >= '0' && pachHeader[nOffset+1] <= '9') &&
           (pachHeader[nOffset+2] >= '0' && pachHeader[nOffset+2] <= '9') &&
@@ -206,7 +206,7 @@ retry:
         return NULL;
     }
 
-    if (EQUALN(szDESID, "CSSHPA DES", strlen("CSSHPA DES")))
+    if (STARTS_WITH_CI(szDESID, "CSSHPA DES"))
     {
         if ( nDESSHL != 62 && nDESSHL != 80)
         {
@@ -227,7 +227,7 @@ retry:
         GetMD(  3, SHAPE3_NAME );
         GetMD(  6, SHAPE3_START );
     }
-    else if (EQUALN(szDESID, "XML_DATA_CONTENT", strlen("XML_DATA_CONTENT")))
+    else if (STARTS_WITH_CI(szDESID, "XML_DATA_CONTENT"))
     {
         /* TODO : handle nDESSHL = 0005 and 0283 */
         if (nDESSHL >= 5)
@@ -253,7 +253,7 @@ retry:
             }
         }
     }
-    else if (EQUALN(szDESID, "CSATTA DES", strlen("CSATTA DES")) && nDESSHL == 52)
+    else if (STARTS_WITH_CI(szDESID, "CSATTA DES") && nDESSHL == 52)
     {
         GetMD( 12, ATT_TYPE );
         GetMD( 14, DT_ATT );
@@ -328,7 +328,7 @@ retry:
 
 #ifdef notdef
         /* Disabled because might generate a huge amount of elements */
-        if (EQUALN(szDESID, "CSATTA DES", strlen("CSATTA DES")))
+        if (STARTS_WITH_CI(szDESID, "CSATTA DES"))
         {
             int nNumAtt = atoi(CSLFetchNameValueDef(psDES->papszMetadata, "NITF_NUM_ATT", "0"));
             if (nNumAtt * 8 * 4 == psSegInfo->nSegmentSize)

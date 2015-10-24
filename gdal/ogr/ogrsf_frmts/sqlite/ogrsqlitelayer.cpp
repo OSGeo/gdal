@@ -286,7 +286,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             {
                 oField.SetType(OFTInteger64);
             }
-            else if (EQUALN(pszDeclType, "INTEGER", strlen("INTEGER")))
+            else if (STARTS_WITH_CI(pszDeclType, "INTEGER"))
             {
                 oField.SetType(OFTInteger);
             }
@@ -300,7 +300,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             {
                 oField.SetType(OFTReal);
             }
-            else if (EQUALN(pszDeclType, "BLOB", 4))
+            else if (STARTS_WITH_CI(pszDeclType, "BLOB"))
             {
                 oField.SetType( OFTBinary );
                 /* Parse format like BLOB_POINT_25D_4326 created by */
@@ -343,7 +343,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 }
             }
             else if (EQUAL(pszDeclType, "TEXT") ||
-                     EQUALN(pszDeclType, "VARCHAR", 7))
+                     STARTS_WITH_CI(pszDeclType, "VARCHAR"))
             {
                 oField.SetType( OFTString );
                 if( strstr(pszDeclType, "_deflate") != NULL )
@@ -369,8 +369,8 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 eFieldType = OFTTime;
         }
         else if( nColType == SQLITE_TEXT &&
-                 (EQUALN(oField.GetNameRef(), "MIN(", 4) ||
-                  EQUALN(oField.GetNameRef(), "MAX(", 4)) &&
+                 (STARTS_WITH_CI(oField.GetNameRef(), "MIN(") ||
+                  STARTS_WITH_CI(oField.GetNameRef(), "MAX(")) &&
                  sqlite3_column_text( hStmt, iCol ) != NULL )
         {
             int nRet = OGRSQLITEStringToDateTimeField(NULL, 0,
@@ -382,9 +382,9 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         // Recognise some common geometry column names.
         if( (EQUAL(oField.GetNameRef(),"wkt_geometry") 
              || EQUAL(oField.GetNameRef(),"geometry")
-             || EQUALN(oField.GetNameRef(), "asbinary(", 9)
-             || EQUALN(oField.GetNameRef(), "astext(", 7)
-             || (EQUALN(oField.GetNameRef(), "st_", 3) && nColType == SQLITE_BLOB ) )
+             || STARTS_WITH_CI(oField.GetNameRef(), "asbinary(")
+             || STARTS_WITH_CI(oField.GetNameRef(), "astext(")
+             || (STARTS_WITH_CI(oField.GetNameRef(), "st_") && nColType == SQLITE_BLOB ) )
             && (bAllowMultipleGeomFields || poFeatureDefn->GetGeomFieldCount() == 0) )
         {
             if( nColType == SQLITE_BLOB )

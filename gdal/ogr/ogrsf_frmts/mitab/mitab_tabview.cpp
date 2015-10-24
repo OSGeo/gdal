@@ -279,7 +279,7 @@ int TABView::OpenForRead(const char *pszFname,
         const char *pszStr = m_papszTABFile[i];
         while(*pszStr != '\0' && isspace((unsigned char)*pszStr))
             pszStr++;
-        if (EQUALN(pszStr, "create view", 11))
+        if (STARTS_WITH_CI(pszStr, "create view"))
             bCreateViewFound = TRUE;
     }
 

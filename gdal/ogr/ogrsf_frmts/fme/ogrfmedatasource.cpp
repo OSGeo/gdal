@@ -451,14 +451,14 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
     }
          
     if( (i < 2 || pszCompositeName[i] != ':' 
-         || EQUALN(pszCompositeName,"OCI:",4)
-         || EQUALN(pszCompositeName,"gltp:",5)
-         || EQUALN(pszCompositeName,"http",4)
-         || EQUALN(pszCompositeName,"DODS:",5)
-         || EQUALN(pszCompositeName,"ODBC:",5)
+         || STARTS_WITH_CI(pszCompositeName, "OCI:")
+         || STARTS_WITH_CI(pszCompositeName, "gltp:")
+         || STARTS_WITH_CI(pszCompositeName, "http")
+         || STARTS_WITH_CI(pszCompositeName, "DODS:")
+         || STARTS_WITH_CI(pszCompositeName, "ODBC:")
          || EQUALN(pszCompositeName,"MYSQL:",5))
         && !EQUAL(CPLGetExtension( pszCompositeName ), "fdd")
-        && !EQUALN(pszCompositeName,"PROMPT",6) )
+        && !STARTS_WITH_CI(pszCompositeName, "PROMPT") )
     {
         CPLDebug( kPROVIDERNAME, 
                   "OGRFMEDataSource::Open(%s) don't try to open via FME.", 
@@ -495,7 +495,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
 /* -------------------------------------------------------------------- */
 /*      Prompt for a source, if none is provided.                       */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszCompositeName,"") || EQUALN(pszCompositeName,"PROMPT",6) )
+    if( EQUAL(pszCompositeName,"") || STARTS_WITH_CI(pszCompositeName, "PROMPT") )
     {
         pszName = PromptForSource();
         if( pszName == NULL )
@@ -546,7 +546,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
 /*      If we prompted for a defintion that includes a file to save     */
 /*      it to, do the save now.                                         */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszCompositeName,"PROMPT:",7) 
+    if( STARTS_WITH_CI(pszCompositeName, "PROMPT:") 
         && strlen(pszCompositeName) > 7 )
     {
         SaveDefinitionFile( pszCompositeName+7, 
@@ -574,8 +574,8 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
 /*      Are we going to use the direct access DB mechanism, or the      */
 /*      spatiallly cached (dumb reader) mechanism.                      */
 /* -------------------------------------------------------------------- */
-    bUseCaching = !EQUALN(pszReaderName,"SDE",3) 
-               && !EQUALN(pszReaderName,"ORACLE",6);
+    bUseCaching = !STARTS_WITH_CI(pszReaderName, "SDE") 
+               && !STARTS_WITH_CI(pszReaderName, "ORACLE");
 
 /* -------------------------------------------------------------------- */
 /*      Is there already a cache for this dataset?  If so, we will      */
@@ -1329,8 +1329,8 @@ void OGRFMEDataSource::OfferForConnectionCaching(IFMEUniversalReader *poReader,
 /* -------------------------------------------------------------------- */
 /*      For now we only cache SDE readers.                              */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszReaderType,"SDE",3) 
-        && !EQUALN(pszReaderType,"ORACLE",6) )
+    if( !STARTS_WITH_CI(pszReaderType, "SDE") 
+        && !STARTS_WITH_CI(pszReaderType, "ORACLE") )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -1346,7 +1346,7 @@ void OGRFMEDataSource::OfferForConnectionCaching(IFMEUniversalReader *poReader,
 
     for( i = 0; i < (int) poUserDirectives->entries()-1; i += 2 )
     {
-        if( EQUALN((const char *) (*poUserDirectives)(i),"RUNTIME_MACROS",14) )
+        if( STARTS_WITH_CI((const char *) (*poUserDirectives)(i), "RUNTIME_MACROS") )
             pszRuntimeMacros = (*poUserDirectives)(i+1);
     }
     

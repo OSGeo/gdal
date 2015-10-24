@@ -283,7 +283,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
             }
         }
 
-        else if( EQUALN(pszSQLCommand, "ogr_layer_", strlen("ogr_layer_"))  )
+        else if( STARTS_WITH_CI(pszSQLCommand, "ogr_layer_")  )
         {
             while( *pszSQLCommand != '\0' && *pszSQLCommand != '(' )
                 pszSQLCommand ++;
@@ -302,7 +302,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
         }
 
         else if( bLookforFTableName &&
-                 EQUALN(pszSQLCommand, "f_table_name", strlen("f_table_name")) &&
+                 STARTS_WITH_CI(pszSQLCommand, "f_table_name") &&
                  (pszSQLCommand[strlen("f_table_name")] == '=' ||
                   isspace((int)pszSQLCommand[strlen("f_table_name")])) )
         {
@@ -324,7 +324,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
             bLookforFTableName = FALSE;
         }
 
-        else if( EQUALN(pszSQLCommand, "FROM", strlen("FROM")) &&
+        else if( STARTS_WITH_CI(pszSQLCommand, "FROM") &&
                  isspace(pszSQLCommand[strlen("FROM")]) )
         {
             pszSQLCommand += strlen("FROM") + 1;
@@ -332,7 +332,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
             while( isspace((int)*pszSQLCommand) )
                 pszSQLCommand ++;
 
-            if( EQUALN(pszSQLCommand, "SpatialIndex", strlen("SpatialIndex")) &&
+            if( STARTS_WITH_CI(pszSQLCommand, "SpatialIndex") &&
                 isspace((int)pszSQLCommand[strlen("SpatialIndex")]) )
             {
                 pszSQLCommand += strlen("SpatialIndex") + 1;
@@ -368,7 +368,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
                     while( isspace((int)*pszSQLCommand) )
                         pszSQLCommand ++;
 
-                    if( EQUALN(pszSQLCommand, "AS", 2) )
+                    if( STARTS_WITH_CI(pszSQLCommand, "AS") )
                     {
                         pszSQLCommand += 2;
                         while( isspace((int)*pszSQLCommand) )
@@ -414,28 +414,28 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
                     break;
             }
         }
-        else if ( EQUALN(pszSQLCommand, "JOIN", strlen("JOIN")) &&
+        else if ( STARTS_WITH_CI(pszSQLCommand, "JOIN") &&
                   isspace(pszSQLCommand[strlen("JOIN")]) )
         {
             pszSQLCommand += strlen("JOIN") + 1;
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand,
                                oSetLayers, osModifiedSQL);
         }
-        else if( EQUALN(pszSQLCommand, "INTO", strlen("INTO")) &&
+        else if( STARTS_WITH_CI(pszSQLCommand, "INTO") &&
                  isspace(pszSQLCommand[strlen("INTO")]) )
         {
             pszSQLCommand += strlen("INTO") + 1;
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand,
                                oSetLayers, osModifiedSQL);
         }
-        else if( EQUALN(pszSQLCommand, "UPDATE", strlen("UPDATE")) &&
+        else if( STARTS_WITH_CI(pszSQLCommand, "UPDATE") &&
                  isspace(pszSQLCommand[strlen("UPDATE")]) )
         {
             pszSQLCommand += strlen("UPDATE") + 1;
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand,
                                oSetLayers, osModifiedSQL);
         }
-        else if ( EQUALN(pszSQLCommand, "DROP TABLE ", strlen("DROP TABLE ")) )
+        else if ( STARTS_WITH_CI(pszSQLCommand, "DROP TABLE ") )
         {
             pszSQLCommand += strlen("DROP TABLE") + 1;
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand,
@@ -1004,7 +1004,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
             return NULL;
         }
 
-        if( !EQUALN(pszStatement, "SELECT ", 7) )
+        if( !STARTS_WITH_CI(pszStatement, "SELECT ") )
         {
 
             sqlite3_finalize( hSQLStmt );

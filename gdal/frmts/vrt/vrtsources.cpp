@@ -306,7 +306,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
                 osPrefix += '"';
             if( EQUALN(pszRelativePath, osPrefix, osPrefix.size()) )
             {
-                if( EQUALN(pszSyntax + osPrefix.size(), "{ANY}", strlen("{ANY}")) )
+                if( STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{ANY}") )
                 {
                     const char* pszLastPart = strrchr(pszRelativePath, ':') + 1;
                     /* CSV:z:/foo.xyz */
@@ -321,7 +321,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
                     osTmp = osPrefixFilename + pszRelativePath;
                     pszRelativePath = osTmp.c_str();
                 }
-                else if( EQUALN(pszSyntax + osPrefix.size(), "{FILENAME}", strlen("{FILENAME}")) )
+                else if( STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{FILENAME}") )
                 {
                     CPLString osFilename(pszRelativePath + osPrefix.size());
                     size_t nPos = 0;
@@ -468,7 +468,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
                 osPrefix += '"';
             if( EQUALN(pszFilename, osPrefix, osPrefix.size()) )
             {
-                if( EQUALN(pszSyntax + osPrefix.size(), "{ANY}", strlen("{ANY}")) )
+                if( STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{ANY}") )
                 {
                     const char* pszLastPart = strrchr(pszFilename, ':') + 1;
                     /* CSV:z:/foo.xyz */
@@ -481,7 +481,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
                         CPLProjectRelativeFilename( pszVRTPath, pszLastPart )).c_str() );
                     bDone = TRUE;
                 }
-                else if( EQUALN(pszSyntax + osPrefix.size(), "{FILENAME}", strlen("{FILENAME}")) )
+                else if( STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{FILENAME}") )
                 {
                     CPLString osFilename(pszFilename + osPrefix.size());
                     size_t nPos = 0;
@@ -513,7 +513,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     const char* pszSourceBand = CPLGetXMLValue(psSrc,"SourceBand","1");
     int nSrcBand = 0;
     int bGetMaskBand = FALSE;
-    if (EQUALN(pszSourceBand, "mask",4))
+    if (STARTS_WITH_CI(pszSourceBand, "mask"))
     {
         bGetMaskBand = TRUE;
         if (pszSourceBand[4] == ',')
@@ -2510,8 +2510,7 @@ VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath )
 
     if( EQUAL(psChild->pszValue,"AveragedSource") 
         || (EQUAL(psChild->pszValue,"SimpleSource")
-            && EQUALN(CPLGetXMLValue(psChild, "Resampling", "Nearest"),
-                      "Aver",4)) )
+            && STARTS_WITH_CI(CPLGetXMLValue(psChild, "Resampling", "Nearest"), "Aver")) )
     {
         poSource = new VRTAveragedSource();
     }

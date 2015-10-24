@@ -2803,7 +2803,7 @@ int PostGISRasterDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
     if (poOpenInfo->pszFilename == NULL ||
         poOpenInfo->fpL != NULL ||
-        !EQUALN(poOpenInfo->pszFilename, "PG:", 3))
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "PG:"))
     {
         return FALSE;
     }
@@ -2957,7 +2957,7 @@ char **PostGISRasterDataset::GetMetadataDomainList()
  * calling ST_Metadata, for example)
  *****************************************/
 char** PostGISRasterDataset::GetMetadata(const char *pszDomain) {
-    if (pszDomain != NULL && EQUALN(pszDomain, "SUBDATASETS", 11))
+    if (pszDomain != NULL && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
         return papszSubdatasets;
     else
         return GDALDataset::GetMetadata(pszDomain);
@@ -3181,7 +3181,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
     // Check connection string
     if (pszFilename == NULL ||
-        !EQUALN(pszFilename, "PG:", 3)) {
+        !STARTS_WITH_CI(pszFilename, "PG:")) {
         /**
          * The connection string provided is not a valid connection 
          * string.
@@ -3509,7 +3509,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
 
     // Check connection string
     if (pszFilename == NULL ||
-        !EQUALN(pszFilename, "PG:", 3)) { 
+        !STARTS_WITH_CI(pszFilename, "PG:")) { 
         /**
          * The connection string provided is not a valid connection 
          * string.

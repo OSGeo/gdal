@@ -77,9 +77,9 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes != 0 )
         return NULL;
 
-    if( !EQUALN(poOpenInfo->pszFilename,"http:",5)
-        && !EQUALN(poOpenInfo->pszFilename,"https:",6)
-        && !EQUALN(poOpenInfo->pszFilename,"ftp:",4) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "http:")
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "https:")
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp:") )
         return NULL;
 
 /* -------------------------------------------------------------------- */

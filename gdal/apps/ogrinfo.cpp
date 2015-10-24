@@ -208,14 +208,14 @@ int main( int nArgc, char ** papszArgv )
         {
             bSummaryOnly = TRUE;
         }
-        else if( EQUALN(papszArgv[iArg],"-fields=", strlen("-fields=")) )
+        else if( STARTS_WITH_CI(papszArgv[iArg], "-fields=") )
         {
             char* pszTemp = (char*)CPLMalloc(32 + strlen(papszArgv[iArg]));
             sprintf(pszTemp, "DISPLAY_FIELDS=%s", papszArgv[iArg] + strlen("-fields="));
             papszOptions = CSLAddString(papszOptions, pszTemp);
             CPLFree(pszTemp);
         }
-        else if( EQUALN(papszArgv[iArg],"-geom=", strlen("-geom=")) )
+        else if( STARTS_WITH_CI(papszArgv[iArg], "-geom=") )
         {
             char* pszTemp = (char*)CPLMalloc(32 + strlen(papszArgv[iArg]));
             sprintf(pszTemp, "DISPLAY_GEOMETRY=%s", papszArgv[iArg] + strlen("-geom="));
@@ -707,7 +707,7 @@ static void GDALInfoPrintMetadata( GDALMajorObjectH hObject,
 {
     bool bIsxml = false;
 
-    if (pszDomain != NULL && EQUALN(pszDomain, "xml:", 4))
+    if (pszDomain != NULL && STARTS_WITH_CI(pszDomain, "xml:"))
         bIsxml = true;
 
     char **papszMetadata = GDALGetMetadata( hObject, pszDomain );

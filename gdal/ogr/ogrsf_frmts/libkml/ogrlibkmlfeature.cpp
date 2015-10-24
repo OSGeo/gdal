@@ -577,8 +577,8 @@ FeaturePtr feat2kml (
         {
             VSILFILE* fp;
             int bIsURL = FALSE;
-            if( EQUALN(pszURL, "http://", strlen("http://")) ||
-                EQUALN(pszURL, "https://", strlen("https://")) )
+            if( STARTS_WITH_CI(pszURL, "http://") ||
+                STARTS_WITH_CI(pszURL, "https://") )
             {
                 bIsURL = TRUE;
                 fp = VSIFOpenL(CPLSPrintf("/vsicurl/%s", pszURL), "rb");

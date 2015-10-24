@@ -109,7 +109,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     char *pszDSN;
     const char* pszOptionName = "";
     const char* pszDSNStringTemplate = NULL;
-    if( EQUALN(pszNewName,"PGEO:",5) )
+    if( STARTS_WITH_CI(pszNewName, "PGEO:") )
         pszDSN = CPLStrdup( pszNewName + 5 );
     else
     {
@@ -138,7 +138,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
     {
         int bError = TRUE;
-        if( !EQUALN(pszNewName,"PGEO:",5) )
+        if( !STARTS_WITH_CI(pszNewName, "PGEO:") )
         {
             // Trying with another template (#5594)
             pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";

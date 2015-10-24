@@ -418,7 +418,7 @@ void PLMosaicDataset::FlushCache()
 int PLMosaicDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    return EQUALN(poOpenInfo->pszFilename, "PLMOSAIC:", strlen("PLMOSAIC:"));
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "PLMOSAIC:");
 }
 
 /************************************************************************/

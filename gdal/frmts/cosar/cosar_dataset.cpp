@@ -150,7 +150,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     if( pOpenInfo->nHeaderBytes < 4 )
         return NULL;
 
-    if (!EQUALN((char *)pOpenInfo->pabyHeader+MAGIC1_OFFSET, "CSAR",4)) 
+    if (!STARTS_WITH_CI((char *)pOpenInfo->pabyHeader+MAGIC1_OFFSET, "CSAR")) 
         return NULL;
 
 /* -------------------------------------------------------------------- */

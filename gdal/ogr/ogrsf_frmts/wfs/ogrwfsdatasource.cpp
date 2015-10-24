@@ -790,7 +790,7 @@ CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
     }
     achHeader[nRead] = 0;
 
-    if( !EQUALN(achHeader,"<OGRWFSDataSource>",18) &&
+    if( !STARTS_WITH_CI(achHeader, "<OGRWFSDataSource>") &&
         strstr(achHeader,"<WFS_Capabilities") == NULL &&
         strstr(achHeader,"<wfs:WFS_Capabilities") == NULL)
     {
@@ -907,7 +907,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
 
     if (psXML == NULL)
     {
-        if (!EQUALN(pszFilename, "WFS:", 4) &&
+        if (!STARTS_WITH_CI(pszFilename, "WFS:") &&
             FindSubStringInsensitive(pszFilename, "SERVICE=WFS") == NULL)
         {
             return FALSE;
@@ -917,7 +917,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
         if( pszBaseURL == NULL )
         {
             pszBaseURL = pszFilename;
-            if (EQUALN(pszFilename, "WFS:", 4))
+            if (STARTS_WITH_CI(pszFilename, "WFS:"))
                 pszBaseURL += 4;
         }
 
@@ -2112,7 +2112,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Deal with "SELECT _LAST_INSERTED_FIDS_ FROM layername" statement */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand, "SELECT _LAST_INSERTED_FIDS_ FROM ", 33) )
+    if( STARTS_WITH_CI(pszSQLCommand, "SELECT _LAST_INSERTED_FIDS_ FROM ") )
     {
         const char* pszIter = pszSQLCommand + 33;
         while(*pszIter && *pszIter != ' ')
@@ -2161,7 +2161,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Deal with "DELETE FROM layer_name WHERE expression" statement   */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand, "DELETE FROM ", 12) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELETE FROM ") )
     {
         const char* pszIter = pszSQLCommand + 12;
         while(*pszIter && *pszIter != ' ')
@@ -2232,7 +2232,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Deal with "SELECT xxxx ORDER BY" statement                      */
 /* -------------------------------------------------------------------- */
-    if (EQUALN(pszSQLCommand, "SELECT", 6))
+    if (STARTS_WITH_CI(pszSQLCommand, "SELECT"))
     {
         swq_select* psSelectInfo = new swq_select();
         if( psSelectInfo->preparse( pszSQLCommand, TRUE ) != CE_None )

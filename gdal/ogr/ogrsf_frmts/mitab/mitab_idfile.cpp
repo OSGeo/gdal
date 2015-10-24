@@ -101,9 +101,9 @@ TABIDFile::~TABIDFile()
 
 int TABIDFile::Open(const char *pszFname, const char* pszAccess)
 {
-    if( EQUALN(pszAccess, "r", 1) )
+    if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead);
-    else if( EQUALN(pszAccess, "w", 1) )
+    else if( STARTS_WITH_CI(pszAccess, "w") )
         return Open(pszFname, TABWrite);
     else
     {

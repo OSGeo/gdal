@@ -336,7 +336,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
                                       const char *pszAccess )
 
 {
-    CPLAssert( EQUALN(pszFilename,"/vsisparse/", 11) );
+    CPLAssert( STARTS_WITH_CI(pszFilename, "/vsisparse/") );
 
     if( !EQUAL(pszAccess,"r") && !EQUAL(pszAccess,"rb") )
     {

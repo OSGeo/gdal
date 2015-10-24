@@ -574,7 +574,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     int		nClientID;
     char        **papszImages=NULL, **papszMatrices=NULL;
     
-    if( !EQUALN(poOpenInfo->pszFilename,"gltp:",5) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "gltp:") )
         return( NULL );
     
 /* -------------------------------------------------------------------- */

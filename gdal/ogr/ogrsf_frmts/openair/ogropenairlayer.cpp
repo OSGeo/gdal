@@ -182,7 +182,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         if (pszLine[0] == '*' || pszLine[0] == '\0')
             continue;
 
-        if (EQUALN(pszLine, "AC ", 3) || EQUALN(pszLine, "AC,", 3))
+        if (STARTS_WITH_CI(pszLine, "AC ") || STARTS_WITH_CI(pszLine, "AC,"))
         {
             if (osCLASS.size() != 0)
             {
@@ -220,21 +220,21 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
             bClockWise = TRUE;
             bHasCenter = FALSE;
         }
-        else if (EQUALN(pszLine, "AN ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AN "))
         {
             if (osNAME.size() != 0)
                 break;
             osNAME = pszLine + 3;
         }
-        else if (EQUALN(pszLine, "AH ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AH "))
             osCEILING = pszLine + 3;
-        else if (EQUALN(pszLine, "AL ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AL "))
             osFLOOR = pszLine + 3;
-        else if (EQUALN(pszLine, "AT ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AT "))
         {
             /* Ignored for that layer*/
         }
-        else if (EQUALN(pszLine, "SP ", 3))
+        else if (STARTS_WITH_CI(pszLine, "SP "))
         {
             if (osCLASS.size() != 0)
             {
@@ -250,7 +250,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 CSLDestroy(papszTokens);
             }
         }
-        else if (EQUALN(pszLine, "SB ", 3))
+        else if (STARTS_WITH_CI(pszLine, "SB "))
         {
             if (osCLASS.size() != 0)
             {
@@ -264,7 +264,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 CSLDestroy(papszTokens);
             }
         }
-        else if (EQUALN(pszLine, "DP ", 3))
+        else if (STARTS_WITH_CI(pszLine, "DP "))
         {
             pszLine += 3;
 
@@ -276,7 +276,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
             /* dfLastLat = dfLat; */
             /* dfLastLon = dfLon; */
         }
-        else if (EQUALN(pszLine, "DA ", 3))
+        else if (STARTS_WITH_CI(pszLine, "DA "))
         {
             pszLine += 3;
 
@@ -320,7 +320,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
             }
             CSLDestroy(papszTokens);
         }
-        else if (EQUALN(pszLine, "DB ", 3))
+        else if (STARTS_WITH_CI(pszLine, "DB "))
         {
             pszLine += 3;
 
@@ -369,7 +369,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
             }
             CSLDestroy(papszTokens);
         }
-        else if ((EQUALN(pszLine, "DC ", 3) || EQUALN(pszLine, "DC=", 3)) &&
+        else if ((STARTS_WITH_CI(pszLine, "DC ") || STARTS_WITH_CI(pszLine, "DC=")) &&
                  (bHasCenter || strstr(pszLine, "V X=") != NULL))
         {
             if (!bHasCenter)
@@ -400,16 +400,16 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 /* dfLastLon = oLR.getX(oLR.getNumPoints() - 1); */
             }
         }
-        else if (EQUALN(pszLine, "V X=", 4))
+        else if (STARTS_WITH_CI(pszLine, "V X="))
         {
             bHasCenter =
                     OGROpenAirGetLatLon(pszLine + 4, dfCenterLat, dfCenterLon);
         }
-        else if (EQUALN(pszLine, "V D=-", 5))
+        else if (STARTS_WITH_CI(pszLine, "V D=-"))
         {
             bClockWise = FALSE;
         }
-        else if (EQUALN(pszLine, "V D=+", 5))
+        else if (STARTS_WITH_CI(pszLine, "V D=+"))
         {
             bClockWise = TRUE;
         }

@@ -536,7 +536,7 @@ int GS7BGDataset::Identify( GDALOpenInfo * poOpenInfo )
     /* Check for signature - for GS7BG the signature is the */
     /* nHEADER_TAG with reverse byte order.                 */
     if( poOpenInfo->nHeaderBytes < 4
-        || !EQUALN((const char *) poOpenInfo->pabyHeader,"DSRB",4) )
+        || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "DSRB") )
     {
         return FALSE;
     }

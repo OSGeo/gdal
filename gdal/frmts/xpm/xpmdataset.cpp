@@ -483,10 +483,10 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
     while( *pszNext != '\0' && *pszNext != '}' )
     {
         // skip whole comment. 
-        if( EQUALN(pszNext,"/*",2) )
+        if( STARTS_WITH_CI(pszNext, "/*") )
         {
             pszNext += 2;
-            while( *pszNext != '\0' && !EQUALN(pszNext,"*/",2) )
+            while( *pszNext != '\0' && !STARTS_WITH_CI(pszNext, "*/") )
                 pszNext++;
         }
 

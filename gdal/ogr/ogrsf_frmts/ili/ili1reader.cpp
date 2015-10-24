@@ -148,7 +148,7 @@ int ILI1Reader::ReadFeatures() {
         {
           pszLine = CPLReadLine( fpItf );
         }
-        while (pszLine && !EQUALN(pszLine, "////", 4));
+        while (pszLine && !STARTS_WITH_CI(pszLine, "////"));
         ret = (pszLine != NULL);
       }
       else if (EQUAL(firsttok, "MOTR"))
@@ -158,7 +158,7 @@ int ILI1Reader::ReadFeatures() {
         {
           pszLine = CPLReadLine( fpItf );
         }
-        while (pszLine && !EQUALN(pszLine, "////", 4));
+        while (pszLine && !STARTS_WITH_CI(pszLine, "////"));
         ret = (pszLine != NULL);
       }
       else if (EQUAL(firsttok, "MTID"))

@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 static int OGRElasticSearchDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    return EQUALN(poOpenInfo->pszFilename, "ES:", strlen("ES:"));
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "ES:");
 }
 
 /************************************************************************/

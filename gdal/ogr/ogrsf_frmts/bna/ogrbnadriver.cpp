@@ -42,8 +42,8 @@ static GDALDataset *OGRBNADriverOpen( GDALOpenInfo* poOpenInfo )
 // --------------------------------------------------------------------
     if( poOpenInfo->fpL == NULL ||
         !(EQUAL( CPLGetExtension(poOpenInfo->pszFilename), "bna" )
-           || ((EQUALN( poOpenInfo->pszFilename, "/vsigzip/", 9) ||
-                EQUALN( poOpenInfo->pszFilename, "/vsizip/", 8)) &&
+           || ((STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/") ||
+                STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsizip/")) &&
                (strstr( poOpenInfo->pszFilename, ".bna") ||
                 strstr( poOpenInfo->pszFilename, ".BNA")))) )
     {

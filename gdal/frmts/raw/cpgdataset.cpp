@@ -503,7 +503,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
         else if ( ( CSLCount( papszTokens ) >= 3 ) &&
                EQUAL(papszTokens[0],"reference") &&
                EQUAL(papszTokens[1],"corner") &&
-               EQUALN(papszTokens[2],"Upper_Left",10) )
+               STARTS_WITH_CI(papszTokens[2], "Upper_Left") )
         {
             /* iCorner = 0; */
             iUTMParamsFound++;
@@ -811,11 +811,11 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
                EQUAL(papszTokens[1],"organization:"))
         {
 
-            if( EQUALN(papszTokens[2], "BSQ", 3) )
+            if( STARTS_WITH_CI(papszTokens[2], "BSQ") )
                 iInterleave = BSQ;
-            else if( EQUALN(papszTokens[2], "BIL", 3) )
+            else if( STARTS_WITH_CI(papszTokens[2], "BIL") )
                 iInterleave = BIL;
-            else if( EQUALN(papszTokens[2], "BIP", 3) )
+            else if( STARTS_WITH_CI(papszTokens[2], "BIP") )
                 iInterleave = BIP;
             else
             {
@@ -831,8 +831,8 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
                EQUAL(papszTokens[1],"state:") )
         {
 
-            if( !EQUALN(papszTokens[2], "RAW", 3) &&
-                !EQUALN(papszTokens[2], "GEO", 3) )
+            if( !STARTS_WITH_CI(papszTokens[2], "RAW") &&
+                !STARTS_WITH_CI(papszTokens[2], "GEO") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                   "The data state of the file (%s) is not supported.\n.  Only RAW and GEO are currently recognized.",
@@ -847,7 +847,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
                EQUAL(papszTokens[1],"origin") &&
                EQUAL(papszTokens[2],"point:")  )
         {
-          if (!EQUALN(papszTokens[3], "Upper_Left", 10))
+          if (!STARTS_WITH_CI(papszTokens[3], "Upper_Left"))
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
             "Unexpected value (%s) for data origin point- expect Upper_Left.",

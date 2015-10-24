@@ -345,11 +345,11 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALOpenInfo* open_info = poOpenInfo;
 
     if (!poOpenInfo->bStatOK) {
-        if ( EQUALN(poOpenInfo->pszFilename, "HRV:", 4) ) {
+        if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "HRV:") ) {
             open_info = new GDALOpenInfo(&poOpenInfo->pszFilename[4], poOpenInfo->eAccess);
             open_mode = MODE_HRV;
         } else
-        if ( EQUALN(poOpenInfo->pszFilename, "RAD:", 4 ) ) {
+        if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "RAD:") ) {
             open_info = new GDALOpenInfo(&poOpenInfo->pszFilename[4], poOpenInfo->eAccess);
             open_mode = MODE_RAD;
         }
@@ -368,8 +368,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /* check if this is a "NATIVE" MSG format image */
-    if( !EQUALN((char *)open_info->pabyHeader,
-                "FormatName                  : NATIVE", 36) )
+    if( !STARTS_WITH_CI((char *)open_info->pabyHeader, "FormatName                  : NATIVE") )
     {
         if (open_info != poOpenInfo) {
             delete open_info;

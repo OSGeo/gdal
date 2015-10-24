@@ -249,7 +249,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj) {
         const char* pszSrsType = json_object_get_string( poObjSrsType );
 
         // TODO: Add URL and URN types support
-        if( EQUALN( pszSrsType, "NAME", 4 ) )
+        if( STARTS_WITH_CI(pszSrsType, "NAME") )
         {
             json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
             if (poObjSrsProps == NULL)
@@ -269,7 +269,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj) {
             }
         }
 
-        if( EQUALN( pszSrsType, "EPSG", 4 ) )
+        if( STARTS_WITH_CI(pszSrsType, "EPSG") )
         {
             json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
             if (poObjSrsProps == NULL)
@@ -289,7 +289,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj) {
             }
         }
 
-        if( EQUALN( pszSrsType, "URL", 3 ) || EQUALN( pszSrsType, "LINK", 4 )  )
+        if( STARTS_WITH_CI(pszSrsType, "URL") || STARTS_WITH_CI(pszSrsType, "LINK")  )
         {
             json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
             if (poObjSrsProps == NULL)

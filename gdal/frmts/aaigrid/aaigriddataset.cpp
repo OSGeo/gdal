@@ -426,15 +426,15 @@ int AAIGDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      Does this look like an AI grid file?                            */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 40
-        || !( EQUALN((const char *) poOpenInfo->pabyHeader,"ncols",5) ||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"nrows",5) ||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"xllcorner",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"yllcorner",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"xllcenter",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"yllcenter",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"dx",2)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"dy",2)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"cellsize",8)) )
+        || !( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "ncols") ||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "nrows") ||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "xllcorner")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "yllcorner")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "xllcenter")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "yllcenter")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "dx")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "dy")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "cellsize")) )
         return FALSE;
 
     return TRUE;
@@ -451,12 +451,12 @@ int GRASSASCIIDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      Does this look like a GRASS ASCII grid file?                    */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 40
-        || !( EQUALN((const char *) poOpenInfo->pabyHeader,"north:",6) ||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"south:",6) ||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"east:",5)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"west:",5)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"rows:",5)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"cols:",5) ) )
+        || !( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "north:") ||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "south:") ||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "east:")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "west:")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "rows:")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "cols:") ) )
         return FALSE;
 
     return TRUE;

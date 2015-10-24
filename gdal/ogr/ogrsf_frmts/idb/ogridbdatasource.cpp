@@ -92,15 +92,15 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
 
     while ( pszToken = papszTokens[i++] )
     {
-        if ( EQUALN( pszToken, "dbname=", 7 ) )
+        if ( STARTS_WITH_CI(pszToken, "dbname=") )
             pszDbName = CPLStrdup( pszToken + 7 );
-        else if ( EQUALN( pszToken, "server=", 7 ) )
+        else if ( STARTS_WITH_CI(pszToken, "server=") )
             pszServer = CPLStrdup( pszToken + 7 );
-        else if ( EQUALN( pszToken, "user=", 5 ) )
+        else if ( STARTS_WITH_CI(pszToken, "user=") )
             pszUser = CPLStrdup( pszToken + 5 );
-        else if ( EQUALN( pszToken, "pass=", 5 ) )
+        else if ( STARTS_WITH_CI(pszToken, "pass=") )
             pszPass = CPLStrdup( pszToken + 5 );
-        else if ( EQUALN( pszToken, "table=", 6 ) )
+        else if ( STARTS_WITH_CI(pszToken, "table=") )
         {
             papszTables = CSLAddString( papszTables, pszToken + 6 );
             papszGeomCol = CSLAddString( papszGeomCol, "" );

@@ -82,7 +82,7 @@ void OGRGFTResultLayer::ResetReading()
 
 int OGRGFTResultLayer::FetchNextRows()
 {
-    if (!EQUALN(osSQL.c_str(), "SELECT", 6))
+    if (!STARTS_WITH_CI(osSQL.c_str(), "SELECT"))
         return FALSE;
 
     aosRows.resize(0);
@@ -181,7 +181,7 @@ int OGRGFTResultLayer::RunSQL()
     OGRGFTTableLayer* poTableLayer = NULL;
     OGRFeatureDefn* poTableDefn = NULL;
     CPLString osTableId;
-    if (EQUALN(osSQL.c_str(), "SELECT", 6))
+    if (STARTS_WITH_CI(osSQL.c_str(), "SELECT"))
     {
         size_t nPosFROM = osSQL.ifind(" FROM ");
         if (nPosFROM == std::string::npos)
@@ -239,9 +239,9 @@ int OGRGFTResultLayer::RunSQL()
         return FALSE;
     }
 
-    if (EQUALN(osSQL.c_str(), "SELECT", 6) ||
+    if (STARTS_WITH_CI(osSQL.c_str(), "SELECT") ||
         EQUAL(osSQL.c_str(), "SHOW TABLES") ||
-        EQUALN(osSQL.c_str(), "DESCRIBE", 8))
+        STARTS_WITH_CI(osSQL.c_str(), "DESCRIBE"))
     {
         ParseCSVResponse(pszLine, aosRows);
         if (aosRows.size() > 0)

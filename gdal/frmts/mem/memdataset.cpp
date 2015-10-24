@@ -762,7 +762,7 @@ void *MEMDataset::GetInternalHandle( const char * pszRequest)
 {
     // check for MEMORYnnn string in pszRequest (nnnn can be up to 10 
     // digits, or even omitted)
-    if( EQUALN(pszRequest,"MEMORY",6))
+    if( STARTS_WITH_CI(pszRequest, "MEMORY"))
     {
         if(int BandNumber = CPLScanLong(&pszRequest[6], 10))
         {
@@ -917,7 +917,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Do we have the special filename signature for MEM format        */
 /*      description strings?                                            */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(poOpenInfo->pszFilename,"MEM:::",6) 
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "MEM:::") 
         || poOpenInfo->fpL != NULL )
         return NULL;
 

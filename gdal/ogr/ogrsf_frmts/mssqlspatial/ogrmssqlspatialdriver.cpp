@@ -60,7 +60,7 @@ OGRDataSource *OGRMSSQLSpatialDriver::Open( const char * pszFilename, int bUpdat
 {
     OGRMSSQLSpatialDataSource     *poDS;
 
-    if( !EQUALN(pszFilename,"MSSQL:",6) )
+    if( !STARTS_WITH_CI(pszFilename, "MSSQL:") )
         return NULL;
 
     poDS = new OGRMSSQLSpatialDataSource();
@@ -83,7 +83,7 @@ OGRDataSource *OGRMSSQLSpatialDriver::CreateDataSource( const char * pszName,
 {
     OGRMSSQLSpatialDataSource   *poDS = new OGRMSSQLSpatialDataSource();
 
-    if( !EQUALN(pszName,"MSSQL:",6) )
+    if( !STARTS_WITH_CI(pszName, "MSSQL:") )
         return NULL;
 
     if( !poDS->Open( pszName, TRUE, TRUE ) )

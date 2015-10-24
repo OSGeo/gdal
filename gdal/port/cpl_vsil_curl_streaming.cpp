@@ -450,8 +450,8 @@ static int VSICurlStreamingHandleWriteFuncForHeader(void *buffer, size_t count, 
         if (psStruct->bIsHTTP && psStruct->bIsInHeader)
         {
             char* pszLine = psStruct->pBuffer + psStruct->nSize;
-            if (EQUALN(pszLine, "HTTP/1.0 ", 9) ||
-                EQUALN(pszLine, "HTTP/1.1 ", 9))
+            if (STARTS_WITH_CI(pszLine, "HTTP/1.0 ") ||
+                STARTS_WITH_CI(pszLine, "HTTP/1.1 "))
                 psStruct->nHTTPCode = atoi(pszLine + 9);
 
             if (pszLine[0] == '\r' || pszLine[0] == '\n')
@@ -835,8 +835,8 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
 
     /* Reset buffer if we have followed link after a redirect */
     if (nSize >=9 && InterpretRedirect() && (nHTTPCode == 301 || nHTTPCode == 302) &&
-        (EQUALN((const char*)buffer, "HTTP/1.0 ", 9) ||
-         EQUALN((const char*)buffer, "HTTP/1.1 ", 9)))
+        (STARTS_WITH_CI((const char*)buffer, "HTTP/1.0 ") ||
+         STARTS_WITH_CI((const char*)buffer, "HTTP/1.1 ")))
     {
         nHeaderSize = 0;
         nHTTPCode = 0;
@@ -855,8 +855,8 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
 
         if (eExists == EXIST_UNKNOWN && nHTTPCode == 0 &&
             strchr((const char*)pabyHeaderData, '\n') != NULL &&
-            (EQUALN((const char*)pabyHeaderData, "HTTP/1.0 ", 9) ||
-                EQUALN((const char*)pabyHeaderData, "HTTP/1.1 ", 9)))
+            (STARTS_WITH_CI((const char*)pabyHeaderData, "HTTP/1.0 ") ||
+                STARTS_WITH_CI((const char*)pabyHeaderData, "HTTP/1.1 ")))
         {
             nHTTPCode = atoi((const char*)pabyHeaderData + 9);
             if (ENABLE_DEBUG)

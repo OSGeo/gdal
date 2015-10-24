@@ -360,7 +360,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      If we aren't prefixed with SDE: then ignore this datasource.    */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(poOpenInfo->pszFilename,"SDE:",4) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "SDE:") )
         return NULL;
 
 /* -------------------------------------------------------------------- */

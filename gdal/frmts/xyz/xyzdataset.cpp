@@ -485,7 +485,7 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
     /*  if the /vsigzip/ has not been explicitly passed */
     if (strlen(poOpenInfo->pszFilename) > 6 &&
         EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "xyz.gz") &&
-        !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         osFilename = "/vsigzip/";
         osFilename += poOpenInfo->pszFilename;
@@ -617,7 +617,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     /*  if the /vsigzip/ has not been explicitly passed */
     if (strlen(poOpenInfo->pszFilename) > 6 &&
         EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "xyz.gz") &&
-        !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         osFilename = "/vsigzip/";
         osFilename += poOpenInfo->pszFilename;
@@ -632,7 +632,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* For better performance of CPLReadLine2L() we create a buffered reader */
     /* (except for /vsigzip/ since it has one internally) */
-    if (!EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+    if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
         fp = (VSILFILE*) VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
     
     const char* pszLine;
@@ -669,15 +669,15 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         for(i=0;i<nTokens;i++)
         {
             if (EQUAL(papszTokens[i], "x") ||
-                EQUALN(papszTokens[i], "lon", 3) ||
-                EQUALN(papszTokens[i], "east", 4))
+                STARTS_WITH_CI(papszTokens[i], "lon") ||
+                STARTS_WITH_CI(papszTokens[i], "east"))
                 nXIndex = i;
             else if (EQUAL(papszTokens[i], "y") ||
-                     EQUALN(papszTokens[i], "lat", 3) ||
-                     EQUALN(papszTokens[i], "north", 5))
+                     STARTS_WITH_CI(papszTokens[i], "lat") ||
+                     STARTS_WITH_CI(papszTokens[i], "north"))
                 nYIndex = i;
             else if (EQUAL(papszTokens[i], "z") ||
-                     EQUALN(papszTokens[i], "alt", 3) ||
+                     STARTS_WITH_CI(papszTokens[i], "alt") ||
                      EQUAL(papszTokens[i], "height"))
                 nZIndex = i;
         }

@@ -829,8 +829,8 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
 
     /* printf( "HKVDataset::SetProjection(%s)\n", pszNewProjection ); */
 
-    if( !EQUALN(pszNewProjection,"GEOGCS",6)
-        && !EQUALN(pszNewProjection,"PROJCS",6)
+    if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
+        && !STARTS_WITH_CI(pszNewProjection, "PROJCS")
         && !EQUAL(pszNewProjection,"") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,

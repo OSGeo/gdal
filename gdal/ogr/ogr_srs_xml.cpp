@@ -60,7 +60,7 @@ static bool parseURN( char *pszURN,
 /* -------------------------------------------------------------------- */
 /*      Verify prefix.                                                  */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszURN,"urn:ogc:def:",12) )
+    if( !STARTS_WITH_CI(pszURN, "urn:ogc:def:") )
         return false;
 
 /* -------------------------------------------------------------------- */
@@ -885,7 +885,7 @@ static bool ParseOGCDefURN( const char *pszURN,
     if( poValue != NULL )
         *poValue = "";
 
-    if( pszURN == NULL || !EQUALN(pszURN,"urn:ogc:def:",12) )
+    if( pszURN == NULL || !STARTS_WITH_CI(pszURN, "urn:ogc:def:") )
         return false;
 
     char **papszTokens = CSLTokenizeStringComplex( pszURN + 12, ":", 

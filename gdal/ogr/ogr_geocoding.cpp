@@ -243,7 +243,7 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
                                                           "CACHE_FILE",
                                                           DEFAULT_CACHE_SQLITE);
     CPLString osExt = CPLGetExtension(pszCacheFilename);
-    if( !(EQUALN(pszCacheFilename, "PG:", 3) ||
+    if( !(STARTS_WITH_CI(pszCacheFilename, "PG:") ||
         EQUAL(osExt, "csv") || EQUAL(osExt, "sqlite")) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -433,7 +433,7 @@ static OGRLayer* OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
         }
 
         if( bCreateIfNecessary && poDS == NULL &&
-            !EQUALN(hSession->pszCacheFilename, "PG:", 3) )
+            !STARTS_WITH_CI(hSession->pszCacheFilename, "PG:") )
         {
             OGRSFDriverH hDriver = OGRGetDriverByName(osExt);
             if( hDriver == NULL &&
@@ -506,7 +506,7 @@ static OGRLayer* OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
             OGRFieldDefn oFieldDefnBlob(FIELD_BLOB, OFTString);
             poLayer->CreateField(&oFieldDefnBlob);
             if( EQUAL(osExt, "SQLITE") ||
-                EQUALN(hSession->pszCacheFilename, "PG:", 3) )
+                STARTS_WITH_CI(hSession->pszCacheFilename, "PG:") )
             {
                 const char* pszSQL =
                     CPLSPrintf( "CREATE INDEX idx_%s_%s ON %s(%s)",

@@ -509,12 +509,12 @@ static double OSR_GDV( char **papszNV, const char * pszField,
     if( papszNV == NULL || papszNV[0] == NULL )
         return dfDefaultValue;
 
-    if( EQUALN(pszField,"PARAM_",6) )
+    if( STARTS_WITH_CI(pszField, "PARAM_") )
     {
         int     nOffset;
 
         for( iLine = 0; 
-             papszNV[iLine] != NULL && !EQUALN(papszNV[iLine],"Paramet",7);
+             papszNV[iLine] != NULL && !STARTS_WITH_CI(papszNV[iLine], "Paramet");
              iLine++ ) {}
 
         for( nOffset=atoi(pszField+6); 
@@ -664,9 +664,9 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 /*      all on one line, but we will accept multi-line formats and      */
 /*      concatenate.                                                    */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(papszPrj[0],"GEOGCS",6)
-        || EQUALN(papszPrj[0],"PROJCS",6)
-        || EQUALN(papszPrj[0],"LOCAL_CS",8) )
+    if( STARTS_WITH_CI(papszPrj[0], "GEOGCS")
+        || STARTS_WITH_CI(papszPrj[0], "PROJCS")
+        || STARTS_WITH_CI(papszPrj[0], "LOCAL_CS") )
     {
         char    *pszWKT, *pszWKT2;
         OGRErr  eErr;
@@ -1211,7 +1211,7 @@ OGRErr OGRSpatialReference::morphToESRI()
         int nZone  = 0;
 
         /* get zone from name first */
-        if( pszProjCSName && EQUALN(pszProjCSName, "UTM Zone ", 9) )
+        if( pszProjCSName && STARTS_WITH_CI(pszProjCSName, "UTM Zone ") )
         {
             nZone = atoi(pszProjCSName+9);
             if( strstr(pszProjCSName, "North") )
@@ -1290,8 +1290,8 @@ OGRErr OGRSpatialReference::morphToESRI()
             (char **)apszECMapping + 0, 2 );
 
     if( pszProjection != NULL 
-        && EQUALN(pszProjection,"Stereographic_",14)
-        && EQUALN(pszProjection+strlen(pszProjection)-5,"_Pole",5) )
+        && STARTS_WITH_CI(pszProjection, "Stereographic_")
+        && STARTS_WITH_CI(pszProjection+strlen(pszProjection)-5, "_Pole") )
         GetRoot()->applyRemapper( 
             "PARAMETER", 
             (char **)apszPolarStereographicMapping + 1, 
@@ -1409,7 +1409,7 @@ OGRErr OGRSpatialReference::morphToESRI()
     if( poDatum != NULL )
     {
         const char* pszDatumName = poDatum->GetValue();
-        if( !EQUALN(pszDatumName, "D_",2) )
+        if( !STARTS_WITH_CI(pszDatumName, "D_") )
         {
             char *pszNewValue;
 
@@ -1430,7 +1430,7 @@ OGRErr OGRSpatialReference::morphToESRI()
     if( pszProjCSName )
     {
       pszGcsName = GetAttrValue( "GEOGCS" ); 
-      if(pszGcsName && !EQUALN( pszGcsName, "GCS_", 4 ) )
+      if(pszGcsName && !STARTS_WITH_CI(pszGcsName, "GCS_") )
       {
         char* newGcsName = (char *) CPLMalloc(strlen(pszGcsName) + 5);
         strcpy( newGcsName, "GCS_" );
@@ -1589,7 +1589,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
 
     if( poDatum != NULL )
     {
-        if( EQUALN(poDatum->GetValue(),"D_",2) )
+        if( STARTS_WITH_CI(poDatum->GetValue(), "D_") )
         {
             char *pszNewValue = CPLStrdup( poDatum->GetValue() + 2 );
             poDatum->SetValue( pszNewValue );
@@ -1673,8 +1673,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
             (char **)apszOrthographicMapping + 1, 2 );
 
     if( pszProjection != NULL 
-        && EQUALN(pszProjection,"Stereographic_",14) 
-        && EQUALN(pszProjection+strlen(pszProjection)-5,"_Pole",5) )
+        && STARTS_WITH_CI(pszProjection, "Stereographic_") 
+        && STARTS_WITH_CI(pszProjection+strlen(pszProjection)-5, "_Pole") )
         GetRoot()->applyRemapper( 
             "PARAMETER", 
             (char **)apszPolarStereographicMapping + 0, 
@@ -1684,8 +1684,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /*      Remap south and north polar stereographic to one value.         */
 /* -------------------------------------------------------------------- */
     if( pszProjection != NULL
-        && EQUALN(pszProjection,"Stereographic_",14)
-        && EQUALN(pszProjection+strlen(pszProjection)-5,"_Pole",5) )
+        && STARTS_WITH_CI(pszProjection, "Stereographic_")
+        && STARTS_WITH_CI(pszProjection+strlen(pszProjection)-5, "_Pole") )
     {
         SetNode( "PROJCS|PROJECTION", SRS_PT_POLAR_STEREOGRAPHIC );
         pszProjection = GetAttrValue("PROJECTION");

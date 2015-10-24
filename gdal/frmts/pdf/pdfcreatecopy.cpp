@@ -1434,7 +1434,7 @@ int GDALPDFWriter::SetInfo(GDALDataset* poSrcDS,
 int  GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
                            const char* pszXMP)
 {
-    if (pszXMP != NULL && EQUALN(pszXMP, "NO", 2))
+    if (pszXMP != NULL && STARTS_WITH_CI(pszXMP, "NO"))
         return 0;
     if (pszXMP != NULL && pszXMP[0] == '\0')
         return 0;
@@ -2999,7 +2999,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
             double dfScale = CPLAtof(papszExtraImagesTokens[i+3]);
             const char* pszLinkVal = NULL;
             i += 4;
-            if( i < nCount && EQUALN(papszExtraImagesTokens[i],"link=",5) )
+            if( i < nCount && STARTS_WITH_CI(papszExtraImagesTokens[i], "link=") )
             {
                 pszLinkVal = papszExtraImagesTokens[i] + 5;
                 i++;

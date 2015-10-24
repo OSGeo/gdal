@@ -349,8 +349,8 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < ERD_HEADER_SIZE )
         return NULL;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"HEADER",6)
-        && !EQUALN((const char *)poOpenInfo->pabyHeader,"HEAD74",6) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "HEADER")
+        && !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "HEAD74") )
         return NULL;
 
 /* -------------------------------------------------------------------- */

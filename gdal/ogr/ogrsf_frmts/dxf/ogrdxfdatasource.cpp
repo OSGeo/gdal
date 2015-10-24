@@ -445,7 +445,7 @@ void OGRDXFDataSource::ReadHeaderSection()
     /* Unusual DXF files produced by dxflib */
     /* such as http://www.ribbonsoft.com/library/architecture/plants/decd5.dxf */
     /* where there is a spurious ENDSEC in the middle of the header variables */
-    if (nCode == 9 && EQUALN(szLineBuf,"$", 1) )
+    if (nCode == 9 && STARTS_WITH_CI(szLineBuf, "$") )
     {
         while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
             && !EQUAL(szLineBuf,"ENDSEC") )
@@ -475,7 +475,7 @@ void OGRDXFDataSource::ReadHeaderSection()
     // not strictly accurate but works even without iconv.
     if( osCodepage == "ANSI_1252" )
         osEncoding = CPL_ENC_ISO8859_1; 
-    else if( EQUALN(osCodepage,"ANSI_",5) )
+    else if( STARTS_WITH_CI(osCodepage, "ANSI_") )
     {
         osEncoding = "CP";
         osEncoding += osCodepage + 5;

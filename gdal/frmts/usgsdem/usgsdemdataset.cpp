@@ -382,7 +382,7 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
         /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
 
-        if( EQUALN(poGDS->pszProjection,"GEOGCS",6) )
+        if( STARTS_WITH_CI(poGDS->pszProjection, "GEOGCS") )
             dyStart = dyStart / 3600.0;
 
         lygap = (int)((dfYMin - dyStart)/poGDS->adfGeoTransform[5]+ 0.5);
@@ -760,15 +760,15 @@ int USGSDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 200 )
         return FALSE;
 
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     0",6)
-        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     1",6)
-        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     2",6) 
-        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     3",6)
-        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, " -9999",6) )
+    if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, "     0")
+        && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, "     1")
+        && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, "     2") 
+        && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, "     3")
+        && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, " -9999") )
         return FALSE;
 
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader+150, "     1",6) 
-        && !EQUALN((const char *) poOpenInfo->pabyHeader+150, "     4",6))
+    if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+150, "     1") 
+        && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+150, "     4"))
         return FALSE;
 
     return TRUE;

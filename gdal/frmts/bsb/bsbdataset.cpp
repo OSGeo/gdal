@@ -395,12 +395,12 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 
     for( int i = 0; psInfo->papszHeader[i] != NULL; i++ )
     {
-        if( EQUALN(psInfo->papszHeader[i],"KNP/",4) )
+        if( STARTS_WITH_CI(psInfo->papszHeader[i], "KNP/") )
         {
             pszKNP = psInfo->papszHeader[i];
             SetMetadataItem( "BSB_KNP", pszKNP + 4 );
         }
-        if( EQUALN(psInfo->papszHeader[i],"KNQ/",4) )
+        if( STARTS_WITH_CI(psInfo->papszHeader[i], "KNQ/") )
         {
             pszKNQ = psInfo->papszHeader[i]; 
             SetMetadataItem( "BSB_KNQ", pszKNQ + 4 );
@@ -433,7 +433,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         {
             /* no match. We'll default to EPSG:4326 */
         }
-        else if( EQUALN(pszGD,"GD=European 1950", 16) )
+        else if( STARTS_WITH_CI(pszGD, "GD=European 1950") )
         {
             pszGEOGCS = "GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297,AUTHORITY[\"EPSG\",\"7022\"]],TOWGS84[-87,-98,-121,0,0,0,0],AUTHORITY[\"EPSG\",\"6230\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]]";
         }
@@ -443,7 +443,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         {
             /* no match */
         }
-        else if( EQUALN(pszPR,"PR=MERCATOR", 11) )
+        else if( STARTS_WITH_CI(pszPR, "PR=MERCATOR") )
         {
             // We somewhat arbitrarily select our first GCPX as our 
             // central meridian.  This is mostly helpful to ensure 
@@ -453,7 +453,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
                 pszGEOGCS, (int) pasGCPList[0].dfGCPX );
         }
 
-        else if( EQUALN(pszPR,"PR=TRANSVERSE MERCATOR", 22)
+        else if( STARTS_WITH_CI(pszPR, "PR=TRANSVERSE MERCATOR")
                  && osPP.size() > 0 )
         {
 
@@ -462,7 +462,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
                 pszGEOGCS, osPP.c_str() );
         }
 
-        else if( EQUALN(pszPR,"PR=UNIVERSAL TRANSVERSE MERCATOR", 32)
+        else if( STARTS_WITH_CI(pszPR, "PR=UNIVERSAL TRANSVERSE MERCATOR")
                  && osPP.size() > 0 )
         {
             // This is not *really* UTM unless the central meridian 
@@ -472,14 +472,14 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
                 pszGEOGCS, osPP.c_str() );
         }
 
-        else if( EQUALN(pszPR,"PR=POLYCONIC", 12) && osPP.size() > 0 )
+        else if( STARTS_WITH_CI(pszPR, "PR=POLYCONIC") && osPP.size() > 0 )
         {
             osUnderlyingSRS.Printf( 
                 "PROJCS[\"unnamed\",%s,PROJECTION[\"Polyconic\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]", 
                 pszGEOGCS, osPP.c_str() );
         }
 
-        else if( EQUALN(pszPR,"PR=LAMBERT CONFORMAL CONIC", 26) 
+        else if( STARTS_WITH_CI(pszPR, "PR=LAMBERT CONFORMAL CONIC") 
                  && osPP.size() > 0 && pszKNQ != NULL )
         {
             CPLString osP2, osP3;
@@ -591,7 +591,7 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
     int fileGCPCount=0;
     while (fgets(thisLine, 80, gfp))
     {
-        if( EQUALN(thisLine, "Point", 5) )
+        if( STARTS_WITH_CI(thisLine, "Point") )
             fileGCPCount++;
     }
     VSIRewind( gfp );
@@ -601,7 +601,7 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
 
     while (fgets(thisLine, 80, gfp))
     {
-        if( EQUALN(thisLine, "Point", 5) )
+        if( STARTS_WITH_CI(thisLine, "Point") )
         {
             // got a point line, turn it into a gcp
             char **Tokens
@@ -646,7 +646,7 @@ void BSBDataset::ScanForGCPsBSB()
 
     // Count the GCPs (reference points) in psInfo->papszHeader
     for( int i = 0; psInfo->papszHeader[i] != NULL; i++ )
-        if( EQUALN(psInfo->papszHeader[i],"REF/",4) )
+        if( STARTS_WITH_CI(psInfo->papszHeader[i], "REF/") )
             fileGCPCount++;
 
     // Memory has not been allocated to fileGCPCount yet
@@ -655,7 +655,7 @@ void BSBDataset::ScanForGCPsBSB()
     for( int i = 0; psInfo->papszHeader[i] != NULL; i++ )
     {
 
-        if( !EQUALN(psInfo->papszHeader[i],"REF/",4) )
+        if( !STARTS_WITH_CI(psInfo->papszHeader[i], "REF/") )
             continue;
 
         char	**papszTokens

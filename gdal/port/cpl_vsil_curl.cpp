@@ -527,13 +527,13 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
         if (psStruct->bIsHTTP && psStruct->bIsInHeader)
         {
             char* pszLine = psStruct->pBuffer + psStruct->nSize;
-            if (EQUALN(pszLine, "HTTP/1.0 ", 9) ||
-                EQUALN(pszLine, "HTTP/1.1 ", 9))
+            if (STARTS_WITH_CI(pszLine, "HTTP/1.0 ") ||
+                STARTS_WITH_CI(pszLine, "HTTP/1.1 "))
                 psStruct->nHTTPCode = atoi(pszLine + 9);
-            else if (EQUALN(pszLine, "Content-Length: ", 16))
+            else if (STARTS_WITH_CI(pszLine, "Content-Length: "))
                 psStruct->nContentLength = CPLScanUIntBig(pszLine + 16,
                                                           strlen(pszLine + 16));
-            else if (EQUALN(pszLine, "Content-Range: ", 15))
+            else if (STARTS_WITH_CI(pszLine, "Content-Range: "))
                 psStruct->bFoundContentRange = true;
 
             /*if (nSize > 2 && pszLine[nSize - 2] == '\r' &&
@@ -1389,7 +1389,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
                 pszEOL[-1] = '\0';
             }
 
-            if (EQUALN(pszNext, "Content-Range: bytes ", strlen("Content-Range: bytes ")))
+            if (STARTS_WITH_CI(pszNext, "Content-Range: bytes "))
             {
                 bExpectedRange = true; /* FIXME */
             }
@@ -1900,7 +1900,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
 static char *VSICurlParserFindEOL( char *pszData )
 
 {
-    while( *pszData != '\0' && *pszData != '\n' && !EQUALN(pszData,"<br>",4) )
+    while( *pszData != '\0' && *pszData != '\n' && !STARTS_WITH_CI(pszData, "<br>") )
         pszData++;
 
     if( *pszData == '\0' )
@@ -2075,9 +2075,9 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
     *pbGotFileList = false;
 
     const char* pszDir;
-    if (EQUALN(pszFilename, "/vsicurl/http://", strlen("/vsicurl/http://")))
+    if (STARTS_WITH_CI(pszFilename, "/vsicurl/http://"))
         pszDir = strchr(pszFilename + strlen("/vsicurl/http://"), '/');
-    else if (EQUALN(pszFilename, "/vsicurl/https://", strlen("/vsicurl/https://")))
+    else if (STARTS_WITH_CI(pszFilename, "/vsicurl/https://"))
         pszDir = strchr(pszFilename + strlen("/vsicurl/https://"), '/');
     else
         pszDir = strchr(pszFilename + strlen("/vsicurl/ftp://"), '/');
@@ -2454,8 +2454,8 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGot
             char* c;
             int nCount = 0;
 
-            if (EQUALN(pszLine, "<!DOCTYPE HTML", strlen("<!DOCTYPE HTML")) ||
-                EQUALN(pszLine, "<HTML>", 6))
+            if (STARTS_WITH_CI(pszLine, "<!DOCTYPE HTML") ||
+                STARTS_WITH_CI(pszLine, "<HTML>"))
             {
                 papszFileList = ParseHTMLFileList(pszDirname,
                                                   sWriteFuncData.pBuffer,
@@ -2631,7 +2631,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
         return -1;
     }
     else if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
-             !EQUALN(CPLGetExtension(osFilename), "zip", 3) &&
+             !STARTS_WITH_CI(CPLGetExtension(osFilename), "zip") &&
              strstr(osFilename, ".zip.") != NULL &&
              strstr(osFilename, ".ZIP.") != NULL &&
              !bSkipReadDir)

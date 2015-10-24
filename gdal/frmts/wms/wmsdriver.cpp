@@ -49,7 +49,7 @@ static
 CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 {
     const char* pszBaseURL = poOpenInfo->pszFilename;
-    if (EQUALN(pszBaseURL, "WMS:", 4))
+    if (STARTS_WITH_CI(pszBaseURL, "WMS:"))
         pszBaseURL += 4;
 
     CPLString osLayer = CPLURLGetValue(pszBaseURL, "LAYERS");
@@ -625,17 +625,17 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
     const char* pszFilename = poOpenInfo->pszFilename;
     const char* pabyHeader = (const char *) poOpenInfo->pabyHeader;
     if (poOpenInfo->nHeaderBytes == 0 &&
-         EQUALN(pszFilename, "<GDAL_WMS>", 10))
+         STARTS_WITH_CI(pszFilename, "<GDAL_WMS>"))
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes >= 10 &&
-             EQUALN(pabyHeader, "<GDAL_WMS>", 10))
+             STARTS_WITH_CI(pabyHeader, "<GDAL_WMS>"))
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-             (EQUALN(pszFilename, "WMS:", 4) ||
+             (STARTS_WITH_CI(pszFilename, "WMS:") ||
              CPLString(pszFilename).ifind("SERVICE=WMS") != std::string::npos) )
     {
         return TRUE;
@@ -669,18 +669,18 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-             EQUALN(pszFilename, "http", 4) &&
+             STARTS_WITH_CI(pszFilename, "http") &&
              strstr(pszFilename, "/MapServer?f=json") != NULL)
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-              EQUALN(pszFilename, "AGS:", 4))
+              STARTS_WITH_CI(pszFilename, "AGS:"))
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-              EQUALN(pszFilename, "IIP:", 4))
+              STARTS_WITH_CI(pszFilename, "IIP:"))
     {
         return TRUE;
     }
@@ -701,21 +701,21 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     const char* pabyHeader = (const char *) poOpenInfo->pabyHeader;
 
     if (poOpenInfo->nHeaderBytes == 0 &&
-        EQUALN(pszFilename, "<GDAL_WMS>", 10))
+        STARTS_WITH_CI(pszFilename, "<GDAL_WMS>"))
     {
         config = CPLParseXMLString(pszFilename);
     }
     else if (poOpenInfo->nHeaderBytes >= 10 &&
-             EQUALN(pabyHeader, "<GDAL_WMS>", 10))
+             STARTS_WITH_CI(pabyHeader, "<GDAL_WMS>"))
     {
         config = CPLParseXMLFile(pszFilename);
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-             (EQUALN(pszFilename, "WMS:http", 8) ||
-              EQUALN(pszFilename, "http", 4)) &&
+             (STARTS_WITH_CI(pszFilename, "WMS:http") ||
+              STARTS_WITH_CI(pszFilename, "http")) &&
              strstr(pszFilename, "/MapServer?f=json") != NULL)
     {
-        if (EQUALN(pszFilename, "WMS:http", 8))
+        if (STARTS_WITH_CI(pszFilename, "WMS:http"))
             pszFilename += 4;
         CPLString osURL(pszFilename);
         if (strstr(pszFilename, "&pretty=true") == NULL)
@@ -734,7 +734,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     else if (poOpenInfo->nHeaderBytes == 0 &&
-             (EQUALN(pszFilename, "WMS:", 4) ||
+             (STARTS_WITH_CI(pszFilename, "WMS:") ||
               CPLString(pszFilename).ifind("SERVICE=WMS") != std::string::npos))
     {
         CPLString osLayers = CPLURLGetValue(pszFilename, "LAYERS");
@@ -812,12 +812,12 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         return poRet;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-              EQUALN(pszFilename, "AGS:", 4))
+              STARTS_WITH_CI(pszFilename, "AGS:"))
     {
 		return NULL;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-              EQUALN(pszFilename, "IIP:", 4))
+              STARTS_WITH_CI(pszFilename, "IIP:"))
     {
         CPLString osURL(pszFilename + 4);
         osURL += "&obj=Basic-Info";

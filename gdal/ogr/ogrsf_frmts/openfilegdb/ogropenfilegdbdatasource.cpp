@@ -847,7 +847,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case GetLayerDefinition                                 */
 /* -------------------------------------------------------------------- */
-    if (EQUALN(pszSQLCommand, "GetLayerDefinition ", strlen("GetLayerDefinition ")))
+    if (STARTS_WITH_CI(pszSQLCommand, "GetLayerDefinition "))
     {
         OGROpenFileGDBLayer* poLayer = (OGROpenFileGDBLayer*)
             GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition "));
@@ -864,7 +864,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case GetLayerMetadata                                   */
 /* -------------------------------------------------------------------- */
-    if (EQUALN(pszSQLCommand, "GetLayerMetadata ", strlen("GetLayerMetadata ")))
+    if (STARTS_WITH_CI(pszSQLCommand, "GetLayerMetadata "))
     {
         OGROpenFileGDBLayer* poLayer = (OGROpenFileGDBLayer*)
             GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata "));
@@ -881,7 +881,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case GetLayerAttrIndexUse (only for debugging purposes) */
 /* -------------------------------------------------------------------- */
-    if (EQUALN(pszSQLCommand, "GetLayerAttrIndexUse ", strlen("GetLayerAttrIndexUse ")))
+    if (STARTS_WITH_CI(pszSQLCommand, "GetLayerAttrIndexUse "))
     {
         OGROpenFileGDBLayer* poLayer = (OGROpenFileGDBLayer*)
             GetLayerByName(pszSQLCommand + strlen("GetLayerAttrIndexUse "));
@@ -898,7 +898,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case GetLayerSpatialIndexState (only for debugging purposes) */
 /* -------------------------------------------------------------------- */
-    if (EQUALN(pszSQLCommand, "GetLayerSpatialIndexState ", strlen("GetLayerSpatialIndexState ")))
+    if (STARTS_WITH_CI(pszSQLCommand, "GetLayerSpatialIndexState "))
     {
         OGROpenFileGDBLayer* poLayer = (OGROpenFileGDBLayer*)
             GetLayerByName(pszSQLCommand + strlen("GetLayerSpatialIndexState "));
@@ -928,7 +928,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special cases for SQL optimizations                             */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand, "SELECT ", strlen("SELECT ")) &&
+    if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") &&
         (pszDialect == NULL || EQUAL(pszDialect, "") || EQUAL(pszDialect, "OGRSQL")) &&
         CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_USE_INDEX", "YES")) )
     {

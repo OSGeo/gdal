@@ -1287,8 +1287,8 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         if( oGeo.getWKT() )
         {
             /* Workaround probable issue with GeoDSK 7 on 64bit Linux */
-            if (!(pszProjection != NULL && !EQUALN(pszProjection, "LOCAL_CS", 8)
-                && EQUALN( oGeo.getWKT(), "LOCAL_CS", 8)))
+            if (!(pszProjection != NULL && !STARTS_WITH_CI(pszProjection, "LOCAL_CS")
+                && STARTS_WITH_CI(oGeo.getWKT(), "LOCAL_CS")))
             {
                 CPLFree( pszProjection );
                 pszProjection =  CPLStrdup( oGeo.getWKT() );
@@ -1319,7 +1319,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
             {
                 if (nCountLine == 1 && strcmp(pszLine, "::MetadataFile") != 0)
                     break;
-                if (EQUALN(pszLine, "Projection UTM ", 15))
+                if (STARTS_WITH_CI(pszLine, "Projection UTM "))
                     nUTMZone = atoi(pszLine + 15);
                 else if (EQUAL(pszLine, "Datum WGS84"))
                     bWGS84 = TRUE;
@@ -1371,7 +1371,7 @@ static int MrSIDIdentify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 32 )
         return FALSE;
 
-    if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
+    if ( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "msid") )
         return FALSE;
 
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
@@ -1428,7 +1428,7 @@ static int JP2Identify( GDALOpenInfo *poOpenInfo )
             && !EQUAL(pszExtension,"j2c") && !EQUAL(pszExtension,"ntf"))
             return FALSE;
     }
-    else if( !EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
+    else if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader + 4, "jP  ") )
         return FALSE;
 
     return TRUE;

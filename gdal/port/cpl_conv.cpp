@@ -1043,7 +1043,7 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
 /*      On MSVC we have to scanf pointer values without the 0x          */
 /*      prefix.                                                         */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(szTemp,"0x",2) )
+    if( STARTS_WITH_CI(szTemp, "0x") )
     {
         pResult = NULL;
 
@@ -1326,7 +1326,7 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
     // does not prefix things with 0x so it is hard to know later if the
     // value is hex encoded.  Fix this up here. 
 
-    if( !EQUALN(szTemp,"0x",2) )
+    if( !STARTS_WITH_CI(szTemp, "0x") )
         sprintf( szTemp, "0x%p", pValue );
 
     return CPLPrintString( pszBuffer, szTemp, nMaxLen );

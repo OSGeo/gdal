@@ -754,7 +754,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 {
                     // Do not preserve NODATA_VALUES when the output includes an alpha band
                     if( psOptions->bEnableDstAlpha &&
-                        EQUALN(papszMetadata[i], "NODATA_VALUES=", strlen("NODATA_VALUES=")) )
+                        STARTS_WITH_CI(papszMetadata[i], "NODATA_VALUES=") )
                     {
                         continue;
                     }
@@ -1699,7 +1699,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             else if( GDALGetGCPProjection( pahSrcDS[iSrc] ) != NULL
                      && strlen(GDALGetGCPProjection(pahSrcDS[iSrc])) > 0 
                      && GDALGetGCPCount( pahSrcDS[iSrc] ) > 1 
-                     && (pszMethod == NULL || EQUALN(pszMethod,"GCP_",4)) )
+                     && (pszMethod == NULL || STARTS_WITH_CI(pszMethod, "GCP_")) )
                 pszThisSourceSRS = GDALGetGCPProjection( pahSrcDS[iSrc] );
             else if( pszMethod != NULL && EQUAL(pszMethod,"RPC") )
                 pszThisSourceSRS = SRS_WKT_WGS84;
@@ -2700,7 +2700,7 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
             const char* pszOvLevel = papszArgv[++i];
             if( EQUAL(pszOvLevel, "AUTO") )
                 psOptions->nOvLevel = -2;
-            else if( EQUALN(pszOvLevel,"AUTO-",5) )
+            else if( STARTS_WITH_CI(pszOvLevel, "AUTO-") )
                 psOptions->nOvLevel = -2-atoi(pszOvLevel + 5);
             else if( EQUAL(pszOvLevel, "NONE") )
                 psOptions->nOvLevel = -1;

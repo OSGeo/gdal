@@ -1270,7 +1270,7 @@ void ENVIDataset::SetENVIDatum( OGRSpatialReference *poSRS,
              || strstr(pszENVIDatumName,"NAD27") 
              || strstr(pszENVIDatumName,"NAD-27") )
         poSRS->SetWellKnownGeogCS( "NAD27" );
-    else if( EQUALN(pszENVIDatumName, "European 1950",13) )
+    else if( STARTS_WITH_CI(pszENVIDatumName, "European 1950") )
         poSRS->SetWellKnownGeogCS( "EPSG:4230" );
     else if( EQUAL(pszENVIDatumName, "Ordnance Survey of Great Britain '36") )
         poSRS->SetWellKnownGeogCS( "EPSG:4277" );
@@ -1385,7 +1385,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     {
         oSRS.Clear();
 
-        if( EQUALN(papszFields[0],"UTM",3) && nCount >= 9 )
+        if( STARTS_WITH_CI(papszFields[0], "UTM") && nCount >= 9 )
         {
             oSRS.SetUTM( atoi(papszFields[7]), 
                          !EQUAL(papszFields[8],"South") );
@@ -1404,7 +1404,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         {
             oSRS.SetStatePlane( ITTVISToUSGSZone(atoi(papszFields[7])), TRUE );
         }
-        else if( EQUALN(papszFields[0],"Geographic Lat",14) 
+        else if( STARTS_WITH_CI(papszFields[0], "Geographic Lat") 
                  && nCount >= 8 )
         {
             if( nCount >= 8 && strstr(papszFields[7],"=") == NULL )
@@ -1518,7 +1518,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 /* -------------------------------------------------------------------- */
 /*      Try to process specialized units.                               */
 /* -------------------------------------------------------------------- */
-    if( EQUALN( papszFields[nCount-1],"units",5))
+    if( STARTS_WITH_CI(papszFields[nCount-1], "units"))
     {
         /* Handle linear units first. */
         if (EQUAL(papszFields[nCount-1],"units=Feet") )
@@ -2046,9 +2046,9 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         pszInterleave = pszExtension;
     }
 
-    if ( !EQUALN(pszInterleave, "BSQ",3) &&
-         !EQUALN(pszInterleave, "BIP",3) &&
-         !EQUALN(pszInterleave, "BIL",3) )
+    if ( !STARTS_WITH_CI(pszInterleave, "BSQ") &&
+         !STARTS_WITH_CI(pszInterleave, "BIP") &&
+         !STARTS_WITH_CI(pszInterleave, "BIL") )
     {
         CPLDebug("ENVI", "Unset or unknown value for 'interleave' keyword --> assuming BSQ interleaving");
         pszInterleave = "bsq";
@@ -2232,7 +2232,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     vsi_l_offset nBandOffset;
     bool bIntOverflow = false;
 
-    if( EQUALN(pszInterleave, "bil", 3) )
+    if( STARTS_WITH_CI(pszInterleave, "bil") )
     {
         poDS->interleave = BIL;
         poDS->SetMetadataItem( "INTERLEAVE", "LINE", "IMAGE_STRUCTURE" );
@@ -2241,7 +2241,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         nPixelOffset = nDataSize;
         nBandOffset = (vsi_l_offset)nDataSize * nSamples;
     }
-    else if( EQUALN(pszInterleave, "bip", 3) )
+    else if( STARTS_WITH_CI(pszInterleave, "bip") )
     {
         poDS->interleave = BIP;
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
@@ -2568,7 +2568,7 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     const char *pszHDRFilename;
     const char *pszSuffix = CSLFetchNameValue( papszOptions, "SUFFIX" );
-    if ( pszSuffix && EQUALN( pszSuffix, "ADD", 3 ))
+    if ( pszSuffix && STARTS_WITH_CI(pszSuffix, "ADD"))
 	pszHDRFilename = CPLFormFilename( NULL, pszFilename, "hdr" );
     else
 	pszHDRFilename = CPLResetExtension(pszFilename, "hdr" );
@@ -2604,9 +2604,9 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
     const char	*pszInterleaving = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
     if ( pszInterleaving )
     {
-	if ( EQUALN( pszInterleaving, "bip", 3 ) )
+	if ( STARTS_WITH_CI(pszInterleaving, "bip") )
 	    pszInterleaving = "bip";		    // interleaved by pixel
-	else if ( EQUALN( pszInterleaving, "bil", 3 ) )
+	else if ( STARTS_WITH_CI(pszInterleaving, "bil") )
 	    pszInterleaving = "bil";		    // interleaved by line
 	else
 	    pszInterleaving = "bsq";		// band sequental by default

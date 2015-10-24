@@ -904,7 +904,7 @@ CPLErr VRTSourcedRasterBand::AddSimpleSource( GDALRasterBand *poSrcBand,
 /* -------------------------------------------------------------------- */
     VRTSimpleSource *poSimpleSource;
 
-    if( pszResampling != NULL && EQUALN(pszResampling,"aver",4) )
+    if( pszResampling != NULL && STARTS_WITH_CI(pszResampling, "aver") )
         poSimpleSource = new VRTAveragedSource();
     else
     {
@@ -1134,19 +1134,19 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
 /* ==================================================================== */
     if( pszDomain != NULL 
         && EQUAL(pszDomain,"LocationInfo")
-        && (EQUALN(pszName,"Pixel_",6) || EQUALN(pszName,"GeoPixel_",9)) )
+        && (STARTS_WITH_CI(pszName, "Pixel_") || STARTS_WITH_CI(pszName, "GeoPixel_")) )
     {
         int iPixel, iLine;
 
 /* -------------------------------------------------------------------- */
 /*      What pixel are we aiming at?                                    */
 /* -------------------------------------------------------------------- */
-        if( EQUALN(pszName,"Pixel_",6) )
+        if( STARTS_WITH_CI(pszName, "Pixel_") )
         {
             if( sscanf( pszName+6, "%d_%d", &iPixel, &iLine ) != 2 )
                 return NULL;
         }
-        else if( EQUALN(pszName,"GeoPixel_",9) )
+        else if( STARTS_WITH_CI(pszName, "GeoPixel_") )
         {
             double adfGeoTransform[6];
             double adfInvGeoTransform[6];

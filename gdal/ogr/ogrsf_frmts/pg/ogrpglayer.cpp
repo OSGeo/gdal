@@ -659,7 +659,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY) )
         {
             if ( !poDS->bUseBinaryCursor &&
-                 EQUALN(pszFieldName,"BinaryBase64", strlen("BinaryBase64")) )
+                 STARTS_WITH_CI(pszFieldName, "BinaryBase64") )
             {
                 GByte* pabyData = (GByte*)PQgetvalue( hResult,
                                                         iRecord, iField);
@@ -683,8 +683,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 
                 continue;
             }
-            else if ( EQUALN(pszFieldName,"ST_AsBinary", strlen("ST_AsBinary")) ||
-                      EQUALN(pszFieldName,"AsBinary", strlen("AsBinary")) )
+            else if ( STARTS_WITH_CI(pszFieldName, "ST_AsBinary") ||
+                      STARTS_WITH_CI(pszFieldName, "AsBinary") )
             {
                 GByte* pabyVal = (GByte*) PQgetvalue( hResult,
                                              iRecord, iField);
@@ -718,7 +718,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 continue;
             }
             else if ( !poDS->bUseBinaryCursor &&
-                      EQUALN(pszFieldName,"EWKBBase64",strlen("EWKBBase64")) )
+                      STARTS_WITH_CI(pszFieldName, "EWKBBase64") )
             {
                 GByte* pabyData = (GByte*)PQgetvalue( hResult,
                                                         iRecord, iField);
@@ -766,7 +766,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                                                  poDS->sPostGISVersion.nMajor < 2);
                     CPLFree(pabyEWKB);
                 }
-                else if( nLength >= 2 && (EQUALN(pabyData,"00",2) || EQUALN(pabyData,"01",2)) )
+                else if( nLength >= 2 && (STARTS_WITH_CI(pabyData, "00") || STARTS_WITH_CI(pabyData, "01")) )
                 {
                     poGeom = OGRGeometryFromHexEWKB(pabyData, NULL,
                                                     poDS->sPostGISVersion.nMajor < 2);
@@ -800,7 +800,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 
                 // optionally strip off PostGIS SRID identifier.  This
                 // happens if we got a raw geometry field.
-                if( EQUALN(pszPostSRID,"SRID=",5) )
+                if( STARTS_WITH_CI(pszPostSRID, "SRID=") )
                 {
                     while( *pszPostSRID != '\0' && *pszPostSRID != ';' )
                         pszPostSRID++;
@@ -808,7 +808,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                         pszPostSRID++;
                 }
 
-                if( EQUALN(pszPostSRID,"00",2) || EQUALN(pszPostSRID,"01",2) )
+                if( STARTS_WITH_CI(pszPostSRID, "00") || STARTS_WITH_CI(pszPostSRID, "01") )
                 {
                     poGeometry = OGRGeometryFromHexEWKB( pszWKT, NULL,
                                                          poDS->sPostGISVersion.nMajor < 2 );
@@ -1362,9 +1362,9 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                      poFeatureDefn->GetFieldDefn(iOGRField)->GetWidth() == 1)
                 {
                     char* pabyData = PQgetvalue( hResult, iRecord, iField );
-                    if (EQUALN(pabyData, "T", 1))
+                    if (STARTS_WITH_CI(pabyData, "T"))
                         poFeature->SetField( iOGRField, 1);
-                    else if (EQUALN(pabyData, "F", 1))
+                    else if (STARTS_WITH_CI(pabyData, "F"))
                         poFeature->SetField( iOGRField, 0);
                     else
                         poFeature->SetField( iOGRField, pabyData);
@@ -1398,8 +1398,7 @@ static int OGRPGIsKnownGeomFuncPrefix(const char* pszFieldName)
     for(size_t i=0; i<sizeof(papszKnownGeomFuncPrefixes) / sizeof(char*); i++)
     {
         if( EQUALN(pszFieldName, papszKnownGeomFuncPrefixes[i],
-                   strlen(papszKnownGeomFuncPrefixes[i])) )
-            return i;
+                   strlen(papszKnownGeomFuncPrefixes[i])) )            return i;
     }
     return -1;
 }

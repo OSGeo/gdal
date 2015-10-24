@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 
 static int OGROCIDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    return EQUALN(poOpenInfo->pszFilename,"OCI:",4);
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "OCI:");
 }
 
 /************************************************************************/

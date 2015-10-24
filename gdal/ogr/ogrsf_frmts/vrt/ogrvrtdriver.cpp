@@ -60,7 +60,7 @@ static int OGRVRTDriverIdentify( GDALOpenInfo* poOpenInfo )
         const char *pszTestXML = poOpenInfo->pszFilename;
         while( *pszTestXML != '\0' && isspace( (unsigned char)*pszTestXML ) )
             pszTestXML++;
-        if( EQUALN(pszTestXML,"<OGRVRTDataSource>",18) )
+        if( STARTS_WITH_CI(pszTestXML, "<OGRVRTDataSource>") )
         {
             return TRUE;
         }
@@ -90,7 +90,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
         pszTestXML++;
 
     char *pszXML = NULL;
-    if( EQUALN(pszTestXML, "<OGRVRTDataSource>", 18) )
+    if( STARTS_WITH_CI(pszTestXML, "<OGRVRTDataSource>") )
     {
         pszXML = CPLStrdup(pszTestXML);
     }

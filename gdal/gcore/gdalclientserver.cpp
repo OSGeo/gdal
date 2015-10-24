@@ -5931,7 +5931,7 @@ static int IsSeparateExecutable()
 const char* GDALClientDatasetGetFilename(const char* pszFilename)
 {
     const char* pszSpawn;
-    if( EQUALN(pszFilename, "API_PROXY:", strlen("API_PROXY:")) )
+    if( STARTS_WITH_CI(pszFilename, "API_PROXY:") )
     {
         pszFilename += strlen("API_PROXY:");
         pszSpawn = "YES";
@@ -5950,12 +5950,12 @@ const char* GDALClientDatasetGetFilename(const char* pszFilename)
      /* /vsistdin/ and /vsistdout/ can work on Unix in the fork() only context (i.e. GDAL_API_PROXY_SERVER undefined) */
      /* since the forked process will inherit the same descriptors as the parent */
 
-    if( EQUALN(pszFilename, "MEM:::", 6) ||
+    if( STARTS_WITH_CI(pszFilename, "MEM:::") ||
         strstr(pszFilename, "/vsimem/") != NULL ||
         strstr(pszFilename, "/vsimem\\") != NULL ||
         (strstr(pszFilename, "/vsistdout/") != NULL && IsSeparateExecutable()) ||
         (strstr(pszFilename, "/vsistdin/") != NULL && IsSeparateExecutable()) ||
-        EQUALN(pszFilename,"NUMPY:::",8) )
+        STARTS_WITH_CI(pszFilename, "NUMPY:::") )
         return NULL;
 
     if( !(EQUAL(pszSpawn, "YES") || EQUAL(pszSpawn, "ON") ||

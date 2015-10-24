@@ -174,7 +174,7 @@ OGRErr OGRMILayerAttrIndex::Initialize( const char *pszIndexPathIn,
     pszIndexPath = CPLStrdup( pszIndexPathIn );
 
     /* try to process the XML string directly */
-    if (EQUALN(pszIndexPathIn, "<OGRMILayerAttrIndex>", 21))
+    if (STARTS_WITH_CI(pszIndexPathIn, "<OGRMILayerAttrIndex>"))
         return LoadConfigFromXML(pszIndexPathIn);
     
     pszMetadataFilename = CPLStrdup(

@@ -548,14 +548,14 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
         iXDim = 1;
         iYDim = 0;
     }
-    else if( EQUALN(dim1_name.c_str(),"lat",3) 
-             && EQUALN(dim2_name.c_str(),"lon",3) )
+    else if( STARTS_WITH_CI(dim1_name.c_str(), "lat") 
+             && STARTS_WITH_CI(dim2_name.c_str(), "lon") )
     {
         iXDim = 0;
         iYDim = 1;
     }
-    else if( EQUALN(dim1_name.c_str(),"lon",3) 
-             && EQUALN(dim2_name.c_str(),"lat",3) )
+    else if( STARTS_WITH_CI(dim1_name.c_str(), "lon") 
+             && STARTS_WITH_CI(dim2_name.c_str(), "lat") )
     {
         iXDim = 1;
         iYDim = 0;
@@ -804,9 +804,9 @@ void DODSDataset::HarvestDAS()
     // strip remaining backslashes (2007-04-26, gaffigan@sfos.uaf.edu)
     oWKT.erase(std::remove(oWKT.begin(), oWKT.end(), '\\'), oWKT.end());
     if( oWKT.length() > 0 
-        && !EQUALN(oWKT.c_str(),"GEOGCS",6)
-        && !EQUALN(oWKT.c_str(),"PROJCS",6)
-        && !EQUALN(oWKT.c_str(),"LOCAL_CS",8) )
+        && !STARTS_WITH_CI(oWKT.c_str(), "GEOGCS")
+        && !STARTS_WITH_CI(oWKT.c_str(), "PROJCS")
+        && !STARTS_WITH_CI(oWKT.c_str(), "LOCAL_CS") )
     {
         OGRSpatialReference oSRS;
 
@@ -973,8 +973,8 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
 GDALDataset *
 DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if( !EQUALN(poOpenInfo->pszFilename,"http://",7) 
-        && !EQUALN(poOpenInfo->pszFilename,"https://",8) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "http://") 
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") )
         return NULL;
 
     

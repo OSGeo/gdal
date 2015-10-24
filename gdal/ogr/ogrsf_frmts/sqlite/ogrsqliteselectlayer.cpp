@@ -266,7 +266,7 @@ GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
         return 0;
 
     if( poLayer->GetFeatureQuery() == NULL &&
-        EQUALN(osSQLCurrent, "SELECT COUNT(*) FROM", strlen("SELECT COUNT(*) FROM")) &&
+        STARTS_WITH_CI(osSQLCurrent, "SELECT COUNT(*) FROM") &&
         osSQLCurrent.ifind(" GROUP BY ") == std::string::npos &&
         osSQLCurrent.ifind(" UNION ") == std::string::npos &&
         osSQLCurrent.ifind(" INTERSECT ") == std::string::npos &&
@@ -534,7 +534,7 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
     while (i < osSQLBase.size() && osSQLBase[i] == ' ')
         i ++;
 
-    if (i < osSQLBase.size() && EQUALN(osSQLBase.c_str() + i, "WHERE ", 6))
+    if (i < osSQLBase.size() && STARTS_WITH_CI(osSQLBase.c_str() + i, "WHERE "))
     {
         osSQLCurrent = osSQLBase.substr(0, i + 6);
         osSQLCurrent += osCustomWhere;
@@ -559,9 +559,9 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
         }
     }
     else if (i < osSQLBase.size() &&
-             (EQUALN(osSQLBase.c_str() + i, "GROUP ", 6) ||
-              EQUALN(osSQLBase.c_str() + i, "ORDER ", 6) ||
-              EQUALN(osSQLBase.c_str() + i, "LIMIT ", 6)))
+             (STARTS_WITH_CI(osSQLBase.c_str() + i, "GROUP ") ||
+              STARTS_WITH_CI(osSQLBase.c_str() + i, "ORDER ") ||
+              STARTS_WITH_CI(osSQLBase.c_str() + i, "LIMIT ")))
     {
         osSQLCurrent = osSQLBase.substr(0, i);
         osSQLCurrent += " WHERE ";

@@ -1016,7 +1016,7 @@ void NASReader::CheckForRelations( const char *pszElement,
     {
         char *pszHRef = tr_strdup( attrs.getValue( nIndex ) );
 
-        if( EQUALN(pszHRef,"urn:adv:oid:", 12 ) )
+        if( STARTS_WITH_CI(pszHRef, "urn:adv:oid:") )
         {
             poFeature->AddOBProperty( pszElement, pszHRef );
             CPLFree( *ppszCurField );

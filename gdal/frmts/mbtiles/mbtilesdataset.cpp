@@ -768,7 +768,7 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
 /* ==================================================================== */
     if( pszDomain != NULL
         && EQUAL(pszDomain,"LocationInfo")
-        && (EQUALN(pszName,"Pixel_",6) || EQUALN(pszName,"GeoPixel_",9)) )
+        && (STARTS_WITH_CI(pszName, "Pixel_") || STARTS_WITH_CI(pszName, "GeoPixel_")) )
     {
         int iPixel, iLine;
 
@@ -778,12 +778,12 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      What pixel are we aiming at?                                    */
 /* -------------------------------------------------------------------- */
-        if( EQUALN(pszName,"Pixel_",6) )
+        if( STARTS_WITH_CI(pszName, "Pixel_") )
         {
             if( sscanf( pszName+6, "%d_%d", &iPixel, &iLine ) != 2 )
                 return NULL;
         }
-        else if( EQUALN(pszName,"GeoPixel_",9) )
+        else if( STARTS_WITH_CI(pszName, "GeoPixel_") )
         {
             double adfGeoTransform[6];
             double adfInvGeoTransform[6];
@@ -1156,7 +1156,7 @@ int MBTilesDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
     if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
         poOpenInfo->nHeaderBytes >= 1024 &&
-        EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
+        STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3"))
     {
         return TRUE;
     }
@@ -1890,7 +1890,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
         poDS->SetDescription( poOpenInfo->pszFilename );
 
-        if ( !EQUALN(poOpenInfo->pszFilename, "/vsicurl/", 9) )
+        if ( !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsicurl/") )
             poDS->TryLoadXML();
         else
         {

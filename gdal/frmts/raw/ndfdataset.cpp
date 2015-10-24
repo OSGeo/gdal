@@ -168,8 +168,8 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"NDF_REVISION=2",14) 
-        && !EQUALN((const char *)poOpenInfo->pabyHeader,"NDF_REVISION=0",14) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "NDF_REVISION=2") 
+        && !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "NDF_REVISION=0") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -357,7 +357,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         oSRS.SetWellKnownGeogCS( osDatum );
     }
-    else if( EQUALN(osDatum,"NAD27",5) )
+    else if( STARTS_WITH_CI(osDatum, "NAD27") )
     {
         oSRS.SetWellKnownGeogCS( "NAD27" );
     }

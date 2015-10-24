@@ -747,7 +747,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
         {
             nSkip = strlen(pszSkipPrefix) + 1;
-            if( EQUALN(papszGeoms[iGeom] + nSkip, "Z ", 2) )
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
                 nSkip += 2;
 
             /* skip empty subgeoms */
@@ -814,7 +814,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
         {
             nSkip = strlen(pszSkipPrefix) + 1;
-            if( EQUALN(papszGeoms[iGeom] + nSkip, "Z ", 2) )
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
                 nSkip += 2;
         }
 

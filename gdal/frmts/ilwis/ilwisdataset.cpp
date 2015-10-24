@@ -706,7 +706,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             //This drive only supports a map list which stores a set of ILWIS raster maps, 
             string sMapStoreName = ReadElement("MapStore", "Data", sBandName);
             string sExt = CPLGetExtension( sMapStoreName.c_str() );
-            if ( !EQUALN( sExt.c_str(), "mp#", 3 ))
+            if ( !STARTS_WITH_CI(sExt.c_str(), "mp#"))
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Unsupported ILWIS data file. \n"
@@ -787,8 +787,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
         {
 
             //Form the coordinate system file name
-            if( !(EQUALN( csy.c_str(), "latlon.csy", 10 )) && 
-                !(EQUALN( csy.c_str(), "LatlonWGS84.csy", 15 )))            
+            if( !(STARTS_WITH_CI(csy.c_str(), "latlon.csy")) && 
+                !(STARTS_WITH_CI(csy.c_str(), "LatlonWGS84.csy")))            
             {
                 string pszBaseName = string(CPLGetBasename(csy.c_str()) );
                 string pszPath = string(CPLGetPath( poDS->osFileName ));
@@ -803,8 +803,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
                 pszProj = "LatLon";
             }
 
-            if( (EQUALN( pszProj.c_str(), "LatLon", 6 )) || 
-                (EQUALN( pszProj.c_str(), "Projection", 10 )))			
+            if( (STARTS_WITH_CI(pszProj.c_str(), "LatLon")) || 
+                (STARTS_WITH_CI(pszProj.c_str(), "Projection")))			
                 poDS->ReadProjection( csy );
         }
     }

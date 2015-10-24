@@ -466,7 +466,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                     poPROJCS->StripNodes( "AXIS" );
             }
 
-            if( EQUALN(pszSRSName, "urn:ogc:def:crs:EPSG::", strlen("urn:ogc:def:crs:EPSG::")) )
+            if( STARTS_WITH_CI(pszSRSName, "urn:ogc:def:crs:EPSG::") )
                 papszOptions = CSLSetNameValue(papszOptions, "GML3_LONGSRS", "YES");
             else
                 papszOptions = CSLSetNameValue(papszOptions, "GML3_LONGSRS", "NO");

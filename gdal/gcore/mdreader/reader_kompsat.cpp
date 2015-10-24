@@ -179,11 +179,11 @@ char** GDALMDReaderKompsat::ReadTxtToList()
         const char *pszLine = papszLines[i];
 
         //check if this is begin block
-        if(EQUALN(pszLine, "BEGIN_", 6))
+        if(STARTS_WITH_CI(pszLine, "BEGIN_"))
         {
             for(j = 6; j < CPLStrnlen(pszLine, 512); j++)
             {
-                if(EQUALN(pszLine + j, "_BLOCK", 6))
+                if(STARTS_WITH_CI(pszLine + j, "_BLOCK"))
                 {
                     szName[j - 6] = 0;
                     break;
@@ -197,7 +197,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
         }
 
         //check if this is end block
-        if(EQUALN(pszLine, "END_", 4))
+        if(STARTS_WITH_CI(pszLine, "END_"))
         {
             soGroupName.clear(); // we don't expect subblocks
             continue;

@@ -412,9 +412,9 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     const char* pszEncoding = strstr(szPtr, "encoding=");
     if (pszEncoding)
         bExpatCompatibleEncoding = (pszEncoding[9] == '\'' || pszEncoding[9] == '"') &&
-                                    (EQUALN(pszEncoding + 10, "UTF-8", 5) ||
-                                    EQUALN(pszEncoding + 10, "ISO-8859-15", 11) ||
-                                    (EQUALN(pszEncoding + 10, "ISO-8859-1", 10) &&
+                                    (STARTS_WITH_CI(pszEncoding + 10, "UTF-8") ||
+                                    STARTS_WITH_CI(pszEncoding + 10, "ISO-8859-15") ||
+                                    (STARTS_WITH_CI(pszEncoding + 10, "ISO-8859-1") &&
                                         pszEncoding[20] == pszEncoding[9])) ;
     else
         bExpatCompatibleEncoding = TRUE; /* utf-8 is the default */
@@ -625,14 +625,14 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     const char *pszOption = CPLGetConfigOption("GML_SAVE_RESOLVED_TO", NULL);
     int bResolve = TRUE;
     int bHugeFile = FALSE;
-    if( pszOption != NULL && EQUALN( pszOption, "SAME", 4 ) )
+    if( pszOption != NULL && STARTS_WITH_CI(pszOption, "SAME") )
     {
         // "SAME" will overwrite the existing gml file
         pszXlinkResolvedFilename = CPLStrdup( pszFilename );
     }
     else if( pszOption != NULL &&
              CPLStrnlen( pszOption, 5 ) >= 5 &&
-             EQUALN( pszOption - 4 + strlen( pszOption ), ".gml", 4 ) )
+             STARTS_WITH_CI(pszOption - 4 + strlen( pszOption ), ".gml") )
     {
         // Any string ending with ".gml" will try and write to it
         pszXlinkResolvedFilename = CPLStrdup( pszOption );
@@ -1139,12 +1139,12 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /*      can't ... could be read-only directory or something.            */
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema && !poReader->HasStoppedParsing() &&
-        !EQUALN(pszFilename, "/vsitar/", strlen("/vsitar/")) &&
-        !EQUALN(pszFilename, "/vsizip/", strlen("/vsizip/")) &&
-        !EQUALN(pszFilename, "/vsigzip/vsi", strlen("/vsigzip/vsi")) &&
-        !EQUALN(pszFilename, "/vsigzip//vsi", strlen("/vsigzip//vsi")) &&
-        !EQUALN(pszFilename, "/vsicurl/", strlen("/vsicurl/")) &&
-        !EQUALN(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
+        !STARTS_WITH_CI(pszFilename, "/vsitar/") &&
+        !STARTS_WITH_CI(pszFilename, "/vsizip/") &&
+        !STARTS_WITH_CI(pszFilename, "/vsigzip/vsi") &&
+        !STARTS_WITH_CI(pszFilename, "/vsigzip//vsi") &&
+        !STARTS_WITH_CI(pszFilename, "/vsicurl/") &&
+        !STARTS_WITH_CI(pszFilename, "/vsicurl_streaming/"))
     {
         VSILFILE    *fp = NULL;
 
@@ -1504,7 +1504,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             eFType = OFTString;
         
         OGRFieldDefn oField( poProperty->GetName(), eFType );
-        if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
+        if ( STARTS_WITH_CI(oField.GetNameRef(), "ogr:") )
           oField.SetName(poProperty->GetName()+4);
         if( poProperty->GetWidth() > 0 )
             oField.SetWidth( poProperty->GetWidth() );

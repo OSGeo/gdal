@@ -238,10 +238,7 @@ int SNODASDataset::Identify( GDALOpenInfo * poOpenInfo )
     if (poOpenInfo->nHeaderBytes == 0)
         return FALSE;
 
-    return EQUALN((const char*)poOpenInfo->pabyHeader,
-                  "Format version: NOHRSC GIS/RS raster file v1.1",
-                  strlen("Format version: NOHRSC GIS/RS raster file v1.1"));
-}
+    return STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "Format version: NOHRSC GIS/RS raster file v1.1");}
 
 /************************************************************************/
 /*                                Open()                                */

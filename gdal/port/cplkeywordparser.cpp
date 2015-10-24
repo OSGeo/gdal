@@ -120,7 +120,7 @@ int CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
             if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str() ) )
                 return FALSE;
         }
-        else if( EQUALN(osName,"END",3) )
+        else if( STARTS_WITH_CI(osName, "END") )
         {
             return TRUE;
         }

@@ -3858,7 +3858,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         {
             psOptions->bPreserveFID = TRUE;
         }
-        else if( EQUALN(papszArgv[i],"-skip",5) )
+        else if( STARTS_WITH_CI(papszArgv[i], "-skip") )
         {
             psOptions->bSkipFailures = TRUE;
             psOptions->nGroupTransactions = 1; /* #2409 */
@@ -3919,13 +3919,13 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             int bIs3D = FALSE;
             CPLString osGeomName = papszArgv[i+1];
             if (strlen(papszArgv[i+1]) > 3 &&
-                EQUALN(papszArgv[i+1] + strlen(papszArgv[i+1]) - 3, "25D", 3))
+                STARTS_WITH_CI(papszArgv[i+1] + strlen(papszArgv[i+1]) - 3, "25D"))
             {
                 bIs3D = TRUE;
                 osGeomName.resize(osGeomName.size() - 3);
             }
             else if (strlen(papszArgv[i+1]) > 1 &&
-                EQUALN(papszArgv[i+1] + strlen(papszArgv[i+1]) - 1, "Z", 1))
+                STARTS_WITH_CI(papszArgv[i+1] + strlen(papszArgv[i+1]) - 1, "Z"))
             {
                 bIs3D = TRUE;
                 osGeomName.resize(osGeomName.size() - 1);
@@ -4182,8 +4182,8 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 ((OGRPolygon *) psOptions->hClipSrc)->addRing( &oRing );
                 i += 4;
             }
-            else if ((EQUALN(papszArgv[i+1], "POLYGON", 7) ||
-                      EQUALN(papszArgv[i+1], "MULTIPOLYGON", 12)) &&
+            else if ((STARTS_WITH_CI(papszArgv[i+1], "POLYGON") ||
+                      STARTS_WITH_CI(papszArgv[i+1], "MULTIPOLYGON")) &&
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
                 char* pszTmp = (char*) papszArgv[i+1];
@@ -4255,8 +4255,8 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 ((OGRPolygon *) psOptions->hClipDst)->addRing( &oRing );
                 i += 4;
             }
-            else if ((EQUALN(papszArgv[i+1], "POLYGON", 7) ||
-                      EQUALN(papszArgv[i+1], "MULTIPOLYGON", 12)) &&
+            else if ((STARTS_WITH_CI(papszArgv[i+1], "POLYGON") ||
+                      STARTS_WITH_CI(papszArgv[i+1], "MULTIPOLYGON")) &&
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
                 char* pszTmp = (char*) papszArgv[i+1];

@@ -279,16 +279,16 @@ void NTv2Dataset::FlushCache()
 int NTv2Dataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-    if( EQUALN(poOpenInfo->pszFilename,"NTv2:",5) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NTv2:") )
         return TRUE;
     
     if( poOpenInfo->nHeaderBytes < 64 )
         return FALSE;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader + 0, "NUM_OREC", 8 ) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + 0, "NUM_OREC") )
         return FALSE;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader +16, "NUM_SREC", 8 ) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader +16, "NUM_SREC") )
         return FALSE;
 
     return TRUE;
@@ -310,7 +310,7 @@ GDALDataset *NTv2Dataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osFilename;
     int iTargetGrid = -1;
 
-    if( EQUALN(poOpenInfo->pszFilename,"NTv2:",5) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NTv2:") )
     {
         const char *pszRest = poOpenInfo->pszFilename+5;
         

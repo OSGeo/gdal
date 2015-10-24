@@ -49,7 +49,7 @@ static int OGROSMDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( EQUAL(pszExt, "pbf") ||
         EQUAL(pszExt, "osm") )
         return TRUE;
-    if( EQUALN(poOpenInfo->pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")) ||
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsicurl_streaming/") ||
         strcmp(poOpenInfo->pszFilename, "/vsistdin/") == 0 ||
         strcmp(poOpenInfo->pszFilename, "/dev/stdin/") == 0 )
         return -1;

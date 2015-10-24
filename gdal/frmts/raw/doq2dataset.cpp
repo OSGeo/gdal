@@ -160,8 +160,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     double      dfXDim=0.0, dfYDim=0.0;
     char	**papszMetadata = NULL;
 
-    if(! EQUALN((const char *) poOpenInfo->pabyHeader,
-                "BEGIN_USGS_DOQ_HEADER", 21) )
+    if(! STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "BEGIN_USGS_DOQ_HEADER") )
         return NULL;
 
     VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");

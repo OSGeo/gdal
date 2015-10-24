@@ -2191,7 +2191,7 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
     const char* pszHost = CSLFetchNameValueDef(papszOpenOptions, "HOST", "localhost");
     const char* pszPort = CSLFetchNameValueDef(papszOpenOptions, "PORT", "27017");
     const char* pszURI = CSLFetchNameValue(papszOpenOptions, "URI");
-    if( EQUALN(pszFilename, "mongodb://", strlen("mongodb://")) )
+    if( STARTS_WITH_CI(pszFilename, "mongodb://") )
         pszURI = pszFilename;
 
     std::string errmsg;
@@ -2619,7 +2619,7 @@ OGRLayer* OGRMongoDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 
@@ -2641,7 +2641,7 @@ OGRLayer* OGRMongoDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case WRITE_OGR_METADATA command.                        */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand, "WRITE_OGR_METADATA ", strlen("WRITE_OGR_METADATA ")) )
+    if( STARTS_WITH_CI(pszSQLCommand, "WRITE_OGR_METADATA ") )
     {
         if( eAccess != GA_Update )
         {
@@ -2712,7 +2712,7 @@ static void OGRMongoDBDriverUnload( CPL_UNUSED GDALDriver* poDriver )
 static int OGRMongoDBDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    return EQUALN(poOpenInfo->pszFilename, "MongoDB:", strlen("MongoDB:"));
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "MongoDB:");
 }
 
 /************************************************************************/

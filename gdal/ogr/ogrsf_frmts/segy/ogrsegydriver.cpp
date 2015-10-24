@@ -69,7 +69,7 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         return NULL;
     }
-    if( EQUALN((const char*)poOpenInfo->pabyHeader, "%PDF", 4))
+    if( STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "%PDF"))
     {
         return NULL;
     }

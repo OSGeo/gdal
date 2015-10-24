@@ -1855,7 +1855,7 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 nSrcXOff2 = nSrcWidth;
             }
 
-            if( EQUALN(pszResampling,"NEAR",4) )
+            if( STARTS_WITH_CI(pszResampling, "NEAR") )
             {
                 pafDstScanline[iDstPixel*2] = pafSrcScanline[nSrcXOff*2];
                 pafDstScanline[iDstPixel*2+1] = pafSrcScanline[nSrcXOff*2+1];
@@ -1900,7 +1900,7 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                     pafDstScanline[iDstPixel*2+1] *= (float) dfRatio;
                 }
             }
-            else if( EQUALN(pszResampling,"AVER",4) )
+            else if( STARTS_WITH_CI(pszResampling, "AVER") )
             {
                 double dfTotalR = 0.0, dfTotalI = 0.0;
                 int nCount = 0;
@@ -2038,16 +2038,16 @@ GDALResampleFunction GDALGetResampleFunction(const char* pszResampling,
                                                  int* pnRadius)
 {
     if( pnRadius ) *pnRadius = 0;
-    if( EQUALN(pszResampling,"NEAR",4) )
+    if( STARTS_WITH_CI(pszResampling, "NEAR") )
         return GDALResampleChunk32R_Near;
-    else if( EQUALN(pszResampling,"AVER",4) )
+    else if( STARTS_WITH_CI(pszResampling, "AVER") )
         return GDALResampleChunk32R_Average;
-    else if( EQUALN(pszResampling,"GAUSS",5) )
+    else if( STARTS_WITH_CI(pszResampling, "GAUSS") )
     {
         if( pnRadius ) *pnRadius = 1;
         return GDALResampleChunk32R_Gauss;
     }
-    else if( EQUALN(pszResampling,"MODE",4) )
+    else if( STARTS_WITH_CI(pszResampling, "MODE") )
         return GDALResampleChunk32R_Mode;
     else if( EQUAL(pszResampling,"CUBIC") )
     {
@@ -2233,16 +2233,16 @@ GDALResampleFunctionMultiBands GDALGetResampleFunctionMultiBands(
 GDALDataType GDALGetOvrWorkDataType(const char* pszResampling,
                                         GDALDataType eSrcDataType)
 {
-    if( (EQUALN(pszResampling,"NEAR",4) ||
-         EQUALN(pszResampling,"AVER",4) ||
+    if( (STARTS_WITH_CI(pszResampling, "NEAR") ||
+         STARTS_WITH_CI(pszResampling, "AVER") ||
          EQUAL(pszResampling,"CUBIC") ||
          EQUAL(pszResampling,"CUBICSPLINE") ||
          EQUAL(pszResampling,"LANCZOS") ||
          EQUAL(pszResampling,"BILINEAR")) &&
         eSrcDataType == GDT_Byte)
         return GDT_Byte;
-    else if( (EQUALN(pszResampling,"NEAR",4) ||
-         EQUALN(pszResampling,"AVER",4) ||
+    else if( (STARTS_WITH_CI(pszResampling, "NEAR") ||
+         STARTS_WITH_CI(pszResampling, "AVER") ||
          EQUAL(pszResampling,"CUBIC") ||
          EQUAL(pszResampling,"CUBICSPLINE") ||
          EQUAL(pszResampling,"LANCZOS") ||
@@ -2311,9 +2311,9 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     GDALColorTable* poColorTable = NULL;
 
-    if ((EQUALN(pszResampling,"AVER",4)
-         || EQUALN(pszResampling,"MODE",4)
-         || EQUALN(pszResampling,"GAUSS",5)) &&
+    if ((STARTS_WITH_CI(pszResampling, "AVER")
+         || STARTS_WITH_CI(pszResampling, "MODE")
+         || STARTS_WITH_CI(pszResampling, "GAUSS")) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex)
     {
         poColorTable = poSrcBand->GetColorTable();
@@ -2355,7 +2355,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     int nMaskFlags = 0;
     bool bUseNoDataMask = false;
 
-    if( !EQUALN(pszResampling,"NEAR",4) )
+    if( !STARTS_WITH_CI(pszResampling, "NEAR") )
     {
         /* Special case if we are the alpha band. We want it to be considered */
         /* as the mask band to avoid alpha=0 to be taken into account in average */
@@ -2383,8 +2383,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     /* In case the mask made be computed from another band of the dataset, */
     /* we can't use cascaded generation, as the computation of the overviews */
     /* of the band used for the mask band may not have yet occured (#3033) */
-    if( (EQUALN(pszResampling,"AVER",4) |
-         EQUALN(pszResampling,"GAUSS",5) ||
+    if( (STARTS_WITH_CI(pszResampling, "AVER") |
+         STARTS_WITH_CI(pszResampling, "GAUSS") ||
          EQUAL(pszResampling,"CUBIC") ||
          EQUAL(pszResampling,"CUBICSPLINE") ||
          EQUAL(pszResampling,"LANCZOS") ||
@@ -2696,7 +2696,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         return CE_None;
 
     /* Sanity checks */
-    if (!EQUALN(pszResampling, "NEAR", 4) &&
+    if (!STARTS_WITH_CI(pszResampling, "NEAR") &&
         !EQUAL(pszResampling, "AVERAGE") &&
         !EQUAL(pszResampling, "GAUSS") &&
         !EQUAL(pszResampling, "CUBIC") &&
@@ -2783,7 +2783,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
 
     /* If we have a nodata mask and we are doing something more complicated */
     /* than nearest neighbouring, we have to fetch to nodata mask */ 
-    bool bUseNoDataMask = (!EQUALN(pszResampling,"NEAR",4) &&
+    bool bUseNoDataMask = (!STARTS_WITH_CI(pszResampling, "NEAR") &&
                           (papoSrcBands[0]->GetMaskFlags() & GMF_ALL_VALID) == 0);
 
     int* pabHasNoData = (int*)CPLMalloc(nBands * sizeof(int));

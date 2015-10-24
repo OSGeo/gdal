@@ -1012,7 +1012,7 @@ int ECRGTOCDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Is this a sub-dataset selector? If so, it is obviously ECRGTOC. */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszFilename, "ECRG_TOC_ENTRY:",strlen("ECRG_TOC_ENTRY:")))
+    if( STARTS_WITH_CI(pszFilename, "ECRG_TOC_ENTRY:"))
         return TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -1048,7 +1048,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osFilename;
     CPLString osProduct, osDiscId, osScale;
 
-    if( EQUALN(pszFilename, "ECRG_TOC_ENTRY:", strlen("ECRG_TOC_ENTRY:")) )
+    if( STARTS_WITH_CI(pszFilename, "ECRG_TOC_ENTRY:") )
     {
         pszFilename += strlen("ECRG_TOC_ENTRY:");
 

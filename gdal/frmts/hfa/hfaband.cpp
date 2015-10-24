@@ -2016,7 +2016,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /* -------------------------------------------------------------------- */
     int nOverviewDataType = nDataType;
 
-    if( EQUALN(pszResampling,"AVERAGE_BIT2GR",14) )
+    if( STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2GR") )
         nOverviewDataType = EPT_u8;
 
 /* -------------------------------------------------------------------- */

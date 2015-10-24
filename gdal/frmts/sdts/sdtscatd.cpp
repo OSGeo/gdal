@@ -274,23 +274,23 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
     if( iEntry < 0 || iEntry >= nEntries )
         return SLTUnknown;
 
-    else if( EQUALN(papoEntries[iEntry]->pszType,"Attribute Primary",17) )
+    else if( STARTS_WITH_CI(papoEntries[iEntry]->pszType, "Attribute Primary") )
         return SLTAttr;
     
     else if( EQUALN(papoEntries[iEntry]->pszType,"Attribute Secondary",17) )
         return SLTAttr;
     
     else if( EQUAL(papoEntries[iEntry]->pszType,"Line")
-             || EQUALN(papoEntries[iEntry]->pszType,"Line ",5) )
+             || STARTS_WITH_CI(papoEntries[iEntry]->pszType, "Line ") )
         return SLTLine;
     
-    else if( EQUALN(papoEntries[iEntry]->pszType,"Point-Node",10) )
+    else if( STARTS_WITH_CI(papoEntries[iEntry]->pszType, "Point-Node") )
         return SLTPoint;
 
-    else if( EQUALN(papoEntries[iEntry]->pszType,"Polygon",7) )
+    else if( STARTS_WITH_CI(papoEntries[iEntry]->pszType, "Polygon") )
         return SLTPoly;
 
-    else if( EQUALN(papoEntries[iEntry]->pszType,"Cell",4) )
+    else if( STARTS_WITH_CI(papoEntries[iEntry]->pszType, "Cell") )
         return SLTRaster;
 
     else

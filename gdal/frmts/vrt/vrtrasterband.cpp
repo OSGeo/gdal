@@ -432,7 +432,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
             return CE_Failure;
         }
 
-        if (EQUALN(pszFilename, "MEM:::", 6) && pszVRTPath != NULL &&
+        if (STARTS_WITH_CI(pszFilename, "MEM:::") && pszVRTPath != NULL &&
             !CSLTestBoolean(CPLGetConfigOption("VRT_ALLOW_MEM_DRIVER", "NO")))
         {
             CPLError( CE_Failure, CPLE_AppDefined,

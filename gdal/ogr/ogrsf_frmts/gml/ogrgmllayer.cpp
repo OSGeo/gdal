@@ -55,7 +55,7 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
         
     poDS = poDSIn;
 
-    if ( EQUALN(pszName, "ogr:", 4) )
+    if ( STARTS_WITH_CI(pszName, "ogr:") )
       poFeatureDefn = new OGRFeatureDefn( pszName+4 );
     else
       poFeatureDefn = new OGRFeatureDefn( pszName );

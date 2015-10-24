@@ -1457,13 +1457,13 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
             GUIntBig nUncompressedSize = 0;
             while ((pszLine = CPLReadLineL(fpCacheLength)) != NULL)
             {
-                if (EQUALN(pszLine, "compressed_size=", strlen("compressed_size=")))
+                if (STARTS_WITH_CI(pszLine, "compressed_size="))
                 {
                     const char* pszBuffer = pszLine + strlen("compressed_size=");
                     nCompressedSize = 
                             CPLScanUIntBig(pszBuffer, strlen(pszBuffer));
                 }
-                else if (EQUALN(pszLine, "uncompressed_size=", strlen("uncompressed_size=")))
+                else if (STARTS_WITH_CI(pszLine, "uncompressed_size="))
                 {
                     const char* pszBuffer = pszLine + strlen("uncompressed_size=");
                     nUncompressedSize =

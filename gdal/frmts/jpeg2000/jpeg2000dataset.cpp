@@ -592,9 +592,9 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
     if ( strlen( pszFormatName ) < 3 ||
-        (!EQUALN( pszFormatName, "jp2", 3 ) &&
-         !EQUALN( pszFormatName, "jpc", 3 ) &&
-         !EQUALN( pszFormatName, "pgx", 3 )) )
+        (!STARTS_WITH_CI(pszFormatName, "jp2") &&
+         !STARTS_WITH_CI(pszFormatName, "jpc") &&
+         !STARTS_WITH_CI(pszFormatName, "pgx")) )
     {
         CPLDebug( "JPEG2000", "JasPer reports file is format type `%s'.", 
                   pszFormatName );
@@ -625,7 +625,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->psStream = sS;
     poDS->iFormat = iFormat;
 
-    if ( EQUALN( pszFormatName, "jp2", 3 ) )
+    if ( STARTS_WITH_CI(pszFormatName, "jp2") )
     {
         // XXX: Hack to read JP2 boxes from input file. JasPer hasn't public
         // API call for such things, so we will use internal JasPer functions.
@@ -881,7 +881,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jas_image_t         *psImage;
 
     JPEG2000Init();
-    const char* pszAccess = EQUALN(pszFilename, "/vsisubfile/", 12) ? "r+b" : "w+b";
+    const char* pszAccess = STARTS_WITH_CI(pszFilename, "/vsisubfile/") ? "r+b" : "w+b";
     if( !(psStream = JPEG2000_VSIL_fopen( pszFilename, pszAccess) ) )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to create file %s.\n", 
@@ -1017,8 +1017,8 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     
     pszFormatName = CSLFetchNameValue( papszOptions, "FORMAT" );
     if ( !pszFormatName ||
-         (!EQUALN( pszFormatName, "jp2", 3 ) &&
-          !EQUALN( pszFormatName, "jpc", 3 ) ) )
+         (!STARTS_WITH_CI(pszFormatName, "jp2") &&
+          !STARTS_WITH_CI(pszFormatName, "jpc") ) )
         pszFormatName = "jp2";
     
     pszOptionBuf[0] = '\0';
@@ -1030,8 +1030,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLDebug( "JPEG2000", "%s\n", papszOptions[i] );
             for ( j = 0; apszComprOptions[j] != NULL; j++ )
                 if( EQUALN( apszComprOptions[j], papszOptions[i],
-                            strlen(apszComprOptions[j]) ) )
-                {
+                            strlen(apszComprOptions[j]) ) )                {
                     int m, n;
 
                     n = strlen( pszOptionBuf );
@@ -1100,7 +1099,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Set the GeoTIFF box if georeferencing is available, and this    */
 /*      is a JP2 file.                                                  */
 /* -------------------------------------------------------------------- */
-    if ( EQUALN( pszFormatName, "jp2", 3 ) )
+    if ( STARTS_WITH_CI(pszFormatName, "jp2") )
     {
 #ifdef HAVE_JASPER_UUID
         double  adfGeoTransform[6];
@@ -1204,7 +1203,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Add GMLJP2 box at end of file.                                  */
 /* -------------------------------------------------------------------- */
-    if ( EQUALN( pszFormatName, "jp2", 3 ) )
+    if ( STARTS_WITH_CI(pszFormatName, "jp2") )
     {
         double  adfGeoTransform[6];
         if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) &&

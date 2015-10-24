@@ -155,7 +155,7 @@ int main( int argc, char ** argv )
             i++;
         }
 
-        else if( EQUALN(argv[i],"-s_nodata",9) )
+        else if( STARTS_WITH_CI(argv[i], "-s_nodata") )
         {
             // TODO
             i += 1;
@@ -166,13 +166,13 @@ int main( int argc, char ** argv )
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
         }   
 
-        else if( EQUALN(argv[i],"-src_scale",10) && i < argc-2)
+        else if( STARTS_WITH_CI(argv[i], "-src_scale") && i < argc-2)
         {
             // TODO
             i += 2;
         }
 
-        else if( EQUALN(argv[i],"-dst_scale",10) && i < argc-2 )
+        else if( STARTS_WITH_CI(argv[i], "-dst_scale") && i < argc-2 )
         {
             // TODO
             i += 2;

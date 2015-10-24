@@ -188,7 +188,7 @@ COASPMetadataItem *COASPMetadataReader::GetNextItem()
             = CSLTokenizeString2(papszMetadata[nCurrentItem], " ",
                                  CSLT_HONOURSTRINGS );
         char *pszItemName = papszMDTokens[0];
-	if (EQUALN(pszItemName, "georef_grid", 11)) {
+	if (STARTS_WITH_CI(pszItemName, "georef_grid")) {
 		// georef_grid ( pixels lines ) ( lat long )
 		// 0           1 2      3     4 5 6   7    8
                 int nPixels = atoi(papszMDTokens[2]);
@@ -360,7 +360,7 @@ int COASPDataset::Identify( GDALOpenInfo *poOpenInfo )
 	/* With a COASP .hdr file, the first line or so is:
  	 * time_first_datarec
  	 */
-	if(EQUALN((char *)poOpenInfo->pabyHeader,"time_first_datarec",18))
+	if(STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "time_first_datarec"))
 		return 1;
 
 	return 0;

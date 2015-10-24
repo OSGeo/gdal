@@ -816,7 +816,7 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
         {
             poDS->pszUnitType = CPLStrdup( "m" );
         }
-        else if( EQUALN( pszValueUnit, "feet", 4 ) )
+        else if( STARTS_WITH_CI(pszValueUnit, "feet") )
         {
             poDS->pszUnitType = CPLStrdup( "ft" );
         }
@@ -2069,7 +2069,7 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     {
         for( int i = 0; i < poRAT->GetColumnCount(); i++ )
         {
-            if EQUALN( "Value", poRAT->GetNameOfCol( i ), 5 ) 
+            if STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Value") 
             {
                 iValue = i;
                 break;
@@ -2095,17 +2095,17 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
         {
             for( int i = 0; i < poRAT->GetColumnCount(); i++ )
             {
-                if EQUALN( "Class_Name", poRAT->GetNameOfCol( i ), 10 )
+                if STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Class_Name")
                 {
                     iName = i;
                     break;
                 }
-                else if EQUALN( "Categor", poRAT->GetNameOfCol( i ), 7 )
+                else if STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Categor")
                 {
                     iName = i;
                     break;
                 }
-                else if EQUALN( "Name",  poRAT->GetNameOfCol( i ), 4 )
+                else if STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Name")
                 {
                     iName = i;
                     break;
@@ -2548,8 +2548,8 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
         //  Is it a WGS84 equivalent?
         // ----------------------------------------------------------------------
 
-        if( ( EQUALN( pszEllipsoid, "WGS", 3 ) ) &&( strstr( pszEllipsoid, "84" ) ) &&
-            ( EQUALN( pszDatum, "WGS", 3 ) )     &&( strstr( pszDatum, "84" ) ) &&
+        if( ( STARTS_WITH_CI(pszEllipsoid, "WGS") ) &&( strstr( pszEllipsoid, "84" ) ) &&
+            ( STARTS_WITH_CI(pszDatum, "WGS") )     &&( strstr( pszDatum, "84" ) ) &&
             ( adfToWGS84[0] == 0.0 ) &&( adfToWGS84[1] == 0.0 ) &&( adfToWGS84[2] == 0.0 ) )
         {
             nEPSG = 4326;
@@ -2807,8 +2807,8 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
                     nGCSCode = atoi( oSRS.GetAuthorityCode( "GEOGCS" ) );
                 }
         if( ( nGCSCode == 4326 ) ||( 
-                ( EQUALN( pszSpheroid, "WGS", 3 ) ) &&( strstr( pszSpheroid, "84" ) ) &&
-                ( EQUALN( pszDatum, "WGS", 3 ) )    &&( strstr( pszDatum, "84" ) ) ) )
+                ( STARTS_WITH_CI(pszSpheroid, "WGS") ) &&( strstr( pszSpheroid, "84" ) ) &&
+                ( STARTS_WITH_CI(pszDatum, "WGS") )    &&( strstr( pszDatum, "84" ) ) ) )
         {
             *pszRefSystem = CPLStrdup( rstLATLONG );
             *pszRefUnit   = CPLStrdup( rstDEGREE );

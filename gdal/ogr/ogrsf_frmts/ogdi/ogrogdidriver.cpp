@@ -62,7 +62,7 @@ OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
 {
     OGROGDIDataSource   *poDS;
 
-    if( !EQUALN(pszFilename,"gltp:",5) )
+    if( !STARTS_WITH_CI(pszFilename, "gltp:") )
         return FALSE;
 
     poDS = new OGROGDIDataSource();

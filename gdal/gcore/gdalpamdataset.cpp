@@ -1293,7 +1293,7 @@ const char *GDALPamDataset::GetMetadataItem( const char *pszName,
             GDALDataset::GetMetadataItem( pszName, pszDomain );
 
         if( pszOverviewFile == NULL 
-            || !EQUALN(pszOverviewFile,":::BASE:::",10) )
+            || !STARTS_WITH_CI(pszOverviewFile, ":::BASE:::") )
             return pszOverviewFile;
         
         CPLString osPath;

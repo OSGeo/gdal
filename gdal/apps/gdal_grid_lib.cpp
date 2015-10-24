@@ -1094,8 +1094,8 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
                 ((OGRPolygon *) psOptions->poClipSrc)->addRing( &oRing );
                 i += 4;
             }
-            else if ((EQUALN(papszArgv[i+1], "POLYGON", 7) ||
-                      EQUALN(papszArgv[i+1], "MULTIPOLYGON", 12)) &&
+            else if ((STARTS_WITH_CI(papszArgv[i+1], "POLYGON") ||
+                      STARTS_WITH_CI(papszArgv[i+1], "MULTIPOLYGON")) &&
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
                 char* pszTmp = (char*) papszArgv[i+1];

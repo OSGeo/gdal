@@ -178,7 +178,7 @@ int GFFDataset::Identify( GDALOpenInfo *poOpenInfo )
     if(poOpenInfo->nHeaderBytes < 7) 
         return 0;
 
-    if (EQUALN((char *)poOpenInfo->pabyHeader,"GSATIMG",7)) 
+    if (STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "GSATIMG")) 
         return 1;
 
     return 0;

@@ -578,7 +578,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
   }
   // check 2: the request contains --collection
   char* connString = poOpenInfo->pszFilename;
-  if (!EQUALN(connString, "rasdaman", 8)) {
+  if (!STARTS_WITH_CI(connString, "rasdaman")) {
     return NULL;
   }
 

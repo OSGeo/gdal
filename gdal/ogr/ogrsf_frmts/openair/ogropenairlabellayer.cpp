@@ -136,7 +136,7 @@ OGRFeature *OGROpenAirLabelLayer::GetNextRawFeature()
         if (pszLine[0] == '*' || pszLine[0] == '\0')
             continue;
 
-        if (EQUALN(pszLine, "AC ", 3))
+        if (STARTS_WITH_CI(pszLine, "AC "))
         {
             if (osCLASS.size() != 0)
             {
@@ -146,13 +146,13 @@ OGRFeature *OGROpenAirLabelLayer::GetNextRawFeature()
             }
             osCLASS = pszLine + 3;
         }
-        else if (EQUALN(pszLine, "AN ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AN "))
             osNAME = pszLine + 3;
-        else if (EQUALN(pszLine, "AH ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AH "))
             osCEILING = pszLine + 3;
-        else if (EQUALN(pszLine, "AL ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AL "))
             osFLOOR = pszLine + 3;
-        else if (EQUALN(pszLine, "AT ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AT "))
         {
             bHasCoord = OGROpenAirGetLatLon(pszLine + 3, dfLat, dfLon);
             break;

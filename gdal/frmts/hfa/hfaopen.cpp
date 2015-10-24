@@ -151,7 +151,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
         return NULL;
     }
 
-    if( !EQUALN(szHeader,"EHFA_HEADER_TAG",15) )
+    if( !STARTS_WITH_CI(szHeader, "EHFA_HEADER_TAG") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s is not an Imagine HFA file ... header wrong.",
@@ -1224,7 +1224,7 @@ char *HFAGetPEString( HFAHandle hHFA )
     int    nDataSize = poProX->GetDataSize();
 
     while( nDataSize > 10 
-           && !EQUALN((const char *) pabyData,"PE_COORDSYS,.",13) ) {
+           && !STARTS_WITH_CI((const char *) pabyData, "PE_COORDSYS,.") ) {
         pabyData++;
         nDataSize--;
     }
@@ -1307,7 +1307,7 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
         GUInt32   nSize;
 
         while( nDataSize > 10 
-               && !EQUALN((const char *) pabyData,"PE_COORDSYS,.",13) ) {
+               && !STARTS_WITH_CI((const char *) pabyData, "PE_COORDSYS,.") ) {
             pabyData++;
             nDataSize--;
             iOffset++;
@@ -2528,7 +2528,7 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
         int        columnDataPtr;
 
         // Skip the #Bin_Function# entry.
-        if( EQUALN(poColumn->GetName(),"#",1) )
+        if( STARTS_WITH_CI(poColumn->GetName(), "#") )
             continue;
 
         pszValue = poColumn->GetStringField( "dataType" );
@@ -2746,10 +2746,10 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 poEntry = new HFAEntry( hHFA, pszAuxMetaData[i], pszAuxMetaData[i+3],
                                         poNode );
 
-                if ( EQUALN( "Statistics", pszAuxMetaData[i], 10 ) )
+                if ( STARTS_WITH_CI(pszAuxMetaData[i], "Statistics") )
                     bCreatedStatistics = TRUE;
                 
-                if( EQUALN( "HistogramParameters", pszAuxMetaData[i], 19 ) )
+                if( STARTS_WITH_CI(pszAuxMetaData[i], "HistogramParameters") )
                 {
                     // this is a bit nasty I need to set the string field for the object
                     // first because the SetStringField sets the count for the object
@@ -2836,7 +2836,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             poBinFunc->SetDoubleField( "minLimit", dMinLimit );
             poBinFunc->SetDoubleField( "maxLimit", dMaxLimit );
             // direct for thematic layers, linear otherwise
-            if ( EQUALN ( poNode->GetStringField("layerType"), "thematic", 8) )
+            if ( STARTS_WITH_CI(poNode->GetStringField("layerType"), "thematic") )
                 poBinFunc->SetStringField( "binFunctionType", "direct" );
             else
                 poBinFunc->SetStringField( "binFunctionType", "linear" );

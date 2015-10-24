@@ -116,7 +116,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 /*                                                                      */
 /* -------------------------------------------------------------------- */
     char *pszDSN;
-    if( EQUALN(pszNewName,"GEOMEDIA:",9) )
+    if( STARTS_WITH_CI(pszNewName, "GEOMEDIA:") )
         pszDSN = CPLStrdup( pszNewName + 9 );
     else
     {

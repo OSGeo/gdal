@@ -364,13 +364,13 @@ void PCIDSKDataset::WriteGeoSegment( )
 
 GDALDataType PCIDSKDataset::PCIDSKTypeToGDAL( const char *pszType )
 {
-    if ( EQUALN( pszType, "8U", 2 ) )
+    if ( STARTS_WITH_CI(pszType, "8U") )
         return GDT_Byte;
-    if ( EQUALN( pszType, "16S", 3 ) )
+    if ( STARTS_WITH_CI(pszType, "16S") )
         return GDT_Int16;
-    if ( EQUALN( pszType, "16U", 3 ) )
+    if ( STARTS_WITH_CI(pszType, "16U") )
         return GDT_UInt16;
-    if ( EQUALN( pszType, "32R", 3 ) )
+    if ( STARTS_WITH_CI(pszType, "32R") )
         return GDT_Float32;
 
     return GDT_Unknown;
@@ -383,7 +383,7 @@ GDALDataType PCIDSKDataset::PCIDSKTypeToGDAL( const char *pszType )
 int PCIDSKDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     if( poOpenInfo->nHeaderBytes < 512 
-        || !EQUALN((const char *) poOpenInfo->pabyHeader, "PCIDSK  ", 8) )
+        || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "PCIDSK  ") )
         return FALSE;
     else
         return TRUE;
@@ -617,11 +617,11 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Read type of interleaving and set up image parameters.          */
 /* -------------------------------------------------------------------- */
     pszString = CPLScanString( szTemp + 360, 8, TRUE, FALSE );
-    if ( EQUALN( pszString, "PIXEL", 5 ) )
+    if ( STARTS_WITH_CI(pszString, "PIXEL") )
         eInterleaving = PDI_PIXEL;
-    else if ( EQUALN( pszString, "BAND", 4 ) )
+    else if ( STARTS_WITH_CI(pszString, "BAND") )
         eInterleaving = PDI_BAND;
-    else if ( EQUALN( pszString, "FILE", 4 ) )
+    else if ( STARTS_WITH_CI(pszString, "FILE") )
         eInterleaving = PDI_FILE;
     else
     {
@@ -697,7 +697,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
               pszFilename = CPLScanString( szTemp + 64, 64, TRUE, FALSE );
 
               // /SIS=n is special case for internal tiled file.
-              if( EQUALN(pszFilename,"/SIS=",5) )
+              if( STARTS_WITH_CI(pszFilename, "/SIS=") )
               {
                   int nImage = atoi(pszFilename+5);
                   poBand = new PCIDSKTiledRasterBand( poDS, iBand+1, nImage );
@@ -852,7 +852,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                 VSIFSeekL( poDS->fp, nGeoDataOffset, SEEK_SET );
                 VSIFReadL( szTemp, 1, 16, poDS->fp );
                 szTemp[16] = '\0';
-                if ( EQUALN( szTemp, "POLYNOMIAL", 10 ) )
+                if ( STARTS_WITH_CI(szTemp, "POLYNOMIAL") )
                 {
                     char        szProj[17];
 
@@ -860,7 +860,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                     VSIFSeekL( poDS->fp, nGeoDataOffset + 32, SEEK_SET );
                     VSIFReadL( szProj, 1, 16, poDS->fp );
                     szProj[16] = '\0';
-                    if ( EQUALN( szProj, "PIXEL", 5 ) )
+                    if ( STARTS_WITH_CI(szProj, "PIXEL") )
                         break;
 
                     // Read number of transform coefficients
@@ -896,7 +896,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                         CPLFree( poDS->pszProjection );
                     oSRS.exportToWkt( &poDS->pszProjection );
                 }
-                else if ( EQUALN( szTemp, "PROJECTION", 10 ) )
+                else if ( STARTS_WITH_CI(szTemp, "PROJECTION") )
                 {
                     char        szProj[17], szUnits[17];
                     double      adfProjParms[17];
@@ -905,8 +905,8 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                     VSIFSeekL( poDS->fp, nGeoDataOffset + 32, SEEK_SET );
                     VSIFReadL( szProj, 1, 16, poDS->fp );
                     szProj[16] = '\0';
-                    if ( EQUALN( szProj, "PIXEL", 5 )
-                         || EQUALN( szProj, "METRE", 5 ) )
+                    if ( STARTS_WITH_CI(szProj, "PIXEL")
+                         || STARTS_WITH_CI(szProj, "METRE") )
                         break;
 
                     // Read number of transform coefficients
@@ -993,7 +993,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                         poDS->pasGCPList = (GDAL_GCP *)
                             CPLCalloc( poDS->nGCPCount, sizeof(GDAL_GCP) );
                         GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
-                        if ( EQUALN( szTemp + 64, "FEET     ", 9 ) )
+                        if ( STARTS_WITH_CI(szTemp + 64, "FEET     ") )
                             dfUnitConv = CPLAtof(SRS_UL_FOOT_CONV);
                         for ( j = 0; j < poDS->nGCPCount; j++ )
                         {
@@ -1044,7 +1044,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         for( iMD = 0; papszMD != NULL && papszMD[iMD] != NULL; iMD++ )
         {
-            if( EQUALN(papszMD[iMD],"Overview_",9) )
+            if( STARTS_WITH_CI(papszMD[iMD], "Overview_") )
             {
                 int nBlockXSize, nBlockYSize;
                 int nImage = atoi(CPLParseNameValue( papszMD[iMD], NULL ));
@@ -1183,7 +1183,7 @@ void PCIDSKDataset::CollectPCIDSKMetadata( int nSegment )
 /*      Handle METADATA_IMG values by assigning to the appropriate      */
 /*      band object.                                                    */
 /* -------------------------------------------------------------------- */
-        if( EQUALN(pszName,"METADATA_IMG_",13) )
+        if( STARTS_WITH_CI(pszName, "METADATA_IMG_") )
         {
             int nBand = atoi(pszName+13);
             pszName += 13;

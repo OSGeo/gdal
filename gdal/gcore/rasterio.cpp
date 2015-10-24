@@ -3098,7 +3098,7 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand* poBand,
         const char *pszResampling = 
             poOverview->GetMetadataItem( "RESAMPLING" );
 
-        if( pszResampling != NULL && EQUALN(pszResampling,"AVERAGE_BIT2",12))
+        if( pszResampling != NULL && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2"))
             continue;
 
         // OK, this is our new best overview.

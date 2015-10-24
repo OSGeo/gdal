@@ -553,8 +553,8 @@ int GRIBDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for(int i=0;i<poOpenInfo->nHeaderBytes-3;i++)
     {
-        if (EQUALN((const char*)poOpenInfo->pabyHeader + i, "GRIB", 4) ||
-            EQUALN((const char*)poOpenInfo->pabyHeader + i, "TDLP", 4))
+        if (STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader + i, "GRIB") ||
+            STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader + i, "TDLP"))
             return TRUE;
     }
 

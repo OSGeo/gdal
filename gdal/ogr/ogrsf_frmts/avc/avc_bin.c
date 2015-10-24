@@ -575,14 +575,14 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
      *----------------------------------------------------------------*/
     nLen = strlen(psFile->pszFilename);
     if( psFile->eFileType == AVCFileARC &&
-        ((nLen>=3 && EQUALN((pszExt=psFile->pszFilename+nLen-3), "arc", 3)) ||
-         (nLen>=7 && EQUALN((pszExt=psFile->pszFilename+nLen-7),"arc.adf",7))))
+        ((nLen>=3 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-3), "arc")) ||
+         (nLen>=7 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-7), "arc.adf"))))
     {
         bIndexed = TRUE;
     }
     else if( psFile->eFileType == AVCFilePAL &&
-        ((nLen>=3 && EQUALN((pszExt=psFile->pszFilename+nLen-3), "pal", 3)) ||
-         (nLen>=7 && EQUALN((pszExt=psFile->pszFilename+nLen-7),"pal.adf",7))))
+        ((nLen>=3 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-3), "pal")) ||
+         (nLen>=7 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-7), "pal.adf"))))
     {
         bIndexed = TRUE;
     }
@@ -1921,8 +1921,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
         {
             if (!sTableDef.bDeletedFlag &&
                 EQUALN(sTableDef.szTableName, pszTableName, 
-                       strlen(pszTableName)) &&
-                _AVCBinReadInfoFileExists(pszInfoPath, 
+                       strlen(pszTableName)) &&                _AVCBinReadInfoFileExists(pszInfoPath, 
                                           sTableDef.szInfoFile, 
                                           eCoverType))
             {

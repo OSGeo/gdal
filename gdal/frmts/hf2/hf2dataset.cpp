@@ -328,7 +328,7 @@ int HF2Dataset::Identify( GDALOpenInfo * poOpenInfo)
     if ((EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hfz") ||
         (strlen(poOpenInfo->pszFilename) > 6 &&
          EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "hf2.gz"))) &&
-         !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+         !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         osFilename = "/vsigzip/";
         osFilename += poOpenInfo->pszFilename;
@@ -372,7 +372,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if ((EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hfz") ||
         (strlen(poOpenInfo->pszFilename) > 6 &&
          EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "hf2.gz"))) &&
-         !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+         !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         osFilename = "/vsigzip/";
         osFilename += poOpenInfo->pszFilename;

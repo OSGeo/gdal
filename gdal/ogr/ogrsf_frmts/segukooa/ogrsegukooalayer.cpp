@@ -166,7 +166,7 @@ void OGRUKOOAP190Layer::ParseHeaders()
     while(TRUE)
     {
         const char* pszLine = CPLReadLine2L(fp,81,NULL);
-        if (pszLine == NULL || EQUALN(pszLine, "EOF", 3))
+        if (pszLine == NULL || STARTS_WITH_CI(pszLine, "EOF"))
         {
             break;
         }
@@ -271,7 +271,7 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
     while(TRUE)
     {
         pszLine = CPLReadLine2L(fp,81,NULL);
-        if (pszLine == NULL || EQUALN(pszLine, "EOF", 3))
+        if (pszLine == NULL || STARTS_WITH_CI(pszLine, "EOF"))
         {
             bEOF = TRUE;
             return NULL;
@@ -550,7 +550,7 @@ OGRFeature *OGRSEGP1Layer::GetNextRawFeature()
     while(TRUE)
     {
         pszLine = CPLReadLine2L(fp,81,NULL);
-        if (pszLine == NULL || EQUALN(pszLine, "EOF", 3))
+        if (pszLine == NULL || STARTS_WITH_CI(pszLine, "EOF"))
         {
             bEOF = TRUE;
             return NULL;

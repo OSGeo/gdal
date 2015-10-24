@@ -117,7 +117,7 @@ int main( int nArgc, char ** papszArgv )
         {
             bPreserveFID = TRUE;
         }
-        else if( EQUALN(papszArgv[iArg],"-skip",5) )
+        else if( STARTS_WITH_CI(papszArgv[iArg], "-skip") )
         {
             bSkipFailures = TRUE;
         }
@@ -150,13 +150,13 @@ int main( int nArgc, char ** papszArgv )
             int bIs3D = FALSE;
             CPLString osGeomName = papszArgv[iArg+1];
             if (strlen(papszArgv[iArg+1]) > 3 &&
-                EQUALN(papszArgv[iArg+1] + strlen(papszArgv[iArg+1]) - 3, "25D", 3))
+                STARTS_WITH_CI(papszArgv[iArg+1] + strlen(papszArgv[iArg+1]) - 3, "25D"))
             {
                 bIs3D = TRUE;
                 osGeomName.resize(osGeomName.size() - 3);
             }
             else if (strlen(papszArgv[iArg+1]) > 1 &&
-                EQUALN(papszArgv[iArg+1] + strlen(papszArgv[iArg+1]) - 1, "Z", 1))
+                STARTS_WITH_CI(papszArgv[iArg+1] + strlen(papszArgv[iArg+1]) - 1, "Z"))
             {
                 bIs3D = TRUE;
                 osGeomName.resize(osGeomName.size() - 1);

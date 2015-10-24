@@ -351,7 +351,7 @@ const char *PamAllocateProxy( const char *pszOriginal )
     i = strlen(pszOriginal) - 1;
     while( i >= 0 && osRevProxyFile.size() < 220 )
     {
-        if( i > 6 && EQUALN(pszOriginal+i-5,":::OVR",6) )
+        if( i > 6 && STARTS_WITH_CI(pszOriginal+i-5, ":::OVR") )
             i -= 6;
 
         // make some effort to break long names at path delimiters.

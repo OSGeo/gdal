@@ -462,25 +462,25 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
             continue;
         }
 
-        if( EQUALN(papszTokens[0],"CELLCOUNT_X",strlen("CELLCOUNT_X")) )
+        if( STARTS_WITH_CI(papszTokens[0], "CELLCOUNT_X") )
             nCols = atoi(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"CELLCOUNT_Y",strlen("CELLCOUNT_Y")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "CELLCOUNT_Y") )
             nRows = atoi(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"POSITION_XMIN",strlen("POSITION_XMIN")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "POSITION_XMIN") )
             dXmin = CPLAtofM(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"POSITION_YMIN",strlen("POSITION_YMIN")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "POSITION_YMIN") )
             dYmin = CPLAtofM(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"CELLSIZE",strlen("CELLSIZE")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "CELLSIZE") )
             dCellsize = CPLAtofM(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"NODATA_VALUE",strlen("NODATA_VALUE")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "NODATA_VALUE") )
             dNoData = CPLAtofM(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"DATAFORMAT",strlen("DATAFORMAT")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "DATAFORMAT") )
             strncpy( szDataFormat, papszTokens[1], sizeof(szDataFormat)-1 );
-        else if( EQUALN(papszTokens[0],"BYTEORDER_BIG",strlen("BYTEORDER_BIG")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "BYTEORDER_BIG") )
             strncpy( szByteOrderBig, papszTokens[1], sizeof(szByteOrderBig)-1 );
-        else if( EQUALN(papszTokens[0],"TOPTOBOTTOM",strlen("TOPTOBOTTOM")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "TOPTOBOTTOM") )
             strncpy( szTopToBottom, papszTokens[1], sizeof(szTopToBottom)-1 );
-        else if( EQUALN(papszTokens[0],"Z_FACTOR",strlen("Z_FACTOR")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "Z_FACTOR") )
             dZFactor = CPLAtofM(papszTokens[1]);
 
         CSLDestroy( papszTokens );
@@ -505,7 +505,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( EQUALN(szTopToBottom,"TRUE",strlen("TRUE")) )
+    if( STARTS_WITH_CI(szTopToBottom, "TRUE") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Currently the SAGA Binary Grid driver does not support\n"
@@ -547,9 +547,9 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     /* -------------------------------------------------------------------- */
     /*      Figure out the byte order.                                      */
     /* -------------------------------------------------------------------- */
-    if( EQUALN(szByteOrderBig,"TRUE",strlen("TRUE")) )
+    if( STARTS_WITH_CI(szByteOrderBig, "TRUE") )
         poBand->m_ByteOrder = 1;
-    else if( EQUALN(szByteOrderBig,"FALSE",strlen("FALSE")) )
+    else if( STARTS_WITH_CI(szByteOrderBig, "FALSE") )
         poBand->m_ByteOrder = 0;
 
 
