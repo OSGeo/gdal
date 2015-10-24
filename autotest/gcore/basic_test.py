@@ -200,32 +200,36 @@ def basic_test_9():
 
 class my_python_error_handler_class:
     def __init__(self):
-        pass
+        self.eErrClass = None
+        self.err_no = None
+        self.msg = None
 
     def handler(self, eErrClass, err_no, msg):
-        gdaltest.eErrClass = eErrClass
-        gdaltest.err_no = err_no
-        gdaltest.msg = msg
+        self.eErrClass = eErrClass
+        self.err_no = err_no
+        self.msg = msg
 
 def basic_test_10():
 
-    gdaltest.eErrClass = 0
-    gdaltest.err_no = 0
-    gdaltest.msg = ''
     # Check that reference counting works OK
     gdal.PushErrorHandler(my_python_error_handler_class().handler)
     gdal.Error(1,2,'test')
     gdal.PopErrorHandler()
 
-    if gdaltest.eErrClass != 1:
+    error_handler = my_python_error_handler_class()
+    gdal.PushErrorHandler(error_handler.handler)
+    gdal.Error(1,2,'test')
+    gdal.PopErrorHandler()
+
+    if error_handler.eErrClass != 1:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if gdaltest.err_no != 2:
+    if error_handler.err_no != 2:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if gdaltest.msg != 'test':
+    if error_handler.msg != 'test':
         gdaltest.post_reason('fail')
         return 'fail'
 
