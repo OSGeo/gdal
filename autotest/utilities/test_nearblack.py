@@ -239,7 +239,9 @@ def test_nearblack_8():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
 
-    shutil.copy('../gdrivers/data/rgbsmall.tif', 'tmp/nearblack8.tif')
+    src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
+    gdal.GetDriverByName('GTiff').CreateCopy('tmp/nearblack8.tif', src_ds)
+    src_ds = None
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' tmp/nearblack8.tif -nb 0')
     if not (err is None or err == '') :
