@@ -177,6 +177,35 @@ def test_nearblack_lib_7():
 
     return 'success'
 
+###############################################################################
+# Test in-place update
+
+def test_nearblack_lib_8():
+    
+    src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
+    ds = gdal.GetDriverByName('MEM').CreateCopy('', src_ds)
+    ret = gdal.Nearblack(ds, ds, maxNonBlack = 0)
+    if ret != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 21106:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum band 1')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 20736:
+        print(ds.GetRasterBand(2).Checksum())
+        gdaltest.post_reason('Bad checksum band 2')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 21309:
+        print(ds.GetRasterBand(3).Checksum())
+        gdaltest.post_reason('Bad checksum band 3')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_nearblack_lib_1,
     test_nearblack_lib_2,
@@ -184,6 +213,7 @@ gdaltest_list = [
     test_nearblack_lib_4,
     test_nearblack_lib_5,
     test_nearblack_lib_7,
+    test_nearblack_lib_8,
     ]
 
 

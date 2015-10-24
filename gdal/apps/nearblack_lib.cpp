@@ -80,8 +80,11 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
  * and GDALNearblackOptionsFree() respectively.
  * pszDest and hDstDS cannot be used at the same time.
  *
+ * In-place update (ie hDstDS == hSrcDataset) is possible for formats that support
+ * it, and if the dataset is opened in update mode.
+ *
  * @param pszDest the destination dataset path or NULL.
- * @param hDstDS the destination dataset or NULL.
+ * @param hDstDS the destination dataset or NULL. Might be equal to hSrcDataset.
  * @param hSrcDataset the source dataset handle.
  * @param psOptions the options struct returned by GDALNearblackOptionsNew() or NULL.
  * @param pbUsageError the pointer to int variable to determine any usage error has occured or NULL.
