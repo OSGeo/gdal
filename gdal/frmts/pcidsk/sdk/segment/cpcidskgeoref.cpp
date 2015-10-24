@@ -216,7 +216,7 @@ std::vector<double> CPCIDSKGeoref::GetParameters()
         std::string grid_units;
         seg_data.Get(64,16,grid_units);
 
-        if( EQUALN(grid_units.c_str(),"DEGREE",3) )
+        if( STARTS_WITH_CI(grid_units.c_str(),"DEG" /* "DEGREE" */) )
             parms[17] = (double) (int) UNIT_DEGREE;
         else if( STARTS_WITH_CI(grid_units.c_str(), "MET") )
             parms[17] = (double) (int) UNIT_METER;
@@ -224,7 +224,7 @@ std::vector<double> CPCIDSKGeoref::GetParameters()
             parms[17] = (double) (int) UNIT_US_FOOT;
         else if( STARTS_WITH_CI(grid_units.c_str(), "FEET") )
             parms[17] = (double) (int) UNIT_US_FOOT;
-        else if( EQUALN(grid_units.c_str(),"INTL FOOT",5) )
+        else if( STARTS_WITH_CI(grid_units.c_str(), "INTL " /* "INTL FOOT" */) )
             parms[17] = (double) (int) UNIT_INTL_FOOT;
         else
             parms[17] = -1.0; /* unknown */

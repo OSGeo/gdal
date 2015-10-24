@@ -613,7 +613,7 @@ static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token )
         return 0;
 
     ExtractString( record, 401, 28, szSARDataFormat );
-    if( !EQUALN( szSARDataFormat, "INTEGER*18                 ", 25) )
+    if( !STARTS_WITH_CI( szSARDataFormat, "INTEGER*18                 ") )
         return 0;
 
     ExtractString( record, 49, 16, szProduct );

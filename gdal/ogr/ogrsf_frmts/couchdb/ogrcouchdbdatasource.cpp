@@ -641,7 +641,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         while(*pszIter && *pszIter == ' ')
             pszIter ++;
-        if (!EQUALN(pszIter, "WHERE ", 5))
+        if (!STARTS_WITH_CI(pszIter, "WHERE "))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "WHERE clause missing");
             return NULL;

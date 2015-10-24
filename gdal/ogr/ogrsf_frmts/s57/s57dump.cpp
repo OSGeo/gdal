@@ -75,7 +75,7 @@ int main( int nArgc, char ** papszArgv )
                                  "ON" );
             bReturnPrimitives = TRUE;
         }
-        else if( EQUALN(papszArgv[iArg],"-lnam",4) )
+        else if( STARTS_WITH_CI(papszArgv[iArg],"-lnam") )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_LNAM_REFS, "ON" );
         else if( STARTS_WITH_CI(papszArgv[iArg], "-return-link") )

@@ -409,7 +409,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     else
     {
         pszProj = ReadElement("CoordSystem", "Type", csyFileName);
-        if( !EQUALN( pszProj.c_str(), "LatLon", 7 ) )
+        if( !STARTS_WITH_CI( pszProj.c_str(), "LatLon" ) )
             pszProj = ReadElement("CoordSystem", "Projection", csyFileName);
         pszDatum = ReadElement("CoordSystem", "Datum", csyFileName);
         pszEllips = ReadElement("CoordSystem", "Ellipsoid", csyFileName);
@@ -425,7 +425,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
-    if( EQUALN( pszProj.c_str(), "LatLon", 7 ) )
+    if( STARTS_WITH_CI(pszProj.c_str(), "LatLon") )
     {
         //set datum later
     }

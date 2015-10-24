@@ -1251,7 +1251,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                                 origNorthing);
                     bUseProjInfo = true;
                 }
-                else if (EQUALN(pszProj,"STPL",3)) {
+                else if (STARTS_WITH_CI(pszProj,"STPL")) {
                     /* State Plate
                        ASSUMPTIONS: "zone" in product.xml matches USGS 
                        definition as expected by ogr spatial reference; NAD83 

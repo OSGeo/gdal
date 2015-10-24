@@ -2474,7 +2474,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, dou
         return importFromDict( "esri_Wisconsin_extra.wkt", codeS);
     }
     double* tableWISCRS;
-    if(EQUALN(prjName, "Lambert_Conformal_Conic", 22))
+    if(STARTS_WITH_CI(prjName, "Lambert_Conformal_Conic"))
         tableWISCRS = apszWISCRS_LCC_meter;
     else if(EQUAL(prjName, SRS_PT_TRANSVERSE_MERCATOR))
         tableWISCRS = apszWISCRS_TM_meter;

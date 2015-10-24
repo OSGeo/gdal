@@ -330,7 +330,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "LCC_1SP ", 7 ) )
+    else if( STARTS_WITH_CI(pszProj, "LCC_1SP ") )
     {
         SetLCC1SP( padfPrjParams[3], padfPrjParams[2],
                    padfPrjParams[8],

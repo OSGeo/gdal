@@ -128,35 +128,35 @@ GBool TranslateDataType(const char * pszDataType,
     if (pbSignedByte)
         *pbSignedByte = false;
 
-    if (EQUALN(pszDataType, "1BB", 3 * sizeof(char))) {
+    if (EQUAL(pszDataType, "1BB")) {
         if (pnBitsDepth)
             *pnBitsDepth = 1;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUALN(pszDataType, "2BUI", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "2BUI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 2;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUALN(pszDataType, "4BUI", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "4BUI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 4;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUALN(pszDataType, "8BUI", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "8BUI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 8;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUALN(pszDataType, "8BSI", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "8BSI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 8;
         if (poDataType)
@@ -170,42 +170,42 @@ GBool TranslateDataType(const char * pszDataType,
         if (pbSignedByte)
             *pbSignedByte = true;
     }
-    else if (EQUALN(pszDataType, "16BSI", 5 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "16BSI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 16;
         if (poDataType)
             *poDataType = GDT_Int16;
     }
 
-    else if (EQUALN(pszDataType, "16BUI", 5 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "16BUI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 16;
         if (poDataType)
             *poDataType = GDT_UInt16;
     }
 
-    else if (EQUALN(pszDataType, "32BSI", 5 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "32BSI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 32;
         if (poDataType)
             *poDataType = GDT_Int32;
     }
 
-    else if (EQUALN(pszDataType, "32BUI", 5 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "32BUI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 32;
         if (poDataType)
             *poDataType = GDT_UInt32;
     }
 
-    else if (EQUALN(pszDataType, "32BF", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "32BF")) {
         if (pnBitsDepth)
             *pnBitsDepth = 32;
         if (poDataType)
             *poDataType = GDT_Float32;
     }
 
-    else if (EQUALN(pszDataType, "64BF", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "64BF")) {
         if (pnBitsDepth)
             *pnBitsDepth = 64;
         if (poDataType)

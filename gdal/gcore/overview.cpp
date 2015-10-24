@@ -212,7 +212,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                  int bHasNoData, float fNoDataValue,
                                  GDALColorTable* poColorTable)
 {
-    int bBit2Grayscale = EQUALN(pszResampling,"AVERAGE_BIT2GRAYSCALE",13);
+    int bBit2Grayscale = STARTS_WITH_CI(pszResampling,"AVERAGE_BIT2G" /* AVERAGE_BIT2GRAYSCALE */);
     if (bBit2Grayscale)
         poColorTable = NULL;
 
@@ -2023,7 +2023,7 @@ GDALRegenerateCascadingOverviews(
         dfPixelsProcessed += dfPixels;
 
         /* we only do the bit2grayscale promotion on the base band */
-        if( EQUALN(pszResampling,"AVERAGE_BIT2GRAYSCALE",13) )
+        if( STARTS_WITH_CI(pszResampling,"AVERAGE_BIT2G" /* AVERAGE_BIT2GRAYSCALE */) )
             pszResampling = "AVERAGE";
     }
 

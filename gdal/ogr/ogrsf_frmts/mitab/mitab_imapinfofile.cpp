@@ -244,7 +244,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
                 bFoundFields = TRUE;
             else if (STARTS_WITH_CI(pszLine, "create view"))
                 bFoundView = TRUE;
-            else if (EQUALN(pszLine, "\"\\IsSeamless\" = \"TRUE\"", 21))
+            else if (STARTS_WITH_CI(pszLine, "\"\\IsSeamless\" = \"TRUE\""))
                 bFoundSeamless = TRUE;
         }
 

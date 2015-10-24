@@ -417,7 +417,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     int  nBandCount, nPixelOffset;
     GDALDataType eDataType;
 
-    if( EQUALN(poDS->pachHeader,"HEADER",7) )
+    if( STARTS_WITH_CI(poDS->pachHeader,"HEADER") )
     {
         float fTmp;
         memcpy(&fTmp, poDS->pachHeader + 16, 4);

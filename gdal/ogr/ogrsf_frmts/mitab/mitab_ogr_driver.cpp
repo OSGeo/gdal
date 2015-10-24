@@ -103,7 +103,7 @@ static int OGRTABDriverIdentify( GDALOpenInfo* poOpenInfo )
                 return TRUE;
             else if (STARTS_WITH_CI(pszLine, "create view"))
                 return TRUE;
-            else if (EQUALN(pszLine, "\"\\IsSeamless\" = \"TRUE\"", 21))
+            else if (STARTS_WITH_CI(pszLine, "\"\\IsSeamless\" = \"TRUE\""))
                 return TRUE;
         }
     }

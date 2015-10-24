@@ -1293,8 +1293,8 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
             &(poBMD[iBand].bSignedByte));
             
         if (papszParams[POS_NODATAVALUE] == NULL ||
-            EQUALN(papszParams[POS_NODATAVALUE], "NULL", 4*sizeof(char)) || 
-            EQUALN(papszParams[POS_NODATAVALUE], "f", sizeof(char)) || 
+            EQUAL(papszParams[POS_NODATAVALUE], "NULL") || 
+            EQUAL(papszParams[POS_NODATAVALUE], "f") || 
             EQUAL(papszParams[POS_NODATAVALUE], "")) {
         
             poBMD[iBand].bHasNoDataValue = false;
@@ -1309,7 +1309,7 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
         
         // TODO: Manage outdb and get path
         poBMD[iBand].bIsOffline = (papszParams[POS_ISOUTDB] != NULL) ?
-            EQUALN(papszParams[POS_ISOUTDB], "t", sizeof(char)) :
+            EQUAL(papszParams[POS_ISOUTDB], "t") :
             false;
         
         CSLDestroy(papszParams);
@@ -2237,10 +2237,10 @@ GBool PostGISRasterDataset::SetRasterProperties
             bTilesSameDimension = true;
 
         bAllTilesSnapToSameGrid =
-            EQUALN(PQgetvalue(poResult, 0, 10), "t", sizeof(char));
+            EQUAL(PQgetvalue(poResult, 0, 10), "t");
         
         bRegularBlocking = 
-            EQUALN(PQgetvalue(poResult, 0, 11), "t", sizeof(char));
+            EQUAL(PQgetvalue(poResult, 0, 11), "t");
     }
 
 #ifdef DEBUG_VERBOSE

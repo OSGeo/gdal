@@ -222,7 +222,7 @@ GBool PostGISRasterRasterBand::GetBandMetadata(
     CPLFree(pszDataType);
             
     bNoDataValueSet = 
-            EQUALN(PQgetvalue(poResult, 0, 1), "t", sizeof(char));
+            EQUAL(PQgetvalue(poResult, 0, 1), "t");
             
     dfNoDataValue = CPLAtof(PQgetvalue(poResult, 0, 2));
     

@@ -225,9 +225,9 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
             /* process default value specification */
             if ( EQUAL(poStmt->GetColColumnDef(iCol), "(getdate())") )
                 oField.SetDefault( "CURRENT_TIMESTAMP" );
-            else if ( EQUALN(poStmt->GetColColumnDef(iCol), "(CONVERT([time],getdate(),0))", 25) )
+            else if ( STARTS_WITH_CI(poStmt->GetColColumnDef(iCol), "(CONVERT([time],getdate()") )
                 oField.SetDefault( "CURRENT_TIME" );
-            else if ( EQUALN(poStmt->GetColColumnDef(iCol), "(CONVERT([date],getdate(),0))", 25) )
+            else if ( STARTS_WITH_CI(poStmt->GetColColumnDef(iCol), "(CONVERT([date],getdate()") )
                 oField.SetDefault( "CURRENT_DATE" );
             else
             {

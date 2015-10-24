@@ -221,7 +221,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Split out based on operation.                                   */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(argv[1],"identify",5) )
+    if( STARTS_WITH_CI(argv[1],"ident" /* identify" */ ) )
         Identify( nRemainingArgc, papszRemainingArgv );
 
     else if( EQUAL(argv[1],"copy") )

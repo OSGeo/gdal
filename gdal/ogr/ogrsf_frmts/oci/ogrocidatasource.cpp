@@ -108,7 +108,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Verify Oracle prefix.                                           */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszNewName,"OCI:",3) )
+    if( !STARTS_WITH_CI(pszNewName,"OCI:") )
     {
         if( !bTestOpen )
         {

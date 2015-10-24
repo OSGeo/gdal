@@ -812,7 +812,7 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
         poDS->pszUnitType = CPLStrdup( "unspecified" );
     else
     {
-        if( EQUALN( pszValueUnit, "meter", 4 ) )
+        if( STARTS_WITH_CI( pszValueUnit, "meter" ) )
         {
             poDS->pszUnitType = CPLStrdup( "m" );
         }
@@ -2647,7 +2647,7 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
     {
         oSRS.SetTM( dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing );
     }
-    else if EQUALN( pszProjName, "Gauss-Kruger", 9 )
+    else if EQUAL( pszProjName, "Gauss-Kruger" )
     {
         oSRS.SetTM( dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing );
     }
@@ -2655,7 +2655,7 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
     {
         oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
-    else if( EQUALN( pszProjName, "Plate Carr" "\xE9" "e", 10 ) ) /* 'eacute' in ISO-8859-1 */
+    else if( EQUAL( pszProjName, "Plate Carr" "\xE9" "e" ) ) /* 'eacute' in ISO-8859-1 */
     {
         oSRS.SetEquirectangular( dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
@@ -2667,23 +2667,23 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
         oSRS.SetProjParm( SRS_PP_FALSE_EASTING,       dfFalseEasting );
         oSRS.SetProjParm( SRS_PP_FALSE_NORTHING,      dfFalseNorthing );
     }
-    else if( EQUALN( pszProjName, "Lambert North Polar Azimuthal Equal Area", 15 ) ||
-        EQUALN( pszProjName, "Lambert South Polar Azimuthal Equal Area", 15 ) ||
-        EQUALN( pszProjName, "Lambert Transverse Azimuthal Equal Area", 15 ) ||
-        EQUALN( pszProjName, "Lambert Oblique Polar Azimuthal Equal Area", 15 ) )
+    else if( EQUAL( pszProjName, "Lambert North Polar Azimuthal Equal Area" ) ||
+        EQUAL( pszProjName, "Lambert South Polar Azimuthal Equal Area" ) ||
+        EQUAL( pszProjName, "Lambert Transverse Azimuthal Equal Area" ) ||
+        EQUAL( pszProjName, "Lambert Oblique Polar Azimuthal Equal Area" ) )
     {
         oSRS.SetLAEA( dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
-    else if( EQUALN( pszProjName, "North Polar Stereographic", 15 ) ||
-        EQUALN( pszProjName, "South Polar Stereographic", 15 ) )
+    else if( EQUAL( pszProjName, "North Polar Stereographic" ) ||
+        EQUAL( pszProjName, "South Polar Stereographic" ) )
     {
         oSRS.SetPS( dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing );
     }
-    else if( EQUALN( pszProjName, "Transverse Stereographic", 15 ) )
+    else if( EQUAL( pszProjName, "Transverse Stereographic" ) )
     {
         oSRS.SetStereographic( dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing );
     }
-    else if( EQUALN( pszProjName, "Oblique Stereographic", 15 ) )
+    else if( EQUAL( pszProjName, "Oblique Stereographic" ) )
     {
         oSRS.SetOS( dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing );
     }
