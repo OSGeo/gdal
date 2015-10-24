@@ -1394,12 +1394,12 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
             else
                 oSRS.SetWellKnownGeogCS( "NAD27" );
         }
-        else if( EQUALN(papszFields[0],"State Plane (NAD 27)",19)
+        else if( STARTS_WITH_CI(papszFields[0],"State Plane (NAD 27)")
                  && nCount >= 7 )
         {
             oSRS.SetStatePlane( ITTVISToUSGSZone(atoi(papszFields[7])), FALSE );
         }
-        else if( EQUALN(papszFields[0],"State Plane (NAD 83)",19)
+        else if( STARTS_WITH_CI(papszFields[0],"State Plane (NAD 83)")
                  && nCount >= 7 )
         {
             oSRS.SetStatePlane( ITTVISToUSGSZone(atoi(papszFields[7])), TRUE );

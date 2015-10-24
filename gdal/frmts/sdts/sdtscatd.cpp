@@ -277,7 +277,7 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
     else if( STARTS_WITH_CI(papoEntries[iEntry]->pszType, "Attribute Primary") )
         return SLTAttr;
     
-    else if( EQUALN(papoEntries[iEntry]->pszType,"Attribute Secondary",17) )
+    else if( STARTS_WITH_CI(papoEntries[iEntry]->pszType,"Attribute Secondary") )
         return SLTAttr;
     
     else if( EQUAL(papoEntries[iEntry]->pszType,"Line")

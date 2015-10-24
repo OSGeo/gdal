@@ -608,7 +608,7 @@ CPLString OGRGFTLayer::PatchSQL(const char* pszSQL)
 
     while(*pszSQL)
     {
-        if (EQUALN(pszSQL, "COUNT(", 5) && strchr(pszSQL, ')'))
+        if (STARTS_WITH_CI(pszSQL, "COUNT(") && strchr(pszSQL, ')'))
         {
             const char* pszNext = strchr(pszSQL, ')');
             osSQL += "COUNT()";

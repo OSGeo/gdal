@@ -456,7 +456,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
          || STARTS_WITH_CI(pszCompositeName, "http")
          || STARTS_WITH_CI(pszCompositeName, "DODS:")
          || STARTS_WITH_CI(pszCompositeName, "ODBC:")
-         || EQUALN(pszCompositeName,"MYSQL:",5))
+         || STARTS_WITH_CI(pszCompositeName, "MYSQL:"))
         && !EQUAL(CPLGetExtension( pszCompositeName ), "fdd")
         && !STARTS_WITH_CI(pszCompositeName, "PROMPT") )
     {

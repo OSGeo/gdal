@@ -937,7 +937,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_CInt16;
     else if( EQUAL(pszDataType,"SWORD") )
         eDataType = GDT_Int16;
-    else if( EQUALN(pszProduct,"ATS_TOA_1",8) )
+    else if( STARTS_WITH_CI(pszProduct,"ATS_TOA_1") )
     {
         /* all 16bit data, no line length provided */
         eDataType = GDT_Int16;

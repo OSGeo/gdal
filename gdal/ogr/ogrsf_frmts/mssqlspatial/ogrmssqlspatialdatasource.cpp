@@ -452,7 +452,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     const char *pszUploadGeometryFormat = CSLFetchNameValue( papszOptions, "UPLOAD_GEOM_FORMAT" );
     if (pszUploadGeometryFormat)
     {
-        if (EQUALN(pszUploadGeometryFormat,"wkb",5))
+        if (STARTS_WITH_CI(pszUploadGeometryFormat,"wkb"))
             poLayer->SetUploadGeometryFormat(MSSQLGEOMETRY_WKB);
         else if (STARTS_WITH_CI(pszUploadGeometryFormat, "wkt"))
             poLayer->SetUploadGeometryFormat(MSSQLGEOMETRY_WKT);

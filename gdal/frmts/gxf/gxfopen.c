@@ -270,12 +270,12 @@ GXFHandle GXFOpen( const char * pszFilename )
         {
             psGXF->nSense = atoi(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#MAP_PROJECTION",8) )
+        else if( STARTS_WITH_CI(szTitle,"#MAP_PROJECTION") )
         {
             psGXF->papszMapProjection = papszList;
             papszList = NULL;
         }
-        else if( EQUALN(szTitle,"#MAP_D",5) )
+        else if( STARTS_WITH_CI(szTitle,"#MAP_D") )
         {
             psGXF->papszMapDatumTransform = papszList;
             papszList = NULL;
@@ -315,7 +315,7 @@ GXFHandle GXFOpen( const char * pszFilename )
 
             CSLDestroy( papszFields );
         }
-        else if( EQUALN(szTitle,"#GTYPE",5) )
+        else if( STARTS_WITH_CI(szTitle,"#GTYPE") )
         {
             psGXF->nGType = atoi(papszList[0]);
         }

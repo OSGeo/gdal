@@ -2792,7 +2792,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 CPLAssert( FALSE );
             }
         }
-        else if ( EQUALN( "STATISTICS_HISTOBINVALUES", pszKey, strlen(pszKey) ) )
+        else if ( STARTS_WITH_CI( pszKey, "STATISTICS_HISTOBINVALUES" ) )
         {
             CPLFree(pszBinValues);
             pszBinValues = CPLStrdup( pszValue );
@@ -2893,7 +2893,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 // Check whether histogram counts were written as int or double
                 bool bCountIsInt = TRUE;
                 const char *pszDataType = poHisto->GetStringField("dataType");
-                if ( EQUALN(pszDataType, "real", strlen(pszDataType)) )
+                if ( STARTS_WITH_CI(pszDataType, "real") )
                 {
                     bCountIsInt = FALSE;
                 }

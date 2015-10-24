@@ -1204,7 +1204,7 @@ void PCIDSKDataset::CollectPCIDSKMetadata( int nSegment )
             }
         }
         
-        else if( EQUALN(pszName,"METADATA_FIL",13) )
+        else if( EQUALN(pszName,"METADATA_FIL",13) /* FIXME: strlen("METADATA_FIL") == 12 */ )
         {
             pszName += 13;
             if( *pszName == '_' )

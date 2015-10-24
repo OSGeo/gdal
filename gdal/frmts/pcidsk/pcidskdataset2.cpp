@@ -65,8 +65,8 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
     
     eDataType = PCIDSK2Dataset::PCIDSKTypeToGDAL( poChannel->GetType() );
 
-    if( !EQUALN(poChannel->GetDescription().c_str(),
-                "Contents Not Specified",20) )
+    if( !STARTS_WITH_CI(poChannel->GetDescription().c_str(),
+                "Contents Not Specified") )
         GDALMajorObject::SetDescription( poChannel->GetDescription().c_str() );
 
 /* -------------------------------------------------------------------- */
@@ -103,8 +103,8 @@ PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannel )
     {
         SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
 
-        if( !EQUALN(poChannel->GetDescription().c_str(),
-                    "Contents Not Specified",20) )
+        if( !STARTS_WITH_CI(poChannel->GetDescription().c_str(),
+                    "Contents Not Specified") )
             GDALMajorObject::SetDescription( poChannel->GetDescription().c_str() );
     }
 }
@@ -158,8 +158,8 @@ void PCIDSK2Band::SetDescription( const char *pszDescription )
     {
         poChannel->SetDescription( pszDescription );
 
-        if( !EQUALN(poChannel->GetDescription().c_str(),
-                    "Contents Not Specified",20) )
+        if( !STARTS_WITH_CI(poChannel->GetDescription().c_str(),
+                    "Contents Not Specified") )
             GDALMajorObject::SetDescription( poChannel->GetDescription().c_str() );
     }
     catch( PCIDSKException ex )

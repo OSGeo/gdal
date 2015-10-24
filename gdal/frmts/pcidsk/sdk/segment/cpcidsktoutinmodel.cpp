@@ -737,7 +737,7 @@ int  CPCIDSKToutinModelSegment::GetSensor( EphemerisSeg_t *OrbitPtr)
         nSensor = GOSAT_1500_L2;
     else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "HJ_CCD_1A"))
         nSensor = HJ_CCD_1A;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"HJ_CCD_1B",5))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "HJ_CCD_1B"))
         nSensor = HJ_CCD_1B;
     else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "NEW"))
         nSensor = NEW;

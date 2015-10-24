@@ -913,7 +913,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         GetCeosField( record, 141, "A8", szField );
 
-        if( !EQUALN(szField,"            ",8) )
+        if( !STARTS_WITH_CI(szField, "            ") )
             SetMetadataItem( "CEOS_PROCESSING_AGENCY", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1098,7 +1098,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 469, "A8", szField );
         szField[8] = '\0';
 
-        if( !EQUALN(szField,"                ",8 ) )
+        if( !STARTS_WITH_CI(szField, "        ") )
             SetMetadataItem( "CEOS_PLATFORM_HEADING", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1125,7 +1125,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 1527, "A8", szField );
         szField[8] = '\0';
 
-        if( !EQUALN(szField,"                ",8 ) )
+        if( !STARTS_WITH_CI(szField, "        ") )
             SetMetadataItem( "CEOS_PIXEL_TIME_DIR", szField );
 
 /* -------------------------------------------------------------------- */

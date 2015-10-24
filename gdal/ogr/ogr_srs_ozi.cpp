@@ -296,11 +296,11 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(SG) Swedish Grid", 27) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(SG) Swedish Grid") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(SUI) Swiss Grid", 26) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(SUI) Swiss Grid") )
     {
     }
 

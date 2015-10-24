@@ -4157,7 +4157,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
         pszSQLCommand ++;
 
     /* Try to analyse the SQL command to get the interest table */
-    if( EQUALN(pszSQLCommand, "SELECT", 5) )
+    if( STARTS_WITH_CI(pszSQLCommand, "SELECT") )
     {
         int bLayerAlreadyAdded = FALSE;
         CPLString osInterestLayers = "SET interest_layers =";

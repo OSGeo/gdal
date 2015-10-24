@@ -452,7 +452,7 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
                  !STARTS_WITH_CI(pszLine, "JABBERWOCKY") &&
                  !STARTS_WITH_CI(pszLine, "EOI") &&
                  ! ( psInfo->eSuperSectionType == AVCFileRPL &&
-                     EQUALN(pszLine, " 0.00000", 6)  ) )
+                     STARTS_WITH_CI(pszLine, " 0.00000")  ) )
         {
             eNewType = psInfo->eSuperSectionType;
         }

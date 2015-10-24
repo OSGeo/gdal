@@ -2343,7 +2343,7 @@ int ECWDataset::IdentifyECW( GDALOpenInfo * poOpenInfo )
     if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
          || poOpenInfo->nHeaderBytes == 0)
         && !STARTS_WITH_CI(poOpenInfo->pszFilename, "ecwp:")
-        && !EQUALN(poOpenInfo->pszFilename,"ecwps:",5) )
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename,"ecwps:") )
         return FALSE;
 
     return TRUE;

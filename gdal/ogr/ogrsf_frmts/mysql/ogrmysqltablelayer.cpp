@@ -182,7 +182,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         {
             oField.SetType( OFTString );            
         }
-        else if( EQUALN(pszType,"varchar",6)  )
+        else if( STARTS_WITH_CI(pszType,"varchar")  )
         {
             /* 
                pszType is usually in the form "varchar(15)" 

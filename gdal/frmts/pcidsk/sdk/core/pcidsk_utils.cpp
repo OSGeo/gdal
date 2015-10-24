@@ -407,7 +407,7 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
     dparms.resize(18);
 
     // This is rather iffy!
-    if( EQUALN(geosys.c_str(),"DEGREE",3) )
+    if( STARTS_WITH_CI(geosys.c_str(),"DEG" /* "DEGREE" */) )
         dparms[17] = (double) (int) UNIT_DEGREE;
     else if( STARTS_WITH_CI(geosys.c_str(), "MET") )
         dparms[17] = (double) (int) UNIT_METER;
@@ -415,7 +415,7 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
         dparms[17] = (double) (int) UNIT_US_FOOT;
     else if( STARTS_WITH_CI(geosys.c_str(), "FEET") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
-    else if( EQUALN(geosys.c_str(),"INTL FOOT",5) )
+    else if( STARTS_WITH_CI(geosys.c_str(),"INTL " /* "INTL FOOT" */) )
         dparms[17] = (double) (int) UNIT_INTL_FOOT;
     else if( STARTS_WITH_CI(geosys.c_str(), "SPCS") )
         dparms[17] = (double) (int) UNIT_METER;

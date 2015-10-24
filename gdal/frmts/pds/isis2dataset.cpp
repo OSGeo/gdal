@@ -883,10 +883,10 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
     /* check if labeling method is set : check the all three first chars */
     const char *pszLabelingMethod = CSLFetchNameValue( papszParmList, "LABELING_METHOD" );
     if ( pszLabelingMethod ){
-        if ( EQUALN( pszLabelingMethod, "detached", 3 ) ){
+        if ( STARTS_WITH_CI( pszLabelingMethod, "det" /* "detached" */ ) ){
             bAttachedLabelingMethod = false;
         }
-        if ( EQUALN( pszLabelingMethod, "attached", 3 ) ){
+        if ( STARTS_WITH_CI( pszLabelingMethod, "att" /* attached" */ ) ){
             bAttachedLabelingMethod = true;
         }
     }
