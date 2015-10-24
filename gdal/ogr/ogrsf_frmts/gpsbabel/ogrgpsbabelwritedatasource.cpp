@@ -136,7 +136,7 @@ int OGRGPSBabelWriteDataSource::Create( const char * pszName,
         return FALSE;
     }
 
-    if (!EQUALN(pszName, "GPSBABEL:", 9))
+    if (!STARTS_WITH_CI(pszName, "GPSBABEL:"))
     {
         const char* pszOptionGPSBabelDriverName =
                 CSLFetchNameValue(papszOptions, "GPSBABEL_DRIVER");

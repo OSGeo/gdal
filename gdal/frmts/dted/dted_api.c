@@ -162,9 +162,9 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
             return NULL;
         }
 
-    } while( EQUALN(achRecord,"VOL",3) || EQUALN(achRecord,"HDR",3) );
+    } while( STARTS_WITH_CI(achRecord, "VOL") || STARTS_WITH_CI(achRecord, "HDR") );
 
-    if( !EQUALN(achRecord,"UHL",3) )
+    if( !STARTS_WITH_CI(achRecord, "UHL") )
     {
         if( !bTestOpen )
         {
@@ -202,8 +202,8 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
     psDInfo->pachACCRecord = (char *) CPLMalloc(DTED_ACC_SIZE);
     VSIFReadL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, fp );
 
-    if( !EQUALN(psDInfo->pachDSIRecord,"DSI",3)
-        || !EQUALN(psDInfo->pachACCRecord,"ACC",3) )
+    if( !STARTS_WITH_CI(psDInfo->pachDSIRecord, "DSI")
+        || !STARTS_WITH_CI(psDInfo->pachACCRecord, "ACC") )
     {
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_OpenFailed,

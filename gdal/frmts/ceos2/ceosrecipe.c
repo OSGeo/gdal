@@ -546,7 +546,7 @@ static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token )
         return 0;
 
     ExtractString( record, 401, 28, szSARDataFormat );
-    if( !EQUALN( szSARDataFormat, "COMPRESSED CROSS-PRODUCTS", 25) )
+    if( !STARTS_WITH_CI(szSARDataFormat, "COMPRESSED CROSS-PRODUCTS") )
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -617,7 +617,7 @@ static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token )
         return 0;
 
     ExtractString( record, 49, 16, szProduct );
-    if( !EQUALN( szProduct, "ALOS-", 5 ) )
+    if( !STARTS_WITH_CI(szProduct, "ALOS-") )
         return 0;
 
 /* -------------------------------------------------------------------- */

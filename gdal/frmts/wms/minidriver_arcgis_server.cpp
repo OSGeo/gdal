@@ -86,7 +86,7 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
 		
 		if (irs != NULL)
 		{
-	        if(EQUALN(irs, "EPSG:", 5)) //if we have EPSG code just convert it to WKT
+	        if(STARTS_WITH_CI(irs, "EPSG:")) //if we have EPSG code just convert it to WKT
 	        {
 	            m_projection_wkt = ProjToWKT(irs);
 	            m_irs = irs + 5;

@@ -245,7 +245,7 @@ typedef struct
 GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
                                       const char*& pszStr)
 {
-    if( EQUALN(pszStr, "{{{", strlen("{{{")) )
+    if( STARTS_WITH_CI(pszStr, "{{{") )
     {
         pszStr += strlen("{{{");
         SkipSpaces(pszStr);
@@ -253,7 +253,7 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
         if( poExpr == NULL )
             return NULL;
         SkipSpaces(pszStr);
-        if( !EQUALN(pszStr, "}}}", strlen("}}}")) )
+        if( !STARTS_WITH_CI(pszStr, "}}}") )
         {
             ReportError(pszOriStr, pszStr);
             delete poExpr;
@@ -262,7 +262,7 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
         pszStr += strlen("}}}");
         return poExpr;
     }
-    else if( EQUALN(pszStr, "XPATH", strlen("XPATH")) )
+    else if( STARTS_WITH_CI(pszStr, "XPATH") )
     {
         pszStr += strlen("XPATH");
         SkipSpaces(pszStr);

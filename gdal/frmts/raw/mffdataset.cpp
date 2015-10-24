@@ -916,23 +916,23 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                 continue;
             }
         }
-        else if( EQUALN(pszExtension,"b",1) )
+        else if( STARTS_WITH_CI(pszExtension, "b") )
         {
             eDataType = GDT_Byte;
         }
-        else if( EQUALN(pszExtension,"i",1) )
+        else if( STARTS_WITH_CI(pszExtension, "i") )
         {
             eDataType = GDT_UInt16;
         }
-        else if( EQUALN(pszExtension,"j",1) )
+        else if( STARTS_WITH_CI(pszExtension, "j") )
         {
             eDataType = GDT_CInt16;
         }
-        else if( EQUALN(pszExtension,"r",1) )
+        else if( STARTS_WITH_CI(pszExtension, "r") )
         {
             eDataType = GDT_Float32;
         }
-        else if( EQUALN(pszExtension,"x",1) )
+        else if( STARTS_WITH_CI(pszExtension, "x") )
         {
             eDataType = GDT_CFloat32;
         }
@@ -1059,8 +1059,8 @@ int GetMFFProjectionType(const char *pszNewProjection)
 {
     OGRSpatialReference oSRS(pszNewProjection);
 
-    if( !EQUALN(pszNewProjection,"GEOGCS",6)
-       && !EQUALN(pszNewProjection,"PROJCS",6)
+    if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
+       && !STARTS_WITH_CI(pszNewProjection, "PROJCS")
        && !EQUAL(pszNewProjection,"") )
       {
           return MFFPRJ_UNRECOGNIZED;       
@@ -1451,7 +1451,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
           CPLFree(newGCPProjection);
           newGCPProjection = NULL;
 
-          if EQUALN(poSrcDS->GetProjectionRef(),"PROJCS",6)
+          if STARTS_WITH_CI(poSrcDS->GetProjectionRef(), "PROJCS")
           {
             // projected coordinate system- need to translate gcps */
             int bSuccess=TRUE;
@@ -1517,8 +1517,8 @@ MFFDataset::CreateCopy( const char * pszFilename,
           const char *pszSrcProjection = poSrcDS->GetProjectionRef();
           char *spheroid_name = NULL;
 
-          if( !EQUALN(pszSrcProjection,"GEOGCS",6)
-           && !EQUALN(pszSrcProjection,"PROJCS",6)
+          if( !STARTS_WITH_CI(pszSrcProjection, "GEOGCS")
+           && !STARTS_WITH_CI(pszSrcProjection, "PROJCS")
            && !EQUAL(pszSrcProjection,"") )
           {
             CPLError( CE_Warning, CPLE_AppDefined,

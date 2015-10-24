@@ -292,9 +292,9 @@ int DTEDDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 240 )
         return FALSE;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"VOL",3)
-        && !EQUALN((const char *)poOpenInfo->pabyHeader,"HDR",3)
-        && !EQUALN((const char *)poOpenInfo->pabyHeader,"UHL",3) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "VOL")
+        && !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "HDR")
+        && !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "UHL") )
     {
         return FALSE;
     }
@@ -302,7 +302,7 @@ int DTEDDataset::Identify( GDALOpenInfo * poOpenInfo )
     bool bFoundUHL = false;
     for(int i=0;i<poOpenInfo->nHeaderBytes-3 && !bFoundUHL ;i += DTED_UHL_SIZE)
     {
-        if( EQUALN((const char *)poOpenInfo->pabyHeader + i,"UHL", 3) )
+        if( STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + i, "UHL") )
         {
             bFoundUHL = true;
         }

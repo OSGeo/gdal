@@ -365,7 +365,7 @@ int CTGDataset::Identify( GDALOpenInfo * poOpenInfo )
     if ((EQUAL(pszFilename, "grid_cell.gz") ||
          EQUAL(pszFilename, "grid_cell1.gz") ||
          EQUAL(pszFilename, "grid_cell2.gz")) &&
-        !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         osFilename = "/vsigzip/";
         osFilename += poOpenInfo->pszFilename;
@@ -433,7 +433,7 @@ GDALDataset *CTGDataset::Open( GDALOpenInfo * poOpenInfo )
     if ((EQUAL(pszFilename, "grid_cell.gz") ||
          EQUAL(pszFilename, "grid_cell1.gz") ||
          EQUAL(pszFilename, "grid_cell2.gz")) &&
-        !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         osFilename = "/vsigzip/";
         osFilename += poOpenInfo->pszFilename;

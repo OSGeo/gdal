@@ -101,7 +101,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
     VSIFSeekL( fp, 0, SEEK_SET );
     VSIFReadL( szTemp, 1, 9, fp );
 
-    if( !EQUALN(szTemp,"NITF",4) && !EQUALN(szTemp,"NSIF",4) )
+    if( !STARTS_WITH_CI(szTemp, "NITF") && !STARTS_WITH_CI(szTemp, "NSIF") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The file %s is not an NITF file.", 
@@ -126,7 +126,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
 /* -------------------------------------------------------------------- */
 /*      Get header length.                                              */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(szTemp,"NITF01.",7) || EQUALN(achFSDWNG,"999998",6) )
+    if( STARTS_WITH_CI(szTemp, "NITF01.") || STARTS_WITH_CI(achFSDWNG, "999998") )
         nHeaderLenOffset = 394;
     else
         nHeaderLenOffset = 354;
@@ -253,7 +253,7 @@ retry_read_header:
         GetMD( psFile, pachHeader, 240,  20, FSCAUT );
         GetMD( psFile, pachHeader, 260,  20, FSCTLN );
         GetMD( psFile, pachHeader, 280,   6, FSDWNG );
-        if( EQUALN(pachHeader+280,"999998",6) )
+        if( STARTS_WITH_CI(pachHeader+280, "999998") )
         {
             GetMD( psFile, pachHeader, 286,  40, FSDEVT );
             nCOff += 40;
@@ -1025,7 +1025,7 @@ int NITFCreate( const char *pszFilename,
             else if( iBand == 2 )
                 pszIREPBAND = "B";
         }
-        else if( EQUALN(pszIREP,"YCbCr",5) )
+        else if( STARTS_WITH_CI(pszIREP, "YCbCr") )
         {
             if( iBand == 0 )
                 pszIREPBAND = "Y";
@@ -1294,7 +1294,7 @@ static int NITFWriteTREsFromOptions(
         if( !EQUALN(papszOptions[iOption], pszTREPrefix, nTREPrefixLen) )
             continue;
 
-        if( EQUALN(papszOptions[iOption]+nTREPrefixLen,"BLOCKA=",7)
+        if( STARTS_WITH_CI(papszOptions[iOption]+nTREPrefixLen, "BLOCKA=")
             && bIgnoreBLOCKA )
             continue;
         
@@ -1557,7 +1557,7 @@ const char *NITFFindTRE( const char *pszTREData, int nTREBytes,
         if (nTREBytes - 11 < nThisTRESize)
         {
             NITFGetField(szTemp, pszTREData, 0, 6 );
-            if (EQUALN(szTemp, "RPFIMG",6))
+            if (STARTS_WITH_CI(szTemp, "RPFIMG"))
             {
                 /* See #3848 */
                 CPLDebug("NITF", "Adjusting RPFIMG TRE size from %d to %d, which is the remaining size", nThisTRESize, nTREBytes - 11);
@@ -1611,7 +1611,7 @@ const char *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
         if (nTREBytes - 11 < nThisTRESize)
         {
             NITFGetField(szTemp, pszTREData, 0, 6 );
-            if (EQUALN(szTemp, "RPFIMG",6))
+            if (STARTS_WITH_CI(szTemp, "RPFIMG"))
             {
                 /* See #3848 */
                 CPLDebug("NITF", "Adjusting RPFIMG TRE size from %d to %d, which is the remaining size", nThisTRESize, nTREBytes - 11);
@@ -1993,7 +1993,7 @@ int NITFCollectAttachments( NITFFile *psFile )
 
             // NITF 2.0. (also works for NITF 2.1)
             nSTYPEOffset = 200;
-            if( EQUALN(achSubheader+193,"999998",6) )
+            if( STARTS_WITH_CI(achSubheader+193, "999998") )
                 nSTYPEOffset += 40;
 
 /* -------------------------------------------------------------------- */
@@ -2735,7 +2735,7 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
     psTreNode = NITFFindTREXMLDescFromName(psFile, pszTREName);
     if (psTreNode == NULL)
     {
-        if (!(EQUALN(pszTREName, "RPF", 3) || strcmp(pszTREName, "XXXXXX") == 0))
+        if (!(STARTS_WITH_CI(pszTREName, "RPF") || strcmp(pszTREName, "XXXXXX") == 0))
         {
             CPLDebug("NITF", "Cannot find definition of TRE %s in %s",
                     pszTREName, NITF_SPEC_FILE);

@@ -207,7 +207,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 
     for( dv_i = poTable->attr_begin(); dv_i != poTable->attr_end(); dv_i++ )
     {
-        if( EQUALN(poTable->get_name(dv_i).c_str(),"ogr_layer_info",14) 
+        if( STARTS_WITH_CI(poTable->get_name(dv_i).c_str(), "ogr_layer_info") 
             && poTable->is_container( dv_i ) )
         {
             AttrTable *poAttr = poTable->get_attr_table( dv_i );

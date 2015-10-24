@@ -159,7 +159,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
     int bExplicitFeatures = FALSE;
     int bWaypoints = TRUE, bTracks = TRUE, bRoutes = TRUE;
 
-    if (!EQUALN(pszDatasourceName, "GPSBABEL:", 9))
+    if (!STARTS_WITH_CI(pszDatasourceName, "GPSBABEL:"))
     {
         CPLAssert(pszGPSBabelDriverNameIn);
         pszGPSBabelDriverName = CPLStrdup(pszGPSBabelDriverNameIn);
@@ -208,7 +208,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
             return FALSE;
 
         /* Parse optionnal features= option */
-        if (EQUALN(pszSep+1, "features=", 9))
+        if (STARTS_WITH_CI(pszSep+1, "features="))
         {
             const char* pszNextSep = strchr(pszSep+1, ':');
             if (pszNextSep == NULL)

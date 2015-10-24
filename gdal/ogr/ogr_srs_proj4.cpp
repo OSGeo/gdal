@@ -998,14 +998,14 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             if( !EQUAL(ogr_pj_ellps[i],pszValue) )
                 continue;
 
-            CPLAssert( EQUALN(ogr_pj_ellps[i+1],"a=",2) );
+            CPLAssert( STARTS_WITH_CI(ogr_pj_ellps[i+1], "a=") );
 
             dfSemiMajor = CPLAtof(ogr_pj_ellps[i+1]+2);
-            if( EQUALN(ogr_pj_ellps[i+2],"rf=",3) )
+            if( STARTS_WITH_CI(ogr_pj_ellps[i+2], "rf=") )
                 dfInvFlattening = CPLAtof(ogr_pj_ellps[i+2]+3);
             else
             {
-                CPLAssert( EQUALN(ogr_pj_ellps[i+2],"b=",2) );
+                CPLAssert( STARTS_WITH_CI(ogr_pj_ellps[i+2], "b=") );
                 dfSemiMinor = CPLAtof(ogr_pj_ellps[i+2]+2);
                 dfInvFlattening = OSRCalcInvFlattening(dfSemiMajor, dfSemiMinor);
             }

@@ -678,7 +678,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             /* do nothing */
         }
         else if( (EQUAL(oField.GetNameRef(),"WKT") ||
-             EQUALN(oField.GetNameRef(),"_WKT", 4) )
+             STARTS_WITH_CI(oField.GetNameRef(), "_WKT") )
             && oField.GetType() == OFTString )
         {
             eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
@@ -1769,9 +1769,9 @@ OGRErr OGRCSVLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
     poFeatureDefn->AddGeomFieldDefn( poGeomField );
 
     const char* pszName = poGeomField->GetNameRef();
-    if( EQUALN(pszName, "geom_", strlen("geom_")) )
+    if( STARTS_WITH_CI(pszName, "geom_") )
         pszName += strlen("geom_");
-    if( !EQUAL(pszName, "WKT") && !EQUALN(pszName, "_WKT", 4) )
+    if( !EQUAL(pszName, "WKT") && !STARTS_WITH_CI(pszName, "_WKT") )
         pszName = CPLSPrintf("_WKT%s", pszName);
 
     OGRFieldDefn oRegularFieldDefn( pszName, OFTString );

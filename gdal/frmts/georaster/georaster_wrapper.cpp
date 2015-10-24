@@ -809,7 +809,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
                 nRasterRows, nRasterColumns, nRasterBands );
         }
 
-        if( EQUALN( sCompressionType.c_str(), "JPEG", 4 ) )
+        if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
         {
             sFormat.append( CPLSPrintf( 
                     "%s "
@@ -1411,13 +1411,13 @@ void GeoRasterWrapper::GetRasterInfo( void )
     sCompressionType  = CPLGetXMLValue( phMetadata,
         "rasterInfo.compression.type", "NONE" );
 
-    if( EQUALN( sCompressionType.c_str(), "JPEG", 4 ) )
+    if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
     {
         nCompressQuality = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.compression.quality", "75" ) );
     }
 
-    if( EQUALN( sCompressionType.c_str(), "JPEG", 4 ) )
+    if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
     {
         sInterleaving = "BIP";
     }
@@ -2036,7 +2036,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         //  Uncompress
         //  ----------------------------------------------------------------
 
-        if( EQUALN( sCompressionType.c_str(), "JPEG", 4 ) )
+        if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
         {
             UncompressJpeg( nBytesRead );
         }
@@ -2169,7 +2169,7 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
             //  Uncompress
             //  ------------------------------------------------------------
 
-            if( EQUALN( sCompressionType.c_str(), "JPEG", 4 ) )
+            if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
             {
                 UncompressJpeg( nBytesRead );
             }
@@ -2258,7 +2258,7 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
 
     if( ! EQUAL( sCompressionType.c_str(), "NONE" ) )
     {
-        if( EQUALN( sCompressionType.c_str(), "JPEG", 4 ) )
+        if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
         {
             nFlushBlockSize = CompressJpeg();
         }
@@ -3108,7 +3108,7 @@ bool GeoRasterWrapper::FlushMetadata()
     {
         CPLSetXMLValue( psNode, "type", sCompressionType.c_str() );
 
-        if( EQUALN( sCompressionType.c_str(), "JPEG", 4 ) )
+        if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
         {
             CPLSetXMLValue( psNode, "quality",
                 CPLSPrintf( "%d", nCompressQuality ) );

@@ -241,7 +241,7 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
         }
 
         if (strcmp(nptr,"-inf") == 0 ||
-            EQUALN (nptr,"-1.#INF",strlen("-1.#INF")))
+            STARTS_WITH_CI(nptr, "-1.#INF"))
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return -std::numeric_limits<double>::infinity();
@@ -254,7 +254,7 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return std::numeric_limits<double>::quiet_NaN();
         }
-        if( EQUALN (nptr,"1.#INF",strlen("1.#INF")) )
+        if( STARTS_WITH_CI(nptr, "1.#INF") )
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return std::numeric_limits<double>::infinity();

@@ -52,19 +52,19 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
         {
             return TRUE;
         }
-        else if ((EQUALN(osBaseFilename, "NationalFile_", 13) ||
-              EQUALN(osBaseFilename, "POP_PLACES_", 11) ||
-              EQUALN(osBaseFilename, "HIST_FEATURES_", 14) ||
-              EQUALN(osBaseFilename, "US_CONCISE_", 11) ||
-              EQUALN(osBaseFilename, "AllNames_", 9) ||
-              EQUALN(osBaseFilename, "Feature_Description_History_", 28) ||
-              EQUALN(osBaseFilename, "ANTARCTICA_", 11) ||
-              EQUALN(osBaseFilename, "GOVT_UNITS_", 11) ||
-              EQUALN(osBaseFilename, "NationalFedCodes_", 17) ||
-              EQUALN(osBaseFilename, "AllStates_", 10) ||
-              EQUALN(osBaseFilename, "AllStatesFedCodes_", 18) ||
-              (strlen(osBaseFilename) > 2 && EQUALN(osBaseFilename+2, "_Features_", 10)) ||
-              (strlen(osBaseFilename) > 2 && EQUALN(osBaseFilename+2, "_FedCodes_", 10))) &&
+        else if ((STARTS_WITH_CI(osBaseFilename, "NationalFile_") ||
+              STARTS_WITH_CI(osBaseFilename, "POP_PLACES_") ||
+              STARTS_WITH_CI(osBaseFilename, "HIST_FEATURES_") ||
+              STARTS_WITH_CI(osBaseFilename, "US_CONCISE_") ||
+              STARTS_WITH_CI(osBaseFilename, "AllNames_") ||
+              STARTS_WITH_CI(osBaseFilename, "Feature_Description_History_") ||
+              STARTS_WITH_CI(osBaseFilename, "ANTARCTICA_") ||
+              STARTS_WITH_CI(osBaseFilename, "GOVT_UNITS_") ||
+              STARTS_WITH_CI(osBaseFilename, "NationalFedCodes_") ||
+              STARTS_WITH_CI(osBaseFilename, "AllStates_") ||
+              STARTS_WITH_CI(osBaseFilename, "AllStatesFedCodes_") ||
+              (strlen(osBaseFilename) > 2 && STARTS_WITH_CI(osBaseFilename+2, "_Features_")) ||
+              (strlen(osBaseFilename) > 2 && STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_"))) &&
              (EQUAL(osExt, "txt") || EQUAL(osExt, "zip")) )
         {
             return TRUE;
@@ -88,7 +88,7 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
             return FALSE;
         }
     }
-    else if( EQUALN(poOpenInfo->pszFilename, "CSV:", 4) )
+    else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "CSV:") )
     {
         return TRUE;
     }

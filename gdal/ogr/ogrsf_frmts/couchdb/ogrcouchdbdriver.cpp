@@ -66,7 +66,7 @@ OGRDataSource *OGRCouchDBDriver::Open( const char * pszFilename, int bUpdate )
     {
         /* ok */
     }
-    else if (!EQUALN(pszFilename, "CouchDB:", 8))
+    else if (!STARTS_WITH_CI(pszFilename, "CouchDB:"))
         return NULL;
 
     OGRCouchDBDataSource   *poDS = new OGRCouchDBDataSource();

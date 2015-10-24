@@ -692,10 +692,10 @@ CPLErr EHdrDataset::SetGeoTransform( double *padfGeoTransform )
     int i;
     for( i = CSLCount(papszHDR)-1; i >= 0; i-- )
     {
-        if( EQUALN(papszHDR[i],"ul",2)
-            || EQUALN(papszHDR[i]+1,"ll",2)
-            || EQUALN(papszHDR[i],"cell",4)
-            || EQUALN(papszHDR[i]+1,"dim",3) )
+        if( STARTS_WITH_CI(papszHDR[i], "ul")
+            || STARTS_WITH_CI(papszHDR[i]+1, "ll")
+            || STARTS_WITH_CI(papszHDR[i], "cell")
+            || STARTS_WITH_CI(papszHDR[i]+1, "dim") )
         {
             papszHDR = CSLRemoveStrings( papszHDR, i, 1, NULL );
         }

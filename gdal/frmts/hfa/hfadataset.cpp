@@ -569,7 +569,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
                 eType = GFT_Real;
             else if( EQUAL(pszType,"string") )
                 eType = GFT_String;
-            else if( EQUALN(pszType,"int",3) )
+            else if( STARTS_WITH_CI(pszType, "int") )
                 eType = GFT_Integer;
             else
                 continue;
@@ -2222,7 +2222,7 @@ void HFARasterBand::ReadHistogramMetadata()
     const char *pszType =  poEntry->GetStringField( "dataType" );
     int nBinSize = 4;
 
-    if( pszType != NULL && EQUALN( "real", pszType, 4 ) )
+    if( pszType != NULL && STARTS_WITH_CI(pszType, "real") )
         nBinSize = 8;
 
     GUIntBig *panHistValues = (GUIntBig *) VSIMalloc2(sizeof(GUIntBig), nNumBins);
@@ -2855,7 +2855,7 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
         = (GDALRasterBand **) CPLCalloc(sizeof(void*),nReqOverviews);
 
     int bNoRegen = FALSE;
-    if( EQUALN(pszResampling,"NO_REGEN:",9) )
+    if( STARTS_WITH_CI(pszResampling, "NO_REGEN:") )
     {
         pszResampling += 9;
         bNoRegen = TRUE;
@@ -5091,7 +5091,7 @@ int HFADataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      Verify that this is a HFA file.                                 */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 15
-        || !EQUALN((char *) poOpenInfo->pabyHeader,"EHFA_HEADER_TAG",15) )
+        || !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "EHFA_HEADER_TAG") )
         return FALSE;
 
     return TRUE;

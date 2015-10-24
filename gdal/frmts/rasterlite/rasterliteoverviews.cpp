@@ -409,7 +409,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
     int nPrevOvrBlockYSize = (int)(nBlockYSize * dfRatioPrevOvr + 0.5);
     GByte* pabyPrevOvrMEMDSBuffer = NULL;
 
-    if( !EQUALN(pszResampling, "NEAR", 4))
+    if( !STARTS_WITH_CI(pszResampling, "NEAR"))
     {
         pabyPrevOvrMEMDSBuffer =
             (GByte*)VSIMalloc3(nPrevOvrBlockXSize, nPrevOvrBlockYSize, nBands * nDataTypeSize);

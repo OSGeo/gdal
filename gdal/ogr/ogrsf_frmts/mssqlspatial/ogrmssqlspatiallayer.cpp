@@ -143,7 +143,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
         {
 		    if (EQUAL(poStmt->GetColName(iCol), pszFIDColumn) )
             {
-                if (EQUALN(poStmt->GetColTypeName( iCol ), "bigint", 6))
+                if (STARTS_WITH_CI(poStmt->GetColTypeName( iCol ), "bigint"))
                     SetMetadataItem(OLMD_FID64, "YES");
             
                 if ( EQUAL(poStmt->GetColTypeName( iCol ), "int identity") ||

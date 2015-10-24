@@ -860,7 +860,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
 /*      Handle command to drop a spatial index.                         */
 /* ==================================================================== */
-    if( EQUALN(pszStatement, "REPACK ", 7) )
+    if( STARTS_WITH_CI(pszStatement, "REPACK ") )
     {
         OGRShapeLayer *poLayer = (OGRShapeLayer *) 
             GetLayerByName( pszStatement + 7 );
@@ -886,7 +886,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
 /*      Handle command to shrink columns to their minimum size.         */
 /* ==================================================================== */
-    if( EQUALN(pszStatement, "RESIZE ", 7) )
+    if( STARTS_WITH_CI(pszStatement, "RESIZE ") )
     {
         OGRShapeLayer *poLayer = (OGRShapeLayer *)
             GetLayerByName( pszStatement + 7 );
@@ -905,7 +905,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
 /*      Handle command to recompute extent                             */
 /* ==================================================================== */
-    if( EQUALN(pszStatement, "RECOMPUTE EXTENT ON ", 20) )
+    if( STARTS_WITH_CI(pszStatement, "RECOMPUTE EXTENT ON ") )
     {
         OGRShapeLayer *poLayer = (OGRShapeLayer *) 
             GetLayerByName( pszStatement + 20 );
@@ -924,7 +924,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
 /*      Handle command to drop a spatial index.                         */
 /* ==================================================================== */
-    if( EQUALN(pszStatement, "DROP SPATIAL INDEX ON ", 22) )
+    if( STARTS_WITH_CI(pszStatement, "DROP SPATIAL INDEX ON ") )
     {
         OGRShapeLayer *poLayer = (OGRShapeLayer *) 
             GetLayerByName( pszStatement + 22 );
@@ -943,7 +943,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
 /*      Handle all comands except spatial index creation generically.   */
 /* ==================================================================== */
-    if( !EQUALN(pszStatement,"CREATE SPATIAL INDEX ON ",24) )
+    if( !STARTS_WITH_CI(pszStatement, "CREATE SPATIAL INDEX ON ") )
     {
         char **papszTokens = CSLTokenizeString( pszStatement );
         if( CSLCount(papszTokens) >=4

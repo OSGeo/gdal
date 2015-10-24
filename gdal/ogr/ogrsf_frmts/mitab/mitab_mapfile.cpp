@@ -249,9 +249,9 @@ TABMAPFile::~TABMAPFile()
 
 int TABMAPFile::Open(const char *pszFname, const char* pszAccess, GBool bNoErrorMsg)
 {
-    if( EQUALN(pszAccess, "r", 1) )
+    if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead, bNoErrorMsg);
-    else if( EQUALN(pszAccess, "w", 1) )
+    else if( STARTS_WITH_CI(pszAccess, "w") )
         return Open(pszFname, TABWrite, bNoErrorMsg);
     else
     {

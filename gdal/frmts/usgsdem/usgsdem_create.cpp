@@ -985,7 +985,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
             return FALSE;
 
-        if( EQUALN(pszNTS+6,"e",1) )
+        if( STARTS_WITH_CI(pszNTS+6, "e") )
             dfULX += (( dfULY < 68.1 ) ? 0.25 : ( dfULY < 80.1 ) ? 0.5 : 1);
     }
 
@@ -1042,12 +1042,12 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
             return FALSE;
 
-        if( EQUALN(psWInfo->pszFilename+7,"e",1) )
+        if( STARTS_WITH_CI(psWInfo->pszFilename+7, "e") )
             dfULX += (( dfULY < 68.1 ) ? 0.25 : ( dfULY < 80.1 ) ? 0.5 : 1);
     }
              
     else if( strlen(psWInfo->pszFilename) == 14 
-             && EQUALN(psWInfo->pszFilename+6,"DEM",3)
+             && STARTS_WITH_CI(psWInfo->pszFilename+6, "DEM")
              && EQUAL(psWInfo->pszFilename+10,".dem") )
     {
         char szTrimmedTile[7];
@@ -1058,7 +1058,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
             return FALSE;
 
-        if( EQUALN(psWInfo->pszFilename+9,"e",1) )
+        if( STARTS_WITH_CI(psWInfo->pszFilename+9, "e") )
             dfULX += (( dfULY < 68.1 ) ? 0.25 : ( dfULY < 80.1 ) ? 0.5 : 1);
     }
 
@@ -1138,7 +1138,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
     else
     {
         const char *pszBasename = CPLGetFilename( psWInfo->pszFilename);
-        if( !EQUALN(pszBasename+6,"DEM",3) 
+        if( !STARTS_WITH_CI(pszBasename+6, "DEM") 
             || strlen(pszBasename) != 10 )
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Internal filename required to be of 'nnnannDEMz', the output\n"

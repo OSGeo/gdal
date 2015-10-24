@@ -278,12 +278,12 @@ int JDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 
     /* check if century values seem reasonable */
-    if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
-          && !EQUALN((char *)poOpenInfo->pabyHeader+11,"20",2))
-        || (!EQUALN((char *)poOpenInfo->pabyHeader+15,"19",2)
-             && !EQUALN((char *)poOpenInfo->pabyHeader+15,"20",2))
-        || (!EQUALN((char *)poOpenInfo->pabyHeader+19,"19",2)
-             && !EQUALN((char *)poOpenInfo->pabyHeader+19,"20",2)) )
+    if( (!STARTS_WITH_CI((char *)poOpenInfo->pabyHeader+11, "19")
+          && !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader+11, "20"))
+        || (!STARTS_WITH_CI((char *)poOpenInfo->pabyHeader+15, "19")
+             && !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader+15, "20"))
+        || (!STARTS_WITH_CI((char *)poOpenInfo->pabyHeader+19, "19")
+             && !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader+19, "20")) )
     {
         return FALSE;
     }

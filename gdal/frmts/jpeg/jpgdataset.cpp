@@ -518,7 +518,7 @@ const char *JPGDatasetCommon::GetMetadataItem( const char * pszName,
     if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
         (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         pszName != NULL &&
-        (EQUAL(pszName, "COMMENT") || EQUALN(pszName, "EXIF_", 5)))
+        (EQUAL(pszName, "COMMENT") || STARTS_WITH_CI(pszName, "EXIF_")))
         ReadEXIFMetadata();
     if (eAccess == GA_ReadOnly && !bHasReadICCMetadata &&
         pszDomain != NULL && EQUAL(pszDomain, "COLOR_PROFILE"))
@@ -2119,7 +2119,7 @@ int JPGDatasetCommon::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      If it is a subfile, read the JPEG header.                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:",13) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "JPEG_SUBFILE:") )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -2198,11 +2198,11 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
     const char *real_filename = pszFilename;
     int nQLevel = -1;
 
-    if( EQUALN(pszFilename,"JPEG_SUBFILE:",13) )
+    if( STARTS_WITH_CI(pszFilename, "JPEG_SUBFILE:") )
     {
         bool bScan = false;
 
-        if( EQUALN(pszFilename,"JPEG_SUBFILE:Q",14) )
+        if( STARTS_WITH_CI(pszFilename, "JPEG_SUBFILE:Q") )
         {
             char** papszTokens = CSLTokenizeString2(pszFilename + 14, ",", 0);
             if (CSLCount(papszTokens) >= 3)

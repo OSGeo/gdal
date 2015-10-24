@@ -789,7 +789,7 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
         }
 
         pszRPBTag = apszRPBMap[i+1];
-        if( EQUALN(pszRPBTag,"IMAGE.",6) )
+        if( STARTS_WITH_CI(pszRPBTag, "IMAGE.") )
             pszRPBTag += 6;
 
         if( strstr(apszRPBMap[i], "COEF" ) == NULL )

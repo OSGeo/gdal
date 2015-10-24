@@ -86,11 +86,11 @@ class VSITarReader : public VSIArchiveReader
 
 static bool VSIIsTGZ(const char* pszFilename)
 {
-    return (!EQUALN(pszFilename, "/vsigzip/", 9) &&
+    return (!STARTS_WITH_CI(pszFilename, "/vsigzip/") &&
             ((strlen(pszFilename) > 4 &&
-            EQUALN(pszFilename + strlen(pszFilename) - 4, ".tgz", 4)) ||
+            STARTS_WITH_CI(pszFilename + strlen(pszFilename) - 4, ".tgz")) ||
             (strlen(pszFilename) > 7 &&
-            EQUALN(pszFilename + strlen(pszFilename) - 7, ".tar.gz", 7))));
+            STARTS_WITH_CI(pszFilename + strlen(pszFilename) - 7, ".tar.gz"))));
 }
 
 /************************************************************************/

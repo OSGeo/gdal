@@ -1607,7 +1607,7 @@ char **netCDFDataset::GetMetadataDomainList()
 /************************************************************************/
 char **netCDFDataset::GetMetadata( const char *pszDomain )
 {
-    if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) )
+    if( pszDomain != NULL && STARTS_WITH_CI(pszDomain, "SUBDATASETS") )
         return papszSubDatasets;
 
     return GDALDataset::GetMetadata( pszDomain );
@@ -3162,8 +3162,8 @@ CPLErr 	netCDFDataset::SetProjection( const char * pszNewProjection )
 
     CPLDebug( "GDAL_netCDF", "SetProjection, WKT = %s", pszNewProjection );
 
-    if( !EQUALN(pszNewProjection,"GEOGCS",6)
-        && !EQUALN(pszNewProjection,"PROJCS",6)
+    if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
+        && !STARTS_WITH_CI(pszNewProjection, "PROJCS")
         && !EQUAL(pszNewProjection,"") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -4210,11 +4210,11 @@ CPL_UNUSED
 /*      http://www.unidata.ucar.edu/software/netcdf/docs/faq.html#fv1_5 */
 /* -------------------------------------------------------------------- */
 
-    if( EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") )
         return NCDF_FORMAT_UNKNOWN;
     if ( poOpenInfo->nHeaderBytes < 4 )
         return NCDF_FORMAT_NONE;
-    if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\001",4) )
+    if ( STARTS_WITH_CI((char*)poOpenInfo->pabyHeader, "CDF\001") )
     {
         /* In case the netCDF driver is registered before the GMT driver, */
         /* avoid opening GMT files */
@@ -4239,9 +4239,9 @@ CPL_UNUSED
 
         return NCDF_FORMAT_NC;
     }
-    else if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\002",4) )
+    else if ( STARTS_WITH_CI((char*)poOpenInfo->pabyHeader, "CDF\002") )
         return NCDF_FORMAT_NC2;
-    else if ( EQUALN((char*)poOpenInfo->pabyHeader,"\211HDF\r\n\032\n",8) ) {
+    else if ( STARTS_WITH_CI((char*)poOpenInfo->pabyHeader, "\211HDF\r\n\032\n") ) {
         /* Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
            If HDF5 is not supported in GDAL, this driver will try to open the file 
            Else, make sure this driver does not try to open HDF5 files 
@@ -4268,7 +4268,7 @@ CPL_UNUSED
 #endif
 
     }
-    else if ( EQUALN((char*)poOpenInfo->pabyHeader,"\016\003\023\001",4) ) {
+    else if ( STARTS_WITH_CI((char*)poOpenInfo->pabyHeader, "\016\003\023\001") ) {
         /* Requires HDF4 support in libnetcdf, but if HF4 is supported by GDAL don't try to open. */
         /* If user really wants to open with this driver, use NETCDF:file.hdf syntax. */
 
@@ -4298,7 +4298,7 @@ CPL_UNUSED
 int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    if( EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") ) {
         return TRUE;
     }
     const int nTmpFormat = IdentifyFormat( poOpenInfo );
@@ -4326,7 +4326,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Does this appear to be a netcdf file?                           */
 /* -------------------------------------------------------------------- */
     int nTmpFormat = NCDF_FORMAT_NONE;
-    if( ! EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
+    if( ! STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") ) {
         nTmpFormat = IdentifyFormat( poOpenInfo );
 #ifdef NCDF_DEBUG
     CPLDebug( "GDAL_netCDF", "identified format %d", nTmpFormat );
@@ -4354,7 +4354,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     bool bTreatAsSubdataset = false;
     CPLString osSubdatasetName;
 
-    if( EQUALN( poOpenInfo->pszFilename,"NETCDF:",7) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") )
     {
         char **papszName =
             CSLTokenizeString2( poOpenInfo->pszFilename,
@@ -4704,7 +4704,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int bCheckDims = FALSE;
     bCheckDims = 
         ( CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ) )
-          != FALSE ) && EQUALN( szConventions, "CF", 2 );
+          != FALSE ) && STARTS_WITH_CI(szConventions, "CF");
 
     char szDimName[NC_MAX_NAME];
 
@@ -5895,14 +5895,14 @@ int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
     /* Valid strings are "GDAL 1.9dev, released 2011/01/18" and "GDAL 1.8.1 " */
     if ( pszVersion == NULL || EQUAL( pszVersion, "" ) )
         return FALSE;
-    else if ( ! EQUALN("GDAL ", pszVersion, 5) )
+    else if ( ! STARTS_WITH_CI(pszVersion, "GDAL ") )
         return FALSE;
     /* 2.0dev of 2011/12/29 has been later renamed as 1.10dev */
     else if ( EQUAL("GDAL 2.0dev, released 2011/12/29", pszVersion) )
         return nTarget <= GDAL_COMPUTE_VERSION(1,10,0);
-    else if ( EQUALN("GDAL 1.9dev", pszVersion,11 ) )
+    else if ( STARTS_WITH_CI(pszVersion, "GDAL 1.9dev") )
         return nTarget <= 1900;
-    else if ( EQUALN("GDAL 1.8dev", pszVersion,11 ) )
+    else if ( STARTS_WITH_CI(pszVersion, "GDAL 1.8dev") )
         return nTarget <= 1800;
 
     char **papszTokens = CSLTokenizeString2( pszVersion+5, ".", 0 );

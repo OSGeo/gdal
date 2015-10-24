@@ -130,7 +130,7 @@ int LOSLASDataset::Identify( GDALOpenInfo *poOpenInfo )
         && !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"los") )
         return FALSE;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader + 56, "NADGRD", 6 ) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + 56, "NADGRD") )
         return FALSE;
 
     return TRUE;

@@ -941,7 +941,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     panMetadata[9] = 0; /* CWD_OPTION */
     /* Check the units/options for user overrides */
     pszTemp = CSLFetchNameValueDef( papszOptions, "ELEVATION_UNIT", "METERS" );
-    if( EQUALN( pszTemp, "METER", 5 ) )
+    if( STARTS_WITH_CI(pszTemp, "METER") )
     {
         panMetadata[0] = 0;
     }
@@ -1180,7 +1180,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     {
         bSetLinearUnits = TRUE;
     }
-    else if( EQUALN( pszTemp, "METER", 5 ) )
+    else if( STARTS_WITH_CI(pszTemp, "METER") )
     {
         nLinearUnits = 0;
     }
@@ -1188,7 +1188,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     {
         nLinearUnits = 1;
     }
-    else if( EQUALN( pszTemp, "KILOMETER", 9 ) )
+    else if( STARTS_WITH_CI(pszTemp, "KILOMETER") )
     {
         nLinearUnits = 2;
     }
@@ -1292,7 +1292,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             {
                 nLinearUnits = 1;
             }
-            else if( EQUALN( pszUnit, "kilomet", 7 ) )
+            else if( STARTS_WITH_CI(pszUnit, "kilomet") )
             {
                 nLinearUnits = 2;
             }

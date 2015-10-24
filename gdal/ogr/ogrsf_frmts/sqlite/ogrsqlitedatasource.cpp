@@ -1691,7 +1691,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 
@@ -1763,9 +1763,9 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
             }
         }
     }
-    else if( !EQUALN(pszSQLCommand,"SELECT ",7) && !EQUAL(pszSQLCommand, "BEGIN")
+    else if( !STARTS_WITH_CI(pszSQLCommand, "SELECT ") && !EQUAL(pszSQLCommand, "BEGIN")
         && !EQUAL(pszSQLCommand, "COMMIT")
-        && !EQUALN(pszSQLCommand, "CREATE TABLE ", strlen("CREATE TABLE ")) )
+        && !STARTS_WITH_CI(pszSQLCommand, "CREATE TABLE ") )
     {
         for(int i = 0; i < nLayers; i++)
             papoLayers[i]->InvalidateCachedFeatureCountAndExtent();
@@ -1834,7 +1834,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
         }
 
-        if( EQUALN(pszSQLCommand, "CREATE ", 7) )
+        if( STARTS_WITH_CI(pszSQLCommand, "CREATE ") )
         {
             char **papszTokens = CSLTokenizeString( pszSQLCommand );
             if ( CSLCount(papszTokens) >= 4 &&
@@ -1849,7 +1849,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
         }
 
-        if( !EQUALN(pszSQLCommand, "SELECT ", 7) )
+        if( !STARTS_WITH_CI(pszSQLCommand, "SELECT ") )
         {
             sqlite3_finalize( hSQLStmt );
             return NULL;
@@ -1863,15 +1863,14 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Special case for some functions which must be run               */
 /*      only once                                                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"SELECT ",7) )
+    if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") )
     {
         unsigned int i;
         for(i=0;i<sizeof(apszFuncsWithSideEffects)/
                   sizeof(apszFuncsWithSideEffects[0]);i++)
         {
             if( EQUALN(apszFuncsWithSideEffects[i], pszSQLCommand + 7,
-                       strlen(apszFuncsWithSideEffects[i])) )
-            {
+                       strlen(apszFuncsWithSideEffects[i])) )            {
                 if (sqlite3_column_count( hSQLStmt ) == 1 &&
                     sqlite3_column_type( hSQLStmt, 0 ) == SQLITE_INTEGER )
                 {

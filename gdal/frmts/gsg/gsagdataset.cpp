@@ -808,7 +808,7 @@ int GSAGDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     /* Check for signature */
     if( poOpenInfo->nHeaderBytes < 5
-        || !EQUALN((const char *) poOpenInfo->pabyHeader,"DSAA",4)
+        || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "DSAA")
         || ( poOpenInfo->pabyHeader[4] != '\x0D'
             && poOpenInfo->pabyHeader[4] != '\x0A' ))
     {

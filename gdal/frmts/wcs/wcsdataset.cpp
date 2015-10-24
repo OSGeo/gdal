@@ -471,7 +471,7 @@ WCSDataset::~WCSDataset()
 
 {
     // perhaps this should be moved into a FlushCache() method.
-    if( bServiceDirty && !EQUALN(GetDescription(),"<WCS_GDAL>",10) )
+    if( bServiceDirty && !STARTS_WITH_CI(GetDescription(), "<WCS_GDAL>") )
     {
         CPLSerializeXMLTreeToFile( psService, GetDescription() );
         bServiceDirty = FALSE;
@@ -1023,11 +1023,11 @@ int WCSDataset::ExtractGridInfo100()
 
     // We should try to use the services name for the CRS if possible.
     if( pszNativeCRSs != NULL
-        && ( EQUALN(pszNativeCRSs,"EPSG:",5)
-             || EQUALN(pszNativeCRSs,"AUTO:",5)
-             || EQUALN(pszNativeCRSs,"Image ",6)
-             || EQUALN(pszNativeCRSs,"Engineering ",12)
-             || EQUALN(pszNativeCRSs,"OGC:",4) ) )
+        && ( STARTS_WITH_CI(pszNativeCRSs, "EPSG:")
+             || STARTS_WITH_CI(pszNativeCRSs, "AUTO:")
+             || STARTS_WITH_CI(pszNativeCRSs, "Image ")
+             || STARTS_WITH_CI(pszNativeCRSs, "Engineering ")
+             || STARTS_WITH_CI(pszNativeCRSs, "OGC:") ) )
     {
         osCRS = pszNativeCRSs;
         
@@ -1057,11 +1057,11 @@ int WCSDataset::ExtractGridInfo100()
         CPLFree( pszProjection );
         oSRS.exportToWkt( &pszProjection );
 
-        if( EQUALN(pszProjOverride,"EPSG:",5)
-            || EQUALN(pszProjOverride,"AUTO:",5)
-            || EQUALN(pszProjOverride,"OGC:",4)
-            || EQUALN(pszProjOverride,"Image ",6)
-            || EQUALN(pszProjOverride,"Engineering ",12) )
+        if( STARTS_WITH_CI(pszProjOverride, "EPSG:")
+            || STARTS_WITH_CI(pszProjOverride, "AUTO:")
+            || STARTS_WITH_CI(pszProjOverride, "OGC:")
+            || STARTS_WITH_CI(pszProjOverride, "Image ")
+            || STARTS_WITH_CI(pszProjOverride, "Engineering ") )
             osCRS = pszProjOverride;
     }
 
@@ -2033,17 +2033,17 @@ int WCSDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      equivelent?                                                     */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes == 0
-        && EQUALN((const char *) poOpenInfo->pszFilename,"<WCS_GDAL>",10) )
+        && STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "<WCS_GDAL>") )
         return TRUE;
 
     else if( poOpenInfo->nHeaderBytes >= 10
-             && EQUALN((const char *) poOpenInfo->pabyHeader,"<WCS_GDAL>",10) )
+             && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "<WCS_GDAL>") )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Is this apparently a WCS subdataset reference?                  */
 /* -------------------------------------------------------------------- */
-    else if( EQUALN((const char *) poOpenInfo->pszFilename,"WCS_SDS:",8) 
+    else if( STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "WCS_SDS:") 
              && poOpenInfo->nHeaderBytes == 0 )
         return TRUE;
 
@@ -2067,19 +2067,19 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLXMLNode *psService = NULL;
 
     if( poOpenInfo->nHeaderBytes == 0 
-        && EQUALN((const char *) poOpenInfo->pszFilename,"<WCS_GDAL>",10) )
+        && STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "<WCS_GDAL>") )
     {
         psService = CPLParseXMLString( poOpenInfo->pszFilename );
     }
     else if( poOpenInfo->nHeaderBytes >= 10
-             && EQUALN((const char *) poOpenInfo->pabyHeader,"<WCS_GDAL>",10) )
+             && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "<WCS_GDAL>") )
     {
         psService = CPLParseXMLFile( poOpenInfo->pszFilename );
     }
 /* -------------------------------------------------------------------- */
 /*      Is this apparently a subdataset?                                */
 /* -------------------------------------------------------------------- */
-    else if( EQUALN((const char *) poOpenInfo->pszFilename,"WCS_SDS:",8) 
+    else if( STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "WCS_SDS:") 
              && poOpenInfo->nHeaderBytes == 0 )
     {
         int iLast;
@@ -2258,8 +2258,8 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      metadata.  Note we don't do subdatasets if this is a            */
 /*      subdataset or if this is an all-in-memory service.              */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(poOpenInfo->pszFilename,"WCS_SDS:",8) 
-        && !EQUALN(poOpenInfo->pszFilename,"<WCS_GDAL>",10) 
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "WCS_SDS:") 
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "<WCS_GDAL>") 
         && poDS->aosTimePositions.size() > 0 )
     {
         char **papszSubdatasets = NULL;

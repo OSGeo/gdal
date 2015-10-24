@@ -299,7 +299,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Is this a numpy dataset name?                                   */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(poOpenInfo->pszFilename,"NUMPY:::",8) 
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "NUMPY:::") 
         || poOpenInfo->fpL != NULL )
         return NULL;
 

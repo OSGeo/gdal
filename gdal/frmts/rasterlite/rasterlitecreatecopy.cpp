@@ -403,7 +403,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     /* Skip optionnal RASTERLITE: prefix */
     const char* pszFilenameWithoutPrefix = pszFilename;
-    if (EQUALN(pszFilename, "RASTERLITE:", 11))
+    if (STARTS_WITH_CI(pszFilename, "RASTERLITE:"))
         pszFilenameWithoutPrefix += 11;
     
     char** papszTokens = CSLTokenizeStringComplex( 
@@ -421,7 +421,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         int i;
         for(i=1;i<nTokens;i++)
         {
-            if (EQUALN(papszTokens[i], "table=", 6))
+            if (STARTS_WITH_CI(papszTokens[i], "table="))
                 osTableName = papszTokens[i] + 6;
             else
             {

@@ -1140,7 +1140,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             pszValue = CSVGetField( pszFilename,
                                     "DATUM_CODE", szSearchKey, CC_Integer,
                                     "DATUM_TYPE" );
-            if( pszValue != NULL && EQUALN(pszValue,"geodetic",8) )
+            if( pszValue != NULL && STARTS_WITH_CI(pszValue, "geodetic") )
                 pszVDatumType = "2002"; // CS_VD_Ellipsoidal
 
             // We unfortunately don't know how to identify other 

@@ -194,11 +194,11 @@ void OGRXPlaneAptReader::Rewind()
 
 int OGRXPlaneAptReader::IsRecognizedVersion( const char* pszVersionString)
 {
-    if (EQUALN(pszVersionString, "810 Version", 11))
+    if (STARTS_WITH_CI(pszVersionString, "810 Version"))
         nVersion = APT_V_810;
-    else if (EQUALN(pszVersionString, "850 Version", 11))
+    else if (STARTS_WITH_CI(pszVersionString, "850 Version"))
         nVersion = APT_V_850;
-    else if (EQUALN(pszVersionString, "1000 Version", 12))
+    else if (STARTS_WITH_CI(pszVersionString, "1000 Version"))
         nVersion = APT_V_1000;
     else
         nVersion = APT_V_UNKNOWN;

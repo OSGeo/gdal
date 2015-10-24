@@ -290,7 +290,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( i = 0; i < nBytesRead - 5 && !bGotGrid; i++ )
     {
-        if( pszBigBuf[i] == '#' && EQUALN(pszBigBuf+i+1,"GRID",4) )
+        if( pszBigBuf[i] == '#' && STARTS_WITH_CI(pszBigBuf+i+1, "GRID") )
             bGotGrid = TRUE;
     }
 

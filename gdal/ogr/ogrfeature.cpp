@@ -5086,7 +5086,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
         {
             if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
             {
-                if( EQUALN(pszDefault, "CURRENT", strlen("CURRENT")) )
+                if( STARTS_WITH_CI(pszDefault, "CURRENT") )
                 {
                     time_t t = time(NULL);
                     struct tm brokendown;

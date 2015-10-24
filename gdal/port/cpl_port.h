@@ -374,6 +374,10 @@ CPL_C_END
 #  define EQUAL(a,b)              (STRCASECMP(a,b)==0)
 #endif
 
+#ifndef STARTS_WITH_CI
+#define STARTS_WITH_CI(a,b)            EQUALN(a,b,strlen(b))
+#endif
+
 #ifndef CPL_THREADLOCAL
 #  define CPL_THREADLOCAL
 #endif

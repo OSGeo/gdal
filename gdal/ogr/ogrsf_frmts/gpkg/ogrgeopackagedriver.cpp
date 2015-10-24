@@ -42,7 +42,7 @@ static const char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
 
 static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    if( EQUALN(poOpenInfo->pszFilename, "GPKG:", 5) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPKG:") )
         return TRUE;
 
     /* Requirement 3: File name has to end in "gpkg" */

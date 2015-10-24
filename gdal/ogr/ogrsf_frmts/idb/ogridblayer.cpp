@@ -117,7 +117,7 @@ CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
         if ( pszGeomColumn != NULL && EQUAL(pszColName,pszGeomColumn) )
             continue;
 
-        if ( EQUALN("st_", pszTypName, 3) && pszGeomColumn == NULL )
+        if ( STARTS_WITH_CI(pszTypName, "st_") && pszGeomColumn == NULL )
         {
             // We found spatial column!
             pszGeomColumn = CPLStrdup(pszColName);
@@ -143,17 +143,17 @@ CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
              EQUAL( pszTypName, "byte" ) ||
              EQUAL( pszTypName, "opaque" ) ||
              EQUAL( pszTypName, "text" ) ||
-             EQUALN( pszTypName, "list", 4 ) ||
-             EQUALN( pszTypName, "collection", 10 ) ||
-             EQUALN( pszTypName, "row", 3 ) ||
-             EQUALN( pszTypName, "set", 3 ) )
+             STARTS_WITH_CI(pszTypName, "list") ||
+             STARTS_WITH_CI(pszTypName, "collection") ||
+             STARTS_WITH_CI(pszTypName, "row") ||
+             STARTS_WITH_CI(pszTypName, "set") )
         {
             CPLDebug( "OGR_IDB", "'%s' column type not supported yet. Column '%s'",
                       pszTypName, pszColName );
             continue;
         }
 
-        if ( EQUALN( pszTypName, "st_", 3 ) )
+        if ( STARTS_WITH_CI(pszTypName, "st_") )
         {
             oField.SetType( OFTBinary );
         }

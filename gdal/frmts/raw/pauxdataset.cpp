@@ -160,7 +160,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
                 pszLine++;
 
             if( pszLine != NULL
-                && EQUALN(pszLine, "(RGB:",5)
+                && STARTS_WITH_CI(pszLine, "(RGB:")
                 && sscanf( pszLine+5, "%d %d %d", 
                            &nRed, &nGreen, &nBlue ) == 3 )
             {
@@ -622,7 +622,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osTarget = poOpenInfo->pszFilename;
 
     if( EQUAL(CPLGetExtension( poOpenInfo->pszFilename ),"aux")
-        && EQUALN((const char *) poOpenInfo->pabyHeader,"AuxilaryTarget: ",16))
+        && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "AuxilaryTarget: "))
     {
         char	szAuxTarget[1024];
         char    *pszPath;
@@ -681,8 +681,8 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFCloseL( fp );
 
     if( pszLine == NULL
-        || (!EQUALN(pszLine,"AuxilaryTarget",14)
-            && !EQUALN(pszLine,"AuxiliaryTarget",15)) )
+        || (!STARTS_WITH_CI(pszLine, "AuxilaryTarget")
+            && !STARTS_WITH_CI(pszLine, "AuxiliaryTarget")) )
     {
         return NULL;
     }
@@ -1066,7 +1066,7 @@ CPLErr PAuxDelete( const char * pszBasename )
     pszLine = CPLReadLineL( fp );
     VSIFCloseL( fp );
     
-    if( pszLine == NULL || !EQUALN(pszLine,"AuxilaryTarget",14) )
+    if( pszLine == NULL || !STARTS_WITH_CI(pszLine, "AuxilaryTarget") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s does not appear to be a PAux dataset,\n"

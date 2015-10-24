@@ -95,10 +95,10 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
         return NULL;
     }
 
-    if (EQUALN(pszContentFilename, "ODS:", 4) ||
+    if (STARTS_WITH_CI(pszContentFilename, "ODS:") ||
         EQUAL(CPLGetFilename(pszContentFilename), "content.xml"))
     {
-        if (EQUALN(pszContentFilename, "ODS:", 4))
+        if (STARTS_WITH_CI(pszContentFilename, "ODS:"))
             pszContentFilename += 4;
 
         fpContent = VSIFOpenL(pszContentFilename, "rb");

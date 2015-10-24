@@ -319,7 +319,7 @@ int CPLEncodingCharSize( const char *pszEncoding )
         return 4;
     else if( EQUAL(pszEncoding,CPL_ENC_ASCII) )
         return 1;
-    else if( EQUALN(pszEncoding,"ISO-8859-",9) )
+    else if( STARTS_WITH_CI(pszEncoding, "ISO-8859-") )
         return 1;
     else
         return -1;

@@ -279,7 +279,7 @@ void GDALDefaultOverviews::OverviewScan()
 
         if( pszProxyOvrFilename != NULL )
         {
-            if( EQUALN(pszProxyOvrFilename,":::BASE:::",10) )
+            if( STARTS_WITH_CI(pszProxyOvrFilename, ":::BASE:::") )
             {
                 CPLString osPath = CPLGetPath(poDS->GetDescription());
 

@@ -490,7 +490,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 
         if( EQUAL(pszUnits,"feet") )
             dfUnits = CPLAtofM(SRS_UL_US_FOOT_CONV);
-        else if( EQUALN(pszUnits,"MET",3) )
+        else if( STARTS_WITH_CI(pszUnits, "MET") )
             dfUnits = 1.0;
         else
             pszUnits = NULL;
@@ -760,9 +760,9 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pszBYTE_ORDER != NULL )
     {
 #ifdef CPL_LSB
-        bNative = EQUALN(pszBYTE_ORDER,"LSB",3);
+        bNative = STARTS_WITH_CI(pszBYTE_ORDER, "LSB");
 #else
-        bNative = !EQUALN(pszBYTE_ORDER,"LSB",3);
+        bNative = !STARTS_WITH_CI(pszBYTE_ORDER, "LSB");
 #endif        
     }
 

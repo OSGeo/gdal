@@ -95,7 +95,7 @@ int KRODataset::Identify( GDALOpenInfo *poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 20 )
         return FALSE;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader, "KRO\x01", 4 ) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "KRO\x01") )
         return FALSE;
 
     return TRUE;

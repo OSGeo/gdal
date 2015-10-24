@@ -211,29 +211,29 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
         if (pszLine[0] == '#' || pszLine[0] == '\0')
             continue;
 
-        if (EQUALN(pszLine, "TYPE=", 5))
+        if (STARTS_WITH_CI(pszLine, "TYPE="))
         {
             if (osTYPE.size() != 0)
                 break;
             osTYPE = pszLine + 5;
         }
-        else if (EQUALN(pszLine, "CLASS=", 6))
+        else if (STARTS_WITH_CI(pszLine, "CLASS="))
         {
             if (osCLASS.size() != 0)
                 break;
             osCLASS = pszLine + 6;
         }
-        else if (EQUALN(pszLine, "TITLE=", 6))
+        else if (STARTS_WITH_CI(pszLine, "TITLE="))
         {
             if (osTITLE.size() != 0)
                 break;
             osTITLE = pszLine + 6;
         }
-        else if (EQUALN(pszLine, "TOPS=", 5))
+        else if (STARTS_WITH_CI(pszLine, "TOPS="))
             osTOPS = pszLine + 5;
-        else if (EQUALN(pszLine, "BASE=", 5))
+        else if (STARTS_WITH_CI(pszLine, "BASE="))
             osBASE = pszLine + 5;
-        else if (EQUALN(pszLine, "POINT=", 6))
+        else if (STARTS_WITH_CI(pszLine, "POINT="))
         {
             pszLine += 6;
             if (strlen(pszLine) != 16)
@@ -247,12 +247,12 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             dfLastLat = dfLat;
             dfLastLon = dfLon;
         }
-        else if (EQUALN(pszLine, "CLOCKWISE", 9) || EQUALN(pszLine, "ANTI-CLOCKWISE", 14))
+        else if (STARTS_WITH_CI(pszLine, "CLOCKWISE") || STARTS_WITH_CI(pszLine, "ANTI-CLOCKWISE"))
         {
             if (oLR.getNumPoints() == 0)
                 continue;
 
-            int bClockWise = EQUALN(pszLine, "CLOCKWISE", 9);
+            int bClockWise = STARTS_WITH_CI(pszLine, "CLOCKWISE");
 
             /*const char* pszRADIUS = strstr(pszLine, "RADIUS=");
             if (pszRADIUS == NULL)
@@ -303,7 +303,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             dfLastLat = oLR.getY(oLR.getNumPoints() - 1);
             dfLastLon = oLR.getX(oLR.getNumPoints() - 1);
         }
-        else if (EQUALN(pszLine, "CIRCLE", 6))
+        else if (STARTS_WITH_CI(pszLine, "CIRCLE"))
         {
             const char* pszRADIUS = strstr(pszLine, "RADIUS=");
             if (pszRADIUS == NULL)
@@ -333,7 +333,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             dfLastLat = oLR.getY(oLR.getNumPoints() - 1);
             dfLastLon = oLR.getX(oLR.getNumPoints() - 1);
         }
-        else if (EQUALN(pszLine, "INCLUDE", 7) || EQUALN(pszLine, "END", 3))
+        else if (STARTS_WITH_CI(pszLine, "INCLUDE") || STARTS_WITH_CI(pszLine, "END"))
         {
         }
         else

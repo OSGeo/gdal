@@ -264,8 +264,8 @@ int TSXDataset::Identify( GDALOpenInfo *poOpenInfo )
                 CPLFormCIFilename( poOpenInfo->pszFilename, CPLGetFilename( poOpenInfo->pszFilename ), "xml" );
 
             /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR (TanDEM-X) */
-            if (!(EQUALN(CPLGetBasename( osFilename ), "TSX1_SAR", 8) ||
-                  EQUALN(CPLGetBasename( osFilename ), "TDX1_SAR", 8)))
+            if (!(STARTS_WITH_CI(CPLGetBasename( osFilename ), "TSX1_SAR") ||
+                  STARTS_WITH_CI(CPLGetBasename( osFilename ), "TDX1_SAR")))
                 return 0;
 
             VSIStatBufL sStat;
@@ -277,12 +277,12 @@ int TSXDataset::Identify( GDALOpenInfo *poOpenInfo )
     }
 
     /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR (TanDEM-X) */
-    if (!(EQUALN(CPLGetBasename( poOpenInfo->pszFilename ), "TSX1_SAR", 8) ||
-          EQUALN(CPLGetBasename( poOpenInfo->pszFilename ), "TDX1_SAR", 8)))
+    if (!(STARTS_WITH_CI(CPLGetBasename( poOpenInfo->pszFilename ), "TSX1_SAR") ||
+          STARTS_WITH_CI(CPLGetBasename( poOpenInfo->pszFilename ), "TDX1_SAR")))
         return 0;
 
     /* finally look for the <level1Product tag */
-    if (!EQUALN((char *)poOpenInfo->pabyHeader, "<level1Product", 14))
+    if (!STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "<level1Product"))
         return 0;
 
     return 1;
@@ -534,13 +534,13 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
     poDS->SetMetadataItem( "PRODUCT_VARIANT", pszProductVariant );
 
     /* Determine what product variant this is */
-    if (EQUALN(pszProductVariant,"SSC",3))
+    if (STARTS_WITH_CI(pszProductVariant, "SSC"))
         poDS->nProduct = eSSC;
-    else if (EQUALN(pszProductVariant,"MGD",3))
+    else if (STARTS_WITH_CI(pszProductVariant, "MGD"))
         poDS->nProduct = eMGD;
-    else if (EQUALN(pszProductVariant,"EEC",3))
+    else if (STARTS_WITH_CI(pszProductVariant, "EEC"))
         poDS->nProduct = eEEC;
-    else if (EQUALN(pszProductVariant,"GEC",3))
+    else if (STARTS_WITH_CI(pszProductVariant, "GEC"))
         poDS->nProduct = eGEC;
     else
         poDS->nProduct = eUnknown;
@@ -560,35 +560,35 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
                 "" );
         const char *pszPolLayer = CPLGetXMLValue(psComponent, "polLayer", " ");
 
-        if ( !EQUALN(pszType," ",1) ) {
-            if (EQUALN(pszType, "MAPPING_GRID", 12) ) {
+        if ( !STARTS_WITH_CI(pszType, " ") ) {
+            if (STARTS_WITH_CI(pszType, "MAPPING_GRID") ) {
                 /* the mapping grid... save as a metadata item this path */
                 poDS->SetMetadataItem( "MAPPING_GRID", pszPath );
             }
-            else if (EQUALN(pszType, "GEOREF", 6)) {
+            else if (STARTS_WITH_CI(pszType, "GEOREF")) {
                 /* save the path to the georef data for later use */
                 CPLFree( pszGeorefFile );
                 pszGeorefFile = CPLStrdup( pszPath );
             }
         }
-        else if( !EQUALN(pszPolLayer, " ", 1) &&
-            EQUALN(psComponent->pszValue, "imageData", 9) ) {
+        else if( !STARTS_WITH_CI(pszPolLayer, " ") &&
+            STARTS_WITH_CI(psComponent->pszValue, "imageData") ) {
             /* determine the polarization of this band */
             ePolarization ePol;
-            if ( EQUALN(pszPolLayer, "HH", 2) ) {
+            if ( STARTS_WITH_CI(pszPolLayer, "HH") ) {
                 ePol = HH;
             }
-            else if ( EQUALN(pszPolLayer, "HV" , 2) ) {
+            else if ( STARTS_WITH_CI(pszPolLayer, "HV") ) {
                 ePol = HV;
             }
-            else if ( EQUALN(pszPolLayer, "VH", 2) ) {
+            else if ( STARTS_WITH_CI(pszPolLayer, "VH") ) {
                 ePol = VH;
             }
             else {
                 ePol = VV;
             }
 
-            GDALDataType eDataType = EQUALN(pszDataType, "COMPLEX", 7) ?
+            GDALDataType eDataType = STARTS_WITH_CI(pszDataType, "COMPLEX") ?
                 GDT_CInt16 : GDT_UInt16;
 
             /* try opening the file that represents that band */

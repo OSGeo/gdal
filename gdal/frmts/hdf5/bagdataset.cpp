@@ -775,7 +775,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         return eOGRErr;
     }
 
-    if( EQUALN(pszSRCodeString, "VERTCS", 6 ) )
+    if( STARTS_WITH_CI(pszSRCodeString, "VERTCS") )
     {
         CPLString oString( pszProjection );
         CPLFree( pszProjection );

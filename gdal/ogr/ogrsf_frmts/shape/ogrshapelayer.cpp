@@ -238,7 +238,7 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
     if( pszCodePage == NULL )
         return osEncoding;
 
-    if( EQUALN(pszCodePage,"LDID/",5) )
+    if( STARTS_WITH_CI(pszCodePage, "LDID/") )
     {
         int nCP = -1; // windows code page. 
 
@@ -327,7 +327,7 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
         osEncoding.Printf( "CP%d", atoi(pszCodePage) );
         return osEncoding;
     }
-    if( EQUALN(pszCodePage,"8859",4) )
+    if( STARTS_WITH_CI(pszCodePage, "8859") )
     {
         if( pszCodePage[4] == '-' )
             osEncoding.Printf( "ISO-8859-%s", pszCodePage + 5 );
@@ -335,7 +335,7 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
             osEncoding.Printf( "ISO-8859-%s", pszCodePage + 4 );
         return osEncoding;
     }
-    if( EQUALN(pszCodePage,"UTF-8",5) )
+    if( STARTS_WITH_CI(pszCodePage, "UTF-8") )
         return CPL_ENC_UTF8;
 
     // try just using the CPG value directly.  Works for stuff like Big5.

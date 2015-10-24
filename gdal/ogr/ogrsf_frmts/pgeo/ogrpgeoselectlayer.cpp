@@ -53,7 +53,7 @@ OGRPGeoSelectLayer::OGRPGeoSelectLayer( OGRPGeoDataSource *poDSIn,
     
     /* Just to make test_ogrsf happy, but would/could need be extended to */
     /* other cases */
-    if( EQUALN(pszBaseStatement, "SELECT * FROM ", strlen("SELECT * FROM ")) )
+    if( STARTS_WITH_CI(pszBaseStatement, "SELECT * FROM ") )
     {
         
         OGRLayer* poBaseLayer =

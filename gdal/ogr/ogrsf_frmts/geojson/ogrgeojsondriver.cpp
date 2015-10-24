@@ -412,7 +412,7 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
 
     poDS->SetGeometryTranslation( OGRGeoJSONDataSource::eGeometryPreserve );
     const char* pszOpt = CPLGetConfigOption("GEOMETRY_AS_COLLECTION", NULL);
-    if( NULL != pszOpt && EQUALN(pszOpt, "YES", 3) )
+    if( NULL != pszOpt && STARTS_WITH_CI(pszOpt, "YES") )
     {
             poDS->SetGeometryTranslation(
                 OGRGeoJSONDataSource::eGeometryAsCollection );
@@ -420,7 +420,7 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
 
     poDS->SetAttributesTranslation( OGRGeoJSONDataSource::eAtributesPreserve );
     pszOpt = CPLGetConfigOption("ATTRIBUTES_SKIP", NULL);
-    if( NULL != pszOpt && EQUALN(pszOpt, "YES", 3) )
+    if( NULL != pszOpt && STARTS_WITH_CI(pszOpt, "YES") )
     {
         poDS->SetAttributesTranslation( 
             OGRGeoJSONDataSource::eAtributesSkip );

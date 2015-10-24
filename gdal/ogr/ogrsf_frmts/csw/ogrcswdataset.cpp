@@ -903,7 +903,7 @@ int OGRCSWDataSource::Open( const char * pszFilename,
     if( pszBaseURL == NULL )
     {
         pszBaseURL = pszFilename;
-        if (EQUALN(pszFilename, "CSW:", 4))
+        if (STARTS_WITH_CI(pszFilename, "CSW:"))
             pszBaseURL += 4;
         if( pszBaseURL[0] == '\0' )
         {
@@ -1018,7 +1018,7 @@ CPLHTTPResult* OGRCSWDataSource::HTTPFetch( const char* pszURL, const char* pszP
 static int OGRCSWDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    return EQUALN(poOpenInfo->pszFilename, "CSW:", 4);
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "CSW:");
 }
 
 /************************************************************************/

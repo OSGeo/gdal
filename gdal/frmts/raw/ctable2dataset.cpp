@@ -111,7 +111,7 @@ int CTable2Dataset::Identify( GDALOpenInfo *poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 64 )
         return FALSE;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader + 0, "CTABLE V2", 9 ) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + 0, "CTABLE V2") )
         return FALSE;
 
     return TRUE;

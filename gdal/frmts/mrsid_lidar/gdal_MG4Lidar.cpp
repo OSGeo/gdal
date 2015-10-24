@@ -707,7 +707,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    CPLXMLNode *pxmlPCView;
 
    // do something sensible for .sid files without a .view
-   if( EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
+   if( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "msid") )
    {
       int gen;
       bool raster;
@@ -725,7 +725,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    else
    {
       // support .view xml
-      if( !EQUALN((const char *) poOpenInfo->pabyHeader, "<PointCloudView", 15 ) )
+      if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "<PointCloudView") )
          return NULL;
 
       pxmlPCView = CPLParseXMLFile( poOpenInfo->pszFilename );
@@ -761,7 +761,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
 
    /* check magic */
    // to do:  SDK should provide an API for this.
-   if(  !EQUALN((const char *) openinfo.pabyHeader, "msid", 4)
+   if(  !STARTS_WITH_CI((const char *) openinfo.pabyHeader, "msid")
       || (*(openinfo.pabyHeader+4) != 0x4 )) // Generation 4.  ... is there more we can check?
    {
       CPLDestroyXMLNode(pxmlPCView);

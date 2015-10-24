@@ -75,8 +75,7 @@ OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError)
     for( iType = 0; asGeomTypeNames[iType].pszName != NULL; iType++ )
     {
         if( EQUALN(pszGType, asGeomTypeNames[iType].pszName,
-                strlen(asGeomTypeNames[iType].pszName)) )
-        {
+                strlen(asGeomTypeNames[iType].pszName)) )        {
             eGeomType = asGeomTypeNames[iType].eType;
 
             if( strstr(pszGType,"25D") != NULL || strstr(pszGType,"Z") != NULL )

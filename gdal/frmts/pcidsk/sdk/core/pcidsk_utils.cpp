@@ -409,19 +409,19 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
     // This is rather iffy!
     if( EQUALN(geosys.c_str(),"DEGREE",3) )
         dparms[17] = (double) (int) UNIT_DEGREE;
-    else if( EQUALN(geosys.c_str(),"MET",3) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "MET") )
         dparms[17] = (double) (int) UNIT_METER;
-    else if( EQUALN(geosys.c_str(),"FOOT",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "FOOT") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
-    else if( EQUALN(geosys.c_str(),"FEET",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "FEET") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
     else if( EQUALN(geosys.c_str(),"INTL FOOT",5) )
         dparms[17] = (double) (int) UNIT_INTL_FOOT;
-    else if( EQUALN(geosys.c_str(),"SPCS",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "SPCS") )
         dparms[17] = (double) (int) UNIT_METER;
-    else if( EQUALN(geosys.c_str(),"SPIF",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "SPIF") )
         dparms[17] = (double) (int) UNIT_INTL_FOOT;
-    else if( EQUALN(geosys.c_str(),"SPAF",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "SPAF") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
     else
         dparms[17] = -1.0; /* unknown */

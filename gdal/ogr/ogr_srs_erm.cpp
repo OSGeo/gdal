@@ -89,11 +89,11 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
 /*      Do we have an EPSG coordinate system?                           */
 /* -------------------------------------------------------------------- */
 
-    if( EQUALN(pszProj,"EPSG:",5) )
+    if( STARTS_WITH_CI(pszProj, "EPSG:") )
         return importFromEPSG( atoi(pszProj+5) );
 
 
-    if( EQUALN(pszDatum,"EPSG:",5) )
+    if( STARTS_WITH_CI(pszDatum, "EPSG:") )
         return importFromEPSG( atoi(pszDatum+5) );
 
 /* -------------------------------------------------------------------- */

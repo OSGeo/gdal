@@ -367,7 +367,7 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
             eFType = OFTString;
 
         OGRFieldDefn oField( poProperty->GetName(), eFType );
-        if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
+        if ( STARTS_WITH_CI(oField.GetNameRef(), "ogr:") )
             oField.SetName(poProperty->GetName()+4);
         if( poProperty->GetWidth() > 0 )
             oField.SetWidth( poProperty->GetWidth() );

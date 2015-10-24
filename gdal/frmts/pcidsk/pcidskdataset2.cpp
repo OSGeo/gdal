@@ -196,7 +196,7 @@ char **PCIDSK2Band::GetCategoryNames()
 
             // is this a "Class_n_name" keyword?
 
-            if( !EQUALN(osKey,"Class_",6) )
+            if( !STARTS_WITH_CI(osKey, "Class_") )
                 continue;
 
             if( !EQUAL(osKey.c_str() + osKey.size() - 5, "_name") )
@@ -317,7 +317,7 @@ bool PCIDSK2Band::CheckForColorTable()
 
             // is this a "Class_n_name" keyword?
 
-            if( !EQUALN(osKey,"Class_",6) )
+            if( !STARTS_WITH_CI(osKey, "Class_") )
                 continue;
 
             if( !EQUAL(osKey.c_str() + osKey.size() - 6, "_Color") )
@@ -333,7 +333,7 @@ bool PCIDSK2Band::CheckForColorTable()
             CPLString osRGB  = poChannel->GetMetadataValue(osKey);
             int nRed, nGreen, nBlue;
 
-            if( !EQUALN(osRGB,"(RGB:",5) )
+            if( !STARTS_WITH_CI(osRGB, "(RGB:") )
                 continue;
 
             if( sscanf( osRGB.c_str() + 5, "%d %d %d", 
@@ -1340,13 +1340,13 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
                 for( i = 0; i < 17; i++ )
                     adfPCIParameters.push_back( padfPrjParams[i] );
 
-                if( EQUALN(pszUnits,"FOOT",4) )
+                if( STARTS_WITH_CI(pszUnits, "FOOT") )
                     adfPCIParameters.push_back( 
                         (double)(int) PCIDSK::UNIT_US_FOOT );
-                else if( EQUALN(pszUnits,"INTL FOOT",9) )
+                else if( STARTS_WITH_CI(pszUnits, "INTL FOOT") )
                     adfPCIParameters.push_back( 
                         (double)(int) PCIDSK::UNIT_INTL_FOOT );
-                else if( EQUALN(pszUnits,"DEGREE",6) )
+                else if( STARTS_WITH_CI(pszUnits, "DEGREE") )
                     adfPCIParameters.push_back( 
                         (double)(int) PCIDSK::UNIT_DEGREE );
                 else 
@@ -1646,7 +1646,7 @@ GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL( eChanType eType )
 int PCIDSK2Dataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     if( poOpenInfo->nHeaderBytes < 512 
-        || !EQUALN((const char *) poOpenInfo->pabyHeader, "PCIDSK  ", 8) )
+        || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "PCIDSK  ") )
         return FALSE;
     else
         return TRUE;
@@ -1931,7 +1931,7 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 
         for( i = 0; papszParmList != NULL && papszParmList[i] != NULL; i++ )
         {
-            if( EQUALN(papszParmList[i],"BANDDESC",8) )
+            if( STARTS_WITH_CI(papszParmList[i], "BANDDESC") )
             {
                 int nBand = atoi(papszParmList[i] + 8 );
                 const char *pszDescription = strstr(papszParmList[i],"=");
@@ -2068,13 +2068,13 @@ PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
             for( i = 0; i < 17; i++ )
                 adfPCIParameters.push_back( padfPrjParams[i] );
             
-            if( EQUALN(pszUnits,"FOOT",4) )
+            if( STARTS_WITH_CI(pszUnits, "FOOT") )
                 adfPCIParameters.push_back( 
                     (double)(int) PCIDSK::UNIT_US_FOOT );
-            else if( EQUALN(pszUnits,"INTL FOOT",9) )
+            else if( STARTS_WITH_CI(pszUnits, "INTL FOOT") )
                 adfPCIParameters.push_back( 
                     (double)(int) PCIDSK::UNIT_INTL_FOOT );
-            else if( EQUALN(pszUnits,"DEGREE",6) )
+            else if( STARTS_WITH_CI(pszUnits, "DEGREE") )
                 adfPCIParameters.push_back( 
                     (double)(int) PCIDSK::UNIT_DEGREE );
             else 

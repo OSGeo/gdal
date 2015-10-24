@@ -348,20 +348,20 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     {
         // If the prelude statements starts with BEGIN, then don't emit one
         // in our code.
-        if( EQUALN(pszPreludeStatements, "BEGIN", 5) )
+        if( STARTS_WITH_CI(pszPreludeStatements, "BEGIN") )
             nSoftTransactionLevel = 1;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Verify postgresql prefix.                                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszNewName,"PGB:",4) )
+    if( STARTS_WITH_CI(pszNewName, "PGB:") )
     {
         bUseBinaryCursor = TRUE;
         CPLDebug("PG","BINARY cursor is used for geometry fetching");
     }
     else
-    if( !EQUALN(pszNewName,"PG:",3) )
+    if( !STARTS_WITH_CI(pszNewName, "PG:") )
     {
         if( !bTestOpen )
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -2738,7 +2738,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 
@@ -2763,7 +2763,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     PGresult    *hResult = NULL;
 
-    if (EQUALN(pszSQLCommand, "SELECT", 6) == FALSE ||
+    if (STARTS_WITH_CI(pszSQLCommand, "SELECT") == FALSE ||
         (strstr(pszSQLCommand, "from") == NULL && strstr(pszSQLCommand, "FROM") == NULL))
     {
         /* For something that is not a select or a select without table, do not */

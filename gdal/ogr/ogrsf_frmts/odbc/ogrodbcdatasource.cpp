@@ -249,7 +249,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 {
     CPLAssert( nLayers == 0 );
 
-    if( !EQUALN(pszNewName, "ODBC:",5) && EQUAL(CPLGetExtension(pszNewName), "MDB") )
+    if( !STARTS_WITH_CI(pszNewName, "ODBC:") && EQUAL(CPLGetExtension(pszNewName), "MDB") )
         return OpenMDB(pszNewName, bUpdate);
 
 /* -------------------------------------------------------------------- */

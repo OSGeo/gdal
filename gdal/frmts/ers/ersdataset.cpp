@@ -796,7 +796,7 @@ int ERSDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      We assume the user selects the .ers file.                       */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes > 15
-        && EQUALN((const char *) poOpenInfo->pabyHeader,"Algorithm Begin",15) )
+        && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "Algorithm Begin") )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s appears to be an algorithm ERS file, which is not currently supported.",
@@ -808,7 +808,7 @@ int ERSDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      We assume the user selects the .ers file.                       */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 15
-        || !EQUALN((const char *) poOpenInfo->pabyHeader,"DatasetHeader ",14) )
+        || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "DatasetHeader ") )
         return FALSE;
 
     return TRUE;

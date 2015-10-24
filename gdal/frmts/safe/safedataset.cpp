@@ -454,7 +454,7 @@ int SAFEDataset::Identify( GDALOpenInfo *poOpenInfo )
 {
 
     /* Check for the case where we're trying to read the calibrated data: */
-    if (EQUALN("SENTINEL_1_CALIB:",poOpenInfo->pszFilename,17)) {
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL_1_CALIB:")) {
         return 1;
     }
 
@@ -1120,7 +1120,7 @@ char **SAFEDataset::GetMetadataDomainList()
 
 char **SAFEDataset::GetMetadata( const char *pszDomain )
 {
-    if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) &&
+    if( pszDomain != NULL && STARTS_WITH_CI(pszDomain, "SUBDATASETS") &&
         papszSubDatasets != NULL)
         return papszSubDatasets;
     else

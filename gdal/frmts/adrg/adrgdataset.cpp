@@ -1426,7 +1426,7 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osIMGFileName;
     bool bFromSubdataset = false;
 
-    if( EQUALN(poOpenInfo->pszFilename, "ADRG:", 5) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "ADRG:") )
     {
         char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename + 5, ",", 0);
         if (CSLCount(papszTokens) == 2)

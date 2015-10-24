@@ -188,13 +188,13 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
     if( bSuccess && pszSRSName != NULL 
         && (*ppszProjection == NULL || strlen(*ppszProjection) == 0) )
     {
-        if( EQUALN(pszSRSName,"epsg:",5) )
+        if( STARTS_WITH_CI(pszSRSName, "epsg:") )
         {
             OGRSpatialReference oSRS;
             if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
                 oSRS.exportToWkt( ppszProjection );
         }
-        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:",16) )
+        else if( STARTS_WITH_CI(pszSRSName, "urn:ogc:def:crs:") )
         {
             OGRSpatialReference oSRS;
             if( oSRS.importFromURN( pszSRSName ) == OGRERR_NONE )

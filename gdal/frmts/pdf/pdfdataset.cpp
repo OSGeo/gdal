@@ -5382,12 +5382,12 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
                 bIsWGS84 = TRUE;
                 oSRS.SetWellKnownGeogCS("WGS84");
             }
-            else if (EQUAL(pszDatum, "NAR") || EQUALN(pszDatum, "NAR-", 4))
+            else if (EQUAL(pszDatum, "NAR") || STARTS_WITH_CI(pszDatum, "NAR-"))
             {
                 bIsNAD83 = TRUE;
                 oSRS.SetWellKnownGeogCS("NAD83");
             }
-            else if (EQUAL(pszDatum, "NAS") || EQUALN(pszDatum, "NAS-", 4))
+            else if (EQUAL(pszDatum, "NAS") || STARTS_WITH_CI(pszDatum, "NAS-"))
             {
                 /* bIsNAD27 = TRUE; */
                 oSRS.SetWellKnownGeogCS("NAD27");
@@ -5408,7 +5408,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
             {
                 oSRS.importFromEPSG(4283);
             }
-            else if (EQUALN(pszDatum, "OHA-", 4)) /* Old Hawaiian */
+            else if (STARTS_WITH_CI(pszDatum, "OHA-")) /* Old Hawaiian */
             {
                 oSRS.importFromEPSG(4135); /* matches OHA-M (Mean) */
                 if( !EQUAL(pszDatum, "OHA-M") )

@@ -60,7 +60,7 @@ const char *OGRGMEDriver::GetName()
 OGRDataSource *OGRGMEDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    if (!EQUALN(pszFilename, "GME:", 4))
+    if (!STARTS_WITH_CI(pszFilename, "GME:"))
         return NULL;
 
     OGRGMEDataSource   *poDS = new OGRGMEDataSource();

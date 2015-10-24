@@ -519,7 +519,7 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for AirSAR/ keyword.                                      */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN((char *) poOpenInfo->pabyHeader, "RECORD LENGTH IN BYTES",22) )
+    if( !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "RECORD LENGTH IN BYTES") )
         return NULL;
 
     if( strstr((char *) poOpenInfo->pabyHeader, "COMPRESSED") == NULL 

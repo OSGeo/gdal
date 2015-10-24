@@ -662,7 +662,7 @@ int RIKDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 50 )
         return FALSE;
 
-    if( EQUALN((const char *) poOpenInfo->pabyHeader, "RIK3", 4) )
+    if( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "RIK3") )
     {
         return TRUE;
     }
@@ -706,7 +706,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     bool rik3header = false;
 
-    if( EQUALN((const char *) poOpenInfo->pabyHeader, "RIK3", 4) )
+    if( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "RIK3") )
     {
         rik3header = true;
         VSIFSeekL( poOpenInfo->fpL, 4, SEEK_SET );

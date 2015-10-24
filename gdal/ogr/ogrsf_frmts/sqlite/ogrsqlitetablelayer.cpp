@@ -544,7 +544,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                         OGRFieldDefn* poFieldDefn =  poFeatureDefn->GetFieldDefn(idx);
                         if( poFieldDefn->GetType() == OFTString &&
                             !EQUAL(pszDefault, "NULL") &&
-                            !EQUALN(pszDefault, "CURRENT_", strlen("CURRENT_")) &&
+                            !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
                             pszDefault[0] != '(' &&
                             pszDefault[0] != '\'' &&
                             CPLGetValueType(pszDefault) == CPL_VALUE_STRING )
@@ -558,7 +558,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                         }
                         else if( (poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime) &&
                              !EQUAL(pszDefault, "NULL") &&
-                             !EQUALN(pszDefault, "CURRENT_", strlen("CURRENT_")) &&
+                             !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
                              pszDefault[0] != '(' &&
                              pszDefault[0] != '\'' &&
                              !(pszDefault[0] >= '0' && pszDefault[0] <= '9') &&
@@ -3306,8 +3306,8 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
         if( pszDefault != NULL &&
             (!poFieldDefn->IsDefaultDriverSpecific() ||
              (pszDefault[0] == '(' && pszDefault[strlen(pszDefault)-1] == ')' &&
-             (EQUALN(pszDefault+1, "strftime", strlen("strftime")) ||
-              EQUALN(pszDefault+1, " strftime", strlen(" strftime"))))) )
+             (STARTS_WITH_CI(pszDefault+1, "strftime") ||
+              STARTS_WITH_CI(pszDefault+1, " strftime")))) )
         {
             osCommand += " DEFAULT ";
             osCommand += poFieldDefn->GetDefault();

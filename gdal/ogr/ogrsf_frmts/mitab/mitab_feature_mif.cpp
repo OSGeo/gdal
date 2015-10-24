@@ -783,7 +783,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    if (EQUALN(papszToken[0],"LINE",4))
+    if (STARTS_WITH_CI(papszToken[0], "LINE"))
     {
         if (CSLCount(papszToken) != 5)
           return -1;
@@ -798,7 +798,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         poLine->getEnvelope(&sEnvelope);
         SetMBR(sEnvelope.MinX, sEnvelope.MinY,sEnvelope.MaxX,sEnvelope.MaxY);
     }
-    else if (EQUALN(papszToken[0],"PLINE",5))
+    else if (STARTS_WITH_CI(papszToken[0], "PLINE"))
     {
         switch (CSLCount(papszToken))
         {
@@ -812,7 +812,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             nNumPoints = atoi(papszToken[1]);
             break;
           case 3:
-            if (EQUALN(papszToken[1],"MULTIPLE",8))
+            if (STARTS_WITH_CI(papszToken[1], "MULTIPLE"))
             {
                 bMultiple = TRUE;
                 nNumSec = atoi(papszToken[2]);
@@ -827,7 +827,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             }
             break;
           case 4:
-            if (EQUALN(papszToken[1],"MULTIPLE",8))
+            if (STARTS_WITH_CI(papszToken[1], "MULTIPLE"))
             {
                 bMultiple = TRUE;
                 nNumSec = atoi(papszToken[2]);
@@ -916,7 +916,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         
         if (CSLCount(papszToken) >= 1)
         {
-            if (EQUALN(papszToken[0],"PEN",3))
+            if (STARTS_WITH_CI(papszToken[0], "PEN"))
             {
                 
                 if (CSLCount(papszToken) == 4)
@@ -927,7 +927,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 }
                 
             }
-            else if (EQUALN(papszToken[0],"SMOOTH",6))
+            else if (STARTS_WITH_CI(papszToken[0], "SMOOTH"))
             {
                 m_bSmooth = TRUE;
             }             
@@ -1130,7 +1130,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         
         if (CSLCount(papszToken) > 1)
         {
-            if (EQUALN(papszToken[0],"PEN",3))
+            if (STARTS_WITH_CI(papszToken[0], "PEN"))
             {
                 
                 if (CSLCount(papszToken) == 4)
@@ -1141,7 +1141,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 }
                 
             }
-            else if (EQUALN(papszToken[0],"BRUSH", 5))
+            else if (STARTS_WITH_CI(papszToken[0], "BRUSH"))
             {
                 if (CSLCount(papszToken) >= 3)
                 {
@@ -1155,7 +1155,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 }
                 
             }
-            else if (EQUALN(papszToken[0],"CENTER",6))
+            else if (STARTS_WITH_CI(papszToken[0], "CENTER"))
             {
                 if (CSLCount(papszToken) == 3)
                 {
@@ -1292,7 +1292,7 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     m_dRoundXRadius  = 0.0;
     m_dRoundYRadius  = 0.0;
     
-    if (EQUALN(papszToken[0],"ROUNDRECT",9))
+    if (STARTS_WITH_CI(papszToken[0], "ROUNDRECT"))
     {
         m_bRoundCorners = TRUE;
         if (CSLCount(papszToken) == 6)
@@ -1365,7 +1365,7 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
        if (CSLCount(papszToken) > 1)
        {
-           if (EQUALN(papszToken[0],"PEN",3))
+           if (STARTS_WITH_CI(papszToken[0], "PEN"))
            {       
                if (CSLCount(papszToken) == 4)
                {   
@@ -1375,7 +1375,7 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                }
               
            }
-           else if (EQUALN(papszToken[0],"BRUSH", 5))
+           else if (STARTS_WITH_CI(papszToken[0], "BRUSH"))
            {
                if (CSLCount(papszToken) >=3)
                {
@@ -1521,7 +1521,7 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         
         if (CSLCount(papszToken) > 1)
         {
-            if (EQUALN(papszToken[0],"PEN",3))
+            if (STARTS_WITH_CI(papszToken[0], "PEN"))
             {       
                 if (CSLCount(papszToken) == 4)
                 {   
@@ -1531,7 +1531,7 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 }
                 
             }
-            else if (EQUALN(papszToken[0],"BRUSH", 5))
+            else if (STARTS_WITH_CI(papszToken[0], "BRUSH"))
             {
                 if (CSLCount(papszToken) >= 3)
                 {
@@ -1693,7 +1693,7 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         
         if (CSLCount(papszToken) > 1)
         {
-            if (EQUALN(papszToken[0],"PEN",3))
+            if (STARTS_WITH_CI(papszToken[0], "PEN"))
             {
                 
                 if (CSLCount(papszToken) == 4)
@@ -1845,7 +1845,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         
         if (CSLCount(papszToken) > 1)
         {
-            if (EQUALN(papszToken[0],"FONT",4))
+            if (STARTS_WITH_CI(papszToken[0], "FONT"))
             {
                 if (CSLCount(papszToken) >= 5)
                 {    
@@ -1863,15 +1863,15 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 }
                 
             }
-            else if (EQUALN(papszToken[0],"SPACING",7))
+            else if (STARTS_WITH_CI(papszToken[0], "SPACING"))
             {
                 if (CSLCount(papszToken) >= 2)
                 {   
-                    if (EQUALN(papszToken[1],"2",1))
+                    if (STARTS_WITH_CI(papszToken[1], "2"))
                     {
                         SetTextSpacing(TABTSDouble);
                     }
-                    else if (EQUALN(papszToken[1],"1.5",3))
+                    else if (STARTS_WITH_CI(papszToken[1], "1.5"))
                     {
                         SetTextSpacing(TABTS1_5);
                     }
@@ -1879,15 +1879,15 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 
                 if (CSLCount(papszToken) == 7)
                 {
-                    if (EQUALN(papszToken[2],"LAbel",5))
+                    if (STARTS_WITH_CI(papszToken[2], "LAbel"))
                     {
-                        if (EQUALN(papszToken[4],"simple",6))
+                        if (STARTS_WITH_CI(papszToken[4], "simple"))
                         {
                             SetTextLineType(TABTLSimple);
                             SetTextLineEndPoint(fp->GetXTrans(CPLAtof(papszToken[5])),
                                                 fp->GetYTrans(CPLAtof(papszToken[6])));
                         }
-                        else if (EQUALN(papszToken[4],"arrow", 5))
+                        else if (STARTS_WITH_CI(papszToken[4], "arrow"))
                         {
                             SetTextLineType(TABTLArrow);
                             SetTextLineEndPoint(fp->GetXTrans(CPLAtof(papszToken[5])),
@@ -1896,15 +1896,15 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     }
                 }               
             }
-            else if (EQUALN(papszToken[0],"Justify",7))
+            else if (STARTS_WITH_CI(papszToken[0], "Justify"))
             {
                 if (CSLCount(papszToken) == 2)
                 {
-                    if (EQUALN( papszToken[1],"Center",6))
+                    if (STARTS_WITH_CI(papszToken[1], "Center"))
                     {
                         SetTextJustification(TABTJCenter);
                     }
-                    else  if (EQUALN( papszToken[1],"Right",5))
+                    else  if (STARTS_WITH_CI(papszToken[1], "Right"))
                     {
                         SetTextJustification(TABTJRight);
                     }
@@ -1912,7 +1912,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 }
                 
             }
-            else if (EQUALN(papszToken[0],"Angle",5))
+            else if (STARTS_WITH_CI(papszToken[0], "Angle"))
             {
                 if (CSLCount(papszToken) == 2)
                 {    
@@ -1920,17 +1920,17 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 }
                 
             }
-            else if (EQUALN(papszToken[0],"LAbel",5))
+            else if (STARTS_WITH_CI(papszToken[0], "LAbel"))
             {
                 if (CSLCount(papszToken) == 5)
                 {    
-                    if (EQUALN(papszToken[2],"simple",6))
+                    if (STARTS_WITH_CI(papszToken[2], "simple"))
                     {
                         SetTextLineType(TABTLSimple);
                         SetTextLineEndPoint(fp->GetXTrans(CPLAtof(papszToken[3])),
                                            fp->GetYTrans(CPLAtof(papszToken[4])));
                     }
-                    else if (EQUALN(papszToken[2],"arrow", 5))
+                    else if (STARTS_WITH_CI(papszToken[2], "arrow"))
                     {
                         SetTextLineType(TABTLArrow);
                         SetTextLineEndPoint(fp->GetXTrans(CPLAtof(papszToken[3])),
@@ -2278,7 +2278,7 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         if (*pszLine == '\0')
             continue;  // Skip blank lines
 
-        if (EQUALN(pszLine,"REGION",6))
+        if (STARTS_WITH_CI(pszLine, "REGION"))
         {
             m_poRegion = new TABRegion(GetDefnRef());
             if (m_poRegion->ReadGeometryFromMIFFile(fp) != 0)
@@ -2290,8 +2290,8 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 return -1;
             }
         }  
-        else if (EQUALN(pszLine,"LINE",4) ||
-                 EQUALN(pszLine,"PLINE",5))
+        else if (STARTS_WITH_CI(pszLine, "LINE") ||
+                 STARTS_WITH_CI(pszLine, "PLINE"))
         {
             m_poPline = new TABPolyline(GetDefnRef());
             if (m_poPline->ReadGeometryFromMIFFile(fp) != 0)
@@ -2303,7 +2303,7 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 return -1;
             }
         }
-        else if (EQUALN(pszLine,"MULTIPOINT",10))
+        else if (STARTS_WITH_CI(pszLine, "MULTIPOINT"))
         {
             m_poMpoint = new TABMultiPoint(GetDefnRef());
             if (m_poMpoint->ReadGeometryFromMIFFile(fp) != 0)

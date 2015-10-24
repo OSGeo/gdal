@@ -922,9 +922,9 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
         const char  *pszExtension = NULL;
 
         pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-        if( (EQUALN(poOpenInfo->pszFilename,"http://",7)
-             || EQUALN(poOpenInfo->pszFilename,"https://",8)
-             || EQUALN(poOpenInfo->pszFilename,"jpip://",7))
+        if( (STARTS_WITH_CI(poOpenInfo->pszFilename, "http://")
+             || STARTS_WITH_CI(poOpenInfo->pszFilename, "https://")
+             || STARTS_WITH_CI(poOpenInfo->pszFilename, "jpip://"))
             && EQUAL(pszExtension,"jp2") )
         {
 #ifdef USE_JPIP
@@ -933,7 +933,7 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
             return FALSE;
 #endif
         }
-        else if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+        else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "J2K_SUBFILE:") )
             return TRUE;
         else
             return FALSE;
@@ -1004,14 +1004,14 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
     if( poOpenInfo->nHeaderBytes < 16 )
     {
-        if( (EQUALN(poOpenInfo->pszFilename,"http://",7)
-             || EQUALN(poOpenInfo->pszFilename,"https://",8)
-             || EQUALN(poOpenInfo->pszFilename,"jpip://",7))
+        if( (STARTS_WITH_CI(poOpenInfo->pszFilename, "http://")
+             || STARTS_WITH_CI(poOpenInfo->pszFilename, "https://")
+             || STARTS_WITH_CI(poOpenInfo->pszFilename, "jpip://"))
             && EQUAL(pszExtension,"jp2") )
         {
             bIsJPIP = TRUE;
         }
-        else if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+        else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "J2K_SUBFILE:") )
         {
             static GByte abySubfileHeader[16];
 
@@ -1400,7 +1400,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
         CPLString osPhysicalFilename = poOpenInfo->pszFilename;
 
-        if( bIsSubfile || EQUALN(poOpenInfo->pszFilename,"/vsisubfile/",12) )
+        if( bIsSubfile || STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsisubfile/") )
         {
             if( strstr(poOpenInfo->pszFilename,",") != NULL )
                 osPhysicalFilename = strstr(poOpenInfo->pszFilename,",") + 1;

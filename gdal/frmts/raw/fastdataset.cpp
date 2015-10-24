@@ -661,9 +661,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         pszTemp = CPLStrdup( "" );
     }
     poDS->SetMetadataItem( "SATELLITE", pszTemp );
-    if ( EQUALN(pszTemp, "LANDSAT", 7) )
+    if ( STARTS_WITH_CI(pszTemp, "LANDSAT") )
 	poDS->iSatellite = LANDSAT;
-    else if ( EQUALN(pszTemp, "IRS", 3) )
+    else if ( STARTS_WITH_CI(pszTemp, "IRS") )
 	poDS->iSatellite = IRS;
     else
 	poDS->iSatellite = IRS;

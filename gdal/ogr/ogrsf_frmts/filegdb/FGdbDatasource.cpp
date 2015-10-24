@@ -625,7 +625,7 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case GetLayerDefinition                                 */
 /* -------------------------------------------------------------------- */
-    if (EQUALN(pszSQLCommand, "GetLayerDefinition ", strlen("GetLayerDefinition ")))
+    if (STARTS_WITH_CI(pszSQLCommand, "GetLayerDefinition "))
     {
         FGdbLayer* poLayer = (FGdbLayer*) GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition "));
         if (poLayer)
@@ -643,7 +643,7 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case GetLayerMetadata                                   */
 /* -------------------------------------------------------------------- */
-    if (EQUALN(pszSQLCommand, "GetLayerMetadata ", strlen("GetLayerMetadata ")))
+    if (STARTS_WITH_CI(pszSQLCommand, "GetLayerMetadata "))
     {
         FGdbLayer* poLayer = (FGdbLayer*) GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata "));
         if (poLayer)
@@ -660,7 +660,7 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     /* TODO: remove that workaround when the SDK has finally a decent */
     /* SQL support ! */
-    if( EQUALN(pszSQLCommand, "SELECT ", 7) && pszDialect == NULL )
+    if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") && pszDialect == NULL )
     {
         CPLDebug("FGDB", "Support for SELECT is known to be partially "
                          "non-compliant with FileGDB SDK API v1.2.\n"
@@ -700,7 +700,7 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
         return NULL;
     }
 
-    if( EQUALN(pszSQLCommand, "SELECT ", 7) )
+    if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") )
     {
         OGRLayer* poLayer = new FGdbResultLayer(this, pszSQLCommand, pEnumRows);
         m_oSetSelectLayers.insert(poLayer);

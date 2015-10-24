@@ -263,7 +263,7 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
-  if( strlen(fileName) < 11 || !EQUALN(&fileName[7], ".hgt", 4) )
+  if( strlen(fileName) < 11 || !STARTS_WITH_CI(&fileName[7], ".hgt") )
     return FALSE;
 
 /* -------------------------------------------------------------------- */

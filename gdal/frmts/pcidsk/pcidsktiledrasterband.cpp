@@ -142,7 +142,7 @@ int PCIDSKTiledRasterBand::BuildBlockMap()
 /* -------------------------------------------------------------------- */
     int nMaxBlocks = (int) CPLScanLong(pachBMap + 18,8);
 
-    if( !EQUALN(pachBMap,"VERSION",7) )
+    if( !STARTS_WITH_CI(pachBMap, "VERSION") )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -286,7 +286,7 @@ CPLErr PCIDSKTiledRasterBand::IReadBlock( int nBlockX, int nBlockY,
 {
     int iTile;
 
-    if( !EQUALN(szCompression,"NONE",4) )
+    if( !STARTS_WITH_CI(szCompression, "NONE") )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Compression '%s' not supported by GDAL.", 

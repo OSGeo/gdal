@@ -1487,7 +1487,7 @@ int LevellerDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 4 )
         return FALSE;
 
-    return EQUALN(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ), "trrn", 4);
+    return STARTS_WITH_CI(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ), "trrn");
 }
 
 /************************************************************************/

@@ -1007,8 +1007,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         char** papszIter = papszMetadata;
         while(papszIter && *papszIter)
         {
-            if (EQUALN(*papszIter, "TIFFTAG_MINSAMPLEVALUE=", 23) ||
-                EQUALN(*papszIter, "TIFFTAG_MAXSAMPLEVALUE=", 23))
+            if (STARTS_WITH_CI(*papszIter, "TIFFTAG_MINSAMPLEVALUE=") ||
+                STARTS_WITH_CI(*papszIter, "TIFFTAG_MAXSAMPLEVALUE="))
             {
                 CPLFree(*papszIter);
                 memmove(papszIter, papszIter+1, sizeof(char*) * (CSLCount(papszIter+1)+1));
@@ -1759,7 +1759,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             int bMask = FALSE;
             if (EQUAL(pszBand, "mask"))
                 pszBand = "mask,1";
-            if (EQUALN(pszBand, "mask,", 5))
+            if (STARTS_WITH_CI(pszBand, "mask,"))
             {
                 bMask = TRUE;
                 pszBand += 5;
@@ -1802,7 +1802,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
                 int bMask = FALSE;
                 if (EQUAL(pszBand, "mask"))
                     pszBand = "mask,1";
-                if (EQUALN(pszBand, "mask,", 5))
+                if (STARTS_WITH_CI(pszBand, "mask,"))
                 {
                     bMask = TRUE;
                     pszBand += 5;
@@ -1888,10 +1888,10 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             psOptions->papszCreateOptions = CSLAddString( psOptions->papszCreateOptions, papszArgv[++i] );
         }   
 
-        else if( EQUAL(papszArgv[i],"-scale") || EQUALN(papszArgv[i],"-scale_", 7) )
+        else if( EQUAL(papszArgv[i],"-scale") || STARTS_WITH_CI(papszArgv[i], "-scale_") )
         {
             int nIndex = 0;
-            if( EQUALN(papszArgv[i],"-scale_", 7) )
+            if( STARTS_WITH_CI(papszArgv[i], "-scale_") )
             {
                 if( !psOptions->bHasUsedExplicitScaleBand && psOptions->nScaleRepeat != 0 )
                 {
@@ -1950,11 +1950,11 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             }
         }
 
-        else if( (EQUAL(papszArgv[i],"-exponent") || EQUALN(papszArgv[i],"-exponent_",10)) &&
+        else if( (EQUAL(papszArgv[i],"-exponent") || STARTS_WITH_CI(papszArgv[i], "-exponent_")) &&
                  papszArgv[i+1] )
         {
             int nIndex = 0;
-            if( EQUALN(papszArgv[i],"-exponent_", 10) )
+            if( STARTS_WITH_CI(papszArgv[i], "-exponent_") )
             {
                 if( !psOptions->bHasUsedExplicitExponentBand && psOptions->nExponentRepeat != 0 )
                 {

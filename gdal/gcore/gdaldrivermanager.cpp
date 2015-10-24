@@ -439,7 +439,7 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 
     if( poDriver->GetMetadataItem( GDAL_DMD_OPENOPTIONLIST ) != NULL &&
         poDriver->pfnIdentify == NULL &&
-        !EQUALN(poDriver->GetDescription(), "Interlis", strlen("Interlis")) )
+        !STARTS_WITH_CI(poDriver->GetDescription(), "Interlis") )
     {
         CPLDebug("GDAL", "Driver %s that defines GDAL_DMD_OPENOPTIONLIST must also "
                  "implement Identify(), so that it can be used",
@@ -758,13 +758,13 @@ void GDALDriverManager::AutoLoadDrivers()
                 continue;
 
             char *pszFuncName;
-            if( EQUALN(papszFiles[iFile],"gdal_",strlen("gdal_")) )
+            if( STARTS_WITH_CI(papszFiles[iFile], "gdal_") )
             {
                 pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
                 sprintf( pszFuncName, "GDALRegister_%s", 
                      CPLGetBasename(papszFiles[iFile]) + strlen("gdal_") );
             }
-            else if ( EQUALN(papszFiles[iFile],"ogr_",strlen("ogr_")) )
+            else if ( STARTS_WITH_CI(papszFiles[iFile], "ogr_") )
             {
                 pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
                 sprintf( pszFuncName, "RegisterOGR%s", 

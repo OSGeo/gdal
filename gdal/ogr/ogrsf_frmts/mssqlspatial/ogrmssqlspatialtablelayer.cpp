@@ -1420,7 +1420,7 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
     // Check if date is NULL: 0000-00-00
     if( nOGRFieldType == OFTDate )
     {
-        if( EQUALN( pszStrValue, "0000", 4 ) )
+        if( STARTS_WITH_CI(pszStrValue, "0000") )
         {
             pszStrValue = "null";
             bIsDateNull = TRUE;

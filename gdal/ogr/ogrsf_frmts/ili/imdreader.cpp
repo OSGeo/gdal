@@ -476,7 +476,7 @@ void ImdReader::ReadModel(const char *pszFilename) {
     {
         const char* className = it->second->GetIliName();
         FeatureDefnInfo oClassInfo = it->second->tableDefs();
-        if (!EQUALN(className, "INTERLIS.", 9) && oClassInfo.poTableDefn)
+        if (!STARTS_WITH_CI(className, "INTERLIS.") && oClassInfo.poTableDefn)
             featureDefnInfos.push_back(oClassInfo);
     }
 

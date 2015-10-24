@@ -282,7 +282,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
             eFType = OFTString;
 
         OGRFieldDefn oField( poProperty->GetName(), eFType );
-        if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
+        if ( STARTS_WITH_CI(oField.GetNameRef(), "ogr:") )
           oField.SetName(poProperty->GetName()+4);
         if( poProperty->GetWidth() > 0 )
             oField.SetWidth( poProperty->GetWidth() );
@@ -339,7 +339,7 @@ void OGRNASDataSource::PopulateRelations()
             const char *pszValue = CPLParseNameValue( papszOBProperties[i],
                                                       &pszName );
 
-            if( EQUALN(pszValue,"urn:adv:oid:",12)
+            if( STARTS_WITH_CI(pszValue, "urn:adv:oid:")
                 && psGMLId != NULL && psGMLId->nSubProperties == 1 )
             {
                 poRelationLayer->AddRelation( psGMLId->papszSubProperties[0],

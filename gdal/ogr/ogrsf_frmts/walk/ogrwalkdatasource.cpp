@@ -72,7 +72,7 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
     char *pszDSN;
 
-    if( EQUALN(pszNewName,"WALK:",5) )
+    if( STARTS_WITH_CI(pszNewName, "WALK:") )
         pszDSN = CPLStrdup( pszNewName + 5 );
     else
     {

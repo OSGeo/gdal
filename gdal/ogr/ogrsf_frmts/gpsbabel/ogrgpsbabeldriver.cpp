@@ -42,7 +42,7 @@ CPL_CVSID("$Id$");
 static int OGRGPSBabelDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
                                               const char** ppszGSPBabelDriverName )
 {
-    if( EQUALN(poOpenInfo->pszFilename, "GPSBABEL:", strlen("GPSBABEL:")) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPSBABEL:") )
         return TRUE;
 
     const char* pszGPSBabelDriverName = NULL;
@@ -58,7 +58,7 @@ static int OGRGPSBabelDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
     else if (strstr((const char*)poOpenInfo->pabyHeader, "$GPGSA") != NULL ||
                 strstr((const char*)poOpenInfo->pabyHeader, "$GPGGA") != NULL)
         pszGPSBabelDriverName = "nmea";
-    else if (EQUALN((const char*)poOpenInfo->pabyHeader, "OziExplorer",11))
+    else if (STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "OziExplorer"))
         pszGPSBabelDriverName = "ozi";
     else if (strstr((const char*)poOpenInfo->pabyHeader, "Grid") &&
                 strstr((const char*)poOpenInfo->pabyHeader, "Datum") &&

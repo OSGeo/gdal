@@ -191,7 +191,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 /*      Handle comments.                                                */
 /* -------------------------------------------------------------------- */
     if( chNext == '<'
-        && EQUALN(psContext->pszInput+psContext->nInputOffset,"!--",3) )
+        && STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "!--") )
     {
         psContext->eTokenType = TComment;
 
@@ -200,7 +200,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         ReadChar(psContext);
         ReadChar(psContext);
 
-        while( !EQUALN(psContext->pszInput+psContext->nInputOffset,"-->",3)
+        while( !STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "-->")
                && (chNext = ReadChar(psContext)) != '\0' )
             AddToToken( psContext, chNext );
 
@@ -213,7 +213,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 /*      Handle DOCTYPE.                                                 */
 /* -------------------------------------------------------------------- */
     else if( chNext == '<'
-          && EQUALN(psContext->pszInput+psContext->nInputOffset,"!DOCTYPE",8) )
+          && STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "!DOCTYPE") )
     {
         bool bInQuotes = false;
         psContext->eTokenType = TLiteral;
@@ -250,7 +250,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                     AddToToken( psContext, chNext );
                 }
                 while( chNext != '\0'
-                    && !EQUALN(psContext->pszInput+psContext->nInputOffset,"]>", 2) );
+                    && !STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "]>") );
 
                 if (chNext == '\0')
                 {
@@ -288,7 +288,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 /*      Handle CDATA.                                                   */
 /* -------------------------------------------------------------------- */
     else if( chNext == '<'
-          && EQUALN(psContext->pszInput+psContext->nInputOffset,"![CDATA[",8) )
+          && STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "![CDATA[") )
     {
         psContext->eTokenType = TString;
 
@@ -302,7 +302,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         ReadChar( psContext );
         ReadChar( psContext );
 
-        while( !EQUALN(psContext->pszInput+psContext->nInputOffset,"]]>",3)
+        while( !STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "]]>")
                && (chNext = ReadChar(psContext)) != '\0' )
             AddToToken( psContext, chNext );
 

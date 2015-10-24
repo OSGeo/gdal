@@ -206,29 +206,29 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
     pszFname = CPLStrdup(psFile->pszFilename);
     nLen = strlen(pszFname);
     if (eType == AVCFileARC &&
-        ( (nLen>=3 && EQUALN((pszExt=pszFname+nLen-3), "arc", 3)) ||
-          (nLen>=7 && EQUALN((pszExt=pszFname+nLen-7), "arc.adf", 7)) ) )
+        ( (nLen>=3 && STARTS_WITH_CI((pszExt=pszFname+nLen-3), "arc")) ||
+          (nLen>=7 && STARTS_WITH_CI((pszExt=pszFname+nLen-7), "arc.adf")) ) )
     {
         strncpy(pszExt, "arx", 3);
         bCreateIndex = TRUE;
     }
     else if ((eType == AVCFilePAL || eType == AVCFileRPL) &&
-             ( (nLen>=3 && EQUALN((pszExt=pszFname+nLen-3), "pal", 3)) ||
-               (nLen>=7 && EQUALN((pszExt=pszFname+nLen-7), "pal.adf", 7)) ) )
+             ( (nLen>=3 && STARTS_WITH_CI((pszExt=pszFname+nLen-3), "pal")) ||
+               (nLen>=7 && STARTS_WITH_CI((pszExt=pszFname+nLen-7), "pal.adf")) ) )
     {
         strncpy(pszExt, "pax", 3);
         bCreateIndex = TRUE;
     }
     else if (eType == AVCFileCNT &&
-             ( (nLen>=3 && EQUALN((pszExt=pszFname+nLen-3), "cnt", 3)) ||
-               (nLen>=7 && EQUALN((pszExt=pszFname+nLen-7), "cnt.adf", 7)) ) )
+             ( (nLen>=3 && STARTS_WITH_CI((pszExt=pszFname+nLen-3), "cnt")) ||
+               (nLen>=7 && STARTS_WITH_CI((pszExt=pszFname+nLen-7), "cnt.adf")) ) )
     {
         strncpy(pszExt, "cnx", 3);
         bCreateIndex = TRUE;
     }
     else if ((eType == AVCFileTXT || eType == AVCFileTX6) &&
-             ( (nLen>=3 && EQUALN((pszExt=pszFname+nLen-3), "txt", 3)) ||
-               (nLen>=7 && EQUALN((pszExt=pszFname+nLen-7), "txt.adf", 7)) ) )
+             ( (nLen>=3 && STARTS_WITH_CI((pszExt=pszFname+nLen-3), "txt")) ||
+               (nLen>=7 && STARTS_WITH_CI((pszExt=pszFname+nLen-7), "txt.adf")) ) )
     {
         strncpy(pszExt, "txx", 3);
         bCreateIndex = TRUE;
@@ -1547,8 +1547,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
     {
         nTableIndex = atoi(sEntry.szInfoFile+3);
         if (EQUALN(psTableDef->szTableName, sEntry.szTableName, 
-                   strlen(psTableDef->szTableName)))
-        {   
+                   strlen(psTableDef->szTableName)))        {   
             bFound = TRUE;
             break;
         }

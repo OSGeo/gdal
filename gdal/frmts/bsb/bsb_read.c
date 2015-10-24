@@ -273,7 +273,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
                                                     FALSE,FALSE);
             nCount = CSLCount(papszTokens);
         }
-        else if( EQUALN(szLine,"    ",4) && szLine[4] != ' ' )
+        else if( STARTS_WITH_CI(szLine, "    ") && szLine[4] != ' ' )
         {
             /* add extension lines to the last header line. */
             int iTargetHeader = CSLCount(psInfo->papszHeader);
@@ -289,7 +289,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             }
         }
 
-        if( EQUALN(szLine,"BSB/",4) )
+        if( STARTS_WITH_CI(szLine, "BSB/") )
         {
             int		nRAIndex;
 
@@ -305,7 +305,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             psInfo->nXSize = atoi(papszTokens[nRAIndex+1]);
             psInfo->nYSize = atoi(papszTokens[nRAIndex+2]);
         }
-        else if( EQUALN(szLine,"NOS/",4) )
+        else if( STARTS_WITH_CI(szLine, "NOS/") )
         {
             int  nRAIndex;
             
@@ -357,7 +357,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             psInfo->pabyPCT[iPCT*3+1] = (unsigned char)atoi(papszTokens[2]);
             psInfo->pabyPCT[iPCT*3+2] = (unsigned char)atoi(papszTokens[3]);
         }
-        else if( EQUALN(szLine,"VER/",4) && nCount >= 1 )
+        else if( STARTS_WITH_CI(szLine, "VER/") && nCount >= 1 )
         {
             psInfo->nVersion = (int) (100 * CPLAtof(papszTokens[0]) + 0.5);
         }

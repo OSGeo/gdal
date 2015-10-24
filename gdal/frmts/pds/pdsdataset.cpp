@@ -649,7 +649,7 @@ void PDSDataset::ParseSRS()
 
 static GUInt32 PDSConvertFromHex(const char* pszVal)
 {
-    if( !EQUALN(pszVal, "16#", 3) )
+    if( !STARTS_WITH_CI(pszVal, "16#") )
         return 0;
 
     pszVal += 3;
@@ -952,7 +952,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
             pszMissing ++;
 
         /* For example : MISSING_CONSTANT             = "16#FF7FFFFB#" */
-        if( EQUALN(pszMissing, "16#", 3) && strlen(pszMissing) >= 3 + 8 + 1 &&
+        if( STARTS_WITH_CI(pszMissing, "16#") && strlen(pszMissing) >= 3 + 8 + 1 &&
             pszMissing[3 + 8] == '#' && (eDataType == GDT_Float32 || eDataType == GDT_Float64) )
         {
             GUInt32 nVal = PDSConvertFromHex(pszMissing);

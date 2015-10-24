@@ -432,7 +432,7 @@ AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName)
     /*-----------------------------------------------------------------
      * Make sure the file starts with a "EXP  0" or "EXP  1" header
      *----------------------------------------------------------------*/
-    if (VSIFGets(szHeader, 5, fp) == NULL || !EQUALN("EXP ", szHeader, 4) )
+    if (VSIFGets(szHeader, 5, fp) == NULL || !STARTS_WITH_CI(szHeader, "EXP ") )
     {
         CPLError(CE_Failure, CPLE_OpenFailed, 
                  "This does not look like a E00 file: does not start with "
@@ -1375,7 +1375,7 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
              * long and contain several '~' characters.
              */
             int nLen = strlen(pszLine);
-            if (nLen == 0 || EQUALN("EXP ", pszLine, 4))
+            if (nLen == 0 || STARTS_WITH_CI(pszLine, "EXP "))
                 continue;  /* Skip empty and EXP header lines */
             else if ( (nLen == 79 || nLen == 80) &&
                       strchr(pszLine, '~') != NULL )

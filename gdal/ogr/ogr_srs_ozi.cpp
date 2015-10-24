@@ -99,11 +99,11 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 
     for ( iLine = 5; iLine < nLines; iLine++ )
     {
-        if ( EQUALN(papszLines[iLine], "Map Projection", 14) )
+        if ( STARTS_WITH_CI(papszLines[iLine], "Map Projection") )
         {
             pszProj = papszLines[iLine];
         }
-        else if ( EQUALN(papszLines[iLine], "Projection Setup", 16) )
+        else if ( STARTS_WITH_CI(papszLines[iLine], "Projection Setup") )
         {
             pszProjParms = papszLines[iLine];
         }
@@ -125,11 +125,11 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
         goto not_enough_data;
     }
 
-    if ( EQUALN(papszProj[1], "Latitude/Longitude", 18) )
+    if ( STARTS_WITH_CI(papszProj[1], "Latitude/Longitude") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "Mercator", 8) )
+    else if ( STARTS_WITH_CI(papszProj[1], "Mercator") )
     {
         if (CSLCount(papszProjParms) < 6) goto not_enough_data;
         double dfScale = CPLAtof(papszProjParms[3]);
@@ -139,7 +139,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                      CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
     }
 
-    else if ( EQUALN(papszProj[1], "Transverse Mercator", 19) )
+    else if ( STARTS_WITH_CI(papszProj[1], "Transverse Mercator") )
     {
         if (CSLCount(papszProjParms) < 6) goto not_enough_data;
         SetTM( CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
@@ -147,7 +147,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
     }
 
-    else if ( EQUALN(papszProj[1], "Lambert Conformal Conic", 23) )
+    else if ( STARTS_WITH_CI(papszProj[1], "Lambert Conformal Conic") )
     {
         if (CSLCount(papszProjParms) < 8) goto not_enough_data;
         SetLCC( CPLAtof(papszProjParms[6]), CPLAtof(papszProjParms[7]),
@@ -155,14 +155,14 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                 CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
     }
 
-    else if ( EQUALN(papszProj[1], "Sinusoidal", 10) )
+    else if ( STARTS_WITH_CI(papszProj[1], "Sinusoidal") )
     {
         if (CSLCount(papszProjParms) < 6) goto not_enough_data;
         SetSinusoidal( CPLAtof(papszProjParms[2]),
                        CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
     }
 
-    else if ( EQUALN(papszProj[1], "Albers Equal Area", 17) )
+    else if ( STARTS_WITH_CI(papszProj[1], "Albers Equal Area") )
     {
         if (CSLCount(papszProjParms) < 8) goto not_enough_data;
         SetACEA( CPLAtof(papszProjParms[6]), CPLAtof(papszProjParms[7]),
@@ -170,12 +170,12 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                  CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
     }
 
-    else if ( EQUALN(papszProj[1], "(UTM) Universal Transverse Mercator", 35) && nLines > 5 )
+    else if ( STARTS_WITH_CI(papszProj[1], "(UTM) Universal Transverse Mercator") && nLines > 5 )
     {
         /* Look for the UTM zone in the calibration point data */
         for ( iLine = 5; iLine < nLines; iLine++ )
         {
-            if ( EQUALN(papszLines[iLine], "Point", 5) )
+            if ( STARTS_WITH_CI(papszLines[iLine], "Point") )
             {
                 char    **papszTok = NULL;
                 papszTok = CSLTokenizeString2( papszLines[iLine], ",",
@@ -206,7 +206,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
             bool bFoundMMPLL = false;
             for ( iLine = 5; iLine < nLines; iLine++ )
             {
-                if ( EQUALN(papszLines[iLine], "MMPLL", 5) )
+                if ( STARTS_WITH_CI(papszLines[iLine], "MMPLL") )
                 {
                     char    **papszTok = NULL;
                     papszTok = CSLTokenizeString2( papszLines[iLine], ",",
@@ -254,22 +254,22 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
         }
     }
 
-    else if ( EQUALN(papszProj[1], "(I) France Zone I", 17) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(I) France Zone I") )
     {
         SetLCC1SP( 49.5, 2.337229167, 0.99987734, 600000, 1200000 );
     }
 
-    else if ( EQUALN(papszProj[1], "(II) France Zone II", 19) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(II) France Zone II") )
     {
         SetLCC1SP( 46.8, 2.337229167, 0.99987742, 600000, 2200000 );
     }
 
-    else if ( EQUALN(papszProj[1], "(III) France Zone III", 21) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(III) France Zone III") )
     {
         SetLCC1SP( 44.1, 2.337229167, 0.99987750, 600000, 3200000 );
     }
 
-    else if ( EQUALN(papszProj[1], "(IV) France Zone IV", 19) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(IV) France Zone IV") )
     {
         SetLCC1SP( 42.165, 2.337229167, 0.99994471, 234.358, 4185861.369 );
     }
@@ -280,19 +280,19 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
  */
 
 /*
-    else if ( EQUALN(papszProj[1], "(BNG) British National Grid", 27) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(BNG) British National Grid") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(IG) Irish Grid", 15) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(IG) Irish Grid") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(NZG) New Zealand Grid", 22) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(NZG) New Zealand Grid") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(NZTM2) New Zealand TM 2000", 27) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(NZTM2) New Zealand TM 2000") )
     {
     }
 
@@ -304,59 +304,59 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(A)Lambert Azimuthual Equal Area", 32) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(A)Lambert Azimuthual Equal Area") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(EQC) Equidistant Conic", 23) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(EQC) Equidistant Conic") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "Polyconic (American)", 20) )
+    else if ( STARTS_WITH_CI(papszProj[1], "Polyconic (American)") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "Van Der Grinten", 15) )
+    else if ( STARTS_WITH_CI(papszProj[1], "Van Der Grinten") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "Vertical Near-Sided Perspective", 31) )
+    else if ( STARTS_WITH_CI(papszProj[1], "Vertical Near-Sided Perspective") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(WIV) Wagner IV", 15) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(WIV) Wagner IV") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "Bonne", 5) )
+    else if ( STARTS_WITH_CI(papszProj[1], "Bonne") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(MT0) Montana State Plane Zone 2500", 35) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(MT0) Montana State Plane Zone 2500") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "ITA1) Italy Grid Zone 1", 23) )
+    else if ( STARTS_WITH_CI(papszProj[1], "ITA1) Italy Grid Zone 1") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "ITA2) Italy Grid Zone 2", 23) )
+    else if ( STARTS_WITH_CI(papszProj[1], "ITA2) Italy Grid Zone 2") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(VICMAP-TM) Victoria Aust.(pseudo AMG)", 38) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(VICMAP-TM) Victoria Aust.(pseudo AMG)") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "VICGRID) Victoria Australia", 27) )
+    else if ( STARTS_WITH_CI(papszProj[1], "VICGRID) Victoria Australia") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "(VG94) VICGRID94 Victoria Australia", 35) )
+    else if ( STARTS_WITH_CI(papszProj[1], "(VG94) VICGRID94 Victoria Australia") )
     {
     }
 
-    else if ( EQUALN(papszProj[1], "Gnomonic", 8) )
+    else if ( STARTS_WITH_CI(papszProj[1], "Gnomonic") )
     {
     }
 */

@@ -1002,7 +1002,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 5 )
         return NULL;
 
-    if( !EQUALN((char *)poOpenInfo->pabyHeader,"GTA",3) )
+    if( !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "GTA") )
         return NULL;
 
 /* -------------------------------------------------------------------- */

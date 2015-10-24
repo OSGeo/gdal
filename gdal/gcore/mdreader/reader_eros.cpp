@@ -45,7 +45,7 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
         return;
     for(i = 0; i < osBaseName.size(); i++)
     {
-        if(EQUALN(osBaseName + i, ".", 1))
+        if(STARTS_WITH_CI(osBaseName + i, "."))
         {
             pszPassFileName = CPLFormFilename( osDirName, szMetadataName,
                                                "pass" );

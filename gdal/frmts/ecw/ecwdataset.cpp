@@ -1320,7 +1320,7 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
                     EQUAL(pszKey, "CLOCKWISE_ROTATION_DEG") ||
                     EQUAL(pszKey, "COLORSPACE") ||
                     EQUAL(pszKey, "COMPRESSION_DATE") ||
-                    EQUALN(pszKey, "FILE_METADATA_", strlen("FILE_METADATA_")) ) )
+                    STARTS_WITH_CI(pszKey, "FILE_METADATA_") ) )
             {
                 /* do nothing */
             }
@@ -2298,7 +2298,7 @@ CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
 int ECWDataset::IdentifyJPEG2000( GDALOpenInfo * poOpenInfo )
 
 {
-    if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "J2K_SUBFILE:") )
         return TRUE;
 
     else if( poOpenInfo->nHeaderBytes >= 16 
@@ -2342,7 +2342,7 @@ int ECWDataset::IdentifyECW( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
          || poOpenInfo->nHeaderBytes == 0)
-        && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5)
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "ecwp:")
         && !EQUALN(poOpenInfo->pszFilename,"ecwps:",5) )
         return FALSE;
 
@@ -2514,7 +2514,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /*      From: J2K_SUBFILE:offset,size,filename                           */
 /*      To: /vsisubfile/offset_size,filename                            */
 /* -------------------------------------------------------------------- */
-    if (EQUALN(osFilename,"J2K_SUBFILE:",12))
+    if (STARTS_WITH_CI(osFilename, "J2K_SUBFILE:"))
     {
         char** papszTokens = CSLTokenizeString2(osFilename.c_str()+12, ",", 0);
         if (CSLCount(papszTokens) >= 3)
@@ -2542,7 +2542,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         /* Detect what is apparently the ECW v3 file format signature */
         if( EQUAL(CPLGetExtension(osFilename), "ECW") &&
             poOpenInfo->nHeaderBytes > 0x30 &&
-            EQUALN((const char*)(poOpenInfo->pabyHeader + 0x20), "ecw ECW3", 8) )
+            STARTS_WITH_CI((const char*)(poOpenInfo->pabyHeader + 0x20), "ecw ECW3") )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot open %s which looks like a ECW format v3 file, that requires ECW SDK 5.0 or later",

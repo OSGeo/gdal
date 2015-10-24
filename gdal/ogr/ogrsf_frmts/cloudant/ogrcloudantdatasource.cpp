@@ -135,7 +135,7 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
     if (strncmp(pszFilename, "http://", 7) == 0 ||
         strncmp(pszFilename, "https://", 8) == 0)
         bHTTP = TRUE;
-    else if (!EQUALN(pszFilename, "cloudant:", 9))
+    else if (!STARTS_WITH_CI(pszFilename, "cloudant:"))
         return FALSE;
 
     bReadWrite = bUpdateIn;

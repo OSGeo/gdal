@@ -83,7 +83,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
             break;
         }
 
-        if( EQUALN( osLine, "# REGION_STUB ", 14 ) )
+        if( STARTS_WITH_CI(osLine, "# REGION_STUB ") )
             nRegionOffset = nStartOfLine;
 
         for( iKey = 0; 

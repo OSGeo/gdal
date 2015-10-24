@@ -172,7 +172,7 @@ void OGRIDFDataSource::Parse()
                     for(int i=0; papszAtr[i]; i++)
                     {
                         OGRFieldType eType = OFTString;
-                        if( EQUALN(papszFrm[i], "decimal", strlen("decimal")) )
+                        if( STARTS_WITH_CI(papszFrm[i], "decimal") )
                         {
                             if( papszFrm[i][strlen("decimal")] == '(' )
                             {

@@ -419,7 +419,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             pszRecStart = szHeader;
             szHeader[sizeof(szHeader)-1] = '\0';
 
-            if( EQUALN(pszRecStart,"Copyright (C)",13) 
+            if( STARTS_WITH_CI(pszRecStart, "Copyright (C)") 
                 && strstr(pszRecStart,"Geographic Data Tech") != NULL )
             {
                 bIsGDT = TRUE;
@@ -494,7 +494,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
         const char *pszRequestedVersion = 
             CPLGetConfigOption( "TIGER_VERSION", NULL );
 
-        if( EQUALN(pszRequestedVersion,"TIGER_",6) )
+        if( STARTS_WITH_CI(pszRequestedVersion, "TIGER_") )
         {
             int iCode;
 

@@ -403,50 +403,50 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Classify the product type.                                      */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszProduct,"LAND-LINE",9) && CPLAtof(pszPVName+5) < 1.3 )
+    if( STARTS_WITH_CI(pszProduct, "LAND-LINE") && CPLAtof(pszPVName+5) < 1.3 )
         nProduct = NPC_LANDLINE;
-    else if( EQUALN(pszProduct,"LAND-LINE",9) )
+    else if( STARTS_WITH_CI(pszProduct, "LAND-LINE") )
         nProduct = NPC_LANDLINE99;
     else if( EQUAL(pszProduct,"OS_LANDRANGER_CONT") ) // Panorama
         nProduct = NPC_LANDRANGER_CONT;
     else if( EQUAL(pszProduct,"L-F_PROFILE_CON") ) // Panorama
         nProduct = NPC_LANDFORM_PROFILE_CONT;
-    else if( EQUALN(pszProduct,"Strategi",8) )
+    else if( STARTS_WITH_CI(pszProduct, "Strategi") )
         nProduct = NPC_STRATEGI;
-    else if( EQUALN(pszProduct,"Meridian_02",11) )
+    else if( STARTS_WITH_CI(pszProduct, "Meridian_02") )
         nProduct = NPC_MERIDIAN2;
-    else if( EQUALN(pszProduct,"Meridian_01",11) )
+    else if( STARTS_WITH_CI(pszProduct, "Meridian_01") )
         nProduct = NPC_MERIDIAN;
     else if( EQUAL(pszProduct,NTF_BOUNDARYLINE) 
-             && EQUALN(pszPVName,"A10N_FC",7) )
+             && STARTS_WITH_CI(pszPVName, "A10N_FC") )
         nProduct = NPC_BOUNDARYLINE;
     else if( EQUAL(pszProduct,NTF_BOUNDARYLINE) 
-             && EQUALN(pszPVName,"A20N_FC",7) )
+             && STARTS_WITH_CI(pszPVName, "A20N_FC") )
         nProduct = NPC_BL2000;
-    else if( EQUALN(pszProduct,"BaseData.GB",11) )
+    else if( STARTS_WITH_CI(pszProduct, "BaseData.GB") )
         nProduct = NPC_BASEDATA;
-    else if( EQUALN(pszProduct,"OSCAR_ASSET",11) )
+    else if( STARTS_WITH_CI(pszProduct, "OSCAR_ASSET") )
         nProduct = NPC_OSCAR_ASSET;
-    else if( EQUALN(pszProduct,"OSCAR_TRAFF",11) )
+    else if( STARTS_WITH_CI(pszProduct, "OSCAR_TRAFF") )
         nProduct = NPC_OSCAR_TRAFFIC;
-    else if( EQUALN(pszProduct,"OSCAR_ROUTE",11) )
+    else if( STARTS_WITH_CI(pszProduct, "OSCAR_ROUTE") )
         nProduct = NPC_OSCAR_ROUTE;
-    else if( EQUALN(pszProduct,"OSCAR_NETWO",11) )
+    else if( STARTS_WITH_CI(pszProduct, "OSCAR_NETWO") )
         nProduct = NPC_OSCAR_NETWORK;
-    else if( EQUALN(pszProduct,"ADDRESS_POI",11) )
+    else if( STARTS_WITH_CI(pszProduct, "ADDRESS_POI") )
         nProduct = NPC_ADDRESS_POINT;
-    else if( EQUALN(pszProduct,"CODE_POINT",10) )
+    else if( STARTS_WITH_CI(pszProduct, "CODE_POINT") )
     {
         if( GetAttDesc( "RH" ) == NULL )
             nProduct = NPC_CODE_POINT;
         else
             nProduct = NPC_CODE_POINT_PLUS;
     }
-    else if( EQUALN(pszProduct,"OS_LANDRANGER_DTM",17) )
+    else if( STARTS_WITH_CI(pszProduct, "OS_LANDRANGER_DTM") )
         nProduct = NPC_LANDRANGER_DTM;
-    else if( EQUALN(pszProduct,"L-F_PROFILE_DTM",15) )
+    else if( STARTS_WITH_CI(pszProduct, "L-F_PROFILE_DTM") )
         nProduct = NPC_LANDFORM_PROFILE_DTM;
-    else if( EQUALN(pszProduct,"NEXTMap Britain DTM",19) )
+    else if( STARTS_WITH_CI(pszProduct, "NEXTMap Britain DTM") )
         nProduct = NPC_LANDFORM_PROFILE_DTM; // Treat as landform
 
     if( poDS->GetOption("FORCE_GENERIC") != NULL

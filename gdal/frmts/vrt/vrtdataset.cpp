@@ -123,7 +123,7 @@ void VRTDataset::FlushCache()
     // We don't write to disk if there is no filename.  This is a 
     // memory only dataset.
     if( strlen(GetDescription()) == 0 
-        || EQUALN(GetDescription(),"<VRTDataset",11) )
+        || STARTS_WITH_CI(GetDescription(), "<VRTDataset") )
         return;
 
     /* -------------------------------------------------------------------- */
@@ -1006,7 +1006,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
         for( int i=0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
         {
-            if( EQUALN(papszOptions[i],"AddFuncSource=", 14) )
+            if( STARTS_WITH_CI(papszOptions[i], "AddFuncSource=") )
             {
                 VRTImageReadFunc pfnReadFunc = NULL;
                 void             *pCBData = NULL;
@@ -1066,7 +1066,7 @@ VRTDataset::Create( const char * pszName,
 
 {
 
-    if( EQUALN(pszName,"<VRTDataset",11) )
+    if( STARTS_WITH_CI(pszName, "<VRTDataset") )
     {
         GDALDataset *poDS = OpenXML( pszName, NULL, GA_Update );
         if (poDS)

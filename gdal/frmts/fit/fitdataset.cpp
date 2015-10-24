@@ -514,7 +514,7 @@ double FITRasterBand::GetMinimum( int *pbSuccess )
         *pbSuccess = TRUE;
 
     if (poFIT_DS->info->version &&
-        EQUALN((const char *) &(poFIT_DS->info->version), "02", 2)) {
+        STARTS_WITH_CI((const char *) &(poFIT_DS->info->version), "02")) {
         return poFIT_DS->info->minValue;
     }
 
@@ -535,7 +535,7 @@ double FITRasterBand::GetMaximum( int *pbSuccess )
     if (pbSuccess)
         *pbSuccess = TRUE;
 
-    if (EQUALN((const char *) &poFIT_DS->info->version, "02", 2)) {
+    if (STARTS_WITH_CI((const char *) &poFIT_DS->info->version, "02")) {
         return poFIT_DS->info->maxValue;
     }
 
@@ -860,8 +860,8 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader, "IT01", 4) &&
-        !EQUALN((const char *) poOpenInfo->pabyHeader, "IT02", 4) )
+    if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "IT01") &&
+        !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "IT02") )
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -902,7 +902,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     FIThead02 *head = (FIThead02 *) poOpenInfo->pabyHeader;
 
     // extract the image attributes from the file header
-    if (EQUALN((const char *) &head->version, "02", 2)) {
+    if (STARTS_WITH_CI((const char *) &head->version, "02")) {
         // incomplete header
         if( poOpenInfo->nHeaderBytes < (signed) sizeof(FIThead02) )
             return NULL;
@@ -918,7 +918,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 
         info->userOffset = sizeof(FIThead02);
     }
-    else if (EQUALN((const char *) &head->version, "01", 2)) {
+    else if (STARTS_WITH_CI((const char *) &head->version, "01")) {
         // incomplete header
         if( poOpenInfo->nHeaderBytes < (signed) sizeof(FIThead01) )
             return NULL;

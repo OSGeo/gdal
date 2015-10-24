@@ -50,7 +50,7 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     for(i = 0; i < nBaseNameLen; i++)
     {
         szMetadataName[i] = pszBaseName[i];
-        if(EQUALN(pszBaseName + i, "_B", 2) || EQUALN(pszBaseName + i, "_b", 2))
+        if(STARTS_WITH_CI(pszBaseName + i, "_B") || STARTS_WITH_CI(pszBaseName + i, "_b"))
         {
             break;
         }

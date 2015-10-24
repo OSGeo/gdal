@@ -2118,32 +2118,32 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
             {
                 pszOutput[iOut++] = ch;
             }
-            else if( EQUALN(pszInput+iIn,"&lt;",4) )
+            else if( STARTS_WITH_CI(pszInput+iIn, "&lt;") )
             {
                 pszOutput[iOut++] = '<';
                 iIn += 3;
             }
-            else if( EQUALN(pszInput+iIn,"&gt;",4) )
+            else if( STARTS_WITH_CI(pszInput+iIn, "&gt;") )
             {
                 pszOutput[iOut++] = '>';
                 iIn += 3;
             }
-            else if( EQUALN(pszInput+iIn,"&amp;",5) )
+            else if( STARTS_WITH_CI(pszInput+iIn, "&amp;") )
             {
                 pszOutput[iOut++] = '&';
                 iIn += 4;
             }
-            else if( EQUALN(pszInput+iIn,"&apos;",6) )
+            else if( STARTS_WITH_CI(pszInput+iIn, "&apos;") )
             {
                 pszOutput[iOut++] = '\'';
                 iIn += 5;
             }
-            else if( EQUALN(pszInput+iIn,"&quot;",6) )
+            else if( STARTS_WITH_CI(pszInput+iIn, "&quot;") )
             {
                 pszOutput[iOut++] = '"';
                 iIn += 5;
             }
-            else if( EQUALN(pszInput+iIn,"&#x",3) )
+            else if( STARTS_WITH_CI(pszInput+iIn, "&#x") )
             {
                 wchar_t anVal[2] = {0 , 0};
                 iIn += 3;
@@ -2170,7 +2170,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 CPLFree(pszUTF8);
                 iOut += nLen;
             }
-            else if( EQUALN(pszInput+iIn,"&#",2) )
+            else if( STARTS_WITH_CI(pszInput+iIn, "&#") )
             {
                 wchar_t anVal[2] = {0 , 0};
                 iIn += 2;

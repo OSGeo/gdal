@@ -216,8 +216,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
             }
             
             if( strlen(candidateFileList[i]) > 4
-              && EQUALN(candidateFileList[i] + strlen(candidateFileList[i])-4,
-                       ".ntf",4) )
+              && STARTS_WITH_CI(candidateFileList[i] + strlen(candidateFileList[i])-4, ".ntf") )
             {
                 char       fullFilename[2048];
 
@@ -280,7 +279,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 
             VSIFClose( fp );
             
-            if( !EQUALN(szHeader,"01",2) )
+            if( !STARTS_WITH_CI(szHeader, "01") )
                 continue;
 
             for( j = 0; j < 80; j++ )

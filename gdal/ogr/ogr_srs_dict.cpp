@@ -90,7 +90,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
         if( pszLine[0] == '#' )
             /* do nothing */;
 
-        else if( EQUALN(pszLine,"include ",8) )
+        else if( STARTS_WITH_CI(pszLine, "include ") )
         {
             eErr = importFromDict( pszLine + 8, pszCode );
             if( eErr != OGRERR_UNSUPPORTED_SRS )

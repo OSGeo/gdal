@@ -380,7 +380,7 @@ const char *SDTSRasterBand::GetUnitType()
 {
     if( EQUAL(poRL->szUNITS,"FEET") )
         return "ft";
-    else if( EQUALN(poRL->szUNITS,"MET",3) )
+    else if( STARTS_WITH_CI(poRL->szUNITS, "MET") )
         return "m";
     else
         return poRL->szUNITS;

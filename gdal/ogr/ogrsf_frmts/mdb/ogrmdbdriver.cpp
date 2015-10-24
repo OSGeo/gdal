@@ -68,13 +68,13 @@ OGRDataSource *OGRMDBDriver::Open( const char * pszFilename,
     if( bUpdate )
         return NULL;
 
-    if( EQUALN(pszFilename, "PGEO:", strlen("PGEO:")) )
+    if( STARTS_WITH_CI(pszFilename, "PGEO:") )
         return NULL;
 
-    if( EQUALN(pszFilename, "GEOMEDIA:", strlen("GEOMEDIA:")) )
+    if( STARTS_WITH_CI(pszFilename, "GEOMEDIA:") )
         return NULL;
 
-    if( EQUALN(pszFilename, "WALK:", strlen("WALK:")) )
+    if( STARTS_WITH_CI(pszFilename, "WALK:") )
         return NULL;
 
     if( !EQUAL(CPLGetExtension(pszFilename),"mdb") )

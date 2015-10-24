@@ -1074,7 +1074,7 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
     // Check if date is NULL: 0000-00-00
     if( nOGRFieldType == OFTDate )
     {
-        if( EQUALN( pszStrValue, "0000", 4 ) )
+        if( STARTS_WITH_CI(pszStrValue, "0000") )
         {
             pszStrValue = "NULL";
             bIsDateNull = TRUE;
@@ -1264,9 +1264,9 @@ int OGRPGCommonLayerSetType(OGRFieldDefn& oField,
     {
         if( nWidth == -1 )
         {
-            if( EQUALN(pszFormatType,"character(",10) )
+            if( STARTS_WITH_CI(pszFormatType, "character(") )
                 nWidth = atoi(pszFormatType+10);
-            else if( EQUALN(pszFormatType,"character varying(",18) )
+            else if( STARTS_WITH_CI(pszFormatType, "character varying(") )
                 nWidth = atoi(pszFormatType+18);
             else
                 nWidth = 0;
@@ -1340,7 +1340,7 @@ int OGRPGCommonLayerSetType(OGRFieldDefn& oField,
     {
         oField.SetType( OFTInteger64List );
     }
-    else if( EQUALN(pszType,"int",3) )
+    else if( STARTS_WITH_CI(pszType, "int") )
     {
         oField.SetType( OFTInteger );
     }
@@ -1349,21 +1349,21 @@ int OGRPGCommonLayerSetType(OGRFieldDefn& oField,
         oField.SetType( OFTReal );
         oField.SetSubType( OFSTFloat32 );
     }
-    else if( EQUALN(pszType,"float",5) ||
-            EQUALN(pszType,"double",6) ||
+    else if( STARTS_WITH_CI(pszType, "float") ||
+            STARTS_WITH_CI(pszType, "double") ||
             EQUAL(pszType,"real") )
     {
         oField.SetType( OFTReal );
     }
-    else if( EQUALN(pszType, "timestamp",9) )
+    else if( STARTS_WITH_CI(pszType, "timestamp") )
     {
         oField.SetType( OFTDateTime );
     }
-    else if( EQUALN(pszType, "date",4) )
+    else if( STARTS_WITH_CI(pszType, "date") )
     {
         oField.SetType( OFTDate );
     }
-    else if( EQUALN(pszType, "time",4) )
+    else if( STARTS_WITH_CI(pszType, "time") )
     {
         oField.SetType( OFTTime );
     }

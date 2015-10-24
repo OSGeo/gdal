@@ -93,7 +93,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 80 || poOpenInfo->fpL == NULL )
         return NULL;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"[Raw data]",10)
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "[Raw data]")
         || strstr((const char *)poOpenInfo->pabyHeader, "Fuji BAS") == NULL )
         return NULL;
 

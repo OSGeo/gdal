@@ -206,7 +206,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
 
                 }
             }
-            else if (strlen(ftype) > 2 && EQUALN(ftype, "15", 2)) { /* -> circle with radius */
+            else if (strlen(ftype) > 2 && STARTS_WITH_CI(ftype, "15")) { /* -> circle with radius */
                 float r;
                 char s[3]; /* 15 */
 

@@ -223,50 +223,50 @@ GXFHandle GXFOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     while( (papszList = GXFReadHeaderValue( fp, szTitle)) != NULL && nHeaderCount < MAX_HEADER_COUNT )
     {
-        if( EQUALN(szTitle,"#TITL",5) )
+        if( STARTS_WITH_CI(szTitle, "#TITL") )
         {
             CPLFree( psGXF->pszTitle );
             psGXF->pszTitle = CPLStrdup( papszList[0] );
         }
-        else if( EQUALN(szTitle,"#POIN",5) )
+        else if( STARTS_WITH_CI(szTitle, "#POIN") )
         {
             psGXF->nRawXSize = atoi(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#ROWS",5) )
+        else if( STARTS_WITH_CI(szTitle, "#ROWS") )
         {
             psGXF->nRawYSize = atoi(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#PTSE",5) )
+        else if( STARTS_WITH_CI(szTitle, "#PTSE") )
         {
             psGXF->dfXPixelSize = CPLAtof(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#RWSE",5) )
+        else if( STARTS_WITH_CI(szTitle, "#RWSE") )
         {
             psGXF->dfYPixelSize = CPLAtof(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#DUMM",5) )
+        else if( STARTS_WITH_CI(szTitle, "#DUMM") )
         {
             memset( psGXF->szDummy, 0, sizeof(psGXF->szDummy));
             strncpy( psGXF->szDummy, papszList[0], sizeof(psGXF->szDummy) - 1);
             psGXF->dfSetDummyTo = CPLAtof(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#XORI",5) )
+        else if( STARTS_WITH_CI(szTitle, "#XORI") )
         {
             psGXF->dfXOrigin = CPLAtof(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#YORI",5) )
+        else if( STARTS_WITH_CI(szTitle, "#YORI") )
         {
             psGXF->dfYOrigin = CPLAtof(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#ZMIN",5) )
+        else if( STARTS_WITH_CI(szTitle, "#ZMIN") )
         {
             psGXF->dfZMinimum = CPLAtof(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#ZMAX",5) )
+        else if( STARTS_WITH_CI(szTitle, "#ZMAX") )
         {
             psGXF->dfZMaximum = CPLAtof(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#SENS",5) )
+        else if( STARTS_WITH_CI(szTitle, "#SENS") )
         {
             psGXF->nSense = atoi(papszList[0]);
         }
@@ -280,7 +280,7 @@ GXFHandle GXFOpen( const char * pszFilename )
             psGXF->papszMapDatumTransform = papszList;
             papszList = NULL;
         }
-        else if( EQUALN(szTitle,"#UNIT",5) )
+        else if( STARTS_WITH_CI(szTitle, "#UNIT") )
         {
             char	**papszFields;
 
@@ -297,7 +297,7 @@ GXFHandle GXFOpen( const char * pszFilename )
 
             CSLDestroy( papszFields );
         }
-        else if( EQUALN(szTitle,"#TRAN",5) )
+        else if( STARTS_WITH_CI(szTitle, "#TRAN") )
         {
             char	**papszFields;
 
@@ -329,7 +329,7 @@ GXFHandle GXFOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Did we find the #GRID?                                          */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(szTitle,"#GRID",5) )
+    if( !STARTS_WITH_CI(szTitle, "#GRID") )
     {
         GXFClose( psGXF );
         CPLError( CE_Failure, CPLE_WrongFormat,

@@ -63,7 +63,7 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     int nLen = (int) strlen(poOpenInfo->pszFilename);
-    if (EQUALN(poOpenInfo->pszFilename, "VirtualShape:", strlen( "VirtualShape:" )) &&
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "VirtualShape:") &&
         nLen > 4 && EQUAL(poOpenInfo->pszFilename + nLen - 4, ".SHP"))
     {
         return TRUE;
@@ -116,7 +116,7 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
 /*      Check VirtualShape:xxx.shp syntax                               */
 /* -------------------------------------------------------------------- */
     int nLen = (int) strlen(poOpenInfo->pszFilename);
-    if (EQUALN(poOpenInfo->pszFilename, "VirtualShape:", strlen( "VirtualShape:" )) &&
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "VirtualShape:") &&
         nLen > 4 && EQUAL(poOpenInfo->pszFilename + nLen - 4, ".SHP"))
     {
         OGRSQLiteDataSource     *poDS;

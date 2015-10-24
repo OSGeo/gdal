@@ -1636,9 +1636,9 @@ void HDF4ImageDataset::GetImageDimensions( char *pszDimList )
 
     for ( i = 0; i < nDimCount; i++ )
     {
-        if ( EQUALN( papszDimList[i], "X", 1 ) && iBandDim != i )
+        if ( STARTS_WITH_CI(papszDimList[i], "X") && iBandDim != i )
             iXDim = i;
-        else if ( EQUALN( papszDimList[i], "Y", 1 ) && iBandDim != i )
+        else if ( STARTS_WITH_CI(papszDimList[i], "Y") && iBandDim != i )
             iYDim = i;
     }
 
@@ -2026,25 +2026,25 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     HDF4EOSProduct eProduct = PROD_UNKNOWN;
     if ( pszProduct )
     {
-        if ( EQUALN(pszProduct, "ASTL1A", 6) )
+        if ( STARTS_WITH_CI(pszProduct, "ASTL1A") )
             eProduct = PROD_ASTER_L1A;
-        else if ( EQUALN(pszProduct, "ASTL1B", 6) )
+        else if ( STARTS_WITH_CI(pszProduct, "ASTL1B") )
             eProduct = PROD_ASTER_L1B;
-        else if ( EQUALN(pszProduct, "AST_04", 6)
-                  || EQUALN(pszProduct, "AST_05", 6)
-                  || EQUALN(pszProduct, "AST_06", 6)
-                  || EQUALN(pszProduct, "AST_07", 6)
-                  || EQUALN(pszProduct, "AST_08", 6)
-                  || EQUALN(pszProduct, "AST_09", 6)
-                  || EQUALN(pszProduct, "AST13", 5)
-                  || EQUALN(pszProduct, "AST3", 4) )
+        else if ( STARTS_WITH_CI(pszProduct, "AST_04")
+                  || STARTS_WITH_CI(pszProduct, "AST_05")
+                  || STARTS_WITH_CI(pszProduct, "AST_06")
+                  || STARTS_WITH_CI(pszProduct, "AST_07")
+                  || STARTS_WITH_CI(pszProduct, "AST_08")
+                  || STARTS_WITH_CI(pszProduct, "AST_09")
+                  || STARTS_WITH_CI(pszProduct, "AST13")
+                  || STARTS_WITH_CI(pszProduct, "AST3") )
             eProduct = PROD_ASTER_L2;
-        else if ( EQUALN(pszProduct, "AST14", 5) )
+        else if ( STARTS_WITH_CI(pszProduct, "AST14") )
             eProduct = PROD_ASTER_L3;
-        else if ( EQUALN(pszProduct, "MOD02", 5)
-                  || EQUALN(pszProduct, "MYD02", 5) )
+        else if ( STARTS_WITH_CI(pszProduct, "MOD02")
+                  || STARTS_WITH_CI(pszProduct, "MYD02") )
             eProduct = PROD_MODIS_L1B;
-        else if ( EQUALN(pszProduct, "MOD07_L2", 8) )
+        else if ( STARTS_WITH_CI(pszProduct, "MOD07_L2") )
             eProduct = PROD_MODIS_L2;
     }
 
@@ -2616,10 +2616,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int     i;
 
-    if( !EQUALN( poOpenInfo->pszFilename, "HDF4_SDS:", 9 ) &&
-        !EQUALN( poOpenInfo->pszFilename, "HDF4_GR:", 8 ) &&
-        !EQUALN( poOpenInfo->pszFilename, "HDF4_GD:", 8 ) &&
-        !EQUALN( poOpenInfo->pszFilename, "HDF4_EOS:", 9 ) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF4_SDS:") &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF4_GR:") &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF4_GD:") &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF4_EOS:") )
         return NULL;
 
 /* -------------------------------------------------------------------- */

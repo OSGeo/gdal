@@ -922,7 +922,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
 
     // Check the OziExplorer Map file signature
     if ( nLines < 5
-         || !EQUALN(papszLines[0], "OziExplorer Map Data File Version ", 34) )
+         || !STARTS_WITH_CI(papszLines[0], "OziExplorer Map Data File Version ") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
         "GDALLoadOziMapFile(): file \"%s\" is not in OziExplorer Map format.",
@@ -945,7 +945,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
     int	iLine;
     for ( iLine = 5; iLine < nLines; iLine++ )
     {
-        if ( EQUALN(papszLines[iLine], "MSF,", 4) )
+        if ( STARTS_WITH_CI(papszLines[iLine], "MSF,") )
         {
             dfMSF = CPLAtof(papszLines[iLine] + 4);
             if (dfMSF <= 0.01) /* Suspicious values */
@@ -980,7 +980,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
         }
 
         if ( CSLCount(papszTok) >= 17
-             && EQUALN(papszTok[0], "Point", 5)
+             && STARTS_WITH_CI(papszTok[0], "Point")
              && !EQUAL(papszTok[2], "")
              && !EQUAL(papszTok[3], "")
              && nCoordinateCount < MAX_GCP )
@@ -1220,7 +1220,7 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
             ** system we need to convert it to geographic.  See to01_02.TAB.
             */
             if( ppszWKT != NULL && *ppszWKT != NULL
-                && EQUALN(*ppszWKT,"PROJCS",6) )
+                && STARTS_WITH_CI(*ppszWKT, "PROJCS") )
             {
                 OGRSpatialReference oSRS, oSRSGeogCS;
                 char *pszSrcWKT = *ppszWKT;
@@ -2847,7 +2847,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     if( fp != NULL )
     {
         if( VSIFReadL( abyHeader, 1, 32, fp ) == 32 &&
-            EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
+            STARTS_WITH_CI((char *) abyHeader, "EHFA_HEADER_TAG") )
         {
             /* Avoid causing failure in opening of main file from SWIG bindings */
             /* when auxiliary file cannot be opened (#3269) */
@@ -2944,7 +2944,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         if( fp != NULL )
         {
             if( VSIFReadL( abyHeader, 1, 32, fp ) == 32 &&
-                EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
+                STARTS_WITH_CI((char *) abyHeader, "EHFA_HEADER_TAG") )
             {
                 /* Avoid causing failure in opening of main file from SWIG bindings */
                 /* when auxiliary file cannot be opened (#3269) */
@@ -3314,7 +3314,7 @@ char** GDALDeserializeOpenOptionsFromXML( CPLXMLNode* psParentNode )
 GDALRIOResampleAlg GDALRasterIOGetResampleAlg(const char* pszResampling)
 {
     GDALRIOResampleAlg eResampleAlg = GRIORA_NearestNeighbour;
-    if( EQUALN(pszResampling, "NEAR", 4) )
+    if( STARTS_WITH_CI(pszResampling, "NEAR") )
         eResampleAlg = GRIORA_NearestNeighbour;
     else if( EQUAL(pszResampling, "BILINEAR") )
         eResampleAlg = GRIORA_Bilinear;

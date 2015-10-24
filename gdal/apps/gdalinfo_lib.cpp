@@ -848,7 +848,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                         = GDALGetMetadataItem( hOverview, "RESAMPLING", "" );
 
                     if( pszResampling != NULL && !bJson 
-                        && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
+                        && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2") )
                         osStr += CPLOPrintf( "*" );
                 }
                 else
@@ -1286,7 +1286,7 @@ static void GDALInfoPrintMetadata( GDALMajorObjectH hObject,
     const char *pszValue;
     json_object *poDomain = NULL, *poValue = NULL;
 
-    if (pszDomain != NULL && EQUALN(pszDomain, "xml:", 4))
+    if (pszDomain != NULL && STARTS_WITH_CI(pszDomain, "xml:"))
         bIsxml = true;
 
     char **papszMetadata = GDALGetMetadata( hObject, pszDomain );

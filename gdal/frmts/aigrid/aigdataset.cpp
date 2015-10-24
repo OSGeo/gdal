@@ -391,10 +391,10 @@ static void CPL_STDCALL AIGErrorHandlerVATOpen(CPLErr eErr, CPLErrorNum no, cons
 {
     std::vector<AIGErrorDescription>* paoErrors =
         (std::vector<AIGErrorDescription>* )CPLGetErrorHandlerUserData();
-    if( EQUALN(msg, "EOF encountered in", strlen("EOF encountered in")) &&
+    if( STARTS_WITH_CI(msg, "EOF encountered in") &&
         strstr(msg, "../info/arc.dir") != NULL )
         return;
-    if( EQUALN(msg, "Failed to open table ", strlen("Failed to open table ")) )
+    if( STARTS_WITH_CI(msg, "Failed to open table ") )
         return;
     AIGErrorDescription oError;
     oError.eErr = eErr;

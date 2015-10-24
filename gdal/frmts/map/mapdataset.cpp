@@ -289,7 +289,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
     bool bNeatLine = false;
     for ( int iLine = 10; iLine < nLines; iLine++ )
     {
-        if ( EQUALN(papszLines[iLine], "MMPXY,", 6) )
+        if ( STARTS_WITH_CI(papszLines[iLine], "MMPXY,") )
         {
             char **papszTok
                 = CSLTokenizeString2( papszLines[iLine], ",",
@@ -324,7 +324,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             for ( int iLine = 10; iLine < nLines; iLine++ )
             {
-                if ( EQUALN(papszLines[iLine], "MMPXY,", 6) )
+                if ( STARTS_WITH_CI(papszLines[iLine], "MMPXY,") )
                 {
                     char **papszTok
                         = CSLTokenizeString2( papszLines[iLine], ",",
@@ -368,7 +368,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
             for ( int iLine = 10; iLine < nLines; iLine++ )
             {
-                if ( EQUALN(papszLines[iLine], "MMPLL,", 6) )
+                if ( STARTS_WITH_CI(papszLines[iLine], "MMPLL,") )
                 {
                     CPLDebug( "MMPLL", "%s", papszLines[iLine] );
                     char **papszTok = NULL;

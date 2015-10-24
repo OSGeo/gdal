@@ -195,7 +195,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      If we aren't prefixed with SDE: then ignore this datasource.    */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszNewName,"SDE:",4) )
+    if( !STARTS_WITH_CI(pszNewName, "SDE:") )
         return FALSE;
 
 /* -------------------------------------------------------------------- */

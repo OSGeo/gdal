@@ -588,7 +588,7 @@ char **EnvisatDataset::GetMetadataDomainList()
 char **EnvisatDataset::GetMetadata( const char * pszDomain )
 
 {
-    if( pszDomain == NULL || !EQUALN(pszDomain,"envisat-ds-",11) )
+    if( pszDomain == NULL || !STARTS_WITH_CI(pszDomain, "envisat-ds-") )
         return GDALDataset::GetMetadata( pszDomain );
 
 /* -------------------------------------------------------------------- */
@@ -679,8 +679,8 @@ void EnvisatDataset::CollectDSDMetadata()
     {
         if( pszFilename == NULL
             || strlen(pszFilename) == 0
-            || EQUALN(pszFilename,"NOT USED",8)
-            || EQUALN(pszFilename,"        ",8))
+            || STARTS_WITH_CI(pszFilename, "NOT USED")
+            || STARTS_WITH_CI(pszFilename, "        "))
             continue;
 
         const int max_len = 128;
@@ -735,7 +735,7 @@ void EnvisatDataset::CollectADSMetadata()
                                      &nNumDsr, &nDSRSize ) == SUCCESS;
          ++nDSIndex )
     {
-        if( EQUALN(pszDSFilename,"NOT USED",8) || (nNumDsr <= 0) )
+        if( STARTS_WITH_CI(pszDSFilename, "NOT USED") || (nNumDsr <= 0) )
             continue;
         if( !EQUAL(pszDSType,"A") && !EQUAL(pszDSType,"G") )
             continue;
@@ -850,7 +850,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 8 )
         return NULL;
 
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader, "PRODUCT=",8) )
+    if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "PRODUCT=") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -927,13 +927,13 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
                                            "" );
 
     GDALDataType eDataType;
-    if( EQUAL(pszDataType,"FLT32") && EQUALN(pszSampleType,"COMPLEX",7))
+    if( EQUAL(pszDataType,"FLT32") && STARTS_WITH_CI(pszSampleType, "COMPLEX"))
         eDataType = GDT_CFloat32;
     else if( EQUAL(pszDataType,"FLT32") )
         eDataType = GDT_Float32;
     else if( EQUAL(pszDataType,"UWORD") )
         eDataType = GDT_UInt16;
-    else if( EQUAL(pszDataType,"SWORD") && EQUALN(pszSampleType,"COMPLEX",7) )
+    else if( EQUAL(pszDataType,"SWORD") && STARTS_WITH_CI(pszSampleType, "COMPLEX") )
         eDataType = GDT_CInt16;
     else if( EQUAL(pszDataType,"SWORD") )
         eDataType = GDT_Int16;
@@ -1012,7 +1012,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
         if( !EQUAL(pszDSType,"M") || num_dsr2 != num_dsr )
             continue;
 
-        if( EQUALN(pszProduct,"MER",3) && (pszProduct[8] == '2') &&
+        if( STARTS_WITH_CI(pszProduct, "MER") && (pszProduct[8] == '2') &&
             ( (strstr(pszDSName, "MDS(16)") != NULL) ||
               (strstr(pszDSName, "MDS(19)") != NULL)) )
             bMiltiChannel = true;
@@ -1035,7 +1035,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /*       Handle MERIS Level 2 datasets with data type different from    */
 /*       the one declared in the SPH                                    */
 /* -------------------------------------------------------------------- */
-        else if( EQUALN(pszProduct,"MER",3) &&
+        else if( STARTS_WITH_CI(pszProduct, "MER") &&
                  (strstr(pszDSName, "Flags") != NULL) )
         {
             if (pszProduct[8] == '1')
@@ -1077,7 +1077,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->GetRasterBand(iBand)->SetDescription( pszDSName );
             }
         }
-        else if( EQUALN(pszProduct,"MER",3) && (pszProduct[8] == '2') )
+        else if( STARTS_WITH_CI(pszProduct, "MER") && (pszProduct[8] == '2') )
         {
             int nPrefixBytes2, nSubBands, nSubBandIdx, nSubBandOffset;
 
@@ -1121,7 +1121,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->CollectDSDMetadata();
     poDS->CollectADSMetadata();
 
-    if( EQUALN(pszProduct,"MER",3) )
+    if( STARTS_WITH_CI(pszProduct, "MER") )
         poDS->ScanForGCPs_MERIS();
     else
         poDS->ScanForGCPs_ASAR();

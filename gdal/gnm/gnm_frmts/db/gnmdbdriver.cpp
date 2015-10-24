@@ -36,8 +36,8 @@
 static int GNMDBDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {    
-    if( !EQUALN(poOpenInfo->pszFilename,"PGB:",4) &&
-        !EQUALN(poOpenInfo->pszFilename,"PG:",3) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "PGB:") &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "PG:") )
         return FALSE;
     if( (poOpenInfo->nOpenFlags & GDAL_OF_GNM) == 0 )
         return FALSE;

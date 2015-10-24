@@ -99,9 +99,9 @@ static int OGRTABDriverIdentify( GDALOpenInfo* poOpenInfo )
         for( int i = 0; i < poOpenInfo->nHeaderBytes; i++)
         {
             const char* pszLine = (const char*)poOpenInfo->pabyHeader + i;
-            if (EQUALN(pszLine, "Fields", 6))
+            if (STARTS_WITH_CI(pszLine, "Fields"))
                 return TRUE;
-            else if (EQUALN(pszLine, "create view", 11))
+            else if (STARTS_WITH_CI(pszLine, "create view"))
                 return TRUE;
             else if (EQUALN(pszLine, "\"\\IsSeamless\" = \"TRUE\"", 21))
                 return TRUE;

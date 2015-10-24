@@ -591,7 +591,7 @@ char **RS2Dataset::GetFileList()
 int RS2Dataset::Identify( GDALOpenInfo *poOpenInfo ) 
 {
    /* Check for the case where we're trying to read the calibrated data: */
-    if (EQUALN("RADARSAT_2_CALIB:",poOpenInfo->pszFilename,17)) {
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "RADARSAT_2_CALIB:")) {
         return TRUE;
     }
 
@@ -646,16 +646,16 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszFilename = poOpenInfo->pszFilename;
     eCalibration eCalib = None;
 
-    if (EQUALN("RADARSAT_2_CALIB:",pszFilename,17)) {
+    if (STARTS_WITH_CI(pszFilename, "RADARSAT_2_CALIB:")) {
         pszFilename += 17;
 
-        if (EQUALN("BETA0",pszFilename,5))
+        if (STARTS_WITH_CI(pszFilename, "BETA0"))
             eCalib = Beta0;
-        else if (EQUALN("SIGMA0",pszFilename,6))
+        else if (STARTS_WITH_CI(pszFilename, "SIGMA0"))
             eCalib = Sigma0;
-        else if (EQUALN("GAMMA", pszFilename,5))
+        else if (STARTS_WITH_CI(pszFilename, "GAMMA"))
             eCalib = Gamma;
-        else if (EQUALN("UNCALIB", pszFilename,7))
+        else if (STARTS_WITH_CI(pszFilename, "UNCALIB"))
             eCalib = Uncalib;
         else
             eCalib = None;
@@ -762,9 +762,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
      * RN-RP-51-2713, but also common sense
      */
     bool bCanCalib = false;
-    if (!(EQUALN(pszProductType, "UNK", 3) || 
-          EQUALN(pszProductType, "SSG", 3) ||
-          EQUALN(pszProductType, "SPG", 3)))
+    if (!(STARTS_WITH_CI(pszProductType, "UNK") || 
+          STARTS_WITH_CI(pszProductType, "SSG") ||
+          STARTS_WITH_CI(pszProductType, "SPG")))
     {
         bCanCalib = true;
     }
@@ -783,9 +783,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     GDALDataType eDataType;
     if( nBitsPerSample == 16 && EQUAL(pszDataType,"Complex") )
         eDataType = GDT_CInt16;
-    else if( nBitsPerSample == 16 && EQUALN(pszDataType,"Mag",3) )
+    else if( nBitsPerSample == 16 && STARTS_WITH_CI(pszDataType, "Mag") )
         eDataType = GDT_UInt16;
-    else if( nBitsPerSample == 8 && EQUALN(pszDataType,"Mag",3) )
+    else if( nBitsPerSample == 8 && STARTS_WITH_CI(pszDataType, "Mag") )
         eDataType = GDT_Byte;
     else
     {
@@ -1215,10 +1215,10 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 origNorthing = CPLStrtod(CPLGetXMLValue( psUtmParams,
                                                       "mapOriginFalseNorthing", "0.0" ), NULL);
 #endif
-                if ( EQUALN(pszHemisphere,"southern",8) )
+                if ( STARTS_WITH_CI(pszHemisphere, "southern") )
                     bNorth = FALSE;
 
-                if (EQUALN(pszProj,"UTM",3)) {
+                if (STARTS_WITH_CI(pszProj, "UTM")) {
                     oPrj.SetUTM(utmZone, bNorth);
                     bUseProjInfo = true;
                 }
@@ -1239,13 +1239,13 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 sP2 = CPLStrtod(CPLGetXMLValue( psNspParams, 
                                              "standardParallels2", "0.0" ), NULL);
 
-                if (EQUALN(pszProj,"ARC",3)) {
+                if (STARTS_WITH_CI(pszProj, "ARC")) {
                     /* Albers Conical Equal Area */
                     oPrj.SetACEA(sP1, sP2, copLat, copLong, origEasting, 
                                  origNorthing);
                     bUseProjInfo = true;
                 }
-                else if (EQUALN(pszProj,"LCC",3)) {
+                else if (STARTS_WITH_CI(pszProj, "LCC")) {
                     /* Lambert Conformal Conic */
                     oPrj.SetLCC(sP1, sP2, copLat, copLong, origEasting, 
                                 origNorthing);
@@ -1461,7 +1461,7 @@ char **RS2Dataset::GetMetadataDomainList()
 char **RS2Dataset::GetMetadata( const char *pszDomain )
 
 {
-    if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) &&
+    if( pszDomain != NULL && STARTS_WITH_CI(pszDomain, "SUBDATASETS") &&
         papszSubDatasets != NULL)
         return papszSubDatasets;
     else

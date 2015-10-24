@@ -776,7 +776,7 @@ char **SAR_CEOSDataset::GetMetadataDomainList()
 char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
 
 {
-    if( pszDomain == NULL || !EQUALN(pszDomain,"ceos-",5) )
+    if( pszDomain == NULL || !STARTS_WITH_CI(pszDomain, "ceos-") )
         return GDALDataset::GetMetadata( pszDomain );
 
 /* -------------------------------------------------------------------- */
@@ -784,23 +784,23 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
 /* -------------------------------------------------------------------- */
     int	nFileId = -1;
 
-    if( EQUALN(pszDomain,"ceos-vol",8) )
+    if( STARTS_WITH_CI(pszDomain, "ceos-vol") )
     {
         nFileId = __CEOS_VOLUME_DIR_FILE;
     }
-    else if( EQUALN(pszDomain,"ceos-lea",8) )
+    else if( STARTS_WITH_CI(pszDomain, "ceos-lea") )
     {
         nFileId = __CEOS_LEADER_FILE;
     }
-    else if( EQUALN(pszDomain,"ceos-img",8) )
+    else if( STARTS_WITH_CI(pszDomain, "ceos-img") )
     {
         nFileId = __CEOS_IMAGRY_OPT_FILE;
     }
-    else if( EQUALN(pszDomain,"ceos-trl",8) )
+    else if( STARTS_WITH_CI(pszDomain, "ceos-trl") )
     {
         nFileId = __CEOS_TRAILER_FILE;
     }
-    else if( EQUALN(pszDomain,"ceos-nul",8) )
+    else if( STARTS_WITH_CI(pszDomain, "ceos-nul") )
     {
         nFileId = __CEOS_NULL_VOL_FILE;
     }
@@ -903,7 +903,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         GetCeosField( record, 149, "A12", szField );
 
-        if( !EQUALN(szField,"            ",12) )
+        if( !STARTS_WITH_CI(szField, "            ") )
             SetMetadataItem( "CEOS_PROCESSING_FACILITY", szField );
 
 /* -------------------------------------------------------------------- */
@@ -923,7 +923,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         GetCeosField( record, 129, "A12", szField );
 
-        if( !EQUALN(szField,"            ",12) )
+        if( !STARTS_WITH_CI(szField, "            ") )
             SetMetadataItem( "CEOS_PROCESSING_COUNTRY", szField );
 
 /* -------------------------------------------------------------------- */
@@ -933,7 +933,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         GetCeosField( record, 33, "A12", szField );
 
-        if( !EQUALN(szField,"            ",12) )
+        if( !STARTS_WITH_CI(szField, "            ") )
             SetMetadataItem( "CEOS_SOFTWARE_ID", szField );
 
 /* -------------------------------------------------------------------- */
@@ -943,7 +943,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         GetCeosField( record, 261, "A8", szField );
 
-        if( !EQUALN(szField,"        ",8) )
+        if( !STARTS_WITH_CI(szField, "        ") )
             SetMetadataItem( "CEOS_PRODUCT_ID", szField );
 
 /* -------------------------------------------------------------------- */
@@ -953,7 +953,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         GetCeosField( record, 77, "A16", szField );
 
-        if( !EQUALN(szField,"                ",16) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_VOLSET_ID", szField );
     }
 
@@ -991,7 +991,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         szField[16] = '\0';
 
         if( strstr(szVolId,"RSAT") != NULL 
-            && !EQUALN(szField,"                ",16 ) )
+            && !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_ASC_DES", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1000,7 +1000,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 149, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_TRUE_HEADING", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1009,7 +1009,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 165, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_ELLIPSOID", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1018,13 +1018,13 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 181, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_SEMI_MAJOR", szField );
 
         GetCeosField( record, 197, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_SEMI_MINOR", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1033,7 +1033,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 341, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_SCENE_LENGTH_KM", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1042,7 +1042,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 357, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_SCENE_WIDTH_KM", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1051,7 +1051,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 397, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_MISSION_ID", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1060,7 +1060,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 413, "A32", szField );
         szField[32] = '\0';
 
-        if( !EQUALN(szField,"                                ",32 ) )
+        if( !STARTS_WITH_CI(szField, "                                ") )
             SetMetadataItem( "CEOS_SENSOR_ID", szField );
 
 
@@ -1070,7 +1070,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 445, "A8", szField );
         szField[8] = '\0';
 
-        if( !EQUALN(szField,"        ",8 ) )
+        if( !STARTS_WITH_CI(szField, "        ") )
             SetMetadataItem( "CEOS_ORBIT_NUMBER", szField );
 
 
@@ -1080,7 +1080,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 453, "A8", szField );
         szField[8] = '\0';
 
-        if( !EQUALN(szField,"        ",8 ) )
+        if( !STARTS_WITH_CI(szField, "        ") )
             SetMetadataItem( "CEOS_PLATFORM_LATITUDE", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1089,7 +1089,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 461, "A8", szField );
         szField[8] = '\0';
 
-        if( !EQUALN(szField,"        ",8 ) )
+        if( !STARTS_WITH_CI(szField, "        ") )
             SetMetadataItem( "CEOS_PLATFORM_LONGITUDE", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1107,7 +1107,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 477, "A8", szField );
         szField[8] = '\0';
 
-        if( !EQUALN(szField,"        ",8 ) )
+        if( !STARTS_WITH_CI(szField, "        ") )
             SetMetadataItem( "CEOS_SENSOR_CLOCK_ANGLE", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1116,7 +1116,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 485, "A8", szField );
         szField[8] = '\0';
 
-        if( !EQUALN(szField,"        ",8 ) )
+        if( !STARTS_WITH_CI(szField, "        ") )
             SetMetadataItem( "CEOS_INC_ANGLE", szField );
 
 /* -------------------------------------------------------------------- */
@@ -1134,7 +1134,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 1687, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_LINE_SPACING_METERS", szField );
 /* -------------------------------------------------------------------- */
 /*      Pixel spacing                                                    */
@@ -1142,7 +1142,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 1703, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_PIXEL_SPACING_METERS", szField );
 
     }
@@ -1189,49 +1189,49 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 583 , "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ", 16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_INC_ANGLE_FIRST_RANGE", szField );
 
         GetCeosField( record, 599 , "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ", 16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_INC_ANGLE_CENTRE_RANGE", szField );
 
         GetCeosField( record, 615, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ", 16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_INC_ANGLE_LAST_RANGE", szField );
 
         GetCeosField( record, 663, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ", 16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_CALIBRATION_CONSTANT_K", szField );
 
         GetCeosField( record, 1855, "A20", szField );
         szField[20] = '\0';
 
-        if( !EQUALN(szField,"                    ", 20 ) )
+        if( !STARTS_WITH_CI(szField, "                    ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C0", szField );
 
         GetCeosField( record, 1875, "A20", szField );
         szField[20] = '\0';
 
-        if( !EQUALN(szField,"                    ", 20 ) )
+        if( !STARTS_WITH_CI(szField, "                    ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C1", szField );
 
         GetCeosField( record, 1895, "A20", szField );
         szField[20] = '\0';
 
-        if( !EQUALN(szField,"                    ", 20 ) )
+        if( !STARTS_WITH_CI(szField, "                    ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C2", szField );
 
         GetCeosField( record, 1915, "A20", szField );
         szField[20] = '\0';
 
-        if( !EQUALN(szField,"                    ", 20 ) )
+        if( !STARTS_WITH_CI(szField, "                    ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C3", szField );
 
     }
@@ -1250,103 +1250,103 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 192, "A21", szField );
         szField[21] = '\0';
 
-        if( !EQUALN(szField,"                     ",21 ) )
+        if( !STARTS_WITH_CI(szField, "                     ") )
             SetMetadataItem( "CEOS_PROC_START", szField );
 
         GetCeosField( record, 213, "A21", szField );
         szField[21] = '\0';
 
-        if( !EQUALN(szField,"                     ",21 ) )
+        if( !STARTS_WITH_CI(szField, "                     ") )
             SetMetadataItem( "CEOS_PROC_STOP", szField );
 
         GetCeosField( record, 4649, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_EPH_ORB_DATA_0", szField );
 
         GetCeosField( record, 4665, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_EPH_ORB_DATA_1", szField );
 
         GetCeosField( record, 4681, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_EPH_ORB_DATA_2", szField );
 
         GetCeosField( record, 4697, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_EPH_ORB_DATA_3", szField );
 
         GetCeosField( record, 4713, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_EPH_ORB_DATA_4", szField );
 
         GetCeosField( record, 4729, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_EPH_ORB_DATA_5", szField );
 
         GetCeosField( record, 4745, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_EPH_ORB_DATA_6", szField );
 
         GetCeosField( record, 4908, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C0", szField );
 
         GetCeosField( record, 4924, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C1", szField );
 
         GetCeosField( record, 4940, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C2", szField );
 
         GetCeosField( record, 4956, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C3", szField );
 
         GetCeosField( record, 4972, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C4", szField );
 
         GetCeosField( record, 4988, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C5", szField );
 
         GetCeosField( record, 7334, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_INC_ANGLE_FIRST_RANGE", szField );
 
         GetCeosField( record, 7350, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_INC_ANGLE_LAST_RANGE", szField );
 
     }
@@ -1363,63 +1363,63 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 449, "A4", szField );
         szField[4] = '\0';
 
-        if( !EQUALN(szField,"    ",4 ) )
+        if( !STARTS_WITH_CI(szField, "    ") )
             SetMetadataItem( "CEOS_DM_CORNER", szField );
 
 
         GetCeosField( record, 453, "A4", szField );
         szField[4] = '\0';
 
-        if( !EQUALN(szField,"    ",4 ) )
+        if( !STARTS_WITH_CI(szField, "    ") )
             SetMetadataItem( "CEOS_DM_TRANSPOSE", szField );
 
 
         GetCeosField( record, 457, "A4", szField );
         szField[4] = '\0';
 
-        if( !EQUALN(szField,"    ",4 ) )
+        if( !STARTS_WITH_CI(szField, "    ") )
             SetMetadataItem( "CEOS_DM_START_SAMPLE", szField );
 
 
         GetCeosField( record, 461, "A5", szField );
         szField[5] = '\0';
 
-        if( !EQUALN(szField,"     ",5 ) )
+        if( !STARTS_WITH_CI(szField, "     ") )
             SetMetadataItem( "CEOS_DM_START_PULSE", szField );
 
 
         GetCeosField( record, 466, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ", 16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_DM_FAST_ALPHA", szField );
 
 
         GetCeosField( record, 482, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ", 16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_DM_FAST_BETA", szField );
 
 
         GetCeosField( record, 498, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ", 16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_DM_SLOW_ALPHA", szField );
 
 
         GetCeosField( record, 514, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ", 16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_DM_SLOW_BETA", szField );
 
 
         GetCeosField( record, 530, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ", 16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_DM_FAST_ALPHA_2", szField );
 
     }
@@ -1442,7 +1442,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 8317, "A16", szField );
         szField[16] = '\0';
 
-        if( !EQUALN(szField,"                ", 16 ) )
+        if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_CALIBRATION_OFFSET", szField );
     }
 
@@ -1459,13 +1459,13 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 29, "A20", szField );
         szField[20] = '\0';
 
-        if( !EQUALN(szField,"                    ", 20 ) )
+        if( !STARTS_WITH_CI(szField, "                    ") )
             SetMetadataItem( "CEOS_OFFSET_A0", szField );
 
         GetCeosField( record, 49, "A20", szField );
         szField[20] = '\0';
 
-        if( !EQUALN(szField,"                    ", 20 ) )
+        if( !STARTS_WITH_CI(szField, "                    ") )
             SetMetadataItem( "CEOS_GAIN_A1", szField );
     }
 
@@ -1517,12 +1517,12 @@ int SAR_CEOSDataset::ScanForMapProjection()
     memset( szField, 0, 17 );
     GetCeosField( record, 29, "A16", szField );
 
-    if( !EQUALN(szField,"Slant Range",11) && !EQUALN(szField,"Ground Range",12) 
-        && !EQUALN(szField,"GEOCODED",8) )
+    if( !STARTS_WITH_CI(szField, "Slant Range") && !STARTS_WITH_CI(szField, "Ground Range") 
+        && !STARTS_WITH_CI(szField, "GEOCODED") )
         return FALSE;
 
     GetCeosField( record, 1073, "A16", szField );
-    if( EQUALN(szField,"        ",8) )
+    if( STARTS_WITH_CI(szField, "        ") )
         return FALSE;
 
 /* -------------------------------------------------------------------- */

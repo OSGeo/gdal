@@ -2036,7 +2036,7 @@ yyreduce:
         OGRwkbGeometryType eType = OGRFromOGCGeomType((yyvsp[-1])->string_value);
         if( !EQUAL((yyvsp[-3])->string_value,"GEOMETRY") || 
             (wkbFlatten(eType) == wkbUnknown &&
-            !EQUALN((yyvsp[-1])->string_value, "GEOMETRY", strlen("GEOMETRY"))) )
+            !STARTS_WITH_CI((yyvsp[-1])->string_value, "GEOMETRY")) )
         {
             yyerror (context, "syntax error");
             delete (yyvsp[-3]);
@@ -2056,7 +2056,7 @@ yyreduce:
         OGRwkbGeometryType eType = OGRFromOGCGeomType((yyvsp[-3])->string_value);
         if( !EQUAL((yyvsp[-5])->string_value,"GEOMETRY") || 
             (wkbFlatten(eType) == wkbUnknown &&
-            !EQUALN((yyvsp[-3])->string_value, "GEOMETRY", strlen("GEOMETRY"))) )
+            !STARTS_WITH_CI((yyvsp[-3])->string_value, "GEOMETRY")) )
         {
             yyerror (context, "syntax error");
             delete (yyvsp[-5]);

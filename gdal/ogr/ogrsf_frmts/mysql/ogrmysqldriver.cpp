@@ -61,7 +61,7 @@ static void OGRMySQLDriverUnload( CPL_UNUSED GDALDriver* poDriver )
 static int OGRMySQLDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    return EQUALN(poOpenInfo->pszFilename,"MYSQL:",6);
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "MYSQL:");
 }
  
 /************************************************************************/

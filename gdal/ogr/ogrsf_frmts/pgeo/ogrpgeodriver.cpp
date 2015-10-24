@@ -62,13 +62,13 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
 {
     OGRPGeoDataSource     *poDS;
 
-    if( EQUALN(pszFilename, "WALK:", strlen("WALK:")) )
+    if( STARTS_WITH_CI(pszFilename, "WALK:") )
         return NULL;
 
-    if( EQUALN(pszFilename, "GEOMEDIA:", strlen("GEOMEDIA:")) )
+    if( STARTS_WITH_CI(pszFilename, "GEOMEDIA:") )
         return NULL;
 
-    if( !EQUALN(pszFilename,"PGEO:",5) 
+    if( !STARTS_WITH_CI(pszFilename, "PGEO:") 
         && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
         return NULL;
 
@@ -78,7 +78,7 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
     /* This was initially meant to know if a MDB should be opened by the PGeo or the */
     /* Geomedia driver. */
 #if 0
-    if( !EQUALN(pszFilename,"PGEO:",5) &&
+    if( !STARTS_WITH_CI(pszFilename, "PGEO:") &&
         EQUAL(CPLGetExtension(pszFilename),"mdb") )
     {
         VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
