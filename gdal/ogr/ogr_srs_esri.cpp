@@ -1386,10 +1386,10 @@ OGRErr OGRSpatialReference::morphToESRI()
 
     if( poSpheroidChild != NULL )
     {
-      const char * dfValue = poSpheroidChild->GetValue();
+      const char * pszValue = poSpheroidChild->GetValue();
       for( int i = 0; apszInvFlatteningMapping[i] != NULL; i += 2 )
       {
-        if( EQUALN(apszInvFlatteningMapping[i], dfValue, strlen(apszInvFlatteningMapping[i]) ))
+        if( EQUALN(apszInvFlatteningMapping[i], pszValue, strlen(apszInvFlatteningMapping[i]) ))
         {
           poSpheroidChild->SetValue( apszInvFlatteningMapping[i+1] );
           break;
