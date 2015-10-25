@@ -163,7 +163,6 @@ int main( int nArgc, char ** papszArgv )
 
     psOptionsForBinary = GDALVectorTranslateOptionsForBinaryNew();
     psOptions = GDALVectorTranslateOptionsNew(papszArgv + 1, psOptionsForBinary);
-    CSLDestroy( papszArgv );
 
     if( psOptions == NULL )
     {
@@ -268,6 +267,7 @@ int main( int nArgc, char ** papszArgv )
         GDALClose(hDstDS);
 
 exit:
+    CSLDestroy( papszArgv );
     OGRCleanupAll();
 
     return nRetCode;
