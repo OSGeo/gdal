@@ -2256,6 +2256,24 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     if(EQUAL(angUnitName, "Degree"))
         GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1, 
                    Angular_Degree );
+    else if (EQUAL(angUnitName, "arc-second"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   Angular_Arc_Second);
+    else if (EQUAL(angUnitName, "arc-minute"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   Angular_Arc_Minute);
+    else if (EQUAL(angUnitName, "grad"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   Angular_Grad);
+    else if (EQUAL(angUnitName, "gon"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   Angular_Gon);
+    else if (EQUAL(angUnitName, "radian"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   Angular_Radian);
+    /*else if (EQUAL(angUnitName, "microradian"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   9109);*/
     else if(angUnitName)
     {
         GTIFKeySet(psGTIF, GeogCitationGeoKey, TYPE_ASCII, 0, 
