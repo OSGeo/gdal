@@ -1843,8 +1843,6 @@ int OGR_G_IsRing( OGRGeometryH hGeom )
 /*      OGR constants.                                                  */
 /************************************************************************/
 
-#define EQUALN_CST(var, cst) EQUALN(var, cst, strlen(cst))
-
 OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
 {
     OGRwkbGeometryType eType;
@@ -1857,29 +1855,29 @@ OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
             bConvertTo3D = true;
         }
     }
-    if ( EQUALN_CST(pszGeomType, "POINT") )
+    if ( STARTS_WITH_CI(pszGeomType, "POINT") )
         eType = wkbPoint;
-    else if ( EQUALN_CST(pszGeomType, "LINESTRING") )
+    else if ( STARTS_WITH_CI(pszGeomType, "LINESTRING") )
         eType = wkbLineString;
-    else if ( EQUALN_CST(pszGeomType, "POLYGON") )
+    else if ( STARTS_WITH_CI(pszGeomType, "POLYGON") )
         eType = wkbPolygon;
-    else if ( EQUALN_CST(pszGeomType, "MULTIPOINT") )
+    else if ( STARTS_WITH_CI(pszGeomType, "MULTIPOINT") )
         eType = wkbMultiPoint;
-    else if ( EQUALN_CST(pszGeomType, "MULTILINESTRING") )
+    else if ( STARTS_WITH_CI(pszGeomType, "MULTILINESTRING") )
         eType = wkbMultiLineString;
-    else if ( EQUALN_CST(pszGeomType, "MULTIPOLYGON") )
+    else if ( STARTS_WITH_CI(pszGeomType, "MULTIPOLYGON") )
         eType = wkbMultiPolygon;
-    else if ( EQUALN_CST(pszGeomType, "GEOMETRYCOLLECTION") )
+    else if ( STARTS_WITH_CI(pszGeomType, "GEOMETRYCOLLECTION") )
         eType = wkbGeometryCollection;
-    else if ( EQUALN_CST(pszGeomType, "CIRCULARSTRING") )
+    else if ( STARTS_WITH_CI(pszGeomType, "CIRCULARSTRING") )
         eType = wkbCircularString;
-    else if ( EQUALN_CST(pszGeomType, "COMPOUNDCURVE") )
+    else if ( STARTS_WITH_CI(pszGeomType, "COMPOUNDCURVE") )
         eType = wkbCompoundCurve;
-    else if ( EQUALN_CST(pszGeomType, "CURVEPOLYGON") )
+    else if ( STARTS_WITH_CI(pszGeomType, "CURVEPOLYGON") )
         eType = wkbCurvePolygon;
-    else if ( EQUALN_CST(pszGeomType, "MULTICURVE") )
+    else if ( STARTS_WITH_CI(pszGeomType, "MULTICURVE") )
         eType = wkbMultiCurve;
-    else if ( EQUALN_CST(pszGeomType, "MULTISURFACE") )
+    else if ( STARTS_WITH_CI(pszGeomType, "MULTISURFACE") )
         eType = wkbMultiSurface;
     else
         eType = wkbUnknown;

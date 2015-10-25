@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define EQUALN_CST(x,y)  (strncmp(x, y, strlen(y)) == 0)
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
@@ -127,7 +126,7 @@ int osr_cs_wkt_lex(CPL_UNUSED YYSTYPE* pNode,
 /* -------------------------------------------------------------------- */
     for(i = 0; i < sizeof(tokens) / sizeof(tokens[0]); i++)
     {
-        if( EQUALN_CST(pszInput, tokens[i].pszToken) )
+        if( STARTS_WITH_CI(pszInput, tokens[i].pszToken) )
         {
             context->pszNext = pszInput + strlen(tokens[i].pszToken);
             return tokens[i].nTokenVal;
