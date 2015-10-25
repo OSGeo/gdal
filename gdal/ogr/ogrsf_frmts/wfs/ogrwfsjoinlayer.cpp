@@ -431,7 +431,7 @@ GDALDataset* OGRWFSJoinLayer::FetchGetFeature()
     {
         const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
                                                     osURL.c_str());
-        if( strncmp(osURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
+        if( STARTS_WITH(osURL, "/vsimem/") &&
             CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
         {
             pszStreamingName = osURL.c_str();

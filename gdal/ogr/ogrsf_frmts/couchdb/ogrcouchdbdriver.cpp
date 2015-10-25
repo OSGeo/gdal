@@ -61,8 +61,8 @@ const char *OGRCouchDBDriver::GetName()
 OGRDataSource *OGRCouchDBDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    if (strncmp(pszFilename, "http://", 7) == 0 ||
-        strncmp(pszFilename, "https://", 8) == 0)
+    if (STARTS_WITH(pszFilename, "http://") ||
+        STARTS_WITH(pszFilename, "https://"))
     {
         /* ok */
     }

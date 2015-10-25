@@ -45,7 +45,7 @@ static GDALDataset *OGRHTFDriverOpen( GDALOpenInfo* poOpenInfo )
         poOpenInfo->fpL == NULL )
         return NULL;
 
-    if( strncmp((const char*)poOpenInfo->pabyHeader,  "HTF HEADER", strlen("HTF HEADER")) != 0 )
+    if( !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "HTF HEADER") )
         return NULL;
 
     OGRHTFDataSource   *poDS = new OGRHTFDataSource();

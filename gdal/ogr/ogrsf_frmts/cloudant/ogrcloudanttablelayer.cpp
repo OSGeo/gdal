@@ -294,13 +294,13 @@ void OGRCloudantTableLayer::WriteMetadata()
         if (poSRS->IsProjected())
         {
             pszAuthName = poSRS->GetAuthorityName("PROJCS");
-            if ((pszAuthName != NULL) && (strncmp(pszAuthName, "EPSG", 4) == 0))
+            if ((pszAuthName != NULL) && (STARTS_WITH(pszAuthName, "EPSG")))
                 pszEpsg = poSRS->GetAuthorityCode("PROJCS");
         }
         else
         {
             pszAuthName = poSRS->GetAuthorityName("GEOGCS");
-            if ((pszAuthName != NULL) && (strncmp(pszAuthName, "EPSG", 4) == 0))
+            if ((pszAuthName != NULL) && (STARTS_WITH(pszAuthName, "EPSG")))
                 pszEpsg = poSRS->GetAuthorityCode("GEOGCS");
         }
 

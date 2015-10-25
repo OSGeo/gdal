@@ -1112,7 +1112,7 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
                 /* At that point the element path should be member|layer|property */
 
                 /* Strip member| prefix. Should always be true normally */
-                if( strncmp(pszElement, "member|", strlen("member|")) == 0 )
+                if( STARTS_WITH(pszElement, "member|") )
                     osFieldName = pszElement + strlen("member|");
 
                 /* Replace layer|property by layer_property */
@@ -1550,14 +1550,14 @@ void GMLReader::SetGlobalSRSName( const char* pszGlobalSRSName )
     if (m_pszGlobalSRSName == NULL && pszGlobalSRSName != NULL)
     {
         const char* pszVertCS_EPSG;
-        if( strncmp(pszGlobalSRSName, "EPSG:", 5) == 0 &&
+        if( STARTS_WITH(pszGlobalSRSName, "EPSG:") &&
             (pszVertCS_EPSG = strstr(pszGlobalSRSName, ", EPSG:")) != NULL )
         {
             m_pszGlobalSRSName = CPLStrdup(CPLSPrintf("EPSG:%d+%d",
                     atoi(pszGlobalSRSName + 5),
                     atoi(pszVertCS_EPSG + 7)));
         }
-        else if (strncmp(pszGlobalSRSName, "EPSG:", 5) == 0 &&
+        else if (STARTS_WITH(pszGlobalSRSName, "EPSG:") &&
             m_bConsiderEPSGAsURN)
         {
             m_pszGlobalSRSName = CPLStrdup(CPLSPrintf("urn:ogc:def:crs:EPSG::%s",

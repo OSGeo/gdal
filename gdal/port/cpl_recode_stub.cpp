@@ -163,7 +163,7 @@ char *CPLRecodeStub( const char *pszSource,
 /* ---------------------------------------------------------------------*/
 /*      CPXXX to UTF8                                                   */
 /* ---------------------------------------------------------------------*/
-    if( strncmp(pszSrcEncoding,"CP",2) == 0
+    if( STARTS_WITH(pszSrcEncoding, "CP")
         && strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
     {
         int nCode = atoi( pszSrcEncoding + 2 );
@@ -178,7 +178,7 @@ char *CPLRecodeStub( const char *pszSource,
 /*      UTF8 to CPXXX                                                   */
 /* ---------------------------------------------------------------------*/
     if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0
-        && strncmp(pszDstEncoding,"CP",2) == 0 )
+        && STARTS_WITH(pszDstEncoding, "CP") )
     {
          int nCode = atoi( pszDstEncoding + 2 );
          if( nCode > 0 ) {

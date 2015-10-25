@@ -133,7 +133,7 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
 
         /* Cf Z 52000 tableau 56 for field list*/
 
-        if (strncmp(pszLine, "LONSA", 5) == 0)
+        if (STARTS_WITH(pszLine, "LONSA"))
         {
             if (osLON.size() != 0)
             {
@@ -142,17 +142,17 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
             }
             osLON = pszLine + 8;
         }
-        else if (strncmp(pszLine, "GNNSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "GNNSA"))
             osGNN = pszLine + 8;
-        else if (strncmp(pszLine, "GONSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "GONSA"))
             osGON = pszLine + 8;
-        else if (strncmp(pszLine, "QANSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "QANSA"))
             osQAN = pszLine + 8;
-        else if (strncmp(pszLine, "DINSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "DINSA"))
             osDIN = pszLine + 8;
-        else if (strncmp(pszLine, "SCNSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "SCNSA"))
             osSCN = pszLine + 8;
-        else if (strncmp(pszLine, "GDNSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "GDNSA"))
             aosGDN.push_back(pszLine + 8);
     }
     if (osLON.size() == 0)
@@ -232,7 +232,7 @@ int OGREDIGEODataSource::ReadGEO()
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
 
-        if (strncmp(pszLine, "RELSA", 5) == 0)
+        if (STARTS_WITH(pszLine, "RELSA"))
         {
             osREL = pszLine + 8;
             CPLDebug("EDIGEO", "REL = %s", osREL.c_str());
@@ -292,11 +292,11 @@ int OGREDIGEODataSource::ReadGEN()
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
 
-        if (strncmp(pszLine, "CM1CC", 5) == 0)
+        if (STARTS_WITH(pszLine, "CM1CC"))
         {
             osCM1 = pszLine + 8;
         }
-        else if (strncmp(pszLine, "CM2CC", 5) == 0)
+        else if (STARTS_WITH(pszLine, "CM2CC"))
         {
             osCM2 = pszLine + 8;
         }
@@ -344,7 +344,7 @@ int OGREDIGEODataSource::ReadDIC()
                 continue;
         }
 
-        if (pszLine == NULL || strncmp(pszLine, "RTYSA", 5) == 0)
+        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "DID")
             {
@@ -368,11 +368,11 @@ int OGREDIGEODataSource::ReadDIC()
             osLAB = "";
             osTYP = "";
         }
-        if (strncmp(pszLine, "RIDSA", 5) == 0)
+        if (STARTS_WITH(pszLine, "RIDSA"))
             osRID = pszLine + 8;
-        else if (strncmp(pszLine, "LABSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "LABSA"))
             osLAB = pszLine + 8;
-        else if (strncmp(pszLine, "TYPSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "TYPSA"))
             osTYP = pszLine + 8;
     }
 
@@ -405,7 +405,7 @@ int OGREDIGEODataSource::ReadSCD()
                 continue;
         }
 
-        if (pszLine == NULL || strncmp(pszLine, "RTYSA", 5) == 0)
+        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "OBJ")
             {
@@ -456,9 +456,9 @@ int OGREDIGEODataSource::ReadSCD()
             aosAttrRID.resize(0);
             nWidth = 0;
         }
-        if (strncmp(pszLine, "RIDSA", 5) == 0)
+        if (STARTS_WITH(pszLine, "RIDSA"))
             osRID = pszLine + 8;
-        else if (strncmp(pszLine, "DIPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "DIPCP"))
         {
             const char* pszDIP = pszLine + 8;
             char** papszTokens = CSLTokenizeString2(pszDIP, ";", 0);
@@ -468,9 +468,9 @@ int OGREDIGEODataSource::ReadSCD()
             }
             CSLDestroy(papszTokens);
         }
-        else if (strncmp(pszLine, "KNDSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "KNDSA"))
             osKND = pszLine + 8;
-        else if (strncmp(pszLine, "AAPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "AAPCP"))
         {
             const char* pszAAP = pszLine + 8;
             char** papszTokens = CSLTokenizeString2(pszAAP, ";", 0);
@@ -481,7 +481,7 @@ int OGREDIGEODataSource::ReadSCD()
             }
             CSLDestroy(papszTokens);
         }
-        else if (strncmp(pszLine, "CANSN", 5) == 0)
+        else if (STARTS_WITH(pszLine, "CANSN"))
             nWidth = atoi(pszLine + 8);
     }
 
@@ -513,7 +513,7 @@ int OGREDIGEODataSource::ReadQAL()
                 continue;
         }
 
-        if (pszLine == NULL || strncmp(pszLine, "RTYSA", 5) == 0)
+        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "QUP")
             {
@@ -526,11 +526,11 @@ int OGREDIGEODataSource::ReadQAL()
             nODA = 0;
             nUDA = 0;
         }
-        else if (strncmp(pszLine, "RIDSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "RIDSA"))
             osRID = pszLine + 8;
-        else if (strncmp(pszLine, "ODASD", 5) == 0)
+        else if (STARTS_WITH(pszLine, "ODASD"))
             nODA = atoi(pszLine + 8);
-        else if (strncmp(pszLine, "UDASD", 5) == 0)
+        else if (STARTS_WITH(pszLine, "UDASD"))
             nUDA = atoi(pszLine + 8);
     }
 
@@ -657,7 +657,7 @@ skip_read_next_line:
                 continue;
         }
 
-        if (pszLine == NULL || strncmp(pszLine, "RTYSA", 5) == 0)
+        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "PAR")
             {
@@ -760,9 +760,9 @@ skip_read_next_line:
             osQUP_RID = "";
             bIso8859_1 = FALSE;
         }
-        else if (strncmp(pszLine, "RIDSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "RIDSA"))
             osRID = pszLine + 8;
-        else if (strncmp(pszLine, "CORCC", 5) == 0)
+        else if (STARTS_WITH(pszLine, "CORCC"))
         {
             const char* pszY = strchr(pszLine+8, ';');
             if (pszY)
@@ -772,7 +772,7 @@ skip_read_next_line:
                 aXY.push_back(xyPairType (dfX, dfY));
             }
         }
-        else if (strncmp(pszLine, "FTPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "FTPCP"))
         {
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
@@ -791,7 +791,7 @@ skip_read_next_line:
             }
             CSLDestroy(papszTokens);
         }
-        else if (strncmp(pszLine, "SCPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "SCPCP"))
         {
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
@@ -806,7 +806,7 @@ skip_read_next_line:
             }
             CSLDestroy(papszTokens);
         }
-        else if (strncmp(pszLine, "ATPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "ATPCP"))
         {
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
@@ -820,7 +820,7 @@ skip_read_next_line:
         {
             bIso8859_1 = TRUE;
         }
-        else if (strncmp(pszLine, "ATVS", 4) == 0)
+        else if (STARTS_WITH(pszLine, "ATVS"))
         {
             CPLString osAttVal = pszLine + 8;
             int bSkipReadNextLine = FALSE;
@@ -830,7 +830,7 @@ skip_read_next_line:
                 if (pszLine != NULL &&
                     strlen(pszLine) >= 8 &&
                     pszLine[7] == ':' &&
-                    strncmp(pszLine, "NEXT ", 5) == 0)
+                    STARTS_WITH(pszLine, "NEXT "))
                 {
                     osAttVal += pszLine + 8;
                 }
@@ -858,7 +858,7 @@ skip_read_next_line:
             if (bSkipReadNextLine)
                 goto skip_read_next_line;
         }
-        else if (strncmp(pszLine, "ATVCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "ATVCP"))
         {
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
@@ -873,7 +873,7 @@ skip_read_next_line:
             }
             CSLDestroy(papszTokens);
         }
-        else if (strncmp(pszLine, "QAPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "QAPCP"))
         {
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)

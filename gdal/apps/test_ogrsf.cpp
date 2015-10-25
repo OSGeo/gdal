@@ -3476,7 +3476,7 @@ static int TestVirtualIO( GDALDataset * poDS )
 {
     int bRet = TRUE;
 
-    if( strncmp( poDS->GetDescription(), "/vsimem/", strlen("/vsimem/") ) == 0 )
+    if( STARTS_WITH(poDS->GetDescription(), "/vsimem/") )
         return TRUE;
 
     VSIStatBufL sStat;

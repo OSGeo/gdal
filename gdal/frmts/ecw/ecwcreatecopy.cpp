@@ -982,9 +982,9 @@ CPLErr GDALECWCompressor::Initialize(
     if( bIsJPEG2000 )
     {
         int bSeekable = !
-          ( strncmp(pszFilename, "/vsistdout/", strlen("/vsistdout/")) == 0 ||
-            strncmp(pszFilename, "/vsizip/", strlen("/vsizip/")) == 0 ||
-            strncmp(pszFilename, "/vsigzip/", strlen("/vsigzip/")) == 0 );
+          ( STARTS_WITH(pszFilename, "/vsistdout/") ||
+            STARTS_WITH(pszFilename, "/vsizip/") ||
+            STARTS_WITH(pszFilename, "/vsigzip/") );
         fpVSIL = VSIFOpenL( pszFilename, (bSeekable) ? "wb+": "wb" );
         if( fpVSIL == NULL )
         {

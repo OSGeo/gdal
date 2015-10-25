@@ -1030,8 +1030,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLDebug( "JPEG2000", "%s\n", papszOptions[i] );
             for ( j = 0; apszComprOptions[j] != NULL; j++ )
                 if( EQUALN( apszComprOptions[j], papszOptions[i],
-                            strlen(apszComprOptions[j]) ) )                {
-                    int m, n;
+                            strlen(apszComprOptions[j]) ) )                {                    int m, n;
 
                     n = strlen( pszOptionBuf );
                     m = n + strlen( papszOptions[i] ) + 1;

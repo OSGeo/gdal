@@ -376,7 +376,7 @@ GTARasterBand::GTARasterBand( GTADataset *poDS, int nBand )
     for( uintmax_t i = 0; i < poDS->oHeader.component_taglist( nBand-1 ).tags(); i++)
     {
         const char *pszTagName = poDS->oHeader.component_taglist( nBand-1 ).name( i );
-        if( strncmp( pszTagName, "GDAL/META/", 10 ) == 0 )
+        if( STARTS_WITH(pszTagName, "GDAL/META/") )
         {
             const char *pDomainEnd = strchr( pszTagName + 10, '/' );
             if( pDomainEnd && pDomainEnd - (pszTagName + 10) > 0 )
@@ -1181,7 +1181,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
     for( uintmax_t i = 0; i < poDS->oHeader.global_taglist().tags(); i++)
     {
         const char *pszTagName = poDS->oHeader.global_taglist().name( i );
-        if( strncmp( pszTagName, "GDAL/META/", 10 ) == 0 )
+        if( STARTS_WITH(pszTagName, "GDAL/META/") )
         {
             const char *pDomainEnd = strchr( pszTagName + 10, '/' );
             if( pDomainEnd && pDomainEnd - (pszTagName + 10) > 0 )

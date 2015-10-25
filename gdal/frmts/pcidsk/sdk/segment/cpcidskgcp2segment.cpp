@@ -28,6 +28,7 @@
 
 #include "pcidsk_gcp.h"
 #include "pcidsk_exception.h"
+#include "core/pcidsk_utils.h"
 
 #include <cstring>
 #include <iostream>
@@ -75,7 +76,7 @@ void CPCIDSKGCP2Segment::Load()
     ReadFromFile(pimpl_->seg_data.buffer, 0, data_size - 1024);
     
     // check for 'GCP2    ' in the first 8 bytes
-    if (std::strncmp(pimpl_->seg_data.buffer, "GCP2    ", 8) != 0) {
+    if (!STARTS_WITH(pimpl_->seg_data.buffer, "GCP2    ")) {
         // Assume it's an empty segment, so we can mark loaded_ = true,
         // write it out and return
         pimpl_->changed = true;

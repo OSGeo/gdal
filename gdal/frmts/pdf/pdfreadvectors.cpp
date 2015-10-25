@@ -1480,7 +1480,7 @@ void PDFDataset::ExploreContents(GDALPDFObject* poObj,
             int bMatchQ = FALSE;
             while (pszAfterBDC[0] == ' ' || pszAfterBDC[0] == '\r' || pszAfterBDC[0] == '\n')
                 pszAfterBDC ++;
-            if (strncmp(pszAfterBDC, "0 0 m", 5) == 0)
+            if (STARTS_WITH(pszAfterBDC, "0 0 m"))
             {
                 const char* pszLastq = pszBDC;
                 while(pszLastq > pszStr && *pszLastq != 'q')

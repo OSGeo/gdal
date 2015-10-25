@@ -121,9 +121,9 @@ static char** GetArgv(int bExplicitFeatures, int bWaypoints, int bRoutes,
 
 int OGRGPSBabelDataSource::IsSpecialFile(const char* pszFilename)
 {
-    return (strncmp(pszFilename, "/dev/", 5) == 0 ||
-            strncmp(pszFilename, "usb:", 4) == 0 ||
-            (strncmp(pszFilename, "COM", 3) == 0  && atoi(pszFilename + 3) > 0));
+    return (STARTS_WITH(pszFilename, "/dev/") ||
+            STARTS_WITH(pszFilename, "usb:") ||
+            (STARTS_WITH(pszFilename, "COM")  && atoi(pszFilename + 3) > 0));
 }
 
 /************************************************************************/

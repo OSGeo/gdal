@@ -446,8 +446,8 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
 {
     char** papszOptions = CSLAddString(GetBaseHTTPOptions(), NULL);
     CPLHTTPResult * psResult;
-    if( strncmp(osBaseURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
-        strncmp(pszURL, "/vsimem/", strlen("/vsimem/")) == 0 )
+    if( STARTS_WITH(osBaseURL, "/vsimem/") &&
+        STARTS_WITH(pszURL, "/vsimem/") )
     {
         CPLDebug("PLSCENES", "Fetching %s", pszURL);
         psResult = (CPLHTTPResult*) CPLCalloc(1, sizeof(CPLHTTPResult));
@@ -861,7 +861,7 @@ int PLMosaicDataset::OpenMosaic()
             }
 
             CPLString osTMSURL(pszLinksTiles);
-            if( strncmp(pszLinksTiles, "https://", strlen("https://")) == 0 )
+            if( STARTS_WITH(pszLinksTiles, "https://") )
             {
                 // Add API key as Basic auth
                 osTMSURL = "https://";
@@ -1261,8 +1261,7 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
         CPLHTTPDestroyResult(psResult);
         GDALDataset* poDS = OpenAndInsertNewDataset(osTmpFilename, osTilename);
 
-        if( strncmp(osTmpFilename, "/vsimem/single_tile_plmosaic_cache/",
-                    strlen("/vsimem/single_tile_plmosaic_cache/")) == 0 )
+        if( STARTS_WITH(osTmpFilename, "/vsimem/single_tile_plmosaic_cache/") )
             VSIUnlink(osTilename);
 
         return poDS;

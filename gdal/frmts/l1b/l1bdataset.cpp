@@ -1475,7 +1475,7 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
             {
                 /* We could also use the time code to determine TIROS-N */
                 if( strlen(pszFilename) == L1B_DATASET_NAME_SIZE &&
-                    strncmp(pszFilename + 8, ".TN.", 4) == 0 )
+                    STARTS_WITH(pszFilename + 8, ".TN.") )
                     eSpacecraftID = TIROSN;
                 else
                     eSpacecraftID = NOAA11;
@@ -1488,7 +1488,7 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
             {
                 /* We could also use the time code to determine NOAA6 */
                 if( strlen(pszFilename) == L1B_DATASET_NAME_SIZE &&
-                    strncmp(pszFilename + 8, ".NA.", 4) == 0 )
+                    STARTS_WITH(pszFilename + 8, ".NA.") )
                     eSpacecraftID = NOAA6;
                 else
                     eSpacecraftID = NOAA13;

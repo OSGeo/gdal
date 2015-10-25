@@ -197,7 +197,7 @@ static CPLXMLNode* CPLExtractSubSchema(CPLXMLNode* psSubXML, CPLXMLNode* psMainS
         {
             /* Add xmlns: from subschema to main schema if missing */
             if (psNext->eType == CXT_Attribute &&
-                strncmp(psNext->pszValue, "xmlns:", 6) == 0 &&
+                STARTS_WITH(psNext->pszValue, "xmlns:") &&
                 CPLGetXMLValue(psMainSchema, psNext->pszValue, NULL) == NULL)
             {
                 CPLXMLNode* psAttr = CPLCreateXMLNode(NULL, CXT_Attribute, psNext->pszValue);
@@ -455,8 +455,8 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
                 if (psIter2->eType == CXT_Attribute &&
                     strcmp(psIter2->pszValue, "schemaLocation") == 0 &&
                     psIter2->psChild != NULL &&
-                    strncmp(psIter2->psChild->pszValue, "http://", 7) != 0 &&
-                    strncmp(psIter2->psChild->pszValue, "ftp://", 6) != 0 &&
+                    !STARTS_WITH(psIter2->psChild->pszValue, "http://") &&
+                    !STARTS_WITH(psIter2->psChild->pszValue, "ftp://") &&
                     /* If the top file is our warping file, don't alter the path of the import */
                     strstr(pszFile, "/vsimem/CPLValidateXML_") == NULL )
                 {
@@ -685,7 +685,7 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
         pszResolved = NULL;
     }
 
-    if (strncmp(URL, "http://", 7) == 0)
+    if (STARTS_WITH(URL, "http://"))
     {
         /* Make sure to use http://schemas.opengis.net/ */
         /* when gml/2 or gml/3 is detected */
@@ -726,21 +726,19 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
                 return xmlNewStringInputStream(context, (const xmlChar*) szXLINK_XSD);
             }
         }
-        else if (strncmp(URL, "http://schemas.opengis.net/",
-                         strlen("http://schemas.opengis.net/")) != 0)
-        {
+        else if (!STARTS_WITH(URL, "http://schemas.opengis.net/"))        {
             CPLDebug("CPL", "Loading %s", URL);
             return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
         }
     }
-    else if (strncmp(URL, "ftp://", 6) == 0)
+    else if (STARTS_WITH(URL, "ftp://"))
     {
         return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
     }
-    else if (strncmp(URL, "file://", 7) == 0)
+    else if (STARTS_WITH(URL, "file://"))
     {
         /* Parse file:// URI so as to be able to open them with VSI*L API */
-        if (strncmp(URL, "file://localhost/", 17) == 0)
+        if (STARTS_WITH(URL, "file://localhost/"))
             URL += 16;
         else
             URL += 7;
@@ -753,21 +751,15 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
     }
 
     CPLString osModURL;
-    if (strncmp(URL, "/vsizip/vsicurl/http%3A//",
-                strlen("/vsizip/vsicurl/http%3A//")) == 0)
-    {
+    if (STARTS_WITH(URL, "/vsizip/vsicurl/http%3A//"))    {
         osModURL = "/vsizip/vsicurl/http://";
         osModURL += URL + strlen("/vsizip/vsicurl/http%3A//");
     }
-    else if (strncmp(URL, "/vsicurl/http%3A//",
-                     strlen("/vsicurl/http%3A//")) == 0)
-    {
+    else if (STARTS_WITH(URL, "/vsicurl/http%3A//"))    {
         osModURL = "vsicurl/http://";
         osModURL += URL + strlen("/vsicurl/http%3A//");
     }
-    else if (strncmp(URL, "http://schemas.opengis.net/",
-                     strlen("http://schemas.opengis.net/")) == 0)
-    {
+    else if (STARTS_WITH(URL, "http://schemas.opengis.net/"))    {
         const char *pszAfterOpenGIS =
                 URL + strlen("http://schemas.opengis.net/");
 
@@ -1084,7 +1076,7 @@ int CPLValidateXML(const char* pszXMLFilename,
         }
         xmlFreeDoc(pDoc);
     }
-    else if (strncmp(pszXMLFilename, "/vsi", 4) != 0)
+    else if (!STARTS_WITH(pszXMLFilename, "/vsi"))
     {
         bValid =
             xmlSchemaValidateFile(pSchemaValidCtxt, pszXMLFilename, 0) == 0;

@@ -2047,7 +2047,7 @@ static double CPLRoundToMoreLikelyDouble(float f)
     pszDot ++;
     if( pszDot[0] == 0 || pszDot[1] == 0 )
         return d;
-    if( strncmp(pszDot + 2, "99", 2) == 0 )
+    if( STARTS_WITH(pszDot + 2, "99") )
     {
         pszDot[2] = 0;
         double d2 = CPLAtof(szBuffer) + 0.01;
@@ -2055,7 +2055,7 @@ static double CPLRoundToMoreLikelyDouble(float f)
         if( f == f2 || nextafterf(f,f+1.0f) == f2 || nextafterf(f,f-1.0f) == f2 )
             d = d2;
     }
-    else if( strncmp(pszDot + 2, "00", 2) == 0 )
+    else if( STARTS_WITH(pszDot + 2, "00") )
     {
         pszDot[2] = 0;
         double d2 = CPLAtof(szBuffer);

@@ -369,7 +369,7 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     /* it transparently with /vsigzip/ */
     if ( ((GByte*)szHeader)[0] == 0x1f && ((GByte*)szHeader)[1] == 0x8b &&
             EQUAL(CPLGetExtension(pszFilename), "gz") &&
-            strncmp(pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0 )
+            !STARTS_WITH(pszFilename, "/vsigzip/") )
     {
         if( fpToClose )
             VSIFCloseL( fpToClose );
@@ -474,7 +474,7 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             }
         }
     }
-    else if (strncmp(pszFilename, "/vsimem/tempwfs_", strlen("/vsimem/tempwfs_")) == 0)
+    else if (STARTS_WITH(pszFilename, "/vsimem/tempwfs_"))
     {
         /* http://regis.intergraph.com/wfs/dcmetro/request.asp? returns a <G:FeatureCollection> */
         /* Who knows what servers can return ? Ok, so when in the context of the WFS driver */
@@ -517,9 +517,9 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     if (pszSchemaLocation)
         pszSchemaLocation += strlen("schemaLocation=");
 
-    if (strncmp(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")) == 0)
+    if (STARTS_WITH(pszFilename, "/vsicurl_streaming/"))
         bCheckAuxFile = FALSE;
-    else if (strncmp(pszFilename, "/vsicurl/", strlen("/vsicurl/")) == 0 &&
+    else if (STARTS_WITH(pszFilename, "/vsicurl/") &&
              (strstr(pszFilename, "?SERVICE=") || strstr(pszFilename, "&SERVICE=")) )
         bCheckAuxFile = FALSE;
 
@@ -742,7 +742,7 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     }
 
     CPLString osGFSFilename = CPLResetExtension( pszFilename, "gfs" );
-    if (strncmp(osGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
+    if (STARTS_WITH(osGFSFilename, "/vsigzip/"))
         osGFSFilename = osGFSFilename.substr(strlen("/vsigzip/"));
 
 /* -------------------------------------------------------------------- */
@@ -803,8 +803,8 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         }
         else
         {
-            if ( strncmp(osXSDFilename, "http://", 7) == 0 ||
-                 strncmp(osXSDFilename, "https://", 8) == 0 ||
+            if ( STARTS_WITH(osXSDFilename, "http://") ||
+                 STARTS_WITH(osXSDFilename, "https://") ||
                  VSIStatExL( osXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
             {
                 bHasFoundXSD = TRUE;
@@ -863,8 +863,8 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                 if( oFeatureType.osSchemaLocation.size() )
                                 {
                                     osXSDFilename = oFeatureType.osSchemaLocation;
-                                    if( strncmp(osXSDFilename, "http://", 7) == 0 ||
-                                        strncmp(osXSDFilename, "https://", 8) == 0 ||
+                                    if( STARTS_WITH(osXSDFilename, "http://") ||
+                                        STARTS_WITH(osXSDFilename, "https://") ||
                                         VSIStatExL( osXSDFilename, &sXSDStatBuf,
                                                     VSI_STAT_EXISTS_FLAG ) == 0 )
                                     {
@@ -1585,13 +1585,13 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     osFilename = pszName;
 
     if( strcmp(pszFilename,"/vsistdout/") == 0 ||
-        strncmp(pszFilename,"/vsigzip/", 9) == 0 )
+        STARTS_WITH(pszFilename, "/vsigzip/") )
     {
         fpOutput = VSIFOpenL(pszFilename, "wb");
         bFpOutputIsNonSeekable = TRUE;
         bFpOutputSingleFile = TRUE;
     }
-    else if ( strncmp(pszFilename,"/vsizip/", 8) == 0)
+    else if ( STARTS_WITH(pszFilename, "/vsizip/"))
     {
         if (EQUAL(CPLGetExtension(pszFilename), "zip"))
         {
@@ -2729,7 +2729,7 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE* fp)
                 {
                     CPLDebug("GML", "Global SRS = %s", pszSRSName);
 
-                    if (strncmp(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#", 40) == 0)
+                    if (STARTS_WITH(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#"))
                     {
                         std::string osWork;
                         osWork.assign("EPSG:", 5);

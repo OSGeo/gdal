@@ -287,8 +287,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
         osURL = pszURL;
         /* Special hack for http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/ */
         if (strlen(pszURL) > 10 &&
-            strncmp(pszURL, "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/",
-                            strlen("http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/")) == 0 &&
+            STARTS_WITH(pszURL, "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/") &&
             strcmp(pszURL + strlen(pszURL) - strlen("1.0.0/"), "1.0.0/") == 0)
         {
             osURL.resize(strlen(pszURL) - strlen("1.0.0/"));

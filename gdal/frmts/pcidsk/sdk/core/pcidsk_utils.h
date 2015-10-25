@@ -49,6 +49,7 @@ namespace PCIDSK
 #define EQUAL(x,y) (pci_strcasecmp(x,y) == 0)
 #define EQUALN(x,y,n) (pci_strncasecmp(x,y,n) == 0)
 #define STARTS_WITH_CI(x,y) EQUALN(x,y,strlen(y))
+#define STARTS_WITH(x,y) (std::strncmp(x,y,strlen(y)) == 0)
   
     void   SwapData( void* const data, const int size, const int wcount );
     bool   BigEndianSystem(void);

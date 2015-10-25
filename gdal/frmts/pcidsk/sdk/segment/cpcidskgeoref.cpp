@@ -98,7 +98,7 @@ void CPCIDSKGeoref::Load()
 /* -------------------------------------------------------------------- */
 /*      Handle simple case of a POLYNOMIAL.                             */
 /* -------------------------------------------------------------------- */
-    if( strncmp(seg_data.buffer,"POLYNOMIAL",10) == 0 )
+    if( STARTS_WITH(seg_data.buffer, "POLYNOMIAL") )
     {
         seg_data.Get(32,16,geosys);
         
@@ -118,7 +118,7 @@ void CPCIDSKGeoref::Load()
 /*      Handle the case of a PROJECTION segment - for now we ignore     */
 /*      the actual projection parameters.                               */
 /* -------------------------------------------------------------------- */
-    else if( strncmp(seg_data.buffer,"PROJECTION",10) == 0 )
+    else if( STARTS_WITH(seg_data.buffer, "PROJECTION") )
     {
         seg_data.Get(32,16,geosys);
         
@@ -202,7 +202,7 @@ std::vector<double> CPCIDSKGeoref::GetParameters()
 
     parms.resize(18);
 
-    if( strncmp(seg_data.buffer,"PROJECTION",10) != 0 )
+    if( !STARTS_WITH(seg_data.buffer, "PROJECTION") )
     {
         for( i = 0; i < 17; i++ )
             parms[i] = 0.0;
@@ -366,7 +366,7 @@ std::vector<double> CPCIDSKGeoref::GetUSGSParameters()
     Load();
 
     parms.resize(19);
-    if( strncmp(seg_data.buffer,"PROJECTION",10) != 0 )
+    if( !STARTS_WITH(seg_data.buffer, "PROJECTION") )
     {
         for( i = 0; i < 19; i++ )
             parms[i] = 0.0;
@@ -964,10 +964,10 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
     int ProjectionZone = 0;
 
-    if( strncmp(geosys_clean.c_str(),"UTM ",4) == 0 
-        || strncmp(geosys_clean.c_str(),"SPCS ",5) == 0 
-        || strncmp(geosys_clean.c_str(),"SPAF ",5) == 0 
-        || strncmp(geosys_clean.c_str(),"SPIF ",5) == 0 )
+    if( STARTS_WITH(geosys_clean.c_str(), "UTM ") 
+        || STARTS_WITH(geosys_clean.c_str(), "SPCS ") 
+        || STARTS_WITH(geosys_clean.c_str(), "SPAF ") 
+        || STARTS_WITH(geosys_clean.c_str(), "SPIF ") )
     {
         ProjectionZone = atoi(geosys_clean.c_str() + 5);
     }
@@ -999,8 +999,8 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 0: Geographic (no projection)			*/
 /* -------------------------------------------------------------------- */
-    if( strncmp(geosys_clean.c_str(),"LON",3) == 0 
-        || strncmp(geosys_clean.c_str(),"LAT",3) == 0 )
+    if( STARTS_WITH(geosys_clean.c_str(), "LON") 
+        || STARTS_WITH(geosys_clean.c_str(), "LAT") )
     {
         gsys = 0;
         UnitsCode = GCTP_UNIT_DEGREE;
@@ -1009,7 +1009,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 1: Universal Transverse Mercator			*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"UTM ",4) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "UTM ") )
     {
         char row_char = geosys_clean[10];
         gsys = 1;
@@ -1040,7 +1040,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 2: State Plane Coordinate System			*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"SPCS ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "SPCS ") )
     {
         gsys = 2;
         if(    UnitsCode != GCTP_UNIT_METRE
@@ -1049,7 +1049,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
             UnitsCode = GCTP_UNIT_METRE;
     }
 
-    else if( strncmp(geosys_clean.c_str(),"SPAF ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "SPAF ") )
     {
         gsys = 2;
         if(    UnitsCode != GCTP_UNIT_METRE
@@ -1058,7 +1058,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
             UnitsCode = GCTP_UNIT_US_FOOT;
     }
 
-    else if( strncmp(geosys_clean.c_str(),"SPIF ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "SPIF ") )
     {
         gsys = 2;
         if(    UnitsCode != GCTP_UNIT_METRE
@@ -1070,7 +1070,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 3: Albers Conical Equal-Area 			*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"ACEA ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "ACEA ") )
     {
         gsys = 3;
         USGSParms[0] = Dearth0;
@@ -1086,7 +1086,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 4: Lambert Conformal Conic				*/ 
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"LCC  ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "LCC  ") )
     {
         gsys = 4;
         USGSParms[0] = Dearth0;
@@ -1102,7 +1102,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 5: Mercator						*/ 
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"MER  ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "MER  ") )
     {
         gsys = 5;
         USGSParms[0] = Dearth0;
@@ -1117,7 +1117,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 6: Polar Stereographic		 		*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"PS   ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "PS   ") )
     {
         gsys = 6;
         USGSParms[0] = Dearth0;
@@ -1132,7 +1132,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 7: Polyconic			 			*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"PC   ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "PC   ") )
     {
         gsys = 7;
         USGSParms[0] = Dearth0;
@@ -1149,7 +1149,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /*	Format A, one standard parallel,  usgs_params[8] = 0		*/
 /*      Format B, two standard parallels, usgs_params[8] = not 0	*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"EC   ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "EC   ") )
     {
         gsys = 8;
         USGSParms[0] = Dearth0;
@@ -1170,7 +1170,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 9: Transverse Mercator				*/ 
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"TM   ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "TM   ") )
     {
         gsys = 9;
         USGSParms[0] = Dearth0;
@@ -1186,7 +1186,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 10: Stereographic					*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"SG   ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "SG   ") )
     {
         gsys = 10;
         USGSParms[0] = Dearth0;
@@ -1200,7 +1200,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 11: Lambert Azimuthal Equal-Area			*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"LAEA ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "LAEA ") )
     {
         gsys = 11;
         
@@ -1215,7 +1215,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 12: Azimuthal Equidistant				*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"AE   ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "AE   ") )
     {
         gsys = 12;
         USGSParms[0] = Dearth0;
@@ -1229,7 +1229,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 13: Gnomonic						*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"GNO  ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "GNO  ") )
     {
         gsys = 13;
         USGSParms[0] = Dearth0;
@@ -1243,7 +1243,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 14: Orthographic					*/ 
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"OG   ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "OG   ") )
     {
         gsys = 14;
         USGSParms[0] = Dearth0;
@@ -1257,7 +1257,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection  15: General Vertical Near-Side Perspective		*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"GVNP ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "GVNP ") )
     {
         gsys = 15;
         USGSParms[0] = Dearth0;
@@ -1273,7 +1273,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 16: Sinusoidal 					*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"SIN  ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "SIN  ") )
     {
         gsys = 16;
         USGSParms[0] = Dearth0;
@@ -1285,7 +1285,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 17: Equirectangular					*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"ER   ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "ER   ") )
     {
         gsys = 17;
         USGSParms[0] = Dearth0;
@@ -1297,7 +1297,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 18: Miller Cylindrical				*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"MC   ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "MC   ") )
     {
         gsys = 18;
         USGSParms[0] = Dearth0;
@@ -1311,7 +1311,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 19: Van der Grinten					*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"VDG  ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "VDG  ") )
     {
         gsys = 19;
         USGSParms[0] = Dearth0;
@@ -1329,7 +1329,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /*	  Format B, Long1, Lat1, Long2, Lat2 defined (Azimuth		*/
 /*	     and RefLong not defined), usgs_params[12] = not 0      	*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"OM   ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "OM   ") )
     {
         gsys = 20;
         USGSParms[0] = Dearth0;
@@ -1355,7 +1355,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 21: Robinson						*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"ROB  ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "ROB  ") )
     {
           gsys = 21;
           USGSParms[0] = Dearth0;
@@ -1370,7 +1370,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 22: Space Oblique Mercator				*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"SOM  ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "SOM  ") )
     {
           gsys = 22;
           USGSParms[0] = Dearth0;
@@ -1385,7 +1385,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*	Projection 23: Modified Stereographic Conformal (Alaska)	*/ 
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"MSC  ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "MSC  ") )
     {
           gsys = 23;
           USGSParms[0] = Dearth0;
@@ -1400,7 +1400,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /*	Projection 6: Universal Polar Stereographic is just Polar	*/
 /*	Stereographic with certain assumptions.				*/
 /* -------------------------------------------------------------------- */
-    else if( strncmp(geosys_clean.c_str(),"UPS  ",5) == 0 )
+    else if( STARTS_WITH(geosys_clean.c_str(), "UPS  ") )
     {
           gsys = 6;
 

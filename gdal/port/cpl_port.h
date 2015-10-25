@@ -375,6 +375,7 @@ CPL_C_END
 #endif
 
 #ifndef STARTS_WITH_CI
+#define STARTS_WITH(a,b)               (strncmp(a,b,strlen(b)) == 0)
 #define STARTS_WITH_CI(a,b)            EQUALN(a,b,strlen(b))
 #endif
 

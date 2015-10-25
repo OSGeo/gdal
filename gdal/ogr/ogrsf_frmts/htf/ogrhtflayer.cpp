@@ -111,7 +111,7 @@ OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone, in
     while( fpHTF != NULL &&
            (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
     {
-        if (strncmp(pszLine, "SOUNDING HEADER", strlen("SOUNDING HEADER")) == 0)
+        if (STARTS_WITH(pszLine, "SOUNDING HEADER"))
             bSoundingHeader = TRUE;
         else if (bSoundingHeader && strlen(pszLine) > 10 &&
                  pszLine[0] == '[' && pszLine[3] == ']' &&
@@ -360,33 +360,26 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
             /* end of polygon is marked by a blank line */
             break;
         }
-        else if (strncmp(pszLine, "POLYGON DESCRIPTION: ",
-                         strlen("POLYGON DESCRIPTION: ")) == 0)
-        {
+        else if (STARTS_WITH(pszLine, "POLYGON DESCRIPTION: "))        {
             poFeature->SetField(0, pszLine + strlen("POLYGON DESCRIPTION: "));
         }
-        else if (strncmp(pszLine, "POLYGON IDENTIFIER: ",
-                         strlen("POLYGON IDENTIFIER: ")) == 0)
-        {
+        else if (STARTS_WITH(pszLine, "POLYGON IDENTIFIER: "))        {
             poFeature->SetField(1, pszLine + strlen("POLYGON IDENTIFIER: "));
         }
         else if (strncmp(pszLine, "SEAFLOOR COVERAGE: ",
-                         strlen("SEAFLOOR COVERAGE:")) == 0)
-        {
+                         strlen("SEAFLOOR COVERAGE:")) == 0)        {
             const char* pszVal = pszLine + strlen("SEAFLOOR COVERAGE: ");
             if (*pszVal != '*')
                 poFeature->SetField(2, pszVal);
         }
         else if (strncmp(pszLine, "POSITION ACCURACY: ",
-                         strlen("POSITION ACCURACY:")) == 0)
-        {
+                         strlen("POSITION ACCURACY:")) == 0)        {
             const char* pszVal = pszLine + strlen("POSITION ACCURACY: ");
             if (*pszVal != '*')
                 poFeature->SetField(3, pszVal);
         }
         else if (strncmp(pszLine, "DEPTH ACCURACY: ",
-                         strlen("DEPTH ACCURACY:")) == 0)
-        {
+                         strlen("DEPTH ACCURACY:")) == 0)        {
             const char* pszVal = pszLine + strlen("DEPTH ACCURACY: ");
             if (*pszVal != '*')
                 poFeature->SetField(4, pszVal);

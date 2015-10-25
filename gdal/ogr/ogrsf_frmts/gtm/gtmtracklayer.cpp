@@ -121,13 +121,13 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
         {
             const char* pszName = poFieldDefn->GetNameRef();
             /* track name */
-            if (strncmp(pszName, "name", 4) == 0)
+            if (STARTS_WITH(pszName, "name"))
             {
                 CPLFree(psztrackname);
                 psztrackname = CPLStrdup( poFeature->GetFieldAsString( i ) );
             }
             /* track type */
-            else if (strncmp(pszName, "type", 4) == 0)
+            else if (STARTS_WITH(pszName, "type"))
             {
                 type = poFeature->GetFieldAsInteger( i );
                 // Check if it is a valid type
@@ -135,7 +135,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                     type = 1;
             }
             /* track color */
-            else if (strncmp(pszName, "color", 5) == 0)
+            else if (STARTS_WITH(pszName, "color"))
             {
                 color = (unsigned int) poFeature->GetFieldAsInteger( i );
                 if (color > 0xFFFFFF)

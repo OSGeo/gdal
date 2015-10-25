@@ -438,7 +438,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
             break; // Not an APP chunk.
 
         if( abyChunkHeader[1] == 0xe1
-            && strncmp((const char *) abyChunkHeader + 4,"http://ns.adobe.com/xap/1.0/",28) == 0 )
+            && STARTS_WITH((const char *) abyChunkHeader + 4, "http://ns.adobe.com/xap/1.0/") )
         {
             bFoundXMP = TRUE;
             break; // APP1 - XMP
@@ -737,7 +737,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
                 break; // Not an APP chunk.
 
             if( abyChunkHeader[1] == 0xe1
-                && strncmp((const char *) abyChunkHeader + 4,"Exif",4) == 0 )
+                && STARTS_WITH((const char *) abyChunkHeader + 4, "Exif") )
             {
                 nTIFFHEADER = nChunkLoc + 10;
             }
@@ -2471,7 +2471,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
         /* will unlink the temporary /vsimem file just after GDALOpen(), so */
         /* later VSIFOpenL() when reading internal overviews would fail. */
         /* Initialize them now */
-        if( strncmp(real_filename, "/vsimem/http_", strlen("/vsimem/http_")) == 0 )
+        if( STARTS_WITH(real_filename, "/vsimem/http_") )
         {
             poDS->InitInternalOverviews();
         }

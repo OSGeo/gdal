@@ -160,7 +160,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
     int i, conn_i;
     
     if( nRequestCount > 0 &&
-        strncmp(pasRequest[0].pszURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
+        STARTS_WITH(pasRequest[0].pszURL, "/vsimem/") &&
         /* Disabled by default for potential security issues */
         CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
     {
@@ -259,7 +259,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
 
         /* In the case of a file:// URL, curl will return a status == 0, so if there's no */
         /* error returned, patch the status code to be 200, as it would be for http:// */
-        if (strncmp(psRequest->pszURL, "file://", 7) == 0 && psRequest->nStatus == 0 &&
+        if (STARTS_WITH(psRequest->pszURL, "file://") && psRequest->nStatus == 0 &&
             psRequest->pszError == NULL)
         {
             psRequest->nStatus = 200;

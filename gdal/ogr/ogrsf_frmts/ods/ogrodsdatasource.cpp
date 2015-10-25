@@ -471,7 +471,7 @@ static void SetField(OGRFeature* poFeature,
     {
         int nHour, nHourRepeated, nMinute, nSecond;
         char c;
-        if (strncmp(pszValue, "PT", 2) == 0 &&
+        if (STARTS_WITH(pszValue, "PT") &&
             sscanf(pszValue + 2, "%02d%c%02d%c%02d%c",
                    &nHour, &c, &nMinute, &c, &nSecond, &c) == 6)
         {
@@ -479,7 +479,7 @@ static void SetField(OGRFeature* poFeature,
         }
         /* bug with kspread 2.1.2 ? */
         /* ex PT121234M56S */
-        else if (strncmp(pszValue, "PT", 2) == 0 &&
+        else if (STARTS_WITH(pszValue, "PT") &&
                  sscanf(pszValue + 2, "%02d%02d%02d%c%02d%c",
                         &nHour, &nHourRepeated, &nMinute, &c, &nSecond, &c) == 6 &&
                  nHour == nHourRepeated)
@@ -668,7 +668,7 @@ void OGRODSDataSource::endElementTable(CPL_UNUSED const char *pszName)
                             poFeature->GetFieldDefnRef(i)->GetType() == OFTString)
                         {
                             const char* pszVal = poFeature->GetFieldAsString(i);
-                            if (strncmp(pszVal, "of:=", 4) == 0)
+                            if (STARTS_WITH(pszVal, "of:="))
                             {
                                 ODSCellEvaluator oCellEvaluator(poCurLayer);
                                 oCellEvaluator.Evaluate(nRow, i);
@@ -720,7 +720,7 @@ void OGRODSDataSource::startElementRow(const char *pszName,
         }
 
         const char* pszFormula = GetAttributeValue(ppszAttr, "table:formula", NULL);
-        if (pszFormula && strncmp(pszFormula, "of:=", 4) == 0)
+        if (pszFormula && STARTS_WITH(pszFormula, "of:="))
         {
             osFormula = pszFormula;
             if (osValueType.size() == 0)
@@ -1498,7 +1498,7 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                 {
                     const char* pszVal = poFeature->GetFieldAsString(j);
                     pszXML = OGRGetXML_UTF8_EscapedString(pszVal);
-                    if (strncmp(pszVal, "of:=", 4) == 0)
+                    if (STARTS_WITH(pszVal, "of:="))
                     {
                         VSIFPrintfL(fp, "<table:table-cell table:formula=\"%s\"/>\n", pszXML);
                     }
@@ -1831,7 +1831,7 @@ int ODSCellEvaluator::EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
             else
             {
                 std::string osVal(poFeature->GetFieldAsString(nCol));
-                if (strncmp(osVal.c_str(), "of:=", 4) == 0)
+                if (STARTS_WITH(osVal.c_str(), "of:="))
                 {
                     delete poFeature;
                     poFeature = NULL;
@@ -1863,7 +1863,7 @@ int ODSCellEvaluator::EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
                     else
                     {
                         osVal = poFeature->GetFieldAsString(nCol);
-                        if (strncmp(osVal.c_str(), "of:=", 4) != 0)
+                        if (!STARTS_WITH(osVal.c_str(), "of:="))
                         {
                             CPLValueType eType = CPLGetValueType(osVal.c_str());
                             /* Try to convert into numeric value if possible */
@@ -1921,7 +1921,7 @@ int ODSCellEvaluator::Evaluate(int nRow, int nCol)
         poFeature->GetFieldDefnRef(nCol)->GetType() == OFTString)
     {
         const char* pszVal = poFeature->GetFieldAsString(nCol);
-        if (strncmp(pszVal, "of:=", 4) == 0)
+        if (STARTS_WITH(pszVal, "of:="))
         {
             ods_formula_node* expr_out = ods_formula_compile( pszVal + 4 );
             if (expr_out &&

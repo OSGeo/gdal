@@ -59,14 +59,13 @@ static int OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
         /* Garmin MapSource - gdb format which can be a problem when the */
         /* driver is loaded as a plugin, and loaded before the GPSBabel driver */
         /* (http://trac.osgeo.org/osgeo4w/ticket/245) */
-        if( strncmp(pszFilename, "/vsicurl/https://github.com/",
-                    strlen("/vsicurl/https://github.com/")) == 0 ||
+        if( STARTS_WITH(pszFilename, "/vsicurl/https://github.com/") ||
             !poOpenInfo->bStatOK ||
             !poOpenInfo->bIsDirectory )
         {
             /* In case we don't manage to list the directory, try to stat one file */
             VSIStatBufL stat;
-            if( !(strncmp(pszFilename, "/vsicurl/", strlen("/vsicurl/")) == 0 &&
+            if( !(STARTS_WITH(pszFilename, "/vsicurl/") &&
                   VSIStatL( CPLFormFilename(pszFilename, "a00000001", "gdbtable"), &stat ) == 0) )
             {
                 return FALSE;

@@ -342,7 +342,7 @@ static int CPLGetProcessMemorySize()
     char szLine[128];
     while (fgets(szLine, sizeof(szLine), fp) != NULL)
     {
-        if (strncmp(szLine, "VmSize:", 7) == 0)
+        if (STARTS_WITH(szLine, "VmSize:"))
         {
             const char* pszPtr = szLine;
             while( !(*pszPtr == '\0' || (*pszPtr >= '0' && *pszPtr <= '9')) )

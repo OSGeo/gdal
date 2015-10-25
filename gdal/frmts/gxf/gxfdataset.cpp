@@ -252,11 +252,11 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
              || poOpenInfo->pabyHeader[i] == 13)
             && poOpenInfo->pabyHeader[i+1] == '#' )
         {
-            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "include", strlen("include")) == 0 )
+            if( STARTS_WITH((const char*)poOpenInfo->pabyHeader + i + 2, "include") )
                 return NULL;
-            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "define", strlen("define")) == 0 )
+            if( STARTS_WITH((const char*)poOpenInfo->pabyHeader + i + 2, "define") )
                 return NULL;
-            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "ifdef", strlen("ifdef")) == 0 )
+            if( STARTS_WITH((const char*)poOpenInfo->pabyHeader + i + 2, "ifdef") )
                 return NULL;
             bFoundKeyword = TRUE;
         }

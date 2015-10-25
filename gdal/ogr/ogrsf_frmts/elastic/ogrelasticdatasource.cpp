@@ -314,7 +314,7 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
         return NULL;
     }
     
-    if( strncmp((const char*) psResult->pabyData, "{\"error\":", strlen("{\"error\":")) == 0 )
+    if( STARTS_WITH((const char*) psResult->pabyData, "{\"error\":") )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s",
                     (const char*) psResult->pabyData );
@@ -497,7 +497,7 @@ int OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &data
     CSLDestroy(papszOptions);
     if (psResult) {
         if( psResult->pszErrBuf != NULL ||
-            (psResult->pabyData && strncmp((const char*) psResult->pabyData, "{\"error\":", strlen("{\"error\":")) == 0) ||
+            (psResult->pabyData && STARTS_WITH((const char*) psResult->pabyData, "{\"error\":")) ||
             (psResult->pabyData && strstr((const char*) psResult->pabyData, "\"errors\":true,") != NULL) )
         {
             bRet = FALSE;

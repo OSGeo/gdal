@@ -188,11 +188,11 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 
     for (i=0; i < 5; i++) {
         PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification[i];
-        if (strncmp(hdi->name, "15Header", strlen("15Header")) == 0) {
+        if (STARTS_WITH(hdi->name, "15Header")) {
             sscanf(hdi->size, "%d", &_f_header_size);
             sscanf(hdi->address, "%d", &_f_header_offset);
         } else
-            if (strncmp(hdi->name, "15Data", strlen("15Data")) == 0) {
+            if (STARTS_WITH(hdi->name, "15Data")) {
             sscanf(hdi->size, "%d", &_f_data_size);
             sscanf(hdi->address, "%d", &_f_data_offset);
         }

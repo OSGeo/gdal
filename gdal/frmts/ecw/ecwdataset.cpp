@@ -1217,7 +1217,7 @@ CPLErr ECWDataset::SetMetadataItem( const char * pszName,
               eAccess == GA_Update &&
               (pszDomain == NULL || EQUAL(pszDomain, "")) &&
               pszName != NULL &&
-              strncmp(pszName, "FILE_METADATA_", strlen("FILE_METADATA_")) == 0 )
+              STARTS_WITH(pszName, "FILE_METADATA_") )
     {
         bFileMetaDataDirty = TRUE;
 
@@ -1365,10 +1365,10 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
         char** papszIter = papszMetadata;
         while(*papszIter)
         {
-            if (strncmp(*papszIter, "PROJ=", 5) == 0 ||
-                strncmp(*papszIter, "DATUM=", 6) == 0 ||
-                strncmp(*papszIter, "UNITS=", 6) == 0 ||
-                (strncmp(*papszIter, "FILE_METADATA_", strlen("FILE_METADATA_")) == 0 && strchr(*papszIter, '=') != NULL) )
+            if (STARTS_WITH(*papszIter, "PROJ=") ||
+                STARTS_WITH(*papszIter, "DATUM=") ||
+                STARTS_WITH(*papszIter, "UNITS=") ||
+                (STARTS_WITH(*papszIter, "FILE_METADATA_") && strchr(*papszIter, '=') != NULL) )
             {
                 char* pszKey = NULL;
                 const char* pszValue = CPLParseNameValue(*papszIter, &pszKey );

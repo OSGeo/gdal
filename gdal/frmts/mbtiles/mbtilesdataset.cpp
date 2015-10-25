@@ -1132,7 +1132,7 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
             const char* pszName = OGR_F_GetFieldAsString(hFeat, 0);
             const char* pszValue = OGR_F_GetFieldAsString(hFeat, 1);
             if (pszValue[0] != '\0' &&
-                strncmp(pszValue, "function(",9) != 0 &&
+                !STARTS_WITH(pszValue, "function(") &&
                 strstr(pszValue, "<img ") == NULL &&
                 strstr(pszValue, "<p>") == NULL &&
                 strstr(pszValue, "</p>") == NULL &&
@@ -1518,7 +1518,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
     /* Small trick to get the VSILFILE associated with the OGR SQLite */
     /* DB */
     CPLString osDSName(OGR_DS_GetName(hDS));
-    if (strncmp(osDSName.c_str(), "/vsicurl/", 9) == 0)
+    if (STARTS_WITH(osDSName.c_str(), "/vsicurl/"))
     {
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);

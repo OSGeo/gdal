@@ -433,7 +433,7 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
     {
         RLEDecompressBlock( oCompressedData, oUncompressedData );
     }
-    else if( strncmp(compression.c_str(),"JPEG",4) == 0 )
+    else if( STARTS_WITH(compression.c_str(), "JPEG") )
     {
         JPEGDecompressBlock( oCompressedData, oUncompressedData );
     }
@@ -581,7 +581,7 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
     {
         RLECompressBlock( oUncompressedData, oCompressedData );
     }
-    else if( strncmp(compression.c_str(),"JPEG",4) == 0 )
+    else if( STARTS_WITH(compression.c_str(), "JPEG") )
     {
         JPEGCompressBlock( oUncompressedData, oCompressedData );
     }

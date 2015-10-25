@@ -2557,15 +2557,15 @@ CPLErr PDFRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 int PDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
-    if (strncmp(poOpenInfo->pszFilename, "PDF:", 4) == 0)
+    if (STARTS_WITH(poOpenInfo->pszFilename, "PDF:"))
         return TRUE;
-    if (strncmp(poOpenInfo->pszFilename, "PDF_IMAGE:", 10) == 0)
+    if (STARTS_WITH(poOpenInfo->pszFilename, "PDF_IMAGE:"))
         return TRUE;
 
     if (poOpenInfo->nHeaderBytes < 128)
         return FALSE;
 
-    return strncmp((const char*)poOpenInfo->pabyHeader, "%PDF", 4) == 0;
+    return STARTS_WITH((const char*)poOpenInfo->pabyHeader, "%PDF");
 }
 
 /************************************************************************/
@@ -3106,8 +3106,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                                             else
                                                 break;
                                         }
-                                        if( strncmp(pszIter, "1 0 0 1 0 0 cm\n",
-                                                    strlen( "1 0 0 1 0 0 cm\n" )) == 0 )
+                                        if( STARTS_WITH(pszIter, "1 0 0 1 0 0 cm\n") )
                                             pszIter += strlen("1 0 0 1 0 0 cm\n");
                                         if( *pszIter == '/' )
                                         {
@@ -3252,7 +3251,7 @@ void PDFDataset::FindXMP(GDALPDFObject* poObj)
     char* pszContent = poStream->GetBytes();
     int nLength = (int)poStream->GetLength();
     if (pszContent != NULL && nLength > 15 &&
-        strncmp(pszContent, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
+        STARTS_WITH(pszContent, "<?xpacket begin="))
     {
         char *apszMDList[2];
         apszMDList[0] = pszContent;
@@ -3951,8 +3950,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     const char* pszUserPwd = GetOption(poOpenInfo->papszOpenOptions, "USER_PWD", NULL);
 
-    int bOpenSubdataset = strncmp(poOpenInfo->pszFilename, "PDF:", 4) == 0;
-    int bOpenSubdatasetImage = strncmp(poOpenInfo->pszFilename, "PDF_IMAGE:", 10) == 0;
+    int bOpenSubdataset = STARTS_WITH(poOpenInfo->pszFilename, "PDF:");
+    int bOpenSubdatasetImage = STARTS_WITH(poOpenInfo->pszFilename, "PDF_IMAGE:");
     int iPage = -1;
     int nImageNum = -1;
     const char* pszFilename = poOpenInfo->pszFilename;
@@ -4748,7 +4747,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         char* pszContent = poMetadata->getCString();
         if (pszContent != NULL &&
-            strncmp(pszContent, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
+            STARTS_WITH(pszContent, "<?xpacket begin="))
         {
             char *apszMDList[2];
             apszMDList[0] = pszContent;
@@ -4813,7 +4812,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
               char* pszContent = poStream->GetBytes();
               int nLength = (int)poStream->GetLength();
               if (pszContent != NULL && nLength > 15 &&
-                  strncmp(pszContent, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
+                  STARTS_WITH(pszContent, "<?xpacket begin="))
               {
                   char *apszMDList[2];
                   apszMDList[0] = pszContent;
@@ -6283,7 +6282,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     /* For http://www.avenza.com/sites/default/files/spatialpdf/US_County_Populations.pdf */
     /* or http://www.agmkt.state.ny.us/soilwater/aem/gis_mapping_tools/HUC12_Albany.pdf */
     const char* pszDatum = oSRS.GetAttrValue("Datum");
-    if (pszDatum && strncmp(pszDatum, "D_", 2) == 0)
+    if (pszDatum && STARTS_WITH(pszDatum, "D_"))
     {
         oSRS.morphFromESRI();
 

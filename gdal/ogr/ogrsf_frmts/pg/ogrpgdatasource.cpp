@@ -1436,7 +1436,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     }
     pszFIDColumnName = osFIDColumnName.c_str();
 
-    if (strncmp(pszLayerName, "pg", 2) == 0)
+    if (STARTS_WITH(pszLayerName, "pg"))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "The layer name should not begin by 'pg' as it is a reserved prefix");

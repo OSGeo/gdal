@@ -3301,9 +3301,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
             continue;
         }
 
-        if( strncmp(pszLine, "closed_ways_are_polygons=",
-                    strlen("closed_ways_are_polygons=")) == 0)
-        {
+        if( STARTS_WITH(pszLine, "closed_ways_are_polygons="))        {
             char** papszTokens = CSLTokenizeString2(pszLine, "=", 0);
             if( CSLCount(papszTokens) == 2)
             {
@@ -3317,7 +3315,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
             CSLDestroy(papszTokens);
         }
 
-        else if(strncmp(pszLine, "report_all_nodes=", strlen("report_all_nodes=")) == 0)
+        else if(STARTS_WITH(pszLine, "report_all_nodes="))
         {
             if( strcmp(pszLine + strlen("report_all_nodes="), "no") == 0 )
             {
@@ -3329,7 +3327,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
             }
         }
 
-        else if(strncmp(pszLine, "report_all_ways=", strlen("report_all_ways=")) == 0)
+        else if(STARTS_WITH(pszLine, "report_all_ways="))
         {
             if( strcmp(pszLine + strlen("report_all_ways="), "no") == 0 )
             {
@@ -3341,7 +3339,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
             }
         }
 
-        else if(strncmp(pszLine, "attribute_name_laundering=", strlen("attribute_name_laundering=")) == 0)
+        else if(STARTS_WITH(pszLine, "attribute_name_laundering="))
         {
             if( strcmp(pszLine + strlen("attribute_name_laundering="), "no") == 0 )
             {
@@ -4088,7 +4086,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special SET interest_layers = command                           */
 /* -------------------------------------------------------------------- */
-    if (strncmp(pszSQLCommand, "SET interest_layers =", 21) == 0)
+    if (STARTS_WITH(pszSQLCommand, "SET interest_layers ="))
     {
         char** papszTokens = CSLTokenizeString2(pszSQLCommand + 21, ",", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
         int i;

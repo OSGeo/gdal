@@ -640,7 +640,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
             && papszFileList[iFile][0] != 'Z' )
             continue;
 
-        if( strncmp(papszFileList[iFile] + 1, "0010", 4) != 0 )
+        if( !STARTS_WITH(papszFileList[iFile] + 1, "0010") )
             continue;
 
         if( !EQUAL(papszFileList[iFile] + 7, ".adf") )

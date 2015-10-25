@@ -50,7 +50,7 @@ const char* GML_ExtractSrsNameFromGeometry(const CPLXMLNode* const * papsGeometr
         {
             int nLen = strlen(pszSRSName);
 
-            if (strncmp(pszSRSName, "EPSG:", 5) == 0 &&
+            if (STARTS_WITH(pszSRSName, "EPSG:") &&
                 bConsiderEPSGAsURN)
             {
                 osWork.reserve(22 + nLen-5);
@@ -58,7 +58,7 @@ const char* GML_ExtractSrsNameFromGeometry(const CPLXMLNode* const * papsGeometr
                 osWork.append(pszSRSName+5, nLen-5);
                 return osWork.c_str();
             }
-            else if (strncmp(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#", 40) == 0)
+            else if (STARTS_WITH(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#"))
             {
                 osWork.reserve(5 + nLen-40 );
                 osWork.assign("EPSG:", 5);
@@ -83,7 +83,7 @@ int GML_IsSRSLatLongOrder(const char* pszSRSName)
     if (pszSRSName == NULL)
         return FALSE;
 
-    if (strncmp(pszSRSName, "urn:", 4) == 0)
+    if (STARTS_WITH(pszSRSName, "urn:"))
     {
         if (strstr(pszSRSName, ":4326") != NULL)
         {

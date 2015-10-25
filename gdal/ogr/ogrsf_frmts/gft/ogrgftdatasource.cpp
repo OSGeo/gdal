@@ -242,7 +242,7 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
     char* pszLine = (char*) psResult->pabyData;
     if (pszLine == NULL ||
         psResult->pszErrBuf != NULL ||
-        strncmp(pszLine, "table id,name", strlen("table id,name")) != 0)
+        !STARTS_WITH(pszLine, "table id,name"))
     {
         CPLHTTPDestroyResult(psResult);
         return FALSE;
@@ -504,7 +504,7 @@ CPLHTTPResult * OGRGFTDataSource::RunSQL(const char* pszUnescapedSQL)
 /*      are transformed info failure.                                   */
 /* -------------------------------------------------------------------- */
     if (psResult && psResult->pszContentType &&
-        strncmp(psResult->pszContentType, "text/html", 9) == 0)
+        STARTS_WITH(psResult->pszContentType, "text/html"))
     {
         CPLDebug( "GFT", "RunSQL HTML Response:%s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined, 

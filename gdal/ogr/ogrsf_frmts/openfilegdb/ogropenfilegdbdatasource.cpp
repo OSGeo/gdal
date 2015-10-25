@@ -99,18 +99,18 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
     }
 
     if( EQUAL(CPLGetExtension(m_osDirName), "zip") &&
-        strncmp(m_osDirName, "/vsizip/", strlen("/vsizip/")) != 0 )
+        !STARTS_WITH(m_osDirName, "/vsizip/") )
     {
         m_osDirName = "/vsizip/" + m_osDirName;
     }
     else  if( EQUAL(CPLGetExtension(m_osDirName), "tar") &&
-        strncmp(m_osDirName, "/vsitar/", strlen("/vsitar/")) != 0 )
+        !STARTS_WITH(m_osDirName, "/vsitar/") )
     {
         m_osDirName = "/vsitar/" + m_osDirName;
     }
 
-    if( strncmp(m_osDirName, "/vsizip/", strlen("/vsizip/")) == 0 ||
-        strncmp(m_osDirName, "/vsitar/", strlen("/vsitar/")) == 0)
+    if( STARTS_WITH(m_osDirName, "/vsizip/") ||
+        STARTS_WITH(m_osDirName, "/vsitar/"))
     {
         /* Look for one subdirectory ending with .gdb extension */
         char** papszDir = CPLReadDir(m_osDirName);

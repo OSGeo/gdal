@@ -46,7 +46,7 @@ static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
 /*      try opening with the /vsigzip/ prefix                           */
 /* -------------------------------------------------------------------- */
     if (poOpenInfo->pabyHeader[0] == 0x1f && ((unsigned char*)poOpenInfo->pabyHeader)[1] == 0x8b &&
-        strncmp(poOpenInfo->pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0)
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         /* ok */
     }
@@ -54,7 +54,7 @@ static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         short version = CPL_LSBINT16PTR(poOpenInfo->pabyHeader);
         if (version != 211 ||
-            strncmp((const char*)poOpenInfo->pabyHeader + 2, "TrackMaker", strlen("TrackMaker")) != 0 )
+            !STARTS_WITH((const char*)poOpenInfo->pabyHeader + 2, "TrackMaker") )
         {
             return NULL;
         }

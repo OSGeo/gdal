@@ -648,12 +648,12 @@ const char* OGRWFSFetchContentDispositionFilename(char** papszHeaders)
     while(papszIter && *papszIter)
     {
         /* For multipart, we have in raw format, but without end-of-line characters */
-        if (strncmp(*papszIter, "Content-Disposition: attachment; filename=", 42) == 0)
+        if (STARTS_WITH(*papszIter, "Content-Disposition: attachment; filename="))
         {
             return *papszIter + 42;
         }
         /* For single part, the headers are in KEY=VAL format, but with e-o-l ... */
-        else if (strncmp(*papszIter, "Content-Disposition=attachment; filename=", 41) == 0)
+        else if (STARTS_WITH(*papszIter, "Content-Disposition=attachment; filename="))
         {
             char* pszVal = (char*)(*papszIter + 41);
             char* pszEOL = strchr(pszVal, '\r');
@@ -735,7 +735,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     {
         const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
                                                     osURL.c_str());
-        if( strncmp(osURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
+        if( STARTS_WITH(osURL, "/vsimem/") &&
             CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
         {
             pszStreamingName = osURL.c_str();

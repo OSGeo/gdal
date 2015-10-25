@@ -185,21 +185,21 @@ void OGRUKOOAP190Layer::ParseHeaders()
             continue;
 
         if (!bUseEastingNorthingAsGeometry &&
-            strncmp(pszLine, "H1500", 5) == 0 && poSRS == NULL)
+            STARTS_WITH(pszLine, "H1500") && poSRS == NULL)
         {
-            if (strncmp(pszLine + 33 - 1, "WGS84", 5) == 0 ||
-                strncmp(pszLine + 33 - 1, "WGS-84", 6) == 0)
+            if (STARTS_WITH(pszLine + 33 - 1, "WGS84") ||
+                STARTS_WITH(pszLine + 33 - 1, "WGS-84"))
             {
                 poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
             }
-            else if (strncmp(pszLine + 33 - 1, "WGS72", 5) == 0)
+            else if (STARTS_WITH(pszLine + 33 - 1, "WGS72"))
             {
                 poSRS = new OGRSpatialReference();
                 poSRS->SetFromUserInput("WGS72");
             }
         }
         else if (!bUseEastingNorthingAsGeometry &&
-                 strncmp(pszLine, "H1501", 5) == 0 && poSRS != NULL &&
+                 STARTS_WITH(pszLine, "H1501") && poSRS != NULL &&
                  nLineLen >= 32 + 6 * 6 + 10)
         {
             char aszParams[6][6+1];
@@ -218,7 +218,7 @@ void OGRUKOOAP190Layer::ParseHeaders()
                               CPLAtof(aszParams[5]),
                               CPLAtof(szZ));
         }
-        else if (strncmp(pszLine, "H0200", 5) == 0)
+        else if (STARTS_WITH(pszLine, "H0200"))
         {
             char** papszTokens = CSLTokenizeString(pszLine + 33 - 1);
             for(int i = 0; papszTokens[i] != NULL; i++)

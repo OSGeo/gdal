@@ -665,7 +665,7 @@ void ENVIDataset::WriteProjectionInfo()
 /*      non-default geotransform.                                       */
 /* -------------------------------------------------------------------- */
     if( pszProjection == NULL || strlen(pszProjection) == 0  ||
-        (strlen(pszProjection) >= 8 && strncmp(pszProjection, "LOCAL_CS", 8) == 0 ) )
+        (strlen(pszProjection) >= 8 && STARTS_WITH(pszProjection, "LOCAL_CS") ) )
     {
         if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
             || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
@@ -1967,7 +1967,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFCloseL( fpHeader );
         return NULL;
     }
-    if( strncmp(szTestHdr,"ENVI",4) != 0 )
+    if( !STARTS_WITH(szTestHdr, "ENVI") )
     {
         VSIFCloseL( fpHeader );
         return NULL;

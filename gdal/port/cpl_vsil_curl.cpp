@@ -682,7 +682,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
 
-        sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
+        sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(pszURL, "http");
         osVerb = "GET";
         
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, "0-4095");
@@ -693,7 +693,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
 
-        sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
+        sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(pszURL, "http");
         sWriteFuncHeaderData.bDownloadHeaderOnly = true;
         osVerb = "GET";
     }
@@ -725,10 +725,10 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 
     eExists = EXIST_UNKNOWN;
 
-    if (strncmp(pszURL, "ftp", 3) == 0)
+    if (STARTS_WITH(pszURL, "ftp"))
     {
         if (sWriteFuncData.pBuffer != NULL &&
-            strncmp(sWriteFuncData.pBuffer, "Content-Length: ", strlen( "Content-Length: ")) == 0)
+            STARTS_WITH(sWriteFuncData.pBuffer, "Content-Length: "))
         {
             const char* pszBuffer = sWriteFuncData.pBuffer + strlen("Content-Length: ");
             eExists = EXIST_YES;
@@ -866,7 +866,7 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
-    sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
+    sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(pszURL, "http");
     sWriteFuncHeaderData.nStartOffset = startOffset;
     sWriteFuncHeaderData.nEndOffset = startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE - 1;
     /* Some servers don't like we try to read after end-of-file (#5786) */
@@ -975,7 +975,7 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
                 }
             }
         }
-        else if (strncmp(pszURL, "ftp", 3) == 0)
+        else if (STARTS_WITH(pszURL, "ftp"))
         {
             /* Parse 213 answer for FTP protocol */
             char* pszSize = strstr(sWriteFuncHeaderData.pBuffer, "213 ");
@@ -1199,7 +1199,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
     VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
-    sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
+    sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(pszURL, "http");
     sWriteFuncHeaderData.bMultiRange = nMergedRanges > 1;
     if (nMergedRanges == 1)
     {
@@ -1458,7 +1458,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         }
 
         pszNext += strlen(osBoundary);
-        if( strncmp(pszNext,"--",2) == 0 )
+        if( STARTS_WITH(pszNext, "--") )
         {
             /* End of multipart */
             break;
@@ -1859,7 +1859,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
     CPLString osFilename(pszFilename);
     bool bGotFileList = true;
     if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
-        strncmp(CPLGetExtension(osFilename), "zip", 3) != 0 && !bSkipReadDir)
+        !STARTS_WITH(CPLGetExtension(osFilename), "zip") && !bSkipReadDir)
     {
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
         const bool bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
@@ -1987,9 +1987,9 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
                     nCurOffset += 2 + 1;
                 int nMin = atoi(pszMonthFound + nCurOffset);
                 nCurOffset += 2 + 1;
-                if (strncmp(pszMonthFound + nCurOffset, "p.m.", 4) == 0)
+                if (STARTS_WITH(pszMonthFound + nCurOffset, "p.m."))
                     nHour += 12;
-                else if (strncmp(pszMonthFound + nCurOffset, "a.m.", 4) != 0)
+                else if (!STARTS_WITH(pszMonthFound + nCurOffset, "a.m."))
                     nHour = -1;
                 nCurOffset += 4;
 
@@ -2029,9 +2029,9 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
                 nCurOffset += 2 + 1;
                 int nMin = atoi(pszMonthFound + nCurOffset);
                 nCurOffset += 2 + 1;
-                if (strncmp(pszMonthFound + nCurOffset, "PM", 2) == 0)
+                if (STARTS_WITH(pszMonthFound + nCurOffset, "PM"))
                     nHour += 12;
-                else if (strncmp(pszMonthFound + nCurOffset, "AM", 2) != 0)
+                else if (!STARTS_WITH(pszMonthFound + nCurOffset, "AM"))
                     nHour = -1;
                 nCurOffset += 2;
 
@@ -2186,7 +2186,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                 beginFilename = strstr(pszLine, "<A HREF=\"");
             beginFilename += strlen("<a href=\"");
             char *endQuote = strchr(beginFilename, '"');
-            if (endQuote && strncmp(beginFilename, "?C=", 3) != 0 && strncmp(beginFilename, "?N=", 3) != 0)
+            if (endQuote && !STARTS_WITH(beginFilename, "?C=") && !STARTS_WITH(beginFilename, "?N="))
             {
                 struct tm brokendowntime;
                 memset(&brokendowntime, 0, sizeof(brokendowntime));
@@ -2374,7 +2374,7 @@ static bool VSICurlParseFullFTPLine(char* pszLine,
     while( *pszCurPtr != '\0')
     {
         /* In case of a link, stop before the pointed part of the link */
-        if (pszPermissions[0] == 'l' && strncmp(pszCurPtr, " -> ", 4) == 0)
+        if (pszPermissions[0] == 'l' && STARTS_WITH(pszCurPtr, " -> "))
         {
             break;
         }
@@ -2409,7 +2409,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGot
     if (strstr(pszDirname, ".tiles.mapbox.com") != NULL)
         return NULL;
 
-    if (strncmp(pszDirname, "/vsicurl/ftp", strlen("/vsicurl/ftp")) == 0)
+    if (STARTS_WITH(pszDirname, "/vsicurl/ftp"))
     {
         WriteFuncStruct sWriteFuncData;
         sWriteFuncData.pBuffer = NULL;
@@ -2555,8 +2555,8 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGot
 
     /* Try to recognize HTML pages that list the content of a directory */
     /* Currently this supports what Apache and shttpd can return */
-    else if (strncmp(pszDirname, "/vsicurl/http://", strlen("/vsicurl/http://")) == 0 ||
-             strncmp(pszDirname, "/vsicurl/https://", strlen("/vsicurl/https://")) == 0)
+    else if (STARTS_WITH(pszDirname, "/vsicurl/http://") ||
+             STARTS_WITH(pszDirname, "/vsicurl/https://"))
     {
         WriteFuncStruct sWriteFuncData;
 
@@ -2615,7 +2615,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
                               CSLTestBoolean(pszOptionVal);
 
     /* Does it look like a FTP directory ? */
-    if (strncmp(osFilename, "/vsicurl/ftp", strlen("/vsicurl/ftp")) == 0 &&
+    if (STARTS_WITH(osFilename, "/vsicurl/ftp") &&
         pszFilename[strlen(osFilename) - 1] == '/' && !bSkipReadDir)
     {
         char** papszFileList = ReadDir(osFilename);

@@ -97,7 +97,7 @@ void CPCIDSKEphemerisSegment::Load()
 
     // We test the name of the binary segment before starting to read 
     // the buffer.
-    if (std::strncmp(seg_data.buffer, "ORBIT   ", 8)) 
+    if (!STARTS_WITH(seg_data.buffer, "ORBIT   ")) 
     {
         seg_data.Put("ORBIT   ",0,8);
         loaded_ = true;
@@ -215,11 +215,11 @@ CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
     as->nImageYSize = seg_data.GetInt(nPos+32, 16);
 
     
-    if ( std::strncmp(seg_data.Get(nPos+48,9), "ASCENDING", 9)==0 )
+    if ( STARTS_WITH(seg_data.Get(nPos+48,9), "ASCENDING") )
         as->bIsAscending = true;
     else
         as->bIsAscending = false;
-    if ( std::strncmp(seg_data.Get(nPos+64,7), "ROTATED", 7)==0 )
+    if ( STARTS_WITH(seg_data.Get(nPos+64,7), "ROTATED") )
         as->bIsImageRotated = true;
     else
         as->bIsImageRotated = false;
@@ -690,8 +690,8 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
 
     segment->SPNCoeff = 0;
 
-    if(std::strncmp(seg_data.Get(nPos,8), "SPOT1BOD", 8)==0 ||
-       std::strncmp(seg_data.Get(nPos,8), "SPOT1BNW", 8)==0)
+    if(STARTS_WITH(seg_data.Get(nPos,8), "SPOT1BOD") ||
+       STARTS_WITH(seg_data.Get(nPos,8), "SPOT1BNW"))
     {
         segment->SPNCoeff = seg_data.GetInt(nPos+22, 22);
         for (i=0; i<20; i++)   
@@ -700,7 +700,7 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
                 seg_data.GetDouble(nPos+(i+2)*22, 22);
         }
 
-        if (std::strncmp(seg_data.Get(nPos,8), "SPOT1BNW", 8)==0)
+        if (STARTS_WITH(seg_data.Get(nPos,8), "SPOT1BNW"))
         {
             nPos = nStartBlock + 6*512;
 
@@ -722,13 +722,13 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 7*512;
     
-    if (std::strncmp(seg_data.Get(nPos,8), "ATTITUDE", 8)==0)
+    if (STARTS_WITH(seg_data.Get(nPos,8), "ATTITUDE"))
         segment->Type = OrbAttitude;
-    else if (std::strncmp(seg_data.Get(nPos,8), "RADAR   ", 8)==0)
+    else if (STARTS_WITH(seg_data.Get(nPos,8), "RADAR   "))
         segment->Type = OrbLatLong;
-    else if (std::strncmp(seg_data.Get(nPos,8), "AVHRR   ", 8)==0)
+    else if (STARTS_WITH(seg_data.Get(nPos,8), "AVHRR   "))
         segment->Type = OrbAvhrr;
-    else if (std::strncmp(seg_data.Get(nPos,8), "NO_DATA ", 8)==0)
+    else if (STARTS_WITH(seg_data.Get(nPos,8), "NO_DATA "))
         segment->Type = OrbNone;
     else
         throw PCIDSKException("Invalid Orbit type found: [%s]", 

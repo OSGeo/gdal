@@ -2403,7 +2403,7 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 
     /* There's a second part with the vertical SRS */
     pszCur = pszComma + 1;
-    if (strncmp(pszCur, "crs:", 4) != 0)
+    if (!STARTS_WITH(pszCur, "crs:"))
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "URN %s not a supported format.", pszURN );

@@ -78,7 +78,7 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
         {
             return TRUE;
         }
-        else if (strncmp(poOpenInfo->pszFilename, "/vsizip/", 8) == 0 &&
+        else if (STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
                  EQUAL(osExt,"zip"))
         {
             return -1; /* unsure */
@@ -169,7 +169,7 @@ static GDALDataset *OGRCSVDriverCreate( const char * pszName,
     }
     else
     {
-        if( strncmp(pszName, "/vsizip/", 8) == 0)
+        if( STARTS_WITH(pszName, "/vsizip/"))
         {
             /* do nothing */
         }

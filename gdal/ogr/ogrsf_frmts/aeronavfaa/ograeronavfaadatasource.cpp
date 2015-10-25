@@ -106,13 +106,13 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
     int bIsDOF = (szBuffer[128] == 13 && szBuffer[128+1] == 10 &&
                   szBuffer[130+128] == 13 && szBuffer[130+129] == 10 &&
                   szBuffer[2*130+128] == 13 && szBuffer[2*130+129] == 10 &&
-                  strncmp(szBuffer + 3 * 130, "------------------------------------------------------------------------------------------------------------------------- ", 122) == 0);
+                  STARTS_WITH(szBuffer + 3 * 130, "------------------------------------------------------------------------------------------------------------------------- "));
 
     int bIsNAVAID = (szBuffer[132] == 13 && szBuffer[132+1] == 10 &&
-                     strncmp(szBuffer + 20 - 1, "CREATION DATE", strlen("CREATION DATE")) == 0 &&
+                     STARTS_WITH(szBuffer + 20 - 1, "CREATION DATE") &&
                      szBuffer[134 + 132] == 13 && szBuffer[134 + 132+1] == 10);
 
-    int bIsROUTE = strncmp(szBuffer, "           UNITED STATES GOVERNMENT FLIGHT INFORMATION PUBLICATION             149343", 85) == 0 &&
+    int bIsROUTE = STARTS_WITH(szBuffer, "           UNITED STATES GOVERNMENT FLIGHT INFORMATION PUBLICATION             149343") &&
                    szBuffer[85] == 13 && szBuffer[85+1] == 10;
 
     int bIsIAP = strstr(szBuffer, "INSTRUMENT APPROACH PROCEDURE NAVAID & FIX DATA") != NULL &&

@@ -147,7 +147,7 @@ int OGRHTFDataSource::Open( const char * pszFilename )
 
         aosMD.push_back(pszLine);
 
-        if (strncmp(pszLine, "GEODETIC DATUM: ", 16) == 0)
+        if (STARTS_WITH(pszLine, "GEODETIC DATUM: "))
         {
             if (strcmp(pszLine + 16, "WG84") == 0 ||
                 strcmp(pszLine + 16, "WGS84") == 0)
@@ -160,11 +160,11 @@ int OGRHTFDataSource::Open( const char * pszFilename )
                 return FALSE;
             }
         }
-        else if (strncmp(pszLine, "NE LATITUDE: -", 14) == 0)
+        else if (STARTS_WITH(pszLine, "NE LATITUDE: -"))
             bIsSouth = TRUE;
-        else if (strncmp(pszLine, "GRID REFERENCE SYSTEM: ", 23) == 0)
+        else if (STARTS_WITH(pszLine, "GRID REFERENCE SYSTEM: "))
         {
-            if (strncmp(pszLine + 23, "UTM", 3) == 0)
+            if (STARTS_WITH(pszLine + 23, "UTM"))
                 bIsUTM = TRUE;
             else
             {
@@ -174,31 +174,31 @@ int OGRHTFDataSource::Open( const char * pszFilename )
                 return FALSE;
             }
         }
-        else if (strncmp(pszLine, "GRID ZONE: ", 11) == 0)
+        else if (STARTS_WITH(pszLine, "GRID ZONE: "))
         {
             nZone = atoi(pszLine + 11);
         }
-        else if (strncmp(pszLine, "SW GRID COORDINATE - EASTING: ", 30) == 0)
+        else if (STARTS_WITH(pszLine, "SW GRID COORDINATE - EASTING: "))
         {
             bHasSWEasting = TRUE;
             dfSWEasting = CPLAtof(pszLine + 30);
         }
-        else if (strncmp(pszLine, "SW GRID COORDINATE - NORTHING: ", 31) == 0)
+        else if (STARTS_WITH(pszLine, "SW GRID COORDINATE - NORTHING: "))
         {
             bHasSWNorthing = TRUE;
             dfSWNorthing = CPLAtof(pszLine + 31);
         }
-        else if (strncmp(pszLine, "NE GRID COORDINATE - EASTING: ", 30) == 0)
+        else if (STARTS_WITH(pszLine, "NE GRID COORDINATE - EASTING: "))
         {
             bHasNEEasting = TRUE;
             dfNEEasting = CPLAtof(pszLine + 30);
         }
-        else if (strncmp(pszLine, "NE GRID COORDINATE - NORTHING: ", 31) == 0)
+        else if (STARTS_WITH(pszLine, "NE GRID COORDINATE - NORTHING: "))
         {
             bHasNENorthing = TRUE;
             dfNENorthing = CPLAtof(pszLine + 31);
         }
-        else if (strncmp(pszLine, "TOTAL SOUNDINGS: ", 17) == 0)
+        else if (STARTS_WITH(pszLine, "TOTAL SOUNDINGS: "))
         {
             nTotalSoundings = atoi(pszLine + 17);
         }

@@ -1818,8 +1818,8 @@ OGRErr OGRCSVLayer::WriteHeader()
         }
         else
         {
-            if( strncmp(pszFilename, "/vsistdout/", 11) == 0 ||
-                strncmp(pszFilename, "/vsizip/", 8) == 0 )
+            if( STARTS_WITH(pszFilename, "/vsistdout/") ||
+                STARTS_WITH(pszFilename, "/vsizip/") )
                 fpCSV = VSIFOpenL( pszFilename, "wb" );
             else
                 fpCSV = VSIFOpenL( pszFilename, "w+b" );

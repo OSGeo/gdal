@@ -91,10 +91,10 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
 /*      GeoJSON text tree.                                              */
 /* -------------------------------------------------------------------- */
     if( NULL == pszGeoData_ ||
-        strncmp(pszGeoData_, "{\"couchdb\":\"Welcome\"", strlen("{\"couchdb\":\"Welcome\"")) == 0 ||
-        strncmp(pszGeoData_, "{\"db_name\":\"", strlen("{\"db_name\":\"")) == 0 ||
-        strncmp(pszGeoData_, "{\"total_rows\":", strlen("{\"total_rows\":")) == 0 ||
-        strncmp(pszGeoData_, "{\"rows\":[", strlen("{\"rows\":[")) == 0)
+        STARTS_WITH(pszGeoData_, "{\"couchdb\":\"Welcome\"") ||
+        STARTS_WITH(pszGeoData_, "{\"db_name\":\"") ||
+        STARTS_WITH(pszGeoData_, "{\"total_rows\":") ||
+        STARTS_WITH(pszGeoData_, "{\"rows\":["))
     {
         Clear();
         return FALSE;
@@ -273,8 +273,8 @@ int OGRGeoJSONDataSource::Create( const char* pszName,
         pszName = "/vsistdout/";
 
     bFpOutputIsSeekable_ =  !(strcmp(pszName,"/vsistdout/") == 0 ||
-                              strncmp(pszName,"/vsigzip/", 9) == 0 ||
-                              strncmp(pszName,"/vsizip/", 8) == 0);
+                              STARTS_WITH(pszName, "/vsigzip/") ||
+                              STARTS_WITH(pszName, "/vsizip/"));
 
 /* -------------------------------------------------------------------- */
 /*     File overwrite not supported.                                    */

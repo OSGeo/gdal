@@ -1507,12 +1507,12 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
             while( (pszLine = CPLReadLineL( fp )) != NULL )
             {
-                if (strncmp(pszLine, "PROJ_ID", strlen("PROJ_ID")) == 0 &&
+                if (STARTS_WITH(pszLine, "PROJ_ID") &&
                     strstr(pszLine, "UTM"))
                 {
                     bUTM = TRUE;
                 }
-                else if (strncmp(pszLine, "PROJ_ZONE", strlen("PROJ_ZONE")) == 0)
+                else if (STARTS_WITH(pszLine, "PROJ_ZONE"))
                 {
                     const char* c = strchr(pszLine, '"');
                     if (c)
@@ -1535,7 +1535,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                         }
                     }
                 }
-                else if (strncmp(pszLine, "PROJ_CODE", strlen("PROJ_CODE")) == 0 &&
+                else if (STARTS_WITH(pszLine, "PROJ_CODE") &&
                          strstr(pszLine, "FR-MINDEF"))
                 {
                     const char* c = strchr(pszLine, 'A');
@@ -1561,12 +1561,12 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                         }
                     }
                 }
-                else if (strncmp(pszLine, "HORIZ_DATUM", strlen("HORIZ_DATUM")) == 0 &&
+                else if (STARTS_WITH(pszLine, "HORIZ_DATUM") &&
                          (strstr(pszLine, "WGS 84") || strstr(pszLine, "WGS84")))
                 {
                     bWGS84 = TRUE;
                 }
-                else if (strncmp(pszLine, "MAP_NUMBER", strlen("MAP_NUMBER")) == 0)
+                else if (STARTS_WITH(pszLine, "MAP_NUMBER"))
                 {
                     const char* c = strchr(pszLine, '"');
                     if (c)
@@ -1578,7 +1578,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                         CPLFree(pszMapNumber);
                     }
                 }
-                else if (strncmp(pszLine, "PRODUCTION_DATE", strlen("PRODUCTION_DATE")) == 0)
+                else if (STARTS_WITH(pszLine, "PRODUCTION_DATE"))
                 {
                     const char* c = pszLine + strlen("PRODUCTION_DATE");
                     while(*c == ' ')

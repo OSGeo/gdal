@@ -105,7 +105,7 @@ OGRLayer *OGRCSVDataSource::GetLayer( int iLayer )
 CPLString OGRCSVDataSource::GetRealExtension(CPLString osFilename)
 {
     CPLString osExt = CPLGetExtension(osFilename);
-    if( strncmp(osFilename, "/vsigzip/", 9) == 0 && EQUAL(osExt, "gz") )
+    if( STARTS_WITH(osFilename, "/vsigzip/") && EQUAL(osExt, "gz") )
     {
         if( strlen(osFilename) > 7 && EQUAL(osFilename + strlen(osFilename) - 7, ".csv.gz") )
             osExt = "csv";
@@ -130,7 +130,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         return TRUE;
 
     /* For writable /vsizip/, do nothing more */
-    if (bUpdateIn && bForceOpen && strncmp(pszFilename, "/vsizip/", 8) == 0)
+    if (bUpdateIn && bForceOpen && STARTS_WITH(pszFilename, "/vsizip/"))
         return TRUE;
 
     CPLString osFilename(pszFilename);
@@ -252,7 +252,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /* -------------------------------------------------------------------- */
 /*      Is this a single a ZIP file with only a CSV file inside ?       */
 /* -------------------------------------------------------------------- */
-    if( strncmp(osFilename, "/vsizip/", 8) == 0 &&
+    if( STARTS_WITH(osFilename, "/vsizip/") &&
         EQUAL(osExt, "zip") &&
         VSI_ISREG(sStatBuf.st_mode) )
     {
@@ -383,7 +383,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
 
     CPLString osLayerName = CPLGetBasename(pszFilename);
     CPLString osExt = CPLGetExtension(pszFilename);
-    if( strncmp(pszFilename, "/vsigzip/", 9) == 0 && EQUAL(osExt, "gz") )
+    if( STARTS_WITH(pszFilename, "/vsigzip/") && EQUAL(osExt, "gz") )
     {
         if( strlen(pszFilename) > 7 && EQUAL(pszFilename + strlen(pszFilename) - 7, ".csv.gz") )
         {
@@ -534,7 +534,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
-    if( strncmp(pszName, "/vsizip/", 8) == 0)
+    if( STARTS_WITH(pszName, "/vsizip/"))
     {
         /* Do nothing */
     }

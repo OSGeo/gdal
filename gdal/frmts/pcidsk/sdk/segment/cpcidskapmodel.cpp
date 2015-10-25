@@ -27,6 +27,7 @@
 #include "pcidsk_airphoto.h"
 #include "pcidsk_exception.h"
 #include "segment/cpcidskapmodel.h"
+#include "core/pcidsk_utils.h"
 
 #include <utility>
 #include <vector>
@@ -326,7 +327,7 @@ namespace {
     /*	Read the header block						    */
     /* -------------------------------------------------------------------- */
     
-        if(strncmp(buf.buffer,"APMODEL ",8))
+        if(!STARTS_WITH(buf.buffer,"APMODEL "))
         {
             std::string magic(buf.buffer, 8);
             ThrowPCIDSKException("Bad segment magic found. Found: [%s] expecting [APMODEL ]",
@@ -465,7 +466,7 @@ namespace {
     /* -------------------------------------------------------------------- */
         buf.Get(512 * 4, 16, map_units);
     
-        if (!std::strncmp(buf.Get(512 * 4 + 16, 3), "UTM", 3))
+        if (STARTS_WITH(buf.Get(512 * 4 + 16, 3), "UTM"))
         {
             buf.Get(512 * 4, 3, utm_units);
         }

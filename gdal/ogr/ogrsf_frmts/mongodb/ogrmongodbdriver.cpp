@@ -2413,7 +2413,7 @@ int OGRMongoDBDataSource::ListLayers(const char* pszDatabase)
         for ( std::list<std::string>::iterator i = l.begin(); i != l.end(); i++ )
         {
             const std::string& m_osCollection(*i);
-            if( strncmp(m_osCollection.c_str(), "system.", strlen("system.")) != 0 &&
+            if( !STARTS_WITH(m_osCollection.c_str(), "system.") &&
                 m_osCollection != "startup_log" &&
                 m_osCollection != "_ogr_metadata" )
             {

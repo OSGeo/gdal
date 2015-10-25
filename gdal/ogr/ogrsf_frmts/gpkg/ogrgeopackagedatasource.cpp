@@ -3358,7 +3358,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
     }
 
     /* Avoiding gpkg prefixes is not an official requirement, but seems wise */
-    if (strncmp(pszLayerName, "gpkg", 4) == 0)
+    if (STARTS_WITH(pszLayerName, "gpkg"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The layer name may not begin with 'gpkg' as it is a reserved geopackage prefix");
@@ -3632,7 +3632,8 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
                   sizeof(apszFuncsWithSideEffects[0]);i++)
         {
             if( EQUALN(apszFuncsWithSideEffects[i], pszSQLCommand + 7,
-                       strlen(apszFuncsWithSideEffects[i])) )            {
+                       strlen(apszFuncsWithSideEffects[i])) )
+            {
                 if (sqlite3_column_count( hSQLStmt ) == 1 &&
                     sqlite3_column_type( hSQLStmt, 0 ) == SQLITE_INTEGER )
                 {

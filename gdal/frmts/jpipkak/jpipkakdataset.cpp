@@ -492,7 +492,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
     CPLString osURL = "http";
     osURL += (pszDatasetName + 4);
     
-    CPLAssert( strncmp(pszDatasetName,"jpip",4) == 0 );
+    CPLAssert( STARTS_WITH(pszDatasetName, "jpip") );
 
     // make initial request to the server for a session, we are going to 
     // assume that the jpip communication is stateful, rather than one-shot
