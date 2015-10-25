@@ -76,7 +76,7 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     // this code enables support for named mememory databases in sqlite. 
     // Named memory databses use file name format file:name?mode=memory&cache=shared
     // SQLITE_USE_URI is checked only to enable backward compatibility, in case we accidently hijacked some other format
-    if( strncmp(poOpenInfo->pszFilename, "file:", strlen("file:")) == 0 &&
+    if( STARTS_WITH(poOpenInfo->pszFilename, "file:") &&
         CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
     {
         char * queryparams = strchr(poOpenInfo->pszFilename, '?');
@@ -95,7 +95,7 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 16 )
         return FALSE;
 
-    if( strncmp( (const char*)poOpenInfo->pabyHeader, "SQLite format 3", 15 ) != 0 )
+    if( !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
         return FALSE;
     
     // Could be a Rasterlite file as well

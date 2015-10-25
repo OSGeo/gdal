@@ -150,7 +150,7 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
 
     for( i = 0; i < keys.size(); i++ )
     {
-        if( strncmp(keys[i].c_str(),"_Overview_",10) != 0 )
+        if( !STARTS_WITH(keys[i].c_str(), "_Overview_") )
             continue;
 
         std::string value = GetMetadataValue( keys[i] );

@@ -754,7 +754,7 @@ static int FindComparisonOperator(CPLXMLNode* psNode, const char* pszVal)
 
             /* For WFS 2.0.0 */
             const char* pszName = CPLGetXMLValue(psChild, "name", NULL);
-            if (pszName != NULL && strncmp(pszName, "PropertyIs", 10) == 0 &&
+            if (pszName != NULL && STARTS_WITH(pszName, "PropertyIs") &&
                 strcmp(pszName + 10, pszVal) == 0)
                 return TRUE;
         }
@@ -923,9 +923,9 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
 
         osBaseURL = pszBaseURL;
 
-        if (strncmp(pszBaseURL, "http://", 7) != 0 &&
-            strncmp(pszBaseURL, "https://", 8) != 0 &&
-            strncmp(pszBaseURL, "/vsimem/", strlen("/vsimem/")) != 0)
+        if (!STARTS_WITH(pszBaseURL, "http://") &&
+            !STARTS_WITH(pszBaseURL, "https://") &&
+            !STARTS_WITH(pszBaseURL, "/vsimem/"))
             return FALSE;
 
         CPLString strOriginalTypeName = "";

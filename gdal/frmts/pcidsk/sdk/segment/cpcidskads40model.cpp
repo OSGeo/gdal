@@ -84,7 +84,7 @@ void CPCIDSKADS40ModelSegment::Load()
     // Bytes   0-7: 'ADS40  '
     // Byte    8-512: the path
     
-    if (std::strncmp(pimpl_->seg_data.buffer, "ADS40   ", 8)) 
+    if (!STARTS_WITH(pimpl_->seg_data.buffer, "ADS40   ")) 
     {
         pimpl_->seg_data.Put("ADS40   ",0,8);
         return;

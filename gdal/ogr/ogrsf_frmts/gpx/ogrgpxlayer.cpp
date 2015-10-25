@@ -1209,7 +1209,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature, int nIdentLevel
                 poDS->PrintLine("<time>%s</time>", pszDate);
                 CPLFree(pszDate);
             }
-            else if (strncmp(pszName, "link", 4) == 0)
+            else if (STARTS_WITH(pszName, "link"))
             {
                 if (strstr(pszName, "href"))
                 {
@@ -1282,8 +1282,8 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature, int nIdentLevel
                     }
 
                     /* Try to detect XML escaped content */
-                    else if (strncmp(pszRaw, "&lt;", 4) == 0 &&
-                            strncmp(pszRaw + strlen(pszRaw) - 4, "&gt;", 4) == 0)
+                    else if (STARTS_WITH(pszRaw, "&lt;") &&
+                            STARTS_WITH(pszRaw + strlen(pszRaw) - 4, "&gt;"))
                     {
                         char* pszUnescapedContent = CPLUnescapeString( pszRaw, NULL, CPLES_XML );
 

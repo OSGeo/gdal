@@ -45,7 +45,7 @@ CPL_CVSID("$Id$");
 SHPHandle OGRShapeDataSource::DS_SHPOpen( const char * pszShapeFile, const char * pszAccess )
 {
     /* Do lazy shx loading for /vsicurl/ */
-    if( strncmp(pszShapeFile, "/vsicurl/", strlen("/vsicurl/")) == 0 &&
+    if( STARTS_WITH(pszShapeFile, "/vsicurl/") &&
         strcmp(pszAccess, "r") == 0 )
         pszAccess = "rl";
     SHPHandle hSHP = SHPOpenLL( pszShapeFile, pszAccess, (SAHooks*) VSI_SHP_GetHook(b2GBLimit) );

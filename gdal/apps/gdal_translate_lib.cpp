@@ -1588,7 +1588,7 @@ static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand
         char** papszMetadataNew = NULL;
         for( int i = 0; papszMetadata != NULL && papszMetadata[i] != NULL; i++ )
         {
-            if (strncmp(papszMetadata[i], "STATISTICS_", 11) != 0)
+            if (!STARTS_WITH(papszMetadata[i], "STATISTICS_"))
                 papszMetadataNew = CSLAddString(papszMetadataNew, papszMetadata[i]);
         }
         poDstBand->SetMetadata( papszMetadataNew );

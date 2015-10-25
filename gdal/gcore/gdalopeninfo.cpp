@@ -97,14 +97,14 @@ retry:
     bool bPotentialDirectory = false;
 
     /* Check if the filename might be a directory of a special virtual file system */
-    if( strncmp(pszFilename, "/vsizip/", strlen("/vsizip/")) == 0 ||
-        strncmp(pszFilename, "/vsitar/", strlen("/vsitar/")) == 0 )
+    if( STARTS_WITH(pszFilename, "/vsizip/") ||
+        STARTS_WITH(pszFilename, "/vsitar/") )
     {
         const char* pszExt = CPLGetExtension(pszFilename);
         if( EQUAL(pszExt, "zip") || EQUAL(pszExt, "tar") || EQUAL(pszExt, "gz") )
             bPotentialDirectory = true;
     }
-    else if( strncmp(pszFilename, "/vsicurl/", strlen("/vsicurl/")) == 0 )
+    else if( STARTS_WITH(pszFilename, "/vsicurl/") )
     {
         bPotentialDirectory = true;
     }
@@ -156,7 +156,7 @@ retry:
                 bIsDirectory = TRUE;
         }
 #ifdef HAVE_READLINK
-        else if ( !bHasRetried && strncmp(pszFilename, "/vsi", strlen("/vsi")) != 0 )
+        else if ( !bHasRetried && !STARTS_WITH(pszFilename, "/vsi") )
         {
             /* If someone creates a file with "ln -sf /vsicurl/http://download.osgeo.org/gdal/data/gtiff/utm.tif my_remote_utm.tif" */
             /* we will be able to open it by passing my_remote_utm.tif */
@@ -245,7 +245,7 @@ char** GDALOpenInfo::GetSiblingFiles()
     /* Small optimization to avoid unnecessary stat'ing from PAux or ENVI */
     /* drivers. The MBTiles driver needs no companion file. */
     if( papszSiblingFiles == NULL &&
-        strncmp(pszFilename, "/vsicurl/", 9) == 0 &&
+        STARTS_WITH(pszFilename, "/vsicurl/") &&
         EQUAL(CPLGetExtension( pszFilename ),"mbtiles") )
     {
         papszSiblingFiles = CSLAddString( NULL, CPLGetFilename(pszFilename) );

@@ -104,7 +104,7 @@ void OGRIDFDataSource::Parse()
             bAdvertizeUTF8 = TRUE;
             bRecodeFromLatin1 = TRUE;
         }
-        else if( strncmp(pszLine, "tbl;", 4) == 0 )
+        else if( STARTS_WITH(pszLine, "tbl;") )
         {
             poCurLayer = NULL;
             osTablename = pszLine + 4;
@@ -113,15 +113,15 @@ void OGRIDFDataSource::Parse()
             iX = iY = iNodeID = iLinkID = iCount = iFromNode = iToNode = -1;
             eLayerType = LAYER_OTHER;
         }
-        else if( strncmp(pszLine, "atr;", 4) == 0 )
+        else if( STARTS_WITH(pszLine, "atr;") )
         {
             osAtr = pszLine + 4;
         }
-        else if( strncmp(pszLine, "frm;", 4) == 0 )
+        else if( STARTS_WITH(pszLine, "frm;") )
         {
             osFrm = pszLine + 4;
         }
-        else if( strncmp(pszLine, "rec;", 4) == 0 )
+        else if( STARTS_WITH(pszLine, "rec;") )
         {
             if( poCurLayer == NULL )
             {

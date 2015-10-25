@@ -565,7 +565,7 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
 /* -------------------------------------------------------------------- */
     const char* pszAPIURL = GetAPIURL();
     char** papszOptions = CSLAddString(
-        strncmp(pszAPIURL, "/vsimem/", strlen("/vsimem/")) != 0 ? AddHTTPOptions(): NULL, osSQL);
+        !STARTS_WITH(pszAPIURL, "/vsimem/") ? AddHTTPOptions(): NULL, osSQL);
     CPLHTTPResult * psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
     CSLDestroy(papszOptions);
 
@@ -574,7 +574,7 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
 /*      are transformed info failure.                                   */
 /* -------------------------------------------------------------------- */
     if (psResult && psResult->pszContentType &&
-        strncmp(psResult->pszContentType, "text/html", 9) == 0)
+        STARTS_WITH(psResult->pszContentType, "text/html"))
     {
         CPLDebug( "CARTODB", "RunSQL HTML Response:%s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined, 

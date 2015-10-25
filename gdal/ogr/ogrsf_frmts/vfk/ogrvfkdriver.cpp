@@ -39,7 +39,7 @@ static int OGRVFKDriverIdentify(GDALOpenInfo* poOpenInfo)
 {
     return ( poOpenInfo->fpL != NULL &&
              poOpenInfo->nHeaderBytes >= 2 &&
-             strncmp((const char*)poOpenInfo->pabyHeader, "&H", 2) == 0 );
+             STARTS_WITH((const char*)poOpenInfo->pabyHeader, "&H") );
 }
 
 /*

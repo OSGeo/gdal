@@ -285,9 +285,7 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
     } 
        
     /* try to open with GDAL */
-    if( strncmp(pszInput, "http://spatialreference.org/",
-                strlen("http://spatialreference.org/")) != 0 )
-    {
+    if( !STARTS_WITH(pszInput, "http://spatialreference.org/") )    {
         CPLDebug( "gdalsrsinfo", "trying to open with GDAL" );
         poGDALDS = (GDALDataset *) GDALOpenEx( pszInput, 0, NULL, NULL, NULL );
     }

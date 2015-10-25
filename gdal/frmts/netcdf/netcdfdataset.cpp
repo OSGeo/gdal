@@ -4991,10 +4991,10 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
             if( CDFVarID == NC_GLOBAL ) {
                 /* Do not copy items in papszIgnoreGlobal and NETCDF_DIM_* */
                 if ( ( CSLFindString( (char **)papszIgnoreGlobal, szMetaName ) != -1 ) ||
-                     ( strncmp( szMetaName, "NETCDF_DIM_", 11 ) == 0 ) )
+                     ( STARTS_WITH(szMetaName, "NETCDF_DIM_") ) )
                     continue;
                 /* Remove NC_GLOBAL prefix for netcdf global Metadata */ 
-                else if( strncmp( szMetaName, "NC_GLOBAL#", 10 ) == 0 ) {
+                else if( STARTS_WITH(szMetaName, "NC_GLOBAL#") ) {
                     strcpy( szTemp, szMetaName+10 );
                     strcpy( szMetaName, szTemp );
                 } 
@@ -5007,13 +5007,13 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
                 /* Keep time, lev and depth information for safe-keeping */
                 /* Time and vertical coordinate handling need improvements */
                 /*
-                else if( strncmp( szMetaName, "time#", 5 ) == 0 ) {
+                else if( STARTS_WITH(szMetaName, "time#") ) {
                     szMetaName[4] = '-';
                 }
-                else if( strncmp( szMetaName, "lev#", 4 ) == 0 ) {
+                else if( STARTS_WITH(szMetaName, "lev#") ) {
                     szMetaName[3] = '-';
                 }
-                else if( strncmp( szMetaName, "depth#", 6 ) == 0 ) {
+                else if( STARTS_WITH(szMetaName, "depth#") ) {
                     szMetaName[5] = '-';
                 }
                 */
@@ -5028,11 +5028,11 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
             else {
                 /* Do not copy varname, stats, NETCDF_DIM_*, nodata 
                    and items in papszIgnoreBand */
-                if ( ( strncmp( szMetaName, "NETCDF_VARNAME", 14) == 0 ) ||
-                     ( strncmp( szMetaName, "STATISTICS_", 11) == 0 ) ||
-                     ( strncmp( szMetaName, "NETCDF_DIM_", 11 ) == 0 ) ||
-                     ( strncmp( szMetaName, "missing_value", 13 ) == 0 ) ||
-                     ( strncmp( szMetaName, "_FillValue", 10 ) == 0 ) ||
+                if ( ( STARTS_WITH(szMetaName, "NETCDF_VARNAME") ) ||
+                     ( STARTS_WITH(szMetaName, "STATISTICS_") ) ||
+                     ( STARTS_WITH(szMetaName, "NETCDF_DIM_") ) ||
+                     ( STARTS_WITH(szMetaName, "missing_value") ) ||
+                     ( STARTS_WITH(szMetaName, "_FillValue") ) ||
                      ( CSLFindString( (char **)papszIgnoreBand, szMetaName ) != -1 ) )
                     continue;
             }

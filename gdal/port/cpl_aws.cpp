@@ -494,7 +494,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
     CPLDebug("S3", "%s", pszErrorMsg);
 #endif
 
-    if( strncmp(pszErrorMsg, "<?xml", 5) != 0 )
+    if( !STARTS_WITH(pszErrorMsg, "<?xml") )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
         return false;

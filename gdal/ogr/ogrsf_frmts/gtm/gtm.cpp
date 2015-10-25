@@ -341,7 +341,7 @@ bool GTM::isValid()
 /*      try opening with the /vsigzip/ prefix                           */
 /* -------------------------------------------------------------------- */
     if (buffer[0] == 0x1f && ((unsigned char*)buffer)[1] == 0x8b &&
-        strncmp(pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0)
+        !STARTS_WITH(pszFilename, "/vsigzip/"))
     {
         char* pszGZIPFileName = (char*)CPLMalloc(
                            strlen("/vsigzip/") + strlen(pszFilename) + 1);

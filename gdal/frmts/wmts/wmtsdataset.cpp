@@ -1072,7 +1072,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         return NULL;
     }
 
-    if( strncmp(osGetCapabilitiesURL, "/vsimem/", strlen("/vsimem/")) == 0 )
+    if( STARTS_WITH(osGetCapabilitiesURL, "/vsimem/") )
     {
         if( CPLGetXMLValue(psXML, "=Capabilities.ServiceMetadataURL.href", NULL) )
             osGetCapabilitiesURL = CPLGetXMLValue(psXML, "=Capabilities.ServiceMetadataURL.href", NULL);

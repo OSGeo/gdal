@@ -267,7 +267,7 @@ int ZMapDataset::Identify( GDALOpenInfo * poOpenInfo )
     while (*pszToken == ' ')
         pszToken ++;
 
-    if (strncmp(pszToken, "GRID", 4) != 0)
+    if (!STARTS_WITH(pszToken, "GRID"))
     {
         CSLDestroy(papszTokens);
         return FALSE;

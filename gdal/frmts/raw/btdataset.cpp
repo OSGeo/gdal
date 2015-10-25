@@ -550,7 +550,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 256)
         return NULL;
 
-    if( strncmp( (const char *) poOpenInfo->pabyHeader, "binterr", 7 ) != 0 )
+    if( !STARTS_WITH((const char *) poOpenInfo->pabyHeader, "binterr") )
         return NULL;
 
 /* -------------------------------------------------------------------- */

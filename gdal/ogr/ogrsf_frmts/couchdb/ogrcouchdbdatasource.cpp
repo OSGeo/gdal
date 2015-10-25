@@ -207,8 +207,8 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
     int bHTTP = FALSE;
-    if (strncmp(pszFilename, "http://", 7) == 0 ||
-        strncmp(pszFilename, "https://", 8) == 0)
+    if (STARTS_WITH(pszFilename, "http://") ||
+        STARTS_WITH(pszFilename, "https://"))
         bHTTP = TRUE;
     else if (!STARTS_WITH_CI(pszFilename, "CouchDB:"))
         return FALSE;
@@ -416,7 +416,7 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
     {
         osValidation = "{\"validate_doc_update\": \"function(new_doc, old_doc, userCtx) {if (userCtx.roles.indexOf('_admin') === -1) { throw({forbidden: \\\"No changes allowed except by admin.\\\"}); } }\" }";
     }
-    else if (strncmp(pszUpdatePermissions, "function(", 9) == 0)
+    else if (STARTS_WITH(pszUpdatePermissions, "function("))
     {
         osValidation = "{\"validate_doc_update\": \"";
         osValidation += pszUpdatePermissions;

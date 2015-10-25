@@ -105,7 +105,7 @@ void GDALPamProxyDB::LoadDB()
     GByte  abyHeader[100];
 
     if( VSIFReadL( abyHeader, 1, 100, fpDB ) != 100 
-        || strncmp( (const char *) abyHeader, "GDAL_PROXY", 10 ) != 0 )
+        || !STARTS_WITH((const char *) abyHeader, "GDAL_PROXY") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Problem reading %s header - short or corrupt?", 

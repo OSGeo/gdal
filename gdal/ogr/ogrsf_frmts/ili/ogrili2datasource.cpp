@@ -207,11 +207,11 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 
     if( strcmp(pszName,"/vsistdout/") == 0 ||
-        strncmp(pszName,"/vsigzip/", 9) == 0 )
+        STARTS_WITH(pszName, "/vsigzip/") )
     {
         fpOutput = VSIFOpenL(pszName, "wb");
     }
-    else if ( strncmp(pszName,"/vsizip/", 8) == 0)
+    else if ( STARTS_WITH(pszName, "/vsizip/"))
     {
         if (EQUAL(CPLGetExtension(pszName), "zip"))
         {

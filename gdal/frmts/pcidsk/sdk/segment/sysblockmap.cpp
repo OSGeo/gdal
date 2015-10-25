@@ -38,6 +38,7 @@
 #include "core/sysvirtualfile.h"
 #include "segment/sysblockmap.h"
 #include "core/cpcidskfile.h"
+#include "core/pcidsk_utils.h"
 
 #include <cassert>
 #include <vector>
@@ -127,7 +128,7 @@ void SysBlockMap::PartialLoad()
     count_data.SetSize( 512 );
     ReadFromFile( count_data.buffer, 0, 512 );
 
-    if( strncmp(count_data.buffer,"VERSION",7) != 0 )
+    if( !STARTS_WITH(count_data.buffer, "VERSION") )
         ThrowPCIDSKException( "SysBlockMap::PartialLoad() - block map corrupt." );
 
     if( count_data.GetInt( 7, 3 ) != 1 )

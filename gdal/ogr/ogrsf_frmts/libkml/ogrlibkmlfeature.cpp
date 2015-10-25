@@ -617,7 +617,7 @@ FeaturePtr feat2kml (
                                 AliasPtr alias = poKmlFactory->CreateAlias();
                                 if( bIsURL && CPLIsFilenameRelative(osImage) )
                                 {
-                                    if( strncmp(pszURL, "http", 4) == 0 )
+                                    if( STARTS_WITH(pszURL, "http") )
                                         alias->set_targethref(CPLSPrintf("%s/%s", CPLGetPath(pszURL), osImage.c_str()));
                                     else
                                         alias->set_targethref(CPLFormFilename(CPLGetPath(pszURL), osImage, NULL));

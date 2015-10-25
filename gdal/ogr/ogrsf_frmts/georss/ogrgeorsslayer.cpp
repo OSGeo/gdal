@@ -56,23 +56,23 @@ const char* apszAllowedATOMFieldNames[] = { "category_term", "category_scheme", 
                                             "id", "published", "rights", "source",
                                             "title", "updated", NULL };
 
-#define IS_LAT_ELEMENT(pszName) (strncmp(pszName, "geo:lat", strlen("geo:lat")) == 0 || \
-                                 strncmp(pszName, "icbm:lat", strlen("icbm:lat")) == 0 || \
-                                 strncmp(pszName, "geourl:lat", strlen("geourl:lat")) == 0)
+#define IS_LAT_ELEMENT(pszName) (STARTS_WITH(pszName, "geo:lat") || \
+                                 STARTS_WITH(pszName, "icbm:lat") || \
+                                 STARTS_WITH(pszName, "geourl:lat"))
 
-#define IS_LON_ELEMENT(pszName) (strncmp(pszName, "geo:lon", strlen("geo:lon")) == 0 || \
-                                 strncmp(pszName, "icbm:lon", strlen("icbm:lon")) == 0 || \
-                                 strncmp(pszName, "geourl:lon", strlen("geourl:lon")) == 0)
+#define IS_LON_ELEMENT(pszName) (STARTS_WITH(pszName, "geo:lon") || \
+                                 STARTS_WITH(pszName, "icbm:lon") || \
+                                 STARTS_WITH(pszName, "geourl:lon"))
 
 #define IS_GEO_ELEMENT(pszName) (strcmp(pszName, "georss:point") == 0 || \
                                  strcmp(pszName, "georss:line") == 0 || \
                                  strcmp(pszName, "georss:box") == 0 || \
                                  strcmp(pszName, "georss:polygon") == 0 || \
                                  strcmp(pszName, "georss:where") == 0 || \
-                                 strncmp(pszName, "gml:", strlen("gml:")) == 0 || \
-                                 strncmp(pszName, "geo:", strlen("geo:")) == 0 || \
-                                 strncmp(pszName, "icbm:", strlen("icbm:")) == 0 || \
-                                 strncmp(pszName, "geourl:", strlen("geourl:")) == 0)
+                                 STARTS_WITH(pszName, "gml:") || \
+                                 STARTS_WITH(pszName, "geo:") || \
+                                 STARTS_WITH(pszName, "icbm:") || \
+                                 STARTS_WITH(pszName, "geourl:"))
 
 /************************************************************************/
 /*                            OGRGeoRSSLayer()                          */
@@ -475,7 +475,7 @@ void OGRGeoRSSLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         nSubElementValueLen = 0;
         iCurrentField = -1;
 
-        if( pszName != pszNoNSName && strncmp(pszName, "atom:", 5) == 0 )
+        if( pszName != pszNoNSName && STARTS_WITH(pszName, "atom:") )
             pszName = pszNoNSName;
 
         pszSubElementName = CPLStrdup(pszName);
@@ -657,7 +657,7 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
         else
         {
             pszSubElementValue[nSubElementValueLen] = 0;
-            CPLAssert(strncmp(pszName, "gml:", 4) == 0);
+            CPLAssert(STARTS_WITH(pszName, "gml:"));
             poGeom = (OGRGeometry*) OGR_G_CreateFromGML(pszSubElementValue);
 
             if (poGeom != NULL && !poGeom->IsEmpty() )
@@ -1288,8 +1288,8 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeature )
             }
         }
         else if (eFormat == GEORSS_ATOM &&
-                 (strncmp(pszName, "content", strlen("content")) == 0 ||
-                  strncmp(pszName, "summary", strlen("summary")) == 0))
+                 (STARTS_WITH(pszName, "content") ||
+                  STARTS_WITH(pszName, "summary")))
         {
             char* pszFieldName;
             int iIndex;
@@ -1345,7 +1345,7 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeature )
                 VSIFPrintfL(fp, "      </%s>\n", pszName);
             }
         }
-        else if (strncmp(pszName, "dc_subject", strlen("dc_subject")) == 0)
+        else if (STARTS_WITH(pszName, "dc_subject"))
         {
             char* pszFieldName;
             int iIndex;
@@ -1855,7 +1855,7 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
     }
     else if (bInFeature && currentDepth == featureDepth + 1 && !IS_GEO_ELEMENT(pszName))
     {
-        if( pszName != pszNoNSName && strncmp(pszName, "atom:", 5) == 0 )
+        if( pszName != pszNoNSName && STARTS_WITH(pszName, "atom:") )
             pszName = pszNoNSName;
 
         CPLFree(pszSubElementName);

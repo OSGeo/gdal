@@ -1185,7 +1185,7 @@ GDALDataset *MEMDataset::Create( CPL_UNUSED const char * pszFilename,
 
 static int MEMDatasetIdentify( GDALOpenInfo * poOpenInfo )
 {
-    return (strncmp(poOpenInfo->pszFilename, "MEM:::", 6) == 0 &&
+    return (STARTS_WITH(poOpenInfo->pszFilename, "MEM:::") &&
             poOpenInfo->fpL == NULL);
 }
 

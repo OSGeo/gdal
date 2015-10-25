@@ -55,7 +55,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
         return FALSE;
 
     if ( poOpenInfo->nHeaderBytes < 16 ||
-        strncmp( (const char*)poOpenInfo->pabyHeader, "SQLite format 3", 15 ) != 0 )
+        !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
     {
         return FALSE;
     }

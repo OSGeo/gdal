@@ -133,8 +133,8 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      If argument is a VSIFILE, then print its contents               */
 /* -------------------------------------------------------------------- */
-        if ( strncmp( psOptionsForBinary->pszFilename, "/vsizip/", 8 ) == 0 || 
-             strncmp( psOptionsForBinary->pszFilename, "/vsitar/", 8 ) == 0 ) 
+        if ( STARTS_WITH(psOptionsForBinary->pszFilename, "/vsizip/") || 
+             STARTS_WITH(psOptionsForBinary->pszFilename, "/vsitar/") ) 
         {
             char** papszFileList = VSIReadDirRecursive( psOptionsForBinary->pszFilename );
             if ( papszFileList )

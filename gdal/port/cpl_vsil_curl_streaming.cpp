@@ -521,7 +521,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
         curl_easy_setopt(hLocalHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hLocalHandle, CURLOPT_HEADERFUNCTION, VSICurlStreamingHandleWriteFuncForHeader);
 
-        sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
+        sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(pszURL, "http");
         sWriteFuncHeaderData.bDownloadHeaderOnly = TRUE;
         osVerb = "GET";
     }
@@ -560,10 +560,10 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     eExists = EXIST_UNKNOWN;
     bHasComputedFileSize = TRUE;
 
-    if (strncmp(pszURL, "ftp", 3) == 0)
+    if (STARTS_WITH(pszURL, "ftp"))
     {
         if (sWriteFuncData.pBuffer != NULL &&
-            strncmp(sWriteFuncData.pBuffer, "Content-Length: ", strlen( "Content-Length: ")) == 0)
+            STARTS_WITH(sWriteFuncData.pBuffer, "Content-Length: "))
         {
             const char* pszBuffer = sWriteFuncData.pBuffer + strlen("Content-Length: ");
             eExists = EXIST_YES;
@@ -893,7 +893,7 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
             if( bHasCandidateFileSize && pszEndOfLine != NULL )
             {
                 const char* pszVal = pszContentEncoding + strlen("Content-Encoding: ");
-                if( strncmp(pszVal, "gzip", 4) == 0 )
+                if( STARTS_WITH(pszVal, "gzip") )
                 {
                     if (ENABLE_DEBUG)
                         CPLDebug("VSICURL", "GZip compression enabled --> cannot trust candidate file size");

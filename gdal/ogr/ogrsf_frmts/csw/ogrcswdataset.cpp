@@ -924,9 +924,9 @@ int OGRCSWDataSource::Open( const char * pszFilename,
         osOutputSchema = "http://www.opengis.net/cat/csw/2.0.2";
     nMaxRecords = atoi(CSLFetchNameValueDef(papszOpenOptions, "MAX_RECORDS", "500"));
 
-    if (strncmp(osBaseURL, "http://", 7) != 0 &&
-        strncmp(osBaseURL, "https://", 8) != 0 &&
-        strncmp(osBaseURL, "/vsimem/", strlen("/vsimem/")) != 0)
+    if (!STARTS_WITH(osBaseURL, "http://") &&
+        !STARTS_WITH(osBaseURL, "https://") &&
+        !STARTS_WITH(osBaseURL, "/vsimem/"))
         return FALSE;
 
     CPLHTTPResult* psResult = SendGetCapabilities();

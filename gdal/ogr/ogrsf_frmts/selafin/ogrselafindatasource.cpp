@@ -275,7 +275,7 @@ int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn, int bCre
     bUpdate = bUpdateIn;
     if (bCreate && EQUAL(pszName, "/vsistdout/")) return TRUE;
     /* For writable /vsizip/, do nothing more */
-    if (bCreate && strncmp(pszName, "/vsizip/", 8) == 0) return TRUE;
+    if (bCreate && STARTS_WITH(pszName, "/vsizip/")) return TRUE;
     CPLString osFilename(pszName);
     CPLString osBaseFilename = CPLGetFilename(pszName);
     // Determine what sort of object this is.
@@ -286,7 +286,7 @@ int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn, int bCre
     if (VSI_ISREG(sStatBuf.st_mode)) return OpenTable( pszName );
 
     // Is this a single a ZIP file with only a Selafin file inside ?
-    if( strncmp(osFilename, "/vsizip/", 8) == 0 && VSI_ISREG(sStatBuf.st_mode) ) {
+    if( STARTS_WITH(osFilename, "/vsizip/") && VSI_ISREG(sStatBuf.st_mode) ) {
         char** papszFiles = VSIReadDir(osFilename);
         if (CSLCount(papszFiles) != 1) {
             CSLDestroy(papszFiles);
@@ -410,7 +410,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
     // Get layer base name
     CPLString osBaseLayerName = CPLGetBasename(pszFilename);
     CPLString osExt = CPLGetExtension(pszFilename);
-    if( strncmp(pszFilename, "/vsigzip/", 9) == 0 && EQUAL(osExt, "gz") ) {
+    if( STARTS_WITH(pszFilename, "/vsigzip/") && EQUAL(osExt, "gz") ) {
         size_t nPos=std::string::npos;
         if (strlen(pszFilename)>3) nPos=osExt.find_last_of('.',strlen(pszFilename)-4);
         if (nPos!=std::string::npos) {

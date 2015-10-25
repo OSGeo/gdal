@@ -418,9 +418,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             CPLString osBoxName;
 
             char *pszXML = (char *) oBox.ReadBoxData();
-            if( strncmp(pszXML, "<GDALMultiDomainMetadata>",
-                        strlen("<GDALMultiDomainMetadata>")) == 0 )
-            {
+            if( STARTS_WITH(pszXML, "<GDALMultiDomainMetadata>") )            {
                 if( pszGDALMultiDomainMetadata == NULL )
                 {
                     pszGDALMultiDomainMetadata = pszXML;
@@ -2177,9 +2175,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         for(int i=0;i<(int)aoGMLFiles.size();i++)
         {
             if( aoGMLFiles[i].osSchemaLocation.size() &&
-                strncmp(aoGMLFiles[i].osSchemaLocation, "gmljp2://xml/",
-                        strlen("gmljp2://xml/")) == 0 )
-            {
+                STARTS_WITH(aoGMLFiles[i].osSchemaLocation, "gmljp2://xml/") )            {
                 const char* pszLookedLabel =
                     aoGMLFiles[i].osSchemaLocation.c_str() + strlen("gmljp2://xml/");
                 bool bFound = false;

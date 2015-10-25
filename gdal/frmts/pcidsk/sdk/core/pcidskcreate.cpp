@@ -95,20 +95,20 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
     UCaseStr( options );
 
-    if(strncmp(options.c_str(),"PIXEL",5) == 0 )
+    if(STARTS_WITH(options.c_str(), "PIXEL") )
         interleaving = "PIXEL";
-    else if( strncmp(options.c_str(),"BAND",4) == 0 )
+    else if( STARTS_WITH(options.c_str(), "BAND") )
         interleaving = "BAND";
-    else if( strncmp(options.c_str(),"TILED",5) == 0 )
+    else if( STARTS_WITH(options.c_str(), "TILED") )
     {
         interleaving = "FILE";
         ParseTileFormat( options, blocksize, compression );
     }
-    else if( strncmp(options.c_str(),"FILE",4) == 0 )
+    else if( STARTS_WITH(options.c_str(), "FILE") )
     {
-        if( strncmp(options.c_str(),"FILENOCREATE",12) == 0 )
+        if( STARTS_WITH(options.c_str(), "FILENOCREATE") )
             nocreate = true;
-        else if( strncmp(options.c_str(),"FILELINK",8) == 0 )
+        else if( STARTS_WITH(options.c_str(), "FILELINK") )
         {
             nocreate = true;
             externallink = true;
@@ -351,7 +351,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     ih.Put( "Contents Not Specified", 0, 64 );
 
     // IHi.2 - Filename storing image.
-    if( strncmp(interleaving,"FILE",4) == 0 )
+    if( STARTS_WITH(interleaving, "FILE") )
         ih.Put( "<unintialized>", 64, 64 );
     
     if( externallink )
@@ -375,7 +375,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     {
         ih.Put(DataTypeName(channel_types[chan_index]).c_str(), 160, 8);    
 
-        if( strncmp("TILED",options.c_str(),5) == 0 )
+        if( STARTS_WITH(options.c_str(), "TILED") )
         {
             char sis_filename[65];
             sprintf( sis_filename, "/SIS=%d", chan_index );
@@ -443,7 +443,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
 /*      If the dataset is tiled, create the file band data.             */
 /* -------------------------------------------------------------------- */
-    if( strncmp(options.c_str(),"TILED",5) == 0 )
+    if( STARTS_WITH(options.c_str(), "TILED") )
     {
         file->SetMetadataValue( "_DBLayout", options ); 
 
@@ -480,8 +480,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /*      If we have a non-tiled FILE interleaved file, should we         */
 /*      create external band files now?                                 */
 /* -------------------------------------------------------------------- */
-    if( strncmp(interleaving,"FILE",4) == 0 
-        && strncmp(options.c_str(),"TILED",5) != 0 
+    if( STARTS_WITH(interleaving, "FILE") 
+        && !STARTS_WITH(options.c_str(), "TILED") 
         && !nocreate )
     {
         for( chan_index = 0; chan_index < channel_count; chan_index++ )

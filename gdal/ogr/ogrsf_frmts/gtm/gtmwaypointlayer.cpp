@@ -124,19 +124,19 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
         {
             const char* pszName = poFieldDefn->GetNameRef();
             /* Waypoint name */
-            if (strncmp(pszName, "name", 4) == 0)
+            if (STARTS_WITH(pszName, "name"))
             {
                 strncpy (psNameField, poFeature->GetFieldAsString( i ), 10);
                 CPLStrlcat (psNameField, "          ", sizeof(psNameField));
             }
             /* Waypoint comment */
-            else if (strncmp(pszName, "comment", 7) == 0)
+            else if (STARTS_WITH(pszName, "comment"))
             {
                 CPLFree(pszcomment);
                 pszcomment = CPLStrdup( poFeature->GetFieldAsString( i ) );
             }
             /* Waypoint icon */
-            else if (strncmp(pszName, "icon", 4) == 0)
+            else if (STARTS_WITH(pszName, "icon"))
             {
                 icon = poFeature->GetFieldAsInteger( i );
                 // Check if it is a valid icon

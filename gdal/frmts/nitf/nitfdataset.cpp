@@ -2466,10 +2466,10 @@ void NITFDataset::InitializeNITFMetadata()
 
     if( psFile->pachHeader != NULL )
     {
-        if ( (strncmp(psFile->pachHeader, "NITF02.10", 9) == 0) || (strncmp(psFile->pachHeader, "NSIF01.00", 9) == 0) )
+        if ( (STARTS_WITH(psFile->pachHeader, "NITF02.10")) || (STARTS_WITH(psFile->pachHeader, "NSIF01.00")) )
             nHeaderLenOffset = 354;
-        else if ( (strncmp(psFile->pachHeader, "NITF01.10", 9) == 0) || (strncmp(psFile->pachHeader, "NITF02.00", 9) == 0) )
-            nHeaderLenOffset = ( strncmp((psFile->pachHeader+280), "999998", 6 ) == 0 ) ? 394 : 354;
+        else if ( (STARTS_WITH(psFile->pachHeader, "NITF01.10")) || (STARTS_WITH(psFile->pachHeader, "NITF02.00")) )
+            nHeaderLenOffset = ( STARTS_WITH((psFile->pachHeader+280), "999998") ) ? 394 : 354;
     }
 
     char fieldHL[7];
@@ -2519,7 +2519,7 @@ void NITFDataset::InitializeNITFMetadata()
 
     for( int i = 0; i < psFile->nSegmentCount; ++i )
     {
-        if (strncmp(psFile->pasSegmentInfo[i].szSegmentType, "IM", 2) == 0)
+        if (STARTS_WITH(psFile->pasSegmentInfo[i].szSegmentType, "IM"))
         {
             nImageSubheaderLen = psFile->pasSegmentInfo[i].nSegmentHeaderSize;
             break;
@@ -5178,17 +5178,17 @@ static void NITFWriteTextSegments( const char *pszFilename,
                 char *pszOrigMonth = achOrigDate+9;
                 char *pszNewMonth = achNewDate+4;
 
-                if (strncmp(pszOrigMonth,"JAN",3) == 0) strncpy(pszNewMonth,"01",2);
-                else if (strncmp(pszOrigMonth,"FEB",3) == 0) strncpy(pszNewMonth,"02",2);
-                else if (strncmp(pszOrigMonth,"MAR",3) == 0) strncpy(pszNewMonth,"03",2);
-                else if (strncmp(pszOrigMonth,"APR",3) == 0) strncpy(pszNewMonth,"04",2);
-                else if (strncmp(pszOrigMonth,"MAY",3) == 0) strncpy(pszNewMonth,"05",2);
-                else if (strncmp(pszOrigMonth,"JUN",3) == 0) strncpy(pszNewMonth,"07",2);
-                else if (strncmp(pszOrigMonth,"AUG",3) == 0) strncpy(pszNewMonth,"08",2);
-                else if (strncmp(pszOrigMonth,"SEP",3) == 0) strncpy(pszNewMonth,"09",2);
-                else if (strncmp(pszOrigMonth,"OCT",3) == 0) strncpy(pszNewMonth,"10",2);
-                else if (strncmp(pszOrigMonth,"NOV",3) == 0) strncpy(pszNewMonth,"11",2);
-                else if (strncmp(pszOrigMonth,"DEC",3) == 0) strncpy(pszNewMonth,"12",2);
+                if (STARTS_WITH(pszOrigMonth, "JAN")) strncpy(pszNewMonth,"01",2);
+                else if (STARTS_WITH(pszOrigMonth, "FEB")) strncpy(pszNewMonth,"02",2);
+                else if (STARTS_WITH(pszOrigMonth, "MAR")) strncpy(pszNewMonth,"03",2);
+                else if (STARTS_WITH(pszOrigMonth, "APR")) strncpy(pszNewMonth,"04",2);
+                else if (STARTS_WITH(pszOrigMonth, "MAY")) strncpy(pszNewMonth,"05",2);
+                else if (STARTS_WITH(pszOrigMonth, "JUN")) strncpy(pszNewMonth,"07",2);
+                else if (STARTS_WITH(pszOrigMonth, "AUG")) strncpy(pszNewMonth,"08",2);
+                else if (STARTS_WITH(pszOrigMonth, "SEP")) strncpy(pszNewMonth,"09",2);
+                else if (STARTS_WITH(pszOrigMonth, "OCT")) strncpy(pszNewMonth,"10",2);
+                else if (STARTS_WITH(pszOrigMonth, "NOV")) strncpy(pszNewMonth,"11",2);
+                else if (STARTS_WITH(pszOrigMonth, "DEC")) strncpy(pszNewMonth,"12",2);
 
                 PLACE( achTSH+ 12, TXTDT         , achNewDate          		);
 

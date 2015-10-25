@@ -119,8 +119,8 @@ int GMLRegistryFeatureType::Parse(const char* pszRegistryFilename, CPLXMLNode* p
 
     if( pszSchemaLocation != NULL )
     {
-        if( strncmp(pszSchemaLocation, "http://", 7) != 0 &&
-            strncmp(pszSchemaLocation, "https://", 8) != 0 &&
+        if( !STARTS_WITH(pszSchemaLocation, "http://") &&
+            !STARTS_WITH(pszSchemaLocation, "https://") &&
             CPLIsFilenameRelative(pszSchemaLocation ) )
         {
             pszSchemaLocation = CPLFormFilename(
@@ -130,8 +130,8 @@ int GMLRegistryFeatureType::Parse(const char* pszRegistryFilename, CPLXMLNode* p
     }
     else if( pszGFSSchemaLocation != NULL )
     {
-        if( strncmp(pszGFSSchemaLocation, "http://", 7) != 0 &&
-            strncmp(pszGFSSchemaLocation, "https://", 8) != 0 &&
+        if( !STARTS_WITH(pszGFSSchemaLocation, "http://") &&
+            !STARTS_WITH(pszGFSSchemaLocation, "https://") &&
             CPLIsFilenameRelative(pszGFSSchemaLocation ) )
         {
             pszGFSSchemaLocation = CPLFormFilename(

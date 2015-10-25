@@ -729,7 +729,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
         {
             /* If the previous file was opened as a /vsisparse/, we have to re-open */
             if( poGDS->poJPEGDS != NULL &&
-                strncmp(poGDS->poJPEGDS->GetDescription(), "/vsisparse/", strlen("/vsisparse/")) == 0 )
+                STARTS_WITH(poGDS->poJPEGDS->GetDescription(), "/vsisparse/") )
             {
                 GDALClose( (GDALDatasetH) poGDS->poJPEGDS );
                 poGDS->poJPEGDS = NULL;
@@ -752,7 +752,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
 
             /* If the previous file was NOT opened as a /vsisparse/, we have to re-open */
             if( poGDS->poJPEGDS != NULL &&
-                strncmp(GDALGetDescription(poGDS->poJPEGDS), "/vsisparse/", strlen("/vsisparse/")) != 0  )
+                !STARTS_WITH(GDALGetDescription(poGDS->poJPEGDS), "/vsisparse/")  )
             {
                 GDALClose( (GDALDatasetH) poGDS->poJPEGDS );
                 poGDS->poJPEGDS = NULL;
@@ -1701,7 +1701,7 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
 
     size_t nMappingSize = 0;
     GByte* pabySrcData = NULL;
-    if( strncmp(GetDescription(), "/vsimem/", strlen("/vsimem/")) == 0 )
+    if( STARTS_WITH(GetDescription(), "/vsimem/") )
     {
         vsi_l_offset nDataLength = 0;
         pabySrcData = VSIGetMemFileBuffer(GetDescription(), &nDataLength, FALSE);
@@ -8232,8 +8232,7 @@ void GTiffDataset::PushMetadataToPam()
             {
                 if( STARTS_WITH_CI(papszMD[i], "TIFFTAG_")
                     || EQUALN(papszMD[i],GDALMD_AREA_OR_POINT,
-                              strlen(GDALMD_AREA_OR_POINT)) )                    papszMD = CSLRemoveStrings( papszMD, i, 1, NULL );
-            }
+                              strlen(GDALMD_AREA_OR_POINT)) )                    papszMD = CSLRemoveStrings( papszMD, i, 1, NULL );            }
 
             if( nBand == 0 )
                 GDALPamDataset::SetMetadata( papszMD, papszDomainList[iDomain]);
@@ -8827,7 +8826,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
              poOpenInfo->nHeaderBytes >= 24 &&
              ((int)VSIFTellL(poOpenInfo->fpL) == poOpenInfo->nHeaderBytes || /* A pipe has no seeking capability, so its position is 0 despite having read bytes */
               strcmp(pszFilename, "/vsistdin/") == 0 ||
-              //strncmp(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")) == 0 ||
+              //STARTS_WITH(pszFilename, "/vsicurl_streaming/") ||
               (pszReadStreaming && CSLTestBoolean(pszReadStreaming))) )
     {
         bStreaming = TRUE;
@@ -11585,9 +11584,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     /* crystalized the directory. This way we avoid a directory rewriting */
 #if defined(BIGTIFF_SUPPORT)
     if( nCompression == COMPRESSION_JPEG &&
-        strncmp(pszFilename, "/vsimem/gtiffdataset_jpg_tmp_",
-                strlen("/vsimem/gtiffdataset_jpg_tmp_")) != 0 &&
-        CSLTestBoolean(CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
+        !STARTS_WITH(pszFilename, "/vsimem/gtiffdataset_jpg_tmp_") &&        CSLTestBoolean(CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
     {
         CPLString osTmpFilename;
         osTmpFilename.Printf("/vsimem/gtiffdataset_jpg_tmp_%p", hTIFF);

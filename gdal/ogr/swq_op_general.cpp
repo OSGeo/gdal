@@ -585,7 +585,8 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                 poRet->int_value = 
                     EQUALN(sub_node_values[0]->string_value,
                            sub_node_values[1]->string_value,
-                           strlen(sub_node_values[1]->string_value));            }
+                           strlen(sub_node_values[1]->string_value));
+            }
             else if( (sub_node_values[0]->field_type == SWQ_TIMESTAMP ||
                       sub_node_values[0]->field_type == SWQ_STRING) &&
                      (sub_node_values[1]->field_type == SWQ_TIMESTAMP ||
@@ -598,7 +599,8 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                 poRet->int_value = 
                     EQUALN(sub_node_values[0]->string_value,
                            sub_node_values[1]->string_value,
-                           strlen(sub_node_values[0]->string_value));            }
+                           strlen(sub_node_values[0]->string_value));
+            }
             else
             {
                 poRet->int_value = 

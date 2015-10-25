@@ -177,7 +177,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /* -------------------------------------------------------------------- */    
     // We test the name of the binary segment before starting to read 
     // the buffer.
-    if (std::strncmp(seg_data.buffer, "MODEL   ", 8)) 
+    if (!STARTS_WITH(seg_data.buffer, "MODEL   ")) 
     {
         seg_data.Put("MODEL   ",0,8);
         return NULL;
@@ -202,7 +202,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
     
     SRITModel->GCPMeanHtFlag = 0;
     SRITModel->nDownSample = 1;
-    if(std::strncmp(seg_data.Get(22,2) , "DS", 2)==0)
+    if(STARTS_WITH(seg_data.Get(22,2) , "DS"))
     {
 	SRITModel->nDownSample = seg_data.GetInt(24,3); 
     }

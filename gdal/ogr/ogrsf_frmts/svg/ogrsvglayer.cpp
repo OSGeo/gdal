@@ -425,7 +425,7 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     }
     else if (inInterestingElement &&
              depthLevel == interestingDepthLevel + 1 &&
-             strncmp(pszName, "cm:", 3) == 0)
+             STARTS_WITH(pszName, "cm:"))
     {
         iCurrentField = poFeatureDefn->GetFieldIndex(pszName + 3);
     }
@@ -742,7 +742,7 @@ void OGRSVGLayer::startElementLoadSchemaCbk(const char *pszName,
     else if (inInterestingElement)
     {
         if (depthLevel == interestingDepthLevel + 1 &&
-            strncmp(pszName, "cm:", 3) == 0)
+            STARTS_WITH(pszName, "cm:"))
         {
             pszName += 3;
             if (poCurLayer->poFeatureDefn->GetFieldIndex(pszName) < 0)

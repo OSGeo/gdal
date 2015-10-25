@@ -1501,7 +1501,7 @@ int OGRLIBKMLDataSource::Open (
 /* Very approximative validation of http://tools.ietf.org/html/rfc3966#page-6 */
 static int IsValidPhoneNumber(const char* pszPhoneNumber)
 {
-    if( strncmp(pszPhoneNumber, "tel:", strlen("tel:")) == 0 )
+    if( STARTS_WITH(pszPhoneNumber, "tel:") )
         pszPhoneNumber += strlen("tel:");
     char ch;
     int bDigitFound = FALSE;
@@ -1576,8 +1576,8 @@ void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
             if( pszAuthorURI != NULL )
             {
                 /* Ad-hoc validation. The ABNF is horribly complicated : http://tools.ietf.org/search/rfc3987#page-7 */
-                if( strncmp(pszAuthorURI, "http://", strlen("http://")) == 0 ||
-                    strncmp(pszAuthorURI, "https://", strlen("https://")) == 0 )
+                if( STARTS_WITH(pszAuthorURI, "http://") ||
+                    STARTS_WITH(pszAuthorURI, "https://") )
                 {
                     author->set_uri(pszAuthorURI);
                 }
@@ -1614,7 +1614,7 @@ void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
         {
             if( IsValidPhoneNumber(pszPhoneNumber) )
             {
-                if( strncmp(pszPhoneNumber, "tel:", strlen("tel:")) != 0 )
+                if( !STARTS_WITH(pszPhoneNumber, "tel:") )
                     poKmlDocument->set_phonenumber(CPLSPrintf("tel:%s", pszPhoneNumber));
                 else
                     poKmlDocument->set_phonenumber(pszPhoneNumber);
@@ -1855,7 +1855,7 @@ int OGRLIBKMLDataSource::Create (
     /***** kml *****/
 
     if ( strcmp(pszFilename, "/vsistdout/") == 0 ||
-         strncmp(pszFilename, "/vsigzip/", 9) == 0 ||
+         STARTS_WITH(pszFilename, "/vsigzip/") ||
          EQUAL ( CPLGetExtension ( pszFilename ), "kml" ) )
         bResult = CreateKml ( pszFilename, papszOptions );
 

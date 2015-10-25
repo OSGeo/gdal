@@ -326,10 +326,10 @@ int VRTSourcedRasterBand::CanUseSourcesMinMaxImplementations()
         if( pszFilename == NULL )
             return FALSE;
         /* /vsimem/ should be fast */
-        if( strncmp(pszFilename, "/vsimem/", 8) == 0 )
+        if( STARTS_WITH(pszFilename, "/vsimem/") )
             continue;
         /* but not other /vsi filesystems */
-        if( strncmp(pszFilename, "/vsi", 4) == 0 )
+        if( STARTS_WITH(pszFilename, "/vsi") )
             return FALSE;
         int i = 0;
         char ch;

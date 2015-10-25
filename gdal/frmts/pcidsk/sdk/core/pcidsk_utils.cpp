@@ -273,7 +273,7 @@ void PCIDSK::ParseTileFormat( std::string full_text,
 /* -------------------------------------------------------------------- */
 /*      Only operate on tiled stuff.                                    */
 /* -------------------------------------------------------------------- */
-    if( strncmp(full_text.c_str(),"TILED",5) != 0 )
+    if( !STARTS_WITH(full_text.c_str(), "TILED") )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -300,7 +300,7 @@ void PCIDSK::ParseTileFormat( std::string full_text,
         if (compression == "NO_WARNINGS")
             compression = "";
         else if( compression != "RLE"
-            && strncmp(compression.c_str(),"JPEG",4) != 0 
+            && !STARTS_WITH(compression.c_str(), "JPEG") 
             && compression != "NONE"
             && compression != "QUADTREE" )
         {

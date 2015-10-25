@@ -570,7 +570,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
 #ifdef SQLITE_OPEN_URI
     // this code enables support for named mememory databases in sqlite. 
     // SQLITE_USE_URI is checked only to enable backward compatibility, in case we accidently hijacked some other format
-    if( strncmp(m_pszFilename, "file:", strlen("file:")) == 0 &&
+    if( STARTS_WITH(m_pszFilename, "file:") &&
         CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
     {
         flags |= SQLITE_OPEN_URI;
@@ -578,7 +578,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
 #endif
 
     int bUseOGRVFS = CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
-    if (bUseOGRVFS || strncmp(m_pszFilename, "/vsi", 4) == 0)
+    if (bUseOGRVFS || STARTS_WITH(m_pszFilename, "/vsi"))
     {
         pMyVFS = OGRSQLiteCreateVFS(OGRSQLiteBaseDataSourceNotifyFileOpened, this);
         sqlite3_vfs_register(pMyVFS, 0);
@@ -1870,7 +1870,8 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
                   sizeof(apszFuncsWithSideEffects[0]);i++)
         {
             if( EQUALN(apszFuncsWithSideEffects[i], pszSQLCommand + 7,
-                       strlen(apszFuncsWithSideEffects[i])) )            {
+                       strlen(apszFuncsWithSideEffects[i])) )
+            {
                 if (sqlite3_column_count( hSQLStmt ) == 1 &&
                     sqlite3_column_type( hSQLStmt, 0 ) == SQLITE_INTEGER )
                 {

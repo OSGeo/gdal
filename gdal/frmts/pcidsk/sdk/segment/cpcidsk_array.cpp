@@ -71,7 +71,7 @@ void CPCIDSK_ARRAY::Load()
     seg_data.SetSize(GetContentSize());
     ReadFromFile(seg_data.buffer, 0, seg_data.buffer_size);
 
-    if(std::strncmp(seg_header.buffer+160, "64R     ", 8))
+    if(!STARTS_WITH(seg_header.buffer+160, "64R     "))
     {
         seg_header.Put("64R     ",160,8);
         loaded_ = true;

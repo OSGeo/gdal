@@ -351,7 +351,7 @@ static int VSIFopenHelper(const char *path, int flags)
 
 static bool GET_DEBUG_VSIPRELOAD_COND(const char* path)
 {
-    return (DEBUG_VSIPRELOAD && (!DEBUG_VSIPRELOAD_ONLY_VSIL || strncmp(path, "/vsi", 4) == 0) );
+    return (DEBUG_VSIPRELOAD && (!DEBUG_VSIPRELOAD_ONLY_VSIL || STARTS_WITH(path, "/vsi")) );
 }
 
 static bool GET_DEBUG_VSIPRELOAD_COND(VSILFILE* fpVSIL)
@@ -416,7 +416,7 @@ FILE *fopen(const char *path, const char *mode)
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "fopen(%s, %s)\n", path, mode);
     FILE* ret;
-    if( strncmp(path, "/vsi", 4) == 0 )
+    if( STARTS_WITH(path, "/vsi") )
         ret = (FILE*) VSIFfopenHelper(path, mode);
     else
         ret = pfnfopen(path, mode);
@@ -434,7 +434,7 @@ FILE *fopen64(const char *path, const char *mode)
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "fopen64(%s, %s)\n", path, mode);
     FILE* ret;
-    if( strncmp(path, "/vsi", 4) == 0 )
+    if( STARTS_WITH(path, "/vsi") )
         ret = (FILE*) VSIFfopenHelper(path, mode);
     else
         ret = pfnfopen64(path, mode);
@@ -528,7 +528,7 @@ int __xstat(int ver, const char *path, struct stat *buf)
     if( DEBUG_VSIPRELOAD && (osCurDir.size() != 0 && path[0] != '/') )
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__xstat(%s)\n", path);
-    if( (osCurDir.size() != 0 && path[0] != '/') || strncmp(path, "/vsi", 4) == 0 )
+    if( (osCurDir.size() != 0 && path[0] != '/') || STARTS_WITH(path, "/vsi") )
     {
         VSIStatBufL sStatBufL;
         int ret;
@@ -572,7 +572,7 @@ int __lxstat(int ver, const char *path, struct stat *buf)
     if( DEBUG_VSIPRELOAD && (osCurDir.size() != 0 && path[0] != '/') )
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__lxstat(%s)\n", path);
-    if( (osCurDir.size() != 0 && path[0] != '/') || strncmp(path, "/vsi", 4) == 0 )
+    if( (osCurDir.size() != 0 && path[0] != '/') || STARTS_WITH(path, "/vsi") )
     {
         VSIStatBufL sStatBufL;
         int ret;
@@ -616,7 +616,7 @@ int __xstat64(int ver, const char *path, struct stat64 *buf)
     if( DEBUG_VSIPRELOAD && (osCurDir.size() != 0 && path[0] != '/') )
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__xstat64(%s)\n", path);
-    if( (osCurDir.size() != 0 && path[0] != '/') || strncmp(path, "/vsi", 4) == 0 )
+    if( (osCurDir.size() != 0 && path[0] != '/') || STARTS_WITH(path, "/vsi") )
     {
         VSIStatBufL sStatBufL;
         int ret;
@@ -960,7 +960,7 @@ int open(const char *path, int flags, ...)
         else
             fd = -1;
     }
-    else if( strncmp(path, "/vsi", 4) == 0 )
+    else if( STARTS_WITH(path, "/vsi") )
         fd = VSIFopenHelper(path, flags);
     else
         fd = pfnopen(path, flags, mode);
@@ -1016,7 +1016,7 @@ int open64(const char *path, int flags, ...)
         else
             fd = -1;
     }
-    else if( strncmp(path, "/vsi", 4) == 0 )
+    else if( STARTS_WITH(path, "/vsi") )
         fd = VSIFopenHelper(path, flags);
     else
         fd = pfnopen64(path, flags, mode);
@@ -1253,7 +1253,7 @@ int __fxstatat (int ver, int dirfd, const char *pathname, struct stat *buf,
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__fxstatat(dirfd=%d,pathname=%s,flags=%d)\n", dirfd, pathname, flags);
 
-    if( osCurDir.size() != 0 || strncmp(pathname, "/vsi", 4) == 0 )
+    if( osCurDir.size() != 0 || STARTS_WITH(pathname, "/vsi") )
     {
         VSIStatBufL sStatBufL;
         int ret;
@@ -1333,7 +1333,7 @@ int truncate(const char *path, off_t length)
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "truncate(%s)\n", path);
 
-    if( strncmp(path, "/vsi", 4) == 0 )
+    if( STARTS_WITH(path, "/vsi") )
     {
         VSILFILE* fpVSIL = VSIFOpenL(path, "wb+");
         if( fpVSIL )
@@ -1382,7 +1382,7 @@ DIR *opendir(const char *name)
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "opendir(%s)\n", name);
 
     DIR * ret;
-    if( osCurDir.size() != 0 || strncmp(name, "/vsi", 4) == 0 )
+    if( osCurDir.size() != 0 || STARTS_WITH(name, "/vsi") )
     {
         char** papszDir;
         if( osCurDir.size() != 0 && name[0] != '/' )
@@ -1605,7 +1605,7 @@ int acl_extended_file(const char *path)
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "acl_extended_file(%s)\n", path);
     int ret;
-    if( strncmp(path, "/vsi", 4) == 0 )
+    if( STARTS_WITH(path, "/vsi") )
         ret = -1;
     else
     {
@@ -1633,7 +1633,7 @@ int getfilecon(const char *path, /*security_context_t **/ void* con)
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "getfilecon(%s)\n", path);
     int ret;
-    if( strncmp(path, "/vsi", 4) == 0 )
+    if( STARTS_WITH(path, "/vsi") )
     {
         errno = ENOTSUP;
         ret = -1;
@@ -1664,7 +1664,7 @@ int lgetfilecon(const char *path, /*security_context_t **/ void* con)
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "lgetfilecon(%s)\n", path);
     int ret;
-    if( strncmp(path, "/vsi", 4) == 0 )
+    if( STARTS_WITH(path, "/vsi") )
     {
         errno = ENOTSUP;
         ret = -1;

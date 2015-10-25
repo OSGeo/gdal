@@ -478,9 +478,9 @@ const char *CPLFormFilename( const char * pszPath,
     {
         /* FIXME? would be better to ask the filesystems what they */
         /* prefer as directory separator */
-        if (strncmp(pszPath, "/vsicurl/", 9) == 0)
+        if (STARTS_WITH(pszPath, "/vsicurl/"))
             pszAddedPathSep = "/";
-        else if (strncmp(pszPath, "/vsizip/", 8) == 0)
+        else if (STARTS_WITH(pszPath, "/vsizip/"))
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
@@ -645,7 +645,7 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
         /* FIXME? would be better to ask the filesystems what they */
         /* prefer as directory separator */
         const char* pszAddedPathSep;
-        if (strncmp(pszStaticResult, "/vsicurl/", 9) == 0)
+        if (STARTS_WITH(pszStaticResult, "/vsicurl/"))
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
@@ -682,8 +682,8 @@ int CPLIsFilenameRelative( const char *pszFilename )
 
 {
     if( (strlen(pszFilename) > 2
-         && (strncmp(pszFilename+1,":\\",2) == 0
-             || strncmp(pszFilename+1,":/",2) == 0))
+         && (STARTS_WITH(pszFilename+1, ":\\")
+             || STARTS_WITH(pszFilename+1, ":/")))
         || pszFilename[0] == '\\'
         || pszFilename[0] == '/' )
         return FALSE;

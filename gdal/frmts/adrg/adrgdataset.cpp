@@ -1108,7 +1108,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
                 return NULL;
             }
             offsetInIMG += 3;
-            if (strncmp(recordName,"IMG",3) == 0)
+            if (STARTS_WITH(recordName, "IMG"))
             {
                 offsetInIMG += 4;
                 if (VSIFSeekL(fdIMG,3,SEEK_CUR) != 0 ||

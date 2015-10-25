@@ -355,7 +355,7 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
 /*      are transformed info failure.                                   */
 /* -------------------------------------------------------------------- */
     if (psResult && psResult->pszContentType &&
-        strncmp(psResult->pszContentType, "text/html", 9) == 0)
+        STARTS_WITH(psResult->pszContentType, "text/html"))
     {
         CPLDebug( "GME", "MakeRequest HTML Response: %s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -516,7 +516,7 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
 /*      are transformed info failure.                                   */
 /* -------------------------------------------------------------------- */
     if (psResult && psResult->pszContentType &&
-        strncmp(psResult->pszContentType, "text/html", 9) == 0)
+        STARTS_WITH(psResult->pszContentType, "text/html"))
     {
         CPLDebug( "GME", "PostRequest HTML Response:%s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined,

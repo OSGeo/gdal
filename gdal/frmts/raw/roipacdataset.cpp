@@ -411,8 +411,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
                 oSRS.SetWellKnownGeogCS( "WGS84" );
             }
         }
-        else if( strncmp( CSLFetchNameValue( papszRsc, "PROJECTION" ),
-                          "UTM", 3 ) == 0 )
+        else if( STARTS_WITH(CSLFetchNameValue( papszRsc, "PROJECTION" ), "UTM") )
         {
             const char *pszZone = CSLFetchNameValue( papszRsc, 
                                                      "PROJECTION" ) + 3;

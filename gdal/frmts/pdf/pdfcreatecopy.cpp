@@ -157,7 +157,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
     int i;
     for(i = nRead - 9; i>= 0; i --)
     {
-        if (strncmp(szBuf + i, "startxref", 9) == 0)
+        if (STARTS_WITH(szBuf + i, "startxref"))
         {
             pszStartXRef = szBuf + i;
             break;
@@ -186,7 +186,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
     const char* pszLine;
     while( (pszLine = CPLReadLineL(fp)) != NULL)
     {
-        if (strncmp(pszLine, "trailer", 7) == 0)
+        if (STARTS_WITH(pszLine, "trailer"))
             break;
     }
 

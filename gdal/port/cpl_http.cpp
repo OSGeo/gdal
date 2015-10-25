@@ -163,7 +163,7 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
 CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
 {
-    if( strncmp(pszURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
+    if( STARTS_WITH(pszURL, "/vsimem/") &&
         /* Disabled by default for potential security issues */
         CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
     {
@@ -199,9 +199,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         }
 
         if( psResult->pabyData != NULL &&
-            strncmp((const char*)psResult->pabyData, "Content-Type: ",
-                    strlen("Content-Type: ")) == 0 )
-        {
+            STARTS_WITH((const char*)psResult->pabyData, "Content-Type: ") )        {
             const char* pszContentType = (const char*)psResult->pabyData + strlen("Content-type: ");
             const char* pszEOL = strchr(pszContentType, '\r');
             if( pszEOL )
@@ -900,7 +898,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         psPart->nDataLen = pszNext - (const char *) psPart->pabyData;
         pszNext += strlen(osBoundary);
 
-        if( strncmp(pszNext,"--",2) == 0 )
+        if( STARTS_WITH(pszNext, "--") )
         {
             break;
         }

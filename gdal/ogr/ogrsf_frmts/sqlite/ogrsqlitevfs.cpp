@@ -297,7 +297,7 @@ static int OGRSQLiteVFSAccess (DEBUG_ONLY sqlite3_vfs* pVFS,
     if (flags == SQLITE_ACCESS_EXISTS)
     {
         /* Do not try to check the presence of a journal on /vsicurl ! */
-        if ( strncmp(zName, "/vsicurl/", 9) == 0 &&
+        if ( STARTS_WITH(zName, "/vsicurl/") &&
              strlen(zName) > strlen("-journal") &&
              strcmp(zName + strlen(zName) - strlen("-journal"), "-journal") == 0 )
             nRet = -1;

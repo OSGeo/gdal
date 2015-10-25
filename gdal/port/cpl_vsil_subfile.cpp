@@ -259,7 +259,7 @@ VSISubFileFilesystemHandler::DecomposePath( const char *pszPath,
                                             vsi_l_offset &nSubFileSize )
 
 {
-    if( strncmp(pszPath,"/vsisubfile/",12) != 0 )
+    if( !STARTS_WITH(pszPath, "/vsisubfile/") )
         return FALSE;
 
     osFilename = "";
