@@ -516,7 +516,7 @@ type_def:
         OGRwkbGeometryType eType = OGRFromOGCGeomType($3->string_value);
         if( !EQUAL($1->string_value,"GEOMETRY") || 
             (wkbFlatten(eType) == wkbUnknown &&
-            !EQUALN($3->string_value, "GEOMETRY", strlen("GEOMETRY"))) )
+            !STARTS_WITH_CI($3->string_value, "GEOMETRY")) )
         {
             yyerror (context, "syntax error");
             delete $1;
@@ -534,7 +534,7 @@ type_def:
         OGRwkbGeometryType eType = OGRFromOGCGeomType($3->string_value);
         if( !EQUAL($1->string_value,"GEOMETRY") || 
             (wkbFlatten(eType) == wkbUnknown &&
-            !EQUALN($3->string_value, "GEOMETRY", strlen("GEOMETRY"))) )
+            !STARTS_WITH_CI($3->string_value, "GEOMETRY")) )
         {
             yyerror (context, "syntax error");
             delete $1;
