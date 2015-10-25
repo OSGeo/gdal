@@ -430,7 +430,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 
     VSIFReadL( szHeader, 49, 1, fpExternal );
 
-    if( strncmp( szHeader, "ERDAS_IMG_EXTERNAL_RASTER", 26 ) != 0 )
+    if( !STARTS_WITH( szHeader, "ERDAS_IMG_EXTERNAL_RASTER") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Raw data file %s appears to be corrupt.\n",

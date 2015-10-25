@@ -360,26 +360,28 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
             /* end of polygon is marked by a blank line */
             break;
         }
-        else if (STARTS_WITH(pszLine, "POLYGON DESCRIPTION: "))        {
+        else if (STARTS_WITH(pszLine, "POLYGON DESCRIPTION: "))
+        {
             poFeature->SetField(0, pszLine + strlen("POLYGON DESCRIPTION: "));
         }
-        else if (STARTS_WITH(pszLine, "POLYGON IDENTIFIER: "))        {
+        else if (STARTS_WITH(pszLine, "POLYGON IDENTIFIER: "))
+        {
             poFeature->SetField(1, pszLine + strlen("POLYGON IDENTIFIER: "));
         }
-        else if (strncmp(pszLine, "SEAFLOOR COVERAGE: ",
-                         strlen("SEAFLOOR COVERAGE:")) == 0)        {
+        else if (STARTS_WITH(pszLine, "SEAFLOOR COVERAGE: "))
+        {
             const char* pszVal = pszLine + strlen("SEAFLOOR COVERAGE: ");
             if (*pszVal != '*')
                 poFeature->SetField(2, pszVal);
         }
-        else if (strncmp(pszLine, "POSITION ACCURACY: ",
-                         strlen("POSITION ACCURACY:")) == 0)        {
+        else if (STARTS_WITH(pszLine, "POSITION ACCURACY: "))
+        {
             const char* pszVal = pszLine + strlen("POSITION ACCURACY: ");
             if (*pszVal != '*')
                 poFeature->SetField(3, pszVal);
         }
-        else if (strncmp(pszLine, "DEPTH ACCURACY: ",
-                         strlen("DEPTH ACCURACY:")) == 0)        {
+        else if (STARTS_WITH(pszLine, "DEPTH ACCURACY: "))
+        {
             const char* pszVal = pszLine + strlen("DEPTH ACCURACY: ");
             if (*pszVal != '*')
                 poFeature->SetField(4, pszVal);

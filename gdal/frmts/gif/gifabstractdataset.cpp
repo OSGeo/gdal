@@ -310,8 +310,8 @@ int GIFAbstractDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 8 )
         return FALSE;
 
-    if( strncmp((const char *) poOpenInfo->pabyHeader, "GIF87a",5) != 0
-        && strncmp((const char *) poOpenInfo->pabyHeader, "GIF89a",5) != 0 )
+    if( !STARTS_WITH((const char *) poOpenInfo->pabyHeader, "GIF87a")
+        && !STARTS_WITH((const char *) poOpenInfo->pabyHeader, "GIF89a") )
         return FALSE;
 
     return TRUE;
