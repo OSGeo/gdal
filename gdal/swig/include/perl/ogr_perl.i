@@ -781,7 +781,7 @@ use Encode;
 use Scalar::Util 'blessed';
 %}
 
-%feature("shadow") OGRFeatureShadow()
+%feature("shadow") OGRFeatureShadow( OGRFeatureDefnShadow *feature_def )
 %{
 use Carp;
 sub new {
