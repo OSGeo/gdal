@@ -99,6 +99,7 @@ int main( int argc, char ** argv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy( argv );
             return 0;
         }
         else if( EQUAL(argv[i],"--help") )

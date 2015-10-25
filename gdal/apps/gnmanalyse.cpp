@@ -411,6 +411,7 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                     papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy( papszArgv );
             return 0;
         }
 
