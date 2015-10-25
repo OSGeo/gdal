@@ -338,6 +338,30 @@ def tiff_srs_angular_units():
 
     return 'success'
 
+###############################################################################
+# Test writing and reading a unknown datum but with a known ellipsoid
+
+def tiff_custom_datum_known_ellipsoid():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_custom_datum_known_ellipsoid.tif', 1, 1)
+    ds.SetProjection("""GEOGCS["WGS 84 based",
+    DATUM["WGS_1984_based",
+        SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",1]]""")
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_custom_datum_known_ellipsoid.tif')
+    wkt = ds.GetProjectionRef()
+    if wkt != 'GEOGCS["WGS 84 based",DATUM["WGS_1984_based",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_custom_datum_known_ellipsoid.tif')
+
+    return 'success'
+
 gdaltest_list = []
 
 tiff_srs_list = [ 2758, #tmerc
@@ -407,7 +431,7 @@ gdaltest_list.append( tiff_srs_compd_cs )
 gdaltest_list.append( tiff_srs_weird_mercator_2sp )
 gdaltest_list.append( tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere )
 gdaltest_list.append( tiff_srs_angular_units )
-
+gdaltest_list.append( tiff_custom_datum_known_ellipsoid )
 
 if __name__ == '__main__':
 
