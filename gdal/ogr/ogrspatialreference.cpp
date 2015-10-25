@@ -1491,7 +1491,7 @@ double OSRGetPrimeMeridian( OGRSpatialReferenceH hSRS, char **ppszName )
  * standard names).  If NULL a value of "degrees" will be assumed. 
  * 
  * @param dfConvertToRadians value to multiply angular units by to transform
- * them to radians.  A value of SRS_UL_DEGREE_CONV will be used if
+ * them to radians.  A value of SRS_UA_DEGREE_CONV will be used if
  * pszAngularUnits is NULL.
  *
  * @return OGRERR_NONE on success.
