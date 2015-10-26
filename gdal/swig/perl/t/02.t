@@ -1,9 +1,8 @@
 use strict;
+use warnings;
 use Carp;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
-
-my $dataset;
 
 # package Geo::GDAL::Dataset
 #
@@ -66,13 +65,13 @@ for my $dt (Geo::GDAL::Driver('MEM')->Create->Domains()) {
     ok($dt{$dt}, "Dataset domain: $dt");
 }
 
-my $dataset = Geo::GDAL::Driver('MEM')->Create(Width => 8, Height => 10);
+$dataset = Geo::GDAL::Driver('MEM')->Create(Width => 8, Height => 10);
 my $band = $dataset->Band;
 my $band2 = $dataset->Band(1);
 my @bands = $dataset->Bands;
 ok(@bands == 1, "Bands");
 
-my @list = Geo::GDAL::DataTypes();
+@list = Geo::GDAL::DataTypes();
 #print "@list\n";
 $dataset->AddBand('Int32', {a => 1});
 @bands = $dataset->Bands;
