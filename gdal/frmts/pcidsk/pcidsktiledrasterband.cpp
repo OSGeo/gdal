@@ -50,7 +50,7 @@ PCIDSKTiledRasterBand::PCIDSKTiledRasterBand( PCIDSKDataset *poDS,
 
     nBlocks = 0;
     panBlockOffset = NULL;
-    
+
     if( !BuildBlockMap() )
         return;
 
@@ -61,12 +61,12 @@ PCIDSKTiledRasterBand::PCIDSKTiledRasterBand( PCIDSKDataset *poDS,
     char achBData[128];
 
     SysRead( 0, 128, achBData );
- 
+
     nRasterXSize = (int) CPLScanLong(achBData + 0, 8);
     nRasterYSize = (int) CPLScanLong(achBData + 8, 8);
     nBlockXSize = (int) CPLScanLong(achBData + 16, 8);
     nBlockYSize = (int) CPLScanLong(achBData + 24, 8);
-    
+
     int nBPR = (nBlockXSize) ? (nRasterXSize + nBlockXSize - 1) / nBlockXSize : 0;
     int nBPC = (nBlockYSize) ? (nRasterYSize + nBlockYSize - 1) / nBlockYSize : 0;
 
@@ -82,7 +82,7 @@ PCIDSKTiledRasterBand::PCIDSKTiledRasterBand( PCIDSKDataset *poDS,
         nBlockXSize = 0;
         nBlockYSize = 0;
     }
-    
+
     eDataType = poPDS->PCIDSKTypeToGDAL( achBData + 32 );
 
     szCompression[8] = '\0';
@@ -133,10 +133,10 @@ int PCIDSKTiledRasterBand::BuildBlockMap()
 
     nBMapSize = (int) poPDS->panSegSize[poPDS->nBlockMapSeg-1];
     pachBMap = (char *) CPLCalloc(nBMapSize+1,1);
-    
+
     if( !poPDS->SegRead( poPDS->nBlockMapSeg, 0, nBMapSize, pachBMap ) )
         return FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Parse the header.                                               */
 /* -------------------------------------------------------------------- */
@@ -176,7 +176,7 @@ int PCIDSKTiledRasterBand::BuildBlockMap()
         else
             panBackLink[nNextBlock] = i;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Track back through chain to identify the first entry (while     */
 /*      counting).                                                      */
@@ -220,7 +220,7 @@ int PCIDSKTiledRasterBand::BuildBlockMap()
             + poPDS->panSegOffset[nBDataSeg-1] + 1024;
 
         iBlock = (int) CPLScanLong( pachEntry + 20, 8 );
-    }            
+    }
 
     CPLFree( pachBMap );
 
@@ -296,7 +296,7 @@ CPLErr PCIDSKTiledRasterBand::IReadBlock( int nBlockX, int nBlockY,
 
     if( !BuildTileMap() )
         return CE_Failure;
-    
+
     int nBPR = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
 
     iTile = nBlockX + nBlockY * nBPR;
@@ -340,7 +340,7 @@ int PCIDSKTiledRasterBand::SysRead( vsi_l_offset nOffset,
         vsi_l_offset nNextOffset = nOffset + iReadSoFar;
         vsi_l_offset nRealOffset;
         int          nOffsetInBlock, nThisReadBytes;
-        
+
         iBlock = (int) (nNextOffset >> 13);
         nOffsetInBlock = (int) (nNextOffset & 0x1fff);
 
@@ -348,9 +348,9 @@ int PCIDSKTiledRasterBand::SysRead( vsi_l_offset nOffset,
             return 0;
 
         nRealOffset = panBlockOffset[iBlock] + nOffsetInBlock;
-        
+
         nThisReadBytes = MIN(nSize - iReadSoFar,8192 - nOffsetInBlock);
-        
+
         if( VSIFSeekL( poPDS->fp, nRealOffset, SEEK_SET ) != 0 )
             return 0;
 

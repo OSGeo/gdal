@@ -130,7 +130,7 @@ class PCIDSKTiledRasterBand : public GDALPamRasterBand
     friend class PCIDSKDataset;
 
     PCIDSKDataset *poPDS;
-    
+
     int          nImage;
 
     int           nBlocks;
@@ -144,7 +144,7 @@ class PCIDSKTiledRasterBand : public GDALPamRasterBand
     GDALRasterBand **papoOverviews;
 
     char        szCompression[9];
-    
+
     void        AttachOverview( GDALRasterBand *poOvBand ) {
 
         nOverviewCount++;
@@ -155,7 +155,7 @@ class PCIDSKTiledRasterBand : public GDALPamRasterBand
 
     int         BuildBlockMap();
     int         BuildTileMap();
-    
+
   public:
                 PCIDSKTiledRasterBand( PCIDSKDataset *, int, int );
                 ~PCIDSKTiledRasterBand();
@@ -179,14 +179,14 @@ class PCIDSKRawRasterBand : public RawRasterBand
 
     int         nOverviewCount;
     GDALRasterBand **papoOverviews;
-    
+
     void        AttachOverview( GDALRasterBand *poOvBand ) {
         nOverviewCount++;
         papoOverviews = (GDALRasterBand **)
             CPLRealloc(papoOverviews,sizeof(void*) * nOverviewCount);
         papoOverviews[nOverviewCount-1] = poOvBand;
     }
-    
+
   public:
     PCIDSKRawRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
                          vsi_l_offset nImgOffset, int nPixelOffset,
@@ -217,5 +217,3 @@ class PCIDSKRawRasterBand : public RawRasterBand
         return RawRasterBand::GetOverview(iOverview);
     }
 };
-
-
