@@ -27,47 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef INCLUDED_PCRASTERRASTERBAND
-#include "pcrasterrasterband.h"
-#define INCLUDED_PCRASTERRASTERBAND
-#endif
-
-// PCRaster library headers.
-#ifndef INCLUDED_CSF
 #include "csf.h"
-#define INCLUDED_CSF
-#endif
-
-#ifndef INCLUDED_CSFIMPL
 #include "csfimpl.h"
-#define INCLUDED_CSFIMPL
-#endif
-
-// Module headers.
-#ifndef INCLUDED_PCRASTERDATASET
 #include "pcrasterdataset.h"
-#define INCLUDED_PCRASTERDATASET
-#endif
-
-#ifndef INCLUDED_PCRASTERUTIL
+#include "pcrasterrasterband.h"
 #include "pcrasterutil.h"
-#define INCLUDED_PCRASTERUTIL
-#endif
-
-
 
 /*!
   \file
   This file contains the implementation of the PCRasterRasterBand class.
 */
-
-
-
-//------------------------------------------------------------------------------
-// DEFINITION OF STATIC PCRRASTERBAND MEMBERS
-//------------------------------------------------------------------------------
-
-
 
 //------------------------------------------------------------------------------
 // DEFINITION OF PCRRASTERBAND MEMBERS
@@ -77,36 +46,26 @@
 /*!
   \param     dataset The dataset we are a part of.
 */
-PCRasterRasterBand::PCRasterRasterBand(
-         PCRasterDataset* dataset)
-
-  : GDALPamRasterBand(),
+PCRasterRasterBand::PCRasterRasterBand( PCRasterDataset* dataset ) :
+    GDALPamRasterBand(),
     d_dataset(dataset),
     d_noDataValue(),
     d_defaultNoDataValueOverridden(false),
     d_create_in(GDT_Unknown)
-
 {
-  this->poDS = dataset;
-  this->nBand = 1;
-  this->eDataType = cellRepresentation2GDALType(dataset->cellRepresentation());
-  this->nBlockXSize = dataset->GetRasterXSize();
-  this->nBlockYSize = 1;
+    poDS = dataset;
+    nBand = 1;
+    eDataType = cellRepresentation2GDALType(dataset->cellRepresentation());
+    nBlockXSize = dataset->GetRasterXSize();
+    nBlockYSize = 1;
 }
-
-
 
 //! Destructor.
 /*!
 */
-PCRasterRasterBand::~PCRasterRasterBand()
-{
-}
+PCRasterRasterBand::~PCRasterRasterBand() {}
 
-
-
-double PCRasterRasterBand::GetNoDataValue(
-         int* success)
+double PCRasterRasterBand::GetNoDataValue( int* success )
 {
   if(success) {
     *success = 1;
@@ -116,13 +75,11 @@ double PCRasterRasterBand::GetNoDataValue(
     ? d_noDataValue : d_dataset->defaultNoDataValue();
 }
 
-
-
 double PCRasterRasterBand::GetMinimum(
          int* success)
 {
   double result;
-  int isValid;
+  bool isValid;
 
   switch(d_dataset->cellRepresentation()) {
     // CSF version 2. ----------------------------------------------------------
@@ -195,7 +152,7 @@ double PCRasterRasterBand::GetMaximum(
          int* success)
 {
   double result;
-  int isValid;
+  bool isValid;
 
   switch(d_dataset->cellRepresentation()) {
     case CR_UINT1: {
@@ -341,7 +298,7 @@ CPLErr PCRasterRasterBand::IWriteBlock(
     (void)RputCellSize(d_dataset->map(), cellSize);
   }
 
-  int nr_cols = this->poDS->GetRasterXSize();
+  const int nr_cols = this->poDS->GetRasterXSize();
 
   // new maps from create() set min/max to MV
   // in case of reopening that map the min/max
@@ -409,14 +366,3 @@ CPLErr PCRasterRasterBand::SetNoDataValue(double nodata)
 
   return CE_None;
 }
-
-
-//------------------------------------------------------------------------------
-// DEFINITION OF FREE OPERATORS
-//------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-// DEFINITION OF FREE FUNCTIONS
-//------------------------------------------------------------------------------
