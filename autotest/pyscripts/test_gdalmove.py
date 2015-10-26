@@ -49,11 +49,11 @@ def test_gdalmove_1():
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdalmove_1.tif' )
 
-    test_py_scripts.run_py_script(script_path, 'gdalmove', '-t_srs EPSG:32611 tmp/test_gdalmove_1.tif -et 1' )
+    test_py_scripts.run_py_script(script_path, 'gdalmove', '-s_srs "+proj=utm +zone=11 +ellps=clrk66 +towgs84=0,0,0 +no_defs" -t_srs EPSG:32611 tmp/test_gdalmove_1.tif -et 1' )
 
     ds = gdal.Open('tmp/test_gdalmove_1.tif')
     got_gt = ds.GetGeoTransform()
-    expected_gt = (440639.48088023334, 60.00034301019623, 0.00029749968671239914, 3751516.308213426, -0.00036349501460790633, -60.0004898541607)
+    expected_gt = (440719.95870935748, 60.000041745067577, 1.9291142234578728e-05, 3751294.2109841029, 1.9099167548120022e-05, -60.000041705276814)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) / abs(got_gt[i]) > 1e-5:
             gdaltest.post_reason('bad gt')
