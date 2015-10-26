@@ -253,7 +253,8 @@ def tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    if wkt.find('UNIT["arc-second",4.848136811095361e-06]') < 0:
+    if wkt.find('UNIT["arc-second",4.848136811095361e-06]') < 0 and \
+       wkt.find('UNIT["arc-second",4.848136811095361e-006]') < 0 : # wine variant
         gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
