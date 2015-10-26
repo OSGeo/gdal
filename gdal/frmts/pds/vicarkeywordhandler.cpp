@@ -35,20 +35,22 @@
 
 /************************************************************************/
 /* ==================================================================== */
-/*                          VICARKeywordHandler                          */
+/*                          VICARKeywordHandler                         */
 /* ==================================================================== */
 /************************************************************************/
 
 /************************************************************************/
-/*                         VICARKeywordHandler()                         */
+/*                         VICARKeywordHandler()                        */
 /************************************************************************/
 
 VICARKeywordHandler::VICARKeywordHandler() :
-    papszKeywordList(NULL), pszHeaderNext(NULL), LabelSize(0)
+    papszKeywordList(NULL),
+    pszHeaderNext(NULL),
+    LabelSize(0)
 { }
 
 /************************************************************************/
-/*                        ~VICARKeywordHandler()                         */
+/*                        ~VICARKeywordHandler()                        */
 /************************************************************************/
 
 VICARKeywordHandler::~VICARKeywordHandler()
@@ -71,18 +73,18 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
 
     // Find LBLSIZE Entry
-    char* pszLBLSIZE = strstr((char*)pabyHeader,"LBLSIZE");
+    char* pszLBLSIZE = strstr(reinterpret_cast<char *>( pabyHeader ), "LBLSIZE");
     int nOffset = 0;
 
     if (pszLBLSIZE)
         nOffset = pszLBLSIZE - (const char *)pabyHeader;
 
-    char *pch1 = strstr((char*)pabyHeader+nOffset, "=");
+    char *pch1 = strstr(reinterpret_cast<char *>( pabyHeader + nOffset ), "=");
     if( pch1 == NULL )
         return FALSE;
 
     ++pch1;
-    char *pch2 = strstr((char*)pabyHeader+nOffset, " ");
+    char *pch2 = strstr(reinterpret_cast<char *>( pabyHeader + nOffset ), " ");
     if( pch2 == NULL )
         return FALSE;
 
@@ -93,7 +95,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if( LabelSize > 10 * 1024 * 124 )
         return FALSE;
 
-    char* pszChunk = (char*) VSIMalloc( LabelSize + 1 );
+    char* pszChunk = reinterpret_cast<char *>(  VSIMalloc( LabelSize + 1 ) );
     if( pszChunk == NULL )
         return FALSE;
     int nBytesRead = VSIFReadL( pszChunk, 1, LabelSize, fp );
@@ -141,10 +143,10 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     const int nBands = atoi( CSLFetchNameValue( papszKeywordList, "NB" ) );
     const int nBB = atoi( CSLFetchNameValue( papszKeywordList, "NBB" ) );
 
-    long int nLineOffset = nPixelOffset * nCols + nBB ;
-    long int nBandOffset = nLineOffset * nRows;
+    const long int nLineOffset = nPixelOffset * nCols + nBB ;
+    const long int nBandOffset = nLineOffset * nRows;
 
-    long int starteol = LabelSize + nBandOffset * nBands;
+    const long int starteol = LabelSize + nBandOffset * nBands;
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
     {
         printf("Error seeking to EOL!\n");
@@ -158,8 +160,8 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 
     if (pszLBLSIZE)
         nOffset = pszLBLSIZE - (const char *)szChunk;
-    pch1 = strstr( (char*)szChunk + nOffset,"=" ) + 1;
-    pch2 = strstr( (char*)szChunk + nOffset, " " );
+    pch1 = strstr( reinterpret_cast<char *>( szChunk + nOffset ), "=" ) + 1;
+    pch2 = strstr( reinterpret_cast<char *>( szChunk + nOffset ), " " );
     strncpy( keyval, pch1, pch2-pch1 );
 
     int EOLabelSize = atoi( keyval );
