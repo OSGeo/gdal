@@ -115,7 +115,7 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
               (ur[1] - ul[1]) / ds.RasterXSize,
               (ll[1] - ul[1]) / ds.RasterYSize)
 
-    (x,inv_new_gt) = gdal.InvGeoTransform( new_gt )
+    inv_new_gt = gdal.InvGeoTransform( new_gt )
     
     # -------------------------------------------------------------------------
     #  Report results for the five locations.
@@ -208,8 +208,7 @@ gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
 #############################################################################
 # Main
 
-if __name__ == '__main__':
-
+def main():
     # Default GDAL argument parsing.
     
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
@@ -264,3 +263,7 @@ if __name__ == '__main__':
 
 
     move( filename, t_srs, s_srs, pixel_threshold )
+
+
+if __name__ == '__main__':
+    main()
