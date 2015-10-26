@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 use Scalar::Util 'blessed';
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
@@ -230,7 +231,7 @@ my $band2 = $dataset->Band(2);
 $band1->RegenerateOverviews([$band2]); #scalar resampling, subref callback, scalar callback_data
 $band1->RegenerateOverview($band2); #scalar resampling, subref callback, scalar callback_data
 
-my $c = $band1->GetOverviewCount;
+$c = $band1->GetOverviewCount;
 ok($c == 2, "GetOverviewCount, got $c");
 my $o = $band1->GetOverview(1);
 ok(defined($o), "GetOverview");
@@ -241,8 +242,7 @@ Geo::GDAL::VSIF::Unlink('/vsimem/test.gtiff');
 $dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Type => 'Float64');
 $band = $dataset->Band;
 
-my $data = $band->ReadTile;
-my ($min, $max);
+$data = $band->ReadTile;
 for my $y (0..@$data-1) {
     for my $x (0..@{$data->[$y]}-1) {
         $data->[$y][$x] = rand 10;
@@ -267,7 +267,8 @@ for (@$h) {
 }
 ok($sum == 256*256, "GetHistogram");
 ok(@$h == 11, "GetHistogram");
-my ($min, $max, $histogram) = $band->GetDefaultHistogram;
+my $histogram;
+($min, $max, $histogram) = $band->GetDefaultHistogram;
 ok(ref($histogram) eq 'ARRAY', "GetDefaultHistogram");
 eval {
     $band->SetDefaultHistogram($min, $max, $histogram);
@@ -285,7 +286,7 @@ ok($hist[2][1] eq $h[1], "DefaultHistogram");
 my $buf = $band->ReadRaster();
 my $pc = $band->PackCharacter;
 my @data = unpack("$pc*", $buf);
-my $n = @data;
+$n = @data;
 ok($n == 256*256, "ReadRaster");
 
 $buf = pack("$pc*", @data);

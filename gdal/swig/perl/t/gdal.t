@@ -1,3 +1,5 @@
+use strict;
+use warnings;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 Geo::GDAL::PushFinderLocation('../../data');
@@ -109,15 +111,15 @@ if (0) {
     $b->FillNodata($r);
     #print STDERR "@$_\n" for (@{$b->ReadTile()});
 
-    my $histogram;
+    my @histogram;
     eval {
 	@histogram = $b->GetHistogram();
     };
-    ok($#histogram == 255, "Histogram: @histogram");
+    ok($#histogram == 255, "Histogram");
     eval {
 	$b->SetDefaultHistogram(1,10,[0..255]);
     };
-    my ($min, $max);
+    my ($min, $max, $histogram);
     eval {
 	($min,$max,$histogram) = $b->GetDefaultHistogram();
     };
@@ -125,7 +127,7 @@ if (0) {
     eval {
 	@histogram = $b->GetHistogram(Min=>0, Max=>100, Buckets=>20);
     };
-    ok($#histogram == 19, "Histogram with parameters: @histogram");
+    ok($#histogram == 19, "Histogram with parameters");
 
     my @o;
     for (0..5) {
@@ -133,9 +135,10 @@ if (0) {
 	push @o, "$a Generating Histogram 1";
     }
     my @out;
-    $callback = sub {
-    	      push @out, "@_";	
-    	      return $_[0] < 0.5 ? 1 : 0 };	
+    my $callback = sub {
+        push @out, "@_";	
+        return $_[0] < 0.5 ? 1 : 0;
+    };
     eval {
 	Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,
 				       Geo::GDAL::ColorTable->new,
@@ -163,12 +166,12 @@ if (0) {
     
     my $band = $r;
 
-    $colors = $band->ColorTable(Geo::GDAL::ColorTable->new);
-    @table = $colors->ColorTable([10,20,30,40],[20,20,30,40]);
+    my $colors = $band->ColorTable(Geo::GDAL::ColorTable->new);
+    my @table = $colors->ColorTable([10,20,30,40],[20,20,30,40]);
     for (@table) {
 	@$_ = (1,2,3,4) if $_->[0] == 10;
     }
-    @table2 = $colors->ColorTable(@table);
+    my @table2 = $colors->ColorTable(@table);
     ok($table[1]->[1] == 20, "colortable 1");
     ok($table2[0]->[2] == 3, "colortable 2");
 
@@ -194,6 +197,7 @@ if (0) {
 }
 
 {
+    my $DOWARN = 0;
     BEGIN { $SIG{'__WARN__'} = sub { warn $_[0] if $DOWARN } }
     my $r = Geo::GDAL::RasterAttributeTable->new;
     my @t = $r->FieldTypes;
@@ -203,11 +207,12 @@ if (0) {
     my @usages;
     for my $u (@u) {
 	for my $t (@t) {
-	    $r->CreateColumn("$t $u", $t, $u);
+	    $r->CreateColumn("$t $u", $t, $u); # do not warn about RAT column types
             push @types, $t;
             push @usages, $u;
 	}
     }
+    $DOWARN = 1;
     my $n = $r->GetColumnCount;
     my $n2 = @t * @u;
     ok($n == $n2, "create rat column");
@@ -240,13 +245,14 @@ if (0) {
 gdal_tests();
 
 SKIP: {
+    my $src;
     eval {
         $src = Geo::OSR::SpatialReference->new(EPSG => 2392);
     };
     
     skip "GDAL support files not found. Please set GDAL_DATA.", 1 if $@;
 
-    $xml = $src->ExportToXML();
+    my $xml = $src->ExportToXML();
     $a = Geo::GDAL::ParseXMLString($xml);
     $xml = Geo::GDAL::SerializeXMLTree($a);
     $b = Geo::GDAL::ParseXMLString($xml);
