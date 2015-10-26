@@ -171,10 +171,10 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
         if this_error > max_error:
             max_error = this_error
 
-    update = 0
+    update = False
     if pixel_threshold is not None:
         if pixel_threshold > max_error:
-            update = 1
+            update = True
 
     # -------------------------------------------------------------------------
     # Apply the change coordinate system and geotransform.
@@ -221,7 +221,6 @@ def main():
     # Script argument defaults
     s_srs = None
     t_srs = None
-    update=0
     filename = None
     pixel_threshold = None
 
