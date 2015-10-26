@@ -210,13 +210,15 @@ static const sqlite3_io_methods OGRSQLiteIOMethods =
     OGRSQLiteIOFileControl,
     OGRSQLiteIOSectorSize,
     OGRSQLiteIODeviceCharacteristics,
-#if SQLITE_VERSION_NUMBER >= 3008002L
+#if SQLITE_VERSION_NUMBER >= 3007004L /* perhaps older too ? */
     NULL,  // xShmMap
     NULL,  // xShmLock
     NULL,  // xShmBarrier
     NULL,  // xShmUnmap
+#if SQLITE_VERSION_NUMBER >= 3008002L /* perhaps older too ? */
     NULL,  // xFetch
     NULL,  // xUnfetch
+#endif
 #endif
 };
 
