@@ -27,31 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef INCLUDED_IOSTREAM
-#include <iostream>
-#define INCLUDED_IOSTREAM
-#endif
+#include <cfloat>
 
-#ifndef INCLUDED_ALGORITHM
 #include <algorithm>
-#define INCLUDED_ALGORITHM
-#endif
 
-#ifndef INCLUDED_FLOAT
-#include <float.h>
-#define INCLUDED_FLOAT
-#endif
-
-#ifndef INCLUDED_PCRTYPES
-#include "pcrtypes.h"
-#define INCLUDED_PCRTYPES
-#endif
-
-#ifndef INCLUDED_PCRASTERUTIL
 #include "pcrasterutil.h"
-#define INCLUDED_PCRASTERUTIL
-#endif
-
+#include "pcrtypes.h"
 
 
 //! Converts PCRaster data type to GDAL data type.
@@ -108,7 +89,6 @@ GDALDataType cellRepresentation2GDALType(
 }
 
 
-
 CSF_VS string2ValueScale(
          std::string const& string)
 {
@@ -146,7 +126,6 @@ CSF_VS string2ValueScale(
 
   return valueScale;
 }
-
 
 
 std::string valueScale2String(
@@ -202,7 +181,6 @@ std::string valueScale2String(
 }
 
 
-
 std::string cellRepresentation2String(
          CSF_CR cellRepresentation)
 {
@@ -253,7 +231,6 @@ std::string cellRepresentation2String(
 }
 
 
-
 //! Converts GDAL data type to PCRaster value scale.
 /*!
   \param     type GDAL data type.
@@ -301,7 +278,6 @@ CSF_VS GDALType2ValueScale(
 
   return valueScale;
 }
-
 
 
 //! Converts a GDAL type to a PCRaster cell representation.
@@ -362,7 +338,6 @@ CSF_CR GDALType2CellRepresentation(
 
   return cellRepresentation;
 }
-
 
 
 //! Determines a missing value to use for data of \a cellRepresentation.
@@ -429,7 +404,6 @@ double missingValue(
 }
 
 
-
 //! Opens the raster in \a filename using mode \a mode.
 /*!
   \param     filename Filename of raster to open.
@@ -446,7 +420,6 @@ MAP* mapOpen(
 
   return map;
 }
-
 
 
 void alterFromStdMV(
@@ -514,7 +487,6 @@ void alterFromStdMV(
 }
 
 
-
 void alterToStdMV(
          void* buffer,
          size_t size,
@@ -578,7 +550,6 @@ void alterToStdMV(
     }
   }
 }
-
 
 
 CSF_VS fitValueScale(
@@ -648,7 +619,6 @@ CSF_VS fitValueScale(
 }
 
 
-
 void castValuesToBooleanRange(
          void* buffer,
          size_t size,
@@ -713,7 +683,6 @@ void castValuesToBooleanRange(
 }
 
 
-
 void castValuesToDirectionRange(
          void* buffer,
          size_t size)
@@ -722,7 +691,6 @@ void castValuesToDirectionRange(
        static_cast<REAL4*>(buffer) + size,
        CastToDirection());
 }
-
 
 
 void castValuesToLddRange(
