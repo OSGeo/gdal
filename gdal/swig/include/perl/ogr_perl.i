@@ -786,11 +786,15 @@ use Scalar::Util 'blessed';
 use Carp;
 sub new {
     my $pkg = shift;
-    if (blessed($_[0]) and $_[0]->isa('Geo::OGR::FeatureDefn')) {
-        return $pkg->new($_[0]);
+    my $arg = blessed($_[0]);
+    my $defn;
+    if ($arg && $arg eq 'Geo::OGR::FeatureDefn') {
+        $defn = $_[0];
     } else {
-        return $pkg->new(Geo::OGR::FeatureDefn->new(@_));
+        $defn = Geo::OGR::FeatureDefn->new(@_);
     }
+    my $self = Geo::OGRc::new_Feature($defn);
+    bless $self, $pkg if defined($self);
 }
 %}
 
