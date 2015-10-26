@@ -9,7 +9,7 @@
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -95,7 +95,6 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
 
     for( ; true; )
     {
-        const char *pszCheck;
         char szChunk[513];
 
         int nBytesRead = VSIFReadL( szChunk, 1, 512, fp );
@@ -106,6 +105,7 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
         if( nBytesRead < 512 )
             break;
 
+        const char *pszCheck;
         if( osHeaderText.size() > 520 )
             pszCheck = osHeaderText.c_str() + (osHeaderText.size() - 520);
         else
@@ -133,10 +133,9 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
 int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix )
 
 {
-    CPLString osName, osValue;
-
     for( ; true; )
     {
+        CPLString osName, osValue;
         if( !ReadPair( osName, osValue ) )
             return FALSE;
 
@@ -187,8 +186,8 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
         // ISIS3 does not have anything after the end group/object keyword. 
         if( EQUAL(osName,"End_Group") || EQUAL(osName,"End_Object") )
             return TRUE;
-        else
-            return FALSE;
+
+        return FALSE;
     }
 
     pszHeaderNext++;
@@ -231,7 +230,6 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
     {
         if( !ReadWord( osValue ) )
             return FALSE;
-
     }
 
     SkipWhite();
@@ -243,10 +241,9 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
     // Append units keyword.  For lines that like like this:
     //  MAP_RESOLUTION               = 4.0 <PIXEL/DEGREE>
 
-    CPLString osWord;
-
     osValue += " ";
 
+    CPLString osWord;
     while( ReadWord( osWord ) )
     {
         SkipWhite();
@@ -271,9 +268,9 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
 
     SkipWhite();
 
-    if( !(*pszHeaderNext != '\0' 
-           && *pszHeaderNext != '=' 
-           && !isspace((unsigned char)*pszHeaderNext)) )
+    if( !(*pszHeaderNext != '\0'
+          && *pszHeaderNext != '='
+          && !isspace( static_cast<unsigned char>( *pszHeaderNext ) ) ) )
         return FALSE;
 
     /* Extract a text string delimited by '\"' */
@@ -331,9 +328,9 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
      * which is taken as a line extender, and we suck up white space to new
      * text.
      */
-    while( *pszHeaderNext != '\0' 
-           && *pszHeaderNext != '=' 
-           && !isspace((unsigned char)*pszHeaderNext) )
+    while( *pszHeaderNext != '\0'
+           && *pszHeaderNext != '='
+           && !isspace(static_cast<unsigned char>( *pszHeaderNext ) ) )
     {
         osWord += *pszHeaderNext;
         pszHeaderNext++;
@@ -385,7 +382,7 @@ void NASAKeywordHandler::SkipWhite()
         }
 
         // Skip # style comments 
-         if( (*pszHeaderNext == 10 || *pszHeaderNext == 13 ||
+        if( (*pszHeaderNext == 10 || *pszHeaderNext == 13 ||
  	     *pszHeaderNext == ' ' || *pszHeaderNext == '\t' )
               && pszHeaderNext[1] == '#' )
         {
@@ -402,7 +399,7 @@ void NASAKeywordHandler::SkipWhite()
         }
 
         // Skip white space (newline, space, tab, etc )
-        if( isspace( (unsigned char)*pszHeaderNext ) )
+        if( isspace( static_cast<unsigned char>( *pszHeaderNext ) ) )
         {
             pszHeaderNext++; 
             continue;
@@ -432,7 +429,7 @@ const char *NASAKeywordHandler::GetKeyword( const char *pszPath,
 /************************************************************************/
 /*                             GetKeywordList()                         */
 /************************************************************************/
- 
+
 char **NASAKeywordHandler::GetKeywordList()
 {
     return papszKeywordList;

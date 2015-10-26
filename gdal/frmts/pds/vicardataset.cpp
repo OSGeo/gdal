@@ -167,11 +167,12 @@ int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->pabyHeader == NULL )
         return FALSE;
 
-    return strstr((char*)poOpenInfo->pabyHeader,"LBLSIZE") != NULL &&
-           strstr((char*)poOpenInfo->pabyHeader,"FORMAT") != NULL &&
-           strstr((char*)poOpenInfo->pabyHeader,"NL") != NULL &&
-           strstr((char*)poOpenInfo->pabyHeader,"NS") != NULL &&
-           strstr((char*)poOpenInfo->pabyHeader,"NB") != NULL;
+    return
+        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "LBLSIZE" ) != NULL &&
+        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "FORMAT" ) != NULL &&
+        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NL" ) != NULL &&
+        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NS" ) != NULL &&
+        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NB" ) != NULL;
 }
 
 /************************************************************************/
@@ -302,40 +303,40 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
 
-    double dfULXMap=0.5;
-    double dfULYMap = 0.5;
     double dfXDim = 1.0;
     double dfYDim = 1.0;
-    double xulcenter = 0.0;
-    double yulcenter = 0.0;
 
     value = poDS->GetKeyword("MAP.MAP_SCALE");
     if (strlen(value) > 0 ) {
-        dfXDim = CPLAtof(value);
-        dfYDim = CPLAtof(value) * -1;
-        dfXDim = dfXDim * 1000.0;
-        dfYDim = dfYDim * 1000.0;
+        dfXDim = CPLAtof(value) * 1000.0;
+        dfYDim = CPLAtof(value) * -1 * 1000.0;
     }
 
-    double dfSampleOffset_Shift =
+    const double dfSampleOffset_Shift =
         CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "-0.5" ));
 
-    double dfLineOffset_Shift =
+    const double dfLineOffset_Shift =
         CPLAtof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "-0.5" ));
 
-    double dfSampleOffset_Mult =
+    const double dfSampleOffset_Mult =
         CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Mult", "-1.0") );
 
-    double dfLineOffset_Mult =
+    const double dfLineOffset_Mult =
         CPLAtof( CPLGetConfigOption( "PDS_LineProjOffset_Mult", "1.0") );
 
     /***********   Grab LINE_PROJECTION_OFFSET ************/
+    double yulcenter = 0.0;
+    double dfULYMap = 0.5;
+
     value = poDS->GetKeyword("MAP.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
         yulcenter = CPLAtof(value);
         dfULYMap = ((yulcenter + dfLineOffset_Shift) * -dfYDim * dfLineOffset_Mult);
     }
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
+    double xulcenter = 0.0;
+    double dfULXMap=0.5;
+
     value = poDS->GetKeyword("MAP.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
         xulcenter = CPLAtof(value);
@@ -460,15 +461,15 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (bProjectionSet) {
         //Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
-        CPLString proj_target_name = map_proj_name + " " + target_name;
+        const CPLString proj_target_name = map_proj_name + " " + target_name;
         oSRS.SetProjCS(proj_target_name); //set ProjCS keyword
 
         //The geographic/geocentric name will be the same basic name as the body name
         //'GCS' = Geographic/Geocentric Coordinate System
-        CPLString geog_name = "GCS_" + target_name;
+        const CPLString geog_name = "GCS_" + target_name;
 
         //The datum and sphere names will be the same basic name aas the planet
-        CPLString datum_name = "D_" + target_name;
+        const CPLString datum_name = "D_" + target_name;
         CPLString sphere_name = target_name; // + "_IAU_IAG");  //Might not be IAU defined so don't add
 
         //calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
@@ -549,7 +550,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[5] = dfYDim;
     }
 
-    CPLString osQubeFile = poOpenInfo->pszFilename;
+    const CPLString osQubeFile = poOpenInfo->pszFilename;
     if( !poDS->bGotTransform )
         poDS->bGotTransform =
             GDALReadWorldFile( osQubeFile, "psw",
@@ -609,8 +610,10 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i+1, poBand );
         poBand->SetNoDataValue( dfNoData );
         if (bIsDTM) {
-            poBand->SetScale( (double) CPLAtof(poDS->GetKeyword( "DTM.DTM_SCALING_FACTOR") ) );
-            poBand->SetOffset( (double) CPLAtof(poDS->GetKeyword( "DTM.DTM_OFFSET") ) );
+            poBand->SetScale( static_cast<double>(
+                CPLAtof(poDS->GetKeyword( "DTM.DTM_SCALING_FACTOR") ) ) );
+            poBand->SetOffset( static_cast<double>(
+                CPLAtof(poDS->GetKeyword( "DTM.DTM_OFFSET") ) ) );
             const char* pszMin = poDS->GetKeyword( "DTM.DTM_MINIMUM_DN", NULL );
             const char* pszMax = poDS->GetKeyword( "DTM.DTM_MAXIMUM_DN", NULL );
             if (pszMin != NULL && pszMax != NULL )
