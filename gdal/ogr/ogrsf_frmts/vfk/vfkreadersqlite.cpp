@@ -151,6 +151,7 @@ VFKReaderSQLite::~VFKReaderSQLite()
                  m_pszDBname);
         VSIUnlink(m_pszDBname);
     }
+    delete[] m_pszDBname;
 }
 
 /*!
