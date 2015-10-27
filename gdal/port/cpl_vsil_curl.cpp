@@ -83,9 +83,8 @@ void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
 
 #define ENABLE_DEBUG 1
 
-#define N_MAX_REGIONS       1000
-
-#define DOWNLOAD_CHUNCK_SIZE    16384
+static const int N_MAX_REGIONS = 1000;
+static const int DOWNLOAD_CHUNCK_SIZE = 16384;
 
 typedef enum
 {
@@ -295,7 +294,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual struct curl_slist* GetCurlHeaders(const CPLString& ) { return NULL; }
     virtual bool CanRestartOnError(const char*) { return false; }
     virtual bool UseLimitRangeGetInsteadOfHead() { return false; }
-    virtual void ProcessGetFileSizeResult(const char* pszContent) {}
+  virtual void ProcessGetFileSizeResult(const char* /* pszContent */ ) {}
     void SetURL(const char* pszURL);
 
   public:
@@ -2996,7 +2995,8 @@ vsi_l_offset VSIS3WriteHandle::Tell()
 /*                               Read()                                 */
 /************************************************************************/
 
-size_t VSIS3WriteHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
+size_t VSIS3WriteHandle::Read( void * /* pBuffer */, size_t /* nSize */,
+                               size_t /* nMemb */ )
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "Read not supported on writable /vsis3 files");
