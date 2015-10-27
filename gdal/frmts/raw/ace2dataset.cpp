@@ -379,7 +379,7 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_ACE2()
 
 {
-    if( GDALGetDriverByName( "ACE2" ) == NULL )
+    if( GDALGetDriverByName( "ACE2" ) != NULL )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();
