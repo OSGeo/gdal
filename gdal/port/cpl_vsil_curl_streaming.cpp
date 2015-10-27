@@ -1714,7 +1714,8 @@ bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg)
  * streamed from AWS S3 buckets without prior download of the entire file.
  *
  * Recognized filenames are of the form /vsis3_streaming/bucket/key where
- * bucket is the name of the S3 bucket and resource the S3 object key.
+ * bucket is the name of the S3 bucket and resource the S3 object "key", i.e.
+ * a filename potentially containing subdirectories.
  *
  * The AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID configuration options *must* be
  * set.

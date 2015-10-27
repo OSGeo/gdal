@@ -3944,7 +3944,8 @@ void VSIS3Handle::ProcessGetFileSizeResult(const char* pszContent)
  * allowed).
  *
  * Recognized filenames are of the form /vsis3/bucket/key where
- * bucket is the name of the S3 bucket and resource the S3 object key.
+ * bucket is the name of the S3 bucket and key the S3 object "key", i.e.
+ * a filename potentially containing subdirectories.
  *
  * Partial downloads (requires the HTTP server to support random reading) are done
  * with a 16 KB granularity by default. If the driver detects sequential reading
