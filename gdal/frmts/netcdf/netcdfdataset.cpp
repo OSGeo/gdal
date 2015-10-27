@@ -270,7 +270,9 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     if( status == NC_NOERR ) {
         if ( NCDFGetAttr( cdfid, nZId, szNoValueName, 
                           &dfNoData ) == CE_None )
+        {
             bGotNoData = true;
+        }
     }
 
     /* if NoData was not found, use the default value */
@@ -283,12 +285,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                   "did not get nodata value for variable #%d, using default %f", 
                   nZId, dfNoData );
     }
-
-    /* set value */
-#ifdef NCDF_DEBUG
-    CPLDebug( "GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData );
-#endif
-    SetNoDataValue( dfNoData );
 
 /* -------------------------------------------------------------------- */
 /*  Look for valid_range or valid_min/valid_max                         */
@@ -379,6 +375,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             /* See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure */
             SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
         }
+        else
+        {
+            // Fix nodata value as it was stored signed
+            if( dfNoData < 0 )
+                dfNoData += 256;
+        }
     }
 
 #ifdef NETCDF_HAS_NC4
@@ -388,6 +390,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 
     CPLDebug( "GDAL_netCDF", "netcdf type=%d gdal type=%d signedByte=%d",
               nc_datatype, eDataType, bSignedData );
+
+    /* set nodata value */
+#ifdef NCDF_DEBUG
+    CPLDebug( "GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData );
+#endif
+    SetNoDataValue( dfNoData );
 
 /* -------------------------------------------------------------------- */
 /*      Create Band Metadata                                            */

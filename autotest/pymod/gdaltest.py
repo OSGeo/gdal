@@ -888,7 +888,10 @@ class GDALTest:
             post_reason( 'Failed to create test file using Create method.' )
             return 'fail'
         
-        nodata = 11
+        if self.options is None or not 'PIXELTYPE=SIGNEDBYTE' in self.options:
+            nodata = 130
+        else:
+            nodata = 11
         if new_ds.GetRasterBand(1).SetNoDataValue(nodata) is not gdal.CE_None:
             post_reason( 'Failed to set NoData value.' )
             return 'fail'
