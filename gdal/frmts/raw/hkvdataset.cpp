@@ -603,11 +603,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
     if (bSuccess)
     {
-        CPLsprintf( szValue, "%.10f", temp_lat );
+        CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "top_left.latitude", 
                                        szValue );
 
-        CPLsprintf( szValue, "%.10f", temp_long );
+        CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_long );
         papszGeoref = CSLSetNameValue( papszGeoref, "top_left.longitude", 
                                        szValue );
     }
@@ -646,11 +646,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
     if (bSuccess)
     {
-        CPLsprintf( szValue, "%.10f", temp_lat );
+        CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "top_right.latitude", 
                                        szValue );
 
-        CPLsprintf( szValue, "%.10f", temp_long );
+        CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_long );
         papszGeoref = CSLSetNameValue( papszGeoref, "top_right.longitude", 
                                        szValue );
     }
@@ -856,13 +856,9 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
     if ((oSRS.GetAttrValue("PROJECTION") != NULL) && 
         (EQUAL(oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
     {
-      char *ol_txt;
-        ol_txt=(char *) CPLMalloc(255);
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "utm" );
-        CPLsprintf(ol_txt,"%f",oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.origin_longitude",
-        ol_txt );
-        CPLFree(ol_txt);
+                        CPLSPrintf("%f",oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl)));
     }
     else if ((oSRS.GetAttrValue("PROJECTION") == NULL) && (oSRS.IsGeographic()))
     {
