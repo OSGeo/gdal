@@ -294,6 +294,31 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.server.stop_requested = True
                 return
 
+            if self.path == '/s3_delete_bucket/delete_file' and getattr(self.server, 'has_requested_s3_delete_bucket_delete_file', None) is None:
+                self.server.has_requested_s3_delete_bucket_delete_file = True
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 3)
+                self.end_headers()
+                self.wfile.write("""foo""".encode('ascii'))
+                return
+
+            if self.path == '/s3_fake_bucket3/empty_file.bin':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                if getattr(self.server, 'has_requested_s3_fake_bucket3_empty_file_bin', None) is None:
+                    self.server.has_requested_s3_fake_bucket3_empty_file_bin = True
+                    self.send_header('Content-type', 'text/plain')
+                    self.send_header('Content-Length', 3)
+                    self.end_headers()
+                    self.wfile.write("""foo""".encode('ascii'))
+                else:
+                    self.send_header('Content-type', 'text/plain')
+                    self.send_header('Content-Length', 0)
+                    self.end_headers()
+                return
+
             if self.path == '/s3_fake_bucket/resource':
                 self.protocol_version = 'HTTP/1.1'
 

@@ -239,6 +239,7 @@ public:
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
             char   **ReadDir( const char *pszDirname, bool* pbGotFileList );
+            void     InvalidateDirContent( const char *pszDirname );
 
 
     const CachedRegion* GetRegion(const char*     pszURL,
@@ -250,6 +251,7 @@ public:
                                   const char     *pData);
 
     CachedFileProp*     GetCachedFileProp(const char*     pszURL);
+    void                InvalidateCachedFileProp(const char*     pszURL);
 
     void                AddRegionToCacheDisk(CachedRegion* psRegion);
     const CachedRegion* GetRegionFromCacheDisk(const char*     pszURL,
@@ -1122,7 +1124,7 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
         pBuffer = (char*) pBuffer + nToCopy;
         iterOffset += nToCopy;
         nBufferRequestSize -= nToCopy;
-        if (psRegion->nSize != DOWNLOAD_CHUNCK_SIZE && nBufferRequestSize != 0)
+        if (psRegion->nSize != (size_t)DOWNLOAD_CHUNCK_SIZE && nBufferRequestSize != 0)
         {
             break;
         }
@@ -1831,6 +1833,22 @@ CachedFileProp*  VSICurlFilesystemHandler::GetCachedFileProp(const char* pszURL)
     }
 
     return cachedFileProp;
+}
+
+/************************************************************************/
+/*                    InvalidateCachedFileProp()                        */
+/************************************************************************/
+
+void VSICurlFilesystemHandler::InvalidateCachedFileProp(const char* pszURL)
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    std::map<CPLString, CachedFileProp*>::iterator oIter = cacheFileSize.find(pszURL);
+    if( oIter != cacheFileSize.end() )
+    {
+        CPLFree(oIter->second);
+        cacheFileSize.erase(oIter);
+    }
 }
 
 /************************************************************************/
@@ -2760,6 +2778,23 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname, bool* pbGotFil
 }
 
 /************************************************************************/
+/*                        InvalidateDirContent()                        */
+/************************************************************************/
+
+void VSICurlFilesystemHandler::InvalidateDirContent( const char *pszDirname )
+{
+    CPLMutexHolder oHolder( &hMutex );
+    std::map<CPLString, CachedDirList*>::iterator oIter =
+        cacheDirList.find(pszDirname);
+    if( oIter != cacheDirList.end() )
+    {
+        CSLDestroy( oIter->second->papszFileList );
+        CPLFree( oIter->second );
+        cacheDirList.erase(oIter);
+    }
+}
+
+/************************************************************************/
 /*                             ReadDir()                                */
 /************************************************************************/
 
@@ -3055,6 +3090,9 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         }
         else
         {
+            m_poFS->InvalidateCachedFileProp( m_poS3HandleHelper->GetURL().c_str() );
+            m_poFS->InvalidateDirContent( CPLGetDirname(m_osFilename) );
+
             CPLXMLNode* psNode = CPLParseXMLString( (const char*)sWriteFuncData.pBuffer );
             if( psNode )
             {
@@ -3280,6 +3318,11 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
                             m_osFilename.c_str());
                 bSuccess = false;
             }
+        }
+        else
+        {
+            m_poFS->InvalidateCachedFileProp( m_poS3HandleHelper->GetURL().c_str() );
+            m_poFS->InvalidateDirContent( CPLGetDirname(m_osFilename) );
         }
 
         CPLFree(sWriteFuncData.pBuffer);
@@ -3670,6 +3713,11 @@ int VSIS3FSHandler::Unlink( const char *pszFilename )
                          pszFilename);
                 nRet = -1;
             }
+        }
+        else
+        {
+            InvalidateCachedFileProp(poS3HandleHelper->GetURL().c_str());
+            InvalidateDirContent( CPLGetDirname(pszFilename) );
         }
 
         CPLFree(sWriteFuncData.pBuffer);
