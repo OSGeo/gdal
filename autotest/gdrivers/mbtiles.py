@@ -131,6 +131,10 @@ def mbtiles_3():
     if drv is None:
         return 'skip'
 
+    if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
+        print("Hangs on MacOSX Travis sometimes. Not sure why.")
+        return 'skip'
+
     # Check that we have SQLite VFS support
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/mbtiles_3.db')
