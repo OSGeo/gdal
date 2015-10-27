@@ -16,17 +16,19 @@ generate: ${WRAPPERS}
 	if [ -f Const.pm ]; then mv Const.pm lib/Geo/GDAL; fi
 	if [ -f OGR.pm ]; then mv OGR.pm lib/Geo; fi
 	if [ -f OSR.pm ]; then mv OSR.pm lib/Geo; fi
+	if [ -f GNM.pm ]; then mv GNM.pm lib/Geo; fi
 
 build: gdal_wrap.cc Makefile_Geo__GDAL
 	$(MAKE) -f Makefile_Geo__GDAL
 	$(MAKE) -f Makefile_Geo__GDAL__Const
 	$(MAKE) -f Makefile_Geo__OGR
 	$(MAKE) -f Makefile_Geo__OSR
+	$(MAKE) -f Makefile_Geo__GNM
 
 gdal_wrap.cc: generate
 
 Makefile_Geo__GDAL:
-	perl Makefile.PL INSTALL_BASE=$(INST_PREFIX)
+	perl Makefile.PL PREFIX=/usr INSTALLDIRS=vendor
 
 test: build
 	$(MAKE) -f Makefile_Geo__GDAL test
@@ -36,6 +38,7 @@ install: build
 	$(MAKE) -f Makefile_Geo__GDAL__Const install
 	$(MAKE) -f Makefile_Geo__OGR install
 	$(MAKE) -f Makefile_Geo__OSR install
+	$(MAKE) -f Makefile_Geo__GNM install
 
 dist: Makefile_Geo__GDAL
 	$(MAKE) -f Makefile_Geo__GDAL dist
@@ -47,11 +50,11 @@ clean:
 	-rm -f osr.bs osr_wrap.o
 	-rm -rf blib
 	-rm -f pm_to_blib
-	-rm -f Makefile_Geo__GDAL Makefile_Geo__GDAL__Const Makefile_Geo__OGR Makefile_Geo__OSR
+	-rm -f Makefile_Geo__GDAL Makefile_Geo__GDAL__Const Makefile_Geo__OGR Makefile_Geo__OSR Makefile_Geo__GNM
 
 veryclean: clean
 	-rm -f ${WRAPPERS} 
-	-rm -f gdal.pm gdalconst.pm osr.pm ogr.pm
+	-rm -f *.pm
 	-rm -f META.* MYMETA.*
 	-rm -f *.tar.gz
 
