@@ -68,6 +68,41 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             f.write('DELETE %s\n' % self.path)
             f.close()
 
+        if self.path == '/s3_delete_bucket/delete_file':
+            self.send_response(204)
+            self.end_headers()
+            return
+
+        if self.path == '/s3_delete_bucket/delete_file_error':
+            self.send_response(403)
+            self.end_headers()
+            return
+
+        if self.path == '/s3_delete_bucket/redirect':
+            self.protocol_version = 'HTTP/1.1'
+            if self.headers['Authorization'].find('us-east-1') >= 0:
+                self.send_response(400)
+                response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>AuthorizationHeaderMalformed</Code><Region>us-west-2</Region></Error>'
+                response = '%x\r\n%s' % (len(response), response)
+                self.send_header('Content-type', 'application/xml')
+                self.send_header('Transfer-Encoding', 'chunked')
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+            elif self.headers['Authorization'].find('us-west-2') >= 0:
+                self.send_response(204)
+                self.end_headers()
+            else:
+                sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                self.send_response(403)
+
+            return
+
+        if self.path == '/s3_fake_bucket4/large_file_upload_part_403_error.bin?uploadId=my_id' or \
+           self.path == '/s3_fake_bucket4/large_file_upload_part_no_etag.bin?uploadId=my_id':
+            self.send_response(204)
+            self.end_headers()
+            return
+
         self.send_error(404,'File Not Found: %s' % self.path)
 
     def do_POST(self):
@@ -75,6 +110,171 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             f = open('/tmp/log.txt', 'a')
             f.write('POST %s\n' % self.path)
             f.close()
+
+        if self.path == '/s3_fake_bucket4/large_file.bin?uploads' or \
+           self.path == '/s3_fake_bucket4/large_file_upload_part_403_error.bin?uploads' or \
+           self.path == '/s3_fake_bucket4/large_file_upload_part_no_etag.bin?uploads':
+
+            self.protocol_version = 'HTTP/1.1'
+            if self.headers['Authorization'].find('us-east-1') >= 0:
+                self.send_response(400)
+                response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>AuthorizationHeaderMalformed</Code><Region>us-west-2</Region></Error>'
+                response = '%x\r\n%s' % (len(response), response)
+                self.send_header('Content-type', 'application/xml')
+                self.send_header('Transfer-Encoding', 'chunked')
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+            elif self.headers['Authorization'].find('us-west-2') >= 0:
+                response = '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>'
+                self.send_response(200)
+                self.send_header('Content-type', 'application/xml')
+                self.send_header('Content-Length', len(response))
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+            else:
+                sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                self.send_response(403)
+
+            return
+
+        if self.path == '/s3_fake_bucket4/large_file.bin?uploadId=my_id':
+
+            if self.headers['Content-Length'] != '186':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(self.headers))
+                self.send_response(400)
+                return
+
+            content = self.rfile.read(186).decode('ascii')
+            if content != """<CompleteMultipartUpload>
+<Part>
+<PartNumber>1</PartNumber><ETag>"first_etag"</ETag></Part>
+<Part>
+<PartNumber>2</PartNumber><ETag>"second_etag"</ETag></Part>
+</CompleteMultipartUpload>
+""":
+                sys.stderr.write('Did not get expected content: %s\n' % content)
+                self.send_response(400)
+                return
+
+            self.send_response(200)
+            self.end_headers()
+            return
+
+        if self.path == '/s3_fake_bucket4/large_file_initiate_403_error.bin?uploads':
+            self.send_response(403)
+            self.end_headers()
+            return
+
+        if self.path == '/s3_fake_bucket4/large_file_initiate_empty_result.bin?uploads':
+            self.send_response(200)
+            self.end_headers()
+            return
+
+        if self.path == '/s3_fake_bucket4/large_file_initiate_invalid_xml_result.bin?uploads':
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write('foo'.encode('ascii'))
+            return
+
+        if self.path == '/s3_fake_bucket4/large_file_initiate_no_uploadId.bin?uploads':
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write('<foo/>'.encode('ascii'))
+            return
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+    def do_PUT(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('PUT %s\n' % self.path)
+            f.close()
+
+        if self.path == '/s3_fake_bucket3/empty_file.bin':
+
+            if self.headers['Content-Length'] != '0':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(self.headers))
+                self.send_response(400)
+                return
+
+            self.send_response(200)
+            self.end_headers()
+            return
+
+        if self.path == '/s3_fake_bucket3/empty_file_error.bin':
+            self.send_response(403)
+            self.end_headers()
+            return
+
+        if self.path == '/s3_fake_bucket3/another_file.bin':
+
+            if self.headers['Content-Length'] != '6':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(self.headers))
+                self.send_response(400)
+                return
+
+            content = self.rfile.read(6).decode('ascii')
+            if content != 'foobar':
+                sys.stderr.write('Did not get expected content: %s\n' % content)
+                self.send_response(400)
+                return
+
+            self.send_response(200)
+            self.end_headers()
+            return
+
+        if self.path == '/s3_fake_bucket3/redirect':
+            self.protocol_version = 'HTTP/1.1'
+            if self.headers['Authorization'].find('us-east-1') >= 0:
+                self.send_response(400)
+                response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>AuthorizationHeaderMalformed</Code><Region>us-west-2</Region></Error>'
+                response = '%x\r\n%s' % (len(response), response)
+                self.send_header('Content-type', 'application/xml')
+                self.send_header('Transfer-Encoding', 'chunked')
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+            elif self.headers['Authorization'].find('us-west-2') >= 0:
+                if self.headers['Content-Length'] != '6':
+                    sys.stderr.write('Did not get expected headers: %s\n' % str(self.headers))
+                    self.send_response(400)
+                    return
+                self.send_response(200)
+                self.end_headers()
+            else:
+                sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                self.send_response(403)
+
+            return
+
+        if self.path == '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id':
+            if self.headers['Content-Length'] != '1048576':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(self.headers))
+                self.send_response(400)
+                return
+            self.send_response(200)
+            self.send_header('ETag', '"first_etag"')
+            self.end_headers()
+            return
+
+        if self.path == '/s3_fake_bucket4/large_file.bin?partNumber=2&uploadId=my_id':
+            if self.headers['Content-Length'] != '1':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(self.headers))
+                self.send_response(400)
+                return
+            self.send_response(200)
+            self.send_header('ETag', '"second_etag"')
+            self.end_headers()
+            return
+
+        if self.path == '/s3_fake_bucket4/large_file_upload_part_403_error.bin?partNumber=1&uploadId=my_id':
+            self.send_response(403)
+            self.end_headers()
+            return
+
+        if self.path == '/s3_fake_bucket4/large_file_upload_part_no_etag.bin?partNumber=1&uploadId=my_id':
+            self.send_response(200)
+            self.end_headers()
+            return
 
         self.send_error(404,'File Not Found: %s' % self.path)
 
@@ -284,6 +484,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 else:
                     sys.stderr.write('Bad headers: %s\n' % str(self.headers))
                     self.send_response(403)
+                return
 
             if self.path == '/s3_fake_bucket2/?delimiter=/&marker=bla&prefix=a_dir/':
 
@@ -312,6 +513,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.send_header('Content-Length', len(response))
                 self.end_headers()
                 self.wfile.write(response.encode('ascii'))
+                return
 
             if self.path == '/index.html':
                 self.send_response(200)

@@ -291,6 +291,212 @@ def vsis3_3():
     return 'success'
 
 ###############################################################################
+# Test simple PUT support with a fake AWS server
+
+def vsis3_4():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3', 'wb')
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Empty file
+    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/empty_file.bin', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    gdal.VSIFCloseL(f)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Invalid seek
+    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/empty_file.bin', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ret = gdal.VSIFSeekL(f, 1, 0)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFCloseL(f)
+
+    # Invalid read
+    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/empty_file.bin', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ret = gdal.VSIFReadL(1, 1, f)
+    if len(ret) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFCloseL(f)
+
+    # Error case
+    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/empty_file_error.bin', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.VSIFCloseL(f)
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Nominal case
+    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/another_file.bin', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFSeekL(f, 0, 1) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFSeekL(f, 0, 2) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFWriteL('foo', 1, 3, f) != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFWriteL('bar', 1, 3, f) != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    gdal.VSIFCloseL(f)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Redirect case
+    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/redirect', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFWriteL('foobar', 1, 6, f) != 6:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    gdal.VSIFCloseL(f)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test simple DELETE support with a fake AWS server
+
+def vsis3_5():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ret = gdal.Unlink('/vsis3/foo')
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ret = gdal.Unlink('/vsis3/s3_delete_bucket/delete_file')
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = gdal.Unlink('/vsis3/s3_delete_bucket/delete_file_error')
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ret = gdal.Unlink('/vsis3/s3_delete_bucket/redirect')
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test multipart upload with a fake AWS server
+
+def vsis3_6():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.SetConfigOption('VSIS3_CHUNK_SIZE', '1') # 1 MB
+    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket4/large_file.bin', 'wb')
+    gdal.SetConfigOption('VSIS3_CHUNK_SIZE', None)
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    size = 1024*1024+1
+    ret = gdal.VSIFWriteL(''.join('a' for i in range(size)), 1,size, f)
+    if ret != size:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    gdal.VSIFCloseL(f)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    for filename in [ '/vsis3/s3_fake_bucket4/large_file_initiate_403_error.bin',
+                      '/vsis3/s3_fake_bucket4/large_file_initiate_empty_result.bin',
+                      '/vsis3/s3_fake_bucket4/large_file_initiate_invalid_xml_result.bin',
+                      '/vsis3/s3_fake_bucket4/large_file_initiate_no_uploadId.bin' ]:
+        gdal.SetConfigOption('VSIS3_CHUNK_SIZE', '1') # 1 MB
+        f = gdal.VSIFOpenL(filename, 'wb')
+        gdal.SetConfigOption('VSIS3_CHUNK_SIZE', None)
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        size = 1024*1024+1
+        with gdaltest.error_handler():
+            ret = gdal.VSIFWriteL(''.join('a' for i in range(size)), 1,size, f)
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+        gdal.ErrorReset()
+        gdal.VSIFCloseL(f)
+        if gdal.GetLastErrorMsg() != '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    for filename in [ '/vsis3/s3_fake_bucket4/large_file_upload_part_403_error.bin',
+                      '/vsis3/s3_fake_bucket4/large_file_upload_part_no_etag.bin']:
+        gdal.SetConfigOption('VSIS3_CHUNK_SIZE', '1') # 1 MB
+        f = gdal.VSIFOpenL(filename, 'wb')
+        gdal.SetConfigOption('VSIS3_CHUNK_SIZE', None)
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        size = 1024*1024+1
+        with gdaltest.error_handler():
+            ret = gdal.VSIFWriteL(''.join('a' for i in range(size)), 1,size, f)
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+        gdal.ErrorReset()
+        gdal.VSIFCloseL(f)
+        if gdal.GetLastErrorMsg() != '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 def vsis3_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -381,6 +587,9 @@ gdaltest_list = [ vsis3_init,
                   vsis3_start_webserver,
                   vsis3_2,
                   vsis3_3,
+                  vsis3_4,
+                  vsis3_5,
+                  vsis3_6,
                   vsis3_stop_webserver,
                   vsis3_cleanup ]
 gdaltest_list_extra = [ vsis3_extra_1, vsis3_cleanup ]
