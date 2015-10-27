@@ -2733,7 +2733,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
                        (( abs( abs(nSpacingBegin)  - abs(nSpacingMiddle) ) ) <= 100 ) &&
                        (( abs( abs(nSpacingMiddle) - abs(nSpacingLast) ) )   <= 100 ) ) ) {
                 bLatSpacingOK = TRUE;
-                CPLError(CE_Warning, 1,"Latitude grid not spaced evenly.\nSeting projection for grid spacing is within 0.1 degrees threshold.\n");
+                CPLError(CE_Warning, 1,"Latitude grid not spaced evenly.\nSetting projection for grid spacing is within 0.1 degrees threshold.\n");
 
                 CPLDebug("GDAL_netCDF", 
                          "Latitude grid not spaced evenly, but within 0.1 degree threshold (probably a Gaussian grid).\n"
@@ -4471,7 +4471,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                           "NetCDF driver detected file type=%d, but libnetcdf detected type=%d",
                           poDS->nFormat, nTmpFormat );
             }
-            CPLDebug( "GDAL_netCDF", "seting file type to %d, was %d", 
+            CPLDebug( "GDAL_netCDF", "setting file type to %d, was %d", 
                       nTmpFormat, poDS->nFormat );
             poDS->nFormat = nTmpFormat;
         }
