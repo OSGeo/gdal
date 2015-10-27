@@ -382,6 +382,12 @@ sub OpenShared {
     return _OpenShared(@p);
 }
 
+sub DEMProcessing {
+    my ($Dest, $Dataset, $Processing, $ColorFilename, $Options, $progress, $progress_data) = @_;
+    $Options = Geo::GDAL::GDALDEMProcessingOptions->new($Options);
+    return wrapper_GDALDEMProcessing($Dest, $Dataset, $Processing, $ColorFilename, $Options, $progress, $progress_data);
+}
+
 sub ComputeMedianCutPCT {
     my @p = @_;
     $p[6] = 1 if $p[5] and not defined $p[6];

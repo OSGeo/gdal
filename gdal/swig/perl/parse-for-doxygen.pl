@@ -1,4 +1,6 @@
 use strict;
+use warnings;
+use Modern::Perl;
 
 my @pm = qw(lib/Geo/GDAL.pm lib/Geo/OGR.pm lib/Geo/OSR.pm lib/Geo/GDAL/Const.pm lib/Geo/GNM.pm);
 
@@ -23,6 +25,7 @@ for my $pm (@pm) {
         next if $_ eq '';
         next if $_ =~ /^#####/; # skip swig comments
         my($w) = /^(\S+)\s/;
+        $w //= '';
         if ($w eq 'package') {
             $package = $_;
             $package =~ s/^(\S+)\s+//;
@@ -58,7 +61,7 @@ for my $pm (@pm) {
         if (/use base/) {
             #print "$_\n";
         }
-        if (/\@ISA/ and /=/) {
+        if ($package and /\@ISA/ and /=/) {
             my $isa = $_;
             $isa =~ s/\@ISA//;
             $isa =~ s/=//;
@@ -88,9 +91,6 @@ for my $pm (@pm) {
 
 my @dox = qw(lib/Geo/GDAL.dox lib/Geo/OGR.dox lib/Geo/OSR.dox);
 
-my $package;
-my $sub;
-my $attr;
 for my $dox (@dox) {
     open(my $fh, "<", $dox) or die "cannot open < $dox: $!";
     while (<$fh>) {
@@ -99,6 +99,7 @@ for my $dox (@dox) {
         s/^[\s#]+//;
         #next if $_ eq '';
         my ($w) = /^(\S+)\s/;
+        $w //= '';
         if ($w eq '@class') {
             $package = $_;
             $package =~ s/^(\S+)\s+//;
@@ -116,6 +117,12 @@ for my $dox (@dox) {
             $package{$package}{dox}{$sub}{d} = $sub;
             $package{$package}{dox}{$sub}{at} = $w;
             $package{$package}{dox}{$sub}{ignore} = 1;
+            next;
+        }
+        if ($w eq '@ignore_class') {
+            my $class = $_;
+            $class =~ s/^(\S+)\s+//;
+            $package{$class}{ignore} = 1;
             next;
         }
         if ($w eq '@cmethod' or $w eq '@method' or $w eq '@sub') {
@@ -170,6 +177,7 @@ for my $dox (@dox) {
 for my $package (sort keys %package) {
     next if $package eq '';
     next if $package eq 'Geo::GDAL::Const';
+    next if $package{$package}{ignore};
     print "#** \@class $package\n";
     for my $l (@{$package{$package}{package_dox}}) {
         print "# $l\n";
@@ -239,21 +247,23 @@ for my $package (sort keys %package) {
         my $dp = $d;
         $dp .= '()' unless $dp =~ /\(/;
         print "#** \@method $dp\n";
-        if ($private_methods{$d} or $package{$package}{dox}{$sub}{at} eq '@ignore') {
+        my $at = $package{$package}{dox}{$sub}{at} // '';
+        if ($private_methods{$d} or $at eq '@ignore') {
             print "# Undocumented method, do not call unless you know what you're doing.\n";
             print "# \@todo Test and document this method.\n";
         }
-        if ($package{$package}{dox}{$sub}{at} eq '@cmethod') {
+        if ($at eq '@cmethod') {
             print "# Class method.\n";
         }
-        if ($package{$package}{dox}{$sub}{at} eq '@sub') {
+        if ($at eq '@sub') {
             print "# Package subroutine.\n";
         }
         for my $c (@{$package{$package}{dox}{$sub}{c}}) {
             if ($c =~ /^\+list/) {
                 $c =~ s/\+list //;
                 my($pkg, $prefix, $exclude) = split / /, $c;
-                my %exclude = map {$_=>1} split /,/, $exclude;
+                my %exclude;
+                %exclude = map {$_=>1} split /,/, $exclude if $exclude;
                 my @list;
                 for my $l (sort keys %{$package{$pkg}{subs}}) {
                     next unless $l =~ /^$prefix/;
@@ -271,7 +281,7 @@ for my $package (sort keys %package) {
         print "sub $sub {\n";
         my $code = $package{$package}{code}{$sub};
         fix_indentation($code);
-        pop @$code if $code->[$#$code] =~ /^\s*}\s*$/; # remove duplicate ending } of the sub
+        pop @$code if $code->[$#$code] && $code->[$#$code] =~ /^\s*}\s*$/; # remove duplicate ending } of the sub
         for my $l (@$code) {
             print "$l\n";
         }
@@ -281,6 +291,7 @@ for my $package (sort keys %package) {
 
 sub fix_indentation {
     my $code = shift;
+    return unless $code && @$code;
     my($space) = $code->[0] =~ /^(\s*)/;
     my $l = length($space);
     if ($l < 4) {

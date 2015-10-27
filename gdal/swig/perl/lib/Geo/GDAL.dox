@@ -240,6 +240,20 @@ sub traverse {
 # specified by the path.
 # @return a Geo::GDAL::Driver object, which represents an internal driver.
 
+## @sub Geo::GDAL::Dataset DEMProcessing($Dest, Geo::GDAL::Dataset Dataset, $Processing, $ColorFilename, $Options, subref progress, $progress_data)
+# Apply DEM processing
+# @param Dest Destination dataset path
+# @param Dataset
+# @param Processing "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", or "Roughness"
+# @param ColorFilename
+# @param Options
+# @param progress
+# @param progress_data
+#
+
+## @ignore_class Geo::GDAL::GDALDEMProcessingOptions
+## @ignore wrapper_GDALDEMProcessing
+
 ## @sub ComputeMedianCutPCT(Geo::GDAL::Band red, Geo::GDAL::Band green, Geo::GDAL::Band blue, $num_colors, $colors, subref progress, $progress_data)
 # Compute an "optimal" color table for a three band image.
 # @param red a Geo::GDAL::Band object
