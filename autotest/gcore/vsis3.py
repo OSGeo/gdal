@@ -304,6 +304,10 @@ def vsis3_4():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    if gdal.VSIStatL('/vsis3/s3_fake_bucket3/empty_file.bin').size != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     # Empty file
     f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/empty_file.bin', 'wb')
     if f is None:
@@ -312,6 +316,10 @@ def vsis3_4():
     gdal.ErrorReset()
     gdal.VSIFCloseL(f)
     if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if gdal.VSIStatL('/vsis3/s3_fake_bucket3/empty_file.bin').size != 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -407,8 +415,20 @@ def vsis3_5():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    if gdal.VSIStatL('/vsis3/s3_delete_bucket/delete_file').size != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if gdal.VSIStatL('/vsis3/s3_delete_bucket/delete_file').size != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     ret = gdal.Unlink('/vsis3/s3_delete_bucket/delete_file')
     if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if gdal.VSIStatL('/vsis3/s3_delete_bucket/delete_file') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
