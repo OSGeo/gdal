@@ -58,6 +58,7 @@ if ($config eq '../../apps/gdal-config' or $config eq 'c:/msys/1.0/local/bin/gda
     if ($config eq '../../apps/gdal-config') {
         print "Building against GDAL in this distro tree\n";
         $LIB .= '-L../../.libs -L../.. ';
+        $INC .= '-I../../gnm ';
     } else {
         print "Building against GDAL in 'c:/msys/1.0/local/bin/'\n";
         $LIB .= '-Lc:/msys/1.0/local/lib ';
@@ -126,7 +127,8 @@ die "=======================================================\n".
 %object = ( 'Geo::GDAL' => 'gdal_wrap.o',
             'Geo::GDAL::Const' => 'gdalconst_wrap.o',
             'Geo::OGR' => 'ogr_wrap.o',
-            'Geo::OSR' => 'osr_wrap.o' );
+            'Geo::OSR' => 'osr_wrap.o',
+            'Geo::GNM' => 'gnm_wrap.o'  );
 
 if ($ARGV{'--debug'}) {
     print "LIB = $LIB\n";
@@ -139,7 +141,7 @@ for my $module (keys %object) {
     WriteMakefile( NAME => $module,
                    VERSION_FROM => 'lib/Geo/GDAL.pm',
                    ABSTRACT_FROM => 'lib/Geo/GDAL.pm',
-                   AUTHOR => 'Ari Jolma <https://trac.osgeo.org/gdal/wiki/GdalOgrInPerl>',
+                   AUTHOR => 'Ari Jolma <ari.jolma at gmail.com>',
                    LICENSE => 'mit',
                    META_MERGE => {
                        'meta-spec' => { version => 2 },
@@ -157,10 +159,11 @@ for my $module (keys %object) {
                    OPTIMIZE => "$ENV{CFLAGS} $ENV{CPPFLAGS}",
                    LD => "$Config{ld} $ENV{CFLAGS} $ENV{LDFLAGS}",
                    OBJECT => $object{$module},
-                   PM => {'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
-                          'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
-                          'lib/Geo/OSR.pm' => '$(INST_LIBDIR)/OSR.pm',
-                          'lib/Geo/GDAL/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm'}
+                   PM => { 'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
+                           'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
+                           'lib/Geo/OSR.pm' => '$(INST_LIBDIR)/OSR.pm',
+                           'lib/Geo/GDAL/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm',
+                           'lib/Geo/GNM.pm' => '$(INST_LIBDIR)/GNM.pm' }
         );
 }
 

@@ -1,6 +1,6 @@
 use strict;
 
-my @pm = qw(lib/Geo/GDAL.pm lib/Geo/OGR.pm lib/Geo/OSR.pm lib/Geo/GDAL/Const.pm);
+my @pm = qw(lib/Geo/GDAL.pm lib/Geo/OGR.pm lib/Geo/OSR.pm lib/Geo/GDAL/Const.pm lib/Geo/GNM.pm);
 
 my %internal_methods = map {$_=>1} qw/TIEHASH CLEAR FIRSTKEY NEXTKEY FETCH STORE 
                                       DESTROY DISOWN ACQUIRE RELEASE_PARENTS

@@ -1017,6 +1017,7 @@
 ## @ignore SetType
 
 ## @method $Type($type)
+# Get and/or set the type of the field.
 # @note a.k.a. GetFieldTypeName, GetTypeName, GetType, SetType
 # @param type [optional] One of field types (Geo::OGR::FieldDefn::Types).
 # @return one of field types in non-void context.

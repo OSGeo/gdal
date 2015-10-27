@@ -59,7 +59,7 @@ typedef void GNMNetworkShadow;
 typedef void GNMGenericNetworkShadow;
 %}
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
 %{
 #ifdef DEBUG 
 typedef struct OGRLayerHS OGRLayerShadow;
