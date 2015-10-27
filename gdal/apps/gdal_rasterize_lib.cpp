@@ -710,7 +710,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
         if( hLayer == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Unable to find layer \"%s\", skipping.", 
-                     psOptions->papszLayers[i] );
+                     psOptions->papszLayers ? psOptions->papszLayers[i] : "0" );
             continue;
         }
 
