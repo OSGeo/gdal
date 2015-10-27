@@ -645,6 +645,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                 if( hDstDS == NULL )
                 {
                     GDALDatasetReleaseResultSet( hSrcDataset, hLayer );
+                    GDALRasterizeOptionsFree(psOptionsToFree);
                     return NULL;
                 }
             }
@@ -690,6 +691,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                                 psOptions->bNoDataSet, psOptions->dfNoData);
         if( hDstDS == NULL )
         {
+            GDALRasterizeOptionsFree(psOptionsToFree);
             return NULL;
         }
     }
@@ -731,6 +733,8 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
         if( eErr != CE_None )
             break;
     }
+    
+    GDALRasterizeOptionsFree(psOptionsToFree);
     
     if( eErr != CE_None )
     {
