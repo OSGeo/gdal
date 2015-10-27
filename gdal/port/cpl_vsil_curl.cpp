@@ -2810,7 +2810,7 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname )
 /**
  * \brief Install /vsicurl/ HTTP/FTP file system handler (requires libcurl)
  *
- * A special file handler is installed that allows reading on-the-fly of files
+ * A special file handler is installed that allows on-the-fly random reading of files
  * available through HTTP/FTP web protocols, without prior download of the entire file.
  *
  * Recognized filenames are of the form /vsicurl/http://path/to/remote/resource or
@@ -3938,7 +3938,7 @@ void VSIS3Handle::ProcessGetFileSizeResult(const char* pszContent)
 /**
  * \brief Install /vsis3/ Amazon S3 file system handler (requires libcurl)
  *
- * A special file handler is installed that allows reading on-the-fly of files
+ * A special file handler is installed that allows on-the-fly random reading of files
  * available in AWS S3 buckets, without prior download of the entire file.
  * It also allows sequential writing of files (no seeks or read operations are then
  * allowed).
@@ -3947,8 +3947,8 @@ void VSIS3Handle::ProcessGetFileSizeResult(const char* pszContent)
  * bucket is the name of the S3 bucket and key the S3 object "key", i.e.
  * a filename potentially containing subdirectories.
  *
- * Partial downloads (requires the HTTP server to support random reading) are done
- * with a 16 KB granularity by default. If the driver detects sequential reading
+ * Partial downloads are done with a 16 KB granularity by default.
+ * If the driver detects sequential reading
  * it will progressively increase the chunk size up to 2 MB to improve download
  * performance.
  *
