@@ -3974,6 +3974,8 @@ void VSIS3Handle::ProcessGetFileSizeResult(const char* pszContent)
  * will remain open, causing Amazon to charge you for the parts storage. You'll have to
  * abort yourself with other means such "ghost" uploads
  * (e.g. with the <a href="http://s3tools.org/s3cmd">s3cmd</a> utility)
+ * For files smaller than the chunk size, a simple PUT request is used instead
+ * of the multipart upload API.
  *
  * VSIStatL() will return the size in st_size member.
  *
