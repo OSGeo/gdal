@@ -186,8 +186,8 @@ class OGRCSVDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-    void                SetDefaultCSVName( const char *pszName ) 
-        { osDefaultCSVName = pszName; }
+    void                CreateForSingleFile( const char* pszDirname,
+                                             const char *pszFilename );
 
     void                EnableGeometryFields() { bEnableGeometryFields = TRUE; }
 
