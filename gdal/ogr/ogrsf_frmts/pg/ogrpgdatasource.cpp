@@ -2818,6 +2818,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
             
             osCommand.Printf( "CLOSE %s", "executeSQLCursor" );
             hResult = OGRPG_PQexec(hPGConn, osCommand );
+            OGRPGClearResult( hResult );
             
             SoftCommitTransaction();
 
