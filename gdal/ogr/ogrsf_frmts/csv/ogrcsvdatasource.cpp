@@ -776,3 +776,15 @@ OGRErr OGRCSVDataSource::DeleteLayer( int iLayer )
 
     return OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                       CreateForSingleFile()                          */
+/************************************************************************/
+
+void OGRCSVDataSource::CreateForSingleFile( const char* pszDirname,
+                                            const char *pszFilename ) 
+{
+    pszName = CPLStrdup( pszDirname );
+    bUpdate = TRUE;
+    osDefaultCSVName = CPLGetFilename(pszFilename);
+}

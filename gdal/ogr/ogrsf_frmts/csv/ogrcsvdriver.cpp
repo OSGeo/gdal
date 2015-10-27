@@ -189,15 +189,14 @@ static GDALDataset *OGRCSVDriverCreate( const char * pszName,
 /* -------------------------------------------------------------------- */
     OGRCSVDataSource   *poDS = new OGRCSVDataSource();
 
-    if( !poDS->Open( osDirName, TRUE, TRUE ) )
+     if( EQUAL(CPLGetExtension(pszName),"csv") )
+        poDS->CreateForSingleFile( osDirName, pszName );
+    else if( !poDS->Open( osDirName, TRUE, TRUE ) )
     {
         delete poDS;
         return NULL;
     }
 
-    if( osDirName != pszName )
-        poDS->SetDefaultCSVName( CPLGetFilename(pszName) );
-    
     const char *pszGeometry = CSLFetchNameValue( papszOptions, "GEOMETRY");
     if (pszGeometry != NULL && EQUAL(pszGeometry, "AS_WKT"))
         poDS->EnableGeometryFields();
