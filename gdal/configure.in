@@ -52,6 +52,7 @@ AX_CHECK_COMPILE_FLAG([-Wno-unknown-pragmas],[NO_UNKNOWN_PRAGMAS_FLAG="-Wno-unkn
 AX_CHECK_COMPILE_FLAG([-Wmissing-field-initializers], [C_WFLAGS="$C_WFLAGS -Wmissing-field-initializers" CXX_WFLAGS="$CXX_WFLAGS -Wmissing-field-initializers"])
 AX_CHECK_COMPILE_FLAG([-Wignored-qualifiers], [C_WFLAGS="$C_WFLAGS -Wignored-qualifiers" CXX_WFLAGS="$CXX_WFLAGS -Wignored-qualifiers"])
 AX_CHECK_COMPILE_FLAG([-Wtype-limits], [C_WFLAGS="$C_WFLAGS -Wtype-limits" CXX_WFLAGS="$CXX_WFLAGS -Wtype-limits"])
+AX_CHECK_COMPILE_FLAG([-Wunused-parameter], [C_WFLAGS="$C_WFLAGS -Wunused-parameter" CXX_WFLAGS="$CXX_WFLAGS -Wunused-parameter" NO_UNUSED_PARAMETER_FLAG="-Wno-unused-parameter"])
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"])
 AC_LANG_POP([C++])
@@ -59,6 +60,7 @@ AC_LANG_POP([C++])
 AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)
 AC_SUBST(C_WFLAGS,$C_WFLAGS)
 AC_SUBST(NO_UNKNOWN_PRAGMAS_FLAG,$NO_UNKNOWN_PRAGMAS_FLAG)
+AC_SUBST(NO_UNUSED_PARAMETER_FLAG,$NO_UNUSED_PARAMETER_FLAG)
 
 dnl Checks for programs.
 AC_PROG_CC

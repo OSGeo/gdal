@@ -851,6 +851,7 @@ LIBTOOL
 OBJDUMP
 DLLTOOL
 AS
+NO_UNUSED_PARAMETER_FLAG
 NO_UNKNOWN_PRAGMAS_FLAG
 C_WFLAGS
 CXX_WFLAGS
@@ -4433,6 +4434,41 @@ else
   :
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wunused-parameter" >&5
+$as_echo_n "checking whether C compiler accepts -Wunused-parameter... " >&6; }
+if ${ax_cv_check_cflags___Wunused_parameter+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Wunused-parameter"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Wunused_parameter=yes
+else
+  ax_cv_check_cflags___Wunused_parameter=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Wunused_parameter" >&5
+$as_echo "$ax_cv_check_cflags___Wunused_parameter" >&6; }
+if test "x$ax_cv_check_cflags___Wunused_parameter" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wunused-parameter" CXX_WFLAGS="$CXX_WFLAGS -Wunused-parameter" NO_UNUSED_PARAMETER_FLAG="-Wno-unused-parameter"
+else
+  :
+fi
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -4486,6 +4522,8 @@ CXX_WFLAGS=$CXX_WFLAGS
 C_WFLAGS=$C_WFLAGS
 
 NO_UNKNOWN_PRAGMAS_FLAG=$NO_UNKNOWN_PRAGMAS_FLAG
+
+NO_UNUSED_PARAMETER_FLAG=$NO_UNUSED_PARAMETER_FLAG
 
 
 ac_ext=c
