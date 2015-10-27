@@ -34,6 +34,7 @@
 #include "cpl_time.h"
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_aws.h"
+#include "cpl_minixml.h"
 
 CPL_CVSID("$Id$");
 
@@ -268,14 +269,15 @@ class VSICurlHandle : public VSIVirtualHandle
   protected:
     VSICurlFilesystemHandler* poFS;
 
-  private:
-    char*           pszURL;
-
-    vsi_l_offset    curOffset;
     vsi_l_offset    fileSize;
     bool            bHasComputedFileSize;
     ExistStatus     eExists;
     bool            bIsDirectory;
+
+  private:
+    char*           pszURL;
+
+    vsi_l_offset    curOffset;
     time_t          mTime;
 
     vsi_l_offset    lastDownloadedOffset;
@@ -293,6 +295,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual struct curl_slist* GetCurlHeaders(const CPLString& ) { return NULL; }
     virtual bool CanRestartOnError(const char*) { return false; }
     virtual bool UseLimitRangeGetInsteadOfHead() { return false; }
+    virtual void ProcessGetFileSizeResult(const char* pszContent) {}
     void SetURL(const char* pszURL);
 
   public:
@@ -789,6 +792,10 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 
             eExists = EXIST_NO;
             fileSize = 0;
+        }
+        else if( sWriteFuncData.pBuffer != NULL )
+        {
+            ProcessGetFileSizeResult( (const char*)sWriteFuncData.pBuffer );
         }
 
         /* Try to guess if this is a directory. Generally if this is a directory, */
@@ -2852,6 +2859,11 @@ protected:
 public:
         VSIS3FSHandler() {}
 
+        virtual VSIVirtualHandle *Open( const char *pszFilename, 
+                                        const char *pszAccess);
+        virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
+        virtual int      Unlink( const char *pszFilename );
+
         void UpdateMapFromHandle(VSIS3HandleHelper * poS3HandleHelper);
         void UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper);
 };
@@ -2868,12 +2880,616 @@ class VSIS3Handle: public VSICurlHandle
         virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
         virtual bool CanRestartOnError(const char*);
         virtual bool UseLimitRangeGetInsteadOfHead() { return true; }
+        virtual void ProcessGetFileSizeResult(const char* pszContent);
 
     public:
         VSIS3Handle(VSIS3FSHandler* poFS,
                     VSIS3HandleHelper* poS3HandleHelper);
         ~VSIS3Handle();
 };
+
+/************************************************************************/
+/*                            VSIS3WriteHandle                          */
+/************************************************************************/
+
+class VSIS3WriteHandle: public VSIVirtualHandle
+{
+    VSIS3FSHandler     *m_poFS;
+    CPLString           m_osFilename;
+    VSIS3HandleHelper  *m_poS3HandleHelper;
+    vsi_l_offset        m_nCurOffset;
+    int                 m_nBufferOff;
+    int                 m_nBufferSize;
+    int                 m_nBufferOffReadCallback;
+    bool                m_bClosed;
+    GByte              *m_pabyBuffer;
+    CPLString           m_osUploadID;
+    int                 m_nPartNumber;
+    std::vector<CPLString> m_aosEtags;
+    CPLString           m_osXML;
+    int                 m_nOffsetInXML;
+    bool                m_bError;
+
+    static size_t       ReadCallBackBuffer(char *buffer, size_t size, size_t nitems, void *instream);
+    bool                InitiateMultipartUpload();
+    bool                UploadPart();
+    static size_t       ReadCallBackXML(char *buffer, size_t size, size_t nitems, void *instream);
+    bool                CompleteMultipart();
+    bool                AbortMultipart();
+    bool                DoSinglePartPUT();
+
+    public:
+        VSIS3WriteHandle(VSIS3FSHandler* poFS,
+                         const char* pszFilename,
+                         VSIS3HandleHelper* poS3HandleHelper);
+        ~VSIS3WriteHandle();
+
+        virtual int       Seek( vsi_l_offset nOffset, int nWhence );
+        virtual vsi_l_offset Tell();
+        virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
+        virtual size_t    Write( const void *pBuffer, size_t nSize,size_t nMemb);
+        virtual int       Eof();
+        virtual int       Close();
+
+        bool              IsOK() { return m_pabyBuffer != NULL; }
+};
+
+/************************************************************************/
+/*                         VSIS3WriteHandle()                           */
+/************************************************************************/
+
+VSIS3WriteHandle::VSIS3WriteHandle(VSIS3FSHandler* poFS,
+                                   const char* pszFilename,
+                                   VSIS3HandleHelper* poS3HandleHelper) :
+        m_poFS(poFS), m_osFilename(pszFilename),
+        m_poS3HandleHelper(poS3HandleHelper),
+        m_nCurOffset(0),
+        m_nBufferOff(0),
+        m_nBufferOffReadCallback(0),
+        m_bClosed(false),
+        m_nPartNumber(0),
+        m_nOffsetInXML(0),
+        m_bError(false)
+{
+    m_nBufferSize = atoi(CPLGetConfigOption("VSIS3_CHUNK_SIZE", "50")) * 1024 * 1024;
+    m_pabyBuffer = (GByte*)VSIMalloc(m_nBufferSize);
+}
+
+/************************************************************************/
+/*                        ~VSIS3WriteHandle()                           */
+/************************************************************************/
+
+VSIS3WriteHandle::~VSIS3WriteHandle()
+{
+    Close();
+    delete m_poS3HandleHelper;
+    CPLFree(m_pabyBuffer);
+}
+
+/************************************************************************/
+/*                               Seek()                                 */
+/************************************************************************/
+
+int VSIS3WriteHandle::Seek( vsi_l_offset nOffset, int nWhence )
+{
+    if( (nWhence == SEEK_SET && nOffset != m_nCurOffset) ||
+        nOffset != 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "Seek not supported on writable /vsis3 files");
+        m_bError = true;
+        return -1;
+    }
+    return 0;
+}
+
+/************************************************************************/
+/*                               Tell()                                 */
+/************************************************************************/
+
+vsi_l_offset VSIS3WriteHandle::Tell()
+{
+    return m_nCurOffset;
+}
+
+/************************************************************************/
+/*                               Read()                                 */
+/************************************************************************/
+
+size_t VSIS3WriteHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Read not supported on writable /vsis3 files");
+    m_bError = true;
+    return 0;
+}
+
+/************************************************************************/
+/*                        InitiateMultipartUpload()                     */
+/************************************************************************/
+
+bool VSIS3WriteHandle::InitiateMultipartUpload()
+{
+    bool bSuccess = true;
+    bool bGoOn;
+    do
+    {
+        bGoOn = false;
+        CURL* hCurlHandle = curl_easy_init();
+        m_poS3HandleHelper->AddQueryParameter("uploads", "");
+        curl_easy_setopt(hCurlHandle, CURLOPT_URL, m_poS3HandleHelper->GetURL().c_str());
+        CPLHTTPSetOptions(hCurlHandle, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
+
+        struct curl_slist* headers = m_poS3HandleHelper->GetCurlHeaders("POST");
+        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+        m_poS3HandleHelper->ResetQueryParameters();
+
+        WriteFuncStruct sWriteFuncData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+
+        curl_easy_perform(hCurlHandle);
+
+        curl_slist_free_all(headers);
+
+        long response_code = 0;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+        if( response_code != 200 || sWriteFuncData.pBuffer == NULL )
+        {
+            if( sWriteFuncData.pBuffer != NULL &&
+                m_poS3HandleHelper->CanRestartOnError( (const char*)sWriteFuncData.pBuffer) )
+            {
+                m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
+                bGoOn = true;
+            }
+            else
+            {
+                CPLDebug("S3", "%s", (sWriteFuncData.pBuffer) ? (const char*)sWriteFuncData.pBuffer : "(null)");
+                CPLError(CE_Failure, CPLE_AppDefined, "InitiateMultipartUpload of %s failed",
+                            m_osFilename.c_str());
+                bSuccess = false;
+            }
+        }
+        else
+        {
+            CPLXMLNode* psNode = CPLParseXMLString( (const char*)sWriteFuncData.pBuffer );
+            if( psNode )
+            {
+                m_osUploadID = CPLGetXMLValue(psNode, "=InitiateMultipartUploadResult.UploadId", "");
+                CPLDebug("S3", "UploadId: %s", m_osUploadID.c_str());
+                CPLDestroyXMLNode(psNode);
+            }
+            if( m_osUploadID.size() == 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "InitiateMultipartUpload of %s failed: cannot get UploadId",
+                         m_osFilename.c_str());
+                bSuccess = false;
+            }
+        }
+
+        CPLFree(sWriteFuncData.pBuffer);
+
+        curl_easy_cleanup(hCurlHandle);
+    }
+    while( bGoOn );
+    return bSuccess;
+}
+
+/************************************************************************/
+/*                         ReadCallBackBuffer()                         */
+/************************************************************************/
+
+size_t VSIS3WriteHandle::ReadCallBackBuffer(char *buffer, size_t size, size_t nitems, void *instream)
+{
+    VSIS3WriteHandle* poThis = (VSIS3WriteHandle*)instream;
+    int nSizeMax = (int)(size * nitems);
+    int nSizeToWrite = MIN(nSizeMax, poThis->m_nBufferOff - poThis->m_nBufferOffReadCallback);
+    memcpy(buffer, poThis->m_pabyBuffer + poThis->m_nBufferOffReadCallback,
+           nSizeToWrite);
+    poThis->m_nBufferOffReadCallback += nSizeToWrite;
+    return nSizeToWrite;
+}
+
+/************************************************************************/
+/*                           UploadPart()                               */
+/************************************************************************/
+
+bool VSIS3WriteHandle::UploadPart()
+{
+    ++ m_nPartNumber;
+    if( m_nPartNumber > 10000 )
+    {
+        m_bError = true;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "10000 parts have been uploaded for %s failed. This is the maximum. "
+                 "Increase VSIS3_CHUNK_SIZE to a higher value (e.g. 500 for 500 MB)",
+                 m_osFilename.c_str());
+        return false;
+    }
+
+    bool bSuccess = true;
+
+    m_nBufferOffReadCallback = 0;
+    CURL* hCurlHandle = curl_easy_init();
+    m_poS3HandleHelper->AddQueryParameter("partNumber", CPLSPrintf("%d", m_nPartNumber));
+    m_poS3HandleHelper->AddQueryParameter("uploadId", m_osUploadID);
+    curl_easy_setopt(hCurlHandle, CURLOPT_URL, m_poS3HandleHelper->GetURL().c_str());
+    CPLHTTPSetOptions(hCurlHandle, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
+    curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackBuffer);
+    curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
+    curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
+
+    struct curl_slist* headers = m_poS3HandleHelper->GetCurlHeaders("PUT",
+                                                                    m_pabyBuffer,
+                                                                    m_nBufferOff);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+    m_poS3HandleHelper->ResetQueryParameters();
+
+    WriteFuncStruct sWriteFuncData;
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+
+    WriteFuncStruct sWriteFuncHeaderData;
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
+    
+    curl_easy_perform(hCurlHandle);
+
+    curl_slist_free_all(headers);
+
+    long response_code = 0;
+    curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+    if( response_code != 200 || sWriteFuncHeaderData.pBuffer == NULL )
+    {
+        CPLDebug("S3", "%s", (sWriteFuncData.pBuffer) ? (const char*)sWriteFuncData.pBuffer : "(null)");
+        CPLError(CE_Failure, CPLE_AppDefined, "UploadPart(%d) of %s failed",
+                    m_nPartNumber, m_osFilename.c_str());
+        bSuccess = false;
+    }
+    else
+    {
+        const char* pszEtag = strstr((const char*)sWriteFuncHeaderData.pBuffer, "ETag: ");
+        if( pszEtag != NULL )
+        {
+            CPLString osEtag = pszEtag + strlen("ETag: ");
+            size_t nPos = osEtag.find("\r");
+            if( nPos != std::string::npos )
+                osEtag.resize(nPos);
+            CPLDebug("S3", "Etag for part %d is %s", m_nPartNumber, osEtag.c_str());
+            m_aosEtags.push_back(osEtag);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "UploadPart(%d) of %s (uploadId = %s) failed",
+                        m_nPartNumber, m_osFilename.c_str(), m_osUploadID.c_str());
+            bSuccess = false;
+        }
+    }
+
+    CPLFree(sWriteFuncData.pBuffer);
+    CPLFree(sWriteFuncHeaderData.pBuffer);
+
+    curl_easy_cleanup(hCurlHandle);
+
+    return bSuccess;
+}
+
+/************************************************************************/
+/*                               Write()                                */
+/************************************************************************/
+
+size_t VSIS3WriteHandle::Write( const void *pBuffer, size_t nSize,size_t nMemb)
+{
+    size_t nBytesToWrite = nSize * nMemb;
+
+    if( m_bError )
+        return false;
+
+    while( nBytesToWrite > 0 )
+    {
+        int nToWriteInBuffer = (int)MIN((size_t)(m_nBufferSize - m_nBufferOff), nBytesToWrite);
+        memcpy(m_pabyBuffer + m_nBufferOff, pBuffer, nToWriteInBuffer);
+        m_nBufferOff += nToWriteInBuffer;
+        m_nCurOffset += nToWriteInBuffer;
+        nBytesToWrite -= nToWriteInBuffer;
+        if( m_nBufferOff == m_nBufferSize )
+        {
+            if( m_nCurOffset == (vsi_l_offset)m_nBufferSize )
+            {
+                if( !InitiateMultipartUpload() )
+                {
+                    m_bError = true;
+                    return 0;
+                }
+            }
+            if( !UploadPart() )
+            {
+                m_bError = true;
+                return 0;
+            }
+            m_nBufferOff = 0;
+        }
+    }
+    return nMemb;
+}
+
+/************************************************************************/
+/*                                Eof()                                 */
+/************************************************************************/
+
+int VSIS3WriteHandle::Eof()
+{
+    return FALSE;
+}
+
+/************************************************************************/
+/*                           DoSinglePartPUT()                          */
+/************************************************************************/
+
+bool VSIS3WriteHandle::DoSinglePartPUT()
+{
+    bool bSuccess = true;
+    bool bGoOn;
+    do
+    {
+        bGoOn = false;
+        m_nBufferOffReadCallback = 0;
+        CURL* hCurlHandle = curl_easy_init();
+        curl_easy_setopt(hCurlHandle, CURLOPT_URL, m_poS3HandleHelper->GetURL().c_str());
+        CPLHTTPSetOptions(hCurlHandle, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
+        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackBuffer);
+        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
+        curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
+
+        struct curl_slist* headers = m_poS3HandleHelper->GetCurlHeaders("PUT",
+                                                                        m_pabyBuffer,
+                                                                        m_nBufferOff);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+        WriteFuncStruct sWriteFuncData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+
+        curl_easy_perform(hCurlHandle);
+
+        curl_slist_free_all(headers);
+
+        long response_code = 0;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+        if( response_code != 200 )
+        {
+            if( sWriteFuncData.pBuffer != NULL &&
+                m_poS3HandleHelper->CanRestartOnError( (const char*)sWriteFuncData.pBuffer) )
+            {
+                m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
+                bGoOn = true;
+            }
+            else
+            {
+                CPLDebug("S3", "%s", (sWriteFuncData.pBuffer) ? (const char*)sWriteFuncData.pBuffer : "(null)");
+                CPLError(CE_Failure, CPLE_AppDefined, "DoSinglePartPUT of %s failed",
+                            m_osFilename.c_str());
+                bSuccess = false;
+            }
+        }
+
+        CPLFree(sWriteFuncData.pBuffer);
+
+        curl_easy_cleanup(hCurlHandle);
+    }
+    while( bGoOn );
+    return bSuccess;
+}
+
+/************************************************************************/
+/*                            ReadCallBackXML()                         */
+/************************************************************************/
+
+size_t VSIS3WriteHandle::ReadCallBackXML(char *buffer, size_t size, size_t nitems, void *instream)
+{
+    VSIS3WriteHandle* poThis = (VSIS3WriteHandle*)instream;
+    int nSizeMax = (int)(size * nitems);
+    int nSizeToWrite = MIN(nSizeMax, (int)poThis->m_osXML.size() - poThis->m_nOffsetInXML);
+    memcpy(buffer, poThis->m_osXML.c_str() + poThis->m_nOffsetInXML,
+           nSizeToWrite);
+    poThis->m_nOffsetInXML += nSizeToWrite;
+    return nSizeToWrite;
+}
+
+/************************************************************************/
+/*                        CompleteMultipart()                           */
+/************************************************************************/
+
+bool VSIS3WriteHandle::CompleteMultipart()
+{
+    bool bSuccess = true;
+
+    m_osXML = "<CompleteMultipartUpload>\n";
+    for(size_t i=0;i<m_aosEtags.size();i++)
+    {
+        m_osXML += "<Part>\n";
+        m_osXML += CPLSPrintf("<PartNumber>%d</PartNumber>", (int)(i+1));
+        m_osXML += "<ETag>" + m_aosEtags[i] + "</ETag>";
+        m_osXML += "</Part>\n";
+    }
+    m_osXML += "</CompleteMultipartUpload>\n";
+
+    m_nOffsetInXML = 0;
+    CURL* hCurlHandle = curl_easy_init();
+    m_poS3HandleHelper->AddQueryParameter("uploadId", m_osUploadID);
+    curl_easy_setopt(hCurlHandle, CURLOPT_URL, m_poS3HandleHelper->GetURL().c_str());
+    CPLHTTPSetOptions(hCurlHandle, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
+    curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackXML);
+    curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
+    curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, (int)m_osXML.size());
+    curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
+
+    struct curl_slist* headers = m_poS3HandleHelper->GetCurlHeaders("POST",
+                                                                    m_osXML.c_str(),
+                                                                    m_osXML.size());
+    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+    m_poS3HandleHelper->ResetQueryParameters();
+
+    WriteFuncStruct sWriteFuncData;
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+
+    curl_easy_perform(hCurlHandle);
+
+    curl_slist_free_all(headers);
+
+    long response_code = 0;
+    curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+    if( response_code != 200 )
+    {
+        CPLDebug("S3", "%s", (sWriteFuncData.pBuffer) ? (const char*)sWriteFuncData.pBuffer : "(null)");
+        CPLError(CE_Failure, CPLE_AppDefined, "CompleteMultipart of %s (uploadId=%s) failed",
+                    m_osFilename.c_str(), m_osUploadID.c_str());
+        bSuccess = false;
+    }
+
+    CPLFree(sWriteFuncData.pBuffer);
+
+    curl_easy_cleanup(hCurlHandle);
+
+    return bSuccess;
+}
+
+/************************************************************************/
+/*                          AbortMultipart()                            */
+/************************************************************************/
+
+bool VSIS3WriteHandle::AbortMultipart()
+{
+    bool bSuccess = true;
+
+    CURL* hCurlHandle = curl_easy_init();
+    m_poS3HandleHelper->AddQueryParameter("uploadId", m_osUploadID);
+    curl_easy_setopt(hCurlHandle, CURLOPT_URL, m_poS3HandleHelper->GetURL().c_str());
+    CPLHTTPSetOptions(hCurlHandle, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
+
+    struct curl_slist* headers = m_poS3HandleHelper->GetCurlHeaders("DELETE");
+    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+    m_poS3HandleHelper->ResetQueryParameters();
+
+    WriteFuncStruct sWriteFuncData;
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+
+    curl_easy_perform(hCurlHandle);
+
+    curl_slist_free_all(headers);
+
+    long response_code = 0;
+    curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+    if( response_code != 204 )
+    {
+        CPLDebug("S3", "%s", (sWriteFuncData.pBuffer) ? (const char*)sWriteFuncData.pBuffer : "(null)");
+        CPLError(CE_Failure, CPLE_AppDefined, "AbortMultipart of %s (uploadId=%s) failed",
+                    m_osFilename.c_str(), m_osUploadID.c_str());
+        bSuccess = false;
+    }
+
+    CPLFree(sWriteFuncData.pBuffer);
+
+    curl_easy_cleanup(hCurlHandle);
+
+    return bSuccess;
+}
+
+/************************************************************************/
+/*                                 Close()                              */
+/************************************************************************/
+
+int VSIS3WriteHandle::Close()
+{
+    int nRet = 0;
+    if( !m_bClosed )
+    {
+        m_bClosed = true;
+        if( m_osUploadID.size() == 0 )
+        {
+            if( !m_bError && !DoSinglePartPUT() )
+                nRet = -1;
+        }
+        else
+        {
+            if( m_bError )
+            {
+                if( !AbortMultipart() )
+                    nRet = -1;
+            }
+            else if( m_nBufferOff > 0 && !UploadPart() )
+                nRet = -1;
+            else if( !CompleteMultipart() )
+                nRet = -1;
+        }
+    }
+    return nRet;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
+                                        const char *pszAccess)
+{
+    if (strchr(pszAccess, 'w') != NULL )
+    {
+        /*if( strchr(pszAccess, '+') != NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "w+ not supported for /vsis3. Only w");
+            return NULL;
+        }*/
+        VSIS3HandleHelper* poS3HandleHelper =
+            VSIS3HandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
+                                            GetFSPrefix().c_str(), false);
+        if( poS3HandleHelper == NULL )
+            return NULL;
+        UpdateHandleFromMap(poS3HandleHelper);
+        VSIS3WriteHandle* poHandle = new VSIS3WriteHandle(this, pszFilename, poS3HandleHelper);
+        if( !poHandle->IsOK() )
+        {
+            delete poHandle;
+            poHandle = NULL;
+        }
+        return poHandle;
+    }
+    else
+    {
+        return VSICurlFilesystemHandler::Open(pszFilename, pszAccess);
+    }
+}
+
+/************************************************************************/
+/*                                Stat()                                */
+/************************************************************************/
+
+int VSIS3FSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                          int nFlags )
+{
+    CPLString osFilename(pszFilename);
+    if( osFilename.find('/', GetFSPrefix().size()) == std::string::npos )
+        osFilename += "/";
+    return VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags);
+}
 
 /************************************************************************/
 /*                          CreateFileHandle()                          */
@@ -3000,6 +3616,73 @@ CPLString VSIS3FSHandler::GetURLFromDirname( const CPLString& osDirname )
 }
 
 /************************************************************************/
+/*                               Unlink()                               */
+/************************************************************************/
+
+int VSIS3FSHandler::Unlink( const char *pszFilename )
+{
+    CPLString osNameWithoutPrefix = pszFilename + GetFSPrefix().size();
+    VSIS3HandleHelper* poS3HandleHelper =
+            VSIS3HandleHelper::BuildFromURI(osNameWithoutPrefix, GetFSPrefix().c_str(), false);
+    if( poS3HandleHelper == NULL )
+    {
+        return -1;
+    }
+    UpdateHandleFromMap(poS3HandleHelper);
+
+    int nRet = 0;
+
+    bool bGoOn;
+    do
+    {
+        bGoOn = false;
+        CURL* hCurlHandle = curl_easy_init();
+        curl_easy_setopt(hCurlHandle, CURLOPT_URL, poS3HandleHelper->GetURL().c_str());
+        CPLHTTPSetOptions(hCurlHandle, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
+
+        struct curl_slist* headers = poS3HandleHelper->GetCurlHeaders("DELETE");
+        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+        WriteFuncStruct sWriteFuncData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+
+        curl_easy_perform(hCurlHandle);
+
+        curl_slist_free_all(headers);
+
+        long response_code = 0;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+        if( response_code != 204 )
+        {
+            if( sWriteFuncData.pBuffer != NULL &&
+                poS3HandleHelper->CanRestartOnError( (const char*)sWriteFuncData.pBuffer) )
+            {
+                UpdateMapFromHandle(poS3HandleHelper);
+                bGoOn = true;
+            }
+            else
+            {
+                CPLDebug("S3", "%s", (sWriteFuncData.pBuffer) ? (const char*)sWriteFuncData.pBuffer : "(null)");
+                CPLError(CE_Failure, CPLE_AppDefined, "Delete of %s failed",
+                         pszFilename);
+                nRet = -1;
+            }
+        }
+
+        CPLFree(sWriteFuncData.pBuffer);
+
+        curl_easy_cleanup(hCurlHandle);
+    }
+    while( bGoOn );
+
+    delete poS3HandleHelper;
+    return nRet;
+}
+
+/************************************************************************/
 /*                           GetFileList()                              */
 /************************************************************************/
 
@@ -3082,14 +3765,15 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname, bool* pbGotFileList 
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 200 )
         {
-            if( poS3HandleHelper->CanRestartOnError( (const char*)sWriteFuncData.pBuffer) )
+            if( sWriteFuncData.pBuffer != NULL &&
+                poS3HandleHelper->CanRestartOnError( (const char*)sWriteFuncData.pBuffer) )
             {
                 UpdateMapFromHandle(poS3HandleHelper);
                 CPLFree(sWriteFuncData.pBuffer);
             }
             else
             {
-                CPLDebug("S3", "%s", (const char*)sWriteFuncData.pBuffer);
+                CPLDebug("S3", "%s", sWriteFuncData.pBuffer ? (const char*)sWriteFuncData.pBuffer : "(null)");
                 CPLFree(sWriteFuncData.pBuffer);
                 delete poS3HandleHelper;
                 return NULL;
@@ -3191,6 +3875,15 @@ bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg)
 }
 
 /************************************************************************/
+/*                    ProcessGetFileSizeResult()                        */
+/************************************************************************/
+
+void VSIS3Handle::ProcessGetFileSizeResult(const char* pszContent)
+{
+    bIsDirectory = strstr(pszContent, "ListBucketResult") != NULL;
+}
+
+/************************************************************************/
 /*                      VSIInstallS3FileHandler()                       */
 /************************************************************************/
 
@@ -3199,6 +3892,8 @@ bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg)
  *
  * A special file handler is installed that allows reading on-the-fly of files
  * available in AWS S3 buckets, without prior download of the entire file.
+ * It also allows sequential writing of files (no seeks or read operations are then
+ * allowed).
  *
  * Recognized filenames are of the form /vsis3/bucket/key where
  * bucket is the name of the S3 bucket and resource the S3 object key.
@@ -3219,9 +3914,18 @@ bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg)
  * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
  * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
  *
- * The file can be cached in RAM by setting the configuration option
+ * On reading, the file can be cached in RAM by setting the configuration option
  * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
  * the configuration option VSI_CACHE_SIZE (in bytes).
+ *
+ * On writing, the file is uploaded using the S3 <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadInitiate.html">multipart upload API</a>.
+ * The size of chunks is set to 50 MB by default, allowing creating files up to
+ * 500 GB (10000 parts of 50 MB each). If larger files are needed, then increase the
+ * value of the VSIS3_CHUNK_SIZE config option to a larger value (expressed in MB).
+ * In case the process is killed and the file not properly closed, the multipart upload
+ * will remain open, causing Amazon to charge you for the parts storage. You'll have to
+ * abort yourself with other means such "ghost" uploads
+ * (e.g. with the <a href="http://s3tools.org/s3cmd">s3cmd</a> utility)
  *
  * VSIStatL() will return the size in st_size member.
  *

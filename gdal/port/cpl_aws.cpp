@@ -345,8 +345,11 @@ void VSIS3HandleHelper::RebuildURL()
         else
             osURL += "&";
         osURL += oIter->first;
-        osURL += "=";
-        osURL += oIter->second;
+        if( oIter->second.size() )
+        {
+            osURL += "=";
+            osURL += oIter->second;
+        }
     }
 }
 
@@ -443,13 +446,15 @@ void VSIS3HandleHelper::AddQueryParameter(const CPLString& osKey, const CPLStrin
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 
-struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb)
+struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb,
+                                                     const void *pabyDataContent,
+                                                     size_t nBytesContent)
 {
     CPLString osXAMZDate = CPLGetConfigOption("AWS_TIMESTAMP", "");
     if( osXAMZDate.size() == 0 )
         osXAMZDate = CPLGetAWS_SIGN4_Timestamp();
 
-    CPLString osXAMZContentSHA256 = CPLGetLowerCaseHexSHA256("");
+    CPLString osXAMZContentSHA256 = CPLGetLowerCaseHexSHA256(pabyDataContent, nBytesContent);
 
     CPLString osCanonicalQueryString;
     std::map<CPLString, CPLString>::iterator oIter = oMapQueryParameters.begin();

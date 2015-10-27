@@ -95,7 +95,9 @@ class VSIS3HandleHelper
 
         void ResetQueryParameters();
         void AddQueryParameter(const CPLString& osKey, const CPLString& osValue);
-        struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
+        struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
+                                          const void *pabyDataContent = NULL,
+                                          size_t nBytesContent = 0);
         bool CanRestartOnError(const char*);
 
         const CPLString& GetURL() const { return osURL; }
