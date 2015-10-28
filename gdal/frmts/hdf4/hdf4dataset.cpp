@@ -704,7 +704,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     if ( SDget_maxopenfiles(&nCurrMax, &nSysLimit) >= 0
          && nCurrMax < nSysLimit )
     {
-        intn res = SDreset_maxopenfiles( nSysLimit );
+        /*intn res = */SDreset_maxopenfiles( nSysLimit );
     }
 #endif /* HDF4_HAS_MAXOPENFILES */
 
