@@ -33,7 +33,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-#include <fstream>
 #include <string>
 
 CPL_CVSID("$Id$");
