@@ -64,6 +64,14 @@ NITFWriteJPEGBlock_12( GDALDataset *poSrcDS, VSILFILE *fp,
                      GDALProgressFunc pfnProgress, void * pProgressData );
 #endif
 
+int 
+NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
+                    int nBlockXOff, int nBlockYOff,
+                    int nBlockXSize, int nBlockYSize,
+                    int bProgressive, int nQuality,
+                    const GByte* pabyAPP6, int nRestartInterval,
+                    GDALProgressFunc pfnProgress, void * pProgressData );
+
 void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile);
 void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 

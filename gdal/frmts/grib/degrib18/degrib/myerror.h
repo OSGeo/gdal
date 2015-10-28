@@ -45,9 +45,9 @@ void myWarnSet (uChar f_outType, uChar f_detail, uChar f_fileDetail,
 /* You are responsible for free'ing the result of myWarnClear. */
 sChar myWarnClear (char **msg, uChar f_closeFile);
 
-uChar myWarnNotEmpty ();
+uChar myWarnNotEmpty (void);
 
-sChar myWarnLevel ();
+sChar myWarnLevel (void);
 
 /* Use myWarnQ# for (quiet file/line) notes. */
 /* Use myWarnN# for notes. */

@@ -186,6 +186,7 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
 /*                     RasterliteCreateTables ()                        */
 /************************************************************************/
 
+static 
 OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableName,
                                       int nSRSId, int bWipeExistingData)
 {

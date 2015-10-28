@@ -41,7 +41,7 @@ namespace Selafin {
         const Header *poHeader;
     };
 
-    void GetBoundsFunc(const void *hFeature,CPLRectObj *poBounds) {
+    static void GetBoundsFunc(const void *hFeature,CPLRectObj *poBounds) {
         const Point *poPoint=(const Point*)hFeature;
         poBounds->minx=poPoint->poHeader->paadfCoords[0][poPoint->nIndex];
         poBounds->maxx=poPoint->poHeader->paadfCoords[0][poPoint->nIndex];
@@ -49,7 +49,7 @@ namespace Selafin {
         poBounds->maxy=poPoint->poHeader->paadfCoords[1][poPoint->nIndex];
     }
 
-    int DumpFeatures(void *pElt,
+    static int DumpFeatures(void *pElt,
                      CPL_UNUSED void *pUserData) {
         Point *poPoint=(Point*)pElt;
         delete poPoint;

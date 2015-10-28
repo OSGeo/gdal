@@ -2584,7 +2584,7 @@ typedef struct {
    int cnt;
 } freqType;
 
-int freqCompare (const void *A, const void *B)
+static int freqCompare (const void *A, const void *B)
 {
    const freqType *a = (freqType *) A;
    const freqType *b = (freqType *) B;

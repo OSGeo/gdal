@@ -376,7 +376,7 @@ void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
 /*                                                                      */
 /*      Find Dataset path for HDopen                                    */
 /************************************************************************/
-char* CreatePath( HDF5GroupObjects *poH5Object )
+static char* CreatePath( HDF5GroupObjects *poH5Object )
 {
     char pszPath[8192];
     char pszUnderscoreSpaceInName[8192];
@@ -624,7 +624,7 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
 /*                          HDF5AttrIterate()                           */
 /************************************************************************/
 
-herr_t HDF5AttrIterate( hid_t hH5ObjID,
+static herr_t HDF5AttrIterate( hid_t hH5ObjID,
                         const char *pszAttrName,
                         void *pDS )
 {

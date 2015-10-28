@@ -40,6 +40,7 @@ using PCIDSK::uint64;
 CPL_CVSID("$Id$");
 
 PCIDSK::EDBFile *GDAL_EDBOpen( std::string osFilename, std::string osAccess );
+const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces();
 
 class VSI_IOInterface : public IOInterfaces
 {

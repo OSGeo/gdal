@@ -642,7 +642,7 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHi
 /*               OGRWFSFetchContentDispositionFilename()                */
 /************************************************************************/
 
-const char* OGRWFSFetchContentDispositionFilename(char** papszHeaders)
+static const char* OGRWFSFetchContentDispositionFilename(char** papszHeaders)
 {
     char** papszIter = papszHeaders;
     while(papszIter && *papszIter)

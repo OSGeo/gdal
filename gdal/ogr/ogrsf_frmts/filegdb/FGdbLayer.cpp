@@ -1903,7 +1903,7 @@ OGRErr FGdbLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poNewFieldDef
 /*                                                                      */
 /************************************************************************/
 
-CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
+static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
 {
     /* We always need a SpatialReference */
     CPLXMLNode *srs_xml = CPLCreateXMLNode(NULL, CXT_Element, "SpatialReference");

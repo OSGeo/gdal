@@ -43,7 +43,7 @@
 /*      stripped off if there is one.  Returns pointer into             */
 /*      original string.                                                */
 /************************************************************************/
-
+static
 const char *StripNS( const char *pszFullValue )
 
 {

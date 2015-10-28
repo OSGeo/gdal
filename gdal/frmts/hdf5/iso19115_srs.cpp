@@ -36,6 +36,10 @@
 
 CPL_CVSID("$Id$");
 
+/* used by bagdataset.cpp */
+OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis, 
+                                   const char *pszISOXML );
+
 /************************************************************************/
 /*                     OGR_SRS_ImportFromISO19115()                     */
 /************************************************************************/

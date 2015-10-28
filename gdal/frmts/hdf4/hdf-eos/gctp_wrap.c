@@ -46,6 +46,26 @@
 #define DEG (180.0 / PI)
 #define RAD (PI / 180.0)
 
+void for_init(
+int32 outsys,       /* output system code                               */
+int32 outzone,      /* output zone number                               */
+float64 *outparm,   /* output array of projection parameters    */
+int32 outdatum,     /* output datum                                     */
+char *fn27,         /* NAD 1927 parameter file                  */
+char *fn83,         /* NAD 1983 parameter file                  */
+int32 *iflg,        /* status flag                                      */
+int32 (*for_trans[])(double, double, double *, double *));
+
+void inv_init(
+int32 insys,            /* input system code                            */
+int32 inzone,           /* input zone number                            */
+float64 *inparm,        /* input array of projection parameters         */
+int32 indatum,      /* input datum code                         */
+char *fn27,                 /* NAD 1927 parameter file                  */
+char *fn83,                 /* NAD 1983 parameter file                  */
+int32 *iflg,            /* status flag                                  */
+int32 (*inv_trans[])(double, double, double*, double*));
+
 /***** static vars to store the transformers in *****/
 /***** this is not thread safe *****/
 
@@ -57,7 +77,7 @@ static OGRCoordinateTransformationH hForCT, hInvCT;
  gctp expects Longitude and Latitude values to be in radians
 ******************************************************************************/
 
-int32 osr_for(
+static int32 osr_for(
 double lon,			/* (I) Longitude 		*/
 double lat,			/* (I) Latitude 		*/
 double *x,			/* (O) X projection coordinate 	*/
@@ -114,7 +134,7 @@ int32 (*for_trans[])(double, double, double *, double *))
  gctp returns Longitude and Latitude values in radians
 ******************************************************************************/
 
-int32 osr_inv(
+static int32 osr_inv(
 double x,           /* (I) X projection coordinate 	*/
 double y,           /* (I) Y projection coordinate 	*/
 double *lon,        /* (O) Longitude 		*/
@@ -171,8 +191,9 @@ int32 (*inv_trans[])(double, double, double*, double*))
 
  note: gctp does not have a function that does this
 ******************************************************************************/
-
+#ifndef GDAL_COMPILATION
 void gctp_destroy(void) {
     OCTDestroyCoordinateTransformation ( hForCT );
     OCTDestroyCoordinateTransformation ( hInvCT );
 }
+#endif

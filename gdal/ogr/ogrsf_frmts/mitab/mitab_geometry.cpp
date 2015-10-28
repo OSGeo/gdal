@@ -49,7 +49,7 @@
  *
  **********************************************************************/
 
-#include "ogr_geometry.h"
+#include "mitab_geometry.h"
 
 #define OGR_NUM_RINGS(poly)   (poly->getNumInteriorRings()+1)
 #define OGR_GET_RING(poly, i) (i==0?poly->getExteriorRing():poly->getInteriorRing(i-1))
@@ -310,7 +310,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         return OGRERR_FAILURE;
 }
 
-
+#ifdef unused
 /**********************************************************************
  *                   OGRGetCentroid()
  *
@@ -357,7 +357,7 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
   
     return OGRERR_NONE;
 }
-
+#endif
 
 
 /**********************************************************************

@@ -65,7 +65,7 @@ enum eProductType {
 /* GetFilePath: return a relative path to a file within an XML node.
  * Returns Null on failure
  */
-const char *GetFilePath(CPLXMLNode *psXMLNode, const char **pszNodeType) {
+static const char *GetFilePath(CPLXMLNode *psXMLNode, const char **pszNodeType) {
     const char *pszDirectory, *pszFilename;
 
     pszDirectory = CPLGetXMLValue( psXMLNode, "file.location.path", "" );

@@ -58,6 +58,7 @@ using kmldom::ImagePyramidPtr;
 #include "ogrlibkmlgeometry.h"
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlfeaturestyle.h"
+#include "ogrlibkmlfeature.h"
 
 static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
                                  int iHeading,

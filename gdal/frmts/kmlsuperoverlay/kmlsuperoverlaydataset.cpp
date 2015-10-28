@@ -51,7 +51,7 @@ using namespace std;
 /************************************************************************/
 /*                           GenerateTiles()                            */
 /************************************************************************/
-void GenerateTiles(std::string filename,
+static void GenerateTiles(std::string filename,
                    CPL_UNUSED int zoom,
                    int rxsize,
                    int rysize,

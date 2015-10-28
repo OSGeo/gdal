@@ -150,7 +150,7 @@ class GSAGRasterBand : public GDALPamRasterBand
 /* explanation.								*/
 /************************************************************************/
 
-bool AlmostEqual( double dfVal1, double dfVal2 )
+static bool AlmostEqual( double dfVal1, double dfVal2 )
 
 {
     const double dfTOLERANCE = 0.0000000001;

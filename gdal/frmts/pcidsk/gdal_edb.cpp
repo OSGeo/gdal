@@ -44,6 +44,8 @@ using PCIDSK::CHN_32R;
 using PCIDSK::CHN_C16S;
 using PCIDSK::CHN_UNKNOWN;
 
+EDBFile *GDAL_EDBOpen( std::string osFilename, std::string osAccess );
+
 /************************************************************************/
 /* ==================================================================== */
 /*                            GDAL_EDBFile                              */

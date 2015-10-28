@@ -32,6 +32,12 @@
 
 CPL_CVSID("$Id$");
 
+
+GDALDataset *
+RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+             int bStrict, char ** papszOptions, 
+             GDALProgressFunc pfnProgress, void * pProgressData );
+
 /************************************************************************/
 /* ==================================================================== */
 /*                        Writer Implementation                         */

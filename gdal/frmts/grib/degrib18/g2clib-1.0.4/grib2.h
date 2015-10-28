@@ -237,5 +237,41 @@ int pack_gp(g2int *, g2int *, g2int *,
             g2int *, g2int *, g2int *, g2int *, g2int *,
             g2int *, g2int *, g2int *);
 
+g2int g2_unpack1(unsigned char *cgrib,g2int *iofst,g2int **ids,g2int *idslen);
+g2int g2_unpack2(unsigned char *cgrib,g2int *iofst,g2int *lencsec2,unsigned char **csec2);
+g2int g2_unpack3(unsigned char *cgrib,g2int *iofst,g2int **igds,g2int **igdstmpl,
+                         g2int *mapgridlen,g2int **ideflist,g2int *idefnum);
+g2int g2_unpack4(unsigned char *cgrib,g2int *iofst,g2int *ipdsnum,g2int **ipdstmpl,
+               g2int *mappdslen,g2float **coordlist,g2int *numcoord);
+g2int g2_unpack5(unsigned char *cgrib,g2int *iofst,g2int *ndpts,g2int *idrsnum,
+               g2int **idrstmpl,g2int *mapdrslen);
+g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
+               g2int **bmap);
+g2int g2_unpack7(unsigned char *cgrib,g2int *iofst,g2int igdsnum,g2int *igdstmpl,
+               g2int idrsnum,g2int *idrstmpl,g2int ndpts,g2float **fld);
+g2int simunpack(unsigned char *,g2int *, g2int,g2float *);
+int comunpack(unsigned char *,g2int,g2int,g2int *,g2int,g2float *);
+g2int specunpack(unsigned char *,g2int *,g2int,g2int,g2int, g2int, g2float *);
+g2int jpcunpack(unsigned char *,g2int,g2int *,g2int, g2float *);
+void specpack(g2float *fld,g2int ndpts,g2int JJ,g2int KK,g2int MM,
+              g2int *idrstmpl,unsigned char *cpack,g2int *lcpack);
+
+typedef g2int integer;
+typedef g2float real;
+int reduce(integer *kfildo, integer *jmin, integer *jmax,
+        integer *lbit, integer *nov, integer *lx, integer *ndg, integer *ibit,
+         integer *jbit, integer *kbit, integer *novref, integer *ibxx2,
+        integer *ier);
+void cmplxpack(g2float *fld,g2int ndpts, g2int idrsnum,g2int *idrstmpl,
+               unsigned char *cpack, g2int *lcpack);
+g2int getdim(unsigned char *csec3,g2int *width,g2int *height,g2int *iscan);
+void g2_miss( gribfield *gfld, float *rmiss, int *nmiss );
+g2int getpoly(unsigned char *csec3,g2int *jj,g2int *kk,g2int *mm);
+void jpcpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
+             unsigned char *cpack,g2int *lcpack);
+int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
+                 g2int ltype, g2int ratio, g2int retry, char *outjpc, 
+                 g2int jpclen);
+
 #endif  /*  _grib2_H  */
 

@@ -49,7 +49,7 @@ class MBTilesBand;
 /*                         MBTILESOpenSQLiteDB()                        */
 /************************************************************************/
 
-OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
+static OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
                                       GDALAccess eAccess)
 {
     const char* apszAllowedDrivers[] = { "SQLITE", NULL };

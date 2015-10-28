@@ -889,7 +889,7 @@ static void GCIOAPI_CALL _InitHeader_GCIO (
 }/* _InitHeader_GCIO */
 
 /* -------------------------------------------------------------------- */
-GCExportFileMetadata GCIOAPI_CALL1(*) CreateHeader_GCIO ( )
+GCExportFileMetadata GCIOAPI_CALL1(*) CreateHeader_GCIO ( void )
 {
   GCExportFileMetadata* m;
 
@@ -2720,6 +2720,7 @@ GCExportFileH GCIOAPI_CALL1(*) FFlush_GCIO (
   return hGXT;
 }/* FFlush_GCIO */
 
+#ifdef unused
 /* -------------------------------------------------------------------- */
 GCAccessMode GCIOAPI_CALL GetMode_GCIO (
                                          GCExportFileH* hGXT
@@ -2727,6 +2728,7 @@ GCAccessMode GCIOAPI_CALL GetMode_GCIO (
 {
   return hGXT? GetGCMode_GCIO(hGXT):vUnknownAccessMode_GCIO;
 }/* GetMode_GCIO */
+#endif
 
 /* -------------------------------------------------------------------- */
 GCSubType GCIOAPI_CALL1(*) AddSubType_GCIO (

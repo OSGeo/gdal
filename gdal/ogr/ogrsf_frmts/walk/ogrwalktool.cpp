@@ -176,7 +176,7 @@ OGRWalkArcToLineString( double dfStartX, double dfStartY,
 /************************************************************************/
 /*                       Binary2WkbMGeom()                              */
 /************************************************************************/
-OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
+static OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
 {
     GUInt32 i,j,k;
 
@@ -394,7 +394,7 @@ OGRErr Binary2WkbGeom(unsigned char *p, WKBGeometry* geom, int nBytes)
 /************************************************************************/
 /*                       TranslateWalkPoint()                           */
 /************************************************************************/
-OGRBoolean TranslateWalkPoint(OGRPoint *poPoint, WKBPoint* pWalkWkbPoint)
+static OGRBoolean TranslateWalkPoint(OGRPoint *poPoint, WKBPoint* pWalkWkbPoint)
 {
     if ( poPoint == NULL || pWalkWkbPoint == NULL ) 
         return FALSE;
@@ -408,7 +408,7 @@ OGRBoolean TranslateWalkPoint(OGRPoint *poPoint, WKBPoint* pWalkWkbPoint)
 /************************************************************************/
 /*                    TranslateCurveSegment()                           */
 /************************************************************************/
-OGRBoolean TranslateCurveSegment(OGRLineString *poLS, CurveSegment* pSegment)
+static OGRBoolean TranslateCurveSegment(OGRLineString *poLS, CurveSegment* pSegment)
 {
     if ( poLS == NULL || pSegment == NULL )
         return FALSE;
@@ -457,7 +457,7 @@ OGRBoolean TranslateCurveSegment(OGRLineString *poLS, CurveSegment* pSegment)
 /************************************************************************/
 /*                    TranslateWalkLineString()                         */
 /************************************************************************/
-OGRBoolean TranslateWalkLineString(OGRLineString *poLS, LineString* pLineString)
+static OGRBoolean TranslateWalkLineString(OGRLineString *poLS, LineString* pLineString)
 {
     if ( poLS == NULL || pLineString == NULL )
         return FALSE;
@@ -474,7 +474,7 @@ OGRBoolean TranslateWalkLineString(OGRLineString *poLS, LineString* pLineString)
 /************************************************************************/
 /*                    TranslateWalkLinearring()                         */
 /************************************************************************/
-OGRBoolean TranslateWalkLinearring(OGRLinearRing *poRing, LineString* pLineString)
+static OGRBoolean TranslateWalkLinearring(OGRLinearRing *poRing, LineString* pLineString)
 {
     if ( poRing == NULL || pLineString == NULL )
         return FALSE;
@@ -488,7 +488,7 @@ OGRBoolean TranslateWalkLinearring(OGRLinearRing *poRing, LineString* pLineStrin
 /************************************************************************/
 /*                    TranslateWalkPolygon()                            */
 /************************************************************************/
-OGRBoolean TranslateWalkPolygon(OGRPolygon *poPolygon, WKBPolygon* pWalkWkbPolgon)
+static OGRBoolean TranslateWalkPolygon(OGRPolygon *poPolygon, WKBPolygon* pWalkWkbPolgon)
 {
     if ( poPolygon == NULL || pWalkWkbPolgon == NULL )
         return FALSE;
@@ -619,7 +619,7 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
 /************************************************************************/
 /*                      DeleteCurveSegment()                            */
 /************************************************************************/
-void DeleteCurveSegment(CurveSegment &obj)
+static void DeleteCurveSegment(CurveSegment &obj)
 {
     if(obj.numPoints)
         delete [] obj.points;
@@ -628,7 +628,7 @@ void DeleteCurveSegment(CurveSegment &obj)
 /************************************************************************/
 /*                      DeleteWKBMultiPoint()                           */
 /************************************************************************/
-void DeleteWKBMultiPoint(WKBMultiPoint &obj)
+static void DeleteWKBMultiPoint(WKBMultiPoint &obj)
 {
     if (obj.num_wkbPoints)
     {
@@ -640,7 +640,7 @@ void DeleteWKBMultiPoint(WKBMultiPoint &obj)
 /************************************************************************/
 /*                      DeleteWKBLineString()                           */
 /************************************************************************/
-void DeleteWKBLineString(WKBLineString &obj)
+static void DeleteWKBLineString(WKBLineString &obj)
 {
     if(obj.numSegments)
     {
@@ -654,7 +654,7 @@ void DeleteWKBLineString(WKBLineString &obj)
 /************************************************************************/
 /*                     DeleteWKBMultiLineString()                       */
 /************************************************************************/
-void DeleteWKBMultiLineString(WKBMultiLineString &obj)
+static void DeleteWKBMultiLineString(WKBMultiLineString &obj)
 {
     if (obj.num_wkbLineStrings)
     {
@@ -669,7 +669,7 @@ void DeleteWKBMultiLineString(WKBMultiLineString &obj)
 /************************************************************************/
 /*                        DeleteWKBPolygon()                            */
 /************************************************************************/
-void DeleteWKBPolygon(WKBPolygon &obj)
+static void DeleteWKBPolygon(WKBPolygon &obj)
 {
     if (obj.numRings)
     {
@@ -684,7 +684,7 @@ void DeleteWKBPolygon(WKBPolygon &obj)
 /************************************************************************/
 /*                      DeleteWKBMultiPolygon()                         */
 /************************************************************************/
-void DeleteWKBMultiPolygon(WKBMultiPolygon &obj)
+static void DeleteWKBMultiPolygon(WKBMultiPolygon &obj)
 {
     if (obj.num_wkbPolygons)
     {
@@ -699,7 +699,7 @@ void DeleteWKBMultiPolygon(WKBMultiPolygon &obj)
 /************************************************************************/
 /*                    DeleteWKBGeometryCollection()                     */
 /************************************************************************/
-void DeleteWKBGeometryCollection(WKBGeometryCollection &obj)
+static void DeleteWKBGeometryCollection(WKBGeometryCollection &obj)
 {
     if (obj.num_wkbSGeometries)
     {

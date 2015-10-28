@@ -3378,7 +3378,7 @@ void ECWInitialize()
 /*                         GDALDeregister_ECW()                         */
 /************************************************************************/
 
-void GDALDeregister_ECW( GDALDriver * )
+static void GDALDeregister_ECW( GDALDriver * )
 
 {
     /* For unknown reason, this cleanup can take up to 3 seconds (see #3134) for SDK 3.3. */

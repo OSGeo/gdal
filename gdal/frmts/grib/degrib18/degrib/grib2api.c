@@ -740,6 +740,7 @@ is required for each GRIB2 message.
  * gfld->num_coord = number of values in array gfld->coord_list[].
  *****************************************************************************
  */
+static
 void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
                   sInt4 * idat, sInt4 * nidat, float * rdat, sInt4 * nrdat,
                   sInt4 * is0, CPL_UNUSED sInt4 * ns0, sInt4 * is1, CPL_UNUSED sInt4 * ns1,
@@ -1746,6 +1747,7 @@ void unpk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
 /* Not sure I need this... It is intended to provide a way to call it from
  * FORTRAN, but I'm not sure it is needed. */
 /* gcc has two __ if there is one _ in the procedure name. */
+#ifndef GDAL_COMPILATION
 void unpk_grib2__ (sInt4 * kfildo, float * ain, sInt4 * iain,
                    sInt4 * nd2x3, sInt4 * idat, sInt4 * nidat, float * rdat,
                    sInt4 * nrdat, sInt4 * is0, sInt4 * ns0, sInt4 * is1,
@@ -1762,6 +1764,7 @@ void unpk_grib2__ (sInt4 * kfildo, float * ain, sInt4 * iain,
                is7, ns7, ib, ibitmap, ipack, nd5, xmissp, xmisss, inew,
                iclean, l3264b, iendpk, jer, ndjer, kjer);
 }
+#endif
 
 /*****************************************************************************
  * C_pkGrib2() --

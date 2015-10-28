@@ -399,6 +399,7 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 /*      Export the envelope of a geometry as a KML:Box.                 */
 /************************************************************************/
 
+#ifdef notused
 CPLXMLNode* OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
 {
     VALIDATE_POINTER1( hGeometry, "OGR_G_ExportEnvelopeToKMLTree", NULL );
@@ -451,6 +452,7 @@ CPLXMLNode* OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
 
     return psBox;
 }
+#endif
 
 /************************************************************************/
 /*                         OGR_G_ExportToKML()                          */
@@ -501,6 +503,7 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
     return pszText;
 }
 
+#ifdef notused
 /************************************************************************/
 /*                       OGR_G_ExportToKMLTree()                        */
 /************************************************************************/
@@ -522,4 +525,4 @@ CPLXMLNode *OGR_G_ExportToKMLTree( OGRGeometryH hGeometry )
 
     return psTree;
 }
-
+#endif

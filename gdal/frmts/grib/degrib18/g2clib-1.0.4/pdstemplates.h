@@ -44,7 +44,7 @@
           g2int mappds[MAXPDSMAPLEN];
       };
 
-const struct pdstemplate *get_templatespds();
+const struct pdstemplate *get_templatespds(void);
 g2int getpdsindex(g2int number);
 
 #endif  /*  _pdstemplates_H  */

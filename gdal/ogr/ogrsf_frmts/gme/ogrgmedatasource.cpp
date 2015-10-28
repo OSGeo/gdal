@@ -104,7 +104,7 @@ OGRLayer *OGRGMEDataSource::GetLayer( int iLayer )
 /*                      OGRGMEGetOptionValue()                          */
 /************************************************************************/
 
-CPLString OGRGMEGetOptionValue(const char* pszFilename,
+static CPLString OGRGMEGetOptionValue(const char* pszFilename,
                                const char* pszOptionName)
 {
     CPLString osOptionName(pszOptionName);

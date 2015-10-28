@@ -185,7 +185,7 @@ static void Usage()
 /*                             SanitizeSRS                              */
 /************************************************************************/
 
-char *SanitizeSRS( const char *pszUserInput )
+static char *SanitizeSRS( const char *pszUserInput )
 
 {
     CPLErrorReset();

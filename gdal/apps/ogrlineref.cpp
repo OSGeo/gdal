@@ -378,7 +378,7 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
 // AddFeature
 //------------------------------------------------------------------------
 
-OGRErr AddFeature(OGRLayer* const poOutLayer, OGRLineString* pPart, double dfFrom, double dfTo, double dfScaleFactor, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
+static OGRErr AddFeature(OGRLayer* const poOutLayer, OGRLineString* pPart, double dfFrom, double dfTo, double dfScaleFactor, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
 {
     OGRFeature *poFeature;
 
@@ -410,7 +410,7 @@ OGRErr AddFeature(OGRLayer* const poOutLayer, OGRLineString* pPart, double dfFro
 //------------------------------------------------------------------------
 // CreateSubline
 //------------------------------------------------------------------------
-OGRErr CreateSubline(OGRLayer* const poPkLayer,
+static OGRErr CreateSubline(OGRLayer* const poPkLayer,
                      double dfPosBeg,
                      double dfPosEnd,
                      OGRLayer* const poOutLayer,
@@ -544,7 +544,7 @@ OGRErr CreateSubline(OGRLayer* const poPkLayer,
 //------------------------------------------------------------------------
 // Project
 //------------------------------------------------------------------------
-double Project(OGRLineString* pLine, OGRPoint* pPoint)
+static double Project(OGRLineString* pLine, OGRPoint* pPoint)
 {
     if(NULL == pLine || NULL == pPoint)
         return -1;
@@ -563,7 +563,7 @@ double Project(OGRLineString* pLine, OGRPoint* pPoint)
 // CreatePartsFromLineString
 //------------------------------------------------------------------------
 
-OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
+static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
 {
     //check repers type
     OGRwkbGeometryType eGeomType = poPkLayer->GetGeomType();
@@ -927,7 +927,7 @@ OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkL
 //------------------------------------------------------------------------
 // CreateParts
 //------------------------------------------------------------------------
-OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
+static OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
 {
     OGRErr eRetCode = OGRERR_FAILURE;
 
@@ -987,7 +987,7 @@ OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMV
 //------------------------------------------------------------------------
 // CreatePartsMultiple
 //------------------------------------------------------------------------
-OGRErr CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLineSepFieldName, OGRLayer* const poPkLayer, const char* pszPicketsSepFieldName, int nMValField, double dfStep, OGRLayer* const poOutLayer, const char* pszOutputSepFieldName, int bDisplayProgress, int bQuiet)
+static OGRErr CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLineSepFieldName, OGRLayer* const poPkLayer, const char* pszPicketsSepFieldName, int nMValField, double dfStep, OGRLayer* const poOutLayer, const char* pszOutputSepFieldName, int bDisplayProgress, int bQuiet)
 {
     //read all sep field values into array
     std::set<CPLString> asIDs;
@@ -1036,7 +1036,7 @@ OGRErr CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLineSepFiel
 //------------------------------------------------------------------------
 // GetPosition
 //------------------------------------------------------------------------
-OGRErr GetPosition(OGRLayer* const poPkLayer,
+static OGRErr GetPosition(OGRLayer* const poPkLayer,
                    double dfX,
                    double dfY,
                    CPL_UNUSED int bDisplayProgress,
@@ -1097,7 +1097,7 @@ OGRErr GetPosition(OGRLayer* const poPkLayer,
 //------------------------------------------------------------------------
 // GetCoordinates
 //------------------------------------------------------------------------
-OGRErr GetCoordinates(OGRLayer* const poPkLayer,
+static OGRErr GetCoordinates(OGRLayer* const poPkLayer,
                       double dfPos,
                       CPL_UNUSED int bDisplayProgress,
                       int bQuiet)
