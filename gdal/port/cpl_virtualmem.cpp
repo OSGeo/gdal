@@ -921,6 +921,7 @@ static OpType CPLVirtualMemGetOpTypeImm(GByte val_rip)
 /* if the fault occurs on a store operation, then we can directly put */
 /* the page in writable mode if the mapping allows it */
 
+#if defined(__x86_64__) || defined(__i386__)
 static OpType CPLVirtualMemGetOpType(const GByte* rip)
 {
     OpType opType = OP_UNKNOWN;
@@ -1575,6 +1576,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
 #endif
     return opType;
 }
+#endif
 
 /************************************************************************/
 /*                    CPLVirtualMemManagerPinAddrInternal()             */
