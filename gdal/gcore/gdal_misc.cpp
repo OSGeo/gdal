@@ -41,23 +41,6 @@ CPL_CVSID("$Id$");
 #include "gdal_mdreader.h"
 
 /************************************************************************/
-/*                           __pure_virtual()                           */
-/*                                                                      */
-/*      The following is a gross hack to remove the last remaining      */
-/*      dependency on the GNU C++ standard library.                     */
-/************************************************************************/
-
-#ifdef __GNUC__
-
-extern "C"
-void __pure_virtual()
-
-{
-}
-
-#endif
-
-/************************************************************************/
 /*                         GDALDataTypeUnion()                          */
 /************************************************************************/
 
@@ -3020,41 +3003,6 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 
     return poODS;
 }
-
-/************************************************************************/
-/* -------------------------------------------------------------------- */
-/*      The following stubs are present to ensure that older GDAL       */
-/*      bridges don't fail with newer libraries.                        */
-/* -------------------------------------------------------------------- */
-/************************************************************************/
-
-CPL_C_START
-
-void * CPL_STDCALL GDALCreateProjDef( const char * )
-{
-    CPLDebug( "GDAL", "GDALCreateProjDef no longer supported." );
-    return NULL;
-}
-
-CPLErr CPL_STDCALL GDALReprojectToLongLat( void *, double *, double * )
-{
-    CPLDebug( "GDAL", "GDALReprojectToLatLong no longer supported." );
-    return CE_Failure;
-}
-
-CPLErr CPL_STDCALL GDALReprojectFromLongLat( void *, double *, double * )
-{
-    CPLDebug( "GDAL", "GDALReprojectFromLatLong no longer supported." );
-    return CE_Failure;
-}
-
-void CPL_STDCALL GDALDestroyProjDef( void * )
-
-{
-    CPLDebug( "GDAL", "GDALDestroyProjDef no longer supported." );
-}
-
-CPL_C_END
 
 /************************************************************************/
 /* Infrastructure to check that dataset characteristics are valid       */
