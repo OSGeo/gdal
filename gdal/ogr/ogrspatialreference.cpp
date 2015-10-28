@@ -47,7 +47,8 @@ CPL_CVSID("$Id$");
 /*                           OGRPrintDouble()                           */
 /************************************************************************/
 
-void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue )
+static
+void OGRPrintDouble( char * pszStrBuf, size_t size, double dfValue )
 
 {
     CPLsnprintf( pszStrBuf, size, "%.16g", dfValue );
@@ -873,7 +874,7 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
     if( ABS(dfValue - (int) dfValue) == 0.0 )
         sprintf( szValue, "%d", (int) dfValue );
     else
-        OGRsnPrintDouble( szValue, sizeof(szValue), dfValue );
+        OGRPrintDouble( szValue, sizeof(szValue), dfValue );
 
     return SetNode( pszNodePath, szValue );
 }
@@ -915,7 +916,7 @@ OGRErr OGRSpatialReference::SetAngularUnits( const char * pszUnitsName,
     if( poCS == NULL )
         return OGRERR_FAILURE;
 
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfInRadians );
+    OGRPrintDouble( szValue, sizeof(szValue), dfInRadians );
 
     if( poCS->FindChild( "UNIT" ) >= 0 )
     {
@@ -1211,7 +1212,7 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
     if( dfInMeters == (int) dfInMeters )
         sprintf( szValue, "%d", (int) dfInMeters );
     else
-      OGRsnPrintDouble( szValue, sizeof(szValue), dfInMeters );
+      OGRPrintDouble( szValue, sizeof(szValue), dfInMeters );
 
     if( poCS->FindChild( "UNIT" ) >= 0 )
     {
@@ -1577,10 +1578,10 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     poSpheroid->AddChild( new OGR_SRSNode( pszSpheroidName ) );
 
     char szValue[128];
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfSemiMajor );
+    OGRPrintDouble( szValue, sizeof(szValue), dfSemiMajor );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfInvFlattening );
+    OGRPrintDouble( szValue, sizeof(szValue), dfInvFlattening );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
 /* -------------------------------------------------------------------- */
@@ -1596,7 +1597,7 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     if( dfPMOffset == 0.0 )
         strcpy( szValue, "0" );
     else
-      OGRsnPrintDouble( szValue, sizeof(szValue), dfPMOffset );
+      OGRPrintDouble( szValue, sizeof(szValue), dfPMOffset );
 
     OGR_SRSNode *poPM = new OGR_SRSNode( "PRIMEM" );
     poPM->AddChild( new OGR_SRSNode( pszPMName ) );
@@ -1605,7 +1606,7 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
 /* -------------------------------------------------------------------- */
 /*      Setup the rotational units.                                     */
 /* -------------------------------------------------------------------- */
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfConvertToRadians );
+    OGRPrintDouble( szValue, sizeof(szValue), dfConvertToRadians );
 
     OGR_SRSNode *poUnits = new OGR_SRSNode( "UNIT" );
     poUnits->AddChild( new OGR_SRSNode(pszAngularUnits) );
@@ -3402,7 +3403,7 @@ OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
         return OGRERR_FAILURE;
 
     char szValue[64];
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfValue );
+    OGRPrintDouble( szValue, sizeof(szValue), dfValue );
 
 /* -------------------------------------------------------------------- */
 /*      Try to find existing parameter with this name.                  */
@@ -6699,25 +6700,25 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
     OGR_SRSNode *poTOWGS84 = new OGR_SRSNode("TOWGS84");
     char szValue[64];
 
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfDX );
+    OGRPrintDouble( szValue, sizeof(szValue), dfDX );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfDY );
+    OGRPrintDouble( szValue, sizeof(szValue), dfDY );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfDZ );
+    OGRPrintDouble( szValue, sizeof(szValue), dfDZ );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfEX );
+    OGRPrintDouble( szValue, sizeof(szValue), dfEX );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfEY );
+    OGRPrintDouble( szValue, sizeof(szValue), dfEY );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfEZ );
+    OGRPrintDouble( szValue, sizeof(szValue), dfEZ );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRsnPrintDouble( szValue, sizeof(szValue), dfPPM );
+    OGRPrintDouble( szValue, sizeof(szValue), dfPPM );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
     poDatum->InsertChild( poTOWGS84, iPosition );
