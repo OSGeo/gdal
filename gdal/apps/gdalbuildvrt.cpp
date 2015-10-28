@@ -142,7 +142,7 @@ static void Usage(const char* pszErrorMsg = NULL)
 /*                         GetSrcDstWin()                               */
 /************************************************************************/
 
-int  GetSrcDstWin(DatasetProperty* psDP,
+static int  GetSrcDstWin(DatasetProperty* psDP,
                   double we_res, double ns_res,
                   double minX, double minY, double maxX, double maxY,
                   double* pdfSrcXOff, double* pdfSrcYOff, double* pdfSrcXSize, double* pdfSrcYSize,

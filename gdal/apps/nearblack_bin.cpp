@@ -37,7 +37,7 @@ CPL_CVSID("$Id$");
 /*                               Usage()                                */
 /************************************************************************/
 
-void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = NULL)
 {
     printf( "nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_black_pixels]\n"
             "          [-setalpha] [-setmask] [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n" );

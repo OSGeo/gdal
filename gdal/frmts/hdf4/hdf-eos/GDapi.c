@@ -6820,7 +6820,7 @@ GDrs2ll(int32 projcode, float64 projparm[],
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-float64
+static float64
 lamazDxDtheta(float64 parms[])
 {
     float64         snTheta, sn2Theta, snTheta1, csTheta1, csLamda;
@@ -6867,7 +6867,7 @@ lamazDxDtheta(float64 parms[])
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-float64
+static float64
 lamazDxDlamda(float64 parms[])
 {
     float64         snTheta, csTheta, snTheta1, csTheta1, csLamda;
@@ -6915,7 +6915,7 @@ lamazDxDlamda(float64 parms[])
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-float64
+static float64
 lamazDyDtheta(float64 parms[])
 {
     float64         snTheta, csTheta, snTheta1, csTheta1, csLamda;
@@ -6965,7 +6965,7 @@ lamazDyDtheta(float64 parms[])
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-float64
+static float64
 homDyDtheta(float64 parms[])
 {
     float64         tnTheta, tnTheta1, snLamda;
@@ -7045,11 +7045,12 @@ GDtangentpnts(int32 projcode, float64 projparm[], float64 cornerlon[],
     float64         orgLat;	/* Latitude of origin */
     float64         dpi;	/* Double precision pi */
 
+#if 0
     float64         lamazDxDtheta();	/* Lambert Azimuthal Dx/Dtheta */
     float64         lamazDxDlamda();	/* Lambert Azimuthal Dx/Dlamda */
     float64         lamazDyDtheta();	/* Lambert Azimuthal Dy/Dtheta */
     float64         homDyDtheta();	/* Oblique Mercator  Dy/Dtheta */
-
+#endif
 
     /* Conpute pi (double precsion) */
     /* ---------------------------- */

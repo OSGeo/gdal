@@ -182,7 +182,7 @@ typedef struct
 
 /*****************************************************************/
 
-int countonbits(GUInt32 dw)
+static int countonbits(GUInt32 dw)
 {
     int r = 0;
     for(int x = 0; x < 32; x++)
@@ -194,7 +194,7 @@ int countonbits(GUInt32 dw)
 }
 
 
-int findfirstonbit(GUInt32 n)
+static int findfirstonbit(GUInt32 n)
 {
     for(int x = 0; x < 32; x++)
     {

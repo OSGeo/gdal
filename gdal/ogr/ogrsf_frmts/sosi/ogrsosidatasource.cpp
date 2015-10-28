@@ -41,7 +41,7 @@
 /*                              utility methods                         */
 /************************************************************************/
 
-int epsg2sosi (int nEPSG) {
+static int epsg2sosi (int nEPSG) {
     int nSOSI = 23;
     switch (nEPSG) {
         case 27391: /* NGO 1984 Axis I-VIII */
@@ -85,7 +85,7 @@ int epsg2sosi (int nEPSG) {
     return nSOSI;
 }
 
-int sosi2epsg (int nSOSI) {
+static int sosi2epsg (int nSOSI) {
     int nEPSG = 4326;
     switch (nSOSI) {
         case 1: /* NGO 1984 Axis I-VIII */

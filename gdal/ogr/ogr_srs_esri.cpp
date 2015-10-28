@@ -58,6 +58,12 @@ int   AddParamBasedOnPrjName( OGRSpatialReference* pOgr,
                              const char* pszProjectionName, char **mappingTable);
 int   RemapGeogCSName(OGRSpatialReference* pOgr, const char *pszGeogCSName);
 
+extern void OGREPSGDatumNameMassage( char ** ppszDatum );
+
+CPL_C_START 
+void CleanupESRIDatumMappingTable(void);
+CPL_C_END
+
 static int   FindCodeFromDict( const char* pszDictFile, const char* CSName, char* code );
 
 static const char *apszProjMapping[] = {
@@ -288,12 +294,10 @@ static const int anUsgsEsriZones[] =
 #define DM_GET_ESRI_NAME(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_ESRI_NAME]
 #define DM_GET_EPSG_NAME(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_EPSG_NAME]
 
-char *DMGetEPSGCode(int i) { return DM_GET_EPSG_CODE(papszDatumMapping, i); }
-char *DMGetESRIName(int i) { return DM_GET_ESRI_NAME(papszDatumMapping, i); }
-char *DMGetEPSGName(int i) { return DM_GET_EPSG_NAME(papszDatumMapping, i); }
+static char *DMGetEPSGCode(int i) { return DM_GET_EPSG_CODE(papszDatumMapping, i); }
+static char *DMGetESRIName(int i) { return DM_GET_ESRI_NAME(papszDatumMapping, i); }
+/* static char *DMGetEPSGName(int i) { return DM_GET_EPSG_NAME(papszDatumMapping, i); } */
 
-
-void OGREPSGDatumNameMassage( char ** ppszDatum );
 
 /************************************************************************/
 /*                           ESRIToUSGSZone()                           */

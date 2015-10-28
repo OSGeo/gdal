@@ -254,7 +254,7 @@ static const IlwisEllips iwEllips[] =
 #define ILW_Latitude_True_Scale "Latitude of True Scale"
 #define ILW_Height_Persp_Center "Height Persp. Center"
 
-double ReadPrjParms(string section, string entry, string filename)
+static double ReadPrjParms(string section, string entry, string filename)
 {
     string str = ReadElement(section, entry, filename);
     //string str="";
@@ -730,7 +730,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     return CE_None;
 }
 
-void WriteFalseEastNorth(string csFileName, OGRSpatialReference oSRS)
+static void WriteFalseEastNorth(string csFileName, OGRSpatialReference oSRS)
 {
     WriteElement("Projection", ILW_False_Easting, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0));
@@ -738,13 +738,13 @@ void WriteFalseEastNorth(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0));
 }
 
-void WriteProjectionName(string csFileName, string stProjection)
+static void WriteProjectionName(string csFileName, string stProjection)
 {
     WriteElement("CoordSystem", "Type", csFileName, "Projection");
     WriteElement("CoordSystem", "Projection", csFileName, stProjection);
 }
 
-void WriteUTM(string csFileName, OGRSpatialReference oSRS)
+static void WriteUTM(string csFileName, OGRSpatialReference oSRS)
 {
     int	bNorth;
 
@@ -758,7 +758,7 @@ void WriteUTM(string csFileName, OGRSpatialReference oSRS)
     WriteElement("Projection", "Zone", csFileName, nZone);
 }
 
-void WriteAlbersConicEqualArea(string csFileName, OGRSpatialReference oSRS)
+static void WriteAlbersConicEqualArea(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Albers EqualArea Conic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -772,7 +772,7 @@ void WriteAlbersConicEqualArea(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
 }
 
-void WriteAzimuthalEquidistant(string csFileName, OGRSpatialReference oSRS)
+static void WriteAzimuthalEquidistant(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Azimuthal Equidistant");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -783,7 +783,7 @@ void WriteAzimuthalEquidistant(string csFileName, OGRSpatialReference oSRS)
     WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
 }
 
-void WriteCylindricalEqualArea(string csFileName, OGRSpatialReference oSRS)
+static void WriteCylindricalEqualArea(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Central Cylindrical");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -791,7 +791,7 @@ void WriteCylindricalEqualArea(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-void WriteCassiniSoldner(string csFileName, OGRSpatialReference oSRS)
+static void WriteCassiniSoldner(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Cassini");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -802,7 +802,7 @@ void WriteCassiniSoldner(string csFileName, OGRSpatialReference oSRS)
     WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
 }
 
-void WriteStereographic(string csFileName, OGRSpatialReference oSRS)
+static void WriteStereographic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Stereographic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -814,7 +814,7 @@ void WriteStereographic(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)); 
 }
 
-void WriteEquidistantConic(string csFileName, OGRSpatialReference oSRS)
+static void WriteEquidistantConic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Equidistant Conic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -828,7 +828,7 @@ void WriteEquidistantConic(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
 }
 
-void WriteTransverseMercator(string csFileName, OGRSpatialReference oSRS)
+static void WriteTransverseMercator(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Transverse Mercator");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -840,7 +840,7 @@ void WriteTransverseMercator(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)); 
 }
 
-void WriteGnomonic(string csFileName, OGRSpatialReference oSRS)
+static void WriteGnomonic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Gnomonic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -850,7 +850,7 @@ void WriteGnomonic(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
-void WriteLambertConformalConic(string csFileName, OGRSpatialReference oSRS)
+static void WriteLambertConformalConic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Lambert Conformal Conic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -861,7 +861,7 @@ void WriteLambertConformalConic(string csFileName, OGRSpatialReference oSRS)
     WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
 }
 
-void WriteLambertConformalConic2SP(string csFileName, OGRSpatialReference oSRS)
+static void WriteLambertConformalConic2SP(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Lambert Conformal Conic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -876,7 +876,7 @@ void WriteLambertConformalConic2SP(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
 }
 
-void WriteLambertAzimuthalEqualArea(string csFileName, OGRSpatialReference oSRS)
+static void WriteLambertAzimuthalEqualArea(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Lambert Azimuthal EqualArea");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -886,7 +886,7 @@ void WriteLambertAzimuthalEqualArea(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
-void WriteMercator_1SP(string csFileName, OGRSpatialReference oSRS)
+static void WriteMercator_1SP(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Mercator");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -896,7 +896,7 @@ void WriteMercator_1SP(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
-void WriteMillerCylindrical(string csFileName, OGRSpatialReference oSRS)
+static void WriteMillerCylindrical(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Miller");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -904,7 +904,7 @@ void WriteMillerCylindrical(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-void WriteMolleweide(string csFileName, OGRSpatialReference oSRS)
+static void WriteMolleweide(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Mollweide");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -912,7 +912,7 @@ void WriteMolleweide(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-void WriteOrthographic(string csFileName, OGRSpatialReference oSRS)
+static void WriteOrthographic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Orthographic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -922,7 +922,7 @@ void WriteOrthographic(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
-void WritePlateRectangle(string csFileName, OGRSpatialReference oSRS)
+static void WritePlateRectangle(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Plate Rectangle");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -933,7 +933,7 @@ void WritePlateRectangle(string csFileName, OGRSpatialReference oSRS)
     WriteElement("Projection", ILW_Latitude_True_Scale, csFileName, "0.0000000000"); 
 }
 
-void WritePolyConic(string csFileName, OGRSpatialReference oSRS)
+static void WritePolyConic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "PolyConic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -944,7 +944,7 @@ void WritePolyConic(string csFileName, OGRSpatialReference oSRS)
     WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
 }
 
-void WriteRobinson(string csFileName, OGRSpatialReference oSRS)
+static void WriteRobinson(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Robinson");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -952,7 +952,7 @@ void WriteRobinson(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-void WriteSinusoidal(string csFileName, OGRSpatialReference oSRS)
+static void WriteSinusoidal(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Sinusoidal");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -960,7 +960,7 @@ void WriteSinusoidal(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-void WriteVanderGrinten(string csFileName, OGRSpatialReference oSRS)
+static void WriteVanderGrinten(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "VanderGrinten");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -968,7 +968,7 @@ void WriteVanderGrinten(string csFileName, OGRSpatialReference oSRS)
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-void WriteGeoStatSat(string csFileName, OGRSpatialReference oSRS)
+static void WriteGeoStatSat(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "GeoStationary Satellite");
     WriteFalseEastNorth(csFileName, oSRS);

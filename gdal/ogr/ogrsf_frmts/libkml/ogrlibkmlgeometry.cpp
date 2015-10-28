@@ -420,7 +420,7 @@ Returns:
 
 ******************************************************************************/
 
-OGRGeometry *kml2geom_rec (
+static OGRGeometry *kml2geom_rec (
     GeometryPtr poKmlGeometry,
     OGRSpatialReference *poOgrSRS)
 

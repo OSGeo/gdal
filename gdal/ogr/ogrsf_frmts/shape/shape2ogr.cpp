@@ -459,7 +459,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 /************************************************************************/
 /*                         SHPWriteOGRObject()                          */
 /************************************************************************/
-
+static
 OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                           int bRewind)
 

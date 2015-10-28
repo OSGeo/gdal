@@ -420,7 +420,7 @@ void DTEDClosePtStream( void *hStream )
 /************************************************************************/
 /*                           DTEDFillPixel()                            */
 /************************************************************************/
-
+static
 void DTEDFillPixel( DTEDInfo *psInfo, GInt16 **papanProfiles, 
                     GInt16 **papanDstProfiles, int iX, int iY, 
                     int nPixelSearchDist, float *pafKernel )

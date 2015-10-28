@@ -502,10 +502,6 @@ void nwtCloseGrid( NWT_GRID * pGrd )
         return;
 }
 
-void nwtGetRow( CPL_UNUSED NWT_GRID * pGrd )
-{
-}
-
 void nwtPrintGridHeader( NWT_GRID * pGrd )
 {
     if( pGrd->cFormat & 0x80 )
@@ -646,7 +642,7 @@ HLS RGBtoHLS( NWT_RGB rgb )
 
 
 /* utility routine for HLStoRGB */
-short HueToRGB( short n1, short n2, short hue )
+static short HueToRGB( short n1, short n2, short hue )
 {
     /* range check: note values passed add/subtract thirds of range */
     if( hue < 0 )

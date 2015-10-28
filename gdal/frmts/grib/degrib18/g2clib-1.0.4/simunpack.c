@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "grib2.h"
 
+g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld);
 
 g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld)
 ////$$$  SUBPROGRAM DOCUMENTATION BLOCK

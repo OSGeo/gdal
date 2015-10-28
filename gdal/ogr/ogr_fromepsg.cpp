@@ -37,7 +37,10 @@
 
 CPL_CVSID("$Id$");
 
-void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
+extern void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
+
+int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform );
+void OGREPSGDatumNameMassage( char ** ppszDatum );
 
 static const char *papszDatumEquiv[] =
 {
@@ -198,7 +201,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
 /*                        EPSGGetUOMAngleInfo()                         */
 /************************************************************************/
 
-int EPSGGetUOMAngleInfo( int nUOMAngleCode,
+static int EPSGGetUOMAngleInfo( int nUOMAngleCode,
                          char **ppszUOMName,
                          double * pdfInDegrees )
 

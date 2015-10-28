@@ -340,7 +340,7 @@ static int SHPCheckObjectContained( SHPObject * psObject, int nDimension,
 /*      longest dimension.                                              */
 /************************************************************************/
 
-void SHPAPI_CALL
+static void
 SHPTreeSplitBounds( double *padfBoundsMinIn, double *padfBoundsMaxIn,
                     double *padfBoundsMin1, double * padfBoundsMax1,
                     double *padfBoundsMin2, double * padfBoundsMax2 )
@@ -548,7 +548,7 @@ SHPTreeAddShapeId( SHPTree * psTree, SHPObject * psObject )
 /*      tree node by tree node basis.                                   */
 /************************************************************************/
 
-void SHPAPI_CALL
+static void
 SHPTreeCollectShapeIds( SHPTree *hTree, SHPTreeNode * psTreeNode,
                         double * padfBoundsMin, double * padfBoundsMax,
                         int * pnShapeCount, int * pnMaxShapes,

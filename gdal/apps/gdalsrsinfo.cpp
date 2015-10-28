@@ -52,7 +52,7 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget );
 /*                               Usage()                                */
 /************************************************************************/
 
-void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf( "\nUsage: gdalsrsinfo [options] srs_def\n"

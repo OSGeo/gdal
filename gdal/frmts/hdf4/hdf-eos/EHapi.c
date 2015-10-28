@@ -48,7 +48,7 @@ static int32 *EHXsdTable = NULL;
 static intn EHmetalist(char *, char *);
 static intn EHreset_maxopenfiles(intn);
 static intn EHget_maxopenfiles(intn *, intn *);
-static intn EHget_numfiles();
+static intn EHget_numfiles(void);
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |

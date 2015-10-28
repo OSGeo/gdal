@@ -120,7 +120,7 @@ OGRLayer *OGRCARTODBDataSource::GetLayerByName(const char * pszLayerName)
 /*                     OGRCARTODBGetOptionValue()                       */
 /************************************************************************/
 
-CPLString OGRCARTODBGetOptionValue(const char* pszFilename,
+static CPLString OGRCARTODBGetOptionValue(const char* pszFilename,
                                const char* pszOptionName)
 {
     CPLString osOptionName(pszOptionName);

@@ -45,6 +45,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <vector>
 
+/* used by ogrdxflayer.cpp */
+void rbspline(int npts,int k,int p1,double b[],double h[], double p[]);
+void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[]);
+
 /************************************************************************/
 /*                               knotu()                                */
 /************************************************************************/

@@ -2,9 +2,6 @@
 #include <math.h>
 #include "grib2.h"
 
-int enc_jpeg2000(unsigned char *,g2int ,g2int ,g2int ,
-                 g2int , g2int, g2int , char *, g2int );
-
 void jpcpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
              unsigned char *cpack,g2int *lcpack)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK

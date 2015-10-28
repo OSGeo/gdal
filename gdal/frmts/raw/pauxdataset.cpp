@@ -1048,7 +1048,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /*                             PAuxDelete()                             */
 /************************************************************************/
 
-CPLErr PAuxDelete( const char * pszBasename )
+static CPLErr PAuxDelete( const char * pszBasename )
 
 {
     VSILFILE	*fp;

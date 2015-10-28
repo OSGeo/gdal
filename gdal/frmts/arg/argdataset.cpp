@@ -108,7 +108,7 @@ CPLErr ARGDataset::GetGeoTransform( double * padfTransform )
 /************************************************************************/
 /*                         GetJsonFilename()                            */
 /************************************************************************/
-CPLString GetJsonFilename(CPLString pszFilename)
+static CPLString GetJsonFilename(CPLString pszFilename)
 {
     return CPLSPrintf( "%s/%s.json", CPLGetDirname(pszFilename), CPLGetBasename(pszFilename) );
 }
@@ -116,7 +116,7 @@ CPLString GetJsonFilename(CPLString pszFilename)
 /************************************************************************/
 /*                           GetJsonObject()                            */
 /************************************************************************/
-json_object * GetJsonObject(CPLString pszFilename)
+static json_object * GetJsonObject(CPLString pszFilename)
 {
     CPLString osJSONFilename = GetJsonFilename(pszFilename);
 
@@ -133,7 +133,7 @@ json_object * GetJsonObject(CPLString pszFilename)
 /************************************************************************/
 /*                          GetJsonValueStr()                           */
 /************************************************************************/
-const char *GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
+static const char *GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
 {
     json_object *pJSONItem = json_object_object_get(pJSONObject, pszKey.c_str());
     if (pJSONItem == NULL) {
@@ -148,7 +148,7 @@ const char *GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
 /************************************************************************/
 /*                          GetJsonValueDbl()                           */
 /************************************************************************/
-double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
+static double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
 {
     const char *pszJSONStr = GetJsonValueStr(pJSONObject, pszKey.c_str());
     if (pszJSONStr == NULL) {
@@ -168,7 +168,7 @@ double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
 /************************************************************************/
 /*                           GetJsonValueInt()                          */
 /************************************************************************/
-int GetJsonValueInt(json_object *pJSONObject, CPLString pszKey)
+static int GetJsonValueInt(json_object *pJSONObject, CPLString pszKey)
 {
     double dfTmp = GetJsonValueDbl(pJSONObject, pszKey.c_str());
     if (CPLIsNan(dfTmp)) {

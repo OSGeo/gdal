@@ -6264,7 +6264,7 @@ CPLErr NCDFSafeStrcpy(char** ppszDest, char* pszSrc, size_t* nDestSize)
 /* sets pdfValue to first value returned */
 /* and if bSetPszValue=True sets pszValue with all attribute values */
 /* pszValue is the responsibility of the caller and must be freed */
-CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName, 
+static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName, 
                      double *pdfValue, char **pszValue, int bSetPszValue )
 {
     nc_type nAttrType = NC_NAT;
@@ -6822,7 +6822,7 @@ double NCDFGetDefaultNoDataValue( int nVarType )
 }
 
 
-int NCDFDoesVarContainAttribVal( int nCdfId,
+static int NCDFDoesVarContainAttribVal( int nCdfId,
                                  const char ** papszAttribNames, 
                                  const char ** papszAttribValues,
                                  int nVarId,
@@ -6853,7 +6853,7 @@ int NCDFDoesVarContainAttribVal( int nCdfId,
     return bFound;
 }
 
-int NCDFDoesVarContainAttribVal2( int nCdfId,
+static int NCDFDoesVarContainAttribVal2( int nCdfId,
                                   const char * papszAttribName, 
                                   const char ** papszAttribValues,
                                   int nVarId,
@@ -6886,7 +6886,7 @@ int NCDFDoesVarContainAttribVal2( int nCdfId,
     return bFound;
 }
 
-int NCDFEqual( const char * papszName, const char ** papszValues )
+static int NCDFEqual( const char * papszName, const char ** papszValues )
 {
     if ( papszName == NULL || EQUAL(papszName,"") )
         return FALSE;

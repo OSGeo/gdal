@@ -36,6 +36,12 @@
 
 using std::string;
 
+/* used by ilwsicoordinatesystem.cpp */
+string ReadElement(string section, string entry, string filename);
+bool WriteElement(string sSection, string sEntry, string fn, string sValue);
+bool WriteElement(string sSection, string sEntry, string fn, int nValue);
+bool WriteElement(string sSection, string sEntry, string fn, double dValue);
+
 // IniFile.cpp: implementation of the IniFile class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -640,7 +646,7 @@ CPLErr ILWISDataset::SetGeoTransform( double * padfTransform )
     return CE_None;
 }
 
-bool CheckASCII(unsigned char * buf, int size)
+static bool CheckASCII(unsigned char * buf, int size)
 {
 	for (int i = 0; i < size; ++i)
         {
@@ -1806,8 +1812,6 @@ double ILWISRasterBand::GetNoDataValue( int *pbSuccess )
 /************************************************************************/
 /*                      ValueRange()                                    */
 /************************************************************************/
-double Max(double a, double b)
-{ return (a>=b && a!=rUNDEF) ? a : b; }
 
 static double doubleConv(const char* s)
 {

@@ -34,7 +34,7 @@
 #include "ogr_p.h"
 #include "cpl_multiproc.h"
 
-void Usage()
+static void Usage()
 
 {
     printf( "testepsg [-xml] [-t src_def trg_def x y z]* [def]*\n" );

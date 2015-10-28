@@ -170,7 +170,7 @@ static const double INGR_LRH_Flip[16] =
         0.0,  0.0,  0.0,  1.0
     };
 
-void INGR_MultiplyMatrix( double *padfA, real64 *padfB, const double *padfC )
+static void INGR_MultiplyMatrix( double *padfA, real64 *padfB, const double *padfC )
 {
     for( int i = 0; i < 4; i++ )
     {

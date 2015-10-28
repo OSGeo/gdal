@@ -587,16 +587,6 @@ const char *swq_select_finish_summarize( swq_select *select_info )
 }
 
 /************************************************************************/
-/*                          swq_select_free()                           */
-/************************************************************************/
-
-void swq_select_free( swq_select *select_info )
-
-{
-    delete select_info;
-}
-
-/************************************************************************/
 /*                         swq_identify_field()                         */
 /************************************************************************/
 int swq_identify_field_internal( const char* table_name, const char *field_token, 

@@ -39,6 +39,11 @@
 
 CPL_CVSID("$Id$");
 
+/* used by usgsdemdataset.cpp */
+GDALDataset *USGSDEMCreateCopy( const char *, GDALDataset *, int, char **,
+                                GDALProgressFunc pfnProgress, 
+                                void * pProgressData );
+
 typedef struct 
 {
     GDALDataset *poSrcDS;
@@ -89,7 +94,7 @@ static void USGSDEMWriteCleanup( USGSDEMWriteInfo *psWInfo )
 /************************************************************************/
 /*                       USGSDEMDectoPackedDMS()                        */
 /************************************************************************/
-const char *USGSDEMDecToPackedDMS( double dfDec )
+static const char *USGSDEMDecToPackedDMS( double dfDec )
 {
     int nSign = ( dfDec < 0.0 )? -1 : 1;
 

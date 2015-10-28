@@ -192,7 +192,7 @@ static const OGRProj4PM* OGRGetProj4PMFromVal(double dfVal)
 /*      strings with a + sign in the exponents of parameter values.     */
 /************************************************************************/
 
-char **OSRProj4Tokenize( const char *pszFull )
+static char **OSRProj4Tokenize( const char *pszFull )
 
 {
     if( pszFull == NULL )

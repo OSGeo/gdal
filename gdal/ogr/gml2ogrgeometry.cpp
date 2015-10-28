@@ -180,7 +180,7 @@ static const CPLXMLNode *GetChildElement( const CPLXMLNode *psElement )
 /*     Returns true for positive orientation.                           */
 /************************************************************************/
 
-int GetElementOrientation( const CPLXMLNode *psElement )
+static int GetElementOrientation( const CPLXMLNode *psElement )
 {
     if( psElement == NULL )
         return TRUE;

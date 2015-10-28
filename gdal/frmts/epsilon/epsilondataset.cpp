@@ -681,7 +681,7 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
 /*                  EpsilonDatasetCreateCopy ()                         */
 /************************************************************************/
 
-GDALDataset *
+static GDALDataset *
 EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
                        CPL_UNUSED int bStrict, char ** papszOptions, 
                        GDALProgressFunc pfnProgress, void * pProgressData )

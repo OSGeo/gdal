@@ -477,13 +477,13 @@ static int get_unsigned32(blxcontext_t *ctx, unsigned char **data) {
 }
 
 /* Check native endian order */
-int is_big_endian(void)
+static int is_big_endian(void)
 {
 	short int word = 0x0001;
 	char *byte = (char *) &word;
 	return (byte[0] ? 0:1);
 }
-double doubleSWAP(double df)
+static double doubleSWAP(double df)
 {
 	union
 	{
@@ -547,7 +547,7 @@ struct lutentry_s {
     int frequency;
 };	
 
-int lutcmp(const void *aa, const void *bb) {
+static int lutcmp(const void *aa, const void *bb) {
     const struct lutentry_s *a=aa, *b=bb;
 
     return b->frequency - a->frequency;
@@ -1021,7 +1021,7 @@ int blx_checkheader(char *header) {
 	((signature[0]==0x400) && (signature[1]==0x6600));
 }
 
-void blx_generate_header(blxcontext_t *ctx, unsigned char *header) {
+static void blx_generate_header(blxcontext_t *ctx, unsigned char *header) {
     unsigned char *hptr = header;
 
     memset(header, 0, 102);

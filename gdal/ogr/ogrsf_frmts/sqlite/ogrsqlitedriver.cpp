@@ -222,7 +222,7 @@ static GDALDataset *OGRSQLiteDriverCreate( const char * pszName,
 /*                             Delete()                                 */
 /************************************************************************/
 
-CPLErr OGRSQLiteDriverDelete( const char *pszName )
+static CPLErr OGRSQLiteDriverDelete( const char *pszName )
 {
     if (VSIUnlink( pszName ) == 0)
         return CE_None;

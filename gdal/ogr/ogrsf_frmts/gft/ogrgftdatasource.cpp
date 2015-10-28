@@ -152,7 +152,7 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
 /*                      OGRGFTGetOptionValue()                          */
 /************************************************************************/
 
-CPLString OGRGFTGetOptionValue(const char* pszFilename,
+static CPLString OGRGFTGetOptionValue(const char* pszFilename,
                                const char* pszOptionName)
 {
     CPLString osOptionName(pszOptionName);

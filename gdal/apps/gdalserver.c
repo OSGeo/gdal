@@ -87,7 +87,7 @@ static int bVerbose = FALSE;
 /*                               Usage()                                */
 /************************************************************************/
 
-void Usage(const char* pszErrorMsg)
+static void Usage(const char* pszErrorMsg)
 
 {
 #ifdef WIN32
@@ -124,7 +124,7 @@ void Usage(const char* pszErrorMsg)
 /*                CreateSocketAndBindAndListen()                        */
 /************************************************************************/
 
-int CreateSocketAndBindAndListen(const char* pszService,
+static int CreateSocketAndBindAndListen(const char* pszService,
                                  int *pnFamily,
                                  int *pnSockType,
                                  int *pnProtocol)
@@ -412,7 +412,7 @@ typedef struct
 
 #define MAX_CLIENTS 100
 
-int RunServer(CPL_UNUSED const char* pszApplication,
+static int RunServer(CPL_UNUSED const char* pszApplication,
               const char* pszService,
               const char* pszUnixSocketFilename,
               int bFork)

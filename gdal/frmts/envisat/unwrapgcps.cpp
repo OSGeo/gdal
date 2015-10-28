@@ -45,6 +45,8 @@ static const double XCNT = 0.0;
 // max. allowed longitude extent of the GCP set 
 static const double XLIM = XDIF*(1.0-NEMPY*(1.0/NBIN));
 
+/* used by envisatdataset.cpp */
+extern void EnvisatUnwrapGCPs( int cnt, GDAL_GCP *gcp );
 
 // The algoright is based on assumption that the unwrapped 
 // GCPs ('flipped' values) have smaller extent along the longitude.

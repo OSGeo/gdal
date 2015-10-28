@@ -171,33 +171,7 @@ void* GDALCreateSimilarGCPTransformer( void *hTransformArg, double dfRatioX, dou
 /*                      GDALCreateGCPTransformer()                      */
 /************************************************************************/
 
-/**
- * Create GCP based polynomial transformer.
- *
- * Computes least squares fit polynomials from a provided set of GCPs,
- * and stores the coefficients for later transformation of points between
- * pixel/line and georeferenced coordinates. 
- *
- * The return value should be used as a TransformArg in combination with
- * the transformation function GDALGCPTransform which fits the 
- * GDALTransformerFunc signature.  The returned transform argument should
- * be deallocated with GDALDestroyGCPTransformer when no longer needed.
- *
- * This function may fail (returning NULL) if the provided set of GCPs
- * are inadequate for the requested order, the determinate is zero or they
- * are otherwise "ill conditioned".  
- *
- * Note that 2nd order requires at least 6 GCPs, and 3rd order requires at
- * least 10 gcps.  If nReqOrder is 0 the highest order possible with the
- * provided gcp count will be used.
- *
- * @param nGCPCount the number of GCPs in pasGCPList.
- * @param pasGCPList an array of GCPs to be used as input.
- * @param nReqOrder the requested polynomial order.  It should be 1, 2 or 3.
- * 
- * @return the transform argument or NULL if creation fails. 
- */
-
+static
 void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList, 
                                 int nReqOrder, int bReversed, int bRefine, double dfTolerance, int nMinimumGcps)
 
@@ -294,6 +268,32 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
     }
 }
 
+/**
+ * Create GCP based polynomial transformer.
+ *
+ * Computes least squares fit polynomials from a provided set of GCPs,
+ * and stores the coefficients for later transformation of points between
+ * pixel/line and georeferenced coordinates. 
+ *
+ * The return value should be used as a TransformArg in combination with
+ * the transformation function GDALGCPTransform which fits the 
+ * GDALTransformerFunc signature.  The returned transform argument should
+ * be deallocated with GDALDestroyGCPTransformer when no longer needed.
+ *
+ * This function may fail (returning NULL) if the provided set of GCPs
+ * are inadequate for the requested order, the determinate is zero or they
+ * are otherwise "ill conditioned".  
+ *
+ * Note that 2nd order requires at least 6 GCPs, and 3rd order requires at
+ * least 10 gcps.  If nReqOrder is 0 the highest order possible with the
+ * provided gcp count will be used.
+ *
+ * @param nGCPCount the number of GCPs in pasGCPList.
+ * @param pasGCPList an array of GCPs to be used as input.
+ * @param nReqOrder the requested polynomial order.  It should be 1, 2 or 3.
+ * 
+ * @return the transform argument or NULL if creation fails. 
+ */
 void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
                                 int nReqOrder, int bReversed )
 

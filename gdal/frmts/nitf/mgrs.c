@@ -224,7 +224,7 @@ static const UPS_Constant UPS_Constant_Table[4] =
  *                              FUNCTIONS     
  */
 
-long Get_Latitude_Band_Min_Northing(long letter, double* min_northing)
+static long Get_Latitude_Band_Min_Northing(long letter, double* min_northing)
 /*
  * The function Get_Latitude_Band_Min_Northing receives a latitude band letter
  * and uses the Latitude_Band_Table to determine the minimum northing for that
@@ -248,8 +248,8 @@ long Get_Latitude_Band_Min_Northing(long letter, double* min_northing)
   return error_code;
 } /* Get_Latitude_Band_Min_Northing */
 
-
-long Get_Latitude_Range(long letter, double* north, double* south)
+#ifdef unused
+static long Get_Latitude_Range(long letter, double* north, double* south)
 /*
  * The function Get_Latitude_Range receives a latitude band letter
  * and uses the Latitude_Band_Table to determine the latitude band 
@@ -282,9 +282,10 @@ long Get_Latitude_Range(long letter, double* north, double* south)
 
   return error_code;
 } /* Get_Latitude_Range */
+#endif
 
-
-long Get_Latitude_Letter(double latitude, int* letter)
+#ifdef unusued
+static long Get_Latitude_Letter(double latitude, int* letter)
 /*
  * The function Get_Latitude_Letter receives a latitude value
  * and uses the Latitude_Band_Table to determine the latitude band 
@@ -310,9 +311,10 @@ long Get_Latitude_Letter(double latitude, int* letter)
 
   return error_code;
 } /* Get_Latitude_Letter */
+#endif
 
-
-long Check_Zone(char* MGRS, long* zone_exists)
+#ifdef unused
+static long Check_Zone(char* MGRS, long* zone_exists)
 /*
  * The function Check_Zone receives an MGRS coordinate string.
  * If a zone is given, TRUE is returned. Otherwise, FALSE
@@ -345,9 +347,9 @@ long Check_Zone(char* MGRS, long* zone_exists)
 
   return error_code;
 } /* Check_Zone */
+#endif
 
-
-long Round_MGRS (double value)
+static long Round_MGRS (double value)
 /*
  * The function Round_MGRS rounds the input value to the 
  * nearest integer, using the standard engineering rule.
@@ -366,7 +368,7 @@ long Round_MGRS (double value)
 } /* Round_MGRS */
 
 
-long Make_MGRS_String (char* MGRS, 
+static long Make_MGRS_String (char* MGRS, 
                        long Zone, 
                        int Letters[MGRS_LETTERS], 
                        double Easting, 
@@ -415,7 +417,7 @@ long Make_MGRS_String (char* MGRS,
 } /* Make_MGRS_String */
 
 
-long Break_MGRS_String (char* MGRS,
+static long Break_MGRS_String (char* MGRS,
                         long* Zone,
                         long Letters[MGRS_LETTERS],
                         double* Easting,
@@ -520,7 +522,7 @@ long Break_MGRS_String (char* MGRS,
 } /* Break_MGRS_String */
 
 
-void Get_Grid_Values (long zone, 
+static void Get_Grid_Values (long zone, 
                       long* ltr2_low_value, 
                       long* ltr2_high_value, 
                       double *false_northing)
@@ -584,8 +586,8 @@ void Get_Grid_Values (long zone,
   }
 } /* END OF Get_Grid_Values */
 
-
-long UTM_To_MGRS (long Zone,
+#ifdef unused
+static long UTM_To_MGRS (long Zone,
                   double Latitude,
                   double Easting,
                   double Northing,
@@ -655,7 +657,7 @@ long UTM_To_MGRS (long Zone,
   }
   return error_code;
 } /* END UTM_To_MGRS */
-
+#endif
 
 long Set_MGRS_Parameters (double a,
                           double f,
@@ -712,7 +714,7 @@ void Get_MGRS_Parameters (double *a,
   return;
 } /* Get_MGRS_Parameters */
 
-#ifdef notdef
+#ifndef GDAL_COMPILATION
 long Convert_UTM_To_MGRS (long Zone,
                           char Hemisphere,
                           double Easting,
@@ -795,7 +797,7 @@ long Convert_MGRS_To_UTM (char   *MGRS,
   double grid_northing;       /* Northing for 100,000 meter grid square     */
   long letters[MGRS_LETTERS];
   long in_precision;
-#ifdef notdef
+#ifndef GDAL_COMPILATION
   double upper_lat_limit;     /* North latitude limits based on 1st letter  */
   double lower_lat_limit;     /* South latitude limits based on 1st letter  */
   double latitude = 0.0;
@@ -861,7 +863,7 @@ long Convert_MGRS_To_UTM (char   *MGRS,
 
             *Easting = grid_easting + *Easting;
             *Northing = grid_northing + *Northing;
-#ifdef notdef
+#ifndef GDAL_COMPILATION
             /* check that point is within Zone Letter bounds */
             error_code = Set_UTM_Parameters(MGRS_a,MGRS_f,*Zone);
             if (!error_code)

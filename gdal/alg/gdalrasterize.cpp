@@ -44,7 +44,7 @@
 /************************************************************************/
 /*                           gvBurnScanline()                           */
 /************************************************************************/
-
+static
 void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
                      double dfVariant )
 
@@ -120,7 +120,7 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
 /************************************************************************/
 /*                            gvBurnPoint()                             */
 /************************************************************************/
-
+static
 void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
 
 {
