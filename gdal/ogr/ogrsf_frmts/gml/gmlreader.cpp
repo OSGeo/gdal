@@ -108,7 +108,7 @@ CPLMutex *GMLReader::hMutex = NULL;
 /************************************************************************/
 
 GMLReader::GMLReader(
-#ifndef HAVE_EXPAT
+#if !defined(HAVE_EXPAT) || !defined(HAVE_XERCES)
 CPL_UNUSED
 #endif
                      int bUseExpatParserPreferably,
