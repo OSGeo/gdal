@@ -35,6 +35,12 @@
 #include "cpl_multiproc.h"
 #include <assert.h>
 
+#ifndef HAVE_GEOS
+#define UNUSED_IF_NO_GEOS CPL_UNUSED
+#else
+#define UNUSED_IF_NO_GEOS 
+#endif
+
 CPL_CVSID("$Id$");
 
 int OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER = FALSE;
@@ -2328,7 +2334,7 @@ GEOSContextHandle_t OGRGeometry::createGEOSContext()
 /*                          freeGEOSContext()                           */
 /************************************************************************/
 
-void OGRGeometry::freeGEOSContext(GEOSContextHandle_t hGEOSCtxt)
+void OGRGeometry::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt)
 {
 #ifdef HAVE_GEOS
     if( hGEOSCtxt != NULL )
@@ -2342,7 +2348,7 @@ void OGRGeometry::freeGEOSContext(GEOSContextHandle_t hGEOSCtxt)
 /*                            exportToGEOS()                            */
 /************************************************************************/
 
-GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const
+GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
 
 {
 #ifndef HAVE_GEOS
@@ -2586,6 +2592,7 @@ double OGR_G_Distance( OGRGeometryH hFirst, OGRGeometryH hOther )
 /*                       OGRGeometryRebuildCurves()                     */
 /************************************************************************/
 
+#ifdef HAVE_GEOS
 static OGRGeometry* OGRGeometryRebuildCurves(const OGRGeometry* poGeom,
                                              const OGRGeometry* poOtherGeom,
                                              OGRGeometry* poOGRProduct)
@@ -2601,6 +2608,7 @@ static OGRGeometry* OGRGeometryRebuildCurves(const OGRGeometry* poGeom,
     }
     return poOGRProduct;
 }
+#endif
 
 /************************************************************************/
 /*                             ConvexHull()                             */
@@ -2844,7 +2852,8 @@ OGRGeometryH OGR_G_GetBoundary( OGRGeometryH hTarget )
  * @return the newly created geometry, or NULL if an error occurs. 
  */
 
-OGRGeometry *OGRGeometry::Buffer( double dfDist, int nQuadSegs ) const
+OGRGeometry *OGRGeometry::Buffer( UNUSED_IF_NO_GEOS double dfDist,
+                                  UNUSED_IF_NO_GEOS int nQuadSegs ) const
 
 {
 #ifndef HAVE_GEOS
@@ -2949,7 +2958,7 @@ OGRGeometryH OGR_G_Buffer( OGRGeometryH hTarget, double dfDist, int nQuadSegs )
  * no intersection or an error occurs.
  */
 
-OGRGeometry *OGRGeometry::Intersection( const OGRGeometry *poOtherGeom ) const
+OGRGeometry *OGRGeometry::Intersection( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -3050,7 +3059,7 @@ OGRGeometryH OGR_G_Intersection( OGRGeometryH hThis, OGRGeometryH hOther )
  * @return a new geometry representing the union or NULL if an error occurs.
  */
 
-OGRGeometry *OGRGeometry::Union( const OGRGeometry *poOtherGeom ) const
+OGRGeometry *OGRGeometry::Union( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -3233,7 +3242,7 @@ OGRGeometryH OGR_G_UnionCascaded( OGRGeometryH hThis )
  * difference is empty or an error occurs.
  */
 
-OGRGeometry *OGRGeometry::Difference( const OGRGeometry *poOtherGeom ) const
+OGRGeometry *OGRGeometry::Difference( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -3337,7 +3346,7 @@ OGRGeometryH OGR_G_Difference( OGRGeometryH hThis, OGRGeometryH hOther )
  */
 
 OGRGeometry *
-OGRGeometry::SymDifference( const OGRGeometry *poOtherGeom ) const
+OGRGeometry::SymDifference( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -3470,7 +3479,7 @@ OGRGeometryH OGR_G_SymmetricDifference( OGRGeometryH hThis, OGRGeometryH hOther 
  */
 
 OGRBoolean
-OGRGeometry::Disjoint( const OGRGeometry *poOtherGeom ) const
+OGRGeometry::Disjoint( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -3552,7 +3561,7 @@ int OGR_G_Disjoint( OGRGeometryH hThis, OGRGeometryH hOther )
  */
 
 OGRBoolean
-OGRGeometry::Touches( const OGRGeometry *poOtherGeom ) const
+OGRGeometry::Touches( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -3635,7 +3644,7 @@ int OGR_G_Touches( OGRGeometryH hThis, OGRGeometryH hOther )
  */
 
 OGRBoolean
-OGRGeometry::Crosses( const OGRGeometry *poOtherGeom ) const
+OGRGeometry::Crosses( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -3718,7 +3727,7 @@ int OGR_G_Crosses( OGRGeometryH hThis, OGRGeometryH hOther )
  */
 
 OGRBoolean
-OGRGeometry::Within( const OGRGeometry *poOtherGeom ) const
+OGRGeometry::Within( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -3800,7 +3809,7 @@ int OGR_G_Within( OGRGeometryH hThis, OGRGeometryH hOther )
  */
 
 OGRBoolean
-OGRGeometry::Contains( const OGRGeometry *poOtherGeom ) const
+OGRGeometry::Contains( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -3883,7 +3892,7 @@ int OGR_G_Contains( OGRGeometryH hThis, OGRGeometryH hOther )
  */
 
 OGRBoolean
-OGRGeometry::Overlaps( const OGRGeometry *poOtherGeom ) const
+OGRGeometry::Overlaps( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 {
 #ifndef HAVE_GEOS
@@ -4265,7 +4274,7 @@ OGRErr OGRGeometry::PointOnSurfaceInternal( OGRPoint * poPoint ) const
  * @since OGR 1.8.0
  */
 
-OGRGeometry *OGRGeometry::Simplify(double dTolerance) const
+OGRGeometry *OGRGeometry::Simplify(UNUSED_IF_NO_GEOS double dTolerance) const
 
 {
 #ifndef HAVE_GEOS
@@ -4351,7 +4360,7 @@ OGRGeometryH OGR_G_Simplify( OGRGeometryH hThis, double dTolerance )
  * @since OGR 1.9.0
  */
 
-OGRGeometry *OGRGeometry::SimplifyPreserveTopology(double dTolerance) const
+OGRGeometry *OGRGeometry::SimplifyPreserveTopology(UNUSED_IF_NO_GEOS double dTolerance) const
 
 {
 #ifndef HAVE_GEOS
@@ -4692,7 +4701,7 @@ int OGRHasPreparedGeometrySupport()
 /*                         OGRCreatePreparedGeometry()                  */
 /************************************************************************/
 
-OGRPreparedGeometry* OGRCreatePreparedGeometry( const OGRGeometry* poGeom )
+OGRPreparedGeometry* OGRCreatePreparedGeometry( UNUSED_IF_NO_GEOS const OGRGeometry* poGeom )
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
@@ -4725,7 +4734,7 @@ OGRPreparedGeometry* OGRCreatePreparedGeometry( const OGRGeometry* poGeom )
 /*                        OGRDestroyPreparedGeometry()                  */
 /************************************************************************/
 
-void OGRDestroyPreparedGeometry( OGRPreparedGeometry* poPreparedGeom )
+void OGRDestroyPreparedGeometry( UNUSED_IF_NO_GEOS OGRPreparedGeometry* poPreparedGeom )
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
     if( poPreparedGeom != NULL )
@@ -4742,8 +4751,8 @@ void OGRDestroyPreparedGeometry( OGRPreparedGeometry* poPreparedGeom )
 /*                      OGRPreparedGeometryIntersects()                 */
 /************************************************************************/
 
-int OGRPreparedGeometryIntersects( const OGRPreparedGeometry* poPreparedGeom,
-                                   const OGRGeometry* poOtherGeom )
+int OGRPreparedGeometryIntersects( UNUSED_IF_NO_GEOS const OGRPreparedGeometry* poPreparedGeom,
+                                   UNUSED_IF_NO_GEOS const OGRGeometry* poOtherGeom )
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
     if( poPreparedGeom == NULL || poOtherGeom == NULL )

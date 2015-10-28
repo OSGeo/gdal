@@ -45,7 +45,7 @@
 
 #ifndef POLYGONIZE_AREAS
 #  if defined(__GNUC_PREREQ)
-#    warning Interlis 1 Area polygonizing disabled. Needs GEOS >= 3.1.0
+//#    warning Interlis 1 Area polygonizing disabled. Needs GEOS >= 3.1.0
 #  endif
 #endif
 

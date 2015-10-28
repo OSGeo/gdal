@@ -1285,7 +1285,11 @@ void OGRSimpleCurve::Value( double dfDistance, OGRPoint * poPoint ) const
 #endif
 
 
-double OGRSimpleCurve::Project(const OGRPoint *poPoint) const
+double OGRSimpleCurve::Project(const OGRPoint *
+#ifdef HAVE_GEOS_PROJECT
+                                poPoint
+#endif
+                               ) const
 
 {
     double dfResult = -1;
