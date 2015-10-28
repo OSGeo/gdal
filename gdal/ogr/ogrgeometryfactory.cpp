@@ -34,6 +34,12 @@
 #include "ogr_p.h"
 #include "ogr_geos.h"
 
+#ifndef HAVE_GEOS
+#define UNUSED_IF_NO_GEOS CPL_UNUSED
+#else
+#define UNUSED_IF_NO_GEOS 
+#endif
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1758,7 +1764,8 @@ OGRGeometry *OGRGeometryFactory::createFromGML( const char *pszData )
 /************************************************************************/
 
 OGRGeometry *
-OGRGeometryFactory::createFromGEOS( GEOSContextHandle_t hGEOSCtxt, GEOSGeom geosGeom )
+OGRGeometryFactory::createFromGEOS( UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt,
+                                    UNUSED_IF_NO_GEOS GEOSGeom geosGeom )
 
 {
 #ifndef HAVE_GEOS 

@@ -544,6 +544,7 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
 //------------------------------------------------------------------------
 // Project
 //------------------------------------------------------------------------
+#ifdef HAVE_GEOS_PROJECT
 static double Project(OGRLineString* pLine, OGRPoint* pPoint)
 {
     if(NULL == pLine || NULL == pPoint)
@@ -558,11 +559,12 @@ static double Project(OGRLineString* pLine, OGRPoint* pPoint)
         
     return pLine->Project(pPoint);    
 }
+#endif
 
 //------------------------------------------------------------------------
 // CreatePartsFromLineString
 //------------------------------------------------------------------------
-
+#ifdef HAVE_GEOS_PROJECT
 static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
 {
     //check repers type
@@ -923,10 +925,12 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
 
     return OGRERR_NONE;
 }
+#endif
 
 //------------------------------------------------------------------------
 // CreateParts
 //------------------------------------------------------------------------
+#ifdef HAVE_GEOS_PROJECT
 static OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
 {
     OGRErr eRetCode = OGRERR_FAILURE;
@@ -983,10 +987,12 @@ static OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, 
 
     return eRetCode;
 }
+#endif
 
 //------------------------------------------------------------------------
 // CreatePartsMultiple
 //------------------------------------------------------------------------
+#ifdef HAVE_GEOS_PROJECT
 static OGRErr CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLineSepFieldName, OGRLayer* const poPkLayer, const char* pszPicketsSepFieldName, int nMValField, double dfStep, OGRLayer* const poOutLayer, const char* pszOutputSepFieldName, int bDisplayProgress, int bQuiet)
 {
     //read all sep field values into array
@@ -1032,10 +1038,12 @@ static OGRErr CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLine
 
     return OGRERR_NONE;
 }
+#endif
 
 //------------------------------------------------------------------------
 // GetPosition
 //------------------------------------------------------------------------
+#ifdef HAVE_GEOS_PROJECT
 static OGRErr GetPosition(OGRLayer* const poPkLayer,
                    double dfX,
                    double dfY,
@@ -1093,6 +1101,7 @@ static OGRErr GetPosition(OGRLayer* const poPkLayer,
 
     return OGRERR_NONE;
 }
+#endif
 
 //------------------------------------------------------------------------
 // GetCoordinates
