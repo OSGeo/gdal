@@ -31,7 +31,7 @@
 #include <ogr_geometry.h>
 #include "gdal.h"
 
-#include <kml/dom.h>
+#include "libkml_headers.h"
 
 using kmldom::KmlFactory;
 using kmldom::PlacemarkPtr;

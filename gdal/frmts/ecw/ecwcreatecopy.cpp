@@ -227,9 +227,9 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
     CPLFree( panBandMap );
 
     if( eErr == CE_None )
-        return NCS_SUCCESS;
+        return _static_NCS_SUCCESS;
     else
-        return NCS_FILEIO_ERROR;
+        return _static_NCS_FILEIO_ERROR;
 }
 
 /************************************************************************/
@@ -1062,9 +1062,7 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
 /*      Set the file info.                                              */
 /* -------------------------------------------------------------------- */
-    CNCSError oError;
-
-    oError = SetFileInfo( sFileInfo );
+    CNCSError oError = SetFileInfo( sFileInfo );
 
     if( oError.GetErrorNumber() == NCS_SUCCESS )
     {
@@ -1080,7 +1078,14 @@ CPLErr GDALECWCompressor::Initialize(
             else
 #endif
             {
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+#endif
                 oError = Open( (char *) pszFilename, false, true );
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
             }
         }
         else
@@ -1231,7 +1236,6 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Setup the compressor.                                           */
 /* -------------------------------------------------------------------- */
     GDALECWCompressor         oCompressor;
-    CNCSError oErr;
 
     oCompressor.pfnProgress = pfnProgress;
     oCompressor.pProgressData = pProgressData;
@@ -1270,7 +1274,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Start the compression.                                          */
 /* -------------------------------------------------------------------- */
-    oErr = oCompressor.Write();
+    CNCSError oErr = oCompressor.Write();
 
     if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
@@ -1781,7 +1785,6 @@ CPLErr ECWWriteDataset::Crystalize()
     int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
 
     CPLErr eErr;
-    CNCSError oError;
 
     if( bCrystalized )
         return CE_None;

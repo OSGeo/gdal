@@ -1,11 +1,11 @@
 /******************************************************************************
  *
- * Project:  rasdaman Driver
- * Purpose:  Implement Rasdaman GDAL driver 
- * Author:   Constantin Jucovschi, jucovschi@yahoo.com
+ * Project:  KML Translator
+ * Purpose:  Implements OGRLIBKMLDriver
+ * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 2010, Constantin Jucovschi
+ * Copyright (c) 2015, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,25 +24,20 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************/
+ *****************************************************************************/
 
-#ifndef _RASDAMAN_DATASET_H_
-#define _RASDAMAN_DATASET_H_
-#include "gdal.h"
+#ifndef LIBKML_HEADERS_H
+#define LIBKML_HEADERS_H
 
-void CPL_DLL CPL_STDCALL GDALRegister_RASDAMAN();
-
-#define __EXECUTABLE__
-#define EARLY_TEMPLATE
+#include "cpl_port.h"
 
 #ifdef HAVE_GCC_SYSTEM_HEADER
 #pragma GCC system_header
 #endif
 
-#include "raslib/template_inst.hh"
-#include "raslib/structuretype.hh"
-#include "raslib/type.hh"
-
-#include "rasodmg/database.hh"
+#include <kml/engine.h>
+#include <kml/dom.h>
+#include <kml/base/color32.h>
+#include <kml/base/file.h>
 
 #endif

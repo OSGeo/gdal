@@ -29,7 +29,7 @@
 
 #include <ogr_geometry.h>
 #include "ogr_p.h"
-#include <kml/dom.h>
+#include "libkml_headers.h"
 
 using kmldom::KmlFactory;
 using kmldom::CoordinatesPtr;

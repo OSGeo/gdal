@@ -1550,9 +1550,7 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Set the new requested window.                                   */
 /* -------------------------------------------------------------------- */
-    CNCSError oErr;
-
-    oErr = poFileView->SetView( nBandCount, (UINT32 *) panAdjustedBandList, 
+    CNCSError oErr = poFileView->SetView( nBandCount, (UINT32 *) panAdjustedBandList, 
                                 nXOff, nYOff, 
                                 nXOff + nXSize-1, nYOff + nYSize-1,
                                 nBufXSize, nBufYSize );
@@ -2033,7 +2031,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     UINT32 anBandIndices[100];
     int    i;
     NCSError     eNCSErr;
-    CNCSError    oErr;
+    CNCSError    oErr = _static_NCS_SUCCESS;
 
     for( i = 0; i < nBandCount; i++ )
         anBandIndices[i] = panBandMap[i] - 1;
@@ -2380,7 +2378,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
 /* -------------------------------------------------------------------- */
     CNCSJP2FileView *poFileView = NULL;
     NCSError         eErr;
-    CNCSError        oErr;
+    CNCSError        oErr = _static_NCS_SUCCESS;
 
     bUsingCustomStream = FALSE;
     poFileView = new CNCSFile();
@@ -3092,9 +3090,7 @@ int ECWTranslateFromWKT( const char *pszWKT,
     if( nEPSGCode != 0 )
     {
         char *pszEPSGProj = NULL, *pszEPSGDatum = NULL;
-        CNCSError oErr;
-
-        oErr = 
+        CNCSError oErr = 
             CNCSJP2FileView::GetProjectionAndDatum( atoi(pszAuthorityCode), 
                                                  &pszEPSGProj, &pszEPSGDatum );
 

@@ -34,15 +34,7 @@
 #include <string>
 #include <memory>
 #include <map>
-
-
-#define __EXECUTABLE__
-#define EARLY_TEMPLATE
-#include "raslib/template_inst.hh"
-#include "raslib/structuretype.hh"
-#include "raslib/type.hh"
-
-#include "rasodmg/database.hh"
+#include "rasdamandataset.h"
 
 CPL_CVSID("$Id$");
 

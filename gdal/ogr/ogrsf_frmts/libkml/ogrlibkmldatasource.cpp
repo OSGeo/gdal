@@ -32,8 +32,7 @@
 //#include "cpl_error.h"
 #include <iostream>
 //#include <sstream>
-#include <kml/dom.h>
-#include <kml/base/file.h>
+#include "libkml_headers.h"
 
 using kmldom::KmlFactory;
 using kmldom::DocumentPtr;

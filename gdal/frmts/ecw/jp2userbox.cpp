@@ -101,7 +101,7 @@ CNCSError JP2UserBox::Parse( CPL_UNUSED class CNCSJP2File &JP2File,
                              CPL_UNUSED CNCSJPCIOStream &Stream )
 #endif
 {
-    CNCSError Error = NCS_SUCCESS;
+    CNCSError Error = _static_NCS_SUCCESS;
 
     return Error;
 }
@@ -120,11 +120,11 @@ CNCSError JP2UserBox::UnParse( class CNCSJP2File &JP2File,
                                CNCSJPCIOStream &Stream )
 #endif
 {
-    CNCSError Error = NCS_SUCCESS;
+    CNCSError Error = _static_NCS_SUCCESS;
 
     if( m_nTBox == 0 )
     {
-        Error = NCS_UNKNOWN_ERROR;
+        Error = _static_NCS_UNKNOWN_ERROR;
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "No box type set in JP2UserBox::UnParse()" );
         return Error;

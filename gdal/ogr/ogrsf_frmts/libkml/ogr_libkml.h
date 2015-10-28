@@ -32,9 +32,7 @@
 
 #include "ogrsf_frmts.h"
 
-#include <kml/engine.h>
-#include <kml/dom.h>
-
+#include "libkml_headers.h"
 
 using kmldom::KmlFactory;
 using kmldom::KmlPtr;
