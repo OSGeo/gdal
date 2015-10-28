@@ -37,6 +37,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
+#include "gdal_priv.h"
 #include "gdalexif.h"
 
 CPL_CVSID("$Id$");

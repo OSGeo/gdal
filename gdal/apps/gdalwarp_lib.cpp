@@ -2262,7 +2262,7 @@ RemoveConflictingMetadata( GDALMajorObjectH hObj, char **papszMetadata,
 /*                             SanitizeSRS                              */
 /************************************************************************/
 
-char *SanitizeSRS( const char *pszUserInput )
+static char *SanitizeSRS( const char *pszUserInput )
 
 {
     OGRSpatialReferenceH hSRS;

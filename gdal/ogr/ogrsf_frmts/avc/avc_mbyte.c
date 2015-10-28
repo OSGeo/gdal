@@ -70,7 +70,7 @@ static const GByte *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo,
  *
  * Alloc and init a new AVCDBCSInfo structure.
  **********************************************************************/
-AVCDBCSInfo *AVCAllocDBCSInfo()
+AVCDBCSInfo *AVCAllocDBCSInfo(void)
 {
     AVCDBCSInfo *psInfo;
 
@@ -105,7 +105,7 @@ void AVCFreeDBCSInfo(AVCDBCSInfo *psInfo)
  * Returns a valid codepage number, or 0 if the codepage is single byte or
  * unsupported.
  **********************************************************************/
-int AVCGetDBCSCodePage()
+int AVCGetDBCSCodePage(void)
 {
 #ifdef _WIN32
     int nCP;

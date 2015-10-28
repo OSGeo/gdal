@@ -303,7 +303,7 @@ void GetCeosSAREmbeddedInfo(CeosSARVolume_t *volume, CeosRecord_t *processed_dat
 void DeleteCeosSARVolume(CeosSARVolume_t *volume);
 
 void RegisterRecipes(void);
-void FreeRecipes();
+void FreeRecipes(void);
 
 void AddRecipe( int ( *function )( CeosSARVolume_t *volume, void *token ),
 		void *token, const char *name );

@@ -1971,6 +1971,7 @@ inline void GDALCopyWordsFromT(const T* const pSrcData, int nSrcPixelStride, boo
 /*                          GDALReplicateWord()                         */
 /************************************************************************/
 
+static
 void GDALReplicateWord(void *pSrcData, GDALDataType eSrcType,
                        void *pDstData, GDALDataType eDstType, int nDstPixelStride,
                        int nWordCount)

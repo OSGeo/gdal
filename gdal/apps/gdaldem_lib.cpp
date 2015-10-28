@@ -1422,6 +1422,7 @@ GDALColorInterp GDALColorReliefRasterBand::GetColorInterpretation()
 }
 
 
+static
 CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
                         GDALRasterBandH hDstBand1,
                         GDALRasterBandH hDstBand2,
@@ -1590,6 +1591,7 @@ end:
 /*                     GDALGenerateVRTColorRelief()                     */
 /************************************************************************/
 
+static
 CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
                                GDALDatasetH hSrcDataset,
                                GDALRasterBandH hSrcBand,

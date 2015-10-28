@@ -39,6 +39,14 @@ CPL_CVSID("$Id$");
 
 #define CPL_RECODE_DSTBUF_SIZE 32768
 
+ /* used by cpl_recode.cpp */
+extern void CPLClearRecodeIconvWarningFlags();
+extern char *CPLRecodeIconv( const char *, const char *, const char * );
+extern char *CPLRecodeFromWCharIconv( const wchar_t *,
+                                      const char *, const char * );
+extern wchar_t *CPLRecodeToWCharIconv( const char *,
+                                       const char *, const char * );
+
 /************************************************************************/
 /*                 CPLClearRecodeIconvWarningFlags()                    */
 /************************************************************************/

@@ -62,7 +62,7 @@ HFACompress::~HFACompress()
 }
 
 /* returns the number of bits needed to encode a count */
-GByte _FindNumBits( GUInt32 range )
+static GByte _FindNumBits( GUInt32 range )
 {
   if( range < 0xff )
   {

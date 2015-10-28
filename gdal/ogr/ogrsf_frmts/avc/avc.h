@@ -782,7 +782,7 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
 /*---------------------------------------------------------------------
  * Functions related to parsing E00 lines
  *--------------------------------------------------------------------*/
-AVCE00ParseInfo  *AVCE00ParseInfoAlloc();
+AVCE00ParseInfo  *AVCE00ParseInfoAlloc(void);
 void    AVCE00ParseInfoFree(AVCE00ParseInfo *psInfo);
 void    AVCE00ParseReset(AVCE00ParseInfo  *psInfo);
 
