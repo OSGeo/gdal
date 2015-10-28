@@ -380,6 +380,8 @@ void GDALDatasetPool::PreventDestroy()
 }
 
 /* keep that in sync with gdaldrivermanager.cpp */
+extern void GDALDatasetPoolPreventDestroy();
+
 void GDALDatasetPoolPreventDestroy()
 {
     GDALDatasetPool::PreventDestroy();
@@ -423,6 +425,8 @@ void GDALDatasetPool::ForceDestroy()
 }
 
 /* keep that in sync with gdaldrivermanager.cpp */
+extern void GDALDatasetPoolForceDestroy();
+
 void GDALDatasetPoolForceDestroy()
 {
     GDALDatasetPool::ForceDestroy();

@@ -13805,7 +13805,7 @@ static char *PrepareTIFFErrorFormat( const char *module, const char *fmt )
 /************************************************************************/
 /*                        GTiffWarningHandler()                         */
 /************************************************************************/
-void
+static void
 GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 {
     char	*pszModFmt;
@@ -13828,7 +13828,7 @@ GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 /************************************************************************/
 /*                         GTiffErrorHandler()                          */
 /************************************************************************/
-void
+static void
 GTiffErrorHandler(const char* module, const char* fmt, va_list ap )
 {
     char *pszModFmt;

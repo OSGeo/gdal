@@ -372,6 +372,7 @@ void CeosUpdateHeaderFromBuffer(CeosRecord_t *record)
 
 #ifdef CPL_LSB
 
+static
 void swapbyte(void *dst,void *src,int toswap)
 {
     int i,e;

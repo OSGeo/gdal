@@ -107,6 +107,7 @@
  * case of 2 numbers that are part of the same string but are not separated 
  * by a space.
  **********************************************************************/
+static
 int    AVCE00Str2Int(const char *pszStr, int numChars)
 {
     int nValue = 0;
@@ -140,7 +141,7 @@ int    AVCE00Str2Int(const char *pszStr, int numChars)
  *
  * The structure will eventually have to be freed with AVCE00ParseInfoFree().
  **********************************************************************/
-AVCE00ParseInfo  *AVCE00ParseInfoAlloc()
+AVCE00ParseInfo  *AVCE00ParseInfoAlloc(void)
 {
     AVCE00ParseInfo       *psInfo;
 
@@ -170,6 +171,7 @@ AVCE00ParseInfo  *AVCE00ParseInfoAlloc()
  * Release mem. associated with the psInfo->cur.* object we are
  * currently using.
  **********************************************************************/
+static
 void    _AVCE00ParseDestroyCurObject(AVCE00ParseInfo  *psInfo)
 {
     if (psInfo->eFileType == AVCFileUnknown)

@@ -63,6 +63,15 @@ static int utf8encode(unsigned ucs, char* buf);
 static int utf8bytes(unsigned ucs);
 #endif /* def FUTURE_NEEDS */
 
+/* used by cpl_recode.cpp */
+extern void CPLClearRecodeStubWarningFlags();
+extern char *CPLRecodeStub( const char *, const char *, const char * );
+extern char *CPLRecodeFromWCharStub( const wchar_t *,
+                                     const char *, const char * );
+extern wchar_t *CPLRecodeToWCharStub( const char *,
+                                      const char *, const char * );
+extern int CPLIsUTF8Stub( const char *, int );
+
 /************************************************************************/
 /* ==================================================================== */
 /*	Stub Implementation not depending on iconv() or WIN32 API.	*/

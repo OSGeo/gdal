@@ -448,6 +448,7 @@ void HFAClose( HFAHandle hHFA )
 /*  Used from HFADelete() function.                                     */
 /************************************************************************/
 
+static
 CPLErr HFARemove( const char *pszFilename )
 
 {

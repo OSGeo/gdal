@@ -274,6 +274,7 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
                        AVCCoverType eCoverType)
 {
@@ -510,6 +511,7 @@ void    AVCBinWriteClose(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteIndexEntry(AVCRawBinFile *psFile, 
                            int nPosition, int nSize)
 {
@@ -598,6 +600,7 @@ int AVCBinWriteObject(AVCBinFile *psFile, void *psObj)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteArc(AVCRawBinFile *psFile, AVCArc *psArc,
                     int nPrecision, AVCRawBinFile *psIndexFile)
 {
@@ -697,6 +700,7 @@ int AVCBinWriteArc(AVCBinFile *psFile, AVCArc *psArc)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWritePal(AVCRawBinFile *psFile, AVCPal *psPal, 
                     int nPrecision, AVCRawBinFile *psIndexFile)
 {
@@ -792,6 +796,7 @@ int AVCBinWritePal(AVCBinFile *psFile, AVCPal *psPal)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteCnt(AVCRawBinFile *psFile, AVCCnt *psCnt, 
                               int nPrecision, AVCRawBinFile *psIndexFile)
 {
@@ -885,6 +890,7 @@ int AVCBinWriteCnt(AVCBinFile *psFile, AVCCnt *psCnt)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteLab(AVCRawBinFile *psFile, AVCLab *psLab, 
                     int nPrecision)
 {
@@ -962,6 +968,7 @@ int AVCBinWriteLab(AVCBinFile *psFile, AVCLab *psLab)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteTol(AVCRawBinFile *psFile, AVCTol *psTol, 
                     int nPrecision)
 {
@@ -1065,6 +1072,7 @@ int AVCBinWritePrj(AVCBinFile *psFile, char **papszPrj)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteTxt(AVCRawBinFile *psFile, AVCTxt *psTxt, 
                               int nPrecision, AVCRawBinFile *psIndexFile)
 {
@@ -1175,6 +1183,7 @@ int _AVCBinWriteTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWritePCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
                               CPL_UNUSED int nPrecision,
                               AVCRawBinFile *psIndexFile)
@@ -1303,6 +1312,7 @@ int AVCBinWriteTxt(AVCBinFile *psFile, AVCTxt *psTxt)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteRxp(AVCRawBinFile *psFile,
                     AVCRxp *psRxp,
                     CPL_UNUSED int nPrecision)
@@ -1362,6 +1372,7 @@ int AVCBinWriteRxp(AVCBinFile *psFile, AVCRxp *psRxp)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteArcDir(AVCRawBinFile *psFile, AVCTableDef *psTableDef)
 {
     /* STRING values MUST be padded with spaces.
@@ -1413,6 +1424,7 @@ int _AVCBinWriteArcDir(AVCRawBinFile *psFile, AVCTableDef *psTableDef)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
 {
     /* STRING values MUST be padded with spaces.
@@ -1469,6 +1481,7 @@ int _AVCBinWriteArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
  */
 int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir);
 
+static
 int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
                                   AVCTableDef *psTableDef, 
                                   AVCDBCSInfo *psDBCSInfo)
@@ -2113,6 +2126,7 @@ static void    _AVCBinWriteCloseTable(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteTableRec(AVCRawBinFile *psFile, int nFields,
                          AVCFieldInfo *pasDef, AVCField *pasFields,
                          int nRecordSize, const char *pszFname)
@@ -2209,6 +2223,7 @@ int _AVCBinWriteTableRec(AVCRawBinFile *psFile, int nFields,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinWriteDBFTableRec(DBFHandle hDBFFile, int nFields,
                             AVCFieldInfo *pasDef, AVCField *pasFields,
                             int *nCurDBFRecord, const char *pszFname)

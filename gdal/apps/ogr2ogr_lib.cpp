@@ -1026,6 +1026,7 @@ public:
 /*                        ApplySpatialFilter()                          */
 /************************************************************************/
 
+static
 void ApplySpatialFilter(OGRLayer* poLayer, OGRGeometry* poSpatialFilter,
                         OGRSpatialReference* poSpatSRS,
                         const char* pszGeomField,
@@ -2382,6 +2383,7 @@ static OGRwkbGeometryType ConvertType(GeomType eGeomConversion,
 /*                        DoFieldTypeConversion()                       */
 /************************************************************************/
 
+static
 void DoFieldTypeConversion(GDALDataset* poDstDS, OGRFieldDefn& oFieldDefn,
                            char** papszFieldTypesToString,
                            char** papszMapFieldType,

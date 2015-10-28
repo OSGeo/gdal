@@ -546,6 +546,7 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
  * AVCWriteCloseCoverFile() will eventually have to be called to release the 
  * resources used by the AVCBinFile structure.
  **********************************************************************/
+static
 int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
                                  const char *pszLine, AVCTableDef *psTableDef)
 {
@@ -686,6 +687,7 @@ int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
  * File should have been previously opened by _AVCE00WriteCreateCoverFile().
  *
  **********************************************************************/
+static
 void  _AVCE00WriteCloseCoverFile(AVCE00WritePtr psInfo)
 {
     /*-----------------------------------------------------------------
