@@ -1013,6 +1013,11 @@ static void gdal_qh_symbols_unused()
     qh_argv_to_command_size();
 }
 
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
+
 #include "libqhull.h"
 #include "libqhull.c"
 #include "poly.c"
@@ -1029,6 +1034,10 @@ static void gdal_qh_symbols_unused()
 #include "geom2.c"
 #include "stat.c"
 #include "merge.c"
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
 
 /* Replaces userprintf.c implementation */
 static void qh_fprintf(CPL_UNUSED FILE *fp, CPL_UNUSED int msgcode, const char *fmt, ... )
