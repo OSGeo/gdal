@@ -4438,21 +4438,23 @@ OGRGeometryH OGR_G_SimplifyPreserveTopology( OGRGeometryH hThis, double dToleran
  * @since OGR 2.1
  */
 
-OGRGeometry *OGRGeometry::DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const
-{
 #ifndef HAVE_GEOS
-
+OGRGeometry *OGRGeometry::DelaunayTriangulation(double /*dfTolerance*/, int /*bOnlyEdges*/) const
+{
     CPLError( CE_Failure, CPLE_NotSupported,
               "GEOS support not enabled." );
     return NULL;
-
+}
 #elif GEOS_VERSION_MAJOR < 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 4)
+OGRGeometry *OGRGeometry::DelaunayTriangulation(double /*dfTolerance*/, int /*bOnlyEdges*/) const
+{
     CPLError( CE_Failure, CPLE_NotSupported,
               "GEOS 3.4 or later needed for DelaunayTriangulation." );
     return NULL;
-
+}
 #else
-    
+OGRGeometry *OGRGeometry::DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const
+{
     GEOSGeom hThisGeosGeom = NULL;
     GEOSGeom hGeosProduct = NULL;
     OGRGeometry *poOGRProduct = NULL;
@@ -4473,9 +4475,8 @@ OGRGeometry *OGRGeometry::DelaunayTriangulation(double dfTolerance, int bOnlyEdg
     }
     freeGEOSContext( hGEOSCtxt );
     return poOGRProduct;
-
-#endif
 }
+#endif
 
 /************************************************************************/
 /*                     OGR_G_DelaunayTriangulation()                    */
