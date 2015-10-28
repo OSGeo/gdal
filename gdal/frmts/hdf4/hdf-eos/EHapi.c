@@ -16,6 +16,7 @@ copyright notice appear in all copies and that both that copyright notice and
 this permission notice appear in supporting documentation.
 */
 
+#include "cpl_port.h"
 #include <errno.h>
 #include "mfhdf.h"
 #include "HdfEosDef.h"
@@ -2692,7 +2693,7 @@ EHmetagroup(int32 sdInterfaceID, char *structname, char *structcode,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-EHfillfld(int32 sdid, int32 rank, int32 truerank, int32 size, int32 off,
+EHfillfld(int32 sdid, int32 rank, CPL_UNUSED int32 truerank, int32 size, int32 off,
 	  int32 dims[], VOIDP fillval)
 {
     intn            i;		/* Loop index */

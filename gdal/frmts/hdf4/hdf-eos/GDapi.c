@@ -10384,7 +10384,7 @@ Alexis Zubrow
 ********************************************************/
 
 intn
-GDsettilecache(int32 gridID, char *fieldname, int32 maxcache, int32 cachecode)
+GDsettilecache(int32 gridID, char *fieldname, int32 maxcache, CPL_UNUSED int32 cachecode)
 {
 
     intn            status = 0;	/* routine return status variable */
@@ -10641,7 +10641,7 @@ static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
 		 float64 projparm[],
 		 int32 xdimsize, int32 ydimsize,
 		 float64 upleftpt[], float64 lowrightpt[], int32 npnts,
-		 float64 lon[],float64 lat[],
+		 CPL_UNUSED float64 lon[],CPL_UNUSED float64 lat[],
 		 float64 x[],float64 y[], float64 *scaleX,float64 *scaleY)
 {
     intn            status = 0;	/* routine return status variable */
@@ -10769,8 +10769,8 @@ static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
 -----------------------------------------------------------------------------*/
 static intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
 		 float64 projparm[],
-		 int32 xdimsize, int32 ydimsize,
-		 float64 upleftpt[], float64 lowrightpt[], int32 npnts,
+		 CPL_UNUSED int32 xdimsize, CPL_UNUSED int32 ydimsize,
+		 CPL_UNUSED float64 upleftpt[], CPL_UNUSED float64 lowrightpt[], int32 npnts,
 		 float64 x[], float64 y[], 
 		 float64 longitude[], float64 latitude[])
 {
