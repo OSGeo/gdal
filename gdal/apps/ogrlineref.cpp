@@ -1173,18 +1173,25 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszPartsDataSource = NULL;
     char  *pszOutputLayerName = NULL;
     const char  *pszLineLayerName = NULL;
+#ifdef HAVE_GEOS_PROJECT
     const char  *pszPicketsLayerName = NULL;
     const char  *pszPicketsMField = NULL;
+#endif
     const char  *pszPartsLayerName = NULL;
 
+#ifdef HAVE_GEOS_PROJECT
     const char  *pszLineSepFieldName = NULL;
     const char  *pszPicketsSepFieldName = NULL;
     const char  *pszOutputSepFieldName = "uniq_uid";
+#endif
     
     char        **papszDSCO = NULL, **papszLCO = NULL;
     
     operation stOper = op_unknown;
-    double dfX(-100000000), dfY(-100000000), dfPos(-100000000);
+#ifdef HAVE_GEOS_PROJECT
+    double dfX(-100000000), dfY(-100000000);
+#endif
+    double dfPos(-100000000);
 
     int bDisplayProgress = FALSE;
     
@@ -1275,7 +1282,12 @@ int main( int nArgc, char ** papszArgv )
         else if (EQUAL(papszArgv[iArg], "-lf"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+#ifdef HAVE_GEOS_PROJECT
             pszLineSepFieldName = papszArgv[++iArg];
+#else
+            fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
+            exit( 1 );
+#endif
         }
         else if( EQUAL(papszArgv[iArg],"-p") )
         {
@@ -1285,17 +1297,32 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-pn") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+#ifdef HAVE_GEOS_PROJECT
             pszPicketsLayerName = papszArgv[++iArg];
+#else
+            fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
+            exit( 1 );
+#endif
         }    
         else if( EQUAL(papszArgv[iArg],"-pm") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+#ifdef HAVE_GEOS_PROJECT
             pszPicketsMField = papszArgv[++iArg];
+#else
+            fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
+            exit( 1 );
+#endif
         }
         else if (EQUAL(papszArgv[iArg], "-pf"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+#ifdef HAVE_GEOS_PROJECT
             pszPicketsSepFieldName = papszArgv[++iArg];
+#else
+            fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
+            exit( 1 );
+#endif
         }
         else if( EQUAL(papszArgv[iArg],"-r") )
         {
@@ -1320,17 +1347,32 @@ int main( int nArgc, char ** papszArgv )
         else if (EQUAL(papszArgv[iArg], "-of"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+#ifdef HAVE_GEOS_PROJECT
             pszOutputSepFieldName = papszArgv[++iArg];
+#else
+            fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
+            exit( 1 );
+#endif
         }
         else if( EQUAL(papszArgv[iArg],"-x") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+#ifdef HAVE_GEOS_PROJECT
             dfX = CPLAtofM(papszArgv[++iArg]);
+#else
+            fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
+            exit( 1 );
+#endif
         } 
         else if( EQUAL(papszArgv[iArg],"-y") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+#ifdef HAVE_GEOS_PROJECT
             dfY = CPLAtofM(papszArgv[++iArg]);
+#else
+            fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
+            exit( 1 );
+#endif
         } 
         else if( EQUAL(papszArgv[iArg],"-m") )
         {
