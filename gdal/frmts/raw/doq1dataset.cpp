@@ -121,7 +121,7 @@ CPLErr DOQ1Dataset::GetGeoTransform( double * padfTransform )
     padfTransform[4] = 0.0;
     padfTransform[5] = -1 * dfYPixelSize;
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -150,10 +150,10 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	Attempt to extract a few key values from the header.		*/
 /* -------------------------------------------------------------------- */
-    const int nWidth = (int) DOQGetField(poOpenInfo->pabyHeader + 150, 6);
-    const int nHeight = (int) DOQGetField(poOpenInfo->pabyHeader + 144, 6);
-    const int nBandStorage = (int) DOQGetField(poOpenInfo->pabyHeader + 162, 3);
-    const int nBandTypes = (int) DOQGetField(poOpenInfo->pabyHeader + 156, 3);
+    const int nWidth = static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 150, 6 ) );
+    const int nHeight = static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 144, 6 ) );
+    const int nBandStorage = static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 162, 3 ) );
+    const int nBandTypes = static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 156, 3 ) );
 
 /* -------------------------------------------------------------------- */
 /*      Do these values look coherent for a DOQ file?  It would be      */
@@ -176,7 +176,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
                   nBandTypes );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -187,7 +187,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
@@ -198,7 +198,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;
-    
+
     poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
     if (poDS->fpImage == NULL)
     {
@@ -209,21 +209,21 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Compute layout of data.                                         */
 /* -------------------------------------------------------------------- */
-    int		nSkipBytes, nBytesPerPixel=0, nBytesPerLine, i;
+    int nBytesPerPixel=0;
 
     if( nBandTypes < 5 )
         nBytesPerPixel = 1;
     else if( nBandTypes == 5 )
         nBytesPerPixel = 3;
 
-    nBytesPerLine = nBytesPerPixel * nWidth;
-    nSkipBytes = 4 * nBytesPerLine;
-    
+    const int nBytesPerLine = nBytesPerPixel * nWidth;
+    const int nSkipBytes = 4 * nBytesPerLine;
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = nBytesPerPixel;
-    for( i = 0; i < poDS->nBands; i++ )
+    for( int i = 0; i < poDS->nBands; i++ )
     {
         poDS->SetBand( i+1, 
             new RawRasterBand( poDS, i+1, poDS->fpImage,
@@ -239,36 +239,37 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Establish the projection string.                                */
 /* -------------------------------------------------------------------- */
-    if( ((int) DOQGetField(poOpenInfo->pabyHeader + 195, 3)) != 1 )
+    if( static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 195, 3) ) != 1 )
         poDS->pszProjection = VSIStrdup("");
     else
     {
-        const char *pszDatumLong, *pszDatumShort;
-        const char *pszUnits;
-        int nZone = (int) DOQGetField(poOpenInfo->pabyHeader + 198, 6);
+        const int nZone = static_cast<int>(
+            DOQGetField(poOpenInfo->pabyHeader + 198, 6) );
 
-        if( ((int) DOQGetField(poOpenInfo->pabyHeader + 204, 3)) == 1 )
+        const char *pszUnits;
+        if( static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 204, 3)) == 1 )
             pszUnits = "UNIT[\"US survey foot\",0.304800609601219]";
         else
             pszUnits = "UNIT[\"metre\",1]";
 
-        switch( (int) DOQGetField(poOpenInfo->pabyHeader + 167, 2) )
+        const char *pszDatumLong, *pszDatumShort;
+        switch( static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 167, 2) ) )
         {
           case 1:
             pszDatumLong = NAD27_DATUM;
             pszDatumShort = "NAD 27";
             break;
-            
+
           case 2:
             pszDatumLong = WGS72_DATUM;
             pszDatumShort = "WGS 72";
             break;
-            
+
           case 3:
             pszDatumLong = WGS84_DATUM;
             pszDatumShort = "WGS 84";
             break;
-            
+
           case 4:
             pszDatumLong = NAD83_DATUM;
             pszDatumShort = "NAD 83";
@@ -279,17 +280,17 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
             pszDatumShort = "unknown";
             break;
         }
-        
+
         poDS->pszProjection = 
             CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort, nZone,
                                   pszDatumLong, nZone * 6 - 183, pszUnits ));
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the georeferencing information.                            */
 /* -------------------------------------------------------------------- */
-    unsigned char	abyRecordData[500];
-    
+    unsigned char abyRecordData[500];
+
     if( VSIFSeekL( poDS->fpImage, nBytesPerLine * 2, SEEK_SET ) != 0
         || VSIFReadL(abyRecordData,sizeof(abyRecordData),1,poDS->fpImage) != 1 )
     {
@@ -337,24 +338,20 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_DOQ1()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "DOQ1" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "DOQ1" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "DOQ1" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "USGS DOQ (Old Style)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#DOQ1" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        
-        poDriver->pfnOpen = DOQ1Dataset::Open;
+    GDALDriver	*poDriver = new GDALDriver();
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->SetDescription( "DOQ1" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "USGS DOQ (Old Style)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#DOQ1" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->pfnOpen = DOQ1Dataset::Open;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 
 /************************************************************************/
@@ -366,7 +363,7 @@ static double DOQGetField( unsigned char *pabyData, int nBytes )
 {
     char	szWork[128];
 
-    strncpy( szWork, (const char *) pabyData, nBytes );
+    strncpy( szWork, reinterpret_cast<const char *>( pabyData ), nBytes );
     szWork[nBytes] = '\0';
 
     for( int i = 0; i < nBytes; i++ )
@@ -386,17 +383,19 @@ static void DOQGetDescription( GDALDataset *poDS, unsigned char *pabyData )
 
 {
     char	szWork[128];
-    int i = 0;
 
     memset( szWork, ' ', 128 );
     strncpy( szWork, "USGS GeoTIFF DOQ 1:12000 Q-Quad of ", 35 );
-    strncpy( szWork + 35, (const char *) pabyData + 0, 38 );
+    strncpy( szWork + 35, reinterpret_cast<const char *>( pabyData + 0 ), 38 );
+
+    int i = 0;
     while ( *(szWork + 72 - i) == ' ' ) {
       i++;
     }
     i--;
-    strncpy( szWork + 73 - i, (const char *) pabyData + 38, 2 );
-    strncpy( szWork + 76 - i, (const char *) pabyData + 44, 2 );
+
+    strncpy( szWork + 73 - i, reinterpret_cast<const char *>( pabyData + 38 ), 2 );
+    strncpy( szWork + 76 - i, reinterpret_cast<const char *>( pabyData + 44 ), 2 );
     szWork[77-i] = '\0';
 
     poDS->SetMetadataItem( "DOQ_DESC", szWork );

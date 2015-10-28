@@ -206,11 +206,11 @@ char **ACE2RasterBand::GetCategoryNames()
     const char* pszName = poDS->GetDescription();
 
     if (strstr(pszName, "_SOURCE_"))
-        return (char**) apszCategorySource;
+        return const_cast<char **>( apszCategorySource );
     if (strstr(pszName, "_QUALITY_"))
-        return (char**) apszCategoryQuality;
+        return const_cast<char **>( apszCategoryQuality );
     if (strstr(pszName, "_CONF_"))
-        return (char**) apszCategoryConfidence;
+        return const_cast<char **>( apszCategoryConfidence );
 
     return NULL;
 }
