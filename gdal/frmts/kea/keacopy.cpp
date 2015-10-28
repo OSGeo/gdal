@@ -34,6 +34,7 @@
 #include "libkea/KEAImageIO.h"
 #include "libkea/KEAAttributeTable.h"
 #include "libkea/KEAAttributeTableInMem.h"
+#include "keacopy.h"
 
 // Support functions for CreateCopy()
 
