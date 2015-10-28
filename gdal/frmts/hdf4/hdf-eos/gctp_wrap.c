@@ -106,8 +106,8 @@ int32 outsys,       /* output system code				*/
 int32 outzone,      /* output zone number				*/
 float64 *outparm,   /* output array of projection parameters	*/
 int32 outdatum,     /* output datum					*/
-char *fn27,         /* NAD 1927 parameter file			*/
-char *fn83,         /* NAD 1983 parameter file			*/
+CPL_UNUSED char *fn27,         /* NAD 1927 parameter file			*/
+CPL_UNUSED char *fn83,         /* NAD 1983 parameter file			*/
 int32 *iflg,        /* status flag					*/
 int32 (*for_trans[])(double, double, double *, double *))
                         /* forward function pointer			*/
@@ -163,8 +163,8 @@ int32 insys,		/* input system code				*/
 int32 inzone,		/* input zone number				*/
 float64 *inparm,	/* input array of projection parameters         */
 int32 indatum,	    /* input datum code			        */
-char *fn27,		    /* NAD 1927 parameter file			*/
-char *fn83,		    /* NAD 1983 parameter file			*/
+CPL_UNUSED char *fn27,		    /* NAD 1927 parameter file			*/
+CPL_UNUSED char *fn83,		    /* NAD 1983 parameter file			*/
 int32 *iflg,		/* status flag					*/
 int32 (*inv_trans[])(double, double, double*, double*))	
                         /* inverse function pointer			*/
