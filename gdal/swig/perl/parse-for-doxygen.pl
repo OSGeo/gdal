@@ -89,7 +89,7 @@ for my $pm (@pm) {
     close $fh;
 }
 
-my @dox = qw(lib/Geo/GDAL.dox lib/Geo/OGR.dox lib/Geo/OSR.dox);
+my @dox = qw(lib/Geo/GDAL.dox lib/Geo/OGR.dox lib/Geo/OSR.dox lib/Geo/GNM.dox);
 
 for my $dox (@dox) {
     open(my $fh, "<", $dox) or die "cannot open < $dox: $!";
@@ -178,6 +178,12 @@ for my $package (sort keys %package) {
     next if $package eq '';
     next if $package eq 'Geo::GDAL::Const';
     next if $package{$package}{ignore};
+    for my $sub (sort keys %{$package{$package}{dox}}) {
+        next if $sub =~ /^\$/;
+        if ($package{$package}{dox}{$sub} and not $package{$package}{subs}{$sub}) {
+            print STDERR "Warning: non-existing $package::$sub documented.\n";
+        }
+    }
     print "#** \@class $package\n";
     for my $l (@{$package{$package}{package_dox}}) {
         print "# $l\n";

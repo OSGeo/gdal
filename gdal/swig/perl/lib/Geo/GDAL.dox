@@ -39,7 +39,6 @@
 ## @ignore ReadDir
 ## @ignore ReadDirRecursive
 ## @ignore Rename
-## @ignore RmDir
 ## @ignore Rmdir
 ## @ignore Stat
 ## @ignore Unlink
@@ -240,29 +239,45 @@ sub traverse {
 # specified by the path.
 # @return a Geo::GDAL::Driver object, which represents an internal driver.
 
-## @sub Geo::GDAL::Dataset DEMProcessing($Dest, Geo::GDAL::Dataset Dataset, $Processing, $ColorFilename, $Options, subref progress, $progress_data)
-# Apply DEM processing
-# @param Dest Destination dataset path
-# @param Dataset
-# @param Processing "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", or "Roughness"
-# @param ColorFilename
-# @param Options
-# @param progress
-# @param progress_data
-#
+## @ignore make_processing_options
 
 ## @ignore_class Geo::GDAL::GDALDEMProcessingOptions
 ## @ignore wrapper_GDALDEMProcessing
 
+## @ignore_class Geo::GDAL::GDALGridOptions
+## @ignore wrapper_GDALGrid
+
+## @ignore_class Geo::GDAL::GDALNearblackOptions
+## @ignore wrapper_GDALNearblackDestDS
+## @ignore wrapper_GDALNearblackDestName
+
+## @ignore_class Geo::GDAL::GDALRasterizeOptions
+## @ignore wrapper_GDALRasterizeDestDS
+## @ignore wrapper_GDALRasterizeDestName
+
+## @ignore_class Geo::GDAL::GDALTranslateOptions
+## @ignore wrapper_GDALTranslate
+
+## @ignore_class Geo::GDAL::GDALVectorTranslateOptions
+## @ignore wrapper_GDALVectorTranslateDestDS
+## @ignore wrapper_GDALVectorTranslateDestName
+
+## @ignore_class Geo::GDAL::GDALWarpAppOptions
+## @ignore wrapper_GDALWarpDestDS
+## @ignore wrapper_GDALWarpDestName
+
+## @ignore_class Geo::GDAL::GDALInfoOptions
+## @ignore GDALInfo
+
 ## @sub ComputeMedianCutPCT(Geo::GDAL::Band red, Geo::GDAL::Band green, Geo::GDAL::Band blue, $num_colors, $colors, subref progress, $progress_data)
 # Compute an "optimal" color table for a three band image.
-# @param red a Geo::GDAL::Band object
-# @param green a Geo::GDAL::Band object
-# @param blue a Geo::GDAL::Band object
-# @param num_colors the desired number of colors 
-# @param colors an empty Geo::GDAL::ColorTable object
-# @param progress [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data)
+# @param red A Geo::GDAL::Band object.
+# @param green A Geo::GDAL::Band object.
+# @param blue A Geo::GDAL::Band object.
+# @param num_colors The desired number of colors.
+# @param colors An empty Geo::GDAL::ColorTable object.
+# @param progress [optional] A reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data).
 # @param progress_data [optional]
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
@@ -397,7 +412,7 @@ sub traverse {
 # use Geo::GDAL;
 # $ds = Geo::GDAL::Open('existing.tiff', 'Update');
 # \endcode
-# @param name
+# @param name Dataset definition string (typically a filename).
 # @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
 # @return a new Geo::GDAL::Dataset object.
 
@@ -755,6 +770,66 @@ sub traverse {
 ## @method CreateMaskBand()
 # Add a mask band to the dataset.
 
+## @method Geo::GDAL::Dataset DEMProcessing($Dest, $Processing, $ColorFilename, $Options, subref progress, $progress_data)
+# Apply a DEM processing to this dataset.
+# @param Dest Destination raster dataset definition string (typically filename).
+# @param Processing Processing to apply, one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", or "Roughness".
+# @param ColorFilename The color palette for color-relief.
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { of => 'PNG'
+# } to set the output format. For a list the options are given as for
+# the command line utility. See <a
+# href="http://www.gdal.org/gdaldem.html">gdaldem</a> for all options.
+# @param progress [optional] A reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data).
+# @param progress_data [optional]
+#
+
+## @method Geo::GDAL::Dataset Nearblack($Dest, $Options, subref progress, $progress_data)
+# Convert nearly black/white pixels to black/white.
+# @param Dest Destination raster dataset definition string (typically
+# filename) OR destination dataset to which to add an alpha or mask
+# band.
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { of => 'PNG'
+# } to set the output format. For a list the options are given as for
+# the command line utility. See <a
+# href="http://www.gdal.org/nearblack.html">nearblack</a> for all
+# options.
+# @return Dataset if destination dataset definition string was given,
+# otherwise a boolean for success/fail but the method croaks if there
+# was an error.
+
+## @method Geo::GDAL::Dataset Translate($Dest, $Options, subref progress, $progress_data)
+# Convert this dataset into another format.
+# @param Dest Destination raster dataset definition string (typically
+# filename).
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { of => 'PNG'
+# } to set the output format. For a list the options are given as for
+# the command line utility. See <a
+# href="http://www.gdal.org/gdal_translate.html">gdal_translate</a> for
+# all options.
+
+## @method Geo::GDAL::Dataset Warp($Dest, $Options, subref progress, $progress_data)
+# Reproject this dataset.
+# @param Dest Destination raster dataset definition string (typically
+# filename).
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { of => 'PNG'
+# } to set the output format. For a list the options are given as for
+# the command line utility. See <a
+# href="http://www.gdal.org/gdalwarp.html">gdalwarp</a> for
+# all options.
+
+## @method $Info($Options)
+# Information about this dataset.
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { JSON => 1 }
+# to set the output format to JSON. For a list the options are given
+# as for the command line utility. See <a
+# href="http://www.gdal.org/gdalinfo.html">gdalinfo</a> for all
+# options.
 
 
 
@@ -762,9 +837,7 @@ sub traverse {
 # @brief A raster band.
 # @isa ( Geo::GDAL::MajorObject Geo::GDAL )
 
-## @ignore COLOR_INTERPRETATIONS 
-
-## @subs ColorInterpretations
+## @sub ColorInterpretations
 # @return a list of types of color interpretation for raster
 # bands.
 

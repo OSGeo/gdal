@@ -1273,6 +1273,22 @@ IF_UNDEF_NULL(const char *, target_key)
         croak("$symname: dataset argument is undefined.");
 }
 
+%typemap(in, numinputs=1) (int object_list_count, GDALDatasetShadow** poObjects)
+{
+    /* %typemap(in, numinputs=1) (int object_list_count, GDALDatasetShadow** poObjects) */
+    $1 = 1;
+    void *argp = 0;
+    int res = SWIG_ConvertPtr($input, &argp, SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+    if (!SWIG_IsOK(res)) {
+        croak("$symname: dataset argument is not a dataset object."); 
+    }
+    GDALDatasetShadow* p = reinterpret_cast< GDALDatasetShadow * >(argp);
+    if (p == NULL)
+         croak("$symname: dataset argument is undefined.");
+    $2 = &p;
+}
+
+
 /*
  * Typemaps for VSIStatL
  */

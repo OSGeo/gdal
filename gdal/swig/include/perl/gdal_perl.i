@@ -382,12 +382,6 @@ sub OpenShared {
     return _OpenShared(@p);
 }
 
-sub DEMProcessing {
-    my ($Dest, $Dataset, $Processing, $ColorFilename, $Options, $progress, $progress_data) = @_;
-    $Options = Geo::GDAL::GDALDEMProcessingOptions->new($Options);
-    return wrapper_GDALDEMProcessing($Dest, $Dataset, $Processing, $ColorFilename, $Options, $progress, $progress_data);
-}
-
 sub ComputeMedianCutPCT {
     my @p = @_;
     $p[6] = 1 if $p[5] and not defined $p[6];
@@ -463,6 +457,19 @@ sub AutoCreateWarpedVRT {
     return _AutoCreateWarpedVRT(@p);
 }
 
+sub make_processing_options {
+    my ($o) = @_;
+    if (ref $o eq 'HASH') {
+        for my $key (keys %$o) {
+            unless ($key =~ /^-/) {
+                $o->{'-'.$key} = $o->{$key};
+                delete $o->{$key};
+            }
+        }
+        $o = [%$o];
+    } 
+    return $o;
+}
 
 
 
@@ -610,6 +617,7 @@ sub Create {
 package Geo::GDAL::Dataset;
 use strict;
 use warnings;
+use Scalar::Util 'blessed';
 use Carp;
 use vars qw/%BANDS @DOMAINS/;
 @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
@@ -657,6 +665,10 @@ sub AddBand {
         $p[1] = $Geo::GDAL::TYPE_STRING2INT{$p[1]};
     }
     return _AddBand(@p);
+}
+
+sub CreateMaskBand {
+    return _CreateMaskBand(@_);
 }
 
 sub Projection {
@@ -816,7 +828,45 @@ sub BuildOverviews {
     confess $@ if $@;
 }
 
+sub DEMProcessing {
+    my ($self, $Dest, $Processing, $ColorFilename, $o, $progress, $progress_data) = @_;
+    $o = Geo::GDAL::GDALDEMProcessingOptions->new(Geo::GDAL::make_processing_options($o));
+    return Geo::GDAL::wrapper_GDALDEMProcessing($Dest, $self, $Processing, $ColorFilename, $o, $progress, $progress_data);
+}
 
+sub Nearblack {
+    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    $o = Geo::GDAL::GDALNearblackOptions->new(Geo::GDAL::make_processing_options($o));
+    my $b = blessed($Dest);
+    if ($b && $b eq 'Geo::GDAL::Dataset') {
+        Geo::GDAL::wrapper_GDALNearblackDestDS($Dest, $self, $o, $progress, $progress_data);
+    } else {
+        return Geo::GDAL::wrapper_GDALNearblackDestName($Dest, $self, $o, $progress, $progress_data);
+    }
+}
+
+sub Translate {
+    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    $o = Geo::GDAL::GDALTranslateOptions->new(Geo::GDAL::make_processing_options($o));
+    return Geo::GDAL::wrapper_GDALTranslate($Dest, $self, $o, $progress, $progress_data);
+}
+
+sub Warp {
+    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    $o = Geo::GDAL::GDALWarpAppOptions->new(Geo::GDAL::make_processing_options($o));
+    my $b = blessed($Dest);
+    if ($b && $b eq 'Geo::GDAL::Dataset') {
+        Geo::GDAL::wrapper_GDALWarpDestDS($Dest, $self, $o, $progress, $progress_data);
+    } else {
+        return Geo::GDAL::wrapper_GDALWarpDestName($Dest, $self, $o, $progress, $progress_data);
+    }
+}
+
+sub Info {
+    my ($self, $o) = @_;
+    $o = Geo::GDAL::GDALInfoOptions->new(Geo::GDAL::make_processing_options($o));
+    return Geo::GDAL::GDALInfo($self, $o);
+}
 
 
 package Geo::GDAL::Band;
