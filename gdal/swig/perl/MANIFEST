@@ -7,10 +7,12 @@ lib/Geo/GDAL/Const.pm
 lib/Geo/GDAL.pm
 lib/Geo/OGR.pm
 lib/Geo/OSR.pm
+lib/Geo/GNM.pm
 lib/Geo/GDAL/Const.dox
 lib/Geo/GDAL.dox
 lib/Geo/OGR.dox
 lib/Geo/OSR.dox
+lib/Geo/GNM.dox
 t/00.t
 t/01.t
 t/02.t
@@ -32,5 +34,3 @@ transform.dox
 check_dox.pl
 parse-for-doxygen.pl
 Changes-in-the-API-in-2.0
-META.yml
-META.json
