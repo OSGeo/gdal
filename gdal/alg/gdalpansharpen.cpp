@@ -449,7 +449,7 @@ template<class WorkDataType, class OutDataType>
 /************************************************************************/
 
 template<class WorkDataType, class OutDataType, int bHasBitDepth>
-                    void GDALPansharpenOperation::WeightedBrovey(
+                    void GDALPansharpenOperation::WeightedBrovey3(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
                                                      OutDataType* pDataBuf,
@@ -749,11 +749,11 @@ template<class WorkDataType, class OutDataType> void GDALPansharpenOperation::We
                                                      WorkDataType nMaxValue) const
 {
     if( nMaxValue == 0 )
-        WeightedBrovey<WorkDataType, OutDataType, FALSE>(
+        WeightedBrovey3<WorkDataType, OutDataType, FALSE>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nBandValues, 0);
     else
     {
-        WeightedBrovey<WorkDataType, OutDataType, TRUE>(
+        WeightedBrovey3<WorkDataType, OutDataType, TRUE>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nBandValues, nMaxValue);
     }
 }
@@ -774,12 +774,12 @@ void GDALPansharpenOperation::WeightedBrovey<GUInt16,GUInt16>(
     }
     else if( nMaxValue == 0 )
     {
-        WeightedBrovey<GUInt16, GUInt16, FALSE>(
+        WeightedBrovey3<GUInt16, GUInt16, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nBandValues, 0);
     }
     else
     {
-        WeightedBrovey<GUInt16, GUInt16, TRUE>(
+        WeightedBrovey3<GUInt16, GUInt16, TRUE>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nBandValues, nMaxValue);
     }
 }
@@ -851,39 +851,39 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
     switch( eBufDataType )
     {
         case GDT_Byte:
-            WeightedBrovey<WorkDataType, GByte, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
+            WeightedBrovey3<WorkDataType, GByte, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
                            (GByte*)pDataBuf, nValues, nBandValues, 0);
             break;
 
         case GDT_UInt16:
-            WeightedBrovey<WorkDataType, GUInt16, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
+            WeightedBrovey3<WorkDataType, GUInt16, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
                            (GUInt16*)pDataBuf, nValues, nBandValues, 0);
             break;
 
 #ifndef LIMIT_TYPES
         case GDT_Int16:
-            WeightedBrovey<WorkDataType, GInt16, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
+            WeightedBrovey3<WorkDataType, GInt16, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
                            (GInt16*)pDataBuf, nValues, nBandValues, 0);
             break;
 
         case GDT_UInt32:
-            WeightedBrovey<WorkDataType, GUInt32, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
+            WeightedBrovey3<WorkDataType, GUInt32, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
                            (GUInt32*)pDataBuf, nValues, nBandValues, 0);
             break;
 
         case GDT_Int32:
-            WeightedBrovey<WorkDataType, GInt32, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
+            WeightedBrovey3<WorkDataType, GInt32, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
                            (GInt32*)pDataBuf, nValues, nBandValues, 0);
             break;
 
         case GDT_Float32:
-            WeightedBrovey<WorkDataType, float, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
+            WeightedBrovey3<WorkDataType, float, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
                            (float*)pDataBuf, nValues, nBandValues, 0);
             break;
 #endif
 
         case GDT_Float64:
-            WeightedBrovey<WorkDataType, double, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
+            WeightedBrovey3<WorkDataType, double, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
                            (double*)pDataBuf, nValues, nBandValues, 0);
             break;
 
