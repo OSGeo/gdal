@@ -110,7 +110,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
     if (oFileList.find(archiveFilename) != oFileList.end() )
     {
         VSIArchiveContent* content = oFileList[archiveFilename];
-        if( sStat.st_mtime > content->mTime ||
+        if( (time_t)sStat.st_mtime > content->mTime ||
             (vsi_l_offset)sStat.st_size != content->nFileSize)
         {
             CPLDebug("VSIArchive", "The content of %s has changed since it was cached",
