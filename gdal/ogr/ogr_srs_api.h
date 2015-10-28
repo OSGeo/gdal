@@ -462,7 +462,8 @@ int    CPL_DLL OSREPSGTreatsAsNorthingEasting( OGRSpatialReferenceH hSRS );
 const char CPL_DLL *OSRGetAxis( OGRSpatialReferenceH hSRS,
                                 const char *pszTargetKey, int iAxis, 
                                 OGRAxisOrientation *peOrientation );
-OGRErr CPL_DLL OSRSetAxes( const char *pszTargetKey,
+OGRErr CPL_DLL OSRSetAxes( OGRSpatialReferenceH hSRS, 
+                           const char *pszTargetKey,
                            const char *pszXAxisName,
                            OGRAxisOrientation eXAxisOrientation,
                            const char *pszYAxisName, 
@@ -560,6 +561,13 @@ OGRErr CPL_DLL OSRSetHOM( OGRSpatialReferenceH hSRS,
                           double dfScale,
                           double dfFalseEasting, double dfFalseNorthing );
 
+OGRErr CPL_DLL OSRSetHOMAC( OGRSpatialReferenceH hSRS, 
+                    double dfCenterLat, double dfCenterLong,
+                    double dfAzimuth, double dfRectToSkew, 
+                    double dfScale,
+                    double dfFalseEasting,
+                    double dfFalseNorthing );
+
 /** Hotine Oblique Mercator using two points on centerline */
 OGRErr CPL_DLL OSRSetHOM2PNO( OGRSpatialReferenceH hSRS, double dfCenterLat,
                               double dfLat1, double dfLong1,
@@ -614,6 +622,10 @@ OGRErr CPL_DLL OSRSetMercator( OGRSpatialReferenceH hSRS,
                                double dfCenterLat, double dfCenterLong,
                                double dfScale, 
                                double dfFalseEasting, double dfFalseNorthing );
+OGRErr CPL_DLL OSRSetMercator2SP( OGRSpatialReferenceH hSRS, 
+                          double dfStdP1,
+                          double dfCenterLat, double dfCenterLong,
+                          double dfFalseEasting, double dfFalseNorthing );
 
 /** Mollweide */
 OGRErr CPL_DLL  OSRSetMollweide( OGRSpatialReferenceH hSRS,
@@ -701,6 +713,11 @@ OGRErr CPL_DLL OSRSetTMSO( OGRSpatialReferenceH hSRS,
                            double dfScale,
                            double dfFalseEasting, double dfFalseNorthing );
 
+OGRErr CPL_DLL OSRSetTPED( OGRSpatialReferenceH hSRS,
+                   double dfLat1, double dfLong1,
+                   double dfLat2, double dfLong2,
+                   double dfFalseEasting, double dfFalseNorthing );
+
 /** VanDerGrinten */
 OGRErr CPL_DLL OSRSetVDG( OGRSpatialReferenceH hSRS,
                           double dfCenterLong,
@@ -708,6 +725,7 @@ OGRErr CPL_DLL OSRSetVDG( OGRSpatialReferenceH hSRS,
 
 /** Wagner I -- VII */
 OGRErr CPL_DLL OSRSetWagner( OGRSpatialReferenceH hSRS, int nVariation,
+                             double dfCenterLat,
                              double dfFalseEasting,
                              double dfFalseNorthing );
 
