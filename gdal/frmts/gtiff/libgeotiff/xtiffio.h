@@ -65,7 +65,7 @@ extern "C" {
 #  endif
 #endif
 
-extern void CPL_DLL XTIFFInitialize();
+extern void CPL_DLL XTIFFInitialize(void);
 extern TIFF CPL_DLL * XTIFFOpen(const char* name, const char* mode);
 extern TIFF CPL_DLL * XTIFFFdOpen(int fd, const char* name, const char* mode);
 extern void CPL_DLL XTIFFClose(TIFF *tif);
