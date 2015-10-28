@@ -53,8 +53,13 @@ AX_CHECK_COMPILE_FLAG([-Wmissing-field-initializers], [C_WFLAGS="$C_WFLAGS -Wmis
 AX_CHECK_COMPILE_FLAG([-Wignored-qualifiers], [C_WFLAGS="$C_WFLAGS -Wignored-qualifiers" CXX_WFLAGS="$CXX_WFLAGS -Wignored-qualifiers"])
 AX_CHECK_COMPILE_FLAG([-Wtype-limits], [C_WFLAGS="$C_WFLAGS -Wtype-limits" CXX_WFLAGS="$CXX_WFLAGS -Wtype-limits"])
 AX_CHECK_COMPILE_FLAG([-Wunused-parameter], [C_WFLAGS="$C_WFLAGS -Wunused-parameter" CXX_WFLAGS="$CXX_WFLAGS -Wunused-parameter" NO_UNUSED_PARAMETER_FLAG="-Wno-unused-parameter"])
+AX_CHECK_COMPILE_FLAG([-Wmissing-prototypes], [C_WFLAGS="$C_WFLAGS -Wmissing-prototypes"])
+AX_CHECK_COMPILE_FLAG([-Wmissing-declarations], [C_WFLAGS="$C_WFLAGS -Wmissing-declarations"])
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"])
+dnl we add -Werror since g++ just emits a warning when using -Wmissing-prototypes
+AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"])
+AX_CHECK_COMPILE_FLAG([-Wmissing-declarations], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"])
 AC_LANG_POP([C++])
 
 AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)

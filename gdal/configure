@@ -4469,6 +4469,76 @@ else
   :
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wmissing-prototypes" >&5
+$as_echo_n "checking whether C compiler accepts -Wmissing-prototypes... " >&6; }
+if ${ax_cv_check_cflags___Wmissing_prototypes+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Wmissing-prototypes"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Wmissing_prototypes=yes
+else
+  ax_cv_check_cflags___Wmissing_prototypes=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Wmissing_prototypes" >&5
+$as_echo "$ax_cv_check_cflags___Wmissing_prototypes" >&6; }
+if test "x$ax_cv_check_cflags___Wmissing_prototypes" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wmissing-prototypes"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wmissing-declarations" >&5
+$as_echo_n "checking whether C compiler accepts -Wmissing-declarations... " >&6; }
+if ${ax_cv_check_cflags___Wmissing_declarations+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Wmissing-declarations"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Wmissing_declarations=yes
+else
+  ax_cv_check_cflags___Wmissing_declarations=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Wmissing_declarations" >&5
+$as_echo "$ax_cv_check_cflags___Wmissing_declarations" >&6; }
+if test "x$ax_cv_check_cflags___Wmissing_declarations" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wmissing-declarations"
+else
+  :
+fi
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -4506,6 +4576,76 @@ fi
 $as_echo "$ax_cv_check_cxxflags___Wunused_private_field" >&6; }
 if test "x$ax_cv_check_cxxflags___Wunused_private_field" = xyes; then :
   CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -Wmissing-prototypes" >&5
+$as_echo_n "checking whether C++ compiler accepts -Werror -Wmissing-prototypes... " >&6; }
+if ${ax_cv_check_cxxflags___Werror__Wmissing_prototypes+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Werror -Wmissing-prototypes"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Werror__Wmissing_prototypes=yes
+else
+  ax_cv_check_cxxflags___Werror__Wmissing_prototypes=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__Wmissing_prototypes" >&5
+$as_echo "$ax_cv_check_cxxflags___Werror__Wmissing_prototypes" >&6; }
+if test "x$ax_cv_check_cxxflags___Werror__Wmissing_prototypes" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Wmissing-declarations" >&5
+$as_echo_n "checking whether C++ compiler accepts -Wmissing-declarations... " >&6; }
+if ${ax_cv_check_cxxflags___Wmissing_declarations+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Wmissing-declarations"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Wmissing_declarations=yes
+else
+  ax_cv_check_cxxflags___Wmissing_declarations=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Wmissing_declarations" >&5
+$as_echo "$ax_cv_check_cxxflags___Wmissing_declarations" >&6; }
+if test "x$ax_cv_check_cxxflags___Wmissing_declarations" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"
 else
   :
 fi
