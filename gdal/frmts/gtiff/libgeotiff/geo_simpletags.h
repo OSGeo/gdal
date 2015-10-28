@@ -61,7 +61,7 @@ int CPL_DLL ST_SetKey( ST_TIFF *, int tag, int count,
 int CPL_DLL ST_GetKey( ST_TIFF *, int tag, int *count, 
                        int *st_type, void **data_ptr );
 
-ST_TIFF CPL_DLL *ST_Create();
+ST_TIFF CPL_DLL *ST_Create( void );
 void CPL_DLL ST_Destroy( ST_TIFF * );
 
 int CPL_DLL ST_TagType( int tag );
