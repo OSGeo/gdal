@@ -1370,7 +1370,8 @@ static bool IsASCII(const char* pszStr)
 {
     for(int i=0;pszStr[i]!='\0';i++)
     {
-        if( reinterpret_cast<GByte *>( pszStr )[i] >= 128 )
+        if( reinterpret_cast<GByte *>(
+            const_cast<char *>( pszStr ) )[i] >= 128 )
             return false;
     }
     return true;
