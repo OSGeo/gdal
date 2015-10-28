@@ -36,10 +36,6 @@
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-void OGRFeatureStylePuller() {}
-CPL_C_END
-
 /****************************************************************************/
 /*                Class Parameter (used in the String)                      */
 /*                                                                          */
