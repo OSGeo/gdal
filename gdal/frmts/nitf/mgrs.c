@@ -790,8 +790,8 @@ long Convert_MGRS_To_UTM (char   *MGRS,
 { /* Convert_MGRS_To_UTM */
   double scaled_min_northing;
   double min_northing;
-  long ltr2_low_value;
-  long ltr2_high_value;
+  long ltr2_low_value = 0;
+  long ltr2_high_value = 0;
   double false_northing;
   double grid_easting;        /* Easting for 100,000 meter grid square      */
   double grid_northing;       /* Northing for 100,000 meter grid square     */
