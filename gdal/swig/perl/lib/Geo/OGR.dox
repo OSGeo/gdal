@@ -184,6 +184,9 @@
 # @return a boolean value indicating whether the data source has the
 # specified capability.
 
+## @method Geo::GDAL::Dataset AsDataset()
+# @return Return this object as a dataset object.
+
 ## @sub Geo::OGR::DataSource Open($name, $update = 0)
 # An example:
 # \code
@@ -276,6 +279,48 @@
 ## @ignore GetRefCount
 ## @ignore GetSummaryRefCount
 
+## @method Geo::GDAL::Dataset Grid($Dest, $Options)
+# Creates a regular raster grid from this data source.
+# This is equivalent to the gdal_grid utility.
+# @param Dest Destination raster dataset definition string (typically filename).
+# @param Options A reference to a hash or list of options. For a
+# hash the keys are without the prefix '-'. For example give { of =>
+# 'PNG' } to set the output format. You must specify at least layer
+# name (key = l) or SQL to create a layer (key = sql). For a list the
+# options are given as for the command line utility. See 
+# <a href="http://www.gdal.org/gdal_grid.html">gdal_grid</a> for a
+# complete list of options.
+#
+
+## @method Geo::GDAL::Dataset Rasterize($Dest, $Options, subref progress, $progress_data)
+# Render data from this data source into a raster.
+# @param Dest Destination raster dataset definition string (typically
+# filename) OR destination dataset.
+# @param Options A reference to a hash or list of options. For a hash the keys
+# are without the prefix '-' and the values must be strings. For
+# example give { of => 'PNG' } to set the output format. You must
+# specify at least layer name (key = l) or SQL to create a layer (key
+# = sql). To create a new raster, you need to specify either target
+# resolution (tr => xres,yres) or target file size (ts =>
+# width,height). For a list the options are given as for the command
+# line utility.See <a href="http://www.gdal.org/gdal_rasterize.html">gdal_rasterize</a> for a
+# complete list of options.
+# @return Dataset if destination dataset definition string was given,
+# otherwise a boolean for success/fail but the method croaks if there
+# was an error.
+#
+
+## @method Geo::OGR::DataSource Translate($Dest, $Options, subref progress, $progress_data)
+# Copy data from this data source into another data source.
+# @param Dest Destination data source string OR destination data source object.
+# @param Options A reference to a hash or list of options. For a hash the keys
+# are without the prefix '-' and the values must be strings. For a
+# list the options are given as for the command line utility. See 
+# <a href="http://www.gdal.org/ogr2ogr.html">ogr2ogr</a> for a complete
+# list of options.
+# @return New data source object if destination data source definition
+# string was given, otherwise a boolean for success/fail but the
+# method croaks if there was an error.
 
 
 
@@ -627,11 +672,6 @@
 # @return a list of the names of the fields in this layer. The
 # non-geometry field names are first in the list and then the geometry
 # fields.
-
-## @method $GetFieldDef($name)
-# @param name name of the field.
-# @return the definition object of the given field. Either
-# Geo::OGR::FieldDefn or Geo::OGR::GeomFieldDefn.
 
 ## @method SetIgnoredFields(@fields)
 # @param fields a list of field names
