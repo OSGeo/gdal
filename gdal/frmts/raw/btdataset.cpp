@@ -54,7 +54,7 @@ class BTDataset : public GDALPamDataset
     double      adfGeoTransform[6];
 
     char        *pszProjection;
-    
+
     int         nVersionCode;  // version times 10.
 
     int         bHeaderModified;
@@ -91,7 +91,6 @@ class BTRasterBand : public GDALPamRasterBand
     VSILFILE          *fpImage;
 
   public:
-
                    BTRasterBand( GDALDataset * poDS, VSILFILE * fp,
                                  GDALDataType eType );
 
@@ -104,18 +103,16 @@ class BTRasterBand : public GDALPamRasterBand
     virtual CPLErr SetNoDataValue( double );
 };
 
-
 /************************************************************************/
 /*                           BTRasterBand()                             */
 /************************************************************************/
 
-BTRasterBand::BTRasterBand( GDALDataset *poDS, VSILFILE *fp, GDALDataType eType )
-
+BTRasterBand::BTRasterBand( GDALDataset *poDSIn, VSILFILE *fp, GDALDataType eType ) :
+    fpImage(fp)
 {
-    this->poDS = poDS;
-    this->nBand = 1;
-    this->eDataType = eType;
-    this->fpImage = fp;
+    poDS = poDSIn;
+    nBand = 1;
+    eDataType = eType;
 
     nBlockXSize = 1;
     nBlockYSize = poDS->GetRasterYSize();
