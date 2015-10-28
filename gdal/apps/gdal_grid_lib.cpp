@@ -637,7 +637,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
 /************************************************************************/
 
 /**
- * Converts raster data between different formats.
+ * Create raster from the scattered data.
  *
  * This is the equivalent of the <a href="gdal_grid.html">gdal_grid</a> utility.
  *
