@@ -33,7 +33,7 @@
 #include <iostream>
 using namespace std;
 
-#include <kml/dom.h>
+#include "libkml_headers.h"
 
 using kmldom::KmlFactory;;
 using kmldom::IconStylePtr;

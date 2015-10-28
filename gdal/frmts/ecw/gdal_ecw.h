@@ -42,63 +42,17 @@
 
 #ifdef FRMT_ecw
 
-// The following is needed on 4.x+ to enable rw support.
-#if defined(HAVE_COMPRESS)
-# ifndef ECW_COMPRESS_RW_SDK_VERSION
-#  define ECW_COMPRESS_RW_SDK_VERSION
-# endif
+#include "ecwsdk_headers.h"
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 #endif
-
-#if defined(_MSC_VER)
-#  pragma warning(disable:4800)
-#endif
-
-#include <NCSECWClient.h>
-#include <NCSECWCompressClient.h>
-#include <NCSErrors.h>
-#include <NCSFile.h>
-#include <NCSJP2FileView.h>
-
-#ifdef HAVE_ECW_BUILDNUMBER_H
-#  include <ECWJP2BuildNumber.h>
-#  if !defined(ECW_VERSION)
-#    define ECWSDK_VERSION (NCS_ECWJP2_VER_MAJOR*10+NCS_ECWJP2_VER_MINOR)
-#  endif
-#else
-/* By default, assume 3.3 SDK Version. */
-#  if !defined(ECWSDK_VERSION)
-#    define ECWSDK_VERSION 33
-#  endif
-#endif
-
-#if ECWSDK_VERSION < 40
-
-#if !defined(NO_COMPRESS) && !defined(HAVE_COMPRESS)
-#  define HAVE_COMPRESS
-#endif
-
-#else
-    #if ECWSDK_VERSION>=50
-		#if ECWSDK_VERSION>=51
-			#define JPEG2000_DOMAIN_NAME "JPEG2000"
-		#endif
-        #include <NCSECWHeaderEditor.h>
-        #include "NCSEcw/SDK/Box.h"
-    #else 
-        #include <HeaderEditor.h>
-    #endif
-#  define NCS_FASTCALL
-#endif
-
-#if ECWSDK_VERSION >= 40
-#define SDK_CAN_DO_SUPERSAMPLING 1
-#endif
-
-#ifndef NCSFILEBASE_H
-#  include <NCSJP2FileView.h>
-#else
-#  undef  CNCSJP2FileView
-#  define CNCSJP2FileView	  CNCSFile
+static const CNCSError _static_NCS_SUCCESS = NCS_SUCCESS;
+static const CNCSError _static_NCS_UNKNOWN_ERROR = NCS_UNKNOWN_ERROR;
+static const CNCSError _static_NCS_FILEIO_ERROR = NCS_FILEIO_ERROR;
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
 #endif
 
 void ECWInitialize( void );

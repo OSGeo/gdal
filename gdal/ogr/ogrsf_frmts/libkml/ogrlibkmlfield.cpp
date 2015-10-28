@@ -31,7 +31,8 @@
 #include <ogr_feature.h>
 #include "ogr_p.h"
 
-#include <kml/dom.h>
+#include "libkml_headers.h"
+
 #include <iostream>
 
 using kmldom::ExtendedDataPtr;

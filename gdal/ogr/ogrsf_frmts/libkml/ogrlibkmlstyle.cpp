@@ -31,9 +31,7 @@
 
 #include <set>
 
-#include <kml/dom.h>
-#include <kml/engine.h>
-#include <kml/base/color32.h>
+#include "libkml_headers.h"
 
 using kmldom::KmlFactory;;
 using kmldom::ElementPtr;
