@@ -2288,7 +2288,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
             comma = strchr(comma, ',');
             if (comma != NULL)
             {
-               for (i=0; i<strlen(dimcheck) + 1; i++)
+               for (i=0; i<(intn)strlen(dimcheck) + 1; i++)
                {
                   dimbuf++;
                   cnt++;
@@ -9406,7 +9406,7 @@ SWdefvrtregion(int32 swathID, int32 regionID, char *vertObj, float64 range[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWdefscanregion(int32 swathID, char *fieldname, float64 range[], int32 mode)
+SWdefscanregion(int32 swathID, char *fieldname, float64 range[], CPL_UNUSED int32 mode)
 {
     intn            j;		/* Loop index */
     intn            k;		/* Loop index */
@@ -10172,7 +10172,7 @@ SWdetach(int32 swathID)
 		}
 		/* Zero out dimbuf1 */
 		/* ---------------- */
-		for (k = 0; k < sizeof(dimbuf1); k++)
+		for (k = 0; k < (intn)sizeof(dimbuf1); k++)
 		{
 		    dimbuf1[k] = 0;
 		}
@@ -10204,7 +10204,7 @@ SWdetach(int32 swathID)
 		    {
 			/* Zero out dimbuf2 */
 			/* ---------------- */
-			for (k = 0; k < sizeof(dimbuf2); k++)
+			for (k = 0; k < (intn)sizeof(dimbuf2); k++)
 			{
 			    dimbuf2[k] = 0;
 			}

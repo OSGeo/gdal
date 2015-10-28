@@ -1430,7 +1430,7 @@ GDdeforigin(int32 gridID, int32 origincode)
     {
 	/* If proper origin code then write to structural metadata */
 	/* ------------------------------------------------------- */
-	if (origincode >= 0 && origincode < sizeof(originNames))
+	if (origincode >= 0 && origincode < (int32)sizeof(originNames))
 	{
 	    sprintf(utlbuf, "%s%s%s",
 		    "\t\tGridOrigin=", originNames[origincode], "\n");
@@ -1502,7 +1502,7 @@ GDdefpixreg(int32 gridID, int32 pixregcode)
     {
 	/* If proper pix reg code then write to structural metadata */
 	/* -------------------------------------------------------- */
-	if (pixregcode >= 0 && pixregcode < sizeof(pixregNames))
+	if (pixregcode >= 0 && pixregcode < (int32)sizeof(pixregNames))
 	{
 	    sprintf(utlbuf, "%s%s%s",
 		    "\t\tPixelRegistration=", pixregNames[pixregcode], "\n");
@@ -2172,7 +2172,7 @@ GDorigininfo(int32 gridID, int32 * origincode)
 	     * If "GridOrigin" string found in metadata then convert to
 	     * numeric origin code (fixed added: Jan 97)
 	     */
-	    for (i = 0; i < sizeof(originNames); i++)
+	    for (i = 0; i < (intn)sizeof(originNames); i++)
 	    {
 		if (strcmp(utlstr, originNames[i]) == 0)
 		{
@@ -2287,7 +2287,7 @@ GDpixreginfo(int32 gridID, int32 * pixregcode)
 	     * to numeric origin code (fixed added: Jan 97)
 	     */
 
-	    for (i = 0; i < sizeof(pixregNames); i++)
+	    for (i = 0; i < (intn)sizeof(pixregNames); i++)
 	    {
 		if (strcmp(utlstr, pixregNames[i]) == 0)
 		{
@@ -2406,7 +2406,7 @@ GDcompinfo(int32 gridID, char *fieldname, int32 * compcode, intn compparm[])
 		if (statmeta == 0)
 		{
 		    /* Loop through compression types until match */
-		    for (i = 0; i < sizeof(HDFcomp); i++)
+		    for (i = 0; i < (intn)sizeof(HDFcomp); i++)
 		    {
 			if (strcmp(utlstr, HDFcomp[i]) == 0)
 			{
@@ -5397,7 +5397,7 @@ GDdetach(int32 gridID)
 		    return(-1);
 		}
 
-		for (k = 0; k < sizeof(dimbuf1); k++)
+		for (k = 0; k < (intn)sizeof(dimbuf1); k++)
 		    dimbuf1[k] = 0;
 
 
@@ -5419,7 +5419,7 @@ GDdetach(int32 gridID)
 
 		for (j = i + 1, cmbfldcnt = 0; j < nflds; j++)
 		{
-		    for (k = 0; k < sizeof(dimbuf2); k++)
+		    for (k = 0; k < (intn)sizeof(dimbuf2); k++)
 			dimbuf2[k] = 0;
 		    memcpy(dimbuf2, dimptr[j], dimlen[j]);
 		    dum = EHparsestr(dimbuf2, ',', ptr2, slen2);
