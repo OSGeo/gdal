@@ -356,7 +356,7 @@ sub get_gdal_inc_lib {
         chomp($INC = `$config --cflags`);
         chomp($LIB = `$config --libs`);
         if ($in_source_tree) {
-            $LIB = "-L../../.libs -lgdal";
+            $LIB = "-L../../.libs -L../..";
             $INC .= ' -I../../gnm' if $have_gnm;
         }
     }
