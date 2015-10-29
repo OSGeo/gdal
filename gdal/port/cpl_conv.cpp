@@ -944,7 +944,7 @@ GIntBig CPLAtoGIntBig( const char* pszString )
 #if defined(__MINGW32__)
 
 // mingw atoll() doesn't return ERANGE in case of overflow
-int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
+static int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
 {
     if( strlen(pszString) <= 18 )
         return FALSE;
@@ -2555,8 +2555,15 @@ int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 /*                             CPLSymlink()                             */
 /************************************************************************/
 
-int CPLSymlink( const char* pszOldPath, const char* pszNewPath,
-                CPL_UNUSED char** papszOptions )
+int CPLSymlink( const char*
+#ifndef WIN32
+                pszOldPath
+#endif
+                , const char* 
+#ifndef WIN32
+                pszNewPath
+#endif
+                ,CPL_UNUSED char** papszOptions )
 {
 #ifdef WIN32
     return -1;

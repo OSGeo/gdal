@@ -199,7 +199,11 @@ int TABCloseRing(OGRLineString *poRing)
  * This function works on the original buffer and returns a reference to it.
  * It does nothing on Windows systems where filenames are not case sensitive.
  **********************************************************************/
-static GBool TABAdjustCaseSensitiveFilename(char *pszFname)
+static GBool TABAdjustCaseSensitiveFilename(char *
+#ifndef _WIN32
+                                            pszFname
+#endif
+                                            )
 {
 
 #ifdef _WIN32
