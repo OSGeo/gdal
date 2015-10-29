@@ -55,7 +55,7 @@ AX_CHECK_COMPILE_FLAG([-Werror -Wunused-parameter], [C_WFLAGS="$C_WFLAGS -Wunuse
 AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [C_WFLAGS="$C_WFLAGS -Wmissing-prototypes"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [C_WFLAGS="$C_WFLAGS -Wmissing-declarations"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wno-sign_compare], [NO_SIGN_COMPARE="-Wno-sign-compare"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"])
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Werror -Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"])

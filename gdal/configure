@@ -4539,14 +4539,14 @@ else
   :
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wno-sign_compare" >&5
-$as_echo_n "checking whether C compiler accepts -Werror -Wno-sign_compare... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wno-sign-compare" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wno-sign-compare... " >&6; }
 if ${ax_cv_check_cflags___Werror__Wno_sign_compare+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS  -Werror -Wno-sign_compare"
+  CFLAGS="$CFLAGS  -Werror -Wno-sign-compare"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
