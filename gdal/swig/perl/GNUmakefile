@@ -21,8 +21,8 @@ generate: ${WRAPPERS}
 build: gdal_wrap.cc Makefile_Geo__GDAL
 	$(MAKE) -f Makefile_Geo__GDAL
 	$(MAKE) -f Makefile_Geo__GDAL__Const
-	$(MAKE) -f Makefile_Geo__OGR
 	$(MAKE) -f Makefile_Geo__OSR
+	if [ -f Makefile_Geo__OGR ]; then $(MAKE) -f Makefile_Geo__OGR; fi
 	if [ -f Makefile_Geo__GNM ]; then $(MAKE) -f Makefile_Geo__GNM; fi
 
 gdal_wrap.cc: generate
@@ -36,8 +36,8 @@ test: build
 install: build
 	$(MAKE) -f Makefile_Geo__GDAL install
 	$(MAKE) -f Makefile_Geo__GDAL__Const install
-	$(MAKE) -f Makefile_Geo__OGR install
 	$(MAKE) -f Makefile_Geo__OSR install
+	if [ -f Makefile_Geo__OGR ]; then $(MAKE) -f Makefile_Geo__OGR install; fi
 	if [ -f Makefile_Geo__GNM ]; then $(MAKE) -f Makefile_Geo__GNM install; fi
 
 dist: Makefile_Geo__GDAL

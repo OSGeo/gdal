@@ -5,6 +5,7 @@ use ExtUtils::MakeMaker;
 use Config;
 
 my $in_source_tree = -r '../../GDALmake.opt.in';
+print "Building in source tree.\n" if $in_source_tree;
 
 # pick up our parameters from @ARGV
 my %ARGV;
@@ -133,17 +134,20 @@ $config = download_and_compile_gdal($my_gdal_version, $gdal_version)
 
 # still in the game?
 
-my $have_gnm = `grep "GNM_ENABLED = " ../../GDALmake.opt`;
-chomp $have_gnm;
-$have_gnm = $have_gnm =~ /yes/ ? 1 : 0;
+my $have_gnm = `grep "CONFIG_GNM_ENABLED" $config`;
+my $have_ogr = `grep "CONFIG_OGR_ENABLED" $config`;
+for ($have_gnm, $have_ogr) {
+    chomp;
+    $_ = /yes/ ? 1 : 0;
+}
 
 my ($INC, $LIB) = get_gdal_inc_lib($config);
 
 my %object = ( 'Geo::GDAL' => 'gdal_wrap.o',
                'Geo::GDAL::Const' => 'gdalconst_wrap.o',
-               'Geo::OGR' => 'ogr_wrap.o',
                'Geo::OSR' => 'osr_wrap.o' );
 
+$object{'Geo::OGR'} = 'ogr_wrap.o' if $have_ogr;
 $object{'Geo::GNM'} = 'gnm_wrap.o' if $have_gnm;
 
 if ($ARGV{'--debug'}) {
@@ -162,10 +166,10 @@ for my $module (keys %object) {
     $OPTIMIZE .= ' '.$ENV{CPPFLAGS} if $ENV{CFLAGS};
     
     my %PM = ( 'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
-               'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
                'lib/Geo/OSR.pm' => '$(INST_LIBDIR)/OSR.pm',
                'lib/Geo/GDAL/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm' );
     
+    $PM{'lib/Geo/OGR.pm'} = '$(INST_LIBDIR)/OGR.pm' if $have_ogr;
     $PM{'lib/Geo/GNM.pm'} = '$(INST_LIBDIR)/GNM.pm' if $have_gnm;
 
     WriteMakefile( NAME => $module,
