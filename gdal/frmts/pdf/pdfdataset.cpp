@@ -45,7 +45,6 @@
 #ifdef HAVE_POPPLER
 #include "cpl_multiproc.h"
 #include "pdfio.h"
-#include <goo/GooList.h>
 #endif // HAVE_POPPLER
 
 #include "pdfcreatecopy.h"

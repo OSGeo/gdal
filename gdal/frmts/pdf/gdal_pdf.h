@@ -37,44 +37,7 @@
 #ifndef _GDAL_PDF_H_INCLUDED
 #define _GDAL_PDF_H_INCLUDED
 
-#ifdef HAVE_POPPLER
-
-/* Horrible hack because there's a conflict between struct FlateDecode of */
-/* include/poppler/Stream.h and the FlateDecode() function of */
-/* pdfium/core/include/fpdfapi/fpdf_parser.h. */
-/* The part of Stream.h where struct FlateDecode is defined isn't needed */
-/* by GDAL, and is luckily protected by a #ifndef ENABLE_ZLIB section */
-#ifdef HAVE_PDFIUM
-#define ENABLE_ZLIB
-#endif /* HAVE_PDFIUM */
-
-/* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
-/* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
-#define CPL_GBOOL_DEFINED
-#define OGR_FEATURESTYLE_INCLUDE
-
-#include <goo/gtypes.h>
-#endif /* HAVE_POPPLER */
-
-#ifdef HAVE_PDFIUM
-#include "cpl_multiproc.h"
-
-#if (!defined(CPL_MULTIPROC_WIN32) && !defined(CPL_MULTIPROC_PTHREAD)) || defined(CPL_MULTIPROC_STUB) || defined(CPL_MULTIPROC_NONE)
-#error PDF driver compiled with PDFium library requires working threads with mutex locking!
-#endif
-
-// Linux ignores timeout, Windows returns if not INFINITE
-#ifdef WIN32
-#define  PDFIUM_MUTEX_TIMEOUT     INFINITE
-#else
-#define  PDFIUM_MUTEX_TIMEOUT     0.0f
-#endif
-
-#include <cstring>
-//#include <fpdfsdk/include/fsdk_define.h>
-#include <fpdfview.h>
-#include <core/include/fpdfapi/fpdf_page.h>
-#endif // HAVE_PDFIUM
+#include "pdfsdk_headers.h"
 
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
