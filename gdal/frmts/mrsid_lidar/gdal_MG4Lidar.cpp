@@ -34,10 +34,8 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 * POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************************/
-#include "lidar/MG4PointReader.h"
-#include "lidar/FileIO.h"
-#include "lidar/Error.h"
-#include "lidar/Version.h"
+#include "mg4lidar_headers.h"
+
 #include <float.h>
 LT_USE_LIDAR_NAMESPACE
 
