@@ -4259,6 +4259,41 @@ case ".$ac_cv_cxxflags_warn_all" in
  ;;
 esac
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wextra" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wextra... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wextra+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wextra"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wextra=yes
+else
+  ax_cv_check_cflags___Werror__Wextra=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wextra" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wextra" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wextra" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wextra" CXX_WFLAGS="$CXX_WFLAGS -Wextra"
+else
+  :
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Winit-self" >&5
 $as_echo_n "checking whether C compiler accepts -Werror -Winit-self... " >&6; }
 if ${ax_cv_check_cflags___Werror__Winit_self+:} false; then :
@@ -4290,111 +4325,6 @@ fi
 $as_echo "$ax_cv_check_cflags___Werror__Winit_self" >&6; }
 if test "x$ax_cv_check_cflags___Werror__Winit_self" = xyes; then :
   C_WFLAGS="$C_WFLAGS -Winit-self" CXX_WFLAGS="$CXX_WFLAGS -Winit-self"
-else
-  :
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wmissing-field-initializers" >&5
-$as_echo_n "checking whether C compiler accepts -Werror -Wmissing-field-initializers... " >&6; }
-if ${ax_cv_check_cflags___Werror__Wmissing_field_initializers+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS  -Werror -Wmissing-field-initializers"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags___Werror__Wmissing_field_initializers=yes
-else
-  ax_cv_check_cflags___Werror__Wmissing_field_initializers=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wmissing_field_initializers" >&5
-$as_echo "$ax_cv_check_cflags___Werror__Wmissing_field_initializers" >&6; }
-if test "x$ax_cv_check_cflags___Werror__Wmissing_field_initializers" = xyes; then :
-  C_WFLAGS="$C_WFLAGS -Wmissing-field-initializers" CXX_WFLAGS="$CXX_WFLAGS -Wmissing-field-initializers"
-else
-  :
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wignored-qualifiers" >&5
-$as_echo_n "checking whether C compiler accepts -Werror -Wignored-qualifiers... " >&6; }
-if ${ax_cv_check_cflags___Werror__Wignored_qualifiers+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS  -Werror -Wignored-qualifiers"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags___Werror__Wignored_qualifiers=yes
-else
-  ax_cv_check_cflags___Werror__Wignored_qualifiers=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wignored_qualifiers" >&5
-$as_echo "$ax_cv_check_cflags___Werror__Wignored_qualifiers" >&6; }
-if test "x$ax_cv_check_cflags___Werror__Wignored_qualifiers" = xyes; then :
-  C_WFLAGS="$C_WFLAGS -Wignored-qualifiers" CXX_WFLAGS="$CXX_WFLAGS -Wignored-qualifiers"
-else
-  :
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wtype-limits" >&5
-$as_echo_n "checking whether C compiler accepts -Werror -Wtype-limits... " >&6; }
-if ${ax_cv_check_cflags___Werror__Wtype_limits+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS  -Werror -Wtype-limits"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags___Werror__Wtype_limits=yes
-else
-  ax_cv_check_cflags___Werror__Wtype_limits=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wtype_limits" >&5
-$as_echo "$ax_cv_check_cflags___Werror__Wtype_limits" >&6; }
-if test "x$ax_cv_check_cflags___Werror__Wtype_limits" = xyes; then :
-  C_WFLAGS="$C_WFLAGS -Wtype-limits" CXX_WFLAGS="$CXX_WFLAGS -Wtype-limits"
 else
   :
 fi
@@ -4504,6 +4434,148 @@ else
   :
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wformat" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wformat... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wformat+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wformat"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wformat=yes
+else
+  ax_cv_check_cflags___Werror__Wformat=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wformat" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wformat" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wformat" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wformat" CXX_WFLAGS="$CXX_WFLAGS -Wformat"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Werror=format-security -Wno-format-nonliteral" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Werror=format-security -Wno-format-nonliteral... " >&6; }
+if ${ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Werror=format-security -Wno-format-nonliteral"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral=yes
+else
+  ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Werror=format-security -Wno-format-nonliteral" CXX_WFLAGS="$CXX_WFLAGS -Werror=format-security -Wno-format-nonliteral"
+else
+  :
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Werror=vla" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Werror=vla... " >&6; }
+if ${ax_cv_check_cflags___Werror__Werror_vla+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Werror=vla"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Werror_vla=yes
+else
+  ax_cv_check_cflags___Werror__Werror_vla=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Werror_vla" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Werror_vla" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Werror_vla" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Werror=declaration-after-statement" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Werror=declaration-after-statement... " >&6; }
+if ${ax_cv_check_cflags___Werror__Werror_declaration_after_statement+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Werror=declaration-after-statement"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Werror_declaration_after_statement=yes
+else
+  ax_cv_check_cflags___Werror__Werror_declaration_after_statement=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Werror_declaration_after_statement" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Werror_declaration_after_statement" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Werror_declaration_after_statement" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"
+else
+  :
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wno-clobbered" >&5
 $as_echo_n "checking whether C compiler accepts -Werror -Wno-clobbered... " >&6; }
 if ${ax_cv_check_cflags___Werror__Wno_clobbered+:} false; then :
@@ -4538,6 +4610,7 @@ if test "x$ax_cv_check_cflags___Werror__Wno_clobbered" = xyes; then :
 else
   :
 fi
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wno-sign-compare" >&5
 $as_echo_n "checking whether C compiler accepts -Werror -Wno-sign-compare... " >&6; }
