@@ -337,7 +337,6 @@ sub get_gdal_version {
         chomp($version = `$config --version`);
     }
     else {
-        # it is not recommended to be here
         if (open(my $fh, $config) || die "Can't open '$config': $!") {
             for (<$fh>) {
                 ($version) = /(\d+\.\d+\.\d+)/ if /^CONFIG_VERSION/;
@@ -356,19 +355,17 @@ sub get_gdal_inc_lib {
         chomp($INC = `$config --cflags`);
         chomp($LIB = `$config --libs`);
         if ($in_source_tree) {
-            $LIB = "-L../../.libs -L../..";
+            $LIB = '-L../../.libs -L../.. ';
             $INC .= ' -I../../gnm' if $have_gnm;
         }
     }
-    else {
-        # again, it is not recommended to be here
+    if (!(-x $config) || $in_source_tree) {
         if (open(my $fh, $config) || die "Can't open '$config': $!") {
             for (<$fh>) {
                 if (/^CONFIG_LIBS/) {
                     s/^CONFIG_LIBS="//;
                     s/"\s*$//;
                     if ($_ =~ /\.la$/) { 
-                        # parse a libtool library file
                         $LIB .= parse_libtool_library_file_for_l($_);
                     } else {
                         $LIB .= $_;
