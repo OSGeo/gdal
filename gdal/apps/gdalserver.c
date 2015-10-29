@@ -124,7 +124,7 @@ static void Usage(const char* pszErrorMsg)
 /*                CreateSocketAndBindAndListen()                        */
 /************************************************************************/
 
-static int CreateSocketAndBindAndListen(const char* pszService,
+static CPL_SOCKET CreateSocketAndBindAndListen(const char* pszService,
                                  int *pnFamily,
                                  int *pnSockType,
                                  int *pnProtocol)
