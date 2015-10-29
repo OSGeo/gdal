@@ -4,6 +4,8 @@ use File::Basename;
 use ExtUtils::MakeMaker;
 use Config;
 
+my $in_source_tree = -r '../../GDALmake.opt.in';
+
 # pick up our parameters from @ARGV
 my %ARGV;
 for (@ARGV) {
@@ -61,7 +63,7 @@ if (open(my $fh, "lib/Geo/GDAL.pm")) {
 # search and decide which GDAL (gdal-config) to build against if not given
 
 my $versions_may_differ = $ARGV{'--no-version-check'};
-my $downloads_are_ok = not $ARGV{'--no-downloads'};
+my $downloads_are_ok = !$in_source_tree && !$ARGV{'--no-downloads'};
 my $gdal_config = $ARGV{'--gdal-config'};
 my $config;
 if ($gdal_config) {
@@ -70,11 +72,15 @@ if ($gdal_config) {
     } else {
         die "The specified gdal-config '$gdal_config' does not exist or is unreadable.\n";
     }
+} elsif ($in_source_tree) {
+    $config = '../../apps/gdal-config';
+    unless (-r $config) {
+        die "You have to cd ../../; make; first!";
+    }
 } else {
     # scan known possible locations in the order of preference:
     my @configs;
-    for ('../../apps/gdal-config',
-         'c:/msys/1.0/local/bin/gdal-config',
+    for ('c:/msys/1.0/local/bin/gdal-config',
          '/usr/local/bin/gdal-config',
          '/usr/bin/gdal-config') {
         push @configs, $_ if -r $_;
@@ -126,6 +132,8 @@ $config = download_and_compile_gdal($my_gdal_version, $gdal_version)
     if $different_versions && !$gdal_config && !$versions_may_differ && $downloads_are_ok;
 
 # still in the game?
+
+my $have_gnm;
 
 my ($INC, $LIB) = get_gdal_inc_lib($config);
 
@@ -337,11 +345,10 @@ sub get_gdal_inc_lib {
     if (-x $config) {
         chomp($INC = `$config --cflags`);
         chomp($LIB = `$config --libs`);
-        if ($LIB =~ /\.la$/) { # this is a not-yet-installed gdal-config
-            my ($name,$path,$suffix) = fileparse($LIB);
-            $LIB = "-L$path.libs -lgdal";
+        if ($in_source_tree) {
+            $LIB = "-L../../.libs -lgdal";
             $INC .= ' -I../../gnm';
-        } 
+        }
     }
     else {
         # again, it is not recommended to be here

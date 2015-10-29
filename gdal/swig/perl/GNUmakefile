@@ -48,6 +48,7 @@ clean:
 	-rm -f gdalconst.bs gdalconst_wrap.o
 	-rm -f ogr.bs ogr_wrap.o
 	-rm -f osr.bs osr_wrap.o
+	-rm -f gnm.bs gnm_wrap.o
 	-rm -rf blib
 	-rm -f pm_to_blib
 	-rm -f Makefile_Geo__GDAL Makefile_Geo__GDAL__Const Makefile_Geo__OGR Makefile_Geo__OSR Makefile_Geo__GNM
