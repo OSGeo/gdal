@@ -953,7 +953,15 @@ static int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
     if( *pszString == '+' )
         pszString ++;
     char szBuffer[32];
+/* x86_64-w64-mingw32-g++ (GCC) 4.8.2 annoyingly warns */
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+#endif
     sprintf(szBuffer, CPL_FRMT_GIB, nVal);
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
     return strcmp(szBuffer, pszString) != 0;
 }
 
@@ -1279,7 +1287,16 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
         nMaxLen = 63;
 
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
+/* x86_64-w64-mingw32-g++ (GCC) 4.8.2 annoyingly warns */
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
+#endif
     sprintf( szTemp, "%*I64d", nMaxLen, iValue );
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
 # elif HAVE_LONG_LONG
     sprintf( szTemp, "%*lld", nMaxLen, (long long) iValue );
 //    sprintf( szTemp, "%*Ld", nMaxLen, (long long) iValue );
