@@ -2985,8 +2985,17 @@ VSIS3WriteHandle::VSIS3WriteHandle(VSIS3FSHandler* poFS,
         m_nOffsetInXML(0),
         m_bError(false)
 {
-    m_nBufferSize = atoi(CPLGetConfigOption("VSIS3_CHUNK_SIZE", "50")) * 1024 * 1024;
+    int nChunkSizeMB = atoi(CPLGetConfigOption("VSIS3_CHUNK_SIZE", "50"));
+    if( nChunkSizeMB <= 0 || nChunkSizeMB > 1000 )
+        m_nBufferSize = 0;
+    else
+        m_nBufferSize = nChunkSizeMB * 1024 * 1024;
     m_pabyBuffer = (GByte*)VSIMalloc(m_nBufferSize);
+    if( m_pabyBuffer == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot allocate working buffer for /vsis3");
+    }
 }
 
 /************************************************************************/
