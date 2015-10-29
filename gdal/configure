@@ -851,6 +851,7 @@ LIBTOOL
 OBJDUMP
 DLLTOOL
 AS
+NO_SIGN_COMPARE
 NO_UNUSED_PARAMETER_FLAG
 NO_UNKNOWN_PRAGMAS_FLAG
 C_WFLAGS
@@ -4574,6 +4575,41 @@ else
   :
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wno-sign_compare" >&5
+$as_echo_n "checking whether C compiler accepts -Wno-sign_compare... " >&6; }
+if ${ax_cv_check_cflags___Wno_sign_compare+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Wno-sign_compare"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Wno_sign_compare=yes
+else
+  ax_cv_check_cflags___Wno_sign_compare=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Wno_sign_compare" >&5
+$as_echo "$ax_cv_check_cflags___Wno_sign_compare" >&6; }
+if test "x$ax_cv_check_cflags___Wno_sign_compare" = xyes; then :
+  NO_SIGN_COMPARE="-Wno-sign-compare"
+else
+  :
+fi
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -4699,6 +4735,8 @@ C_WFLAGS=$C_WFLAGS
 NO_UNKNOWN_PRAGMAS_FLAG=$NO_UNKNOWN_PRAGMAS_FLAG
 
 NO_UNUSED_PARAMETER_FLAG=$NO_UNUSED_PARAMETER_FLAG
+
+NO_SIGN_COMPARE=$NO_SIGN_COMPARE
 
 
 ac_ext=c
