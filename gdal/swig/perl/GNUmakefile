@@ -57,6 +57,7 @@ veryclean: clean
 	-rm -f *.pm
 	-rm -f META.* MYMETA.*
 	-rm -f *.tar.gz
+	-rm -f *.bs
 
 doc: .FORCE
 
