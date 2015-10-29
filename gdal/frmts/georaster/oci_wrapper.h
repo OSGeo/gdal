@@ -59,7 +59,7 @@ bool CheckError( sword nStatus, OCIError* hError );
 /*                            Auxiliar functions                           */
 /***************************************************************************/
 
-const GDALDataType  OWGetDataType( const char* pszCellDepth );
+GDALDataType        OWGetDataType( const char* pszCellDepth );
 const char*         OWSetDataType( const GDALDataType eType );
 int                 OWParseServerVersion( const char* pszText );
 int                 OWParseEPSG( const char* pszText );

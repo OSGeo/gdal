@@ -2294,7 +2294,7 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
 //  ---------------------------------------------------------------------------
 //                                                           LoadNoDataValues()
 //  ---------------------------------------------------------------------------
-
+static
 CPLList* AddToNoDataList( CPLXMLNode* phNode, int nNumber, CPLList* poList )
 {
     CPLXMLNode* psChild = phNode->psChild;
@@ -3687,7 +3687,7 @@ static const int DC_HUFFVAL[256] =
  * JPEGHuffmanTable.StdDCChrominance
  *
  ***/
-
+static
 void JPEG_LoadTables( JQUANT_TBL* hquant_tbl_ptr,
                       JHUFF_TBL* huff_ac_ptr,
                       JHUFF_TBL* huff_dc_ptr,

@@ -197,7 +197,7 @@ public:
                             GDALProgressFunc pfnProgress,
                             void* pProgresoversData );
     virtual CPLErr      CreateMaskBand( int nFlags );
-    virtual OGRErr      StartTransaction(int bForce=FALSE) {return CE_None;};
+    virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) {return CE_None;};
     virtual OGRErr      CommitTransaction() {return CE_None;};
     virtual OGRErr      RollbackTransaction() {return CE_None;};
     

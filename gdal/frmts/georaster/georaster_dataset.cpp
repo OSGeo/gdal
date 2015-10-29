@@ -1683,7 +1683,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     
     int nNewSRID = 0;    
    
-    char *pszFuncName = "FIND_GEOG_CRS";
+    const char *pszFuncName = "FIND_GEOG_CRS";
   
     if( poSRS2->IsProjected() )
     {

@@ -347,18 +347,17 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
 /* -------------------------------------------------------------------- */
     OGRGeometryCollection *poCollection = NULL;
     OGRPolygon *poPolygon = NULL;
-    OGRGeometry *poParent = NULL;
 
     if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_POLYGON) )
-        poParent = poPolygon = new OGRPolygon();
+        poPolygon = new OGRPolygon();
     else if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_COLLECTION) )
-        poParent = poCollection = new OGRGeometryCollection();
+        poCollection = new OGRGeometryCollection();
     else if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_MULTIPOINT) )
-        poParent = poCollection = new OGRMultiPoint();
+        poCollection = new OGRMultiPoint();
     else if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_MULTILINESTRING) )
-        poParent = poCollection = new OGRMultiLineString();
+        poCollection = new OGRMultiLineString();
     else if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_MULTIPOLYGON) )
-        poParent = poCollection = new OGRMultiPolygon();
+        poCollection = new OGRMultiPolygon();
 
 /* ==================================================================== */
 /*      Loop over the component elements.                               */

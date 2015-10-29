@@ -521,7 +521,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 /*                       WriteFeatureBinaryMode()                       */
 /************************************************************************/
 
-OGRErr OGROCILoaderLayer::WriteFeatureBinaryMode( OGRFeature *poFeature )
+OGRErr OGROCILoaderLayer::WriteFeatureBinaryMode( OGRFeature * /*poFeature*/ )
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -592,7 +592,7 @@ int OGROCILoaderLayer::TestCapability( const char * pszCap )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGROCILoaderLayer::GetFeatureCount( int bForce )
+GIntBig OGROCILoaderLayer::GetFeatureCount( int /* bForce */ )
 
 {
     return iNextFIDToWrite - 1;
