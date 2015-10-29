@@ -32,40 +32,13 @@
 #include "gdaljp2metadata.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
-#include "jp2_local.h"
 
 #include "../mem/memdataset.h"
 
-// Kakadu core includes
-#include "kdu_elementary.h"
-#include "kdu_messaging.h"
-#include "kdu_params.h"
-#include "kdu_compressed.h"
-#include "kdu_sample_processing.h"
-#include "kdu_stripe_decompressor.h"
-#include "kdu_arch.h"
+#include "jp2kak_headers.h"
 
 #include "subfile_source.h"
 #include "vsil_target.h"
-
-// Application level includes
-#include "kdu_file_io.h"
-#include "jp2.h"
-
-// ROI related.
-#include "kdu_roi_processing.h"
-#include "kdu_image.h"
-#include "roi_sources.h"
-
-// I don't think JPIP support currently works due to changes in 
-// classes like kdu_window ... some fixing required if someone wants it.
-// #define USE_JPIP
-
-#ifdef USE_JPIP
-#  include "kdu_client.h" 
-#else
-#  define kdu_client void
-#endif
 
 CPL_CVSID("$Id$");
 
