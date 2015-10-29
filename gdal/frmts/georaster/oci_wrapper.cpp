@@ -1523,7 +1523,7 @@ bool OWIsNumeric( const char *pszText )
 /*****************************************************************************/
 /*                     Parse Value after a Hint on a string                  */
 /*****************************************************************************/
-
+static
 const char *OWParseValue( const char* pszText,
                           const char* pszSeparators,
                           const char* pszHint,
@@ -1646,7 +1646,7 @@ int OWParseEPSG( const char* pszText )
 /*                            Convert Data type description                  */
 /*****************************************************************************/
 
-const GDALDataType OWGetDataType( const char* pszCellDepth )
+GDALDataType OWGetDataType( const char* pszCellDepth )
 {
     unsigned int i;
 

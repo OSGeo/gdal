@@ -254,7 +254,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /************************************************************************/
 
 int OGROCIDataSource::OpenTable( const char *pszNewName, 
-                                 int nSRID, int bUpdate, int bTestOpen )
+                                 int nSRID, int bUpdate, CPL_UNUSED int bTestOpen )
 
 {
 /* -------------------------------------------------------------------- */
