@@ -35,6 +35,12 @@
 #include <fstream>
 #include <vector>
 
+#if __cplusplus >= 201103L
+#define UNIQUEPTR       std::unique_ptr
+#else
+#define UNIQUEPTR       std::auto_ptr
+#endif
+
 /************************************************************************/
 /*                             OGRWAsPLayer                             */
 /************************************************************************/
@@ -89,9 +95,9 @@ class OGRWAsPLayer : public OGRLayer
     enum OpenMode {READ_ONLY, WRITE_ONLY};
     OpenMode              eMode;
 
-    std::auto_ptr<double> pdfTolerance;
-    std::auto_ptr<double> pdfAdjacentPointTolerance;
-    std::auto_ptr<double> pdfPointToCircleRadius;
+    UNIQUEPTR<double> pdfTolerance;
+    UNIQUEPTR<double> pdfAdjacentPointTolerance;
+    UNIQUEPTR<double> pdfPointToCircleRadius;
 
     OGRErr                WriteRoughness( OGRLineString *,
                                           const double & dfZleft,
@@ -172,7 +178,7 @@ class OGRWAsPDataSource : public OGRDataSource
 {
     CPLString                     sFilename;
     VSILFILE *                    hFile;
-    std::auto_ptr<OGRWAsPLayer>   oLayer;
+    UNIQUEPTR<OGRWAsPLayer>   oLayer;
 
     void               GetOptions(CPLString & sFirstField, 
                                   CPLString & sSecondField,
