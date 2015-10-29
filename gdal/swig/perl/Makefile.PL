@@ -3,8 +3,6 @@ use warnings;
 use File::Basename;
 use ExtUtils::MakeMaker;
 use Config;
-use File::Fetch;
-use Capture::Tiny ':all';
 
 # pick up our parameters from @ARGV
 my %ARGV;
@@ -179,7 +177,8 @@ for my $module (keys %object) {
                        'File::Basename' => 0,
                        'ExtUtils::MakeMaker' => 0,
                        'Config' => 0,
-                       'File::Fetch' => 0 },
+                       'File::Fetch' => 0,
+                       'Capture::Tiny' => 0 },
                    PREREQ_PM => {
                        Carp => 0,
                        Encode => 0,
@@ -236,43 +235,59 @@ output will be buffered.
 
 end
 
-{
+{ 
+    require File::Fetch;
+    require Capture::Tiny;
+    Capture::Tiny->import(':all');
     open(my $log, ">", "gdal-build.log") 
         or die "Can't open gdal-build.log: $!.";
     open(my $err, ">", "gdal-build.err") 
         or die "Can't open gdal-build.err: $!.";
-    
-    my $gdal = gdal_source_location($version);
-    my $ret = 1;
-    print "fetch $gdal\n";
-    my ($stdout, $stderr, $exit) = capture {
-        unless (-s "gdal-$version.tar.gz") { # fetch leaves a zero sized file even when it fails
-            my $ff = File::Fetch->new(uri => $gdal);
-            $ret = $ff->fetch() if $ff;
-        } else {
-            print "Using existing \"gdal-$version.tar.gz\"\n";
-        }
-    };
-    print $err $stderr;
-    print $log $stdout;
+
     my $step = sub {
         my @cmd = @_;
         my $ret;
         print "@cmd\n";
-        my ($stdout, $stderr, $exit) = capture {
+        my $code = sub {
             if ($cmd[0] eq 'cd') {
                 $ret = chdir($cmd[1]);
             } else {
                 $ret = system(@cmd);
             }
         };
+        my ($stdout, $stderr, $exit) = capture($code);
         print $err $stderr;
         print $log $stdout;
         return $cmd[0] eq 'cd' ? $ret : ($ret == 0);
     };
+
+    my $gdal = "gdal-$version";
+    my $uri = gdal_source_location($version);
+    my $ret = 1;
+    
+    print "fetch $uri\n";
+    my $code = sub {
+        unless (-s "gdal-$version.tar.gz") { # fetch leaves a zero sized file even when it fails
+            print "Attempting to fetch '$uri'\n";
+            my $ff = File::Fetch->new(uri => $uri);
+            $ret = $ff->fetch() if $ff;
+        } else {
+            print "Using existing \"$gdal.tar.gz\"\n";
+        }
+    };
+    my ($stdout, $stderr, $exit) = capture($code);
+    print $err $stderr;
+    print $log $stdout;
     if ($ret) {
-        for my $cmd (["tar", "zxf", "gdal-$version.tar.gz"],
-                     ["cd", "gdal-$version"],
+        $ret = $step->("tar", "zxf", "$gdal.tar.gz");
+    } else {
+        print "No luck. Maybe this is the development version?\n";
+        #$ret = $step->("svn", "checkout", "https://svn.osgeo.org/gdal/trunk/gdal", "gdal");
+        $ret = 1;
+        $gdal = "gdal";
+    }
+    if ($ret) {
+        for my $cmd (["cd", $gdal],
                      ["./configure"],
                      ["make", "-j4"],
                      ["cd", ".."]) 
@@ -284,7 +299,7 @@ end
     close $log;
     close $err;
     if ($ret) {
-        return "./gdal-$version/apps/gdal-config";
+        return "./$gdal/apps/gdal-config";
     } else {
         open(my $err, "<", "gdal-build.err") 
             or die "Can't open gdal-build.err: $!.";
