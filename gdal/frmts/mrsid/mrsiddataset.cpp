@@ -105,6 +105,13 @@ CPL_C_END
 #  define MRSID_HAVE_GETWKT
 #endif
 
+/* getTotalBandData is deprecated by getBandData, at least starting with 8.5 */
+#if defined(LTI_SDK_MAJOR) && (LTI_SDK_MAJOR > 8 || (LTI_SDK_MAJOR >= 8 && LTI_SDK_MINOR >= 5))
+#  define myGetTotalBandData getBandData
+#else
+#  define myGetTotalBandData getTotalBandData
+#endif
+
 #include "mrsidstream.h"
 
 LT_USE_NAMESPACE(LizardTech)
@@ -549,7 +556,7 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         poGDS->nPrevBlockYOff = nBlockYOff;
     }
 
-    memcpy( pImage, poGDS->poBuffer->getTotalBandData(nBand - 1), 
+    memcpy( pImage, poGDS->poBuffer->myGetTotalBandData(nBand - 1), 
             nBlockSize * (GDALGetDataTypeSize(poGDS->eDataType) / 8) );
 
     return CE_None;
@@ -972,7 +979,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
         for( int iBand = 0; iBand < nBandCount; iBand++ )
         {
             GByte *pabySrcBand = (GByte *) 
-                oLTIBuffer.getTotalBandData( panBandMap[iBand] - 1 );
+                oLTIBuffer.myGetTotalBandData( panBandMap[iBand] - 1 );
 	  
             for( int iLine = 0; iLine < nBufYSize; iLine++ )
 	    {
@@ -1009,7 +1016,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                         + nLineSpace * iBufLine
                         + nBandSpace * iBand;
 
-                    pabySrc = (GByte *) oLTIBuffer.getTotalBandData( 
+                    pabySrc = (GByte *) oLTIBuffer.myGetTotalBandData( 
                         panBandMap[iBand] - 1 );
                     pabySrc += (iTmpLine * sceneWidth + iTmpPixel) * nTmpPixelSize;
 
