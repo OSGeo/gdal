@@ -1018,6 +1018,7 @@ static void gdal_qh_symbols_unused()
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
 #pragma GCC diagnostic ignored "-Wuninitialized"
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #endif
 
 #include "libqhull.h"
