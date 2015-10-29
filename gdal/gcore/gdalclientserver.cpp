@@ -1622,16 +1622,15 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         CPLString osHost(pszSpawnServer);
         osHost.resize(pszColon - pszSpawnServer);
         CPL_SOCKET nConnSocket = INVALID_SOCKET;
-        int nRet;
 
 #ifdef WIN32
         WSADATA wsaData;
 
-        nRet = WSAStartup(MAKEWORD(2, 2), &wsaData);
-        if (nRet != NO_ERROR)
+        int nRet1 = WSAStartup(MAKEWORD(2, 2), &wsaData);
+        if (nRet1 != NO_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "WSAStartup() failed with error: %d\n", nRet);
+                     "WSAStartup() failed with error: %d\n", nRet1);
             return NULL;
         }
 #endif
@@ -1645,11 +1644,11 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         sHints.ai_flags = 0;
         sHints.ai_protocol = IPPROTO_TCP;
 
-        nRet = getaddrinfo(osHost, pszColon + 1, &sHints, &psResults);
-        if (nRet)
+        int nRet2 = getaddrinfo(osHost, pszColon + 1, &sHints, &psResults);
+        if (nRet2)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "getaddrinfo(): %s", gai_strerror(nRet));
+                     "getaddrinfo(): %s", gai_strerror(nRet2));
             WSACleanup();
             return NULL;
         }
