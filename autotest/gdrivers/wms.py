@@ -638,8 +638,8 @@ def wms_15():
     if ds is None:
         return' fail'
 
-    if ds.RasterXSize != 134217728 \
-       or ds.RasterYSize != 134217728 \
+    if ds.RasterXSize != 1073741824 \
+       or ds.RasterYSize != 1073741824 \
        or ds.RasterCount != 3:
         gdaltest.post_reason( 'wrong size or bands' )
         return 'fail'
@@ -652,15 +652,15 @@ def wms_15():
     gt = ds.GetGeoTransform()
     if abs(gt[0]- -20037508.342787001) > 0.00001 \
        or abs(gt[3]- 20037508.342787001) > 0.00001 \
-       or abs(gt[1] - 0.298582141697407) > 0.00001 \
+       or abs(gt[1] - 0.037322767717361482) > 0.00001 \
        or abs(gt[2] - 0) > 0.00001 \
-       or abs(gt[5] - -0.298582141697407) > 0.00001 \
+       or abs(gt[5] - -0.037322767717361482) > 0.00001 \
        or abs(gt[4] - 0) > 0.00001:
         gdaltest.post_reason( 'wrong geotransform' )
         print(gt)
         return 'fail'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 19:
+    if ds.GetRasterBand(1).GetOverviewCount() != 22:
         gdaltest.post_reason( 'bad overview count' )
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'

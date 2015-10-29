@@ -585,6 +585,15 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
         dfMaxX = 180;
     }
 
+    const int nLevelCountOri = nLevelCount;
+    while( (double)nTileCountX * nTileWidth * (1 << nLevelCount) > INT_MAX )
+        nLevelCount --;
+    while( (double)nTileHeight * (1 << nLevelCount) > INT_MAX )
+        nLevelCount --;
+    if( nLevelCount != nLevelCountOri )
+        CPLDebug("WMS", "Had to limit level count to %d instead of %d to stay within GDAL raster size limits",
+                 nLevelCount, nLevelCountOri);
+
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
             "  <Service name=\"TMS\">\n"
