@@ -263,7 +263,7 @@ int RunServer(const char* pszApplication,
 
         apszArgs[0] = pszApplication;
         nConnSocket = accept(nListenSocket, &sockAddr, &nLen);
-        if( nConnSocket == SOCKET_ERROR )
+        if( nConnSocket == (CPL_SOCKET)SOCKET_ERROR )
         {
             fprintf(stderr, "accept() function failed with error: %d\n", WSAGetLastError());
             closesocket(nListenSocket);
