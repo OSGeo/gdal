@@ -104,7 +104,7 @@ public:
     CPLErr  PrepareCoverageBox( const char *pszWKT, double *padfGeoTransform );
     CPLErr  WriteJP2Box( GDALJP2Box * );
     void    WriteXMLBoxes();
-    CPLErr  WriteLineBIL(UINT16 nBands, void **ppOutputLine, UINT32 *pLineSteps = NULL);
+    CPLErr  ourWriteLineBIL(UINT16 nBands, void **ppOutputLine, UINT32 *pLineSteps = NULL);
     virtual NCSEcwCellType WriteReadLineGetCellType() {
         return sFileInfo.eCellType;
     }
@@ -513,10 +513,10 @@ void GDALECWCompressor::WriteXMLBoxes()
 }
 
 /************************************************************************/
-/*                            WriteLineBIL()                            */
+/*                          ourWriteLineBIL()                           */
 /************************************************************************/
 
-CPLErr  GDALECWCompressor::WriteLineBIL(UINT16 nBands, void **ppOutputLine, UINT32 *pLineSteps){
+CPLErr  GDALECWCompressor::ourWriteLineBIL(UINT16 nBands, void **ppOutputLine, UINT32 *pLineSteps){
 
     CNCSError oError = CNCSFile::WriteLineBIL(sFileInfo.eCellType,nBands, ppOutputLine, pLineSteps);
 
@@ -1849,7 +1849,7 @@ CPLErr ECWWriteDataset::FlushLine()
                 (void *) (pabyBILBuffer + i * nWordSize * nRasterXSize);
         
 
-        eErr =  oCompressor.WriteLineBIL( (UINT16) nBands, papOutputLine );
+        eErr =  oCompressor.ourWriteLineBIL( (UINT16) nBands, papOutputLine );
         CPLFree( papOutputLine );
         if (eErr!=CE_None){
            return eErr;
