@@ -600,7 +600,8 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #endif
 
 /* Null terminated variadic */
-#if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
+/* We exclude mingw64 4.6 which seems to be broken regarding this */
+#if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP) && !(defined(__MINGW64__) && __GNUC__ == 4 && __GNUC_MINOR__ == 6)
 #   define CPL_NULL_TERMINATED     __attribute__((__sentinel__))
 #else
 #   define CPL_NULL_TERMINATED
