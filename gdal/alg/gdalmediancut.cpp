@@ -1163,3 +1163,33 @@ shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
     have_bmax:
     ;
 }
+
+/* Explicitly instanciate template functions */
+template int
+GDALComputeMedianCutPCTInternal<GUInt32>( GDALRasterBandH hRed, 
+                           GDALRasterBandH hGreen, 
+                           GDALRasterBandH hBlue, 
+                           GByte* pabyRedBand,
+                           GByte* pabyGreenBand,
+                           GByte* pabyBlueBand,
+                           int (*pfnIncludePixel)(int,int,void*),
+                           int nColors, 
+                           int nBits,
+                           GUInt32* panHistogram,
+                           GDALColorTableH hColorTable,
+                           GDALProgressFunc pfnProgress, 
+                           void * pProgressArg );
+template int
+GDALComputeMedianCutPCTInternal<GUIntBig>( GDALRasterBandH hRed, 
+                           GDALRasterBandH hGreen, 
+                           GDALRasterBandH hBlue, 
+                           GByte* pabyRedBand,
+                           GByte* pabyGreenBand,
+                           GByte* pabyBlueBand,
+                           int (*pfnIncludePixel)(int,int,void*),
+                           int nColors, 
+                           int nBits,
+                           GUIntBig* panHistogram,
+                           GDALColorTableH hColorTable,
+                           GDALProgressFunc pfnProgress, 
+                           void * pProgressArg );
