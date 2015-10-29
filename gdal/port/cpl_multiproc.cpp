@@ -697,6 +697,7 @@ void CPLCleanupTLS()
   /************************************************************************/
 
 /* InitializeCriticalSectionAndSpinCount requires _WIN32_WINNT >= 0x403 */
+#undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0500
 
 #include <windows.h>

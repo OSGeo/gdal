@@ -25,7 +25,7 @@
 #include "cpl_string.h"
 #include "ogr_core.h"
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(strcasecmp)
 #  define strcasecmp stricmp
 #endif
 
