@@ -538,7 +538,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 
 void GDALRegister_COASP(void)
 {
-    if ( GDALGetDriverByName( "COASP" ) == NULL )
+    if ( GDALGetDriverByName( "COASP" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

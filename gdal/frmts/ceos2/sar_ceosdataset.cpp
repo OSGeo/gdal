@@ -2176,7 +2176,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 void GDALRegister_SAR_CEOS()
 
 {
-    if( GDALGetDriverByName( "SAR_CEOS" ) == NULL )
+    if( GDALGetDriverByName( "SAR_CEOS" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
