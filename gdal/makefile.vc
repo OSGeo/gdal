@@ -15,13 +15,11 @@ VB6_TARGET = vb6_dir
 # for a raster-gdal build.
 
 #OGR_BASE_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation@8 \
-#		/INCLUDE:_OGRFeatureStylePuller@0 \
 #		/INCLUDE:_OSRValidate@4 \
 #		/INCLUDE:_OPTGetProjectionMethods@0 \
 #		/INCLUDE:_OGR_G_GetPointCount@4
 
-OGR_BASE_INCLUDE = /INCLUDE:$(SYM_PREFIX)OGRFeatureStylePuller \
-		/INCLUDE:$(SYM_PREFIX)OSRValidate \
+OGR_BASE_INCLUDE = /INCLUDE:$(SYM_PREFIX)OSRValidate \
 		/INCLUDE:$(SYM_PREFIX)OPTGetProjectionMethods \
 		/INCLUDE:$(SYM_PREFIX)OGR_G_GetPointCount 
 
