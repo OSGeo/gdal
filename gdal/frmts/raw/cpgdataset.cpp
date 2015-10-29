@@ -157,10 +157,10 @@ class SIRC_QSLCRasterBand : public GDALRasterBand
 };
 
 static const int M11 = 0;
-static const int M12 = 1;
+//static const int M12 = 1;
 static const int M13 = 2;
 static const int M14 = 3;
-static const int M21 = 4;
+//static const int M21 = 4;
 static const int M22 = 5;
 static const int M23 = 6;
 static const int M24 = 7;
