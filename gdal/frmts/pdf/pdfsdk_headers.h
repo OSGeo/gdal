@@ -113,6 +113,7 @@
 #include <fpdfview.h>
 #include <core/include/fpdfapi/fpdf_page.h>
 #include <core/include/fpdfapi/fpdf_objects.h>
+#include "fpdfsdk/include/fsdk_rendercontext.h"
 #endif // HAVE_PDFIUM
 
 #endif
