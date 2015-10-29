@@ -245,7 +245,7 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
 
     const bool bMerge = CSLTestBoolean(CSLFetchNameValueDef( papszOptions, "WASP_MERGE", "YES" ));
 
-    std::auto_ptr<double> pdfTolerance;
+    UNIQUEPTR<double> pdfTolerance;
     {
         const char *pszToler = CSLFetchNameValue( papszOptions, "WASP_TOLERANCE" );
 
@@ -271,7 +271,7 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
         }
     }
 
-    std::auto_ptr<double> pdfAdjacentPointTolerance;
+    UNIQUEPTR<double> pdfAdjacentPointTolerance;
     {
         const char *pszAdjToler = CSLFetchNameValue( papszOptions, "WASP_ADJ_TOLER" );
         if ( pszAdjToler )
@@ -287,7 +287,7 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
         }
     }
 
-    std::auto_ptr<double> pdfPointToCircleRadius;
+    UNIQUEPTR<double> pdfPointToCircleRadius;
     {
         const char *pszPtToCircRad = CSLFetchNameValue( papszOptions, "WASP_POINT_TO_CIRCLE_RADIUS" );
         if ( pszPtToCircRad )

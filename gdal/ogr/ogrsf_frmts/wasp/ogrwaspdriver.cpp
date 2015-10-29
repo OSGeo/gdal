@@ -53,7 +53,7 @@ OGRDataSource *OGRWAsPDriver::Open( const char * pszFilename, int bUpdate )
         /*CPLError( CE_Failure, CPLE_FileIO, "cannot open file %s", pszFilename );*/
         return NULL;
     }
-    std::auto_ptr<OGRWAsPDataSource> pDataSource( new OGRWAsPDataSource( pszFilename, fh ));
+    UNIQUEPTR<OGRWAsPDataSource> pDataSource( new OGRWAsPDataSource( pszFilename, fh ));
 
     if ( pDataSource->Load(true) != OGRERR_NONE )
     {
