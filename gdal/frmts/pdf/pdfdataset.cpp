@@ -1352,8 +1352,6 @@ const char* PDFDataset::GetOption(char** papszOpenOptions,
 
 #ifdef HAVE_PDFIUM
 
-#include "fpdfsdk/include/fsdk_rendercontext.h"
-
 /************************************************************************/
 /*                         GDALPDFiumOCContext                          */
 /************************************************************************/
