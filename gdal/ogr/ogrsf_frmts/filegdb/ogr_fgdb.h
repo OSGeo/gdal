@@ -42,8 +42,8 @@
 /* GDAL XML handler */
 #include "cpl_minixml.h"
 
-/* FGDB API headers */
-#include "FileGDBAPI.h"
+/* FGDB API headers through our own inclusion file */
+#include "filegdbsdk_headers.h"
 
 /* Workaround needed for Linux, at least for FileGDB API 1.1 (#4455) */
 #if defined(__linux__)
