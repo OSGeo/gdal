@@ -104,9 +104,8 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
      */
     if( pSymbol == NULL )
     {
-        char withUnder[strlen(pszSymbolName) + 2];
-        withUnder[0] = '_'; withUnder[1] = 0;
-        strcat(withUnder, pszSymbolName);
+        char withUnder[256];
+        snprintf(withUnder, sizeof(withUnder), "_%s", pszSymbolName);
         pSymbol = dlsym( pLibrary, withUnder );
     }
 #endif
