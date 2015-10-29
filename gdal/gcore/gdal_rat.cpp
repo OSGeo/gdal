@@ -1036,7 +1036,7 @@ GDALRasterAttributeTableH CPL_STDCALL GDALCreateRasterAttributeTable()
 //! Copy constructor.
 
 GDALDefaultRasterAttributeTable::GDALDefaultRasterAttributeTable( 
-    const GDALDefaultRasterAttributeTable &oOther )
+    const GDALDefaultRasterAttributeTable &oOther ) : GDALRasterAttributeTable()
 
 {
     // We have tried to be careful to allow wholesale assignment
