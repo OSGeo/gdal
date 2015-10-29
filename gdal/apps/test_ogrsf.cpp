@@ -1127,7 +1127,7 @@ bye:
 /*                          GetLayerNameForSQL()                        */
 /************************************************************************/
 
-const char* GetLayerNameForSQL( GDALDataset* poDS, const char* pszLayerName )
+static const char* GetLayerNameForSQL( GDALDataset* poDS, const char* pszLayerName )
 {
     int i;
     char ch;
