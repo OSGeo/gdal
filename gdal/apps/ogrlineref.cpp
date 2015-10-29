@@ -1196,7 +1196,9 @@ int main( int nArgc, char ** papszArgv )
     int bDisplayProgress = FALSE;
     
     double dfPosBeg(-100000000), dfPosEnd(-100000000);
+#ifdef HAVE_GEOS_PROJECT
     double dfStep(-100000000);
+#endif
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -1392,7 +1394,12 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-s") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+#ifdef HAVE_GEOS_PROJECT
             dfStep = CPLAtofM(papszArgv[++iArg]);
+#else
+            fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
+            exit( 1 );
+#endif
         }  
         else if( EQUAL(papszArgv[iArg],"-progress") )
         {
