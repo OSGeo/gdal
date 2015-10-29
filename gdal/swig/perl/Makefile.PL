@@ -133,15 +133,18 @@ $config = download_and_compile_gdal($my_gdal_version, $gdal_version)
 
 # still in the game?
 
-my $have_gnm;
+my $have_gnm = `grep "GNM_ENABLED = " ../../GDALmake.opt`;
+chomp $have_gnm;
+$have_gnm = $have_gnm =~ /yes/ ? 1 : 0;
 
 my ($INC, $LIB) = get_gdal_inc_lib($config);
 
 my %object = ( 'Geo::GDAL' => 'gdal_wrap.o',
                'Geo::GDAL::Const' => 'gdalconst_wrap.o',
                'Geo::OGR' => 'ogr_wrap.o',
-               'Geo::OSR' => 'osr_wrap.o',
-               'Geo::GNM' => 'gnm_wrap.o' );
+               'Geo::OSR' => 'osr_wrap.o' );
+
+$object{'Geo::GNM'} = 'gnm_wrap.o' if $have_gnm;
 
 if ($ARGV{'--debug'}) {
     print "LIB = $LIB\n";
@@ -157,6 +160,14 @@ for my $module (keys %object) {
     my $OPTIMIZE = '';
     $OPTIMIZE .= ' '.$ENV{CFLAGS} if $ENV{CFLAGS};
     $OPTIMIZE .= ' '.$ENV{CPPFLAGS} if $ENV{CFLAGS};
+    
+    my %PM = ( 'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
+               'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
+               'lib/Geo/OSR.pm' => '$(INST_LIBDIR)/OSR.pm',
+               'lib/Geo/GDAL/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm' );
+    
+    $PM{'lib/Geo/GNM.pm'} = '$(INST_LIBDIR)/GNM.pm' if $have_gnm;
+
     WriteMakefile( NAME => $module,
                    VERSION_FROM => 'lib/Geo/GDAL.pm',
                    ABSTRACT_FROM => 'lib/Geo/GDAL.pm',
@@ -178,12 +189,7 @@ for my $module (keys %object) {
                    OPTIMIZE => $OPTIMIZE,
                    LD => $LD,
                    OBJECT => $object{$module},
-                   PM => { 'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
-                           'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
-                           'lib/Geo/OSR.pm' => '$(INST_LIBDIR)/OSR.pm',
-                           'lib/Geo/GDAL/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm',
-                           'lib/Geo/GNM.pm' => '$(INST_LIBDIR)/GNM.pm',
-                   },
+                   PM => \%PM,
                    BUILD_REQUIRES => {
                        'File::Basename' => 0,
                        'ExtUtils::MakeMaker' => 0,
@@ -347,7 +353,7 @@ sub get_gdal_inc_lib {
         chomp($LIB = `$config --libs`);
         if ($in_source_tree) {
             $LIB = "-L../../.libs -lgdal";
-            $INC .= ' -I../../gnm';
+            $INC .= ' -I../../gnm' if $have_gnm;
         }
     }
     else {
