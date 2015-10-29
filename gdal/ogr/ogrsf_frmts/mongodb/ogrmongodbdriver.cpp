@@ -30,12 +30,9 @@
 
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
-#ifdef WIN32
-#include <winsock2.h>
-#undef min
-#undef max
-#endif
-#include "mongo/client/dbclient.h" // for the driver
+
+#include "mongocxx_headers.h"
+
 #include "ogr_p.h"
 #include "cpl_time.h"
 #include <limits>
