@@ -44,17 +44,6 @@
 
 #include "ecwsdk_headers.h"
 
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wwrite-strings"
-#endif
-static const CNCSError _static_NCS_SUCCESS = NCS_SUCCESS;
-static const CNCSError _static_NCS_UNKNOWN_ERROR = NCS_UNKNOWN_ERROR;
-static const CNCSError _static_NCS_FILEIO_ERROR = NCS_FILEIO_ERROR;
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
-
 void ECWInitialize( void );
 GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo);
 const char* ECWGetColorInterpretationName(GDALColorInterp eColorInterpretation, int nBandNumber);
