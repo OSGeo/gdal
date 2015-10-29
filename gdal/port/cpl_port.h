@@ -697,6 +697,9 @@ template<class T> static void CPL_IGNORE_RET_VAL(T) {}
 
 #if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(_MSC_VER)) 
 #define HAVE_GCC_DIAGNOSTIC_PUSH
+#endif
+
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)) && !defined(_MSC_VER)) 
 #define HAVE_GCC_SYSTEM_HEADER
 #endif
 

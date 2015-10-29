@@ -29,7 +29,9 @@
 #ifndef MG4LIDAR_HEADERS_H
 #define MG4LIDAR_HEADERS_H
 
-#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(_MSC_VER)) 
+#include "cpl_port.h"
+
+#ifdef HAVE_GCC_SYSTEM_HEADER
 #pragma GCC system_header
 #endif
 
