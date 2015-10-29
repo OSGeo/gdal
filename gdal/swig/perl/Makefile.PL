@@ -132,7 +132,8 @@ my ($INC, $LIB) = get_gdal_inc_lib($config);
 my %object = ( 'Geo::GDAL' => 'gdal_wrap.o',
                'Geo::GDAL::Const' => 'gdalconst_wrap.o',
                'Geo::OGR' => 'ogr_wrap.o',
-               'Geo::OSR' => 'osr_wrap.o'  );
+               'Geo::OSR' => 'osr_wrap.o',
+               'Geo::GNM' => 'gnm_wrap.o' );
 
 if ($ARGV{'--debug'}) {
     print "LIB = $LIB\n";
@@ -172,7 +173,9 @@ for my $module (keys %object) {
                    PM => { 'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
                            'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
                            'lib/Geo/OSR.pm' => '$(INST_LIBDIR)/OSR.pm',
-                           'lib/Geo/GDAL/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm' },
+                           'lib/Geo/GDAL/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm',
+                           'lib/Geo/GNM.pm' => '$(INST_LIBDIR)/GNM.pm',
+                   },
                    BUILD_REQUIRES => {
                        'File::Basename' => 0,
                        'ExtUtils::MakeMaker' => 0,
@@ -282,8 +285,7 @@ end
         $ret = $step->("tar", "zxf", "$gdal.tar.gz");
     } else {
         print "No luck. Maybe this is the development version?\n";
-        #$ret = $step->("svn", "checkout", "https://svn.osgeo.org/gdal/trunk/gdal", "gdal");
-        $ret = 1;
+        $ret = $step->("svn", "checkout", "https://svn.osgeo.org/gdal/trunk/gdal", "gdal");
         $gdal = "gdal";
     }
     if ($ret) {
@@ -333,12 +335,13 @@ sub get_gdal_inc_lib {
     my $config = shift;
     my ($INC, $LIB) = ('', '');
     if (-x $config) {
+        chomp($INC = `$config --cflags`);
         chomp($LIB = `$config --libs`);
         if ($LIB =~ /\.la$/) { # this is a not-yet-installed gdal-config
             my ($name,$path,$suffix) = fileparse($LIB);
             $LIB = "-L$path.libs -lgdal";
+            $INC .= ' -I../../gnm';
         } 
-        chomp($INC = `$config --cflags`);
     }
     else {
         # again, it is not recommended to be here
