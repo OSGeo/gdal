@@ -2824,7 +2824,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             std::string fieldName;
             std::string fieldType;
             int nLength = 0;
-            int nPrecision = 0;
+            //int nPrecision = 0;
             int bNullable = TRUE;
             std::string osDefault;
 
@@ -2862,7 +2862,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"Precision") )
                     {
-                        nPrecision = atoi(psFieldItemNode->psChild->pszValue);
+                        //nPrecision = atoi(psFieldItemNode->psChild->pszValue);
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"IsNullable") )
                     {
