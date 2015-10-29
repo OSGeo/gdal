@@ -2031,7 +2031,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     UINT32 anBandIndices[100];
     int    i;
     NCSError     eNCSErr;
-    CNCSError    oErr = _static_NCS_SUCCESS;
+    CNCSError    oErr(GetCNCSError(NCS_SUCCESS));
 
     for( i = 0; i < nBandCount; i++ )
         anBandIndices[i] = panBandMap[i] - 1;
@@ -2378,7 +2378,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
 /* -------------------------------------------------------------------- */
     CNCSJP2FileView *poFileView = NULL;
     NCSError         eErr;
-    CNCSError        oErr = _static_NCS_SUCCESS;
+    CNCSError        oErr(GetCNCSError(NCS_SUCCESS));
 
     bUsingCustomStream = FALSE;
     poFileView = new CNCSFile();

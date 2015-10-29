@@ -95,4 +95,8 @@
 #  define CNCSJP2FileView         CNCSFile
 #endif
 
+/* Trick to avoid warnings with SDK 3.3 when assigning a NCSError code */
+/* to a CNCSError object */
+static inline CNCSError GetCNCSError(NCSError nCode) { return CNCSError(nCode); }
+
 #endif

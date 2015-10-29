@@ -227,9 +227,9 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
     CPLFree( panBandMap );
 
     if( eErr == CE_None )
-        return _static_NCS_SUCCESS;
+        return GetCNCSError(NCS_SUCCESS);
     else
-        return _static_NCS_FILEIO_ERROR;
+        return GetCNCSError(NCS_FILEIO_ERROR);
 }
 
 /************************************************************************/
@@ -1072,20 +1072,13 @@ CPLErr GDALECWCompressor::Initialize(
             if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
             {
                 wchar_t *pwszFilename = CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
-                oError = Open( pwszFilename, false, true );
+                oError = GetCNCSError(Open( pwszFilename, false, true ));
                 CPLFree( pwszFilename );
             }
             else
 #endif
             {
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wwrite-strings"
-#endif
-                oError = Open( (char *) pszFilename, false, true );
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
+                oError = GetCNCSError(Open( (char *) pszFilename, false, true ));
             }
         }
         else
