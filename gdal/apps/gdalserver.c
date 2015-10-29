@@ -223,10 +223,11 @@ static int CreateSocketAndBindAndListen(const char* pszService,
 /*                             RunServer()                              */
 /************************************************************************/
 
+static
 int RunServer(const char* pszApplication,
               const char* pszService,
-              const char* unused_pszUnixSocketFilename,
-              int bFork)
+              CPL_UNUSED const char* unused_pszUnixSocketFilename,
+              CPL_UNUSED int bFork)
 {
     int nRet;
     WSADATA wsaData;
@@ -336,6 +337,7 @@ int RunServer(const char* pszApplication,
 /*                          RunNewConnection()                          */
 /************************************************************************/
 
+static
 int RunNewConnection()
 {
     int nRet;

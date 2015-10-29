@@ -261,12 +261,12 @@ struct _CPLSpawnedProcess
 /*                            CPLSpawnAsync()                           */
 /************************************************************************/
 
-CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
+CPLSpawnedProcess* CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
                                  const char * const papszArgv[],
                                  int bCreateInputPipe,
                                  int bCreateOutputPipe,
                                  int bCreateErrorPipe,
-                                 char** papszOptions)
+                                 CPL_UNUSED char** papszOptions)
 {
     HANDLE pipe_in[2] = {NULL, NULL};
     HANDLE pipe_out[2] = {NULL, NULL};
@@ -402,7 +402,7 @@ CPL_PID CPLSpawnAsyncGetChildProcessId(CPLSpawnedProcess* p)
 /*                        CPLSpawnAsyncFinish()                         */
 /************************************************************************/
 
-int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, int bKill)
+int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, CPL_UNUSED int bKill)
 {
     // Get the exit code.
     DWORD exitCode = -1;

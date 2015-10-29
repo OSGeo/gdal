@@ -50,7 +50,7 @@ struct timezone
 #define MICROSEC_IN_SEC   1000000
 
 static
-int OGR_gettimeofday(struct timeval *tv, struct timezone *tzIgnored)
+int OGR_gettimeofday(struct timeval *tv, CPL_UNUSED struct timezone *tzIgnored)
 {
     FILETIME ft;
     GetSystemTimeAsFileTime(&ft);
