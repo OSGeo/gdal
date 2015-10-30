@@ -427,6 +427,24 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
         }
         oSRS.exportToWkt( &poDS->pszProjection );
     }
+    if ( CSLFetchNameValue( papszRsc, "Z_OFFSET" ) != NULL )
+    {
+        double dfOffset = strtod( CSLFetchNameValue( papszRsc, "Z_OFFSET" ), NULL);
+        for (int b = 1; b <= nBands; b++)
+        {
+            GDALRasterBand *poBand = poDS->GetRasterBand(b);
+            poBand->SetOffset( dfOffset );
+        }    
+    }
+    if ( CSLFetchNameValue( papszRsc, "Z_SCALE" ) != NULL )
+    {
+        double dfScale = strtod( CSLFetchNameValue( papszRsc, "Z_SCALE" ), NULL);
+        for (int b = 1; b <= nBands; b++)
+        {
+            GDALRasterBand *poBand = poDS->GetRasterBand(b);
+            poBand->SetScale( dfScale );
+        }    
+    }
 
 
 /* -------------------------------------------------------------------- */
@@ -446,7 +464,9 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
               || strcmp( papszTokens[0], "Y_FIRST" ) == 0
               || strcmp( papszTokens[0], "Y_STEP" ) == 0
               || strcmp( papszTokens[0], "PROJECTION" ) == 0 
-              || strcmp( papszTokens[0], "DATUM" ) == 0 )
+              || strcmp( papszTokens[0], "DATUM" ) == 0
+              || strcmp( papszTokens[0], "Z_OFFSET" ) == 0
+              || strcmp( papszTokens[0], "Z_SCALE" ) == 0 )
         {
             CSLDestroy( papszTokens );
             continue;
@@ -722,6 +742,8 @@ void ROIPACDataset::FlushCache( void )
             VSIFPrintfL( fpRsc, "%-40s %.16g\n", "X_STEP", adfGeoTransform[1] );
             VSIFPrintfL( fpRsc, "%-40s %.16g\n", "Y_FIRST", adfGeoTransform[3] );
             VSIFPrintfL( fpRsc, "%-40s %.16g\n", "Y_STEP", adfGeoTransform[5] );
+            VSIFPrintfL( fpRsc, "%-40s %.16g\n", "Z_OFFSET", band->GetOffset(NULL) );
+            VSIFPrintfL( fpRsc, "%-40s %.16g\n", "Z_SCALE", band->GetScale(NULL) );
         }
     }
 

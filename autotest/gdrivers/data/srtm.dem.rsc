@@ -12,5 +12,5 @@ X_STEP                            8.33333330000e-03
 Y_STEP                            -8.3333333000e-03
 X_UNIT                            degrees
 Y_UNIT                            degrees
-Z_OFFSET                          0.
-Z_SCALE                           1
+Z_OFFSET                          1.
+Z_SCALE                           2
