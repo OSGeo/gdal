@@ -64,8 +64,8 @@ def roipac_1():
 def roipac_2():
 
     ds = gdal.Open( 'data/srtm.dem' )
-    val = ds.GetMetadataItem( 'Z_SCALE', 'ROI_PAC' )
-    if val != '1':
+    val = ds.GetMetadataItem( 'YMAX', 'ROI_PAC' )
+    if val != '9':
         return 'fail'
 
     return 'success'
@@ -86,11 +86,28 @@ def roipac_4():
     tst = gdaltest.GDALTest( 'roi_pac', 'srtm.dem', 1, 64074 )
     return tst.testCreateCopy( check_gt = 1, new_filename = 'strm.tst.dem', vsimem = 1 )
 
+###############################################################################
+# Verify offset/scale metadata reading
+
+def roipac_5():
+
+    ds = gdal.Open( 'data/srtm.dem' )
+    band = ds.GetRasterBand( 1 )
+    offset = band.GetOffset( )
+    if offset != 1:
+        return 'fail'
+    scale = band.GetScale( )
+    if scale != 2:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     roipac_1,
     roipac_2,
     roipac_3,
     roipac_4,
+    roipac_5,
     ]
   
 
