@@ -3909,7 +3909,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         else if( EQUAL(papszArgv[i],"-dialect") && i+1 < nArgc )
         {
             CPLFree(psOptions->pszDialect);
-            psOptions->pszDialect = papszArgv[++i];
+            psOptions->pszDialect = CPLStrdup(papszArgv[++i]);
         }
         else if( EQUAL(papszArgv[i],"-nln") && i+1 < nArgc )
         {

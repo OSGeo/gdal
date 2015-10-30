@@ -65,7 +65,7 @@ def test_ogr2ogr_lib_1():
 def test_ogr2ogr_lib_2():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
-    ds = gdal.VectorTranslate('', srcDS, format = 'Memory', SQLStatement='select * from poly')
+    ds = gdal.VectorTranslate('', srcDS, format = 'Memory', SQLStatement='select * from poly', SQLDialect = 'OGRSQL')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         gdaltest.post_reason('fail')
         return 'fail'
