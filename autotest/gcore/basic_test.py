@@ -590,6 +590,27 @@ def basic_test_15():
 
     return 'success'
 
+###############################################################################
+# Test unrecognized and recognized open options prefixed by @
+
+def basic_test_16():
+
+    gdal.ErrorReset()
+    ds = gdal.OpenEx('data/byte.tif', open_options=['@UNRECOGNIZED=FOO'])
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx('data/byte.tif', gdal.OF_UPDATE, open_options=['@NUM_THREADS=INVALID'])
+    if gdal.GetLastErrorMsg() != 'Invalid value for NUM_THREADS: INVALID':
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
                   basic_test_3,
@@ -604,7 +625,8 @@ gdaltest_list = [ basic_test_1,
                   basic_test_12,
                   basic_test_13,
                   basic_test_14,
-                  basic_test_15 ]
+                  basic_test_15,
+                  basic_test_16 ]
 
 
 if __name__ == '__main__':

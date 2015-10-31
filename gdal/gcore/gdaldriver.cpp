@@ -1492,6 +1492,14 @@ int GDALValidateOptions( const char* pszOptionList,
             continue;
         }
 
+        // Must we be forgiving in case of missing option ?
+        bool bWarnIfMissingKey = true;
+        if( pszKey[0] == '@' )
+        {
+            bWarnIfMissingKey = false;
+            memmove(pszKey, pszKey + 1, strlen(pszKey+1)+1);
+        }
+
         CPLXMLNode* psChildNode = psNode->psChild;
         while(psChildNode)
         {
@@ -1531,8 +1539,9 @@ int GDALValidateOptions( const char* pszOptionList,
         }
         if (psChildNode == NULL)
         {
-            if( !EQUAL(pszErrorMessageOptionType, "open option") ||
-                CSLFetchBoolean((char**)papszOptionsToValidate, "VALIDATE_OPEN_OPTIONS", TRUE) )
+            if( bWarnIfMissingKey &&
+                (!EQUAL(pszErrorMessageOptionType, "open option") ||
+                 CSLFetchBoolean((char**)papszOptionsToValidate, "VALIDATE_OPEN_OPTIONS", TRUE)) )
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
                         "%s does not support %s %s",
