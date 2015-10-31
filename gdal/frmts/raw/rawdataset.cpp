@@ -32,6 +32,11 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <cmath>
+#include <cstddef>
+
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -39,11 +44,12 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
-                              void * fpRaw, vsi_l_offset nImgOffset,
+                              void *fpRawIn, vsi_l_offset nImgOffset,
                               int nPixelOffset, int nLineOffset,
                               GDALDataType eDataType, int bNativeOrder,
-                              int bIsVSIL, int bOwnsFP )
-
+                              int bIsVSIL, int bOwnsFP ) :
+    fpRaw(NULL),
+    fpRawL(NULL)
 {
     this->poDS = poDS;
     this->nBand = nBand;
@@ -53,13 +59,11 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 
     if (bIsVSIL)
     {
-        this->fpRaw = NULL;
-        this->fpRawL = (VSILFILE*) fpRaw;
+        fpRawL = reinterpret_cast<VSILFILE *>( fpRawIn );
     }
     else
     {
-        this->fpRaw = (FILE*) fpRaw;
-        this->fpRawL = NULL;
+        fpRaw = reinterpret_cast<FILE *>( fpRawIn );
     }
     this->nImgOffset = nImgOffset;
     this->nPixelOffset = nPixelOffset;
@@ -89,12 +93,19 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 /*                           RawRasterBand()                            */
 /************************************************************************/
 
-RawRasterBand::RawRasterBand( void * fpRaw, vsi_l_offset nImgOffset,
+RawRasterBand::RawRasterBand( void *fpRawIn, vsi_l_offset nImgOffset,
                               int nPixelOffset, int nLineOffset,
                               GDALDataType eDataType, int bNativeOrder,
                               int nXSize, int nYSize, int bIsVSIL, int bOwnsFP ) :
-    nLineSize(0), nLoadedScanline(0), pLineStart(NULL), bDirty(FALSE),
-    poCT(NULL), eInterp(GCI_Undefined), papszCategoryNames(NULL)
+    fpRaw(NULL),
+    fpRawL(NULL),
+    nLineSize(0),
+    nLoadedScanline(0),
+    pLineStart(NULL),
+    bDirty(FALSE),
+    poCT(NULL),
+    eInterp(GCI_Undefined),
+    papszCategoryNames(NULL)
 {
     this->poDS = NULL;
     this->nBand = 1;
@@ -104,13 +115,11 @@ RawRasterBand::RawRasterBand( void * fpRaw, vsi_l_offset nImgOffset,
 
     if (bIsVSIL)
     {
-        this->fpRaw = NULL;
-        this->fpRawL = (VSILFILE*) fpRaw;
+        this->fpRawL = reinterpret_cast<VSILFILE *>( fpRawIn );
     }
     else
     {
-        this->fpRaw = (FILE*) fpRaw;
-        this->fpRawL = NULL;
+        this->fpRaw = reinterpret_cast<FILE *>( fpRawIn );
     }
     this->nImgOffset = nImgOffset;
     this->nPixelOffset = nPixelOffset;
@@ -167,8 +176,8 @@ void RawRasterBand::Initialize()
     }
     else
     {
-        nLineSize = ABS(nPixelOffset) * nBlockXSize;
-        pLineBuffer = VSIMalloc2( ABS(nPixelOffset), nBlockXSize );
+        nLineSize = std::abs(nPixelOffset) * nBlockXSize;
+        pLineBuffer = VSIMalloc2( std::abs(nPixelOffset), nBlockXSize );
     }
     if (pLineBuffer == NULL)
     {
@@ -180,7 +189,9 @@ void RawRasterBand::Initialize()
     if( nPixelOffset >= 0 )
         pLineStart = pLineBuffer;
     else
-        pLineStart = ((char *) pLineBuffer) + ABS(nPixelOffset) * (nBlockXSize-1);
+        pLineStart = reinterpret_cast<char *> (pLineBuffer )
+            + static_cast<std::ptrdiff_t>( std::abs( nPixelOffset ) )
+            * ( nBlockXSize - 1 );
 }
 
 /************************************************************************/
@@ -196,7 +207,7 @@ RawRasterBand::~RawRasterBand()
     CSLDestroy( papszCategoryNames );
 
     FlushCache();
-    
+
     if (bOwnsFP)
     {
         if ( bIsVSIL )
@@ -204,7 +215,7 @@ RawRasterBand::~RawRasterBand()
         else
             VSIFClose( fpRaw );
     }
-    
+
     CPLFree( pLineBuffer );
 }
 
@@ -213,9 +224,9 @@ RawRasterBand::~RawRasterBand()
 /*                             SetAccess()                              */
 /************************************************************************/
 
-void  RawRasterBand::SetAccess( GDALAccess eAccess )
+void  RawRasterBand::SetAccess( GDALAccess eAccessIn )
 {
-    this->eAccess = eAccess;
+    eAccess = eAccessIn;
 }
 
 /************************************************************************/
@@ -229,9 +240,7 @@ void  RawRasterBand::SetAccess( GDALAccess eAccess )
 CPLErr RawRasterBand::FlushCache()
 
 {
-    CPLErr eErr;
-
-    eErr = GDALRasterBand::FlushCache();
+    CPLErr eErr = GDALRasterBand::FlushCache();
     if( eErr != CE_None )
         return eErr;
 
@@ -271,7 +280,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
     else
     {
         nReadStart = nImgOffset + (vsi_l_offset)iLine * nLineOffset
-            - ABS(nPixelOffset) * (nBlockXSize-1);
+            - std::abs(nPixelOffset) * (nBlockXSize-1);
     }
 
 /* -------------------------------------------------------------------- */
@@ -299,12 +308,10 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 /*      are needed, and not to lose a partially successful scanline     */
 /*      read.                                                           */
 /* -------------------------------------------------------------------- */
-    int	nBytesToRead, nBytesActuallyRead;
-
-    nBytesToRead = ABS(nPixelOffset) * (nBlockXSize - 1) 
+    const int nBytesToRead = std::abs(nPixelOffset) * (nBlockXSize - 1)
         + GDALGetDataTypeSize(GetRasterDataType()) / 8;
 
-    nBytesActuallyRead = Read( pLineBuffer, 1, nBytesToRead );
+    const int nBytesActuallyRead = Read( pLineBuffer, 1, nBytesToRead );
     if( nBytesActuallyRead < nBlockXSize )
     {
         if (poDS != NULL && poDS->GetAccess() == GA_ReadOnly)
@@ -316,7 +323,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         }
         else
         {
-            memset( ((GByte *) pLineBuffer) + nBytesActuallyRead, 
+            memset( reinterpret_cast<GByte *>( pLineBuffer ) + nBytesActuallyRead,
                     0, nBytesToRead - nBytesActuallyRead );
         }
     }
@@ -328,16 +335,15 @@ CPLErr RawRasterBand::AccessLine( int iLine )
     {
         if( GDALDataTypeIsComplex( eDataType ) )
         {
-            int nWordSize;
-
-            nWordSize = GDALGetDataTypeSize(eDataType)/16;
-            GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize, ABS(nPixelOffset) );
-            GDALSwapWords( ((GByte *) pLineBuffer)+nWordSize, 
-                           nWordSize, nBlockXSize, ABS(nPixelOffset) );
+            const int nWordSize = GDALGetDataTypeSize(eDataType)/16;
+            GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize, std::abs(nPixelOffset) );
+            GDALSwapWords(
+                reinterpret_cast<GByte *>( pLineBuffer ) + nWordSize,
+                nWordSize, nBlockXSize, std::abs(nPixelOffset) );
         }
         else
             GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
-                           nBlockXSize, ABS(nPixelOffset) );
+                           nBlockXSize, std::abs(nPixelOffset) );
     }
 
     nLoadedScanline = iLine;
@@ -353,14 +359,12 @@ CPLErr RawRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                   int nBlockYOff,
                                   void * pImage )
 {
-    CPLErr		eErr;
-
     CPLAssert( nBlockXOff == 0 );
 
     if (pLineBuffer == NULL)
         return CE_Failure;
 
-    eErr = AccessLine( nBlockYOff );
+    CPLErr eErr = AccessLine( nBlockYOff );
 
 /* -------------------------------------------------------------------- */
 /*      Copy data from disk buffer to user block buffer.                */
@@ -380,8 +384,6 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
                                    int nBlockYOff,
                                    void * pImage )
 {
-    CPLErr		eErr = CE_None;
-
     CPLAssert( nBlockXOff == 0 );
 
     if (pLineBuffer == NULL)
@@ -391,7 +393,8 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 /*      If the data for this band is completely contiguous we don't     */
 /*      have to worry about pre-reading from disk.                      */
 /* -------------------------------------------------------------------- */
-    if( ABS(nPixelOffset) > GDALGetDataTypeSize(eDataType) / 8 )
+    CPLErr eErr = CE_None;
+    if( std::abs(nPixelOffset) > GDALGetDataTypeSize(eDataType) / 8 )
         eErr = AccessLine( nBlockYOff );
 
 /* -------------------------------------------------------------------- */
@@ -408,17 +411,16 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     {
         if( GDALDataTypeIsComplex( eDataType ) )
         {
-            int nWordSize;
-
-            nWordSize = GDALGetDataTypeSize(eDataType)/16;
+            const int nWordSize = GDALGetDataTypeSize(eDataType)/16;
             GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize, 
-                           ABS(nPixelOffset) );
-            GDALSwapWords( ((GByte *) pLineBuffer)+nWordSize, 
-                           nWordSize, nBlockXSize, ABS(nPixelOffset) );
+                           std::abs(nPixelOffset) );
+            GDALSwapWords(
+                reinterpret_cast<GByte *>( pLineBuffer ) + nWordSize,
+                nWordSize, nBlockXSize, std::abs(nPixelOffset) );
         }
         else
             GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
-                           nBlockXSize, ABS(nPixelOffset) );
+                           nBlockXSize, std::abs(nPixelOffset) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -430,7 +432,7 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     else
     {
         nWriteStart = nImgOffset + (vsi_l_offset)nBlockYOff * nLineOffset
-            - ABS(nPixelOffset) * (nBlockXSize-1);
+            - std::abs(nPixelOffset) * (nBlockXSize-1);
     }
 
 /* -------------------------------------------------------------------- */
@@ -441,28 +443,27 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to scanline %d @ " CPL_FRMT_GUIB " to write to file.\n",
                   nBlockYOff, nImgOffset + nBlockYOff * nLineOffset );
-        
+
         eErr = CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Write data buffer.                                              */
 /* -------------------------------------------------------------------- */
-    int	nBytesToWrite;
-
-    nBytesToWrite = ABS(nPixelOffset) * (nBlockXSize - 1) 
+    int	nBytesToWrite = std::abs(nPixelOffset) * (nBlockXSize - 1)
         + GDALGetDataTypeSize(GetRasterDataType()) / 8;
 
-    if( eErr == CE_None 
-        && Write( pLineBuffer, 1, nBytesToWrite ) < (size_t) nBytesToWrite )
+    if( eErr == CE_None
+        && Write( pLineBuffer, 1, nBytesToWrite )
+        < static_cast<size_t>( nBytesToWrite ) )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to write scanline %d to file.\n",
                   nBlockYOff );
-        
+
         eErr = CE_Failure;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Byte swap (if necessary) back into machine order so the         */
 /*      buffer is still usable for reading purposes.                    */
@@ -471,18 +472,16 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     {
         if( GDALDataTypeIsComplex( eDataType ) )
         {
-            int nWordSize;
-
-            nWordSize = GDALGetDataTypeSize(eDataType)/16;
+            const int nWordSize = GDALGetDataTypeSize(eDataType)/16;
             GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize, 
-                           ABS(nPixelOffset) );
-            GDALSwapWords( ((GByte *) pLineBuffer)+nWordSize, 
-                           nWordSize, nBlockXSize, 
-                           ABS(nPixelOffset) );
+                           std::abs(nPixelOffset) );
+            GDALSwapWords( reinterpret_cast<GByte *>( pLineBuffer ) +
+                           nWordSize, nWordSize, nBlockXSize,
+                           std::abs(nPixelOffset) );
         }
         else
             GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
-                           nBlockXSize, ABS(nPixelOffset) );
+                           nBlockXSize, std::abs(nPixelOffset) );
     }
 
     bDirty = TRUE;
@@ -496,8 +495,6 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 CPLErr RawRasterBand::AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
                                    void * pData )
 {
-    int         nBytesActuallyRead;
-
 /* -------------------------------------------------------------------- */
 /*      Seek to the right block.                                        */
 /* -------------------------------------------------------------------- */
@@ -510,11 +507,11 @@ CPLErr RawRasterBand::AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
 /* -------------------------------------------------------------------- */
 /*      Read the block.                                                 */
 /* -------------------------------------------------------------------- */
-    nBytesActuallyRead = Read( pData, 1, nBlockSize );
+    const int nBytesActuallyRead = Read( pData, 1, nBlockSize );
     if( nBytesActuallyRead < nBlockSize )
     {
 
-        memset( ((GByte *) pData) + nBytesActuallyRead, 
+        memset( reinterpret_cast<GByte *>( pData ) + nBytesActuallyRead,
                 0, nBlockSize - nBytesActuallyRead );
         return CE_None;
     }
@@ -526,12 +523,10 @@ CPLErr RawRasterBand::AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
     {
         if( GDALDataTypeIsComplex( eDataType ) )
         {
-            int nWordSize;
-
-            nWordSize = GDALGetDataTypeSize(eDataType)/16;
+            const int nWordSize = GDALGetDataTypeSize(eDataType)/16;
             GDALSwapWords( pData, nWordSize, nBlockSize / nPixelOffset,
                            nPixelOffset );
-            GDALSwapWords( ((GByte *) pData) + nWordSize, 
+            GDALSwapWords( reinterpret_cast<GByte *>( pData ) + nWordSize,
                            nWordSize, nBlockSize / nPixelOffset, nPixelOffset );
         }
         else
@@ -551,16 +546,15 @@ CPLErr RawRasterBand::AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
 
 int RawRasterBand::IsSignificantNumberOfLinesLoaded( int nLineOff, int nLines )
 {
-    int         iLine;
     int         nCountLoaded = 0;
 
-    for ( iLine = nLineOff; iLine < nLineOff + nLines; iLine++ )
+    for ( int iLine = nLineOff; iLine < nLineOff + nLines; iLine++ )
     {
         GDALRasterBlock *poBlock = TryGetLockedBlockRef( 0, iLine );
         if( poBlock != NULL )
         {
             poBlock->DropLock();
-            nCountLoaded ++;
+            nCountLoaded++;
             if( nCountLoaded > nLines / 20 )
             {
                 return TRUE;
@@ -575,11 +569,11 @@ int RawRasterBand::IsSignificantNumberOfLinesLoaded( int nLineOff, int nLines )
 /*                           CanUseDirectIO()                           */
 /************************************************************************/
 
-int RawRasterBand::CanUseDirectIO(CPL_UNUSED int nXOff,
+int RawRasterBand::CanUseDirectIO(int /* nXOff */,
                                   int nYOff,
                                   int nXSize,
                                   int nYSize,
-                                  CPL_UNUSED GDALDataType eBufType)
+                                  GDALDataType /* eBufType*/)
 {
 
 /* -------------------------------------------------------------------- */
@@ -612,8 +606,8 @@ int RawRasterBand::CanUseDirectIO(CPL_UNUSED int nXOff,
         }
         return TRUE;
     }
-    else
-        return CSLTestBoolean(pszGDAL_ONE_BIG_READ);
+
+    return CSLTestBoolean(pszGDAL_ONE_BIG_READ);
 }
 
 /************************************************************************/
@@ -628,9 +622,9 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  GDALRasterIOExtraArg* psExtraArg )
 
 {
-    int         nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
-    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
-    int         nBytesToRW = nPixelOffset * nXSize;
+    const int nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+    int nBytesToRW = nPixelOffset * nXSize;
 
     if( !CanUseDirectIO(nXOff, nYOff, nXSize, nYSize, eBufType ) )
     {
@@ -689,22 +683,19 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* ==================================================================== */
         else
         {
-            GByte   *pabyData;
-            double  dfSrcXInc, dfSrcYInc;
-            int     iLine;
-            
-            dfSrcXInc = (double)nXSize / nBufXSize;
-            dfSrcYInc = (double)nYSize / nBufYSize;
+            const double dfSrcXInc = static_cast<double>( nXSize ) / nBufXSize;
+            const double dfSrcYInc = static_cast<double>( nYSize ) / nBufYSize;
 
+            GByte *pabyData = reinterpret_cast<GByte *>(
+                CPLMalloc( nBytesToRW ) );
 
-            pabyData = (GByte *) CPLMalloc( nBytesToRW );
-
-            for ( iLine = 0; iLine < nBufYSize; iLine++ )
+            for ( int iLine = 0; iLine < nBufYSize; iLine++ )
             {
                 vsi_l_offset nOffset = nImgOffset
-                                  + ((vsi_l_offset)nYOff
-                                  + (vsi_l_offset)(iLine * dfSrcYInc)) * nLineOffset
-                                  + nXOff * nPixelOffset;
+                    + (static_cast<vsi_l_offset>( nYOff )
+                       + static_cast<vsi_l_offset>( iLine * dfSrcYInc ) )
+                    * nLineOffset
+                    + nXOff * nPixelOffset;
                 if ( AccessBlock( nOffset,
                                   nBytesToRW, pabyData ) != CE_None )
                 {
@@ -720,21 +711,25 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if ( nXSize == nBufXSize && nYSize == nBufYSize )
                 {
                     GDALCopyWords( pabyData, eDataType, nPixelOffset,
-                                   (GByte *)pData + (vsi_l_offset)iLine * nLineSpace,
+                                   reinterpret_cast<GByte *>( pData ) +
+                                   static_cast<vsi_l_offset>( iLine ) *
+                                   nLineSpace,
                                    eBufType, nPixelSpace, nXSize );
                 }
                 else
                 {
-                    int     iPixel;
-
-                    for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
+                    for ( int iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
-                        GDALCopyWords( pabyData +
-                                       (vsi_l_offset)(iPixel * dfSrcXInc) * nPixelOffset,
-                                       eDataType, nPixelOffset,
-                                       (GByte *)pData + (vsi_l_offset)iLine * nLineSpace +
-                                       (vsi_l_offset)iPixel * nPixelSpace,
-                                       eBufType, nPixelSpace, 1 );
+                        GDALCopyWords(
+                            pabyData +
+                            static_cast<vsi_l_offset>( iPixel * dfSrcXInc ) *
+                            nPixelOffset,
+                            eDataType, nPixelOffset,
+                            reinterpret_cast<GByte *>( pData ) +
+                            static_cast<vsi_l_offset>( iLine ) *
+                            nLineSpace +
+                            static_cast<vsi_l_offset>( iPixel) * nPixelSpace,
+                            eBufType, nPixelSpace, 1 );
                     }
                 }
 
@@ -756,8 +751,6 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* ==================================================================== */
     else
     {
-        int nBytesActuallyWritten;
-
 /* ==================================================================== */
 /*   1. Simplest case when we should write contiguous block             */
 /*   of uninterleaved pixels.                                           */
@@ -777,12 +770,11 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             {
                 if( GDALDataTypeIsComplex( eDataType ) )
                 {
-                    int nWordSize;
-
-                    nWordSize = GDALGetDataTypeSize(eDataType)/16;
+                    const int nWordSize = GDALGetDataTypeSize(eDataType)/16;
                     GDALSwapWords( pData, nWordSize, nXSize, nPixelOffset );
-                    GDALSwapWords( ((GByte *) pData) + nWordSize, 
-                                   nWordSize, nXSize, nPixelOffset );
+                    GDALSwapWords(
+                        reinterpret_cast<GByte *>( pData ) + nWordSize,
+                        nWordSize, nXSize, nPixelOffset );
                 }
                 else
                     GDALSwapWords( pData, nBandDataSize, nXSize, nPixelOffset );
@@ -797,7 +789,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Failed to seek to " CPL_FRMT_GUIB " to write data.\n",
                           nOffset);
-        
+
                 return CE_Failure;
             }
 
@@ -806,13 +798,13 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
             nBytesToRW = nXSize * nYSize * nBandDataSize;
 
-            nBytesActuallyWritten = Write( pData, 1, nBytesToRW );
+            const int nBytesActuallyWritten = Write( pData, 1, nBytesToRW );
             if( nBytesActuallyWritten < nBytesToRW )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Failed to write %d bytes to file. %d bytes written",
                           nBytesToRW, nBytesActuallyWritten );
-        
+
                 return CE_Failure;
             }
 
@@ -824,12 +816,11 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             {
                 if( GDALDataTypeIsComplex( eDataType ) )
                 {
-                    int nWordSize;
-
-                    nWordSize = GDALGetDataTypeSize(eDataType)/16;
+                    const int nWordSize = GDALGetDataTypeSize(eDataType)/16;
                     GDALSwapWords( pData, nWordSize, nXSize, nPixelOffset );
-                    GDALSwapWords( ((GByte *) pData) + nWordSize, 
-                                   nWordSize, nXSize, nPixelOffset );
+                    GDALSwapWords(
+                        reinterpret_cast<GByte *>( pData ) + nWordSize,
+                        nWordSize, nXSize, nPixelOffset );
                 }
                 else
                     GDALSwapWords( pData, nBandDataSize, nXSize, nPixelOffset );
@@ -841,17 +832,15 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* ==================================================================== */
         else
         {
-            GByte   *pabyData;
-            double  dfSrcXInc, dfSrcYInc;
             vsi_l_offset nBlockOff;
-            int     iLine;
-            
-            dfSrcXInc = (double)nXSize / nBufXSize;
-            dfSrcYInc = (double)nYSize / nBufYSize;
 
-            pabyData = (GByte *) CPLMalloc( nBytesToRW );
+            const double dfSrcXInc = static_cast<double>( nXSize ) / nBufXSize;
+            const double dfSrcYInc = static_cast<double>( nYSize ) / nBufYSize;
 
-            for ( iLine = 0; iLine < nBufYSize; iLine++ )
+            GByte *pabyData = reinterpret_cast<GByte *>(
+                CPLMalloc( nBytesToRW ) );
+
+            for ( int iLine = 0; iLine < nBufYSize; iLine++ )
             {
                 nBlockOff = nImgOffset
                     + ((vsi_l_offset)nYOff + (vsi_l_offset)(iLine*dfSrcYInc))*nLineOffset
@@ -870,22 +859,25 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
                 if ( nXSize == nBufXSize && nYSize == nBufYSize )
                 {
-                    GDALCopyWords( (GByte *)pData + (vsi_l_offset)iLine * nLineSpace,
-                                   eBufType, nPixelSpace,
-                                   pabyData, eDataType, nPixelOffset, nXSize );
+                    GDALCopyWords(
+                        reinterpret_cast<GByte *>( pData ) +
+                        static_cast<vsi_l_offset>( iLine ) * nLineSpace,
+                        eBufType, nPixelSpace,
+                        pabyData, eDataType, nPixelOffset, nXSize );
                 }
                 else
                 {
-                    int     iPixel;
-
-                    for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
+                    for ( int iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
-                        GDALCopyWords( (GByte *)pData+(vsi_l_offset)iLine*nLineSpace +
-                                       (vsi_l_offset)iPixel * nPixelSpace,
-                                       eBufType, nPixelSpace,
-                                       pabyData +
-                                       (vsi_l_offset)(iPixel * dfSrcXInc) * nPixelOffset,
-                                       eDataType, nPixelOffset, 1 );
+                        GDALCopyWords(
+                            reinterpret_cast<GByte *>(pData) +
+                            static_cast<vsi_l_offset>( iLine ) * nLineSpace +
+                            static_cast<vsi_l_offset>( iPixel ) * nPixelSpace,
+                            eBufType, nPixelSpace,
+                            pabyData +
+                            static_cast<vsi_l_offset>( iPixel * dfSrcXInc ) *
+                            nPixelOffset,
+                            eDataType, nPixelOffset, 1 );
                     }
                 }
 
@@ -896,12 +888,11 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 {
                     if( GDALDataTypeIsComplex( eDataType ) )
                     {
-                        int nWordSize;
-
-                        nWordSize = GDALGetDataTypeSize(eDataType)/16;
+                        const int nWordSize = GDALGetDataTypeSize(eDataType)/16;
                         GDALSwapWords( pabyData, nWordSize, nXSize, nPixelOffset );
-                        GDALSwapWords( ((GByte *) pabyData) + nWordSize, 
-                                       nWordSize, nXSize, nPixelOffset );
+                        GDALSwapWords(
+                            reinterpret_cast<GByte *>( pabyData ) + nWordSize,
+                            nWordSize, nXSize, nPixelOffset );
                     }
                     else
                         GDALSwapWords( pabyData, nBandDataSize, nXSize,
@@ -923,13 +914,13 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Write the line of block.                                        */
 /* -------------------------------------------------------------------- */
-                nBytesActuallyWritten = Write( pabyData, 1, nBytesToRW );
+                const int nBytesActuallyWritten = Write( pabyData, 1, nBytesToRW );
                 if( nBytesActuallyWritten < nBytesToRW )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
                               "Failed to write %d bytes to file. %d bytes written",
                               nBytesToRW, nBytesActuallyWritten );
-            
+
                     return CE_Failure;
                 }
 
@@ -941,12 +932,11 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 {
                     if( GDALDataTypeIsComplex( eDataType ) )
                     {
-                        int nWordSize;
-
-                        nWordSize = GDALGetDataTypeSize(eDataType)/16;
+                        const int nWordSize = GDALGetDataTypeSize(eDataType)/16;
                         GDALSwapWords( pabyData, nWordSize, nXSize, nPixelOffset );
-                        GDALSwapWords( ((GByte *) pabyData) + nWordSize, 
-                                       nWordSize, nXSize, nPixelOffset );
+                        GDALSwapWords(
+                            reinterpret_cast<GByte *>( pabyData ) + nWordSize,
+                            nWordSize, nXSize, nPixelOffset );
                     }
                     else
                         GDALSwapWords( pabyData, nBandDataSize, nXSize,
@@ -972,8 +962,8 @@ int RawRasterBand::Seek( vsi_l_offset nOffset, int nSeekMode )
 {
     if( bIsVSIL )
         return VSIFSeekL( fpRawL, nOffset, nSeekMode );
-    else
-        return VSIFSeek( fpRaw, (long) nOffset, nSeekMode );
+
+    return VSIFSeek( fpRaw, static_cast<long>( nOffset ), nSeekMode );
 }
 
 /************************************************************************/
@@ -985,8 +975,8 @@ size_t RawRasterBand::Read( void *pBuffer, size_t nSize, size_t nCount )
 {
     if( bIsVSIL )
         return VSIFReadL( pBuffer, nSize, nCount, fpRawL );
-    else
-        return VSIFRead( pBuffer, nSize, nCount, fpRaw );
+
+    return VSIFRead( pBuffer, nSize, nCount, fpRaw );
 }
 
 /************************************************************************/
@@ -998,8 +988,8 @@ size_t RawRasterBand::Write( void *pBuffer, size_t nSize, size_t nCount )
 {
     if( bIsVSIL )
         return VSIFWriteL( pBuffer, nSize, nCount, fpRawL );
-    else
-        return VSIFWrite( pBuffer, nSize, nCount, fpRaw );
+
+    return VSIFWrite( pBuffer, nSize, nCount, fpRaw );
 }
 
 /************************************************************************/
@@ -1100,7 +1090,7 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
     CPLAssert(pnPixelSpace);
     CPLAssert(pnLineSpace);
 
-    vsi_l_offset nSize =  (vsi_l_offset)(nRasterYSize - 1) * nLineOffset +
+    const vsi_l_offset nSize = static_cast<vsi_l_offset>(nRasterYSize - 1) * nLineOffset +
         (nRasterXSize - 1) * nPixelOffset + GDALGetDataTypeSize(eDataType) / 8;
 
     if( !bIsVSIL || VSIFGetNativeFileDescriptorL(fpRawL) == NULL ||
@@ -1142,20 +1132,14 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
 /*                            RawDataset()                              */
 /************************************************************************/
 
-RawDataset::RawDataset()
-
-{
-}
+RawDataset::RawDataset() {}
 
 /************************************************************************/
 /*                           ~RawDataset()                              */
 /************************************************************************/
 
-RawDataset::~RawDataset()
-
-{
     /* It's pure virtual function but must be defined, even if empty. */
-}
+RawDataset::~RawDataset() {}
 
 /************************************************************************/
 /*                             IRasterIO()                              */
@@ -1183,10 +1167,11 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
         (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) != NULL &&
         EQUAL(pszInterleave, "PIXEL"))
     {
-        int iBandIndex;
-        for(iBandIndex = 0; iBandIndex < nBandCount; iBandIndex ++ )
+        int iBandIndex = 0;
+        for( ; iBandIndex < nBandCount; iBandIndex++ )
         {
-            RawRasterBand* poBand = (RawRasterBand*) GetRasterBand(panBandMap[iBandIndex]);
+            RawRasterBand* poBand = reinterpret_cast<RawRasterBand *>(
+                GetRasterBand(panBandMap[iBandIndex]) );
             if( !poBand->CanUseDirectIO(nXOff, nYOff, nXSize, nYSize, eBufType ) )
             {
                 break;
@@ -1199,12 +1184,11 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
             void             *pProgressDataGlobal = psExtraArg->pProgressData;
 
             CPLErr eErr = CE_None;
-            for( iBandIndex = 0; 
-                iBandIndex < nBandCount && eErr == CE_None; 
-                iBandIndex++ )
+            for( iBandIndex = 0;
+                 iBandIndex < nBandCount && eErr == CE_None;
+                 iBandIndex++ )
             {
                 GDALRasterBand *poBand = GetRasterBand(panBandMap[iBandIndex]);
-                GByte *pabyBandData;
 
                 if (poBand == NULL)
                 {
@@ -1212,7 +1196,8 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                     break;
                 }
 
-                pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
+                GByte *pabyBandData = reinterpret_cast<GByte *>( pData )
+                    + iBandIndex * nBandSpace;
 
                 psExtraArg->pfnProgress = GDALScaledProgress;
                 psExtraArg->pProgressData = 
@@ -1221,9 +1206,11 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                                             pfnProgressGlobal,
                                             pProgressDataGlobal );
 
-                eErr = poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
-                                        (void *) pabyBandData, nBufXSize, nBufYSize,
-                                        eBufType, nPixelSpace, nLineSpace, psExtraArg );
+                eErr = poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                         reinterpret_cast<void *>( pabyBandData ),
+                                         nBufXSize, nBufYSize,
+                                         eBufType, nPixelSpace, nLineSpace,
+                                         psExtraArg );
 
                 GDALDestroyScaledProgress( psExtraArg->pProgressData );
             }

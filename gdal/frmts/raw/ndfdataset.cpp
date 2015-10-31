@@ -65,13 +65,11 @@ class NDFDataset : public RawDataset
 /*                            NDFDataset()                             */
 /************************************************************************/
 
-NDFDataset::NDFDataset()
+NDFDataset::NDFDataset() :
+    pszProjection(CPLStrdup("")),
+    papszExtraFiles(NULL),
+    papszHeader(NULL)
 {
-    pszProjection = CPLStrdup("");
-
-    papszHeader = NULL;
-    papszExtraFiles = NULL;
-
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -94,7 +92,8 @@ NDFDataset::~NDFDataset()
 
     for( int i = 0; i < GetRasterCount(); i++ )
     {
-        VSIFCloseL( ((RawRasterBand *) GetRasterBand(i+1))->GetFPL() );
+       VSIFCloseL( reinterpret_cast<RawRasterBand *>(
+           GetRasterBand(i+1) )->GetFPL() );
     }
 }
 
@@ -132,8 +131,8 @@ const char *NDFDataset::Get( const char *pszKey, const char *pszDefault )
 
     if( pszResult == NULL )
         return pszDefault;
-    else
-        return pszResult;
+
+    return pszResult;
 }
 
 /************************************************************************/
@@ -143,10 +142,8 @@ const char *NDFDataset::Get( const char *pszKey, const char *pszDefault )
 char **NDFDataset::GetFileList()
 
 {
-    char **papszFileList = NULL;
-
-    // Main data file, etc. 
-    papszFileList = GDALPamDataset::GetFileList();
+    // Main data file, etc.
+    char **papszFileList = GDALPamDataset::GetFileList();
 
     // Header file.
     papszFileList = CSLInsertStrings( papszFileList, -1,
@@ -168,8 +165,8 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
-    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "NDF_REVISION=2") 
-        && !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "NDF_REVISION=0") )
+    if( !STARTS_WITH_CI(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ), "NDF_REVISION=2")
+        && !STARTS_WITH_CI(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ), "NDF_REVISION=0") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -186,27 +183,26 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszLine;
     const int nHeaderMax = 1000;
     int nHeaderLines = 0;
-    char **papszHeader = (char **) CPLMalloc(sizeof(char *) * (nHeaderMax+1));
+    char **papszHeader = reinterpret_cast<char **>(
+        CPLMalloc( sizeof(char *) * (nHeaderMax+1) ) );
 
     while( nHeaderLines < nHeaderMax
            && (pszLine = CPLReadLineL( fp )) != NULL
            && !EQUAL(pszLine,"END_OF_HDR;") )
     {
-        char *pszFixed;
-
         if( strstr(pszLine,"=") == NULL )
             break;
 
-        pszFixed = CPLStrdup( pszLine );
+        char *pszFixed = CPLStrdup( pszLine );
         if( pszFixed[strlen(pszFixed)-1] == ';' )
             pszFixed[strlen(pszFixed)-1] = '\0';
-        
+
         papszHeader[nHeaderLines++] = pszFixed;
         papszHeader[nHeaderLines] = NULL;
     }
     VSIFCloseL(fp);
     fp = NULL;
-    
+
     if( CSLFetchNameValue( papszHeader, "PIXELS_PER_LINE" ) == NULL 
         || CSLFetchNameValue( papszHeader, "LINES_PER_DATA_FILE" ) == NULL 
         || CSLFetchNameValue( papszHeader, "BITS_PER_PIXEL" ) == NULL 
@@ -218,8 +214,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( !EQUAL(CSLFetchNameValue( papszHeader, "PIXEL_FORMAT"),
-               "BYTE" ) 
+    if( !EQUAL(CSLFetchNameValue( papszHeader, "PIXEL_FORMAT"), "BYTE" )
         || !EQUAL(CSLFetchNameValue( papszHeader, "BITS_PER_PIXEL"),"8") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -227,7 +222,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszHeader );
         return NULL;
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -239,13 +234,11 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    NDFDataset 	*poDS;
-
-    poDS = new NDFDataset();
+    NDFDataset 	*poDS = new NDFDataset();
     poDS->papszHeader = papszHeader;
 
     poDS->nRasterXSize = atoi(poDS->Get("PIXELS_PER_LINE",""));
@@ -254,16 +247,15 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a raw raster band for each file.                         */
 /* -------------------------------------------------------------------- */
-    int iBand;
-    const char* pszBand = CSLFetchNameValue(papszHeader, 
-                                        "NUMBER_OF_BANDS_IN_VOLUME");
+    const char* pszBand = CSLFetchNameValue(papszHeader,
+                                            "NUMBER_OF_BANDS_IN_VOLUME");
     if (pszBand == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find band count");
         delete poDS;
         return NULL;
     }
-    int nBands = atoi(pszBand);
+    const int nBands = atoi(pszBand);
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBands, FALSE))
@@ -272,13 +264,11 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    for( iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
         char szKey[100];
-        CPLString osFilename;
-
         sprintf( szKey, "BAND%d_FILENAME", iBand+1 );
-        osFilename = poDS->Get(szKey,"");
+        CPLString osFilename = poDS->Get(szKey,"");
 
         // NDF1 file do not include the band filenames.
         if( osFilename.size() == 0 )
@@ -289,7 +279,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
                                             szBandExtension );
         }
         else
-        {      
+        {
             CPLString osBasePath = CPLGetPath(poOpenInfo->pszFilename);
             osFilename = CPLFormFilename( osBasePath, osFilename, NULL);
         }
@@ -310,7 +300,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         RawRasterBand *poBand = 
             new RawRasterBand( poDS, iBand+1, fpRaw, 0, 1, poDS->nRasterXSize,
                                GDT_Byte, TRUE, TRUE );
-        
+
         sprintf( szKey, "BAND%d_NAME", iBand+1 );
         poBand->SetDescription( poDS->Get(szKey, "") );
 
@@ -334,8 +324,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( CSLCount( papszParmTokens ) >= 15 )
     {
-        int i;
-        for( i = 0; i < 15; i++ )
+        for( int i = 0; i < 15; i++ )
             adfUSGSParms[i] = CPLAtof(papszParmTokens[i]);
     }
     CSLDestroy(papszParmTokens);
@@ -345,13 +334,13 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Minimal georef support ... should add full USGS style           */
 /*      support at some point.                                          */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS;
-    int nUSGSProjection = atoi(poDS->Get( "USGS_PROJECTION_NUMBER", "" ));
-    int nZone = atoi(poDS->Get("USGS_MAP_ZONE","0"));
+    const int nUSGSProjection = atoi(poDS->Get( "USGS_PROJECTION_NUMBER", "" ));
+    const int nZone = atoi(poDS->Get("USGS_MAP_ZONE","0"));
 
+    OGRSpatialReference oSRS;
     oSRS.importFromUSGS( nUSGSProjection, nZone, adfUSGSParms, 12 );
 
-    CPLString osDatum = poDS->Get( "HORIZONTAL_DATUM", "" );
+    const CPLString osDatum = poDS->Get( "HORIZONTAL_DATUM", "" );
     if( EQUAL(osDatum,"WGS84") || EQUAL(osDatum,"NAD83") 
         || EQUAL(osDatum,"NAD27") )
     {
@@ -385,7 +374,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->Get("UPPER_RIGHT_CORNER",""), ",", 0 );
     char **papszLL = CSLTokenizeString2( 
         poDS->Get("LOWER_LEFT_CORNER",""), ",", 0 );
-    
+
     if( CSLCount(papszUL) == 4 
         && CSLCount(papszUR) == 4 
         && CSLCount(papszLL) == 4 )
@@ -412,7 +401,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     CSLDestroy( papszUL );
     CSLDestroy( papszLL );
     CSLDestroy( papszUR );
-                      
+
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
@@ -434,23 +423,18 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_NDF()
 
 {
-    GDALDriver	*poDriver;
-
     if( GDALGetDriverByName( "NDF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "NDF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "NLAPS Data Format" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#NDF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        return;
 
-        poDriver->pfnOpen = NDFDataset::Open;
+    GDALDriver *poDriver = new GDALDriver();
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->SetDescription( "NDF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NLAPS Data Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#NDF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->pfnOpen = NDFDataset::Open;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

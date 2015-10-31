@@ -28,15 +28,15 @@
  ****************************************************************************/
 
 #include "rawdataset.h"
-#include "ogr_srs_api.h"
 #include "cpl_string.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
 // g++ -g -Wall -fPIC frmts/raw/snodasdataset.cpp -shared -o gdal_SNODAS.so -Iport -Igcore -Ifrmts/raw -Iogr -L. -lgdal
 
 CPL_C_START
-void    GDALRegister_SNODAS(void);
+void GDALRegister_SNODAS(void);
 CPL_C_END
 
 /************************************************************************/
@@ -110,13 +110,14 @@ SNODASRasterBand::SNODASRasterBand(VSILFILE* fpRaw,
 
 double SNODASRasterBand::GetNoDataValue( int *pbSuccess )
 {
-    SNODASDataset* poGDS = (SNODASDataset*) poDS;
+    SNODASDataset* poGDS = reinterpret_cast<SNODASDataset *>( poDS );
     if (pbSuccess)
         *pbSuccess = poGDS->bHasNoData;
+
     if (poGDS->bHasNoData)
         return poGDS->dfNoData;
-    else
-        return RawRasterBand::GetNoDataValue(pbSuccess);
+
+    return RawRasterBand::GetNoDataValue(pbSuccess);
 }
 
 /************************************************************************/
@@ -125,13 +126,14 @@ double SNODASRasterBand::GetNoDataValue( int *pbSuccess )
 
 double SNODASRasterBand::GetMinimum( int *pbSuccess )
 {
-    SNODASDataset* poGDS = (SNODASDataset*) poDS;
+    SNODASDataset* poGDS = reinterpret_cast<SNODASDataset *>( poDS );
     if (pbSuccess)
         *pbSuccess = poGDS->bHasMin;
+
     if (poGDS->bHasMin)
         return poGDS->dfMin;
-    else
-        return RawRasterBand::GetMinimum(pbSuccess);
+
+    return RawRasterBand::GetMinimum(pbSuccess);
 }
 
 /************************************************************************/
@@ -140,13 +142,14 @@ double SNODASRasterBand::GetMinimum( int *pbSuccess )
 
 double SNODASRasterBand::GetMaximum( int *pbSuccess )
 {
-    SNODASDataset* poGDS = (SNODASDataset*) poDS;
+    SNODASDataset* poGDS = reinterpret_cast<SNODASDataset *>( poDS );
     if (pbSuccess)
         *pbSuccess = poGDS->bHasMax;
+
     if (poGDS->bHasMax)
         return poGDS->dfMax;
-    else
-        return RawRasterBand::GetMaximum(pbSuccess);
+
+    return RawRasterBand::GetMaximum(pbSuccess);
 }
 
 /************************************************************************/
@@ -159,21 +162,21 @@ double SNODASRasterBand::GetMaximum( int *pbSuccess )
 /*                           SNODASDataset()                            */
 /************************************************************************/
 
-SNODASDataset::SNODASDataset()
+SNODASDataset::SNODASDataset() :
+    bGotTransform(FALSE),
+    bHasNoData(FALSE),
+    dfNoData(0.0),
+    bHasMin(FALSE),
+    dfMin(0.0),
+    bHasMax(FALSE),
+    dfMax(0.0)
 {
-    bGotTransform = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    bHasNoData = FALSE;
-    dfNoData = 0.0;
-    bHasMin = FALSE;
-    dfMin = 0.0;
-    bHasMax = FALSE;
-    dfMax = 0.0;
 }
 
 /************************************************************************/
@@ -208,10 +211,9 @@ CPLErr SNODASDataset::GetGeoTransform( double * padfTransform )
         memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
         return CE_None;
     }
-    else
-    {
-        return GDALPamDataset::GetGeoTransform( padfTransform );
-    }
+
+    return GDALPamDataset::GetGeoTransform( padfTransform );
+
 }
 
 
@@ -250,34 +252,36 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !Identify(poOpenInfo) )
         return NULL;
 
-    VSILFILE    *fp;
-
-    fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-
+    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     if( fp == NULL )
     {
         return NULL;
     }
 
-    const char *    pszLine;
     int             nRows = -1, nCols = -1;
     CPLString       osDataFilename;
-    int             bIsInteger = FALSE, bIs2Bytes = FALSE;
+    bool bIsInteger = false;
+    bool bIs2Bytes = false;
     double          dfNoData = 0;
-    int             bHasNoData = FALSE;
+    bool bHasNoData = false;
     double          dfMin = 0;
-    int             bHasMin = FALSE;
+    bool bHasMin = false;
     double          dfMax = 0;
-    int             bHasMax = FALSE;
+    bool bHasMax = false;
     double          dfMinX = 0.0, dfMinY = 0.0, dfMaxX = 0.0, dfMaxY = 0.0;
-    int             bHasMinX = FALSE, bHasMinY = FALSE, bHasMaxX = FALSE, bHasMaxY = FALSE;
-    int             bNotProjected = FALSE, bIsWGS84 = FALSE;
+    bool bHasMinX = false;
+    bool bHasMinY = false;
+    bool bHasMaxX = false;
+    bool bHasMaxY = false;
+    bool bNotProjected = false;
+    bool bIsWGS84 = false;
     CPLString       osDescription, osDataUnits;
     int             nStartYear = -1, nStartMonth = -1, nStartDay = -1,
                     nStartHour = -1, nStartMinute = -1, nStartSecond = -1;
     int             nStopYear = -1, nStopMonth = -1, nStopDay = -1,
                     nStopHour = -1, nStopMinute = -1, nStopSecond = -1;
 
+    const char *pszLine;
     while( (pszLine = CPLReadLine2L( fp, 256, NULL )) != NULL )
     {
         char** papszTokens = CSLTokenizeStringComplex( pszLine, ":", TRUE, FALSE );
@@ -354,37 +358,37 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"No data value"))
         {
-            bHasNoData = TRUE;
+            bHasNoData = true;
             dfNoData = CPLAtofM(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"Minimum data value"))
         {
-            bHasMin = TRUE;
+            bHasMin = true;
             dfMin = CPLAtofM(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"Maximum data value"))
         {
-            bHasMax = TRUE;
+            bHasMax = true;
             dfMax = CPLAtofM(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"Minimum x-axis coordinate") )
         {
-            bHasMinX = TRUE;
+            bHasMinX = true;
             dfMinX = CPLAtofM(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"Minimum y-axis coordinate") )
         {
-            bHasMinY = TRUE;
+            bHasMinY = true;
             dfMinY = CPLAtofM(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"Maximum x-axis coordinate") )
         {
-            bHasMaxX = TRUE;
+            bHasMaxX = true;
             dfMaxX = CPLAtofM(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"Maximum y-axis coordinate") )
         {
-            bHasMaxY = TRUE;
+            bHasMaxY = true;
             dfMaxY = CPLAtofM(papszTokens[1]);
         }
 
@@ -424,9 +428,7 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    SNODASDataset     *poDS;
-
-    poDS = new SNODASDataset();
+    SNODASDataset *poDS = new SNODASDataset();
 
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
@@ -480,7 +482,7 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-   
+
     return( poDS );
 }
 
@@ -491,24 +493,22 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_SNODAS()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "SNODAS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "SNODAS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "SNODAS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Snow Data Assimilation System" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#SNODAS" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdr" );
+    poDriver->SetDescription( "SNODAS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Snow Data Assimilation System" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#SNODAS" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdr" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        poDriver->pfnOpen = SNODASDataset::Open;
-        poDriver->pfnIdentify = SNODASDataset::Identify;
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = SNODASDataset::Open;
+    poDriver->pfnIdentify = SNODASDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

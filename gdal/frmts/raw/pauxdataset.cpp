@@ -64,11 +64,11 @@ class PAuxDataset : public RawDataset
   public:
     		PAuxDataset();
     	        ~PAuxDataset();
-    
+
     char	*pszAuxFilename;
     char	**papszAuxLines;
     int		bAuxUpdated;
-    
+
     virtual const char *GetProjectionRef();
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
@@ -118,15 +118,13 @@ class PAuxRasterBand : public RawRasterBand
 PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
                                 VSILFILE * fpRaw, vsi_l_offset nImgOffset,
                                 int nPixelOffset, int nLineOffset,
-                                GDALDataType eDataType, int bNativeOrder )
-        : RawRasterBand( poDS, nBand, fpRaw, 
-                         nImgOffset, nPixelOffset, nLineOffset, 
-                         eDataType, bNativeOrder, TRUE )
-
+                                GDALDataType eDataType, int bNativeOrder ) :
+    RawRasterBand( poDS, nBand, fpRaw,
+                   nImgOffset, nPixelOffset, nLineOffset,
+                   eDataType, bNativeOrder, TRUE ),
+    poCT(NULL)
 {
-    PAuxDataset *poPDS = (PAuxDataset *) poDS;
-
-    poCT = NULL;
+    PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>( poDS );
 
 /* -------------------------------------------------------------------- */
 /*      Does this channel have a description?                           */
@@ -145,27 +143,24 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
     sprintf( szTarget, "METADATA_IMG_%d_Class_%d_Color", nBand, 0 );
     if( CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) != NULL )
     {
-        const char *pszLine;
-        int         i;
-
         poCT = new GDALColorTable();
 
-        for( i = 0; i < 256; i++ )
+        for( int i = 0; i < 256; i++ )
         {
-            int	nRed, nGreen, nBlue;
-
             sprintf( szTarget, "METADATA_IMG_%d_Class_%d_Color", nBand, i );
-            pszLine = CSLFetchNameValue( poPDS->papszAuxLines, szTarget );
+            const char *pszLine
+                = CSLFetchNameValue( poPDS->papszAuxLines, szTarget );
             while( pszLine && *pszLine == ' ' )
                 pszLine++;
 
+            int	nRed, nGreen, nBlue;
             if( pszLine != NULL
                 && STARTS_WITH_CI(pszLine, "(RGB:")
                 && sscanf( pszLine+5, "%d %d %d", 
                            &nRed, &nGreen, &nBlue ) == 3 )
             {
                 GDALColorEntry    oColor;
-                
+
                 oColor.c1 = (short) nRed;
                 oColor.c2 = (short) nGreen;
                 oColor.c3 = (short) nBlue;
@@ -195,21 +190,19 @@ PAuxRasterBand::~PAuxRasterBand()
 double PAuxRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    PAuxDataset *poPDS = (PAuxDataset *) poDS;
     char	szTarget[128];
-    const char  *pszLine;
-
     sprintf( szTarget, "METADATA_IMG_%d_NO_DATA_VALUE", nBand );
 
-    pszLine = CSLFetchNameValue( poPDS->papszAuxLines, szTarget );
+    PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>( poDS );
+    const char  *pszLine = CSLFetchNameValue( poPDS->papszAuxLines, szTarget );
 
     if( pbSuccess != NULL )
         *pbSuccess = (pszLine != NULL);
 
     if( pszLine == NULL )
         return -1e8;
-    else
-        return CPLAtof(pszLine);
+
+    return CPLAtof(pszLine);
 }
 
 /************************************************************************/
@@ -231,7 +224,7 @@ CPLErr PAuxRasterBand::SetNoDataValue( double dfNewValue )
     snprintf( szTarget, sizeof(szTarget), "METADATA_IMG_%d_NO_DATA_VALUE", nBand );
     CPLsnprintf( szValue, sizeof(szValue), "%24.12f", dfNewValue );
 
-    PAuxDataset *poPDS = (PAuxDataset *) poDS;
+    PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>( poDS );
     poPDS->papszAuxLines =
         CSLSetNameValue( poPDS->papszAuxLines, szTarget, szValue );
 
@@ -255,7 +248,7 @@ void PAuxRasterBand::SetDescription( const char *pszNewDescription )
         char	szTarget[128];
         sprintf( szTarget, "ChanDesc-%d", nBand );
 
-        PAuxDataset *poPDS = (PAuxDataset *) poDS;
+        PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>( poDS );
         poPDS->papszAuxLines =
             CSLSetNameValue( poPDS->papszAuxLines,
                              szTarget, pszNewDescription  );
@@ -286,8 +279,8 @@ GDALColorInterp PAuxRasterBand::GetColorInterpretation()
 {
     if( poCT == NULL )
         return GCI_Undefined;
-    else
-        return GCI_PaletteIndex;
+
+    return GCI_PaletteIndex;
 }
 
 /************************************************************************/
@@ -300,18 +293,16 @@ GDALColorInterp PAuxRasterBand::GetColorInterpretation()
 /*                            PAuxDataset()                             */
 /************************************************************************/
 
-PAuxDataset::PAuxDataset()
-{
-    papszAuxLines = NULL;
-    fpImage = NULL;
-    bAuxUpdated = FALSE;
-    pszAuxFilename = NULL;
-    nGCPCount = 0;
-    pasGCPList = NULL;
-
-    pszProjection = NULL;
-    pszGCPProjection = NULL;
-}
+PAuxDataset::PAuxDataset() :
+    fpImage(NULL),
+    nGCPCount(0),
+    pasGCPList(NULL),
+    pszGCPProjection(NULL),
+    pszProjection(NULL),
+    pszAuxFilename(NULL),
+    papszAuxLines(NULL),
+    bAuxUpdated(FALSE)
+{}
 
 /************************************************************************/
 /*                            ~PAuxDataset()                            */
@@ -351,8 +342,6 @@ char *PAuxDataset::PCI2WKT( const char *pszGeosys,
                             const char *pszProjParms )
 
 {
-    OGRSpatialReference oSRS;
-
     while( *pszGeosys == ' ' )
         pszGeosys++;
 
@@ -360,25 +349,23 @@ char *PAuxDataset::PCI2WKT( const char *pszGeosys,
 /*      Parse projection parameters array.                              */
 /* -------------------------------------------------------------------- */
     double adfProjParms[16];
-    
+
     memset( adfProjParms, 0, sizeof(adfProjParms) );
 
     if( pszProjParms != NULL )
     {
-        char **papszTokens;
-        int i;
+        char **papszTokens = CSLTokenizeString( pszProjParms );
 
-        papszTokens = CSLTokenizeString( pszProjParms );
-        
-        for( i=0; papszTokens != NULL && papszTokens[i] != NULL && i < 16; i++)
+        for( int i=0; papszTokens != NULL && papszTokens[i] != NULL && i < 16; i++)
             adfProjParms[i] = CPLAtof(papszTokens[i]);
 
         CSLDestroy( papszTokens );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Convert to SRS.                                                 */
 /* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
     if( oSRS.importFromPCI( pszGeosys, NULL, adfProjParms ) == OGRERR_NONE )
     {
         char *pszResult = NULL;
@@ -387,8 +374,8 @@ char *PAuxDataset::PCI2WKT( const char *pszGeosys,
 
         return pszResult;
     }
-    else
-        return NULL;
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -398,40 +385,35 @@ char *PAuxDataset::PCI2WKT( const char *pszGeosys,
 void PAuxDataset::ScanForGCPs()
 
 {
-#define MAX_GCP		256
+    static const int MAX_GCP = 256;
 
     nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),MAX_GCP);
+    pasGCPList = reinterpret_cast<GDAL_GCP *>(
+        CPLCalloc( sizeof(GDAL_GCP), MAX_GCP ) );
 
 /* -------------------------------------------------------------------- */
 /*      Get the GCP coordinate system.                                  */
 /* -------------------------------------------------------------------- */
-    const char	*pszMapUnits, *pszProjParms;
+    const char *pszMapUnits = CSLFetchNameValue( papszAuxLines, "GCP_1_MapUnits" );
+    const char *pszProjParms = CSLFetchNameValue( papszAuxLines, "GCP_1_ProjParms" );
 
-    pszMapUnits = CSLFetchNameValue( papszAuxLines, "GCP_1_MapUnits" );
-    pszProjParms = CSLFetchNameValue( papszAuxLines, "GCP_1_ProjParms" );
-    
     if( pszMapUnits != NULL )
         pszGCPProjection = PCI2WKT( pszMapUnits, pszProjParms );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Collect standalone GCPs.  They look like:                       */
 /*                                                                      */
 /*      GCP_1_n = row, col, x, y [,z [,"id"[, "desc"]]]			*/
 /* -------------------------------------------------------------------- */
-    int i;
-
-    for( i = 0; nGCPCount < MAX_GCP; i++ )
+    for( int i = 0; nGCPCount < MAX_GCP; i++ )
     {
         char	szName[50];
-        char    **papszTokens;
-
         sprintf( szName, "GCP_1_%d", i+1 );
         if( CSLFetchNameValue( papszAuxLines, szName ) == NULL )
             break;
 
-        papszTokens = CSLTokenizeStringComplex( 
-            CSLFetchNameValue( papszAuxLines, szName ), 
+        char **papszTokens = CSLTokenizeStringComplex(
+            CSLFetchNameValue( papszAuxLines, szName ),
             " ", TRUE, FALSE );
 
         if( CSLCount(papszTokens) >= 4 )
@@ -489,8 +471,8 @@ const char *PAuxDataset::GetGCPProjection()
 {
     if( nGCPCount > 0 && pszGCPProjection != NULL )
         return pszGCPProjection;
-    else
-        return "";
+
+    return "";
 }
 
 /************************************************************************/
@@ -512,8 +494,8 @@ const char *PAuxDataset::GetProjectionRef()
 {
     if( pszProjection )
         return pszProjection;
-    else
-        return GDALPamDataset::GetProjectionRef();
+
+    return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -528,12 +510,10 @@ CPLErr PAuxDataset::GetGeoTransform( double * padfGeoTransform )
         && CSLFetchNameValue(papszAuxLines, "LoRightX") != NULL 
         && CSLFetchNameValue(papszAuxLines, "LoRightY") != NULL )
     {
-        double	dfUpLeftX, dfUpLeftY, dfLoRightX, dfLoRightY;
-
-        dfUpLeftX = CPLAtof(CSLFetchNameValue(papszAuxLines, "UpLeftX" ));
-        dfUpLeftY = CPLAtof(CSLFetchNameValue(papszAuxLines, "UpLeftY" ));
-        dfLoRightX = CPLAtof(CSLFetchNameValue(papszAuxLines, "LoRightX" ));
-        dfLoRightY = CPLAtof(CSLFetchNameValue(papszAuxLines, "LoRightY" ));
+        const double dfUpLeftX = CPLAtof(CSLFetchNameValue(papszAuxLines, "UpLeftX" ));
+        const double dfUpLeftY = CPLAtof(CSLFetchNameValue(papszAuxLines, "UpLeftY" ));
+        const double dfLoRightX = CPLAtof(CSLFetchNameValue(papszAuxLines, "LoRightX" ));
+        const double dfLoRightY = CPLAtof(CSLFetchNameValue(papszAuxLines, "LoRightY" ));
 
         padfGeoTransform[0] = dfUpLeftX;
         padfGeoTransform[1] = (dfLoRightX - dfUpLeftX) / GetRasterXSize();
@@ -589,14 +569,10 @@ CPLErr PAuxDataset::SetGeoTransform( double * padfGeoTransform )
                padfGeoTransform[3] + padfGeoTransform[5] * GetRasterYSize() );
     }
 
-    papszAuxLines = CSLSetNameValue( papszAuxLines,
-                                     "UpLeftX", szUpLeftX );
-    papszAuxLines = CSLSetNameValue( papszAuxLines,
-                                     "UpLeftY", szUpLeftY );
-    papszAuxLines = CSLSetNameValue( papszAuxLines,
-                                     "LoRightX", szLoRightX );
-    papszAuxLines = CSLSetNameValue( papszAuxLines,
-                                     "LoRightY", szLoRightY );
+    papszAuxLines = CSLSetNameValue( papszAuxLines, "UpLeftX", szUpLeftX );
+    papszAuxLines = CSLSetNameValue( papszAuxLines, "UpLeftY", szUpLeftY );
+    papszAuxLines = CSLSetNameValue( papszAuxLines, "LoRightX", szLoRightX );
+    papszAuxLines = CSLSetNameValue( papszAuxLines, "LoRightY", szLoRightY );
 
     bAuxUpdated = TRUE;
 
@@ -618,26 +594,26 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      file it references.                                             */
 /* -------------------------------------------------------------------- */
 
-    int i;
     CPLString osTarget = poOpenInfo->pszFilename;
 
     if( EQUAL(CPLGetExtension( poOpenInfo->pszFilename ),"aux")
         && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "AuxilaryTarget: "))
     {
         char	szAuxTarget[1024];
-        char    *pszPath;
-        const char *pszSrc = (const char *) poOpenInfo->pabyHeader+16;
+        const char *pszSrc = reinterpret_cast<const char *>(
+            poOpenInfo->pabyHeader+16 );
 
-        for( i = 0;
+        int i = 0;
+        for( ;
              pszSrc[i] != 10 && pszSrc[i] != 13 && pszSrc[i] != '\0'
-                 && i < (int) sizeof(szAuxTarget)-1;
+                 && i < static_cast<int>( sizeof(szAuxTarget) ) - 1;
              i++ )
         {
             szAuxTarget[i] = pszSrc[i];
         }
         szAuxTarget[i] = '\0';
 
-        pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+        char *pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
         osTarget = CPLFormFilename(pszPath, szAuxTarget, NULL);
         CPLFree(pszPath);
     }
@@ -773,12 +749,9 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      corresponding bands.                                            */
 /* -------------------------------------------------------------------- */
     int iBand = 0;
-    for( i = 0; i < poDS->nBands; i++ )
+    for( int i = 0; i < poDS->nBands; i++ )
     {
         char	szDefnName[32];
-        GDALDataType eType;
-        int	bNative = TRUE;
-
         sprintf( szDefnName, "ChanDefinition-%d", i+1 );
 
         pszLine = CSLFetchNameValue(poDS->papszAuxLines, szDefnName);
@@ -795,6 +768,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
             continue;
         }
 
+        GDALDataType eType;
         if( EQUAL(papszTokens[0],"16U") )
             eType = GDT_UInt16;
         else if( EQUAL(papszTokens[0],"16S") )
@@ -804,6 +778,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         else
             eType = GDT_Byte;
 
+        int bNative = TRUE;
         if( CSLCount(papszTokens) > 4 )
         {
 #ifdef CPL_LSB
@@ -813,10 +788,10 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
         }
 
-        vsi_l_offset nBandOffset = CPLScanUIntBig(papszTokens[1],
+        const vsi_l_offset nBandOffset = CPLScanUIntBig(papszTokens[1],
                                                strlen(papszTokens[1]));
-        int nPixelOffset = atoi(papszTokens[2]);
-        int nLineOffset = atoi(papszTokens[3]);
+        const int nPixelOffset = atoi(papszTokens[2]);
+        const int nLineOffset = atoi(papszTokens[3]);
 
         if (nPixelOffset <= 0 || nLineOffset <= 0)
         {
@@ -830,7 +805,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
                                 nBandOffset,
                                 nPixelOffset,
                                 nLineOffset, eType, bNative ) );
-        iBand ++;
+        iBand++;
 
         CSLDestroy( papszTokens );
     }
@@ -840,14 +815,12 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get the projection.                                             */
 /* -------------------------------------------------------------------- */
-    const char	*pszMapUnits, *pszProjParms;
+    const char *pszMapUnits = CSLFetchNameValue( poDS->papszAuxLines, "MapUnits" );
+    const char *pszProjParms = CSLFetchNameValue( poDS->papszAuxLines, "ProjParms" );
 
-    pszMapUnits = CSLFetchNameValue( poDS->papszAuxLines, "MapUnits" );
-    pszProjParms = CSLFetchNameValue( poDS->papszAuxLines, "ProjParms" );
-    
     if( pszMapUnits != NULL )
         poDS->pszProjection = poDS->PCI2WKT( pszMapUnits, pszProjParms );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
@@ -875,11 +848,9 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
                                   char **papszOptions )
 
 {
-    char	*pszAuxFilename;
-
-	const char *pszInterleave = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
-	if( pszInterleave == NULL )
-		pszInterleave = "BAND";
+    const char *pszInterleave = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
+    if( pszInterleave == NULL )
+        pszInterleave = "BAND";
 
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
@@ -898,19 +869,15 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Sum the sizes of the band pixel types.                          */
 /* -------------------------------------------------------------------- */
-	int nPixelSizeSum = 0;
-	int iBand;
+    int nPixelSizeSum = 0;
 
-    for( iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBands; iBand++ )
         nPixelSizeSum += (GDALGetDataTypeSize(eType)/8);
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    VSILFILE	*fp;
-
-    fp = VSIFOpenL( pszFilename, "w" );
-
+    VSILFILE *fp = VSIFOpenL( pszFilename, "w" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -923,13 +890,15 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /*      Just write out a couple of bytes to establish the binary        */
 /*      file, and then close it.                                        */
 /* -------------------------------------------------------------------- */
-    VSIFWriteL( (void *) "\0\0", 2, 1, fp );
+    VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
+                2, 1, fp );
     VSIFCloseL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Create the aux filename.                                        */
 /* -------------------------------------------------------------------- */
-    pszAuxFilename = (char *) CPLMalloc(strlen(pszFilename)+5);
+    char *pszAuxFilename = reinterpret_cast<char *>(
+        CPLMalloc( strlen( pszFilename ) + 5 ) );
     strcpy( pszAuxFilename, pszFilename );;
 
     for( int i = strlen(pszAuxFilename)-1; i > 0; i-- )
@@ -955,14 +924,12 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         return NULL;
     }
     CPLFree( pszAuxFilename );
-    
+
 /* -------------------------------------------------------------------- */
 /*      We need to write out the original filename but without any      */
 /*      path components in the AuxilaryTarget line.  Do so now.         */
 /* -------------------------------------------------------------------- */
-    int		iStart;
-
-    iStart = strlen(pszFilename)-1;
+    int iStart = strlen(pszFilename)-1;
     while( iStart > 0 && pszFilename[iStart-1] != '/'
            && pszFilename[iStart-1] != '\\' )
         iStart--;
@@ -981,12 +948,13 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /*      handled by GDAL.                                                */
 /* -------------------------------------------------------------------- */
     vsi_l_offset    nImgOffset = 0;
-    
-    for( iBand = 0; iBand < nBands; iBand++ )
+
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
         const char  *pszTypeName;
-        int         nPixelOffset, nLineOffset;
-		vsi_l_offset nNextImgOffset;
+        int nPixelOffset;
+        int nLineOffset;
+        vsi_l_offset nNextImgOffset;
 
 /* -------------------------------------------------------------------- */
 /*      Establish our file layout based on supplied interleaving.       */
@@ -1041,7 +1009,8 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     VSIFCloseL( fp );
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    return reinterpret_cast<GDALDataset *>(
+        GDALOpen( pszFilename, GA_Update ) );
 }
 
 /************************************************************************/
@@ -1051,10 +1020,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 static CPLErr PAuxDelete( const char * pszBasename )
 
 {
-    VSILFILE	*fp;
-    const char *pszLine;
-
-    fp = VSIFOpenL( CPLResetExtension( pszBasename, "aux" ), "r" );
+    VSILFILE *fp = VSIFOpenL( CPLResetExtension( pszBasename, "aux" ), "r" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1063,9 +1029,9 @@ static CPLErr PAuxDelete( const char * pszBasename )
         return CE_Failure;
     }
 
-    pszLine = CPLReadLineL( fp );
+    const char *pszLine = CPLReadLineL( fp );
     VSIFCloseL( fp );
-    
+
     if( pszLine == NULL || !STARTS_WITH_CI(pszLine, "AuxilaryTarget") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1094,21 +1060,18 @@ static CPLErr PAuxDelete( const char * pszBasename )
 void GDALRegister_PAux()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "PAux" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "PAux" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "PAux" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "PCI .aux Labelled" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#PAux" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Float32" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "PAux" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PCI .aux Labelled" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#PAux" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16 Float32" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='INTERLEAVE' type='string-select' default='BAND'>"
 "       <Value>BAND</Value>"
@@ -1117,10 +1080,9 @@ void GDALRegister_PAux()
 "   </Option>"
 "</CreationOptionList>" );
 
-        poDriver->pfnOpen = PAuxDataset::Open;
-        poDriver->pfnCreate = PAuxDataset::Create;
-        poDriver->pfnDelete = PAuxDelete;
+    poDriver->pfnOpen = PAuxDataset::Open;
+    poDriver->pfnCreate = PAuxDataset::Create;
+    poDriver->pfnDelete = PAuxDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
