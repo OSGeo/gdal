@@ -279,6 +279,8 @@ class CPL_DLL OGRFeature
     OGRFeatureDefn      *poDefn;
     OGRGeometry        **papoGeometries;
     OGRField            *pauFields;
+    char                *m_pszNativeData;
+    char                *m_pszNativeMediaType;
 
   protected: 
     char *              m_pszStyleString;
@@ -434,6 +436,11 @@ class CPL_DLL OGRFeature
     virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
     virtual void        SetStyleTableDirectly(OGRStyleTable *poStyleTable);
 
+    const char         *GetNativeData() const { return m_pszNativeData; }
+    const char         *GetNativeMediaType() const { return m_pszNativeMediaType; }
+    void                SetNativeData( const char* pszNativeData );
+    void                SetNativeMediaType( const char* pszNativeMediaType );
+    
     static OGRFeature  *CreateFeature( OGRFeatureDefn * );
     static void         DestroyFeature( OGRFeature * );
 

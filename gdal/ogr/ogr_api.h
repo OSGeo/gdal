@@ -420,6 +420,11 @@ OGRStyleTableH CPL_DLL OGR_F_GetStyleTable( OGRFeatureH );
 void   CPL_DLL OGR_F_SetStyleTableDirectly( OGRFeatureH, OGRStyleTableH );
 void   CPL_DLL OGR_F_SetStyleTable( OGRFeatureH, OGRStyleTableH );
 
+const char CPL_DLL *OGR_F_GetNativeData( OGRFeatureH );
+void CPL_DLL OGR_F_SetNativeData( OGRFeatureH, const char* );
+const char CPL_DLL *OGR_F_GetNativeMediaType( OGRFeatureH );
+void CPL_DLL OGR_F_SetNativeMediaType( OGRFeatureH, const char* );
+
 void   CPL_DLL OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
                                            int bNotNullableOnly,
                                            char** papszOptions );
