@@ -968,19 +968,15 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
 
     for( int i = 0; papszGeoref[i] != NULL; i++ )
     {
-        bool bAfterEqual = false;
         int iDst = 0;
         char     *pszLine = papszGeoref[i];
 
         for( int iSrc = 0; pszLine[iSrc] != '\0'; iSrc++ )
         {
-            if( bAfterEqual || pszLine[iSrc] != ' ' )
+            if( pszLine[iSrc] != ' ' )
             {
                 pszLine[iDst++] = pszLine[iSrc];
             }
-
-            if( iDst > 0 && pszLine[iDst-1] == '=' )
-                bAfterEqual = false;  // TODO: Bug?  Should this be true?
         }
         pszLine[iDst] = '\0';
     }
@@ -1253,19 +1249,15 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( int i = 0; papszAttrib[i] != NULL; i++ )
     {
-        bool bAfterEqual = false;
         int iDst = 0;
         char *pszLine = papszAttrib[i];
 
         for( int iSrc = 0; pszLine[iSrc] != '\0'; iSrc++ )
         {
-            if( bAfterEqual || pszLine[iSrc] != ' ' )
+            if( pszLine[iSrc] != ' ' )
             {
                 pszLine[iDst++] = pszLine[iSrc];
             }
-
-            if( iDst > 0 && pszLine[iDst-1] == '=' )
-                bAfterEqual = FALSE;  // TODO: Bug?  Should this be true?
         }
         pszLine[iDst] = '\0';
     }

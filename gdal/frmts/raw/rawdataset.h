@@ -99,7 +99,7 @@ protected:
     GDALColorInterp eInterp;
 
     char           **papszCategoryNames;
-    
+
     int         bOwnsFP;
 
     int         Seek( vsi_l_offset, int );
@@ -136,7 +136,7 @@ public:
                  ~RawRasterBand() /* = 0 */ ;
 
     // should override RasterIO eventually.
-    
+
     virtual CPLErr  IReadBlock( int, int, void * );
     virtual CPLErr  IWriteBlock( int, int, void * );
 
@@ -158,7 +158,7 @@ public:
     CPLErr          AccessLine( int iLine );
 
     void            SetAccess( GDALAccess eAccess );
-    
+
     // this is deprecated.
     void	 StoreNoDataValue( double );
 
@@ -168,7 +168,7 @@ public:
     int          GetLineOffset() { return nLineOffset; }
     int          GetNativeOrder() { return bNativeOrder; }
     int          GetIsVSIL() { return bIsVSIL; }
-    FILE        *GetFP() { return (bIsVSIL) ? (FILE*)fpRawL : fpRaw; }
+    FILE        *GetFP() { return (bIsVSIL) ? reinterpret_cast<FILE *>( fpRawL ) : fpRaw; }
     VSILFILE    *GetFPL() { CPLAssert(bIsVSIL); return fpRawL; }
     int          GetOwnsFP() { return bOwnsFP; }
 
