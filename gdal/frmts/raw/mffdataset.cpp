@@ -34,6 +34,7 @@
 #include "atlsci_spheroid.h"
 
 #include <cctype>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
