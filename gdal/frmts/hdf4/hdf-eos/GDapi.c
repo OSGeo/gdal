@@ -10511,6 +10511,8 @@ GDsettilecomp(int32 gridID, char *fieldname, int32 tilerank, int32*
     HDF_CHUNK_DEF   chunkDef;   /* Tiling structure */
     int32           chunkFlag;  /* Chunking (Tiling) flag */
  
+    c_info.nbit.nt = 0;
+ 
     /* Check for valid grid ID and get SDS interface ID */
     status = GDchkgdid(gridID, "GDsetfillvalue",
                        &fid, &sdInterfaceID, &gdVgrpID);
