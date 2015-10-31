@@ -861,6 +861,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 /* -------------------------------------------------------------------- */
 /*      For each of those tables, create a Virtual Table.               */
 /* -------------------------------------------------------------------- */
+    OGRLayer* poSingleSrcLayer = NULL;
     for(; oIter != oSetLayers.end(); ++oIter)
     {
         const LayerDesc& oLayerDesc = *oIter;
@@ -919,11 +920,15 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
             nExtraDS = OGR2SQLITE_AddExtraDS(poModule, poOtherDS);
         }
 
-        osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR(%d,'%s',%d)",
+        if( oSetLayers.size() == 1 )
+            poSingleSrcLayer = poLayer;
+
+        osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR(%d,'%s',%d,%d)",
                 OGRSQLiteEscapeName(osTableName).c_str(),
                 nExtraDS,
                 OGRSQLiteEscape(oLayerDesc.osLayerName).c_str(),
-                bFoundOGRStyle);
+                bFoundOGRStyle,
+                TRUE/*bExposeOGRNativeData*/);
 
         char* pszErrMsg = NULL;
         int rc = sqlite3_exec( hDB, osSQL.c_str(),
@@ -1031,6 +1036,10 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( 0, poSpatialFilter );
+    
+    if( poSingleSrcLayer != NULL )
+        poLayer->SetMetadata( poSingleSrcLayer->GetMetadata( "NATIVE_DATA" ),
+                              "NATIVE_DATA" );
 
     return poLayer;
 }
