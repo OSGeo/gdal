@@ -43,6 +43,7 @@ OGRGeoJSONReader::OGRGeoJSONReader()
         bAttributesSkip_( false ),
         bFlattenNestedAttributes_ (false),
         chNestedAttributeSeparator_ (0),
+        bStoreNativeData_(false),
         bFlattenGeocouchSpatiallistFormat (-1),
       bFoundId (false),
       bFoundRev(false),
@@ -80,23 +81,11 @@ OGRErr OGRGeoJSONReader::Parse( const char* pszText )
             pszText += 3;
         }
 
-        json_tokener* jstok = json_tokener_new();
-        json_object* jsobj = json_tokener_parse_ex(jstok, pszText, -1);
-        if( jstok->err != json_tokener_success)
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "GeoJSON parsing error: %s (at offset %d)",
-            	      json_tokener_error_desc(jstok->err), jstok->char_offset);
-
-            json_tokener_free(jstok);
-            return OGRERR_CORRUPT_DATA;
-        }
-        json_tokener_free(jstok);
-
         /* JSON tree is shared for while lifetime of the reader object
          * and will be released in the destructor.
          */
-        poGJObject_ = jsobj;
+        if( !OGRJSonParse(pszText, &poGJObject_) )
+            return OGRERR_CORRUPT_DATA;
     }
 
     return OGRERR_NONE;
@@ -364,13 +353,22 @@ void OGRGeoJSONReader::SetSkipAttributes( bool bSkip )
 }
 
 /************************************************************************/
-/*                           SetSkipAttributes                          */
+/*                         SetFlattenNestedAttributes                   */
 /************************************************************************/
 
 void OGRGeoJSONReader::SetFlattenNestedAttributes( bool bFlatten, char chSeparator )
 {
     bFlattenNestedAttributes_ = bFlatten;
     chNestedAttributeSeparator_ = chSeparator;
+}
+
+/************************************************************************/
+/*                           SetStoreNativeData                         */
+/************************************************************************/
+
+void OGRGeoJSONReader::SetStoreNativeData( bool bStoreNativeData )
+{
+    bStoreNativeData_ = bStoreNativeData;
 }
 
 /************************************************************************/
@@ -935,6 +933,12 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
     OGRFeature* poFeature = NULL;
     poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
+    if( bStoreNativeData_ )
+    {
+        poFeature->SetNativeData( json_object_to_json_string( poObj ) );
+        poFeature->SetNativeMediaType( "application/vnd.geo+json" );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Translate GeoJSON "properties" object to feature attributes.    */
 /* -------------------------------------------------------------------- */
@@ -1104,6 +1108,46 @@ OGRGeoJSONReader::ReadFeatureCollection( OGRGeoJSONLayer* poLayer, json_object* 
         }
         //CPLAssert( nFeatures == poLayer_->GetFeatureCount() );
     }
+
+    // Collect top objects except 'type' and the 'features' array
+    if( bStoreNativeData_ )
+    {
+        json_object_iter it;
+        it.key = NULL;
+        it.val = NULL;
+        it.entry = NULL;
+        CPLString osNativeData;
+        json_object_object_foreachC(poObj, it)
+        {
+            if( strcmp(it.key, "type") == 0 ||
+                strcmp(it.key, "features") == 0 )
+            {
+                continue;
+            }
+            if( osNativeData.size() == 0 )
+                osNativeData = "{ ";
+            else
+                osNativeData += ", ";
+            json_object* poKey = json_object_new_string(it.key);
+            osNativeData += json_object_to_json_string(poKey);
+            json_object_put(poKey);
+            osNativeData += ": ";
+            osNativeData += json_object_to_json_string(it.val);
+        }
+        if( osNativeData.size() != 0 )
+        {
+            osNativeData += " }";
+
+            osNativeData = "NATIVE_DATA=" + osNativeData;
+
+            char* apszMetadata[3];
+            apszMetadata[0] = (char*) osNativeData.c_str();
+            apszMetadata[1] = (char*) "NATIVE_MEDIA_TYPE=application/vnd.geo+json";
+            apszMetadata[2] = NULL;
+
+            poLayer->SetMetadata( apszMetadata, "NATIVE_DATA" );
+        }
+    }
 }
 
 /************************************************************************/
@@ -1231,11 +1275,10 @@ bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point )
     {
         const int nSize = json_object_array_length( poObj );
 
-        if( nSize != GeoJSONObject::eMinCoordinateDimension
-            && nSize != GeoJSONObject::eMaxCoordinateDimension )
+        if( nSize < GeoJSONObject::eMinCoordinateDimension )
         {
             CPLDebug( "GeoJSON",
-                      "Invalid coord dimension. Only 2D and 3D supported." );
+                      "Invalid coord dimension. At least 2 dimensions must be present." );
             return false;
         }
 
@@ -1284,7 +1327,7 @@ bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point )
             point.setY(json_object_get_int( poObjCoord ));
 
         // Read Z coordinate
-        if( nSize == GeoJSONObject::eMaxCoordinateDimension )
+        if( nSize >= GeoJSONObject::eMaxCoordinateDimension )
         {
             // Don't *expect* mixed-dimension geometries, although the 
             // spec doesn't explicitly forbid this.
@@ -1739,17 +1782,9 @@ OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
         return NULL;
     }
 
-    json_tokener *jstok = json_tokener_new();
-    json_object *poObj = json_tokener_parse_ex(jstok, pszJson, -1);
-    if( jstok->err != json_tokener_success)
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "GeoJSON parsing error: %s (at offset %d)",
-                  json_tokener_error_desc(jstok->err), jstok->char_offset);
-        json_tokener_free(jstok);
+    json_object *poObj = NULL;
+    if( !OGRJSonParse(pszJson, &poObj) )
         return NULL;
-    }
-    json_tokener_free(jstok);
 
     OGRGeometry* poGeometry
         = OGRGeoJSONReadGeometry( poObj );
@@ -1786,4 +1821,28 @@ json_object* json_ex_get_object_by_path(json_object* poObj, const char* pszPath 
     }
     CSLDestroy(papszTokens);
     return poObj;
+}
+
+/************************************************************************/
+/*                             OGRJSonParse()                           */
+/************************************************************************/
+
+bool OGRJSonParse(const char* pszText, json_object** ppoObj)
+{
+    if( ppoObj == NULL )
+        return false;
+    json_tokener* jstok = json_tokener_new();
+    *ppoObj = json_tokener_parse_ex(jstok, pszText, -1);
+    if( jstok->err != json_tokener_success)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "GeoJSON parsing error: %s (at offset %d)",
+                    json_tokener_error_desc(jstok->err), jstok->char_offset);
+
+        json_tokener_free(jstok);
+        *ppoObj = NULL;
+        return false;
+    }
+    json_tokener_free(jstok);
+    return true;
 }
