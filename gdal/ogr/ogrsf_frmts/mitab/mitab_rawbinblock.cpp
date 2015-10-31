@@ -785,7 +785,7 @@ float   TABRawBinBlock::ReadFloat()
     ReadBytes(4, (GByte*)(&fValue));
 
 #ifdef CPL_MSB
-    *(GUInt32*)(&fValue) = CPL_SWAP32(*(GUInt32*)(&fValue));
+    CPL_LSBPTR32(&fValue);
 #endif
     return fValue;
 }
@@ -902,7 +902,7 @@ int  TABRawBinBlock::WriteInt32(GInt32 n32Value)
 int  TABRawBinBlock::WriteFloat(float fValue)
 {
 #ifdef CPL_MSB
-    *(GUInt32*)(&fValue) = CPL_SWAP32(*(GUInt32*)(&fValue));
+    CPL_LSBPTR32(&fValue);
 #endif
 
     return WriteBytes(4, (GByte*)&fValue);
