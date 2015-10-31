@@ -596,7 +596,7 @@ def basic_test_15():
 def basic_test_16():
 
     gdal.ErrorReset()
-    ds = gdal.OpenEx('data/byte.tif', open_options=['@UNRECOGNIZED=FOO'])
+    gdal.OpenEx('data/byte.tif', open_options=['@UNRECOGNIZED=FOO'])
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail')
         return 'fail'
