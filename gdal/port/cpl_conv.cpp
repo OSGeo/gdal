@@ -31,6 +31,9 @@
 // For uselocale
 #define _XOPEN_SOURCE 700 
 
+// For atoll (at least for NetBSD)
+#define _ISOC99_SOURCE
+
 #ifdef MSVC_USE_VLD
 #include <vld.h>
 #endif
