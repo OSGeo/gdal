@@ -4469,14 +4469,14 @@ else
   :
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Werror=format-security -Wno-format-nonliteral" >&5
-$as_echo_n "checking whether C compiler accepts -Werror -Werror=format-security -Wno-format-nonliteral... " >&6; }
-if ${ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wformat -Werror=format-security -Wno-format-nonliteral" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wformat -Werror=format-security -Wno-format-nonliteral... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS  -Werror -Werror=format-security -Wno-format-nonliteral"
+  CFLAGS="$CFLAGS  -Werror -Wformat -Werror=format-security -Wno-format-nonliteral"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -4489,16 +4489,16 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral=yes
+  ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral=yes
 else
-  ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral=no
+  ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   CFLAGS=$ax_check_save_flags
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral" >&5
-$as_echo "$ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral" >&6; }
-if test "x$ax_cv_check_cflags___Werror__Werror_format_security__Wno_format_nonliteral" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral" = xyes; then :
   C_WFLAGS="$C_WFLAGS -Werror=format-security -Wno-format-nonliteral" CXX_WFLAGS="$CXX_WFLAGS -Werror=format-security -Wno-format-nonliteral"
 else
   :
