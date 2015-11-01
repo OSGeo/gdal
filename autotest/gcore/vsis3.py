@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test /vsis3
 # Author:   Even Rouault <even dot rouault at spatialys dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Even Rouault <even dot rouault at spatialys dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -67,7 +67,7 @@ def vsis3_1():
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
-        
+
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = gdal.VSIFOpenL('/vsis3_streaming/foo/bar', 'rb')
@@ -75,7 +75,7 @@ def vsis3_1():
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
-        
+
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY')
 
     # Missing AWS_ACCESS_KEY_ID
@@ -135,7 +135,7 @@ def vsis3_2():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
-        
+
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID')
     gdal.SetConfigOption('AWS_TIMESTAMP', '20150101T000000Z')
@@ -149,7 +149,7 @@ def vsis3_2():
         return 'fail'
     data = gdal.VSIFReadL(1, 4, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data != 'foo':
         gdaltest.post_reason('fail')
         print(data)
@@ -161,7 +161,7 @@ def vsis3_2():
         return 'fail'
     data = gdal.VSIFReadL(1, 4, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data != 'foo':
         gdaltest.post_reason('fail')
         print(data)
@@ -195,7 +195,7 @@ def vsis3_2():
         return 'fail'
     data = gdal.VSIFReadL(1, 4, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data != 'foo':
         gdaltest.post_reason('fail')
         print(data)
@@ -208,7 +208,7 @@ def vsis3_2():
         return 'fail'
     data = gdal.VSIFReadL(1, 4, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data != 'foo':
         gdaltest.post_reason('fail')
         print(data)
@@ -554,7 +554,7 @@ def vsis3_extra_1():
         return 'fail'
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
-    
+
     if len(ret) != 1:
         gdaltest.post_reason('fail')
         print(ret)
@@ -567,7 +567,7 @@ def vsis3_extra_1():
         return 'fail'
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
-    
+
     if len(ret) != 1:
         gdaltest.post_reason('fail')
         print(ret)
@@ -621,4 +621,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list + gdaltest_list_extra )
 
     gdaltest.summarize()
-
