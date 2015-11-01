@@ -2976,7 +2976,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
         CPLFree( papoBlocks );
     }
 
-    return( CE_None );
+    return( eErr );
 }
 
 /************************************************************************/
