@@ -50,6 +50,7 @@
   #include <sys/socket.h>
   #include <sys/un.h>
   #include <netinet/in.h>
+  #include <signal.h>
   #include <unistd.h>
   #ifdef HAVE_GETADDRINFO
     #include <netdb.h>
@@ -423,7 +424,7 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
     int i;
     int nClients = 0;
     ClientInfo asClientInfos[MAX_CLIENTS];
-    
+
     if( !bFork )
         signal(SIGPIPE, SIG_IGN);
 
