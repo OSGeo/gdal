@@ -1355,10 +1355,11 @@ char* GDALPDFStreamPoppler::GetBytes()
     {
         m_nLength = gstr->getLength();
         char* pszContent = (char*) VSIMalloc(m_nLength + 1);
-        if (!pszContent)
-            return NULL;
-        memcpy(pszContent, gstr->getCString(), m_nLength);
-        pszContent[m_nLength] = '\0';
+        if (pszContent)
+        {
+            memcpy(pszContent, gstr->getCString(), m_nLength);
+            pszContent[m_nLength] = '\0';
+        }
         delete gstr;
         return pszContent;
     }
