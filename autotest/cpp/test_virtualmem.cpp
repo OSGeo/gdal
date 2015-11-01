@@ -84,6 +84,8 @@ static int test_two_pages()
     volatile char* addr;
     void* hThread;
 
+    printf("test_two_pages()\n");
+
     ctxt = CPLVirtualMemNew(3*MINIMUM_PAGE_SIZE,
                         MINIMUM_PAGE_SIZE,
                         MINIMUM_PAGE_SIZE,
@@ -119,6 +121,8 @@ static int test_two_pages()
 
 static void test_raw_auto(int bFileMapping)
 {
+    printf("test_raw_auto(bFileMapping=%d)\n", bFileMapping);
+
     GDALAllRegister();
     
     CPLString osTmpFile;
@@ -185,6 +189,27 @@ int main(int /* argc */, char* /* argv */[])
     test_huge_mapping();*/
 
     printf("Physical memory : " CPL_FRMT_GIB " bytes\n", CPLGetPhysicalRAM());
+    
+    if( CPLIsVirtualMemFileMapAvailable() )
+    {
+        printf("Testing CPLVirtualMemFileMapNew()\n");
+        VSILFILE* fp = VSIFOpenL("../gcore/data/byte.tif", "rb");
+        assert(fp);
+        VSIFSeekL(fp, 0, SEEK_END);
+        size_t nSize = (size_t)VSIFTellL(fp);
+        VSIFSeekL(fp, 0, SEEK_SET);
+        void* pRefBuf = CPLMalloc(nSize);
+        VSIFReadL(pRefBuf, 1, nSize, fp);
+        CPLVirtualMem * psMem = CPLVirtualMemFileMapNew( fp, 0, nSize,
+                                                         VIRTUALMEM_READONLY,
+                                                         NULL, NULL );
+        assert(psMem);
+        void* pMemBuf = CPLVirtualMemGetAddr(psMem);
+        assert(memcmp(pRefBuf, pMemBuf, nSize) == 0);
+        CPLFree(pRefBuf);
+        CPLVirtualMemFree(psMem);
+        VSIFCloseL(fp);
+    }
 
     if( !test_two_pages() )
         return 0;
