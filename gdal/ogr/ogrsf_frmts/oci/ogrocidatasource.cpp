@@ -325,7 +325,7 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
 /*      Prepare and execute the geometry validation.                    */
 /* -------------------------------------------------------------------- */
 
-    if( !strlen(poLayer->GetGeometryColumn()) == 0 )
+    if( strlen(poLayer->GetGeometryColumn()) != 0 )
     {
         OGROCIStringBuf oValidateCmd;
         OGROCIStatement oValidateStmt( GetSession() );
