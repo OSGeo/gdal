@@ -1784,6 +1784,9 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
 
     if( psVirtualMemIOMapping )
     {
+#ifdef DEBUG
+        CPLDebug("GTiff", "Using VirtualMemIO");
+#endif
         nMappingSize = CPLVirtualMemGetSize(psVirtualMemIOMapping);
         pabySrcData = (GByte*)CPLVirtualMemGetAddr(psVirtualMemIOMapping);
     }

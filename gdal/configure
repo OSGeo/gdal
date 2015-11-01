@@ -17807,6 +17807,17 @@ _ACEOF
 fi
 done
 
+for ac_func in mmap
+do :
+  ac_fn_c_check_func "$LINENO" "mmap" "ac_cv_func_mmap"
+if test "x$ac_cv_func_mmap" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_MMAP 1
+_ACEOF
+
+fi
+done
+
 
 
 ac_ext=cpp
