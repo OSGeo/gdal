@@ -1266,7 +1266,7 @@ def tiff_read_irregular_tile_size_jpeg_in_tiff():
     return 'success'
 
 ###############################################################################
-# Test GTIFF_DIRECT_IO optimization
+# Test GTIFF_DIRECT_IO and GTIFF_VIRTUAL_MEM_IO optimizations
 
 def tiff_direct_and_virtual_mem_io():
 
