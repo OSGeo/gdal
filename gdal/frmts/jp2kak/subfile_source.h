@@ -122,7 +122,6 @@ class subfile_source : public kdu_compressed_source {
           else
             capabilities = KDU_SOURCE_CAP_SEQUENTIAL | KDU_SOURCE_CAP_SEEKABLE;
 
-          seek_origin = subfile_offset;
           seek( 0 );
       }
 
@@ -137,28 +136,17 @@ class subfile_source : public kdu_compressed_source {
           if (!(capabilities & KDU_SOURCE_CAP_SEEKABLE))
               return false;
           
-          if( VSIFSeekL( file, seek_origin+offset, SEEK_SET ) == 0 )
+          if( VSIFSeekL( file, subfile_offset+offset, SEEK_SET ) == 0 )
               return true;
           else
               return false;
       }
 
-    bool set_seek_origin(kdu_long position)
-      { 
-          if (!(capabilities & KDU_SOURCE_CAP_SEEKABLE))
-              return false;
-          seek_origin = position + subfile_offset;
-          return true;
-      }
-
-    kdu_long get_pos(bool absolute)
+    kdu_long get_pos()
       { 
         if (file == NULL) return -1;
         kdu_long result = VSIFTellL( file );
-        if (!absolute) 
-            result -= seek_origin;
-        else
-            result -= subfile_offset;
+        result -= subfile_offset;
         return result;
       }
 
@@ -180,7 +168,6 @@ class subfile_source : public kdu_compressed_source {
 
   private: // Data
     int capabilities;
-    kdu_long seek_origin;
 
     int subfile_offset;
     int subfile_size;
