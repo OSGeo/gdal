@@ -7850,10 +7850,12 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
                       blockindexstop = j;
                    }
                 }
-                templeftpt[0] = upleftpt[0] + ((offset[j]/xdimsize)*abs(upleftpt[0] - lowrightpt[0])) + abs((upleftpt[0] - lowrightpt[0]))*(n-1);
+
+                // E. Rouault: FIXME: was really abs(int) indented here ? Forcing the cast to int to please compilers
+                templeftpt[0] = upleftpt[0] + ((offset[j]/xdimsize)*abs((int)(upleftpt[0] - lowrightpt[0]))) + abs((int)(upleftpt[0] - lowrightpt[0]))*(n-1);
                 templeftpt[1] = upleftpt[1] + ((lowrightpt[1] - upleftpt[1]))*(n-1);
 
-                temprightpt[0] = lowrightpt[0] + ((offset[j]/xdimsize)*abs(lowrightpt[0] - upleftpt[0])) + abs((lowrightpt[0] - upleftpt[0]))*(n-1);
+                temprightpt[0] = lowrightpt[0] + ((offset[j]/xdimsize)*abs((int)(lowrightpt[0] - upleftpt[0]))) + abs((int)(lowrightpt[0] - upleftpt[0]))*(n-1);
                 temprightpt[1] = lowrightpt[1] + ((upleftpt[1] - lowrightpt[1]))*(n-1);
 
                 somupleftpt[0] = templeftpt[0];
