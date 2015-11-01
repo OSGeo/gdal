@@ -96,7 +96,7 @@ void OGROCIStringBuf::Appendf( int nMax, const char *pszFormat, ... )
     char    szSimpleBuf[100];
     char    *pszBuffer;
 
-    if( nMax > (int) sizeof(szSimpleBuf-1) )
+    if( nMax > (int) sizeof(szSimpleBuf)-1 )
         pszBuffer = (char *) CPLMalloc(nMax+1);
     else
         pszBuffer = szSimpleBuf;
