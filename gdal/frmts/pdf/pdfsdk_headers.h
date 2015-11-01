@@ -30,7 +30,7 @@
 #define PDFSDK_HEADERS_H
 
 /* We avoid to include cpl_port.h directly or indirectly */
-#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)) && !defined(_MSC_VER)) 
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER)) 
 #pragma GCC system_header
 #endif
 
