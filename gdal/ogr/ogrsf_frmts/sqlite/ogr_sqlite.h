@@ -203,6 +203,8 @@ class OGRSQLiteDataSource;
 class IOGRSQLiteGetSpatialWhere
 {
   public:
+    virtual              ~IOGRSQLiteGetSpatialWhere() {}
+
     virtual int           HasFastSpatialFilter(int iGeomCol) = 0;
     virtual CPLString     GetSpatialWhere(int iGeomCol,
                                           OGRGeometry* poFilterGeom) = 0;
@@ -530,6 +532,8 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
 class IOGRSQLiteSelectLayer
 {
     public:
+        virtual                     ~IOGRSQLiteSelectLayer() {}
+
         virtual char*&               GetAttrQueryString() = 0;
         virtual OGRFeatureQuery*&    GetFeatureQuery() = 0;
         virtual OGRGeometry*&        GetFilterGeom() = 0;

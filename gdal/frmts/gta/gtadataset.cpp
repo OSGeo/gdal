@@ -88,7 +88,7 @@
 
 #include <limits.h>
 #include "cpl_port.h" // for snprintf for MSVC
-#include <gta/gta.hpp>
+#include "gta_headers.h"
 #include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
@@ -144,7 +144,8 @@ class GTAIO : public gta::custom_io
         : fp( NULL )
     {
     }
-    ~GTAIO( )
+
+    virtual ~GTAIO( )
     {
         close( );
     }
