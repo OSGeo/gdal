@@ -2102,7 +2102,12 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                             else
                             {
                                 GByte* pabySrcLocal = pabySrcData + nCurOffset + nByteOffsetInBlock;
-                                if( nPixelSpace == 1 && nBandsPerBlockDTSize == 3 )
+                                if( nPixelSpace == 1 && nBandsPerBlockDTSize == 1 )
+                                {
+                                    memcpy(pabyLocalData, pabySrcLocal, nIters);
+                                    pabyLocalData += nIters;
+                                }
+                                else if( nPixelSpace == 1 && nBandsPerBlockDTSize == 3 )
                                 {
                                     REACHED(12);
                                     UnrolledCopy<3,1>(pabyLocalData, pabySrcLocal, nIters);
