@@ -765,8 +765,8 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                 atoi(CSLFetchNameValue(papszHdrLines,"tile_size_columns"));
 
         if (nTileXSize <= 0 || nTileYSize <= 0 ||
-            poDS->nRasterXSize > INT_MAX - (nTileXSize - 1) ||
-            poDS->nRasterYSize > INT_MAX - (nTileYSize - 1))
+            poDS->nRasterXSize-1 > INT_MAX - nTileXSize ||
+            poDS->nRasterYSize-1 > INT_MAX - nTileYSize )
         {
             delete poDS;
             return NULL;
