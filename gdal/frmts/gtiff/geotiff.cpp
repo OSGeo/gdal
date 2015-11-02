@@ -1664,6 +1664,47 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                            UnrolledCopy()                            */
+/************************************************************************/
+
+template<int srcStride, int dstStride> 
+static inline void UnrolledCopy(GByte* CPL_RESTRICT pabyDest,
+                                    const GByte* CPL_RESTRICT pabySrc,
+                                    int nIters)
+{
+    if (nIters >= 16)
+    {
+        for ( int i = nIters / 16; i != 0; i -- )
+        {
+            pabyDest[0*dstStride] = pabySrc[0*srcStride];
+            pabyDest[1*dstStride] = pabySrc[1*srcStride];
+            pabyDest[2*dstStride] = pabySrc[2*srcStride];
+            pabyDest[3*dstStride] = pabySrc[3*srcStride];
+            pabyDest[4*dstStride] = pabySrc[4*srcStride];
+            pabyDest[5*dstStride] = pabySrc[5*srcStride];
+            pabyDest[6*dstStride] = pabySrc[6*srcStride];
+            pabyDest[7*dstStride] = pabySrc[7*srcStride];
+            pabyDest[8*dstStride] = pabySrc[8*srcStride];
+            pabyDest[9*dstStride] = pabySrc[9*srcStride];
+            pabyDest[10*dstStride] = pabySrc[10*srcStride];
+            pabyDest[11*dstStride] = pabySrc[11*srcStride];
+            pabyDest[12*dstStride] = pabySrc[12*srcStride];
+            pabyDest[13*dstStride] = pabySrc[13*srcStride];
+            pabyDest[14*dstStride] = pabySrc[14*srcStride];
+            pabyDest[15*dstStride] = pabySrc[15*srcStride];
+            pabyDest += 16*dstStride;
+            pabySrc += 16*srcStride;
+        }
+        nIters = nIters % 16;
+    }
+    for( int i = 0; i < nIters; i++ )
+    {
+        pabyDest[i*dstStride] = *pabySrc;
+        pabySrc += srcStride;
+    }
+}
+
+/************************************************************************/
 /*                         VirtualMemIO()                               */
 /************************************************************************/
 
@@ -2019,52 +2060,71 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                     if( bByteNoXResampling )
                     {
                         GByte* pabyLocalData = pabyData + y * nLineSpace;
-                        int nLastPixelBlock = 0;
-                        int nByteOffsetInBlock = 0;
-                        toff_t nCurOffset = 0;
                         int nBlockXOff = nXOff / nBlockXSize;
                         int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
                         if ( nPlanarConfig == PLANARCONFIG_SEPARATE )
                             nBlockId += nBlocksPerBand * (nBand - 1);
                         int nXOffsetInBlock = nXOff % nBlockXSize;
-                        for(int x=0;x<nBufXSize;x++)
+
+                        int x = 0;
+                        while( x < nBufXSize )
                         {
-                            int nSrcPixel = nXOff + x;
-                            if( nSrcPixel >= nLastPixelBlock )
+                            const int nLastPixelBlock = (nBlockXOff + 1) * nBlockXSize;
+                            const int nByteOffsetInBlock = nBaseByteOffsetInBlock + nXOffsetInBlock * nBandsPerBlockDTSize;
+                            const toff_t nCurOffset = panOffsets[nBlockId];
+                            if( nCurOffset != 0 &&
+                                nCurOffset + nBlockSize > nMappingSize )
                             {
-                                REACHED(11);
-                                nLastPixelBlock = (nBlockXOff + 1) * nBlockXSize;
-                                nByteOffsetInBlock = nBaseByteOffsetInBlock + nXOffsetInBlock * nBandsPerBlockDTSize;
-                                nCurOffset = panOffsets[nBlockId];
-                                if( nCurOffset != 0 &&
-                                    nCurOffset + nBlockSize > nMappingSize )
-                                {
-                                    REACHED(27);
-                                    CPLError(CE_Failure, CPLE_FileIO,
-                                                "Missing data for block %d", nBlockId);
-                                    return CE_Failure;
-                                }
-                                nXOffsetInBlock = 0;
-                                nBlockXOff ++;
-                                nBlockId ++; 
+                                REACHED(27);
+                                CPLError(CE_Failure, CPLE_FileIO,
+                                            "Missing data for block %d", nBlockId);
+                                return CE_Failure;
                             }
-                            else
-                            {
-                                REACHED(12);
-                                nByteOffsetInBlock += nBandsPerBlockDTSize;
-                            }
+                            nXOffsetInBlock = 0;
+                            nBlockXOff ++;
+                            nBlockId ++; 
+
+                            const int nSrcPixel = nXOff + x;
+                            int nIters = nLastPixelBlock - nSrcPixel;
+                            if( x + nIters > nBufXSize )
+                                nIters = nBufXSize - x;
+                            x += nIters;
 
                             if( nCurOffset == 0 )
                             {
-                                REACHED(13);
-                                *pabyLocalData = abyNoData;
+                                REACHED(11);
+                                while( nIters-- > 0 )
+                                {
+                                    *pabyLocalData = abyNoData;
+                                    pabyLocalData += nPixelSpace;
+                                }
                             }
                             else
                             {
-                                REACHED(14);
-                                *pabyLocalData = pabySrcData[nCurOffset + nByteOffsetInBlock];
+                                GByte* pabySrcLocal = pabySrcData + nCurOffset + nByteOffsetInBlock;
+                                if( nPixelSpace == 1 && nBandsPerBlockDTSize == 3 )
+                                {
+                                    REACHED(12);
+                                    UnrolledCopy<3,1>(pabyLocalData, pabySrcLocal, nIters);
+                                    pabyLocalData += nIters;
+                                }
+                                else if( nPixelSpace == 1 && nBandsPerBlockDTSize == 4 )
+                                {
+                                    REACHED(13);
+                                    UnrolledCopy<4,1>(pabyLocalData, pabySrcLocal, nIters);
+                                    pabyLocalData += nIters;
+                                }
+                                else
+                                {
+                                    REACHED(14);
+                                    while( nIters-- > 0 )
+                                    {
+                                        *pabyLocalData = *pabySrcLocal;
+                                        pabyLocalData += nPixelSpace;
+                                        pabySrcLocal += nBandsPerBlockDTSize;
+                                    }
+                                }
                             }
-                            pabyLocalData += nPixelSpace;
                         }
                     }
                     else
@@ -2703,42 +2763,10 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*     Optimization for high number of words to transfer and some       */
 /*     typical band numbers : we unroll the loop.                       */
 /* ==================================================================== */
-#define COPY_TO_DST_BUFFER(nBands) \
-        if (nBlockPixels > 100) \
-        { \
-            for ( i = nBlockPixels / 16; i != 0; i -- ) \
-            { \
-                pabyImageDest[0] = pabyImage[0*nBands]; \
-                pabyImageDest[1] = pabyImage[1*nBands]; \
-                pabyImageDest[2] = pabyImage[2*nBands]; \
-                pabyImageDest[3] = pabyImage[3*nBands]; \
-                pabyImageDest[4] = pabyImage[4*nBands]; \
-                pabyImageDest[5] = pabyImage[5*nBands]; \
-                pabyImageDest[6] = pabyImage[6*nBands]; \
-                pabyImageDest[7] = pabyImage[7*nBands]; \
-                pabyImageDest[8] = pabyImage[8*nBands]; \
-                pabyImageDest[9] = pabyImage[9*nBands]; \
-                pabyImageDest[10] = pabyImage[10*nBands]; \
-                pabyImageDest[11] = pabyImage[11*nBands]; \
-                pabyImageDest[12] = pabyImage[12*nBands]; \
-                pabyImageDest[13] = pabyImage[13*nBands]; \
-                pabyImageDest[14] = pabyImage[14*nBands]; \
-                pabyImageDest[15] = pabyImage[15*nBands]; \
-                pabyImageDest += 16; \
-                pabyImage += 16*nBands; \
-            } \
-            nBlockPixels = nBlockPixels % 16; \
-        } \
-        for( i = 0; i < nBlockPixels; i++ ) \
-        { \
-            pabyImageDest[i] = *pabyImage; \
-            pabyImage += nBands; \
-        }
-
         switch (nBands)
         {
-            case 3:  COPY_TO_DST_BUFFER(3); break;
-            case 4:  COPY_TO_DST_BUFFER(4); break;
+            case 3:  UnrolledCopy<3,1>(pabyImageDest, pabyImage, nBlockPixels); break;
+            case 4:  UnrolledCopy<4,1>(pabyImageDest, pabyImage, nBlockPixels); break;
             default:
             {
                 for( i = 0; i < nBlockPixels; i++ )
@@ -2748,7 +2776,6 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 }
             }
         }
-#undef COPY_TO_DST_BUFFER
     }
 
     else
@@ -2928,42 +2955,10 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /*     Optimization for high number of words to transfer and some       */
 /*     typical band numbers : we unroll the loop.                       */
 /* ==================================================================== */
-#define COPY_TO_DST_BUFFER(nBands) \
-            if (nBlockPixels > 100) \
-            { \
-                for ( i = nBlockPixels / 16; i != 0; i -- ) \
-                { \
-                    pabyOut[0*nBands] = pabyThisImage[0]; \
-                    pabyOut[1*nBands] = pabyThisImage[1]; \
-                    pabyOut[2*nBands] = pabyThisImage[2]; \
-                    pabyOut[3*nBands] = pabyThisImage[3]; \
-                    pabyOut[4*nBands] = pabyThisImage[4]; \
-                    pabyOut[5*nBands] = pabyThisImage[5]; \
-                    pabyOut[6*nBands] = pabyThisImage[6]; \
-                    pabyOut[7*nBands] = pabyThisImage[7]; \
-                    pabyOut[8*nBands] = pabyThisImage[8]; \
-                    pabyOut[9*nBands] = pabyThisImage[9]; \
-                    pabyOut[10*nBands] = pabyThisImage[10]; \
-                    pabyOut[11*nBands] = pabyThisImage[11]; \
-                    pabyOut[12*nBands] = pabyThisImage[12]; \
-                    pabyOut[13*nBands] = pabyThisImage[13]; \
-                    pabyOut[14*nBands] = pabyThisImage[14]; \
-                    pabyOut[15*nBands] = pabyThisImage[15]; \
-                    pabyThisImage += 16; \
-                    pabyOut += 16*nBands; \
-                } \
-                nBlockPixels = nBlockPixels % 16; \
-            } \
-            for( i = 0; i < nBlockPixels; i++ ) \
-            { \
-                *pabyOut = pabyThisImage[i]; \
-                pabyOut += nBands; \
-            }
-
             switch (nBands)
             {
-                case 3:  COPY_TO_DST_BUFFER(3); break;
-                case 4:  COPY_TO_DST_BUFFER(4); break;
+                case 3:  UnrolledCopy<1,3>(pabyOut, pabyThisImage, nBlockPixels); break;
+                case 4:  UnrolledCopy<1,4>(pabyOut, pabyThisImage, nBlockPixels); break;
                 default:
                 {
                     for( i = 0; i < nBlockPixels; i++ )
@@ -2973,7 +2968,6 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     }
                 }
             }
-#undef COPY_TO_DST_BUFFER
         }
         else
         {
