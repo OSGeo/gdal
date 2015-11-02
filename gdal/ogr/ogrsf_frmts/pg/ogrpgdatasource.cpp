@@ -2790,17 +2790,6 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Generate an error report if an error occured.                   */
-/* -------------------------------------------------------------------- */
-    if( !hResult ||
-        (PQresultStatus(hResult) == PGRES_NONFATAL_ERROR
-         || PQresultStatus(hResult) == PGRES_FATAL_ERROR ) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", PQerrorMessage( hPGConn ) );
-    }
-
     OGRPGClearResult( hResult );
 
     return NULL;
