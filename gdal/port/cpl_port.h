@@ -632,6 +632,13 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #define CPL_NO_RETURN
 #endif
 
+#if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
+#  define CPL_RETURNS_NONNULL __attribute__((returns_nonnull))
+#else
+/* TODO: add cases for other compilers */
+#  define CPL_RETURNS_NONNULL
+#endif
+
 /* Helper to remove the copy and assignment constructors so that the compiler
    will not generate the default versions.
 
