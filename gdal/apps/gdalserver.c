@@ -50,6 +50,7 @@
   #include <sys/socket.h>
   #include <sys/un.h>
   #include <netinet/in.h>
+  #include <signal.h>
   #include <unistd.h>
   #ifdef HAVE_GETADDRINFO
     #include <netdb.h>
