@@ -260,8 +260,6 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     const int nBands = atoi(poDS->GetKeyword("NB"));
 
     /***********   Grab record bytes  **********/
-    int nSkipBytes = atoi(poDS->GetKeyword("NBB"));
-
     GDALDataType eDataType = GDT_Byte;
     double dfNoData = 0.0;
     if (EQUAL( poDS->GetKeyword( "FORMAT" ), "BYTE" )) {
@@ -590,7 +588,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     const long int nLineOffset = nPixelOffset * nCols + atoi(poDS->GetKeyword("NBB")) ;
     const long int nBandOffset = nLineOffset * nRows;
 
-    nSkipBytes = atoi(poDS->GetKeyword("LBLSIZE"));
+    int nSkipBytes = atoi(poDS->GetKeyword("LBLSIZE"));
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
