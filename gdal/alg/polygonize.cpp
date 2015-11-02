@@ -714,14 +714,16 @@ GBool GDALFloatEquals(float A, float B)
     /**
      * This function will allow maxUlps-1 floats between A and B.
      */
-    int maxUlps = MAX_ULPS;
+    const int maxUlps = MAX_ULPS;
     int aInt, bInt;
 
     /**
      * Make sure maxUlps is non-negative and small enough that the default NAN
      * won't compare as equal to anything.
      */
-    CPLAssert(maxUlps > 0 && maxUlps < 4 * 1024 * 1024);
+#if MAX_ULPS <= 0 || MAX_ULPS >= 4 * 1024 * 1024
+#error "Invalid MAX_ULPS"
+#endif
 
     /**
      * This assignation could violate strict aliasing. It causes a warning with
@@ -744,7 +746,8 @@ GBool GDALFloatEquals(float A, float B)
     
     if (bInt < 0)
         bInt = 0x80000000 - bInt;
-    int intDiff = abs(aInt - bInt);
+    /* to make -ftrapv happy we compute the diff on larger type and cast down later */
+    int intDiff = abs((int)((GIntBig)aInt - (GIntBig)bInt));
     if (intDiff <= maxUlps)
         return true;
     return false;
