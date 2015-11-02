@@ -2015,7 +2015,7 @@ void GDALRegister_PNG()
 "   <Option name='WORLDFILE' type='boolean' description='Create world file' default='FALSE'/>\n"
 "   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>\n"
 "   <Option name='SOURCE_ICC_PROFILE' type='string' description='ICC Profile'/>\n"
-"   <Option name='SOURCE_ICC_PROFILE_NAME' type='string' descriptor='ICC Profile name'/>\n"
+"   <Option name='SOURCE_ICC_PROFILE_NAME' type='string' description='ICC Profile name'/>\n"
 "   <Option name='SOURCE_PRIMARIES_RED' type='string' description='x,y,1.0 (xyY) red chromaticity'/>\n"
 "   <Option name='SOURCE_PRIMARIES_GREEN' type='string' description='x,y,1.0 (xyY) green chromaticity'/>\n"
 "   <Option name='SOURCE_PRIMARIES_BLUE' type='string' description='x,y,1.0 (xyY) blue chromaticity'/>\n"
