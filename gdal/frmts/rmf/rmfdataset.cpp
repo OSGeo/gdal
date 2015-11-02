@@ -85,7 +85,7 @@ RMFRasterBand::RMFRasterBand( RMFDataset *poDSIn, int nBandIn,
               " last tile width %d, last tile height %d, "
               "bytes per pixel is %d, data type size is %d",
               nBand, nBlockXSize, nBlockYSize,
-              poDS->sHeader.nLastTileWidth, poDS->sHeader.nLastTileHeight,
+              poDSIn->sHeader.nLastTileWidth, poDSIn->sHeader.nLastTileHeight,
               nBytesPerPixel, nDataSize );
 #endif
 }
