@@ -99,12 +99,12 @@ ZMapRasterBand::ZMapRasterBand( ZMapDataset *poDSIn )
 
 {
     poDS = poDSIn;
-    nBand = nBand;
+    nBand = 1;
 
     eDataType = GDT_Float64;
 
     nBlockXSize = 1;
-    nBlockYSize = poDS->GetRasterYSize();
+    nBlockYSize = poDSIn->GetRasterYSize();
 }
 
 /************************************************************************/
