@@ -1699,6 +1699,19 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
     if( !SetDirectory() )
         return CE_Failure;
 
+    if( !(nCompression == COMPRESSION_NONE &&
+        (nPhotometric == PHOTOMETRIC_MINISBLACK ||
+        nPhotometric == PHOTOMETRIC_RGB ||
+        nPhotometric == PHOTOMETRIC_PALETTE) &&
+        (nBitsPerSample == 8 || (nBitsPerSample == 16) ||
+        nBitsPerSample == 32 || nBitsPerSample == 64) &&
+        nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+        !TIFFIsByteSwapped(hTIFF) ) )
+    {
+        eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
+        return -1;
+    }
+
     size_t nMappingSize = 0;
     GByte* pabySrcData = NULL;
     if( STARTS_WITH(GetDescription(), "/vsimem/") )
@@ -1711,18 +1724,6 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
     }
     else if( psVirtualMemIOMapping == NULL )
     {
-        if( !(nCompression == COMPRESSION_NONE &&
-              (nPhotometric == PHOTOMETRIC_MINISBLACK ||
-              nPhotometric == PHOTOMETRIC_RGB ||
-              nPhotometric == PHOTOMETRIC_PALETTE) &&
-              (nBitsPerSample == 8 || (nBitsPerSample == 16) ||
-              nBitsPerSample == 32 || nBitsPerSample == 64) &&
-              nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
-              !TIFFIsByteSwapped(hTIFF) ) )
-        {
-            eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
-            return -1;
-        }
         VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
         if( !CPLIsVirtualMemFileMapAvailable() ||
             VSIFGetNativeFileDescriptorL(fp) == NULL )
