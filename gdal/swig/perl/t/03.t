@@ -74,7 +74,7 @@ ok($ds eq 'metri', "Unit");
 
 $band->ScaleAndOffset(0.1, 5);
 @list = $band->ScaleAndOffset();
-ok(($list[0] == 0.1 and $list[1] == 5), "ScaleAndOffset");
+ok((sprintf("%.1f", $list[0]) eq '0.1' and $list[1] == 5), "ScaleAndOffset");
 
 my $nr = $band->GetBandNumber;
 ok($nr == 1, "GetBandNumber");
@@ -117,7 +117,7 @@ $dataset->AddBand('Float64');
 $band = $dataset->Band(3);
 $band->	Fill(123.45);
 $data = $band->ReadTile;
-ok($data->[0][0] == 123.45, "Fill with real");
+ok(sprintf("%.2f", $data->[0][0]) eq '123.45', "Fill with real");
 for my $row (@$data) {
 #    print "@$row\n";
 }

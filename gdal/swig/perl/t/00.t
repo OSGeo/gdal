@@ -66,6 +66,7 @@ my $dms = Geo::GDAL::DecToDMS(62, 'Long');
 ok($dms eq " 62d 0' 0.00\"E", "DecToDMS, got '$dms'"),
 $dms = Geo::GDAL::DecToPackedDMS(62.15);
 my $dec = Geo::GDAL::PackedDMSToDec($dms);
+$dec = sprintf("%.2f", $dec);
 ok($dec == 62.15, "DecToPackedDMS and PackedDMSToDec, got $dec");
 
 # sub DitherRGB2PCT

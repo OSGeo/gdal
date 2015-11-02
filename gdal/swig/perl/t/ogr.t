@@ -121,7 +121,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     # test the Points method
     my $g = Geo::OGR::Geometry->new( WKT => 'POINT(1.1 2.2)');
     my $p = $g->Points;
-    ok ($p->[0] == 1.1 && $p->[1] == 2.2, "Points from a point is a simple anonymous array");
+    ok (sprintf("%.1f", $p->[0]) eq '1.1' && sprintf("%.1f", $p->[1]) eq '2.2', "Points from a point is a simple anonymous array");
     $g->Points($p);
     my $q = $g->Points;
     is_deeply($p, $q, "Points with a point");
@@ -177,6 +177,9 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     @test = $f->GetField('ilist');
     ok(is_deeply(\@test, [1,2,3]), 'integer list');
     @test = $f->GetField('rlist');
+    for (@test) {
+        $_ = sprintf("%.1f", $_);
+    }
     ok(is_deeply(\@test, [1.1,2.2,3.3]), 'double list');
     @test = $f->GetField('slist');
     ok(is_deeply(\@test, ['a','b','c']), 'string list');
