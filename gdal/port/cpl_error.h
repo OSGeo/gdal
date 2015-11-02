@@ -100,7 +100,7 @@ typedef int CPLErrorNum;
 
 void CPL_DLL CPLError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (3, 4);
 void CPL_DLL CPLErrorV(CPLErr, CPLErrorNum, const char *, va_list );
-void CPL_DLL CPLEmergencyError( const char * );
+void CPL_DLL CPLEmergencyError( const char * ) CPL_NO_RETURN;
 void CPL_DLL CPL_STDCALL CPLErrorReset( void );
 CPLErrorNum CPL_DLL CPL_STDCALL CPLGetLastErrorNo( void );
 CPLErr CPL_DLL CPL_STDCALL CPLGetLastErrorType( void );
@@ -123,7 +123,7 @@ void CPL_DLL CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler, void* );
 void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 
 void CPL_DLL CPL_STDCALL CPLDebug( const char *, const char *, ... )  CPL_PRINT_FUNC_FORMAT (2, 3);
-void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int );
+void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int ) CPL_NO_RETURN;
 
 #ifdef DEBUG
 #  define CPLAssert(expr)  ((expr) ? (void)(0) : _CPLAssert(#expr,__FILE__,__LINE__))

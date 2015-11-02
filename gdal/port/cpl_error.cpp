@@ -977,6 +977,7 @@ void CPL_STDCALL _CPLAssert( const char * pszExpression, const char * pszFile,
               "Assertion `%s' failed\n"
               "in file `%s', line %d\n",
               pszExpression, pszFile, iLine );
+    abort(); /* just to please compiler so it is aware the function does not return */
 }
 
 
