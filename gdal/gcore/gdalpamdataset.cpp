@@ -820,7 +820,7 @@ CPLErr GDALPamDataset::TrySaveXML()
         const char *pszNewPam;
         const char *pszBasename = GetDescription();
 
-        if( psPam && psPam->osPhysicalFilename.length() > 0 )
+        if( psPam->osPhysicalFilename.length() > 0 )
             pszBasename = psPam->osPhysicalFilename;
             
         if( PamGetProxy(pszBasename) == NULL 
