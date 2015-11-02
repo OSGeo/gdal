@@ -172,7 +172,7 @@ class RIKRasterBand : public GDALPamRasterBand
 RIKRasterBand::RIKRasterBand( RIKDataset *poDSIn, int nBandIn )
 
 {
-    poDS = poDS;
+    poDS = poDSIn;
     nBand = nBandIn;
 
     eDataType = GDT_Byte;
