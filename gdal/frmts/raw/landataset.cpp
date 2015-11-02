@@ -179,7 +179,7 @@ LAN4BitRasterBand::LAN4BitRasterBand( LANDataset *poDSIn, int nBandIn ) :
     poCT(NULL),
     eInterp(GCI_Undefined)
 {
-    poDS = poDS;
+    poDS = poDSIn;
     nBand = nBandIn;
     eDataType = GDT_Byte;
 
@@ -1004,7 +1004,7 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
 void GDALRegister_LAN()
 
 {
-    if( GDALGetDriverByName( "LAN" ) == NULL )
+    if( GDALGetDriverByName( "LAN" ) != NULL )
         return;
 
     GDALDriver	*poDriver;
