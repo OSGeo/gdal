@@ -29,8 +29,9 @@
  ****************************************************************************/
 
 #include "rawdataset.h"
-#include "ogr_spatialref.h"
+
 #include "cpl_string.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -413,7 +414,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -423,7 +424,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_NDF()
 
 {
-    if( GDALGetDriverByName( "NDF" ) == NULL )
+    if( GDALGetDriverByName( "NDF" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
