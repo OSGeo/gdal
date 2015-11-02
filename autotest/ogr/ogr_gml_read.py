@@ -244,11 +244,13 @@ def ogr_gml_6():
         feat = lyr.GetNextFeature() 
         while feat is not None: 
             if ( feat.GetFID() < 0 ) or ( feat.GetFID() in fids ): 
+                gml_ds = None
                 os.remove( 'data' + os.sep + filename + '.gfs' ) 
                 gdaltest.post_reason( 'Wrong FID value' ) 
                 return 'fail' 
             fids.append(feat.GetFID()) 
             feat = lyr.GetNextFeature() 
+        gml_ds = None
         os.remove( 'data' + os.sep + filename + '.gfs' ) 
 
     return 'success'
@@ -345,6 +347,7 @@ def ogr_gml_9():
         gdaltest.post_reason('Unexpected content.')
         print(feat.GetField('test'))
         return 'fail'
+    ds = None
 
     os.remove('tmp/broken_utf8.gml')
     os.remove('tmp/broken_utf8.xsd')
@@ -439,6 +442,7 @@ def ogr_gml_10():
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('integer')).GetWidth() != 5:
         gdaltest.post_reason('Unexpected width of integer field.')
         return 'fail'
+    ds = None
 
     os.remove('tmp/fields.gml')
     os.remove('tmp/fields.xsd')
