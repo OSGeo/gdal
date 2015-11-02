@@ -3929,7 +3929,7 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
     if( poLSNew != NULL )
     {
         double dfScale2 = MAX(1, fabs(p0.getX()));
-        dfScale2 = MAX(dfScale, fabs(p0.getY()));
+        dfScale2 = MAX(dfScale2, fabs(p0.getY()));
         /* Not strictly necessary, but helps having 'clean' lines without duplicated points */
         if( fabs(poLSNew->getX(poLSNew->getNumPoints()-1) - p0.getX()) / dfScale2 > 1e-8 ||
             fabs(poLSNew->getY(poLSNew->getNumPoints()-1) - p0.getY()) / dfScale2 > 1e-8 )
