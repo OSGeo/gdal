@@ -241,6 +241,8 @@ if test "x$enable_debug" = "xyes" ; then
   CXXFLAGS="$CXXFLAGS -g -DDEBUG"
   CFLAGS="$CFLAGS -g -DDEBUG"
 
+  AX_CHECK_COMPILE_FLAG([-Werror -ftrapv],[CFLAGS="$CFLAGS -ftrapv" CXXFLAGS="$CXXFLAGS -ftrapv"])
+
   AC_MSG_RESULT([yes, modified CFLAGS="$CFLAGS"])
 else
   AC_MSG_RESULT([no, CFLAGS="$CFLAGS"])
