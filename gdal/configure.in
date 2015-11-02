@@ -222,6 +222,9 @@ AC_ARG_ENABLE(debug,
 			     [enable debugging (disabled by default)]),
 	      [HAVE_DEBUG=$enableval], [HAVE_DEBUG=yes])
 
+CFLAGS_NOFTRAPV="$CFLAGS"
+CXXFLAGS_NOFTRAPV="$CXXFLAGS"
+
 if test "x$enable_debug" = "xyes" ; then
 
   dnl Try to strip out optimization.
@@ -241,12 +244,18 @@ if test "x$enable_debug" = "xyes" ; then
   CXXFLAGS="$CXXFLAGS -g -DDEBUG"
   CFLAGS="$CFLAGS -g -DDEBUG"
 
+  CFLAGS_NOFTRAPV="$CFLAGS"
+  CXXFLAGS_NOFTRAPV="$CXXFLAGS"
+
   AX_CHECK_COMPILE_FLAG([-Werror -ftrapv],[CFLAGS="$CFLAGS -ftrapv" CXXFLAGS="$CXXFLAGS -ftrapv"])
 
   AC_MSG_RESULT([yes, modified CFLAGS="$CFLAGS"])
 else
   AC_MSG_RESULT([no, CFLAGS="$CFLAGS"])
 fi
+
+AC_SUBST(CFLAGS_NOFTRAPV,$CFLAGS_NOFTRAPV)
+AC_SUBST(CXXFLAGS_NOFTRAPV,$CXXFLAGS_NOFTRAPV)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if GCC 4.1 atomic builtins are really available
