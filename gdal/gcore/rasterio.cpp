@@ -132,12 +132,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     poBlock->MarkDirty();
 
                 pabySrcBlock = (GByte *) poBlock->GetDataRef();
-                if( pabySrcBlock == NULL )
-                {
-                    poBlock->DropLock();
-                    eErr = CE_Failure;
-                    break;
-                }
                 if( bMemZeroBuffer )
                 {
                     memset(pabySrcBlock, 0,
@@ -310,11 +304,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     poBlock->MarkDirty();
 
                 pabySrcBlock = (GByte *) poBlock->GetDataRef();
-                if( pabySrcBlock == NULL )
-                {
-                    poBlock->DropLock();
-                    return CE_Failure;
-                }
                 if( bMemZeroBuffer )
                 {
                     memset(pabySrcBlock, 0,
@@ -476,11 +465,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     poBlock->MarkDirty();
 
                     pabyDstBlock = (GByte *) poBlock->GetDataRef();
-                    if( pabyDstBlock == NULL )
-                    {
-                        poBlock->DropLock();
-                        return CE_Failure;
-                    }
                     /*if( bMemZeroBuffer )
                     {
                         memset(pabyDstBlock, 0,
@@ -607,11 +591,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     }
 
                     pabySrcBlock = (GByte *) poBlock->GetDataRef();
-                    if( pabySrcBlock == NULL )
-                    {
-                        eErr = CE_Failure;
-                        break;
-                    }
                 }
 
     /* -------------------------------------------------------------------- */
@@ -2905,11 +2884,6 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                     papoBlocks[iBand] = poBlock;
 
                     papabySrcBlock[iBand] = (GByte *) poBlock->GetDataRef();
-                    if( papabySrcBlock[iBand] == NULL )
-                    {
-                        eErr = CE_Failure; 
-                        goto CleanupAndReturn;
-                    }
                     /*if( bMemZeroBuffer )
                     {
                         memset(papabySrcBlock[iBand], 0,

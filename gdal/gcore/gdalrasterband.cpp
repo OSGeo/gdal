@@ -1231,12 +1231,6 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
                 VSIFree(srcBlock);
 		return CE_Failure;
 	    }
-            if (destBlock->GetDataRef() == NULL)
-            {
-                destBlock->DropLock();
-                VSIFree(srcBlock);
-                return CE_Failure;
-            }
 	    memcpy(destBlock->GetDataRef(), srcBlock, blockByteSize);
 	    destBlock->MarkDirty();
             destBlock->DropLock();
@@ -2901,11 +2895,6 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
             GDALRasterBlock *poBlock = GetLockedBlockRef( iXBlock, iYBlock );
             if( poBlock == NULL )
                 return CE_Failure;
-            if( poBlock->GetDataRef() == NULL )
-            {
-                poBlock->DropLock();
-                return CE_Failure;
-            }
 
             void *pData = poBlock->GetDataRef();
 
@@ -3770,11 +3759,6 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             poBlock = GetLockedBlockRef( iXBlock, iYBlock );
             if( poBlock == NULL )
                 continue;
-            if( poBlock->GetDataRef() == NULL )
-            {
-                poBlock->DropLock();
-                continue;
-            }
 
             pData = poBlock->GetDataRef();
 
@@ -4238,11 +4222,6 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
             GDALRasterBlock *poBlock = GetLockedBlockRef( iXBlock, iYBlock );
             if( poBlock == NULL )
                 continue;
-            if( poBlock->GetDataRef() == NULL )
-            {
-                poBlock->DropLock();
-                continue;
-            }
 
             void *pData = poBlock->GetDataRef();
 
