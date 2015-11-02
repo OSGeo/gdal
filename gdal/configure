@@ -822,6 +822,8 @@ AVXFLAGS
 HAVE_SSE_AT_COMPILE_TIME
 SSEFLAGS
 HAVE_GCC_ATOMIC_BUILTINS
+CXXFLAGS_NOFTRAPV
+CFLAGS_NOFTRAPV
 HAVE_LIBTOOL
 SO_EXT
 LD_SHARED
@@ -18002,6 +18004,9 @@ else
 fi
 
 
+CFLAGS_NOFTRAPV="$CFLAGS"
+CXXFLAGS_NOFTRAPV="$CXXFLAGS"
+
 if test "x$enable_debug" = "xyes" ; then
 
 
@@ -18017,6 +18022,9 @@ if test "x$enable_debug" = "xyes" ; then
 
   CXXFLAGS="$CXXFLAGS -g -DDEBUG"
   CFLAGS="$CFLAGS -g -DDEBUG"
+
+  CFLAGS_NOFTRAPV="$CFLAGS"
+  CXXFLAGS_NOFTRAPV="$CXXFLAGS"
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -ftrapv" >&5
 $as_echo_n "checking whether C compiler accepts -Werror -ftrapv... " >&6; }
@@ -18060,6 +18068,11 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, CFLAGS=\"$CFLAGS\"" >&5
 $as_echo "no, CFLAGS=\"$CFLAGS\"" >&6; }
 fi
+
+CFLAGS_NOFTRAPV=$CFLAGS_NOFTRAPV
+
+CXXFLAGS_NOFTRAPV=$CXXFLAGS_NOFTRAPV
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether GCC 4.1 atomic builtins are available" >&5
