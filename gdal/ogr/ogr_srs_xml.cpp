@@ -1286,9 +1286,7 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 /*      root elements as there is sometimes prefix stuff like           */
 /*      <?xml>.                                                         */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psNode = psTree;
-
-    for( psNode = psTree; psNode != NULL; psNode = psNode->psNext )
+    for( CPLXMLNode* psNode = psTree; psNode != NULL; psNode = psNode->psNext )
     {
         if( EQUAL(psNode->pszValue,"GeographicCRS") )
         {

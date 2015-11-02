@@ -237,7 +237,6 @@ get_delta( unsigned char *srcdata,
     }
 
     const int delta_raw = get_bits( srcdata, block_offset+delta_offset, delta_bits );
-    int delta = delta_raw;
 
     /* Should not happen as delta_075_by_level_by_bc[level_index] == NULL if and
        only if level_index == 0, which means that pixel_index == 0, which means
@@ -248,7 +247,7 @@ get_delta( unsigned char *srcdata,
     const int *lookup_table = delta_075_by_level_by_bc[level_index][busy_code];
 
     CPLAssert( lookup_table != NULL );
-    delta = lookup_table[delta_raw];
+    int delta = lookup_table[delta_raw];
 
     return delta;
 }

@@ -690,14 +690,12 @@ int HFAEntry::GetFieldValue( const char * pszFieldPath,
                              int *pnRemainingDataSize)
 
 {
-    HFAEntry	*poEntry = this;
-
 /* -------------------------------------------------------------------- */
 /*      Is there a node path in this string?                            */
 /* -------------------------------------------------------------------- */
     if( strchr(pszFieldPath,':') != NULL )
     {
-        poEntry = GetNamedChild( pszFieldPath );
+        HFAEntry* poEntry = GetNamedChild( pszFieldPath );
         if( poEntry == NULL )
             return FALSE;
 
@@ -731,14 +729,12 @@ int HFAEntry::GetFieldValue( const char * pszFieldPath,
 
 int HFAEntry::GetFieldCount( const char * pszFieldPath, CPL_UNUSED CPLErr *peErr )
 {
-    HFAEntry	*poEntry = this;
-
 /* -------------------------------------------------------------------- */
 /*      Is there a node path in this string?                            */
 /* -------------------------------------------------------------------- */
     if( strchr(pszFieldPath,':') != NULL )
     {
-        poEntry = GetNamedChild( pszFieldPath );
+        HFAEntry* poEntry = GetNamedChild( pszFieldPath );
         if( poEntry == NULL )
             return -1;
 
@@ -869,14 +865,12 @@ CPLErr HFAEntry::SetFieldValue( const char * pszFieldPath,
                                 char chReqType, void *pValue )
 
 {
-    HFAEntry	*poEntry = this;
-
 /* -------------------------------------------------------------------- */
 /*      Is there a node path in this string?                            */
 /* -------------------------------------------------------------------- */
     if( strchr(pszFieldPath,':') != NULL )
     {
-        poEntry = GetNamedChild( pszFieldPath );
+        HFAEntry* poEntry = GetNamedChild( pszFieldPath );
         if( poEntry == NULL )
             return CE_Failure;
 

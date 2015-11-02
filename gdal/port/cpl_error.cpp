@@ -794,7 +794,7 @@ CPLErrorHandler CPL_STDCALL
 CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew, 
                       void* pUserData )
 {
-    CPLErrorHandler     pfnOldHandler = pfnErrorHandler;
+    CPLErrorHandler     pfnOldHandler;
     CPLErrorContext *psCtx = CPLGetErrorContext();
 
     if( psCtx->psHandlerStack != NULL )

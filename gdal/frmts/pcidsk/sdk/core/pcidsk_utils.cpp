@@ -389,9 +389,8 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
 
 {
     std::vector<double> dparms;
-    const char *next = sparms.c_str();
 
-    for( next = sparms.c_str(); *next != '\0'; )
+    for( const char* next = sparms.c_str(); *next != '\0'; )
     {
         dparms.push_back( CPLAtof(next) );
 

@@ -512,7 +512,6 @@ static char *CPLReadLineBuffer( int nRequiredSize )
 const char *CPLReadLine( FILE * fp )
 
 {
-    char *pszRLBuffer = CPLReadLineBuffer(1);
     int         nReadSoFar = 0;
 
 /* -------------------------------------------------------------------- */
@@ -529,6 +528,7 @@ const char *CPLReadLine( FILE * fp )
 /*      the line.                                                       */
 /* -------------------------------------------------------------------- */
     int nBytesReadThisTime;
+    char* pszRLBuffer;
 
     do {
 /* -------------------------------------------------------------------- */
