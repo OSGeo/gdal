@@ -1001,7 +1001,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
     const int nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int nLineOffset = record_bytes;
+    int nLineOffset;
     int nPixelOffset;
     int nBandOffset;
 
