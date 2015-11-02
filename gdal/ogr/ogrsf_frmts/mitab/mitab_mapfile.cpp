@@ -485,7 +485,11 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
     if( m_eAccessMode == TABReadWrite )
     {
         VSIStatBufL sStatBuf;
-        VSIStatL(m_pszFname, &sStatBuf);
+        if( VSIStatL(m_pszFname, &sStatBuf) != 0 )
+        {
+            Close();
+            return -1;
+        }
         m_oBlockManager.SetLastPtr((int)(((sStatBuf.st_size-1)/512)*512));
 
         /* Read chain of garbage blocks */

@@ -59,15 +59,16 @@ void OGRWFSRecursiveUnlink( const char *pszName )
         CPLString osFullFilename =
                  CPLFormFilename( pszName, papszFileList[i], NULL );
 
-        VSIStatL( osFullFilename, &sStatBuf );
-
-        if( VSI_ISREG( sStatBuf.st_mode ) )
+        if( VSIStatL( osFullFilename, &sStatBuf ) == 0 )
         {
-            VSIUnlink( osFullFilename );
-        }
-        else if( VSI_ISDIR( sStatBuf.st_mode ) )
-        {
-            OGRWFSRecursiveUnlink( osFullFilename );
+            if( VSI_ISREG( sStatBuf.st_mode ) )
+            {
+                VSIUnlink( osFullFilename );
+            }
+            else if( VSI_ISDIR( sStatBuf.st_mode ) )
+            {
+                OGRWFSRecursiveUnlink( osFullFilename );
+            }
         }
     }
 
@@ -1483,17 +1484,18 @@ GIntBig OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         osFileInZipTmpFileName += papszDirContent[0];
 
         fp = VSIFOpenL(osFileInZipTmpFileName.c_str(), "rb");
-        if (fp == NULL)
+        VSIStatBufL sBuf;
+        if (fp == NULL || VSIStatL(osFileInZipTmpFileName.c_str(), &sBuf) != 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot parse result of RESULTTYPE=hits request : cannot open one file in zip");
             CSLDestroy(papszDirContent);
             CPLHTTPDestroyResult(psResult);
             VSIUnlink(osTmpFileName);
+            if( fp )
+                VSIFCloseL(fp);
             return -1;
         }
-        VSIStatBufL sBuf;
-        VSIStatL(osFileInZipTmpFileName.c_str(), &sBuf);
         pabyData = (char*) CPLMalloc((size_t)(sBuf.st_size + 1));
         pabyData[sBuf.st_size] = 0;
         VSIFReadL(pabyData, 1, (size_t)sBuf.st_size, fp);

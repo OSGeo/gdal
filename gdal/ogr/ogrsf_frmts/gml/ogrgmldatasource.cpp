@@ -648,8 +648,8 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         VSIStatBufL sResStatBuf, sGMLStatBuf;
         if( bCheckAuxFile && VSIStatL( pszXlinkResolvedFilename, &sResStatBuf ) == 0 )
         {
-            VSIStatL( pszFilename, &sGMLStatBuf );
-            if( sGMLStatBuf.st_mtime > sResStatBuf.st_mtime )
+            if( VSIStatL( pszFilename, &sGMLStatBuf ) == 0 &&
+                sGMLStatBuf.st_mtime > sResStatBuf.st_mtime )
             {
                 CPLDebug( "GML", 
                           "Found %s but ignoring because it appears\n"
@@ -754,8 +754,8 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         if( bCheckAuxFile && VSIStatL( osGFSFilename, &sGFSStatBuf ) == 0 )
         {
             VSIStatBufL sGMLStatBuf;
-            VSIStatL( pszFilename, &sGMLStatBuf );
-            if( sGMLStatBuf.st_mtime > sGFSStatBuf.st_mtime )
+            if( VSIStatL( pszFilename, &sGMLStatBuf ) == 0 &&
+                sGMLStatBuf.st_mtime > sGFSStatBuf.st_mtime )
             {
                 CPLDebug( "GML", 
                           "Found %s but ignoring because it appears\n"

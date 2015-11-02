@@ -53,7 +53,7 @@ static int utf8test(const char* src, unsigned srclen);
 #include <winnls.h>
 
 static char* CPLWin32Recode( const char* src,
-                             unsigned src_code_page, unsigned dst_code_page );
+                             unsigned src_code_page, unsigned dst_code_page ) CPL_RETURNS_NONNULL;
 #endif
 
 #ifdef FUTURE_NEEDS
@@ -65,7 +65,7 @@ static int utf8bytes(unsigned ucs);
 
 /* used by cpl_recode.cpp */
 extern void CPLClearRecodeStubWarningFlags();
-extern char *CPLRecodeStub( const char *, const char *, const char * );
+extern char *CPLRecodeStub( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
 extern char *CPLRecodeFromWCharStub( const wchar_t *,
                                      const char *, const char * );
 extern wchar_t *CPLRecodeToWCharStub( const char *,

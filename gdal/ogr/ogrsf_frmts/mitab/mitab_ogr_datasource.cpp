@@ -480,8 +480,8 @@ char **OGRTABDataSource::GetFileList()
     VSIStatBufL sStatBuf;
     CPLStringList osList;
 
-    VSIStatL( m_pszName, &sStatBuf );
-    if( VSI_ISDIR(sStatBuf.st_mode) )
+    if( VSIStatL( m_pszName, &sStatBuf ) == 0 &&
+        VSI_ISDIR(sStatBuf.st_mode) )
     {
         static const char *apszExtensions[] = 
             { "mif", "mid", "tab", "map", "ind", "dat", "id", NULL };

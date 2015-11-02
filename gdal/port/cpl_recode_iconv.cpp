@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
 
  /* used by cpl_recode.cpp */
 extern void CPLClearRecodeIconvWarningFlags();
-extern char *CPLRecodeIconv( const char *, const char *, const char * );
+extern char *CPLRecodeIconv( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
 extern char *CPLRecodeFromWCharIconv( const wchar_t *,
                                       const char *, const char * );
 extern wchar_t *CPLRecodeToWCharIconv( const char *,
