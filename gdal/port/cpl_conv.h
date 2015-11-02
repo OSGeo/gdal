@@ -66,7 +66,7 @@ void CPL_DLL CPL_STDCALL CPLFreeConfig(void);
 void CPL_DLL *CPLMalloc( size_t ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL *CPLCalloc( size_t, size_t ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL *CPLRealloc( void *, size_t ) CPL_WARN_UNUSED_RESULT;
-char CPL_DLL *CPLStrdup( const char * ) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL *CPLStrdup( const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 char CPL_DLL *CPLStrlwr( char *);
 
 #define CPLFree VSIFree
