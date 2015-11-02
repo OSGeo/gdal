@@ -476,7 +476,7 @@ def ogr_plscenes_2():
         gdaltest.post_reason('fail')
         return 'fail'
     lyr.SetSpatialFilterRect(2.5,49.5,2.5,49.5)
-    if lyr.GetFeatureCount() != 1:
+    if lyr.GetFeatureCount() != 1 and gdal.GetLastErrorMsg().find('GEOS support not enabled') < 0:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
