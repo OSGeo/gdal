@@ -2419,9 +2419,8 @@ void OGRGMLDataSource::InsertHeader()
 /* -------------------------------------------------------------------- */
         int nChunkSize = MIN(nSchemaStart-nSchemaInsertLocation,250000);
         char *pszChunk = (char *) CPLMalloc(nChunkSize);
-        int nEndOfUnmovedData = nSchemaStart;
 
-        for( nEndOfUnmovedData = nSchemaStart;
+        for( int nEndOfUnmovedData = nSchemaStart;
              nEndOfUnmovedData > nSchemaInsertLocation; )
         {
             int nBytesToMove = 

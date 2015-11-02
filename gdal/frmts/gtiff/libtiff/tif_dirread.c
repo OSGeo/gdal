@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.192 2015-10-17 10:13:14 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.193 2015-11-02 09:52:08 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -4292,7 +4292,7 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 		/* calculate amount of space used by indirect values */
 		for (dp = dir, n = dircount; n > 0; n--, dp++)
 		{
-			uint32 typewidth = TIFFDataWidth((TIFFDataType) dp->tdir_type);
+			uint32 typewidth;
 			uint64 datasize;
 			typewidth = TIFFDataWidth((TIFFDataType) dp->tdir_type);
 			if (typewidth == 0) {

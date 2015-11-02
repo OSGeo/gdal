@@ -99,7 +99,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if( pszChunk == NULL )
         return FALSE;
     int nBytesRead = VSIFReadL( pszChunk, 1, LabelSize, fp );
-    pszChunk[LabelSize] = 0;
+    pszChunk[nBytesRead] = 0;
 
     osHeaderText += pszChunk ;
     VSIFree( pszChunk );

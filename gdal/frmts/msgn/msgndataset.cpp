@@ -248,8 +248,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 }
             }
             double dvalue = double(value);
-            double bbvalue = MSGN_NODATA_VALUE;
-            bbvalue = dvalue * poGDS->msg_reader_core->get_calibration_parameters()[orig_band_no-1].cal_slope +
+            double bbvalue = dvalue * poGDS->msg_reader_core->get_calibration_parameters()[orig_band_no-1].cal_slope +
                 poGDS->msg_reader_core->get_calibration_parameters()[orig_band_no-1].cal_offset;
 
             ((double *)pImage)[nBlockXSize-1 -c] = bbvalue;

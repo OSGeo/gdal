@@ -2138,7 +2138,6 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     PGresult            *hResult = NULL;
     CPLString           osCommand;
     char                *pszWKT = NULL;
-    int                 nSRSId = nUndefinedSRID;
     const char*         pszAuthorityName;
 
     if( poSRS == NULL )
@@ -2189,7 +2188,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
                 && PQntuples(hResult) > 0 )
             {
-                nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
+                int nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
 
                 OGRPGClearResult( hResult );
 
@@ -2226,7 +2225,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
         && PQntuples(hResult) > 0 )
     {
-        nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
+        int nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
 
         OGRPGClearResult( hResult );
 
@@ -2255,6 +2254,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     hResult = OGRPG_PQexec(hPGConn, "SELECT MAX(srid) FROM spatial_ref_sys" );
 
+    int nSRSId;
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
     {
         nSRSId = atoi(PQgetvalue(hResult,0,0)) + 1;

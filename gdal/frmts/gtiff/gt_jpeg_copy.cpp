@@ -635,12 +635,11 @@ static CPLErr GTIFF_CopyBlockFromJPEG(TIFF* hTIFF,
                                 (JDIMENSION) compptr->v_samp_factor, TRUE);
 
             int offset_y = 0;
-            int nYBlocks = compptr->v_samp_factor;
             if( bIsTiled &&
                 dst_blk_y + y_crop_blocks + compptr->v_samp_factor >
                                                         nSrcHeightInBlocks)
             {
-                nYBlocks = nSrcHeightInBlocks - (dst_blk_y + y_crop_blocks);
+                int nYBlocks = nSrcHeightInBlocks - (dst_blk_y + y_crop_blocks);
                 if (nYBlocks > 0)
                 {
                     JBLOCKARRAY src_buffer = (*sDInfo.mem->access_virt_barray)

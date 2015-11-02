@@ -1037,8 +1037,6 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                  where <stuff> should contain the                    */
 /*                  substring "sso" or "polgasp"                        */
 /* -------------------------------------------------------------------- */
-    int nNameLen = strlen(poOpenInfo->pszFilename);
-
     int CPGType = 0;
     if ( FindType1( poOpenInfo->pszFilename ))
       CPGType = 1;
@@ -1059,7 +1057,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ( CPGType == 0 )
     {
-      nNameLen = strlen(poOpenInfo->pszFilename);
+      int nNameLen = strlen(poOpenInfo->pszFilename);
       if ( (nNameLen > 8) && 
            ( ( strstr(poOpenInfo->pszFilename,"sso") != NULL ) ||
              ( strstr(poOpenInfo->pszFilename,"polgasp") != NULL ) ) &&

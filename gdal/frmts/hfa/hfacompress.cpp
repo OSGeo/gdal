@@ -256,10 +256,9 @@ bool HFACompress::compressBlock()
 
   /* Go thru the block */
   GUInt32 u32Last = valueAsUInt32( 0 );
-  GUInt32 u32Val = u32Last;
   for( GUInt32 count = 1; count < m_nBlockCount; count++ )
   {
-    u32Val = valueAsUInt32( count );
+    GUInt32 u32Val = valueAsUInt32( count );
     if( u32Val != u32Last )
     {
       /* The values have changed - ie a run has come to and end */

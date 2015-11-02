@@ -248,12 +248,11 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         return NULL;
     }
 
-    double dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
+    double dfNoDataValue;
+    GDALDataType eType;
+    int nPixelOffset;
 
     // get the datatype
-    GDALDataType eType = GDT_Unknown;
-    int nPixelOffset = 0;
-
     pszJSONStr = GetJsonValueStr(pJSONObject, "datatype");
     if (pszJSONStr == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined,

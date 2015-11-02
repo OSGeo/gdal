@@ -1664,13 +1664,11 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         if( oWK.pafUnifiedSrcDensity == NULL )
         {
-            int j = oWK.nSrcXSize * oWK.nSrcYSize;
-
             eErr = CreateKernelMask( &oWK, 0, "UnifiedSrcDensity" );
 
             if( eErr == CE_None )
             {
-                for( j = oWK.nSrcXSize * oWK.nSrcYSize - 1; j >= 0; j-- )
+                for( int j = oWK.nSrcXSize * oWK.nSrcYSize - 1; j >= 0; j-- )
                     oWK.pafUnifiedSrcDensity[j] = 1.0;
             }
         }

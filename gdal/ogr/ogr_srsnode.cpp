@@ -948,12 +948,10 @@ OGRErr OGR_SRSNode::FixupOrdering()
             if( panChildKey[j] > panChildKey[j+1] )
             {
                 OGR_SRSNode *poTemp = papoChildNodes[j];
-                int          nKeyTemp = panChildKey[j];
-
                 papoChildNodes[j] = papoChildNodes[j+1];
                 papoChildNodes[j+1] = poTemp;
 
-                nKeyTemp = panChildKey[j];
+                int nKeyTemp = panChildKey[j];
                 panChildKey[j] = panChildKey[j+1];
                 panChildKey[j+1] = nKeyTemp;
 
