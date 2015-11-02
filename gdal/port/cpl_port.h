@@ -632,10 +632,14 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #define CPL_NO_RETURN
 #endif
 
-#if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
+/* Clang __has_attribute */
+#ifndef __has_attribute
+  #define __has_attribute(x) 0  // Compatibility with non-clang compilers.
+#endif
+
+#if ((defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))) || __has_attribute(returns_nonnull)) && !defined(DOXYGEN_SKIP)
 #  define CPL_RETURNS_NONNULL __attribute__((returns_nonnull))
 #else
-/* TODO: add cases for other compilers */
 #  define CPL_RETURNS_NONNULL
 #endif
 
