@@ -228,8 +228,10 @@ def run_all( dirlist, run_as_external = False ):
         files = os.listdir(dir_name)
 
         old_path = sys.path
-        sys.path.append('.')
-        
+        # We prepend '.' rather than append it, so that "import rasterio"
+        # imports our rasterio.py and not another famous externel package...
+        sys.path = ['.'] + sys.path
+
         for file in files:
             if not file[-3:] == '.py':
                 continue
@@ -278,6 +280,8 @@ def run_all( dirlist, run_as_external = False ):
                         setup_run( '%s/%s' % (dir_name,file) )
                         exec("run_tests( " + module + ".gdaltest_list)")
                     except:
+                        #import traceback
+                        #traceback.print_exc(file=sys.stderr)
                         pass
 
                 os.chdir( wd )
