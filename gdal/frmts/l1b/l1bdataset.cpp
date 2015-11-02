@@ -3201,7 +3201,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     if( fp == NULL )
         fp = VSIFOpenL( osFilename, "rb" );
     poDS->fp = fp;
-    if ( !poDS->fp )
+    if ( !poDS->fp || VSIStatL(osFilename, &sStat) != 0 )
     {
         CPLDebug( "L1B", "Can't open file \"%s\".", osFilename.c_str() );
         goto bad;
@@ -3215,8 +3215,6 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug( "L1B", "Error reading L1B record header." );
         goto bad;
     }
-
-    VSIStatL(osFilename, &sStat);
 
     if( poDS->eL1BFormat == L1B_NOAA15_NOHDR &&
         poDS->nRecordSizeFromHeader == 22016 &&

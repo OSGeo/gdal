@@ -107,9 +107,8 @@ int OGRNASDataSource::Open( const char * pszNewName )
     pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
     if( CPLStat( pszGFSFilename, &sGFSStatBuf ) == 0 )
     {
-        CPLStat( pszNewName, &sNASStatBuf );
-
-        if( sNASStatBuf.st_mtime > sGFSStatBuf.st_mtime )
+        if( CPLStat( pszNewName, &sNASStatBuf ) == 0 &&
+            sNASStatBuf.st_mtime > sGFSStatBuf.st_mtime )
         {
             CPLDebug( "NAS",
                       "Found %s but ignoring because it appears\n"

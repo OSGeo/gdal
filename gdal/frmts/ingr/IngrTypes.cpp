@@ -743,7 +743,8 @@ uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
         // -------------------------------------------------------------
 
         VSIStatBufL  sStat;
-        VSIStatL( pszFilename, &sStat );
+        if( VSIStatL( pszFilename, &sStat ) != 0 )
+            return 0;
         return (uint32) (sStat.st_size - nDataOffset);
     }
 

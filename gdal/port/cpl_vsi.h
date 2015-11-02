@@ -95,7 +95,7 @@ int CPL_DLL     VSIFEof( FILE * );
 /* ==================================================================== */
 
 typedef struct stat VSIStatBuf;
-int CPL_DLL VSIStat( const char *, VSIStatBuf * );
+int CPL_DLL VSIStat( const char *, VSIStatBuf * ) CPL_WARN_UNUSED_RESULT;
 
 #ifdef _WIN32
 #  define VSI_ISLNK(x)  ( 0 )            /* N/A on Windows */
@@ -156,13 +156,13 @@ typedef struct VSI_STAT64_T VSIStatBufL;
 #define VSIStatBufL    VSIStatBuf
 #endif
 
-int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
+int CPL_DLL     VSIStatL( const char *, VSIStatBufL * ) CPL_WARN_UNUSED_RESULT;
 
 #define VSI_STAT_EXISTS_FLAG    0x1
 #define VSI_STAT_NATURE_FLAG    0x2
 #define VSI_STAT_SIZE_FLAG      0x4
 
-int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, int nFlags );
+int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, int nFlags ) CPL_WARN_UNUSED_RESULT;
 
 int CPL_DLL     VSIIsCaseSensitiveFS( const char * pszFilename );
 
@@ -235,7 +235,7 @@ void CPL_DLL VSICleanupFileManager(void);
 VSILFILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
                                     GByte *pabyData, 
                                     vsi_l_offset nDataLength,
-                                    int bTakeOwnership );
+                                    int bTakeOwnership ) CPL_WARN_UNUSED_RESULT;
 GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
                                     vsi_l_offset *pnDataLength, 
                                     int bUnlinkAndSeize );
