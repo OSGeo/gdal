@@ -1971,6 +1971,11 @@ def ogr_gml_48():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
+    try:
+        os.unlink('data/schema_with_geom_in_complextype.gfs')
+    except:
+        pass
+
     ds = ogr.Open('data/schema_with_geom_in_complextype.xml')
     lyr = ds.GetLayer(0)
 
@@ -2270,6 +2275,11 @@ def ogr_gml_56():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
+    try:
+        os.unlink('data/ogr_gml_56.gfs')
+    except:
+        pass
+
     gdal.SetConfigOption('GML_REGISTRY', 'data/ogr_gml_56_registry.xml')
     ds = ogr.Open('data/ogr_gml_56.gml')
     gdal.SetConfigOption('GML_REGISTRY', None)
@@ -2409,6 +2419,11 @@ def ogr_gml_58():
 
     if not gdaltest.have_gml_reader:
         return 'skip'
+
+    try:
+        os.unlink('data/inspire_cadastralparcel.gfs')
+    except:
+        pass
 
     ds = ogr.Open('data/inspire_cadastralparcel.xml')
     lyr = ds.GetLayer(0)
