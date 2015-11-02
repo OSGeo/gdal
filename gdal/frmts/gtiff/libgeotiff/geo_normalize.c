@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2677 2015-10-17 10:27:53Z rouault $
+ * $Id: geo_normalize.c 2679 2015-11-02 10:40:01Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -203,7 +203,7 @@ int GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
         if( atoi(pszValue) > 0 )
             *pnProjOp = (short) atoi(pszValue);
         else
-            *pnUOMLengthCode = KvUserDefined;
+            *pnProjOp = KvUserDefined;
     }
 
 /* -------------------------------------------------------------------- */
