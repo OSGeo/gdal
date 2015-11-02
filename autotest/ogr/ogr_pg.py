@@ -4930,6 +4930,26 @@ def ogr_pg_79():
     return 'success'
 
 ###############################################################################
+# Test retrieving an error from ExecuteSQL() (#6194)
+
+def ogr_pg_80():
+
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run:
+        return 'skip'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT FROM')
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_pg_table_cleanup():
@@ -5098,7 +5118,9 @@ gdaltest_list_internal = [
     ogr_pg_77,
     ogr_pg_78,
     ogr_pg_79,
-    ogr_pg_cleanup ]
+    ogr_pg_80,
+    ogr_pg_cleanup
+]
 
 DISABLED_gdaltest_list_internal = [
     ogr_pg_table_cleanup,
@@ -5110,6 +5132,7 @@ DISABLED_gdaltest_list_internal = [
 
 def ogr_pg_with_and_without_postgis():
 
+    gdaltest.ogr_pg_second_run = False
     gdaltest.run_tests( [ ogr_pg_1 ] )
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5120,9 +5143,11 @@ def ogr_pg_with_and_without_postgis():
 
         if gdaltest.pg_has_postgis:
             gdal.SetConfigOption("PG_USE_POSTGIS", "NO")
+            gdaltest.ogr_pg_second_run = True
             gdaltest.run_tests( [ ogr_pg_1 ] )
             gdaltest.run_tests( gdaltest_list_internal )
             gdal.SetConfigOption("PG_USE_POSTGIS", "YES")
+            gdaltest.ogr_pg_second_run = False
 
     return 'success'
 
