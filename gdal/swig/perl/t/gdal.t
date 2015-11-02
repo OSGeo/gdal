@@ -131,12 +131,15 @@ if (0) {
 
     my @o;
     for (0..5) {
-	my $a = 0.1*$_;
-	push @o, "$a Generating Histogram 1";
+	my $x = 0.1*$_;
+        my $t = sprintf("%.1f", $x);
+	push @o, "$t Generating Histogram 1";
     }
     my @out;
     my $callback = sub {
-        push @out, "@_";	
+        my ($x, $s, $data) = @_;
+        my $t = sprintf("%.1f", $x);
+        push @out, "$t $s $data";
         return $_[0] < 0.5 ? 1 : 0;
     };
     eval {
@@ -145,11 +148,13 @@ if (0) {
 				       $callback
 				       );
     };
+    print "\n@out vs @o\n";
     ok(is_deeply(\@out, \@o), "callback without callback_data");
     @o = ();
     for (0..5) {
-	my $a = 0.1*$_;
-	push @o, "$a Generating Histogram 6";
+	my $x = 0.1*$_;
+        my $t = sprintf("%.1f", $x);
+	push @o, "$t Generating Histogram 6";
     }
     @out = ();
     eval {
