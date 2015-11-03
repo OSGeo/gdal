@@ -38,13 +38,11 @@ CPL_CVSID("$Id$");
 /*                         SDTSIndexedReader()                          */
 /************************************************************************/
 
-SDTSIndexedReader::SDTSIndexedReader()
-
-{
-    nIndexSize = 0;
-    papoFeatures = NULL;
-    iCurrentFeature = 0;
-}
+SDTSIndexedReader::SDTSIndexedReader() :
+    nIndexSize(0),
+    papoFeatures(NULL),
+    iCurrentFeature(0)
+{}
 
 /************************************************************************/
 /*                         ~SDTSIndexedReader()                         */
@@ -93,7 +91,7 @@ void SDTSIndexedReader::ClearIndex()
         if( papoFeatures[i] != NULL )
             delete papoFeatures[i];
     }
-    
+
     CPLFree( papoFeatures );
 
     papoFeatures = NULL;
@@ -124,18 +122,16 @@ SDTSFeature *SDTSIndexedReader::GetNextFeature()
 {
     if( nIndexSize == 0 )
         return GetNextRawFeature();
-    else
-    {
-        while( iCurrentFeature < nIndexSize )
-        {
-            if( papoFeatures[iCurrentFeature] != NULL )
-                return papoFeatures[iCurrentFeature++];
-            else
-                iCurrentFeature++;
-        }
 
-        return NULL;
+    while( iCurrentFeature < nIndexSize )
+    {
+        if( papoFeatures[iCurrentFeature] != NULL )
+            return papoFeatures[iCurrentFeature++];
+        else
+            iCurrentFeature++;
     }
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -165,8 +161,8 @@ SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 
     if( iRecordId < 0 || iRecordId >= nIndexSize )
         return NULL;
-    else
-        return papoFeatures[iRecordId];
+
+    return papoFeatures[iRecordId];
 }
 
 /************************************************************************/
@@ -183,16 +179,16 @@ SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 void SDTSIndexedReader::FillIndex()
 
 {
-    SDTSFeature         *poFeature;
 
     if( nIndexSize != 0 )
         return;
 
     Rewind();
-    
+
+    SDTSFeature *poFeature;
     while( (poFeature = GetNextRawFeature()) != NULL )
     {
-        int     iRecordId = poFeature->oModId.nRecord;
+        const int iRecordId = poFeature->oModId.nRecord;
 
         CPLAssert( iRecordId < 1000000 );
         if( iRecordId >= 1000000 )
@@ -203,10 +199,10 @@ void SDTSIndexedReader::FillIndex()
 
         if( iRecordId >= nIndexSize )
         {
-            int         nNewSize = (int) (iRecordId * 1.25 + 100);
+            const int nNewSize = static_cast<int>(iRecordId * 1.25 + 100);
 
-            papoFeatures = (SDTSFeature **)
-                CPLRealloc( papoFeatures, sizeof(void*) * nNewSize);
+            papoFeatures = reinterpret_cast<SDTSFeature **>(
+                CPLRealloc( papoFeatures, sizeof(void*) * nNewSize ) );
 
             for( int i = nIndexSize; i < nNewSize; i++ )
                 papoFeatures[i] = NULL;

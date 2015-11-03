@@ -44,11 +44,12 @@ CPL_CVSID("$Id$");
 /*                            SDTSRawLine()                             */
 /************************************************************************/
 
-SDTSRawLine::SDTSRawLine()
-
+SDTSRawLine::SDTSRawLine() :
+    nVertices(0),
+    padfX(NULL),
+    padfY(NULL),
+    padfZ(NULL)
 {
-    nVertices = 0;
-    padfX = padfY = padfZ = NULL;
     nAttributes = 0;
 }
 
@@ -76,7 +77,7 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
     // E.Rouault: Not sure if this test is really useful
     if( poRecord->GetStringSubfield( "LINE", 0, "MODN", 0 ) == NULL )
         return FALSE;
-    
+
 /* ==================================================================== */
 /*      Loop over fields in this record, looking for those we           */
 /*      recognise, and need.  I don't use the getSubfield()             */
@@ -99,24 +100,25 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 
         else if( EQUAL(pszFieldName,"PIDL") )
             oLeftPoly.Set( poField );
-        
+
         else if( EQUAL(pszFieldName,"PIDR") )
             oRightPoly.Set( poField );
-        
+
         else if( EQUAL(pszFieldName,"SNID") )
             oStartNode.Set( poField );
-        
+
         else if( EQUAL(pszFieldName,"ENID") )
             oEndNode.Set( poField );
 
         else if( EQUAL(pszFieldName,"SADR") )
         {
             nVertices = poIREF->GetSADRCount( poField );
-            
-            padfX = (double*) CPLRealloc(padfX,sizeof(double)*nVertices*3);
+
+            padfX = reinterpret_cast<double *>(
+                CPLRealloc( padfX, sizeof(double) * nVertices*3 ) );
             padfY = padfX + nVertices;
             padfZ = padfX + 2*nVertices;
-            
+
             poIREF->GetSADR( poField, nVertices, padfX, padfY, padfZ );
         }
     }
@@ -133,8 +135,6 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 void SDTSRawLine::Dump( FILE * fp )
 
 {
-    int    i;
-
     fprintf( fp, "SDTSRawLine\n" );
     fprintf( fp, "  Module=%s, Record#=%ld\n",
              oModId.szModule, oModId.nRecord );
@@ -150,11 +150,11 @@ void SDTSRawLine::Dump( FILE * fp )
     if( oEndNode.nRecord != -1 )
         fprintf( fp, "  EndNode (Module=%s, Record=%ld)\n", 
                  oEndNode.szModule, oEndNode.nRecord );
-    for( i = 0; i < nAttributes; i++ )
+    for( int i = 0; i < nAttributes; i++ )
         fprintf( fp, "  Attribute (Module=%s, Record=%ld)\n", 
                  paoATID[i].szModule, paoATID[i].nRecord );
 
-    for( i = 0; i < nVertices; i++ )
+    for( int i = 0; i < nVertices; i++ )
     {
         fprintf( fp, "  Vertex[%3d] = (%.2f,%.2f,%.2f)\n",
                  i, padfX[i], padfY[i], padfZ[i] );
@@ -217,7 +217,7 @@ int SDTSLineReader::Open( const char * pszFilename )
 /*      Fetch the next line feature as an STDSRawLine.                  */
 /************************************************************************/
 
-SDTSRawLine * SDTSLineReader::GetNextLine()
+SDTSRawLine *SDTSLineReader::GetNextLine()
 
 {
 /* -------------------------------------------------------------------- */
@@ -229,25 +229,23 @@ SDTSRawLine * SDTSLineReader::GetNextLine()
 /* -------------------------------------------------------------------- */
 /*      Read the record.                                                */
 /* -------------------------------------------------------------------- */
-    DDFRecord   *poRecord = oDDFModule.ReadRecord();
-    
+    DDFRecord *poRecord = oDDFModule.ReadRecord();
+
     if( poRecord == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Transform into a line feature.                                  */
 /* -------------------------------------------------------------------- */
-    SDTSRawLine         *poRawLine = new SDTSRawLine();
+    SDTSRawLine *poRawLine = new SDTSRawLine();
 
     if( poRawLine->Read( poIREF, poRecord ) )
     {
         return( poRawLine );
     }
-    else
-    {
-        delete poRawLine;
-        return NULL;
-    }
+
+    delete poRawLine;
+    return NULL;
 }
 
 /************************************************************************/
@@ -286,11 +284,11 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer,
 /*      Loop over all lines, attaching them to the polygons they        */
 /*      have as right and left faces.                                   */
 /* ==================================================================== */
+    Rewind();
     SDTSRawLine *poLine;
     SDTSPolygonReader *poPolyReader = NULL;
-    
-    Rewind();
-    while( (poLine = (SDTSRawLine *) GetNextFeature()) != NULL )
+    while( (poLine = reinterpret_cast<SDTSRawLine *>( GetNextFeature()) )
+           != NULL )
     {
 /* -------------------------------------------------------------------- */
 /*      Skip lines with the same left and right polygon face.  These    */
@@ -307,7 +305,7 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer,
         if( poPolyReader == NULL )
         {
             int         iPolyLayer = -1;
-            
+
             if( poLine->oLeftPoly.nRecord != -1 )
             {
                 iPolyLayer = poTransfer->FindLayer(poLine->oLeftPoly.szModule);
@@ -323,8 +321,8 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer,
             if( iPolyLayer != iTargetPolyLayer )
                 continue;
 
-            poPolyReader = (SDTSPolygonReader *)
-                poTransfer->GetLayerIndexedReader(iPolyLayer);
+            poPolyReader = reinterpret_cast<SDTSPolygonReader *>(
+                poTransfer->GetLayerIndexedReader(iPolyLayer) );
 
             if( poPolyReader == NULL )
                 return;
@@ -335,20 +333,17 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer,
 /* -------------------------------------------------------------------- */
         if( poLine->oLeftPoly.nRecord != -1 )
         {
-            SDTSRawPolygon      *poPoly;
-
-            poPoly = (SDTSRawPolygon *) poPolyReader->GetIndexedFeatureRef(
-                poLine->oLeftPoly.nRecord );
+          SDTSRawPolygon *poPoly = reinterpret_cast<SDTSRawPolygon *>(
+              poPolyReader->GetIndexedFeatureRef( poLine->oLeftPoly.nRecord ) );
             if( poPoly != NULL )
                 poPoly->AddEdge( poLine );
         }
-            
+
         if( poLine->oRightPoly.nRecord != -1 )
         {
-            SDTSRawPolygon      *poPoly;
-
-            poPoly = (SDTSRawPolygon *) poPolyReader->GetIndexedFeatureRef(
-                poLine->oRightPoly.nRecord );
+            SDTSRawPolygon *poPoly = reinterpret_cast<SDTSRawPolygon *>(
+                poPolyReader->GetIndexedFeatureRef(
+                    poLine->oRightPoly.nRecord ) );
 
             if( poPoly != NULL )
                 poPoly->AddEdge( poLine );
