@@ -65,13 +65,11 @@ class SDTS_CATDEntry
 /*                             SDTS_CATD()                              */
 /************************************************************************/
 
-SDTS_CATD::SDTS_CATD()
-
-{
-    nEntries = 0;
-    papoEntries = NULL;
-    pszPrefixPath = NULL;
-}
+SDTS_CATD::SDTS_CATD() :
+    pszPrefixPath(NULL),
+    nEntries(0),
+    papoEntries(NULL)
+{}
 
 /************************************************************************/
 /*                             ~SDTS_CATD()                             */
@@ -79,10 +77,8 @@ SDTS_CATD::SDTS_CATD()
 
 SDTS_CATD::~SDTS_CATD()
 {
-    int         i;
-
-    for( i = 0; i < nEntries; i++ )
-    { 
+    for( int i = 0; i < nEntries; i++ )
+    {
         CPLFree( papoEntries[i]->pszModule );
         CPLFree( papoEntries[i]->pszType );
         CPLFree( papoEntries[i]->pszFile );
@@ -104,12 +100,10 @@ SDTS_CATD::~SDTS_CATD()
 int SDTS_CATD::Read( const char * pszFilename )
 
 {
-    DDFModule   oCATDFile;
-    DDFRecord   *poRecord;
-
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
+    DDFModule oCATDFile;
     if( !oCATDFile.Open( pszFilename ) )
         return FALSE;
 
@@ -122,14 +116,13 @@ int SDTS_CATD::Read( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     if( oCATDFile.FindFieldDefn( "CATD" ) == NULL )
         return FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Strip off the filename, and keep the path prefix.               */
 /* -------------------------------------------------------------------- */
-    int         i;
-
     pszPrefixPath = CPLStrdup( pszFilename );
-    for( i = strlen(pszPrefixPath)-1; i > 0; i-- )
+    int i = strlen(pszPrefixPath) - 1;
+    for( ; i > 0; i-- )
     {
         if( pszPrefixPath[i] == '\\' || pszPrefixPath[i] == '/' )
         {
@@ -142,11 +135,12 @@ int SDTS_CATD::Read( const char * pszFilename )
     {
         strcpy( pszPrefixPath, "." );
     }
-    
+
 /* ==================================================================== */
 /*      Loop reading CATD records, and adding to our list of entries    */
 /*      for each.                                                       */
 /* ==================================================================== */
+    DDFRecord *poRecord;
     while( (poRecord = oCATDFile.ReadRecord()) != NULL )
     {
 /* -------------------------------------------------------------------- */
@@ -154,11 +148,11 @@ int SDTS_CATD::Read( const char * pszFilename )
 /* -------------------------------------------------------------------- */
         if( poRecord->GetStringSubfield( "CATD", 0, "MODN", 0 ) == NULL )
             continue;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Create a new entry, and get the module and file name.           */
 /* -------------------------------------------------------------------- */
-        SDTS_CATDEntry  *poEntry = new SDTS_CATDEntry;
+        SDTS_CATDEntry *poEntry = new SDTS_CATDEntry;
 
         poEntry->pszModule =
             CPLStrdup(poRecord->GetStringSubfield( "CATD", 0, "NAME", 0 ));
@@ -175,12 +169,12 @@ int SDTS_CATD::Read( const char * pszFilename )
         poEntry->pszFullPath = 
             CPLStrdup(CPLFormCIFilename( pszPrefixPath, poEntry->pszFile,
                                          NULL ));
-        
+
 /* -------------------------------------------------------------------- */
 /*      Add the entry to the list.                                      */
 /* -------------------------------------------------------------------- */
-        papoEntries = (SDTS_CATDEntry **)
-            CPLRealloc(papoEntries, sizeof(void*) * ++nEntries );
+        papoEntries = reinterpret_cast<SDTS_CATDEntry **>(
+            CPLRealloc( papoEntries, sizeof(void*) * ++nEntries ) );
         papoEntries[nEntries-1] = poEntry;
     }
 
@@ -195,9 +189,7 @@ int SDTS_CATD::Read( const char * pszFilename )
 const char * SDTS_CATD::GetModuleFilePath( const char * pszModule )
 
 {
-    int         i;
-
-    for( i = 0; i < nEntries; i++ )
+    for( int i = 0; i < nEntries; i++ )
     {
         if( EQUAL(papoEntries[i]->pszModule,pszModule) )
             return papoEntries[i]->pszFullPath;
@@ -215,8 +207,8 @@ const char * SDTS_CATD::GetEntryModule( int iEntry )
 {
     if( iEntry < 0 || iEntry >= nEntries )
         return NULL;
-    else
-        return papoEntries[iEntry]->pszModule;
+
+    return papoEntries[iEntry]->pszModule;
 }
 
 /************************************************************************/
@@ -239,8 +231,8 @@ const char * SDTS_CATD::GetEntryTypeDesc( int iEntry )
 {
     if( iEntry < 0 || iEntry >= nEntries )
         return NULL;
-    else
-        return papoEntries[iEntry]->pszType;
+
+    return papoEntries[iEntry]->pszType;
 }
 
 /************************************************************************/
@@ -276,14 +268,14 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
 
     else if( STARTS_WITH_CI(papoEntries[iEntry]->pszType, "Attribute Primary") )
         return SLTAttr;
-    
+
     else if( STARTS_WITH_CI(papoEntries[iEntry]->pszType,"Attribute Secondary") )
         return SLTAttr;
-    
+
     else if( EQUAL(papoEntries[iEntry]->pszType,"Line")
              || STARTS_WITH_CI(papoEntries[iEntry]->pszType, "Line ") )
         return SLTLine;
-    
+
     else if( STARTS_WITH_CI(papoEntries[iEntry]->pszType, "Point-Node") )
         return SLTPoint;
 
@@ -316,6 +308,6 @@ const char * SDTS_CATD::GetEntryFilePath( int iEntry )
 {
     if( iEntry < 0 || iEntry >= nEntries )
         return NULL;
-    else
-        return papoEntries[iEntry]->pszFullPath;
+
+    return papoEntries[iEntry]->pszFullPath;
 }

@@ -29,6 +29,8 @@
 
 #include "sdts_al.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -44,15 +46,17 @@ CPL_CVSID("$Id$");
 /*                           SDTSRawPolygon()                           */
 /************************************************************************/
 
-SDTSRawPolygon::SDTSRawPolygon()
-
+SDTSRawPolygon::SDTSRawPolygon() :
+    nEdges(0),
+    papoEdges(NULL),
+    nRings(0),
+    nVertices(0),
+    panRingStart(NULL),
+    padfX(NULL),
+    padfY(NULL),
+    padfZ(NULL)
 {
     nAttributes = 0;
-    nEdges = nRings = nVertices = 0;
-    papoEdges = NULL;
-    
-    panRingStart = NULL;
-    padfX = padfY = padfZ = NULL;
 }
 
 /************************************************************************/
@@ -87,10 +91,9 @@ int SDTSRawPolygon::Read( DDFRecord * poRecord )
     for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
     {
         DDFField        *poField = poRecord->GetField( iField );
-        const char      *pszFieldName;
-
         CPLAssert( poField != NULL );
-        pszFieldName = poField->GetFieldDefn()->GetName();
+
+        const char *pszFieldName = poField->GetFieldDefn()->GetName();
 
         if( EQUAL(pszFieldName,"POLY") )
         {
@@ -114,8 +117,9 @@ void SDTSRawPolygon::AddEdge( SDTSRawLine * poNewLine )
 
 {
     nEdges++;
-    
-    papoEdges = (SDTSRawLine **) CPLRealloc(papoEdges, sizeof(void*)*nEdges );
+
+    papoEdges = reinterpret_cast<SDTSRawLine **>(
+        CPLRealloc(papoEdges, sizeof(void*)*nEdges ) );
     papoEdges[nEdges-1] = poNewLine;
 }
 
@@ -130,7 +134,9 @@ void SDTSRawPolygon::AddEdgeToRing( int nVertToAdd,
                                     int bReverse, int bDropVertex )
 
 {
-    int         iStart=0, iEnd=nVertToAdd-1, iStep=1;
+    int iStart = 0;
+    int iEnd = nVertToAdd-1;
+    int iStep = 1;
 
     if( bDropVertex && bReverse )
     {
@@ -209,7 +215,7 @@ void SDTSRawPolygon::AddEdgeToRing( int nVertToAdd,
  * direction of rings.
  *
  * @return TRUE if all rings assembled without problems or FALSE if a problem
- * occured.  If a problem occurs rings are still formed from all lines, but
+ * occurred.  If a problem occurs rings are still formed from all lines, but
  * some of the rings will not be closed, and rings will have no particular
  * order or direction.
  */
@@ -217,9 +223,6 @@ void SDTSRawPolygon::AddEdgeToRing( int nVertToAdd,
 int SDTSRawPolygon::AssembleRings()
 
 {
-    int         iEdge;
-    int         bSuccess = TRUE;
-    
     if( nRings > 0 )
         return TRUE;
 
@@ -229,17 +232,17 @@ int SDTSRawPolygon::AssembleRings()
 /* -------------------------------------------------------------------- */
 /*      Allocate ring arrays.                                           */
 /* -------------------------------------------------------------------- */
-    panRingStart = (int *) CPLMalloc(sizeof(int) * nEdges);
+    panRingStart = reinterpret_cast<int *>( CPLMalloc(sizeof(int) * nEdges) );
 
     nVertices = 0;
-    for( iEdge = 0; iEdge < nEdges; iEdge++ )
+    for( int iEdge = 0; iEdge < nEdges; iEdge++ )
     {
         nVertices += papoEdges[iEdge]->nVertices;
     }
 
-    padfX = (double *) CPLMalloc(sizeof(double) * nVertices);
-    padfY = (double *) CPLMalloc(sizeof(double) * nVertices);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nVertices);
+    padfX = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
+    padfY = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
+    padfZ = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
 
     nVertices = 0;
 
@@ -247,25 +250,25 @@ int SDTSRawPolygon::AssembleRings()
 /*      Setup array of line markers indicating if they have been        */
 /*      added to a ring yet.                                            */
 /* -------------------------------------------------------------------- */
-    int *panEdgeConsumed, nRemainingEdges = nEdges;
-
-    panEdgeConsumed = (int *) CPLCalloc(sizeof(int),nEdges);
+    int *panEdgeConsumed = reinterpret_cast<int *>(
+        CPLCalloc( sizeof(int), nEdges ) );
 
 /* ==================================================================== */
 /*      Loop generating rings.                                          */
 /* ==================================================================== */
+    bool bSuccess = true;
+
+    int nRemainingEdges = nEdges;
     while( nRemainingEdges > 0 )
     {
-        int             nStartNode, nLinkNode;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Find the first unconsumed edge.                                 */
 /* -------------------------------------------------------------------- */
-        SDTSRawLine     *poEdge;
-        
-        for( iEdge = 0; panEdgeConsumed[iEdge]; iEdge++ ) {}
+        int iEdge = 0;
+        for( ; panEdgeConsumed[iEdge]; iEdge++ ) {}
 
-        poEdge = papoEdges[iEdge];
+        SDTSRawLine *poEdge = papoEdges[iEdge];
 
 /* -------------------------------------------------------------------- */
 /*      Start a new ring, copying in the current line directly          */
@@ -278,23 +281,23 @@ int SDTSRawPolygon::AssembleRings()
 
         panEdgeConsumed[iEdge] = TRUE;
         nRemainingEdges--;
-        
-        nStartNode = poEdge->oStartNode.nRecord;
-        nLinkNode = poEdge->oEndNode.nRecord;
+
+        const int nStartNode = poEdge->oStartNode.nRecord;
+        int nLinkNode = poEdge->oEndNode.nRecord;
 
 /* ==================================================================== */
 /*      Loop adding edges to this ring until we make a whole pass       */
 /*      within finding anything to add.                                 */
 /* ==================================================================== */
-        int             bWorkDone = TRUE;
+        bool bWorkDone = true;
 
         while( nLinkNode != nStartNode
                && nRemainingEdges > 0
                && bWorkDone )
         {
-            bWorkDone = FALSE;
-            
-            for( iEdge = 0; iEdge < nEdges; iEdge++ )
+            bWorkDone = false;
+
+            for( int iEdge = 0; iEdge < nEdges; iEdge++ )
             {
                 if( panEdgeConsumed[iEdge] )
                     continue;
@@ -318,10 +321,10 @@ int SDTSRawPolygon::AssembleRings()
                 {
                     continue;
                 }
-                    
+
                 panEdgeConsumed[iEdge] = TRUE;
                 nRemainingEdges--;
-                bWorkDone = TRUE;
+                bWorkDone = true;
             }
         }
 
@@ -329,8 +332,7 @@ int SDTSRawPolygon::AssembleRings()
 /*      Did we fail to complete the ring?                               */
 /* -------------------------------------------------------------------- */
         if( nLinkNode != nStartNode )
-            bSuccess = FALSE;
-        
+            bSuccess = false;
     } /* next ring */
 
     CPLFree( panEdgeConsumed );
@@ -346,22 +348,23 @@ int SDTSRawPolygon::AssembleRings()
 /*      Gems II_, James Arvo, 1991, Academic Press, Inc., section 1.1,  */
 /*      "The Area of a Simple Polygon", Jon Rokne, pp. 5-6.             */
 /* ==================================================================== */
-    double      *padfRingArea, dfMaxArea = 0.0;
-    int         iRing, iBiggestRing = -1;
+    double      dfMaxArea = 0.0;
+    int         iBiggestRing = -1;
 
-    padfRingArea = (double *) CPLCalloc(sizeof(double),nRings);
+    double *padfRingArea = reinterpret_cast<double *>(
+        CPLCalloc( sizeof(double), nRings) );
 
-    for( iRing = 0; iRing < nRings; iRing++ )
+    for( int iRing = 0; iRing < nRings; iRing++ )
     {
-        double  dfSum1 = 0.0, dfSum2 = 0.0;
-        int     i, nRingVertices;
-
+        int nRingVertices;
         if( iRing == nRings - 1 )
             nRingVertices = nVertices - panRingStart[iRing];
         else
             nRingVertices = panRingStart[iRing+1] - panRingStart[iRing];
-        
-        for( i = panRingStart[iRing];
+
+        double dfSum1 = 0.0;
+        double dfSum2 = 0.0;
+        for( int i = panRingStart[iRing];
              i < panRingStart[iRing] + nRingVertices - 1;
              i++)
         {
@@ -371,9 +374,9 @@ int SDTSRawPolygon::AssembleRings()
 
         padfRingArea[iRing] = (dfSum1 - dfSum2) / 2;
 
-        if( ABS(padfRingArea[iRing]) > dfMaxArea )
+        if( std::abs(padfRingArea[iRing]) > dfMaxArea )
         {
-            dfMaxArea = ABS(padfRingArea[iRing]);
+            dfMaxArea = std::abs(padfRingArea[iRing]);
             iBiggestRing = iRing;
         }
     }
@@ -392,18 +395,17 @@ int SDTSRawPolygon::AssembleRings()
     double      *padfXRaw = padfX;
     double      *padfYRaw = padfY;
     double      *padfZRaw = padfZ;
-    int         *panRawRingStart = panRingStart;
-    int         nRawVertices = nVertices;
-    int         nRawRings = nRings;
-    int         nRingVertices;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nVertices);
-    padfY = (double *) CPLMalloc(sizeof(double) * nVertices);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nVertices);
-    panRingStart = (int *) CPLMalloc(sizeof(int) * nRawRings);
+    padfX = reinterpret_cast<double *>( CPLMalloc(sizeof(double) * nVertices) );
+    padfY = reinterpret_cast<double *>( CPLMalloc(sizeof(double) * nVertices) );
+    padfZ = reinterpret_cast<double *>( CPLMalloc(sizeof(double) * nVertices) );
+    int nRawRings = nRings;
+    panRingStart = reinterpret_cast<int *>( CPLMalloc(sizeof(int) * nRawRings) );
     nVertices = 0;
     nRings = 0;
 
+    int *panRawRingStart = panRingStart;
+    int nRawVertices = nVertices;
+    int nRingVertices;
     if( iBiggestRing == nRawRings - 1 )
         nRingVertices = nRawVertices - panRawRingStart[iBiggestRing];
     else
@@ -421,11 +423,11 @@ int SDTSRawPolygon::AssembleRings()
 /*      Add the rest of the rings, which must be holes, in clockwise    */
 /*      order.                                                          */
 /* ==================================================================== */
-    for( iRing = 0; iRing < nRawRings; iRing++ )
+    for( int iRing = 0; iRing < nRawRings; iRing++ )
     {
         if( iRing == iBiggestRing )
             continue;
-        
+
         if( iRing == nRawRings - 1 )
             nRingVertices = nRawVertices - panRawRingStart[iRing];
         else
@@ -438,7 +440,7 @@ int SDTSRawPolygon::AssembleRings()
                        padfZRaw + panRawRingStart[iRing],
                        padfRingArea[iRing] > 0.0, FALSE );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
@@ -462,11 +464,9 @@ int SDTSRawPolygon::AssembleRings()
 void SDTSRawPolygon::Dump( FILE * fp )
 
 {
-    int         i;
-    
     fprintf( fp, "SDTSRawPolygon %s: ", oModId.GetName() );
 
-    for( i = 0; i < nAttributes; i++ )
+    for( int i = 0; i < nAttributes; i++ )
         fprintf( fp, "  ATID[%d]=%s", i, paoATID[i].GetName() );
 
     fprintf( fp, "\n" );
@@ -484,19 +484,15 @@ void SDTSRawPolygon::Dump( FILE * fp )
 /*                           SDTSPolygonReader()                          */
 /************************************************************************/
 
-SDTSPolygonReader::SDTSPolygonReader()
-
-{
-    bRingsAssembled = FALSE;
-}
+SDTSPolygonReader::SDTSPolygonReader() :
+    bRingsAssembled(FALSE)
+{}
 
 /************************************************************************/
 /*                             ~SDTSPolygonReader()                     */
 /************************************************************************/
 
-SDTSPolygonReader::~SDTSPolygonReader()
-{
-}
+SDTSPolygonReader::~SDTSPolygonReader() {}
 
 /************************************************************************/
 /*                               Close()                                */
@@ -530,33 +526,29 @@ int SDTSPolygonReader::Open( const char * pszFilename )
 SDTSRawPolygon * SDTSPolygonReader::GetNextPolygon()
 
 {
-    DDFRecord   *poRecord;
-    
 /* -------------------------------------------------------------------- */
 /*      Read a record.                                                  */
 /* -------------------------------------------------------------------- */
     if( oDDFModule.GetFP() == NULL )
         return NULL;
 
-    poRecord = oDDFModule.ReadRecord();
+    DDFRecord *poRecord = oDDFModule.ReadRecord();
 
     if( poRecord == NULL )
         return NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Transform into a Polygon feature.                                 */
 /* -------------------------------------------------------------------- */
-    SDTSRawPolygon      *poRawPolygon = new SDTSRawPolygon();
+    SDTSRawPolygon *poRawPolygon = new SDTSRawPolygon();
 
     if( poRawPolygon->Read( poRecord ) )
     {
         return( poRawPolygon );
     }
-    else
-    {
-        delete poRawPolygon;
-        return NULL;
-    }
+
+    delete poRawPolygon;
+    return NULL;
 }
 
 /************************************************************************/
@@ -595,7 +587,7 @@ void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer,
         return;
 
     bRingsAssembled = TRUE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      To write polygons we need to build them from their related      */
 /*      arcs.  We don't know off hand which arc (line) layers           */
@@ -606,13 +598,11 @@ void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer,
          iLineLayer < poTransfer->GetLayerCount();
          iLineLayer++ )
     {
-        SDTSLineReader  *poLineReader;
-        
         if( poTransfer->GetLayerType(iLineLayer) != SLTLine )
             continue;
 
-        poLineReader = (SDTSLineReader *)
-            poTransfer->GetLayerIndexedReader( iLineLayer );
+        SDTSLineReader *poLineReader = reinterpret_cast<SDTSLineReader *>(
+            poTransfer->GetLayerIndexedReader( iLineLayer ) );
         if( poLineReader == NULL )
             continue;
 
@@ -624,15 +614,16 @@ void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer,
 /*      Scan all polygons indexed on this reader, and assemble their    */
 /*      rings.                                                          */
 /* -------------------------------------------------------------------- */
-    SDTSFeature *poFeature;
-    
     Rewind();
+
+    SDTSFeature *poFeature;
     while( (poFeature = GetNextFeature()) != NULL )
     {
-        SDTSRawPolygon  *poPoly = (SDTSRawPolygon *) poFeature;
+        SDTSRawPolygon  *poPoly
+            = reinterpret_cast<SDTSRawPolygon *>( poFeature );
 
         poPoly->AssembleRings();
     }
-    
+
     Rewind();
 }
