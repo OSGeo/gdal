@@ -232,7 +232,7 @@ int SDTSRawPolygon::AssembleRings()
 /* -------------------------------------------------------------------- */
 /*      Allocate ring arrays.                                           */
 /* -------------------------------------------------------------------- */
-    panRingStart = reinterpret_cast<int *>( CPLMalloc(sizeof(int) * nEdges) );
+    panRingStart = reinterpret_cast<int *>( CPLMalloc( sizeof(int) * nEdges ) );
 
     nVertices = 0;
     for( int iEdge = 0; iEdge < nEdges; iEdge++ )
@@ -250,6 +250,8 @@ int SDTSRawPolygon::AssembleRings()
 /*      Setup array of line markers indicating if they have been        */
 /*      added to a ring yet.                                            */
 /* -------------------------------------------------------------------- */
+    int nRemainingEdges = nEdges;
+
     int *panEdgeConsumed = reinterpret_cast<int *>(
         CPLCalloc( sizeof(int), nEdges ) );
 
@@ -258,10 +260,8 @@ int SDTSRawPolygon::AssembleRings()
 /* ==================================================================== */
     bool bSuccess = true;
 
-    int nRemainingEdges = nEdges;
     while( nRemainingEdges > 0 )
     {
-
 /* -------------------------------------------------------------------- */
 /*      Find the first unconsumed edge.                                 */
 /* -------------------------------------------------------------------- */
@@ -297,7 +297,7 @@ int SDTSRawPolygon::AssembleRings()
         {
             bWorkDone = false;
 
-            for( int iEdge = 0; iEdge < nEdges; iEdge++ )
+            for( iEdge = 0; iEdge < nEdges; iEdge++ )
             {
                 if( panEdgeConsumed[iEdge] )
                     continue;
@@ -348,11 +348,11 @@ int SDTSRawPolygon::AssembleRings()
 /*      Gems II_, James Arvo, 1991, Academic Press, Inc., section 1.1,  */
 /*      "The Area of a Simple Polygon", Jon Rokne, pp. 5-6.             */
 /* ==================================================================== */
-    double      dfMaxArea = 0.0;
-    int         iBiggestRing = -1;
+    double dfMaxArea = 0.0;
+    int iBiggestRing = -1;
 
-    double *padfRingArea = reinterpret_cast<double *>(
-        CPLCalloc( sizeof(double), nRings) );
+    double *padfRingArea
+        = reinterpret_cast<double *>( CPLCalloc( sizeof(double), nRings ) );
 
     for( int iRing = 0; iRing < nRings; iRing++ )
     {
@@ -395,16 +395,17 @@ int SDTSRawPolygon::AssembleRings()
     double      *padfXRaw = padfX;
     double      *padfYRaw = padfY;
     double      *padfZRaw = padfZ;
-    padfX = reinterpret_cast<double *>( CPLMalloc(sizeof(double) * nVertices) );
-    padfY = reinterpret_cast<double *>( CPLMalloc(sizeof(double) * nVertices) );
-    padfZ = reinterpret_cast<double *>( CPLMalloc(sizeof(double) * nVertices) );
-    int nRawRings = nRings;
-    panRingStart = reinterpret_cast<int *>( CPLMalloc(sizeof(int) * nRawRings) );
+    int         *panRawRingStart = panRingStart;
+    int         nRawVertices = nVertices;
+    int         nRawRings = nRings;
+
+    padfX = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
+    padfY = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
+    padfZ = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
+    panRingStart = reinterpret_cast<int *>( CPLMalloc(sizeof(int) * nRawRings ) );
     nVertices = 0;
     nRings = 0;
 
-    int *panRawRingStart = panRingStart;
-    int nRawVertices = nVertices;
     int nRingVertices;
     if( iBiggestRing == nRawRings - 1 )
         nRingVertices = nRawVertices - panRawRingStart[iBiggestRing];
