@@ -448,21 +448,20 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     const char		*pszLine;
     while( (pszLine = CPLReadLineL( fp )) != NULL )
     {
-        char	**papszTokens;
-
         nLineCount++;
 
         if( nLineCount > 50 || strlen(pszLine) > 1000 )
             break;
 
-        char **papszHDR = CSLAddString( NULL, pszLine );
-
-        papszTokens = CSLTokenizeStringComplex( pszLine, " =", TRUE, FALSE );
+        char **papszTokens
+            = CSLTokenizeStringComplex( pszLine, " =", TRUE, FALSE );
         if( CSLCount( papszTokens ) < 2 )
         {
             CSLDestroy( papszTokens );
             continue;
         }
+
+        char **papszHDR = CSLAddString( NULL, pszLine );
 
         if( STARTS_WITH_CI(papszTokens[0], "CELLCOUNT_X") )
             nCols = atoi(papszTokens[1]);
