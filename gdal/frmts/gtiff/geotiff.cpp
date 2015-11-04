@@ -391,7 +391,7 @@ class GTiffDataset : public GDALPamDataset
     int            GuessJPEGQuality(int& bOutHasQuantizationTable,
                                     int& bOutHasHuffmanTable);
 
-    CPLErr         DirectIO( GDALRWFlag eRWFlag,
+    int            DirectIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
@@ -896,7 +896,7 @@ class GTiffRasterBand : public GDALPamRasterBand
     CPLString          osUnitType;
     CPLString          osDescription;
 
-    CPLErr DirectIO( GDALRWFlag eRWFlag,
+    int                DirectIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
@@ -1136,8 +1136,9 @@ GTiffRasterBand::~GTiffRasterBand()
 /* block reading. Restricted to simple TIFF configurations (un-tiled, */
 /* uncompressed data, standard data types). Particularly useful to extract */
 /* sub-windows of data on a large /vsicurl dataset). */
+/* Returns -1 if DirectIO() can't be supported on that file */
 
-CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
+int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
@@ -1155,7 +1156,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
           poGDS->SetDirectory() && /* very important to make hTIFF uptodate! */
           !TIFFIsTiled( poGDS->hTIFF )) )
     {
-        return CE_Failure;
+        return -1;
     }
 
     /* we only know how to deal with nearest neighbour in this optimized routine */
@@ -1163,7 +1164,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
         psExtraArg != NULL &&
         psExtraArg->eResampleAlg != GRIORA_NearestNeighbour )
     {
-        return CE_Failure;
+        return -1;
     }
 
     /*CPLDebug("GTiff", "DirectIO(%d,%d,%d,%d -> %dx%d)",
@@ -1193,7 +1194,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     size_t* panSizes = (size_t*) VSIMalloc(nReqYSize * sizeof(size_t));
     int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
     void* pTmpBuffer = NULL;
-    CPLErr eErr = CE_None;
+    int eErr = CE_None;
     int nContigBands = ((poGDS->nPlanarConfig == PLANARCONFIG_CONTIG) ? poGDS->nBands : 1);
     int nSrcPixelSize = nDTSize * nContigBands;
 
@@ -1237,7 +1238,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
 
         panOffsets[iLine] = panTIFFOffsets[nBlockId];
         if (panOffsets[iLine] == 0) /* We don't support sparse files */
-            eErr = CE_Failure;
+            eErr = -1;
 
         panOffsets[iLine] += (nXOff + nYOffsetInBlock * nBlockXSize) * nSrcPixelSize;
         panSizes[iLine] = nReqXSize * nSrcPixelSize;
@@ -1646,12 +1647,12 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
     }
     if (bDirectIO)
     {
-        eErr = DirectIO(
+        int nErr = DirectIO(
                 eRWFlag, nXOff, nYOff, nXSize, nYSize,
                 pData, nBufXSize, nBufYSize, eBufType,
                 nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
-        if (eErr == CE_None)
-            return eErr;
+        if (nErr >= 0)
+            return (CPLErr)nErr;
     }
 
     nJPEGOverviewVisibilityFlag ++;
@@ -2276,8 +2277,9 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
 /* block reading. Restricted to simple TIFF configurations (un-tiled, */
 /* uncompressed data, standard data types). Particularly useful to extract */
 /* sub-windows of data on a large /vsicurl dataset). */
+/* Returns -1 if DirectIO() can't be supported on that file */
 
-CPLErr GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
+int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
@@ -2298,7 +2300,7 @@ CPLErr GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
           SetDirectory() && /* very important to make hTIFF uptodate! */
           !TIFFIsTiled( hTIFF )) )
     {
-        return CE_Failure;
+        return -1;
     }
 
     /* we only know how to deal with nearest neighbour in this optimized routine */
@@ -2306,7 +2308,7 @@ CPLErr GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
         psExtraArg != NULL &&
         psExtraArg->eResampleAlg != GRIORA_NearestNeighbour )
     {
-        return CE_Failure;
+        return -1;
     }
 
     /* if the file is band interleave or only one band is requested, then */
@@ -2371,7 +2373,7 @@ CPLErr GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     size_t* panSizes = (size_t*) VSIMalloc(nReqYSize * sizeof(size_t));
     int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
     void* pTmpBuffer = NULL;
-    CPLErr eErr = CE_None;
+    int eErr = CE_None;
     int nContigBands = nBands;
     int nSrcPixelSize = nDTSize * nContigBands;
 
@@ -2412,7 +2414,7 @@ CPLErr GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
 
         panOffsets[iLine] = panTIFFOffsets[nBlockId];
         if (panOffsets[iLine] == 0) /* We don't support sparse files */
-            eErr = CE_Failure;
+            eErr = -1;
 
         panOffsets[iLine] += (nXOff + nYOffsetInBlock * nBlockXSize) * nSrcPixelSize;
         panSizes[iLine] = nReqXSize * nSrcPixelSize;
@@ -2544,11 +2546,11 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     }
     if (poGDS->bDirectIO)
     {
-        eErr = DirectIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+        int nErr = DirectIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                         pData, nBufXSize, nBufYSize, eBufType,
                         nPixelSpace, nLineSpace, psExtraArg);
-        if (eErr == CE_None)
-            return eErr;
+        if (nErr >= 0)
+            return (CPLErr)nErr;
     }
 
     if (poGDS->nBands != 1 &&
