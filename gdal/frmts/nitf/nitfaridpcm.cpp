@@ -28,9 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_conv.h"
 #include "gdal.h"
 #include "nitflib.h"
-#include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 
@@ -41,7 +41,7 @@ static const int bits_per_level_by_busycode_75[4/*busy code*/][4/*level*/] = {
     { 8, 6, 4, 0 }, // BC = 10
     { 8, 7, 4, 2 }};// BC = 11
 
-#define CR075  1
+static const int CR075 = 1;
 
 // Level for each index value.
 static const int level_index_table[64] = 
@@ -77,7 +77,7 @@ static const int ij_index[64] = {
     43, // 5, 1
     53, // 6, 1
     55, // 7, 1
-    
+
      5, // 0, 2
     21, // 1, 2
      7, // 2, 2
@@ -86,7 +86,7 @@ static const int ij_index[64] = {
     45, // 5, 2
     13, // 6, 2
     57, // 7, 2
-    
+
     20, // 0, 3
     22, // 1, 3
     32, // 2, 3
@@ -95,7 +95,7 @@ static const int ij_index[64] = {
     46, // 5, 3
     56, // 6, 3
     58, // 7, 3
-    
+
      2, // 0, 4
     24, // 1, 4
      9, // 2, 4
@@ -104,7 +104,7 @@ static const int ij_index[64] = {
     48, // 5, 4
     15, // 6, 4
     60, // 7, 4
-    
+
     23, // 0, 5
     25, // 1, 5
     35, // 2, 5
@@ -113,7 +113,7 @@ static const int ij_index[64] = {
     49, // 5, 5
     59, // 6, 5
     61, // 7, 5
-    
+
      8, // 0, 6
     27, // 1, 6
     10, // 2, 6
@@ -122,7 +122,7 @@ static const int ij_index[64] = {
     51, // 5, 6
     16, // 6, 6
     63, // 7, 6
-    
+
     26, // 0, 7
     28, // 1, 7
     38, // 2, 7
@@ -156,7 +156,6 @@ static const int *delta_075_level_2[4] =
 { delta_075_level_2_bc_0, delta_075_level_2_bc_1, 
   delta_075_level_2_bc_2, delta_075_level_2_bc_3 };
 
-
 static const int delta_075_level_3_bc_1[4] = { -24, -6, 6, 24 };
 static const int delta_075_level_3_bc_2[16] = 
 {-68,-37,-23,-15, -9, -6, -3, -1, 1, 4, 7,10,16,24,37,70 };
@@ -180,12 +179,11 @@ static int
 get_bits( unsigned char *buffer, int first_bit, int num_bits )
 
 {
-    int i;
     int total =0;
 
-    for( i = first_bit; i < first_bit+num_bits; i++ )
+    for( int i = first_bit; i < first_bit+num_bits; i++ )
     {
-        total = total * 2;
+        total *= 2;
         if( buffer[i>>3] & (0x80 >> (i&7)) )
             total++;
     }
@@ -211,10 +209,10 @@ get_delta( unsigned char *srcdata,
 
 {
     CPLAssert( comrat == CR075 );
-    int pixel_index = IND(i,j);
-    int level_index = level_index_table[pixel_index];
+    const int pixel_index = IND(i,j);
+    const int level_index = level_index_table[pixel_index];
     const int *bits_per_level = bits_per_level_by_busycode_75[busy_code];
-    int delta_bits = bits_per_level[level_index];
+    const int delta_bits = bits_per_level[level_index];
     int delta_offset = 0;
 
     *pbError = FALSE;
@@ -238,8 +236,7 @@ get_delta( unsigned char *srcdata,
         return 0;
     }
 
-    int delta_raw = get_bits( srcdata, block_offset+delta_offset, delta_bits );
-    int delta = delta_raw;
+    const int delta_raw = get_bits( srcdata, block_offset+delta_offset, delta_bits );
 
     /* Should not happen as delta_075_by_level_by_bc[level_index] == NULL if and
        only if level_index == 0, which means that pixel_index == 0, which means
@@ -250,7 +247,7 @@ get_delta( unsigned char *srcdata,
     const int *lookup_table = delta_075_by_level_by_bc[level_index][busy_code];
 
     CPLAssert( lookup_table != NULL );
-    delta = lookup_table[delta_raw];
+    int delta = lookup_table[delta_raw];
 
     return delta;
 }
@@ -268,7 +265,6 @@ decode_block( unsigned char *srcdata, int nInputBytes,
               int left_side, int top_side, int L[9][9] )
 
 {
-    int i, j;
     int bError;
 
     // Level 2
@@ -288,9 +284,9 @@ decode_block( unsigned char *srcdata, int nInputBytes,
         L[8][4] = L[0][4];
 
     // Level 3
-    for( i = 0; i < 8; i += 4 )
+    for( int i = 0; i < 8; i += 4 )
     {
-        for( j = 0; j < 8; j += 4 )
+        for( int j = 0; j < 8; j += 4 )
         {
             // above
             L[i+2][j] = (L[i][j]+L[i+4][j])/2 
@@ -322,9 +318,9 @@ decode_block( unsigned char *srcdata, int nInputBytes,
     }
 
     // Level 4
-    for( i = 0; i < 8; i += 2 )
+    for( int i = 0; i < 8; i += 2 )
     {
-        for( j = 0; j < 8; j += 2 )
+        for( int j = 0; j < 8; j += 2 )
         {
             // above
             L[i+1][j] = (L[i][j]+L[i+2][j])/2 
@@ -357,7 +353,6 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
                            GByte *pabyOutputImage )
 
 {
-
 /* -------------------------------------------------------------------- */
 /*      First, verify that we are a COMRAT 0.75 image, which is all     */
 /*      we currently support.                                           */
@@ -375,10 +370,10 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
 /*      Setup up the various info we need for each 8x8 neighbourhood    */
 /*      (which we call blocks in this context).                         */
 /* -------------------------------------------------------------------- */
-    int blocks_x = (psImage->nBlockWidth + 7) / 8;
-    int blocks_y = (psImage->nBlockHeight + 7) / 8;
-    int block_count = blocks_x * blocks_y;
-    int  rowlen = blocks_x * 8;
+    const int blocks_x = (psImage->nBlockWidth + 7) / 8;
+    const int blocks_y = (psImage->nBlockHeight + 7) / 8;
+    const int block_count = blocks_x * blocks_y;
+    const int rowlen = blocks_x * 8;
 
     if( psImage->nBlockWidth > 1000 || /* to detect int overflow above */
         psImage->nBlockHeight > 1000 ||
@@ -391,7 +386,7 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
     int block_offset[1000];
     int block_size[1000];
     int busy_code[1000];
-    int busy_code_table_size = blocks_x * blocks_y * 2;
+    const int busy_code_table_size = blocks_x * blocks_y * 2;
     unsigned char L00[1000];
 
 /* -------------------------------------------------------------------- */
@@ -399,15 +394,16 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
 /*      bit larger than the output buffer if the width or height is     */
 /*      not divisible by 8.                                             */
 /* -------------------------------------------------------------------- */
-    GByte *full_image = (GByte *) CPLMalloc(blocks_x * blocks_y * 8 * 8 );
+    GByte *full_image = reinterpret_cast<GByte *>(
+        CPLMalloc(blocks_x * blocks_y * 8 * 8 ) );
 
 /* -------------------------------------------------------------------- */
 /*      Scan through all the neighbourhoods determining the busyness    */
 /*      code, and the offset to each's data as well as the L00 value.   */
 /* -------------------------------------------------------------------- */
-    int i, j, total = busy_code_table_size;
+    int total = busy_code_table_size;
 
-    for( i = 0; i < blocks_x * blocks_y; i++ )
+    for( int i = 0; i < blocks_x * blocks_y; i++ )
     {
         if (nInputBytes * 8 < i * 2 + 2)
         {
@@ -434,11 +430,9 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
 /* -------------------------------------------------------------------- */
 /*      Process all the blocks, forming into a final image.             */
 /* -------------------------------------------------------------------- */
-    int iX, iY;
-
-    for( iY = 0; iY < blocks_y; iY++ )
+    for( int iY = 0; iY < blocks_y; iY++ )
     {
-        for( iX = 0; iX < blocks_x; iX++ )
+        for( int iX = 0; iX < blocks_x; iX++ )
         {
             int iBlock = iX + iY * blocks_x;
             int L[9][9];
@@ -459,7 +453,7 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
                 L[4][8] = L[0][8];
                 L[6][8] = L[0][8];
             }
-            
+
             if( iY > 0 )
             {
                 L[8][0] = full_tl[7 - rowlen];
@@ -479,7 +473,7 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
                 L[8][8] = L[0][0];
             else
                 L[8][8] = full_tl[-1-rowlen];
-            
+
             if (!(decode_block( pabyInputData, nInputBytes, busy_code[iBlock], CR075,
                           block_offset[iBlock], block_size[iBlock],
                           iX == 0, iY == 0, L )))
@@ -488,17 +482,17 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
                 return FALSE;
             }
 
-            // Assign to output matrix. 
-            for( i = 0; i < 8; i++ )
+            // Assign to output matrix.
+            for( int i = 0; i < 8; i++ )
             {
-                for( j = 0; j < 8; j++ )
+                for( int j = 0; j < 8; j++ )
                 {
                     int value = L[i][j];
                     if( value < 0 )
                         value = 0;
                     if( value > 255 )
                         value = 255;
-                    
+
                     full_tl[8-j-1 + (8-i-1) * rowlen] = (unsigned char) value;
                 }
             }
@@ -508,7 +502,7 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
 /* -------------------------------------------------------------------- */
 /*      Copy full image back into target buffer, and free.              */
 /* -------------------------------------------------------------------- */
-    for( iY = 0; iY < psImage->nBlockHeight; iY++ )
+    for( int iY = 0; iY < psImage->nBlockHeight; iY++ )
     {
         memcpy( pabyOutputImage + iY * psImage->nBlockWidth,
                 full_image + iY * rowlen,

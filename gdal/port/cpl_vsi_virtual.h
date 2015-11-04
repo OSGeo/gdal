@@ -38,12 +38,6 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 
-#if defined(WIN32CE)
-#  include "cpl_wince.h"
-#  include <wce_errno.h>
-#  pragma warning(disable:4786) /* Remove annoying warnings in eVC++ and VC++ 6.0 */
-#endif
-
 #include <map>
 #include <vector>
 #include <string>
@@ -140,13 +134,17 @@ typedef struct
     GIntBig       nModifiedTime;
 } VSIArchiveEntry;
 
-typedef struct
+class VSIArchiveContent
 {
+public:
     time_t       mTime;
     vsi_l_offset nFileSize;
     int nEntries;
     VSIArchiveEntry* entries;
-} VSIArchiveContent;
+    
+    VSIArchiveContent() : mTime(0), nFileSize(0), nEntries(0), entries(NULL) {}
+    ~VSIArchiveContent();
+};
 
 class VSIArchiveReader
 {

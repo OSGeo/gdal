@@ -86,7 +86,7 @@ static std::map<OGRDataSourceH, DatasetDescription> oMapDS;
 static std::map<OGRLayerH, CPLString> oGlobalMapLayer;
 static OGRLayerH hLayerGetNextFeature = NULL;
 static OGRLayerH hLayerGetLayerDefn = NULL;
-static int bDeferGetFieldCount = FALSE;
+static bool bDeferGetFieldCount = false;
 static int nGetNextFeatureCalls = 0;
 static std::set<CPLString> aoSetCreatedDS;
 static std::map<OGRFeatureDefnH, FeatureDefnDescription> oMapFDefn;
@@ -133,7 +133,7 @@ static void OGRAPISpyFileClose()
     }
 }
 
-static int OGRAPISpyEnabled()
+static bool OGRAPISpyEnabled()
 {
     const char* pszSpyFile = CPLGetConfigOption("OGR_API_SPY_FILE", NULL);
     bOGRAPISpyEnabled = (pszSpyFile != NULL);
@@ -141,10 +141,10 @@ static int OGRAPISpyEnabled()
     {
         osSpyFile.resize(0);
         aoSetCreatedDS.clear();
-        return FALSE;
+        return false;
     }
     if( osSpyFile.size() )
-        return TRUE;
+        return true;
 
     osSpyFile = pszSpyFile;
 
@@ -172,7 +172,7 @@ static int OGRAPISpyEnabled()
     fprintf(fpSpyFile, "shutil.copy\n"); // same here
     fprintf(fpSpyFile, "\n");
 
-    return TRUE;
+    return true;
 }
 
 static CPLString OGRAPISpyGetOptions(char** papszOptions)
@@ -359,7 +359,7 @@ static void OGRAPISpyFlushDefered()
         {
             fprintf(fpSpyFile, "%s.GetFieldCount()\n",
                     OGRAPISpyGetFeatureDefnVar(hDefn).c_str());
-            bDeferGetFieldCount = FALSE;
+            bDeferGetFieldCount = false;
         }
 
         hLayerGetLayerDefn = NULL;
@@ -478,7 +478,7 @@ void OGRAPISpyPreClose(OGRDataSourceH hDS)
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpyPostClose(CPL_UNUSED OGRDataSourceH hDS)
+void OGRAPISpyPostClose()
 {
     if( !GDALIsInGlobalDestructor() )
     {
@@ -983,7 +983,7 @@ void OGRAPISpy_FD_GetFieldCount(OGRFeatureDefnH hDefn)
     if( hLayerGetLayerDefn != NULL &&
         (OGRFeatureDefnH)(((OGRLayer*)hLayerGetLayerDefn)->GetLayerDefn()) == hDefn )
     {
-        bDeferGetFieldCount = TRUE;
+        bDeferGetFieldCount = true;
     }
     else
     {

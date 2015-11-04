@@ -38,7 +38,7 @@ CPL_C_START
 void	GDALRegister_PALSARJaxa(void);
 CPL_C_END
 
-#if defined(WIN32) || defined(WIN32CE)
+#if defined(WIN32)
 #define SEP_STRING "\\"
 #else
 #define SEP_STRING "/"
@@ -140,7 +140,8 @@ CPL_C_END
 enum eFileType {
 	level_11 = 0,
 	level_15,
-    level_10
+        level_10,
+        level_unknown = 999,
 };
 
 enum ePolarization {
@@ -176,18 +177,18 @@ public:
     static void ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp );
 };
 
-PALSARJaxaDataset::PALSARJaxaDataset()
-{
-    pasGCPList = NULL;
-    nGCPCount = 0;
-}
+PALSARJaxaDataset::PALSARJaxaDataset() :
+    pasGCPList(NULL),
+    nGCPCount(0),
+    nFileType(level_unknown)
+{ }
 
 PALSARJaxaDataset::~PALSARJaxaDataset()
 {
-    if( nGCPCount > 0 ) 
+    if( nGCPCount > 0 )
     {
-        GDALDeinitGCPs( nGCPCount, pasGCPList ); 
-        CPLFree( pasGCPList ); 
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
     }
 }
 
@@ -477,9 +478,8 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
         return 0;
 
     /* First, check that this is a PALSAR image indeed */
-    if ( !EQUALN((char *)(poOpenInfo->pabyHeader + 60),"AL", 2) 
-         || !EQUALN(CPLGetBasename((char *)(poOpenInfo->pszFilename)) + 4, 
-                    "ALPSR", 5) )
+    if ( !STARTS_WITH_CI((char *)(poOpenInfo->pabyHeader + 60), "AL") 
+         || !STARTS_WITH_CI(CPLGetBasename((char *)(poOpenInfo->pszFilename)) + 4, "ALPSR") )
     {
         return 0;
     }

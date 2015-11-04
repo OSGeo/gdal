@@ -64,8 +64,7 @@ def urlescape(url):
         pass
     return url
 
-def gdalurlopen(url):
-    timeout = 10
+def gdalurlopen(url, timeout = 10):
     old_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(timeout)
 

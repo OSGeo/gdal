@@ -35,7 +35,7 @@
 #include "cpl_port.h"
 #include "gdal.h"
 #include "gdal_priv.h"
-#include "math.h"
+#include <cmath>
 
 CPL_C_START
 #include "tiffio.h"
@@ -84,10 +84,10 @@ typedef struct {
 
 typedef union 
 {
-    uint8   AsUint8;          
-    uint16  AsUint16;          
-    uint32  AsUint32;          
-    real32  AsReal32;          
+    uint8   AsUint8;
+    uint16  AsUint16;
+    uint32  AsUint32;
+    real32  AsReal32;
     real64  AsReal64;
 } INGR_MinMax;
 
@@ -96,12 +96,13 @@ typedef union
 //  ----------------------------------------------------------------------------
 
 typedef enum {
-    PackedBinary                     = 1,   // 1 bit / pixel  
-    ByteInteger                      = 2,   // 8 bits / pixel  
-    WordIntegers                     = 3,   // 16 bits / pixel  
-    Integers32Bit                    = 4,     
-    FloatingPoint32Bit               = 5,     
-    FloatingPoint64Bit               = 6,     
+    IngrUnknownFrmt                  = 0,
+    PackedBinary                     = 1,   // 1 bit / pixel
+    ByteInteger                      = 2,   // 8 bits / pixel
+    WordIntegers                     = 3,   // 16 bits / pixel
+    Integers32Bit                    = 4,
+    FloatingPoint32Bit               = 5,
+    FloatingPoint64Bit               = 6,
     Complex                          = 7,   // 64 bits / pixel  
     DoublePrecisionComplex           = 8,     
     RunLengthEncoded                 = 9,   // Bi-level Images  
@@ -319,7 +320,8 @@ typedef     struct {
 //    Tile Directory Header
 //  ----------------------------------------------------------------------------
 
-typedef    struct {
+typedef struct INGR_TileHeader {
+    INGR_TileHeader();
     uint16              ApplicationType;
     uint16              SubTypeCode;
     uint32              WordsToFollow;
@@ -329,7 +331,7 @@ typedef    struct {
     uint16              Properties;
     uint16              DataTypeCode;
     uint8               Reserved2[100];
-    uint32              TileSize; 
+    uint32              TileSize;
     uint32              Reserved3;
     INGR_TileItem       First;
 } INGR_TileHeader;
@@ -572,4 +574,3 @@ void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem, const GByte *p
 void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData, const GByte *pabyBuf);
 
 #endif
-

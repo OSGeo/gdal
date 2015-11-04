@@ -126,6 +126,8 @@ def test_gnmmanage_4():
 # gnmanalyse dijkstra 61 50 -alo "fetch_vertex=OFF" -ds /home/bishop/tmp/di.shp -lco "SHPT=ARC" /home/bishop/tmp/test_gnm --config CPL_DEBUG ON
 
 def test_gnmanalyse_1():
+    if test_cli_utilities.get_gnmmanage_path() is None:
+        return 'skip'
     if test_cli_utilities.get_gnmanalyse_path() is None:
         return 'skip'
 
@@ -140,6 +142,8 @@ def test_gnmanalyse_1():
 # gnmanalyse kpaths 61 50 3 -alo "fetch_vertex=OFF" -ds /home/bishop/tmp/kp.shp -lco "SHPT=ARC" /home/bishop/tmp/test_gnm --config CPL_DEBUG ON
 
 def test_gnmanalyse_2():
+    if test_cli_utilities.get_gnmmanage_path() is None:
+        return 'skip'
     if test_cli_utilities.get_gnmanalyse_path() is None:
         return 'skip'
 

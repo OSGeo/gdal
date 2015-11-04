@@ -116,7 +116,7 @@ static void Check(GByte* pBuffer, int nXSize, int nYSize, int nBands,
 static void ReadRaster(GDALDataset* poDS, int nXSize, int nYSize, int nBands,
                        GByte* pBuffer, int nXOff, int nYOff, int nXWin, int nYWin)
 {
-    poDS->RasterIO(GF_Read, nXOff, nYOff, nXWin, nYWin,
+    CPL_IGNORE_RET_VAL(poDS->RasterIO(GF_Read, nXOff, nYOff, nXWin, nYWin,
                     pBuffer, nXWin, nYWin,
                     GDT_Byte,
                     nBands, NULL,
@@ -124,7 +124,7 @@ static void ReadRaster(GDALDataset* poDS, int nXSize, int nYSize, int nBands,
 #ifdef GDAL_COMPILATION
                     , NULL
 #endif
-                    );
+                    ));
     if( bCheck )
     {
         Check(pBuffer, nXSize, nYSize, nBands,
@@ -206,7 +206,7 @@ static void ThreadFuncDedicatedDataset(void* _psThreadDescription)
     CPLFree(pBuffer);
 }
 
-static void ThreadFuncWithMigration(void* _unused)
+static void ThreadFuncWithMigration(void* /* _unused */)
 {
     Request* psRequest;
     while( (psRequest = GetNextRequest(psGlobalRequestList)) != NULL )
@@ -445,7 +445,7 @@ int main(int argc, char* argv[])
                         pabyLine[iBand * nXSize + iX] = (GByte)(myrand_r(&seed) & 0xff);
                     }
                 }
-                poDS->RasterIO(GF_Write, 0, iY, nXSize, 1,
+                CPL_IGNORE_RET_VAL(poDS->RasterIO(GF_Write, 0, iY, nXSize, 1,
                                pabyLine, nXSize, 1,
                                GDT_Byte,
                                nBands, NULL,
@@ -453,7 +453,7 @@ int main(int argc, char* argv[])
 #ifdef GDAL_COMPILATION
                                , NULL
 #endif
-                               );
+                               ));
             }
             VSIFree(pabyLine);
         }
@@ -580,4 +580,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-

@@ -112,8 +112,8 @@ OGRXPlaneReader* OGRXPlaneNavReader::CloneForLayer(OGRXPlaneLayer* poLayer)
 
 int OGRXPlaneNavReader::IsRecognizedVersion( const char* pszVersionString)
 {
-    return EQUALN(pszVersionString, "810 Version", 11) ||
-           EQUALN(pszVersionString, "740 Version", 11);
+    return STARTS_WITH_CI(pszVersionString, "810 Version") ||
+           STARTS_WITH_CI(pszVersionString, "740 Version");
 }
 
 /************************************************************************/

@@ -449,9 +449,9 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
 /*                      GuessFeatureLocations()                         */
 /************************************************************************/
 
-#define MARK_DELETED(x)  ((x) | (((GIntBig)1) << 63))
-#define IS_DELETED(x)    (((x) & (((GIntBig)1) << 63)) != 0)
-#define GET_OFFSET(x)    ((x) & ~(((GIntBig)1) << 63))
+#define MARK_DELETED(x)  ((x) | (((GUIntBig)1) << 63))
+#define IS_DELETED(x)    (((x) & (((GUIntBig)1) << 63)) != 0)
+#define GET_OFFSET(x)    ((x) & ~(((GUIntBig)1) << 63))
 
 int FileGDBTable::GuessFeatureLocations()
 {
@@ -1270,7 +1270,7 @@ int FileGDBTable::SelectRow(int iRow)
             returnErrorAndCleanupIf(
                 VSIFReadL(pabyBuffer, nRowBlobLength, 1, fpTable) != 1, nCurRow = -1 );
             /* Protection for 4 ReadVarUInt64NoCheck */
-            CPLAssert(ZEROES_AFTER_END_OF_BUFFER == 4);
+            CPL_STATIC_ASSERT(ZEROES_AFTER_END_OF_BUFFER == 4);
             pabyBuffer[nRowBlobLength] = 0;
             pabyBuffer[nRowBlobLength+1] = 0;
             pabyBuffer[nRowBlobLength+2] = 0;

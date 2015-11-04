@@ -418,9 +418,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             CPLString osBoxName;
 
             char *pszXML = (char *) oBox.ReadBoxData();
-            if( strncmp(pszXML, "<GDALMultiDomainMetadata>",
-                        strlen("<GDALMultiDomainMetadata>")) == 0 )
-            {
+            if( STARTS_WITH(pszXML, "<GDALMultiDomainMetadata>") )            {
                 if( pszGDALMultiDomainMetadata == NULL )
                 {
                     pszGDALMultiDomainMetadata = pszXML;
@@ -541,7 +539,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     if(! CSLTestBoolean(CPLGetConfigOption("GDAL_USE_GEOJP2", "TRUE")) )
         return FALSE;
 
-    int abValidProjInfo[MAX_JP2GEOTIFF_BOXES] = { FALSE };
+    bool abValidProjInfo[MAX_JP2GEOTIFF_BOXES] = { false };
     char* apszProjection[MAX_JP2GEOTIFF_BOXES] = { NULL };
     double aadfGeoTransform[MAX_JP2GEOTIFF_BOXES][6];
     int anGCPCount[MAX_JP2GEOTIFF_BOXES] = { 0 };
@@ -569,7 +567,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
                                &abPixelIsPoint[i], &apapszRPCMD[i] ) == CE_None )
         {
             if( apszProjection[i] != NULL && strlen(apszProjection[i]) != 0 ) 
-                abValidProjInfo[i] = TRUE;
+                abValidProjInfo[i] = true;
         }
     }
 
@@ -584,7 +582,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         else if( abValidProjInfo[i] && apszProjection[i] != NULL )
         {
             /* Anything else than a LOCAL_CS will probably be better */
-            if( EQUALN(apszProjection[iBestIndex], "LOCAL_CS", strlen("LOCAL_CS")) )
+            if( STARTS_WITH_CI(apszProjection[iBestIndex], "LOCAL_CS") )
                 iBestIndex = i;
         }
     }
@@ -700,11 +698,11 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
     int i;
 
 
-    if( EQUALN(pszURN,"urn:jp2k:xml:", 13) )
+    if( STARTS_WITH_CI(pszURN, "urn:jp2k:xml:") )
         pszLabel = CPLStrdup( pszURN + 13 );
-    else if( EQUALN(pszURN,"urn:ogc:tc:gmljp2:xml:", 22) )
+    else if( STARTS_WITH_CI(pszURN, "urn:ogc:tc:gmljp2:xml:") )
         pszLabel = CPLStrdup( pszURN + 22 );
-    else if( EQUALN(pszURN,"gmljp2://xml/",13) )
+    else if( STARTS_WITH_CI(pszURN, "gmljp2://xml/") )
         pszLabel = CPLStrdup( pszURN + 13 );
     else
         pszLabel = CPLStrdup( pszURN );
@@ -929,11 +927,11 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /* -------------------------------------------------------------------- */
     char **papszOffset1Tokens = NULL;
     char **papszOffset2Tokens = NULL;
-    int bSuccess = FALSE;
+    bool bSuccess = false;
 
-    papszOffset1Tokens = 
+    papszOffset1Tokens =
         CSLTokenizeStringComplex( pszOffset1, " ,", FALSE, FALSE );
-    papszOffset2Tokens = 
+    papszOffset2Tokens =
         CSLTokenizeStringComplex( pszOffset2, " ,", FALSE, FALSE );
 
     if( CSLCount(papszOffset1Tokens) >= 2
@@ -953,7 +951,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         adfGeoTransform[3] -= adfGeoTransform[4]*0.5;
         adfGeoTransform[3] -= adfGeoTransform[5]*0.5;
 
-        bSuccess = TRUE;
+        bSuccess = true;
         bHaveGeoTransform = TRUE;
     }
 
@@ -989,25 +987,23 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /*      If we have gotten a geotransform, then try to interprete the    */
 /*      srsName.                                                        */
 /* -------------------------------------------------------------------- */
-    int bNeedAxisFlip = FALSE;
+    bool bNeedAxisFlip = false;
 
     OGRSpatialReference oSRS;
     if( bSuccess && pszSRSName != NULL 
         && (pszProjection == NULL || strlen(pszProjection) == 0) )
     {
-        if( EQUALN(pszSRSName,"epsg:",5) )
+        if( STARTS_WITH_CI(pszSRSName, "epsg:") )
         {
             if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
                 oSRS.exportToWkt( &pszProjection );
         }
-        else if( (EQUALN(pszSRSName,"urn:",4) 
+        else if( (STARTS_WITH_CI(pszSRSName, "urn:") 
                  && strstr(pszSRSName,":def:") != NULL
                  && oSRS.importFromURN(pszSRSName) == OGRERR_NONE) ||
                  /* GMLJP2 v2.0 uses CRS URL instead of URN */
                  /* See e.g. http://schemas.opengis.net/gmljp2/2.0/examples/minimalInstance.xml */
-                 (EQUALN(pszSRSName,"http://www.opengis.net/def/crs/",
-                         strlen("http://www.opengis.net/def/crs/")) 
-                 && oSRS.importFromCRSURL(pszSRSName) == OGRERR_NONE) )
+                 (STARTS_WITH_CI(pszSRSName, "http://www.opengis.net/def/crs/")                  && oSRS.importFromCRSURL(pszSRSName) == OGRERR_NONE) )
         {
             oSRS.exportToWkt( &pszProjection );
 
@@ -1016,7 +1012,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
             {
                 CPLDebug( "GMLJP2", "Request axis flip for SRS=%s",
                           pszSRSName );
-                bNeedAxisFlip = TRUE;
+                bNeedAxisFlip = true;
             }
         }
         else if( !GMLSRSLookup( pszSRSName ) )
@@ -1039,7 +1035,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         && CSLTestBoolean( CPLGetConfigOption( "GDAL_IGNORE_AXIS_ORIENTATION",
                                                "FALSE" ) ) )
     {
-        bNeedAxisFlip = FALSE;
+        bNeedAxisFlip = false;
         CPLDebug( "GMLJP2", "Suppressed axis flipping based on GDAL_IGNORE_AXIS_ORIENTATION." );
     }
     
@@ -1065,21 +1061,22 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     if( bNeedAxisFlip && psRG != NULL )
     {
         int nAxisCount = 0;
-        int bFirstAxisIsEastOrLong = FALSE, bSecondAxisIsNorthOrLat = FALSE;
+        bool bFirstAxisIsEastOrLong = false;
+        bool bSecondAxisIsNorthOrLat = false;
         for(CPLXMLNode* psIter = psRG->psChild; psIter != NULL; psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element && strcmp(psIter->pszValue, "axisName") == 0 &&
                 psIter->psChild != NULL && psIter->psChild->eType == CXT_Text )
             {
                 if( nAxisCount == 0 && 
-                    (EQUALN(psIter->psChild->pszValue, "EAST", 4) ||
-                     EQUALN(psIter->psChild->pszValue, "LONG", 4) ) )
+                    (STARTS_WITH_CI(psIter->psChild->pszValue, "EAST") ||
+                     STARTS_WITH_CI(psIter->psChild->pszValue, "LONG") ) )
                 {
                     bFirstAxisIsEastOrLong = TRUE;
                 }
                 else if( nAxisCount == 1 &&
-                         (EQUALN(psIter->psChild->pszValue, "NORTH", 5) ||
-                          EQUALN(psIter->psChild->pszValue, "LAT", 3)) )
+                         (STARTS_WITH_CI(psIter->psChild->pszValue, "NORTH") ||
+                          STARTS_WITH_CI(psIter->psChild->pszValue, "LAT")) )
                 {
                     bSecondAxisIsNorthOrLat = TRUE;
                 }
@@ -1089,7 +1086,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         if( bFirstAxisIsEastOrLong && bSecondAxisIsNorthOrLat )
         {
             CPLDebug( "GMLJP2", "Disable axis flip because of explicit axisName disabling it" );
-            bNeedAxisFlip = FALSE;
+            bNeedAxisFlip = false;
         }
     }
 
@@ -1692,7 +1689,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
     CPLString osRootGMLId = "ID_GMLJP2_0";
     CPLString osGridCoverage;
     CPLString osGridCoverageFile;
-    int bCRSURL = TRUE;
+    bool bCRSURL = true;
     std::vector<GMLJP2V2MetadataDesc> aoMetadata;
     std::vector<GMLJP2V2AnnotationDesc> aoAnnotations;
     std::vector<GMLJP2V2GMLFileDesc> aoGMLFiles;
@@ -2178,12 +2175,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         for(int i=0;i<(int)aoGMLFiles.size();i++)
         {
             if( aoGMLFiles[i].osSchemaLocation.size() &&
-                strncmp(aoGMLFiles[i].osSchemaLocation, "gmljp2://xml/",
-                        strlen("gmljp2://xml/")) == 0 )
-            {
+                STARTS_WITH(aoGMLFiles[i].osSchemaLocation, "gmljp2://xml/") )            {
                 const char* pszLookedLabel =
                     aoGMLFiles[i].osSchemaLocation.c_str() + strlen("gmljp2://xml/");
-                int bFound = FALSE;
+                bool bFound = false;
                 for(int j=0; !bFound && j<(int)aoBoxes.size();j++)
                     bFound = (strcmp(pszLookedLabel, aoBoxes[j].osLabel) == 0);
                 if( !bFound )
@@ -2319,7 +2314,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 /*      Process metadata, annotations and features collections.         */
 /* -------------------------------------------------------------------- */
     std::vector<CPLString> aosTmpFiles;
-    int bRootHasXLink = FALSE;
+    bool bRootHasXLink = false;
     if( aoMetadata.size() || aoAnnotations.size() || aoGMLFiles.size() ||
         aoStyles.size() || aoExtensions.size() )
     {
@@ -2522,7 +2517,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 {
                     if( !bRootHasXLink )
                     {
-                        bRootHasXLink = TRUE;
+                        bRootHasXLink = true;
                         CPLSetXMLValue(psGMLJP2CoverageCollection, "#xmlns:xlink",
                                        "http://www.w3.org/1999/xlink");
                     }
@@ -2934,10 +2929,10 @@ CPLXMLNode* GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(
         papszSrcMD = CSLSetNameValue(papszSrcMD, "VERSION", NULL);
     }
 
-    int bHasMD = FALSE;
+    bool bHasMD = false;
     if( papszSrcMD && *papszSrcMD )
     {
-        bHasMD = TRUE;
+        bHasMD = true;
         oLocalMDMD.SetMetadata(papszSrcMD);
     }
     CSLDestroy(papszSrcMD);
@@ -2951,7 +2946,7 @@ CPLXMLNode* GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(
             if( !EQUAL(*papszMDListIter, "") &&
                 !EQUAL(*papszMDListIter, "IMAGE_STRUCTURE") &&
                 !EQUAL(*papszMDListIter, "JPEG2000") &&
-                !EQUALN(*papszMDListIter, "xml:BOX_", strlen("xml:BOX_")) &&
+                !STARTS_WITH_CI(*papszMDListIter, "xml:BOX_") &&
                 !EQUAL(*papszMDListIter, "xml:gml.root-instance") &&
                 !EQUAL(*papszMDListIter, "xml:XMP") &&
                 !EQUAL(*papszMDListIter, "xml:IPR") )
@@ -3016,7 +3011,7 @@ GDALJP2Box** GDALJP2Metadata::CreateXMLBoxes( GDALDataset* poSrcDS,
     {
         /* Write metadata that look like originating from JP2 XML boxes */
         /* as a standalone JP2 XML box */
-        if( EQUALN(*papszMDListIter, "xml:BOX_", strlen("xml:BOX_")) )
+        if( STARTS_WITH_CI(*papszMDListIter, "xml:BOX_") )
         {
             char** papszSrcMD = poSrcDS->GetMetadata(*papszMDListIter);
             if( papszSrcMD && *papszSrcMD )

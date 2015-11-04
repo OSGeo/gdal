@@ -36,11 +36,7 @@
 
 #include "cpl_conv.h"
 
-#if !defined(WIN32CE)
-#  include <time.h>
-#else
-#  include <wce_time.h>
-#endif
+#include <time.h>
 
 CPL_CVSID("$Id$");
 
@@ -637,14 +633,13 @@ void CPLJoinThread(CPL_UNUSED CPLJoinableThread* hJoinableThread)
 void CPLSleep( double dfWaitInSeconds )
 {
     time_t  ltime;
-    time_t  ttime;
 
     time( &ltime );
-    ttime = ltime + (int) (dfWaitInSeconds+0.5);
+    time_t ttime = ltime + (int) (dfWaitInSeconds+0.5);
 
     for( ; ltime < ttime; time(&ltime) )
     {
-        /* currently we just busy wait.  Perhaps we could at least block on 
+        /* currently we just busy wait.  Perhaps we could at least block on
            io? */
     }
 }
@@ -702,15 +697,10 @@ void CPLCleanupTLS()
   /************************************************************************/
 
 /* InitializeCriticalSectionAndSpinCount requires _WIN32_WINNT >= 0x403 */
+#undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0500
 
 #include <windows.h>
-
-/* windows.h header must be included above following lines. */
-#if defined(WIN32CE)
-#  include "cpl_win32ce_api.h"
-#  define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
-#endif
 
 /************************************************************************/
 /*                             CPLGetNumCPUs()                          */
@@ -994,14 +984,11 @@ void  CPLDestroyCond( CPLCond *hCond )
 void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 
 {
-    char      *pszLockFilename;
-    HANDLE    hLockFile;
-    
-    pszLockFilename = (char *) CPLMalloc(strlen(pszPath) + 30);
+    char *pszLockFilename = (char *) CPLMalloc(strlen(pszPath) + 30);
     sprintf( pszLockFilename, "%s.lock", pszPath );
 
-    hLockFile = 
-        CreateFile( pszLockFilename, GENERIC_WRITE, 0, NULL,CREATE_NEW, 
+    HANDLE hLockFile =
+        CreateFile( pszLockFilename, GENERIC_WRITE, 0, NULL,CREATE_NEW,
                     FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE, NULL );
 
     while( GetLastError() == ERROR_ALREADY_EXISTS
@@ -1157,7 +1144,7 @@ void CPLSleep( double dfWaitInSeconds )
     Sleep( (DWORD) (dfWaitInSeconds * 1000.0) );
 }
 
-static int           bTLSKeySetup = FALSE;
+static bool          bTLSKeySetup = false;
 static DWORD         nTLSKey;
 
 /************************************************************************/
@@ -1176,7 +1163,7 @@ static void **CPLGetTLSList()
         {
             CPLEmergencyError( "CPLGetTLSList(): TlsAlloc() failed!" );
         }
-        bTLSKeySetup = TRUE;
+        bTLSKeySetup = true;
     }
 
     papTLSList = (void **) TlsGetValue( nTLSKey );

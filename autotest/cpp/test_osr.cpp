@@ -4,20 +4,20 @@
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  OGR Spatial Reference general features test.
 // Author:   Mateusz Loskot <mateusz@loskot.net>
-// 
+//
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
-//  
+//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
 // License as published by the Free Software Foundation; either
 // version 2 of the License, or (at your option) any later version.
-// 
+//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Library General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Library General Public
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -33,7 +33,9 @@
 
 // See Bronek Kozicki's comments posted here:
 // http://lists.boost.org/Archives/boost/2005/07/89697.php
+#if defined(_MSC_VER) || defined(_WIN32_WCE)
 #pragma warning(disable: 4996)
+#endif
 
 #include <tut.h>
 #include <tut_gdal.h>
@@ -83,7 +85,7 @@ namespace tut
         ensure_equals("Can't set GeogCS", err_, OGRERR_NONE);
 
         double val = 0;
-        
+
         val = OSRGetProjParm(srs_, SRS_PP_CENTRAL_MERIDIAN, -1111, &err_);
         ensure("Invalid UTM central meridian",
             std::fabs(val - (-117.0)) <= .00000000000010);
@@ -211,7 +213,7 @@ namespace tut
 
         ensure("Got METER authority code on linear units",
             NULL == OSRGetAuthorityCode(srs_, "PROJCS|UNIT"));
-        
+
         char* unitsName = NULL;
         val = OSRGetLinearUnits(srs_, &unitsName);
         ensure("Units name is NULL", NULL != unitsName);
@@ -236,7 +238,7 @@ namespace tut
 
         err_ = OSRSetTOWGS84(srs_, 1, 2, 3, 0, 0, 0, 0);
         ensure_equals("OSRSetTOWGS84 failed", err_, OGRERR_NONE);
-        
+
         const int coeffSize = 7;
         double coeff[coeffSize] = { 0 };
         const double expect[coeffSize] = { 1, 2, 3, 0, 0, 0, 0 };
@@ -341,10 +343,10 @@ namespace tut
         std::string expect("PROJCS[\"UTM Zone 11, Northern Hemisphere\","
                            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
                            "SPHEROID[\"WGS 84\",6378137,298.257223563,"
-                           "AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],"
+                           "AUTHORITY[\"EPSG\",\"7030\"]],"
                            "AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,"
                            "AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,"
-                           "AUTHORITY[\"EPSG\",\"9108\"]],"
+                           "AUTHORITY[\"EPSG\",\"9122\"]],"
                            "AUTHORITY[\"EPSG\",\"4326\"]],"
                            "PROJECTION[\"Transverse_Mercator\"],"
                            "PARAMETER[\"latitude_of_origin\",0],"

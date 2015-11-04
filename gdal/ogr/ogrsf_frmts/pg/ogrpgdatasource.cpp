@@ -45,8 +45,8 @@ static void OGRPGNoticeProcessor( void *arg, const char * pszMessage );
 /*                          OGRPGDataSource()                           */
 /************************************************************************/
 
-OGRPGDataSource::OGRPGDataSource()
-
+OGRPGDataSource::OGRPGDataSource() :
+    bDSUpdate(FALSE)
 {
     pszName = NULL;
     pszDBName = NULL;
@@ -55,13 +55,19 @@ OGRPGDataSource::OGRPGDataSource()
     hPGConn = NULL;
     bHavePostGIS = FALSE;
     bHaveGeography = FALSE;
+    sPostgreSQLVersion.nMajor = 0;
+    sPostgreSQLVersion.nMinor = 0;
+    sPostgreSQLVersion.nRelease = 0;
+    sPostGISVersion.nMajor = 0;
+    sPostGISVersion.nMinor = 0;
+    sPostGISVersion.nRelease = 0;
     bUseBinaryCursor = FALSE;
     bUserTransactionActive = FALSE;
     bSavePointActive = FALSE;
     nSoftTransactionLevel = 0;
     bBinaryTimeFormatIsInt8 = FALSE;
     bUseEscapeStringSyntax = FALSE;
-    
+
     nGeometryOID = (Oid) 0;
     nGeographyOID = (Oid) 0;
 
@@ -87,7 +93,7 @@ OGRPGDataSource::~OGRPGDataSource()
 {
     int         i;
 
-    FlushSoftTransaction();
+    FlushCache();
 
     CPLFree( pszName );
     CPLFree( pszDBName );
@@ -101,6 +107,21 @@ OGRPGDataSource::~OGRPGDataSource()
 
     if( hPGConn != NULL )
     {
+        /* If there are prelude statements we don't want to mess with transactions */
+        if( CSLFetchNameValue(papszOpenOptions, "PRELUDE_STATEMENTS") == NULL )
+            FlushSoftTransaction();
+
+/* -------------------------------------------------------------------- */
+/*      Send closing statements                                         */
+/* -------------------------------------------------------------------- */
+        const char* pszClosingStatements = CSLFetchNameValue(papszOpenOptions,
+                                                             "CLOSING_STATEMENTS");
+        if( pszClosingStatements != NULL )
+        {
+            PGresult    *hResult = OGRPG_PQexec( hPGConn, pszClosingStatements, TRUE );
+            OGRPGClearResult(hResult);
+        }
+
         /* XXX - mloskot: After the connection is closed, valgrind still
          * reports 36 bytes definitely lost, somewhere in the libpq.
          */
@@ -315,21 +336,32 @@ static PGTableEntry* OGRPGAddTableEntry(CPLHashSet* hSetTables,
 /************************************************************************/
 
 int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
-                           int bTestOpen, char** papszOpenOptions )
+                           int bTestOpen, char** papszOpenOptionsIn )
 
 {
     CPLAssert( nLayers == 0 );
+    papszOpenOptions = CSLDuplicate(papszOpenOptionsIn);
+
+    const char* pszPreludeStatements = CSLFetchNameValue(papszOpenOptions,
+                                                         "PRELUDE_STATEMENTS");
+    if( pszPreludeStatements )
+    {
+        // If the prelude statements starts with BEGIN, then don't emit one
+        // in our code.
+        if( STARTS_WITH_CI(pszPreludeStatements, "BEGIN") )
+            nSoftTransactionLevel = 1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Verify postgresql prefix.                                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszNewName,"PGB:",4) )
+    if( STARTS_WITH_CI(pszNewName, "PGB:") )
     {
         bUseBinaryCursor = TRUE;
         CPLDebug("PG","BINARY cursor is used for geometry fetching");
     }
     else
-    if( !EQUALN(pszNewName,"PG:",3) )
+    if( !STARTS_WITH_CI(pszNewName, "PG:") )
     {
         if( !bTestOpen )
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -482,6 +514,21 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     bDSUpdate = bUpdate;
+
+/* -------------------------------------------------------------------- */
+/*      Send prelude statements                                         */
+/* -------------------------------------------------------------------- */
+    if( pszPreludeStatements != NULL )
+    {
+        PGresult    *hResult = OGRPG_PQexec( hPGConn, pszPreludeStatements, TRUE );
+        if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            OGRPGClearResult( hResult );
+            return FALSE;
+        }
+
+        OGRPGClearResult(hResult);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set the encoding to UTF8 as the driver advertizes UTF8          */
@@ -1389,7 +1436,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     }
     pszFIDColumnName = osFIDColumnName.c_str();
 
-    if (strncmp(pszLayerName, "pg", 2) == 0)
+    if (STARTS_WITH(pszLayerName, "pg"))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "The layer name should not begin by 'pg' as it is a reserved prefix");
@@ -2091,7 +2138,6 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     PGresult            *hResult = NULL;
     CPLString           osCommand;
     char                *pszWKT = NULL;
-    int                 nSRSId = nUndefinedSRID;
     const char*         pszAuthorityName;
 
     if( poSRS == NULL )
@@ -2142,7 +2188,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
                 && PQntuples(hResult) > 0 )
             {
-                nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
+                int nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
 
                 OGRPGClearResult( hResult );
 
@@ -2179,7 +2225,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
         && PQntuples(hResult) > 0 )
     {
-        nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
+        int nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
 
         OGRPGClearResult( hResult );
 
@@ -2208,6 +2254,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     hResult = OGRPG_PQexec(hPGConn, "SELECT MAX(srid) FROM spatial_ref_sys" );
 
+    int nSRSId;
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
     {
         nSRSId = atoi(PQgetvalue(hResult,0,0)) + 1;
@@ -2491,16 +2538,12 @@ OGRErr OGRPGDataSource::SoftRollbackTransaction()
 OGRErr OGRPGDataSource::FlushSoftTransaction()
 
 {
-    FlushCache(); 
-    
     /*CPLDebug("PG", "poDS=%p FlushSoftTransaction() nSoftTransactionLevel=%d",
              this, nSoftTransactionLevel);*/
 
     if( nSoftTransactionLevel <= 0 )
         return OGRERR_NONE;
 
-    for(int i=0;i<nLayers;i++)
-        papoLayers[i]->InvalidateCursor();
     bSavePointActive = FALSE;
 
     OGRErr eErr = OGRERR_NONE;
@@ -2695,7 +2738,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 
@@ -2720,7 +2763,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     PGresult    *hResult = NULL;
 
-    if (EQUALN(pszSQLCommand, "SELECT", 6) == FALSE ||
+    if (STARTS_WITH_CI(pszSQLCommand, "SELECT") == FALSE ||
         (strstr(pszSQLCommand, "from") == NULL && strstr(pszSQLCommand, "FROM") == NULL))
     {
         /* For something that is not a select or a select without table, do not */
@@ -2775,6 +2818,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
             
             osCommand.Printf( "CLOSE %s", "executeSQLCursor" );
             hResult = OGRPG_PQexec(hPGConn, osCommand );
+            OGRPGClearResult( hResult );
             
             SoftCommitTransaction();
 
@@ -2787,17 +2831,6 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
         {
             SoftRollbackTransaction();
         }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Generate an error report if an error occured.                   */
-/* -------------------------------------------------------------------- */
-    if( !hResult ||
-        (PQresultStatus(hResult) == PGRES_NONFATAL_ERROR
-         || PQresultStatus(hResult) == PGRES_FATAL_ERROR ) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", PQerrorMessage( hPGConn ) );
     }
 
     OGRPGClearResult( hResult );
@@ -2844,4 +2877,3 @@ OGRErr OGRPGDataSource::EndCopy( )
     else
         return OGRERR_NONE;
 }
-

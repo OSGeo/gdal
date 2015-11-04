@@ -118,7 +118,12 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#ifdef GDAL_COMPILATION
+#include "shapefil.h"
+#else
 #include "dbfopen.h"
+#endif
+
 #include "avc_mbyte.h"
 
 CPL_C_START
@@ -777,7 +782,7 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
 /*---------------------------------------------------------------------
  * Functions related to parsing E00 lines
  *--------------------------------------------------------------------*/
-AVCE00ParseInfo  *AVCE00ParseInfoAlloc();
+AVCE00ParseInfo  *AVCE00ParseInfoAlloc(void);
 void    AVCE00ParseInfoFree(AVCE00ParseInfo *psInfo);
 void    AVCE00ParseReset(AVCE00ParseInfo  *psInfo);
 

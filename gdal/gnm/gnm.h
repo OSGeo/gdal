@@ -605,7 +605,7 @@ typedef enum
  * @since GDAL 2.1
  */
 
-class CPL_DLL GNMRule : public CPLString
+class CPL_DLL GNMRule
 {
 public:
     GNMRule();
@@ -643,6 +643,8 @@ public:
     virtual CPLString GetSourceLayerName() const;
     virtual CPLString GetTargetLayerName() const;
     virtual CPLString GetConnectorLayerName() const;
+    const char* c_str() const;
+    operator const char* (void) const;
 protected:
     virtual bool ParseRuleString();
 protected:
@@ -652,6 +654,7 @@ protected:
     bool m_bAllow;
     bool m_bValid;
     bool m_bAny;
+    CPLString m_soRuleString;
 };
 
 /**

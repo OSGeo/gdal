@@ -1266,12 +1266,12 @@ def tiff_read_irregular_tile_size_jpeg_in_tiff():
     return 'success'
 
 ###############################################################################
-# Test GTIFF_DIRECT_IO optimization
+# Test GTIFF_DIRECT_IO and GTIFF_VIRTUAL_MEM_IO optimizations
 
 def tiff_direct_and_virtual_mem_io():
 
   # Test with pixel-interleaved and band-interleaved datasets
-  for dt in [ gdal.GDT_Byte, gdal.GDT_Int16 ]:
+  for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_CInt16 ]:
 
     src_ds = gdal.Open('data/stefan_full_rgba.tif')
     dt_size = 1
@@ -1293,6 +1293,28 @@ def tiff_direct_and_virtual_mem_io():
             data = ''.join(new_vals)
         mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data, buf_type = dt)
         src_ds = mem_ds
+    elif dt == gdal.GDT_CInt16:
+        dt_size = 4
+        mem_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, dt)
+        data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, buf_type = dt)
+        new_vals = []
+        for i in range(4*src_ds.RasterXSize*src_ds.RasterYSize):
+            if sys.version_info >= (3,0,0):
+                new_vals.append(chr(data[4*i]).encode('latin1'))
+                new_vals.append(chr(data[4*i]).encode('latin1'))
+                new_vals.append(chr(255 - data[4*i]).encode('latin1'))
+                new_vals.append(chr(255 - data[4*i]).encode('latin1'))
+            else:
+                new_vals.append(data[4*i])
+                new_vals.append(data[4*i])
+                new_vals.append(chr(255 - ord(data[4*i])))
+                new_vals.append(chr(255 - ord(data[4*i])))
+        if sys.version_info >= (3,0,0):
+            data = ''.encode('latin1').join(new_vals)
+        else:
+            data = ''.join(new_vals)
+        mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data, buf_type = dt)
+        src_ds = mem_ds
 
     for truncated in [False, True]:
      if truncated:
@@ -1302,7 +1324,7 @@ def tiff_direct_and_virtual_mem_io():
          nitermax = 8
          options = [('GTIFF_DIRECT_IO', '/vsimem'), ('GTIFF_VIRTUAL_MEM_IO', 'tmp'), ('GTIFF_VIRTUAL_MEM_IO', '/vsimem')]
      for (option, prefix) in options:
-      if option == 'GTIFF_DIRECT_IO':
+      if option == 'GTIFF_DIRECT_IO' or dt == gdal.GDT_CInt16:
           niter = 2
       else:
           niter = nitermax
@@ -1310,7 +1332,11 @@ def tiff_direct_and_virtual_mem_io():
 
         if i == 0:
             filename = '%s/tiff_direct_io_contig.tif' % prefix
+            oldval = gdal.GetConfigOption( 'GDAL_TIFF_ENDIANNESS', None )
+            if (dt == gdal.GDT_CInt16 or dt == gdal.GDT_Int16) and option == 'GTIFF_DIRECT_IO':
+                gdal.SetConfigOption( 'GDAL_TIFF_ENDIANNESS', 'INVERTED' )
             out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds)
+            gdal.SetConfigOption( 'GDAL_TIFF_ENDIANNESS', oldval )
             out_ds.FlushCache()
             out_ds = None
         elif i == 1:
@@ -1487,6 +1513,7 @@ def tiff_direct_and_virtual_mem_io():
         if truncated:
             if got_4bands_data_native_type_whole is not None:
                 gdaltest.post_reason('fail')
+                print(gdal.GetDataTypeName(dt))
                 print(option)
                 print(i)
                 return 'fail'

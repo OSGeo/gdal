@@ -98,7 +98,7 @@ char* ImagineCitationTranslation(char* psCitation, geokey_t keyID)
     int i;
     if(!psCitation)
         return ret;
-    if(EQUALN(psCitation, "IMAGINE GeoTIFF Support", strlen("IMAGINE GeoTIFF Support")))
+    if(STARTS_WITH_CI(psCitation, "IMAGINE GeoTIFF Support"))
     {
         // this is a handle IMAGING style citation
         char name[256];
@@ -354,7 +354,7 @@ void SetGeogCSCitation(GTIF * psGTIF, OGRSpatialReference *poSRS, char* angUnitN
     if (n == 0)
         return;
 
-    if(!EQUALN(szName, "GCS Name = ", strlen("GCS Name = ")))
+    if(!STARTS_WITH_CI(szName, "GCS Name = "))
     {
         osCitation = "GCS Name = ";
         osCitation += szName;

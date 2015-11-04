@@ -328,10 +328,10 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
         /* We must strip the explicit "LINESTRING " prefix */
         int nSkip = 0;
         if( !papoCurves[iGeom]->IsEmpty() &&
-            EQUALN(papszGeoms[iGeom], "LINESTRING ", strlen("LINESTRING ")) )
+            STARTS_WITH_CI(papszGeoms[iGeom], "LINESTRING ") )
         {
             nSkip = strlen("LINESTRING ");
-            if( EQUALN(papszGeoms[iGeom] + nSkip, "Z ", 2) )
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
                 nSkip += 2;
         }
 
@@ -465,7 +465,7 @@ void OGRCurveCollection::getEnvelope( OGREnvelope * psEnvelope ) const
 void OGRCurveCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
 {
     OGREnvelope3D       oGeomEnv;
-    int                 bExtentSet = FALSE;
+    bool                bExtentSet = false;
 
     for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
     {
@@ -474,7 +474,7 @@ void OGRCurveCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
             if (!bExtentSet)
             {
                 papoCurves[iGeom]->getEnvelope( psEnvelope );
-                bExtentSet = TRUE;
+                bExtentSet = true;
             }
             else
             {

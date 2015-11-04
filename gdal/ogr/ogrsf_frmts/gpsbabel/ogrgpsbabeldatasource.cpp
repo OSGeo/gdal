@@ -41,14 +41,17 @@ CPL_CVSID("$Id$");
 /*                      OGRGPSBabelDataSource()                         */
 /************************************************************************/
 
-OGRGPSBabelDataSource::OGRGPSBabelDataSource()
-
+OGRGPSBabelDataSource::OGRGPSBabelDataSource() :
+    nLayers(0),
+    pszName(NULL),
+    pszGPSBabelDriverName(NULL),
+    pszFilename(NULL),
+    poGPXDS(NULL)
 {
-    nLayers = 0;
-    pszName = NULL;
-    pszGPSBabelDriverName = NULL;
-    pszFilename = NULL;
-    poGPXDS = NULL;
+  for(int i=0; i<5; ++i)
+  {
+    apoLayers[i] = NULL;
+  }
 }
 
 /************************************************************************/
@@ -118,9 +121,9 @@ static char** GetArgv(int bExplicitFeatures, int bWaypoints, int bRoutes,
 
 int OGRGPSBabelDataSource::IsSpecialFile(const char* pszFilename)
 {
-    return (strncmp(pszFilename, "/dev/", 5) == 0 ||
-            strncmp(pszFilename, "usb:", 4) == 0 ||
-            (strncmp(pszFilename, "COM", 3) == 0  && atoi(pszFilename + 3) > 0));
+    return (STARTS_WITH(pszFilename, "/dev/") ||
+            STARTS_WITH(pszFilename, "usb:") ||
+            (STARTS_WITH(pszFilename, "COM")  && atoi(pszFilename + 3) > 0));
 }
 
 /************************************************************************/
@@ -156,7 +159,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
     int bExplicitFeatures = FALSE;
     int bWaypoints = TRUE, bTracks = TRUE, bRoutes = TRUE;
 
-    if (!EQUALN(pszDatasourceName, "GPSBABEL:", 9))
+    if (!STARTS_WITH_CI(pszDatasourceName, "GPSBABEL:"))
     {
         CPLAssert(pszGPSBabelDriverNameIn);
         pszGPSBabelDriverName = CPLStrdup(pszGPSBabelDriverNameIn);
@@ -205,7 +208,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
             return FALSE;
 
         /* Parse optionnal features= option */
-        if (EQUALN(pszSep+1, "features=", 9))
+        if (STARTS_WITH_CI(pszSep+1, "features="))
         {
             const char* pszNextSep = strchr(pszSep+1, ':');
             if (pszNextSep == NULL)

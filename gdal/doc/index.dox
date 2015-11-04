@@ -17,8 +17,8 @@ Geospatial Foundation</a>.  As a library, it presents a
 to the calling application for all supported formats.  It also comes with a variety
 of useful commandline utilities
 for data translation and processing.  The 
-<a href="http://trac.osgeo.org/gdal/wiki/Release/2.0.0-News">NEWS</a>
-page describes the June 2015 GDAL/OGR 2.0.0 release.
+<a href="http://trac.osgeo.org/gdal/wiki/Release/2.0.1-News">NEWS</a>
+page describes the September 2015 GDAL/OGR 2.0.1 release.
 
 Traditionally GDAL used to design the raster part of the library, and OGR the
 vector part for Simple Features. Starting with GDAL 2.0, both sides have been
@@ -52,7 +52,6 @@ Download:
 <ul>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/BuildHints">Building GDAL From Source</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadSource">Downloads</a> - source code
-<li> <a href="wince.html">GDAL for Windows CE (unmaintained)</a>
 </ul>
 
 \subsection index_devdocs_tutorials Tutorials
@@ -84,6 +83,7 @@ Download:
 <li> <a href="gdal_8h.html">gdal.h: Raster C API</a>
 <li> <a href="ogr__api_8h.html">ogr_api.h: Vector C API</a>
 <li> <a href="gdal__alg_8h.html">gdal_alg.h: GDAL Algorithms C API</a>
+<li> <a href="gdal__utils_8h.html">gdal_utils.h: GDAL Utilities C API</a>
 <li> <a href="classGDALDataset.html">GDALDataset C++ API</a>
 <li> <a href="classGDALRasterBand.html">GDALRasterBand C++ API</a>
 <li> <a href="classOGRLayer.html">OGRLayer C++ API</a>
@@ -105,16 +105,16 @@ or <a href="http://home.gdal.org/projects/opengis/wkt_prop.doc">doc</a> format.
 \htmlonly 
 <table border="0" cellspacing="4" cellpadding="4"> 
 
-<tr><td><a href="http://2015.foss4g.org/"> 
-<img src="foss4g2015.png" alt="FOSS4G 2015" border="0" width="150" height="75"> 
+<tr><td><a href="http://2016.foss4g.org/"> 
+<img src="http://wiki.osgeo.org/images/f/ff/Foss4g2016_logo_squared.png" alt="FOSS4G 2016" border="0"> 
 </a></td> 
  
-<td><a href="http://2015.foss4g.org">FOSS4G 2015</a> is the leading annual  
+<td><a href="http://2016.foss4g.org">FOSS4G 2016</a> is the leading annual  
 conference for free and open source geospatial software.  It will include  
 presentations related to GDAL/OGR, and some of the GDAL/OGR  
 development community will be attending.  It is <i>the</i> event for those  
 interested in GDAL/OGR, other FOSS geospatial technologies and the community  
-around them. The conference will be held in Seoul, South Korea <strong>September 14th - 19th, 2015</strong>.</td>
+around them. The conference will be held in Bonn, Germany, <strong>August 24th - 26th, 2016</strong>.</td>
 </table> 
 \endhtmlonly
 

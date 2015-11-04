@@ -43,11 +43,11 @@ extern "C" void RegisterOGRWFS();
 static int OGRWFSDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !EQUALN(poOpenInfo->pszFilename, "WFS:", 4) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "WFS:") )
     {
         if( poOpenInfo->fpL == NULL )
             return FALSE;
-        if( !EQUALN((const char*)poOpenInfo->pabyHeader,"<OGRWFSDataSource>",18) &&
+        if( !STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "<OGRWFSDataSource>") &&
             strstr((const char*)poOpenInfo->pabyHeader,"<WFS_Capabilities") == NULL &&
             strstr((const char*)poOpenInfo->pabyHeader,"<wfs:WFS_Capabilities") == NULL)
         {

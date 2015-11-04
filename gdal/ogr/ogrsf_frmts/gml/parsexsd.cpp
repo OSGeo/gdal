@@ -43,7 +43,7 @@
 /*      stripped off if there is one.  Returns pointer into             */
 /*      original string.                                                */
 /************************************************************************/
-
+static
 const char *StripNS( const char *pszFullValue )
 
 {
@@ -454,7 +454,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             {
                 gmlType = GMLPT_FeatureProperty;
             }
-            else if (strncmp(pszType, "gml:", 4) == 0)
+            else if (STARTS_WITH(pszType, "gml:"))
             {
                 const AssocNameType* psIter = apsPropertyTypes;
                 while(psIter->pszName)
@@ -590,7 +590,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             const char* pszRef = CPLGetXMLValue( psAttrDef, "ref", NULL );
 
             /* FME .xsd */
-            if (pszRef != NULL && strncmp(pszRef, "gml:", 4) == 0)
+            if (pszRef != NULL && STARTS_WITH(pszRef, "gml:"))
             {
                 const AssocNameType* psIter = apsRefTypes;
                 while(psIter->pszName)
@@ -720,8 +720,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 static
 CPLXMLNode* GMLParseXMLFile(const char* pszFilename)
 {
-    if( strncmp(pszFilename, "http://", 7) == 0 ||
-        strncmp(pszFilename, "https://", 8) == 0 )
+    if( STARTS_WITH(pszFilename, "http://") ||
+        STARTS_WITH(pszFilename, "https://") )
     {
         CPLXMLNode* psRet = NULL;
         CPLHTTPResult* psResult = CPLHTTPFetch( pszFilename, NULL );
@@ -805,8 +805,8 @@ void CPLXMLSchemaResolveInclude( const char* pszMainSchemaLocation,
                 {
                     osAlreadyIncluded.insert( pszSchemaLocation );
 
-                    if( strncmp(pszSchemaLocation, "http://", 7) != 0 &&
-                        strncmp(pszSchemaLocation, "https://", 8) != 0 &&
+                    if( !STARTS_WITH(pszSchemaLocation, "http://") &&
+                        !STARTS_WITH(pszSchemaLocation, "https://") &&
                         CPLIsFilenameRelative(pszSchemaLocation ) )
                     {
                         pszSchemaLocation = CPLFormFilename(
@@ -984,8 +984,7 @@ int GMLParseXSD( const char *pszFile,
                   strlen(pszName) > strlen(pszType) - 4 &&
                   strncmp(pszName + strlen(pszName) - (strlen(pszType) - 4),
                           pszType,
-                          strlen(pszType) - 4) == 0 )
-        {
+                          strlen(pszType) - 4) == 0 )        {
         }
 
         else if( !EQUALN(pszType,pszName,strlen(pszName))
@@ -996,9 +995,9 @@ int GMLParseXSD( const char *pszFile,
         }
 
         /* CanVec .xsd contains weird types that are not used in the related GML */
-        if (strncmp(pszName, "XyZz", 4) == 0 ||
-            strncmp(pszName, "XyZ1", 4) == 0 ||
-            strncmp(pszName, "XyZ2", 4) == 0)
+        if (STARTS_WITH(pszName, "XyZz") ||
+            STARTS_WITH(pszName, "XyZ1") ||
+            STARTS_WITH(pszName, "XyZ2"))
             continue;
 
         GMLFeatureClass* poClass =

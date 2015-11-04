@@ -217,7 +217,7 @@ def summarize():
 
 ###############################################################################
 
-def run_all( dirlist, option_list ):
+def run_all( dirlist, run_as_external = False ):
 
     global start_time, end_time
     global cur_name
@@ -228,8 +228,10 @@ def run_all( dirlist, option_list ):
         files = os.listdir(dir_name)
 
         old_path = sys.path
-        sys.path.append('.')
-        
+        # We prepend '.' rather than append it, so that "import rasterio"
+        # imports our rasterio.py and not another famous externel package...
+        sys.path = ['.'] + sys.path
+
         for file in files:
             if not file[-3:] == '.py':
                 continue
@@ -238,15 +240,50 @@ def run_all( dirlist, option_list ):
             try:
                 wd = os.getcwd()
                 os.chdir( dir_name )
-                
+
+                # Even try to import as module in run_as_external case
+                # so as to be able to detect ImportError and skip them
                 exec("import " + module)
-                try:
-                    print('Running tests from %s/%s' % (dir_name,file))
-                    setup_run( '%s/%s' % (dir_name,file) )
-                    exec("run_tests( " + module + ".gdaltest_list)")
-                except:
-                    pass
-                
+
+                if run_as_external:
+
+                    exec("%s.gdaltest_list" % module)
+
+                    python_exe = sys.executable
+                    if sys.platform == 'win32':
+                        python_exe = python_exe.replace('\\', '/')
+
+                    print('Running %s/%s...' % (dir_name,file))
+                    #ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
+                    if 'GDALTEST_ASAN_OPTIONS' in os.environ:
+                        if 'ASAN_OPTIONS' in os.environ:
+                            backup_asan_options = os.environ['ASAN_OPTIONS'] 
+                        else:
+                            backup_asan_options = None
+                        os.environ['ASAN_OPTIONS'] = os.environ['GDALTEST_ASAN_OPTIONS']
+                    ret = runexternal(python_exe + """ -c "import %s; import sys; sys.path.append('../pymod'); import gdaltest; gdaltest.run_tests( %s.gdaltest_list ); gdaltest.summarize()" """ % (module, module) , display_live_on_parent_stdout = True)
+                    if 'GDALTEST_ASAN_OPTIONS' in os.environ:
+                        if backup_asan_options is None:
+                            del os.environ['ASAN_OPTIONS']
+                        else:
+                            os.environ['ASAN_OPTIONS'] = backup_asan_options
+
+                    global success_counter, failure_counter, failure_summary
+                    if ret.find('Failed:    0') < 0:
+                        failure_counter += 1
+                        failure_summary.append( dir_name + '/' + file )
+                    else:
+                        success_counter += 1
+                else:
+                    try:
+                        print('Running tests from %s/%s' % (dir_name,file))
+                        setup_run( '%s/%s' % (dir_name,file) )
+                        exec("run_tests( " + module + ".gdaltest_list)")
+                    except:
+                        #import traceback
+                        #traceback.print_exc(file=sys.stderr)
+                        pass
+
                 os.chdir( wd )
 
             except:
@@ -855,7 +892,10 @@ class GDALTest:
             post_reason( 'Failed to create test file using Create method.' )
             return 'fail'
         
-        nodata = 11
+        if self.options is None or not 'PIXELTYPE=SIGNEDBYTE' in self.options:
+            nodata = 130
+        else:
+            nodata = 11
         if new_ds.GetRasterBand(1).SetNoDataValue(nodata) is not gdal.CE_None:
             post_reason( 'Failed to set NoData value.' )
             return 'fail'

@@ -734,7 +734,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
                     float fSecond;
                     if( oField.GetType() == OFTString &&
                         !EQUAL(pszDefault, "NULL") &&
-                        !EQUALN(pszDefault, "CURRENT_", strlen("CURRENT_")) &&
+                        !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
                         pszDefault[0] != '(' &&
                         pszDefault[0] != '\'' &&
                         CPLGetValueType(pszDefault) == CPL_VALUE_STRING )
@@ -759,7 +759,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
                     }
                     else if( (oField.GetType() == OFTDate || oField.GetType() == OFTDateTime) &&
                              !EQUAL(pszDefault, "NULL") &&
-                             !EQUALN(pszDefault, "CURRENT_", strlen("CURRENT_")) &&
+                             !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
                              pszDefault[0] != '(' &&
                              pszDefault[0] != '\'' &&
                              !(pszDefault[0] >= '0' && pszDefault[0] <= '9') &&
@@ -2436,8 +2436,8 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
         if( pszDefault != NULL &&
             (!poFieldDefn->IsDefaultDriverSpecific() ||
              (pszDefault[0] == '(' && pszDefault[strlen(pszDefault)-1] == ')' &&
-             (EQUALN(pszDefault+1, "strftime", strlen("strftime")) ||
-              EQUALN(pszDefault+1, " strftime", strlen(" strftime"))))) )
+             (STARTS_WITH_CI(pszDefault+1, "strftime") ||
+              STARTS_WITH_CI(pszDefault+1, " strftime")))) )
         {
             osCommand += " DEFAULT ";
             OGRField sField;

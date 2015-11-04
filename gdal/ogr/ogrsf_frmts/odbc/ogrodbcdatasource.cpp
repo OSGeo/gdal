@@ -37,8 +37,8 @@ CPL_CVSID("$Id$");
 /*                         OGRODBCDataSource()                          */
 /************************************************************************/
 
-OGRODBCDataSource::OGRODBCDataSource()
-
+OGRODBCDataSource::OGRODBCDataSource() :
+    bDSUpdate(FALSE)
 {
     pszName = NULL;
     papoLayers = NULL;
@@ -249,7 +249,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 {
     CPLAssert( nLayers == 0 );
 
-    if( !EQUALN(pszNewName, "ODBC:",5) && EQUAL(CPLGetExtension(pszNewName), "MDB") )
+    if( !STARTS_WITH_CI(pszNewName, "ODBC:") && EQUAL(CPLGetExtension(pszNewName), "MDB") )
         return OpenMDB(pszNewName, bUpdate);
 
 /* -------------------------------------------------------------------- */
@@ -293,7 +293,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
                 *pszComma = '\0';
                 pszSRIDCol = CPLStrdup( pszComma + 1 );
             }
-            
+
             *pszOBracket = '\0';
             pszSRSTableName = CPLStrdup( pszDelimiter + 1 );
             pszSRTextCol = CPLStrdup( pszOBracket + 1 );
@@ -389,6 +389,9 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
         CPLFree( pszDSN );
         CPLFree( pszUserid );
         CPLFree( pszPassword );
+        CPLFree( pszSRIDCol );
+        CPLFree( pszSRTextCol );
+        CPLFree( pszSRSTableName );
         return FALSE;
     }
 
@@ -397,7 +400,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     CPLFree( pszPassword );
 
     pszName = CPLStrdup( pszNewName );
-    
+
     bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */

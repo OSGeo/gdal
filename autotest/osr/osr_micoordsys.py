@@ -85,10 +85,45 @@ def osr_micoordsys_2():
 
     return 'success'
 
+###############################################################################
+# Test EPSG:3857
+#
+
+def osr_micoordsys_3():
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+
+    proj = srs.ExportToMICoordSys()
+
+    if proj != 'Earth Projection 10, 157, "m", 0':
+        gdaltest.post_reason('failure')
+        print(proj)
+        return 'fail'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromMICoordSys('Earth Projection 10, 157, "m", 0')
+    wkt = srs.ExportToWkt()
+    if wkt.find('EXTENSION["PROJ4"') < 0:
+        gdaltest.post_reason('failure')
+        print(wkt)
+        return 'fail'
+
+    # Transform again to MITAB (we no longer have the EPSG code, so we rely on PROJ4 extension node)
+    proj = srs.ExportToMICoordSys()
+
+    if proj != 'Earth Projection 10, 157, "m", 0':
+        gdaltest.post_reason('failure')
+        print(proj)
+        return 'fail'
+
+    return 'success'
+
 
 gdaltest_list = [ 
     osr_micoordsys_1,
-    osr_micoordsys_2 ]
+    osr_micoordsys_2,
+    osr_micoordsys_3 ]
 
 if __name__ == '__main__':
 

@@ -99,6 +99,10 @@ FreeMapObject(ColorMapObject * Object) {
 #ifdef DEBUG
 void
 DumpColorMap(ColorMapObject * Object,
+             FILE * fp);
+
+void
+DumpColorMap(ColorMapObject * Object,
              FILE * fp) {
 
     if (Object) {
@@ -301,7 +305,7 @@ FreeExtension(SavedImage * Image)
 /* Private Function:
  * Frees the last image in the GifFile->SavedImages array
  */
-void
+static void
 FreeLastSavedImage(GifFileType *GifFile) {
 
     SavedImage *sp;

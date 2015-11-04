@@ -51,10 +51,6 @@
 
 CPL_CVSID("$Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif 
-
 /************************************************************************/
 /*                            OGRDWGLayer()                             */
 /************************************************************************/
@@ -485,7 +481,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
 /*      Prepare style string.                                           */
 /* -------------------------------------------------------------------- */
-    double dfAngle = poMTE->rotation() * 180 / PI;
+    double dfAngle = poMTE->rotation() * 180 / M_PI;
     double dfHeight = poMTE->textHeight();
     int nAttachmentPoint = (int) poMTE->attachment();
 
@@ -618,7 +614,7 @@ OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
 /*      Prepare style string.                                           */
 /* -------------------------------------------------------------------- */
-    double dfAngle = poText->rotation() * 180 / PI;
+    double dfAngle = poText->rotation() * 180 / M_PI;
     double dfHeight = poText->height();
 
     CPLString osStyle;
@@ -868,18 +864,18 @@ double OGRDWGLayer::AngleCorrect( double dfTrueAngle, double dfRatio )
     double dfRotAngle;
     double dfDeltaX, dfDeltaY;
 
-    dfTrueAngle *= (PI / 180); // convert to radians.
+    dfTrueAngle *= (M_PI / 180); // convert to radians.
 
     dfDeltaX = cos(dfTrueAngle);
     dfDeltaY = sin(dfTrueAngle);
 
     dfRotAngle = atan2( dfDeltaY, dfDeltaX * dfRatio);
 
-    dfRotAngle *= (180 / PI); // convert to degrees.
+    dfRotAngle *= (180 / M_PI); // convert to degrees.
 
     if( dfTrueAngle < 0 && dfRotAngle > 0 )
         dfRotAngle -= 360.0;
-    
+
     if( dfTrueAngle > 360 && dfRotAngle < 360 )
         dfRotAngle += 360.0;
 
@@ -909,8 +905,8 @@ OGRFeature *OGRDWGLayer::TranslateELLIPSE( OdDbEntityPtr poEntity )
     poEE->get( oCenter, oUnitNormal, oMajorAxis, 
                dfRatio, dfEndAngle, dfStartAngle ); 
 
-    dfStartAngle = -1 * dfStartAngle * 180 / PI;
-    dfEndAngle   = -1 * dfEndAngle * 180 / PI;
+    dfStartAngle = -1 * dfStartAngle * 180 / M_PI;
+    dfEndAngle   = -1 * dfEndAngle * 180 / M_PI;
 
 /* -------------------------------------------------------------------- */
 /*      The DWG SDK expresses the angles as the angle to a real         */
@@ -938,7 +934,7 @@ OGRFeature *OGRDWGLayer::TranslateELLIPSE( OdDbEntityPtr poEntity )
 
     dfSecondaryRadius = dfRatio * dfPrimaryRadius;
 
-    dfRotation = -1 * atan2( oMajorAxis.y, oMajorAxis.x ) * 180 / PI;
+    dfRotation = -1 * atan2( oMajorAxis.y, oMajorAxis.x ) * 180 / M_PI;
 
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
@@ -974,11 +970,11 @@ OGRFeature *OGRDWGLayer::TranslateARC( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
 /*      Collect parameters.                                             */
 /* -------------------------------------------------------------------- */
-    dfEndAngle = -1 * poAE->startAngle() * 180 / PI;
-    dfStartAngle = -1 * poAE->endAngle() * 180 / PI;
+    dfEndAngle = -1 * poAE->startAngle() * 180 / M_PI;
+    dfStartAngle = -1 * poAE->endAngle() * 180 / M_PI;
     dfRadius = poAE->radius();
     oCenter = poAE->center();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
@@ -1161,10 +1157,10 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
     GeometryInsertTransformer oTransformer;
     CPLString osBlockName;
-    double dfAngle = poRef->rotation() * 180 / PI;
+    double dfAngle = poRef->rotation() * 180 / M_PI;
     OdGePoint3d oPosition = poRef->position();
     OdGeScale3d oScale = poRef->scaleFactors();
-    
+
     oTransformer.dfXOffset = oPosition.x;
     oTransformer.dfYOffset = oPosition.y;
     oTransformer.dfZOffset = oPosition.z;
@@ -1459,4 +1455,3 @@ int OGRDWGLayer::TestCapability( const char * pszCap )
     else
         return FALSE;
 }
-

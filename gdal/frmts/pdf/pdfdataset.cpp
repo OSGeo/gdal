@@ -45,7 +45,6 @@
 #ifdef HAVE_POPPLER
 #include "cpl_multiproc.h"
 #include "pdfio.h"
-#include <goo/GooList.h>
 #endif // HAVE_POPPLER
 
 #include "pdfcreatecopy.h"
@@ -1353,8 +1352,6 @@ const char* PDFDataset::GetOption(char** papszOpenOptions,
 
 #ifdef HAVE_PDFIUM
 
-#include "fpdfsdk/include/fsdk_rendercontext.h"
-
 /************************************************************************/
 /*                         GDALPDFiumOCContext                          */
 /************************************************************************/
@@ -2557,15 +2554,15 @@ CPLErr PDFRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 int PDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
-    if (strncmp(poOpenInfo->pszFilename, "PDF:", 4) == 0)
+    if (STARTS_WITH(poOpenInfo->pszFilename, "PDF:"))
         return TRUE;
-    if (strncmp(poOpenInfo->pszFilename, "PDF_IMAGE:", 10) == 0)
+    if (STARTS_WITH(poOpenInfo->pszFilename, "PDF_IMAGE:"))
         return TRUE;
 
     if (poOpenInfo->nHeaderBytes < 128)
         return FALSE;
 
-    return strncmp((const char*)poOpenInfo->pabyHeader, "%PDF", 4) == 0;
+    return STARTS_WITH((const char*)poOpenInfo->pabyHeader, "%PDF");
 }
 
 /************************************************************************/
@@ -3106,8 +3103,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                                             else
                                                 break;
                                         }
-                                        if( strncmp(pszIter, "1 0 0 1 0 0 cm\n",
-                                                    strlen( "1 0 0 1 0 0 cm\n" )) == 0 )
+                                        if( STARTS_WITH(pszIter, "1 0 0 1 0 0 cm\n") )
                                             pszIter += strlen("1 0 0 1 0 0 cm\n");
                                         if( *pszIter == '/' )
                                         {
@@ -3252,7 +3248,7 @@ void PDFDataset::FindXMP(GDALPDFObject* poObj)
     char* pszContent = poStream->GetBytes();
     int nLength = (int)poStream->GetLength();
     if (pszContent != NULL && nLength > 15 &&
-        strncmp(pszContent, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
+        STARTS_WITH(pszContent, "<?xpacket begin="))
     {
         char *apszMDList[2];
         apszMDList[0] = pszContent;
@@ -3951,8 +3947,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     const char* pszUserPwd = GetOption(poOpenInfo->papszOpenOptions, "USER_PWD", NULL);
 
-    int bOpenSubdataset = strncmp(poOpenInfo->pszFilename, "PDF:", 4) == 0;
-    int bOpenSubdatasetImage = strncmp(poOpenInfo->pszFilename, "PDF_IMAGE:", 10) == 0;
+    int bOpenSubdataset = STARTS_WITH(poOpenInfo->pszFilename, "PDF:");
+    int bOpenSubdatasetImage = STARTS_WITH(poOpenInfo->pszFilename, "PDF_IMAGE:");
     int iPage = -1;
     int nImageNum = -1;
     const char* pszFilename = poOpenInfo->pszFilename;
@@ -4443,6 +4439,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfUserUnit = poDS->dfDPI * USER_UNIT_IN_INCH;
     poDS->dfPageWidth = dfX2 - dfX1;
     poDS->dfPageHeight = dfY2 - dfY1;
+    //CPLDebug("PDF", "left=%f right=%f bottom=%f top=%f", dfX1, dfX2, dfY1, dfY2);
     poDS->nRasterXSize = (int) floor((dfX2 - dfX1) * dfUserUnit+0.5);
     poDS->nRasterYSize = (int) floor((dfY2 - dfY1) * dfUserUnit+0.5);
 
@@ -4531,10 +4528,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 else
                 {
-                    poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[2] * poDS->dfPageHeight;
+                    poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[2] * dfY2;
                     poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfUserUnit;
                     poDS->adfGeoTransform[2] = - poDS->adfCTM[2] / dfUserUnit;
-                    poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[3] * poDS->dfPageHeight;
+                    poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[3] * dfY2;
                     poDS->adfGeoTransform[4] = poDS->adfCTM[1] / dfUserUnit;
                     poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfUserUnit;
                 }
@@ -4564,7 +4561,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 else
                 {
                     poDS->pasGCPList[i].dfGCPPixel = poDS->pasGCPList[i].dfGCPPixel * dfUserUnit;
-                    poDS->pasGCPList[i].dfGCPLine = poDS->nRasterYSize - poDS->pasGCPList[i].dfGCPLine * dfUserUnit;
+                    poDS->pasGCPList[i].dfGCPLine = (dfY2 - poDS->pasGCPList[i].dfGCPLine) * dfUserUnit;
                 }
             }
         }
@@ -4721,7 +4718,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 else
                 {
                     x = poRing->getX(i) * dfUserUnit;
-                    y = poDS->nRasterYSize - poRing->getY(i) * dfUserUnit;
+                    y = (dfY2 - poRing->getY(i)) * dfUserUnit;
                 }
                 double X = poDS->adfGeoTransform[0] + x * poDS->adfGeoTransform[1] +
                                                       y * poDS->adfGeoTransform[2];
@@ -4747,7 +4744,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         char* pszContent = poMetadata->getCString();
         if (pszContent != NULL &&
-            strncmp(pszContent, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
+            STARTS_WITH(pszContent, "<?xpacket begin="))
         {
             char *apszMDList[2];
             apszMDList[0] = pszContent;
@@ -4812,7 +4809,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
               char* pszContent = poStream->GetBytes();
               int nLength = (int)poStream->GetLength();
               if (pszContent != NULL && nLength > 15 &&
-                  strncmp(pszContent, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
+                  STARTS_WITH(pszContent, "<?xpacket begin="))
               {
                   char *apszMDList[2];
                   apszMDList[0] = pszContent;
@@ -5222,7 +5219,8 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
     GDALPDFObject* poCTM;
     bHasCTM = FALSE;
     if ((poCTM = poLGIDict->Get("CTM")) != NULL &&
-        poCTM->GetType() == PDFObjectType_Array)
+        poCTM->GetType() == PDFObjectType_Array &&
+        CSLTestBoolean(CPLGetConfigOption("PDF_USE_CTM", "YES")) )
     {
         int nLength = poCTM->GetArray()->GetLength();
         if ( nLength != 6 )
@@ -5380,12 +5378,12 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
                 bIsWGS84 = TRUE;
                 oSRS.SetWellKnownGeogCS("WGS84");
             }
-            else if (EQUAL(pszDatum, "NAR") || EQUALN(pszDatum, "NAR-", 4))
+            else if (EQUAL(pszDatum, "NAR") || STARTS_WITH_CI(pszDatum, "NAR-"))
             {
                 bIsNAD83 = TRUE;
                 oSRS.SetWellKnownGeogCS("NAD83");
             }
-            else if (EQUAL(pszDatum, "NAS") || EQUALN(pszDatum, "NAS-", 4))
+            else if (EQUAL(pszDatum, "NAS") || STARTS_WITH_CI(pszDatum, "NAS-"))
             {
                 /* bIsNAD27 = TRUE; */
                 oSRS.SetWellKnownGeogCS("NAD27");
@@ -5406,7 +5404,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
             {
                 oSRS.importFromEPSG(4283);
             }
-            else if (EQUALN(pszDatum, "OHA-", 4)) /* Old Hawaiian */
+            else if (STARTS_WITH_CI(pszDatum, "OHA-")) /* Old Hawaiian */
             {
                 oSRS.importFromEPSG(4135); /* matches OHA-M (Mean) */
                 if( !EQUAL(pszDatum, "OHA-M") )
@@ -6281,7 +6279,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     /* For http://www.avenza.com/sites/default/files/spatialpdf/US_County_Populations.pdf */
     /* or http://www.agmkt.state.ny.us/soilwater/aem/gis_mapping_tools/HUC12_Albany.pdf */
     const char* pszDatum = oSRS.GetAttrValue("Datum");
-    if (pszDatum && strncmp(pszDatum, "D_", 2) == 0)
+    if (pszDatum && STARTS_WITH(pszDatum, "D_"))
     {
         oSRS.morphFromESRI();
 

@@ -119,7 +119,9 @@ remapping technique to enable the user to create features at the FID of their ch
             Using the OpenFileGDB driver will generally solve that issue.</li>
 	<li>Blob fields have not been implemented.</li>
 	<li>FGDB coordinate snapping will cause geometries to be altered during writing. Use the origin and scale layer creation options to control the snapping behavior.</li>
-	<li>Driver can't read data from compressed feature classes (SDC, Smart Data Compression) because operation is not supported by the ESRI SDK.</li>
+	<li>Driver can't read data  in SDC format (Smart Data Compression) because operation is not supported by the ESRI SDK.</li>
+        <li>Reading data compressed in CDF format (Compressed Data Format) requires ESRI SDK 1.4 or later.</li>
+        <li>Curve in geometries are not currently supported.</li>
 </ul>
 
 <h2>Links</h2>

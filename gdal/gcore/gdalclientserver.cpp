@@ -271,7 +271,7 @@ typedef enum
     INSTR_END
 } InstrEnum;
 
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
 static const char* apszInstr[] =
 {
     "INVALID",
@@ -1191,7 +1191,7 @@ static int GDALSkipUntilEndOfJunkMarker(GDALPipe* p)
         return FALSE;
     if( memcmp(abyEndOfJunkMarker, abyBuffer, sizeof(abyBuffer)) == 0 )
         return TRUE;
-    while(TRUE)
+    while(true)
     {
         if( nIter < sizeof(abyBuffer) )
             c = abyBuffer[nIter ++];
@@ -1622,16 +1622,15 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         CPLString osHost(pszSpawnServer);
         osHost.resize(pszColon - pszSpawnServer);
         CPL_SOCKET nConnSocket = INVALID_SOCKET;
-        int nRet;
 
 #ifdef WIN32
         WSADATA wsaData;
 
-        nRet = WSAStartup(MAKEWORD(2, 2), &wsaData);
-        if (nRet != NO_ERROR)
+        int nRet1 = WSAStartup(MAKEWORD(2, 2), &wsaData);
+        if (nRet1 != NO_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "WSAStartup() failed with error: %d\n", nRet);
+                     "WSAStartup() failed with error: %d\n", nRet1);
             return NULL;
         }
 #endif
@@ -1645,11 +1644,11 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         sHints.ai_flags = 0;
         sHints.ai_protocol = IPPROTO_TCP;
 
-        nRet = getaddrinfo(osHost, pszColon + 1, &sHints, &psResults);
-        if (nRet)
+        int nRet2 = getaddrinfo(osHost, pszColon + 1, &sHints, &psResults);
+        if (nRet2)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "getaddrinfo(): %s", gai_strerror(nRet));
+                     "getaddrinfo(): %s", gai_strerror(nRet2));
             WSACleanup();
             return NULL;
         }
@@ -1778,7 +1777,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
     if( strstr(pszSpawnServer, "gdalserver") == NULL )
         apszGDALServer[1] = NULL;
 #endif
-    int bCheckVersions = TRUE;
+    bool bCheckVersions = true;
 
     CPLSpawnedProcess* sp;
 #ifndef WIN32
@@ -1786,7 +1785,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         EQUAL(pszSpawnServer, "FALSE")  || EQUAL(pszSpawnServer, "0") )
     {
         sp = CPLSpawnAsync(GDALServerLoopForked, NULL, TRUE, TRUE, FALSE, NULL);
-        bCheckVersions = FALSE;
+        bCheckVersions = false;
     }
     else
 #endif
@@ -2020,7 +2019,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
     // fprintf(stderr, "[%d] started\n", (int)getpid());
     int nIter = 0;
     //fprintf(stderr, "Beginning of loop: poSrcDS = %p, poDS = %p\n", poSrcDS, poDS);
-    while(TRUE)
+    while(true)
     {
         nIter ++;
         if( !bIterateForever && nIter != 1 )
@@ -2035,7 +2034,9 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             break;
         }
 
-        //fprintf(stderr, "[%d] %s\n", (int)getpid(), (instr >= 0 && instr < INSTR_END) ? apszInstr[instr] : "unknown");
+#ifdef DEBUG_VERBOSE
+        fprintf(stderr, "[%d] %s\n", (int)getpid(), (instr >= 0 && instr < INSTR_END) ? apszInstr[instr] : "unknown");
+#endif
 
         GDALRasterBand* poBand = NULL;
 
@@ -2894,17 +2895,21 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             int nExpectedSize = nBufXSize * nBufYSize * nBandCount *
                 (GDALGetDataTypeSize(eBufType) / 8);
             int nSize;
-            if( !GDALPipeRead(p, &nSize) )
+            if( !GDALPipeRead(p, &nSize) || nSize != nExpectedSize )
+            {
+                CPLFree(panBandMap);
                 break;
-            if( nSize != nExpectedSize )
-                break;
+            }
             if( nSize > nBufferSize )
             {
                 nBufferSize = nSize;
                 pBuffer = CPLRealloc(pBuffer, nSize);
             }
             if( !GDALPipeRead_nolength(p, nSize, pBuffer) )
+            {
+                CPLFree(panBandMap);
                 break;
+            }
 
             CPLErr eErr = poDS->RasterIO(GF_Write,
                                          nXOff, nYOff, nXSize, nYSize,
@@ -5845,7 +5850,7 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess,
         CPLFree(pszDriverName);
         pszDriverName = NULL;
 
-        while(TRUE)
+        while(true)
         {
             char* pszKey = NULL, *pszVal = NULL;
             if( !GDALPipeRead(p, &pszKey) )
@@ -5925,7 +5930,7 @@ static int IsSeparateExecutable()
 const char* GDALClientDatasetGetFilename(const char* pszFilename)
 {
     const char* pszSpawn;
-    if( EQUALN(pszFilename, "API_PROXY:", strlen("API_PROXY:")) )
+    if( STARTS_WITH_CI(pszFilename, "API_PROXY:") )
     {
         pszFilename += strlen("API_PROXY:");
         pszSpawn = "YES";
@@ -5944,12 +5949,12 @@ const char* GDALClientDatasetGetFilename(const char* pszFilename)
      /* /vsistdin/ and /vsistdout/ can work on Unix in the fork() only context (i.e. GDAL_API_PROXY_SERVER undefined) */
      /* since the forked process will inherit the same descriptors as the parent */
 
-    if( EQUALN(pszFilename, "MEM:::", 6) ||
+    if( STARTS_WITH_CI(pszFilename, "MEM:::") ||
         strstr(pszFilename, "/vsimem/") != NULL ||
         strstr(pszFilename, "/vsimem\\") != NULL ||
         (strstr(pszFilename, "/vsistdout/") != NULL && IsSeparateExecutable()) ||
         (strstr(pszFilename, "/vsistdin/") != NULL && IsSeparateExecutable()) ||
-        EQUALN(pszFilename,"NUMPY:::",8) )
+        STARTS_WITH_CI(pszFilename, "NUMPY:::") )
         return NULL;
 
     if( !(EQUAL(pszSpawn, "YES") || EQUAL(pszSpawn, "ON") ||
@@ -6340,11 +6345,11 @@ GDALDriver* GDALGetAPIPROXYDriver()
     CPLMutexHolderD(GDALGetphDMMutex());
     if( poAPIPROXYDriver == NULL )
     {
-#ifdef DEBUG
-        CPLAssert(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
+#ifdef DEBUG_VERBOSE
+        CPL_STATIC_ASSERT(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
 #endif
         /* If asserted, change GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR */
-        CPLAssert(INSTR_END + 1 == 81);
+        CPL_STATIC_ASSERT(INSTR_END + 1 == 81);
 
         const char* pszConnPool = CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");
         if( atoi(pszConnPool) > 0 )

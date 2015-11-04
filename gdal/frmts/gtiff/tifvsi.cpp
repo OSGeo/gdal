@@ -266,7 +266,7 @@ TIFF* VSI_TIFFOpen(const char* name, const char* mode,
     }
 
     // No need to buffer on /vsimem/
-    if( strncmp(name, "/vsimem/", strlen("/vsimem/")) == 0 )
+    if( STARTS_WITH(name, "/vsimem/") )
         bAllocBuffer = FALSE;
 
     strcat( access, "b" );

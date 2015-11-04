@@ -492,7 +492,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
     CPLString osURL = "http";
     osURL += (pszDatasetName + 4);
     
-    CPLAssert( strncmp(pszDatasetName,"jpip",4) == 0 );
+    CPLAssert( STARTS_WITH(pszDatasetName, "jpip") );
 
     // make initial request to the server for a session, we are going to 
     // assume that the jpip communication is stateful, rather than one-shot
@@ -533,7 +533,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
     if( pszCnew == NULL )
     {
         if( psResult->pszContentType != NULL 
-            && EQUALN(psResult->pszContentType,"text/html",9) )
+            && STARTS_WITH_CI(psResult->pszContentType, "text/html") )
             CPLDebug( "JPIPKAK", "%s", 
                       psResult->pabyData );
 
@@ -551,7 +551,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
     for (int i = 0; i < CSLCount(papszTokens); i++)
     {
         // looking for cid, path
-        if (EQUALN(papszTokens[i], "cid", 3))
+        if (STARTS_WITH_CI(papszTokens[i], "cid"))
         {
             char *pszKey = NULL;
             const char *pszValue = CPLParseNameValue(papszTokens[i], &pszKey );
@@ -559,7 +559,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
             CPLFree( pszKey );
         }
 
-        if (EQUALN(papszTokens[i], "path", 4))
+        if (STARTS_WITH_CI(papszTokens[i], "path"))
         {
             char *pszKey = NULL;
             const char *pszValue = CPLParseNameValue(papszTokens[i], &pszKey );
@@ -1420,8 +1420,8 @@ GDALDataset *JPIPKAKDataset::Open(GDALOpenInfo * poOpenInfo)
 {
     // test jpip and jpips, assuming jpip is using http as the transport layer
     // jpip = http, jpips = https (note SSL is allowed, but jpips is not in the ISO spec)
-    if (EQUALN(poOpenInfo->pszFilename,"jpip://", 7)
-        || EQUALN(poOpenInfo->pszFilename,"jpips://",8))
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "jpip://")
+        || STARTS_WITH_CI(poOpenInfo->pszFilename, "jpips://"))
     {
         // perform the initial connection
         // using cpl_http for the connection

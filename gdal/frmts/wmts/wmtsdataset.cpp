@@ -323,7 +323,7 @@ const char *WMTSBand::GetMetadataItem( const char * pszName,
 /*      LocationInfo handling.                                          */
 /* ==================================================================== */
     if( pszDomain != NULL && EQUAL(pszDomain,"LocationInfo") &&
-        pszName != NULL && EQUALN(pszName,"Pixel_",6) &&
+        pszName != NULL && STARTS_WITH_CI(pszName, "Pixel_") &&
         poGDS->oTMS.aoTM.size() &&
         poGDS->osURLFeatureInfoTemplate.size() )
     {
@@ -536,10 +536,10 @@ const char* WMTSDataset::GetMetadataItem(const char* pszName,
 
 int WMTSDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
-    if( EQUALN(poOpenInfo->pszFilename, "WMTS:", 5) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "WMTS:") )
         return TRUE;
 
-    if( EQUALN(poOpenInfo->pszFilename, "<GDAL_WMTS", strlen("<GDAL_WMTS")) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "<GDAL_WMTS") )
         return TRUE;
 
     if( poOpenInfo->nHeaderBytes == 0 )
@@ -586,9 +586,7 @@ CPLString WMTSDataset::FixCRSName(const char* pszCRS)
     /* http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml uses urn:ogc:def:crs:EPSG:6.18:3:3857 */
     /* instead of urn:ogc:def:crs:EPSG:6.18.3:3857. Coming from an incorrect example of URN in WMTS spec */
     /* https://portal.opengeospatial.org/files/?artifact_id=50398 */
-    if( EQUALN(pszCRS, "urn:ogc:def:crs:EPSG:6.18:3:",
-               strlen("urn:ogc:def:crs:EPSG:6.18:3:")) )
-    {
+    if( STARTS_WITH_CI(pszCRS, "urn:ogc:def:crs:EPSG:6.18:3:") )    {
         return CPLSPrintf("urn:ogc:def:crs:EPSG::%s",
                           pszCRS + strlen("urn:ogc:def:crs:EPSG:6.18:3:"));
     }
@@ -706,7 +704,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             double dfVal2 = CPLAtof(strchr(pszTopLeftCorner, ' ')+1);
             if( !bSwap ||
                 /* Hack for http://osm.geobretagne.fr/gwc01/service/wmts?request=getcapabilities */
-                ( EQUALN( pszIdentifier, "EPSG:4326:", strlen("EPSG:4326:")) &&
+                ( STARTS_WITH_CI(pszIdentifier, "EPSG:4326:") &&
                   dfVal1 == -180.0 ) )
             {
                 oTM.dfTLX = dfVal1;
@@ -944,7 +942,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                      "<ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>"
                      "<ZeroBlockOnServerException>true</ZeroBlockOnServerException>";
 
-    if( EQUALN(poOpenInfo->pszFilename, "WMTS:", 5) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "WMTS:") )
     {
         char** papszTokens = CSLTokenizeString2( poOpenInfo->pszFilename + 5,
                                                  ",", CSLT_HONOURSTRINGS );
@@ -985,14 +983,14 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
     CPLString osProjection;
 
     if( (psXML != NULL && CPLGetXMLNode(psXML, "=GDAL_WMTS") != NULL ) ||
-        EQUALN(poOpenInfo->pszFilename, "<GDAL_WMTS", strlen("<GDAL_WMTS")) ||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "<GDAL_WMTS") ||
         (poOpenInfo->nHeaderBytes > 0 &&
          strstr((const char*)poOpenInfo->pabyHeader, "<GDAL_WMTS")) )
     {
         CPLXMLNode* psGDALWMTS;
         if( psXML != NULL && CPLGetXMLNode(psXML, "=GDAL_WMTS") != NULL )
             psGDALWMTS = CPLCloneXMLTree(psXML);
-        else if( EQUALN(poOpenInfo->pszFilename, "<GDAL_WMTS", strlen("<GDAL_WMTS")) )
+        else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "<GDAL_WMTS") )
             psGDALWMTS = CPLParseXMLString(poOpenInfo->pszFilename);
         else
             psGDALWMTS = CPLParseXMLFile(poOpenInfo->pszFilename);
@@ -1057,7 +1055,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         psXML = GetCapabilitiesResponse(osGetCapabilitiesURL, papszHTTPOptions);
         CSLDestroy(papszHTTPOptions);
     }
-    else if( !EQUALN(poOpenInfo->pszFilename, "WMTS:", 5) )
+    else if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "WMTS:") )
     {
         osGetCapabilitiesURL = poOpenInfo->pszFilename;
         psXML = CPLParseXMLFile(poOpenInfo->pszFilename);
@@ -1074,7 +1072,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         return NULL;
     }
 
-    if( strncmp(osGetCapabilitiesURL, "/vsimem/", strlen("/vsimem/")) == 0 )
+    if( STARTS_WITH(osGetCapabilitiesURL, "/vsimem/") )
     {
         if( CPLGetXMLValue(psXML, "=Capabilities.ServiceMetadataURL.href", NULL) )
             osGetCapabilitiesURL = CPLGetXMLValue(psXML, "=Capabilities.ServiceMetadataURL.href", NULL);
@@ -1089,7 +1087,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         }
     }
     CPLString osCapabilitiesFilename(osGetCapabilitiesURL);
-    if( !EQUALN(osCapabilitiesFilename, "WMTS:", 5) )
+    if( !STARTS_WITH_CI(osCapabilitiesFilename, "WMTS:") )
         osCapabilitiesFilename = "WMTS:" + osGetCapabilitiesURL;
 
     int nLayerCount = 0;

@@ -42,7 +42,7 @@
           g2int mapdrs[MAXDRSMAPLEN];
       };
 
-const struct drstemplate *get_templatesdrs();
+const struct drstemplate *get_templatesdrs(void);
 g2int getdrsindex(g2int number);
 
 #endif  /*  _drstemplates_H  */

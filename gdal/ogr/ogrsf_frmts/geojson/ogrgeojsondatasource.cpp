@@ -91,10 +91,10 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
 /*      GeoJSON text tree.                                              */
 /* -------------------------------------------------------------------- */
     if( NULL == pszGeoData_ ||
-        strncmp(pszGeoData_, "{\"couchdb\":\"Welcome\"", strlen("{\"couchdb\":\"Welcome\"")) == 0 ||
-        strncmp(pszGeoData_, "{\"db_name\":\"", strlen("{\"db_name\":\"")) == 0 ||
-        strncmp(pszGeoData_, "{\"total_rows\":", strlen("{\"total_rows\":")) == 0 ||
-        strncmp(pszGeoData_, "{\"rows\":[", strlen("{\"rows\":[")) == 0)
+        STARTS_WITH(pszGeoData_, "{\"couchdb\":\"Welcome\"") ||
+        STARTS_WITH(pszGeoData_, "{\"db_name\":\"") ||
+        STARTS_WITH(pszGeoData_, "{\"total_rows\":") ||
+        STARTS_WITH(pszGeoData_, "{\"rows\":["))
     {
         Clear();
         return FALSE;
@@ -103,25 +103,25 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
     LoadLayers(poOpenInfo->papszOpenOptions);
     if( nLayers_ == 0 )
     {
-        int bEmitError = TRUE;
+        bool bEmitError = true;
         if( eGeoJSONSourceService == nSrcType )
         {
             CPLString osTmpFilename = CPLSPrintf("/vsimem/%p/%s", this,
                                         CPLGetFilename(poOpenInfo->pszFilename));
             VSIFCloseL(VSIFileFromMemBuffer( osTmpFilename,
                                              (GByte*)pszGeoData_,
-                                             nGeoDataLen_, 
+                                             nGeoDataLen_,
                                              TRUE ));
             pszGeoData_ = NULL;
             if( GDALIdentifyDriver(osTmpFilename, NULL) )
-                bEmitError = FALSE;
+                bEmitError = false;
             VSIUnlink(osTmpFilename);
         }
         Clear();
 
         if( bEmitError )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                     "Failed to read GeoJSON data" );
         }
         return FALSE;
@@ -185,13 +185,13 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszName_,
         return NULL;
     }
 
-    OGRGeoJSONWriteLayer* poLayer = NULL;
-    poLayer = new OGRGeoJSONWriteLayer( pszName_, eGType, papszOptions, this );
+    OGRGeoJSONWriteLayer* poLayer
+        = new OGRGeoJSONWriteLayer( pszName_, eGType, papszOptions, this );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
-    
+
     papoLayers_ = (OGRLayer **)
         CPLRealloc( papoLayers_,  sizeof(OGRLayer*) * (nLayers_ + 1) );
 
@@ -253,28 +253,28 @@ int OGRGeoJSONDataSource::TestCapability( const char* pszCap )
 {
     if( EQUAL( pszCap, ODsCCreateLayer ) )
         return fpOut_ != NULL && nLayers_ == 0;
-    else if( EQUAL( pszCap, ODsCDeleteLayer ) )
-        return FALSE;
-    else
-        return FALSE;
+
+    // if( EQUAL( pszCap, ODsCDeleteLayer ) )
+    //     return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
 /*                              Create()                                */
 /************************************************************************/
 
-int OGRGeoJSONDataSource::Create( const char* pszName, char** papszOptions )
+int OGRGeoJSONDataSource::Create( const char* pszName,
+                                  char** /* papszOptions */ )
 {
-    UNREFERENCED_PARAM(papszOptions);
-
     CPLAssert( NULL == fpOut_ );
 
     if (strcmp(pszName, "/dev/stdout") == 0)
         pszName = "/vsistdout/";
 
     bFpOutputIsSeekable_ =  !(strcmp(pszName,"/vsistdout/") == 0 ||
-                              strncmp(pszName,"/vsigzip/", 9) == 0 ||
-                              strncmp(pszName,"/vsizip/", 8) == 0);
+                              STARTS_WITH(pszName, "/vsigzip/") ||
+                              STARTS_WITH(pszName, "/vsizip/"));
 
 /* -------------------------------------------------------------------- */
 /*     File overwrite not supported.                                    */
@@ -286,7 +286,7 @@ int OGRGeoJSONDataSource::Create( const char* pszName, char** papszOptions )
                   "The GeoJSON driver does not overwrite existing files." );
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
@@ -396,10 +396,10 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
 
-    CPLHTTPResult* pResult = NULL;
     char* papsOptions[] = { (char*) "HEADERS=Accept: text/plain, application/json", NULL };
 
-    pResult = CPLHTTPFetch( pszSource, papsOptions );
+    CPLHTTPResult* pResult
+        = CPLHTTPFetch( pszSource, papsOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Try to handle CURL/HTTP errors.                                 */
@@ -464,7 +464,7 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
                   "GeoJSON data buffer empty" );
         return;
     }
-    
+
     const char* const apszPrefix[] = { "loadGeoJSON(", "jsonp(" };
     for(size_t iP = 0; iP < sizeof(apszPrefix) / sizeof(apszPrefix[0]); iP++ )
     {
@@ -490,8 +490,6 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
         return;
     }
 
-    OGRErr err = OGRERR_NONE;
-
 /* -------------------------------------------------------------------- */
 /*      Is it ESRI Feature Service data ?                               */
 /* -------------------------------------------------------------------- */
@@ -499,7 +497,7 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
          strstr(pszGeoData_, "esriFieldType") )
     {
         OGRESRIJSONReader reader;
-        err = reader.Parse( pszGeoData_ );
+        OGRErr err = reader.Parse( pszGeoData_ );
         if( OGRERR_NONE == err )
         {
             json_object* poObj = reader.GetJSonObject();
@@ -522,7 +520,7 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
          strstr(pszGeoData_, "\"Topology\"")  )
     {
         OGRTopoJSONReader reader;
-        err = reader.Parse( pszGeoData_ );
+        OGRErr err = reader.Parse( pszGeoData_ );
         if( OGRERR_NONE == err )
         {
             reader.ReadLayers( this );
@@ -540,13 +538,13 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
         reader.SetPreserveGeometryType( false );
         CPLDebug( "GeoJSON", "Geometry as OGRGeometryCollection type." );
     }
-    
+
     if( eAtributesSkip == flTransAttrs_ )
     {
         reader.SetSkipAttributes( true );
         CPLDebug( "GeoJSON", "Skip all attributes." );
     }
-    
+
     reader.SetFlattenNestedAttributes(
         (bool)CSLFetchBoolean(papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", FALSE),
         CSLFetchNameValueDef(papszOpenOptions, "NESTED_ATTRIBUTE_SEPARATOR", "_")[0]);
@@ -554,7 +552,7 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
 /* -------------------------------------------------------------------- */
 /*      Parse GeoJSON and build valid OGRLayer instance.                */
 /* -------------------------------------------------------------------- */
-    err = reader.Parse( pszGeoData_ );
+    OGRErr err = reader.Parse( pszGeoData_ );
     if( OGRERR_NONE == err )
     {
         json_object* poObj = reader.GetJSonObject();
@@ -582,7 +580,6 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
 
 void OGRGeoJSONDataSource::AddLayer( OGRGeoJSONLayer* poLayer )
 {
-
     poLayer->DetectGeometryType();
 
     /* Return layer in readable state. */

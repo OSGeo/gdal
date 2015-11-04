@@ -182,9 +182,9 @@ IMapInfoFile::~IMapInfoFile()
 int IMapInfoFile::Open(const char *pszFname, const char* pszAccess,
                        GBool bTestOpenNoError)
 {
-    if( EQUALN(pszAccess, "r", 1) )
+    if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead, bTestOpenNoError);
-    else if( EQUALN(pszAccess, "w", 1) )
+    else if( STARTS_WITH_CI(pszAccess, "w") )
         return Open(pszFname, TABWrite, bTestOpenNoError);
     else
     {
@@ -240,11 +240,11 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
         while(fp && (pszLine = CPLReadLineL(fp)) != NULL)
         {
             while (isspace((unsigned char)*pszLine))  pszLine++;
-            if (EQUALN(pszLine, "Fields", 6))
+            if (STARTS_WITH_CI(pszLine, "Fields"))
                 bFoundFields = TRUE;
-            else if (EQUALN(pszLine, "create view", 11))
+            else if (STARTS_WITH_CI(pszLine, "create view"))
                 bFoundView = TRUE;
-            else if (EQUALN(pszLine, "\"\\IsSeamless\" = \"TRUE\"", 21))
+            else if (STARTS_WITH_CI(pszLine, "\"\\IsSeamless\" = \"TRUE\""))
                 bFoundSeamless = TRUE;
         }
 

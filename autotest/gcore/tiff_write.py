@@ -2388,6 +2388,9 @@ def tiff_write_65():
 # Verify that we can write and read a band-interleaved GeoTIFF with 65535 bands (#2838)
 
 def tiff_write_66():
+    
+    if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
+        return 'skip'
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_66.tif',1,1,65535, options = ['INTERLEAVE=BAND'])
     ds = None
@@ -2413,6 +2416,9 @@ def tiff_write_66():
 # Verify that we can write and read a pixel-interleaved GeoTIFF with 65535 bands (#2838)
 
 def tiff_write_67():
+    
+    if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
+        return 'skip'
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_67.tif',1,1,65535, options = ['INTERLEAVE=PIXEL'])
     ds = None
@@ -4306,14 +4312,12 @@ def tiff_write_102():
 
 def tiff_write_103():
     import test_cli_utilities
-    if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
     if test_cli_utilities.get_gdaladdo_path() is None:
         return 'skip'
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' data/rgbsmall.tif tmp/tiff_write_103_src.tif -outsize 260 260')
+    gdal.Translate('tmp/tiff_write_103_src.tif', 'data/rgbsmall.tif', options = '-outsize 260 260')
     gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -ro tmp/tiff_write_103_src.tif 2')
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/tiff_write_103_src.tif tmp/tiff_write_103_dst.tif -co COPY_SRC_OVERVIEWS=YES')
+    gdal.Translate('tmp/tiff_write_103_dst.tif', 'tmp/tiff_write_103_src.tif', options = '-co COPY_SRC_OVERVIEWS=YES')
 
     src_ds = gdal.Open('tmp/tiff_write_103_src.tif')
     dst_ds = gdal.Open('tmp/tiff_write_103_dst.tif')
@@ -4914,6 +4918,9 @@ def tiff_write_124():
 # Test out-of-memory conditions with SplitBand and SplitBitmapBand
 
 def tiff_write_125():
+    
+    if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
+        return 'skip'
 
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_125.tif', 2147000000, 5000, 65535, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=5000', 'COMPRESS=LZW', 'BIGTIFF=NO'])
     ds = None
@@ -6178,6 +6185,36 @@ def tiff_write_140():
     return 'success'
 
 ###############################################################################
+# Test GEOTIFF_KEYS_FLAVOR=ESRI_PE with EPSG:3857
+
+def tiff_write_141():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_141.tif',1,1,options = ['GEOTIFF_KEYS_FLAVOR=ESRI_PE'])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    ds.SetProjection(srs.ExportToWkt())
+    ds = None
+    
+    ds = gdal.Open('/vsimem/tiff_write_141.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    if wkt.find('PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere"') != 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    if wkt.find('EXTENSION["PROJ4"') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_141.tif')
+
+    return 'success'
+
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6350,6 +6387,7 @@ gdaltest_list = [
     tiff_write_138,
     tiff_write_139,
     tiff_write_140,
+    tiff_write_141,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 

@@ -46,12 +46,12 @@ static const char* HTTPFetchContentDispositionFilename(char** papszHeaders)
     while(papszIter && *papszIter)
     {
         /* For multipart, we have in raw format, but without end-of-line characters */
-        if (strncmp(*papszIter, "Content-Disposition: attachment; filename=", 42) == 0)
+        if (STARTS_WITH(*papszIter, "Content-Disposition: attachment; filename="))
         {
             return *papszIter + 42;
         }
         /* For single part, the headers are in KEY=VAL format, but with e-o-l ... */
-        else if (strncmp(*papszIter, "Content-Disposition=attachment; filename=", 41) == 0)
+        else if (STARTS_WITH(*papszIter, "Content-Disposition=attachment; filename="))
         {
             char* pszVal = (char*)(*papszIter + 41);
             char* pszEOL = strchr(pszVal, '\r');
@@ -77,9 +77,9 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes != 0 )
         return NULL;
 
-    if( !EQUALN(poOpenInfo->pszFilename,"http:",5)
-        && !EQUALN(poOpenInfo->pszFilename,"https:",6)
-        && !EQUALN(poOpenInfo->pszFilename,"ftp:",4) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "http:")
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "https:")
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp:") )
         return NULL;
 
 /* -------------------------------------------------------------------- */

@@ -92,6 +92,9 @@ class GDALOverviewDataset : public GDALDataset
                                              const char * pszDomain = "" );
 
         virtual int        CloseDependentDatasets();
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALOverviewDataset);
 };
 
 /* ******************************************************************** */
@@ -114,6 +117,9 @@ class GDALOverviewBand : public GDALProxyRasterBand
 
         virtual int GetOverviewCount();
         virtual GDALRasterBand *GetOverview(int);
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALOverviewBand);
 };
 
 /************************************************************************/

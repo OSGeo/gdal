@@ -1735,18 +1735,18 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
                 OGRFieldDefn    oFieldDefn( poClass->papszAttrNames[iGAtt],
                                             OFTInteger );
 
-                if( EQUALN(pszFormat,"I",1) )
+                if( STARTS_WITH_CI(pszFormat, "I") )
                 {
                     oFieldDefn.SetType( OFTInteger );
                     oFieldDefn.SetWidth( poClass->panAttrMaxWidth[iGAtt] );
                 }
-                else if( EQUALN(pszFormat,"D",1)
-                         || EQUALN(pszFormat,"A",1) )
+                else if( STARTS_WITH_CI(pszFormat, "D")
+                         || STARTS_WITH_CI(pszFormat, "A") )
                 {
                     oFieldDefn.SetType( OFTString );
                     oFieldDefn.SetWidth( poClass->panAttrMaxWidth[iGAtt] );
                 }
-                else if( EQUALN(pszFormat,"R",1) )
+                else if( STARTS_WITH_CI(pszFormat, "R") )
                 {
                     oFieldDefn.SetType( OFTReal );
                     oFieldDefn.SetWidth( poClass->panAttrMaxWidth[iGAtt]+1 );

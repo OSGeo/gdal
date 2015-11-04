@@ -51,7 +51,7 @@ using namespace std;
 /************************************************************************/
 /*                           GenerateTiles()                            */
 /************************************************************************/
-void GenerateTiles(std::string filename,
+static void GenerateTiles(std::string filename,
                    CPL_UNUSED int zoom,
                    int rxsize,
                    int rysize,
@@ -139,8 +139,8 @@ void GenerateTiles(std::string filename,
             if (!bReadFailed)
             {
                 GDALRasterBand* poBandtmp = poTmpDataset->GetRasterBand(band);
-                poBandtmp->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
-                                    0, 0, NULL);
+                CPL_IGNORE_RET_VAL( poBandtmp->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
+                                    0, 0, NULL) );
             }
         }
 
@@ -161,8 +161,8 @@ void GenerateTiles(std::string filename,
                     }
                 }
 
-                alphaBand->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
-                                    0, 0, NULL);
+                CPL_IGNORE_RET_VAL( alphaBand->RasterIO(GF_Write, 0, row, dxsize, 1, pafScanline, dxsize, 1, GDT_Byte,
+                                    0, 0, NULL) );
             }
         }
     }
@@ -1174,13 +1174,13 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                     dfRequestYMin < adfExtents[3] && dfRequestYMax > adfExtents[1] )
                 {
                     CPLString osSubFilename;
-                    if( strncmp(pszHref, "http", 4) == 0)
+                    if( STARTS_WITH(pszHref, "http"))
                         osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
                     else
                     {
                         const char* pszBaseFilename = osFilename.c_str();
                         if( EQUAL(CPLGetExtension(pszBaseFilename), "kmz") &&
-                            strncmp(pszBaseFilename, "/vsizip/", 8) != 0 )
+                            !STARTS_WITH(pszBaseFilename, "/vsizip/") )
                         {
                             osSubFilename = "/vsizip/";
                             osSubFilename += CPLGetPath(pszBaseFilename);
@@ -1395,8 +1395,9 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
     void             *pProgressDataGlobal = psExtraArg->pProgressData;
+    CPLErr eErr = CE_None;
 
-    for(int iBandIdx = 0; iBandIdx < nBandCount; iBandIdx++ )
+    for(int iBandIdx = 0; iBandIdx < nBandCount && eErr == CE_None; iBandIdx++ )
     {
         int nBand = panBandMap[iBandIdx];
 
@@ -1430,7 +1431,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                       pfnProgressGlobal,
                                       pProgressDataGlobal );
 
-        poDSIcon->GetRasterBand(nIconBand)->RasterIO( eRWFlag,
+        eErr = poDSIcon->GetRasterBand(nIconBand)->RasterIO( eRWFlag,
                                                       nReqXOff,
                                                       nReqYOff,
                                                       nReqXSize,
@@ -1446,7 +1447,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
     psExtraArg->pfnProgress = pfnProgressGlobal;
     psExtraArg->pProgressData = pProgressDataGlobal;
 
-    return CE_None;
+    return eErr;
 
 }
 
@@ -1586,7 +1587,7 @@ GDALDataset* KmlSuperOverlayLoadIcon(const char* pszBaseFilename, const char* ps
     }
 
     CPLString osSubFilename;
-    if( strncmp(pszIcon, "http", 4) == 0)
+    if( STARTS_WITH(pszIcon, "http"))
         osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszIcon);
     else
     {
@@ -1649,7 +1650,7 @@ static void KmlSuperOverlayComputeDepth(CPLString osFilename,
             if( EQUAL(pszExt, "kml") )
             {
                 CPLString osSubFilename;
-                if( strncmp(pszHref, "http", 4) == 0)
+                if( STARTS_WITH(pszHref, "http"))
                     osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
                 else
                 {
@@ -2096,7 +2097,7 @@ static void KmlSingleDocCollectTiles(CPLXMLNode* psNode,
         int level, j, i;
         char szExt[4];
         const char* pszHref = CPLGetXMLValue(psNode, "", "");
-        if( strncmp(pszHref, "http", 4) == 0 )
+        if( STARTS_WITH(pszHref, "http") )
         {
             osURLBase = CPLGetPath(pszHref);
         }
@@ -2259,7 +2260,7 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
     const char* pszExt = CPLGetExtension(pszFilename);
     if( EQUAL(pszExt, "kmz") )
     {
-        if( strncmp(pszFilename, "/vsizip/", 8) != 0 )
+        if( !STARTS_WITH(pszFilename, "/vsizip/") )
             osFilename = CPLSPrintf("/vsizip/%s", pszFilename);
         char** papszFiles = CPLReadDir(osFilename);
         if( papszFiles == NULL )
@@ -2319,7 +2320,7 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
         }
 
         CPLString osSubFilename;
-        if( strncmp(pszHref, "http", 4) == 0)
+        if( STARTS_WITH(pszHref, "http"))
             osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
         else
         {

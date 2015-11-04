@@ -133,12 +133,12 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
     /*-----------------------------------------------------------------
      * Validate access mode and make sure we use Text access.
      *----------------------------------------------------------------*/
-    if (EQUALN(pszAccess, "r", 1))
+    if (STARTS_WITH_CI(pszAccess, "r"))
     {
         m_eAccessMode = TABRead;
         pszAccess = "rt";
     }
-    else if (EQUALN(pszAccess, "w", 1))
+    else if (STARTS_WITH_CI(pszAccess, "w"))
     {
         m_eAccessMode = TABWrite;
         pszAccess = "wt";
@@ -213,9 +213,9 @@ const char *MIDDATAFile::GetLine()
         }
         else
         {
-            // skip leading spaces
-            while(pszLine && (*pszLine == ' ' || *pszLine == '\t') )
-                pszLine++;
+            // skip leading spaces and tabs (except is the delimiter is tab)
+            while(pszLine && (*pszLine == ' ' || (*m_pszDelimiter != '\t' && *pszLine == '\t')) )
+                    pszLine++;
 
             strncpy(m_szLastRead,pszLine,MIDMAXCHAR);
         }

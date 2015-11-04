@@ -379,10 +379,14 @@ GDALDataset *KEADataset::CreateCopy( const char * pszFilename, GDALDataset *pSrc
             if( pSrcDs->GetRasterBand(nCount+1)->GetMaskFlags() == 0 ) // Per-band mask
             {
                 pDataset->GetRasterBand(nCount+1)->CreateMaskBand(0);
-                GDALRasterBandCopyWholeRaster(
+                if( GDALRasterBandCopyWholeRaster(
                     (GDALRasterBandH)pSrcDs->GetRasterBand(nCount+1)->GetMaskBand(),
                     (GDALRasterBandH)pDataset->GetRasterBand(nCount+1)->GetMaskBand(),
-                    NULL, NULL, NULL);
+                    NULL, NULL, NULL) != CE_None )
+                {
+                    delete pDataset;
+                    return NULL;
+                }
             }
         }
 

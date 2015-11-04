@@ -42,7 +42,7 @@ CPL_C_END
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *OGRSVGDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRSVGDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == NULL )

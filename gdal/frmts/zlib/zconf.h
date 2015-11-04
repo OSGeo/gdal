@@ -68,7 +68,7 @@
 #if defined(_WINDOWS) && !defined(WINDOWS)
 #  define WINDOWS
 #endif
-#if defined(_WIN32) || defined(_WIN32_WCE) || defined(__WIN32__)
+#if defined(_WIN32) || defined(__WIN32__)
 #  ifndef WIN32
 #    define WIN32
 #  endif

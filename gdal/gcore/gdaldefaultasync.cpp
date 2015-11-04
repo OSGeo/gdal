@@ -53,7 +53,21 @@ CPL_C_END
 /*                          GDALAsyncReader()                           */
 /************************************************************************/
 
-GDALAsyncReader::GDALAsyncReader()
+GDALAsyncReader::GDALAsyncReader() :
+    poDS(NULL),
+    nXOff(0),
+    nYOff(0),
+    nXSize(0),
+    nYSize(0),
+    pBuf(NULL),
+    nBufXSize(0),
+    nBufYSize(0),
+    eBufType(GDT_Unknown),
+    nBandCount(0),
+    panBandMap(NULL),
+    nPixelSpace(0),
+    nLineSpace(0),
+    nBandSpace(0)
 {
 }
 

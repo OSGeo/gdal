@@ -343,13 +343,14 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     /* ---- Get buffers for each source ---- */
     pBuffers = (void **) CPLMalloc(sizeof(void *) * nSources);
     for (iSource = 0; iSource < nSources; iSource++) {
-        pBuffers[iSource] = (void *) 
+        pBuffers[iSource] = (void *)
             VSIMalloc(sourcesize * nBufXSize * nBufYSize);
         if (pBuffers[iSource] == NULL)
         {
             for (ii = 0; ii < iSource; ii++) {
                 VSIFree(pBuffers[iSource]);
             }
+            CPLFree(pBuffers);
             CPLError( CE_Failure, CPLE_OutOfMemory,
                 "VRTDerivedRasterBand::IRasterIO:" \
                 "Out of memory allocating " CPL_FRMT_GIB " bytes.\n",
@@ -411,10 +412,7 @@ CPLErr VRTDerivedRasterBand::XMLInit(CPLXMLNode *psTree,
 				     const char *pszVRTPath)
 
 {
-    CPLErr eErr;
-    const char *pszTypeName;
-
-    eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath );
+    CPLErr eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath );
     if( eErr != CE_None )
         return eErr;
 
@@ -423,7 +421,7 @@ CPLErr VRTDerivedRasterBand::XMLInit(CPLXMLNode *psTree,
 	(CPLGetXMLValue(psTree, "PixelFunctionType", NULL));
 
     /* ---- Read optional source transfer data type ---- */
-    pszTypeName = CPLGetXMLValue(psTree, "SourceTransferType", NULL);
+    const char *pszTypeName = CPLGetXMLValue(psTree, "SourceTransferType", NULL);
     if (pszTypeName != NULL) {
 	this->eSourceTransferType = GDALGetDataTypeByName(pszTypeName);
     }
@@ -437,9 +435,7 @@ CPLErr VRTDerivedRasterBand::XMLInit(CPLXMLNode *psTree,
 
 CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath)
 {
-    CPLXMLNode *psTree;
-
-    psTree = VRTSourcedRasterBand::SerializeToXML( pszVRTPath );
+    CPLXMLNode *psTree = VRTSourcedRasterBand::SerializeToXML( pszVRTPath );
 
 /* -------------------------------------------------------------------- */
 /*      Set subclass.                                                   */
@@ -457,4 +453,3 @@ CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath)
 
     return psTree;
 }
-

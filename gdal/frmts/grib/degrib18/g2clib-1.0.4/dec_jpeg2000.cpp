@@ -117,7 +117,7 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
     int nBandSpace = 0;
 
     //    Decompress the JPEG2000 into the output integer array.
-    poJ2KDataset->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
+    CPLErr eErr = poJ2KDataset->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
                             outfld, nBufXSize, nBufYSize, eBufType,
                             nBandCount, panBandMap, 
                             nPixelSpace, nLineSpace, nBandSpace, NULL );
@@ -126,7 +126,7 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
     GDALClose( poJ2KDataset );
     VSIUnlink( osFileName );
 
-    return 0;
+    return (eErr == CE_None) ? 0 : -3;
 
 #else 
 

@@ -63,7 +63,7 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     int nLen = (int) strlen(poOpenInfo->pszFilename);
-    if (EQUALN(poOpenInfo->pszFilename, "VirtualShape:", strlen( "VirtualShape:" )) &&
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "VirtualShape:") &&
         nLen > 4 && EQUAL(poOpenInfo->pszFilename + nLen - 4, ".SHP"))
     {
         return TRUE;
@@ -71,6 +71,23 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 
     if( EQUAL(poOpenInfo->pszFilename, ":memory:") )
         return TRUE;
+
+#ifdef SQLITE_OPEN_URI
+    // this code enables support for named mememory databases in sqlite. 
+    // Named memory databses use file name format file:name?mode=memory&cache=shared
+    // SQLITE_USE_URI is checked only to enable backward compatibility, in case we accidently hijacked some other format
+    if( STARTS_WITH(poOpenInfo->pszFilename, "file:") &&
+        CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
+    {
+        char * queryparams = strchr(poOpenInfo->pszFilename, '?');
+        if( queryparams )
+        {
+            if( strstr(queryparams, "mode=memory") != NULL )
+                return TRUE;
+        }
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Verify that the target is a real file, and has an               */
 /*      appropriate magic string at the beginning.                      */
@@ -78,7 +95,7 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 16 )
         return FALSE;
 
-    if( strncmp( (const char*)poOpenInfo->pabyHeader, "SQLite format 3", 15 ) != 0 )
+    if( !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
         return FALSE;
     
     // Could be a Rasterlite file as well
@@ -99,7 +116,7 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
 /*      Check VirtualShape:xxx.shp syntax                               */
 /* -------------------------------------------------------------------- */
     int nLen = (int) strlen(poOpenInfo->pszFilename);
-    if (EQUALN(poOpenInfo->pszFilename, "VirtualShape:", strlen( "VirtualShape:" )) &&
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "VirtualShape:") &&
         nLen > 4 && EQUAL(poOpenInfo->pszFilename + nLen - 4, ".SHP"))
     {
         OGRSQLiteDataSource     *poDS;
@@ -205,7 +222,7 @@ static GDALDataset *OGRSQLiteDriverCreate( const char * pszName,
 /*                             Delete()                                 */
 /************************************************************************/
 
-CPLErr OGRSQLiteDriverDelete( const char *pszName )
+static CPLErr OGRSQLiteDriverDelete( const char *pszName )
 {
     if (VSIUnlink( pszName ) == 0)
         return CE_None;

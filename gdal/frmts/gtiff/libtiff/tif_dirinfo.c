@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.121 2014-05-07 01:58:46 bfriesen Exp $ */
+/* $Id: tif_dirinfo.c,v 1.122 2015-10-28 19:10:20 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -521,7 +521,7 @@ TIFFFindField(TIFF* tif, uint32 tag, TIFFDataType dt)
 	return tif->tif_foundfield = (ret ? *ret : NULL);
 }
 
-const TIFFField*
+static const TIFFField*
 _TIFFFindFieldByName(TIFF* tif, const char *field_name, TIFFDataType dt)
 {
 	TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0, 0, 0, 0, 0, 0, NULL, NULL};

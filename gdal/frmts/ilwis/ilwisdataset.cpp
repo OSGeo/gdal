@@ -29,12 +29,18 @@
 
 
 #include "ilwisdataset.h"
-#include <float.h>
-#include <limits.h>
+#include <cfloat>
+#include <climits>
 
 #include <string>
 
-using namespace std;
+using std::string;
+
+/* used by ilwsicoordinatesystem.cpp */
+string ReadElement(string section, string entry, string filename);
+bool WriteElement(string sSection, string sEntry, string fn, string sValue);
+bool WriteElement(string sSection, string sEntry, string fn, int nValue);
+bool WriteElement(string sSection, string sEntry, string fn, double dValue);
 
 // IniFile.cpp: implementation of the IniFile class.
 //
@@ -49,11 +55,11 @@ bool CompareAsNum::operator() (const string& s1, const string& s2) const
 static string TrimSpaces(const string& input)
 {
     // find first non space
-    if ( input.empty()) 
+    if ( input.empty() )
         return string();
 
-    size_t iFirstNonSpace = input.find_first_not_of(' ');
-    size_t iFindLastSpace = input.find_last_not_of(' ');
+    const size_t iFirstNonSpace = input.find_first_not_of(' ');
+    const size_t iFindLastSpace = input.find_last_not_of(' ');
     if (iFirstNonSpace == string::npos || iFindLastSpace == string::npos)
         return string();
 
@@ -158,13 +164,13 @@ void IniFile::RemoveSection(const string& section)
 
 void IniFile::Load()
 {
-    enum ParseState { FindSection, FindKey, ReadFindKey, StoreKey, None } state;
     VSILFILE *filIni = VSIFOpenL(filename.c_str(), "r");
     if (filIni == NULL)
         return;
 
     string section, key, value;
-    state = FindSection;
+    enum ParseState { FindSection, FindKey, ReadFindKey, StoreKey, None } state
+        = FindSection;
     string s;
     while (!VSIFEofL(filIni) || !s.empty() )
     {
@@ -206,7 +212,7 @@ void IniFile::Load()
             SetKeyValue(section, key, value);
             state = FindSection;
             break;
-            
+
           case None:
             // Do we need to do anything?  Perhaps this never occurs.
             break;
@@ -252,8 +258,8 @@ void IniFile::Store()
 static long longConv(double x) {
     if ((x == rUNDEF) || (x > LONG_MAX) || (x < LONG_MIN))
         return iUNDEF;
-    else
-        return (long)floor(x + 0.5);
+
+    return (long)floor(x + 0.5);
 }
 
 string ReadElement(string section, string entry, string filename)
@@ -301,7 +307,7 @@ bool WriteElement(string sSection, string sEntry,
         return false;
 
     char strdouble[45];
-    CPLsprintf(strdouble, "%.6f", dValue);
+    CPLsnprintf(strdouble, sizeof(strdouble), "%.6f", dValue);
     string sValue = string(strdouble);
     return WriteElement(sSection, sEntry, fn, sValue) != 0;
 }
@@ -334,18 +340,18 @@ static GDALDataType ILWIS2GDALType(ilwisStoreType stStoreType)
   GDALDataType eDataType = GDT_Unknown;
 
   switch (stStoreType){
-	  case stByte: {
-	    eDataType = GDT_Byte;
+    case stByte: {
+      eDataType = GDT_Byte;
       break;
-		} 
+    }
     case stInt:{
       eDataType = GDT_Int16;
       break;
-		}
+    }
     case stLong:{
       eDataType = GDT_Int32;
       break;
-		}
+    }
     case stFloat:{
       eDataType = GDT_Float32;
       break;
@@ -365,8 +371,7 @@ static GDALDataType ILWIS2GDALType(ilwisStoreType stStoreType)
 //Determine store type of ILWIS raster
 static string GDALType2ILWIS(GDALDataType type)
 {
-    string sStoreType;
-    sStoreType = "";
+    string sStoreType = "";
     switch( type )
     {
       case GDT_Byte:{
@@ -404,7 +409,7 @@ static string GDALType2ILWIS(GDALDataType type)
 static CPLErr GetStoreType(string pszFileName, ilwisStoreType &stStoreType)
 {
     string st = ReadElement("MapStore", "Type", pszFileName.c_str());
-		
+
     if( EQUAL(st.c_str(),"byte"))
     {
         stStoreType = stByte;
@@ -435,13 +440,12 @@ static CPLErr GetStoreType(string pszFileName, ilwisStoreType &stStoreType)
 }
 
 
-ILWISDataset::ILWISDataset()
-
+ILWISDataset::ILWISDataset() :
+    bGeoDirty(FALSE),
+    bNewDataset(FALSE)
 {
-		bGeoDirty = FALSE;
-		bNewDataset = FALSE;
     pszProjection = CPLStrdup("");
-		adfGeoTransform[0] = 0.0;
+    adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
@@ -501,14 +505,14 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
             string sMinY = ReadElement("GeoRefCorners", "MinY", pszRefName);
             string sMaxX = ReadElement("GeoRefCorners", "MaxX", pszRefName);
             string sMaxY = ReadElement("GeoRefCorners", "MaxY", pszRefName);
-				
+
             //Calculate pixel size in X and Y direction from the extent
             double deltaX = CPLAtof(sMaxX.c_str()) - CPLAtof(sMinX.c_str());
             double deltaY = CPLAtof(sMaxY.c_str()) - CPLAtof(sMinY.c_str());
 
             double PixelSizeX = deltaX / (double)nRasterXSize;
             double PixelSizeY = deltaY / (double)nRasterYSize;
-				
+
             if (EQUAL(IsCorner.c_str(),"Yes"))
             {
                 adfGeoTransform[0] = CPLAtof(sMinX.c_str());
@@ -582,7 +586,7 @@ CPLErr ILWISDataset::WriteGeoReference()
                     if (iBand == 0)
                       WriteElement("MapList", "GeoRef", osFileName, sBaseName + ".grf");
                     char pszName[100];
-                    sprintf(pszName, "%s_band_%d", sBaseName.c_str(),iBand + 1 );
+                    snprintf(pszName, sizeof(pszName), "%s_band_%d", sBaseName.c_str(),iBand + 1 );
                     string pszODFName = string(CPLFormFilename(sPath.c_str(),pszName,"mpr"));
                     WriteElement("Map", "GeoRef", pszODFName, sBaseName + ".grf");
                 }
@@ -642,11 +646,13 @@ CPLErr ILWISDataset::SetGeoTransform( double * padfTransform )
     return CE_None;
 }
 
-bool CheckASCII(unsigned char * buf, int size)
+static bool CheckASCII(unsigned char * buf, int size)
 {
 	for (int i = 0; i < size; ++i)
-		if (!isascii(buf[i]))
-			return false;
+        {
+            if (!isascii(buf[i]))
+                return false;
+        }
 
 	return true;
 }
@@ -673,14 +679,14 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     string ilwistype = ReadElement("Ilwis", "Type", poOpenInfo->pszFilename);
     if( ilwistype.length() == 0)
         return NULL;
-		
+
     string sFileType;	//map or map list
     int    iBandCount;
     string mapsize;
-    string maptype = ReadElement("BaseMap", "Type", poOpenInfo->pszFilename);
-    string sBaseName = string(CPLGetBasename(poOpenInfo->pszFilename) );
-    string sPath = string(CPLGetPath( poOpenInfo->pszFilename));
-							
+    const string maptype = ReadElement("BaseMap", "Type", poOpenInfo->pszFilename);
+    const string sBaseName = string(CPLGetBasename(poOpenInfo->pszFilename) );
+    const string sPath = string(CPLGetPath( poOpenInfo->pszFilename));
+
     //Verify whether it is a map list or a map
     if( EQUAL(ilwistype.c_str(),"MapList") )
     {
@@ -692,7 +698,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             //Form the band file name.
             char cBandName[45];
-            sprintf( cBandName, "Map%d", iBand);
+            snprintf( cBandName, sizeof(cBandName), "Map%d", iBand);
             string sBandName = ReadElement("MapList", string(cBandName), poOpenInfo->pszFilename);
             string pszBandBaseName = string(CPLGetBasename(sBandName.c_str()) );
             string pszBandPath = string(CPLGetPath( sBandName.c_str()));
@@ -706,7 +712,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             //This drive only supports a map list which stores a set of ILWIS raster maps, 
             string sMapStoreName = ReadElement("MapStore", "Data", sBandName);
             string sExt = CPLGetExtension( sMapStoreName.c_str() );
-            if ( !EQUALN( sExt.c_str(), "mp#", 3 ))
+            if ( !STARTS_WITH_CI(sExt.c_str(), "mp#"))
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Unsupported ILWIS data file. \n"
@@ -742,19 +748,21 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    ILWISDataset 	*poDS;
-    poDS = new ILWISDataset();
-		
+    ILWISDataset *poDS = new ILWISDataset();
+
 /* -------------------------------------------------------------------- */
 /*      Capture raster size from ILWIS file (.mpr).                     */
 /* -------------------------------------------------------------------- */
     int Row = 0, Col = 0;
     if ( GetRowCol(mapsize, Row, Col) != CE_None)
+    {
+        delete poDS;
         return FALSE;
+    }
     poDS->nRasterXSize = Col;
     poDS->nRasterYSize = Row;
     poDS->osFileName = poOpenInfo->pszFilename;
-    poDS->pszFileType = sFileType;  
+    poDS->pszFileType = sFileType;
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -764,7 +772,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->SetBand( iBand+1, new ILWISRasterBand( poDS, iBand+1 ) );
     }
-		
+
 /* -------------------------------------------------------------------- */
 /*      Collect the geotransform coefficients                           */
 /* -------------------------------------------------------------------- */
@@ -776,7 +784,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( (pszGeoRef.length() != 0) && !EQUAL(pszGeoRef.c_str(),"none"))
     {
-		
+
         //	Fetch coordinate system
         string csy = ReadElement("GeoRef", "CoordSystem", pszGeoRef);
         string pszProj;
@@ -785,8 +793,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
         {
 
             //Form the coordinate system file name
-            if( !(EQUALN( csy.c_str(), "latlon.csy", 10 )) && 
-                !(EQUALN( csy.c_str(), "LatlonWGS84.csy", 15 )))            
+            if( !(STARTS_WITH_CI(csy.c_str(), "latlon.csy")) && 
+                !(STARTS_WITH_CI(csy.c_str(), "LatlonWGS84.csy")))            
             {
                 string pszBaseName = string(CPLGetBasename(csy.c_str()) );
                 string pszPath = string(CPLGetPath( poDS->osFileName ));
@@ -800,9 +808,9 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 pszProj = "LatLon";
             }
-					
-            if( (EQUALN( pszProj.c_str(), "LatLon", 6 )) || 
-                (EQUALN( pszProj.c_str(), "Projection", 10 )))			
+
+            if( (STARTS_WITH_CI(pszProj.c_str(), "LatLon")) || 
+                (STARTS_WITH_CI(pszProj.c_str(), "Projection")))			
                 poDS->ReadProjection( csy );
         }
     }
@@ -831,11 +839,11 @@ void ILWISDataset::FlushCache()
     GDALDataset::FlushCache();
 
     if( bGeoDirty == TRUE )
-		{
-				WriteGeoReference();
+    {
+        WriteGeoReference();
         WriteProjection();
-				bGeoDirty = FALSE;
-		}
+        bGeoDirty = FALSE;
+    }
 }
 
 /************************************************************************/
@@ -849,9 +857,6 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
                                   int nBands, GDALDataType eType,
                                   CPL_UNUSED char** papszParmList)
 {
-    ILWISDataset	*poDS;
-    int 		iBand;
-
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
@@ -878,9 +883,9 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
     else if( EQUAL(sStoreType.c_str(),"Real") || EQUAL(sStoreType.c_str(),"float"))
         stepsize = 0;
 
-    string pszBaseName = string(CPLGetBasename( pszFilename ));
-    string pszPath = string(CPLGetPath( pszFilename ));
-		
+    const string pszBaseName = string(CPLGetBasename( pszFilename ));
+    const string pszPath = string(CPLGetPath( pszFilename ));
+
 /* -------------------------------------------------------------------- */
 /*      Write out object definition file for each band                  */
 /* -------------------------------------------------------------------- */
@@ -889,9 +894,9 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
     string pszFileName;
 
     char strsize[45];
-    sprintf(strsize, "%d %d", nYSize, nXSize);
-    
-    //Form map/maplist name. 
+    snprintf(strsize, sizeof(strsize), "%d %d", nYSize, nXSize);
+
+    //Form map/maplist name.
     if ( nBands == 1 )
     {
         pszODFName = string(CPLFormFilename(pszPath.c_str(),pszBaseName.c_str(),"mpr"));
@@ -907,7 +912,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
         WriteElement("MapList", "Maps", string(pszFileName), nBands);
     }
 
-    for( iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
         if ( nBands > 1 )
         {
@@ -915,18 +920,18 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
             sprintf(pszBandName, "%s_band_%d", pszBaseName.c_str(),iBand + 1 );
             pszODFName = string(pszBandName) + ".mpr";
             pszDataBaseName = string(pszBandName);
-            sprintf(pszBandName, "Map%d", iBand);	
+            sprintf(pszBandName, "Map%d", iBand);
             WriteElement("MapList", string(pszBandName), string(pszFileName), pszODFName);
             pszODFName = CPLFormFilename(pszPath.c_str(),pszDataBaseName.c_str(),"mpr");
         }
 /* -------------------------------------------------------------------- */
 /*      Write data definition per band (.mpr)                           */
 /* -------------------------------------------------------------------- */
-				
+
         WriteElement("Ilwis", "Type", pszODFName, "BaseMap");
         WriteElement("BaseMap", "Type", pszODFName, "Map");
         WriteElement("Map", "Type", pszODFName, "MapStore");
-				
+
         WriteElement("BaseMap", "Domain", pszODFName, sDomain);
         string pszDataName = pszDataBaseName + ".mp#";
         WriteElement("MapStore", "Data", pszODFName, pszDataName);
@@ -937,17 +942,15 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
         // For now write-out a "Range" that is as broad as possible.
         // If later a better range is found (by inspecting metadata in the source dataset),
         // the "Range" will be overwritten by a better version.
-        double adfMinMax[2];
-        adfMinMax[0] = -9999999.9;
-        adfMinMax[1] = 9999999.9;
+        double adfMinMax[2] = {-9999999.9, 9999999.9};
         char strdouble[45];
-        CPLsprintf(strdouble, "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
-        string range = string(strdouble);
+        CPLsnprintf(strdouble, sizeof(strdouble), "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
+        string range(strdouble);
         WriteElement("BaseMap", "Range", pszODFName, range);
 
         WriteElement("Map", "GeoRef", pszODFName, "none.grf");
         WriteElement("Map", "Size", pszODFName, string(strsize));
-							
+
 /* -------------------------------------------------------------------- */
 /*      Try to create the data file.                                    */
 /* -------------------------------------------------------------------- */
@@ -963,7 +966,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
         }
         VSIFCloseL( fp );
     }
-    poDS = new ILWISDataset();
+    ILWISDataset *poDS = new ILWISDataset();
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->nBands = nBands;
@@ -981,7 +984,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
 
-    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+    for( int iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new ILWISRasterBand( poDS, iBand ) );
     }
@@ -996,44 +999,38 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
 
 GDALDataset *
 ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-                        int bStrict, char ** papszOptions,
-                        GDALProgressFunc pfnProgress, void * pProgressData )
+                          int /* bStrict */, char ** papszOptions,
+                          GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    
-    ILWISDataset	*poDS;
-    GDALDataType eType = GDT_Byte;
-    int iBand;
-    (void) bStrict;
-
-		
-    int   nXSize = poSrcDS->GetRasterXSize();
-    int   nYSize = poSrcDS->GetRasterYSize();
-    int   nBands = poSrcDS->GetRasterCount();
-
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
+
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
+    const int nBands = poSrcDS->GetRasterCount();
 
 /* -------------------------------------------------------------------- */
 /*      Create the basic dataset.                                       */
 /* -------------------------------------------------------------------- */
-    for( iBand = 0; iBand < nBands; iBand++ )
+    GDALDataType eType = GDT_Byte;
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
         GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
         eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
     }
 
-    poDS = (ILWISDataset *) Create( pszFilename,
-                                    poSrcDS->GetRasterXSize(),
-                                    poSrcDS->GetRasterYSize(),
-                                    nBands,
-                                    eType, papszOptions );
+    ILWISDataset *poDS = (ILWISDataset *) Create( pszFilename,
+                                                  poSrcDS->GetRasterXSize(),
+                                                  poSrcDS->GetRasterYSize(),
+                                                  nBands,
+                                                  eType, papszOptions );
 
     if( poDS == NULL )
         return NULL;
-    string pszBaseName = string(CPLGetBasename( pszFilename ));
-    string pszPath = string(CPLGetPath( pszFilename ));
-				
+    const string pszBaseName = string(CPLGetBasename( pszFilename ));
+    const string pszPath = string(CPLGetPath( pszFilename ));
+
 /* -------------------------------------------------------------------- */
 /*  Copy and geo-transform and projection information.                  */
 /* -------------------------------------------------------------------- */
@@ -1060,7 +1057,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Create the output raster files for each band                    */
 /* -------------------------------------------------------------------- */
 
-    for( iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
         VSILFILE *fpData = NULL;
 
@@ -1077,7 +1074,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         double dNoDataValue = poBand->GetNoDataValue(&bHasNoDataValue); 
 
         //Determine store type of ILWIS raster
-        string sStoreType = GDALType2ILWIS( eType );
+        const string sStoreType = GDALType2ILWIS( eType );
         double stepsize = 1;
         if( EQUAL(sStoreType.c_str(),""))
             return NULL;
@@ -1123,8 +1120,6 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copy the image data.                           */
 /* -------------------------------------------------------------------- */
-        CPLErr      eErr = CE_None;
-
         //For file name for raw data, and create binary files. 
         string pszDataFileName = CPLResetExtension(pszODFName.c_str(), "mp#" );
 
@@ -1139,6 +1134,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         GByte *pData = (GByte *) CPLMalloc( nLineSize );
 
+        CPLErr eErr = CE_None;
         for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
         {
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
@@ -1225,7 +1221,7 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
 
 {
     string sBandName;
-    if ( EQUAL(poDS->pszFileType.c_str(),"Map"))  		
+    if ( EQUAL(poDS->pszFileType.c_str(),"Map"))
         sBandName = string(poDS->osFileName);
     else //map list
     {
@@ -1237,9 +1233,9 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
         string sBandPath = string(CPLGetPath( sBandName.c_str()));
         string sBandBaseName = string(CPLGetBasename( sBandName.c_str()));
         if ( 0==sBandPath.length() )
-            sBandName = string(CPLFormFilename(sInputPath.c_str(),sBandBaseName.c_str(),"mpr" ));		
+            sBandName = string(CPLFormFilename(sInputPath.c_str(),sBandBaseName.c_str(),"mpr" ));
         else
-            sBandName = string(CPLFormFilename(sBandPath.c_str(),sBandBaseName.c_str(),"mpr" ));		
+          sBandName = string(CPLFormFilename(sBandPath.c_str(),sBandBaseName.c_str(),"mpr" ));
     }
 
     if (poDS->bNewDataset)
@@ -1251,7 +1247,7 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
       // the most compact storeType possible, without going through all values.
         GetStoreType(sBandName, psInfo.stStoreType);
         eDataType = ILWIS2GDALType(psInfo.stStoreType);
-    }					
+    }
     else // Called from Open(), thus convert ILWIS type from ODF to eDataType
         GetILWISInfo(sBandName);
     this->poDS = poDS;
@@ -1300,8 +1296,8 @@ ILWISRasterBand::~ILWISRasterBand()
 void ILWISRasterBand::ILWISOpen( string pszFileName )
 {
     ILWISDataset* dataset = (ILWISDataset*) poDS;
-    string pszDataFile;
-    pszDataFile = string(CPLResetExtension( pszFileName.c_str(), "mp#" ));
+    string pszDataFile
+        = string(CPLResetExtension( pszFileName.c_str(), "mp#" ));
 
     fpRaw = VSIFOpenL( pszDataFile.c_str(), (dataset->eAccess == GA_Update) ? "rb+" : "rb");
 }
@@ -1416,7 +1412,7 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unsupported ILWIS domain type.");
-        return CE_Failure;		
+        return CE_Failure;
     }
     else
     {
@@ -1443,10 +1439,10 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Unsupported ILWIS domain type.");
-            return CE_Failure;		
+            return CE_Failure;
         }
     }
-		
+
     return CE_None;
 }
 
@@ -1519,34 +1515,33 @@ CPLErr ILWISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     switch (psInfo.stStoreType)
     {
-      int iCol;
       case stByte:
-        for( iCol = 0; iCol < nBlockXSize; iCol++ )
+        for( int iCol = 0; iCol < nBlockXSize; iCol++ )
         {
           double rV = psInfo.bUseValueRange ? psInfo.vr.rValue(((GByte *) pData)[iCol]) : ((GByte *) pData)[iCol];
           SetValue(pImage, iCol, rV);
         }
         break;
       case stInt:
-        for( iCol = 0; iCol < nBlockXSize; iCol++ )
+        for( int iCol = 0; iCol < nBlockXSize; iCol++ )
         {
           double rV = psInfo.bUseValueRange ? psInfo.vr.rValue(((GInt16 *) pData)[iCol]) : ((GInt16 *) pData)[iCol];
           SetValue(pImage, iCol, rV);
         }
       break;
       case stLong:
-        for( iCol = 0; iCol < nBlockXSize; iCol++ )
+        for( int iCol = 0; iCol < nBlockXSize; iCol++ )
         {
           double rV = psInfo.bUseValueRange ? psInfo.vr.rValue(((GInt32 *) pData)[iCol]) : ((GInt32 *) pData)[iCol];
           SetValue(pImage, iCol, rV);
         }
         break;
       case stFloat:
-        for( iCol = 0; iCol < nBlockXSize; iCol++ )
+        for( int iCol = 0; iCol < nBlockXSize; iCol++ )
           ((float *) pImage)[iCol] = ((float *) pData)[iCol];
-        break;  
+        break;
       case stReal:
-        for( iCol = 0; iCol < nBlockXSize; iCol++ )
+        for( int iCol = 0; iCol < nBlockXSize; iCol++ )
           ((double *) pImage)[iCol] = ((double *) pData)[iCol];
         break;
       default:
@@ -1672,7 +1667,7 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     int nXSize = dataset->GetRasterXSize();
     int nBlockSize = nBlockXSize * nBlockYSize * nSizePerPixel;
     void *pData = CPLMalloc(nBlockSize);
-    
+
     VSIFSeekL( fpRaw, nBlockSize * nBlockYOff, SEEK_SET );
 
     bool fDataExists = (VSIFReadL( pData, 1, nBlockSize, fpRaw ) >= 1);
@@ -1690,9 +1685,8 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         // thus only fill in gaps (nodata values)
         switch (psInfo.stStoreType)
         {
-          int iCol;
           case stByte:
-            for (iCol = 0; iCol < nXSize; iCol++ )
+            for (int iCol = 0; iCol < nXSize; iCol++ )
                 if ((( GByte * )pData)[iCol] == 0)
                 {
                     double rV = GetValue(pImage, iCol);
@@ -1701,7 +1695,7 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 }
             break;
           case stInt:
-            for (iCol = 0; iCol < nXSize; iCol++ )
+            for (int iCol = 0; iCol < nXSize; iCol++ )
                 if ((( GInt16 * )pData)[iCol] == shUNDEF)
                 {
                     double rV = GetValue(pImage, iCol);
@@ -1710,7 +1704,7 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 }
             break;
           case stLong:
-            for (iCol = 0; iCol < nXSize; iCol++ )
+            for (int iCol = 0; iCol < nXSize; iCol++ )
                 if ((( GInt32 * )pData)[iCol] == iUNDEF)
                 {
                     double rV = GetValue(pImage, iCol);
@@ -1719,12 +1713,12 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 }
             break;
           case stFloat:
-            for (iCol = 0; iCol < nXSize; iCol++ )
+            for (int iCol = 0; iCol < nXSize; iCol++ )
                 if ((( float * )pData)[iCol] == flUNDEF)
                     (( float * )pData)[iCol] = ((float* )pImage)[iCol];
             break;
           case stReal:
-            for (iCol = 0; iCol < nXSize; iCol++ )
+            for (int iCol = 0; iCol < nXSize; iCol++ )
                 if ((( double * )pData)[iCol] == rUNDEF)
                     (( double * )pData)[iCol] = ((double* )pImage)[iCol];
             break;
@@ -1735,9 +1729,8 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         // fpRaw (thus pData) is still empty, just write the data
         switch (psInfo.stStoreType)
         {
-          int iCol;
           case stByte:
-            for (iCol = 0; iCol < nXSize; iCol++ )
+            for (int iCol = 0; iCol < nXSize; iCol++ )
             {
                 double rV = GetValue(pImage, iCol);
                 (( GByte * )pData)[iCol] = (GByte) 
@@ -1745,7 +1738,7 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             }
             break;
           case stInt:
-            for (iCol = 0; iCol < nXSize; iCol++ )
+            for (int iCol = 0; iCol < nXSize; iCol++ )
             {
                 double rV = GetValue(pImage, iCol);
                 (( GInt16 * )pData)[iCol] = (GInt16) 
@@ -1753,7 +1746,7 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             }
             break;
           case stLong:
-            for (iCol = 0; iCol < nXSize; iCol++ )
+            for (int iCol = 0; iCol < nXSize; iCol++ )
             {
                 double rV = GetValue(pImage, iCol);
                 ((GInt32 *)pData)[iCol] = (GInt32)
@@ -1761,11 +1754,11 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             }
             break;
           case stFloat:
-            for (iCol = 0; iCol < nXSize; iCol++ )
+            for (int iCol = 0; iCol < nXSize; iCol++ )
                 (( float * )pData)[iCol] = ((float* )pImage)[iCol];
             break;
           case stReal:
-            for (iCol = 0; iCol < nXSize; iCol++ )
+            for (int iCol = 0; iCol < nXSize; iCol++ )
                 (( double * )pData)[iCol] = ((double* )pImage)[iCol];
             break;
         }
@@ -1819,13 +1812,10 @@ double ILWISRasterBand::GetNoDataValue( int *pbSuccess )
 /************************************************************************/
 /*                      ValueRange()                                    */
 /************************************************************************/
-double Max(double a, double b)
-{ return (a>=b && a!=rUNDEF) ? a : b; }
 
 static double doubleConv(const char* s)
 {
     if (s == 0) return rUNDEF;
-    char *endptr;
     char *begin = const_cast<char*>(s);
 
     // skip leading spaces; strtol will return 0 on a string with only spaces
@@ -1834,7 +1824,8 @@ static double doubleConv(const char* s)
 
     if (strlen(begin) == 0) return rUNDEF;
     errno = 0;
-    double r = CPLStrtod(begin, &endptr);
+    char *endptr;
+    const double r = CPLStrtod(begin, &endptr);
     if ((0 == *endptr) && (errno==0))
         return r;
     while (*endptr != 0) { // check trailing spaces
@@ -1853,7 +1844,7 @@ ValueRange::ValueRange(string sRng) :
     for (unsigned int i = 0; i < sRng.length(); ++i)
         sRange[i] = sRng[i];
     sRange[sRng.length()] = 0;
-	
+
     char *p1 = strchr(sRange, ':');
     if (0 == p1)
         return;
@@ -1882,9 +1873,9 @@ ValueRange::ValueRange(string sRng) :
     else {
         _rLo = CPLAtof(sRange);
         _rHi = _rLo;
-    }  
+    }
     init(_r0);
-	 
+
     delete [] sRange;
 }
 
@@ -1949,7 +1940,7 @@ void ValueRange::init(double rRaw0)
         {
             st = stReal;
             _rStep = 0;
-        }			
+        }
         else {
             r = get_rHi() - get_rLo();
             if (r <= ULONG_MAX) {
@@ -1993,11 +1984,11 @@ string ValueRange::ToString()
 {
     char buffer[200];
     if (fabs(get_rLo()) > 1.0e20 || fabs(get_rHi()) > 1.0e20)
-        CPLsprintf(buffer, "%g:%g:%f:offset=%g", get_rLo(), get_rHi(), get_rStep(), get_rRaw0());
+        CPLsnprintf(buffer, sizeof(buffer), "%g:%g:%f:offset=%g", get_rLo(), get_rHi(), get_rStep(), get_rRaw0());
     else if (get_iDec() >= 0)
-        CPLsprintf(buffer, "%.*f:%.*f:%.*f:offset=%.0f", get_iDec(), get_rLo(), get_iDec(), get_rHi(), get_iDec(), get_rStep(), get_rRaw0());
+        CPLsnprintf(buffer, sizeof(buffer), "%.*f:%.*f:%.*f:offset=%.0f", get_iDec(), get_rLo(), get_iDec(), get_rHi(), get_iDec(), get_rStep(), get_rRaw0());
     else
-        CPLsprintf(buffer, "%f:%f:%f:offset=%.0f", get_rLo(), get_rHi(), get_rStep(), get_rRaw0());
+        CPLsnprintf(buffer, sizeof(buffer), "%f:%f:%f:offset=%.0f", get_rLo(), get_rHi(), get_rStep(), get_rRaw0());
     return string(buffer);
 }
 
@@ -2009,7 +2000,7 @@ double ValueRange::rValue(int iRaw)
     rVal *= _rStep;
     if (get_rLo() == get_rHi())
         return rVal;
-    double rEpsilon = _rStep == 0.0 ? 1e-6 : _rStep / 3.0; // avoid any rounding problems with an epsilon directly based on the
+    const double rEpsilon = _rStep == 0.0 ? 1e-6 : _rStep / 3.0; // avoid any rounding problems with an epsilon directly based on the
     // the stepsize
     if ((rVal - get_rLo() < -rEpsilon) || (rVal - get_rHi() > rEpsilon))
         return rUNDEF;
@@ -2020,7 +2011,7 @@ int ValueRange::iRaw(double rValue)
 {
     if (rValue == rUNDEF) // || !fContains(rValue))
         return iUNDEF;
-    double rEpsilon = _rStep == 0.0 ? 1e-6 : _rStep / 3.0;	
+    const double rEpsilon = _rStep == 0.0 ? 1e-6 : _rStep / 3.0;
     if (rValue - get_rLo() < -rEpsilon) // take a little rounding tolerance
         return iUNDEF;
     else if (rValue - get_rHi() > rEpsilon) // take a little rounding tolerance
@@ -2028,8 +2019,7 @@ int ValueRange::iRaw(double rValue)
     rValue /= _rStep;
     double rVal = floor(rValue+0.5);
     rVal -= _r0;
-    long iVal;
-    iVal = longConv(rVal);
+    long iVal = longConv(rVal);
     return iVal;
 }
 
@@ -2041,25 +2031,23 @@ int ValueRange::iRaw(double rValue)
 void GDALRegister_ILWIS()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "ILWIS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "ILWIS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "ILWIS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "ILWIS Raster Map" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mpr/mpl" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 Int32 Float64" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = ILWISDataset::Open;
-        poDriver->pfnCreate = ILWISDataset::Create;
-        poDriver->pfnCreateCopy = ILWISDataset::CreateCopy;
+    poDriver->SetDescription( "ILWIS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "ILWIS Raster Map" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mpr/mpl" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 Int32 Float64" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = ILWISDataset::Open;
+    poDriver->pfnCreate = ILWISDataset::Create;
+    poDriver->pfnCreateCopy = ILWISDataset::CreateCopy;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

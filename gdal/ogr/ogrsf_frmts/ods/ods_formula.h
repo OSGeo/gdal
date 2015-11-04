@@ -37,10 +37,8 @@
 
 #include <vector>
 
-#if defined(_WIN32) && !defined(_WIN32_WCE)
+#if defined(_WIN32)
 #  define strcasecmp stricmp
-#elif defined(_WIN32_WCE)
-#  define strcasecmp _stricmp
 #endif
 
 typedef enum {
@@ -180,7 +178,11 @@ public:
 
 class ods_formula_parse_context {
 public:
-    ods_formula_parse_context() : nStartToken(0), poRoot(NULL) {}
+    ods_formula_parse_context() :
+        nStartToken(0),
+        pszInput(NULL),
+        pszNext(NULL),
+        poRoot(NULL) {}
 
     int        nStartToken;
     const char *pszInput;

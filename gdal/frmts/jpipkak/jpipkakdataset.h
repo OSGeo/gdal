@@ -102,7 +102,6 @@ class JPIPKAKDataset: public GDALPamDataset
 private:
     int       bNeedReinitialize;
     CPLString osRequestUrl;
-    char* pszTid;
     char* pszPath;
     char* pszCid;
     char* pszProjection;

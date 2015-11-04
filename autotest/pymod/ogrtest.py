@@ -116,6 +116,12 @@ def check_feature_geometry( feat, geom, max_error = 0.0001 ):
             if max(x_dist,y_dist,z_dist) > max_error:
                 gdaltest.post_reason( 'Error in vertex %d, off by %g.'
                                       % (i, max(x_dist,y_dist,z_dist)) )
+                #print(f_geom.GetX(i))
+                #print(geom.GetX(i))
+                #print(f_geom.GetY(i))
+                #print(geom.GetY(i))
+                #print(f_geom.GetZ(i))
+                #print(geom.GetZ(i))
                 return 1
 
     geom.Destroy()

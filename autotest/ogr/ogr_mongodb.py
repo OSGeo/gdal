@@ -260,7 +260,7 @@ def ogr_mongodb_1():
         open_options += ['HOST=' + ogrtest.mongodb_test_host ]
         open_options += ['PORT=' + str(ogrtest.mongodb_test_port) ]
         open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname ]
-        open_options += ['AUTH_JSON={ "mechanism" : "MONGODB-CR", "db": "%s", "user": "%s", "pwd": "%s" }' % \
+        open_options += ['AUTH_JSON={ "mechanism" : "SCRAM-SHA-1", "db": "%s", "user": "%s", "pwd": "%s" }' % \
             (ogrtest.mongodb_test_dbname, ogrtest.mongodb_test_user, ogrtest.mongodb_test_password)]
         ds = gdal.OpenEx('mongodb:', open_options = open_options)
         if ds is None:
@@ -961,6 +961,9 @@ gdaltest_list = [
     ]
 
 if __name__ == '__main__':
+
+    import locale
+    locale.setlocale(locale.LC_ALL, '')
 
     gdaltest.setup_run( 'ogr_mongodb' )
 

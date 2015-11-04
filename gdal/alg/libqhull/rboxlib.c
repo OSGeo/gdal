@@ -30,7 +30,6 @@
 #endif
 
 #define MAXdim 200
-#define PI 3.1415926535897932384
 
 /* ------------------------------ prototypes ----------------*/
 int roundi( double a);
@@ -505,7 +504,7 @@ int qh_rboxpoints(FILE* fout, FILE* ferr, char* rbox_command) {
       }
     }
     angle= 0.0;
-    anglediff= 2.0 * PI/numpoints;
+    anglediff= 2.0 * M_PI/numpoints;
     for (i=0; i < numpoints; i++) {
       angle += anglediff;
       x= radius * cos(angle);
@@ -557,7 +556,7 @@ int qh_rboxpoints(FILE* fout, FILE* ferr, char* rbox_command) {
       qh_errexit_rbox(qh_ERRinput);
     }
     angle= 0.0;
-    anglediff= 2* PI/numpoints;
+    anglediff= 2* M_PI/numpoints;
     if (!isgap) {
       isgap= 1;
       gap= 0.5;
@@ -641,8 +640,8 @@ int qh_rboxpoints(FILE* fout, FILE* ferr, char* rbox_command) {
           qh_fprintf_rbox(rbox.ferr, 6199, "rbox error: spiral distribution is available only in 3d\n\n");
           longjmp(rbox.errexit,qh_ERRinput);
         }
-        coord[0]= cos(2*PI*i/(numpoints - 1));
-        coord[1]= sin(2*PI*i/(numpoints - 1));
+        coord[0]= cos(2*M_PI*i/(numpoints - 1));
+        coord[1]= sin(2*M_PI*i/(numpoints - 1));
         coord[2]= 2.0*(double)i/(double)(numpoints-1) - 1.0;
       /* ============= point of 's' distribution =============== */
       }else if (issphere) {
@@ -792,4 +791,3 @@ void qh_errexit_rbox(int exitcode)
 {
     longjmp(rbox.errexit, exitcode);
 } /* rbox_errexit */
-

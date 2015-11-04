@@ -49,7 +49,7 @@ class MBTilesBand;
 /*                         MBTILESOpenSQLiteDB()                        */
 /************************************************************************/
 
-OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
+static OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
                                       GDALAccess eAccess)
 {
     const char* apszAllowedDrivers[] = { "SQLITE", NULL };
@@ -185,6 +185,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, pszSQL, NULL, NULL);
 
     OGRFeatureH hFeat = hSQLLyr ? OGR_L_GetNextFeature(hSQLLyr) : NULL;
+    CPLErr eErr = CE_None;
     if (hFeat != NULL)
     {
         CPLString osMemFileName;
@@ -232,7 +233,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                     memset(pImage, 255, nBlockXSize * nBlockYSize);
                 else
                 {
-                    GDALRasterIO(GDALGetRasterBand(hDSTile, iBand), GF_Read,
+                    eErr = GDALRasterIO(GDALGetRasterBand(hDSTile, iBand), GF_Read,
                                 0, 0, nBlockXSize, nBlockYSize,
                                 pImage, nBlockXSize, nBlockYSize, eDataType, 0, 0);
                 }
@@ -267,7 +268,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                     }
                 }
 
-                for(int iOtherBand=1;iOtherBand<=poGDS->nBands;iOtherBand++)
+                for(int iOtherBand=1;iOtherBand<=poGDS->nBands && eErr == CE_None;iOtherBand++)
                 {
                     GDALRasterBlock *poBlock;
 
@@ -313,7 +314,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                     }
                     else
                     {
-                        GDALRasterIO(GDALGetRasterBand(hDSTile, iOtherBand), GF_Read,
+                        eErr = GDALRasterIO(GDALGetRasterBand(hDSTile, iOtherBand), GF_Read,
                             0, 0, nBlockXSize, nBlockYSize,
                             pabySrcBlock, nBlockXSize, nBlockYSize, eDataType, 0, 0);
                     }
@@ -330,7 +331,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                 bGotTile = TRUE;
 
                 GByte* pabyRGBImage = (GByte*)CPLMalloc(3 * nBlockXSize * nBlockYSize);
-                GDALDatasetRasterIO(hDSTile, GF_Read,
+                eErr = GDALDatasetRasterIO(hDSTile, GF_Read,
                                     0, 0, nBlockXSize, nBlockYSize,
                                     pabyRGBImage, nBlockXSize, nBlockYSize, eDataType,
                                     3, NULL, 3, 3 * nBlockXSize, 1);
@@ -390,7 +391,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
         }
     }
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -767,7 +768,7 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
 /* ==================================================================== */
     if( pszDomain != NULL
         && EQUAL(pszDomain,"LocationInfo")
-        && (EQUALN(pszName,"Pixel_",6) || EQUALN(pszName,"GeoPixel_",9)) )
+        && (STARTS_WITH_CI(pszName, "Pixel_") || STARTS_WITH_CI(pszName, "GeoPixel_")) )
     {
         int iPixel, iLine;
 
@@ -777,12 +778,12 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      What pixel are we aiming at?                                    */
 /* -------------------------------------------------------------------- */
-        if( EQUALN(pszName,"Pixel_",6) )
+        if( STARTS_WITH_CI(pszName, "Pixel_") )
         {
             if( sscanf( pszName+6, "%d_%d", &iPixel, &iLine ) != 2 )
                 return NULL;
         }
-        else if( EQUALN(pszName,"GeoPixel_",9) )
+        else if( STARTS_WITH_CI(pszName, "GeoPixel_") )
         {
             double adfGeoTransform[6];
             double adfInvGeoTransform[6];
@@ -1131,7 +1132,7 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
             const char* pszName = OGR_F_GetFieldAsString(hFeat, 0);
             const char* pszValue = OGR_F_GetFieldAsString(hFeat, 1);
             if (pszValue[0] != '\0' &&
-                strncmp(pszValue, "function(",9) != 0 &&
+                !STARTS_WITH(pszValue, "function(") &&
                 strstr(pszValue, "<img ") == NULL &&
                 strstr(pszValue, "<p>") == NULL &&
                 strstr(pszValue, "</p>") == NULL &&
@@ -1155,7 +1156,7 @@ int MBTilesDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
     if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
         poOpenInfo->nHeaderBytes >= 1024 &&
-        EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
+        STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3"))
     {
         return TRUE;
     }
@@ -1517,7 +1518,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
     /* Small trick to get the VSILFILE associated with the OGR SQLite */
     /* DB */
     CPLString osDSName(OGR_DS_GetName(hDS));
-    if (strncmp(osDSName.c_str(), "/vsicurl/", 9) == 0)
+    if (STARTS_WITH(osDSName.c_str(), "/vsicurl/"))
     {
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -1889,7 +1890,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
         poDS->SetDescription( poOpenInfo->pszFilename );
 
-        if ( !EQUALN(poOpenInfo->pszFilename, "/vsicurl/", 9) )
+        if ( !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsicurl/") )
             poDS->TryLoadXML();
         else
         {

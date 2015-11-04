@@ -52,7 +52,7 @@ class OGRRawPoint
                   x = y = 0.0;
           }
 
-          OGRRawPoint(double x, double y) : x(x), y(y) {}
+          OGRRawPoint(double xIn, double yIn) : x(xIn), y(yIn) {}
     double      x;
     double      y;
 };
@@ -150,7 +150,7 @@ class CPL_DLL OGRGeometry
     virtual OGRBoolean  IsSimple() const;
     virtual OGRBoolean  IsRing() const;
     virtual void        empty() = 0;
-    virtual OGRGeometry *clone() const = 0;
+    virtual OGRGeometry *clone() const CPL_WARN_UNUSED_RESULT = 0;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const = 0;
     virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const = 0;
 
@@ -173,11 +173,11 @@ class CPL_DLL OGRGeometry
 
     static GEOSContextHandle_t createGEOSContext();
     static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);
-    virtual GEOSGeom exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const;
+    virtual GEOSGeom exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const CPL_WARN_UNUSED_RESULT;
     virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
-    virtual OGRGeometry* getCurveGeometry(const char* const* papszOptions = NULL) const;
+    virtual OGRGeometry* getCurveGeometry(const char* const* papszOptions = NULL) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry* getLinearGeometry(double dfMaxAngleStepSizeDegrees = 0,
-                                             const char* const* papszOptions = NULL) const;
+                                             const char* const* papszOptions = NULL) const CPL_WARN_UNUSED_RESULT;
 
     virtual void closeRings();
 
@@ -202,27 +202,27 @@ class CPL_DLL OGRGeometry
     virtual OGRBoolean  Overlaps( const OGRGeometry * ) const;
 //    virtual OGRBoolean  Relate( const OGRGeometry *, const char * ) const;
 
-    virtual OGRGeometry *Boundary() const;
-    virtual double  Distance( const OGRGeometry * ) const;
-    virtual OGRGeometry *ConvexHull() const;
-    virtual OGRGeometry *Buffer( double dfDist, int nQuadSegs = 30 ) const;
-    virtual OGRGeometry *Intersection( const OGRGeometry *) const;
-    virtual OGRGeometry *Union( const OGRGeometry * ) const;
-    virtual OGRGeometry *UnionCascaded() const;
-    virtual OGRGeometry *Difference( const OGRGeometry * ) const;
-    virtual OGRGeometry *SymDifference( const OGRGeometry * ) const;
+    virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
+    virtual double  Distance( const OGRGeometry * ) const ;
+    virtual OGRGeometry *ConvexHull() const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *Buffer( double dfDist, int nQuadSegs = 30 ) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *Intersection( const OGRGeometry *) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *Union( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *UnionCascaded() const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *Difference( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *SymDifference( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT;
     virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
-    virtual OGRGeometry *Simplify(double dTolerance) const;
-    OGRGeometry *SimplifyPreserveTopology(double dTolerance) const;
-    virtual OGRGeometry *DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const;
+    virtual OGRGeometry *Simplify(double dTolerance) const CPL_WARN_UNUSED_RESULT;
+    OGRGeometry *SimplifyPreserveTopology(double dTolerance) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const CPL_WARN_UNUSED_RESULT;
 
-    virtual OGRGeometry *Polygonize() const;
+    virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT;
 
     // backward compatibility to non-standard method names. 
     OGRBoolean  Intersect( OGRGeometry * ) const CPL_WARN_DEPRECATED("Non standard method. Use Intersects() instead");
     OGRBoolean  Equal( OGRGeometry * ) const CPL_WARN_DEPRECATED("Non standard method. Use Equals() instead");
-    virtual OGRGeometry *SymmetricDifference( const OGRGeometry * ) const CPL_WARN_DEPRECATED("Non standard method. Use SymDifference() instead");
-    virtual OGRGeometry *getBoundary() const CPL_WARN_DEPRECATED("Non standard method. Use Boundary() instead");
+    OGRGeometry *SymmetricDifference( const OGRGeometry * ) const CPL_WARN_DEPRECATED("Non standard method. Use SymDifference() instead");
+    OGRGeometry *getBoundary() const CPL_WARN_DEPRECATED("Non standard method. Use Boundary() instead");
     
     // Special HACK for DB2 7.2 support
     static int bGenerate_DB2_V72_BYTE_ORDER;

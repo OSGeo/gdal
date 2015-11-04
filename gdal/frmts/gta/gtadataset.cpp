@@ -88,7 +88,7 @@
 
 #include <limits.h>
 #include "cpl_port.h" // for snprintf for MSVC
-#include <gta/gta.hpp>
+#include "gta_headers.h"
 #include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
@@ -144,7 +144,8 @@ class GTAIO : public gta::custom_io
         : fp( NULL )
     {
     }
-    ~GTAIO( )
+
+    virtual ~GTAIO( )
     {
         close( );
     }
@@ -376,7 +377,7 @@ GTARasterBand::GTARasterBand( GTADataset *poDS, int nBand )
     for( uintmax_t i = 0; i < poDS->oHeader.component_taglist( nBand-1 ).tags(); i++)
     {
         const char *pszTagName = poDS->oHeader.component_taglist( nBand-1 ).name( i );
-        if( strncmp( pszTagName, "GDAL/META/", 10 ) == 0 )
+        if( STARTS_WITH(pszTagName, "GDAL/META/") )
         {
             const char *pDomainEnd = strchr( pszTagName + 10, '/' );
             if( pDomainEnd && pDomainEnd - (pszTagName + 10) > 0 )
@@ -1002,7 +1003,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 5 )
         return NULL;
 
-    if( !EQUALN((char *)poOpenInfo->pabyHeader,"GTA",3) )
+    if( !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "GTA") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1181,7 +1182,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
     for( uintmax_t i = 0; i < poDS->oHeader.global_taglist().tags(); i++)
     {
         const char *pszTagName = poDS->oHeader.global_taglist().name( i );
-        if( strncmp( pszTagName, "GDAL/META/", 10 ) == 0 )
+        if( STARTS_WITH(pszTagName, "GDAL/META/") )
         {
             const char *pDomainEnd = strchr( pszTagName + 10, '/' );
             if( pDomainEnd && pDomainEnd - (pszTagName + 10) > 0 )

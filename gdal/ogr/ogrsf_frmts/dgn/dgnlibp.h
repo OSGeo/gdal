@@ -33,10 +33,8 @@
 
 #include "dgnlib.h"
 
-
-#ifndef PI
-#define PI  3.1415926535897932384626433832795
-#endif
+#define _USE_MATH_DEFINES  // For MSVC to get M_PI.
+#include <cmath>
 
 typedef struct {
     FILE        *fp;

@@ -32,19 +32,21 @@
 #include <cstdio>
 
 // number of histogram bins (36 a 10dg)
-#define NBIN  36  
+static const int NBIN = 36;
 // number of empty bins to guess the flip-point
-#define NEMPY 7 
+static const int NEMPY = 7;
 
-// WGS84 bounds 
-#define XMIN  (-180.0)
-#define XMAX  (+180.0)
-#define XDIF  (+360.0)
-#define XCNT     (0.0)
+// WGS84 bounds
+static const double XMIN = -180.0;
+// static const double XMAX = 180.0;
+static const double XDIF = 360.0;
+static const double XCNT = 0.0;
 
 // max. allowed longitude extent of the GCP set 
-#define XLIM  (XDIF*(1.0-NEMPY*(1.0/NBIN)))
+static const double XLIM = XDIF*(1.0-NEMPY*(1.0/NBIN));
 
+/* used by envisatdataset.cpp */
+extern void EnvisatUnwrapGCPs( int cnt, GDAL_GCP *gcp );
 
 // The algoright is based on assumption that the unwrapped 
 // GCPs ('flipped' values) have smaller extent along the longitude.
@@ -58,7 +60,7 @@ static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp )
 { 
     // the histogram array - it is expected to fit the stack
     int hist[NBIN] ; 
-    
+
     // reset the histogram counters
     for( int i = 0 ; i < NBIN ; i++ ) hist[i] = 0 ; 
 
@@ -110,17 +112,17 @@ static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp )
 
     return (tmp-floor(tmp))*XDIF + XMIN ;
 }
-    
+
 
 void EnvisatUnwrapGCPs( int cnt, GDAL_GCP *gcp ) 
 { 
     if ( cnt < 1 ) return ; 
-    
+
     // suggest right flip-point 
     double x_flip = _suggest_flip_point( cnt, gcp ); 
 
     // find the limits allong the longitude (x) for flipped and unflipped values
-    
+
     int cnt_flip = 0 ; // flipped values' counter
     double x0_dif , x1_dif ; 
 
@@ -158,7 +160,7 @@ void EnvisatUnwrapGCPs( int cnt, GDAL_GCP *gcp )
 
     // check whether we need to split the segment 
     // i.e., segment is too long decide the best option 
-    
+
     if (( x0_dif > XLIM ) && ( x1_dif > XLIM )) 
     { 
         // this should not happen 

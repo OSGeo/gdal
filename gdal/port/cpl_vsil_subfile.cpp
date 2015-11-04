@@ -33,10 +33,6 @@
 #include "cpl_multiproc.h"
 #include <map>
 
-#if defined(WIN32CE)
-#  include <wce_errno.h>
-#endif
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -256,24 +252,22 @@ VSISubFileFilesystemHandler::~VSISubFileFilesystemHandler()
 /*      offset (1000), a size (2000) and a path (data/abc.tif).         */
 /************************************************************************/
 
-int 
-VSISubFileFilesystemHandler::DecomposePath( const char *pszPath, 
-                                            CPLString &osFilename, 
+int
+VSISubFileFilesystemHandler::DecomposePath( const char *pszPath,
+                                            CPLString &osFilename,
                                             vsi_l_offset &nSubFileOffset,
                                             vsi_l_offset &nSubFileSize )
 
 {
-    int i;
+    if( !STARTS_WITH(pszPath, "/vsisubfile/") )
+        return FALSE;
 
     osFilename = "";
     nSubFileOffset = 0;
     nSubFileSize = 0;
 
-    if( strncmp(pszPath,"/vsisubfile/",12) != 0 )
-        return FALSE;
-
     nSubFileOffset = CPLScanUIntBig(pszPath+12, strlen(pszPath + 12));
-    for( i = 12; pszPath[i] != '\0'; i++ )
+    for( int i = 12; pszPath[i] != '\0'; i++ )
     {
         if( pszPath[i] == '_' && nSubFileSize == 0 )
         {

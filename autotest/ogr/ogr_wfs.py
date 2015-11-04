@@ -5359,7 +5359,7 @@ gdaltest_live_list = [
     #ogr_wfs_geoserver_json, #FIXME: reenable after adapting test
     #ogr_wfs_geoserver_shapezip, #FIXME: reenable after adapting test
     #ogr_wfs_geoserver_paging, #FIXME: reenable after adapting test
-    ogr_wfs_deegree,
+    #ogr_wfs_deegree,
     #ogr_wfs_test_ogrsf,
     ogr_wfs_fake_wfs_server,
     #ogr_wfs_geoserver_wfst, #FIXME: reenable after adapting test
@@ -5369,9 +5369,9 @@ gdaltest_live_list = [
     ogr_wfs_xmldescriptionfile,
     #ogr_wfs_xmldescriptionfile_to_be_updated, #FIXME: reenable after adapting test
     ogr_wfs_getcapabilitiesfile,
-    ogr_wfs_deegree_gml321,
-    ogr_wfs_deegree_wfs200,
-    ogr_wfs_deegree_sortby,
+    #ogr_wfs_deegree_gml321,
+    #ogr_wfs_deegree_wfs200,
+    #ogr_wfs_deegree_sortby,
     #ogr_wfs_esri,
     ogr_wfs_esri_2,
     ogr_wfs_cubewerx,
@@ -5380,7 +5380,7 @@ gdaltest_live_list = [
     ogr_wfs_intergraph,
     ogr_wfs_mapinfo,
     ogr_wfs_turn_streaming_off,
-    ogr_wfs_deegree,
+    #ogr_wfs_deegree,
     #ogr_wfs_test_ogrsf,
     ]
 

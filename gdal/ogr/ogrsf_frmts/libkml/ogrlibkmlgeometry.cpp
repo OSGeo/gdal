@@ -29,7 +29,7 @@
 
 #include <ogr_geometry.h>
 #include "ogr_p.h"
-#include <kml/dom.h>
+#include "libkml_headers.h"
 
 using kmldom::KmlFactory;
 using kmldom::CoordinatesPtr;
@@ -420,7 +420,7 @@ Returns:
 
 ******************************************************************************/
 
-OGRGeometry *kml2geom_rec (
+static OGRGeometry *kml2geom_rec (
     GeometryPtr poKmlGeometry,
     OGRSpatialReference *poOgrSRS)
 

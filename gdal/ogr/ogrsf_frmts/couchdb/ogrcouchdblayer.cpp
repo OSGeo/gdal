@@ -526,7 +526,7 @@ int OGRCouchDBLayer::FetchNextRowsAnalyseDocs(json_object* poAnswerObj)
 
         json_object* poId = json_object_object_get(poDoc, "_id");
         const char* pszId = json_object_get_string(poId);
-        if (pszId != NULL && strncmp(pszId, "_design/", 8) != 0)
+        if (pszId != NULL && !STARTS_WITH(pszId, "_design/"))
         {
             aoFeatures.push_back(poDoc);
         }

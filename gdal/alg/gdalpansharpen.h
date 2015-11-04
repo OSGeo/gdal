@@ -201,7 +201,7 @@ class GDALPansharpenOperation
                                                      int nValues,
                                                      int nBandValues,
                                                      WorkDataType nMaxValue) const;
-        template<class WorkDataType, class OutDataType, int bHasBitDepth> void WeightedBrovey(
+        template<class WorkDataType, class OutDataType, int bHasBitDepth> void WeightedBrovey3(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
                                                      OutDataType* pDataBuf,

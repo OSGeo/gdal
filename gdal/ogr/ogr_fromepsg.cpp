@@ -32,15 +32,15 @@
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
 #include "cpl_csv.h"
+
 #include <vector>
 
 CPL_CVSID("$Id$");
 
-#ifndef PI
-#  define PI 3.14159265358979323846
-#endif
+extern void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
 
-void OGRPrintDouble( char * pszStrBuf, double dfValue );
+int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform );
+void OGREPSGDatumNameMassage( char ** ppszDatum );
 
 static const char *papszDatumEquiv[] =
 {
@@ -177,7 +177,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
     }
     else if( nUOMAngle == 9101 )                        /* radians */
     {
-        dfAngle = 180 * (CPLAtof(pszAngle ) / PI);
+        dfAngle = 180 * (CPLAtof(pszAngle ) / M_PI);
     }
     else if( nUOMAngle == 9103 )                        /* arc-minute */
     {
@@ -190,7 +190,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
     else /* decimal degrees ... some cases missing but seeminly never used */
     {
         CPLAssert( nUOMAngle == 9102 || nUOMAngle == 0 );
-        
+
         dfAngle = CPLAtof(pszAngle );
     }
 
@@ -201,7 +201,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
 /*                        EPSGGetUOMAngleInfo()                         */
 /************************************************************************/
 
-int EPSGGetUOMAngleInfo( int nUOMAngleCode,
+static int EPSGGetUOMAngleInfo( int nUOMAngleCode,
                          char **ppszUOMName,
                          double * pdfInDegrees )
 
@@ -237,7 +237,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
 /* -------------------------------------------------------------------- */
     double dfInDegrees = 1.0;
 
-    if( pszUOMName != NULL )
+    if( !EQUAL( pszUOMName, "" ) )
     {
         const double dfFactorB =
             CPLAtof(CSVGetField( pszFilename,
@@ -250,7 +250,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
                               "FACTOR_C" ));
 
         if( dfFactorC != 0.0 )
-            dfInDegrees = (dfFactorB / dfFactorC) * (180.0 / PI);
+            dfInDegrees = (dfFactorB / dfFactorC) * (180.0 / M_PI);
 
         // For some reason, (FactorB) is not very precise in EPSG, use
         // a more exact form for grads.
@@ -267,7 +267,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
         {
           case 9101:
             pszUOMName = "radian";
-            dfInDegrees = 180.0 / PI;
+            dfInDegrees = 180.0 / M_PI;
             break;
 
           case 9103:
@@ -292,7 +292,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
 
           case 9109:
             pszUOMName = "microradian";
-            dfInDegrees = 180.0 / (3.14159265358979 * 1000000.0);
+            dfInDegrees = 180.0 / (M_PI * 1000000.0);
             break;
 
           default:
@@ -303,7 +303,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
 /* -------------------------------------------------------------------- */
 /*      Return to caller.                                               */
 /* -------------------------------------------------------------------- */
-    if( ppszUOMName != NULL && pszUOMName != NULL )
+    if( ppszUOMName != NULL )
         *ppszUOMName = CPLStrdup( pszUOMName );
 
     if( pdfInDegrees != NULL )
@@ -1955,10 +1955,10 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
     OGR_SRSNode *poSpheroid = new OGR_SRSNode( "SPHEROID" );
     poSpheroid->AddChild( new OGR_SRSNode( pszEllipsoidName ) );
 
-    OGRPrintDouble( szValue, dfSemiMajor );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfSemiMajor );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
-    OGRPrintDouble( szValue, dfInvFlattening );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfInvFlattening );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
     CPLFree( pszEllipsoidName );
@@ -1980,8 +1980,8 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
     if( dfPMOffset == 0.0 )
         strcpy( szValue, "0" );
     else
-        OGRPrintDouble( szValue, dfPMOffset );
-    
+        OGRsnPrintDouble( szValue, sizeof(szValue), dfPMOffset );
+
     OGR_SRSNode *poPM = new OGR_SRSNode( "PRIMEM" );
     poPM->AddChild( new OGR_SRSNode( pszPMName ) );
     poPM->AddChild( new OGR_SRSNode( szValue ) );
@@ -2362,12 +2362,12 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
     if( nPCSCode < 1 )
     {
         char    szName[128];
-        static int bFailureReported = FALSE;
+        static bool bFailureReported = FALSE;
 
         if( !bFailureReported )
         {
-            bFailureReported = TRUE;
-            CPLError( CE_Warning, CPLE_OpenFailed, 
+            bFailureReported = true;
+            CPLError( CE_Warning, CPLE_OpenFailed,
                       "Unable to find state plane zone in stateplane.csv,\n"
                       "likely because the GDAL data files cannot be found.  Using\n"
                       "incomplete definition of state plane zone.\n" );

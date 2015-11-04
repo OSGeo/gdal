@@ -1285,7 +1285,11 @@ void OGRSimpleCurve::Value( double dfDistance, OGRPoint * poPoint ) const
 #endif
 
 
-double OGRSimpleCurve::Project(const OGRPoint *poPoint) const
+double OGRSimpleCurve::Project(const OGRPoint *
+#ifdef HAVE_GEOS_PROJECT
+                                poPoint
+#endif
+                               ) const
 
 {
     double dfResult = -1;
@@ -1681,20 +1685,20 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
                     CPLGetConfigOption("OGR_ENABLE_PARTIAL_REPROJECTION", NULL);
             if (pszEnablePartialReprojection == NULL)
             {
-                static int bHasWarned = FALSE;
+                static bool bHasWarned = false;
                 if (!bHasWarned)
                 {
                     /* Check that there is at least one valid reprojected point */
                     /* and issue an error giving an hint to use OGR_ENABLE_PARTIAL_REPROJECTION */
-                    int bHasOneValidPoint = (j != 0);
+                    bool bHasOneValidPoint = (j != 0);
                     for( ; i < nPointCount && !bHasOneValidPoint; i++ )
                     {
                         if (pabSuccess[i])
-                            bHasOneValidPoint = TRUE;
+                            bHasOneValidPoint = true;
                     }
                     if (bHasOneValidPoint)
                     {
-                        bHasWarned = TRUE;
+                        bHasWarned = true;
                         CPLError(CE_Failure, CPLE_AppDefined,
                                 "Full reprojection failed, but partial is possible if you define "
                                 "OGR_ENABLE_PARTIAL_REPROJECTION configuration option to TRUE");

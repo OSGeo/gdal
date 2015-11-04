@@ -40,10 +40,12 @@ CPL_CVSID("$Id$");
 /*                          OGRGPXDataSource()                          */
 /************************************************************************/
 
-OGRGPXDataSource::OGRGPXDataSource() :
-    validity(GPX_VALIDITY_UNKNOWN), nElementsRead(0)
+OGRGPXDataSource::OGRGPXDataSource()
 #ifdef HAVE_EXPAT
-    ,oCurrentParser(NULL),
+  :
+    validity(GPX_VALIDITY_UNKNOWN),
+    nElementsRead(0),
+    oCurrentParser(NULL),
     nDataHandlerCounter(0)
 #endif
 {
@@ -62,7 +64,9 @@ OGRGPXDataSource::OGRGPXDataSource() :
     dfMaxLon = -180;
 
     pszName = NULL;
+#ifdef HAVE_EXPAT
     pszVersion = NULL;
+#endif
 
     bIsBackSeekable = TRUE;
     pszEOL = "\n";
@@ -113,7 +117,9 @@ OGRGPXDataSource::~OGRGPXDataSource()
     CPLFree( papoLayers );
     CPLFree( pszExtensionsNS );
     CPLFree( pszName );
+#ifdef HAVE_EXPAT
     CPLFree( pszVersion );
+#endif
 }
 
 /************************************************************************/

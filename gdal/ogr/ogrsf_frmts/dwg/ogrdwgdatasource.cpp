@@ -301,7 +301,7 @@ void OGRDWGDataSource::ReadHeaderSection()
     // not strictly accurate but works even without iconv.
     if( osCodepage == "ANSI_1252" )
         osEncoding = CPL_ENC_ISO8859_1; 
-    else if( EQUALN(osCodepage,"ANSI_",5) )
+    else if( STARTS_WITH_CI(osCodepage, "ANSI_") )
     {
         osEncoding = "CP";
         osEncoding += osCodepage + 5;

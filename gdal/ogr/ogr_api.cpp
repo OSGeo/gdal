@@ -33,7 +33,7 @@
 #include "ogr_api.h"
 #include "cpl_error.h"
 
-static int bNonLinearGeometriesEnabled = TRUE;
+static bool bNonLinearGeometriesEnabled = true;
 
 /************************************************************************/
 /*                        OGR_G_GetPointCount()                         */
@@ -1192,7 +1192,7 @@ OGRGeometryH OGR_G_Value( OGRGeometryH hGeom, double dfDistance )
 
 void OGRSetNonLinearGeometriesEnabledFlag(int bFlag)
 {
-    bNonLinearGeometriesEnabled = bFlag;
+    bNonLinearGeometriesEnabled = (bFlag != FALSE);
 }
 
 /************************************************************************/

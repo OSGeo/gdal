@@ -50,6 +50,7 @@
   #include <sys/socket.h>
   #include <sys/un.h>
   #include <netinet/in.h>
+  #include <signal.h>
   #include <unistd.h>
   #ifdef HAVE_GETADDRINFO
     #include <netdb.h>
@@ -87,7 +88,7 @@ static int bVerbose = FALSE;
 /*                               Usage()                                */
 /************************************************************************/
 
-void Usage(const char* pszErrorMsg)
+static void Usage(const char* pszErrorMsg)
 
 {
 #ifdef WIN32
@@ -124,7 +125,7 @@ void Usage(const char* pszErrorMsg)
 /*                CreateSocketAndBindAndListen()                        */
 /************************************************************************/
 
-int CreateSocketAndBindAndListen(const char* pszService,
+static CPL_SOCKET CreateSocketAndBindAndListen(const char* pszService,
                                  int *pnFamily,
                                  int *pnSockType,
                                  int *pnProtocol)
@@ -223,10 +224,11 @@ int CreateSocketAndBindAndListen(const char* pszService,
 /*                             RunServer()                              */
 /************************************************************************/
 
+static
 int RunServer(const char* pszApplication,
               const char* pszService,
-              const char* unused_pszUnixSocketFilename,
-              int bFork)
+              CPL_UNUSED const char* unused_pszUnixSocketFilename,
+              CPL_UNUSED int bFork)
 {
     int nRet;
     WSADATA wsaData;
@@ -255,14 +257,14 @@ int RunServer(const char* pszApplication,
         CPLSpawnedProcess* psProcess;
         CPL_FILE_HANDLE fin, fout;
         CPL_PID nPid;
-        SOCKET nConnSocket;
+        CPL_SOCKET nConnSocket;
         char szReady[5];
         int bOK = TRUE;
         const char* apszArgs[] = { NULL, "-newconnection", NULL };
 
         apszArgs[0] = pszApplication;
         nConnSocket = accept(nListenSocket, &sockAddr, &nLen);
-        if( nConnSocket == SOCKET_ERROR )
+        if( nConnSocket == (CPL_SOCKET)SOCKET_ERROR )
         {
             fprintf(stderr, "accept() function failed with error: %d\n", WSAGetLastError());
             closesocket(nListenSocket);
@@ -336,6 +338,7 @@ int RunServer(const char* pszApplication,
 /*                          RunNewConnection()                          */
 /************************************************************************/
 
+static
 int RunNewConnection()
 {
     int nRet;
@@ -412,7 +415,7 @@ typedef struct
 
 #define MAX_CLIENTS 100
 
-int RunServer(CPL_UNUSED const char* pszApplication,
+static int RunServer(CPL_UNUSED const char* pszApplication,
               const char* pszService,
               const char* pszUnixSocketFilename,
               int bFork)
@@ -421,7 +424,7 @@ int RunServer(CPL_UNUSED const char* pszApplication,
     int i;
     int nClients = 0;
     ClientInfo asClientInfos[MAX_CLIENTS];
-    
+
     if( !bFork )
         signal(SIGPIPE, SIG_IGN);
 

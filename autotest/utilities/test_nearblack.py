@@ -233,6 +233,44 @@ def test_nearblack_7():
     return 'success'
 
 ###############################################################################
+# Test in-place update
+
+def test_nearblack_8():
+    if test_cli_utilities.get_nearblack_path() is None:
+        return 'skip'
+
+    src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
+    gdal.GetDriverByName('GTiff').CreateCopy('tmp/nearblack8.tif', src_ds)
+    src_ds = None
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' tmp/nearblack8.tif -nb 0')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
+
+    ds = gdal.Open('tmp/nearblack8.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 21106:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum band 1')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 20736:
+        print(ds.GetRasterBand(2).Checksum())
+        gdaltest.post_reason('Bad checksum band 2')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 21309:
+        print(ds.GetRasterBand(3).Checksum())
+        gdaltest.post_reason('Bad checksum band 3')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_nearblack_cleanup():
@@ -276,6 +314,10 @@ def test_nearblack_cleanup():
         os.remove('tmp/nearblack7.tif')
     except:
         pass
+    try:
+        os.remove('tmp/nearblack8.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -286,6 +328,7 @@ gdaltest_list = [
     test_nearblack_5,
     test_nearblack_6,
     test_nearblack_7,
+    test_nearblack_8,
     test_nearblack_cleanup
     ]
 

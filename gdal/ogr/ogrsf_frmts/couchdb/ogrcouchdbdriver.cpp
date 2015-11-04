@@ -61,12 +61,12 @@ const char *OGRCouchDBDriver::GetName()
 OGRDataSource *OGRCouchDBDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    if (strncmp(pszFilename, "http://", 7) == 0 ||
-        strncmp(pszFilename, "https://", 8) == 0)
+    if (STARTS_WITH(pszFilename, "http://") ||
+        STARTS_WITH(pszFilename, "https://"))
     {
         /* ok */
     }
-    else if (!EQUALN(pszFilename, "CouchDB:", 8))
+    else if (!STARTS_WITH_CI(pszFilename, "CouchDB:"))
         return NULL;
 
     OGRCouchDBDataSource   *poDS = new OGRCouchDBDataSource();

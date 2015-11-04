@@ -452,7 +452,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
         if (strlen(pszLine) != 85)
             continue;
 
-        if (bIsDPOrSTARS && strncmp(pszLine, "===", 3) == 0 && pszLine[3] != '=')
+        if (bIsDPOrSTARS && STARTS_WITH(pszLine, "===") && pszLine[3] != '=')
         {
             osAPTName = pszLine + 3;
             const char* pszComma = strchr(pszLine + 3, ',');
@@ -473,9 +473,9 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
             }
         }
 
-        if (strncmp(pszLine + 2, "FACILITY OR", strlen("FACILITY OR")) == 0)
+        if (STARTS_WITH(pszLine + 2, "FACILITY OR"))
             continue;
-        if (strncmp(pszLine + 2, "INTERSECTION", strlen("INTERSECTION")) == 0)
+        if (STARTS_WITH(pszLine + 2, "INTERSECTION"))
             continue;
 
         if (strcmp(pszLine, "================================DELETIONS LIST=================================198326") == 0)
@@ -491,7 +491,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
                 continue;
             }
 
-            if (strncmp(pszLine + 29, "                    ", 20) == 0 ||
+            if (STARTS_WITH(pszLine + 29, "                    ") ||
                 strchr(pszLine, '(') != NULL)
             {
                 CPLString osName = pszLine + 2;
@@ -523,7 +523,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
             continue;
         }
 
-        if (strncmp(pszLine, "                                                                                    0", 85) == 0)
+        if (STARTS_WITH(pszLine, "                                                                                    0"))
         {
             if (poLS->getNumPoints() == 0)
                 continue;
@@ -644,7 +644,7 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
         if (strlen(pszLine) != 85)
             continue;
 
-        if (strncmp(pszLine, "DELETIONS", strlen("DELETIONS")) == 0)
+        if (STARTS_WITH(pszLine, "DELETIONS"))
         {
             bEOF = TRUE;
             return NULL;
@@ -659,7 +659,7 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
 
         if (pszLine[1] != ' ')
             continue;
-        if (strncmp(pszLine, "                                                                               ", 79) == 0)
+        if (STARTS_WITH(pszLine, "                                                                               "))
             continue;
         if (strstr(pszLine, "NAVIGATIONAL AIDS") != NULL)
             continue;

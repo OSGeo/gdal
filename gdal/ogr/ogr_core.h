@@ -443,7 +443,7 @@ typedef enum
 #endif
 
 #ifdef HACK_FOR_IBM_DB2_V72
-#  define DB2_V72_FIX_BYTE_ORDER(x) ((((x) & 0x31) == (x)) ? (OGRwkbByteOrder) ((x) & 0x1) : (x))
+#  define DB2_V72_FIX_BYTE_ORDER(x) ((((x) & 0x31) == (x)) ? ((x) & 0x1) : (x))
 #  define DB2_V72_UNFIX_BYTE_ORDER(x) ((unsigned char) (OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER ? ((x) | 0x30) : (x)))
 #else
 #  define DB2_V72_FIX_BYTE_ORDER(x) (x)
@@ -514,7 +514,7 @@ typedef enum
  * Used by OGR_F_Validate().
  * @since GDAL 2.0
  */
-#define OGR_F_VAL_ALL            0xFFFFFFFF
+#define OGR_F_VAL_ALL            0x7FFFFFFF
 
 /************************************************************************/
 /*                  ogr_feature.h related definitions.                  */

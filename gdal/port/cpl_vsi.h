@@ -57,19 +57,12 @@
 /* -------------------------------------------------------------------- */
 
 /* Unix */
-#if !defined(_WIN32) && !defined(_WIN32_WCE)
+#if !defined(_WIN32)
 #  include <unistd.h>
 #endif
 
 /* Windows */
-#if !defined(macos_pre10) && !defined(_WIN32_WCE)
-#  include <sys/stat.h>
-#endif
-
-/* Windows CE */
-#if defined(_WIN32_WCE)
-#  include <wce_stat.h>
-#endif
+#include <sys/stat.h>
 
 CPL_C_START
 
@@ -102,7 +95,7 @@ int CPL_DLL     VSIFEof( FILE * );
 /* ==================================================================== */
 
 typedef struct stat VSIStatBuf;
-int CPL_DLL VSIStat( const char *, VSIStatBuf * );
+int CPL_DLL VSIStat( const char *, VSIStatBuf * ) CPL_WARN_UNUSED_RESULT;
 
 #ifdef _WIN32
 #  define VSI_ISLNK(x)  ( 0 )            /* N/A on Windows */
@@ -124,6 +117,7 @@ int CPL_DLL VSIStat( const char *, VSIStatBuf * );
 /*      otherwise redefine to use the regular api.                      */
 /* ==================================================================== */
 typedef GUIntBig vsi_l_offset;
+#define VSI_L_OFFSET_MAX GUINTBIG_MAX
 
 /* Make VSIL_STRICT_ENFORCE active in DEBUG builds */
 #ifdef DEBUG
@@ -162,13 +156,13 @@ typedef struct VSI_STAT64_T VSIStatBufL;
 #define VSIStatBufL    VSIStatBuf
 #endif
 
-int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
+int CPL_DLL     VSIStatL( const char *, VSIStatBufL * ) CPL_WARN_UNUSED_RESULT;
 
 #define VSI_STAT_EXISTS_FLAG    0x1
 #define VSI_STAT_NATURE_FLAG    0x2
 #define VSI_STAT_SIZE_FLAG      0x4
 
-int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, int nFlags );
+int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, int nFlags ) CPL_WARN_UNUSED_RESULT;
 
 int CPL_DLL     VSIIsCaseSensitiveFS( const char * pszFilename );
 
@@ -226,6 +220,8 @@ void CPL_DLL VSIInstallLargeFileHandler(void);
 void CPL_DLL VSIInstallSubFileHandler(void);
 void VSIInstallCurlFileHandler(void);
 void VSIInstallCurlStreamingFileHandler(void);
+void VSIInstallS3FileHandler(void);
+void VSIInstallS3StreamingFileHandler(void);
 void VSIInstallGZipFileHandler(void); /* No reason to export that */
 void VSIInstallZipFileHandler(void); /* No reason to export that */
 void VSIInstallStdinHandler(void); /* No reason to export that */
@@ -239,7 +235,7 @@ void CPL_DLL VSICleanupFileManager(void);
 VSILFILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
                                     GByte *pabyData, 
                                     vsi_l_offset nDataLength,
-                                    int bTakeOwnership );
+                                    int bTakeOwnership ) CPL_WARN_UNUSED_RESULT;
 GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
                                     vsi_l_offset *pnDataLength, 
                                     int bUnlinkAndSeize );

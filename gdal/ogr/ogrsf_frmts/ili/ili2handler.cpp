@@ -44,10 +44,13 @@ static const char* ILI2_DATASECTION = "DATASECTION";
 
 //
 // ILI2Handler
-// 
-ILI2Handler::ILI2Handler( ILI2Reader *poReader ) {
+//
+ILI2Handler::ILI2Handler( ILI2Reader *poReader ) :
+    level(0),
+    m_nEntityCounter(0)
+{
   m_poReader = poReader;
-  
+
   XMLCh *tmpCh = XMLString::transcode("CORE");
   DOMImplementation *impl = DOMImplementationRegistry::getDOMImplementation(tmpCh);
   XMLString::release(&tmpCh);
@@ -59,24 +62,21 @@ ILI2Handler::ILI2Handler( ILI2Reader *poReader ) {
 
   // the first element is root
   dom_elem = dom_doc->getDocumentElement();
-
 }
 
 ILI2Handler::~ILI2Handler() {
-  
   // remove all elements
   DOMNode *tmpNode = dom_doc->getFirstChild();
   while (tmpNode != NULL) {
     tmpNode = dom_doc->removeChild(tmpNode);
     tmpNode = dom_doc->getFirstChild();
   }
-  
+
   // release the dom tree
   dom_doc->release();
-
 }
 
-    
+
 void ILI2Handler::startDocument() {
   // the level counter starts with DATASECTION
   level = -1;

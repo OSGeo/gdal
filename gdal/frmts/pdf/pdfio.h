@@ -32,12 +32,6 @@
 
 #include "cpl_vsi_virtual.h"
 
-
-/* begin of poppler xpdf includes */
-#include <poppler/Object.h>
-#include <poppler/Stream.h>
-/* end of poppler xpdf includes */
-
 /************************************************************************/
 /*                         VSIPDFFileStream                             */
 /************************************************************************/

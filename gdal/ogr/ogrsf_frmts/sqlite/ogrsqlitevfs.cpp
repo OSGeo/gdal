@@ -209,7 +209,17 @@ static const sqlite3_io_methods OGRSQLiteIOMethods =
     OGRSQLiteIOCheckReservedLock,
     OGRSQLiteIOFileControl,
     OGRSQLiteIOSectorSize,
-    OGRSQLiteIODeviceCharacteristics
+    OGRSQLiteIODeviceCharacteristics,
+#if SQLITE_VERSION_NUMBER >= 3007004L /* perhaps older too ? */
+    NULL,  // xShmMap
+    NULL,  // xShmLock
+    NULL,  // xShmBarrier
+    NULL,  // xShmUnmap
+#if SQLITE_VERSION_NUMBER >= 3008002L /* perhaps older too ? */
+    NULL,  // xFetch
+    NULL,  // xUnfetch
+#endif
+#endif
 };
 
 static int OGRSQLiteVFSOpen(sqlite3_vfs* pVFS,
@@ -289,7 +299,7 @@ static int OGRSQLiteVFSAccess (DEBUG_ONLY sqlite3_vfs* pVFS,
     if (flags == SQLITE_ACCESS_EXISTS)
     {
         /* Do not try to check the presence of a journal on /vsicurl ! */
-        if ( strncmp(zName, "/vsicurl/", 9) == 0 &&
+        if ( STARTS_WITH(zName, "/vsicurl/") &&
              strlen(zName) > strlen("-journal") &&
              strcmp(zName + strlen(zName) - strlen("-journal"), "-journal") == 0 )
             nRet = -1;

@@ -66,7 +66,7 @@ VSIPDFFileStream::VSIPDFFileStream(VSILFILE* f, const char* pszFilename, Object 
     nStart = 0;
     bLimited = gFalse;
     nLength = 0;
-    nCurrentPos = -1;
+    nCurrentPos = VSI_L_OFFSET_MAX;
     bHasSavedPos = FALSE;
     nSavedPos = 0;
     nPosInBuffer = nBufferLength = -1;
@@ -91,7 +91,7 @@ VSIPDFFileStream::VSIPDFFileStream(VSIPDFFileStream* poParent,
     nStart = startA;
     bLimited = limitedA;
     nLength = lengthA;
-    nCurrentPos = -1;
+    nCurrentPos = VSI_L_OFFSET_MAX;
     bHasSavedPos = FALSE;
     nSavedPos = 0;
     nPosInBuffer = nBufferLength = -1;
@@ -206,7 +206,7 @@ int VSIPDFFileStream::FillBuffer()
     // So make as if the file is not linearized to avoid those issues...
     // All this is due to our attempt of avoiding cross-heap issues with allocation
     // and liberation of VSIPDFFileStream as PDFDoc::str member.
-    if( nCurrentPos <= 0 )
+    if( nCurrentPos == 0 || nCurrentPos == VSI_L_OFFSET_MAX )
     {
         for(int i=0;i<nToRead-(int)strlen("/Linearized ");i++)
         {

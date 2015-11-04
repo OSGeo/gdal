@@ -34,16 +34,18 @@
 
 #include <set>
 
-GNMGenericNetwork::GNMGenericNetwork() : GNMNetwork()
+GNMGenericNetwork::GNMGenericNetwork() :
+    GNMNetwork(),
+    m_nVersion(0),
+    m_nGID(0),
+    m_nVirtualConnectionGID(-1),
+    m_poMetadataLayer(NULL),
+    m_poGraphLayer(NULL),
+    m_poFeaturesLayer(NULL),
+    m_poLayerDriver(NULL),
+    m_bIsRulesChanged(false),
+    m_bIsGraphLoaded(false)
 {
-    m_poMetadataLayer = NULL;
-    m_poGraphLayer = NULL;
-    m_poFeaturesLayer = NULL;
-    m_poLayerDriver = NULL;
-    m_nGID = 0;
-    m_nVirtualConnectionGID = -1;
-    m_bIsRulesChanged = false;
-    m_bIsGraphLoaded = false;
 }
 
 GNMGenericNetwork::~GNMGenericNetwork()
@@ -84,7 +86,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         if(EQUAL(pFeatureClass, pszLayerName))
         {
             anGFIDs.insert(poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID));
-            m_poFeaturesLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poFeaturesLayer->DeleteFeature(poFeature->GetFID()));
         }
         OGRFeature::DestroyFeature(poFeature);
     }
@@ -98,7 +100,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         it = anGFIDs.find(nGFID);
         if( it != anGFIDs.end())
         {
-            m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
@@ -107,7 +109,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         it = anGFIDs.find(nGFID);
         if( it != anGFIDs.end())
         {
-            m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
@@ -116,7 +118,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         it = anGFIDs.find(nGFID);
         if( it != anGFIDs.end())
         {
-            m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
@@ -408,7 +410,7 @@ CPLErr GNMGenericNetwork::DisconnectAll()
     m_poGraphLayer->ResetReading();
     while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
     {
-        m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+        CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
         OGRFeature::DestroyFeature( poFeature );
     }
 
@@ -439,7 +441,9 @@ CPLErr GNMGenericNetwork::CreateRule(const char *pszRuleStr)
 
     if(!oRule.IsAcceptAny())
     {
-        bool bSrcExist, bTgtExist, bConnExist;
+        bool bSrcExist = false;
+        bool bTgtExist = false;
+        bool bConnExist = false;
         // check layers exist
         for(size_t i = 0; i < m_apoLayers.size(); ++i)
         {
@@ -497,7 +501,7 @@ CPLErr GNMGenericNetwork::DeleteAllRules()
     m_poMetadataLayer->SetAttributeFilter(NULL);
     for(size_t i = 0; i < aFIDs.size(); ++i)
     {
-        m_poMetadataLayer->DeleteFeature(aFIDs[i]);
+        CPL_IGNORE_RET_VAL(m_poMetadataLayer->DeleteFeature(aFIDs[i]));
     }
 
     return CE_None;

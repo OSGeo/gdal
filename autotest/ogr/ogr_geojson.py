@@ -2116,6 +2116,18 @@ def ogr_geojson_43():
 
     return 'success'
 
+###############################################################################
+# Test null Feature (#6166)
+
+def ogr_geojson_44():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ogr.Open("""{"type": "FeatureCollection", "features":[ null ]}""")
+
+    return 'success'
+
 
 ###############################################################################
 
@@ -2197,6 +2209,7 @@ gdaltest_list = [
     ogr_geojson_41,
     ogr_geojson_42,
     ogr_geojson_43,
+    ogr_geojson_44,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

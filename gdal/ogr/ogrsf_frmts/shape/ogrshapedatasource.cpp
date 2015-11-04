@@ -45,7 +45,7 @@ CPL_CVSID("$Id$");
 SHPHandle OGRShapeDataSource::DS_SHPOpen( const char * pszShapeFile, const char * pszAccess )
 {
     /* Do lazy shx loading for /vsicurl/ */
-    if( strncmp(pszShapeFile, "/vsicurl/", strlen("/vsicurl/")) == 0 &&
+    if( STARTS_WITH(pszShapeFile, "/vsicurl/") &&
         strcmp(pszAccess, "r") == 0 )
         pszAccess = "rl";
     SHPHandle hSHP = SHPOpenLL( pszShapeFile, pszAccess, (SAHooks*) VSI_SHP_GetHook(b2GBLimit) );
@@ -68,16 +68,16 @@ DBFHandle OGRShapeDataSource::DS_DBFOpen( const char * pszDBFFile, const char * 
 /*                         OGRShapeDataSource()                         */
 /************************************************************************/
 
-OGRShapeDataSource::OGRShapeDataSource()
-
+OGRShapeDataSource::OGRShapeDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    bDSUpdate(FALSE),
+    bSingleFileDataSource(FALSE),
+    papszOpenOptions(NULL)
 {
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    bSingleFileDataSource = FALSE;
     poPool = new OGRLayerPool();
     b2GBLimit = CSLTestBoolean(CPLGetConfigOption("SHAPE_2GB_LIMIT", "FALSE"));
-    papszOpenOptions = NULL;
 }
 
 
@@ -860,7 +860,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
 /*      Handle command to drop a spatial index.                         */
 /* ==================================================================== */
-    if( EQUALN(pszStatement, "REPACK ", 7) )
+    if( STARTS_WITH_CI(pszStatement, "REPACK ") )
     {
         OGRShapeLayer *poLayer = (OGRShapeLayer *) 
             GetLayerByName( pszStatement + 7 );
@@ -886,7 +886,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
 /*      Handle command to shrink columns to their minimum size.         */
 /* ==================================================================== */
-    if( EQUALN(pszStatement, "RESIZE ", 7) )
+    if( STARTS_WITH_CI(pszStatement, "RESIZE ") )
     {
         OGRShapeLayer *poLayer = (OGRShapeLayer *)
             GetLayerByName( pszStatement + 7 );
@@ -905,7 +905,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
 /*      Handle command to recompute extent                             */
 /* ==================================================================== */
-    if( EQUALN(pszStatement, "RECOMPUTE EXTENT ON ", 20) )
+    if( STARTS_WITH_CI(pszStatement, "RECOMPUTE EXTENT ON ") )
     {
         OGRShapeLayer *poLayer = (OGRShapeLayer *) 
             GetLayerByName( pszStatement + 20 );
@@ -924,7 +924,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
 /*      Handle command to drop a spatial index.                         */
 /* ==================================================================== */
-    if( EQUALN(pszStatement, "DROP SPATIAL INDEX ON ", 22) )
+    if( STARTS_WITH_CI(pszStatement, "DROP SPATIAL INDEX ON ") )
     {
         OGRShapeLayer *poLayer = (OGRShapeLayer *) 
             GetLayerByName( pszStatement + 22 );
@@ -943,7 +943,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
 /*      Handle all comands except spatial index creation generically.   */
 /* ==================================================================== */
-    if( !EQUALN(pszStatement,"CREATE SPATIAL INDEX ON ",24) )
+    if( !STARTS_WITH_CI(pszStatement, "CREATE SPATIAL INDEX ON ") )
     {
         char **papszTokens = CSLTokenizeString( pszStatement );
         if( CSLCount(papszTokens) >=4

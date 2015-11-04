@@ -45,7 +45,9 @@ OGRXPlaneReader* OGRXPlaneCreateAptFileReader( OGRXPlaneDataSource* poDataSource
 /************************************************************************/
 /*                         OGRXPlaneAptReader()                         */
 /************************************************************************/
-OGRXPlaneAptReader::OGRXPlaneAptReader()
+OGRXPlaneAptReader::OGRXPlaneAptReader() :
+    dfElevation(0.0),
+    bControlTower(FALSE)
 {
     poDataSource = NULL;
     nVersion = APT_V_UNKNOWN;
@@ -69,7 +71,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader()
     poTaxiwaySignLayer = NULL;
     poVASI_PAPI_WIGWAG_Layer = NULL;
     poTaxiLocationLayer = NULL;
-    
+
     Rewind();
 }
 
@@ -77,7 +79,9 @@ OGRXPlaneAptReader::OGRXPlaneAptReader()
 /*                         OGRXPlaneAptReader()                         */
 /************************************************************************/
 
-OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSourceIn )
+OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSourceIn ) :
+    dfElevation(0.0),
+    bControlTower(FALSE)
 {
     poDataSource = poDataSourceIn;
     nVersion = APT_V_UNKNOWN;
@@ -120,7 +124,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSourceIn )
     poDataSource->RegisterLayer(poAPTWindsockLayer);
     poDataSource->RegisterLayer(poTaxiwaySignLayer);
     poDataSource->RegisterLayer(poVASI_PAPI_WIGWAG_Layer);
-    
+
     Rewind();
 }
 
@@ -190,11 +194,11 @@ void OGRXPlaneAptReader::Rewind()
 
 int OGRXPlaneAptReader::IsRecognizedVersion( const char* pszVersionString)
 {
-    if (EQUALN(pszVersionString, "810 Version", 11))
+    if (STARTS_WITH_CI(pszVersionString, "810 Version"))
         nVersion = APT_V_810;
-    else if (EQUALN(pszVersionString, "850 Version", 11))
+    else if (STARTS_WITH_CI(pszVersionString, "850 Version"))
         nVersion = APT_V_850;
-    else if (EQUALN(pszVersionString, "1000 Version", 12))
+    else if (STARTS_WITH_CI(pszVersionString, "1000 Version"))
         nVersion = APT_V_1000;
     else
         nVersion = APT_V_UNKNOWN;

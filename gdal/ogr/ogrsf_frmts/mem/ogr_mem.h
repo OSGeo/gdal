@@ -41,7 +41,7 @@ class OGRMemDataSource;
 class OGRMemLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
-    
+
     GIntBig             nFeatureCount;
     GIntBig             nMaxFeatureCount;
     OGRFeature        **papoFeatures;
@@ -68,7 +68,7 @@ class OGRMemLayer : public OGRLayer
     OGRErr              ISetFeature( OGRFeature *poFeature );
     OGRErr              ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( GIntBig nFID );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     GIntBig             GetFeatureCount( int );
@@ -95,9 +95,9 @@ class OGRMemLayer : public OGRLayer
 
 class OGRMemDataSource : public OGRDataSource
 {
-    OGRMemLayer     **papoLayers;
+    OGRMemLayer       **papoLayers;
     int                 nLayers;
-    
+
     char                *pszName;
 
   public:
@@ -108,7 +108,7 @@ class OGRMemDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-    virtual OGRLayer    *ICreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -125,13 +125,13 @@ class OGRMemDriver : public OGRSFDriver
 {
   public:
                 ~OGRMemDriver();
-                
+
     const char *GetName();
     OGRDataSource *Open( const char *, int );
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
-    
+
     int                 TestCapability( const char * );
 };
 

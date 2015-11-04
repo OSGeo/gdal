@@ -608,8 +608,8 @@ int EpsilonDataset::Identify(GDALOpenInfo* poOpenInfo)
     }
     
     if (poOpenInfo->nHeaderBytes > EPS_MIN_GRAYSCALE_BUF &&
-        (EQUALN((const char*)poOpenInfo->pabyHeader, "type=gs", 7) ||
-         EQUALN((const char*)poOpenInfo->pabyHeader, "type=tc", 7)))
+        (STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "type=gs") ||
+         STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "type=tc")))
     {
         return TRUE;
     }
@@ -681,7 +681,7 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
 /*                  EpsilonDatasetCreateCopy ()                         */
 /************************************************************************/
 
-GDALDataset *
+static GDALDataset *
 EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
                        CPL_UNUSED int bStrict, char ** papszOptions, 
                        GDALProgressFunc pfnProgress, void * pProgressData )

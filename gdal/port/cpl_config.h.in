@@ -149,6 +149,9 @@
 /* Define to 1 if you have the `vfork' function. */
 #undef HAVE_VFORK
 
+/* Define to 1 if you have the `mmap' function. */
+#undef HAVE_MMAP
+
 /* Define to 1 if you have the `lstat' function. */
 #undef HAVE_LSTAT
 

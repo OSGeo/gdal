@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_conv.h"
 #include "cpl_minixml.h"
 #include "iso8211.h"
 #include <map>
@@ -204,7 +205,7 @@ int main(int nArgc, char* papszArgv[])
 
                     poField = poRec->AddField( poFieldDefn );
                     const char* pszValue = CPLGetXMLValue(psSubIter, "value", NULL);
-                    if( pszValue != NULL && strncmp(pszValue, "0x", 2) == 0 )
+                    if( pszValue != NULL && STARTS_WITH(pszValue, "0x") )
                     {
                         pszValue += 2;
                         int nDataLen = (int)strlen(pszValue)  / 2;
@@ -258,7 +259,7 @@ int main(int nArgc, char* papszArgv[])
                                                               pszSubfieldValue );
                                 }
                                 else if( strcmp(pszSubfieldType, "binary") == 0 &&
-                                         strncmp(pszSubfieldValue, "0x", 2) == 0 )
+                                         STARTS_WITH(pszSubfieldValue, "0x") )
                                 {
                                     pszSubfieldValue += 2;
                                     int nDataLen = (int)strlen(pszSubfieldValue) / 2;

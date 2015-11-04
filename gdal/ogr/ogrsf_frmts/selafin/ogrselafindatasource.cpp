@@ -212,14 +212,15 @@ size_t Range::getSize() const {
 /*                          OGRSelafinDataSource()                      */
 /************************************************************************/
 
-OGRSelafinDataSource::OGRSelafinDataSource() {
-    papoLayers = NULL;
-    nLayers = 0;
-    pszName = NULL;
-    poHeader=0;
-    pszLockName=0;
-    poSpatialRef=0;
-}
+OGRSelafinDataSource::OGRSelafinDataSource() :
+    pszName(NULL),
+    pszLockName(0),
+    papoLayers(NULL),
+    nLayers(0),
+    bUpdate(FALSE),
+    poHeader(0),
+    poSpatialRef(0)
+{ }
 
 /************************************************************************/
 /*                         ~OGRSelafinDataSource()                      */
@@ -274,7 +275,7 @@ int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn, int bCre
     bUpdate = bUpdateIn;
     if (bCreate && EQUAL(pszName, "/vsistdout/")) return TRUE;
     /* For writable /vsizip/, do nothing more */
-    if (bCreate && strncmp(pszName, "/vsizip/", 8) == 0) return TRUE;
+    if (bCreate && STARTS_WITH(pszName, "/vsizip/")) return TRUE;
     CPLString osFilename(pszName);
     CPLString osBaseFilename = CPLGetFilename(pszName);
     // Determine what sort of object this is.
@@ -285,7 +286,7 @@ int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn, int bCre
     if (VSI_ISREG(sStatBuf.st_mode)) return OpenTable( pszName );
 
     // Is this a single a ZIP file with only a Selafin file inside ?
-    if( strncmp(osFilename, "/vsizip/", 8) == 0 && VSI_ISREG(sStatBuf.st_mode) ) {
+    if( STARTS_WITH(osFilename, "/vsizip/") && VSI_ISREG(sStatBuf.st_mode) ) {
         char** papszFiles = VSIReadDir(osFilename);
         if (CSLCount(papszFiles) != 1) {
             CSLDestroy(papszFiles);
@@ -409,7 +410,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
     // Get layer base name
     CPLString osBaseLayerName = CPLGetBasename(pszFilename);
     CPLString osExt = CPLGetExtension(pszFilename);
-    if( strncmp(pszFilename, "/vsigzip/", 9) == 0 && EQUAL(osExt, "gz") ) {
+    if( STARTS_WITH(pszFilename, "/vsigzip/") && EQUAL(osExt, "gz") ) {
         size_t nPos=std::string::npos;
         if (strlen(pszFilename)>3) nPos=osExt.find_last_of('.',strlen(pszFilename)-4);
         if (nPos!=std::string::npos) {
@@ -455,7 +456,8 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                     return FALSE;
                 }
                 if (poHeader->panStartDate==0) snprintf(szTemp,29,"%li",i); else {
-                    struct tm sDate={0};
+                    struct tm sDate;
+                    memset(&sDate, 0, sizeof(sDate));
                     sDate.tm_year=poHeader->panStartDate[0]-1900;
                     sDate.tm_mon=poHeader->panStartDate[1]-1;
                     sDate.tm_mday=poHeader->panStartDate[2];

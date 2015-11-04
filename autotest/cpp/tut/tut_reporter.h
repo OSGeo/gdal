@@ -105,12 +105,12 @@ namespace tut
       }
     }
 
-    void group_started(const std::string& name)
+    void group_started(const std::string& /* name */)
     {
         ok_group_count = 0;
     }
 
-    void group_completed(const std::string& name)
+    void group_completed(const std::string& /* name */)
     {
         os << " " << ok_group_count << std::endl;
     }

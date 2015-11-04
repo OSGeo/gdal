@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.121 2015-05-31 23:11:43 bfriesen Exp $ */
+/* $Id: tif_dir.c,v 1.123 2015-10-28 19:10:20 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -57,13 +57,13 @@ void _TIFFsetByteArray(void** vpp, void* vp, uint32 n)
     { setByteArray(vpp, vp, n, 1); }
 void _TIFFsetString(char** cpp, char* cp)
     { setByteArray((void**) cpp, (void*) cp, strlen(cp)+1, 1); }
-void _TIFFsetNString(char** cpp, char* cp, uint32 n)
+static void _TIFFsetNString(char** cpp, char* cp, uint32 n)
     { setByteArray((void**) cpp, (void*) cp, n, 1); }
 void _TIFFsetShortArray(uint16** wpp, uint16* wp, uint32 n)
     { setByteArray((void**) wpp, (void*) wp, n, sizeof (uint16)); }
 void _TIFFsetLongArray(uint32** lpp, uint32* lp, uint32 n)
     { setByteArray((void**) lpp, (void*) lp, n, sizeof (uint32)); }
-void _TIFFsetLong8Array(uint64** lpp, uint64* lp, uint32 n)
+static void _TIFFsetLong8Array(uint64** lpp, uint64* lp, uint32 n)
     { setByteArray((void**) lpp, (void*) lp, n, sizeof (uint64)); }
 void _TIFFsetFloatArray(float** fpp, float* fp, uint32 n)
     { setByteArray((void**) fpp, (void*) fp, n, sizeof (float)); }
@@ -579,10 +579,10 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 				   handled this way ... likely best if we move it into
 				   the directory structure with an explicit field in 
 				   libtiff 4.1 and assign it a FIELD_ value */
-				uint16 v[2];
-				v[0] = (uint16)va_arg(ap, int);
-				v[1] = (uint16)va_arg(ap, int);
-				_TIFFmemcpy(tv->value, &v, 4);
+				uint16 v2[2];
+				v2[0] = (uint16)va_arg(ap, int);
+				v2[1] = (uint16)va_arg(ap, int);
+				_TIFFmemcpy(tv->value, &v2, 4);
 			}
 
 			else if (fip->field_passcount
@@ -600,66 +600,66 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 				case TIFF_BYTE:
 				case TIFF_UNDEFINED:
 					{
-						uint8 v = (uint8)va_arg(ap, int);
-						_TIFFmemcpy(val, &v, tv_size);
+						uint8 v2 = (uint8)va_arg(ap, int);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_SBYTE:
 					{
-						int8 v = (int8)va_arg(ap, int);
-						_TIFFmemcpy(val, &v, tv_size);
+						int8 v2 = (int8)va_arg(ap, int);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_SHORT:
 					{
-						uint16 v = (uint16)va_arg(ap, int);
-						_TIFFmemcpy(val, &v, tv_size);
+						uint16 v2 = (uint16)va_arg(ap, int);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_SSHORT:
 					{
-						int16 v = (int16)va_arg(ap, int);
-						_TIFFmemcpy(val, &v, tv_size);
+						int16 v2 = (int16)va_arg(ap, int);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_LONG:
 				case TIFF_IFD:
 					{
-						uint32 v = va_arg(ap, uint32);
-						_TIFFmemcpy(val, &v, tv_size);
+						uint32 v2 = va_arg(ap, uint32);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_SLONG:
 					{
-						int32 v = va_arg(ap, int32);
-						_TIFFmemcpy(val, &v, tv_size);
+						int32 v2 = va_arg(ap, int32);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_LONG8:
 				case TIFF_IFD8:
 					{
-						uint64 v = va_arg(ap, uint64);
-						_TIFFmemcpy(val, &v, tv_size);
+						uint64 v2 = va_arg(ap, uint64);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_SLONG8:
 					{
-						int64 v = va_arg(ap, int64);
-						_TIFFmemcpy(val, &v, tv_size);
+						int64 v2 = va_arg(ap, int64);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_RATIONAL:
 				case TIFF_SRATIONAL:
 				case TIFF_FLOAT:
 					{
-						float v = (float)va_arg(ap, double);
-						_TIFFmemcpy(val, &v, tv_size);
+						float v2 = (float)va_arg(ap, double);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_DOUBLE:
 					{
-						double v = va_arg(ap, double);
-						_TIFFmemcpy(val, &v, tv_size);
+						double v2 = va_arg(ap, double);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				default:
@@ -672,9 +672,9 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 	}
 	}
 	if (status) {
-		const TIFFField* fip=TIFFFieldWithTag(tif,tag);
-		if (fip)                
-			TIFFSetFieldBit(tif, fip->field_bit);
+		const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
+		if (fip2)                
+			TIFFSetFieldBit(tif, fip2->field_bit);
 		tif->tif_flags |= TIFF_DIRTYDIRECT;
 	}
 
@@ -683,31 +683,31 @@ end:
 	return (status);
 badvalue:
         {
-		const TIFFField* fip=TIFFFieldWithTag(tif,tag);
+		const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
 		TIFFErrorExt(tif->tif_clientdata, module,
 		     "%s: Bad value %u for \"%s\" tag",
 		     tif->tif_name, v,
-		     fip ? fip->field_name : "Unknown");
+		     fip2 ? fip2->field_name : "Unknown");
 		va_end(ap);
         }
 	return (0);
 badvalue32:
         {
-		const TIFFField* fip=TIFFFieldWithTag(tif,tag);
+		const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
 		TIFFErrorExt(tif->tif_clientdata, module,
 		     "%s: Bad value %u for \"%s\" tag",
 		     tif->tif_name, v32,
-		     fip ? fip->field_name : "Unknown");
+		     fip2 ? fip2->field_name : "Unknown");
 		va_end(ap);
         }
 	return (0);
 badvaluedouble:
         {
-        const TIFFField* fip=TIFFFieldWithTag(tif,tag);
+        const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
         TIFFErrorExt(tif->tif_clientdata, module,
              "%s: Bad value %f for \"%s\" tag",
              tif->tif_name, dblval,
-             fip ? fip->field_name : "Unknown");
+             fip2 ? fip2->field_name : "Unknown");
         va_end(ap);
         }
     return (0);

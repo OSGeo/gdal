@@ -83,10 +83,10 @@ public:
 
 class VSIStdoutHandle : public VSIVirtualHandle
 {
-    vsi_l_offset      nOffset;
+    vsi_l_offset      m_nOffset;
 
   public:
-                      VSIStdoutHandle() : nOffset(0) {}
+                      VSIStdoutHandle() : m_nOffset(0) {}
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -118,7 +118,7 @@ int VSIStdoutHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 vsi_l_offset VSIStdoutHandle::Tell()
 {
-    return nOffset;
+    return m_nOffset;
 }
 
 /************************************************************************/
@@ -151,11 +151,11 @@ size_t VSIStdoutHandle::Read( CPL_UNUSED void * pBuffer,
 /************************************************************************/
 
 size_t VSIStdoutHandle::Write( const void * pBuffer, size_t nSize, 
-                                  size_t nCount )
+                               size_t nCount )
 
 {
     size_t nRet = pWriteFunction(pBuffer, nSize, nCount, pWriteStream);
-    nOffset += nSize * nRet;
+    m_nOffset += nSize * nRet;
     return nRet;
 }
 
@@ -176,7 +176,7 @@ int VSIStdoutHandle::Eof()
 int VSIStdoutHandle::Close()
 
 {
-    return 0;
+    return Flush();
 }
 
 /************************************************************************/

@@ -69,13 +69,13 @@ class GTXDataset : public RawDataset
 {
   public:
     VSILFILE	*fpImage;	// image data file.
-    
+
     double      adfGeoTransform[6];
 
   public:
-    		GTXDataset();
+    		GTXDataset() : fpImage(NULL) {}
     	        ~GTXDataset();
-    
+
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual CPLErr SetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef();
@@ -92,15 +92,6 @@ class GTXDataset : public RawDataset
 /*				GTXDataset				*/
 /* ==================================================================== */
 /************************************************************************/
-
-/************************************************************************/
-/*                             GTXDataset()                             */
-/************************************************************************/
-
-GTXDataset::GTXDataset()
-{
-    fpImage = NULL;
-}
 
 /************************************************************************/
 /*                            ~GTXDataset()                             */
@@ -140,13 +131,11 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     if( !Identify( poOpenInfo ) )
         return NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GTXDataset 	*poDS;
-
-    poDS = new GTXDataset();
+    GTXDataset *poDS = new GTXDataset();
 
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -204,12 +193,13 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Guess the data type. Since October 1, 2009, it should be        */
 /*      Float32. Before it was double.                                  */
 /* -------------------------------------------------------------------- */
-    GDALDataType eDT = GDT_Float32;
     VSIFSeekL(poDS->fpImage, 0, SEEK_END);
-    vsi_l_offset nSize = VSIFTellL(poDS->fpImage);
+    const vsi_l_offset nSize = VSIFTellL(poDS->fpImage);
+
+    GDALDataType eDT = GDT_Float32;
     if( nSize == 40 + 8 * (vsi_l_offset)poDS->nRasterXSize * poDS->nRasterYSize )
         eDT = GDT_Float64;
-    int nDTSize = GDALGetDataTypeSize(eDT) / 8;
+    const int nDTSize = GDALGetDataTypeSize(eDT) / 8;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
@@ -223,7 +213,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
       poBand->SetNoDataValue( -88.8888 );
     else
       /* GDT_Float32 */
-      poBand->SetNoDataValue( (double)-88.8888f );
+      poBand->SetNoDataValue( -88.8888 );
     poDS->SetBand( 1, poBand );
 
 /* -------------------------------------------------------------------- */
@@ -267,15 +257,12 @@ CPLErr GTXDataset::SetGeoTransform( double * padfTransform )
 
     memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
 
+    const double dfXOrigin = adfGeoTransform[0] + 0.5 * adfGeoTransform[1];
+    const double dfYOrigin = adfGeoTransform[3] + (nRasterYSize-0.5) * adfGeoTransform[5];
+    const double dfWidth = adfGeoTransform[1];
+    const double dfHeight = - adfGeoTransform[5];
+
     unsigned char header[32];
-    double dfXOrigin, dfYOrigin, dfWidth, dfHeight;
-
-    dfXOrigin = adfGeoTransform[0] + 0.5 * adfGeoTransform[1];
-    dfYOrigin = adfGeoTransform[3] + (nRasterYSize-0.5) * adfGeoTransform[5];
-    dfWidth = adfGeoTransform[1];
-    dfHeight = - adfGeoTransform[5];
-    
-
     memcpy( header + 0, &dfYOrigin, 8 );
     CPL_MSBPTR64( header + 0 );
 
@@ -338,10 +325,7 @@ GDALDataset *GTXDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    VSILFILE	*fp;
-
-    fp = VSIFOpenL( pszFilename, "wb" );
-
+    VSILFILE *fp = VSIFOpenL( pszFilename, "wb" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -353,31 +337,37 @@ GDALDataset *GTXDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out the header with stub georeferencing.                  */
 /* -------------------------------------------------------------------- */
-    unsigned char header[40];
-    double dfXOrigin=0, dfYOrigin=0, dfXSize=0.01, dfYSize=0.01;
-    GInt32 nXSize32 = nXSize, nYSize32 = nYSize;
 
+    unsigned char header[40];
+    double dfYOrigin=0;
     memcpy( header + 0, &dfYOrigin, 8 );
     CPL_MSBPTR64( header + 0 );
 
+    double dfXOrigin=0;
     memcpy( header + 8, &dfXOrigin, 8 );
     CPL_MSBPTR64( header + 8 );
 
+    double dfYSize=0.01;
     memcpy( header + 16, &dfYSize, 8 );
     CPL_MSBPTR64( header + 16 );
 
+    double dfXSize=0.01;
     memcpy( header + 24, &dfXSize, 8 );
     CPL_MSBPTR64( header + 24 );
 
+    GInt32 nYSize32 = nYSize;
     memcpy( header + 32, &nYSize32, 4 );
     CPL_MSBPTR32( header + 32 );
+
+    GInt32 nXSize32 = nXSize;
     memcpy( header + 36, &nXSize32, 4 );
     CPL_MSBPTR32( header + 36 );
 
     VSIFWriteL( header, 40, 1, fp );
     VSIFCloseL( fp );
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    return reinterpret_cast<GDALDataset *>(
+        GDALOpen( pszFilename, GA_Update ) );
 }
 
 
@@ -388,28 +378,26 @@ GDALDataset *GTXDataset::Create( const char * pszFilename,
 void GDALRegister_GTX()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "GTX" ) != NULL )
+      return;
 
-    if( GDALGetDriverByName( "GTX" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "GTX" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "NOAA Vertical Datum .GTX" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gtx" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-//        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-//                                   "frmt_various.html#GTX" );
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Float32" );
+    GDALDriver	*poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = GTXDataset::Open;
-        poDriver->pfnIdentify = GTXDataset::Identify;
-        poDriver->pfnCreate = GTXDataset::Create;
+    poDriver->SetDescription( "GTX" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "NOAA Vertical Datum .GTX" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gtx" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    // poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+    //                            "frmt_various.html#GTX" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Float32" );
+
+    poDriver->pfnOpen = GTXDataset::Open;
+    poDriver->pfnIdentify = GTXDataset::Identify;
+    poDriver->pfnCreate = GTXDataset::Create;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

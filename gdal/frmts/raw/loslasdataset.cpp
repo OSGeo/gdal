@@ -77,13 +77,13 @@ class LOSLASDataset : public RawDataset
     VSILFILE	*fpImage;	// image data file.
 
     int         nRecordLength;
-    
+
     double      adfGeoTransform[6];
 
   public:
     		LOSLASDataset();
     	        ~LOSLASDataset();
-    
+
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef();
 
@@ -130,7 +130,7 @@ int LOSLASDataset::Identify( GDALOpenInfo *poOpenInfo )
         && !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"los") )
         return FALSE;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader + 56, "NADGRD", 6 ) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + 56, "NADGRD") )
         return FALSE;
 
     return TRUE;
@@ -145,13 +145,11 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     if( !Identify( poOpenInfo ) )
         return NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    LOSLASDataset 	*poDS;
-
-    poDS = new LOSLASDataset();
+    LOSLASDataset *poDS = new LOSLASDataset();
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -263,21 +261,19 @@ const char *LOSLASDataset::GetProjectionRef()
 void GDALRegister_LOSLAS()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "LOSLAS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "LOSLAS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "LOSLAS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "NADCON .los/.las Datum Grid Shift" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver	*poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = LOSLASDataset::Open;
-        poDriver->pfnIdentify = LOSLASDataset::Identify;
+    poDriver->SetDescription( "LOSLAS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "NADCON .los/.las Datum Grid Shift" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = LOSLASDataset::Open;
+    poDriver->pfnIdentify = LOSLASDataset::Identify;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

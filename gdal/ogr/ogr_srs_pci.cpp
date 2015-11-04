@@ -203,7 +203,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /* -------------------------------------------------------------------- */
 /*      Use safe defaults if projection parameters are not supplied.    */
 /* -------------------------------------------------------------------- */
-    int     bProjAllocated = FALSE;
+    bool bProjAllocated = false;
 
     if( padfPrjParams == NULL )
     {
@@ -214,7 +214,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             return OGRERR_NOT_ENOUGH_MEMORY;
         for ( i = 0; i < 17; i++ )
             padfPrjParams[i] = 0.0;
-        bProjAllocated = TRUE;
+        bProjAllocated = true;
     }
 
 /* -------------------------------------------------------------------- */
@@ -255,51 +255,51 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
-    if( EQUALN( pszProj, "LONG/LAT", 8 ) )
+    if( STARTS_WITH_CI(pszProj, "LONG/LAT") )
     {
     }
     
-    else if( EQUALN( pszProj, "METER", 5 ) 
-             || EQUALN( pszProj, "METRE", 5 ) )
+    else if( STARTS_WITH_CI(pszProj, "METER") 
+             || STARTS_WITH_CI(pszProj, "METRE") )
     {
         SetLocalCS( "METER" );
         SetLinearUnits( "METER", 1.0 );
     }
 
-    else if( EQUALN( pszProj, "FEET", 4 ) 
-             || EQUALN( pszProj, "FOOT", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "FEET") 
+             || STARTS_WITH_CI(pszProj, "FOOT") )
     {
         SetLocalCS( "FEET" );
         SetLinearUnits( "FEET", CPLAtof(SRS_UL_FOOT_CONV) );
     }
 
-    else if( EQUALN( pszProj, "ACEA", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "ACEA") )
     {
         SetACEA( padfPrjParams[4], padfPrjParams[5],
                  padfPrjParams[3], padfPrjParams[2],
                  padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "AE", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "AE") )
     {
         SetAE( padfPrjParams[3], padfPrjParams[2],
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "CASS ", 5 ) )
+    else if( STARTS_WITH_CI(pszProj, "CASS ") )
     {
         SetCS( padfPrjParams[3], padfPrjParams[2],
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "EC", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "EC") )
     {
         SetEC( padfPrjParams[4], padfPrjParams[5],
                padfPrjParams[3], padfPrjParams[2],
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "ER", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "ER") )
     {
         // PCI and GCTP don't support natural origin lat. 
         SetEquirectangular2( 0.0, padfPrjParams[2],
@@ -307,7 +307,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                              padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "GNO", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "GNO") )
     {
         SetGnomonic( padfPrjParams[3], padfPrjParams[2],
                      padfPrjParams[6], padfPrjParams[7] );
@@ -317,46 +317,46 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     // FIXME: GOOD -- our Goode's is not the interrupted version from pci
 
-    else if( EQUALN( pszProj, "LAEA", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "LAEA") )
     {
         SetLAEA( padfPrjParams[3], padfPrjParams[2],
                  padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "LCC ", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "LCC ") )
     {
         SetLCC( padfPrjParams[4], padfPrjParams[5],
                 padfPrjParams[3], padfPrjParams[2],
                 padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "LCC_1SP ", 7 ) )
+    else if( STARTS_WITH_CI(pszProj, "LCC_1SP ") )
     {
         SetLCC1SP( padfPrjParams[3], padfPrjParams[2],
                    padfPrjParams[8],
                    padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "MC", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "MC") )
     {
         SetMC( padfPrjParams[3], padfPrjParams[2],
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "MER", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "MER") )
     {
         SetMercator( padfPrjParams[3], padfPrjParams[2],
                      (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                      padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "OG", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "OG") )
     {
         SetOrthographic( padfPrjParams[3], padfPrjParams[2],
                          padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "OM ", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "OM ") )
     {
         if( padfPrjParams[10] == 0.0
             && padfPrjParams[11] == 0.0
@@ -379,40 +379,40 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         }
     }
 
-    else if( EQUALN( pszProj, "PC", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "PC") )
     {
         SetPolyconic( padfPrjParams[3], padfPrjParams[2],
                       padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "PS", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "PS") )
     {
         SetPS( padfPrjParams[3], padfPrjParams[2],
                (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "ROB", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "ROB") )
     {
         SetRobinson( padfPrjParams[2],
                      padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "SGDO", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "SGDO") )
     {
         SetOS( padfPrjParams[3], padfPrjParams[2],
                (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "SG", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "SG") )
     {
         SetStereographic( padfPrjParams[3], padfPrjParams[2],
                           (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                           padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "SIN", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "SIN") )
     {
         SetSinusoidal( padfPrjParams[2],
                        padfPrjParams[6], padfPrjParams[7] );
@@ -420,7 +420,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     // FIXME: SOM --- Space Oblique Mercator skipped
 
-    else if( EQUALN( pszProj, "SPCS", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "SPCS") )
     {
         int     iZone;
 
@@ -430,7 +430,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
     }
 
-    else if( EQUALN( pszProj, "SPIF", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "SPIF") )
     {
         int     iZone;
 
@@ -441,7 +441,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                                            CPLAtof(SRS_UL_FOOT_CONV) );
     }
 
-    else if( EQUALN( pszProj, "SPAF", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "SPAF") )
     {
         int     iZone;
 
@@ -452,14 +452,14 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                                            CPLAtof(SRS_UL_US_FOOT_CONV) );
     }
 
-    else if( EQUALN( pszProj, "TM", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "TM") )
     {
         SetTM( padfPrjParams[3], padfPrjParams[2],
                (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "UTM", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "UTM") )
     {
         int     iZone, bNorth = TRUE;
 
@@ -501,7 +501,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         SetUTM( iZone, bNorth );
     }
 
-    else if( EQUALN( pszProj, "VDG", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "VDG") )
     {
         SetVDG( padfPrjParams[2],
                 padfPrjParams[6], padfPrjParams[7] );
@@ -635,7 +635,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /* -------------------------------------------------------------------- */
 /*      Custom spheroid?                                                */
 /* -------------------------------------------------------------------- */
-            if( dfSemiMajor == 0.0 && EQUALN(szEarthModel,"E999",4) 
+            if( dfSemiMajor == 0.0 && STARTS_WITH_CI(szEarthModel, "E999") 
                 && padfPrjParams[0] != 0.0 )
             {
                 dfSemiMajor = padfPrjParams[0];
@@ -1310,7 +1310,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /* -------------------------------------------------------------------- */
     const char  *pszUnits;
         
-    if( EQUALN( szProj, "LONG/LAT", 8 ) )
+    if( STARTS_WITH_CI(szProj, "LONG/LAT") )
         pszUnits = "DEGREE";
     else
         pszUnits = "METRE";

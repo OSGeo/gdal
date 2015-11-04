@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
 
@@ -85,7 +85,7 @@ class NGSGEOIDRasterBand : public GDALPamRasterBand
 
   public:
 
-                NGSGEOIDRasterBand( NGSGEOIDDataset * );
+                explicit NGSGEOIDRasterBand( NGSGEOIDDataset * );
 
     virtual CPLErr IReadBlock( int, int, void * );
 
@@ -118,28 +118,30 @@ CPLErr NGSGEOIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                        void * pImage )
 
 {
-    NGSGEOIDDataset *poGDS = (NGSGEOIDDataset *) poDS;
+    NGSGEOIDDataset *poGDS = reinterpret_cast<NGSGEOIDDataset *>( poDS );
 
     /* First values in the file corresponds to the south-most line of the imagery */
     VSIFSeekL(poGDS->fp,
               HEADER_SIZE + (nRasterYSize - 1 - nBlockYOff) * nRasterXSize * 4,
               SEEK_SET);
 
-    if ((int)VSIFReadL(pImage, 4, nRasterXSize, poGDS->fp) != nRasterXSize)
+    if (static_cast<int>(
+            VSIFReadL(pImage, 4, nRasterXSize, poGDS->fp)) != nRasterXSize )
         return CE_Failure;
 
+#ifdef CPL_MSB
     if (poGDS->bIsLittleEndian)
     {
-#ifdef CPL_MSB
         GDALSwapWords( pImage, 4, nRasterXSize, 4 );
-#endif
     }
-    else
-    {
+#endif
+
 #ifdef CPL_LSB
+    if ( !poGDS->bIsLittleEndian )
+    {
         GDALSwapWords( pImage, 4, nRasterXSize, 4 );
-#endif
     }
+#endif
 
     return CE_None;
 }
@@ -148,16 +150,16 @@ CPLErr NGSGEOIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                          ~NGSGEOIDDataset()                          */
 /************************************************************************/
 
-NGSGEOIDDataset::NGSGEOIDDataset()
+NGSGEOIDDataset::NGSGEOIDDataset() :
+    fp(NULL),
+    bIsLittleEndian(TRUE)
 {
-    fp = NULL;
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
     adfGeoTransform[2] = 0;
     adfGeoTransform[3] = 0;
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = 1;
-    bIsLittleEndian = TRUE;
 }
 
 /************************************************************************/
@@ -182,17 +184,10 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
                                     int* pnCols,
                                     int* pbIsLittleEndian )
 {
-    double dfSLAT;
-    double dfWLON;
-    double dfDLAT;
-    double dfDLON;
-    int nNLAT;
-    int nNLON;
-    int nIKIND;
-
     /* First check IKIND marker to determine if the file */
     /* is in little or big-endian order, and if it is a valid */
     /* NGSGEOID dataset */
+    int nIKIND;
     memcpy(&nIKIND, pBuffer + HEADER_SIZE - 4, 4);
     CPL_LSBPTR32(&nIKIND);
     if (nIKIND == 1)
@@ -213,6 +208,7 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
         }
     }
 
+    double dfSLAT;
     memcpy(&dfSLAT, pBuffer, 8);
     if (*pbIsLittleEndian)
     {
@@ -223,6 +219,8 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
         CPL_MSBPTR64(&dfSLAT);
     }
     pBuffer += 8;
+
+    double dfWLON;
     memcpy(&dfWLON, pBuffer, 8);
     if (*pbIsLittleEndian)
     {
@@ -233,6 +231,8 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
         CPL_MSBPTR64(&dfWLON);
     }
     pBuffer += 8;
+
+    double dfDLAT;
     memcpy(&dfDLAT, pBuffer, 8);
     if (*pbIsLittleEndian)
     {
@@ -243,6 +243,8 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
         CPL_MSBPTR64(&dfDLAT);
     }
     pBuffer += 8;
+
+    double dfDLON;
     memcpy(&dfDLON, pBuffer, 8);
     if (*pbIsLittleEndian)
     {
@@ -253,6 +255,8 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
         CPL_MSBPTR64(&dfDLON);
     }
     pBuffer += 8;
+
+    int nNLAT;
     memcpy(&nNLAT, pBuffer, 4);
     if (*pbIsLittleEndian)
     {
@@ -263,6 +267,8 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
         CPL_MSBPTR32(&nNLAT);
     }
     pBuffer += 4;
+
+    int nNLON;
     memcpy(&nNLON, pBuffer, 4);
     if (*pbIsLittleEndian)
     {
@@ -344,9 +350,7 @@ GDALDataset *NGSGEOIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    NGSGEOIDDataset         *poDS;
-
-    poDS = new NGSGEOIDDataset();
+    NGSGEOIDDataset *poDS = new NGSGEOIDDataset();
     poDS->fp = fp;
 
     int nRows, nCols;
@@ -405,25 +409,23 @@ const char* NGSGEOIDDataset::GetProjectionRef()
 void GDALRegister_NGSGEOID()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "NGSGEOID" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "NGSGEOID" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "NGSGEOID" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "NOAA NGS Geoid Height Grids" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_ngsgeoid.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bin" );
+    poDriver->SetDescription( "NGSGEOID" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "NOAA NGS Geoid Height Grids" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_ngsgeoid.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bin" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = NGSGEOIDDataset::Open;
-        poDriver->pfnIdentify = NGSGEOIDDataset::Identify;
+    poDriver->pfnOpen = NGSGEOIDDataset::Open;
+    poDriver->pfnIdentify = NGSGEOIDDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

@@ -44,8 +44,10 @@ CPL_CVSID("$Id$");
 /*                            SDTSRawPoint()                            */
 /************************************************************************/
 
-SDTSRawPoint::SDTSRawPoint()
-
+SDTSRawPoint::SDTSRawPoint() :
+    dfX(0.0),
+    dfY(0.0),
+    dfZ(0.0)
 {
     nAttributes = 0;
 }
@@ -54,10 +56,7 @@ SDTSRawPoint::SDTSRawPoint()
 /*                           ~STDSRawPoint()                            */
 /************************************************************************/
 
-SDTSRawPoint::~SDTSRawPoint()
-
-{
-}
+SDTSRawPoint::~SDTSRawPoint() {}
 
 /************************************************************************/
 /*                                Read()                                */
@@ -77,10 +76,10 @@ int SDTSRawPoint::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
     for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
     {
         DDFField        *poField = poRecord->GetField( iField );
-        const char      *pszFieldName;
 
         CPLAssert( poField != NULL );
-        pszFieldName = poField->GetFieldDefn()->GetName();
+
+        const char *pszFieldName = poField->GetFieldDefn()->GetName();
 
         if( EQUAL(pszFieldName,"PNTS") )
             oModId.Set( poField );
@@ -108,16 +107,14 @@ int SDTSRawPoint::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 void SDTSRawPoint::Dump( FILE * fp )
 
 {
-    int         i;
-    
     fprintf( fp, "SDTSRawPoint %s: ", oModId.GetName() );
 
     if( oAreaId.nRecord != -1 )
         fprintf( fp, " AreaId=%s", oAreaId.GetName() );
 
-    for( i = 0; i < nAttributes; i++ )
+    for( int i = 0; i < nAttributes; i++ )
         fprintf( fp, "  ATID[%d]=%s", i, paoATID[i].GetName() );
-    
+
     fprintf( fp, "  Vertex = (%.2f,%.2f,%.2f)\n", dfX, dfY, dfZ );
 }
 
@@ -134,19 +131,15 @@ void SDTSRawPoint::Dump( FILE * fp )
 /*                           SDTSPointReader()                          */
 /************************************************************************/
 
-SDTSPointReader::SDTSPointReader( SDTS_IREF * poIREFIn )
-
-{
-    poIREF = poIREFIn;
-}
+SDTSPointReader::SDTSPointReader( SDTS_IREF * poIREFIn ) :
+    poIREF(poIREFIn)
+{}
 
 /************************************************************************/
 /*                             ~SDTSLineReader()                        */
 /************************************************************************/
 
-SDTSPointReader::~SDTSPointReader()
-{
-}
+SDTSPointReader::~SDTSPointReader() {}
 
 /************************************************************************/
 /*                               Close()                                */
@@ -180,32 +173,27 @@ int SDTSPointReader::Open( const char * pszFilename )
 SDTSRawPoint * SDTSPointReader::GetNextPoint()
 
 {
-    DDFRecord   *poRecord;
-    
 /* -------------------------------------------------------------------- */
 /*      Read a record.                                                  */
 /* -------------------------------------------------------------------- */
     if( oDDFModule.GetFP() == NULL )
         return NULL;
 
-    poRecord = oDDFModule.ReadRecord();
+    DDFRecord *poRecord = oDDFModule.ReadRecord();
 
     if( poRecord == NULL )
         return NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Transform into a point feature.                                 */
 /* -------------------------------------------------------------------- */
-    SDTSRawPoint        *poRawPoint = new SDTSRawPoint();
+    SDTSRawPoint *poRawPoint = new SDTSRawPoint();
 
     if( poRawPoint->Read( poIREF, poRecord ) )
     {
         return( poRawPoint );
     }
-    else
-    {
-        delete poRawPoint;
-        return NULL;
-    }
-}
 
+    delete poRawPoint;
+    return NULL;
+}

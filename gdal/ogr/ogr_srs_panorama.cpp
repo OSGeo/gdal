@@ -248,7 +248,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /* -------------------------------------------------------------------- */
 /*      Use safe defaults if projection parameters are not supplied.    */
 /* -------------------------------------------------------------------- */
-    int     bProjAllocated = FALSE;
+    int bProjAllocated = false;
 
     if( padfPrjParams == NULL )
     {
@@ -259,7 +259,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             return OGRERR_NOT_ENOUGH_MEMORY;
         for ( i = 0; i < 7; i++ )
             padfPrjParams[i] = 0.0;
-        bProjAllocated = TRUE;
+        bProjAllocated = true;
     }
 
 /* -------------------------------------------------------------------- */
@@ -835,4 +835,3 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
     return OGRERR_NONE;
 }
-

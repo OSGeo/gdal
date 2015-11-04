@@ -108,7 +108,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Verify Oracle prefix.                                           */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszNewName,"OCI:",3) )
+    if( !STARTS_WITH_CI(pszNewName,"OCI:") )
     {
         if( !bTestOpen )
         {
@@ -254,7 +254,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /************************************************************************/
 
 int OGROCIDataSource::OpenTable( const char *pszNewName, 
-                                 int nSRID, int bUpdate, int bTestOpen )
+                                 int nSRID, int bUpdate, CPL_UNUSED int bTestOpen )
 
 {
 /* -------------------------------------------------------------------- */
@@ -325,7 +325,7 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
 /*      Prepare and execute the geometry validation.                    */
 /* -------------------------------------------------------------------- */
 
-    if( !strlen(poLayer->GetGeometryColumn()) == 0 )
+    if( strlen(poLayer->GetGeometryColumn()) != 0 )
     {
         OGROCIStringBuf oValidateCmd;
         OGROCIStatement oValidateStmt( GetSession() );
@@ -683,7 +683,7 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 
@@ -697,7 +697,7 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case VALLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"VALLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "VALLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 
@@ -711,7 +711,7 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Just execute simple command.                                    */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszSQLCommand,"SELECT",6) )
+    if( !STARTS_WITH_CI(pszSQLCommand, "SELECT") )
     {
         OGROCIStatement oCommand( poSession );
 

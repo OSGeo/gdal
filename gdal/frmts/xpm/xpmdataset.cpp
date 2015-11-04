@@ -385,8 +385,13 @@ XPMCreateCopy( const char * pszFilename,
     pabyScanline = (GByte *) CPLMalloc( nXSize );
     for( iLine = 0; iLine < nYSize; iLine++ )
     {
-        poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                          (void *) pabyScanline, nXSize, 1, GDT_Byte, 0, 0, NULL );
+        if( poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                          (void *) pabyScanline, nXSize, 1, GDT_Byte, 0, 0, NULL ) != CE_None )
+        {
+            CPLFree( pabyScanline );
+            VSIFCloseL( fpPBM );
+            return NULL;
+        }
         
         VSIFPutcL( '"', fpPBM );
         for( int iPixel = 0; iPixel < nXSize; iPixel++ )
@@ -478,10 +483,10 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
     while( *pszNext != '\0' && *pszNext != '}' )
     {
         // skip whole comment. 
-        if( EQUALN(pszNext,"/*",2) )
+        if( STARTS_WITH_CI(pszNext, "/*") )
         {
             pszNext += 2;
-            while( *pszNext != '\0' && !EQUALN(pszNext,"*/",2) )
+            while( *pszNext != '\0' && !STARTS_WITH_CI(pszNext, "*/") )
                 pszNext++;
         }
 

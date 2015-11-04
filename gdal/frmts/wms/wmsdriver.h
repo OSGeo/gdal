@@ -102,14 +102,40 @@ public:
 
 class GDALWMSRasterIOHint {
 public:
-    int m_x0, m_y0;
-    int m_sx, m_sy;
+  GDALWMSRasterIOHint() :
+      m_x0(0),
+      m_y0(0),
+      m_sx(0),
+      m_sy(0),
+      m_overview(0),
+      m_valid(false)
+  {}
+    int m_x0;
+    int m_y0;
+    int m_sx;
+    int m_sy;
     int m_overview;
     bool m_valid;
 };
 
+typedef enum
+{
+    OVERVIEW_ROUNDED,
+    OVERVIEW_FLOOR
+} GDALWMSOverviewDimComputationMethod;
+
 class GDALWMSMiniDriverCapabilities {
 public:
+  GDALWMSMiniDriverCapabilities() : 
+      m_capabilities_version(0),
+      m_has_image_request(0),
+      m_has_tiled_image_requeset(0),
+      m_has_arb_overviews(0),
+      m_max_overview_count(-1),
+      m_overview_dim_computation_method(OVERVIEW_ROUNDED),
+      m_has_geotransform(true)
+  {}
+
 /* Version N capabilities require all version N and earlier variables to be set to correct values */
     int m_capabilities_version;
 
@@ -118,6 +144,8 @@ public:
     int m_has_tiled_image_requeset;     // 1 if TiledImageRequest method is implemented
     int m_has_arb_overviews;            // 1 if ImageRequest method supports arbitrary overviews / resolutions
     int m_max_overview_count;               // Maximum number of overviews supported if known, -1 otherwise
+    GDALWMSOverviewDimComputationMethod m_overview_dim_computation_method;
+    bool m_has_geotransform;
 };
 
 /* All data returned by mini-driver as pointer should remain valid for mini-driver lifetime
@@ -362,7 +390,8 @@ protected:
     GDALColorTable *m_poColorTable;
     std::vector<double> vNoData, vMin, vMax;
     GDALDataType m_data_type;
-    int m_block_size_x, m_block_size_y;
+    int m_block_size_x;
+    int m_block_size_y;
     GDALWMSRasterIOHint m_hint;
     int m_use_advise_read;
     int m_verify_advise_read;

@@ -153,7 +153,8 @@ void CPL_DLL * GDALCloneTransformer( void *pTranformerArg );
 /*      Color table related                                             */
 /************************************************************************/
 
-int
+/* definitions exists for T = GUInt32 and T = GUIntBig */
+template<class T> int
 GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed, 
                            GDALRasterBandH hGreen, 
                            GDALRasterBandH hBlue, 
@@ -163,7 +164,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
                            int (*pfnIncludePixel)(int,int,void*),
                            int nColors, 
                            int nBits,
-                           int* panHistogram,
+                           T* panHistogram,
                            GDALColorTableH hColorTable,
                            GDALProgressFunc pfnProgress, 
                            void * pProgressArg );
@@ -180,6 +181,9 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
                                void * pProgressArg );
 
 #define PRIME_FOR_65536                                 98317
+
+/* See HashHistogram structure in gdalmediancut.cpp and ColorIndex structure in gdaldither.cpp */
+/* 6 * sizeof(int) should be the size of the largest of both structures */
 #define MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536         (6 * sizeof(int) * PRIME_FOR_65536)
 
 

@@ -34,7 +34,17 @@
 
 CPL_CVSID("$Id$");
 
-using namespace PCIDSK;
+using PCIDSK::EDBFile;
+using PCIDSK::eChanType;
+using PCIDSK::ThrowPCIDSKException;
+using PCIDSK::CHN_8U;
+using PCIDSK::CHN_16S;
+using PCIDSK::CHN_16U;
+using PCIDSK::CHN_32R;
+using PCIDSK::CHN_C16S;
+using PCIDSK::CHN_UNKNOWN;
+
+EDBFile *GDAL_EDBOpen( std::string osFilename, std::string osAccess );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -48,7 +58,7 @@ class GDAL_EDBFile : public EDBFile
 
 public:
 
-    GDAL_EDBFile( GDALDataset *poDSIn ) { poDS = poDSIn; }
+    explicit GDAL_EDBFile( GDALDataset *poDSIn ) { poDS = poDSIn; }
     ~GDAL_EDBFile() { if( poDS ) Close(); }
 
     int Close() const;
@@ -75,9 +85,9 @@ EDBFile *GDAL_EDBOpen( std::string osFilename, std::string osAccess )
     GDALDataset *poDS;
 
     if( osAccess == "r" )
-        poDS = (GDALDataset *) GDALOpen( osFilename.c_str(), GA_ReadOnly );
+        poDS = reinterpret_cast<GDALDataset *>( GDALOpen( osFilename.c_str(), GA_ReadOnly )) ;
     else
-        poDS = (GDALDataset *) GDALOpen( osFilename.c_str(), GA_Update );
+        poDS = reinterpret_cast<GDALDataset *>( GDALOpen( osFilename.c_str(), GA_Update ) );
 
     if( poDS == NULL )
         ThrowPCIDSKException( "%s", CPLGetLastErrorMsg() );
@@ -95,7 +105,7 @@ int GDAL_EDBFile::Close() const
     if( poDS != NULL )
     {
         delete poDS;
-        ((GDAL_EDBFile*)this)->poDS = NULL;
+        const_cast<GDAL_EDBFile*>( this )->poDS = NULL;
     }
 
     return 1;
@@ -198,11 +208,6 @@ int GDAL_EDBFile::ReadBlock( int channel,
 
 {
     GDALRasterBand *poBand = poDS->GetRasterBand(channel);
-    int nBlockXSize, nBlockYSize;
-    int nBlockX, nBlockY;
-    int nWidthInBlocks;
-    int nPixelOffset;
-    int nLineOffset;
 
     if( GetType(channel) == CHN_UNKNOWN )
     {
@@ -210,15 +215,16 @@ int GDAL_EDBFile::ReadBlock( int channel,
                              GDALGetDataTypeName(poBand->GetRasterDataType()) );
     }
 
+    int nBlockXSize, nBlockYSize;
     poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
-    nWidthInBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
-    
-    nBlockX = block_index % nWidthInBlocks;
-    nBlockY = block_index / nWidthInBlocks;
+    const int nWidthInBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
 
-    nPixelOffset = GDALGetDataTypeSize(poBand->GetRasterDataType()) / 8;
-    nLineOffset = win_xsize * nPixelOffset;
+    const int nBlockX = block_index % nWidthInBlocks;
+    const int nBlockY = block_index / nWidthInBlocks;
+
+    const int nPixelOffset = GDALGetDataTypeSize(poBand->GetRasterDataType()) / 8;
+    const int nLineOffset = win_xsize * nPixelOffset;
 
 /* -------------------------------------------------------------------- */
 /*      Are we reading a partial block at the edge of the database?     */
@@ -230,7 +236,7 @@ int GDAL_EDBFile::ReadBlock( int channel,
     if( nBlockY * nBlockYSize + win_yoff + win_ysize > poBand->GetYSize() )
         win_ysize = poBand->GetYSize() - nBlockY * nBlockYSize - win_yoff;
 
-    CPLErr eErr = poBand->RasterIO( GF_Read, 
+    const CPLErr eErr = poBand->RasterIO( GF_Read,
                                     nBlockX * nBlockXSize + win_xoff, 
                                     nBlockY * nBlockYSize + win_yoff,
                                     win_xsize, win_ysize, 
@@ -254,10 +260,6 @@ int GDAL_EDBFile::WriteBlock( int channel, int block_index, void *buffer)
 
 {
     GDALRasterBand *poBand = poDS->GetRasterBand(channel);
-    int nBlockXSize, nBlockYSize;
-    int nBlockX, nBlockY;
-    int nWinXSize, nWinYSize;
-    int nWidthInBlocks;
 
     if( GetType(channel) == CHN_UNKNOWN )
     {
@@ -265,17 +267,20 @@ int GDAL_EDBFile::WriteBlock( int channel, int block_index, void *buffer)
                              GDALGetDataTypeName(poBand->GetRasterDataType()) );
     }
 
+    int nBlockXSize, nBlockYSize;
     poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
-    nWidthInBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
-    
-    nBlockX = block_index % nWidthInBlocks;
-    nBlockY = block_index / nWidthInBlocks;
+    const int nWidthInBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
+
+    const int nBlockX = block_index % nWidthInBlocks;
+    const int nBlockY = block_index / nWidthInBlocks;
 
 /* -------------------------------------------------------------------- */
 /*      Are we reading a partial block at the edge of the database?     */
 /*      If so, ensure we don't read off the database.                   */
 /* -------------------------------------------------------------------- */
+    int nWinXSize, nWinYSize;
+
     if( nBlockX * nBlockXSize + nBlockXSize > poBand->GetXSize() )
         nWinXSize = poBand->GetXSize() - nBlockX * nBlockXSize;
     else
@@ -286,7 +291,7 @@ int GDAL_EDBFile::WriteBlock( int channel, int block_index, void *buffer)
     else
         nWinYSize = nBlockYSize;
 
-    CPLErr eErr = poBand->RasterIO( GF_Write, 
+    const CPLErr eErr = poBand->RasterIO( GF_Write,
                                     nBlockX * nBlockXSize, 
                                     nBlockY * nBlockYSize,
                                     nWinXSize, nWinYSize,

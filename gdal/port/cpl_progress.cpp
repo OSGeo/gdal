@@ -74,7 +74,7 @@ int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage,
 
 {
     GDALScaledProgressInfo *psInfo = (GDALScaledProgressInfo *) pData;
-    
+
     /* optimization if GDALCreateScaledProgress() provided with GDALDummyProgress */
     if( psInfo == NULL )
         return TRUE;
@@ -209,16 +209,12 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
 
 int CPL_STDCALL GDALTermProgress( CPL_UNUSED double dfComplete,
                                   CPL_UNUSED const char *pszMessage,
-                                  void * pProgressArg )
+                                  void * /* pProgressArg */ )
 {
-    static int nLastTick = -1;
-    int nThisTick = (int) (dfComplete * 40.0);
-
-    (void) pProgressArg;
-
-    nThisTick = MIN(40,MAX(0,nThisTick));
+    int nThisTick = MIN(40,MAX(0, int(dfComplete * 40.0)));
 
     // Have we started a new progress run?
+    static int nLastTick = -1;
     if( nThisTick < nLastTick && nLastTick >= 39 )
         nLastTick = -1;
 
@@ -227,7 +223,7 @@ int CPL_STDCALL GDALTermProgress( CPL_UNUSED double dfComplete,
 
     while( nThisTick > nLastTick )
     {
-        nLastTick++;
+        ++nLastTick;
         if( nLastTick % 4 == 0 )
             fprintf( stdout, "%d", (nLastTick / 4) * 10 );
         else

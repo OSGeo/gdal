@@ -500,4 +500,10 @@ size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp);
 
 #endif
 
+
+%apply (char **CSL) {char **};
+%rename (ParseCommandLine) CSLParseCommandLine;
+char **CSLParseCommandLine( const char * commandLine );
+%clear char **;
+
 #endif

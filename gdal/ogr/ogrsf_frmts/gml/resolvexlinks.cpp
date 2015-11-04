@@ -576,9 +576,9 @@ int GMLReader::ResolveXlinks( const char *pszFile,
     {
         char *pszTmpName = NULL;
         int bTryWithTempFile = FALSE;
-        if( EQUALN(pszFile, "/vsitar/", strlen("/vsitar/")) ||
-            EQUALN(pszFile, "/vsigzip/", strlen("/vsigzip/")) ||
-            EQUALN(pszFile, "/vsizip/", strlen("/vsizip/")) )
+        if( STARTS_WITH_CI(pszFile, "/vsitar/") ||
+            STARTS_WITH_CI(pszFile, "/vsigzip/") ||
+            STARTS_WITH_CI(pszFile, "/vsizip/") )
         {
             bTryWithTempFile = TRUE;
         }

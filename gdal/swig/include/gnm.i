@@ -59,7 +59,7 @@ typedef void GNMNetworkShadow;
 typedef void GNMGenericNetworkShadow;
 %}
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
 %{
 #ifdef DEBUG 
 typedef struct OGRLayerHS OGRLayerShadow;
@@ -88,7 +88,7 @@ typedef void OSRSpatialReferenceShadow;
 //%include gnm_java.i
 #elif defined(SWIGPERL)
 //%include gnm_perl.i
-%include typemaps_perl.i
+%import typemaps_perl.i
 #else
 %include gdal_typemaps.i
 #endif

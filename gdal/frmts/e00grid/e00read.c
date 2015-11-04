@@ -85,7 +85,7 @@ static E00ReadPtr  _E00ReadTestOpen(E00ReadPtr psInfo)
     /* Check that the file is in E00 format.
      */
     _ReadNextSourceLine(psInfo);
-    if (!psInfo->bEOF && strncmp(psInfo->szInBuf, "EXP ", 4) == 0)
+    if (!psInfo->bEOF && STARTS_WITH(psInfo->szInBuf, "EXP "))
     {
         /* We should be in presence of a valid E00 file... 
          * Is the file compressed or not?

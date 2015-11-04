@@ -131,7 +131,6 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
 VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
 
 {
-    const char *pszParserFunc;
 
     if( psSrc == NULL || psSrc->eType != CXT_Element )
     {
@@ -140,7 +139,8 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
         return NULL;
     }
 
-    pszParserFunc = CSLFetchNameValue( papszSourceParsers, psSrc->pszValue );
+    const char *pszParserFunc
+        = CSLFetchNameValue( papszSourceParsers, psSrc->pszValue );
     if( pszParserFunc == NULL )
         return NULL;
 
@@ -161,16 +161,11 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
 static GDALDataset *
 VRTCreateCopy( const char * pszFilename,
                GDALDataset *poSrcDS,
-               int bStrict,
-               char ** papszOptions,
-               CPL_UNUSED GDALProgressFunc pfnProgress,
-               CPL_UNUSED void * pProgressData )
+               int /* bStrict */,
+               char ** /* papszOptions */,
+               GDALProgressFunc /* pfnProgress */,
+               void * /* pProgressData */ )
 {
-    VRTDataset *poVRTDS = NULL;
-
-    (void) bStrict;
-    (void) papszOptions;
-
     CPLAssert( NULL != poSrcDS );
 
 /* -------------------------------------------------------------------- */
@@ -190,11 +185,11 @@ VRTCreateCopy( const char * pszFilename,
         CPLXMLNode *psDSTree = ((VRTDataset *) poSrcDS)->SerializeToXML( pszVRTPath );
 
         char *pszXML = CPLSerializeXMLTree( psDSTree );
-        
+
         CPLDestroyXMLNode( psDSTree );
 
         CPLFree( pszVRTPath );
-        
+
     /* -------------------------------------------------------------------- */
     /*      Write to disk.                                                  */
     /* -------------------------------------------------------------------- */
@@ -202,9 +197,7 @@ VRTCreateCopy( const char * pszFilename,
 
         if( 0 != strlen( pszFilename ) )
         {
-            VSILFILE *fpVRT = NULL;
-
-            fpVRT = VSIFOpenL( pszFilename, "wb" );
+            VSILFILE *fpVRT = VSIFOpenL( pszFilename, "wb" );
             if (fpVRT == NULL)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -233,7 +226,8 @@ VRTCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the virtual dataset.                                     */
 /* -------------------------------------------------------------------- */
-    poVRTDS = (VRTDataset *) 
+    VRTDataset *poVRTDS
+        = (VRTDataset *)
         VRTDataset::Create( pszFilename, 
                             poSrcDS->GetRasterXSize(),
                             poSrcDS->GetRasterYSize(),
@@ -353,44 +347,42 @@ VRTCreateCopy( const char * pszFilename,
 void GDALRegister_VRT()
 
 {
-    VRTDriver	*poDriver;
+    if( GDALGetDriverByName( "VRT" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "VRT" ) == NULL )
-    {
-        poDriver = new VRTDriver();
-        
-        poDriver->SetDescription( "VRT" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Virtual Raster" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vrt" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "gdal_vrttut.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
-        
-        poDriver->pfnOpen = VRTDataset::Open;
-        poDriver->pfnCreateCopy = VRTCreateCopy;
-        poDriver->pfnCreate = VRTDataset::Create;
-        poDriver->pfnIdentify = VRTDataset::Identify;
-        poDriver->pfnDelete = VRTDataset::Delete;
+    VRTDriver *poDriver = new VRTDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
-"<OpenOptionList>"
-"  <Option name='ROOT_PATH' type='string' description='Root path to evaluate relative paths inside the VRT. Mainly useful for inlined VRT, or in-memory VRT, where their own directory does not make sense'/>"
-"</OpenOptionList>" );
+    poDriver->SetDescription( "VRT" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Virtual Raster" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vrt" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "gdal_vrttut.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = VRTDataset::Open;
+    poDriver->pfnCreateCopy = VRTCreateCopy;
+    poDriver->pfnCreate = VRTDataset::Create;
+    poDriver->pfnIdentify = VRTDataset::Identify;
+    poDriver->pfnDelete = VRTDataset::Delete;
 
-        poDriver->AddSourceParser( "SimpleSource", 
-                                   VRTParseCoreSources );
-        poDriver->AddSourceParser( "ComplexSource", 
-                                   VRTParseCoreSources );
-        poDriver->AddSourceParser( "AveragedSource", 
-                                   VRTParseCoreSources );
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OptionList>"
+"  <on name='ROOT_PATH' type='string' description='Root path to evaluate relative paths inside the VRT. Mainly useful for inlined VRT, or in-memory VRT, where their own directory does not make sense'/>"
+"</OptionList>" );
 
-        poDriver->AddSourceParser( "KernelFilteredSource", 
-                                   VRTParseFilterSources );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->AddSourceParser( "SimpleSource",
+                               VRTParseCoreSources );
+    poDriver->AddSourceParser( "ComplexSource",
+                               VRTParseCoreSources );
+    poDriver->AddSourceParser( "AveragedSource",
+                               VRTParseCoreSources );
+
+    poDriver->AddSourceParser( "KernelFilteredSource",
+                               VRTParseFilterSources );
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

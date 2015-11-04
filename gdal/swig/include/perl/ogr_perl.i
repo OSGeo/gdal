@@ -109,6 +109,15 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 }
 
+%{
+    typedef void GDALDatasetShadow;
+%}
+%extend OGRDataSourceShadow {
+    GDALDatasetShadow* AsDataset() {
+        return (GDALDatasetShadow*)self;
+    }
+}
+
 /* wrapped data source methods: */
 %rename (_GetDriver) GetDriver;
 %rename (_TestCapability) TestCapability;
@@ -175,6 +184,7 @@ package Geo::OGR::DataSource;
 use strict;
 use warnings;
 use Carp;
+use Scalar::Util 'blessed';
 use vars qw /@CAPABILITIES %CAPABILITIES %LAYERS %RESULT_SET/;
 for (keys %Geo::OGR::) {
     push(@CAPABILITIES, $1), next if /^ODsC(\w+)/;
@@ -304,6 +314,33 @@ sub DeleteLayer {
     _DeleteLayer($self, $index);
 }
 
+sub Grid {
+    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    $o = Geo::GDAL::GDALGridOptions->new(Geo::GDAL::make_processing_options($o));
+    return Geo::GDAL::wrapper_GDALGrid($Dest, AsDataset($self), $o, $progress, $progress_data);
+}
+
+sub Rasterize {
+    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    $o = Geo::GDAL::GDALRasterizeOptions->new(Geo::GDAL::make_processing_options($o));
+    my $b = blessed($Dest);
+    if ($b && $b eq 'Geo::GDAL::Dataset') {
+        Geo::GDAL::wrapper_GDALRasterizeDestDS($Dest, AsDataset($self), $o, $progress, $progress_data);
+    } else {
+        return Geo::GDAL::wrapper_GDALRasterizeDestName($Dest, AsDataset($self), $o, $progress, $progress_data);        
+    }
+}
+
+sub Translate {
+    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    $o = Geo::GDAL::GDALVectorTranslateOptions->new(Geo::GDAL::make_processing_options($o));
+    my $b = blessed($Dest);
+    if ($b && $b eq 'Geo::OGR::DataSource') {
+        Geo::GDAL::wrapper_GDALVectorTranslateDestDS(AsDataset($Dest), AsDataset($self), $o, $progress, $progress_data);
+    } else {
+        return Geo::GDAL::wrapper_GDALVectorTranslateDestName($Dest, AsDataset($self), $o, $progress, $progress_data);
+    }
+}
 
 
 
@@ -781,16 +818,20 @@ use Encode;
 use Scalar::Util 'blessed';
 %}
 
-%feature("shadow") OGRFeatureShadow()
+%feature("shadow") OGRFeatureShadow( OGRFeatureDefnShadow *feature_def )
 %{
 use Carp;
 sub new {
     my $pkg = shift;
-    if (blessed($_[0]) and $_[0]->isa('Geo::OGR::FeatureDefn')) {
-        return $pkg->new($_[0]);
+    my $arg = blessed($_[0]);
+    my $defn;
+    if ($arg && $arg eq 'Geo::OGR::FeatureDefn') {
+        $defn = $_[0];
     } else {
-        return $pkg->new(Geo::OGR::FeatureDefn->new(@_));
+        $defn = Geo::OGR::FeatureDefn->new(@_);
     }
+    my $self = Geo::OGRc::new_Feature($defn);
+    bless $self, $pkg if defined($self);
 }
 %}
 
@@ -1405,6 +1446,7 @@ sub Type {
     }
     $Geo::OGR::Geometry::TYPE_INT2STRING{GetType($self)} if defined wantarray;
 }
+*GeometryType = *Type;
 
 sub Types {
   return @Geo::OGR::Geometry::GEOMETRY_TYPES;

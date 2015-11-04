@@ -41,13 +41,13 @@ void appendDouble(void* pBuffer, double val)
 
 void appendFloat(void* pBuffer, float val)
 {
-    CPL_LSBPTR32(&val)
+    CPL_LSBPTR32(&val);
     memcpy(pBuffer, &val, 4);
 }
 
 void appendInt(void* pBuffer, int val)
 {
-    CPL_LSBPTR32(&val)
+    CPL_LSBPTR32(&val);
     memcpy(pBuffer, &val, 4);
 }
 
@@ -58,7 +58,7 @@ void appendUChar(void* pBuffer, unsigned char val)
 
 void appendUShort(void* pBuffer, unsigned short val)
 {
-    CPL_LSBPTR16(&val)
+    CPL_LSBPTR16(&val);
     memcpy(pBuffer, &val, 2);
 }
 
@@ -69,7 +69,7 @@ void writeUChar(VSILFILE* fp, unsigned char val)
 
 void writeDouble(VSILFILE* fp, double val)
 {
-    CPL_LSBPTR64(&val)
+    CPL_LSBPTR64(&val);
     VSIFWriteL(&val, 1, 8, fp);
 }
 
@@ -77,7 +77,7 @@ static double readDouble(VSILFILE* fp)
 {
     double val;
     VSIFReadL( &val, 1, 8, fp );
-    CPL_LSBPTR64(&val)
+    CPL_LSBPTR64(&val);
     return val;
 }
 
@@ -85,7 +85,7 @@ static float readFloat(VSILFILE* fp)
 {
     float val;
     VSIFReadL( &val, 1, 4, fp );
-    CPL_LSBPTR32(&val)
+    CPL_LSBPTR32(&val);
     return val;
 }
 
@@ -93,7 +93,7 @@ static int readInt(VSILFILE* fp)
 {
     int val;
     VSIFReadL( &val, 1, 4, fp );
-    CPL_LSBPTR32(&val)
+    CPL_LSBPTR32(&val);
     return val;
 }
 
@@ -113,25 +113,25 @@ static unsigned short readUShort(VSILFILE* fp, int *pbSuccess = NULL)
         return 0;
     }
     if (pbSuccess) *pbSuccess = TRUE;
-    CPL_LSBPTR16(&val)
+    CPL_LSBPTR16(&val);
     return val;
 }
 
 void writeFloat(VSILFILE* fp, float val)
 {
-    CPL_LSBPTR32(&val)
+    CPL_LSBPTR32(&val);
     VSIFWriteL(&val, 1, 4, fp);
 }
 
 void writeInt(VSILFILE* fp, int val)
 {
-    CPL_LSBPTR32(&val)
+    CPL_LSBPTR32(&val);
     VSIFWriteL(&val, 1, 4, fp);
 }
 
 void writeUShort(VSILFILE* fp, unsigned short val)
 {
-    CPL_LSBPTR16(&val)
+    CPL_LSBPTR16(&val);
     VSIFWriteL(&val, 1, 2, fp);
 }
 
@@ -341,7 +341,7 @@ bool GTM::isValid()
 /*      try opening with the /vsigzip/ prefix                           */
 /* -------------------------------------------------------------------- */
     if (buffer[0] == 0x1f && ((unsigned char*)buffer)[1] == 0x8b &&
-        strncmp(pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0)
+        !STARTS_WITH(pszFilename, "/vsigzip/"))
     {
         char* pszGZIPFileName = (char*)CPLMalloc(
                            strlen("/vsigzip/") + strlen(pszFilename) + 1);

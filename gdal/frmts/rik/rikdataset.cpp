@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <float.h>
+#include <cfloat>
 #include <zlib.h>
 #include "gdal_pam.h"
 
@@ -169,16 +169,16 @@ class RIKRasterBand : public GDALPamRasterBand
 /*                           RIKRasterBand()                            */
 /************************************************************************/
 
-RIKRasterBand::RIKRasterBand( RIKDataset *poDS, int nBand )
+RIKRasterBand::RIKRasterBand( RIKDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Byte;
 
-    nBlockXSize = poDS->nBlockXSize;
-    nBlockYSize = poDS->nBlockYSize;
+    nBlockXSize = poDSIn->nBlockXSize;
+    nBlockYSize = poDSIn->nBlockYSize;
 }
 
 /************************************************************************/
@@ -206,9 +206,7 @@ static int GetNextLZWCode( int codeBits,
 
     while( bitsLeftToGo > 0 )
     {
-        int tmp;
-
-        tmp = blockData[filePos];
+        int tmp = blockData[filePos];
         tmp = tmp >> bitsTaken;
 
         if( bitsLeftToGo < 8 )
@@ -248,7 +246,8 @@ static void OutputPixel( GByte pixel,
 
 {
     if( imagePos < imageWidth && imageLine >= 0)
-        ((GByte *) image)[imagePos + imageLine * imageWidth] = pixel;
+      reinterpret_cast<GByte *>( image )[imagePos + imageLine * imageWidth]
+          = pixel;
 
     imagePos++;
 
@@ -278,18 +277,13 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    RIKDataset *poRDS = (RIKDataset *) poDS;
-    GByte *blockData;
-    GUInt32 blocks;
-    GUInt32 nBlockIndex;
-    GUInt32 nBlockOffset;
-    GUInt32 nBlockSize;
+    RIKDataset *poRDS = reinterpret_cast<RIKDataset *>( poDS );
 
-    blocks = poRDS->nHorBlocks * poRDS->nVertBlocks;
-    nBlockIndex = nBlockXOff + nBlockYOff * poRDS->nHorBlocks;
-    nBlockOffset = poRDS->pOffsets[nBlockIndex];
+    const GUInt32 blocks = poRDS->nHorBlocks * poRDS->nVertBlocks;
+    const GUInt32 nBlockIndex = nBlockXOff + nBlockYOff * poRDS->nHorBlocks;
+    const GUInt32 nBlockOffset = poRDS->pOffsets[nBlockIndex];
 
-    nBlockSize = poRDS->nFileSize;
+    GUInt32 nBlockSize = poRDS->nFileSize;
     for( GUInt32 bi = nBlockIndex + 1; bi < blocks; bi++ )
     {
         if( poRDS->pOffsets[bi] )
@@ -311,7 +305,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         )
     {
         for( GUInt32 i = 0; i < pixels; i++ )
-        ((GByte *) pImage)[i] = 0;
+            reinterpret_cast<GByte *>( pImage )[i] = 0;
         return CE_None;
     }
 
@@ -328,15 +322,14 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     // Read block to memory
-    blockData = (GByte *) CPLMalloc(nBlockSize);
+    GByte *blockData = reinterpret_cast<GByte *>( CPLMalloc(nBlockSize) );
     VSIFReadL( blockData, 1, nBlockSize, poRDS->fp );
-
-    GUInt32 filePos = 0;
-    GUInt32 imagePos = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Read RLE block.                                                 */
 /* -------------------------------------------------------------------- */
+    GUInt32 filePos = 0;
+    GUInt32 imagePos = 0;
 
     if( poRDS->options == 0x01 ||
         poRDS->options == 0x41 ) do
@@ -346,7 +339,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         for (GByte i = 0; i <= count; i++)
         {
-            ((GByte *) pImage)[imagePos++] = color;
+          reinterpret_cast<GByte *>( pImage )[imagePos++] = color;
         }
     } while( filePos < nBlockSize && imagePos < pixels );
 
@@ -376,11 +369,9 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         int prefix[8192];      // only need LZW_CODES for size.
         GByte character[8192]; // only need LZW_CODES for size.
 
-        int i;
-
-        for( i = 0; i < LZW_CLEAR; i++ )
-            character[i] = (GByte)i;
-        for( i = 0; i < LZW_CODES; i++ )
+        for( int i = 0; i < LZW_CLEAR; i++ )
+          character[i] = static_cast<GByte>( i );
+        for( int i = 0; i < LZW_CODES; i++ )
             prefix[i] = LZW_NO_SUCH_CODE;
 
         filePos = LZW_OFFSET;
@@ -396,9 +387,9 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         code = GetNextLZWCode( codeBits, blockData, filePos,
                                fileAlign, bitsTaken );
 
-        OutputPixel( (GByte)code, pImage, poRDS->nBlockXSize,
+        OutputPixel( static_cast<GByte>( code ), pImage, poRDS->nBlockXSize,
                      lineBreak, imageLine, imagePos );
-        lastOutput = (GByte)code;
+        lastOutput = static_cast<GByte>( code );
 
         while( imageLine >= 0 &&
                (imageLine || imagePos < poRDS->nBlockXSize) &&
@@ -429,7 +420,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #endif
 
                 // Clear prefix table
-                for( i = LZW_CLEAR; i < LZW_CODES; i++ )
+                for( int i = LZW_CLEAR; i < LZW_CODES; i++ )
                     prefix[i] = LZW_NO_SUCH_CODE;
                 lastAdded = LZW_CLEAR;
                 codeBits = LZW_BITS_PER_PIXEL + 1;
@@ -472,7 +463,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 // Decode
 
-                i = 0;
+                int i = 0;
                 while( ++i < LZW_CODES &&
        	               decodeCode >= LZW_CLEAR &&
        	               decodeCode < LZW_NO_SUCH_CODE )
@@ -480,7 +471,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     stack[stackPtr++] = character[decodeCode];
                     decodeCode = prefix[decodeCode];
                 }
-                stack[stackPtr++] = (GByte)decodeCode;
+                stack[stackPtr++] = static_cast<GByte>( decodeCode );
 
                 if( i == LZW_CODES || decodeCode >= LZW_NO_SUCH_CODE )
                 {
@@ -547,13 +538,13 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else if( poRDS->options == 0x0d )
     {
         uLong destLen = pixels;
-        Byte *upsideDown = (Byte *) CPLMalloc( pixels );
+        Byte *upsideDown = static_cast<Byte *>( CPLMalloc( pixels ) );
 
         uncompress( upsideDown, &destLen, blockData, nBlockSize );
 
         for (GUInt32 i = 0; i < poRDS->nBlockYSize; i++)
         {
-            memcpy( ((Byte *)pImage) + poRDS->nBlockXSize * i,
+          memcpy( reinterpret_cast<Byte *>( pImage ) + poRDS->nBlockXSize * i,
                     upsideDown + poRDS->nBlockXSize *
                                  (poRDS->nBlockYSize - i - 1),
                     poRDS->nBlockXSize );
@@ -584,7 +575,7 @@ GDALColorInterp RIKRasterBand::GetColorInterpretation()
 GDALColorTable *RIKRasterBand::GetColorTable()
 
 {
-    RIKDataset *poRDS = (RIKDataset *) poDS;
+    RIKDataset *poRDS = reinterpret_cast<RIKDataset *>( poDS );
 
     return poRDS->poColorTable;
 }
@@ -669,7 +660,7 @@ int RIKDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 50 )
         return FALSE;
 
-    if( EQUALN((const char *) poOpenInfo->pabyHeader, "RIK3", 4) )
+    if( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "RIK3") )
     {
         return TRUE;
     }
@@ -686,7 +677,7 @@ int RIKDataset::Identify( GDALOpenInfo * poOpenInfo )
         }
         if( actLength == 0 )
             return -1;
-        
+
         for( int i=0;i<actLength;i++ )
         {
             if( poOpenInfo->pabyHeader[2+i] == 0 )
@@ -713,7 +704,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     bool rik3header = false;
 
-    if( EQUALN((const char *) poOpenInfo->pabyHeader, "RIK3", 4) )
+    if( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "RIK3") )
     {
         rik3header = true;
         VSIFSeekL( poOpenInfo->fpL, 4, SEEK_SET );
@@ -857,9 +848,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             !CPLIsFinite(header.fEast))
             return NULL;
 
-        bool offsetBounds;
-
-        offsetBounds = header.fSouth < 4000000;
+        const bool offsetBounds = header.fSouth < 4000000;
 
         header.iMPPDen = 1;
 
@@ -882,7 +871,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             headerType = "RIK2";
         }
 
-        metersPerPixel = header.iMPPNum / double(header.iMPPDen);
+        metersPerPixel = header.iMPPNum / static_cast<double>( header.iMPPDen );
 
         VSIFReadL( &header.iBlockWidth, 1, sizeof(header.iBlockWidth), poOpenInfo->fpL );
         VSIFReadL( &header.iBlockHeight, 1, sizeof(header.iBlockHeight), poOpenInfo->fpL );
@@ -953,8 +942,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     GByte palette[768];
 
-    GUInt16 i;
-    for( i = 0; i < 256; i++ )
+    for( GUInt16 i = 0; i < 256; i++ )
     {
         VSIFReadL( &palette[i * 3 + 2], 1, 1, poOpenInfo->fpL );
         VSIFReadL( &palette[i * 3 + 1], 1, 1, poOpenInfo->fpL );
@@ -965,11 +953,9 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Find block offsets.                                             */
 /* -------------------------------------------------------------------- */
 
-    GUInt32 blocks;
-    GUInt32 *offsets;
-
-    blocks = header.iHorBlocks * header.iVertBlocks;
-    offsets = (GUInt32 *)CPLMalloc( blocks * sizeof(GUInt32) );
+    const GUInt32 blocks = header.iHorBlocks * header.iVertBlocks;
+    GUInt32 *offsets = reinterpret_cast<GUInt32 *>(
+        CPLMalloc( blocks * sizeof(GUInt32) ) );
 
     if( !offsets )
     {
@@ -1019,6 +1005,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "File %s. Read past end of file.\n",
                   poOpenInfo->pszFilename );
+        CPLFree(offsets);
         return NULL;
     }
 
@@ -1051,6 +1038,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                     CPLError( CE_Failure, CPLE_OpenFailed,
                               "File %s too short.\n",
                               poOpenInfo->pszFilename );
+                    CPLFree( offsets );
                     return NULL;
                 }
                 header.iVertBlocks = y;
@@ -1064,6 +1052,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                     CPLError( CE_Failure, CPLE_OpenFailed,
                               "File %s. Corrupt offset table.\n",
                               poOpenInfo->pszFilename );
+                    CPLFree( offsets );
                     return NULL;
                 }
                 header.iVertBlocks = y;
@@ -1121,9 +1110,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
 
-    RIKDataset 	*poDS;
-
-    poDS = new RIKDataset();
+    RIKDataset 	*poDS = new RIKDataset();
 
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
@@ -1150,7 +1137,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     GDALColorEntry oEntry;
     poDS->poColorTable = new GDALColorTable();
-    for( i = 0; i < 256; i++ )
+    for( GUInt16 i = 0; i < 256; i++ )
     {
         oEntry.c1 = palette[i * 3 + 2]; // Red
         oEntry.c2 = palette[i * 3 + 1]; // Green
@@ -1189,7 +1176,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
     return( poDS );
 }
 
@@ -1200,25 +1187,23 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_RIK()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "RIK" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "RIK" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "RIK" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Swedish Grid RIK (.rik)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#RIK" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rik" );
+    poDriver->SetDescription( "RIK" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Swedish Grid RIK (.rik)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#RIK" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rik" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = RIKDataset::Open;
-        poDriver->pfnIdentify = RIKDataset::Identify;
+    poDriver->pfnOpen = RIKDataset::Open;
+    poDriver->pfnIdentify = RIKDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

@@ -31,7 +31,8 @@
 #include <ogr_feature.h>
 #include "ogr_p.h"
 
-#include <kml/dom.h>
+#include "libkml_headers.h"
+
 #include <iostream>
 
 using kmldom::ExtendedDataPtr;
@@ -63,7 +64,7 @@ using kmldom::GxMultiTrackPtr;
 
 #include "ogrlibkmlfield.h"
 
-void ogr2altitudemode_rec (
+static void ogr2altitudemode_rec (
     GeometryPtr poKmlGeometry,
     int iAltitudeMode,
     int isGX )
@@ -131,7 +132,7 @@ void ogr2altitudemode_rec (
 
 }
 
-void ogr2extrude_rec (
+static void ogr2extrude_rec (
     int nExtrude,
     GeometryPtr poKmlGeometry )
 {
@@ -180,7 +181,7 @@ void ogr2extrude_rec (
     }
 }
 
-void ogr2tessellate_rec (
+static void ogr2tessellate_rec (
     int nTessellate,
     GeometryPtr poKmlGeometry )
 {
@@ -861,7 +862,7 @@ void field2kml (
  recursive function to read altitude mode from the geometry
 ******************************************************************************/
 
-int kml2altitudemode_rec (
+static int kml2altitudemode_rec (
     GeometryPtr poKmlGeometry,
     int *pnAltitudeMode,
     int *pbIsGX )
@@ -949,7 +950,7 @@ int kml2altitudemode_rec (
  recursive function to read extrude from the geometry
 ******************************************************************************/
 
-int kml2extrude_rec (
+static int kml2extrude_rec (
     GeometryPtr poKmlGeometry,
     int *pnExtrude )
 {
@@ -1021,7 +1022,7 @@ int kml2extrude_rec (
  recursive function to read tessellate from the geometry
 ******************************************************************************/
 
-int kml2tessellate_rec (
+static int kml2tessellate_rec (
     GeometryPtr poKmlGeometry,
     int *pnTessellate )
 {

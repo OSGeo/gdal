@@ -46,11 +46,11 @@ static void test_huge_mapping()
 }
 #endif
 
-static void test_two_pages_cbk(CPLVirtualMem* ctxt, 
+static void test_two_pages_cbk(CPLVirtualMem* /* ctxt */,
                   size_t nOffset,
                   void* pPageToFill,
                   size_t nPageSize,
-                  void* pUserData)
+                  void* /* pUserData */)
 {
     /*fprintfstderr("requesting page %lu (nPageSize=%d), nLRUSize=%d\n",
             (unsigned long)(nOffset / nPageSize),
@@ -83,6 +83,8 @@ static int test_two_pages()
     CPLVirtualMem* ctxt;
     volatile char* addr;
     void* hThread;
+
+    printf("test_two_pages()\n");
 
     ctxt = CPLVirtualMemNew(3*MINIMUM_PAGE_SIZE,
                         MINIMUM_PAGE_SIZE,
@@ -119,6 +121,8 @@ static int test_two_pages()
 
 static void test_raw_auto(int bFileMapping)
 {
+    printf("test_raw_auto(bFileMapping=%d)\n", bFileMapping);
+
     GDALAllRegister();
     
     CPLString osTmpFile;
@@ -169,22 +173,43 @@ static void test_raw_auto(int bFileMapping)
     CPLVirtualMemFree(pVMem1);
     CPLVirtualMemFree(pVMem2);
     GDALClose(hDS);
-    
+
     hDS = GDALOpen(osTmpFile.c_str(), GA_ReadOnly);
     assert(GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, 400, 300) == 52906);
     assert(GDALChecksumImage(GDALGetRasterBand(hDS, 2), 0, 0, 400, 300) == 30926);
     GDALClose(hDS);
-    
+
     GDALDeleteDataset(NULL, osTmpFile.c_str());
 
 }
 
-int main(int argc, char* argv[])
+int main(int /* argc */, char* /* argv */[])
 {
     /*printf("test_huge_mapping\n");
     test_huge_mapping();*/
-    
+
     printf("Physical memory : " CPL_FRMT_GIB " bytes\n", CPLGetPhysicalRAM());
+    
+    if( CPLIsVirtualMemFileMapAvailable() )
+    {
+        printf("Testing CPLVirtualMemFileMapNew()\n");
+        VSILFILE* fp = VSIFOpenL("../gcore/data/byte.tif", "rb");
+        assert(fp);
+        VSIFSeekL(fp, 0, SEEK_END);
+        size_t nSize = (size_t)VSIFTellL(fp);
+        VSIFSeekL(fp, 0, SEEK_SET);
+        void* pRefBuf = CPLMalloc(nSize);
+        VSIFReadL(pRefBuf, 1, nSize, fp);
+        CPLVirtualMem * psMem = CPLVirtualMemFileMapNew( fp, 0, nSize,
+                                                         VIRTUALMEM_READONLY,
+                                                         NULL, NULL );
+        assert(psMem);
+        void* pMemBuf = CPLVirtualMemGetAddr(psMem);
+        assert(memcmp(pRefBuf, pMemBuf, nSize) == 0);
+        CPLFree(pRefBuf);
+        CPLVirtualMemFree(psMem);
+        VSIFCloseL(fp);
+    }
 
     if( !test_two_pages() )
         return 0;

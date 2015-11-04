@@ -3,8 +3,8 @@
  *
  * Project:  CPL - Common Portability Library
  * Author:   Frank Warmerdam, warmerdam@pobox.com
- * Purpose:  Include file providing low level portability services for CPL.  
- *           This should be the first include file for any CPL based code.  
+ * Purpose:  Include file providing low level portability services for CPL.
+ *           This should be the first include file for any CPL based code.
  *
  ******************************************************************************
  * Copyright (c) 1998, 2005, Frank Warmerdam <warmerdam@pobox.com>
@@ -40,29 +40,14 @@
  */
 
 /* ==================================================================== */
-/*      We will use macos_pre10 to indicate compilation with MacOS      */
-/*      versions before MacOS X.                                        */
-/* ==================================================================== */
-#ifdef macintosh
-#  define macos_pre10
-#endif
-
-/* ==================================================================== */
 /*      We will use WIN32 as a standard windows define.                 */
 /* ==================================================================== */
-#if defined(_WIN32) && !defined(WIN32) && !defined(_WIN32_WCE)
+#if defined(_WIN32) && !defined(WIN32)
 #  define WIN32
 #endif
 
-#if defined(_WINDOWS) && !defined(WIN32) && !defined(_WIN32_WCE)
+#if defined(_WINDOWS) && !defined(WIN32)
 #  define WIN32
-#endif
-
-/* ==================================================================== */
-/*      We will use WIN32CE as a standard Windows CE (Mobile) define.   */
-/* ==================================================================== */
-#if defined(_WIN32_WCE)
-#  define WIN32CE
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -105,7 +90,6 @@
 
 #ifdef unix
 #  undef WIN32
-#  undef WIN32CE
 #endif
 
 #if defined(VSI_NEED_LARGEFILE64_SOURCE) && !defined(_LARGEFILE64_SOURCE)
@@ -149,17 +133,11 @@
 #include <ctype.h>
 #include <limits.h>
 
-#if !defined(WIN32CE)
-#  include <time.h>
-#else
-#  include <wce_time.h>
-#  include <wce_errno.h>
-#endif
-
+#include <time.h>
 
 #if defined(HAVE_ERRNO_H)
 #  include <errno.h>
-#endif 
+#endif
 
 #ifdef HAVE_LOCALE_H
 #  include <locale.h>
@@ -169,7 +147,7 @@
 #  include <direct.h>
 #endif
 
-#if !(defined(WIN32) || defined(WIN32CE))
+#if !defined(WIN32)
 #  include <strings.h>
 #endif
 
@@ -221,6 +199,7 @@ typedef unsigned __int64 GUIntBig;
 
 #define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
 #define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
+#define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
 #elif HAVE_LONG_LONG
 
@@ -229,6 +208,7 @@ typedef unsigned long long GUIntBig;
 
 #define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
 #define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
+#define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFF) << 32) | 0xFFFFFFFFU)
 
 #else
 
@@ -237,6 +217,7 @@ typedef unsigned long    GUIntBig;
 
 #define GINTBIG_MIN     INT_MIN
 #define GINTBIG_MAX     INT_MAX
+#define GUINTBIG_MAX     UINT_MAX
 #endif
 
 #if SIZEOF_VOIDP == 8
@@ -346,7 +327,8 @@ typedef int              GPtrDiff_t;
 #endif
 
 #ifndef M_PI
-# define M_PI		3.14159265358979323846	/* pi */
+# define M_PI		3.14159265358979323846
+/* 3.1415926535897932384626433832795 */
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -381,7 +363,7 @@ CPL_C_END
 
 #endif /* defined(__linux__) && defined(DEBUG) && defined(GDAL_COMPILATION) */
 
-#  if defined(WIN32) || defined(WIN32CE)
+#  if defined(WIN32)
 #    define STRCASECMP(a,b)         (stricmp(a,b))
 #    define STRNCASECMP(a,b,n)      (strnicmp(a,b,n))
 #  else
@@ -392,10 +374,9 @@ CPL_C_END
 #  define EQUAL(a,b)              (STRCASECMP(a,b)==0)
 #endif
 
-#ifdef macos_pre10
-int strcasecmp(char * str1, char * str2);
-int strncasecmp(char * str1, char * str2, int len);
-char * strdup (char *instr);
+#ifndef STARTS_WITH_CI
+#define STARTS_WITH(a,b)               (strncmp(a,b,strlen(b)) == 0)
+#define STARTS_WITH_CI(a,b)            EQUALN(a,b,strlen(b))
 #endif
 
 #ifndef CPL_THREADLOCAL
@@ -448,6 +429,27 @@ char * strdup (char *instr);
 #  define CPL_IS_LSB 0
 #endif
 
+#ifdef __cplusplus
+
+extern "C++" {
+
+template <bool b> struct CPLStaticAssert {};
+template<> struct CPLStaticAssert<true>
+{
+    static void my_function() {}
+};
+
+} /* extern "C++" */
+
+#define CPL_STATIC_ASSERT(x) CPLStaticAssert<x>::my_function()
+#define CPL_STATIC_ASSERT_IF_AVAILABLE(x) CPL_STATIC_ASSERT(x)
+
+#else  /* __cplusplus */
+
+#define CPL_STATIC_ASSERT_IF_AVAILABLE(x) 
+
+#endif  /* __cplusplus */
+
 /*---------------------------------------------------------------------
  *        Little endian <==> big endian byte swap macros.
  *--------------------------------------------------------------------*/
@@ -460,6 +462,7 @@ char * strdup (char *instr);
 #define CPL_SWAP16PTR(x) \
 {                                                                 \
     GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
+    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2); \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
     _pabyDataT[0] = _pabyDataT[1];                                \
@@ -476,6 +479,7 @@ char * strdup (char *instr);
 #define CPL_SWAP32PTR(x) \
 {                                                                 \
     GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
+    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4);  \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
     _pabyDataT[0] = _pabyDataT[3];                                \
@@ -488,6 +492,7 @@ char * strdup (char *instr);
 #define CPL_SWAP64PTR(x) \
 {                                                                 \
     GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
+    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
     _pabyDataT[0] = _pabyDataT[7];                                \
@@ -527,22 +532,22 @@ char * strdup (char *instr);
 #  define CPL_LSBWORD16(x)      CPL_SWAP16(x)
 #  define CPL_MSBWORD32(x)      (x)
 #  define CPL_LSBWORD32(x)      CPL_SWAP32(x)
-#  define CPL_MSBPTR16(x)       
+#  define CPL_MSBPTR16(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2)
 #  define CPL_LSBPTR16(x)       CPL_SWAP16PTR(x)
-#  define CPL_MSBPTR32(x)       
+#  define CPL_MSBPTR32(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4)
 #  define CPL_LSBPTR32(x)       CPL_SWAP32PTR(x)
-#  define CPL_MSBPTR64(x)       
+#  define CPL_MSBPTR64(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8)
 #  define CPL_LSBPTR64(x)       CPL_SWAP64PTR(x)
 #else
 #  define CPL_LSBWORD16(x)      (x)
 #  define CPL_MSBWORD16(x)      CPL_SWAP16(x)
 #  define CPL_LSBWORD32(x)      (x)
 #  define CPL_MSBWORD32(x)      CPL_SWAP32(x)
-#  define CPL_LSBPTR16(x)       
+#  define CPL_LSBPTR16(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2)
 #  define CPL_MSBPTR16(x)       CPL_SWAP16PTR(x)
-#  define CPL_LSBPTR32(x)       
+#  define CPL_LSBPTR32(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4)
 #  define CPL_MSBPTR32(x)       CPL_SWAP32PTR(x)
-#  define CPL_LSBPTR64(x)       
+#  define CPL_LSBPTR64(x)       CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8)
 #  define CPL_MSBPTR64(x)       CPL_SWAP64PTR(x)
 #endif
 
@@ -595,7 +600,8 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #endif
 
 /* Null terminated variadic */
-#if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
+/* We exclude mingw64 4.6 which seems to be broken regarding this */
+#if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP) && !(defined(__MINGW64__) && __GNUC__ == 4 && __GNUC_MINOR__ == 6)
 #   define CPL_NULL_TERMINATED     __attribute__((__sentinel__))
 #else
 #   define CPL_NULL_TERMINATED
@@ -603,8 +609,10 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 
 #if defined(__GNUC__) && __GNUC__ >= 3 && !defined(DOXYGEN_SKIP)
 #define CPL_PRINT_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+#define CPL_SCAN_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__scanf__, format_idx, arg_idx)))
 #else
 #define CPL_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+#define CPL_SCAN_FUNC_FORMAT( format_idx, arg_idx )
 #endif
 
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
@@ -626,18 +634,36 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #define CPL_NO_RETURN
 #endif
 
+/* Clang __has_attribute */
+#ifndef __has_attribute
+  #define __has_attribute(x) 0  // Compatibility with non-clang compilers.
+#endif
+
+#if ((defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))) || __has_attribute(returns_nonnull)) && !defined(DOXYGEN_SKIP)
+#  define CPL_RETURNS_NONNULL __attribute__((returns_nonnull))
+#else
+#  define CPL_RETURNS_NONNULL
+#endif
+
+
+#if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
+#define CPL_RESTRICT __restrict__
+#else
+#define CPL_RESTRICT
+#endif
+
 /* Helper to remove the copy and assignment constructors so that the compiler
    will not generate the default versions.
 
    Must be placed in the private section of a class and should be at the end.
 */
 #ifdef __cplusplus
-#if 0 /* Initially disabled */
+#if 1
 
 #if __cplusplus >= 201103L
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ) = delete; \
-    void &operator=( const ClassName & ) = delete;
+    ClassName &operator=( const ClassName & ) = delete;
 #else
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ); \
@@ -676,6 +702,26 @@ int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WAR
 #else
 /* This is technically unspecified behaviour if the double is out of range, but works OK on x86 */
 #define CPL_IS_DOUBLE_A_INT(d)  ( (double)(int)(d) == (d) )
+#endif
+
+#ifdef __cplusplus
+/* The size of C style arrays. */
+#define CPL_ARRAYSIZE(array) \
+  ((sizeof(array) / sizeof(*(array))) / \
+  static_cast<size_t>(!(sizeof(array) % sizeof(*(array)))))
+
+extern "C++" {
+template<class T> static void CPL_IGNORE_RET_VAL(T) {} 
+} /* extern "C++" */
+
+#endif  /* __cplusplus */
+
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(_MSC_VER)) 
+#define HAVE_GCC_DIAGNOSTIC_PUSH
+#endif
+
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER)) 
+#define HAVE_GCC_SYSTEM_HEADER
 #endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */

@@ -95,7 +95,7 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
     if( pbErrorOccured )
         *pbErrorOccured = FALSE;
 
-    /* GetLayerByName() can instanciate layers that would have been */
+    /* GetLayerByName() can instantiate layers that would have been */
     /* 'hidden' otherwise, for example, non-spatial tables in a */
     /* Postgis-enabled database, so this apparently useless command is */
     /* not useless... (#4012) */
@@ -215,7 +215,6 @@ static void ReportOnLayer( OGRLayer * poLayer, int bVerbose )
 
 {
     OGRFeatureDefn      *poDefn = poLayer->GetLayerDefn();
-
 
 /* -------------------------------------------------------------------- */
 /*      Report various overall information.                             */
@@ -412,9 +411,10 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                     papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy( papszArgv );
             return 0;
-        }        
-    
+        }
+
         else if( EQUAL(papszArgv[iArg],"--help") )
         {
             Usage();
@@ -627,4 +627,3 @@ int main( int nArgc, char ** papszArgv )
 
     return nRet;
 }
-

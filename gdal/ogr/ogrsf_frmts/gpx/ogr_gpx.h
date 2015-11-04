@@ -64,11 +64,9 @@ class OGRGPXLayer : public OGRLayer
     int                nGPXFields;
 
     int                bWriteMode;
-    int                nFeatures;
     int                eof;
     int                nNextFID;
     VSILFILE*          fpGPX; /* Large file API */
-    const char*        pszElementToScan;
 #ifdef HAVE_EXPAT
     XML_Parser         oParser;
     XML_Parser         oSchemaParser;
@@ -76,12 +74,16 @@ class OGRGPXLayer : public OGRLayer
     int                inInterestingElement;
     int                hasFoundLat;
     int                hasFoundLon;
+#ifdef HAVE_EXPAT
     double             latVal;
     double             lonVal;
+#endif
     char*              pszSubElementName;
     char*              pszSubElementValue;
     int                nSubElementValueLen;
+#ifdef HAVE_EXPAT
     int                iCurrentField;
+#endif
 
     OGRFeature*        poFeature;
     OGRFeature **      ppoFeatureTab;
@@ -94,12 +96,14 @@ class OGRGPXLayer : public OGRLayer
     int                depthLevel;
     int                interestingDepthLevel;
     
+#ifdef HAVE_EXPAT
     OGRFieldDefn*      currentFieldDefn;
     int                inExtensions;
     int                extensionsDepthLevel;
     
     int                inLink;
     int                iCountLink;
+#endif
     int                nMaxLinks;
     
     int                bEleAs25D;
@@ -111,9 +115,11 @@ class OGRGPXLayer : public OGRLayer
     int                rteFID;
     int                rtePtId;
     
+#ifdef HAVE_EXPAT
     int                bStopParsing;
     int                nWithoutEventCounter;
     int                nDataHandlerCounter;
+#endif
     
     int                iFirstGPXField;
     
@@ -187,10 +193,10 @@ class OGRGPXDataSource : public OGRDataSource
     int                 bUseExtensions;
     char*               pszExtensionsNS;
     
+#ifdef HAVE_EXPAT
     OGRGPXValidity      validity;
     int                 nElementsRead;
     char*               pszVersion;
-#ifdef HAVE_EXPAT
     XML_Parser          oCurrentParser;
     int                 nDataHandlerCounter;
 #endif
@@ -232,10 +238,9 @@ class OGRGPXDataSource : public OGRDataSource
 #ifdef HAVE_EXPAT
     void                startElementValidateCbk(const char *pszName, const char **ppszAttr);
     void                dataHandlerValidateCbk(const char *data, int nLen);
+    const char*         GetVersion() { return pszVersion; }
 #endif
 
-    const char*         GetVersion() { return pszVersion; }
-    
     void                AddCoord(double dfLon, double dfLat);
     
     void                PrintLine(const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);

@@ -123,22 +123,22 @@ AVCRawBinFile *AVCRawBinOpen(const char *pszFname, const char *pszAccess,
      * A case for "r+" is included here, but random access is not
      * properly supported yet... so this option should be used with care.
      *----------------------------------------------------------------*/
-    if (EQUALN(pszAccess, "r+", 2))
+    if (STARTS_WITH_CI(pszAccess, "r+"))
     {
         psFile->eAccess = AVCReadWrite;
         psFile->fp = VSIFOpen(pszFname, "r+b");
     }
-    else if (EQUALN(pszAccess, "r", 1))
+    else if (STARTS_WITH_CI(pszAccess, "r"))
     {
         psFile->eAccess = AVCRead;
         psFile->fp = VSIFOpen(pszFname, "rb");
     }
-    else if (EQUALN(pszAccess, "w", 1))
+    else if (STARTS_WITH_CI(pszAccess, "w"))
     {
         psFile->eAccess = AVCWrite;
         psFile->fp = VSIFOpen(pszFname, "wb");
     }
-    else if (EQUALN(pszAccess, "a", 1))
+    else if (STARTS_WITH_CI(pszAccess, "a"))
     {
         psFile->eAccess = AVCWrite;
         psFile->fp = VSIFOpen(pszFname, "ab");

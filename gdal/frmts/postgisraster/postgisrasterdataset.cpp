@@ -1293,8 +1293,8 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
             &(poBMD[iBand].bSignedByte));
             
         if (papszParams[POS_NODATAVALUE] == NULL ||
-            EQUALN(papszParams[POS_NODATAVALUE], "NULL", 4*sizeof(char)) || 
-            EQUALN(papszParams[POS_NODATAVALUE], "f", sizeof(char)) || 
+            EQUAL(papszParams[POS_NODATAVALUE], "NULL") || 
+            EQUAL(papszParams[POS_NODATAVALUE], "f") || 
             EQUAL(papszParams[POS_NODATAVALUE], "")) {
         
             poBMD[iBand].bHasNoDataValue = false;
@@ -1309,7 +1309,7 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
         
         // TODO: Manage outdb and get path
         poBMD[iBand].bIsOffline = (papszParams[POS_ISOUTDB] != NULL) ?
-            EQUALN(papszParams[POS_ISOUTDB], "t", sizeof(char)) :
+            EQUAL(papszParams[POS_ISOUTDB], "t") :
             false;
         
         CSLDestroy(papszParams);
@@ -2237,10 +2237,10 @@ GBool PostGISRasterDataset::SetRasterProperties
             bTilesSameDimension = true;
 
         bAllTilesSnapToSameGrid =
-            EQUALN(PQgetvalue(poResult, 0, 10), "t", sizeof(char));
+            EQUAL(PQgetvalue(poResult, 0, 10), "t");
         
         bRegularBlocking = 
-            EQUALN(PQgetvalue(poResult, 0, 11), "t", sizeof(char));
+            EQUAL(PQgetvalue(poResult, 0, 11), "t");
     }
 
 #ifdef DEBUG_VERBOSE
@@ -2803,7 +2803,7 @@ int PostGISRasterDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
     if (poOpenInfo->pszFilename == NULL ||
         poOpenInfo->fpL != NULL ||
-        !EQUALN(poOpenInfo->pszFilename, "PG:", 3))
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "PG:"))
     {
         return FALSE;
     }
@@ -2957,7 +2957,7 @@ char **PostGISRasterDataset::GetMetadataDomainList()
  * calling ST_Metadata, for example)
  *****************************************/
 char** PostGISRasterDataset::GetMetadata(const char *pszDomain) {
-    if (pszDomain != NULL && EQUALN(pszDomain, "SUBDATASETS", 11))
+    if (pszDomain != NULL && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
         return papszSubdatasets;
     else
         return GDALDataset::GetMetadata(pszDomain);
@@ -3181,7 +3181,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
     // Check connection string
     if (pszFilename == NULL ||
-        !EQUALN(pszFilename, "PG:", 3)) {
+        !STARTS_WITH_CI(pszFilename, "PG:")) {
         /**
          * The connection string provided is not a valid connection 
          * string.
@@ -3509,7 +3509,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
 
     // Check connection string
     if (pszFilename == NULL ||
-        !EQUALN(pszFilename, "PG:", 3)) { 
+        !STARTS_WITH_CI(pszFilename, "PG:")) { 
         /**
          * The connection string provided is not a valid connection 
          * string.

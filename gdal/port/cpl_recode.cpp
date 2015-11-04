@@ -30,7 +30,7 @@ CPL_CVSID("$Id$");
 
 #ifdef CPL_RECODE_ICONV
 extern void CPLClearRecodeIconvWarningFlags();
-extern char *CPLRecodeIconv( const char *, const char *, const char * );
+extern char *CPLRecodeIconv( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
 extern char *CPLRecodeFromWCharIconv( const wchar_t *,
                                       const char *, const char * );
 extern wchar_t *CPLRecodeToWCharIconv( const char *,
@@ -38,7 +38,7 @@ extern wchar_t *CPLRecodeToWCharIconv( const char *,
 #endif /* CPL_RECODE_ICONV */
 
 extern void CPLClearRecodeStubWarningFlags();
-extern char *CPLRecodeStub( const char *, const char *, const char * );
+extern char *CPLRecodeStub( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
 extern char *CPLRecodeFromWCharStub( const wchar_t *,
                                      const char *, const char * );
 extern wchar_t *CPLRecodeToWCharStub( const char *,
@@ -319,7 +319,7 @@ int CPLEncodingCharSize( const char *pszEncoding )
         return 4;
     else if( EQUAL(pszEncoding,CPL_ENC_ASCII) )
         return 1;
-    else if( EQUALN(pszEncoding,"ISO-8859-",9) )
+    else if( STARTS_WITH_CI(pszEncoding, "ISO-8859-") )
         return 1;
     else
         return -1;

@@ -511,7 +511,7 @@ void DGNAsciiToRad50( const char *str, unsigned short *pRad50 )
 /*      Read the line style name from symbol table.                     */
 /*      The got name is stored in psLine.                               */
 /************************************************************************/
-
+#ifdef unused
 int DGNGetLineStyleName(CPL_UNUSED DGNInfo *psDGN,
                         DGNElemMultiPoint *psLine,
                         char szLineStyle[65] )
@@ -544,6 +544,7 @@ int DGNGetLineStyleName(CPL_UNUSED DGNInfo *psDGN,
         return FALSE;
     }
 }
+#endif
 
 /************************************************************************/
 /*                           DGNDumpElement()                           */
@@ -1327,7 +1328,7 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
 void DGNRotationToQuaternion( double dfRotation, int *panQuaternion )
 
 {
-    double dfRadianRot = (dfRotation / 180.0)  * PI;
+    double dfRadianRot = (dfRotation / 180.0)  * M_PI;
 
     panQuaternion[0] = (int) (cos(-dfRadianRot/2.0) * 2147483647);
     panQuaternion[1] = 0;
@@ -1368,6 +1369,7 @@ void DGNQuaternionToMatrix( int *quat, float *mat )
 /*                  DGNTransformPointWithQuaternion()                   */
 /************************************************************************/
 
+#ifdef unused
 void DGNTransformPointWithQuaternionVertex( CPL_UNUSED int *quat,
                                             CPL_UNUSED DGNPoint *v1,
                                             CPL_UNUSED DGNPoint *v2 )
@@ -1448,3 +1450,4 @@ A u t o r  :  Peggy Jung
     v2->z = ROT[8]*x + ROT[9]*y + ROT[10]*z;
 */
 }
+#endif

@@ -426,15 +426,15 @@ int AAIGDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      Does this look like an AI grid file?                            */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 40
-        || !( EQUALN((const char *) poOpenInfo->pabyHeader,"ncols",5) ||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"nrows",5) ||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"xllcorner",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"yllcorner",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"xllcenter",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"yllcenter",9)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"dx",2)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"dy",2)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"cellsize",8)) )
+        || !( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "ncols") ||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "nrows") ||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "xllcorner")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "yllcorner")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "xllcenter")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "yllcenter")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "dx")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "dy")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "cellsize")) )
         return FALSE;
 
     return TRUE;
@@ -451,12 +451,12 @@ int GRASSASCIIDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      Does this look like a GRASS ASCII grid file?                    */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 40
-        || !( EQUALN((const char *) poOpenInfo->pabyHeader,"north:",6) ||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"south:",6) ||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"east:",5)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"west:",5)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"rows:",5)||
-              EQUALN((const char *) poOpenInfo->pabyHeader,"cols:",5) ) )
+        || !( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "north:") ||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "south:") ||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "east:")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "west:")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "rows:")||
+              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "cols:") ) )
         return FALSE;
 
     return TRUE;
@@ -958,16 +958,16 @@ GDALDataset * AAIGDataset::CreateCopy(
     char ** papszOptions,
     GDALProgressFunc pfnProgress, void * pProgressData )
 {
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
+    const int nBands = poSrcDS->GetRasterCount();
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
 
 /* -------------------------------------------------------------------- */
 /*      Some rudimentary checks                                         */
 /* -------------------------------------------------------------------- */
     if( nBands != 1 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "AAIG driver doesn't support %d bands.  Must be 1 band.\n",
                   nBands );
 
@@ -980,9 +980,7 @@ GDALDataset * AAIGDataset::CreateCopy(
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    VSILFILE        *fpImage;
-
-    fpImage = VSIFOpenL( pszFilename, "wt" );
+    VSILFILE *fpImage = VSIFOpenL( pszFilename, "wt" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -996,42 +994,42 @@ GDALDataset * AAIGDataset::CreateCopy(
 /* -------------------------------------------------------------------- */
     double      adfGeoTransform[6];
     char        szHeader[2000];
-    const char *pszForceCellsize = 
+    const char *pszForceCellsize =
         CSLFetchNameValue( papszOptions, "FORCE_CELLSIZE" );
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
-    if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001 
-        || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001 
+    if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001
+        || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001
         || (pszForceCellsize && CSLTestBoolean(pszForceCellsize)) )
-        CPLsprintf( szHeader, 
-                 "ncols        %d\n" 
+        CPLsnprintf( szHeader, sizeof(szHeader),
+                 "ncols        %d\n"
                  "nrows        %d\n"
                  "xllcorner    %.12f\n"
                  "yllcorner    %.12f\n"
-                 "cellsize     %.12f\n", 
-                 nXSize, nYSize, 
-                 adfGeoTransform[0], 
+                 "cellsize     %.12f\n",
+                 nXSize, nYSize,
+                 adfGeoTransform[0],
                  adfGeoTransform[3] - nYSize * adfGeoTransform[1],
                  adfGeoTransform[1] );
     else
     {
         if( pszForceCellsize == NULL )
-            CPLError( CE_Warning, CPLE_AppDefined, 
+            CPLError( CE_Warning, CPLE_AppDefined,
                       "Producing a Golden Surfer style file with DX and DY instead\n"
                       "of CELLSIZE since the input pixels are non-square.  Use the\n"
                       "FORCE_CELLSIZE=TRUE creation option to force use of DX for\n"
                       "even though this will be distorted.  Most ASCII Grid readers\n"
                       "(ArcGIS included) do not support the DX and DY parameters.\n" );
-        CPLsprintf( szHeader, 
-                 "ncols        %d\n" 
+        CPLsnprintf( szHeader, sizeof(szHeader),
+                 "ncols        %d\n"
                  "nrows        %d\n"
                  "xllcorner    %.12f\n"
                  "yllcorner    %.12f\n"
                  "dx           %.12f\n"
-                 "dy           %.12f\n", 
-                 nXSize, nYSize, 
-                 adfGeoTransform[0], 
+                 "dy           %.12f\n",
+                 nXSize, nYSize,
+                 adfGeoTransform[0],
                  adfGeoTransform[3] + nYSize * adfGeoTransform[5],
                  adfGeoTransform[1],
                  fabs(adfGeoTransform[5]) );

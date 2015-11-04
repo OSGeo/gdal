@@ -102,7 +102,7 @@ string trim(string tmpstr) {
   return tmpstr;
 }
 
-int getGeometryTypeOfElem(DOMElement* elem) {
+static int getGeometryTypeOfElem(DOMElement* elem) {
   int type = ILI2_STRING_TYPE;
   char* pszTagName = XMLString::transcode(elem->getTagName());
 
@@ -125,7 +125,7 @@ int getGeometryTypeOfElem(DOMElement* elem) {
   return type;
 }
 
-char *getObjValue(DOMElement *elem) {
+static char *getObjValue(DOMElement *elem) {
   DOMNode* child = elem->getFirstChild();
   if ((child != NULL) && (child->getNodeType() == DOMNode::TEXT_NODE))
   {
@@ -136,14 +136,14 @@ char *getObjValue(DOMElement *elem) {
   return NULL;
 }
 
-char *getREFValue(DOMElement *elem) {
+static char *getREFValue(DOMElement *elem) {
   XMLCh* pszIli2_ref = XMLString::transcode(ILI2_REF);
   char* pszREFValue = tr_strdup(elem->getAttribute(pszIli2_ref));
   XMLString::release(&pszIli2_ref);
   return pszREFValue;
 }
 
-OGRPoint *getPoint(DOMElement *elem) {
+static OGRPoint *getPoint(DOMElement *elem) {
   // elem -> COORD (or ARC)
   OGRPoint *pt = new OGRPoint();
 
@@ -208,7 +208,7 @@ OGRCircularString *ILI2Reader::getArc(DOMElement *elem) {
   return arc;
 }
 
-OGRCompoundCurve *getPolyline(DOMElement *elem) {
+static OGRCompoundCurve *getPolyline(DOMElement *elem) {
   // elem -> POLYLINE
   OGRCompoundCurve *ogrCurve = new OGRCompoundCurve();
   OGRLineString *ls = new OGRLineString();
@@ -285,7 +285,7 @@ OGRCompoundCurve *getPolyline(DOMElement *elem) {
   return ogrCurve;
 }
 
-OGRCompoundCurve *getBoundary(DOMElement *elem) {
+static OGRCompoundCurve *getBoundary(DOMElement *elem) {
 
   DOMElement *lineElem = (DOMElement *)elem->getFirstChild();
   if (lineElem != NULL)
@@ -302,7 +302,7 @@ OGRCompoundCurve *getBoundary(DOMElement *elem) {
   return new OGRCompoundCurve();
 }
 
-OGRCurvePolygon *getPolygon(DOMElement *elem) {
+static OGRCurvePolygon *getPolygon(DOMElement *elem) {
   OGRCurvePolygon *pg = new OGRCurvePolygon();
 
   DOMElement *boundaryElem = (DOMElement *)elem->getFirstChild(); // outer boundary
@@ -393,7 +393,7 @@ int ILI2Reader::ReadModel(ImdReader *poImdReader, const char *modelFilename) {
 }
 
 //Detect field name of value element
-char* fieldName(DOMElement* elem) {
+static char* fieldName(DOMElement* elem) {
   DOMNode *node = elem;
   if (getGeometryTypeOfElem(elem))
   {
@@ -691,7 +691,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   }
 
   SetFieldValues(feature, elem);
-  curLayer->SetFeature(feature);
+  CPL_IGNORE_RET_VAL(curLayer->SetFeature(feature));
   
   CPLFree(pszName);
 

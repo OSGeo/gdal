@@ -45,25 +45,21 @@ static const int InterlacedJumps[] = { 8, 8, 4, 2 };
 /*                         GIFAbstractDataset()                         */
 /************************************************************************/
 
-GIFAbstractDataset::GIFAbstractDataset()
-
+GIFAbstractDataset::GIFAbstractDataset() :
+    fp(NULL),
+    hGifFile(NULL),
+    pszProjection(NULL),
+    bGeoTransformValid(FALSE),
+    nGCPCount(0),
+    pasGCPList(NULL),
+    bHasReadXMPMetadata(FALSE)
 {
-    hGifFile = NULL;
-    fp = NULL;
-
-    pszProjection = NULL;
-    bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    nGCPCount = 0;
-    pasGCPList = NULL;
-
-    bHasReadXMPMetadata = FALSE;
 }
 
 /************************************************************************/
@@ -91,7 +87,6 @@ GIFAbstractDataset::~GIFAbstractDataset()
         VSIFCloseL( fp );
 }
 
-
 /************************************************************************/
 /*                       GIFCollectXMPMetadata()                        */
 /************************************************************************/
@@ -113,16 +108,15 @@ static CPLString GIFCollectXMPMetadata(VSILFILE* fp)
     /* Loop over file */
 
     int iStartSearchOffset = 1024;
-    while(TRUE)
+    while(true)
     {
         int nRead = VSIFReadL( abyBuffer + 1024, 1, 1024, fp );
         if (nRead <= 0)
             break;
         abyBuffer[1024 + nRead] = 0;
 
-        int i;
         int iFoundOffset = -1;
-        for(i=iStartSearchOffset;i<1024+nRead - 14;i++)
+        for(int i=iStartSearchOffset;i<1024+nRead - 14;i++)
         {
             if (memcmp(abyBuffer + i, "\x21\xff\x0bXMP DataXMP", 14) == 0)
             {
@@ -247,8 +241,8 @@ const char *GIFAbstractDataset::GetProjectionRef()
 {
     if ( pszProjection && bGeoTransformValid )
         return pszProjection;
-    else
-        return GDALPamDataset::GetProjectionRef();
+
+    return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -263,8 +257,8 @@ CPLErr GIFAbstractDataset::GetGeoTransform( double * padfTransform )
         memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
         return CE_None;
     }
-    else
-        return GDALPamDataset::GetGeoTransform( padfTransform );
+
+    return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
@@ -276,8 +270,8 @@ int GIFAbstractDataset::GetGCPCount()
 {
     if (nGCPCount > 0)
         return nGCPCount;
-    else
-        return GDALPamDataset::GetGCPCount();
+
+    return GDALPamDataset::GetGCPCount();
 }
 
 /************************************************************************/
@@ -289,8 +283,8 @@ const char *GIFAbstractDataset::GetGCPProjection()
 {
     if ( pszProjection && nGCPCount > 0 )
         return pszProjection;
-    else
-        return GDALPamDataset::GetGCPProjection();
+
+    return GDALPamDataset::GetGCPProjection();
 }
 
 /************************************************************************/
@@ -302,8 +296,8 @@ const GDAL_GCP *GIFAbstractDataset::GetGCPs()
 {
     if (nGCPCount > 0)
         return pasGCPList;
-    else
-        return GDALPamDataset::GetGCPs();
+
+    return GDALPamDataset::GetGCPs();
 }
 
 /************************************************************************/
@@ -316,8 +310,8 @@ int GIFAbstractDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 8 )
         return FALSE;
 
-    if( strncmp((const char *) poOpenInfo->pabyHeader, "GIF87a",5) != 0
-        && strncmp((const char *) poOpenInfo->pabyHeader, "GIF89a",5) != 0 )
+    if( !STARTS_WITH((const char *) poOpenInfo->pabyHeader, "GIF87a")
+        && !STARTS_WITH((const char *) poOpenInfo->pabyHeader, "GIF89a") )
         return FALSE;
 
     return TRUE;
@@ -431,8 +425,10 @@ int GIFAbstractDataset::ReadFunc( GifFileType *psGFile, GifByteType *pabyBuffer,
 GIFAbstractRasterBand::GIFAbstractRasterBand(
                               GIFAbstractDataset *poDS, int nBand, 
                               SavedImage *psSavedImage, int nBackground,
-                              int bAdvertizeInterlacedMDI )
-
+                              int bAdvertizeInterlacedMDI ) :
+    panInterlaceMap(NULL),
+    poColorTable(NULL),
+    nTransparentColor(0)
 {
     this->poDS = poDS;
     this->nBand = nBand;
@@ -444,10 +440,6 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(
 
     psImage = psSavedImage;
 
-    poColorTable = NULL;
-    panInterlaceMap = NULL;
-    nTransparentColor = 0;
-
     if (psImage == NULL)
         return;
 
@@ -457,16 +449,16 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(
     panInterlaceMap = NULL;
     if( psImage->ImageDesc.Interlace )
     {
-        int     i, j, iLine = 0;
-        
+        int iLine = 0;
+
         if( bAdvertizeInterlacedMDI )
             poDS->SetMetadataItem( "INTERLACED", "YES", "IMAGE_STRUCTURE" );
 
         panInterlaceMap = (int *) CPLCalloc(poDS->nRasterYSize,sizeof(int));
 
-        for (i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++)
         {
-            for (j = InterlacedOffset[i]; 
+            for (int j = InterlacedOffset[i];
                  j < poDS->nRasterYSize;
                  j += InterlacedJumps[i]) 
                 panInterlaceMap[j] = iLine++;
@@ -479,10 +471,8 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(
 /*      Check for transparency.  We just take the first graphic         */
 /*      control extension block we find, if any.                        */
 /* -------------------------------------------------------------------- */
-    int iExtBlock;
-
     nTransparentColor = -1;
-    for( iExtBlock = 0; iExtBlock < psImage->ExtensionBlockCount; iExtBlock++ )
+    for( int iExtBlock = 0; iExtBlock < psImage->ExtensionBlockCount; iExtBlock++ )
     {
         unsigned char *pExtData;
 
@@ -532,7 +522,7 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(
     if( nBackground != 255 )
     {
         char szBackground[10];
-        
+
         sprintf( szBackground, "%d", nBackground );
         SetMetadataItem( "GIF_BACKGROUND", szBackground );
     }

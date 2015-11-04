@@ -65,17 +65,14 @@ OGRErr OGRTopoJSONReader::Parse( const char* pszText )
 {
     if( NULL != pszText )
     {
-        json_tokener* jstok = NULL;
-        json_object* jsobj = NULL;
-
-        jstok = json_tokener_new();
-        jsobj = json_tokener_parse_ex(jstok, pszText, -1);
+        json_tokener *jstok = json_tokener_new();
+        json_object *jsobj = json_tokener_parse_ex(jstok, pszText, -1);
         if( jstok->err != json_tokener_success)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TopoJSON parsing error: %s (at offset %d)",
             	      json_tokener_error_desc(jstok->err), jstok->char_offset);
-            
+
             json_tokener_free(jstok);
             return OGRERR_CORRUPT_DATA;
         }
@@ -100,7 +97,7 @@ typedef struct
 /*                            ParsePoint()                              */
 /************************************************************************/
 
-static int ParsePoint(json_object* poPoint, double* pdfX, double* pdfY)
+static bool ParsePoint(json_object* poPoint, double* pdfX, double* pdfY)
 {
     if( poPoint != NULL && json_type_array == json_object_get_type(poPoint) &&
         json_object_array_length(poPoint) == 2 )
@@ -116,10 +113,10 @@ static int ParsePoint(json_object* poPoint, double* pdfX, double* pdfY)
         {
             *pdfX = json_object_get_double(poX);
             *pdfY = json_object_get_double(poY);
-            return TRUE;
+            return true;
         }
     }
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -375,7 +372,7 @@ static void ParseObject(const char* pszId,
         poGeom = poMultiPoly;
         ParseMultiPolygon(poMultiPoly, poArcsObj, poArcsDB, psParams);
     }
-    
+
     if( poGeom != NULL )
         poFeature->SetGeometryDirectly(poGeom);
     poLayer->AddFeature(poFeature);
@@ -602,7 +599,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     }
     else if( json_type_array == json_object_get_type( poObjects ) )
     {
-        int nObjects = json_object_array_length(poObjects);
+        const int nObjects = json_object_array_length(poObjects);
         int bNeedSecondPass = FALSE;
         for(int i=0; i<nObjects; i++)
         {

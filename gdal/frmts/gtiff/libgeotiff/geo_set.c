@@ -78,7 +78,7 @@ the new values are just kept with the GTIF structure.<p>
 int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
 {
     va_list ap;
-    int index = gtif->gt_keyindex[ keyID ];
+    int nIndex = gtif->gt_keyindex[ keyID ];
     int newvalues = 0;
     GeoKey *key;
     char *data = NULL;
@@ -97,21 +97,21 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
         /* delete the indicated tag */
         va_end(ap);
 
-        if( index < 1 )
+        if( nIndex < 1 )
             return 0;
 
-        if (gtif->gt_keys[index].gk_type == TYPE_ASCII)
+        if (gtif->gt_keys[nIndex].gk_type == TYPE_ASCII)
         {
-            _GTIFFree (gtif->gt_keys[index].gk_data);
+            _GTIFFree (gtif->gt_keys[nIndex].gk_data);
         }
 
-        while( index < gtif->gt_num_keys )
+        while( nIndex < gtif->gt_num_keys )
         {
-            _GTIFmemcpy( gtif->gt_keys + index, 
-                         gtif->gt_keys + index + 1, 
+            _GTIFmemcpy( gtif->gt_keys + nIndex, 
+                         gtif->gt_keys + nIndex + 1, 
                          sizeof(GeoKey) );
-            gtif->gt_keyindex[gtif->gt_keys[index].gk_key] = index;
-            index++;
+            gtif->gt_keyindex[gtif->gt_keys[nIndex].gk_key] = nIndex;
+            nIndex++;
         }
 
         gtif->gt_num_keys--;
@@ -136,10 +136,10 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     va_end(ap);
     
     /* We assume here that there are no multi-valued SHORTS ! */
-    if (index)
+    if (nIndex)
     {
         /* Key already exists */
-        key = gtif->gt_keys+index;
+        key = gtif->gt_keys+nIndex;
         if (type!=key->gk_type || count > key->gk_count)
         {
             /* need to reset data pointer */
@@ -154,8 +154,8 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
         /* We need to create the key */
         if (gtif->gt_num_keys == MAX_KEYS) return 0;
         key = gtif->gt_keys + ++gtif->gt_num_keys;
-        index = gtif->gt_num_keys;
-        gtif->gt_keyindex[ keyID ] = index;
+        nIndex = gtif->gt_num_keys;
+        gtif->gt_keyindex[ keyID ] = nIndex;
         key->gk_key = keyID;
         key->gk_type = type;
         key->gk_count = count;

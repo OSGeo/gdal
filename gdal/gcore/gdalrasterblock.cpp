@@ -34,7 +34,7 @@
 
 CPL_CVSID("$Id$");
 
-static int bCacheMaxInitialized = FALSE;
+static bool bCacheMaxInitialized = false;
 static GIntBig nCacheMax = 40 * 1024*1024;
 static volatile GIntBig nCacheUsed = 0;
 
@@ -50,7 +50,7 @@ static CPLMutex *hRBLock = NULL;
 
 static CPLLock* hRBLock = NULL;
 static int bDebugContention = FALSE;
-static int bSleepsForBockCacheDebug = FALSE;
+static bool bSleepsForBockCacheDebug = false;
 static CPLLockType GetLockType()
 {
     static int nLockType = -1;
@@ -138,7 +138,7 @@ void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
     }
 #endif
 
-    bCacheMaxInitialized = TRUE;
+    bCacheMaxInitialized = true;
     nCacheMax = nNewSizeInBytes;
 
 /* -------------------------------------------------------------------- */
@@ -180,13 +180,13 @@ int CPL_STDCALL GDALGetCacheMax()
     GIntBig nRes = GDALGetCacheMax64();
     if (nRes > INT_MAX)
     {
-        static int bHasWarned = FALSE;
+        static bool bHasWarned = false;
         if (!bHasWarned)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Cache max value doesn't fit on a 32 bit integer. "
                      "Call GDALGetCacheMax64() instead");
-            bHasWarned = TRUE;
+            bHasWarned = true;
         }
         nRes = INT_MAX;
     }
@@ -221,7 +221,7 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
         bSleepsForBockCacheDebug = CSLTestBoolean(CPLGetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "NO"));
 
         const char* pszCacheMax = CPLGetConfigOption("GDAL_CACHEMAX",NULL);
-        bCacheMaxInitialized = TRUE;
+        bCacheMaxInitialized = true;
         if( pszCacheMax != NULL )
         {
             GIntBig nNewCacheMax = (GIntBig)CPLScanUIntBig(pszCacheMax, strlen(pszCacheMax));
@@ -257,13 +257,13 @@ int CPL_STDCALL GDALGetCacheUsed()
 {
     if (nCacheUsed > INT_MAX)
     {
-        static int bHasWarned = FALSE;
+        static bool bHasWarned = false;
         if (!bHasWarned)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Cache used value doesn't fit on a 32 bit integer. "
                      "Call GDALGetCacheUsed64() instead");
-            bHasWarned = TRUE;
+            bHasWarned = true;
         }
         return INT_MAX;
     }
@@ -814,11 +814,11 @@ CPLErr GDALRasterBlock::Internalize()
 /* -------------------------------------------------------------------- */
 /*      Flush old blocks if we are nearing our memory limit.            */
 /* -------------------------------------------------------------------- */
-    int bFirstIter = TRUE;
-    int bLoopAgain;
+    bool bFirstIter = true;
+    bool bLoopAgain = false;
     do
     {
-        bLoopAgain = FALSE;
+        bLoopAgain = false;
         GDALRasterBlock* apoBlocksToFree[64];
         int nBlocksToFree = 0;
         {
@@ -874,7 +874,7 @@ CPLErr GDALRasterBlock::Internalize()
                 Touch_unlocked();
         }
 
-        bFirstIter = FALSE;
+        bFirstIter = false;
 
         /* Now free blocks we have detached and removed from their band */
         for(int i=0;i<nBlocksToFree;i++)

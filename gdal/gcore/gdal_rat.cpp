@@ -500,13 +500,11 @@ GDALRATGetLinearBinning( GDALRasterAttributeTableH hRAT,
 CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 
 {
-    CPLXMLNode *psTree = NULL;
-    CPLXMLNode *psRow = NULL;
-
-    if( ( GetColumnCount() == 0 ) && ( GetRowCount() == 0 ) ) 
+    if( ( GetColumnCount() == 0 ) && ( GetRowCount() == 0 ) )
  	    return NULL;
 
-    psTree = CPLCreateXMLNode( NULL, CXT_Element, "GDALRasterAttributeTable" );
+    CPLXMLNode *psTree
+        = CPLCreateXMLNode( NULL, CXT_Element, "GDALRasterAttributeTable" );
 
 /* -------------------------------------------------------------------- */
 /*      Add attributes with regular binning info if appropriate.        */
@@ -516,29 +514,27 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 
     if( GetLinearBinning(&dfRow0Min, &dfBinSize) )
     {
-        CPLsprintf( szValue, "%.16g", dfRow0Min );
-        CPLCreateXMLNode( 
-            CPLCreateXMLNode( psTree, CXT_Attribute, "Row0Min" ), 
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", dfRow0Min );
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( psTree, CXT_Attribute, "Row0Min" ),
             CXT_Text, szValue );
 
-        CPLsprintf( szValue, "%.16g", dfBinSize );
-        CPLCreateXMLNode( 
-            CPLCreateXMLNode( psTree, CXT_Attribute, "BinSize" ), 
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", dfBinSize );
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( psTree, CXT_Attribute, "BinSize" ),
             CXT_Text, szValue );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Define each column.                                             */
 /* -------------------------------------------------------------------- */
-    int iCol;
     int iColCount = GetColumnCount();
 
-    for( iCol = 0; iCol < iColCount; iCol++ )
+    for( int iCol = 0; iCol < iColCount; iCol++ )
     {
-        CPLXMLNode *psCol;
+        CPLXMLNode *psCol
+            = CPLCreateXMLNode( psTree, CXT_Element, "FieldDefn" );
 
-        psCol = CPLCreateXMLNode( psTree, CXT_Element, "FieldDefn" );
-        
         sprintf( szValue, "%d", iCol );
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psCol, CXT_Attribute, "index" ), 
@@ -557,11 +553,11 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 /* -------------------------------------------------------------------- */
 /*      Write out each row.                                             */
 /* -------------------------------------------------------------------- */
-    int iRow;
-    int iRowCount = GetRowCount();
+    const int iRowCount = GetRowCount();
     CPLXMLNode *psTail = NULL;
+    CPLXMLNode *psRow = NULL;
 
-    for( iRow = 0; iRow < iRowCount; iRow++ )
+    for( int iRow = 0; iRow < iRowCount; iRow++ )
     {
         psRow = CPLCreateXMLNode( NULL, CXT_Element, "Row" );
         if( psTail == NULL )
@@ -575,14 +571,14 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
             CPLCreateXMLNode( psRow, CXT_Attribute, "index" ), 
             CXT_Text, szValue );
 
-        for( iCol = 0; iCol < iColCount; iCol++ )
+        for( int iCol = 0; iCol < iColCount; iCol++ )
         {
             const char *pszValue = szValue;
 
             if( GetTypeOfCol(iCol) == GFT_Integer )
-                sprintf( szValue, "%d", GetValueAsInt(iRow, iCol) );
+                snprintf( szValue, sizeof(szValue), "%d", GetValueAsInt(iRow, iCol) );
             else if( GetTypeOfCol(iCol) == GFT_Real )
-                CPLsprintf( szValue, "%.16g", GetValueAsDouble(iRow, iCol) );
+                CPLsnprintf( szValue, sizeof(szValue), "%.16g", GetValueAsDouble(iRow, iCol) );
             else
                 pszValue = GetValueAsString(iRow, iCol);
 
@@ -781,8 +777,6 @@ CPLErr GDALRasterAttributeTable::InitializeFromColorTable(
     const GDALColorTable *poTable )
 
 {
-    int iRow;
-
     if( GetRowCount() > 0 || GetColumnCount() > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -799,7 +793,7 @@ CPLErr GDALRasterAttributeTable::InitializeFromColorTable(
 
     SetRowCount( poTable->GetColorEntryCount() );
 
-    for( iRow = 0; iRow < poTable->GetColorEntryCount(); iRow++ )
+    for( int iRow = 0; iRow < poTable->GetColorEntryCount(); iRow++ )
     {
         GDALColorEntry sEntry;
 
@@ -860,12 +854,10 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
 /* -------------------------------------------------------------------- */
 /*      Establish which fields are red, green, blue and alpha.          */
 /* -------------------------------------------------------------------- */
-    int iRed, iGreen, iBlue, iAlpha;
-
-    iRed = GetColOfUsage( GFU_Red );
-    iGreen = GetColOfUsage( GFU_Green );
-    iBlue = GetColOfUsage( GFU_Blue );
-    iAlpha = GetColOfUsage( GFU_Alpha );
+    int iRed = GetColOfUsage( GFU_Red );
+    int iGreen = GetColOfUsage( GFU_Green );
+    int iBlue = GetColOfUsage( GFU_Blue );
+    int iAlpha = GetColOfUsage( GFU_Alpha );
 
     if( iRed == -1 || iGreen == -1 || iBlue == -1 )
         return NULL;
@@ -876,17 +868,14 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
 /* -------------------------------------------------------------------- */
     if( nEntryCount == -1 )
     {
-        int  iRow;
-        int  iMaxCol;
-
-        iMaxCol = GetColOfUsage( GFU_Max );
+        int  iMaxCol = GetColOfUsage( GFU_Max );
         if( iMaxCol == -1 )
             iMaxCol = GetColOfUsage( GFU_MinMax );
 
         if( iMaxCol == -1 || GetRowCount() == 0 )
             return NULL;
-    
-        for( iRow = 0; iRow < GetRowCount(); iRow++ )
+
+        for( int iRow = 0; iRow < GetRowCount(); iRow++ )
             nEntryCount = MAX(nEntryCount,GetValueAsInt(iRow,iMaxCol)+1);
 
         if( nEntryCount < 0 )
@@ -900,9 +889,8 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
 /*      Assign values to color table.                                   */
 /* -------------------------------------------------------------------- */
     GDALColorTable *poCT = new GDALColorTable();
-    int iEntry;
 
-    for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
+    for( int iEntry = 0; iEntry < nEntryCount; iEntry++ )
     {
         GDALColorEntry sColor;
         int iRow = GetRowOfValue( iEntry );
@@ -921,7 +909,7 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
             else
                 sColor.c4 = (short) GetValueAsInt( iRow, iAlpha );
         }
-        
+
         poCT->SetColorEntry( iEntry, &sColor );
     }
 
@@ -940,7 +928,6 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
 GDALColorTableH CPL_STDCALL 
 GDALRATTranslateToColorTable( GDALRasterAttributeTableH hRAT,
                               int nEntryCount )
-                                 
 
 {
     VALIDATE_POINTER1( hRAT, "GDALRATTranslateToColorTable", NULL );
@@ -1049,7 +1036,7 @@ GDALRasterAttributeTableH CPL_STDCALL GDALCreateRasterAttributeTable()
 //! Copy constructor.
 
 GDALDefaultRasterAttributeTable::GDALDefaultRasterAttributeTable( 
-    const GDALDefaultRasterAttributeTable &oOther )
+    const GDALDefaultRasterAttributeTable &oOther ) : GDALRasterAttributeTable()
 
 {
     // We have tried to be careful to allow wholesale assignment
@@ -1142,8 +1129,7 @@ const char *GDALDefaultRasterAttributeTable::GetNameOfCol( int iCol ) const
     if( iCol < 0 || iCol >= (int) aoFields.size() )
         return "";
 
-    else
-        return aoFields[iCol].sName;
+    return aoFields[iCol].sName;
 }
 
 /************************************************************************/
@@ -1174,8 +1160,7 @@ GDALRATFieldUsage GDALDefaultRasterAttributeTable::GetUsageOfCol( int iCol ) con
     if( iCol < 0 || iCol >= (int) aoFields.size() )
         return GFU_Generic;
 
-    else
-        return aoFields[iCol].eUsage;
+    return aoFields[iCol].eUsage;
 }
 
 /************************************************************************/
@@ -1206,8 +1191,7 @@ GDALRATFieldType GDALDefaultRasterAttributeTable::GetTypeOfCol( int iCol ) const
     if( iCol < 0 || iCol >= (int) aoFields.size() )
         return GFT_Integer;
 
-    else
-        return aoFields[iCol].eType;
+    return aoFields[iCol].eType;
 }
 
 /************************************************************************/
@@ -1235,9 +1219,7 @@ GDALRATGetTypeOfCol( GDALRasterAttributeTableH hRAT, int iCol )
 int GDALDefaultRasterAttributeTable::GetColOfUsage( GDALRATFieldUsage eUsage ) const
 
 {
-    unsigned int i;
-
-    for( i = 0; i < aoFields.size(); i++ )
+    for( unsigned int i = 0; i < aoFields.size(); i++ )
     {
         if( aoFields[i].eUsage == eUsage )
             return i;
@@ -1482,8 +1464,7 @@ void GDALDefaultRasterAttributeTable::SetRowCount( int nNewCount )
     if( nNewCount == nRowCount )
         return;
 
-    unsigned int iField;
-    for( iField = 0; iField < aoFields.size(); iField++ )
+    for( unsigned int iField = 0; iField < aoFields.size(); iField++ )
     {
         switch( aoFields[iField].eType )
         {
@@ -1522,7 +1503,7 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
 
     if( iRow == nRowCount )
         SetRowCount( nRowCount+1 );
-    
+
     if( iRow < 0 || iRow >= nRowCount )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1536,11 +1517,11 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
       case GFT_Integer:
         aoFields[iField].anValues[iRow] = atoi(pszValue);
         break;
-        
+
       case GFT_Real:
         aoFields[iField].adfValues[iRow] = CPLAtof(pszValue);
         break;
-        
+
       case GFT_String:
         aoFields[iField].aosValues[iRow] = pszValue;
         break;
@@ -1584,7 +1565,7 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
 
     if( iRow == nRowCount )
         SetRowCount( nRowCount+1 );
-    
+
     if( iRow < 0 || iRow >= nRowCount )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1598,11 +1579,11 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
       case GFT_Integer:
         aoFields[iField].anValues[iRow] = nValue;
         break;
-        
+
       case GFT_Real:
         aoFields[iField].adfValues[iRow] = nValue;
         break;
-        
+
       case GFT_String:
       {
           char szValue[100];
@@ -1651,7 +1632,7 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
 
     if( iRow == nRowCount )
         SetRowCount( nRowCount+1 );
-    
+
     if( iRow < 0 || iRow >= nRowCount )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1665,16 +1646,16 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
       case GFT_Integer:
         aoFields[iField].anValues[iRow] = (int) dfValue;
         break;
-        
+
       case GFT_Real:
         aoFields[iField].adfValues[iRow] = dfValue;
         break;
-        
+
       case GFT_String:
       {
           char szValue[100];
 
-          CPLsprintf( szValue, "%.15g", dfValue );
+          CPLsnprintf( szValue, sizeof(szValue), "%.15g", dfValue );
           aoFields[iField].aosValues[iRow] = szValue;
       }
       break;
@@ -1762,18 +1743,16 @@ int GDALDefaultRasterAttributeTable::GetRowOfValue( double dfValue ) const
         poMin = &(aoFields[nMinCol]);
     else
         poMin = NULL;
-    
+
     if( nMaxCol != -1 )
         poMax = &(aoFields[nMaxCol]);
     else
         poMax = NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Search through rows for match.                                  */
 /* -------------------------------------------------------------------- */
-    int   iRow;
-
-    for( iRow = 0; iRow < nRowCount; iRow++ )
+    for( int iRow = 0; iRow < nRowCount; iRow++ )
     {
         if( poMin != NULL )
         {

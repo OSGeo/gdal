@@ -248,8 +248,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 }
             }
             double dvalue = double(value);
-            double bbvalue = MSGN_NODATA_VALUE;
-            bbvalue = dvalue * poGDS->msg_reader_core->get_calibration_parameters()[orig_band_no-1].cal_slope +
+            double bbvalue = dvalue * poGDS->msg_reader_core->get_calibration_parameters()[orig_band_no-1].cal_slope +
                 poGDS->msg_reader_core->get_calibration_parameters()[orig_band_no-1].cal_offset;
 
             ((double *)pImage)[nBlockXSize-1 -c] = bbvalue;
@@ -285,7 +284,9 @@ double MSGNRasterBand::GetMaximum(int *pbSuccess ) {
 /* ==================================================================== */
 /************************************************************************/
 
-MSGNDataset::MSGNDataset() {
+MSGNDataset::MSGNDataset() :
+    fp(NULL)
+{
     pszProjection = CPLStrdup("");
     msg_reader_core = 0;
 }
@@ -343,11 +344,11 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALOpenInfo* open_info = poOpenInfo;
 
     if (!poOpenInfo->bStatOK) {
-        if ( EQUALN(poOpenInfo->pszFilename, "HRV:", 4) ) {
+        if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "HRV:") ) {
             open_info = new GDALOpenInfo(&poOpenInfo->pszFilename[4], poOpenInfo->eAccess);
             open_mode = MODE_HRV;
         } else
-        if ( EQUALN(poOpenInfo->pszFilename, "RAD:", 4 ) ) {
+        if ( STARTS_WITH_CI(poOpenInfo->pszFilename, "RAD:") ) {
             open_info = new GDALOpenInfo(&poOpenInfo->pszFilename[4], poOpenInfo->eAccess);
             open_mode = MODE_RAD;
         }
@@ -366,8 +367,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /* check if this is a "NATIVE" MSG format image */
-    if( !EQUALN((char *)open_info->pabyHeader,
-                "FormatName                  : NATIVE", 36) )
+    if( !STARTS_WITH_CI((char *)open_info->pabyHeader, "FormatName                  : NATIVE") )
     {
         if (open_info != poOpenInfo) {
             delete open_info;

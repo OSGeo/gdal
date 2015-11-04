@@ -972,7 +972,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
       myAssert (numUsed == 4);
       bds += numUsed;
       t_numBytes += numUsed;
-      origVal = (f_negative) ? -1 * uli_temp : uli_temp;
+      origVal = (f_negative) ? -1 * (sInt4)uli_temp : uli_temp;
       memBitRead (&mbit, sizeof (mbit), bds, 5, &bufLoc, &numUsed);
       memBitRead (&f_negative, sizeof (f_negative), bds, 1, &bufLoc,
                   &numUsed);
@@ -981,7 +981,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
       memBitRead (&uli_temp, sizeof (sInt4), bds, mbit, &bufLoc, &numUsed);
       bds += numUsed;
       t_numBytes += numUsed;
-      fstDiff = (f_negative) ? -1 * uli_temp : uli_temp;
+      fstDiff = (f_negative) ? -1 * (sInt4)uli_temp : uli_temp;
    }
    memBitRead (&nbit, sizeof (nbit), bds, 5, &bufLoc, &numUsed);
    bds += numUsed;
@@ -993,7 +993,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
    memBitRead (&uli_temp, sizeof (sInt4), bds, nbit, &bufLoc, &numUsed);
    bds += numUsed;
    t_numBytes += numUsed;
-   minVal = (f_negative) ? -1 * uli_temp : uli_temp;
+   minVal = (f_negative) ? -1 * (sInt4)uli_temp : uli_temp;
    memBitRead (&LX, sizeof (LX), bds, 16, &bufLoc, &numUsed);
    bds += numUsed;
    t_numBytes += numUsed;

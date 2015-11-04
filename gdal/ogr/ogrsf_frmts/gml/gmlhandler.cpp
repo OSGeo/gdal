@@ -968,7 +968,7 @@ int GMLHandler::IsConditionMatched(const char* pszCondition, void* attr)
     if( *pszIter == '\0' )
         return bCondMet;
 
-    if( strncmp(pszIter, "and", 3) == 0 )
+    if( STARTS_WITH(pszIter, "and") )
     {
         pszIter += 3;
         if( !bCondMet )
@@ -976,7 +976,7 @@ int GMLHandler::IsConditionMatched(const char* pszCondition, void* attr)
         return IsConditionMatched(pszIter, attr);
     }
 
-    if( strncmp(pszIter, "or", 2) == 0 )
+    if( STARTS_WITH(pszIter, "or") )
     {
         pszIter += 2;
         if( bCondMet )
@@ -1076,7 +1076,7 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
                 const char* pszElement = poState->osPath.c_str();
                 CPLString osFieldName;
                 /* Strip member| prefix. Should always be true normally */
-                if( strncmp(pszElement, "member|", strlen("member|")) == 0 )
+                if( STARTS_WITH(pszElement, "member|") )
                     osFieldName = pszElement + strlen("member|");
 
                 /* Replace layer|property by layer_property */
@@ -1302,7 +1302,7 @@ OGRErr GMLHandler::startElementDefault(const char *pszName, int nLenName, void* 
     /* WFS 2.0 GetFeature documents have a wfs:FeatureCollection */
     /* as a wfs:member of the top wfs:FeatureCollection. We don't want this */
     /* wfs:FeatureCollection to be recognized as a feature */
-    else if( (!(nLenName == strlen("FeatureCollection") &&
+    else if( (!(nLenName == (int)strlen("FeatureCollection") &&
                 strcmp(pszName, "FeatureCollection") == 0)) &&
              (nClassIndex = m_poReader->GetFeatureElementIndex( pszName, nLenName, eAppSchemaType )) != -1 )
     {

@@ -78,25 +78,25 @@ int GeoJSONIsObject( const char* pszText )
 /************************************************************************/
 
 static
-int GeoJSONFileIsObject( GDALOpenInfo* poOpenInfo ) 
-{ 
+bool GeoJSONFileIsObject( GDALOpenInfo* poOpenInfo )
+{
     // by default read first 6000 bytes 
     // 6000 was chosen as enough bytes to  
     // enable all current tests to pass 
 
     if( poOpenInfo->fpL == NULL ||
-        !poOpenInfo->TryToIngest(6000) ) 
-    { 
-        return FALSE; 
-    } 
+        !poOpenInfo->TryToIngest(6000) )
+    {
+        return false;
+    }
 
     if( !GeoJSONIsObject((const char*)poOpenInfo->pabyHeader) )
     {
-        return FALSE;
+        return false;
     }
 
-    return TRUE; 
-} 
+    return true;
+}
 
 /************************************************************************/
 /*                           GeoJSONGetSourceType()                     */
@@ -121,7 +121,7 @@ GeoJSONSourceType GeoJSONGetSourceType( GDALOpenInfo* poOpenInfo )
     else if( EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "geojson" )
              || EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "json" )
              || EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "topojson" )
-             || ((EQUALN( poOpenInfo->pszFilename, "/vsigzip/", 9) || EQUALN( poOpenInfo->pszFilename, "/vsizip/", 8)) &&
+             || ((STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/") || STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsizip/")) &&
                  (strstr( poOpenInfo->pszFilename, ".json") || strstr( poOpenInfo->pszFilename, ".JSON") ||
                   strstr( poOpenInfo->pszFilename, ".geojson") || strstr( poOpenInfo->pszFilename, ".GEOJSON")) ))
     {
@@ -148,11 +148,11 @@ GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource )
 {
     GeoJSONProtocolType ptclType = eGeoJSONProtocolUnknown;
 
-    if( EQUALN( pszSource, "http:", 5 ) )
+    if( STARTS_WITH_CI(pszSource, "http:") )
         ptclType = eGeoJSONProtocolHTTP;
-    else if( EQUALN( pszSource, "https:", 6 ) )
+    else if( STARTS_WITH_CI(pszSource, "https:") )
         ptclType = eGeoJSONProtocolHTTPS;
-    else if( EQUALN( pszSource, "ftp:", 4 ) )
+    else if( STARTS_WITH_CI(pszSource, "ftp:") )
         ptclType = eGeoJSONProtocolFTP;
 
     return ptclType;
@@ -188,10 +188,10 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
         {
             if( nVal == MY_INT64_MIN || nVal == MY_INT64_MAX )
             {
-                static int bWarned = FALSE;
+                static bool bWarned = false;
                 if( !bWarned )
                 {
-                    bWarned = TRUE;
+                    bWarned = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Integer values probably ranging out of 64bit integer range "
                              "have been found. Will be clamped to INT64_MIN/INT64_MAX");
@@ -255,7 +255,7 @@ OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
 
     OGRField sWrkField;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    int bSuccess = OGRParseDate( pszStr, &sWrkField, 0 );
+    const bool bSuccess = OGRParseDate( pszStr, &sWrkField, 0 );
     CPLPopErrorHandler();
     CPLErrorReset();
     if( bSuccess )
@@ -280,8 +280,8 @@ OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
 const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry )
 {
     CPLAssert( NULL != poGeometry );
-    
-    OGRwkbGeometryType eType = poGeometry->getGeometryType();
+
+    const OGRwkbGeometryType eType = poGeometry->getGeometryType();
 
     if( wkbPoint == eType || wkbPoint25D == eType )
         return "Point";
@@ -300,4 +300,3 @@ const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry )
     else
         return "Unknown";
 }
-

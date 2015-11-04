@@ -52,7 +52,7 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget );
 /*                               Usage()                                */
 /************************************************************************/
 
-void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf( "\nUsage: gdalsrsinfo [options] srs_def\n"
@@ -133,6 +133,7 @@ int main( int argc, char ** argv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy( argv );
             return 0;
         }
         else if( EQUAL(argv[i], "-h") || EQUAL(argv[i], "--help") )
@@ -285,9 +286,7 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
     } 
        
     /* try to open with GDAL */
-    if( strncmp(pszInput, "http://spatialreference.org/",
-                strlen("http://spatialreference.org/")) != 0 )
-    {
+    if( !STARTS_WITH(pszInput, "http://spatialreference.org/") )    {
         CPLDebug( "gdalsrsinfo", "trying to open with GDAL" );
         poGDALDS = (GDALDataset *) GDALOpenEx( pszInput, 0, NULL, NULL, NULL );
     }
@@ -546,7 +545,7 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget )
             continue;
             /* do nothing */;
 
-        // else if( EQUALN(pszLine,"include ",8) )
+        // else if( STARTS_WITH_CI(pszLine, "include ") )
         // {
         //     eErr = importFromDict( pszLine + 8, pszCode );
         //     if( eErr != OGRERR_UNSUPPORTED_SRS )

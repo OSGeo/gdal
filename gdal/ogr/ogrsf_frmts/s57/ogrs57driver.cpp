@@ -58,7 +58,7 @@ OGRS57Driver::~OGRS57Driver()
         delete poRegistrar;
         poRegistrar = NULL;
     }
-    
+
     if( hS57RegistrarMutex != NULL )
     {
         CPLDestroyMutex(hS57RegistrarMutex);
@@ -93,12 +93,11 @@ static int OGRS57DriverIdentify( GDALOpenInfo* poOpenInfo )
 GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRS57DataSource    *poDS;
 
     if( !OGRS57DriverIdentify(poOpenInfo) )
         return NULL;
 
-    poDS = new OGRS57DataSource(poOpenInfo->papszOpenOptions);
+    OGRS57DataSource *poDS = new OGRS57DataSource(poOpenInfo->papszOpenOptions);
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
@@ -171,63 +170,63 @@ S57ClassRegistrar *OGRS57Driver::GetS57Registrar()
 void RegisterOGRS57()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "S57" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "S57" ) == NULL )
-    {
-        poDriver = new OGRS57Driver();
+    GDALDriver *poDriver = new OGRS57Driver();
 
-        poDriver->SetDescription( "S57" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "IHO S-57 (ENC)" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "000" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_s57.html" );
+    poDriver->SetDescription( "S57" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "IHO S-57 (ENC)" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "000" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "drv_s57.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
-"<OpenOptionList>"
-"  <Option name='" S57O_UPDATES "' type='string-select' description='Should update files be incorporated into the base data on the fly' default='APPLY'>"
-"    <Value>APPLY</Value>"
-"    <Value>IGNORE</Value>"
-"  </Option>"
-"  <Option name='" S57O_SPLIT_MULTIPOINT "' type='boolean' description='Should multipoint soundings be split into many single point sounding features' default='NO'/>"
-"  <Option name='" S57O_ADD_SOUNDG_DEPTH "' type='boolean' description='Should a DEPTH attribute be added on SOUNDG features and assign the depth of the sounding' default='NO'/>"
-"  <Option name='" S57O_RETURN_PRIMITIVES "' type='boolean' description='Should all the low level geometry primitives be returned as special IsolatedNode, ConnectedNode, Edge and Face layers' default='NO'/>"
-"  <Option name='" S57O_PRESERVE_EMPTY_NUMBERS "' type='boolean' description='If enabled, numeric attributes assigned an empty string as a value will be preserved as a special numeric value' default='NO'/>"
-"  <Option name='" S57O_LNAM_REFS "' type='boolean' description='Should LNAM and LNAM_REFS fields be attached to features capturing the feature to feature relationships in the FFPT group of the S-57 file' default='YES'/>"
-"  <Option name='" S57O_RETURN_LINKAGES "' type='boolean' description='Should additional attributes relating features to their underlying geometric primtives be attached' default='NO'/>"
-"  <Option name='" S57O_RECODE_BY_DSSI "' type='boolean' description='Should attribute values be recoded to UTF-8 from the character encoding specified in the S57 DSSI record.' default='NO'/>"
-"</OpenOptionList>");
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
-"<CreationOptionList>"
-"   <Option name='S57_EXPP' type='int' description='Exchange purpose' default='1'/>"
-"   <Option name='S57_INTU' type='int' description='Intended usage' default='4'/>"
-"   <Option name='S57_EDTN' type='string' description='Edition number' default='2'/>"
-"   <Option name='S57_UPDN' type='string' description='Update number' default='0'/>"
-"   <Option name='S57_UADT' type='string' description='Update application date' default='20030801'/>"
-"   <Option name='S57_ISDT' type='string' description='Issue date' default='20030801'/>"
-"   <Option name='S57_STED' type='string' description='Edition number of S-57' default='03.1'/>"
-"   <Option name='S57_AGEN' type='int' description='Producing agency' default='540'/>"
-"   <Option name='S57_COMT' type='string' description='Comment' default=''/>"
-"   <Option name='S57_NOMR' type='int' description='Number of meta records (objects with acronym starting with \"M_\")' default='0'/>"
-"   <Option name='S57_NOGR' type='int' description='Number of geo records' default='0'/>"
-"   <Option name='S57_NOLR' type='int' description='Number of collection records' default='0'/>"
-"   <Option name='S57_NOIN' type='int' description='Number of isolated node records' default='0'/>"
-"   <Option name='S57_NOCN' type='int' description='Number of connected node records' default='0'/>"
-"   <Option name='S57_NOED' type='int' description='Number of edge records' default='0'/>"
-"   <Option name='S57_HDAT' type='int' description='Horizontal geodetic datum' default='2'/>"
-"   <Option name='S57_VDAT' type='int' description='Vertical datum' default='17'/>"
-"   <Option name='S57_SDAT' type='int' description='Sounding datum' default='23'/>"
-"   <Option name='S57_CSCL' type='int' description='Compilation scale of data (1:X)' default='52000'/>"
-"</CreationOptionList>" );
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='" S57O_UPDATES "' type='string-select' description='Should update files be incorporated into the base data on the fly' default='APPLY'>"
+        "    <Value>APPLY</Value>"
+        "    <Value>IGNORE</Value>"
+        "  </Option>"
+        "  <Option name='" S57O_SPLIT_MULTIPOINT "' type='boolean' description='Should multipoint soundings be split into many single point sounding features' default='NO'/>"
+        "  <Option name='" S57O_ADD_SOUNDG_DEPTH "' type='boolean' description='Should a DEPTH attribute be added on SOUNDG features and assign the depth of the sounding' default='NO'/>"
+        "  <Option name='" S57O_RETURN_PRIMITIVES "' type='boolean' description='Should all the low level geometry primitives be returned as special IsolatedNode, ConnectedNode, Edge and Face layers' default='NO'/>"
+        "  <Option name='" S57O_PRESERVE_EMPTY_NUMBERS "' type='boolean' description='If enabled, numeric attributes assigned an empty string as a value will be preserved as a special numeric value' default='NO'/>"
+        "  <Option name='" S57O_LNAM_REFS "' type='boolean' description='Should LNAM and LNAM_REFS fields be attached to features capturing the feature to feature relationships in the FFPT group of the S-57 file' default='YES'/>"
+        "  <Option name='" S57O_RETURN_LINKAGES "' type='boolean' description='Should additional attributes relating features to their underlying geometric primtives be attached' default='NO'/>"
+        "  <Option name='" S57O_RECODE_BY_DSSI "' type='boolean' description='Should attribute values be recoded to UTF-8 from the character encoding specified in the S57 DSSI record.' default='NO'/>"
+        "</OpenOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "   <Option name='S57_EXPP' type='int' description='Exchange purpose' default='1'/>"
+        "   <Option name='S57_INTU' type='int' description='Intended usage' default='4'/>"
+        "   <Option name='S57_EDTN' type='string' description='Edition number' default='2'/>"
+        "   <Option name='S57_UPDN' type='string' description='Update number' default='0'/>"
+        "   <Option name='S57_UADT' type='string' description='Update application date' default='20030801'/>"
+        "   <Option name='S57_ISDT' type='string' description='Issue date' default='20030801'/>"
+        "   <Option name='S57_STED' type='string' description='Edition number of S-57' default='03.1'/>"
+        "   <Option name='S57_AGEN' type='int' description='Producing agency' default='540'/>"
+        "   <Option name='S57_COMT' type='string' description='Comment' default=''/>"
+        "   <Option name='S57_NOMR' type='int' description='Number of meta records (objects with acronym starting with \"M_\")' default='0'/>"
+        "   <Option name='S57_NOGR' type='int' description='Number of geo records' default='0'/>"
+        "   <Option name='S57_NOLR' type='int' description='Number of collection records' default='0'/>"
+        "   <Option name='S57_NOIN' type='int' description='Number of isolated node records' default='0'/>"
+        "   <Option name='S57_NOCN' type='int' description='Number of connected node records' default='0'/>"
+        "   <Option name='S57_NOED' type='int' description='Number of edge records' default='0'/>"
+        "   <Option name='S57_HDAT' type='int' description='Horizontal geodetic datum' default='2'/>"
+        "   <Option name='S57_VDAT' type='int' description='Vertical datum' default='17'/>"
+        "   <Option name='S57_SDAT' type='int' description='Sounding datum' default='23'/>"
+        "   <Option name='S57_CSCL' type='int' description='Compilation scale of data (1:X)' default='52000'/>"
+        "</CreationOptionList>" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRS57Driver::Open;
-        poDriver->pfnIdentify = OGRS57DriverIdentify;
-        poDriver->pfnCreate = OGRS57Driver::Create;
+    poDriver->pfnOpen = OGRS57Driver::Open;
+    poDriver->pfnIdentify = OGRS57DriverIdentify;
+    poDriver->pfnCreate = OGRS57Driver::Create;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

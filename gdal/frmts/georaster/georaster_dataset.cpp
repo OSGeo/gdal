@@ -101,8 +101,8 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
 
     char* pszFilename = poOpenInfo->pszFilename;
 
-    if( EQUALN( pszFilename, "georaster:", 10 ) == false &&
-        EQUALN( pszFilename, "geor:", 5 )       == false )
+    if( STARTS_WITH_CI(pszFilename, "georaster:") == false &&
+        STARTS_WITH_CI(pszFilename, "geor:")       == false )
     {
         return false;
     }
@@ -215,10 +215,10 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
 
         for( i = 0; i < n; i++ )
         {
-            if ( EQUALN( papszRPC_MD[i], "MIN_LAT", 7 )  ||
-                 EQUALN( papszRPC_MD[i], "MIN_LONG", 8 ) ||
-                 EQUALN( papszRPC_MD[i], "MAX_LAT", 7 )  ||
-                 EQUALN( papszRPC_MD[i], "MAX_LONG", 8 ) )
+            if ( STARTS_WITH_CI(papszRPC_MD[i], "MIN_LAT")  ||
+                 STARTS_WITH_CI(papszRPC_MD[i], "MIN_LONG") ||
+                 STARTS_WITH_CI(papszRPC_MD[i], "MAX_LAT")  ||
+                 STARTS_WITH_CI(papszRPC_MD[i], "MAX_LONG") )
             {
                 continue;
             }
@@ -294,7 +294,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     poGRD->SetMetadataItem( "COMPRESSION", CPLGetXMLValue( poGRW->phMetadata,
         "rasterInfo.compression.type", "NONE" ), "IMAGE_STRUCTURE" );
 
-    if( EQUALN( poGRW->sCompressionType.c_str(), "JPEG", 4 ) )
+    if( STARTS_WITH_CI(poGRW->sCompressionType.c_str(), "JPEG") )
     {
         poGRD->SetMetadataItem( "COMPRESS_QUALITY",
             CPLGetXMLValue( poGRW->phMetadata,
@@ -479,7 +479,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     pszFetched = CSLFetchNameValue( papszOptions, "COMPRESS" );
 
     if( pszFetched != NULL &&
-        ( EQUALN( pszFetched, "JPEG", 4 ) ||
+        ( STARTS_WITH_CI(pszFetched, "JPEG") ||
           EQUAL( pszFetched, "DEFLATE" ) ) )
     {
         poGRW->sCompressionType = pszFetched;
@@ -547,7 +547,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
       poGRW->sInterleaving = "BIP";
     }
 
-    if( EQUALN( poGRW->sCompressionType.c_str(), "JPEG", 4 ) )
+    if( STARTS_WITH_CI(poGRW->sCompressionType.c_str(), "JPEG") )
     {
         if( ! EQUAL( poGRW->sInterleaving.c_str(), "BIP" ) )
         {
@@ -1683,7 +1683,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     
     int nNewSRID = 0;    
    
-    char *pszFuncName = "FIND_GEOG_CRS";
+    const char *pszFuncName = "FIND_GEOG_CRS";
   
     if( poSRS2->IsProjected() )
     {
@@ -1812,7 +1812,7 @@ char **GeoRasterDataset::GetMetadataDomainList()
 
 char **GeoRasterDataset::GetMetadata( const char *pszDomain )
 {
-    if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) )
+    if( pszDomain != NULL && STARTS_WITH_CI(pszDomain, "SUBDATASETS") )
         return papszSubdatasets;
     else
         return GDALDataset::GetMetadata( pszDomain );
@@ -2149,7 +2149,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     {
         strcpy( szMethod, "NN" );
     }
-    else if( EQUALN( pszResampling, "AVERAGE", 7 ) )
+    else if( STARTS_WITH_CI(pszResampling, "AVERAGE") )
     {
         strcpy( szMethod, "AVERAGE4" );
     }

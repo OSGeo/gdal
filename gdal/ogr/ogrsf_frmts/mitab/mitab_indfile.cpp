@@ -149,17 +149,17 @@ int TABINDFile::Open(const char *pszFname, const char *pszAccess,
      * Note that for write access, we actually need read/write access to
      * the file.
      *----------------------------------------------------------------*/
-    if (EQUALN(pszAccess, "r", 1) && strchr(pszAccess, '+') != NULL)
+    if (STARTS_WITH_CI(pszAccess, "r") && strchr(pszAccess, '+') != NULL)
     {
         m_eAccessMode = TABReadWrite;
         pszAccess = "rb+";
     }
-    else if (EQUALN(pszAccess, "r", 1))
+    else if (STARTS_WITH_CI(pszAccess, "r"))
     {
         m_eAccessMode = TABRead;
         pszAccess = "rb";
     }
-    else if (EQUALN(pszAccess, "w", 1))
+    else if (STARTS_WITH_CI(pszAccess, "w"))
     {
         m_eAccessMode = TABWrite;
         pszAccess = "wb+";
@@ -1780,6 +1780,7 @@ int TABINDNode::SplitNode()
                 poTmpNode->SetPrevNodePtr(poNewNode->GetNodeBlockPtr()) != 0 ||
                 poTmpNode->CommitToFile() != 0)
             {
+                delete poTmpNode;
                 return -1;
             }
             delete poTmpNode;
@@ -1838,6 +1839,7 @@ int TABINDNode::SplitNode()
                 poTmpNode->SetNextNodePtr(poNewNode->GetNodeBlockPtr()) != 0 ||
                 poTmpNode->CommitToFile() != 0)
             {
+                delete poTmpNode;
                 return -1;
             }
             delete poTmpNode;

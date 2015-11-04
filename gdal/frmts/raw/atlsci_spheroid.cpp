@@ -68,9 +68,11 @@ SpheroidItem :: ~SpheroidItem()
       CPLFree(spheroid_name);
 }
 
-SpheroidList :: SpheroidList()
+SpheroidList :: SpheroidList() :
+    num_spheroids(0),
+    epsilonR(0.0),
+    epsilonI(0.0)
 {
-  num_spheroids=0;
 }
 
 SpheroidList :: ~SpheroidList()
@@ -79,78 +81,62 @@ SpheroidList :: ~SpheroidList()
 
 char *SpheroidList :: GetSpheroidNameByRadii( double eq_radius, double polar_radius )
 {
-  int index=0;
-  double er=0.0;
-  double pr=0.0;
-
-  for(index=0;index<num_spheroids;index++)
+  for( int index = 0; index < num_spheroids; index++ )
   {
-    er = spheroids[index].equitorial_radius;
-    pr = spheroids[index].polar_radius;
+    const double er = spheroids[index].equitorial_radius;
+    const double pr = spheroids[index].polar_radius;
     if ((fabs(er - eq_radius) < epsilonR) && (fabs(pr - polar_radius) < epsilonR))
       return CPLStrdup(spheroids[index].spheroid_name);
   }
-  
+
   return NULL;
 
 }
 
 char *SpheroidList :: GetSpheroidNameByEqRadiusAndInvFlattening( double eq_radius, double inverse_flattening )
 {
-  int index=0;
-  double er=0.0;
-  double invf=0.0;
-
-  for(index=0;index<num_spheroids;index++)
+  for( int index = 0; index < num_spheroids; index++ )
   {
-    er = spheroids[index].equitorial_radius;
-    invf = spheroids[index].inverse_flattening;
+    const double er = spheroids[index].equitorial_radius;
+    const double invf = spheroids[index].inverse_flattening;
     if ((fabs(er - eq_radius) < epsilonR) && (fabs(invf - inverse_flattening) < epsilonI))
       return CPLStrdup(spheroids[index].spheroid_name);
   }
-  
-  return NULL;
 
+  return NULL;
 }
 
 double SpheroidList :: GetSpheroidEqRadius( const char *spheroid_name )
 {
-  int index=0;
-
-  for(index=0;index<num_spheroids;index++)
+  for( int index = 0; index < num_spheroids; index++ )
   {
     if EQUAL(spheroids[index].spheroid_name,spheroid_name)
       return spheroids[index].equitorial_radius;
   }
-  
-  return -1.0;
 
+  return -1.0;
 }
 
 int SpheroidList :: SpheroidInList( const char *spheroid_name )
 {
   /* Return 1 if the spheroid name is recognized; 0 otherwise */
-  int index=0;
-
-  for(index=0;index<num_spheroids;index++)
+  for( int index = 0; index < num_spheroids; index++)
   {
     if EQUAL(spheroids[index].spheroid_name,spheroid_name) 
       return 1;
   }
-  
+
   return 0;
 }
 
 double SpheroidList :: GetSpheroidInverseFlattening( const char *spheroid_name )
 {
-  int index=0;
-
-  for(index=0;index<num_spheroids;index++)
+  for( int index = 0; index < num_spheroids; index++ )
   {
     if  EQUAL(spheroids[index].spheroid_name,spheroid_name)
       return spheroids[index].inverse_flattening;
   }
-  
+
   return -1.0;
 
 }
@@ -164,8 +150,6 @@ double SpheroidList :: GetSpheroidPolarRadius( const char *spheroid_name )
     if (strcmp(spheroids[index].spheroid_name,spheroid_name) == 0)
       return spheroids[index].polar_radius;
   }
-  
+
   return -1.0;
-
 }
-

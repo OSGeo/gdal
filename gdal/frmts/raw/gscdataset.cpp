@@ -42,7 +42,7 @@ CPL_CVSID("$Id$");
 class GSCDataset : public RawDataset
 {
     VSILFILE	*fpImage;	// image data file.
-    
+
     double	adfGeoTransform[6];
 
   public:
@@ -50,7 +50,7 @@ class GSCDataset : public RawDataset
     	        ~GSCDataset();
 
     CPLErr 	GetGeoTransform( double * padfTransform );
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -58,7 +58,8 @@ class GSCDataset : public RawDataset
 /*                            GSCDataset()                             */
 /************************************************************************/
 
-GSCDataset::GSCDataset()
+GSCDataset::GSCDataset() :
+    fpImage(NULL)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -66,7 +67,6 @@ GSCDataset::GSCDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    fpImage = NULL;
 }
 
 /************************************************************************/
@@ -100,7 +100,6 @@ CPLErr GSCDataset::GetGeoTransform( double * padfTransform )
 GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		nPixels, nLines, i, nRecordLen;
 
 /* -------------------------------------------------------------------- */
 /*      Does this plausible look like a GSC Geogrid file?               */
@@ -114,16 +113,19 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
         || poOpenInfo->pabyHeader[15] != 0x00 )
         return NULL;
 
-    nRecordLen = CPL_LSBWORD32(((GInt32 *) poOpenInfo->pabyHeader)[0]);
-    nPixels = CPL_LSBWORD32(((GInt32 *) poOpenInfo->pabyHeader)[1]);
-    nLines  = CPL_LSBWORD32(((GInt32 *) poOpenInfo->pabyHeader)[2]);
+    int nRecordLen =
+        CPL_LSBWORD32(reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader)[0] );
+    const int nPixels =
+        CPL_LSBWORD32(reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader)[1] );
+    const int nLines =
+        CPL_LSBWORD32(reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader)[2] );
 
     if( nPixels < 1 || nLines < 1 || nPixels > 100000 || nLines > 100000 )
         return NULL;
 
     if( nRecordLen != nPixels * 4 )
         return NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -134,15 +136,13 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
     nRecordLen += 8; /* for record length markers */
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GSCDataset 	*poDS;
-
-    poDS = new GSCDataset();
+    GSCDataset *poDS = new GSCDataset();
 
     poDS->nRasterXSize = nPixels;
     poDS->nRasterYSize = nLines;
@@ -172,7 +172,7 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    for( i = 0; i < 8; i++ )
+    for( int i = 0; i < 8; i++ )
     {
         CPL_LSBPTR32( afHeaderInfo + i );
     }
@@ -183,21 +183,20 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[3] = afHeaderInfo[5];
     poDS->adfGeoTransform[4] = 0.0;
     poDS->adfGeoTransform[5] = -afHeaderInfo[1];
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    RawRasterBand *poBand;
 #ifdef CPL_LSB
-    int	bNative = TRUE;
+    const int bNative = TRUE;
 #else
-    int bNative = FALSE;
+    const int bNative = FALSE;
 #endif
 
-    poBand = new RawRasterBand( poDS, 1, poDS->fpImage,
-                                nRecordLen * 2 + 4,
-                                sizeof(float), nRecordLen,
-                                GDT_Float32, bNative, TRUE );
+    RawRasterBand *poBand = new RawRasterBand( poDS, 1, poDS->fpImage,
+                                               nRecordLen * 2 + 4,
+                                               sizeof(float), nRecordLen,
+                                               GDT_Float32, bNative, TRUE );
     poDS->SetBand( 1, poBand );
 
     poBand->SetNoDataValue( -1.0000000150474662199e+30 );
@@ -207,7 +206,7 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
@@ -223,23 +222,20 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_GSC()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "GSC" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GSC" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "GSC" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "GSC" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "GSC Geogrid" );
-//        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-//                                   "frmt_various.html#GSC" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    // poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+    //                            "frmt_various.html#GSC" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = GSCDataset::Open;
+    poDriver->pfnOpen = GSCDataset::Open;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

@@ -279,25 +279,67 @@ def mem_5():
     return 'success'
 
 ###############################################################################
-# Test out-of-memory situations (simulated by multiplication overflows)
+# Test out-of-memory situations
 
 def mem_6():
+    
+    if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
+        return 'skip'
 
     drv = gdal.GetDriverByName('MEM')
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16, options = ['INTERLEAVE=PIXEL'] )
-    gdal.PopErrorHandler()
+    # Multiplication overflow
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 1, 1, 0x7FFFFFFF, gdal.GDT_Float64 )
     if ds is not None:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16, gdal.GDT_Float64 )
-    gdal.PopErrorHandler()
+    # Multiplication overflow
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16 )
     if ds is not None:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
+
+    # Multiplication overflow
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1, gdal.GDT_Float64 )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    # Out of memory error
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1, options = ['INTERLEAVE=PIXEL'] )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Out of memory error
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1 )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    # 32 bit overflow on 32-bit builds, or possible out of memory error
+    ds = drv.Create( '', 0x7FFFFFFF, 1, 0 )
+    with gdaltest.error_handler():
+        ds.AddBand(gdal.GDT_Float64)
+
+    # Will raise out of memory error in all cases
+    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 0 )
+    with gdaltest.error_handler():
+        ret = ds.AddBand(gdal.GDT_Float64)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 

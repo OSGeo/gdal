@@ -59,15 +59,16 @@ void OGRWFSRecursiveUnlink( const char *pszName )
         CPLString osFullFilename =
                  CPLFormFilename( pszName, papszFileList[i], NULL );
 
-        VSIStatL( osFullFilename, &sStatBuf );
-
-        if( VSI_ISREG( sStatBuf.st_mode ) )
+        if( VSIStatL( osFullFilename, &sStatBuf ) == 0 )
         {
-            VSIUnlink( osFullFilename );
-        }
-        else if( VSI_ISDIR( sStatBuf.st_mode ) )
-        {
-            OGRWFSRecursiveUnlink( osFullFilename );
+            if( VSI_ISREG( sStatBuf.st_mode ) )
+            {
+                VSIUnlink( osFullFilename );
+            }
+            else if( VSI_ISDIR( sStatBuf.st_mode ) )
+            {
+                OGRWFSRecursiveUnlink( osFullFilename );
+            }
         }
     }
 
@@ -367,7 +368,7 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
             eFType = OFTString;
 
         OGRFieldDefn oField( poProperty->GetName(), eFType );
-        if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
+        if ( STARTS_WITH_CI(oField.GetNameRef(), "ogr:") )
             oField.SetName(poProperty->GetName()+4);
         if( poProperty->GetWidth() > 0 )
             oField.SetWidth( poProperty->GetWidth() );
@@ -642,18 +643,18 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHi
 /*               OGRWFSFetchContentDispositionFilename()                */
 /************************************************************************/
 
-const char* OGRWFSFetchContentDispositionFilename(char** papszHeaders)
+static const char* OGRWFSFetchContentDispositionFilename(char** papszHeaders)
 {
     char** papszIter = papszHeaders;
     while(papszIter && *papszIter)
     {
         /* For multipart, we have in raw format, but without end-of-line characters */
-        if (strncmp(*papszIter, "Content-Disposition: attachment; filename=", 42) == 0)
+        if (STARTS_WITH(*papszIter, "Content-Disposition: attachment; filename="))
         {
             return *papszIter + 42;
         }
         /* For single part, the headers are in KEY=VAL format, but with e-o-l ... */
-        else if (strncmp(*papszIter, "Content-Disposition=attachment; filename=", 41) == 0)
+        else if (STARTS_WITH(*papszIter, "Content-Disposition=attachment; filename="))
         {
             char* pszVal = (char*)(*papszIter + 41);
             char* pszEOL = strchr(pszVal, '\r');
@@ -735,7 +736,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     {
         const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
                                                     osURL.c_str());
-        if( strncmp(osURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
+        if( STARTS_WITH(osURL, "/vsimem/") &&
             CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
         {
             pszStreamingName = osURL.c_str();
@@ -1483,17 +1484,18 @@ GIntBig OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         osFileInZipTmpFileName += papszDirContent[0];
 
         fp = VSIFOpenL(osFileInZipTmpFileName.c_str(), "rb");
-        if (fp == NULL)
+        VSIStatBufL sBuf;
+        if (fp == NULL || VSIStatL(osFileInZipTmpFileName.c_str(), &sBuf) != 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot parse result of RESULTTYPE=hits request : cannot open one file in zip");
             CSLDestroy(papszDirContent);
             CPLHTTPDestroyResult(psResult);
             VSIUnlink(osTmpFileName);
+            if( fp )
+                VSIFCloseL(fp);
             return -1;
         }
-        VSIStatBufL sBuf;
-        VSIStatL(osFileInZipTmpFileName.c_str(), &sBuf);
         pabyData = (char*) CPLMalloc((size_t)(sBuf.st_size + 1));
         pabyData[sBuf.st_size] = 0;
         VSIFReadL(pabyData, 1, (size_t)sBuf.st_size, fp);

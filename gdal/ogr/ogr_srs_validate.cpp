@@ -677,8 +677,8 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
     {
         OGR_SRSNode     *poNode;
         int             i;
-        int             bGotVertDatum = FALSE;
-        int             bGotUnit = FALSE;
+        bool            bGotVertDatum = false;
+        bool            bGotUnit = false;
         int             nCountAxis = 0;
 
         for( i = 1; i < poRoot->GetChildCount(); i++ )
@@ -690,14 +690,14 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                 OGRErr eErr = ValidateVertDatum(poNode);
                 if (eErr != OGRERR_NONE)
                     return eErr;
-                bGotVertDatum = TRUE;
+                bGotVertDatum = true;
             }
             else if( EQUAL(poNode->GetValue(),"UNIT") )
             {
                 OGRErr eErr = ValidateUnit(poNode);
                 if (eErr != OGRERR_NONE)
                     return eErr;
-                bGotUnit = TRUE;
+                bGotUnit = true;
             }
             else if( EQUAL(poNode->GetValue(),"AXIS") )
             {
@@ -755,9 +755,9 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
     {
         OGR_SRSNode     *poNode;
         int             i;
-        int             bGotDatum = FALSE;
-        int             bGotPrimeM = FALSE;
-        int             bGotUnit = FALSE;
+        bool            bGotDatum = false;
+        bool            bGotPrimeM = false;
+        bool            bGotUnit = false;
         int             nCountAxis = 0;
 
         for( i = 1; i < poRoot->GetChildCount(); i++ )
@@ -766,11 +766,11 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 
             if( EQUAL(poNode->GetValue(),"DATUM") )
             {
-                bGotDatum = TRUE;
+                bGotDatum = true;
             }
             else if( EQUAL(poNode->GetValue(),"PRIMEM") )
             {
-                bGotPrimeM = TRUE;
+                bGotPrimeM = true;
 
                 if( poNode->GetChildCount() < 2 
                     || poNode->GetChildCount() > 3 )
@@ -788,7 +788,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                 OGRErr eErr = ValidateUnit(poNode);
                 if (eErr != OGRERR_NONE)
                     return eErr;
-                bGotUnit = TRUE;
+                bGotUnit = true;
             }
             else if( EQUAL(poNode->GetValue(),"AXIS") )
             {
@@ -1049,7 +1049,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
     if( poDATUM != NULL )
     {
         OGR_SRSNode     *poSPHEROID;
-        int             bGotSpheroid = FALSE;
+        bool            bGotSpheroid = false;
         int             i;
 
         if( poDATUM->GetChildCount() == 0 )
@@ -1068,7 +1068,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             if( EQUAL(poNode->GetValue(),"SPHEROID") )
             {
                 poSPHEROID = poDATUM->GetChild(1);
-                bGotSpheroid = TRUE;
+                bGotSpheroid = true;
 
                 if( poSPHEROID->GetChildCount() != 3 
                     && poSPHEROID->GetChildCount() != 4 )
@@ -1455,4 +1455,3 @@ OGRErr OGRSpatialReference::ValidateUnit(OGR_SRSNode *poRoot)
 
     return OGRERR_NONE;
 }
-

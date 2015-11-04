@@ -4209,7 +4209,6 @@ SWIGINTERN PyObject *_wrap_GetWellKnownGeogCSAsWKT(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -4294,7 +4293,6 @@ SWIGINTERN PyObject *_wrap_GetUserInputAsWKT(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -4898,7 +4896,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetAuthority(PyObject *SWIGUNUSEDPAR
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -5037,7 +5034,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetAttrValue(PyObject *SWIGUNUSEDPAR
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -5113,7 +5109,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetAngularUnits(PyObject *SWIGUNUSED
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -5232,7 +5227,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTargetLinearUnits(PyObject *SWIGU
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -5308,7 +5302,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLinearUnits(PyObject *SWIGUNUSEDP
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -5383,7 +5376,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLinearUnitsAndUpdateParameters(Py
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -5609,7 +5601,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetUTM(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -5735,7 +5726,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetStatePlane(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -5785,7 +5775,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_AutoIdentifyEPSG(PyObject *SWIGUNUSE
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -5845,7 +5834,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetProjection(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -5920,7 +5908,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetProjParm(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -6056,7 +6043,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetNormProjParm(PyObject *SWIGUNUSED
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -6323,7 +6309,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetACEA(PyObject *SWIGUNUSEDPARM(sel
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -6411,7 +6396,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetAE(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -6499,7 +6483,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetBonne(PyObject *SWIGUNUSEDPARM(se
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -6587,7 +6570,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetCEA(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -6675,7 +6657,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetCS(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -6781,7 +6762,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetEC(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -6860,7 +6840,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetEckertIV(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -6939,7 +6918,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetEckertVI(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7027,7 +7005,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetEquirectangular(PyObject *SWIGUNU
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7124,7 +7101,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetEquirectangular2(PyObject *SWIGUN
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7221,7 +7197,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGaussSchreiberTMercator(PyObject 
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7300,7 +7275,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGS(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7379,7 +7353,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGH(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7428,7 +7401,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetIGH(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7516,7 +7488,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGEOS(PyObject *SWIGUNUSEDPARM(sel
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7604,7 +7575,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGnomonic(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7719,7 +7689,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetHOM(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7843,7 +7812,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetHOM2PNO(PyObject *SWIGUNUSEDPARM(
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -7958,7 +7926,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetKrovak(PyObject *SWIGUNUSEDPARM(s
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8046,7 +8013,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLAEA(PyObject *SWIGUNUSEDPARM(sel
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8152,7 +8118,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLCC(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8249,7 +8214,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLCC1SP(PyObject *SWIGUNUSEDPARM(s
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8355,7 +8319,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLCCB(PyObject *SWIGUNUSEDPARM(sel
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8443,7 +8406,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetMC(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8540,7 +8502,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetMercator(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8619,7 +8580,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetMollweide(PyObject *SWIGUNUSEDPAR
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8707,7 +8667,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetNZMG(PyObject *SWIGUNUSEDPARM(sel
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8804,7 +8763,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetOS(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8892,7 +8850,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetOrthographic(PyObject *SWIGUNUSED
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -8980,7 +8937,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetPolyconic(PyObject *SWIGUNUSEDPAR
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9077,7 +9033,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetPS(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9156,7 +9111,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetRobinson(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9235,7 +9189,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetSinusoidal(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9332,7 +9285,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetStereographic(PyObject *SWIGUNUSE
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9420,7 +9372,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetSOC(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9517,7 +9468,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTM(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9625,7 +9575,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTMVariant(PyObject *SWIGUNUSEDPAR
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9714,7 +9663,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTMG(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9811,7 +9759,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTMSO(PyObject *SWIGUNUSEDPARM(sel
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9890,7 +9837,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetVDG(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -9955,7 +9901,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetWellKnownGeogCS(PyObject *SWIGUNU
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10021,7 +9966,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetFromUserInput(PyObject *SWIGUNUSE
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10085,7 +10029,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_CopyGeogCSFrom(PyObject *SWIGUNUSEDP
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10205,7 +10148,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTOWGS84(PyObject *SWIGUNUSEDPARM(
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10265,7 +10207,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_GetTOWGS84(PyObject *SWIGUNUSEDPARM(
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10325,7 +10266,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLocalCS(PyObject *SWIGUNUSEDPARM(
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10474,7 +10414,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGeogCS(PyObject *SWIGUNUSEDPARM(s
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10546,7 +10485,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetProjCS(PyObject *SWIGUNUSEDPARM(s
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10614,7 +10552,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGeocCS(PyObject *SWIGUNUSEDPARM(s
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10701,7 +10638,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetVertCS(PyObject *SWIGUNUSEDPARM(s
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10796,7 +10732,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetCompoundCS(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10857,7 +10792,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromWkt(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10917,7 +10851,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromProj4(PyObject *SWIGUNUSED
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -10983,7 +10916,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromUrl(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11025,8 +10957,12 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj1);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj1,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -11083,7 +11019,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11145,7 +11080,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromEPSG(PyObject *SWIGUNUSEDP
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11203,7 +11137,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromEPSGA(PyObject *SWIGUNUSED
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11263,7 +11196,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromPCI(PyObject *SWIGUNUSEDPA
         PyErr_SetString(PyExc_TypeError, "not a sequence");
         SWIG_fail;
       }
-      int seq_size = PySequence_Size(obj3);
+      Py_ssize_t seq_size = PySequence_Size(obj3);
       if ( seq_size != 17 ) {
         PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
         SWIG_fail;
@@ -11305,7 +11238,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromPCI(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11369,7 +11301,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromUSGS(PyObject *SWIGUNUSEDP
         PyErr_SetString(PyExc_TypeError, "not a sequence");
         SWIG_fail;
       }
-      int seq_size = PySequence_Size(obj3);
+      Py_ssize_t seq_size = PySequence_Size(obj3);
       if ( seq_size != 15 ) {
         PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
         SWIG_fail;
@@ -11416,7 +11348,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromUSGS(PyObject *SWIGUNUSEDP
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11476,7 +11407,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromXML(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11569,7 +11499,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromERM(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11632,7 +11561,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromMICoordSys(PyObject *SWIGU
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11674,8 +11602,12 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromOzi(PyObject *SWIGUNUSEDPA
       SWIG_fail;
     }
     
-    int size = PySequence_Size(obj1);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem(obj1,i);
       if (PyUnicode_Check(pyObj))
       {
@@ -11737,7 +11669,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromOzi(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11813,7 +11744,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToWkt(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11901,7 +11831,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPrettyWkt(PyObject *SWIGUNUS
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -11978,7 +11907,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToProj4(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12093,7 +12021,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPCI(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12201,7 +12128,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToUSGS(PyObject *SWIGUNUSEDPAR
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12290,7 +12216,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToXML(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12368,7 +12293,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToMICoordSys(PyObject *SWIGUNU
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12488,7 +12412,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_Validate(PyObject *SWIGUNUSEDPARM(se
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12537,7 +12460,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_StripCTParms(PyObject *SWIGUNUSEDPAR
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12586,7 +12508,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_FixupOrdering(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12635,7 +12556,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_Fixup(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12684,7 +12604,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_MorphToESRI(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12733,7 +12652,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_MorphFromESRI(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
       resultobj = 0;
     }
     if (resultobj == 0) {
@@ -12850,7 +12768,7 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoint__SWIG_0(PyObj
       PyErr_SetString(PyExc_TypeError, "not a sequence");
       SWIG_fail;
     }
-    int seq_size = PySequence_Size(obj1);
+    Py_ssize_t seq_size = PySequence_Size(obj1);
     if ( seq_size != 3 ) {
       PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
       SWIG_fail;
@@ -13051,7 +12969,12 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoints(PyObject *SW
       SWIG_fail;
     }
     
-    arg2 = PySequence_Size(obj1);
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg2 = (int)size;
     arg3 = (double*) VSIMalloc(arg2*sizeof(double));
     arg4 = (double*) VSIMalloc(arg2*sizeof(double));
     arg5 = (double*) VSIMalloc(arg2*sizeof(double));

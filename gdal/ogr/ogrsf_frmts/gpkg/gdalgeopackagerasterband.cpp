@@ -24,7 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFpszFileNameTWARE.
+ * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
 #include "ogr_geopackage.h"
@@ -966,7 +966,9 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         bTileDriverSupports4Bands = WEBPSupports4Bands();
     }
     else
+    {
         CPLAssert(0);
+    }
 
     GDALDriver* poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
     if( poDriver != NULL)
@@ -1071,10 +1073,10 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             
             if( m_pabyHugeColorArray == NULL )
             {
-                if( nBlockXSize * nBlockYSize <= 65536 )
+                if( nBlockXSize <= 65536 / nBlockYSize )
                     m_pabyHugeColorArray = (GByte*) VSIMalloc(MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536);
                 else
-                    m_pabyHugeColorArray = (GByte*) VSIMalloc2(256 * 256 * 256, sizeof(int));
+                    m_pabyHugeColorArray = (GByte*) VSIMalloc2(256 * 256 * 256, sizeof(GUInt32));
             }
 
             GDALColorTable* poCT = new GDALColorTable();
@@ -1088,7 +1090,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
                                        NULL,
                                        256, /* max colors */
                                        8, /* bit depth */
-                                       (int*)m_pabyHugeColorArray, /* preallocated histogram */
+                                       (GUInt32*)m_pabyHugeColorArray, /* preallocated histogram */
                                        poCT,
                                        NULL, NULL );
 

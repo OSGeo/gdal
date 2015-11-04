@@ -258,8 +258,8 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
             GByte* pabyGeomBackup = pabyGeom;
             int nBytesBackup = nBytes;
 
-            int bAllPolyline = TRUE;
-            int bAllPolygon = TRUE;
+            bool bAllPolyline = true;
+            bool bAllPolygon = true;
 
             for(int i=0;i<nParts;i++)
             {
@@ -290,9 +290,9 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
 
                 int nSubGeomType = pabyGeom[0];
                 if ( nSubGeomType != GEOMEDIA_POLYLINE )
-                    bAllPolyline = FALSE;
+                    bAllPolyline = false;
                 if ( nSubGeomType != GEOMEDIA_POLYGON )
-                    bAllPolygon = FALSE;
+                    bAllPolygon = false;
 
                 pabyGeom += nSubBytes;
                 nBytes -= nSubBytes;

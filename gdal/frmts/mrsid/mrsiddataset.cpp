@@ -105,6 +105,13 @@ CPL_C_END
 #  define MRSID_HAVE_GETWKT
 #endif
 
+/* getTotalBandData is deprecated by getBandData, at least starting with 8.5 */
+#if defined(LTI_SDK_MAJOR) && (LTI_SDK_MAJOR > 8 || (LTI_SDK_MAJOR >= 8 && LTI_SDK_MINOR >= 5))
+#  define myGetTotalBandData getBandData
+#else
+#  define myGetTotalBandData getTotalBandData
+#endif
+
 #include "mrsidstream.h"
 
 LT_USE_NAMESPACE(LizardTech)
@@ -232,7 +239,8 @@ class MrSIDDataset : public GDALJP2AbstractDataset
     const LTIPixel      *poNDPixel;
 
     LTIDLLBuffer<LTISceneBuffer>  *poBuffer;
-    int                 nBlockXSize, nBlockYSize;
+    int                 nBlockXSize;
+    int                 nBlockYSize;
     int                 bPrevBlockRead;
     int                 nPrevBlockXOff, nPrevBlockYOff;
 
@@ -548,7 +556,7 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         poGDS->nPrevBlockYOff = nBlockYOff;
     }
 
-    memcpy( pImage, poGDS->poBuffer->getTotalBandData(nBand - 1), 
+    memcpy( pImage, poGDS->poBuffer->myGetTotalBandData(nBand - 1), 
             nBlockSize * (GDALGetDataTypeSize(poGDS->eDataType) / 8) );
 
     return CE_None;
@@ -733,7 +741,10 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 /*                           MrSIDDataset()                             */
 /************************************************************************/
 
-MrSIDDataset::MrSIDDataset(int bIsJPEG2000)
+MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
+    nBlockXSize(0),
+    nBlockYSize(0),
+    eColorSpace(LTI_COLORSPACE_INVALID)
 {
     poStream = NULL;
     poImageReader = NULL;
@@ -968,7 +979,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
         for( int iBand = 0; iBand < nBandCount; iBand++ )
         {
             GByte *pabySrcBand = (GByte *) 
-                oLTIBuffer.getTotalBandData( panBandMap[iBand] - 1 );
+                oLTIBuffer.myGetTotalBandData( panBandMap[iBand] - 1 );
 	  
             for( int iLine = 0; iLine < nBufYSize; iLine++ )
 	    {
@@ -1005,7 +1016,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                         + nLineSpace * iBufLine
                         + nBandSpace * iBand;
 
-                    pabySrc = (GByte *) oLTIBuffer.getTotalBandData( 
+                    pabySrc = (GByte *) oLTIBuffer.myGetTotalBandData( 
                         panBandMap[iBand] - 1 );
                     pabySrc += (iTmpLine * sceneWidth + iTmpPixel) * nTmpPixelSize;
 
@@ -1283,8 +1294,8 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         if( oGeo.getWKT() )
         {
             /* Workaround probable issue with GeoDSK 7 on 64bit Linux */
-            if (!(pszProjection != NULL && !EQUALN(pszProjection, "LOCAL_CS", 8)
-                && EQUALN( oGeo.getWKT(), "LOCAL_CS", 8)))
+            if (!(pszProjection != NULL && !STARTS_WITH_CI(pszProjection, "LOCAL_CS")
+                && STARTS_WITH_CI(oGeo.getWKT(), "LOCAL_CS")))
             {
                 CPLFree( pszProjection );
                 pszProjection =  CPLStrdup( oGeo.getWKT() );
@@ -1315,7 +1326,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
             {
                 if (nCountLine == 1 && strcmp(pszLine, "::MetadataFile") != 0)
                     break;
-                if (EQUALN(pszLine, "Projection UTM ", 15))
+                if (STARTS_WITH_CI(pszLine, "Projection UTM "))
                     nUTMZone = atoi(pszLine + 15);
                 else if (EQUAL(pszLine, "Datum WGS84"))
                     bWGS84 = TRUE;
@@ -1367,7 +1378,7 @@ static int MrSIDIdentify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 32 )
         return FALSE;
 
-    if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
+    if ( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "msid") )
         return FALSE;
 
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
@@ -1424,7 +1435,7 @@ static int JP2Identify( GDALOpenInfo *poOpenInfo )
             && !EQUAL(pszExtension,"j2c") && !EQUAL(pszExtension,"ntf"))
             return FALSE;
     }
-    else if( !EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
+    else if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader + 4, "jP  ") )
         return FALSE;
 
     return TRUE;

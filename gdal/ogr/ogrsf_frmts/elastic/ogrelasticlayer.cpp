@@ -1825,8 +1825,9 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 if( m_abIsGeoPoint[i] )
                 {
                     json_object *coordinates = json_object_new_array();
-                    json_object_array_add(coordinates, json_object_new_double((env.MaxX + env.MinX)*0.5));
-                    json_object_array_add(coordinates, json_object_new_double((env.MaxY + env.MinY)*0.5));
+                    const int nPrecision = 10;
+                    json_object_array_add(coordinates, json_object_new_double_with_precision((env.MaxX + env.MinX)*0.5, nPrecision));
+                    json_object_array_add(coordinates, json_object_new_double_with_precision((env.MaxY + env.MinY)*0.5, nPrecision));
 
                     if( bAddGeoJSONType )
                     {

@@ -118,6 +118,7 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy(papszArgv);
             return 0;
         }
         else if( EQUAL(papszArgv[iArg],"-ro") )
@@ -1126,7 +1127,7 @@ bye:
 /*                          GetLayerNameForSQL()                        */
 /************************************************************************/
 
-const char* GetLayerNameForSQL( GDALDataset* poDS, const char* pszLayerName )
+static const char* GetLayerNameForSQL( GDALDataset* poDS, const char* pszLayerName )
 {
     int i;
     char ch;
@@ -3476,7 +3477,7 @@ static int TestVirtualIO( GDALDataset * poDS )
 {
     int bRet = TRUE;
 
-    if( strncmp( poDS->GetDescription(), "/vsimem/", strlen("/vsimem/") ) == 0 )
+    if( STARTS_WITH(poDS->GetDescription(), "/vsimem/") )
         return TRUE;
 
     VSIStatBufL sStat;

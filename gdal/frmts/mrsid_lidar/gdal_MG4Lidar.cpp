@@ -34,10 +34,8 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 * POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************************/
-#include "lidar/MG4PointReader.h"
-#include "lidar/FileIO.h"
-#include "lidar/Error.h"
-#include "lidar/Version.h"
+#include "mg4lidar_headers.h"
+
 #include <float.h>
 LT_USE_LIDAR_NAMESPACE
 
@@ -79,12 +77,14 @@ static double MaxBlockSideSize = 1024.0;
 class MG4LidarDataset : public GDALPamDataset
 {
 friend class MG4LidarRasterBand;
+
 public:
    MG4LidarDataset();
    ~MG4LidarDataset();
    static GDALDataset *Open( GDALOpenInfo * );
    CPLErr 	GetGeoTransform( double * padfTransform );
    const char *GetProjectionRef();
+
 protected:
    MG4PointReader *reader;
    FileIO *fileIO;
@@ -94,7 +94,8 @@ protected:
    MG4LidarDataset **papoOverviewDS;
    CPLXMLNode *poXMLPCView;
    bool ownsXML;
-   int nBlockXSize, nBlockYSize;
+   int nBlockXSize;
+   int nBlockYSize;
    int iLevel;
 };
 
@@ -120,7 +121,7 @@ public:
    protected:
    double getMaxValue();
    double nodatavalue;
-   virtual const bool ElementPassesFilter(const PointData &, size_t);
+   virtual bool ElementPassesFilter(const PointData &, size_t);
    template<typename DTYPE>
    CPLErr   doReadBlock(int, int, void *);
    CPLXMLNode *poxmlBand;
@@ -308,7 +309,7 @@ const DTYPE GetChannelElement(const ChannelData &channel, size_t idx)
 }
 
 
-const bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t i)
+bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t i)
 {
    bool bClassificationOK = true;
    bool bReturnNumOK = true;
@@ -520,11 +521,14 @@ double MG4LidarRasterBand::GetNoDataValue( int *pbSuccess )
    return nodatavalue;
 }
 
-
 /************************************************************************/
 /*                            MG4LidarDataset()                             */
 /************************************************************************/
-MG4LidarDataset::MG4LidarDataset()
+
+MG4LidarDataset::MG4LidarDataset() :
+    nBlockXSize(0),
+    nBlockYSize(0),
+    iLevel(0)
 {
    reader = NULL;
    fileIO = NULL;
@@ -533,8 +537,8 @@ MG4LidarDataset::MG4LidarDataset()
    ownsXML = false;
    nOverviewCount = 0;
    papoOverviewDS = NULL;
-
 }
+
 /************************************************************************/
 /*                            ~MG4LidarDataset()                             */
 /************************************************************************/
@@ -701,7 +705,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    CPLXMLNode *pxmlPCView;
 
    // do something sensible for .sid files without a .view
-   if( EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
+   if( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "msid") )
    {
       int gen;
       bool raster;
@@ -719,7 +723,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    else
    {
       // support .view xml
-      if( !EQUALN((const char *) poOpenInfo->pabyHeader, "<PointCloudView", 15 ) )
+      if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "<PointCloudView") )
          return NULL;
 
       pxmlPCView = CPLParseXMLFile( poOpenInfo->pszFilename );
@@ -755,7 +759,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
 
    /* check magic */
    // to do:  SDK should provide an API for this.
-   if(  !EQUALN((const char *) openinfo.pabyHeader, "msid", 4)
+   if(  !STARTS_WITH_CI((const char *) openinfo.pabyHeader, "msid")
       || (*(openinfo.pabyHeader+4) != 0x4 )) // Generation 4.  ... is there more we can check?
    {
       CPLDestroyXMLNode(pxmlPCView);

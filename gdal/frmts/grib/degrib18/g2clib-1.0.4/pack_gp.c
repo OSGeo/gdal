@@ -13,7 +13,6 @@
 /*#include "f2c.h"*/
 #include <stdlib.h>
 #include "grib2.h"
-typedef g2int integer;
 typedef g2int logical;
 #define TRUE_ (1)
 #define FALSE_ (0)

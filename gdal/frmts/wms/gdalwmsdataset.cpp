@@ -48,7 +48,15 @@
 /************************************************************************/
 /*                           GDALWMSDataset()                           */
 /************************************************************************/
-GDALWMSDataset::GDALWMSDataset() {
+GDALWMSDataset::GDALWMSDataset() :
+    m_block_size_x(0),
+    m_block_size_y(0),
+    m_use_advise_read(0),
+    m_verify_advise_read(0),
+    m_offline_mode(0),
+    m_http_max_conn(0),
+    m_http_timeout(0)
+{
     m_mini_driver = 0;
     m_cache = 0;
     m_hint.m_valid = false;
@@ -585,6 +593,16 @@ CPLErr GDALWMSDataset::SetProjection(CPL_UNUSED const char *proj) {
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 CPLErr GDALWMSDataset::GetGeoTransform(double *gt) {
+    if( !(m_mini_driver_caps.m_has_geotransform) )
+    {
+        gt[0] = 0;
+        gt[1] = 1;
+        gt[2] = 0;
+        gt[3] = 0;
+        gt[4] = 0;
+        gt[5] = 1;
+        return CE_Failure;
+    }
     gt[0] = m_data_window.m_x0;
     gt[1] = (m_data_window.m_x1 - m_data_window.m_x0) / static_cast<double>(m_data_window.m_sx);
     gt[2] = 0.0;

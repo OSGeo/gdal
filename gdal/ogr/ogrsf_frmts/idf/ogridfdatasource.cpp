@@ -104,7 +104,7 @@ void OGRIDFDataSource::Parse()
             bAdvertizeUTF8 = TRUE;
             bRecodeFromLatin1 = TRUE;
         }
-        else if( strncmp(pszLine, "tbl;", 4) == 0 )
+        else if( STARTS_WITH(pszLine, "tbl;") )
         {
             poCurLayer = NULL;
             osTablename = pszLine + 4;
@@ -113,15 +113,15 @@ void OGRIDFDataSource::Parse()
             iX = iY = iNodeID = iLinkID = iCount = iFromNode = iToNode = -1;
             eLayerType = LAYER_OTHER;
         }
-        else if( strncmp(pszLine, "atr;", 4) == 0 )
+        else if( STARTS_WITH(pszLine, "atr;") )
         {
             osAtr = pszLine + 4;
         }
-        else if( strncmp(pszLine, "frm;", 4) == 0 )
+        else if( STARTS_WITH(pszLine, "frm;") )
         {
             osFrm = pszLine + 4;
         }
-        else if( strncmp(pszLine, "rec;", 4) == 0 )
+        else if( STARTS_WITH(pszLine, "rec;") )
         {
             if( poCurLayer == NULL )
             {
@@ -172,7 +172,7 @@ void OGRIDFDataSource::Parse()
                     for(int i=0; papszAtr[i]; i++)
                     {
                         OGRFieldType eType = OFTString;
-                        if( EQUALN(papszFrm[i], "decimal", strlen("decimal")) )
+                        if( STARTS_WITH_CI(papszFrm[i], "decimal") )
                         {
                             if( papszFrm[i][strlen("decimal")] == '(' )
                             {
@@ -311,7 +311,7 @@ void OGRIDFDataSource::Parse()
                     poLSNew->addPoint(poLS->getX(1), poLS->getY(1));
                     poLSNew->assignSpatialReference(poSRS);
                     poFeat->SetGeometryDirectly(poLSNew);
-                    poLinkLyr->SetFeature(poFeat);
+                    CPL_IGNORE_RET_VAL(poLinkLyr->SetFeature(poFeat));
                 }
                 delete poFeat;
             }

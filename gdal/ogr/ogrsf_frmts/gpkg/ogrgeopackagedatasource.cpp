@@ -405,7 +405,9 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference * cpoSRS)
 /*                        GDALGeoPackageDataset()                       */
 /************************************************************************/
 
-GDALGeoPackageDataset::GDALGeoPackageDataset()
+GDALGeoPackageDataset::GDALGeoPackageDataset() :
+    m_dfTMSMinX(0.0),
+    m_dfTMSMaxY(0.0)
 {
     m_bNew = FALSE;
     m_papoLayers = NULL;
@@ -524,7 +526,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     SetDescription( poOpenInfo->pszFilename );
     CPLString osFilename( poOpenInfo->pszFilename );
     CPLString osSubdatasetTableName;
-    if( EQUALN(poOpenInfo->pszFilename, "GPKG:", 5) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPKG:") )
     {
         char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", 0);
         if( CSLCount(papszTokens) != 3 )
@@ -2292,13 +2294,13 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
     char** papszMDDup = NULL;
     for( char** papszIter = GetMetadata(); papszIter && *papszIter; ++papszIter )
     {
-        if( EQUALN(*papszIter, "IDENTIFIER=", strlen("IDENTIFIER=")) )
+        if( STARTS_WITH_CI(*papszIter, "IDENTIFIER=") )
             continue;
-        if( EQUALN(*papszIter, "DESCRIPTION=", strlen("DESCRIPTION=")) )
+        if( STARTS_WITH_CI(*papszIter, "DESCRIPTION=") )
             continue;
-        if( EQUALN(*papszIter, "ZOOM_LEVEL=", strlen("ZOOM_LEVEL=")) )
+        if( STARTS_WITH_CI(*papszIter, "ZOOM_LEVEL=") )
             continue;
-        if( EQUALN(*papszIter, "GPKG_METADATA_ITEM_", strlen("GPKG_METADATA_ITEM_")) )
+        if( STARTS_WITH_CI(*papszIter, "GPKG_METADATA_ITEM_") )
             continue;
         papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
     }
@@ -2368,11 +2370,11 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
         char** papszMDDup = NULL;
         for( char** papszIter = m_papoLayers[i]->GetMetadata(); papszIter && *papszIter; ++papszIter )
         {
-            if( EQUALN(*papszIter, "IDENTIFIER=", strlen("IDENTIFIER=")) )
+            if( STARTS_WITH_CI(*papszIter, "IDENTIFIER=") )
                 continue;
-            if( EQUALN(*papszIter, "DESCRIPTION=", strlen("DESCRIPTION=")) )
+            if( STARTS_WITH_CI(*papszIter, "DESCRIPTION=") )
                 continue;
-            if( EQUALN(*papszIter, "OLMD_FID64=", strlen("OLMD_FID64=")) )
+            if( STARTS_WITH_CI(*papszIter, "OLMD_FID64=") )
                 continue;
             papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
         }
@@ -3356,7 +3358,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
     }
 
     /* Avoiding gpkg prefixes is not an official requirement, but seems wise */
-    if (strncmp(pszLayerName, "gpkg", 4) == 0)
+    if (STARTS_WITH(pszLayerName, "gpkg"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The layer name may not begin with 'gpkg' as it is a reserved geopackage prefix");
@@ -3591,7 +3593,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
         }
         
-        if( EQUALN(pszSQLCommand, "ALTER TABLE ", strlen("ALTER TABLE ")) )
+        if( STARTS_WITH_CI(pszSQLCommand, "ALTER TABLE ") )
         {
             char **papszTokens = CSLTokenizeString( pszSQLCommand );
             /* ALTER TABLE src_table RENAME TO dst_table */
@@ -3609,7 +3611,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
             CSLDestroy(papszTokens);
         }
 
-        if( !EQUALN(pszSQLCommand, "SELECT ", 7) )
+        if( !STARTS_WITH_CI(pszSQLCommand, "SELECT ") )
         {
             sqlite3_finalize( hSQLStmt );
             return NULL;
@@ -3623,7 +3625,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /*      Special case for some functions which must be run               */
 /*      only once                                                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"SELECT ",7) )
+    if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") )
     {
         unsigned int i;
         for(i=0;i<sizeof(apszFuncsWithSideEffects)/
@@ -3645,7 +3647,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
             }
         }
     }
-    else if( EQUALN(pszSQLCommand,"PRAGMA ",7) )
+    else if( STARTS_WITH_CI(pszSQLCommand, "PRAGMA ") )
     {
         if (sqlite3_column_count( hSQLStmt ) == 1 &&
             sqlite3_column_type( hSQLStmt, 0 ) == SQLITE_INTEGER )
@@ -4376,4 +4378,3 @@ const char* GDALGeoPackageDataset::GetGeometryTypeString(OGRwkbGeometryType eTyp
     }
     return pszGPKGGeomType;
 }
-

@@ -101,7 +101,7 @@ class GIFAbstractRasterBand : public GDALPamRasterBand
     SavedImage  *psImage;
 
     int         *panInterlaceMap;
-    
+
     GDALColorTable *poColorTable;
 
     int         nTransparentColor;

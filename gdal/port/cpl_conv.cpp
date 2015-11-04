@@ -31,6 +31,9 @@
 // For uselocale
 #define _XOPEN_SOURCE 700 
 
+// For atoll (at least for NetBSD)
+#define _ISOC99_SOURCE
+
 #ifdef MSVC_USE_VLD
 #include <vld.h>
 #endif
@@ -41,10 +44,6 @@
 #include <errno.h>
 
 CPL_CVSID("$Id$");
-
-#if defined(WIN32CE)
-#  include "cpl_wince.h"
-#endif
 
 static CPLMutex *hConfigMutex = NULL;
 static volatile char **papszConfigOptions = NULL;
@@ -348,7 +347,11 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
         if( chCheck != 10 )
         {
             // unget the character.
-            VSIFSeek( fp, nOriginalOffset+nActuallyRead, SEEK_SET );
+            if (VSIFSeek( fp, nOriginalOffset+nActuallyRead, SEEK_SET ) == -1)
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Unable to unget a character");
+            }
         }
     }
 
@@ -356,13 +359,13 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 /*      Trim off \n, \r or \r\n if it appears at the end.  We don't     */
 /*      need to do any "seeking" since we want the newline eaten.       */
 /* -------------------------------------------------------------------- */
-    if( nActuallyRead > 1 
-        && pszBuffer[nActuallyRead-1] == 10 
+    if( nActuallyRead > 1
+        && pszBuffer[nActuallyRead-1] == 10
         && pszBuffer[nActuallyRead-2] == 13 )
     {
         pszBuffer[nActuallyRead-2] = '\0';
     }
-    else if( pszBuffer[nActuallyRead-1] == 10 
+    else if( pszBuffer[nActuallyRead-1] == 10
              || pszBuffer[nActuallyRead-1] == 13 )
     {
         pszBuffer[nActuallyRead-1] = '\0';
@@ -509,7 +512,6 @@ static char *CPLReadLineBuffer( int nRequiredSize )
 const char *CPLReadLine( FILE * fp )
 
 {
-    char *pszRLBuffer = CPLReadLineBuffer(1);
     int         nReadSoFar = 0;
 
 /* -------------------------------------------------------------------- */
@@ -526,6 +528,7 @@ const char *CPLReadLine( FILE * fp )
 /*      the line.                                                       */
 /* -------------------------------------------------------------------- */
     int nBytesReadThisTime;
+    char* pszRLBuffer;
 
     do {
 /* -------------------------------------------------------------------- */
@@ -621,7 +624,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars, char** papszOptions )
     int nBufLength = 0;
     size_t nChunkBytesConsumed = 0;
 
-    while( TRUE )
+    while( true )
     {
 /* -------------------------------------------------------------------- */
 /*      Read a chunk from the input file.                               */
@@ -661,11 +664,11 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars, char** papszOptions )
                     break;
             }
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      copy over characters watching for end-of-line.                  */
 /* -------------------------------------------------------------------- */
-        int bBreak = FALSE;
+        bool bBreak = false;
         while( nChunkBytesConsumed < nChunkBytesRead-1 && !bBreak )
         {
             if( (szChunk[nChunkBytesConsumed] == 13
@@ -674,13 +677,13 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars, char** papszOptions )
                     && szChunk[nChunkBytesConsumed+1] == 13) )
             {
                 nChunkBytesConsumed += 2;
-                bBreak = TRUE;
+                bBreak = true;
             }
             else if( szChunk[nChunkBytesConsumed] == 10
                      || szChunk[nChunkBytesConsumed] == 13 )
             {
                 nChunkBytesConsumed += 1;
-                bBreak = TRUE;
+                bBreak = true;
             }
             else
             {
@@ -944,7 +947,7 @@ GIntBig CPLAtoGIntBig( const char* pszString )
 #if defined(__MINGW32__)
 
 // mingw atoll() doesn't return ERANGE in case of overflow
-int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
+static int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
 {
     if( strlen(pszString) <= 18 )
         return FALSE;
@@ -953,7 +956,15 @@ int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
     if( *pszString == '+' )
         pszString ++;
     char szBuffer[32];
+/* x86_64-w64-mingw32-g++ (GCC) 4.8.2 annoyingly warns */
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+#endif
     sprintf(szBuffer, CPL_FRMT_GIB, nVal);
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
     return strcmp(szBuffer, pszString) != 0;
 }
 
@@ -1043,7 +1054,7 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
 /*      On MSVC we have to scanf pointer values without the 0x          */
 /*      prefix.                                                         */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(szTemp,"0x",2) )
+    if( STARTS_WITH_CI(szTemp, "0x") )
     {
         pResult = NULL;
 
@@ -1279,7 +1290,16 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
         nMaxLen = 63;
 
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
+/* x86_64-w64-mingw32-g++ (GCC) 4.8.2 annoyingly warns */
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
+#endif
     sprintf( szTemp, "%*I64d", nMaxLen, iValue );
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
 # elif HAVE_LONG_LONG
     sprintf( szTemp, "%*lld", nMaxLen, (long long) iValue );
 //    sprintf( szTemp, "%*Ld", nMaxLen, (long long) iValue );
@@ -1326,7 +1346,7 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
     // does not prefix things with 0x so it is hard to know later if the
     // value is hex encoded.  Fix this up here. 
 
-    if( !EQUALN(szTemp,"0x",2) )
+    if( !STARTS_WITH_CI(szTemp, "0x") )
         sprintf( szTemp, "0x%p", pValue );
 
     return CPLPrintString( pszBuffer, szTemp, nMaxLen );
@@ -1421,8 +1441,6 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
  * @return Number of characters printed.
  */
 
-#ifndef WIN32CE /* XXX - mloskot - strftime is not available yet. */
-
 int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
                   const struct tm *poBrokenTime, const char *pszLocale )
 {
@@ -1442,7 +1460,7 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
 #else
     (void) pszLocale;
 #endif
-    
+
     if ( !strftime( pszTemp, nMaxLen + 1, pszFormat, poBrokenTime ) )
         memset( pszTemp, 0, nMaxLen + 1);
 
@@ -1458,8 +1476,6 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
 
     return nChars;
 }
-
-#endif
 
 /************************************************************************/
 /*                       CPLVerifyConfiguration()                       */
@@ -1477,20 +1493,9 @@ void CPLVerifyConfiguration()
 /* -------------------------------------------------------------------- */
 /*      Verify data types.                                              */
 /* -------------------------------------------------------------------- */
-#if __cplusplus >= 201103L
-    static_assert(sizeof(GInt32) == 4, "GInt32 must be 4 bytes");
-    static_assert(sizeof(GInt16) == 2, "GInt16 must be 2 bytes");
-    static_assert(sizeof(GByte) == 1, "GInt32 must be 1 byte");
-#else
-    if( sizeof(GInt32) != 4 )
-        CPLError( CE_Fatal, CPLE_AppDefined,
-                  "sizeof(GInt32) == %d ... yow!\n",
-                  (int) sizeof(GInt32) );
-
-    CPLAssert( sizeof(GInt32) == 4 );
-    CPLAssert( sizeof(GInt16) == 2 );
-    CPLAssert( sizeof(GByte) == 1 );
-#endif
+    CPL_STATIC_ASSERT( sizeof(GInt32) == 4 );
+    CPL_STATIC_ASSERT( sizeof(GInt16) == 2 );
+    CPL_STATIC_ASSERT( sizeof(GByte) == 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Verify byte order                                               */
@@ -1626,11 +1631,9 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
         pszResult = CSLFetchNameValue( (char **) papszConfigOptions, pszKey );
     }
 
-#if !defined(WIN32CE) 
     if( pszResult == NULL )
         pszResult = getenv( pszKey );
-#endif
-    
+
     if( pszResult == NULL )
         return pszDefault;
     else
@@ -1937,10 +1940,14 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
         pszHemisphere = "N";
 
     char szFormat[30];
-    CPLsprintf( szFormat, "%%3dd%%2d\'%%%d.%df\"%s", nPrecision+3, nPrecision, pszHemisphere );
+    CPLsnprintf( szFormat, sizeof(szFormat),
+                 "%%3dd%%2d\'%%%d.%df\"%s",
+                 nPrecision+3, nPrecision, pszHemisphere );
 
     static CPL_THREADLOCAL char szBuffer[50] = { 0 };
-    CPLsprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
+    CPLsnprintf( szBuffer, sizeof(szBuffer),
+                 szFormat,
+                 nDegrees, nMinutes, dfSeconds );
 
     return( szBuffer );
 }
@@ -2568,8 +2575,15 @@ int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 /*                             CPLSymlink()                             */
 /************************************************************************/
 
-int CPLSymlink( const char* pszOldPath, const char* pszNewPath,
-                CPL_UNUSED char** papszOptions )
+int CPLSymlink( const char*
+#ifndef WIN32
+                pszOldPath
+#endif
+                , const char* 
+#ifndef WIN32
+                pszNewPath
+#endif
+                ,CPL_UNUSED char** papszOptions )
 {
 #ifdef WIN32
     return -1;
@@ -2772,13 +2786,12 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
 /*      of pszFilename too all entries.                                 */
 /* -------------------------------------------------------------------- */
     CPLString osFileOnly = CPLGetFilename( pszFilename );
-    int i;
 
-    for( i = 0; papszSiblingFiles[i] != NULL; i++ )
+    for( int i = 0; papszSiblingFiles[i] != NULL; i++ )
     {
         if( EQUAL(papszSiblingFiles[i],osFileOnly) )
         {
-            strcpy( pszFilename + strlen(pszFilename) - strlen(osFileOnly), 
+            strcpy( pszFilename + strlen(pszFilename) - strlen(osFileOnly),
                     papszSiblingFiles[i] );
             return TRUE;
         }

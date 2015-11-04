@@ -473,7 +473,7 @@ static int CPLCompareKeyValueString(const char* pszKVa, const char* pszKVb)
 {
     const char* pszItera = pszKVa;
     const char* pszIterb = pszKVb;
-    while( TRUE )
+    while( true )
     {
         char cha = *pszItera;
         char chb = *pszIterb;

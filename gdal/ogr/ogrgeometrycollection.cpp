@@ -728,7 +728,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
     char        **papszGeoms;
     int         iGeom, nCumulativeLength = 0;
     OGRErr      eErr;
-    int bMustWriteComma = FALSE;
+    bool bMustWriteComma = false;
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each Geom.     */
@@ -747,7 +747,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
         {
             nSkip = strlen(pszSkipPrefix) + 1;
-            if( EQUALN(papszGeoms[iGeom] + nSkip, "Z ", 2) )
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
                 nSkip += 2;
 
             /* skip empty subgeoms */
@@ -806,7 +806,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 
         if( bMustWriteComma )
             (*ppszDstText)[nCumulativeLength++] = ',';
-        bMustWriteComma = TRUE;
+        bMustWriteComma = true;
 
         int nSkip = 0;
         if( pszSkipPrefix != NULL &&
@@ -814,7 +814,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
         {
             nSkip = strlen(pszSkipPrefix) + 1;
-            if( EQUALN(papszGeoms[iGeom] + nSkip, "Z ", 2) )
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
                 nSkip += 2;
         }
 
@@ -861,7 +861,7 @@ void OGRGeometryCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
 {
     OGREnvelope3D       oGeomEnv;
-    int                 bExtentSet = FALSE;
+    bool                bExtentSet = false;
 
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
@@ -870,7 +870,7 @@ void OGRGeometryCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
             if (!bExtentSet)
             {
                 papoGeoms[iGeom]->getEnvelope( psEnvelope );
-                bExtentSet = TRUE;
+                bExtentSet = true;
             }
             else
             {
@@ -1147,12 +1147,12 @@ OGRGeometry* OGRGeometryCollection::getCurveGeometry(const char* const* papszOpt
     OGRGeometryCollection* poGC = (OGRGeometryCollection*)
         OGRGeometryFactory::createGeometry(OGR_GT_GetCurve(getGeometryType()));
     poGC->assignSpatialReference( getSpatialReference() );
-    int bHasCurveGeometry = FALSE;
+    bool bHasCurveGeometry = false;
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
         OGRGeometry* poSubGeom = papoGeoms[iGeom]->getCurveGeometry(papszOptions);
         if( poSubGeom->hasCurveGeometry() )
-            bHasCurveGeometry = TRUE;
+            bHasCurveGeometry = true;
         poGC->addGeometryDirectly( poSubGeom );
     }
     if( !bHasCurveGeometry )

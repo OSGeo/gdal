@@ -53,7 +53,7 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
     for(i = 0; i < nBaseNameLen; i++)
     {
         szMetadataName[i] = pszBaseName[i];
-        if(EQUALN(pszBaseName + i, "_rgb_", 5) || EQUALN(pszBaseName + i, "_pan_", 5))
+        if(STARTS_WITH_CI(pszBaseName + i, "_rgb_") || STARTS_WITH_CI(pszBaseName + i, "_pan_"))
         {
             break;
         }
@@ -257,13 +257,13 @@ char** GDALMDReaderGeoEye::LoadIMDWktFile() const
     {
         // skip section (=== or ---) lines
 
-        if(EQUALN( papszLines[i], "===",3))
+        if(STARTS_WITH_CI(papszLines[i], "==="))
         {
             bBeginSection = true;
             continue;
         }
 
-        if(EQUALN( papszLines[i], "---",3) || CPLStrnlen(papszLines[i], 512) == 0)
+        if(STARTS_WITH_CI(papszLines[i], "---") || CPLStrnlen(papszLines[i], 512) == 0)
             continue;
 
         // check the metadata level

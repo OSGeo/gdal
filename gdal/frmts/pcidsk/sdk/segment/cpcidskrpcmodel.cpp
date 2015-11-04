@@ -124,7 +124,7 @@ void CPCIDSKRPCModelSegment::Load()
     // Bytes 30-35: 'SENSOR'
     // Bytes    36: Sensor Name (NULL terminated)
     
-    if (std::strncmp(pimpl_->seg_data.buffer, "RFMODEL ", 8)) 
+    if (!STARTS_WITH(pimpl_->seg_data.buffer, "RFMODEL ")) 
     {
         pimpl_->seg_data.Put("RFMODEL",0,8);
         pimpl_->userrpc = false;
@@ -146,7 +146,7 @@ void CPCIDSKRPCModelSegment::Load()
     
     // Check for the DS characters
     pimpl_->downsample = 1;
-    if (!std::strncmp(&pimpl_->seg_data.buffer[22], "DS", 2)) 
+    if (STARTS_WITH(&pimpl_->seg_data.buffer[22], "DS")) 
     {
         // Read the downsample factor
         pimpl_->downsample = pimpl_->seg_data.GetInt(24, 3);
@@ -156,13 +156,13 @@ void CPCIDSKRPCModelSegment::Load()
     //and reading with GDBIO (probably because of legacy issue)
     // see Bugzilla 255 and 254.
     bool bSecond = false;
-    if (!std::strncmp(&pimpl_->seg_data.buffer[27], "2ND", 3)) 
+    if (STARTS_WITH(&pimpl_->seg_data.buffer[27], "2ND")) 
     {
         bSecond = true;
     }
     
     // Sensor name:
-    if (!std::strncmp(&pimpl_->seg_data.buffer[30], "SENSOR", 6)) {
+    if (STARTS_WITH(&pimpl_->seg_data.buffer[30], "SENSOR")) {
         pimpl_->sensor_name = std::string(&pimpl_->seg_data.buffer[36]);
     } else {
         pimpl_->sensor_name = "";

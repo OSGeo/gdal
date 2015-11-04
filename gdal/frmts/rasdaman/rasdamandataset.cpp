@@ -34,15 +34,7 @@
 #include <string>
 #include <memory>
 #include <map>
-
-
-#define __EXECUTABLE__
-#define EARLY_TEMPLATE
-#include "raslib/template_inst.hh"
-#include "raslib/structuretype.hh"
-#include "raslib/type.hh"
-
-#include "rasodmg/database.hh"
+#include "rasdamandataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -447,7 +439,7 @@ static int getOption(const char *string, regmatch_t cMatch, int defaultValue) {
   return nRet;
 }
 
-void replace(CPLString& str, const char *from, const char *to) {
+static void replace(CPLString& str, const char *from, const char *to) {
   if(strlen(from) == 0)
     return;
   size_t start_pos = 0;
@@ -469,7 +461,7 @@ static CPLString getQuery(const char *templateString, const char* x_lo, const ch
   return result;
 }
 
-GDALDataType mapRasdamanTypesToGDAL(r_Type::r_Type_Id typeId) {
+static GDALDataType mapRasdamanTypesToGDAL(r_Type::r_Type_Id typeId) {
   switch (typeId) {
   case r_Type::ULONG:
     return GDT_UInt32;
@@ -578,7 +570,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
   }
   // check 2: the request contains --collection
   char* connString = poOpenInfo->pszFilename;
-  if (!EQUALN(connString, "rasdaman", 8)) {
+  if (!STARTS_WITH_CI(connString, "rasdaman")) {
     return NULL;
   }
 

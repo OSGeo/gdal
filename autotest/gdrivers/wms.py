@@ -638,8 +638,8 @@ def wms_15():
     if ds is None:
         return' fail'
 
-    if ds.RasterXSize != 134217728 \
-       or ds.RasterYSize != 134217728 \
+    if ds.RasterXSize != 1073741824 \
+       or ds.RasterYSize != 1073741824 \
        or ds.RasterCount != 3:
         gdaltest.post_reason( 'wrong size or bands' )
         return 'fail'
@@ -652,15 +652,15 @@ def wms_15():
     gt = ds.GetGeoTransform()
     if abs(gt[0]- -20037508.342787001) > 0.00001 \
        or abs(gt[3]- 20037508.342787001) > 0.00001 \
-       or abs(gt[1] - 0.298582141697407) > 0.00001 \
+       or abs(gt[1] - 0.037322767717361482) > 0.00001 \
        or abs(gt[2] - 0) > 0.00001 \
-       or abs(gt[5] - -0.298582141697407) > 0.00001 \
+       or abs(gt[5] - -0.037322767717361482) > 0.00001 \
        or abs(gt[4] - 0) > 0.00001:
         gdaltest.post_reason( 'wrong geotransform' )
         print(gt)
         return 'fail'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 19:
+    if ds.GetRasterBand(1).GetOverviewCount() != 22:
         gdaltest.post_reason( 'bad overview count' )
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
@@ -827,7 +827,39 @@ def wms_18():
     ds = None
         
     return 'success'
-    
+
+###############################################################################
+# Test a IIP server
+
+def wms_19():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'IIP:http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif' )
+
+    if ds is None:
+        if gdaltest.gdalurlopen('http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif&obj=Basic-Info') is None:
+            return 'skip'
+        gdaltest.post_reason( 'open failed.' )
+        return 'fail'
+
+    if ds.RasterXSize != 86400 \
+       or ds.RasterYSize != 43200 \
+       or ds.RasterCount != 3:
+        gdaltest.post_reason( 'wrong size or bands' )
+        return 'fail'
+
+    # Expected checksum seems to change over time. Hum...
+    cs = ds.GetRasterBand(1).GetOverview(ds.GetRasterBand(1).GetOverviewCount()-1).Checksum()
+    if cs == 0:
+        gdaltest.post_reason( 'Did not get expected checksum.' )
+        print(cs)
+        return 'fail'
+        
+    ds = None
+        
+    return 'success'
 ###############################################################################
 def wms_cleanup():
 
@@ -855,6 +887,7 @@ gdaltest_list = [
     wms_16,
     wms_17,
     wms_18,
+    wms_19,
     wms_cleanup ]
 
 if __name__ == '__main__':

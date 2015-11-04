@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_trans.c 1568 2009-04-22 21:10:55Z warmerdam $
+ * $Id: geo_trans.c 2678 2015-10-28 19:06:57Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to abstract translation between pixel/line and PCS
@@ -73,6 +73,7 @@ static int inv_geotransform( double *gt_in, double *gt_out )
 /*                       GTIFTiepointTranslate()                        */
 /************************************************************************/
 
+static
 int GTIFTiepointTranslate( int gcp_count, double * gcps_in, double * gcps_out,
                            double x_in, double y_in,
                            double *x_out, double *y_out )

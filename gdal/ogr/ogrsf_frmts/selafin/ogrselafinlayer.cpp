@@ -37,7 +37,7 @@
 /************************************************************************/
 /*                           Utilities functions                        */
 /************************************************************************/
-void MoveOverwrite(VSILFILE *fpDest,VSILFILE *fpSource) {
+static void MoveOverwrite(VSILFILE *fpDest,VSILFILE *fpSource) {
     VSIRewindL(fpSource);
     VSIRewindL(fpDest);
     VSIFTruncateL(fpDest,0);

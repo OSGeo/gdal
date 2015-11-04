@@ -279,7 +279,7 @@ int TABView::OpenForRead(const char *pszFname,
         const char *pszStr = m_papszTABFile[i];
         while(*pszStr != '\0' && isspace((unsigned char)*pszStr))
             pszStr++;
-        if (EQUALN(pszStr, "create view", 11))
+        if (STARTS_WITH_CI(pszStr, "create view"))
             bCreateViewFound = TRUE;
     }
 
@@ -603,6 +603,7 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
                     CPLError(CE_Failure, CPLE_NotSupported,
                      "WHERE clause in %s is not in a supported format: \"%s\"",
                              m_pszFname, m_papszTABFile[iLine]);
+                CSLDestroy(papszTok);
                 return -1;
             }
         }

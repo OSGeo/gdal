@@ -99,7 +99,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
         szHeader[MIN(nRead, sizeof(szHeader))-1] = '\0';
         
         // TODO: improve check
-        if (strncmp(szHeader, "&H", 2) != 0) {
+        if (!STARTS_WITH(szHeader, "&H")) {
             VSIFClose(fp);
             return FALSE;
         } 

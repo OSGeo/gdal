@@ -60,7 +60,7 @@ class GDALPamProxyDB
     void        SaveDB();
 }; 
 
-static int bProxyDBInitialized = FALSE;
+static bool bProxyDBInitialized = FALSE;
 static GDALPamProxyDB *poProxyDB = NULL;
 static CPLMutex *hProxyDBLock = NULL;
 
@@ -105,7 +105,7 @@ void GDALPamProxyDB::LoadDB()
     GByte  abyHeader[100];
 
     if( VSIFReadL( abyHeader, 1, 100, fpDB ) != 100 
-        || strncmp( (const char *) abyHeader, "GDAL_PROXY", 10 ) != 0 )
+        || !STARTS_WITH((const char *) abyHeader, "GDAL_PROXY") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Problem reading %s header - short or corrupt?", 
@@ -212,9 +212,7 @@ void GDALPamProxyDB::SaveDB()
 /* -------------------------------------------------------------------- */
 /*      Write names.                                                    */
 /* -------------------------------------------------------------------- */
-    unsigned int i;
-
-    for( i = 0; i < aosOriginalFiles.size(); i++ )
+    for( unsigned int i = 0; i < aosOriginalFiles.size(); i++ )
     {
         size_t nBytesWritten;
         const char *pszProxyFile;
@@ -234,6 +232,8 @@ void GDALPamProxyDB::SaveDB()
                       VSIStrerror( errno ) );
             VSIFCloseL( fpDB );
             VSIUnlink( osDBName );
+            if( hLock )
+                CPLUnlockFile( hLock );
             return;
         }
     }
@@ -270,7 +270,7 @@ static void InitProxyDB()
             }
         }
 
-        bProxyDBInitialized = TRUE;
+        bProxyDBInitialized = true;
     }
 }
 
@@ -283,9 +283,9 @@ void PamCleanProxyDB()
 {
     {
         CPLMutexHolderD( &hProxyDBLock );
-        
-        bProxyDBInitialized = FALSE;
-        
+
+        bProxyDBInitialized = false;
+
         delete poProxyDB;
         poProxyDB = NULL;
     }
@@ -351,7 +351,7 @@ const char *PamAllocateProxy( const char *pszOriginal )
     i = strlen(pszOriginal) - 1;
     while( i >= 0 && osRevProxyFile.size() < 220 )
     {
-        if( i > 6 && EQUALN(pszOriginal+i-5,":::OVR",6) )
+        if( i > 6 && STARTS_WITH_CI(pszOriginal+i-5, ":::OVR") )
             i -= 6;
 
         // make some effort to break long names at path delimiters.

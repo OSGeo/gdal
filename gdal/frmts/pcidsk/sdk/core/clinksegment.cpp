@@ -67,7 +67,7 @@ void CLinkSegment::Load()
     
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
     
-    if (std::strncmp(seg_data.buffer, "SysLinkF", 8)) 
+    if (!STARTS_WITH(seg_data.buffer, "SysLinkF")) 
     {
         seg_data.Put("SysLinkF",0,8);
         return;

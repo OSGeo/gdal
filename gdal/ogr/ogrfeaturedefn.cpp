@@ -547,10 +547,10 @@ OGRErr OGRFeatureDefn::ReorderFieldDefns( int* panMap )
  * for each field definition at position i after reordering,
  * its position before reordering was panMap[i].
  * @return OGRERR_NONE in case of success.
- * @since OGR 1.9.0
+ * @since OGR 2.1.0
  */
 
-OGRErr OGR_FD_ReorderFieldDefn( OGRFeatureDefnH hDefn, int* panMap )
+OGRErr OGR_FD_ReorderFieldDefns( OGRFeatureDefnH hDefn, int* panMap )
 
 {
     return ((OGRFeatureDefn *) hDefn)->ReorderFieldDefns( panMap );

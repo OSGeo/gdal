@@ -467,7 +467,7 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
     std::multimap<double,GNMGFID> to_see;
     std::multimap<double,GNMGFID>::iterator it;
     to_see.insert(std::pair<double,GNMGFID>(0.0, nFID));
-    LPGNMVECTOR panOutcomeEdgeId;
+    LPGNMCONSTVECTOR panOutcomeEdgeId;
 
     size_t i;
     GNMGFID nCurrenVertId, nCurrentEdgeId, nTargetVertId;
@@ -527,11 +527,11 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
     }
 }
 
-const LPGNMVECTOR GNMGraph::GetOutEdges(GNMGFID nFID) const
+LPGNMCONSTVECTOR GNMGraph::GetOutEdges(GNMGFID nFID) const
 {
     std::map<GNMGFID,GNMStdVertex>::const_iterator it = m_mstVertices.find(nFID);
     if (it != m_mstVertices.end())
-        return (const LPGNMVECTOR)&it->second.anOutEdgeFIDs;
+        return &it->second.anOutEdgeFIDs;
     return NULL;
 }
 
@@ -556,7 +556,7 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
                             std::set<GNMGFID> &markedVertIds, 
                             GNMPATH &connectedIds)
 {
-    GNMVECTOR::iterator it;
+    GNMCONSTVECTOR::const_iterator it;
     std::queue<GNMGFID> neighbours_queue;
 
     // See all given vertexes except thouse that have been already seen.
@@ -572,7 +572,7 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
             // See all outcome edges, add them to connected and than see the target
             // vertex of each edge. Add it to the queue, which will be recursively
             // seen the same way on the next iteration.
-            LPGNMVECTOR panOutcomeEdgeIDs = GetOutEdges(nCurVertID);
+            LPGNMCONSTVECTOR panOutcomeEdgeIDs = GetOutEdges(nCurVertID);
             if(NULL != panOutcomeEdgeIDs)
             {
                 for (it = panOutcomeEdgeIDs->begin(); it != panOutcomeEdgeIDs->end(); ++it)

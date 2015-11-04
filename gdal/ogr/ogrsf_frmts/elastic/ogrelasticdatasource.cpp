@@ -194,7 +194,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                         GetURL(), osLaunderedName.c_str(), m_pszMappingName), NULL);
         CPLPopErrorHandler();
         bMappingExists = psResult != NULL && psResult->pabyData != NULL &&
-                         !EQUALN((const char*)psResult->pabyData, "{}", 2);
+                         !STARTS_WITH_CI((const char*)psResult->pabyData, "{}");
         CPLHTTPDestroyResult(psResult);
     }
     
@@ -314,7 +314,7 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
         return NULL;
     }
     
-    if( strncmp((const char*) psResult->pabyData, "{\"error\":", strlen("{\"error\":")) == 0 )
+    if( STARTS_WITH((const char*) psResult->pabyData, "{\"error\":") )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s",
                     (const char*) psResult->pabyData );
@@ -358,7 +358,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
 {
     eAccess = poOpenInfo->eAccess;
     m_pszName = CPLStrdup(poOpenInfo->pszFilename);
-    m_osURL = (EQUALN(m_pszName, "ES:", 3)) ? m_pszName + 3 : m_pszName;
+    m_osURL = (STARTS_WITH_CI(m_pszName, "ES:")) ? m_pszName + 3 : m_pszName;
     if( m_osURL.size() == 0 )
     {
         const char* pszHost =
@@ -497,7 +497,7 @@ int OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &data
     CSLDestroy(papszOptions);
     if (psResult) {
         if( psResult->pszErrBuf != NULL ||
-            (psResult->pabyData && strncmp((const char*) psResult->pabyData, "{\"error\":", strlen("{\"error\":")) == 0) ||
+            (psResult->pabyData && STARTS_WITH((const char*) psResult->pabyData, "{\"error\":")) ||
             (psResult->pabyData && strstr((const char*) psResult->pabyData, "\"errors\":true,") != NULL) )
         {
             bRet = FALSE;
@@ -519,7 +519,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
 {
     eAccess = GA_Update;
     this->m_pszName = CPLStrdup(pszFilename);
-    m_osURL = (EQUALN(pszFilename, "ES:", 3)) ? pszFilename + 3 : pszFilename;
+    m_osURL = (STARTS_WITH_CI(pszFilename, "ES:")) ? pszFilename + 3 : pszFilename;
     if( m_osURL.size() == 0 )
         m_osURL = "localhost:9200";
 
@@ -573,7 +573,7 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 

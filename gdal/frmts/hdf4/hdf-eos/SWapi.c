@@ -74,6 +74,7 @@ June 05, 2003 Abe Taaheri / Bruce Beaumont
 			      in SWgeomapinfo
 ******************************************************************************/
 
+#include "cpl_port.h" /* for M_PI */
 #include "mfhdf.h"
 #include "hcomp.h"
 #include "HdfEosDef.h"
@@ -100,7 +101,6 @@ static intn  timeflag = 0;
 ** for floating scene subsetting
 ** Jul 1999 DaW
 */
-#define PI      3.141592653589793238
 #define RADOE	6371.0		/* Radius of Earth in Km */
 
 #define NSWATH 200
@@ -2288,7 +2288,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
             comma = strchr(comma, ',');
             if (comma != NULL)
             {
-               for (i=0; i<strlen(dimcheck) + 1; i++)
+               for (i=0; i<(intn)strlen(dimcheck) + 1; i++)
                {
                   dimbuf++;
                   cnt++;
@@ -7661,7 +7661,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
                                         /*  L7 float scene sub.              */
    float32	*buffer2;
    float32	*bufferc;
-   float32	deg2rad = PI/180.00;
+   float32	deg2rad = M_PI/180.00;
 
    float32	p1_long = 0.0;	/* point 1, longitude */
    float32	p2_long = 0.0;	/* point 2, longitude */
@@ -7871,7 +7871,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
 
    if (fieldflag == 1)
    {
-      pi_long = atan(y_pi/x_pi)*180.0/PI;
+      pi_long = atan(y_pi/x_pi)*180.0/M_PI;
       if (p1_long_l90_flag == 1 || p2_long_l90_flag == 1)
       {
          pi_long = pi_long - 180.0;
@@ -7934,7 +7934,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
     }
     if (fieldflag == 2)
     {
-      pi_lat = atan((sqrt(x_pi*x_pi + y_pi*y_pi)/z_pi))*180.0/PI;
+      pi_lat = atan((sqrt(x_pi*x_pi + y_pi*y_pi)/z_pi))*180.0/M_PI;
       switch(pos2)
       {
       case UL:
@@ -9406,7 +9406,7 @@ SWdefvrtregion(int32 swathID, int32 regionID, char *vertObj, float64 range[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWdefscanregion(int32 swathID, char *fieldname, float64 range[], int32 mode)
+SWdefscanregion(int32 swathID, char *fieldname, float64 range[], CPL_UNUSED int32 mode)
 {
     intn            j;		/* Loop index */
     intn            k;		/* Loop index */
@@ -10172,7 +10172,7 @@ SWdetach(int32 swathID)
 		}
 		/* Zero out dimbuf1 */
 		/* ---------------- */
-		for (k = 0; k < sizeof(dimbuf1); k++)
+		for (k = 0; k < (intn)sizeof(dimbuf1); k++)
 		{
 		    dimbuf1[k] = 0;
 		}
@@ -10204,7 +10204,7 @@ SWdetach(int32 swathID)
 		    {
 			/* Zero out dimbuf2 */
 			/* ---------------- */
-			for (k = 0; k < sizeof(dimbuf2); k++)
+			for (k = 0; k < (intn)sizeof(dimbuf2); k++)
 			{
 			    dimbuf2[k] = 0;
 			}
@@ -11425,4 +11425,3 @@ SWsdid(int32 swathID, const char *fieldname, int32 *sdid)
 
     return (status);
 }
-

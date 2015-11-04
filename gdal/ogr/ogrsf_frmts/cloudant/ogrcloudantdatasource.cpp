@@ -132,10 +132,10 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
     int bHTTP = FALSE;
-    if (strncmp(pszFilename, "http://", 7) == 0 ||
-        strncmp(pszFilename, "https://", 8) == 0)
+    if (STARTS_WITH(pszFilename, "http://") ||
+        STARTS_WITH(pszFilename, "https://"))
         bHTTP = TRUE;
-    else if (!EQUALN(pszFilename, "cloudant:", 9))
+    else if (!STARTS_WITH_CI(pszFilename, "cloudant:"))
         return FALSE;
 
     bReadWrite = bUpdateIn;
@@ -326,13 +326,13 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
             if (poSpatialRef->IsProjected())
             {
                 pszAuthName = poSpatialRef->GetAuthorityName("PROJCS");
-                if ((pszAuthName != NULL) && (strncmp(pszAuthName, "EPSG", 4) == 0))
+                if ((pszAuthName != NULL) && (STARTS_WITH(pszAuthName, "EPSG")))
                     pszEpsg = poSpatialRef->GetAuthorityCode("PROJCS");
             }
             else
             {
                 pszAuthName = poSpatialRef->GetAuthorityName("GEOGCS");
-                if ((pszAuthName != NULL) && (strncmp(pszAuthName, "EPSG", 4) == 0))
+                if ((pszAuthName != NULL) && (STARTS_WITH(pszAuthName, "EPSG")))
                     pszEpsg = poSpatialRef->GetAuthorityCode("GEOGCS");
             }
 

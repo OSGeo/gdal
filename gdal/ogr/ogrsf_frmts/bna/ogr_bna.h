@@ -58,7 +58,7 @@ class OGRBNALayer : public OGRLayer
     int                failed;
     int                curLine;
     int                nNextFID;
-    VSILFILE*              fpBNA;
+    VSILFILE*          fpBNA;
     int                nFeatures;
     int                partialIndexTable;
     OffsetAndLine*     offsetAndLineFeaturesTable;

@@ -47,8 +47,33 @@ AC_CANONICAL_HOST
 dnl Enable as much warnings as possible
 AX_CFLAGS_WARN_ALL(C_WFLAGS)
 AX_CXXFLAGS_WARN_ALL(CXX_WFLAGS)
+AX_CHECK_COMPILE_FLAG([-Werror -Wextra],[C_WFLAGS="$C_WFLAGS -Wextra" CXX_WFLAGS="$CXX_WFLAGS -Wextra"])
+AX_CHECK_COMPILE_FLAG([-Werror -Winit-self],[C_WFLAGS="$C_WFLAGS -Winit-self" CXX_WFLAGS="$CXX_WFLAGS -Winit-self"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wunused-parameter], [C_WFLAGS="$C_WFLAGS -Wunused-parameter" CXX_WFLAGS="$CXX_WFLAGS -Wunused-parameter" NO_UNUSED_PARAMETER_FLAG="-Wno-unused-parameter"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [C_WFLAGS="$C_WFLAGS -Wmissing-prototypes"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [C_WFLAGS="$C_WFLAGS -Wmissing-declarations"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wformat], [C_WFLAGS="$C_WFLAGS -Wformat" CXX_WFLAGS="$CXX_WFLAGS -Wformat"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wformat -Werror=format-security -Wno-format-nonliteral], [C_WFLAGS="$C_WFLAGS -Werror=format-security -Wno-format-nonliteral" CXX_WFLAGS="$CXX_WFLAGS -Werror=format-security -Wno-format-nonliteral"])
+
+dnl Error out on things that will fail with MSVC
+AX_CHECK_COMPILE_FLAG([-Werror -Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"])
+AX_CHECK_COMPILE_FLAG([-Werror -Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"])
+
+dnl -Wclobbered is not reliable on most gcc versions
+AX_CHECK_COMPILE_FLAG([-Werror -Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"])
+
+AX_CHECK_COMPILE_FLAG([-Werror -Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"])
+AC_LANG_PUSH([C++])
+AX_CHECK_COMPILE_FLAG([-Werror -Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor"])
+AC_LANG_POP([C++])
+
 AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)
 AC_SUBST(C_WFLAGS,$C_WFLAGS)
+AC_SUBST(NO_UNUSED_PARAMETER_FLAG,$NO_UNUSED_PARAMETER_FLAG)
+AC_SUBST(NO_SIGN_COMPARE,$NO_SIGN_COMPARE)
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -150,6 +175,7 @@ AC_CHECK_FUNCS(readlink)
 AC_CHECK_FUNCS(lstat)
 AC_CHECK_FUNCS(posix_spawnp)
 AC_CHECK_FUNCS(vfork)
+AC_CHECK_FUNCS(mmap)
 
 dnl Make sure at least these are checked under C++.  Prototypes missing on 
 dnl some platforms.
@@ -196,6 +222,9 @@ AC_ARG_ENABLE(debug,
 			     [enable debugging (disabled by default)]),
 	      [HAVE_DEBUG=$enableval], [HAVE_DEBUG=yes])
 
+CFLAGS_NOFTRAPV="$CFLAGS"
+CXXFLAGS_NOFTRAPV="$CXXFLAGS"
+
 if test "x$enable_debug" = "xyes" ; then
 
   dnl Try to strip out optimization.
@@ -215,10 +244,18 @@ if test "x$enable_debug" = "xyes" ; then
   CXXFLAGS="$CXXFLAGS -g -DDEBUG"
   CFLAGS="$CFLAGS -g -DDEBUG"
 
+  CFLAGS_NOFTRAPV="$CFLAGS"
+  CXXFLAGS_NOFTRAPV="$CXXFLAGS"
+
+  AX_CHECK_COMPILE_FLAG([-Werror -ftrapv],[CFLAGS="$CFLAGS -ftrapv" CXXFLAGS="$CXXFLAGS -ftrapv"])
+
   AC_MSG_RESULT([yes, modified CFLAGS="$CFLAGS"])
 else
   AC_MSG_RESULT([no, CFLAGS="$CFLAGS"])
 fi
+
+AC_SUBST(CFLAGS_NOFTRAPV,$CFLAGS_NOFTRAPV)
+AC_SUBST(CXXFLAGS_NOFTRAPV,$CXXFLAGS_NOFTRAPV)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if GCC 4.1 atomic builtins are really available

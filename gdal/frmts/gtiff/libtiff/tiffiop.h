@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.87 2015-08-23 17:49:01 bfriesen Exp $ */
+/* $Id: tiffiop.h,v 1.88 2015-10-19 12:04:24 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -105,29 +105,29 @@ struct tiff {
 	int                  tif_fd;           /* open file descriptor */
 	int                  tif_mode;         /* open mode (O_*) */
 	uint32               tif_flags;
-	#define TIFF_FILLORDER   0x00003 /* natural bit fill order for machine */
-	#define TIFF_DIRTYHEADER 0x00004 /* header must be written on close */
-	#define TIFF_DIRTYDIRECT 0x00008 /* current directory must be written */
-	#define TIFF_BUFFERSETUP 0x00010 /* data buffers setup */
-	#define TIFF_CODERSETUP  0x00020 /* encoder/decoder setup done */
-	#define TIFF_BEENWRITING 0x00040 /* written 1+ scanlines to file */
-	#define TIFF_SWAB        0x00080 /* byte swap file information */
-	#define TIFF_NOBITREV    0x00100 /* inhibit bit reversal logic */
-	#define TIFF_MYBUFFER    0x00200 /* my raw data buffer; free on close */
-	#define TIFF_ISTILED     0x00400 /* file is tile, not strip- based */
-	#define TIFF_MAPPED      0x00800 /* file is mapped into memory */
-	#define TIFF_POSTENCODE  0x01000 /* need call to postencode routine */
-	#define TIFF_INSUBIFD    0x02000 /* currently writing a subifd */
-	#define TIFF_UPSAMPLED   0x04000 /* library is doing data up-sampling */
-	#define TIFF_STRIPCHOP   0x08000 /* enable strip chopping support */
-	#define TIFF_HEADERONLY  0x10000 /* read header only, do not process the first directory */
-	#define TIFF_NOREADRAW   0x20000 /* skip reading of raw uncompressed image data */
-	#define TIFF_INCUSTOMIFD 0x40000 /* currently writing a custom IFD */
-	#define TIFF_BIGTIFF     0x80000 /* read/write bigtiff */
-        #define TIFF_BUF4WRITE  0x100000 /* rawcc bytes are for writing */
-        #define TIFF_DIRTYSTRIP 0x200000 /* stripoffsets/stripbytecount dirty*/
-        #define TIFF_PERSAMPLE  0x400000 /* get/set per sample tags as arrays */
-        #define TIFF_BUFFERMMAP 0x800000 /* read buffer (tif_rawdata) points into mmap() memory */
+	#define TIFF_FILLORDER   0x00003U /* natural bit fill order for machine */
+	#define TIFF_DIRTYHEADER 0x00004U /* header must be written on close */
+	#define TIFF_DIRTYDIRECT 0x00008U /* current directory must be written */
+	#define TIFF_BUFFERSETUP 0x00010U /* data buffers setup */
+	#define TIFF_CODERSETUP  0x00020U /* encoder/decoder setup done */
+	#define TIFF_BEENWRITING 0x00040U /* written 1+ scanlines to file */
+	#define TIFF_SWAB        0x00080U /* byte swap file information */
+	#define TIFF_NOBITREV    0x00100U /* inhibit bit reversal logic */
+	#define TIFF_MYBUFFER    0x00200U /* my raw data buffer; free on close */
+	#define TIFF_ISTILED     0x00400U /* file is tile, not strip- based */
+	#define TIFF_MAPPED      0x00800U /* file is mapped into memory */
+	#define TIFF_POSTENCODE  0x01000U /* need call to postencode routine */
+	#define TIFF_INSUBIFD    0x02000U /* currently writing a subifd */
+	#define TIFF_UPSAMPLED   0x04000U /* library is doing data up-sampling */
+	#define TIFF_STRIPCHOP   0x08000U /* enable strip chopping support */
+	#define TIFF_HEADERONLY  0x10000U /* read header only, do not process the first directory */
+	#define TIFF_NOREADRAW   0x20000U /* skip reading of raw uncompressed image data */
+	#define TIFF_INCUSTOMIFD 0x40000U /* currently writing a custom IFD */
+	#define TIFF_BIGTIFF     0x80000U /* read/write bigtiff */
+        #define TIFF_BUF4WRITE  0x100000U /* rawcc bytes are for writing */
+        #define TIFF_DIRTYSTRIP 0x200000U /* stripoffsets/stripbytecount dirty*/
+        #define TIFF_PERSAMPLE  0x400000U /* get/set per sample tags as arrays */
+        #define TIFF_BUFFERMMAP 0x800000U /* read buffer (tif_rawdata) points into mmap() memory */
 	uint64               tif_diroff;       /* file offset of current directory */
 	uint64               tif_nextdiroff;   /* file offset of following directory */
 	uint64*              tif_dirlist;      /* list of offsets to already seen directories to prevent IFD looping */

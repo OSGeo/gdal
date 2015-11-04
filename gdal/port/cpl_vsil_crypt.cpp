@@ -14,10 +14,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -29,17 +29,6 @@
 
 #include "cpl_vsi_virtual.h"
 
-/* Increase Major in case of backward incompatible changes */
-#define VSICRYPT_CURRENT_MAJOR          1
-#define VSICRYPT_CURRENT_MINOR          0
-#define VSICRYPT_SIGNATURE              "VSICRYPT" /* Must be 8 cars */
-
-#define VSICRYPT_PREFIX_WITHOUT_SLASH   "/vsicrypt"
-#define VSICRYPT_PREFIX                 "/vsicrypt/"
-
-#define VSICRYPT_READ  0x1
-#define VSICRYPT_WRITE 0x2
-
 CPL_C_START
 void CPL_DLL VSIInstallCryptFileHandler(void);
 void CPL_DLL VSISetCryptKey(const GByte* pabyKey, int nKeySize);
@@ -47,7 +36,19 @@ CPL_C_END
 
 CPL_CVSID("$Id$");
 
+static const char VSICRYPT_PREFIX[] = "/vsicrypt/";
+
 #if defined(HAVE_CRYPTOPP) || defined(DOXYGEN_SKIP)
+
+/* Increase Major in case of backward incompatible changes */
+static const int VSICRYPT_CURRENT_MAJOR = 1;
+static const int VSICRYPT_CURRENT_MINOR = 0;
+static const char VSICRYPT_SIGNATURE[] = "VSICRYPT";  // Must be 8 chars.
+
+static const char VSICRYPT_PREFIX_WITHOUT_SLASH[] = "/vsicrypt";
+
+static const unsigned int VSICRYPT_READ = 0x1;
+static const unsigned int VSICRYPT_WRITE = 0x2;
 
 /* Begin of crypto++ headers */
 
@@ -372,10 +373,10 @@ class VSICryptFileHeader
 /*                         VSICryptReadError()                          */
 /************************************************************************/
 
-static int VSICryptReadError()
+static bool VSICryptReadError()
 {
     CPLError(CE_Failure, CPLE_FileIO, "Cannot read header");
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -427,6 +428,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
 {
     GByte abySignature[8];
     fp->Seek(0, SEEK_SET);
+    CPL_STATIC_ASSERT(sizeof(VSICRYPT_SIGNATURE) == 8+1);
     if( fp->Read(abySignature, 8, 1) == 0 ||
         memcmp(abySignature, VSICRYPT_SIGNATURE, 8) != 0 )
     {
@@ -448,7 +450,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
         return VSICryptReadError();
     if( fp->Read(&nMinorVersion, 1, 1) == 0 )
         return VSICryptReadError();
-    
+
     if( nMajorVersion != VSICRYPT_CURRENT_MAJOR )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -459,11 +461,11 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
     {
         CPLDebug("VSICRYPT", "Minor version in file is %d", nMinorVersion);
     }
-    
+
     if( fp->Read(&nSectorSize, 2, 1) == 0 )
         return VSICryptReadError();
     nSectorSize = CPL_LSBWORD16(nSectorSize);
-    
+
     GByte nAlg, nMode;
     if( fp->Read(&nAlg, 1, 1) == 0 ||
         fp->Read(&nMode, 1, 1) == 0 )
@@ -484,7 +486,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
     }
     eAlg = (VSICryptAlg)nAlg;
     eMode = (VSICryptMode)nMode;
-    
+
     GByte nIVSize;
     if( fp->Read(&nIVSize, 1, 1) == 0 )
         return VSICryptReadError();
@@ -500,7 +502,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
     osFreeText.resize(nFreeTextSize);
     if( fp->Read((void*)osFreeText.c_str(), 1, nFreeTextSize) != nFreeTextSize )
         return VSICryptReadError();
-    
+
     GByte nKeyCheckSize;
     if( fp->Read(&nKeyCheckSize, 1, 1) == 0 )
         return VSICryptReadError();
@@ -511,7 +513,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
         osKeyCheck.resize(nKeyCheckSize);
         if( fp->Read((void*)osKeyCheck.c_str(), 1, nKeyCheckSize) != nKeyCheckSize )
             return VSICryptReadError();
-        
+
         if( osKey.size() == 0 && pabyGlobalKey == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -632,7 +634,7 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle* fp, CryptoPP::BlockCipher*
 
     GUInt16 nSectorSizeToWrite = CPL_LSBWORD16(nSectorSize);
     bRet &= (fp->Write(&nSectorSizeToWrite, 2, 1) == 1);
-    
+
     GByte nAlg = (GByte)eAlg;
     bRet &= (fp->Write(&nAlg, 1, 1) == 1);
 
@@ -655,13 +657,13 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle* fp, CryptoPP::BlockCipher*
     GUIntBig nPayloadFileSizeToWrite = nPayloadFileSize;
     CPL_LSBPTR64(&nPayloadFileSizeToWrite);
     bRet &= (fp->Write(&nPayloadFileSizeToWrite, 8, 1) == 1);
-    
+
     GUInt16 nExtraContentSizeToWrite = CPL_LSBWORD16((GUInt16)osExtraContent.size());
     bRet &= (fp->Write(&nExtraContentSizeToWrite, 2, 1) == 1);
     bRet &= (fp->Write(osExtraContent.c_str(), 1, osExtraContent.size()) == osExtraContent.size());
 
     CPLAssert( fp->Tell() == nHeaderSize) ;
-    
+
     return bRet;
 }
 
@@ -688,9 +690,9 @@ class VSICryptFileHandle : public VSIVirtualHandle
         GByte*              pabyWB;
         int                 nWBSize;
         int                 bWBDirty;
-        
+
         int                 bLastSectorWasModified;
-    
+
         void                 EncryptBlock(GByte* pabyData, vsi_l_offset nOffset);
         int                  DecryptBlock(GByte* pabyData, vsi_l_offset nOffset);
         int                  FlushDirty();
@@ -702,7 +704,7 @@ class VSICryptFileHandle : public VSIVirtualHandle
                        VSICryptFileHeader* poHeader,
                        int nPerms);
     ~VSICryptFileHandle();
-    
+
     int                  Init(const CPLString& osKey, int bWriteHeader = FALSE);
 
     virtual int          Seek( vsi_l_offset nOffset, int nWhence );
@@ -758,7 +760,7 @@ int VSICryptFileHandle::Init(const CPLString& osKey, int bWriteHeader)
                     (int)poHeader->eAlg);
         return FALSE;
     }
-    
+
     if( poHeader->osIV.size() != poEncCipher->BlockSize() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -769,7 +771,7 @@ int VSICryptFileHandle::Init(const CPLString& osKey, int bWriteHeader)
     poDecCipher = GetDecBlockCipher(poHeader->eAlg);
     nBlockSize = poEncCipher->BlockSize();
     int nMaxKeySize = poEncCipher->MaxKeyLength();
-    
+
     try
     {
         if( osKey.size() )
@@ -864,7 +866,7 @@ int VSICryptFileHandle::DecryptBlock(GByte* pabyData, vsi_l_offset nOffset)
     CryptoPP::StringSink* poSink = new CryptoPP::StringSink(osRes);
     CryptoPP::StreamTransformation* poMode = NULL;
     CryptoPP::StreamTransformationFilter* poDec = NULL;
-    
+
     try
     {
         /* Yes, some modes need the encryption cipher */
@@ -896,7 +898,7 @@ int VSICryptFileHandle::DecryptBlock(GByte* pabyData, vsi_l_offset nOffset)
 
     CPLAssert( (int)osRes.length() == poHeader->nSectorSize );
     memcpy( pabyData, osRes.c_str(), osRes.length() );
-    
+
     return TRUE;
 }
 
@@ -909,13 +911,13 @@ int VSICryptFileHandle::FlushDirty()
     if( !bWBDirty )
         return TRUE;
     bWBDirty = FALSE;
-    
+
     EncryptBlock(pabyWB, nWBOffset);
     poBaseHandle->Seek( poHeader->nHeaderSize + nWBOffset, SEEK_SET );
-    
+
     nWBOffset = 0;
     nWBSize = 0;
-    
+
     if( poBaseHandle->Write( pabyWB, poHeader->nSectorSize, 1 ) != 1 )
         return FALSE;
 
@@ -1043,7 +1045,7 @@ size_t VSICryptFileHandle::Write( const void *pBuffer, size_t nSize, size_t nMem
              "nPayloadFileSize=" CPL_FRMT_GUIB ",bWBDirty=%d,nWBOffset=" CPL_FRMT_GUIB ",nWBSize=%d)",
              nCurPos, (int)nToWrite, poHeader->nPayloadFileSize, bWBDirty, nWBOffset, nWBSize);
 #endif
-    
+
     if( (nPerms & VSICRYPT_WRITE) == 0 )
         return 0;
 
@@ -1333,7 +1335,7 @@ static CPLString GetArgument(const char* pszFilename, const char* pszParamName,
 {
     CPLString osParamName(pszParamName);
     osParamName += "=";
-    
+
     const char* pszNeedle = strstr(pszFilename, osParamName);
     if( pszNeedle == NULL )
         return pszDefault;
@@ -1642,6 +1644,16 @@ char** VSICryptFilesystemHandler::ReadDir( const char *pszDirname )
 
 #include "gdal_priv.h"
 
+/**
+ * \brief Evaluate if this is a crypt file.
+ *
+ * The function signature must match GDALDataset::Identify.
+ *
+ * @param poOpenInfo The header bytes used for file identification.
+ *
+ * @return 1 if this is a crypt file or 0 otherwise.
+ */
+
 static int VSICryptIdentify(GDALOpenInfo* poOpenInfo)
 {
     return poOpenInfo->nHeaderBytes > 8 &&
@@ -1746,7 +1758,7 @@ static GDALDataset* VSICryptOpen(GDALOpenInfo* poOpenInfo)
  *
  * Implementation details:
  *
- * The structure of encrypted files is the following: a header, immediatly
+ * The structure of encrypted files is the following: a header, immediately
  * followed by the encrypted payload (by sectors, i.e. chunks of sector_size bytes).
  *
  * The header structure is the following :
@@ -1773,7 +1785,7 @@ static GDALDataset* VSICryptOpen(GDALOpenInfo* poOpenInfo)
  *
  * This design does not provide any means of authentication or integrity check.
  *
- * Each sector is encrypted/decrypted independantly of other sectors.
+ * Each sector is encrypted/decrypted independently of other sectors.
  * For that, the Initial Vector contained in the header is XOR'ed with the file offset
  * (relative to plain text file) of the start of the sector being processed, as a 8-byte integer.
  * More precisely, the first byte of the main IV is XOR'ed with the 8 least-significant

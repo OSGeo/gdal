@@ -44,32 +44,35 @@ CPL_CVSID("$Id$");
 #undef WKT_LONGITUDE_RELATIVE_TO_PM
 
 /************************************************************************/
-/*                           OGRPrintDouble()                           */
+/*                           OGRsnPrintDouble()                         */
 /************************************************************************/
 
-void OGRPrintDouble( char * pszStrBuf, double dfValue )
+void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
+
+void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue )
 
 {
-    CPLsprintf( pszStrBuf, "%.16g", dfValue );
+    CPLsnprintf( pszStrBuf, size, "%.16g", dfValue );
 
     int nLen = strlen(pszStrBuf);
 
     // The following hack is intended to truncate some "precision" in cases
-    // that appear to be roundoff error. 
-    if( nLen > 15 
+    // that appear to be roundoff error.
+    if( nLen > 15
         && (strcmp(pszStrBuf+nLen-6,"999999") == 0
             || strcmp(pszStrBuf+nLen-6,"000001") == 0) )
     {
         CPLsprintf( pszStrBuf, "%.15g", dfValue );
     }
 
-    // force to user periods regardless of locale.
+    // Force to user periods regardless of locale.
     if( strchr( pszStrBuf, ',' ) != NULL )
     {
         char *pszDelim = strchr( pszStrBuf, ',' );
         *pszDelim = '.';
     }
 }
+
 
 /************************************************************************/
 /*                        OGRSpatialReference()                         */
@@ -137,13 +140,14 @@ OGRSpatialReferenceH CPL_STDCALL OSRNewSpatialReference( const char *pszWKT )
 /*      Simple copy constructor.  See also Clone().                     */
 /************************************************************************/
 
-OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther)
-
+OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther) :
+    dfFromGreenwich(0.0),
+    dfToMeter(0.0),
+    dfToDegrees(0.0),
+    poRoot(NULL),
+    nRefCount(1),
+    bNormInfoSet(FALSE)
 {
-    bNormInfoSet = FALSE;
-    nRefCount = 1;
-    poRoot = NULL;
-
     if( oOther.poRoot != NULL )
         poRoot = oOther.poRoot->Clone();
 }
@@ -849,7 +853,7 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
  *
  * This function is the same as OGRSpatialReference::SetNode()
  */
-OGRErr CPL_STDCALL OSRSetAttrValue( OGRSpatialReferenceH hSRS, 
+OGRErr CPL_STDCALL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
                         const char * pszPath, const char * pszValue )
 
 {
@@ -871,7 +875,7 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
     if( ABS(dfValue - (int) dfValue) == 0.0 )
         sprintf( szValue, "%d", (int) dfValue );
     else
-        OGRPrintDouble( szValue, dfValue );
+        OGRsnPrintDouble( szValue, sizeof(szValue), dfValue );
 
     return SetNode( pszNodePath, szValue );
 }
@@ -913,7 +917,7 @@ OGRErr OGRSpatialReference::SetAngularUnits( const char * pszUnitsName,
     if( poCS == NULL )
         return OGRERR_FAILURE;
 
-    OGRPrintDouble( szValue, dfInRadians );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfInRadians );
 
     if( poCS->FindChild( "UNIT" ) >= 0 )
     {
@@ -928,7 +932,7 @@ OGRErr OGRSpatialReference::SetAngularUnits( const char * pszUnitsName,
         poUnits = new OGR_SRSNode( "UNIT" );
         poUnits->AddChild( new OGR_SRSNode( pszUnitsName ) );
         poUnits->AddChild( new OGR_SRSNode( szValue ) );
-        
+
         poCS->AddChild( poUnits );
     }
 
@@ -1209,7 +1213,7 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
     if( dfInMeters == (int) dfInMeters )
         sprintf( szValue, "%d", (int) dfInMeters );
     else
-        OGRPrintDouble( szValue, dfInMeters );
+      OGRsnPrintDouble( szValue, sizeof(szValue), dfInMeters );
 
     if( poCS->FindChild( "UNIT" ) >= 0 )
     {
@@ -1226,7 +1230,7 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
         poUnits = new OGR_SRSNode( "UNIT" );
         poUnits->AddChild( new OGR_SRSNode( pszUnitsName ) );
         poUnits->AddChild( new OGR_SRSNode( szValue ) );
-        
+
         poCS->AddChild( poUnits );
     }
 
@@ -1489,7 +1493,7 @@ double OSRGetPrimeMeridian( OGRSpatialReferenceH hSRS, char **ppszName )
  * standard names).  If NULL a value of "degrees" will be assumed. 
  * 
  * @param dfConvertToRadians value to multiply angular units by to transform
- * them to radians.  A value of SRS_UL_DEGREE_CONV will be used if
+ * them to radians.  A value of SRS_UA_DEGREE_CONV will be used if
  * pszAngularUnits is NULL.
  *
  * @return OGRERR_NONE on success.
@@ -1575,10 +1579,10 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     poSpheroid->AddChild( new OGR_SRSNode( pszSpheroidName ) );
 
     char szValue[128];
-    OGRPrintDouble( szValue, dfSemiMajor );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfSemiMajor );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
-    OGRPrintDouble( szValue, dfInvFlattening );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfInvFlattening );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
 /* -------------------------------------------------------------------- */
@@ -1594,7 +1598,7 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     if( dfPMOffset == 0.0 )
         strcpy( szValue, "0" );
     else
-        OGRPrintDouble( szValue, dfPMOffset );
+      OGRsnPrintDouble( szValue, sizeof(szValue), dfPMOffset );
 
     OGR_SRSNode *poPM = new OGR_SRSNode( "PRIMEM" );
     poPM->AddChild( new OGR_SRSNode( pszPMName ) );
@@ -1603,7 +1607,7 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
 /* -------------------------------------------------------------------- */
 /*      Setup the rotational units.                                     */
 /* -------------------------------------------------------------------- */
-    OGRPrintDouble( szValue, dfConvertToRadians );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfConvertToRadians );
 
     OGR_SRSNode *poUnits = new OGR_SRSNode( "UNIT" );
     poUnits->AddChild( new OGR_SRSNode(pszAngularUnits) );
@@ -1691,7 +1695,7 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
 /* -------------------------------------------------------------------- */
 /*      Check for EPSG authority numbers.                               */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszName, "EPSG:",5) )
+    if( STARTS_WITH_CI(pszName, "EPSG:") )
     {
         eErr = oSRS2.importFromEPSG( atoi(pszName+5) );
         if( eErr != OGRERR_NONE )
@@ -1706,7 +1710,7 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
 /* -------------------------------------------------------------------- */
 /*      Check for EPSGA authority numbers.                               */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszName, "EPSGA:",6) )
+    if( STARTS_WITH_CI(pszName, "EPSGA:") )
     {
         eErr = oSRS2.importFromEPSGA( atoi(pszName+6) );
         if( eErr != OGRERR_NONE )
@@ -1919,24 +1923,24 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
 {
-    int     bESRI = FALSE;
-    OGRErr  err;
+    bool bESRI = false;
+    OGRErr err;
 
-    if( EQUALN(pszDefinition,"ESRI::",6) )
+    if( STARTS_WITH_CI(pszDefinition, "ESRI::") )
     {
-        bESRI = TRUE;
+        bESRI = true;
         pszDefinition += 6;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Is it a recognised syntax?                                      */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszDefinition,"PROJCS",6)
-        || EQUALN(pszDefinition,"GEOGCS",6)
-        || EQUALN(pszDefinition,"COMPD_CS",8)
-        || EQUALN(pszDefinition,"GEOCCS",6)
-        || EQUALN(pszDefinition,"VERT_CS",7)
-        || EQUALN(pszDefinition,"LOCAL_CS",8) )
+    if( STARTS_WITH_CI(pszDefinition, "PROJCS")
+        || STARTS_WITH_CI(pszDefinition, "GEOGCS")
+        || STARTS_WITH_CI(pszDefinition, "COMPD_CS")
+        || STARTS_WITH_CI(pszDefinition, "GEOCCS")
+        || STARTS_WITH_CI(pszDefinition, "VERT_CS")
+        || STARTS_WITH_CI(pszDefinition, "LOCAL_CS") )
     {
         err = importFromWkt( (char **) &pszDefinition );
         if( err == OGRERR_NONE && bESRI )
@@ -1945,15 +1949,15 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         return err;
     }
 
-    if( EQUALN(pszDefinition,"EPSG:",5) 
-        || EQUALN(pszDefinition,"EPSGA:",6) )
+    if( STARTS_WITH_CI(pszDefinition, "EPSG:") 
+        || STARTS_WITH_CI(pszDefinition, "EPSGA:") )
     {
         OGRErr eStatus; 
 
-        if( EQUALN(pszDefinition,"EPSG:",5) )
+        if( STARTS_WITH_CI(pszDefinition, "EPSG:") )
             eStatus = importFromEPSG( atoi(pszDefinition+5) );
         
-        else /* if( EQUALN(pszDefinition,"EPSGA:",6) ) */
+        else /* if( STARTS_WITH_CI(pszDefinition, "EPSGA:") ) */
             eStatus = importFromEPSGA( atoi(pszDefinition+6) );
         
         // Do we want to turn this into a compound definition
@@ -1985,28 +1989,28 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
             return eStatus;
     }
 
-    if( EQUALN(pszDefinition,"urn:ogc:def:crs:",16)
-        || EQUALN(pszDefinition,"urn:ogc:def:crs,crs:",20)
-        || EQUALN(pszDefinition,"urn:x-ogc:def:crs:",18)
-        || EQUALN(pszDefinition,"urn:opengis:crs:",16)
-        || EQUALN(pszDefinition,"urn:opengis:def:crs:",20))
+    if( STARTS_WITH_CI(pszDefinition, "urn:ogc:def:crs:")
+        || STARTS_WITH_CI(pszDefinition, "urn:ogc:def:crs,crs:")
+        || STARTS_WITH_CI(pszDefinition, "urn:x-ogc:def:crs:")
+        || STARTS_WITH_CI(pszDefinition, "urn:opengis:crs:")
+        || STARTS_WITH_CI(pszDefinition, "urn:opengis:def:crs:"))
         return importFromURN( pszDefinition );
 
-    if( EQUALN(pszDefinition,"http://opengis.net/def/crs",26)
-        || EQUALN(pszDefinition,"http://www.opengis.net/def/crs",30)
-        || EQUALN(pszDefinition,"www.opengis.net/def/crs",23))
+    if( STARTS_WITH_CI(pszDefinition, "http://opengis.net/def/crs")
+        || STARTS_WITH_CI(pszDefinition, "http://www.opengis.net/def/crs")
+        || STARTS_WITH_CI(pszDefinition, "www.opengis.net/def/crs"))
         return importFromCRSURL( pszDefinition );
 
-    if( EQUALN(pszDefinition,"AUTO:",5) )
+    if( STARTS_WITH_CI(pszDefinition, "AUTO:") )
         return importFromWMSAUTO( pszDefinition );
 
-    if( EQUALN(pszDefinition,"OGC:",4) )  // WMS/WCS OGC codes like OGC:CRS84
+    if( STARTS_WITH_CI(pszDefinition, "OGC:") )  // WMS/WCS OGC codes like OGC:CRS84
         return SetWellKnownGeogCS( pszDefinition+4 );
 
-    if( EQUALN(pszDefinition,"CRS:",4) )
+    if( STARTS_WITH_CI(pszDefinition, "CRS:") )
         return SetWellKnownGeogCS( pszDefinition );
 
-    if( EQUALN(pszDefinition,"DICT:",5) 
+    if( STARTS_WITH_CI(pszDefinition, "DICT:") 
         && strstr(pszDefinition,",") )
     {
         char *pszFile = CPLStrdup(pszDefinition+5);
@@ -2036,7 +2040,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
              || strstr(pszDefinition,"+init") != NULL )
         return importFromProj4( pszDefinition );
 
-    if( EQUALN(pszDefinition,"IGNF:", 5) )
+    if( STARTS_WITH_CI(pszDefinition, "IGNF:") )
     {
         char* pszProj4Str = (char*) CPLMalloc(6 + strlen(pszDefinition) + 1);
         strcpy(pszProj4Str, "+init=");
@@ -2047,7 +2051,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         return err;
     }
 
-    if( EQUALN(pszDefinition,"http://",7) )
+    if( STARTS_WITH_CI(pszDefinition, "http://") )
     {
         return importFromUrl (pszDefinition);
     }
@@ -2098,9 +2102,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         err = importFromProj4( pszBufPtr );
     else
     {
-        if( EQUALN(pszBufPtr,"ESRI::",6) )
+        if( STARTS_WITH_CI(pszBufPtr, "ESRI::") )
         {
-            bESRI = TRUE;
+            bESRI = true;
             pszBufPtr += 6;
         }
 
@@ -2156,7 +2160,7 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
 {
 
 
-    if( !EQUALN(pszUrl,"http://",7) )
+    if( !STARTS_WITH_CI(pszUrl, "http://") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The given string is not recognized as a URL"
@@ -2205,7 +2209,7 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
         return OGRERR_FAILURE;        
     }
 
-    if( EQUALN( (const char*) psResult->pabyData,"http://",7) )
+    if( STARTS_WITH_CI((const char*) psResult->pabyData, "http://") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The data that was downloaded also starts with 'http://' "
@@ -2252,19 +2256,19 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
 /*      Is this an EPSG code? Note that we import it with EPSG          */
 /*      preferred axis ordering for geographic coordinate systems!      */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszAuthority,"EPSG",4) )
+    if( STARTS_WITH_CI(pszAuthority, "EPSG") )
         return importFromEPSGA( atoi(pszCode) );
 
 /* -------------------------------------------------------------------- */
 /*      Is this an IAU code?  Lets try for the IAU2000 dictionary.      */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszAuthority,"IAU",3) )
+    if( STARTS_WITH_CI(pszAuthority, "IAU") )
         return importFromDict( "IAU2000.wkt", pszCode );
 
 /* -------------------------------------------------------------------- */
 /*      Is this an OGC code?                                            */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszAuthority,"OGC",3) )
+    if( !STARTS_WITH_CI(pszAuthority, "OGC") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "URN %s has unrecognised authority.",
@@ -2272,20 +2276,20 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
         return OGRERR_FAILURE;
     }
 
-    if( EQUALN(pszCode,"CRS84",5) )
+    if( STARTS_WITH_CI(pszCode, "CRS84") )
         return SetWellKnownGeogCS( pszCode );
-    else if( EQUALN(pszCode,"CRS83",5) )
+    else if( STARTS_WITH_CI(pszCode, "CRS83") )
         return SetWellKnownGeogCS( pszCode );
-    else if( EQUALN(pszCode,"CRS27",5) )
+    else if( STARTS_WITH_CI(pszCode, "CRS27") )
         return SetWellKnownGeogCS( pszCode );
-    else if( EQUALN(pszCode,"84",2) ) /* urn:ogc:def:crs:OGC:2:84 */
+    else if( STARTS_WITH_CI(pszCode, "84") ) /* urn:ogc:def:crs:OGC:2:84 */
         return SetWellKnownGeogCS( "CRS84" );
 
 /* -------------------------------------------------------------------- */
 /*      Handle auto codes.  We need to convert from format              */
 /*      AUTO42001:99:8888 to format AUTO:42001,99,8888.                 */
 /* -------------------------------------------------------------------- */
-    else if( EQUALN(pszCode,"AUTO",4) )
+    else if( STARTS_WITH_CI(pszCode, "AUTO") )
     {
         char szWMSAuto[100];
         int i;
@@ -2341,15 +2345,15 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 {
     const char *pszCur;
 
-    if( EQUALN(pszURN,"urn:ogc:def:crs:",16) )
+    if( STARTS_WITH_CI(pszURN, "urn:ogc:def:crs:") )
         pszCur = pszURN + 16;
-    else if( EQUALN(pszURN,"urn:ogc:def:crs,crs:",20) )
+    else if( STARTS_WITH_CI(pszURN, "urn:ogc:def:crs,crs:") )
         pszCur = pszURN + 20;
-    else if( EQUALN(pszURN,"urn:x-ogc:def:crs:",18) )
+    else if( STARTS_WITH_CI(pszURN, "urn:x-ogc:def:crs:") )
         pszCur = pszURN + 18;
-    else if( EQUALN(pszURN,"urn:opengis:crs:",16) )
+    else if( STARTS_WITH_CI(pszURN, "urn:opengis:crs:") )
         pszCur = pszURN + 16;
-    else if( EQUALN(pszURN,"urn:opengis:def:crs:",20) )
+    else if( STARTS_WITH_CI(pszURN, "urn:opengis:def:crs:") )
         pszCur = pszURN + 20;
     else
     {
@@ -2401,7 +2405,7 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 
     /* There's a second part with the vertical SRS */
     pszCur = pszComma + 1;
-    if (strncmp(pszCur, "crs:", 4) != 0)
+    if (!STARTS_WITH(pszCur, "crs:"))
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "URN %s not a supported format.", pszURN );
@@ -2494,11 +2498,11 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
 {
     const char *pszCur;
     
-    if( EQUALN(pszURL,"http://opengis.net/def/crs",26) )
+    if( STARTS_WITH_CI(pszURL, "http://opengis.net/def/crs") )
         pszCur = pszURL + 26;
-    else if( EQUALN(pszURL,"http://www.opengis.net/def/crs",30) )
+    else if( STARTS_WITH_CI(pszURL, "http://www.opengis.net/def/crs") )
         pszCur = pszURL + 30;
-    else if( EQUALN(pszURL,"www.opengis.net/def/crs",23) )
+    else if( STARTS_WITH_CI(pszURL, "www.opengis.net/def/crs") )
         pszCur = pszURL + 23;
     else
     {
@@ -2516,7 +2520,7 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
         poRoot = NULL;
     }
 
-    if( EQUALN(pszCur, "-compound?1=", 12) )
+    if( STARTS_WITH_CI(pszCur, "-compound?1=") )
     {
 /* -------------------------------------------------------------------- */
 /*      It's a compound CRS, of the form:                               */
@@ -2644,7 +2648,7 @@ OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
 /* -------------------------------------------------------------------- */
 /*      Tokenize                                                        */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszDefinition,"AUTO:",5) )
+    if( STARTS_WITH_CI(pszDefinition, "AUTO:") )
         pszDefinition += 5;
 
     papszTokens = CSLTokenizeStringComplex( pszDefinition, ",", FALSE, TRUE );
@@ -3395,12 +3399,12 @@ OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
 {
     OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
     OGR_SRSNode *poParm;
-    char        szValue[64];
 
     if( poPROJCS == NULL )
         return OGRERR_FAILURE;
 
-    OGRPrintDouble( szValue, dfValue );
+    char szValue[64];
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfValue );
 
 /* -------------------------------------------------------------------- */
 /*      Try to find existing parameter with this name.                  */
@@ -3410,14 +3414,14 @@ OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
         poParm = poPROJCS->GetChild( iChild );
 
         if( EQUAL(poParm->GetValue(),"PARAMETER")
-            && poParm->GetChildCount() == 2 
+            && poParm->GetChildCount() == 2
             && EQUAL(poParm->GetChild(0)->GetValue(),pszParmName) )
         {
             poParm->GetChild(1)->SetValue( szValue );
             return OGRERR_NONE;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Otherwise create a new parameter and append.                    */
 /* -------------------------------------------------------------------- */
@@ -6578,10 +6582,10 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
 /* -------------------------------------------------------------------- */
 /*      Compare projected coordinate system.                            */
 /* -------------------------------------------------------------------- */
-    if( IsProjected() )
+    const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+    if( poPROJCS != NULL )
     {
         const char *pszValue1, *pszValue2;
-        const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
 
         pszValue1 = this->GetAttrValue( "PROJECTION" );
         pszValue2 = poOtherSRS->GetAttrValue( "PROJECTION" );
@@ -6697,25 +6701,25 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
     OGR_SRSNode *poTOWGS84 = new OGR_SRSNode("TOWGS84");
     char szValue[64];
 
-    OGRPrintDouble( szValue, dfDX );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfDX );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRPrintDouble( szValue, dfDY );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfDY );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRPrintDouble( szValue, dfDZ );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfDZ );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRPrintDouble( szValue, dfEX );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfEX );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRPrintDouble( szValue, dfEY );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfEY );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRPrintDouble( szValue, dfEZ );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfEZ );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
-    OGRPrintDouble( szValue, dfPPM );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfPPM );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
 
     poDatum->InsertChild( poTOWGS84, iPosition );
@@ -6805,10 +6809,10 @@ OGRErr OSRGetTOWGS84( OGRSpatialReferenceH hSRS,
 int OGRSpatialReference::IsAngularParameter( const char *pszParameterName )
 
 {
-    if( EQUALN(pszParameterName,"long",4)
-        || EQUALN(pszParameterName,"lati",4)
+    if( STARTS_WITH_CI(pszParameterName, "long")
+        || STARTS_WITH_CI(pszParameterName, "lati")
         || EQUAL(pszParameterName,SRS_PP_CENTRAL_MERIDIAN)
-        || EQUALN(pszParameterName,"standard_parallel",17)
+        || STARTS_WITH_CI(pszParameterName, "standard_parallel")
         || EQUAL(pszParameterName,SRS_PP_AZIMUTH)
         || EQUAL(pszParameterName,SRS_PP_RECTIFIED_GRID_ANGLE) )
         return TRUE;
@@ -6826,7 +6830,7 @@ int OGRSpatialReference::IsAngularParameter( const char *pszParameterName )
 int OGRSpatialReference::IsLongitudeParameter( const char *pszParameterName )
 
 {
-    if( EQUALN(pszParameterName,"long",4)
+    if( STARTS_WITH_CI(pszParameterName, "long")
         || EQUAL(pszParameterName,SRS_PP_CENTRAL_MERIDIAN) )
         return TRUE;
     else
@@ -6843,7 +6847,7 @@ int OGRSpatialReference::IsLongitudeParameter( const char *pszParameterName )
 int OGRSpatialReference::IsLinearParameter( const char *pszParameterName )
 
 {
-    if( EQUALN(pszParameterName,"false_",6) 
+    if( STARTS_WITH_CI(pszParameterName, "false_") 
         || EQUAL(pszParameterName,SRS_PP_SATELLITE_HEIGHT) )
         return TRUE;
     else

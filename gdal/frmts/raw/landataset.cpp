@@ -32,6 +32,10 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
+#include <cmath>
+
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 CPL_C_START
@@ -97,7 +101,7 @@ There is also some information on .STA and .TRL files at:
 
 **/
 
-#define ERD_HEADER_SIZE  128
+static const int ERD_HEADER_SIZE = 128;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -134,11 +138,11 @@ class LANDataset : public RawDataset
 {
   public:
     VSILFILE	*fpImage;	// image data file.
-    
+
     char	pachHeader[ERD_HEADER_SIZE];
 
     char        *pszProjection;
-    
+
     double      adfGeoTransform[6];
 
     CPLString   osSTAFilename;
@@ -149,7 +153,7 @@ class LANDataset : public RawDataset
   public:
     		LANDataset();
     	        ~LANDataset();
-    
+
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual CPLErr SetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef();
@@ -171,18 +175,16 @@ class LANDataset : public RawDataset
 /*                         LAN4BitRasterBand()                          */
 /************************************************************************/
 
-LAN4BitRasterBand::LAN4BitRasterBand( LANDataset *poDS, int nBandIn )
-
+LAN4BitRasterBand::LAN4BitRasterBand( LANDataset *poDSIn, int nBandIn ) :
+    poCT(NULL),
+    eInterp(GCI_Undefined)
 {
-    this->poDS = poDS;
-    this->nBand = nBandIn;
-    this->eDataType = GDT_Byte;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eDataType = GDT_Byte;
 
-    nBlockXSize = poDS->GetRasterXSize();;
+    nBlockXSize = poDSIn->GetRasterXSize();;
     nBlockYSize = 1;
-
-    poCT = NULL;
-    eInterp = GCI_Undefined;
 }
 
 /************************************************************************/
@@ -205,15 +207,13 @@ CPLErr LAN4BitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                       void * pImage )
 
 {
-    LANDataset *poLAN_DS = (LANDataset *) poDS;
+    LANDataset *poLAN_DS = reinterpret_cast<LANDataset *>( poDS );
     CPLAssert( nBlockXOff == 0  );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Seek to profile.                                                */
 /* -------------------------------------------------------------------- */
-    int nOffset;
-
-    nOffset = 
+    const int nOffset =
         ERD_HEADER_SIZE
         + (nBlockYOff * nRasterXSize * poLAN_DS->GetRasterCount()) / 2
         + ((nBand - 1) * nRasterXSize) / 2;
@@ -239,14 +239,12 @@ CPLErr LAN4BitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Convert 4bit to 8bit.                                           */
 /* -------------------------------------------------------------------- */
-    int i;
-
-    for( i = nRasterXSize-1; i >= 0; i-- )
+    for( int i = nRasterXSize-1; i >= 0; i-- )
     {
         if( (i & 0x01) != 0 )
-            ((GByte *) pImage)[i] = ((GByte *) pImage)[i/2] & 0x0f;
+            reinterpret_cast<GByte *>( pImage )[i] = ((GByte *) pImage)[i/2] & 0x0f;
         else
-            ((GByte *) pImage)[i] = (((GByte *) pImage)[i/2] & 0xf0)/16;
+            reinterpret_cast<GByte *>( pImage )[i] = (((GByte *) pImage)[i/2] & 0xf0)/16;
     }
 
     return CE_None;
@@ -278,8 +276,8 @@ GDALColorTable *LAN4BitRasterBand::GetColorTable()
 {
     if( poCT != NULL )
         return poCT;
-    else
-        return GDALPamRasterBand::GetColorTable();
+
+    return GDALPamRasterBand::GetColorTable();
 }
 
 /************************************************************************/
@@ -314,10 +312,10 @@ GDALColorInterp LAN4BitRasterBand::GetColorInterpretation()
 /*                             LANDataset()                             */
 /************************************************************************/
 
-LANDataset::LANDataset()
+LANDataset::LANDataset() :
+    fpImage(NULL),
+    pszProjection(NULL)
 {
-    fpImage = NULL;
-    pszProjection = NULL;
 }
 
 /************************************************************************/
@@ -349,16 +347,14 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < ERD_HEADER_SIZE )
         return NULL;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"HEADER",6)
-        && !EQUALN((const char *)poOpenInfo->pabyHeader,"HEAD74",6) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "HEADER")
+        && !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "HEAD74") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    LANDataset 	*poDS;
-
-    poDS = new LANDataset();
+    LANDataset *poDS = new LANDataset();
 
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -380,16 +376,15 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Do we need to byte swap the headers to local machine order?     */
 /* -------------------------------------------------------------------- */
     int bBigEndian = poOpenInfo->pabyHeader[8] == 0;
-    int bNeedSwap;
 
     memcpy( poDS->pachHeader, poOpenInfo->pabyHeader, ERD_HEADER_SIZE );
 
 #ifdef CPL_LSB
-    bNeedSwap = bBigEndian;
+    const int bNeedSwap = bBigEndian;
 #else
-    bNeedSwap = !bBigEndian;
+    const int bNeedSwap = !bBigEndian;
 #endif
-        
+
     if( bNeedSwap )
     {
         CPL_SWAP16PTR( poDS->pachHeader + 6 );
@@ -414,10 +409,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    int  nBandCount, nPixelOffset;
-    GDALDataType eDataType;
-
-    if( EQUALN(poDS->pachHeader,"HEADER",7) )
+    if( STARTS_WITH_CI(poDS->pachHeader,"HEADER") )
     {
         float fTmp;
         memcpy(&fTmp, poDS->pachHeader + 16, 4);
@@ -442,6 +434,8 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     memcpy(&nTmp16, poDS->pachHeader + 6, 2);
     CPL_LSBPTR16(&nTmp16);
 
+    int nPixelOffset;
+    GDALDataType eDataType;
     if( nTmp16 == 0 )
     {
         eDataType = GDT_Byte;
@@ -462,14 +456,14 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unsupported pixel type (%d).", 
                   nTmp16 );
-                  
+
         delete poDS;
         return NULL;
     }
 
     memcpy(&nTmp16, poDS->pachHeader + 8, 2);
     CPL_LSBPTR16(&nTmp16);
-    nBandCount = nTmp16;
+    const int nBandCount = nTmp16;
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBandCount, FALSE))
@@ -555,7 +549,6 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nCoordSys == 0 )
     {
         poDS->pszProjection = CPLStrdup(SRS_WKT_WGS84);
-            
     }
     else if( nCoordSys == 1 )
     {
@@ -577,22 +570,18 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char *pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
     char *pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
-    const char *pszTRLFilename = 
+    const char *pszTRLFilename =
         CPLFormCIFilename( pszPath, pszBasename, "trl" );
-    VSILFILE *fpTRL;
-
-    fpTRL = VSIFOpenL( pszTRLFilename, "rb" );
+    VSILFILE *fpTRL = VSIFOpenL( pszTRLFilename, "rb" );
     if( fpTRL != NULL )
     {
         char szTRLData[896];
-        int iColor;
-        GDALColorTable *poCT;
 
         VSIFReadL( szTRLData, 1, 896, fpTRL );
         VSIFCloseL( fpTRL );
-        
-        poCT = new GDALColorTable();
-        for( iColor = 0; iColor < 256; iColor++ )
+
+        GDALColorTable *poCT = new GDALColorTable();
+        for( int iColor = 0; iColor < 256; iColor++ )
         {
             GDALColorEntry sEntry;
 
@@ -609,7 +598,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->GetRasterBand(1)->SetColorTable( poCT );
         poDS->GetRasterBand(1)->SetColorInterpretation( GCI_PaletteIndex );
-        
+
         delete poCT;
     }
 
@@ -650,21 +639,21 @@ CPLErr LANDataset::SetGeoTransform( double * padfTransform )
     VSIFReadL( abyHeader, 128, 1, fpImage );
 
     // Upper Left X
-    float f32Val;
-
-    f32Val = (float) (adfGeoTransform[0] + 0.5 * adfGeoTransform[1]);
+    float f32Val = static_cast<float>(
+        adfGeoTransform[0] + 0.5 * adfGeoTransform[1] );
     memcpy( abyHeader + 112, &f32Val, 4 );
-    
+
     // Upper Left Y
-    f32Val = (float) (adfGeoTransform[3] + 0.5 * adfGeoTransform[5]);
+    f32Val = static_cast<float>(
+        adfGeoTransform[3] + 0.5 * adfGeoTransform[5] );
     memcpy( abyHeader + 116, &f32Val, 4 );
-    
+
     // width of pixel
-    f32Val = (float) adfGeoTransform[1];
+    f32Val = static_cast<float>( adfGeoTransform[1] );
     memcpy( abyHeader + 120, &f32Val, 4 );
-    
+
     // height of pixel
-    f32Val = (float) fabs(adfGeoTransform[5]);
+    f32Val = static_cast<float>( std::abs( adfGeoTransform[5] ) );
     memcpy( abyHeader + 124, &f32Val, 4 );
 
     if( VSIFSeekL( fpImage, 0, SEEK_SET ) != 0 
@@ -674,8 +663,8 @@ CPLErr LANDataset::SetGeoTransform( double * padfTransform )
                   "File IO Error writing header with new geotransform." );
         return CE_Failure;
     }
-    else
-        return CE_None;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -692,8 +681,8 @@ const char *LANDataset::GetProjectionRef()
 
     if( pszProjection != NULL && strlen(pszPamPrj) == 0 )
         return pszProjection;
-    else
-        return pszPamPrj;
+
+    return pszPamPrj;
 }
 
 /************************************************************************/
@@ -709,7 +698,7 @@ CPLErr LANDataset::SetProjection( const char * pszWKT )
     VSIFReadL( abyHeader, 128, 1, fpImage );
 
     OGRSpatialReference oSRS( pszWKT );
-    
+
     GUInt16 nProjCode = 0;
 
     if( oSRS.IsGeographic() )
@@ -795,10 +784,8 @@ CPLErr LANDataset::SetProjection( const char * pszWKT )
 char **LANDataset::GetFileList()
 
 {
-    char **papszFileList = NULL;
-
-    // Main data file, etc. 
-    papszFileList = GDALPamDataset::GetFileList();
+    // Main data file, etc.
+    char **papszFileList = GDALPamDataset::GetFileList();
 
     if( strlen(osSTAFilename) > 0 )
         papszFileList = CSLAddString( papszFileList, osSTAFilename );
@@ -836,19 +823,17 @@ void LANDataset::CheckForStatistics()
 /*      Read it one band at a time.                                     */
 /* -------------------------------------------------------------------- */
     GByte abyBandInfo[1152];
-    int iBand;
 
-    for( iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
         if( VSIFReadL( abyBandInfo, 1152, 1, fpSTA ) != 1 )
             break;
 
-        int nBandNumber = abyBandInfo[7];
+        const int nBandNumber = abyBandInfo[7];
         GDALRasterBand *poBand = GetRasterBand(nBandNumber);
         if( poBand == NULL )
             break;
 
-        float fMean, fStdDev;
         GInt16 nMin, nMax;
 
         if( poBand->GetRasterDataType() != GDT_Byte )
@@ -863,15 +848,16 @@ void LANDataset::CheckForStatistics()
             nMin = abyBandInfo[9];
             nMax = abyBandInfo[8];
         }
-        
+
+        float fMean, fStdDev;
         memcpy( &fMean, abyBandInfo + 12, 4 );
         memcpy( &fStdDev, abyBandInfo + 24, 4 );
         CPL_LSBPTR32( &fMean );
         CPL_LSBPTR32( &fStdDev );
-        
+
         poBand->SetStatistics( nMin, nMax, fMean, fStdDev );
     }
-    
+
     VSIFCloseL( fpSTA );
 }
 
@@ -897,10 +883,7 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    VSILFILE	*fp;
-
-    fp = VSIFOpenL( pszFilename, "wb" );
-
+    VSILFILE *fp = VSIFOpenL( pszFilename, "wb" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -913,14 +896,13 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
 /*      Write out the header.                                           */
 /* -------------------------------------------------------------------- */
     unsigned char abyHeader[128];
-    GInt16  n16Val;
-    GInt32  n32Val;
 
     memset( abyHeader, 0, sizeof(abyHeader) );
-    
+
     memcpy( abyHeader + 0, "HEAD74", 6 );
 
     // Pixel type
+    GInt16  n16Val;
     if( eType == GDT_Byte ) // do we want 4bit?
         n16Val = 0;
     else
@@ -934,9 +916,9 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
     // Unknown (6)
 
     // Width
-    n32Val = nXSize;
+    GInt32  n32Val = nXSize;
     memcpy( abyHeader + 16, &n32Val, 4 );
-    
+
     // Height
     n32Val = nYSize;
     memcpy( abyHeader + 20, &n32Val, 4 );
@@ -961,23 +943,21 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
     memcpy( abyHeader + 106, &n16Val, 2 );
 
     // Pixel Area
-    float f32Val;
-
-    f32Val = 0.0f;
+    float f32Val = 0.0f;
     memcpy( abyHeader + 108, &f32Val, 4 );
 
     // Upper Left X
     f32Val = 0.5f;
     memcpy( abyHeader + 112, &f32Val, 4 );
-    
+
     // Upper Left Y
     f32Val = (float) (nYSize - 0.5);
     memcpy( abyHeader + 116, &f32Val, 4 );
-    
+
     // width of pixel
     f32Val = 1.0f;
     memcpy( abyHeader + 120, &f32Val, 4 );
-    
+
     // height of pixel
     f32Val = 1.0f;
     memcpy( abyHeader + 124, &f32Val, 4 );
@@ -990,16 +970,17 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
     vsi_l_offset nImageBytes;
 
     if( eType != GDT_Byte )
-        nImageBytes = nXSize * (vsi_l_offset) nYSize * 2;
+        nImageBytes = nXSize * static_cast<vsi_l_offset>( nYSize ) * 2;
     else
-        nImageBytes = nXSize * (vsi_l_offset) nYSize;
+        nImageBytes = nXSize * static_cast<vsi_l_offset>( nYSize );
 
     memset( abyHeader, 0, sizeof(abyHeader) );
-    
+
     while( nImageBytes > 0 )
     {
-        vsi_l_offset nWriteThisTime = MIN(nImageBytes,sizeof(abyHeader));
-        
+        const vsi_l_offset nWriteThisTime
+            = std::min( static_cast<size_t>( nImageBytes ), sizeof(abyHeader) );
+
         if( VSIFWriteL( abyHeader, 1, (size_t)nWriteThisTime, fp ) 
             != nWriteThisTime )
         {
@@ -1023,25 +1004,21 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
 void GDALRegister_LAN()
 
 {
+    if( GDALGetDriverByName( "LAN" ) != NULL )
+        return;
+
     GDALDriver	*poDriver;
+    poDriver = new GDALDriver();
 
-    if( GDALGetDriverByName( "LAN" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "LAN" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Erdas .LAN/.GIS" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#LAN" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16" );
-        
-        poDriver->pfnOpen = LANDataset::Open;
-        poDriver->pfnCreate = LANDataset::Create;
+    poDriver->SetDescription( "LAN" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Erdas .LAN/.GIS" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#LAN" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = LANDataset::Open;
+    poDriver->pfnCreate = LANDataset::Create;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

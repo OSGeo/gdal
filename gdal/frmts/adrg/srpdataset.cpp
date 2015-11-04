@@ -588,7 +588,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
                 return FALSE;
             }
             offsetInIMG += 3;
-            if (strncmp(recordName,"IMG",3) == 0)
+            if (STARTS_WITH(recordName, "IMG"))
             {
                 offsetInIMG += 4;
                 if (VSIFSeekL(fdIMG,3,SEEK_CUR) != 0)
@@ -1407,7 +1407,7 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
     int bFromSubdataset = FALSE;
     int bTHFWithSingleGEN = FALSE;
 
-    if( EQUALN(poOpenInfo->pszFilename, "SRP:", 4) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "SRP:") )
     {
         char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename + 4, ",", 0);
         if (CSLCount(papszTokens) == 2)

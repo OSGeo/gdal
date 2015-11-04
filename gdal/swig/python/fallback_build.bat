@@ -8,7 +8,7 @@ rem
 set PYTHONHOME=C:\OSGeo4W\apps\Python25
 set OUTDIR=build\lib.win32-2.5\osgeo
 
-set CLARGS=/c /nologo /Ox /MD /EHsc /DNDEBUG -I../../port -I../../gcore -I../../alg -I../../ogr/ -I%PYTHONHOME%\include -I%PYTHONHOME%\PC -I%PYTHONHOME%\lib\site-packages\numpy\core\include
+set CLARGS=/c /nologo /Ox /MD /EHsc /DNDEBUG -I../../port -I../../gcore -I../../alg -I../../ogr/ -I../../apps/ -I%PYTHONHOME%\include -I%PYTHONHOME%\PC -I%PYTHONHOME%\lib\site-packages\numpy\core\include
 
 cl.exe %CLARGS% extensions\gdal_wrap.cpp
 cl.exe %CLARGS% extensions\osr_wrap.cpp

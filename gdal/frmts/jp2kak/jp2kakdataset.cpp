@@ -32,40 +32,13 @@
 #include "gdaljp2metadata.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
-#include "jp2_local.h"
 
 #include "../mem/memdataset.h"
 
-// Kakadu core includes
-#include "kdu_elementary.h"
-#include "kdu_messaging.h"
-#include "kdu_params.h"
-#include "kdu_compressed.h"
-#include "kdu_sample_processing.h"
-#include "kdu_stripe_decompressor.h"
-#include "kdu_arch.h"
+#include "jp2kak_headers.h"
 
 #include "subfile_source.h"
 #include "vsil_target.h"
-
-// Application level includes
-#include "kdu_file_io.h"
-#include "jp2.h"
-
-// ROI related.
-#include "kdu_roi_processing.h"
-#include "kdu_image.h"
-#include "roi_sources.h"
-
-// I don't think JPIP support currently works due to changes in 
-// classes like kdu_window ... some fixing required if someone wants it.
-// #define USE_JPIP
-
-#ifdef USE_JPIP
-#  include "kdu_client.h" 
-#else
-#  define kdu_client void
-#endif
 
 CPL_CVSID("$Id$");
 
@@ -922,9 +895,9 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
         const char  *pszExtension = NULL;
 
         pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-        if( (EQUALN(poOpenInfo->pszFilename,"http://",7)
-             || EQUALN(poOpenInfo->pszFilename,"https://",8)
-             || EQUALN(poOpenInfo->pszFilename,"jpip://",7))
+        if( (STARTS_WITH_CI(poOpenInfo->pszFilename, "http://")
+             || STARTS_WITH_CI(poOpenInfo->pszFilename, "https://")
+             || STARTS_WITH_CI(poOpenInfo->pszFilename, "jpip://"))
             && EQUAL(pszExtension,"jp2") )
         {
 #ifdef USE_JPIP
@@ -933,7 +906,7 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
             return FALSE;
 #endif
         }
-        else if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+        else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "J2K_SUBFILE:") )
             return TRUE;
         else
             return FALSE;
@@ -1004,14 +977,14 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
     if( poOpenInfo->nHeaderBytes < 16 )
     {
-        if( (EQUALN(poOpenInfo->pszFilename,"http://",7)
-             || EQUALN(poOpenInfo->pszFilename,"https://",8)
-             || EQUALN(poOpenInfo->pszFilename,"jpip://",7))
+        if( (STARTS_WITH_CI(poOpenInfo->pszFilename, "http://")
+             || STARTS_WITH_CI(poOpenInfo->pszFilename, "https://")
+             || STARTS_WITH_CI(poOpenInfo->pszFilename, "jpip://"))
             && EQUAL(pszExtension,"jp2") )
         {
             bIsJPIP = TRUE;
         }
-        else if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+        else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "J2K_SUBFILE:") )
         {
             static GByte abySubfileHeader[16];
 
@@ -1400,7 +1373,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
         CPLString osPhysicalFilename = poOpenInfo->pszFilename;
 
-        if( bIsSubfile || EQUALN(poOpenInfo->pszFilename,"/vsisubfile/",12) )
+        if( bIsSubfile || STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsisubfile/") )
         {
             if( strstr(poOpenInfo->pszFilename,",") != NULL )
                 osPhysicalFilename = strstr(poOpenInfo->pszFilename,",") + 1;
@@ -1789,12 +1762,12 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                 INIT_RASTERIO_EXTRA_ARG(sExtraArgTmp);
                 sExtraArgTmp.eResampleAlg = psExtraArg->eResampleAlg;
 
-                poMEMDS->RasterIO(GF_Read, 0, 0, dims.size.x, dims.size.y,
+                CPL_IGNORE_RET_VAL(poMEMDS->RasterIO(GF_Read, 0, 0, dims.size.x, dims.size.y,
                                   pData, nBufXSize, nBufYSize,
                                   eBufType,
                                   nBandCount, NULL,
                                   nPixelSpace, nLineSpace, nBandSpace,
-                                  &sExtraArgTmp);
+                                  &sExtraArgTmp));
 
                 GDALClose(poMEMDS);
             }

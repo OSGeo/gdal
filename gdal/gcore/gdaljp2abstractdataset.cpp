@@ -304,8 +304,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
             CPLXMLNode* psChild = psGCorGMLJP2FeaturesChildIter->psChild;
             if( psChild->eType == CXT_Attribute &&
                 strcmp(psChild->pszValue, "xlink:href") == 0 &&
-                strncmp(psChild->psChild->pszValue,
-                        "gmljp2://xml/", strlen("gmljp2://xml/")) == 0 )
+                STARTS_WITH(psChild->psChild->pszValue, "gmljp2://xml/") )
             {
                 const char* pszBoxName = psChild->psChild->pszValue + strlen("gmljp2://xml/");
                 char** papszBoxData = GetMetadata(CPLSPrintf("xml:%s", pszBoxName));
@@ -323,8 +322,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
             }
             if( psChild->eType == CXT_Attribute &&
                 strcmp(psChild->pszValue, "xlink:href") == 0 &&
-                (strncmp(psChild->psChild->pszValue, "http://", strlen("http://")) == 0 ||
-                 strncmp(psChild->psChild->pszValue, "https://", strlen("https://")) == 0) )
+                (STARTS_WITH(psChild->psChild->pszValue, "http://") ||
+                 STARTS_WITH(psChild->psChild->pszValue, "https://")) )
             {
                 if( !bOpenRemoteResources )
                     CPLDebug("GMLJP2", "Remote feature collection %s mentionned in GMLJP2 box",
@@ -366,7 +365,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                     {
                         for(char** papszIter = papszTokens; *papszIter; papszIter += 2 )
                         {
-                            if( strncmp(papszIter[1], "gmljp2://xml/", strlen("gmljp2://xml/")) == 0 )
+                            if( STARTS_WITH(papszIter[1], "gmljp2://xml/") )
                             {
                                 const char* pszBoxName = papszIter[1] + strlen("gmljp2://xml/");
                                 char** papszBoxData = GetMetadata(CPLSPrintf("xml:%s", pszBoxName));
@@ -434,7 +433,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                 CPLDebug("GMLJP2", "No GML driver found to read feature collection");
             }
 
-            if( strncmp(osGMLTmpFile, "/vsicurl/", strlen("/vsicurl/")) != 0 )
+            if( !STARTS_WITH(osGMLTmpFile, "/vsicurl/") )
                 VSIUnlink(osGMLTmpFile);
             if( osXSDTmpFile.size() )
                 VSIUnlink(osXSDTmpFile);

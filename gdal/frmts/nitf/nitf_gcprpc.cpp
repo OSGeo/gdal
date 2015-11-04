@@ -41,17 +41,16 @@ CPL_CVSID("$Id");
 static double Apply( double *C, double P, double L, double H )
 {
     // Polynomial equation for RPC00B.
-
-    double H2 = H * H;
-    double L2 = L * L;
-    double P2 = P * P;
+    const double H2 = H * H;
+    const double L2 = L * L;
+    const double P2 = P * P;
 
     return  C[0]
         + C[1]*L     + C[2]*P     + C[3]*H     + C[4]*L*P   + C[5]*L*H  
         + C[6]*P*H   + C[7]*L2    + C[8]*P2    + C[9]*H2    + C[10]*P*L*H
         + C[11]*L*L2 + C[12]*L*P2 + C[13]*L*H2 + C[14]*L2*P + C[15]*P*P2
         + C[16]*P*H2 + C[17]*L2*H + C[18]*P2*H + C[19]*H*H2;
-} 
+}
 
 /************************************************************************/
 /*                          NITFDensifyGCPs()                           */
@@ -65,7 +64,8 @@ void NITFDensifyGCPs( GDAL_GCP **psGCPs, int *pnGCPCount )
     if ( (*pnGCPCount != 4) || (psGCPs == NULL) ) return;
 
     const int  nDensifiedGCPs  = 16;
-    GDAL_GCP  *psDensifiedGCPs = (GDAL_GCP*) CPLMalloc(sizeof(GDAL_GCP)*nDensifiedGCPs);
+    GDAL_GCP  *psDensifiedGCPs = reinterpret_cast<GDAL_GCP *>(
+        CPLMalloc( sizeof( GDAL_GCP ) * nDensifiedGCPs) );
 
     GDALInitGCPs( nDensifiedGCPs, psDensifiedGCPs );
 
@@ -246,4 +246,4 @@ void NITFUpdateGCPsWithRPC( NITFRPC00BInfo *psRPCInfo,
     pGCPYCoord = NULL;
 }
 
-#endif
+#endif  // ESRI_BUILD

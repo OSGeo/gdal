@@ -348,7 +348,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
      * Parse the passed string into words.
      *----------------------------------------------------------------*/
     while(*pszCoordSys == ' ') pszCoordSys++;  // Eat leading spaces
-    if( EQUALN(pszCoordSys,"CoordSys",8) )
+    if( STARTS_WITH_CI(pszCoordSys, "CoordSys") )
         pszCoordSys += 9;
     
     papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );

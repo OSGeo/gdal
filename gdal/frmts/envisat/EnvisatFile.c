@@ -294,8 +294,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
      * Is this an incomplete level 0 file?
      */
     if( EnvisatFile_GetKeyValueAsInt( self, MPH, "SPH_SIZE", -1 ) == 0 
-        && strncmp(EnvisatFile_GetKeyValueAsString( self, MPH, "PRODUCT", ""),
-                   "ASA_IM__0P", 10) == 0 )
+        && STARTS_WITH(EnvisatFile_GetKeyValueAsString( self, MPH, "PRODUCT", ""), "ASA_IM__0P") )
     {
 
         if( EnvisatFile_SetupLevel0( self ) == FAILURE )
@@ -1182,12 +1181,12 @@ int EnvisatFile_SetKeyValueAsDouble( EnvisatFile *self,
         {
             if( prototype_value[i] == '.' )
                 break;
-            
+
             decimals++;
         }
 
-        sprintf( format, "%%+0%d.%df", length, decimals );
-        CPLsprintf( string_value, format, value );
+        snprintf( format, sizeof(format), "%%+0%d.%df", length, decimals );
+        CPLsnprintf( string_value, sizeof(string_value), format, value );
 
         if( (int)strlen(string_value) > length )
             string_value[length] = '\0';
@@ -1244,8 +1243,7 @@ int EnvisatFile_GetDatasetIndex( EnvisatFile *self, const char *ds_name )
     for( i = 0; i < self->ds_count; i++ )
     {
         if( strncmp( padded_ds_name, self->ds_info[i]->ds_name, 
-                     strlen(self->ds_info[i]->ds_name) ) == 0 )
-        {
+                     strlen(self->ds_info[i]->ds_name) ) == 0 )        {
             return i;
         }
     }

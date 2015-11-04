@@ -27,12 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
-#include "ogrsf_frmts.h"
 #include "cpl_http.h"
 #include "cpl_minixml.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
+
 #include <json.h>
 
 CPL_CVSID("$Id$");
@@ -67,7 +68,7 @@ class PLMosaicRasterBand;
 class PLMosaicDataset : public GDALPamDataset
 {
     friend class PLMosaicRasterBand;
-    
+
         int                     bMustCleanPersistant;
         CPLString               osCachePathRoot;
         int                     bTrustCache;
@@ -115,7 +116,7 @@ class PLMosaicDataset : public GDALPamDataset
   public:
                 PLMosaicDataset();
                 ~PLMosaicDataset();
-    
+
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
 
@@ -178,12 +179,12 @@ PLMosaicRasterBand::PLMosaicRasterBand( PLMosaicDataset *poDS, int nBand,
 
 {
     this->eDataType = eDataType;
-    this->nBlockXSize = 256;
-    this->nBlockYSize = 256;
+    nBlockXSize = 256;
+    nBlockYSize = 256;
 
     this->poDS = poDS;
     this->nBand = nBand;
-    
+
     if( eDataType == GDT_UInt16 )
     {
         if( nBand <= 3 )
@@ -196,21 +197,25 @@ PLMosaicRasterBand::PLMosaicRasterBand( PLMosaicDataset *poDS, int nBand,
 /************************************************************************/
 
 CPLErr PLMosaicRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                       void * pImage )
+                                       void *pImage )
 {
-    PLMosaicDataset* poMOSDS = (PLMosaicDataset*) poDS;
-    //CPLDebug("PLMOSAIC", "IReadBlock(band=%d, x=%d, y=%d)", nBand, xBlock, yBlock);
+    PLMosaicDataset* poMOSDS = reinterpret_cast<PLMosaicDataset *>( poDS );
+
+#ifdef DEBUG_VERBOSE
+    CPLDebug("PLMOSAIC", "IReadBlock(band=%d, x=%d, y=%d)",
+             nBand, nBlockYOff, nBlockYOff);
+#endif
 
     if( poMOSDS->bUseTMSForMain && poMOSDS->poTMSDS )
         return poMOSDS->poTMSDS->GetRasterBand(nBand)->ReadBlock(nBlockXOff, nBlockYOff,
                                                                 pImage);
 
-    int bottom_yblock = (nRasterYSize - nBlockYOff * nBlockYSize) / nBlockYSize - 1;
+    const int bottom_yblock = (nRasterYSize - nBlockYOff * nBlockYSize) / nBlockYSize - 1;
 
-    int meta_tile_x = (nBlockXOff * nBlockXSize) / poMOSDS->nQuadSize;
-    int meta_tile_y = (bottom_yblock * nBlockYSize) / poMOSDS->nQuadSize;
-    int sub_tile_x = nBlockXOff % (poMOSDS->nQuadSize / nBlockXSize);
-    int sub_tile_y = nBlockYOff % (poMOSDS->nQuadSize / nBlockYSize);
+    const int meta_tile_x = (nBlockXOff * nBlockXSize) / poMOSDS->nQuadSize;
+    const int meta_tile_y = (bottom_yblock * nBlockYSize) / poMOSDS->nQuadSize;
+    const int sub_tile_x = nBlockXOff % (poMOSDS->nQuadSize / nBlockXSize);
+    const int sub_tile_y = nBlockYOff % (poMOSDS->nQuadSize / nBlockYSize);
 
     GDALDataset *poMetaTileDS = poMOSDS->GetMetaTile(meta_tile_x, meta_tile_y);
     if( poMetaTileDS == NULL )
@@ -241,7 +246,7 @@ CPLErr PLMosaicRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                          GSpacing nPixelSpace, GSpacing nLineSpace,
                                          GDALRasterIOExtraArg* psExtraArg )
 {
-    PLMosaicDataset* poMOSDS = (PLMosaicDataset*) poDS;
+    PLMosaicDataset* poMOSDS = reinterpret_cast<PLMosaicDataset *>( poDS );
     if( poMOSDS->bUseTMSForMain && poMOSDS->poTMSDS )
         return poMOSDS->poTMSDS->GetRasterBand(nBand)->RasterIO(
                                          eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -264,11 +269,11 @@ const char* PLMosaicRasterBand::GetMetadataItem( const char* pszName,
     if( pszName != NULL && pszDomain != NULL && EQUAL(pszDomain, "LocationInfo") &&
         sscanf(pszName, "Pixel_%d_%d", &nPixel, &nLine) == 2 )
     {
-        PLMosaicDataset* poMOSDS = (PLMosaicDataset*) poDS;
+        PLMosaicDataset* poMOSDS = reinterpret_cast<PLMosaicDataset *>( poDS );
         return poMOSDS->GetLocationInfo(nPixel, nLine);
     }
-    else
-        return GDALRasterBand::GetMetadataItem(pszName, pszDomain);
+
+    return GDALRasterBand::GetMetadataItem(pszName, pszDomain);
 }
 
 
@@ -278,9 +283,10 @@ const char* PLMosaicRasterBand::GetMetadataItem( const char* pszName,
 
 int PLMosaicRasterBand::GetOverviewCount()
 {
-    PLMosaicDataset *poGDS = (PLMosaicDataset *) poDS;
+    PLMosaicDataset *poGDS = reinterpret_cast<PLMosaicDataset *>( poDS );
     if( !poGDS->poTMSDS )
         return 0;
+
     return poGDS->poTMSDS->GetRasterBand(1)->GetOverviewCount();
 }
 
@@ -290,7 +296,7 @@ int PLMosaicRasterBand::GetOverviewCount()
 
 GDALRasterBand* PLMosaicRasterBand::GetOverview(int iOvrLevel)
 {
-    PLMosaicDataset *poGDS = (PLMosaicDataset *) poDS;
+    PLMosaicDataset *poGDS = reinterpret_cast<PLMosaicDataset *>( poDS );
     if (iOvrLevel < 0 || iOvrLevel >= GetOverviewCount())
         return NULL;
 
@@ -331,29 +337,30 @@ GDALColorInterp PLMosaicRasterBand::GetColorInterpretation()
 /*                        PLMosaicDataset()                            */
 /************************************************************************/
 
-PLMosaicDataset::PLMosaicDataset()
+PLMosaicDataset::PLMosaicDataset() :
+    bMustCleanPersistant(FALSE),
+    bTrustCache(FALSE),
+    pszWKT(NULL),
+    nQuadSize(0),
+    bHasGeoTransform(FALSE),
+    nZoomLevel(0),
+    bUseTMSForMain(FALSE),
+    poTMSDS(NULL),
+    nCacheMaxSize(10),
+    psHead(NULL),
+    psTail(NULL),
+    nLastMetaTileX(-1),
+    nLastMetaTileY(-1)
 {
-    bMustCleanPersistant = FALSE;
-    bTrustCache = FALSE;
-    pszWKT = NULL;
-    nQuadSize = 0;
-    bHasGeoTransform = FALSE;
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
     adfGeoTransform[2] = 0;
     adfGeoTransform[3] = 0;
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = 1;
-    nZoomLevel = 0;
-    psHead = NULL;
-    psTail = NULL;
+
     SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     osCachePathRoot = CPLGetPath(CPLGenerateTempFilename(""));
-    nCacheMaxSize = 10;
-    nLastMetaTileX = -1;
-    nLastMetaTileY = -1;
-    bUseTMSForMain = FALSE;
-    poTMSDS = NULL;
 }
 
 /************************************************************************/
@@ -368,12 +375,12 @@ PLMosaicDataset::~PLMosaicDataset()
     delete poTMSDS;
     if (bMustCleanPersistant)
     {
-        char** papszOptions = NULL;
-        papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("PLMOSAIC:%p", this));
-        CPLHTTPFetch( osBaseURL, papszOptions);
+        char** papszOptions
+            = CSLSetNameValue(NULL, "CLOSE_PERSISTENT",
+                              CPLSPrintf("PLMOSAIC:%p", this));
+        CPLHTTPDestroyResult( CPLHTTPFetch( osBaseURL, papszOptions) );
         CSLDestroy(papszOptions);
     }
-
 }
 
 /************************************************************************/
@@ -390,7 +397,8 @@ void PLMosaicDataset::FlushDatasetsCache()
         delete psIter;
         psIter = psNext;
     }
-    psHead = psTail = NULL;
+    psHead = NULL;
+    psTail = NULL;
     oMapLinkedDatasets.clear();
 }
 
@@ -418,7 +426,7 @@ void PLMosaicDataset::FlushCache()
 int PLMosaicDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    return EQUALN(poOpenInfo->pszFilename, "PLMOSAIC:", strlen("PLMOSAIC:"));
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "PLMOSAIC:");
 }
 
 /************************************************************************/
@@ -429,11 +437,11 @@ char** PLMosaicDataset::GetBaseHTTPOptions()
 {
     bMustCleanPersistant = TRUE;
 
-    char** papszOptions = NULL;
-    papszOptions = CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=PLMOSAIC:%p", this));
+    char** papszOptions
+        = CSLAddString(NULL, CPLSPrintf("PERSISTENT=PLMOSAIC:%p", this));
     /* Use basic auth, rather than Authorization headers since curl would forward it to S3 */
     papszOptions = CSLAddString(papszOptions, CPLSPrintf("USERPWD=%s:", osAPIKey.c_str()));
-    
+
     return papszOptions;
 }
 
@@ -446,11 +454,12 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
 {
     char** papszOptions = CSLAddString(GetBaseHTTPOptions(), NULL);
     CPLHTTPResult * psResult;
-    if( strncmp(osBaseURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
-        strncmp(pszURL, "/vsimem/", strlen("/vsimem/")) == 0 )
+    if( STARTS_WITH(osBaseURL, "/vsimem/") &&
+        STARTS_WITH(pszURL, "/vsimem/") )
     {
         CPLDebug("PLSCENES", "Fetching %s", pszURL);
-        psResult = (CPLHTTPResult*) CPLCalloc(1, sizeof(CPLHTTPResult));
+        psResult = reinterpret_cast<CPLHTTPResult *>(
+            CPLCalloc( 1, sizeof( CPLHTTPResult ) ) );
         vsi_l_offset nDataLength = 0;
         CPLString osURL(pszURL);
         if( osURL[osURL.size()-1 ] == '/' )
@@ -458,12 +467,13 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
         GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLength, FALSE); 
         if( pabyBuf )
         {
-            psResult->pabyData = (GByte*) VSIMalloc(1 + (size_t)nDataLength);
+            psResult->pabyData = reinterpret_cast<GByte *>(
+                VSIMalloc(1 + static_cast<size_t>( nDataLength ) ) );
             if( psResult->pabyData )
             {
-                memcpy(psResult->pabyData, pabyBuf, (size_t)nDataLength);
+                memcpy(psResult->pabyData, pabyBuf, static_cast<size_t>( nDataLength ) );
                 psResult->pabyData[nDataLength] = 0;
-                psResult->nDataLen = (size_t)nDataLength;
+                psResult->nDataLen = static_cast<size_t>( nDataLength );
             }
         }
         else
@@ -481,19 +491,20 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
             CPLPopErrorHandler();
     }
     CSLDestroy(papszOptions);
-    
+
     if( psResult->pszErrBuf != NULL )
     {
         if( !(bQuiet404Error && strstr(psResult->pszErrBuf, "404")) )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                    psResult->pabyData ? (const char*) psResult->pabyData :
-                    psResult->pszErrBuf);
+            CPLError( CE_Failure, CPLE_AppDefined, "%s",
+                      psResult->pabyData ? reinterpret_cast<const char*>(
+                          psResult->pabyData ) :
+                      psResult->pszErrBuf );
         }
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    
+
     if( psResult->pabyData == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Empty content returned by server");
@@ -517,11 +528,9 @@ json_object* PLMosaicDataset::RunRequest(const char* pszURL,
         return NULL;
     }
 
-    json_tokener* jstok = NULL;
-    json_object* poObj = NULL;
-
-    jstok = json_tokener_new();
-    poObj = json_tokener_parse_ex(jstok, (const char*) psResult->pabyData, -1);
+    json_tokener* jstok = json_tokener_new();
+    json_object* poObj
+        = json_tokener_parse_ex(jstok, (const char*) psResult->pabyData, -1);
     if( jstok->err != json_tokener_success)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -541,7 +550,7 @@ json_object* PLMosaicDataset::RunRequest(const char* pszURL,
         json_object_put(poObj);
         poObj = NULL;
     }
-    
+
     return poObj;
 }
 
@@ -572,7 +581,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
     PLMosaicDataset* poDS = new PLMosaicDataset();
 
     poDS->osBaseURL = CPLGetConfigOption("PL_URL", "https://api.planet.com/v0/mosaics/");
-    
+
     char** papszOptions = CSLTokenizeStringComplex(
             poOpenInfo->pszFilename+strlen("PLMosaic:"), ",", TRUE, FALSE );
     for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
@@ -643,18 +652,19 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
             char** papszMD = poDS->GetMetadata("SUBDATASETS");
             if( CSLCount(papszMD) == 2 )
             {
-                CPLString osOldFilename(poOpenInfo->pszFilename);
-                CPLString osMosaicConnectionString = CSLFetchNameValue(papszMD, "SUBDATASET_1_NAME");
+                const CPLString osOldFilename(poOpenInfo->pszFilename);
+                const CPLString osMosaicConnectionString
+                    = CSLFetchNameValue(papszMD, "SUBDATASET_1_NAME");
                 delete poDS;
                 GDALOpenInfo oOpenInfo(osMosaicConnectionString.c_str(), GA_ReadOnly);
                 oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
-                poDS = (PLMosaicDataset*) Open(&oOpenInfo);
+                poDS = reinterpret_cast<PLMosaicDataset *>( Open(&oOpenInfo) );
                 if( poDS )
                     poDS->SetDescription(osOldFilename);
             }
         }
     }
-    
+
     if( poDS )
         poDS->SetPamFlags(0);
 
@@ -686,8 +696,10 @@ CPLString PLMosaicDataset::GetMosaicCachePath()
 {
     if( osCachePathRoot.size() )
     {
-        CPLString osCachePath(CPLFormFilename(osCachePathRoot, "plmosaic_cache", NULL));
-        CPLString osMosaicPath(CPLFormFilename(osCachePath, osMosaic, NULL));
+        const CPLString osCachePath(
+            CPLFormFilename(osCachePathRoot, "plmosaic_cache", NULL));
+        const CPLString osMosaicPath(
+            CPLFormFilename(osCachePath, osMosaic, NULL));
 
         return osMosaicPath;
     }
@@ -702,8 +714,10 @@ void PLMosaicDataset::CreateMosaicCachePathIfNecessary()
 {
     if( osCachePathRoot.size() )
     {
-        CPLString osCachePath(CPLFormFilename(osCachePathRoot, "plmosaic_cache", NULL));
-        CPLString osMosaicPath(CPLFormFilename(osCachePath, osMosaic, NULL));
+        const CPLString osCachePath(
+            CPLFormFilename(osCachePathRoot, "plmosaic_cache", NULL));
+        const CPLString osMosaicPath(
+            CPLFormFilename(osCachePath, osMosaic, NULL));
 
         VSIStatBufL sStatBuf;
         if( VSIStatL(osMosaicPath, &sStatBuf) != 0 )
@@ -758,7 +772,7 @@ int PLMosaicDataset::OpenMosaic()
         json_object_put(poObj);
         return FALSE;
     }
-    
+
     const char* pszSRS = json_object_get_string(poCoordinateSystem);
     if( !EQUAL(pszSRS, "EPSG:3857") )
     {
@@ -771,7 +785,7 @@ int PLMosaicDataset::OpenMosaic()
     OGRSpatialReference oSRS;
     oSRS.SetFromUserInput(pszSRS);
     oSRS.exportToWkt(&pszWKT);
-    
+
     GDALDataType eDT = GDT_Unknown;
     const char* pszDataType = json_object_get_string(poDataType);
     if( EQUAL(pszDataType, "byte") )
@@ -787,7 +801,7 @@ int PLMosaicDataset::OpenMosaic()
         json_object_put(poObj);
         return FALSE;
     }
-    
+
     if( bUseTMSForMain && eDT != GDT_Byte )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -804,11 +818,11 @@ int PLMosaicDataset::OpenMosaic()
         return FALSE;
     }
 
-    double dfResolution = json_object_get_double(poResolution);
+    const double dfResolution = json_object_get_double(poResolution);
     if( EQUAL(pszSRS, "EPSG:3857") )
     {
         double dfZoomLevel = log(GM_ZOOM_0 / dfResolution)/log(2.0);
-        nZoomLevel = (int)(dfZoomLevel + 0.1);
+        nZoomLevel = static_cast<int>( dfZoomLevel + 0.1 );
         if( fabs(dfZoomLevel - nZoomLevel) > 1e-5 )
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Unsupported resolution = %.12g",
@@ -823,10 +837,10 @@ int PLMosaicDataset::OpenMosaic()
         adfGeoTransform[3] = -GM_ORIGIN;
         adfGeoTransform[4] = 0;
         adfGeoTransform[5] = -dfResolution;
-        nRasterXSize = (int)(2 * -GM_ORIGIN / dfResolution + 0.5);
+        nRasterXSize = static_cast<int>( 2 * -GM_ORIGIN / dfResolution + 0.5 );
         nRasterYSize = nRasterXSize;
     }
-    
+
     const char* pszQuadPattern = json_object_get_string(poQuadPattern);
     if( strstr(pszQuadPattern, "{tilex:") == NULL ||
         strstr(pszQuadPattern, "{tiley:") == NULL )
@@ -861,7 +875,7 @@ int PLMosaicDataset::OpenMosaic()
             }
 
             CPLString osTMSURL(pszLinksTiles);
-            if( strncmp(pszLinksTiles, "https://", strlen("https://")) == 0 )
+            if( STARTS_WITH(pszLinksTiles, "https://") )
             {
                 // Add API key as Basic auth
                 osTMSURL = "https://";
@@ -874,7 +888,8 @@ int PLMosaicDataset::OpenMosaic()
             ReplaceSubString(osTMSURL, "{z}", "${z}");
             ReplaceSubString(osTMSURL, "{0-3}", "0");
 
-            CPLString osTMS = CPLSPrintf("<GDAL_WMS>\n"
+            CPLString osTMS = CPLSPrintf(
+"<GDAL_WMS>\n"
 "    <Service name=\"TMS\">\n"
 "        <ServerUrl>%s</ServerUrl>\n"
 "    </Service>\n"
@@ -904,11 +919,12 @@ int PLMosaicDataset::OpenMosaic()
                 osCacheStr.c_str());
             //CPLDebug("PLMosaic", "TMS : %s", osTMS.c_str());
 
-            poTMSDS = (GDALDataset*)GDALOpenEx(osTMS, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                                               NULL, NULL, NULL);
+            poTMSDS = reinterpret_cast<GDALDataset *>(
+                GDALOpenEx( osTMS, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                           NULL, NULL, NULL ) );
         }
     }
-    
+
     if( bUseTMSForMain && poTMSDS == NULL )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -937,7 +953,7 @@ int PLMosaicDataset::OpenMosaic()
         SetMetadataItem("TITLE", json_object_get_string(poTitle));
     }
 
-    
+
     json_object_put(poObj);
     return TRUE;
 }
@@ -976,7 +992,7 @@ int PLMosaicDataset::ListSubdatasets()
             return FALSE;
         }
 
-        int nMosaics = json_object_array_length(poMosaics);
+        const int nMosaics = json_object_array_length(poMosaics);
         for(int i=0;i< nMosaics;i++)
         {
             const char* pszName = NULL;
@@ -1015,7 +1031,7 @@ int PLMosaicDataset::ListSubdatasets()
             if( pszName && pszSelf && pszCoordinateSystem &&
                 EQUAL(pszCoordinateSystem, "EPSG:3857") )
             {
-                int nDatasetIdx = aosSubdatasets.Count() / 2 + 1;
+                const int nDatasetIdx = aosSubdatasets.Count() / 2 + 1;
                 aosSubdatasets.AddNameValue(
                     CPLSPrintf("SUBDATASET_%d_NAME", nDatasetIdx),
                     CPLSPrintf("PLMOSAIC:mosaic=%s", pszName));
@@ -1067,15 +1083,14 @@ CPLString PLMosaicDataset::formatTileName(int tile_x, int tile_y)
 
 {
     CPLString result = osQuadPattern;
-    CPLString fragment;
-    size_t nPos;
-    int nDigits;
 
-    nPos = osQuadPattern.find("{tilex:");
+    size_t nPos = osQuadPattern.find("{tilex:");
     nPos += strlen("{tilex:");
+    int nDigits;
     if( sscanf(osQuadPattern.c_str() + nPos, "0%dd}", &nDigits) != 1 ||
         nDigits <= 0 || nDigits > 9 )
         return result;
+    CPLString fragment;
     fragment.Printf(CPLSPrintf("%%0%dd", nDigits), tile_x);
     ReplaceSubString(result, CPLSPrintf("{tilex:0%dd}", nDigits), fragment);
 
@@ -1099,7 +1114,7 @@ CPLString PLMosaicDataset::formatTileName(int tile_x, int tile_y)
 
 void PLMosaicDataset::InsertNewDataset(CPLString osKey, GDALDataset* poDS)
 {
-    if( (int) oMapLinkedDatasets.size() == nCacheMaxSize )
+    if( static_cast<int>( oMapLinkedDatasets.size() ) == nCacheMaxSize )
     {
         CPLDebug("PLMOSAIC", "Discarding older entry %s from cache",
                  psTail->osKey.c_str());
@@ -1132,9 +1147,9 @@ GDALDataset* PLMosaicDataset::OpenAndInsertNewDataset(CPLString osTmpFilename,
                                                       CPLString osTilename)
 {
     const char* const apszAllowedDrivers[2] = { "GTiff", NULL };
-    GDALDataset* poDS = (GDALDataset*)
-        GDALOpenEx(osTmpFilename, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                            apszAllowedDrivers, NULL, NULL);
+    GDALDataset* poDS = reinterpret_cast<GDALDataset *>(
+        GDALOpenEx( osTmpFilename, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                    apszAllowedDrivers, NULL, NULL ) );
     if( poDS != NULL )
     {
         if( poDS->GetRasterXSize() != nQuadSize ||
@@ -1152,7 +1167,7 @@ GDALDataset* PLMosaicDataset::OpenAndInsertNewDataset(CPLString osTmpFilename,
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid GTiff dataset: %s",
                  osTilename.c_str());
     }
-    
+
     InsertNewDataset(osTilename, poDS);
     return poDS;
 }
@@ -1163,14 +1178,14 @@ GDALDataset* PLMosaicDataset::OpenAndInsertNewDataset(CPLString osTmpFilename,
 
 GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
 {
-    CPLString osTilename = formatTileName(tile_x, tile_y);
+    const CPLString osTilename = formatTileName(tile_x, tile_y);
     std::map<CPLString,PLLinkedDataset*>::const_iterator it = 
                                                     oMapLinkedDatasets.find(osTilename);
     if( it == oMapLinkedDatasets.end() )
     {
         CPLString osTmpFilename;
 
-        CPLString osMosaicPath(GetMosaicCachePath());
+        const CPLString osMosaicPath(GetMosaicCachePath());
         osTmpFilename = CPLFormFilename(osMosaicPath,
                 CPLSPrintf("%s_%s.tif", osMosaic.c_str(), CPLGetFilename(osTilename)), NULL);
         VSIStatBufL sStatBuf;
@@ -1204,7 +1219,7 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
                 nFileSize = json_object_get_int(poFileSize);
             }
             json_object_put(poObj);
-            if( (int)sStatBuf.st_size == nFileSize )
+            if( static_cast<int>( sStatBuf.st_size ) == nFileSize )
             {
                 CPLDebug("PLMOSAIC", "Cached tile is up-to-date");
                 return OpenAndInsertNewDataset(osTmpFilename, osTilename);
@@ -1261,8 +1276,7 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
         CPLHTTPDestroyResult(psResult);
         GDALDataset* poDS = OpenAndInsertNewDataset(osTmpFilename, osTilename);
 
-        if( strncmp(osTmpFilename, "/vsimem/single_tile_plmosaic_cache/",
-                    strlen("/vsimem/single_tile_plmosaic_cache/")) == 0 )
+        if( STARTS_WITH(osTmpFilename, "/vsimem/single_tile_plmosaic_cache/") )
             VSIUnlink(osTilename);
 
         return poDS;
@@ -1297,12 +1311,12 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
     int nBlockXSize, nBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
-    int nBlockXOff = nPixel / nBlockXSize;
-    int nBlockYOff = nLine / nBlockYSize;
-    int bottom_yblock = (nRasterYSize - nBlockYOff * nBlockYSize) / nBlockYSize - 1;
+    const int nBlockXOff = nPixel / nBlockXSize;
+    const int nBlockYOff = nLine / nBlockYSize;
+    const int bottom_yblock = (nRasterYSize - nBlockYOff * nBlockYSize) / nBlockYSize - 1;
 
-    int meta_tile_x = (nBlockXOff * nBlockXSize) / nQuadSize;
-    int meta_tile_y = (bottom_yblock * nBlockYSize) / nQuadSize;
+    const int meta_tile_x = (nBlockXOff * nBlockXSize) / nQuadSize;
+    const int meta_tile_y = (bottom_yblock * nBlockYSize) / nQuadSize;
 
     CPLString osQuadURL = osQuadsURL;
     CPLString osTilename = formatTileName(meta_tile_x, meta_tile_y);
@@ -1310,15 +1324,14 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
 
     if( meta_tile_x != nLastMetaTileX || meta_tile_y != nLastMetaTileY )
     {
-        CPLHTTPResult* psResult;
-        psResult = Download(osQuadURL, TRUE);
+        CPLHTTPResult* psResult = Download(osQuadURL, TRUE);
         if( psResult )
             osLastQuadInformation = (const char*) psResult->pabyData;
         else
             osLastQuadInformation = "";
         CPLHTTPDestroyResult(psResult);
 
-        CPLString osQuadScenesURL = osQuadURL + "/scenes/";
+        const CPLString osQuadScenesURL = osQuadURL + "/scenes/";
 
         psResult = Download(osQuadScenesURL, TRUE);
         if( psResult )
@@ -1341,11 +1354,16 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
         const char* const apszOptions[2] = { "FLATTEN_NESTED_ATTRIBUTES=YES", NULL };
         CPLString osTmpJSonFilename;
         osTmpJSonFilename.Printf("/vsimem/plmosaic/%p/quad.json", this);
-        VSIFCloseL(VSIFileFromMemBuffer(osTmpJSonFilename,
-                                        (GByte*)osLastQuadInformation.c_str(),
-                                        osLastQuadInformation.size(), FALSE));
-        GDALDataset* poDS = (GDALDataset*) GDALOpenEx(osTmpJSonFilename, GDAL_OF_VECTOR,
-                                                    apszAllowedDrivers, apszOptions, NULL);
+
+        VSIFCloseL(VSIFileFromMemBuffer(
+            osTmpJSonFilename,
+            reinterpret_cast<GByte *>( const_cast<char *>(
+                osLastQuadInformation.c_str() ) ),
+            osLastQuadInformation.size(), FALSE));
+
+        GDALDataset* poDS = reinterpret_cast<GDALDataset *>(
+            GDALOpenEx( osTmpJSonFilename, GDAL_OF_VECTOR,
+                        apszAllowedDrivers, apszOptions, NULL ) );
         VSIUnlink(osTmpJSonFilename);
 
         if( poDS )
@@ -1386,18 +1404,23 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
         const char* const apszOptions[2] = { "FLATTEN_NESTED_ATTRIBUTES=YES", NULL };
         CPLString osTmpJSonFilename;
         osTmpJSonFilename.Printf("/vsimem/plmosaic/%p/scenes.json", this);
-        VSIFCloseL(VSIFileFromMemBuffer(osTmpJSonFilename,
-                                        (GByte*)osLastQuadSceneInformation.c_str(),
-                                        osLastQuadSceneInformation.size(), FALSE));
-        GDALDataset* poDS = (GDALDataset*) GDALOpenEx(osTmpJSonFilename, GDAL_OF_VECTOR,
-                                                    apszAllowedDrivers, apszOptions, NULL);
+
+        VSIFCloseL(VSIFileFromMemBuffer(
+            osTmpJSonFilename,
+            reinterpret_cast<GByte *>( const_cast<char *>(
+                osLastQuadSceneInformation.c_str() ) ),
+            osLastQuadSceneInformation.size(), FALSE));
+
+        GDALDataset* poDS = reinterpret_cast<GDALDataset*>(
+            GDALOpenEx( osTmpJSonFilename, GDAL_OF_VECTOR,
+                        apszAllowedDrivers, apszOptions, NULL ) );
         VSIUnlink(osTmpJSonFilename);
 
         OGRSpatialReference oSRSSrc, oSRSDst;
         oSRSSrc.SetFromUserInput(pszWKT);
         oSRSDst.importFromEPSG(4326);
         OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oSRSSrc,
-                                                                            &oSRSDst);
+                                                                              &oSRSDst);
         double x = adfGeoTransform[0] + nPixel * adfGeoTransform[1];
         double y = adfGeoTransform[3] + nLine * adfGeoTransform[5];
         if( poDS && poCT && poCT->Transform(1, &x, &y))
@@ -1479,22 +1502,21 @@ CPLErr  PLMosaicDataset::IRasterIO( GDALRWFlag eRWFlag,
 void GDALRegister_PLMOSAIC()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "PLMOSAIC" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "PLMOSAIC" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "PLMOSAIC" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Planet Labs Mosaics API" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_plmosaic.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PLMOSAIC:" );
+    poDriver->SetDescription( "PLMOSAIC" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Planet Labs Mosaics API" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_plmosaic.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PLMOSAIC:" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='API_KEY' type='string' description='Account API key' required='true'/>"
 "  <Option name='MOSAIC' type='string' description='Mosaic name'/>"
@@ -1503,9 +1525,8 @@ void GDALRegister_PLMOSAIC()
 "  <Option name='USE_TILES' type='boolean' description='Whether to use the tile API even for full resolution data (only for Byte mosaics)' default='NO'/>"
 "</OpenOptionList>" );
 
-        poDriver->pfnIdentify = PLMosaicDataset::Identify;
-        poDriver->pfnOpen = PLMosaicDataset::Open;
+    poDriver->pfnIdentify = PLMosaicDataset::Identify;
+    poDriver->pfnOpen = PLMosaicDataset::Open;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

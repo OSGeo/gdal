@@ -63,6 +63,12 @@ CPL_C_END
 
 typedef struct
 {
+    CPLMutex* hMutex;
+    int       nMutexTakenCount;
+} GDALDatasetPrivate;
+
+typedef struct
+{
     /* PID of the thread that mark the dataset as shared */
     /* This may not be the actual PID, but the responsiblePID */
     GIntBig      nPID;
@@ -200,7 +206,7 @@ void GDALDataset::Init(int bForceCachedIOIn)
     bForceCachedIO = (GByte)bForceCachedIOIn;
     
     m_poStyleTable = NULL;
-    m_hMutex = NULL;
+    m_hPrivateData = CPLCalloc(1, sizeof(GDALDatasetPrivate));
 }
 
 /************************************************************************/
@@ -225,9 +231,7 @@ void GDALDataset::Init(int bForceCachedIOIn)
 GDALDataset::~GDALDataset()
 
 {
-    int         i;
-
-    // we don't want to report destruction of datasets that 
+    // we don't want to report destruction of datasets that
     // were never really open or meant as internal
     if( !bIsInternal && ( nBands != 0 || !EQUAL(GetDescription(),"") ) )
     {
@@ -293,7 +297,7 @@ GDALDataset::~GDALDataset()
 /* -------------------------------------------------------------------- */
 /*      Destroy the raster bands if they exist.                         */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nBands && papoBands != NULL; i++ )
+    for( int i = 0; i < nBands && papoBands != NULL; i++ )
     {
         if( papoBands[i] != NULL )
             delete papoBands[i];
@@ -307,8 +311,10 @@ GDALDataset::~GDALDataset()
         m_poStyleTable = NULL;
     }
 
-    if( m_hMutex != NULL )
-        CPLDestroyMutex( m_hMutex );
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    if( psPrivate->hMutex != NULL )
+        CPLDestroyMutex( psPrivate->hMutex );
+    CPLFree(psPrivate);
 
     CSLDestroy( papszOpenOptions );
 }
@@ -357,25 +363,24 @@ void GDALDataset::AddToDatasetOpenList()
 void GDALDataset::FlushCache()
 
 {
-    int         i;
-
     // This sometimes happens if a dataset is destroyed before completely
     // built. 
 
     if( papoBands != NULL )
     {
-        for( i = 0; i < nBands; i++ )
+        for( int i = 0; i < nBands; i++ )
         {
             if( papoBands[i] != NULL )
                 papoBands[i]->FlushCache();
         }
     }
 
-    int nLayers = GetLayerCount();
+    const int nLayers = GetLayerCount();
     if( nLayers > 0 )
     {
-        CPLMutexHolderD( &m_hMutex );
-        for( i = 0; i < nLayers ; i++ )
+        GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+        CPLMutexHolderD( &(psPrivate->hMutex) );
+        for( int i = 0; i < nLayers ; i++ )
         {
             OGRLayer *poLayer = GetLayer(i);
 
@@ -419,26 +424,24 @@ void CPL_STDCALL GDALFlushCache( GDALDatasetH hDS )
 void GDALDataset::BlockBasedFlushCache()
 
 {
-    GDALRasterBand *poBand1;
-    int  nBlockXSize, nBlockYSize, iBand;
-    
-    poBand1 = GetRasterBand( 1 );
+    GDALRasterBand *poBand1 = GetRasterBand( 1 );
     if( poBand1 == NULL )
     {
         GDALDataset::FlushCache();
         return;
     }
 
+    int  nBlockXSize, nBlockYSize;
     poBand1->GetBlockSize( &nBlockXSize, &nBlockYSize );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify that all bands match.                                    */
 /* -------------------------------------------------------------------- */
-    for( iBand = 1; iBand < nBands; iBand++ )
+    for( int iBand = 1; iBand < nBands; iBand++ )
     {
-        int nThisBlockXSize, nThisBlockYSize;
         GDALRasterBand *poBand = GetRasterBand( iBand+1 );
-        
+
+        int nThisBlockXSize, nThisBlockYSize;
         poBand->GetBlockSize( &nThisBlockXSize, &nThisBlockYSize );
         if( nThisBlockXSize != nBlockXSize && nThisBlockYSize != nBlockYSize )
         {
@@ -454,7 +457,7 @@ void GDALDataset::BlockBasedFlushCache()
     {
         for( int iX = 0; iX < poBand1->nBlocksPerRow; iX++ )
         {
-            for( iBand = 0; iBand < nBands; iBand++ )
+            for( int iBand = 0; iBand < nBands; iBand++ )
             {
                 GDALRasterBand *poBand = GetRasterBand( iBand+1 );
 
@@ -479,7 +482,7 @@ void GDALDataset::RasterInitialize( int nXSize, int nYSize )
 
 {
     CPLAssert( nXSize > 0 && nYSize > 0 );
-    
+
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 }
@@ -552,7 +555,6 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /*      Do we need to grow the bands list?                              */
 /* -------------------------------------------------------------------- */
     if( nBands < nNewBand || papoBands == NULL ) {
-        int             i;
         GDALRasterBand** papoNewBands;
 
         if( papoBands == NULL )
@@ -570,7 +572,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
         }
         papoBands = papoNewBands;
 
-        for( i = nBands; i < nNewBand; i++ )
+        for( int i = nBands; i < nNewBand; i++ )
             papoBands[i] = NULL;
 
         nBands = MAX(nBands,nNewBand);
@@ -1875,9 +1877,9 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 
 {
     int i = 0;
-    int bNeedToFreeBandMap = FALSE;
+    bool bNeedToFreeBandMap = false;
     CPLErr eErr = CE_None;
-    
+
     GDALRasterIOExtraArg sExtraArg;
     if( psExtraArg == NULL )
     {
@@ -1954,7 +1956,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
             for( i = 0; i < nBandCount; i++ )
                 panBandMap[i] = i+1;
 
-            bNeedToFreeBandMap = TRUE;
+            bNeedToFreeBandMap = true;
         }
         else
             panBandMap = anBandMap;
@@ -3880,7 +3882,8 @@ In GDAL 1.X, this method used to be in the OGRDataSource class.
 int GDALDataset::GetSummaryRefCount() const
 
 {
-    CPLMutexHolderD( (CPLMutex**) &m_hMutex );
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    CPLMutexHolderD( &(psPrivate->hMutex) );
     int nSummaryCount = nRefCount;
     int iLayer;
     GDALDataset *poUseThis = (GDALDataset *) this;
@@ -4123,7 +4126,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
     if( nGroupTransactions <= 0 )
     {
-      while( TRUE )
+      while( true )
       {
         OGRFeature      *poDstFeature = NULL;
 
@@ -4189,7 +4192,8 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     }
     else
     {
-      int i, bStopTransfer = FALSE, bStopTransaction = FALSE;
+      bool bStopTransfer = false;
+      bool bStopTransaction = false;
       int nFeatCount = 0; // Number of features in the temporary array
       int nFeaturesToAdd = 0;
       OGRFeature **papoDstFeature =
@@ -4205,7 +4209,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
             if( poFeature == NULL )
             {
-                bStopTransfer = 1;
+                bStopTransfer = true;
                 break;
             }
 
@@ -4219,7 +4223,8 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                           "Unable to translate feature " CPL_FRMT_GIB " from layer %s.\n",
                           poFeature->GetFID(), poSrcDefn->GetName() );
                 OGRFeature::DestroyFeature( poFeature );
-                bStopTransfer = TRUE;
+                poFeature = NULL;
+                bStopTransfer = true;
                 break;
             }
 
@@ -4238,41 +4243,49 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                                       " from layer %s.\n",
                                       poFeature->GetFID(), poSrcDefn->GetName() );
                             OGRFeature::DestroyFeature( poFeature );
-                            bStopTransfer = TRUE;
+                            bStopTransfer = true;
+                            poFeature = NULL;
                             break;
                         }
                     }
                 }
             }
 
-            papoDstFeature[nFeatCount]->SetFID( poFeature->GetFID() );
-
-            OGRFeature::DestroyFeature( poFeature );
+            if (poFeature)
+            {
+                papoDstFeature[nFeatCount]->SetFID( poFeature->GetFID() );
+                OGRFeature::DestroyFeature( poFeature );
+                poFeature = NULL;
+            }
         }
         nFeaturesToAdd = nFeatCount;
 
         CPLErrorReset();
-        bStopTransaction = FALSE;
+        bStopTransaction = false;
         while( !bStopTransaction )
         {
-            bStopTransaction = TRUE;
-            poDstLayer->StartTransaction();
-            for( i = 0; i < nFeaturesToAdd; i++ )
+            bStopTransaction = true;
+            if( poDstLayer->StartTransaction() != OGRERR_NONE )
+                break;
+            for( int i = 0; i < nFeaturesToAdd; i++ )
             {
                 if( poDstLayer->CreateFeature( papoDstFeature[i] ) != OGRERR_NONE )
                 {
                     nFeaturesToAdd = i;
-                    bStopTransfer = TRUE;
-                    bStopTransaction = FALSE;
+                    bStopTransfer = true;
+                    bStopTransaction = false;
                 }
             }
             if( bStopTransaction )
-                poDstLayer->CommitTransaction();
+            {
+                if( poDstLayer->CommitTransaction() != OGRERR_NONE )
+                    break;
+            }
             else
                 poDstLayer->RollbackTransaction();
         }
 
-        for( i = 0; i < nFeatCount; i++ )
+        for( int i = 0; i < nFeatCount; i++ )
             OGRFeature::DestroyFeature( papoDstFeature[i] );
       }
       CPLFree(papoDstFeature);
@@ -4340,7 +4353,8 @@ OGRErr GDALDataset::DeleteLayer( int iLayer )
 OGRLayer *GDALDataset::GetLayerByName( const char *pszName )
 
 {
-    CPLMutexHolderD( &m_hMutex );
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    CPLMutexHolderD( &(psPrivate->hMutex) );
 
     if ( ! pszName )
         return NULL;
@@ -4407,7 +4421,8 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
     OGRLayer *poLayer = NULL;
 
     {
-        CPLMutexHolderD( &m_hMutex );
+        GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+        CPLMutexHolderD( &(psPrivate->hMutex) );
 
         for( i = 0; i < GetLayerCount(); i++ )
         {
@@ -4515,7 +4530,8 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
     OGRLayer *poLayer=NULL;
 
     {
-        CPLMutexHolderD( &m_hMutex );
+        GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+        CPLMutexHolderD( &(psPrivate->hMutex) );
 
         for( i = 0; i < GetLayerCount(); i++ )
         {
@@ -5187,7 +5203,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Handle CREATE INDEX statements specially.                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszStatement,"CREATE INDEX",12) )
+    if( STARTS_WITH_CI(pszStatement, "CREATE INDEX") )
     {
         ProcessSQLCreateIndex( pszStatement );
         return NULL;
@@ -5196,7 +5212,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Handle DROP INDEX statements specially.                         */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszStatement,"DROP INDEX",10) )
+    if( STARTS_WITH_CI(pszStatement, "DROP INDEX") )
     {
         ProcessSQLDropIndex( pszStatement );
         return NULL;
@@ -5205,7 +5221,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Handle DROP TABLE statements specially.                         */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszStatement,"DROP TABLE",10) )
+    if( STARTS_WITH_CI(pszStatement, "DROP TABLE") )
     {
         ProcessSQLDropTable( pszStatement );
         return NULL;
@@ -5214,7 +5230,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Handle ALTER TABLE statements specially.                        */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszStatement,"ALTER TABLE",11) )
+    if( STARTS_WITH_CI(pszStatement, "ALTER TABLE") )
     {
         char **papszTokens = CSLTokenizeString( pszStatement );
         if( CSLCount(papszTokens) >= 4 &&
@@ -5998,15 +6014,17 @@ OGRErr GDALDatasetRollbackTransaction(GDALDatasetH hDS)
 
 int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 {
-    if( eAccess == GA_Update && (eRWFlag == GF_Write || m_hMutex != NULL) )
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    if( eAccess == GA_Update && (eRWFlag == GF_Write || psPrivate->hMutex != NULL) )
     {
         // There should be no race related to creating this mutex since
         // it should be first created through IWriteBlock() / IRasterIO()
         // and then GDALRasterBlock might call it from another thread
-        if( m_hMutex == NULL )
-            m_hMutex = CPLCreateMutex();
+        if( psPrivate->hMutex == NULL )
+            psPrivate->hMutex = CPLCreateMutex();
         else
-            CPLAcquireMutex(m_hMutex, 1000.0);
+            CPLAcquireMutex(psPrivate->hMutex, 1000.0);
+        psPrivate->nMutexTakenCount ++; /* not sure if we can have recursive calls, so ...*/
         return TRUE;
     }
     return FALSE;
@@ -6018,9 +6036,32 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 
 void GDALDataset::LeaveReadWrite()
 {
-    CPLReleaseMutex(m_hMutex);
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    psPrivate->nMutexTakenCount --;
+    CPLReleaseMutex(psPrivate->hMutex);
 }
 
+/************************************************************************/
+/*                      TemporarilyDropReadWriteLock()                  */
+/************************************************************************/
+
+void GDALDataset::TemporarilyDropReadWriteLock()
+{
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    for(int i=0;i<psPrivate->nMutexTakenCount;i++)
+        CPLReleaseMutex(psPrivate->hMutex);
+}
+
+/************************************************************************/
+/*                       ReacquireReadWriteLock()                       */
+/************************************************************************/
+
+void GDALDataset::ReacquireReadWriteLock()
+{
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    for(int i=0;i<psPrivate->nMutexTakenCount;i++)
+        CPLAcquireMutex(psPrivate->hMutex, 1000.0);
+}
 
 /************************************************************************/
 /*                           AcquireMutex()                             */
@@ -6028,7 +6069,8 @@ void GDALDataset::LeaveReadWrite()
 
 int GDALDataset::AcquireMutex()
 {
-    return CPLCreateOrAcquireMutex(&m_hMutex, 1000.0);
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    return CPLCreateOrAcquireMutex(&(psPrivate->hMutex), 1000.0);
 }
 
 /************************************************************************/
@@ -6037,5 +6079,6 @@ int GDALDataset::AcquireMutex()
 
 void GDALDataset::ReleaseMutex()
 {
-    CPLReleaseMutex(m_hMutex);
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    CPLReleaseMutex(psPrivate->hMutex);
 }

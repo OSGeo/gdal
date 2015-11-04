@@ -2779,11 +2779,11 @@ void OGR_F_SetFieldInteger64( OGRFeatureH hFeat, int iField, GIntBig nValue )
 void OGRFeature::SetField( int iField, double dfValue )
 
 {
-    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
     if( poFDefn == NULL )
         return;
-    
+
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTReal )
     {
@@ -2822,7 +2822,7 @@ void OGRFeature::SetField( int iField, double dfValue )
     {
         char    szTempBuffer[128];
 
-        CPLsprintf( szTempBuffer, "%.16g", dfValue );
+        CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), "%.16g", dfValue );
 
         if( IsFieldSet( iField) )
             CPLFree( pauFields[iField].String );
@@ -2833,10 +2833,8 @@ void OGRFeature::SetField( int iField, double dfValue )
     {
         char    szTempBuffer[64];
 
-        CPLsprintf( szTempBuffer, "%.16g", dfValue );
-        char   *apszValues[2];
-        apszValues[0] = szTempBuffer;
-        apszValues[1] = NULL;
+        CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), "%.16g", dfValue );
+        char   *apszValues[2] = {szTempBuffer, NULL};
         SetField( iField, apszValues);
     }
     else
@@ -2902,13 +2900,13 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 
     if( poFDefn == NULL )
         return;
-    
+
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTString )
     {
         if( IsFieldSet(iField) )
             CPLFree( pauFields[iField].String );
-            
+
         pauFields[iField].String = CPLStrdup( pszValue );
     }
     else if( eType == OFTInteger )
@@ -5088,7 +5086,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
         {
             if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
             {
-                if( EQUALN(pszDefault, "CURRENT", strlen("CURRENT")) )
+                if( STARTS_WITH_CI(pszDefault, "CURRENT") )
                 {
                     time_t t = time(NULL);
                     struct tm brokendown;

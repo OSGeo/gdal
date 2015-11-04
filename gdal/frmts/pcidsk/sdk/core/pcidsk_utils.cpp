@@ -98,7 +98,7 @@ std::string &PCIDSK::UCaseStr( std::string &target )
         if( islower(target[i]) )
             target[i] = (char) toupper(target[i]);
     }
-    
+
     return target;
 }
 
@@ -273,7 +273,7 @@ void PCIDSK::ParseTileFormat( std::string full_text,
 /* -------------------------------------------------------------------- */
 /*      Only operate on tiled stuff.                                    */
 /* -------------------------------------------------------------------- */
-    if( strncmp(full_text.c_str(),"TILED",5) != 0 )
+    if( !STARTS_WITH(full_text.c_str(), "TILED") )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -287,7 +287,7 @@ void PCIDSK::ParseTileFormat( std::string full_text,
         while( isdigit(*next_text) )
             next_text++;
     }
-    
+
     while( *next_text == ' ' )
         next_text++;
 
@@ -300,7 +300,7 @@ void PCIDSK::ParseTileFormat( std::string full_text,
         if (compression == "NO_WARNINGS")
             compression = "";
         else if( compression != "RLE"
-            && strncmp(compression.c_str(),"JPEG",4) != 0 
+            && !STARTS_WITH(compression.c_str(), "JPEG") 
             && compression != "NONE"
             && compression != "QUADTREE" )
         {
@@ -309,7 +309,7 @@ void PCIDSK::ParseTileFormat( std::string full_text,
         }
     }    
 }
-                      
+
 /************************************************************************/
 /*                           pci_strcasecmp()                           */
 /************************************************************************/
@@ -350,9 +350,7 @@ int PCIDSK::pci_strcasecmp( const char *string1, const char *string2 )
 int PCIDSK::pci_strncasecmp( const char *string1, const char *string2, int len )
 
 {
-    int i;
-
-    for( i = 0; i < len; i++ )
+    for( int i = 0; i < len; i++ )
     {
         if( string1[i] == '\0' && string2[i] == '\0' )
             return 0;
@@ -391,9 +389,8 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
 
 {
     std::vector<double> dparms;
-    const char *next = sparms.c_str();
 
-    for( next = sparms.c_str(); *next != '\0'; )
+    for( const char* next = sparms.c_str(); *next != '\0'; )
     {
         dparms.push_back( CPLAtof(next) );
 
@@ -409,25 +406,25 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
     dparms.resize(18);
 
     // This is rather iffy!
-    if( EQUALN(geosys.c_str(),"DEGREE",3) )
+    if( STARTS_WITH_CI(geosys.c_str(),"DEG" /* "DEGREE" */) )
         dparms[17] = (double) (int) UNIT_DEGREE;
-    else if( EQUALN(geosys.c_str(),"MET",3) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "MET") )
         dparms[17] = (double) (int) UNIT_METER;
-    else if( EQUALN(geosys.c_str(),"FOOT",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "FOOT") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
-    else if( EQUALN(geosys.c_str(),"FEET",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "FEET") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
-    else if( EQUALN(geosys.c_str(),"INTL FOOT",5) )
+    else if( STARTS_WITH_CI(geosys.c_str(),"INTL " /* "INTL FOOT" */) )
         dparms[17] = (double) (int) UNIT_INTL_FOOT;
-    else if( EQUALN(geosys.c_str(),"SPCS",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "SPCS") )
         dparms[17] = (double) (int) UNIT_METER;
-    else if( EQUALN(geosys.c_str(),"SPIF",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "SPIF") )
         dparms[17] = (double) (int) UNIT_INTL_FOOT;
-    else if( EQUALN(geosys.c_str(),"SPAF",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "SPAF") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
     else
         dparms[17] = -1.0; /* unknown */
-    
+
     return dparms;
 }
 
@@ -438,10 +435,9 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
 std::string PCIDSK::ProjParmsToText( std::vector<double> dparms )
 
 {
-    unsigned int i;
     std::string sparms;
 
-    for( i = 0; i < 17; i++ )
+    for( unsigned int i = 0; i < 17; i++ )
     {
         char value[64];
         double dvalue;
@@ -452,13 +448,13 @@ std::string PCIDSK::ProjParmsToText( std::vector<double> dparms )
             dvalue = 0.0;
 
         if( dvalue == floor(dvalue) )
-            sprintf( value, "%d", (int) dvalue );
+            CPLsnprintf( value, sizeof(value), "%d", (int) dvalue );
         else
-            CPLsprintf( value, "%.15g", dvalue );
-        
+            CPLsnprintf( value, sizeof(value), "%.15g", dvalue );
+
         if( i > 0 )
             sparms += " ";
-        
+
         sparms += value;
     }
 
@@ -568,7 +564,7 @@ void PCIDSK::DefaultDebug( const char * message )
 {
     static bool initialized = false;
     static bool enabled = false;
-    
+
     if( !initialized )
     {
         if( getenv( "PCIDSK_DEBUG" ) != NULL )
@@ -622,7 +618,7 @@ static void vDebug( void (*pfnDebug)(const char *),
 #else
     wrk_args = args;
 #endif
-    
+
     nPR = vsnprintf( szModestBuffer, sizeof(szModestBuffer), fmt, 
                      wrk_args );
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )

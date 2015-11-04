@@ -156,8 +156,8 @@ OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 
 GIntBig OGRILI1Layer::GetFeatureCount( int bForce )
 {
-    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
-        1 /*poAreaLineLayer == NULL*/)
+    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL
+        /* && poAreaLineLayer == NULL*/)
     {
         return nFeatures;
     }
@@ -492,7 +492,12 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurf
     poSurfaceLineLayer = 0;
 }
 
-OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines )
+OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines,
+                                           bool
+                                           #if defined(HAVE_GEOS)
+                                            fix_crossing_lines
+                                           #endif
+                                           )
 {
     if (poLines->getNumGeometries() == 0)
     {
@@ -565,7 +570,16 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
 }
 
 
-void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nAreaFieldIndex, int nPointFieldIndex )
+void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer,
+                                        int 
+#if defined(HAVE_GEOS)
+                                            nAreaFieldIndex
+#endif
+                                        , int
+#if defined(HAVE_GEOS)
+                                            nPointFieldIndex
+#endif
+                                        )
 {
     //add all lines from poAreaLineLayer to collection
     OGRGeometryCollection *gc = new OGRGeometryCollection();

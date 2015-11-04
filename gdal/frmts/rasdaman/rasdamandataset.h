@@ -32,4 +32,17 @@
 
 void CPL_DLL CPL_STDCALL GDALRegister_RASDAMAN();
 
+#define __EXECUTABLE__
+#define EARLY_TEMPLATE
+
+#ifdef HAVE_GCC_SYSTEM_HEADER
+#pragma GCC system_header
+#endif
+
+#include "raslib/template_inst.hh"
+#include "raslib/structuretype.hh"
+#include "raslib/type.hh"
+
+#include "rasodmg/database.hh"
+
 #endif

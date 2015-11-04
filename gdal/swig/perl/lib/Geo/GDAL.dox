@@ -39,7 +39,6 @@
 ## @ignore ReadDir
 ## @ignore ReadDirRecursive
 ## @ignore Rename
-## @ignore RmDir
 ## @ignore Rmdir
 ## @ignore Stat
 ## @ignore Unlink
@@ -49,24 +48,24 @@
 ## @ignore RegenerateOverviews
 ## @ignore RegenerateOverview
 
-## @cmethod $VersionInfo($request = 'VERSION_NUM')
+## @sub $VersionInfo($request = 'VERSION_NUM')
 # @param request A string specifying the request. Currently either
 # "VERSION_NUM", "RELEASE_DATE", "RELEASE_NAME", or
 # "--version". Default is "VERSION_NUM".
 # @return Requested information.
 
-## @cmethod PushFinderLocation($path)
+## @sub PushFinderLocation($path)
 # Add a path to the set of paths from where GDAL support files are
 # sought.
 
-## @cmethod PopFinderLocation()
+## @sub PopFinderLocation()
 # Remove the latest addition from the set of support file search
 # paths.
 
-## @cmethod FinderClean()
+## @sub FinderClean()
 # Clear the set of support file search paths.
 
-## @cmethod $FindFile($class, $basename)
+## @sub $FindFile($class, $basename)
 # Search for GDAL support files.
 #
 # An example:
@@ -85,7 +84,7 @@
 #  'pcs.csv'.
 # @return the path to the searched file or undef.
 
-## @cmethod SetConfigOption($key, $value)
+## @sub SetConfigOption($key, $value)
 # @param key A GDAL config option. Possible values include
 # 'GDAL_FORCE_CACHING', 'USE_RRD', GDAL_DATA', 'GDAL_SKIP',
 # 'GDAL_DRIVER_PATH', 'GDAL_IGNORE_AXIS_ORIENTATION',
@@ -99,7 +98,7 @@
 # @param value A value for the option, typically 'YES', 'NO',
 # undef, a path, or a filename.
 
-## @cmethod $GetConfigOption($key, $default)
+## @sub $GetConfigOption($key, $default)
 # @param key A GDAL config option.
 # @param default A default value for the option.
 # @return the value of the GDAL config option or the value of the
@@ -109,47 +108,47 @@
 ## @ignore InvGeoTransform
 ## @ignore GCPsToGeoTransform
 
-## @cmethod $GetCacheMax()
+## @sub $GetCacheMax()
 # @return maximum amount of memory (as bytes) for caching within GDAL.
 
-## @cmethod SetCacheMax($Bytes)
+## @sub SetCacheMax($Bytes)
 # @param Bytes New maximum amount of memory for caching within GDAL.
 #
 
-## @cmethod $GetCacheUsed()
+## @sub $GetCacheUsed()
 # @return the amount of memory currently used for caching within GDAL.
 
-## @cmethod @DataTypes()
+## @sub @DataTypes()
 # @return a list of GDAL pixel data types. These are currently:
 # +list Geo::GDAL::Const GDT_ TypeCount
 
-## @cmethod $GetDataTypeSize($DataType)
+## @sub $GetDataTypeSize($DataType)
 # @param DataType A GDAL pixel data type (one of those listed by Geo::GDAL::DataTypes).
 # @return the size as the number of bits.
 
-## @cmethod @DataTypeValueRange($DataType)
+## @sub @DataTypeValueRange($DataType)
 # @param DataType Data type (one of those listed by Geo::GDAL::DataTypes).
 # @note Some returned values are inaccurate.
 #
 # @return the minimum, maximum range of the data type.
 
-## @cmethod $DataTypeIsComplex($DataType)
+## @sub $DataTypeIsComplex($DataType)
 # @param DataType A GDAL pixel data type (one of those listed by Geo::GDAL::DataTypes).
 # @return true if the data type is a complex number.
 
-## @cmethod @AccessTypes()
+## @sub @AccessTypes()
 # @return a list of GDAL data set open modes. These are currently:
 # +list Geo::GDAL::Const GA_
 
-## @cmethod @ResamplingTypes()
+## @sub @ResamplingTypes()
 # @return a list of GDAL resampling methods. These are currently:
 # +list Geo::GDAL::Const GRA_
 
-## @cmethod @RIOResamplingTypes()
+## @sub @RIOResamplingTypes()
 # @return a list of GDAL raster IO resampling methods. These are currently:
 # +list Geo::GDAL::Const GRIORA_
 
-## @cmethod $DecToDMS($angle, $axis, $precision=2)
+## @sub $DecToDMS($angle, $axis, $precision=2)
 # Convert decimal degrees to degrees, minutes, and seconds string
 # @param angle A number
 # @param axis A string specifying latitude or longitude ('Long').
@@ -157,24 +156,24 @@
 # @return a string nndnn'nn.nn'"L where n is a number and L is either
 # N or E
 
-## @cmethod $PackedDMSToDec($packed)
+## @sub $PackedDMSToDec($packed)
 # @param packed DMS as a number DDDMMMSSS.SS
 # @return decimal degrees
 
-## @cmethod $DecToPackedDMS($dec)
+## @sub $DecToPackedDMS($dec)
 # @param dec Decimal degrees
 # @return packed DMS, i.e., a number DDDMMMSSS.SS
 
-## @cmethod @NodeTypes()
+## @sub @NodeTypes()
 # @return a list of GDAL XML parser node types. These are currently:
 # +list Geo::GDAL::Const CXT_
 
-## @cmethod $NodeType($type)
+## @sub $NodeType($type)
 # Convert between integer and string expressions of CPLXMLNodeTypes
 # @param type (as integer)
 # @return type (as string)
 
-## @cmethod \@ParseXMLString($XML)
+## @sub \@ParseXMLString($XML)
 # Parses a given XML into an array of arrays and returns a reference
 # to that. An array in the structure is: (CPLXMLNodeType, value,
 # child, child, ...). CPLXMLNodeType is an integer.
@@ -202,58 +201,88 @@ sub traverse {
 }
 # \endcode
 
-## @cmethod @NodeData($node)
+## @sub @NodeData($node)
 # @param node
 # @return ($NodeType, $value)
 
-## @cmethod @Children($node)
+## @sub @Children($node)
 # @param node
 # @return
 
-## @cmethod @Child($node, $i)
+## @sub @Child($node, $i)
 # @param node
 # @param i 0 .. number of children - 1
 # @return
 
-## @cmethod $SerializeXMLTree(arrayref XMLTree)
+## @sub $SerializeXMLTree(arrayref XMLTree)
 # @param XMLTree
 # @return XML
 
 ## @ignore Drivers
 ## @ignore GetDriverCount
 
-## @cmethod @GetDriverNames()
+## @sub @GetDriverNames()
 # @return a list of the named of all (available and registered) GDAL
 # raster drivers.
 
 ## @ignore Driver
 ## @ignore GetDriverByName
 
-## @cmethod Geo::GDAL::Driver GetDriver($name)
+## @sub Geo::GDAL::Driver GetDriver($name)
 # Create a driver object for the internal GDAL driver.
 # @param name the (short) name of the driver.
 # @return a Geo::GDAL::Driver object, which represents the internal driver.
 
-## @cmethod Geo::GDAL::Driver IdentifyDriver($path, $siblings)
+## @sub Geo::GDAL::Driver IdentifyDriver($path, $siblings)
 # @param path a dataset path.
 # @param siblings [optional] A list of names of files in the directory
 # specified by the path.
 # @return a Geo::GDAL::Driver object, which represents an internal driver.
 
-## @cmethod ComputeMedianCutPCT(Geo::GDAL::Band red, Geo::GDAL::Band green, Geo::GDAL::Band blue, $num_colors, $colors, subref progress, $progress_data)
+## @ignore make_processing_options
+
+## @ignore_class Geo::GDAL::GDALDEMProcessingOptions
+## @ignore wrapper_GDALDEMProcessing
+
+## @ignore_class Geo::GDAL::GDALGridOptions
+## @ignore wrapper_GDALGrid
+
+## @ignore_class Geo::GDAL::GDALNearblackOptions
+## @ignore wrapper_GDALNearblackDestDS
+## @ignore wrapper_GDALNearblackDestName
+
+## @ignore_class Geo::GDAL::GDALRasterizeOptions
+## @ignore wrapper_GDALRasterizeDestDS
+## @ignore wrapper_GDALRasterizeDestName
+
+## @ignore_class Geo::GDAL::GDALTranslateOptions
+## @ignore wrapper_GDALTranslate
+
+## @ignore_class Geo::GDAL::GDALVectorTranslateOptions
+## @ignore wrapper_GDALVectorTranslateDestDS
+## @ignore wrapper_GDALVectorTranslateDestName
+
+## @ignore_class Geo::GDAL::GDALWarpAppOptions
+## @ignore wrapper_GDALWarpDestDS
+## @ignore wrapper_GDALWarpDestName
+
+## @ignore_class Geo::GDAL::GDALInfoOptions
+## @ignore GDALInfo
+
+## @sub ComputeMedianCutPCT(Geo::GDAL::Band red, Geo::GDAL::Band green, Geo::GDAL::Band blue, $num_colors, $colors, subref progress, $progress_data)
 # Compute an "optimal" color table for a three band image.
-# @param red a Geo::GDAL::Band object
-# @param green a Geo::GDAL::Band object
-# @param blue a Geo::GDAL::Band object
-# @param num_colors the desired number of colors 
-# @param colors an empty Geo::GDAL::ColorTable object
-# @param progress [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data)
+# @param red A Geo::GDAL::Band object.
+# @param green A Geo::GDAL::Band object.
+# @param blue A Geo::GDAL::Band object.
+# @param num_colors The desired number of colors.
+# @param colors An empty Geo::GDAL::ColorTable object.
+# @param progress [optional] A reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data).
 # @param progress_data [optional]
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod DitherRGB2PCT($red, $green, $blue, $target, $colors, subref progress, $progress_data)
+## @sub DitherRGB2PCT($red, $green, $blue, $target, $colors, subref progress, $progress_data)
 # Dither a three band image into one band using a color table.
 # @param red a Geo::GDAL::Band object
 # @param green a Geo::GDAL::Band object
@@ -266,7 +295,7 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $WarpMemoryLimit=0, $maxerror=0.0, subref progress, $progress_data)
+## @sub ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $WarpMemoryLimit=0, $maxerror=0.0, subref progress, $progress_data)
 # @param src_ds Source dataset.
 # @param dst_ds Destination dataset.
 # @param src_wkt Source projection as a WKT.
@@ -283,7 +312,7 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper</a>
 
-## @cmethod Geo::GDAL::Dataset AutoCreateWarpedVRT(Geo::GDAL::Dataset src, Geo::OSR::SpatialReference src_srs=undef, Geo::OSR::SpatialReference dst_srs=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
+## @sub Geo::GDAL::Dataset AutoCreateWarpedVRT(Geo::GDAL::Dataset src, Geo::OSR::SpatialReference src_srs=undef, Geo::OSR::SpatialReference dst_srs=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
 # @param src
 # @param src_srs source projection.
 # @param dst_srs destination projection.
@@ -293,7 +322,7 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper</a>
 
-## @cmethod ComputeProximity(Geo::GDAL::Band src, Geo::GDAL::Band proximity, hashref options, subref progress, $progress_data)
+## @sub ComputeProximity(Geo::GDAL::Band src, Geo::GDAL::Band proximity, hashref options, subref progress, $progress_data)
 # @param src The raster from which the proximities are computed from.
 # @param proximity The raster to which the proximities are computed to.
 # @param options Options. Supported key, value pairs are 
@@ -320,7 +349,7 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod RasterizeLayer(Geo::GDAL::Dataset ds, arrayref bands, Geo::OGR::Layer layer, $transformer, $arg, arrayref burn_values, hashref options, subref progress, $progress_data)
+## @sub RasterizeLayer(Geo::GDAL::Dataset ds, arrayref bands, Geo::OGR::Layer layer, $transformer, $arg, arrayref burn_values, hashref options, subref progress, $progress_data)
 # @param ds
 # @param bands A reference to a list of bands to be updated.
 # @param layer
@@ -334,7 +363,7 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod Polygonize(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::OGR::Layer out, $PixValField, hashref options, subref progress, $progress_data)
+## @sub Polygonize(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::OGR::Layer out, $PixValField, hashref options, subref progress, $progress_data)
 # @param src
 # @param mask All pixels in the mask band with a value other than zero
 # will be considered suitable for collection as polygons. Must be
@@ -349,7 +378,7 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod SieveFilter(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::GDAL::Band dst, $threshold, $connectedness, hashref options, subref progress, $progress_data)
+## @sub SieveFilter(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::GDAL::Band dst, $threshold, $connectedness, hashref options, subref progress, $progress_data)
 # Removes small raster polygons.
 # @param src
 # @param mask
@@ -363,12 +392,12 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod \@GeneralCmdLineProcessor(arrayref argv, $options = 0)
+## @sub \@GeneralCmdLineProcessor(arrayref argv, $options = 0)
 # @param argv
 # @param options integer
 # @return arrayref
 
-## @cmethod $PackCharacter($DataType)
+## @sub $PackCharacter($DataType)
 # Get the character that is needed for Perl's pack and unpack when
 # they are used with Geo::GDAL::Band::ReadRaster and
 # Geo::GDAL::Band::WriteRaster. Note that Geo::GDAL::Band::ReadTile
@@ -377,22 +406,22 @@ sub traverse {
 # @param DataType A GDAL pixel data type (typically from $band->{DataType}).
 # @return a character which can be used in Perl's pack and unpack.
 
-## @cmethod Geo::GDAL::Dataset Open($name, $access = 'ReadOnly')
+## @sub Geo::GDAL::Dataset Open($name, $access = 'ReadOnly')
 # An example
 # \code
 # use Geo::GDAL;
 # $ds = Geo::GDAL::Open('existing.tiff', 'Update');
 # \endcode
+# @param name Dataset definition string (typically a filename).
+# @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
+# @return a new Geo::GDAL::Dataset object.
+
+## @sub Geo::GDAL::Dataset OpenShared($name, $access = 'ReadOnly')
 # @param name
 # @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
 # @return a new Geo::GDAL::Dataset object.
 
-## @cmethod Geo::GDAL::Dataset OpenShared($name, $access = 'ReadOnly')
-# @param name
-# @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
-# @return a new Geo::GDAL::Dataset object.
-
-## @cmethod Geo::GDAL::Dataset OpenEx($name, $open_flags = 0, array reference allowed_drivers = undef, array reference open_options = undef, array reference sibling_files = undef);
+## @sub Geo::GDAL::Dataset OpenEx($name, $open_flags = 0, array reference allowed_drivers = undef, array reference open_options = undef, array reference sibling_files = undef);
 # @return a new Geo::GDAL::Dataset object.
 
 
@@ -412,7 +441,7 @@ sub traverse {
 # @brief An object, which holds meta data.
 # @isa (Geo::GDAL)
 
-## @cmethod Domains
+## @sub Domains
 # @return the class specific DOMAINS list
 
 ## @method $Description($description)
@@ -478,7 +507,7 @@ sub traverse {
 # @return The short name of the driver.
 
 ## @method @Capabilities()
-# @return A list of capabilities. When executed as a class method
+# @return A list of capabilities. When executed as a package subroutine
 # returns a list of all potential capabilities a driver may have. When
 # executed as an object method returns a list of all capabilities the
 # driver has.
@@ -604,7 +633,7 @@ sub traverse {
 ## @attr RasterCount
 # scalar (access as $dataset->{RasterCount})
 
-## @cmethod Geo::GDAL::Dataset Open($name, $access='ReadOnly')
+## @sub Geo::GDAL::Dataset Open($name, $access='ReadOnly')
 # An example:
 # \code
 # use Geo::GDAL;
@@ -614,7 +643,7 @@ sub traverse {
 # @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
 # @return a new Geo::GDAL::Dataset object.
 
-## @cmethod Geo::GDAL::Dataset OpenShared($name, $access='ReadOnly')
+## @sub Geo::GDAL::Dataset OpenShared($name, $access='ReadOnly')
 # @param name
 # @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
 # @return a new Geo::GDAL::Dataset object.
@@ -741,6 +770,66 @@ sub traverse {
 ## @method CreateMaskBand()
 # Add a mask band to the dataset.
 
+## @method Geo::GDAL::Dataset DEMProcessing($Dest, $Processing, $ColorFilename, $Options, subref progress, $progress_data)
+# Apply a DEM processing to this dataset.
+# @param Dest Destination raster dataset definition string (typically filename).
+# @param Processing Processing to apply, one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", or "Roughness".
+# @param ColorFilename The color palette for color-relief.
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { of => 'PNG'
+# } to set the output format. For a list the options are given as for
+# the command line utility. See <a
+# href="http://www.gdal.org/gdaldem.html">gdaldem</a> for all options.
+# @param progress [optional] A reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data).
+# @param progress_data [optional]
+#
+
+## @method Geo::GDAL::Dataset Nearblack($Dest, $Options, subref progress, $progress_data)
+# Convert nearly black/white pixels to black/white.
+# @param Dest Destination raster dataset definition string (typically
+# filename) OR destination dataset to which to add an alpha or mask
+# band.
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { of => 'PNG'
+# } to set the output format. For a list the options are given as for
+# the command line utility. See <a
+# href="http://www.gdal.org/nearblack.html">nearblack</a> for all
+# options.
+# @return Dataset if destination dataset definition string was given,
+# otherwise a boolean for success/fail but the method croaks if there
+# was an error.
+
+## @method Geo::GDAL::Dataset Translate($Dest, $Options, subref progress, $progress_data)
+# Convert this dataset into another format.
+# @param Dest Destination raster dataset definition string (typically
+# filename).
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { of => 'PNG'
+# } to set the output format. For a list the options are given as for
+# the command line utility. See <a
+# href="http://www.gdal.org/gdal_translate.html">gdal_translate</a> for
+# all options.
+
+## @method Geo::GDAL::Dataset Warp($Dest, $Options, subref progress, $progress_data)
+# Reproject this dataset.
+# @param Dest Destination raster dataset definition string (typically
+# filename).
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { of => 'PNG'
+# } to set the output format. For a list the options are given as for
+# the command line utility. See <a
+# href="http://www.gdal.org/gdalwarp.html">gdalwarp</a> for
+# all options.
+
+## @method $Info($Options)
+# Information about this dataset.
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-'. For example give { JSON => 1 }
+# to set the output format to JSON. For a list the options are given
+# as for the command line utility. See <a
+# href="http://www.gdal.org/gdalinfo.html">gdalinfo</a> for all
+# options.
 
 
 
@@ -748,9 +837,7 @@ sub traverse {
 # @brief A raster band.
 # @isa ( Geo::GDAL::MajorObject Geo::GDAL )
 
-## @ignore COLOR_INTERPRETATIONS 
-
-## @cmethods ColorInterpretations
+## @sub ColorInterpretations
 # @return a list of types of color interpretation for raster
 # bands.
 
@@ -1045,7 +1132,7 @@ sub traverse {
 # @param ColorTable A color table object.
 #
 
-## @cmethod @MaskFlags
+## @sub @MaskFlags
 # @return the list of mask flags. These are
 # - \a AllValid: There are no invalid pixels, all mask values will be 255.
 # When used this will normally be the only flag set.
@@ -1216,10 +1303,10 @@ sub traverse {
 ## @cmethod Geo::GDAL::RasterAttributeTable new()
 # @return a new Geo::GDAL::RasterAttributeTable object
 
-## @cmethod @FieldTypes()
+## @sub @FieldTypes()
 # @return
 
-## @cmethod @FieldUsages()
+## @sub @FieldUsages()
 # @return
 
 ## @method Geo::GDAL::RasterAttributeTable Clone()
@@ -1328,7 +1415,7 @@ sub traverse {
 # @brief A GDAL virtual file system.
 # @isa = ( Geo::GDAL )
 
-## @cmethod Geo::GDAL::VSIF Open($filename, $mode)
+## @sub Geo::GDAL::VSIF Open($filename, $mode)
 # @param filename Name of the file to open. For example "/vsimem/x".
 # @param mode Access mode. 'r', 'r+', 'w', etc.
 # @return A file handle on success.
@@ -1349,37 +1436,37 @@ sub traverse {
 
 ## @method Truncate($new_size)
 
-## @cmethod @ReadDir($dir)
+## @sub @ReadDir($dir)
 # @return Contents of a directory in an anonymous array or as a list.
 
-## @cmethod $ReadDirRecursive($dir)
+## @sub $ReadDirRecursive($dir)
 # @note Give the directory in the form '/vsimem', i.e., without trailing '/'.
 # @return Contents of a directory tree in an anonymous array.
 
-## @cmethod @Stat($filename)
+## @sub @Stat($filename)
 # @return ($filemode, $filesize). filemode is f for a plain file, d
 # for a directory, l for a symbolic link, p for a named pipe (FIFO), S
 # for a socket, b for a block special file, and c for a character
 # special file.
 
-## @cmethod Unlink($filename)
+## @sub Unlink($filename)
 # @param filename The file to delete.
 # @return 0 on success and -1 on an error.
 
 ## @ignore Mkdir
 
-## @cmethod MkDir($path)
+## @sub MkDir($path)
 # Make a directory.
 # @param path The directory to make.
 # @note The name of this method is VSIMkdir in GDAL.
 
 ## @ignore Rmdir
 
-## @cmethod RmDir($path)
+## @sub RmDir($path)
 # Remove a directory.
 # @note The name of this method is VSIRmdir in GDAL.
 
-## @cmethod Rename($old, $new)
+## @sub Rename($old, $new)
 # Rename a file.
 # @note The name of this method is VSIRename in GDAL.
 

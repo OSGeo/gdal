@@ -79,12 +79,12 @@ static void    (*pfn_pj_ctx_free)( projCtx ) = NULL;
 
 // Locale-safe proj starts with 4.10
 #if defined(PJ_LOCALE_SAFE)
-static int      bProjLocaleSafe = PJ_LOCALE_SAFE;
+static bool      bProjLocaleSafe = PJ_LOCALE_SAFE;
 #else
-static int      bProjLocaleSafe = FALSE;
+static bool      bProjLocaleSafe = false;
 #endif
 
-#if (defined(WIN32) || defined(WIN32CE)) && !defined(__MINGW32__)
+#if defined(WIN32) && !defined(__MINGW32__)
 #  define LIBNAME      "proj.dll"
 #elif defined(__MINGW32__)
 // XXX: If PROJ.4 library was properly built using libtool in Cygwin or MinGW
@@ -180,10 +180,8 @@ public:
 static const char* GetProjLibraryName()
 {
     const char *pszLibName = LIBNAME;
-#if !defined(WIN32CE)
     if( CPLGetConfigOption("PROJSO",NULL) != NULL )
         pszLibName = CPLGetConfigOption("PROJSO",NULL);
-#endif
     return pszLibName;
 }
 
@@ -191,16 +189,16 @@ static const char* GetProjLibraryName()
 /*                          LoadProjLibrary()                           */
 /************************************************************************/
 
-static int LoadProjLibrary_unlocked()
+static bool LoadProjLibrary_unlocked()
 
 {
-    static int  bTriedToLoad = FALSE;
+    static bool bTriedToLoad = false;
     const char *pszLibName;
-    
+
     if( bTriedToLoad )
         return( pfn_pj_transform != NULL );
 
-    bTriedToLoad = TRUE;
+    bTriedToLoad = true;
 
     pszLibName = GetProjLibraryName();
 
@@ -227,9 +225,9 @@ static int LoadProjLibrary_unlocked()
     pfn_pj_init = (projPJ (*)(int, char**)) CPLGetSymbol( pszLibName,
                                                        "pj_init" );
     CPLPopErrorHandler();
-    
+
     if( pfn_pj_init == NULL )
-       return( FALSE );
+       return false;
 
     pfn_pj_init_plus = (projPJ (*)(const char *)) 
         CPLGetSymbol( pszLibName, "pj_init_plus" );
@@ -280,7 +278,7 @@ static int LoadProjLibrary_unlocked()
         pfn_pj_init_plus_ctx = NULL;
         pfn_pj_ctx_get_errno = NULL;
     }
-    
+
     if( bProjLocaleSafe )
         CPLDebug("OGRCT", "Using locale-safe proj version");
 
@@ -291,13 +289,13 @@ static int LoadProjLibrary_unlocked()
                   "Please upgrade to PROJ 4.1.2 or later.", 
                   pszLibName );
 
-        return FALSE;
+        return false;
     }
 
-    return( TRUE );
+    return true;
 }
 
-static int LoadProjLibrary()
+static bool LoadProjLibrary()
 
 {
     CPLMutexHolderD( &hPROJMutex );
@@ -437,7 +435,7 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
     }
 
     poCT = new OGRProj4CT();
-    
+
     if( !poCT->Initialize( poSource, poTarget ) )
     {
         delete poCT;
@@ -861,7 +859,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
 
 #if 0
     /* In case of identity transform, under the following conditions, */
-    /* we can also avoid transforming from deegrees <--> radians. */
+    /* we can also avoid transforming from degrees <--> radians. */
     if( bIdentityTransform && bSourceLatLong && !bSourceWrap &&
         bTargetLatLong && !bTargetWrap &&
         fabs(dfSourceToRadians * dfTargetFromRadians - 1.0) < 1e-10 )
@@ -981,7 +979,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /* -------------------------------------------------------------------- */
 /*      Optimized transform from WebMercator to WGS84                   */
 /* -------------------------------------------------------------------- */
-    int bTransformDone = FALSE;
+    bool bTransformDone = false;
     if( bWebMercatorToWGS84 )
     {
 #define REVERSE_SPHERE_RADIUS  (1. / 6378137.)
@@ -1034,10 +1032,10 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
             }
         }
 
-        bTransformDone = TRUE;
+        bTransformDone = true;
     }
     else if( bIdentityTransform )
-        bTransformDone = TRUE;
+        bTransformDone = true;
 
 /* -------------------------------------------------------------------- */
 /*      Do the transformation (or not...) using PROJ.4.                 */

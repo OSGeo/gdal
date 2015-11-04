@@ -2,6 +2,7 @@
 $Id$
 Translation corresponds to gdal_tutorial.dox 14528 2008-05-26 03:07:21Z
 Translator Andrey Kiselev <dron@remotesensing.org>
+Translator Dmitry Baryshnikov <polimax@mail.ru>
 */
 
 /*!
@@ -25,6 +26,7 @@ GDALOpen() для открытия набора данных. В качеств�
 На языке C++:
 \code
 #include "gdal_priv.h"
+#include "cpl_conv.h" // for CPLMalloc()
 
 int main()
 {
@@ -42,6 +44,7 @@ int main()
 На языке C:
 \code
 #include "gdal.h"
+#include "cpl_conv.h" /* for CPLMalloc() */
 
 int main()
 {
@@ -271,6 +274,8 @@ In C:
                           0, 0 );
 \endcode
 
+Буффер pafScanline должен быть освобожден при помощи CPLFree() после его использования.
+
 На языке C:
 \code
 	float *pafScanline;
@@ -281,6 +286,8 @@ In C:
                       pafScanline, nXSize, 1, GDT_Float32, 
                       0, 0 );
 \endcode
+
+Буффер pafScanline должен быть освобожден при помощи CPLFree() после его использования.
 
 На языке Python:
  
@@ -342,9 +349,15 @@ pData --- это указатель на буфер в памяти, куда д
 Пожалуйста, постоянно помните, что объекты GDALRasterBand <i>принадлежат</i> к
 своему набору данных и они никогда не должны удаляться с помощью оператора
 delete языка C++. Наборы данных GDALDataset могут быть закрыты либо с помощью
-вызова функции GDALClose(), либо с использованием оператора delete для объекта
-GDALDataset. Любой вариант приведёт к корректному освобождению памяти и сбросу
-на диск всех незаписанных данных.
+вызова функции GDALClose() (настоятельно НЕ рекомендуется использовать оператор
+delete для освобождения GDALDataset для пользователей Windows из-за извесной ошибки
+получения и освобождения памяти через границы модуля. Подробнее см. 
+<a href="http://trac.osgeo.org/gdal/wiki/FAQMiscellaneous#HowshouldIdeallocateresourcesacquaintedfromGDALonWindows">раздел</a> в FAQ).
+Вызов GDALClose приведет к правильной очистке и выполнении всех ожидающих операций
+записи.
+Если забыть выполнить GDALClose для набора данных в режиме редактирования в одном
+из популярных форматов, например, GTiff, может привести к тому, что набор данных
+больше не сможет открываться.
 
 \section gdal_tutorial_ru_creation Способы создания файлов
 
@@ -485,6 +498,8 @@ CreateCopy(), показывает, что CreateCopy() должен завер�
     papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
     poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE, 
                                     papszOptions, GDALTermProgress, NULL );
+    
+    /* Once we're done, close properly the dataset */
     if( poDstDS != NULL )
         delete poDstDS;
     CSLDestroy( papszOptions );
@@ -500,6 +515,7 @@ CreateCopy(), показывает, что CreateCopy() должен завер�
     papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
     hDstDS = GDALCreateCopy( hDriver, pszDstFilename, hSrcDS, FALSE, 
                              papszOptions, GDALTermProgres, NULL );
+    /* Once we're done, close properly the dataset */                         
     if( hDstDS != NULL )
         GDALClose( hDstDS );
     CSLDestroy( papszOptions );
@@ -511,6 +527,9 @@ CreateCopy(), показывает, что CreateCopy() должен завер�
     src_ds = gdal.Open( src_filename )
     dst_ds = driver.CreateCopy( dst_filename, src_ds, 0, 
                                 [ 'TILED=YES', 'COMPRESS=PACKBITS' ] )
+    # Once we're done, close properly the dataset
+    dst_ds = None
+    src_ds = None                                
 \endcode
 
 \section gdal_tutorial_ru_create Использование метода Create()
@@ -568,7 +587,8 @@ CreateCopy(), показывает, что CreateCopy() должен завер�
     poBand->RasterIO( GF_Write, 0, 0, 512, 512, 
                       abyRaster, 512, 512, GDT_Byte, 0, 0 );    
 
-    delete poDstDS;
+    /* Once we're done, close properly the dataset */
+    GDALClose( (GDALDatasetH) poDstDS );
 \endcode
 
 На языке C:
@@ -594,13 +614,15 @@ CreateCopy(), показывает, что CreateCopy() должен завер�
     GDALRasterIO( hBand, GF_Write, 0, 0, 512, 512, 
                   abyRaster, 512, 512, GDT_Byte, 0, 0 );    
 
+    /* Once we're done, close properly the dataset */
     GDALClose( hDstDS );
 \endcode
 
 На языке Python:
 
 \code
-    import Numeric, osr
+    import osr
+    import numpy
 
     dst_ds.SetGeoTransform( [ 444720, 30, 0, 3751320, 0, -30 ] )
     
@@ -609,8 +631,11 @@ CreateCopy(), показывает, что CreateCopy() должен завер�
     srs.SetWellKnownGeogCS( 'NAD27' )
     dst_ds.SetProjection( srs.ExportToWkt() )
 
-    raster = Numeric.zeros( (512, 512) )    
+    raster = numpy.zeros( (512, 512), dtype=numpy.uint8 )    
     dst_ds.GetRasterBand(1).WriteArray( raster )
+
+    # Once we're done, close properly the dataset
+    dst_ds = None
 \endcode
 
 \htmlonly

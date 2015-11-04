@@ -174,8 +174,8 @@ static CPLString GetInterestLayersForDSName(const CPLString& osDSName)
 /*                        OGROSMDataSource()                            */
 /************************************************************************/
 
-OGROSMDataSource::OGROSMDataSource()
-
+OGROSMDataSource::OGROSMDataSource() :
+    hSelectNodeBetweenStmt(NULL)
 {
     nLayers = 0;
     papoLayers = NULL;
@@ -519,42 +519,35 @@ int OGROSMDataSource::FlushCurrentSector()
 
 int OGROSMDataSource::AllocBucket(int iBucket)
 {
-    int bOOM = FALSE;
     if( bCompressNodes )
     {
         int nRem = iBucket % (PAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
         if( papsBuckets[iBucket - nRem].u.panSectorSize == NULL )
             papsBuckets[iBucket - nRem].u.panSectorSize = (GByte*)VSICalloc(1, PAGE_SIZE);
-        if( papsBuckets[iBucket - nRem].u.panSectorSize == NULL )
+        if( papsBuckets[iBucket - nRem].u.panSectorSize != NULL )
         {
-            papsBuckets[iBucket].u.panSectorSize = NULL;
-            bOOM = TRUE;
-        }
-        else
             papsBuckets[iBucket].u.panSectorSize = papsBuckets[iBucket - nRem].u.panSectorSize + nRem * BUCKET_SECTOR_SIZE_ARRAY_SIZE;
+            return TRUE;
+        }
+        papsBuckets[iBucket].u.panSectorSize = NULL;
     }
     else
     {
         int nRem = iBucket % (PAGE_SIZE / BUCKET_BITMAP_SIZE);
         if( papsBuckets[iBucket - nRem].u.pabyBitmap == NULL )
             papsBuckets[iBucket - nRem].u.pabyBitmap = (GByte*)VSICalloc(1, PAGE_SIZE);
-        if( papsBuckets[iBucket - nRem].u.pabyBitmap == NULL )
+        if( papsBuckets[iBucket - nRem].u.pabyBitmap != NULL )
         {
-            papsBuckets[iBucket].u.pabyBitmap = NULL;
-            bOOM = TRUE;
-        }
-        else
             papsBuckets[iBucket].u.pabyBitmap = papsBuckets[iBucket - nRem].u.pabyBitmap + nRem * BUCKET_BITMAP_SIZE;
+            return TRUE;
+        }
+        papsBuckets[iBucket].u.pabyBitmap = NULL;
     }
 
-    if( bOOM )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "AllocBucket() failed. Use OSM_USE_CUSTOM_INDEXING=NO");
-        bStopParsing = TRUE;
-        return FALSE;
-    }
-
-    return TRUE;
+    // Out of memory.
+    CPLError(CE_Failure, CPLE_AppDefined, "AllocBucket() failed. Use OSM_USE_CUSTOM_INDEXING=NO");
+    bStopParsing = TRUE;
+    return FALSE;
 }
 
 /************************************************************************/
@@ -681,6 +674,7 @@ int OGROSMDataSource::FlushCurrentSectorCompressedCase()
         Bucket* psBucket = &papsBuckets[nBucketOld];
         if( psBucket->u.panSectorSize == NULL && !AllocBucket(nBucketOld) )
             return FALSE;
+        CPLAssert( psBucket->u.panSectorSize != NULL );
         psBucket->u.panSectorSize[nOffInBucketReducedOld] =
                                     COMPRESS_SIZE_TO_BYTE(nCompressSize);
 
@@ -754,10 +748,11 @@ int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
 
     if( !bCompressNodes )
     {
-        int nBitmapIndex = nOffInBucketReduced / 8;
-        int nBitmapRemainer = nOffInBucketReduced % 8;
+        const int nBitmapIndex = nOffInBucketReduced / 8;
+        const int nBitmapRemainer = nOffInBucketReduced % 8;
         if( psBucket->u.pabyBitmap == NULL && !AllocBucket(nBucket) )
             return FALSE;
+        CPLAssert( psBucket->u.pabyBitmap != NULL );
         psBucket->u.pabyBitmap[nBitmapIndex] |= (1 << nBitmapRemainer);
     }
 
@@ -1335,7 +1330,7 @@ static void WriteVarInt(unsigned int nVal, GByte** ppabyData)
     GByte* pabyData = *ppabyData;
     while(TRUE)
     {
-        if( (nVal & (~0x7f)) == 0 )
+        if( (nVal & (~0x7fU)) == 0 )
         {
             *pabyData = (GByte)nVal;
             *ppabyData = pabyData + 1;
@@ -1357,7 +1352,7 @@ static void WriteVarInt64(GUIntBig nVal, GByte** ppabyData)
     GByte* pabyData = *ppabyData;
     while(TRUE)
     {
-        if( (nVal & (~0x7f)) == 0 )
+        if( (nVal & (~0x7fU)) == 0 )
         {
             *pabyData = (GByte)nVal;
             *ppabyData = pabyData + 1;
@@ -3306,9 +3301,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
             continue;
         }
 
-        if( strncmp(pszLine, "closed_ways_are_polygons=",
-                    strlen("closed_ways_are_polygons=")) == 0)
-        {
+        if( STARTS_WITH(pszLine, "closed_ways_are_polygons="))        {
             char** papszTokens = CSLTokenizeString2(pszLine, "=", 0);
             if( CSLCount(papszTokens) == 2)
             {
@@ -3322,7 +3315,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
             CSLDestroy(papszTokens);
         }
 
-        else if(strncmp(pszLine, "report_all_nodes=", strlen("report_all_nodes=")) == 0)
+        else if(STARTS_WITH(pszLine, "report_all_nodes="))
         {
             if( strcmp(pszLine + strlen("report_all_nodes="), "no") == 0 )
             {
@@ -3334,7 +3327,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
             }
         }
 
-        else if(strncmp(pszLine, "report_all_ways=", strlen("report_all_ways=")) == 0)
+        else if(STARTS_WITH(pszLine, "report_all_ways="))
         {
             if( strcmp(pszLine + strlen("report_all_ways="), "no") == 0 )
             {
@@ -3346,7 +3339,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
             }
         }
 
-        else if(strncmp(pszLine, "attribute_name_laundering=", strlen("attribute_name_laundering=")) == 0)
+        else if(STARTS_WITH(pszLine, "attribute_name_laundering="))
         {
             if( strcmp(pszLine + strlen("attribute_name_laundering="), "no") == 0 )
             {
@@ -4093,7 +4086,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special SET interest_layers = command                           */
 /* -------------------------------------------------------------------- */
-    if (strncmp(pszSQLCommand, "SET interest_layers =", 21) == 0)
+    if (STARTS_WITH(pszSQLCommand, "SET interest_layers ="))
     {
         char** papszTokens = CSLTokenizeString2(pszSQLCommand + 21, ",", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
         int i;
@@ -4162,7 +4155,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
         pszSQLCommand ++;
 
     /* Try to analyse the SQL command to get the interest table */
-    if( EQUALN(pszSQLCommand, "SELECT", 5) )
+    if( STARTS_WITH_CI(pszSQLCommand, "SELECT") )
     {
         int bLayerAlreadyAdded = FALSE;
         CPLString osInterestLayers = "SET interest_layers =";

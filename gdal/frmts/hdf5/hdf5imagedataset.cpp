@@ -183,8 +183,6 @@ HDF5ImageDataset::HDF5ImageDataset() :
     iCSKProductType(PROD_UNKNOWN),
     bHasGeoTransform(false)
 {
-    poH5RootGroup = NULL;
-    papszMetadata = NULL;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -445,7 +443,7 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 int HDF5ImageDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-    if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) )
+    if(!STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF5:") )
         return FALSE;
     else
         return TRUE;
@@ -460,7 +458,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     HDF5ImageDataset    *poDS;
     char szFilename[2048];
 
-    if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) ||
+    if(!STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF5:") ||
         strlen(poOpenInfo->pszFilename) > sizeof(szFilename) - 3 )
         return NULL;
 
@@ -740,19 +738,19 @@ CPLErr HDF5ImageDataset::CreateProjections()
             //Get the format's level
             osMissionLevel = HDF5Dataset::GetMetadataItem("Product_Type");
 
-            if(EQUALN(osMissionLevel,"RAW",3))
+            if(STARTS_WITH_CI(osMissionLevel, "RAW"))
                 productType  = PROD_CSK_L0;
 
-            if(EQUALN(osMissionLevel,"SSC",3))
+            if(STARTS_WITH_CI(osMissionLevel, "SSC"))
                 productType  = PROD_CSK_L1A;
 
-            if(EQUALN(osMissionLevel,"DGM",3))
+            if(STARTS_WITH_CI(osMissionLevel, "DGM"))
                 productType  = PROD_CSK_L1B;
 
-            if(EQUALN(osMissionLevel,"GEC",3))
+            if(STARTS_WITH_CI(osMissionLevel, "GEC"))
                 productType  = PROD_CSK_L1C;
 
-            if(EQUALN(osMissionLevel,"GTC",3))
+            if(STARTS_WITH_CI(osMissionLevel, "GTC"))
                 productType  = PROD_CSK_L1D;
         }
 
@@ -984,19 +982,19 @@ void HDF5ImageDataset::IdentifyProductType()
                 //Get the format's level
                 osMissionLevel = HDF5Dataset::GetMetadataItem("Product_Type");
 
-                if(EQUALN(osMissionLevel,"RAW",3))
+                if(STARTS_WITH_CI(osMissionLevel, "RAW"))
                     iCSKProductType  = PROD_CSK_L0;
 
-                if(EQUALN(osMissionLevel,"SCS",3))
+                if(STARTS_WITH_CI(osMissionLevel, "SCS"))
                     iCSKProductType  = PROD_CSK_L1A;
                 
-                if(EQUALN(osMissionLevel,"DGM",3))
+                if(STARTS_WITH_CI(osMissionLevel, "DGM"))
                     iCSKProductType  = PROD_CSK_L1B;
 
-                if(EQUALN(osMissionLevel,"GEC",3))
+                if(STARTS_WITH_CI(osMissionLevel, "GEC"))
                     iCSKProductType  = PROD_CSK_L1C;
 
-                if(EQUALN(osMissionLevel,"GTC",3))
+                if(STARTS_WITH_CI(osMissionLevel, "GTC"))
                     iCSKProductType  = PROD_CSK_L1D;
             }
         }

@@ -39,7 +39,8 @@ CPL_CVSID("$Id$");
 /*                            OGRHTFLayer()                             */
 /************************************************************************/
 
-OGRHTFLayer::OGRHTFLayer( const char* pszFilename, int nZone, int bIsNorth )
+OGRHTFLayer::OGRHTFLayer( const char* pszFilename, int nZone, int bIsNorth ) :
+    poFeatureDefn(NULL)
 
 {
     fpHTF = VSIFOpenL(pszFilename, "rb");
@@ -110,7 +111,7 @@ OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone, in
     while( fpHTF != NULL &&
            (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
     {
-        if (strncmp(pszLine, "SOUNDING HEADER", strlen("SOUNDING HEADER")) == 0)
+        if (STARTS_WITH(pszLine, "SOUNDING HEADER"))
             bSoundingHeader = TRUE;
         else if (bSoundingHeader && strlen(pszLine) > 10 &&
                  pszLine[0] == '[' && pszLine[3] == ']' &&
@@ -342,7 +343,7 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
     const char* pszLine;
 
     OGRLinearRing oLR;
-    int bHastFirstCoord = FALSE;
+    bool bHasFirstCoord = false;
     double dfFirstEasting = 0, dfFirstNorthing = 0;
     double dfIslandEasting = 0, dfIslandNorthing = 0;
     int bInIsland = FALSE;
@@ -359,32 +360,27 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
             /* end of polygon is marked by a blank line */
             break;
         }
-        else if (strncmp(pszLine, "POLYGON DESCRIPTION: ",
-                         strlen("POLYGON DESCRIPTION: ")) == 0)
+        else if (STARTS_WITH(pszLine, "POLYGON DESCRIPTION: "))
         {
             poFeature->SetField(0, pszLine + strlen("POLYGON DESCRIPTION: "));
         }
-        else if (strncmp(pszLine, "POLYGON IDENTIFIER: ",
-                         strlen("POLYGON IDENTIFIER: ")) == 0)
+        else if (STARTS_WITH(pszLine, "POLYGON IDENTIFIER: "))
         {
             poFeature->SetField(1, pszLine + strlen("POLYGON IDENTIFIER: "));
         }
-        else if (strncmp(pszLine, "SEAFLOOR COVERAGE: ",
-                         strlen("SEAFLOOR COVERAGE:")) == 0)
+        else if (STARTS_WITH(pszLine, "SEAFLOOR COVERAGE: "))
         {
             const char* pszVal = pszLine + strlen("SEAFLOOR COVERAGE: ");
             if (*pszVal != '*')
                 poFeature->SetField(2, pszVal);
         }
-        else if (strncmp(pszLine, "POSITION ACCURACY: ",
-                         strlen("POSITION ACCURACY:")) == 0)
+        else if (STARTS_WITH(pszLine, "POSITION ACCURACY: "))
         {
             const char* pszVal = pszLine + strlen("POSITION ACCURACY: ");
             if (*pszVal != '*')
                 poFeature->SetField(3, pszVal);
         }
-        else if (strncmp(pszLine, "DEPTH ACCURACY: ",
-                         strlen("DEPTH ACCURACY:")) == 0)
+        else if (STARTS_WITH(pszLine, "DEPTH ACCURACY: "))
         {
             const char* pszVal = pszLine + strlen("DEPTH ACCURACY: ");
             if (*pszVal != '*')
@@ -402,9 +398,9 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
             {
                 double dfEasting = CPLAtof(papszTokens[2]);
                 double dfNorthing = CPLAtof(papszTokens[3]);
-                if (!bHastFirstCoord)
+                if (!bHasFirstCoord)
                 {
-                    bHastFirstCoord = TRUE;
+                    bHasFirstCoord = true;
                     dfFirstEasting = dfEasting;
                     dfFirstNorthing = dfNorthing;
                     oLR.addPoint(dfEasting, dfNorthing);

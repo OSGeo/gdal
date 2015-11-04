@@ -41,7 +41,7 @@ extern "C" void RegisterOGRCartoDB();
 
 static int OGRCartoDBDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    return EQUALN(poOpenInfo->pszFilename, "CARTODB:", strlen("CARTODB:"));
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "CARTODB:");
 }
 
 /************************************************************************/

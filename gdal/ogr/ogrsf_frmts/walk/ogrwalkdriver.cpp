@@ -56,13 +56,13 @@ const char *OGRWalkDriver::GetName()
 OGRDataSource *OGRWalkDriver::Open( const char * pszFilename, int bUpdate )
 {
 
-    if( EQUALN(pszFilename, "PGEO:", strlen("PGEO:")) )
+    if( STARTS_WITH_CI(pszFilename, "PGEO:") )
         return NULL;
 
-    if( EQUALN(pszFilename, "GEOMEDIA:", strlen("GEOMEDIA:")) )
+    if( STARTS_WITH_CI(pszFilename, "GEOMEDIA:") )
         return NULL;
 
-    if( !EQUALN(pszFilename,"WALK:", strlen("WALK:"))
+    if( !STARTS_WITH_CI(pszFilename, "WALK:")
         && !EQUAL(CPLGetExtension(pszFilename), "MDB") )
         return NULL;
 

@@ -27,28 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-// Library headers.
-#ifndef INCLUDED_STRING
-#include <string>
-#define INCLUDED_STRING
-#endif
+#ifndef INCLUDED_PCRASTERUTIL
+#define INCLUDED_PCRASTERUTIL
 
-// PCRaster library headers.
-#ifndef INCLUDED_CSF
 #include "csf.h"
-#define INCLUDED_CSF
-#endif
-
-#ifndef INCLUDED_PCRTYPES
-#include "pcrtypes.h"
-#define INCLUDED_PCRTYPES
-#endif
-
-// Module headers.
-#ifndef INCLUDED_GDAL_PRIV
 #include "gdal_priv.h"
-#define INCLUDED_GDAL_PRIV
-#endif
+#include "pcrtypes.h"
 
 
 GDALDataType       cellRepresentation2GDALType(CSF_CR cellRepresentation);
@@ -124,7 +108,6 @@ struct CastToBooleanRange
 };
 
 
-
 template<>
 struct CastToBooleanRange<UINT1>
 {
@@ -136,7 +119,6 @@ struct CastToBooleanRange<UINT1>
 };
 
 
-
 template<>
 struct CastToBooleanRange<UINT2>
 {
@@ -146,7 +128,6 @@ struct CastToBooleanRange<UINT2>
     }
   }
 };
-
 
 
 template<>
@@ -171,7 +152,6 @@ struct CastToDirection
 };
 
 
-
 struct CastToLdd
 {
   void operator()(UINT1& value) {
@@ -187,3 +167,5 @@ struct CastToLdd
     }
   }
 };
+
+#endif  // INCLUDED_PCRASTERUTIL

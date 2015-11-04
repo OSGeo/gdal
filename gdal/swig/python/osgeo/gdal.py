@@ -148,6 +148,891 @@ def DontUseExceptions(*args):
 def VSIFReadL(*args):
   """VSIFReadL(int nMembSize, int nMembCount, VSILFILE * fp) -> int"""
   return _gdal.VSIFReadL(*args)
+def InfoOptions(options = [], format = 'text', deserialize = True,
+         computeMinMax = False, reportHistograms = False, reportProj4 = False,
+         stats = False, approxStats = False, computeChecksum = False,
+         showGCPs = True, showMetadata = True, showRAT = True, showColorTable = True,
+         listMDD = False, showFileList = True, allMetadata = False,
+         extraMDDomains = None):
+    """ Create a InfoOptions() object that can be passed to gdal.Info()
+        options can be be an array of strings, a string or let empty and filled from other keywords."""
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+        format = 'text'
+        if '-json' in new_options:
+            format = 'json'
+    else:
+        new_options = copy.copy(options)
+        if format == 'json':
+            new_options += ['-json']
+        if computeMinMax:
+            new_options += ['-mm']
+        if reportHistograms:
+            new_options += ['-hist']
+        if reportProj4:
+            new_options += ['-proj4']
+        if stats:
+            new_options += ['-stats']
+        if approxStats:
+            new_options += ['-approx_stats']
+        if computeChecksum:
+            new_options += ['-checksum']
+        if not showGCPs:
+            new_options += ['-nogcp']
+        if not showMetadata:
+            new_options += ['-nomd']
+        if not showRAT:
+            new_options += ['-norat']
+        if not showColorTable:
+            new_options += ['-noct']
+        if listMDD:
+            new_options += ['-listmdd']
+        if not showFileList:
+            new_options += ['-nofl']
+        if allMetadata:
+            new_options += ['-mdd', 'all']
+        if extraMDDomains is not None:
+            for mdd in extraMDDomains:
+                new_options += ['-mdd', mdd]
+
+    return (GDALInfoOptions(new_options), format, deserialize)
+
+def Info(ds, **kwargs):
+    """ Return information on a dataset.
+        Arguments are :
+          ds --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.InfoOptions()
+        If options is provided as a gdal.InfoOptions() object, other keywords are ignored. """
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, format, deserialize) = InfoOptions(**kwargs)
+    else:
+        (opts, format, deserialize) = kwargs['options']
+    if type(ds) == type(''):
+        ds = Open(ds)
+    ret = InfoInternal(ds, opts)
+    if format == 'json' and deserialize:
+        import json
+        ret = json.loads(ret)
+    return ret
+
+
+def TranslateOptions(options = [], format = 'GTiff',
+              outputType = GDT_Unknown, bandList = None, maskBand = None,
+              width = 0, height = 0, widthPct = 0.0, heightPct = 0.0,
+              xRes = 0.0, yRes = 0.0,
+              creationOptions = None, srcWin = None, projWin = None, projWinSRS = None, strict = False,
+              unscale = False, scaleParams = None, exponents = None,
+              outputBounds = None, metadataOptions = None,
+              outputSRS = None, GCPs = None,
+              noData = None, rgbExpand = None,
+              stats = False, rat = True, resampleAlg = None,
+              callback = None, callback_data = None):
+    """ Create a TranslateOptions() object that can be passed to gdal.Translate()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          outputType --- output type (gdal.GDT_Byte, etc...)
+          bandList --- array of band numbers (index start at 1)
+          maskBand --- mask band to generate or not ("none", "auto", "mask", 1, ...)
+          width --- width of the output raster in pixel
+          height --- height of the output raster in pixel
+          widthPct --- width of the output raster in percentage (100 = original width)
+          heightPct --- height of the output raster in percentage (100 = original height)
+          xRes --- output horizontal resolution
+          yRes --- output vertical resolution
+          creationOptions --- list of creation options
+          srcWin --- subwindow in pixels to extract: [left_x, top_y, width, height]
+          projWin --- subwindow in projected coordinates to extract: [ulx, uly, lrx, lry]
+          projWinSRS --- SRS in which projWin is expressed
+          strict --- strict mode
+          unscale --- unscale values with scale and offset metadata
+          scaleParams --- list of scale parameters, each of the form [src_min,src_max] or [src_min,src_max,dst_min,dst_max]
+          exponents --- list of exponentation parameters
+          outputBounds --- assigned output bounds: [ulx, uly, lrx, lry]
+          metadataOptions --- list of metadata options
+          outputSRS --- assigned output SRS
+          GCPs --- list of GCPs
+          noData --- nodata value (or "none" to unset it)
+          rgbExpand --- Color palette expansion mode: "gray", "rgb", "rgba"
+          stats --- whether to calcule statistics
+          rat --- whether to write source RAT
+          resampleAlg --- resampling mode
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-of', format]
+        if outputType != GDT_Unknown:
+            new_options += ['-ot', GetDataTypeName(outputType) ]
+        if maskBand != None:
+            new_options += ['-mask', str(maskBand) ]
+        if bandList != None:
+            for b in bandList:
+                new_options += ['-b', str(b) ]
+        if width != 0 or height != 0:
+            new_options += ['-outsize', str(width), str(height)]
+        elif widthPct != 0 and heightPct != 0:
+            new_options += ['-outsize', str(widthPct) + '%%', str(heightPct) + '%%']
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if srcWin is not None:
+            new_options += ['-srcwin', str(srcWin[0]), str(srcWin[1]), str(srcWin[2]), str(srcWin[3])]
+        if strict:
+            new_options += ['-strict']
+        if unscale:
+            new_options += ['-unscale']
+        if scaleParams:
+            for scaleParam in scaleParams:
+                new_options += ['-scale']
+                for v in scaleParam:
+                    new_options += [ str(v) ]
+        if exponents:
+            for exponent in exponents:
+                new_options += ['-exponent', str(exponent)]
+        if outputBounds is not None:
+            new_options += ['-a_ullr', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
+        if metadataOptions is not None:
+            for opt in metadataOptions:
+                new_options += ['-mo', opt ]
+        if outputSRS is not None:
+            new_options += ['-a_srs', str(outputSRS) ]
+        if GCPs is not None:
+            for gcp in GCPs:
+                new_options += ['-gcp', str(gcp.GCPPixel), str(gcp.GCPLine), str(gcp.GCPX), str(gcp.GCPY), str(gcp.GCPZ) ]
+        if projWin is not None:
+            new_options += ['-projwin', str(projWin[0]), str(projWin[1]), str(projWin[2]), str(projWin[3])]
+        if projWinSRS is not None:
+            new_options += ['-projwin_srs', str(projWinSRS) ]
+        if noData is not None:
+            new_options += ['-a_nodata', str(noData) ]
+        if rgbExpand is not None:
+            new_options += ['-expand', str(rgbExpand) ]
+        if stats:
+            new_options += ['-stats']
+        if not rat:
+            new_options += ['-norat']
+        if resampleAlg is not None:
+            if resampleAlg == GRA_NearestNeighbour:
+                new_options += ['-r', 'near']
+            elif resampleAlg == GRA_Bilinear:
+                new_options += ['-r', 'bilinear']
+            elif resampleAlg == GRA_Cubic:
+                new_options += ['-r', 'cubic']
+            elif resampleAlg == GRA_CubicSpline:
+                new_options += ['-r', 'cubicspline']
+            elif resampleAlg == GRA_Lanczos:
+                new_options += ['-r', 'lanczos']
+            elif resampleAlg == GRRA_Average:
+                new_options += ['-r', 'average']
+            elif resampleAlg == GRA_Mode:
+                new_options += ['-r', 'mode']
+            else:
+                new_options += ['-r', str(resampleAlg) ]
+        if xRes != 0 and yRes != 0:
+            new_options += ['-tr', str(xRes), str(yRes) ]
+
+    return (GDALTranslateOptions(new_options), callback, callback_data)
+
+def Translate(destName, srcDS, **kwargs):
+    """ Convert a dataset.
+        Arguments are :
+          destName --- Output dataset name
+          srcDS --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.TranslateOptions()
+        If options is provided as a gdal.TranslateOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = TranslateOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = Open(srcDS)
+
+    return TranslateInternal(destName, srcDS, opts, callback, callback_data)
+
+def WarpOptions(options = [], format = 'GTiff', 
+         outputBounds = None,
+         outputBoundsSRS = None,
+         xRes = None, yRes = None, targetAlignedPixels = False,
+         width = 0, height = 0,
+         srcSRS = None, dstSRS = None,
+         srcAlpha = False, dstAlpha = False, 
+         warpOptions = None, errorThreshold = None,
+         warpMemoryLimit = None, creationOptions = None, outputType = GDT_Unknown,
+         workingType = GDT_Unknown, resampleAlg = None,
+         srcNodata = None, dstNodata = None, multithread = False,
+         tps = False, rpc = False, geoloc = False, polynomialOrder = None,
+         transformerOptions = None, cutlineDSName = None,
+         cutlineLayer = None, cutlineWhere = None, cutlineSQL = None, cutlineBlend = None, cropToCutline = False,
+         copyMetadata = True, metadataConflictValue = None,
+         setColorInterpretation = False,
+         callback = None, callback_data = None):
+    """ Create a WarpOptions() object that can be passed to gdal.Warp()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          outputBounds --- output bounds as (minX, minY, maxX, maxY) in target SRS
+          outputBoundsSRS --- SRS in which output bounds are expressed, in the case they are not expressed in dstSRS
+          xRes, yRes --- output resolution in target SRS
+          targetAlignedPixels --- whether to force output bounds to be multiple of output resolution
+          width --- width of the output raster in pixel
+          height --- height of the output raster in pixel
+          srcSRS --- source SRS
+          dstSRS --- output SRS
+          srcAlpha --- whether to force the last band of the input dataset to be considered as an alpha band
+          dstAlpha --- whether to force the creation of an output alpha band
+          outputType --- output type (gdal.GDT_Byte, etc...)
+          workingType --- working type (gdal.GDT_Byte, etc...)
+          warpOptions --- list of warping options
+          errorThreshold --- error threshold for approximation transformer (in pixels)
+          warpMemoryLimit --- size of working buffer in bytes
+          resampleAlg --- resampling mode
+          creationOptions --- list of creation options
+          srcNodata --- source nodata value(s)
+          dstNodata --- output nodata value(s)
+          multithread --- whether to multithread computation and I/O operations
+          tps --- whether to use Thin Plate Spline GCP transformer
+          rpc --- whether to use RPC transformer
+          geoloc --- whether to use GeoLocation array transformer
+          polynomialOrder --- order of polynomial GCP interpolation
+          transformerOptions --- list of transformer options
+          cutlineDSName --- cutline dataset name
+          cutlineLayer --- cutline layer name
+          cutlineWhere --- cutline WHERE clause
+          cutlineSQL --- cutline SQL statement
+          cutlineBlend --- cutline blend distance in pixels
+          cropToCutline --- whether to use cutline extent for output bounds
+          copyMetadata --- whether to copy source metadata
+          metadataConflictValue --- metadata data conflict value
+          setColorInterpretation --- whether to force color interpretation of input bands to output bands
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-of', format]
+        if outputType != GDT_Unknown:
+            new_options += ['-ot', GetDataTypeName(outputType) ]
+        if workingType != GDT_Unknown:
+            new_options += ['-wt', GetDataTypeName(workingType) ]
+        if outputBounds is not None:
+            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3]) ]
+        if outputBoundsSRS is not None:
+            new_options += ['-te_srs', str(outputBoundsSRS) ]
+        if xRes is not None and yRes is not None:
+            new_options += ['-tr', str(xRes), str(yRes) ]
+        if width != 0 or height != 0:
+            new_options += ['-ts', str(width), str(height)]
+        if srcSRS is not None:
+            new_options += ['-s_srs', str(srcSRS) ]
+        if dstSRS is not None:
+            new_options += ['-t_srs', str(dstSRS) ]
+        if targetAlignedPixels:
+            new_options += ['-tap']
+        if srcAlpha:
+            new_options += ['-srcalpha']
+        if dstAlpha:
+            new_options += ['-dstalpha']
+        if warpOptions is not None:
+            for opt in warpOptions:
+                new_options += ['-wo', str(opt)]
+        if errorThreshold is not None:
+            new_options += ['-et', str(errorThreshold)]
+        if resampleAlg is not None:
+            if resampleAlg == GRIORA_NearestNeighbour:
+                new_options += ['-r', 'near']
+            elif resampleAlg == GRIORA_Bilinear:
+                new_options += ['-rb']
+            elif resampleAlg == GRIORA_Cubic:
+                new_options += ['-rc']
+            elif resampleAlg == GRIORA_CubicSpline:
+                new_options += ['-rcs']
+            elif resampleAlg == GRIORA_Lanczos:
+                new_options += ['-r', 'lanczos']
+            elif resampleAlg == GRIORA_Average:
+                new_options += ['-r', 'average']
+            elif resampleAlg == GRIORA_Mode:
+                new_options += ['-r', 'mode']
+            elif resampleAlg == GRIORA_Gauss:
+                new_options += ['-r', 'gauss']
+            else:
+                new_options += ['-r', str(resampleAlg) ]
+        if warpMemoryLimit is not None:
+            new_options += ['-wm', str(warpMemoryLimit) ]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if srcNodata is not None:
+            new_options += ['-srcnodata', str(srcNodata) ]
+        if dstNodata is not None:
+            new_options += ['-dstnodata', str(dstNodata) ]
+        if multithread:
+            new_options += ['-multi']
+        if tps:
+            new_options += ['-tps']
+        if rpc:
+            new_options += ['-rpc']
+        if geoloc:
+            new_options += ['-geoloc']
+        if polynomialOrder is not None:
+            new_options += ['-order', str(polynomialOrder)]
+        if transformerOptions is not None:
+            for opt in transformerOptions:
+                new_options += ['-to', opt ]
+        if cutlineDSName is not None:
+            new_options += ['-cutline', str(cutlineDSName) ]
+        if cutlineLayer is not None:
+            new_options += ['-cl', str(cutlineLayer) ]
+        if cutlineWhere is not None:
+            new_options += ['-cwhere', str(cutlineWhere) ]
+        if cutlineSQL is not None:
+            new_options += ['-csql', str(cutlineSQL) ]
+        if cutlineBlend is not None:
+            new_options += ['-cblend', str(cutlineBlend) ]
+        if cropToCutline:
+            new_options += ['-crop_to_cutline']
+        if not copyMetadata:
+            new_options += ['-nomd']
+        if metadataConflictValue:
+            new_options += ['-cvmd', str(metadataConflictValue) ]
+        if setColorInterpretation:
+            new_options += ['-setci']
+
+    return (GDALWarpAppOptions(new_options), callback, callback_data)
+
+def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
+    """ Warp one or several datasets.
+        Arguments are :
+          destNameOrDestDS --- Output dataset name or object
+          srcDSOrSrcDSTab --- an array of Dataset objects or filenames, or a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.WarpOptions()
+        If options is provided as a gdal.WarpOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = WarpOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDSOrSrcDSTab) == type(''):
+        srcDSTab = [Open(srcDSOrSrcDSTab)]
+    elif type(srcDSOrSrcDSTab) == type([]):
+        srcDSTab = []
+        for elt in srcDSOrSrcDSTab:
+            if type(elt) == type(''):
+                srcDSTab.append(Open(elt))
+            else:
+                srcDSTab.append(elt)
+    else:
+        srcDSTab = [ srcDSOrSrcDSTab ]
+
+    if type(destNameOrDestDS) == type(''):
+        return wrapper_GDALWarpDestName(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
+    else:
+        return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
+
+
+def VectorTranslateOptions(options = [], format = 'ESRI Shapefile', 
+         accessMode = None,
+         srcSRS = None, dstSRS = None, reproject = True,
+         SQLStatement = None, SQLDialect = None, where = None, selectFields = None, spatFilter = None,
+         datasetCreationOptions = None,
+         layerCreationOptions = None,
+         layers = None,
+         layerName = None,
+         geometryType = None,
+         segmentizeMaxDist= None,
+         callback = None, callback_data = None):
+    """ Create a VectorTranslateOptions() object that can be passed to gdal.VectorTranslate()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("ESRI Shapefile", etc...)
+          accessMode --- None for creation, 'update', 'append', 'overwrite'
+          srcSRS --- source SRS
+          dstSRS --- output SRS (with reprojection if reproject = True)
+          reproject --- whether to do reprojection
+          SQLStatement --- SQL statement to apply to the source dataset
+          SQLDialect --- SQL dialect ('OGRSQL', 'SQLITE', ...)
+          where --- WHERE clause to apply to source layer(s)
+          selectFields --- list of fields to select
+          spatFilter --- spatial filter as (minX, minY, maxX, maxY) bounding box
+          datasetCreationOptions --- list of dataset creation options
+          layerCreationOptions --- list of layer creation options
+          layers --- list of layers to convert
+          layerName --- output layer name
+          geometryType --- output layer geometry type ('POINT', ....)
+          segmentizeMaxDist --- maximum distance between consecutive nodes of a line geometry
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-f', format]
+        if srcSRS is not None:
+            new_options += ['-s_srs', str(srcSRS) ]
+        if dstSRS is not None:
+            if reproject:
+                new_options += ['-t_srs', str(dstSRS) ]
+            else:
+                new_options += ['-a_srs', str(dstSRS) ]
+        if SQLStatement is not None:
+            new_options += ['-sql', str(SQLStatement) ]
+        if SQLDialect is not None:
+            new_options += ['-dialect', str(SQLDialect) ]
+        if where is not None:
+            new_options += ['-where', str(where) ]
+        if accessMode is not None:
+            if accessMode == 'update':
+                new_options += ['-update']
+            elif accessMode == 'append':
+                new_options += ['-append']
+            elif accessMode == 'overwrite':
+                new_options += ['-overwrite']
+            else:
+                raise Exception('unhandled accessMode')
+        if selectFields is not None:
+            val = ''
+            for item in selectFields:
+                if len(val)>0:
+                    val += ','
+                val += item
+            new_options += ['-select', val]
+        if datasetCreationOptions is not None:
+            for opt in datasetCreationOptions:
+                new_options += ['-dsco', opt ]
+        if layerCreationOptions is not None:
+            for opt in layerCreationOptions:
+                new_options += ['-lco', opt ]
+        if layers is not None:
+            for lyr in layers:
+                new_options += [ lyr ]
+        if segmentizeMaxDist is not None:
+            new_options += ['-segmentize', str(segmentizeMaxDist) ]
+        if spatFilter is not None:
+            new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3]) ]
+        if layerName is not None:
+            new_options += ['-nln', layerName]
+        if geometryType is not None:
+            new_options += ['-nlt', geometryType]
+
+    if callback is not None:
+        new_options += [ '-progress' ]
+
+    return (GDALVectorTranslateOptions(new_options), callback, callback_data)
+
+def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
+    """ Convert one vector dataset
+        Arguments are :
+          destNameOrDestDS --- Output dataset name or object
+          srcDS --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.VectorTranslateOptions()
+        If options is provided as a gdal.VectorTranslateOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = VectorTranslateOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = OpenEx(srcDS)
+
+    if type(destNameOrDestDS) == type(''):
+        return wrapper_GDALVectorTranslateDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    else:
+        return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+
+def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
+              creationOptions = None, computeEdges = False, alg = 'Horn', band = 1,
+              zFactor = None, scale = None, azimuth = None, altitude = None, combined = False,
+              slopeFormat = None, trigonometric = False, zeroForFlat = False,
+              callback = None, callback_data = None):
+    """ Create a DEMProcessingOptions() object that can be passed to gdal.DEMProcessing()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          colorFilename --- (mandatory for "color-relief") name of file that contains palette definition for the "color-relief" processing.
+          format --- output format ("GTiff", etc...)
+          creationOptions --- list of creation options
+          computeEdges --- whether to compute values at raster edges.
+          alg --- 'ZevenbergenThorne' or 'Horn'
+          band --- source band number to use
+          zFactor --- (hillshade only) vertical exaggeration used to pre-multiply the elevations.
+          scale --- ratio of vertical units to horizontal.
+          azimuth --- (hillshade only) azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.
+          altitude ---(hillshade only) altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.
+          combined --- (hillshade only) whether to compute combined shading, a combination of slope and oblique shading.
+          slopeformat --- (slope only) "degree" or "percent".
+          trigonometric --- (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
+          zeroForFlat --- (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-of', format]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if computeEdges:
+            new_options += ['-compute_edges' ]
+        if alg ==  'ZevenbergenThorne':
+            new_options += ['-alg', 'ZevenbergenThorne']
+        new_options += ['-b', str(band) ]
+        if zFactor is not None:
+            new_options += ['-z', str(zFactor) ]
+        if scale is not None:
+            new_options += ['-s', str(scale) ]
+        if azimuth is not None:
+            new_options += ['-az', str(azimuth) ]
+        if altitude is not None:
+            new_options += ['-alt', str(altitude) ]
+        if combined:
+            new_options += ['-combined' ]
+        if slopeFormat == 'percent':
+            new_options += ['-p' ]
+        if trigonometric:
+            new_options += ['-trigonometric' ]
+        if zeroForFlat:
+            new_options += ['zero_for_flat' ]
+
+    return (GDALDEMProcessingOptions(new_options), colorFilename, callback, callback_data)
+
+def DEMProcessing(destName, srcDS, processing, **kwargs):
+    """ Apply a DEM processing.
+        Arguments are :
+          destName --- Output dataset name
+          srcDS --- a Dataset object or a filename
+          processing --- one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", "Roughness"
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.DEMProcessingOptions()
+        If options is provided as a gdal.DEMProcessingOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, colorFilename, callback, callback_data) = DEMProcessingOptions(**kwargs)
+    else:
+        (opts, colorFilename, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = Open(srcDS)
+
+    return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
+
+
+def NearblackOptions(options = [], format = 'GTiff', 
+         creationOptions = None, white = False, colors = None,
+         maxNonBlack = None, nearDist = None, setAlpha = False, setMask = False,
+         callback = None, callback_data = None):
+    """ Create a NearblackOptions() object that can be passed to gdal.Nearblack()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          creationOptions --- list of creation options
+          white --- whether to search for nearly white (255) pixels instead of nearly black pixels.
+          colors --- list of colors  to search for, e.g. ((0,0,0),(255,255,255)). The pixels that are considered as the collar are set to 0
+          maxNonBlack --- number of non-black (or other searched colors specified with white / colors) pixels that can be encountered before the giving up search inwards. Defaults to 2. 
+          nearDist --- select how far from black, white or custom colors the pixel values can be and still considered near black, white or custom color.  Defaults to 15.
+          setAlpha --- adds an alpha band if the output file.
+          setMask --- adds a mask band to the output file.
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-of', format]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if white:
+            new_options += ['-white']
+        if colors is not None:
+            for color in colors:
+                color_str = ''
+                for cpt in color:
+                    if color_str != '':
+                        color_str += ','
+                    color_str += str(cpt)
+                new_options += ['-color',color_str]
+        if maxNonBlack is not None:
+            new_options += ['-nb', str(maxNonBlack) ]
+        if nearDist is not None:
+            new_options += ['-near', str(nearDist) ]
+        if setAlpha:
+            new_options += ['-setalpha']
+        if setMask:
+            new_options += ['-setmask']
+
+    return (GDALNearblackOptions(new_options), callback, callback_data)
+
+def Nearblack(destNameOrDestDS, srcDS, **kwargs):
+    """ Convert nearly black/white borders to exact value.
+        Arguments are :
+          destNameOrDestDS --- Output dataset name or object
+          srcDS --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.NearblackOptions()
+        If options is provided as a gdal.NearblackOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = NearblackOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = OpenEx(srcDS)
+
+    if type(destNameOrDestDS) == type(''):
+        return wrapper_GDALNearblackDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    else:
+        return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+
+
+def GridOptions(options = [], format = 'GTiff',
+              outputType = GDT_Unknown,
+              width = 0, height = 0,
+              creationOptions = None,
+              outputBounds = None,
+              outputSRS = None,
+              noData = None,
+              algorithm = None,
+              layers = None,
+              SQLStatement = None,
+              where = None,
+              spatFilter = None,
+              zfield = None,
+              z_increase = None,
+              z_multiply = None,
+              callback = None, callback_data = None):
+    """ Create a GridOptions() object that can be passed to gdal.Grid()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          outputType --- output type (gdal.GDT_Byte, etc...)
+          width --- width of the output raster in pixel
+          height --- height of the output raster in pixel
+          creationOptions --- list of creation options
+          outputBounds --- assigned output bounds: [ulx, uly, lrx, lry]
+          outputSRS --- assigned output SRS
+          noData --- nodata value
+          algorithm --- e.g "invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0"
+          layers --- list of layers to convert
+          SQLStatement --- SQL statement to apply to the source dataset
+          where --- WHERE clause to apply to source layer(s)
+          spatFilter --- spatial filter as (minX, minY, maxX, maxY) bounding box
+          zfield --- Identifies an attribute field on the features to be used to get a Z value from. This value overrides Z value read from feature geometry record.
+          z_increase --- Addition to the attribute field on the features to be used to get a Z value from. The addition should be the same unit as Z value. The result value will be Z value + Z increase value. The default value is 0.
+          z_multiply - Multiplication ratio for Z field. This can be used for shift from e.g. foot to meters or from  elevation to deep. The result value will be (Z value + Z increase value) * Z multiply value.  The default value is 1.
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        new_options += ['-of', format]
+        if outputType != GDT_Unknown:
+            new_options += ['-ot', GetDataTypeName(outputType) ]
+        if width != 0 or height != 0:
+            new_options += ['-outsize', str(width), str(height)]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if outputBounds is not None:
+            new_options += ['-txe', str(outputBounds[0]), str(outputBounds[2]), '-tye', str(outputBounds[1]), str(outputBounds[3])]
+        if outputSRS is not None:
+            new_options += ['-a_srs', str(outputSRS) ]
+        if algorithm is not None:
+            new_options += ['-a', algorithm ]
+        if layers is not None:
+            if type(layers) == type(()) or type(layers) == type([]):
+                for layer in layers:
+                    new_options += ['-l', layer]
+            else:
+                new_options += ['-l', layers]
+        if SQLStatement is not None:
+            new_options += ['-sql', str(SQLStatement) ]
+        if where is not None:
+            new_options += ['-where', str(where) ]
+        if zfield is not None:
+            new_options += ['-zfield', zfield ]
+        if z_increase is not None:
+            new_options += ['-z_increase', str(z_increase) ]
+        if z_multiply is not None:
+            new_options += ['-z_multiply', str(z_multiply) ]
+        if spatFilter is not None:
+            new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3]) ]
+
+    return (GDALGridOptions(new_options), callback, callback_data)
+
+def Grid(destName, srcDS, **kwargs):
+    """ Create raster from the scattered data.
+        Arguments are :
+          destName --- Output dataset name
+          srcDS --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.GridOptions()
+        If options is provided as a gdal.GridOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = GridOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = OpenEx(srcDS, OF_VECTOR)
+
+    return GridInternal(destName, srcDS, opts, callback, callback_data)
+
+def RasterizeOptions(options = [], format = None, 
+         creationOptions = None, noData = None, initValues = None,
+         outputBounds = None, outputSRS = None,
+         width = None, height = None,
+         xRes = None, yRes = None, targetAlignedPixels = False,
+         bands = None, inverse = False, allTouched = False,
+         burnValues = None, attribute = None, useZ = False, layers = None,
+         SQLStatement = None, SQLDialect = None, where = None,
+         callback = None, callback_data = None):
+    """ Create a RasterizeOptions() object that can be passed to gdal.Rasterize()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          creationOptions --- list of creation options
+          outputBounds --- assigned output bounds: [minx, miny, maxx, maxy]
+          outputSRS --- assigned output SRS
+          width --- width of the output raster in pixel
+          height --- height of the output raster in pixel
+          xRes, yRes --- output resolution in target SRS
+          targetAlignedPixels --- whether to force output bounds to be multiple of output resolution
+          noData --- nodata value
+          initValues --- Value or list of values to pre-initialize the output image bands with.  However, it is not marked as the nodata value in the output file.  If only one value is given, the same value is used in all the bands.
+          bands --- list of output bands to burn values into
+          inverse --- whether to invert rasterization, ie burn the fixed burn value, or the burn value associated  with the first feature into all parts of the image not inside the provided a polygon.
+          allTouched -- whether to enable the ALL_TOUCHED rasterization option so that all pixels touched by lines or polygons will be updated, not just those on the line render path, or whose center point is within the polygon.
+          burnValues -- list of fixed values to burn into each band for all objects. Excusive with attribute.
+          attribute --- identifies an attribute field on the features to be used for a burn-in value. The value will be burned into all output bands. Excusive with burnValues.
+          useZ --- whether to indicate that a burn value should be extracted from the "Z" values of the feature. These values are added to the burn value given by burnValues or attribute if provided. As of now, only points and lines are drawn in 3D.
+          layers --- list of layers from the datasource that will be used for input features.
+          SQLStatement --- SQL statement to apply to the source dataset
+          SQLDialect --- SQL dialect ('OGRSQL', 'SQLITE', ...)
+          where --- WHERE clause to apply to source layer(s)
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    import copy
+
+    if type(options) == type(''):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        if format is not None:
+            new_options += ['-of', format]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt ]
+        if bands is not None:
+            for b in bands:
+                new_options += ['-b', str(b) ]
+        if noData is not None:
+            new_options += ['-a_nodata', str(noData) ]
+        if initValues is not None:
+            if type(initValues) == type(()) or type(initValues) == type([]):
+                for val in initValues:
+                    new_options += ['-init', str(val) ]
+            else:
+                new_options += ['-init', str(initValues) ]
+        if outputBounds is not None:
+            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
+        if outputSRS is not None:
+            new_options += ['-a_srs', str(outputSRS) ]
+        if width is not None and height is not None:
+            new_options += ['-ts', str(width), str(height)]
+        if xRes is not None and yRes is not None:
+            new_options += ['-tr', str(xRes), str(yRes)]
+        if targetAlignedPixels:
+            new_options += ['-tap']
+        if inverse:
+            new_options += ['-i']
+        if allTouched:
+            new_options += ['-at']
+        if burnValues is not None:
+            if attribute is not None:
+                raise Exception('burnValues and attribute option are exclusive.')
+            if type(burnValues) == type(()) or type(burnValues) == type([]):
+                for val in burnValues:
+                    new_options += ['-burn', str(val) ]
+            else:
+                new_options += ['-burn', str(burnValues) ]
+        if attribute is not None:
+            new_options += ['-a', attribute]
+        if useZ:
+            new_options += ['-3d']
+        if layers is not None:
+            if type(layers) == type(()) or type(layers) == type([]):
+                for layer in layers:
+                    new_options += ['-l', layer]
+            else:
+                new_options += ['-l', layers]
+        if SQLStatement is not None:
+            new_options += ['-sql', str(SQLStatement) ]
+        if SQLDialect is not None:
+            new_options += ['-dialect', str(SQLDialect) ]
+        if where is not None:
+            new_options += ['-where', str(where) ]
+
+    return (GDALRasterizeOptions(new_options), callback, callback_data)
+
+def Rasterize(destNameOrDestDS, srcDS, **kwargs):
+    """ Burns vector geometries into a raster
+        Arguments are :
+          destNameOrDestDS --- Output dataset name or object
+          srcDS --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.RasterizeOptions()
+        If options is provided as a gdal.RasterizeOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+        (opts, callback, callback_data) = RasterizeOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if type(srcDS) == type(''):
+        srcDS = OpenEx(srcDS)
+
+    if type(destNameOrDestDS) == type(''):
+        return wrapper_GDALRasterizeDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    else:
+        return wrapper_GDALRasterizeDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+
+
 
 def Debug(*args):
   """Debug(char const * msg_class, char const * message)"""
@@ -322,6 +1207,10 @@ def VSIFTruncateL(*args):
 def VSIFWriteL(*args):
   """VSIFWriteL(int nLen, int size, int memb, VSILFILE * f) -> int"""
   return _gdal.VSIFWriteL(*args)
+
+def ParseCommandLine(*args):
+  """ParseCommandLine(char const * commandLine) -> char **"""
+  return _gdal.ParseCommandLine(*args)
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class"""
     __swig_setmethods__ = {}
@@ -1823,6 +2712,236 @@ def GeneralCmdLineProcessor(*args):
 GeneralCmdLineProcessor = _gdal.GeneralCmdLineProcessor
 __version__ = _gdal.VersionInfo("RELEASE_NAME") 
 
+class GDALInfoOptions(_object):
+    """Proxy of C++ GDALInfoOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALInfoOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALInfoOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALInfoOptions self, char ** options) -> GDALInfoOptions"""
+        this = _gdal.new_GDALInfoOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALInfoOptions
+    __del__ = lambda self : None;
+GDALInfoOptions_swigregister = _gdal.GDALInfoOptions_swigregister
+GDALInfoOptions_swigregister(GDALInfoOptions)
+
+
+def InfoInternal(*args):
+  """InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> char *"""
+  return _gdal.InfoInternal(*args)
+InfoInternal = _gdal.InfoInternal
+class GDALTranslateOptions(_object):
+    """Proxy of C++ GDALTranslateOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALTranslateOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALTranslateOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALTranslateOptions self, char ** options) -> GDALTranslateOptions"""
+        this = _gdal.new_GDALTranslateOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALTranslateOptions
+    __del__ = lambda self : None;
+GDALTranslateOptions_swigregister = _gdal.GDALTranslateOptions_swigregister
+GDALTranslateOptions_swigregister(GDALTranslateOptions)
+
+
+def TranslateInternal(*args):
+  """
+    TranslateInternal(char const * dest, Dataset dataset, GDALTranslateOptions translateOptions, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> Dataset
+    """
+  return _gdal.TranslateInternal(*args)
+TranslateInternal = _gdal.TranslateInternal
+class GDALWarpAppOptions(_object):
+    """Proxy of C++ GDALWarpAppOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALWarpAppOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALWarpAppOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALWarpAppOptions self, char ** options) -> GDALWarpAppOptions"""
+        this = _gdal.new_GDALWarpAppOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALWarpAppOptions
+    __del__ = lambda self : None;
+GDALWarpAppOptions_swigregister = _gdal.GDALWarpAppOptions_swigregister
+GDALWarpAppOptions_swigregister(GDALWarpAppOptions)
+
+
+def wrapper_GDALWarpDestDS(*args):
+  """
+    wrapper_GDALWarpDestDS(Dataset dstDS, int object_list_count, GDALWarpAppOptions warpAppOptions, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> int
+    """
+  return _gdal.wrapper_GDALWarpDestDS(*args)
+wrapper_GDALWarpDestDS = _gdal.wrapper_GDALWarpDestDS
+
+def wrapper_GDALWarpDestName(*args):
+  """
+    wrapper_GDALWarpDestName(char const * dest, int object_list_count, GDALWarpAppOptions warpAppOptions, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> Dataset
+    """
+  return _gdal.wrapper_GDALWarpDestName(*args)
+wrapper_GDALWarpDestName = _gdal.wrapper_GDALWarpDestName
+class GDALVectorTranslateOptions(_object):
+    """Proxy of C++ GDALVectorTranslateOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALVectorTranslateOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALVectorTranslateOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALVectorTranslateOptions self, char ** options) -> GDALVectorTranslateOptions"""
+        this = _gdal.new_GDALVectorTranslateOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALVectorTranslateOptions
+    __del__ = lambda self : None;
+GDALVectorTranslateOptions_swigregister = _gdal.GDALVectorTranslateOptions_swigregister
+GDALVectorTranslateOptions_swigregister(GDALVectorTranslateOptions)
+
+
+def wrapper_GDALVectorTranslateDestDS(*args):
+  """
+    wrapper_GDALVectorTranslateDestDS(Dataset dstDS, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> int
+    """
+  return _gdal.wrapper_GDALVectorTranslateDestDS(*args)
+wrapper_GDALVectorTranslateDestDS = _gdal.wrapper_GDALVectorTranslateDestDS
+
+def wrapper_GDALVectorTranslateDestName(*args):
+  """
+    wrapper_GDALVectorTranslateDestName(char const * dest, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> Dataset
+    """
+  return _gdal.wrapper_GDALVectorTranslateDestName(*args)
+wrapper_GDALVectorTranslateDestName = _gdal.wrapper_GDALVectorTranslateDestName
+class GDALDEMProcessingOptions(_object):
+    """Proxy of C++ GDALDEMProcessingOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALDEMProcessingOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALDEMProcessingOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALDEMProcessingOptions self, char ** options) -> GDALDEMProcessingOptions"""
+        this = _gdal.new_GDALDEMProcessingOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALDEMProcessingOptions
+    __del__ = lambda self : None;
+GDALDEMProcessingOptions_swigregister = _gdal.GDALDEMProcessingOptions_swigregister
+GDALDEMProcessingOptions_swigregister(GDALDEMProcessingOptions)
+
+
+def DEMProcessingInternal(*args):
+  """
+    DEMProcessingInternal(char const * dest, Dataset dataset, char const * pszProcessing, char const * pszColorFilename, 
+        GDALDEMProcessingOptions options, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> Dataset
+    """
+  return _gdal.DEMProcessingInternal(*args)
+DEMProcessingInternal = _gdal.DEMProcessingInternal
+class GDALNearblackOptions(_object):
+    """Proxy of C++ GDALNearblackOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALNearblackOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALNearblackOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALNearblackOptions self, char ** options) -> GDALNearblackOptions"""
+        this = _gdal.new_GDALNearblackOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALNearblackOptions
+    __del__ = lambda self : None;
+GDALNearblackOptions_swigregister = _gdal.GDALNearblackOptions_swigregister
+GDALNearblackOptions_swigregister(GDALNearblackOptions)
+
+
+def wrapper_GDALNearblackDestDS(*args):
+  """
+    wrapper_GDALNearblackDestDS(Dataset dstDS, Dataset srcDS, GDALNearblackOptions options, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> int
+    """
+  return _gdal.wrapper_GDALNearblackDestDS(*args)
+wrapper_GDALNearblackDestDS = _gdal.wrapper_GDALNearblackDestDS
+
+def wrapper_GDALNearblackDestName(*args):
+  """
+    wrapper_GDALNearblackDestName(char const * dest, Dataset srcDS, GDALNearblackOptions options, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> Dataset
+    """
+  return _gdal.wrapper_GDALNearblackDestName(*args)
+wrapper_GDALNearblackDestName = _gdal.wrapper_GDALNearblackDestName
+class GDALGridOptions(_object):
+    """Proxy of C++ GDALGridOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALGridOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALGridOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALGridOptions self, char ** options) -> GDALGridOptions"""
+        this = _gdal.new_GDALGridOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALGridOptions
+    __del__ = lambda self : None;
+GDALGridOptions_swigregister = _gdal.GDALGridOptions_swigregister
+GDALGridOptions_swigregister(GDALGridOptions)
+
+
+def GridInternal(*args):
+  """
+    GridInternal(char const * dest, Dataset dataset, GDALGridOptions options, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> Dataset
+    """
+  return _gdal.GridInternal(*args)
+GridInternal = _gdal.GridInternal
+class GDALRasterizeOptions(_object):
+    """Proxy of C++ GDALRasterizeOptions class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALRasterizeOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALRasterizeOptions, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(GDALRasterizeOptions self, char ** options) -> GDALRasterizeOptions"""
+        this = _gdal.new_GDALRasterizeOptions(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_GDALRasterizeOptions
+    __del__ = lambda self : None;
+GDALRasterizeOptions_swigregister = _gdal.GDALRasterizeOptions_swigregister
+GDALRasterizeOptions_swigregister(GDALRasterizeOptions)
+
+
+def wrapper_GDALRasterizeDestDS(*args):
+  """
+    wrapper_GDALRasterizeDestDS(Dataset dstDS, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> int
+    """
+  return _gdal.wrapper_GDALRasterizeDestDS(*args)
+wrapper_GDALRasterizeDestDS = _gdal.wrapper_GDALRasterizeDestDS
+
+def wrapper_GDALRasterizeDestName(*args):
+  """
+    wrapper_GDALRasterizeDestName(char const * dest, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFunc callback=0, 
+        void * callback_data=None) -> Dataset
+    """
+  return _gdal.wrapper_GDALRasterizeDestName(*args)
+wrapper_GDALRasterizeDestName = _gdal.wrapper_GDALRasterizeDestName
 # This file is compatible with both classic and new-style classes.
 
 

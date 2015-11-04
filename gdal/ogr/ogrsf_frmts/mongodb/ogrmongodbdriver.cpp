@@ -30,12 +30,9 @@
 
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
-#ifdef WIN32
-#include <winsock2.h>
-#undef min
-#undef max
-#endif
-#include "mongo/client/dbclient.h" // for the driver
+
+#include "mongocxx_headers.h"
+
 #include "ogr_p.h"
 #include "cpl_time.h"
 #include <limits>
@@ -577,6 +574,8 @@ std::map< CPLString, CPLString> OGRMongoDBLayer::CollectGeomIndices()
     {
         std::auto_ptr<DBClientCursor> cursor =
             m_poDS->GetConn()->enumerateIndexes(m_osQualifiedCollection);
+        if( cursor.get() == NULL )
+            return oMapIndices;
         while( cursor->more() )
         {
             BSONObj obj = cursor->nextSafe();
@@ -2189,7 +2188,7 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
     const char* pszHost = CSLFetchNameValueDef(papszOpenOptions, "HOST", "localhost");
     const char* pszPort = CSLFetchNameValueDef(papszOpenOptions, "PORT", "27017");
     const char* pszURI = CSLFetchNameValue(papszOpenOptions, "URI");
-    if( EQUALN(pszFilename, "mongodb://", strlen("mongodb://")) )
+    if( STARTS_WITH_CI(pszFilename, "mongodb://") )
         pszURI = pszFilename;
 
     std::string errmsg;
@@ -2411,7 +2410,7 @@ int OGRMongoDBDataSource::ListLayers(const char* pszDatabase)
         for ( std::list<std::string>::iterator i = l.begin(); i != l.end(); i++ )
         {
             const std::string& m_osCollection(*i);
-            if( strncmp(m_osCollection.c_str(), "system.", strlen("system.")) != 0 &&
+            if( !STARTS_WITH(m_osCollection.c_str(), "system.") &&
                 m_osCollection != "startup_log" &&
                 m_osCollection != "_ogr_metadata" )
             {
@@ -2617,7 +2616,7 @@ OGRLayer* OGRMongoDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 
@@ -2639,7 +2638,7 @@ OGRLayer* OGRMongoDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case WRITE_OGR_METADATA command.                        */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand, "WRITE_OGR_METADATA ", strlen("WRITE_OGR_METADATA ")) )
+    if( STARTS_WITH_CI(pszSQLCommand, "WRITE_OGR_METADATA ") )
     {
         if( eAccess != GA_Update )
         {
@@ -2710,7 +2709,7 @@ static void OGRMongoDBDriverUnload( CPL_UNUSED GDALDriver* poDriver )
 static int OGRMongoDBDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    return EQUALN(poOpenInfo->pszFilename, "MongoDB:", strlen("MongoDB:"));
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "MongoDB:");
 }
 
 /************************************************************************/

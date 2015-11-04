@@ -443,7 +443,7 @@ GDALRasterBlock *GDALArrayBandBlockCache::TryGetLockedBlockRef( int nXBlockOff,
     {
         nBlockIndex = nXBlockOff + nYBlockOff * poBand->nBlocksPerRow;
 
-        while( TRUE )
+        while( true )
         {
             poBlock = u.papoBlocks[nBlockIndex];
             if( poBlock == NULL )
@@ -470,7 +470,7 @@ GDALRasterBlock *GDALArrayBandBlockCache::TryGetLockedBlockRef( int nXBlockOff,
         int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
             + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
-        while( TRUE )
+        while( true )
         {
             poBlock = papoSubBlockGrid[nBlockInSubBlock];
             if( poBlock == NULL )

@@ -68,17 +68,17 @@ int main( int nArgc, char ** papszArgv )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_PRESERVE_EMPTY_NUMBERS,
                                  "ON" );
-        else if( EQUALN(papszArgv[iArg],"-return-prim",12) )
+        else if( STARTS_WITH_CI(papszArgv[iArg], "-return-prim") )
         {
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_RETURN_PRIMITIVES,
                                  "ON" );
             bReturnPrimitives = TRUE;
         }
-        else if( EQUALN(papszArgv[iArg],"-lnam",4) )
+        else if( STARTS_WITH_CI(papszArgv[iArg],"-lnam") )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_LNAM_REFS, "ON" );
-        else if( EQUALN(papszArgv[iArg],"-return-link",12) )
+        else if( STARTS_WITH_CI(papszArgv[iArg], "-return-link") )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_RETURN_LINKAGES, "ON" );
     }

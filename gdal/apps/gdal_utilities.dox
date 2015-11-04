@@ -55,7 +55,7 @@ introduced here. <p>
 <dt> <b>-of</b> <i>format</i></dt><dd> 
 Select the format to create the new file as.  The formats are assigned short 
 names such as GTiff (for GeoTIFF) or HFA (for Erdas Imagine).  The list of 
-all format codes can be listed with the <b>--formats</b> switch.  Only
+all format codes can be listed with the <b>\-\-formats</b> switch.  Only
 formats list as "(rw)" (read-write) can be written.<p>
 Many utilities default
 to creating GeoTIFF files if a format is not specified.  File extensions
@@ -126,9 +126,9 @@ All GDAL command line utility programs support the following
 "general" options.<p>
 
 <dl>
-<dt> <b>--version</b></dt><dd> Report the version of GDAL and exit.</dd>
+<dt> <b>\-\-version</b></dt><dd> Report the version of GDAL and exit.</dd>
 
-<dt> <b>--formats</b></dt><dd> List all raster formats supported by this
+<dt> <b>\-\-formats</b></dt><dd> List all raster formats supported by this
 GDAL build (read-only and read-write) and exit. The format support is indicated
  as follows: 'ro' is read-only driver; 
 'rw' is read or write (ie. supports CreateCopy);
@@ -139,18 +139,18 @@ Note: The valid formats for the output of gdalwarp are formats that support the
 Create() method (marked as rw+), not just the CreateCopy() method.
 </dd>
 
-<dt> <b>--format</b> <i>format</i></dt><dd>
+<dt> <b>\-\-format</b> <i>format</i></dt><dd>
 List detailed information about a single format driver.  The <i>format</i> 
-should be the short name reported in the <b>--formats</b> list, such as 
+should be the short name reported in the <b>\-\-formats</b> list, such as 
 GTiff.</dd>
 
-<dt> <b>--optfile</b> <i>file</i></dt><dd>
+<dt> <b>\-\-optfile</b> <i>file</i></dt><dd>
 Read the named file and substitute the contents into the commandline
 options list.  Lines beginning with # will be ignored.  Multi-word arguments
 may be kept together with double quotes. 
 </dd>
 
-<dt> <b>--config</b> <i>key value</i></dt><dd>
+<dt> <b>\-\-config</b> <i>key value</i></dt><dd>
 Sets the named <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">
 configuration keyword</a> to the given value, as opposed to 
 setting them as environment variables.  Some common configuration keywords
@@ -159,14 +159,14 @@ and GDAL_DATA (path of the GDAL "data" directory).  Individual drivers may
 be influenced by other configuration options.  
 </dd>
 
-<dt> <b>--debug</b> <i>value</i></dt><dd>
+<dt> <b>\-\-debug</b> <i>value</i></dt><dd>
 Control what debugging messages are emitted.  A value of <i>ON</i> will
 enable all debug messages.  A value of <i>OFF</i> will disable all debug
 messages.  Another value will select only debug messages containing that
 string in the debug prefix code.  
 </dd>
 
-<dt> <b>--help-general</b></dt><dd>
+<dt> <b>\-\-help-general</b></dt><dd>
 Gives a brief usage message for the generic GDAL commandline options 
 and exit.
 </dd>
@@ -994,7 +994,7 @@ The value will be burned into all output bands.</dd>
 
 <dt> <b>-3d</b>: </dt><dd> 
 Indicates that a burn value should be extracted from the "Z" values of the 
-feature. These values are adjusted by the burn value given by "-burn value" or
+feature. These values are added to the burn value given by "-burn value" or
 "-a attribute_name" if provided. As of now, only points and lines are drawn in
 3D.</dd>
 
@@ -1483,7 +1483,7 @@ generates directory with TMS tiles, KMLs and simple web viewers
 
 \verbatim
 gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
-              [-e] [-a nodata] [-v] [-h] [-k] [-n] [-u url]
+              [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u url]
               [-w webviewer] [-t title] [-c copyright]
               [-g googlekey] [-b bingkey] input_file [output_dir]
 \endverbatim
@@ -1492,7 +1492,7 @@ gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
 
 This utility generates a directory with small tiles and metadata, following
 the OSGeo Tile Map Service Specification. Simple web pages with viewers based on
-Google Maps and OpenLayers are generated as well - so anybody can comfortably
+Google Maps, OpenLayers and Leaflet are generated as well - so anybody can comfortably
 explore your maps on-line and you do not need to install or configure any
 special software (like MapServer) and the map displays very fast in the
 web browser. You only need to upload the generated directory onto a web server.
@@ -1518,9 +1518,11 @@ can publish a picture without proper georeferencing too.
   <dd>NODATA transparency value to assign to the input data.</dd>
 <dt> <b>-v, --verbose</b></dt>
   <dd>Generate verbose output of tile generation.</dd>
+<dt> <b>-q, --quiet</b></dt>
+  <dd>Disable messages and status to stdout (GDAL &gt;= 2.1).</dd>
 <dt> <b>-h, --help</b></dt>
   <dd>Show help message and exit.</dd>
-<dt> <b>--version</b></dt>
+<dt> <b>\-\-version</b></dt>
   <dd>Show program's version number and exit.</dd>
 </dl>
 
@@ -1541,7 +1543,7 @@ Options for generated Google Earth SuperOverlay metadata
 Options for generated HTML viewers a la Google Maps
 <dl>
 <dt> <b>-w</b> <i>WEBVIEWER</i>, --webviewer=<i>WEBVIEWER</i>:</dt>
-  <dd>Web viewer to generate (all,google,openlayers,none) - default 'all'.</dd>
+  <dd>Web viewer to generate (all,google,openlayers,leaflet,none) - default 'all'.</dd>
 <dt> <b>-t</b> <i>TITLE</i>, --title=<i>TITLE</i>:</dt>
   <dd>Title of the map.</dd>
 <dt> <b>-c</b> <i>COPYRIGHT</i>, --copyright=<i>COPYRIGHT</i>:</dt>
@@ -1588,16 +1590,16 @@ by configure scripts for applications using GDAL but can be queried by an
 end user. 
 
 <dl>
-<dt> <b>--prefix</b>:</dt><dd> the top level directory for the GDAL
+<dt> <b>\-\-prefix</b>:</dt><dd> the top level directory for the GDAL
 installation.</dd>
-<dt> <b>--libs</b>:</dt><dd> The libraries and link directives required to
+<dt> <b>\-\-libs</b>:</dt><dd> The libraries and link directives required to
 use GDAL.</dd>
-<dt> <b>--cflags</b>:</dt><dd> The include and macro definition required to compiled
+<dt> <b>\-\-cflags</b>:</dt><dd> The include and macro definition required to compiled
 modules using GDAL.</dd>
-<dt> <b>--version</b>:</dt><dd> Reports the GDAL version.</dd>
-<dt> <b>--ogr-enabled</b>:</dt><dd> Reports "yes" or "no" to standard output depending
+<dt> <b>\-\-version</b>:</dt><dd> Reports the GDAL version.</dd>
+<dt> <b>\-\-ogr-enabled</b>:</dt><dd> Reports "yes" or "no" to standard output depending
 on whether OGR is built into GDAL.</dd>
-<dt> <b>--formats</b>:</dt><dd> Reports which formats are configured into GDAL 
+<dt> <b>\-\-formats</b>:</dt><dd> Reports which formats are configured into GDAL 
 to stdout.  
 </dd>
 </dl>

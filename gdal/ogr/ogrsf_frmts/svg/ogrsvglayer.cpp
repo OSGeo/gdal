@@ -39,26 +39,40 @@ CPL_CVSID("$Id$");
 OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
                           const char* pszLayerName,
                           SVGGeometryType svgGeomType,
-                          OGRSVGDataSource* poDS)
+                          OGRSVGDataSource* poDS) :
+    poFeatureDefn(NULL),
+    poSRS(NULL),
+    poDS(NULL),
+    nTotalFeatures(0),
+    nNextFID(0),
+    fpSVG(NULL),
+#ifdef HAVE_EXPAT
+    oParser(NULL),
+    oSchemaParser(NULL),
+#endif
+    pszSubElementValue(NULL),
+    nSubElementValueLen(0),
+    iCurrentField(0),
+    poFeature(NULL),
+    ppoFeatureTab(NULL),
+    nFeatureTabLength(0),
+    nFeatureTabIndex(0),
+    depthLevel(0),
+    interestingDepthLevel(0),
+    inInterestingElement(FALSE),
+    bStopParsing(FALSE)
+#ifdef HAVE_EXPAT
+        ,
+    nWithoutEventCounter(0),
+    nDataHandlerCounter(0),
+    poCurLayer(NULL)
+#endif
 
 {
-    nNextFID = 0;
-
     this->poDS = poDS;
     this->svgGeomType = svgGeomType;
     osLayerName = pszLayerName;
     SetDescription( pszLayerName );
-
-    poFeatureDefn = NULL;
-
-    nTotalFeatures = 0;
-
-    ppoFeatureTab = NULL;
-    nFeatureTabIndex = 0;
-    nFeatureTabLength = 0;
-    pszSubElementValue = NULL;
-    nSubElementValueLen = 0;
-    bStopParsing = FALSE;
 
     poSRS = new OGRSpatialReference("PROJCS[\"WGS 84 / Pseudo-Mercator\","
     "GEOGCS[\"WGS 84\","
@@ -82,12 +96,6 @@ OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
     "AUTHORITY[\"EPSG\",\"3857\"],"
     "AXIS[\"X\",EAST],"
     "AXIS[\"Y\",NORTH]]");
-
-    poFeature = NULL;
-
-#ifdef HAVE_EXPAT
-    oParser = NULL;
-#endif
 
     fpSVG = VSIFOpenL( pszFilename, "r" );
     if( fpSVG == NULL )
@@ -417,7 +425,7 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     }
     else if (inInterestingElement &&
              depthLevel == interestingDepthLevel + 1 &&
-             strncmp(pszName, "cm:", 3) == 0)
+             STARTS_WITH(pszName, "cm:"))
     {
         iCurrentField = poFeatureDefn->GetFieldIndex(pszName + 3);
     }
@@ -734,7 +742,7 @@ void OGRSVGLayer::startElementLoadSchemaCbk(const char *pszName,
     else if (inInterestingElement)
     {
         if (depthLevel == interestingDepthLevel + 1 &&
-            strncmp(pszName, "cm:", 3) == 0)
+            STARTS_WITH(pszName, "cm:"))
         {
             pszName += 3;
             if (poCurLayer->poFeatureDefn->GetFieldIndex(pszName) < 0)

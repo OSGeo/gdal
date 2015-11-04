@@ -52,7 +52,7 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
         if( poOpenInfo->nHeaderBytes < 80 )
             return NULL;
         const char* pszHeader = (const char*)poOpenInfo->pabyHeader;
-        if( !EQUALN(pszHeader,"01",2) )
+        if( !STARTS_WITH_CI(pszHeader, "01") )
             return NULL;
 
         int j;

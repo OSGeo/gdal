@@ -107,6 +107,9 @@ void LibgeotiffOneTimeInit()
     // If linking with an external libgeotiff we hope this will call the
     // SetCSVFilenameHook() in libgeotiff, not the one in gdal/port!
     SetCSVFilenameHook( GDALDefaultCSVFilename );
+
+    // This isn't thread-safe, so better do it now
+    XTIFFInitialize();
 }
 
 /************************************************************************/
@@ -633,8 +636,12 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     }
     else
     {
-        GDALGTIFKeyGetDOUBLE(hGTIF, GeogAngularUnitSizeGeoKey, &(psDefn->UOMAngleInDegrees), 0, 1 );
-        aUnitGot = TRUE;
+        double dfRadians = 0.0;
+        if( GDALGTIFKeyGetDOUBLE(hGTIF, GeogAngularUnitSizeGeoKey, &dfRadians, 0, 1 ) )
+        {
+            aUnitGot = TRUE;
+            psDefn->UOMAngleInDegrees = dfRadians / CPLAtof(SRS_UA_DEGREE_CONV);
+        }
     }
 
     if( pszDatumName != NULL )
@@ -664,20 +671,12 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         pszGeogName = CPLStrdup( pszDatumName ? pszDatumName : "unknown" );
     }
 
-    if(aUnitGot)
-        oSRS.SetGeogCS( pszGeogName, pszDatumName, 
-                        pszSpheroidName, dfSemiMajor, dfInvFlattening,
-                        pszPMName,
-                        psDefn->PMLongToGreenwich / psDefn->UOMAngleInDegrees,
-                        pszAngularUnits,
-                        psDefn->UOMAngleInDegrees );
-    else
-        oSRS.SetGeogCS( pszGeogName, pszDatumName, 
-                        pszSpheroidName, dfSemiMajor, dfInvFlattening,
-                        pszPMName,
-                        psDefn->PMLongToGreenwich / psDefn->UOMAngleInDegrees,
-                        pszAngularUnits,
-                        psDefn->UOMAngleInDegrees * 0.0174532925199433 );
+    oSRS.SetGeogCS( pszGeogName, pszDatumName, 
+                    pszSpheroidName, dfSemiMajor, dfInvFlattening,
+                    pszPMName,
+                    psDefn->PMLongToGreenwich / psDefn->UOMAngleInDegrees,
+                    pszAngularUnits,
+                    psDefn->UOMAngleInDegrees * CPLAtof(SRS_UA_DEGREE_CONV) );
 
     if( psDefn->GCS != KvUserDefined && psDefn->GCS > 0 )
         oSRS.SetAuthority( "GEOGCS", "EPSG", psDefn->GCS );
@@ -1137,7 +1136,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             pszValue = CSVGetField( pszFilename,
                                     "DATUM_CODE", szSearchKey, CC_Integer,
                                     "DATUM_TYPE" );
-            if( pszValue != NULL && EQUALN(pszValue,"geodetic",8) )
+            if( pszValue != NULL && STARTS_WITH_CI(pszValue, "geodetic") )
                 pszVDatumType = "2002"; // CS_VD_Ellipsoidal
 
             // We unfortunately don't know how to identify other 
@@ -1296,6 +1295,12 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
 int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
 {
+    return GTIFSetFromOGISDefnEx(psGTIF, pszOGCWKT, GEOTIFF_KEYS_STANDARD);
+}
+
+int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
+                           GTIFFKeysFlavorEnum eFlavor )
+{
     OGRSpatialReference *poSRS;
     int		nPCS = KvUserDefined;
     OGRErr      eErr;
@@ -1413,9 +1418,19 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     
     if( nPCS != KvUserDefined )
     {
-        GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
-                   ModelTypeProjected);
-        GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
+        // If ESRI_PE flavor is explicitly required, then for EPSG:3857
+        // we will have to write a completely non-standard definition
+        // that requires not setting GTModelTypeGeoKey to ProjectedCSTypeGeoKey
+        if( eFlavor == GEOTIFF_KEYS_ESRI_PE && nPCS == 3857 )
+        {
+            bWritePEString = TRUE;
+        }
+        else
+        {
+            GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                    ModelTypeProjected);
+            GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
+        }
     }
     else if( poSRS->IsGeocentric() )
     {
@@ -2169,10 +2184,13 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     // Note that VERTCS is an ESRI "spelling" of VERT_CS so we assume if
     // we find it that we should try to treat this as a PE string.
     bWritePEString |= (poSRS->GetAttrValue("VERTCS") != NULL);
+    
+    bWritePEString |= (eFlavor == GEOTIFF_KEYS_ESRI_PE);
+    
+    bWritePEString &= CSLTestBoolean( CPLGetConfigOption("GTIFF_ESRI_CITATION",
+                                              "YES") );
 
-    if( bWritePEString 
-        && CSLTestBoolean( CPLGetConfigOption("GTIFF_ESRI_CITATION",
-                                              "YES") ) )
+    if( bWritePEString )
     {
         /* Anyhing we can't map, we store as an ESRI PE string with a citation key */
         char *pszPEString = NULL;
@@ -2188,10 +2206,21 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
             peStrStored = TRUE;
             CPLFree( outPeStr );
         }
-        if(pszPEString)
-            CPLFree( pszPEString );
+        CPLFree( pszPEString );
         GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
                    KvUserDefined );
+
+        /* Not completely sure we really need to imitate ArcGIS to that point */
+        /* but that cannot hurt */
+        if( nPCS == 3857 )
+        {
+            GTIFKeySet(psGTIF, GTCitationGeoKey, TYPE_ASCII, 0,
+                       "PCS Name = WGS_1984_Web_Mercator_Auxiliary_Sphere");
+            GTIFKeySet( psGTIF, GeographicTypeGeoKey, TYPE_SHORT,
+                        1, GCS_WGS_84 );
+            GTIFKeySet( psGTIF, GeogSemiMajorAxisGeoKey, TYPE_DOUBLE, 1, 6378137.0);
+            GTIFKeySet( psGTIF, GeogInvFlatteningGeoKey, TYPE_DOUBLE, 1, 298.257223563);
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -2244,8 +2273,7 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     }
     
 /* -------------------------------------------------------------------- */
-/*      Write angular units.  Always Degrees for now.                   */
-/*   Changed to support different angular units                         */
+/*      Write angular units.                                            */
 /* -------------------------------------------------------------------- */
 
     char* angUnitName = NULL;
@@ -2253,6 +2281,24 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     if(EQUAL(angUnitName, "Degree"))
         GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1, 
                    Angular_Degree );
+    else if (EQUAL(angUnitName, "arc-second"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   Angular_Arc_Second);
+    else if (EQUAL(angUnitName, "arc-minute"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   Angular_Arc_Minute);
+    else if (EQUAL(angUnitName, "grad"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   Angular_Grad);
+    else if (EQUAL(angUnitName, "gon"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   Angular_Gon);
+    else if (EQUAL(angUnitName, "radian"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   Angular_Radian);
+    /*else if (EQUAL(angUnitName, "microradian"))
+        GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
+                   9109);*/
     else if(angUnitName)
     {
         GTIFKeySet(psGTIF, GeogCitationGeoKey, TYPE_ASCII, 0, 
@@ -2269,8 +2315,11 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         && poSRS->GetRoot()->GetChild(0) != NULL 
         && (poSRS->IsProjected() || poSRS->IsLocal() || poSRS->IsGeocentric()) )
     {
-        GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0, 
-                    poSRS->GetRoot()->GetChild(0)->GetValue() );
+        if( !(bWritePEString && nPCS == 3857) )
+        {
+            GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0, 
+                        poSRS->GetRoot()->GetChild(0)->GetValue() );
+        }
     }
 
 /* -------------------------------------------------------------------- */

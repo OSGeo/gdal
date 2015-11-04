@@ -665,8 +665,20 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             }
         }
 
-        if( (EQUAL(oField.GetNameRef(),"WKT") ||
-             EQUALN(oField.GetNameRef(),"_WKT", 4) )
+        if( Matches(oField.GetNameRef(),papszZPossibleNames) )
+        {
+            oField.SetType(OFTReal);
+            iZField = iField;
+            if( !bKeepGeomColumns )
+                continue;
+        }
+        else if( ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 ) ||
+            ( iLatitudeField != -1 && iLongitudeField != -1 ) )
+        {
+            /* do nothing */
+        }
+        else if( (EQUAL(oField.GetNameRef(),"WKT") ||
+             STARTS_WITH_CI(oField.GetNameRef(), "_WKT") )
             && oField.GetType() == OFTString )
         {
             eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
@@ -715,32 +727,28 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             if( !bKeepGeomColumns )
                 continue;
         }
-        else if( Matches(oField.GetNameRef(),papszXPossibleNames) )
+        else if( Matches(oField.GetNameRef(),papszXPossibleNames) &&
+                 poFeatureDefn->GetGeomFieldCount() == 0 )
         {
             oField.SetType(OFTReal);
             iLongitudeField = iField;
             if( !bKeepGeomColumns )
                 continue;
         }
-        else if( Matches(oField.GetNameRef(),papszYPossibleNames) )
+        else if( Matches(oField.GetNameRef(),papszYPossibleNames) &&
+                 poFeatureDefn->GetGeomFieldCount() == 0 )
         {
             oField.SetType(OFTReal);
             iLatitudeField = iField;
             if( !bKeepGeomColumns )
                 continue;
         }
-        else if( Matches(oField.GetNameRef(),papszZPossibleNames) )
-        {
-            oField.SetType(OFTReal);
-            iZField = iField;
-            if( !bKeepGeomColumns )
-                continue;
-        }
 
         /*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
-        if ( pszNfdcGeomField != NULL &&
+        else if ( pszNfdcGeomField != NULL &&
                   EQUALN(oField.GetNameRef(), pszNfdcGeomField, strlen(pszNfdcGeomField)) &&
-                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LatitudeS") )
+                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LatitudeS") &&
+                 poFeatureDefn->GetGeomFieldCount() == 0  )
         {
             iNfdcLatitudeS = iField;
             if( !bKeepGeomColumns )
@@ -748,7 +756,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         }
         else if ( pszNfdcGeomField != NULL &&
                   EQUALN(oField.GetNameRef(), pszNfdcGeomField, strlen(pszNfdcGeomField)) &&
-                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LongitudeS") )
+                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField), "LongitudeS") &&
+                 poFeatureDefn->GetGeomFieldCount() == 0  )
         {
             iNfdcLongitudeS = iField;
             if( !bKeepGeomColumns )
@@ -760,7 +769,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                   EQUALN(oField.GetNameRef(), pszGeonamesGeomFieldPrefix, strlen(pszGeonamesGeomFieldPrefix)) &&
                   (EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LAT_DEC") ||
                    EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LATITUDE_DEC") ||
-                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LATITUDE")) )
+                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LATITUDE")) &&
+                 poFeatureDefn->GetGeomFieldCount() == 0  )
         {
             oField.SetType(OFTReal);
             iLatitudeField = iField;
@@ -771,7 +781,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                   EQUALN(oField.GetNameRef(), pszGeonamesGeomFieldPrefix, strlen(pszGeonamesGeomFieldPrefix)) &&
                   (EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONG_DEC") ||
                    EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONGITUDE_DEC") ||
-                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONGITUDE")) )
+                   EQUAL(oField.GetNameRef() + strlen(pszGeonamesGeomFieldPrefix), "_LONGITUDE")) &&
+                 poFeatureDefn->GetGeomFieldCount() == 0  )
         {
             oField.SetType(OFTReal);
             iLongitudeField = iField;
@@ -794,14 +805,20 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
             poFeatureDefn->SetGeomType( wkbPoint );
         else
+        {
             iNfdcLatitudeS = iNfdcLongitudeS = -1;
+            iLatitudeField = iLongitudeField = -1;
+        }
     }
     else if ( iLatitudeField != -1 && iLongitudeField != -1 )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
             poFeatureDefn->SetGeomType( (iZField >= 0) ? wkbPoint25D : wkbPoint );
         else
+        {
+            iNfdcLatitudeS = iNfdcLongitudeS = -1;
             iLatitudeField = iLongitudeField = -1;
+        }
     }
     
     if( poFeatureDefn->GetGeomFieldCount() > 0 &&
@@ -1324,36 +1341,39 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
             continue;
         }
         int iGeom = panGeomFieldIndex[iAttr];
-        if( iGeom >= 0 && papszTokens[iAttr][0] != '\0'&&
-            !(poFeatureDefn->GetGeomFieldDefn(iGeom)->IsIgnored()) )
+        if( iGeom >= 0 )
         {
-            const char* pszStr = papszTokens[iAttr];
-            while( *pszStr == ' ' )
-                pszStr ++;
-            char *pszWKT = (char*)pszStr;
-            OGRGeometry *poGeom = NULL;
+            if ( papszTokens[iAttr][0] != '\0'&&
+                 !(poFeatureDefn->GetGeomFieldDefn(iGeom)->IsIgnored()) )
+            {
+                const char* pszStr = papszTokens[iAttr];
+                while( *pszStr == ' ' )
+                    pszStr ++;
+                char *pszWKT = (char*)pszStr;
+                OGRGeometry *poGeom = NULL;
 
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            if( OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeom )
-                == OGRERR_NONE )
-            {
-                poGeom->assignSpatialReference(
-                    poFeatureDefn->GetGeomFieldDefn(iGeom)->GetSpatialRef());
-                poFeature->SetGeomFieldDirectly( iGeom, poGeom );
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                if( OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeom )
+                    == OGRERR_NONE )
+                {
+                    poGeom->assignSpatialReference(
+                        poFeatureDefn->GetGeomFieldDefn(iGeom)->GetSpatialRef());
+                    poFeature->SetGeomFieldDirectly( iGeom, poGeom );
+                }
+                else if( *pszStr == '{' &&
+                    (poGeom = (OGRGeometry*)OGR_G_CreateGeometryFromJson(pszStr)) != NULL )
+                {
+                    poFeature->SetGeomFieldDirectly( iGeom, poGeom );
+                }
+                else if( ((*pszStr >= '0' && *pszStr <= '9') ||
+                        (*pszStr >= 'a' && *pszStr <= 'z') ||
+                        (*pszStr >= 'A' && *pszStr <= 'Z') ) &&
+                        (poGeom = OGRGeometryFromHexEWKB(pszStr, NULL, FALSE)) != NULL )
+                {
+                    poFeature->SetGeomFieldDirectly( iGeom, poGeom );
+                }
+                CPLPopErrorHandler();
             }
-            else if( *pszStr == '{' &&
-                (poGeom = (OGRGeometry*)OGR_G_CreateGeometryFromJson(pszStr)) != NULL )
-            {
-                poFeature->SetGeomFieldDirectly( iGeom, poGeom );
-            }
-            else if( ((*pszStr >= '0' && *pszStr <= '9') ||
-                      (*pszStr >= 'a' && *pszStr <= 'z') ||
-                      (*pszStr >= 'A' && *pszStr <= 'Z') ) &&
-                     (poGeom = OGRGeometryFromHexEWKB(pszStr, NULL, FALSE)) != NULL )
-            {
-                poFeature->SetGeomFieldDirectly( iGeom, poGeom );
-            }
-            CPLPopErrorHandler();
             if( !bKeepGeomColumns )
                 continue;
         }
@@ -1749,9 +1769,9 @@ OGRErr OGRCSVLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
     poFeatureDefn->AddGeomFieldDefn( poGeomField );
 
     const char* pszName = poGeomField->GetNameRef();
-    if( EQUALN(pszName, "geom_", strlen("geom_")) )
+    if( STARTS_WITH_CI(pszName, "geom_") )
         pszName += strlen("geom_");
-    if( !EQUAL(pszName, "WKT") && !EQUALN(pszName, "_WKT", 4) )
+    if( !EQUAL(pszName, "WKT") && !STARTS_WITH_CI(pszName, "_WKT") )
         pszName = CPLSPrintf("_WKT%s", pszName);
 
     OGRFieldDefn oRegularFieldDefn( pszName, OFTString );
@@ -1798,8 +1818,8 @@ OGRErr OGRCSVLayer::WriteHeader()
         }
         else
         {
-            if( strncmp(pszFilename, "/vsistdout/", 11) == 0 ||
-                strncmp(pszFilename, "/vsizip/", 8) == 0 )
+            if( STARTS_WITH(pszFilename, "/vsistdout/") ||
+                STARTS_WITH(pszFilename, "/vsizip/") )
                 fpCSV = VSIFOpenL( pszFilename, "wb" );
             else
                 fpCSV = VSIFOpenL( pszFilename, "w+b" );

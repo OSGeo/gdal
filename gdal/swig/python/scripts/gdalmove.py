@@ -115,7 +115,7 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
               (ur[1] - ul[1]) / ds.RasterXSize,
               (ll[1] - ul[1]) / ds.RasterYSize)
 
-    (x,inv_new_gt) = gdal.InvGeoTransform( new_gt )
+    inv_new_gt = gdal.InvGeoTransform( new_gt )
     
     # -------------------------------------------------------------------------
     #  Report results for the five locations.
@@ -171,10 +171,10 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
         if this_error > max_error:
             max_error = this_error
 
-    update = 0
+    update = False
     if pixel_threshold is not None:
         if pixel_threshold > max_error:
-            update = 1
+            update = True
 
     # -------------------------------------------------------------------------
     # Apply the change coordinate system and geotransform.
@@ -208,8 +208,7 @@ gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
 #############################################################################
 # Main
 
-if __name__ == '__main__':
-
+def main():
     # Default GDAL argument parsing.
     
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
@@ -222,7 +221,6 @@ if __name__ == '__main__':
     # Script argument defaults
     s_srs = None
     t_srs = None
-    update=0
     filename = None
     pixel_threshold = None
 
@@ -264,3 +262,7 @@ if __name__ == '__main__':
 
 
     move( filename, t_srs, s_srs, pixel_threshold )
+
+
+if __name__ == '__main__':
+    main()

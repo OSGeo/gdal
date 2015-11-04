@@ -200,32 +200,36 @@ def basic_test_9():
 
 class my_python_error_handler_class:
     def __init__(self):
-        pass
+        self.eErrClass = None
+        self.err_no = None
+        self.msg = None
 
     def handler(self, eErrClass, err_no, msg):
-        gdaltest.eErrClass = eErrClass
-        gdaltest.err_no = err_no
-        gdaltest.msg = msg
+        self.eErrClass = eErrClass
+        self.err_no = err_no
+        self.msg = msg
 
 def basic_test_10():
 
-    gdaltest.eErrClass = 0
-    gdaltest.err_no = 0
-    gdaltest.msg = ''
     # Check that reference counting works OK
     gdal.PushErrorHandler(my_python_error_handler_class().handler)
     gdal.Error(1,2,'test')
     gdal.PopErrorHandler()
 
-    if gdaltest.eErrClass != 1:
+    error_handler = my_python_error_handler_class()
+    gdal.PushErrorHandler(error_handler.handler)
+    gdal.Error(1,2,'test')
+    gdal.PopErrorHandler()
+
+    if error_handler.eErrClass != 1:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if gdaltest.err_no != 2:
+    if error_handler.err_no != 2:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if gdaltest.msg != 'test':
+    if error_handler.msg != 'test':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -544,6 +548,48 @@ def basic_test_14():
 
     return 'success'
 
+###############################################################################
+# Test errors with progress callback
+
+def basic_test_15_cbk_no_argument():
+    return None
+
+def basic_test_15_cbk_no_ret(a, b, c):
+    return None
+
+def basic_test_15_cbk_bad_ret(a, b, c):
+    return 'ok'
+
+def basic_test_15():
+
+    try:
+        with gdaltest.error_handler():
+            gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = 'foo')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = basic_test_15_cbk_no_argument)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = basic_test_15_cbk_no_ret)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = basic_test_15_cbk_bad_ret)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
                   basic_test_3,
@@ -557,7 +603,8 @@ gdaltest_list = [ basic_test_1,
                   basic_test_11,
                   basic_test_12,
                   basic_test_13,
-                  basic_test_14 ]
+                  basic_test_14,
+                  basic_test_15 ]
 
 
 if __name__ == '__main__':

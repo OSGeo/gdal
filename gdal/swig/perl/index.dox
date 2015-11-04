@@ -73,38 +73,49 @@ $return = $object->method(); # method called in scalar context
 Many of the methods may throw an error, which can be caught by putting
 the call into eval{}; and then examining the contents of $\@.
 
-\section class_methods_vs_object_methods Class methods and attributes vs object methods and attributes 
+\section class_methods_vs_object_methods Modules, package subroutines, class methods, and object methods
 
-Some methods are class methods and some methods are object
-methods. Object methods are always invoked for objects, i.e.
+Geo::GDAL is the module, which you `use` in your Perl program. A
+module is a file with `.pm` extension. When you `use` the Geo::GDAL
+module, it `use`s other modules. Geo::GDAL modules define several
+packages, also known as namespaces, which are usually but not always
+classes.  Subroutines within packages may either be simply
+subroutines, class methods, or object methods.
+
+Objects of a class are often created using the class method `new`
+
+\code
+$object = SomeClass->new();
+\endcode
+
+Object methods in packages are always invoked for objects
 
 \code
 $object->method();
 \endcode
 
-while class methods are invoked either as methods
+while class methods are invoked for classes
 
 \code
 Geo::GDAL::Class->method();
 \endcode
 
-or as subroutines
+and package subroutines are invoked as subroutines in namespaces
 
 \code
 Geo::GDAL::Class::subroutine();
 \endcode
 
-The disctinction between class methods and subroutines is subtle but
-often important. The method invocation passes the class name as the
-first argument while the subroutine invocation does not. Especially
-constructor (new) must be called as a class method.
+The disctinction between class methods and package subroutines is
+subtle but often important. The method invocation passes the class
+name as the first argument while the subroutine invocation does
+not. Especially constructor (new) must be called as a class method.
 
 Similar to methods, also attributes are either class attributes or
-object attributes. Class attributes are global variables that are
-associated with a class and object attributes are variables owned by
-each individual object. Class attributes are used for example for
-enumerated values. In some cases object attributes can be accessed
-as hash values
+object attributes. Class attributes are package variables and object
+attributes are variables owned by each individual object. Class
+attributes are used for example for enumerated values. In some cases
+object attributes can be accessed as hash values
 
 \code
 $value = $object->{attribute};

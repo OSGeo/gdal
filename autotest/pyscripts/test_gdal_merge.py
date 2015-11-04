@@ -181,6 +181,86 @@ def test_gdal_merge_4():
     return 'success'
 
 ###############################################################################
+# Test merging with alpha band (#3669)
+
+def test_gdal_merge_5():
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.BandRasterIONumPy
+    except:
+        return 'skip'
+
+    script_path = test_py_scripts.get_py_script('gdal_merge')
+    if script_path is None:
+        return 'skip'
+
+    drv = gdal.GetDriverByName('GTiff')
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS( 'WGS84' )
+    wkt = srs.ExportToWkt()
+
+    ds = drv.Create('tmp/in5.tif', 10, 10, 4)
+    ds.SetProjection( wkt )
+    ds.SetGeoTransform( [ 2, 0.1, 0, 49, 0, -0.1 ] )
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    ds = drv.Create('tmp/in6.tif', 10, 10, 4)
+    ds.SetProjection( wkt )
+    ds.SetGeoTransform( [ 2, 0.1, 0, 49, 0, -0.1 ] )
+    ds.GetRasterBand(2).Fill(255)
+    ds.GetRasterBand(4).Fill(255)
+    cs = ds.GetRasterBand(4).Checksum()
+    ds = None
+
+    test_py_scripts.run_py_script(script_path, 'gdal_merge', ' -o tmp/test_gdal_merge_5.tif tmp/in5.tif tmp/in6.tif' )
+
+    ds = gdal.Open('tmp/test_gdal_merge_5.tif')
+
+    if ds.GetRasterBand(1).Checksum() != 0:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+    if ds.GetRasterBand(2).Checksum() != cs:
+        print(ds.GetRasterBand(2).Checksum())
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+    if ds.GetRasterBand(3).Checksum() != 0:
+        print(ds.GetRasterBand(3).Checksum())
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+    if ds.GetRasterBand(4).Checksum() != cs:
+        print(ds.GetRasterBand(4).Checksum())
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+    ds = None
+    
+    os.unlink('tmp/test_gdal_merge_5.tif')
+
+    test_py_scripts.run_py_script(script_path, 'gdal_merge', ' -o tmp/test_gdal_merge_5.tif tmp/in6.tif tmp/in5.tif' )
+
+    ds = gdal.Open('tmp/test_gdal_merge_5.tif')
+
+    if ds.GetRasterBand(1).Checksum() != 0:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+    if ds.GetRasterBand(2).Checksum() != cs:
+        print(ds.GetRasterBand(2).Checksum())
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+    if ds.GetRasterBand(3).Checksum() != 0:
+        print(ds.GetRasterBand(3).Checksum())
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+    if ds.GetRasterBand(4).Checksum() != cs:
+        print(ds.GetRasterBand(4).Checksum())
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_merge_cleanup():
@@ -189,10 +269,13 @@ def test_gdal_merge_cleanup():
             'tmp/test_gdal_merge_2.tif',
             'tmp/test_gdal_merge_3.tif',
             'tmp/test_gdal_merge_4.tif',
+            'tmp/test_gdal_merge_5.tif',
             'tmp/in1.tif',
             'tmp/in2.tif',
             'tmp/in3.tif',
-            'tmp/in4.tif' ]
+            'tmp/in4.tif',
+            'tmp/in5.tif',
+            'tmp/in6.tif' ]
     for filename in lst:
         try:
             os.remove(filename)
@@ -206,6 +289,7 @@ gdaltest_list = [
     test_gdal_merge_2,
     test_gdal_merge_3,
     test_gdal_merge_4,
+    test_gdal_merge_5,
     test_gdal_merge_cleanup
     ]
 

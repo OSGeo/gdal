@@ -132,9 +132,7 @@ int OGRGFTTableLayer::FetchDescribe()
         char* pszLine = (char*) psResult->pabyData;
         if (pszLine == NULL ||
             psResult->pszErrBuf != NULL ||
-            strncmp(pszLine, "column id,name,type",
-                    strlen("column id,name,type")) != 0)
-        {
+            !STARTS_WITH(pszLine, "column id,name,type"))        {
             CPLHTTPDestroyResult(psResult);
             return FALSE;
         }
@@ -256,10 +254,10 @@ int OGRGFTTableLayer::FetchDescribe()
                 {
                     const char* pszVal = papszTokens[i];
                     if (pszVal != NULL &&
-                        (strncmp(pszVal, "<Point>", 7) == 0 ||
-                         strncmp(pszVal, "<LineString>", 12) == 0 ||
-                         strncmp(pszVal, "<Polygon>", 9) == 0 ||
-                         strncmp(pszVal, "<MultiGeometry>", 15) == 0))
+                        (STARTS_WITH(pszVal, "<Point>") ||
+                         STARTS_WITH(pszVal, "<LineString>") ||
+                         STARTS_WITH(pszVal, "<Polygon>") ||
+                         STARTS_WITH(pszVal, "<MultiGeometry>")))
                     {
                         if (iGeometryField < 0)
                         {
@@ -500,7 +498,7 @@ GIntBig OGRGFTTableLayer::GetFeatureCount(CPL_UNUSED int bForce)
 
     char* pszLine = (char*) psResult->pabyData;
     if (pszLine == NULL ||
-        strncmp(pszLine, "count()", 7) != 0 ||
+        !STARTS_WITH(pszLine, "count()") ||
         psResult->pszErrBuf != NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GetFeatureCount() failed");
@@ -664,7 +662,7 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
 
     char* pszLine = (char*) psResult->pabyData;
     if (pszLine == NULL ||
-        strncmp(pszLine, "tableid", 7) != 0 ||
+        !STARTS_WITH(pszLine, "tableid") ||
         psResult->pszErrBuf != NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Table creation failed");
@@ -844,7 +842,7 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     char* pszLine = (char*) psResult->pabyData;
     if (pszLine == NULL ||
-        strncmp(pszLine, "rowid", 5) != 0 ||
+        !STARTS_WITH(pszLine, "rowid") ||
         psResult->pszErrBuf != NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Feature creation failed");
@@ -1022,7 +1020,7 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     char* pszLine = (char*) psResult->pabyData;
     if (pszLine == NULL ||
-        strncmp(pszLine, "affected_rows\n1\n", 16) != 0 ||
+        !STARTS_WITH(pszLine, "affected_rows\n1\n") ||
         psResult->pszErrBuf != NULL)
     {
         CPLDebug( "GFT", "%s/%s", 
@@ -1089,7 +1087,7 @@ OGRErr OGRGFTTableLayer::DeleteFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
     char* pszLine = (char*) psResult->pabyData;
     if (pszLine == NULL ||
-        strncmp(pszLine, "affected_rows\n1\n", 16) != 0 ||
+        !STARTS_WITH(pszLine, "affected_rows\n1\n") ||
         psResult->pszErrBuf != NULL)
     {
         CPLDebug( "GFT", "%s/%s", 
@@ -1184,7 +1182,7 @@ OGRErr OGRGFTTableLayer::CommitTransaction()
 
         char* pszLine = (char*) psResult->pabyData;
         if (pszLine == NULL ||
-            strncmp(pszLine, "rowid", 5) != 0 ||
+            !STARTS_WITH(pszLine, "rowid") ||
             psResult->pszErrBuf != NULL)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "CommitTransaction failed : %s",

@@ -266,7 +266,7 @@ GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
         return 0;
 
     if( poLayer->GetFeatureQuery() == NULL &&
-        EQUALN(osSQLCurrent, "SELECT COUNT(*) FROM", strlen("SELECT COUNT(*) FROM")) &&
+        STARTS_WITH_CI(osSQLCurrent, "SELECT COUNT(*) FROM") &&
         osSQLCurrent.ifind(" GROUP BY ") == std::string::npos &&
         osSQLCurrent.ifind(" UNION ") == std::string::npos &&
         osSQLCurrent.ifind(" INTERSECT ") == std::string::npos &&
@@ -419,22 +419,26 @@ std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> OGRSQLiteSelectLayerCommonBehav
         return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>((OGRLayer*)NULL, (IOGRSQLiteGetSpatialWhere*)NULL);
     }
 
-    char chQuote = osSQLBase[nFromPos + 6];
-    int bInQuotes = (chQuote == '\'' || chQuote == '"' );
+    /* Remove potential quotes around layer name */
+    char chFirst = osSQLBase[nFromPos + 6];
+    int bInQuotes = (chFirst == '\'' || chFirst == '"' );
     CPLString osBaseLayerName;
     for( i = nFromPos + 6 + (bInQuotes ? 1 : 0);
          i < osSQLBase.size(); i++ )
     {
-        if (osSQLBase[i] == chQuote && i + 1 < osSQLBase.size() &&
-            osSQLBase[i + 1] == chQuote )
+        if (osSQLBase[i] == chFirst && bInQuotes )
         {
-            osBaseLayerName += osSQLBase[i];
-            i++;
-        }
-        else if (osSQLBase[i] == chQuote && bInQuotes)
-        {
-            i++;
-            break;
+            if( i + 1 < osSQLBase.size() &&
+                osSQLBase[i + 1] == chFirst )
+            {
+                osBaseLayerName += osSQLBase[i];
+                i++;
+            }
+            else
+            {
+                i++;
+                break;
+            }
         }
         else if (osSQLBase[i] == ' ' && !bInQuotes)
             break;
@@ -530,7 +534,7 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
     while (i < osSQLBase.size() && osSQLBase[i] == ' ')
         i ++;
 
-    if (i < osSQLBase.size() && EQUALN(osSQLBase.c_str() + i, "WHERE ", 6))
+    if (i < osSQLBase.size() && STARTS_WITH_CI(osSQLBase.c_str() + i, "WHERE "))
     {
         osSQLCurrent = osSQLBase.substr(0, i + 6);
         osSQLCurrent += osCustomWhere;
@@ -555,9 +559,9 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
         }
     }
     else if (i < osSQLBase.size() &&
-             (EQUALN(osSQLBase.c_str() + i, "GROUP ", 6) ||
-              EQUALN(osSQLBase.c_str() + i, "ORDER ", 6) ||
-              EQUALN(osSQLBase.c_str() + i, "LIMIT ", 6)))
+             (STARTS_WITH_CI(osSQLBase.c_str() + i, "GROUP ") ||
+              STARTS_WITH_CI(osSQLBase.c_str() + i, "ORDER ") ||
+              STARTS_WITH_CI(osSQLBase.c_str() + i, "LIMIT ")))
     {
         osSQLCurrent = osSQLBase.substr(0, i);
         osSQLCurrent += " WHERE ";

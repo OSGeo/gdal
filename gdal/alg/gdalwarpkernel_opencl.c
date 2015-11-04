@@ -287,9 +287,9 @@ cl_device_id get_device(OCLVendor *peVendor)
     assert(err == CL_SUCCESS);
     CPLDebug( "OpenCL", "Connected to %s %s.", vendor_name, device_name);
 
-    if (strncmp((const char*)vendor_name, "Advanced Micro Devices", strlen("Advanced Micro Devices")) == 0)
+    if (STARTS_WITH((const char*)vendor_name, "Advanced Micro Devices"))
         *peVendor = VENDOR_AMD;
-    else if (strncmp((const char*)vendor_name, "Intel(R) Corporation", strlen("Intel(R) Corporation")) == 0)
+    else if (STARTS_WITH((const char*)vendor_name, "Intel(R) Corporation"))
         *peVendor = VENDOR_INTEL;
     else
         *peVendor = VENDOR_OTHER;

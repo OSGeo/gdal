@@ -82,7 +82,8 @@ void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
 
 #endif
 
-void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDecimalSep, int nPrecision = 15 );
+void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
+                      char chDecimalSep, int nPrecision = 15, char chConversionSpecifier = 'f' );
 
 /* -------------------------------------------------------------------- */
 /*      Date-time parsing and processing functions                      */
@@ -151,7 +152,7 @@ OGRGeometry CPL_DLL *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSR
 OGRGeometry CPL_DLL *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID,
                                              int bIsPostGIS1_EWKB );
 char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
-                                     int bIsPostGIS1_EWKB );
+                                     int nPostGISMajor, int nPostGISMinor );
 
 /************************************************************************/
 /*                        WKB Type Handling encoding                    */

@@ -249,9 +249,9 @@ TABMAPFile::~TABMAPFile()
 
 int TABMAPFile::Open(const char *pszFname, const char* pszAccess, GBool bNoErrorMsg)
 {
-    if( EQUALN(pszAccess, "r", 1) )
+    if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead, bNoErrorMsg);
-    else if( EQUALN(pszAccess, "w", 1) )
+    else if( STARTS_WITH_CI(pszAccess, "w") )
         return Open(pszFname, TABWrite, bNoErrorMsg);
     else
     {
@@ -485,7 +485,11 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
     if( m_eAccessMode == TABReadWrite )
     {
         VSIStatBufL sStatBuf;
-        VSIStatL(m_pszFname, &sStatBuf);
+        if( VSIStatL(m_pszFname, &sStatBuf) != 0 )
+        {
+            Close();
+            return -1;
+        }
         m_oBlockManager.SetLastPtr((int)(((sStatBuf.st_size-1)/512)*512));
 
         /* Read chain of garbage blocks */
@@ -1515,8 +1519,8 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         {
             /* This can happen if the file created by MapInfo contains just */
             /* a few objects */
-            TABRawBinBlock *poBlock;
-            poBlock = GetIndexObjectBlock( m_poHeader->m_nFirstIndexBlock );
+            TABRawBinBlock *poBlock
+                = GetIndexObjectBlock( m_poHeader->m_nFirstIndexBlock );
             CPLAssert( poBlock != NULL && poBlock->GetBlockType() == TABMAP_OBJECT_BLOCK);
             delete poBlock;
 
@@ -1636,7 +1640,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
     {
         TABMAPObjHdr *poExistingObjHdr=NULL;
         TABMAPObjHdr **papoSrcObjHdrs = NULL;
-        int i, numSrcObj = 0;
+        int numSrcObj = 0;
         int nObjectSpace = 0;
 
         /* First pass to enumerate valid objects and compute their accumulated
@@ -1667,7 +1671,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
 #endif
             m_poCurObjBlock->ClearObjects();
 
-            for(i=0; i<numSrcObj; i++)
+            for(int i=0; i<numSrcObj; i++)
             {
                 /*-----------------------------------------------------------------
                 * Prepare and Write ObjHdr to this ObjBlock
@@ -1679,6 +1683,12 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
                     CPLError(CE_Failure, CPLE_FileIO,
                             "Failed writing object header for feature id %d",
                             papoSrcObjHdrs[i]->m_nId);
+                    for(int j=0; j<numSrcObj; i++)
+                    {
+                      delete papoSrcObjHdrs[j];
+                    }
+                    CPLFree(papoSrcObjHdrs);
+                    papoSrcObjHdrs = NULL;
                     return -1;
                 }
 
@@ -1690,7 +1700,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         }
 
         /* Cleanup papoSrcObjHdrs[] */
-        for(i=0; i<numSrcObj; i++)
+        for(int i=0; i<numSrcObj; i++)
         {
             delete papoSrcObjHdrs[i];
         }
@@ -1711,7 +1721,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         nMinY = MIN(nMinY, poObjHdr->m_nMinY);
         nMaxX = MAX(nMaxX, poObjHdr->m_nMaxX);
         nMaxY = MAX(nMaxY, poObjHdr->m_nMaxY);
-        
+
         m_poCurObjBlock->SetMBR(nMinX, nMinY, nMaxX, nMaxY);
 
         if (m_poSpIndex->UpdateLeafEntry(m_poCurObjBlock->GetStartAddress(),
@@ -1728,8 +1738,8 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
          * everything to disk and will update m_poCurCoordBlock to point to
          * the last coord block in the chain, ready to accept new data
          *------------------------------------------------------------*/
-        TABMAPObjectBlock *poNewObjBlock;
-        poNewObjBlock= SplitObjBlock(poObjHdr, nObjSize);
+        TABMAPObjectBlock *poNewObjBlock
+            = SplitObjBlock(poObjHdr, nObjSize);
 
         if (poNewObjBlock == NULL)
             return -1;  /* Split failed, error already reported. */
@@ -1748,7 +1758,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         nMinY = MIN(nMinY, poObjHdr->m_nMinY);
         nMaxX = MAX(nMaxX, poObjHdr->m_nMaxX);
         nMaxY = MAX(nMaxY, poObjHdr->m_nMaxY);
-        
+
         m_poCurObjBlock->SetMBR(nMinX, nMinY, nMaxX, nMaxY);
 
         if (m_poSpIndex->UpdateLeafEntry(m_poCurObjBlock->GetStartAddress(),
@@ -1792,8 +1802,6 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
  **********************************************************************/
 int   TABMAPFile::PrepareNewObjViaObjBlock(TABMAPObjHdr *poObjHdr)
 {
-    int nObjSize;
-
     /*-------------------------------------------------------------
      * We will need an object block... check if it exists and
      * create it if it has not been created yet (first time for this file).
@@ -1820,7 +1828,7 @@ int   TABMAPFile::PrepareNewObjViaObjBlock(TABMAPObjHdr *poObjHdr)
      * Fetch new object size, make sure there is enough room in obj. 
      * block for new object, and save/create a new one if necessary.
      *----------------------------------------------------------------*/
-    nObjSize = m_poHeader->GetMapObjectSize(poObjHdr->m_nType);
+    const int nObjSize = m_poHeader->GetMapObjectSize(poObjHdr->m_nType);
     if (m_poCurObjBlock->GetNumUnusedBytes() < nObjSize )
     {
         /*-------------------------------------------------------------
@@ -1966,8 +1974,6 @@ int TABMAPFile::CommitObjAndCoordBlocks(GBool bDeleteObjects /*=FALSE*/)
      *----------------------------------------------------------------*/
     if (nStatus == 0 && m_bQuickSpatialIndexMode)
     {
-        GInt32 nXMin, nYMin, nXMax, nYMax;
-
         if (m_poSpIndex == NULL)
         {
             // Spatial Index not created yet...
@@ -1980,6 +1986,7 @@ int TABMAPFile::CommitObjAndCoordBlocks(GBool bDeleteObjects /*=FALSE*/)
             m_poHeader->m_nFirstIndexBlock = m_poSpIndex->GetNodeBlockPtr();
         }
 
+        GInt32 nXMin, nYMin, nXMax, nYMax;
         m_poCurObjBlock->GetMBR(nXMin, nYMin, nXMax, nYMax);
         nStatus = m_poSpIndex->AddEntry(nXMin, nYMin, nXMax, nYMax,
                                         m_poCurObjBlock->GetStartAddress());
@@ -2013,8 +2020,6 @@ int TABMAPFile::CommitObjAndCoordBlocks(GBool bDeleteObjects /*=FALSE*/)
  **********************************************************************/
 int TABMAPFile::LoadObjAndCoordBlocks(GInt32 nBlockPtr)
 {
-    TABRawBinBlock *poBlock = NULL;
-
     /*-----------------------------------------------------------------
      * In Write mode, if an object block is already in memory then flush it
      *----------------------------------------------------------------*/
@@ -2028,9 +2033,10 @@ int TABMAPFile::LoadObjAndCoordBlocks(GInt32 nBlockPtr)
     /*-----------------------------------------------------------------
      * Load Obj Block
      *----------------------------------------------------------------*/
-    poBlock = TABCreateMAPBlockFromFile(m_fp, 
-                                             nBlockPtr,
-                                             512, TRUE, TABReadWrite);
+    TABRawBinBlock *poBlock =
+        TABCreateMAPBlockFromFile(m_fp,
+                                  nBlockPtr,
+                                  512, TRUE, TABReadWrite);
     if (poBlock != NULL &&
         poBlock->GetBlockClass() == TABMAP_OBJECT_BLOCK)
     {
@@ -2168,13 +2174,19 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     poObjHdr = papoSrcObjHdrs[nSeed1];
     if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
                        m_poCurObjBlock, &m_poCurCoordBlock) <= 0)
+    {
+        delete poNewObjBlock;
         return NULL;
+    }
 
     // Move nSeed2 to 2nd block
     poObjHdr = papoSrcObjHdrs[nSeed2];
     if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
                        poNewObjBlock, &poNewCoordBlock) <= 0)
+    {
+        delete poNewObjBlock;
         return NULL;
+    }
 
     /*-----------------------------------------------------------------
      * Go through the rest of the entries and assign them to one 

@@ -32,22 +32,26 @@
 #include "gnm_priv.h"
 
 
-GNMRule::GNMRule() : CPLString()
+GNMRule::GNMRule()
 {
     m_bValid = false;
+    m_bAllow = false;
+    m_bAny = false;
 }
 
-GNMRule::GNMRule(const std::string &oRule) : CPLString(oRule)
+GNMRule::GNMRule(const std::string &oRule)
 {
+    m_soRuleString = oRule;
     m_bValid = ParseRuleString();
 }
 
-GNMRule::GNMRule(const char *pszRule) : CPLString(pszRule)
+GNMRule::GNMRule(const char *pszRule)
 {
+    m_soRuleString = pszRule;
     m_bValid = ParseRuleString();
 }
 
-GNMRule::GNMRule(const GNMRule &oRule) : CPLString(oRule)
+GNMRule::GNMRule(const GNMRule &oRule)
 {
     m_soSrcLayerName = oRule.m_soSrcLayerName;
     m_soTgtLayerName = oRule.m_soTgtLayerName;
@@ -55,6 +59,7 @@ GNMRule::GNMRule(const GNMRule &oRule) : CPLString(oRule)
     m_bAllow = oRule.m_bAllow;
     m_bValid = oRule.m_bValid;
     m_bAny = oRule.m_bAny;
+    m_soRuleString = oRule.m_soRuleString;
 }
 
 GNMRule::~GNMRule()
@@ -111,9 +116,19 @@ CPLString GNMRule::GetConnectorLayerName() const
     return m_soConnLayerName;
 }
 
+const char *GNMRule::c_str() const
+{
+    return m_soRuleString.c_str();
+}
+
+GNMRule::operator const char *() const
+{
+    return c_str();
+}
+
 bool GNMRule::ParseRuleString()
 {
-    CPLStringList aTokens (CSLTokenizeString2(c_str(), " ", CSLT_STRIPLEADSPACES |
+    CPLStringList aTokens (CSLTokenizeString2(m_soRuleString.c_str(), " ", CSLT_STRIPLEADSPACES |
                                             CSLT_STRIPENDSPACES));
 
     // the minimum rule consist 3 tokens
@@ -121,7 +136,7 @@ bool GNMRule::ParseRuleString()
     if(nTokenCount < 3)
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "Need more than %d tokens. Failed to parse rule: %s",
-                  nTokenCount, c_str() );
+                  nTokenCount, m_soRuleString.c_str() );
         return false;
     }
 
@@ -132,7 +147,7 @@ bool GNMRule::ParseRuleString()
     else
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "First token is invalid. Failed to parse rule: %s",
-                  c_str() );
+                  m_soRuleString.c_str() );
         return false;
     }
 
@@ -142,7 +157,7 @@ bool GNMRule::ParseRuleString()
     if(!EQUAL(aTokens[1], GNM_RULEKW_CONNECTS))
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "Not a CONNECTS rule. Failed to parse rule: %s",
-                  c_str() );
+                  m_soRuleString.c_str() );
         return false;
     }
 
@@ -156,7 +171,7 @@ bool GNMRule::ParseRuleString()
         if(nTokenCount < 5)
         {
             CPLError( CE_Failure, CPLE_IllegalArg, "Not an ANY rule, but have only %d tokens. Failed to parse rule: %s",
-                      nTokenCount, c_str() );
+                      nTokenCount, m_soRuleString.c_str() );
             return false;
         }
         m_soSrcLayerName = aTokens[2];

@@ -6,21 +6,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR VRT driver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -44,8 +44,10 @@ import test_cli_utilities
 
 def ogr_vrt_1():
 
-    gdaltest.vrt_ds = ogr.Open( 'data/vrt_test.vrt' )
-    
+    with gdaltest.error_handler():
+        # Complains about dummySrcDataSource as expected.
+        gdaltest.vrt_ds = ogr.Open( 'data/vrt_test.vrt' )
+
     if gdaltest.vrt_ds is not None:
         return 'success'
     else:
@@ -69,7 +71,7 @@ def ogr_vrt_2():
         return 'fail'
 
     expect = ['First', 'Second']
-    
+
     tr = ogrtest.check_features_against_list( lyr, 'other', expect )
     if not tr:
         return 'fail'

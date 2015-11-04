@@ -189,23 +189,22 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
 /*                         OGRTigerDataSource()                         */
 /************************************************************************/
 
-OGRTigerDataSource::OGRTigerDataSource()
-
+OGRTigerDataSource::OGRTigerDataSource() :
+    pszName(NULL),
+    nLayers(0),
+    papoLayers(NULL),
+    papszOptions(NULL),
+    pszPath(NULL),
+    nModules(0),
+    papszModules(NULL),
+    nVersionCode(0),
+    nVersion(TIGER_Unknown),
+    bWriteMode(FALSE)
 {
-    bWriteMode = FALSE;
-
-    nLayers = 0;
-    papoLayers = NULL;
-
-    nModules = 0;
-    papszModules = NULL;
-
-    pszName = NULL;
-    pszPath = NULL;
-
-    papszOptions = NULL;
-
-    poSpatialRef = new OGRSpatialReference( "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\",SPHEROID[\"GRS 1980\",6378137,298.257222101]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]" );
+    poSpatialRef = new OGRSpatialReference(
+        "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\","
+        "SPHEROID[\"GRS 1980\",6378137,298.257222101]],PRIMEM[\"Greenwich\",0],"
+        "UNIT[\"degree\",0.0174532925199433]]" );
 }
 
 /************************************************************************/
@@ -215,11 +214,9 @@ OGRTigerDataSource::OGRTigerDataSource()
 OGRTigerDataSource::~OGRTigerDataSource()
 
 {
-    int         i;
-
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
     CPLFree( pszName );
@@ -339,11 +336,10 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     else
     {
         char      **candidateFileList = CPLReadDir( pszFilename );
-        int         i;
 
         pszPath = CPLStrdup( pszFilename );
 
-        for( i = 0; 
+        for( int i = 0;
              candidateFileList != NULL && candidateFileList[i] != NULL; 
              i++ ) 
         {
@@ -380,7 +376,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                           "No candidate Tiger files (TGR*.RT1) found in\n"
                           "directory: %s",
                           pszFilename );
-
+            CSLDestroy(papszFileList);
             return FALSE;
         }
     }
@@ -423,7 +419,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             pszRecStart = szHeader;
             szHeader[sizeof(szHeader)-1] = '\0';
 
-            if( EQUALN(pszRecStart,"Copyright (C)",13) 
+            if( STARTS_WITH_CI(pszRecStart, "Copyright (C)") 
                 && strstr(pszRecStart,"Geographic Data Tech") != NULL )
             {
                 bIsGDT = TRUE;
@@ -498,7 +494,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
         const char *pszRequestedVersion = 
             CPLGetConfigOption( "TIGER_VERSION", NULL );
 
-        if( EQUALN(pszRequestedVersion,"TIGER_",6) )
+        if( STARTS_WITH_CI(pszRequestedVersion, "TIGER_") )
         {
             int iCode;
 

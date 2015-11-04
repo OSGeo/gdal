@@ -50,7 +50,7 @@ struct timezone
 #define MICROSEC_IN_SEC   1000000
 
 static
-int OGR_gettimeofday(struct timeval *tv, struct timezone *tzIgnored)
+int OGR_gettimeofday(struct timeval *tv, CPL_UNUSED struct timezone *tzIgnored)
 {
     FILETIME ft;
     GetSystemTimeAsFileTime(&ft);
@@ -147,7 +147,7 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
 {
     const char* pszIter = pszQueryTemplate;
     int bValidFormat = TRUE;
-    int bFoundPctS = FALSE;
+    bool bFoundPctS = false;
     while( *pszIter != '\0' )
     {
         if( *pszIter == '%' )
@@ -163,7 +163,7 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
                     bValidFormat = FALSE;
                     break;
                 }
-                bFoundPctS = TRUE;
+                bFoundPctS = true;
             }
             else
             {
@@ -243,7 +243,7 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
                                                           "CACHE_FILE",
                                                           DEFAULT_CACHE_SQLITE);
     CPLString osExt = CPLGetExtension(pszCacheFilename);
-    if( !(EQUALN(pszCacheFilename, "PG:", 3) ||
+    if( !(STARTS_WITH_CI(pszCacheFilename, "PG:") ||
         EQUAL(osExt, "csv") || EQUAL(osExt, "sqlite")) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -433,7 +433,7 @@ static OGRLayer* OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
         }
 
         if( bCreateIfNecessary && poDS == NULL &&
-            !EQUALN(hSession->pszCacheFilename, "PG:", 3) )
+            !STARTS_WITH_CI(hSession->pszCacheFilename, "PG:") )
         {
             OGRSFDriverH hDriver = OGRGetDriverByName(osExt);
             if( hDriver == NULL &&
@@ -506,7 +506,7 @@ static OGRLayer* OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
             OGRFieldDefn oFieldDefnBlob(FIELD_BLOB, OFTString);
             poLayer->CreateField(&oFieldDefnBlob);
             if( EQUAL(osExt, "SQLITE") ||
-                EQUALN(hSession->pszCacheFilename, "PG:", 3) )
+                STARTS_WITH_CI(hSession->pszCacheFilename, "PG:") )
             {
                 const char* pszSQL =
                     CPLSPrintf( "CREATE INDEX idx_%s_%s ON %s(%s)",
@@ -565,7 +565,7 @@ static char* OGRGeocodeGetFromCache(OGRGeocodingSessionH hSession,
 /*                        OGRGeocodePutIntoCache()                      */
 /************************************************************************/
 
-static int OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
+static bool OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
                                   const char* pszURL,
                                   const char* pszContent)
 {
@@ -574,7 +574,7 @@ static int OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
     int nIdxBlob = -1;
     OGRLayer* poLayer = OGRGeocodeGetCacheLayer(hSession, TRUE, &nIdxBlob);
     if( poLayer == NULL )
-        return FALSE;
+        return false;
 
     OGRFeature* poFeature = new OGRFeature(poLayer->GetLayerDefn());
     poFeature->SetField(FIELD_URL, pszURL);
@@ -597,7 +597,7 @@ static OGRLayerH OGRGeocodeMakeRawLayer(const char* pszContent)
     poLayer->CreateField(&oFieldDefnRaw);
     OGRFeature* poFeature = new OGRFeature(poFDefn);
     poFeature->SetField("raw", pszContent);
-    poLayer->CreateFeature(poFeature);
+    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
     delete poFeature;
     return (OGRLayerH) poLayer;
 }
@@ -664,7 +664,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
             (strcmp(psPlace->pszValue, "place") == 0 || /* Nominatim */
              strcmp(psPlace->pszValue, "geoname") == 0 /* Geonames */) )
         {
-            int bFoundLat = FALSE, bFoundLon = FALSE;
+            bool bFoundLat = false, bFoundLon = false;
             double dfLat = 0.0, dfLon = 0.0;
 
             /* Iteration to fill the feature */
@@ -686,13 +686,13 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
                         poFeature->SetField(nIdx, pszVal);
                         if( strcmp(pszName, "lat") == 0 )
                         {
-                            bFoundLat = TRUE;
+                            bFoundLat = true;
                             dfLat = CPLAtofM(pszVal);
                         }
                         else if( strcmp(pszName, "lon") == 0 ||  /* Nominatim */
                                  strcmp(pszName, "lng") == 0 /* Geonames */ )
                         {
-                            bFoundLon = TRUE;
+                            bFoundLon = true;
                             dfLon = CPLAtofM(pszVal);
                         }
                     }
@@ -728,7 +728,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
             if( poFeature->GetGeometryRef() == NULL && bFoundLon && bFoundLat )
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            poLayer->CreateFeature(poFeature);
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
             delete poFeature;
         }
         psPlace = psPlace->psNext;
@@ -754,7 +754,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(CPLXMLNode* psReverseGeoco
     OGRMemLayer* poLayer = new OGRMemLayer( "result", NULL, wkbNone );
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
 
-    int bFoundLat = FALSE, bFoundLon = FALSE;
+    bool bFoundLat = false, bFoundLon = false;
     double dfLat = 0.0, dfLon = 0.0;
 
     /* First iteration to add fields */
@@ -771,7 +771,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(CPLXMLNode* psReverseGeoco
             {
                 if( pszVal != NULL )
                 {
-                    bFoundLat = TRUE;
+                    bFoundLat = true;
                     dfLat = CPLAtofM(pszVal);
                 }
                 oFieldDefn.SetType(OFTReal);
@@ -780,7 +780,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(CPLXMLNode* psReverseGeoco
             {
                 if( pszVal != NULL )
                 {
-                    bFoundLon = TRUE;
+                    bFoundLon = true;
                     dfLon = CPLAtofM(pszVal);
                 }
                 oFieldDefn.SetType(OFTReal);
@@ -858,7 +858,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(CPLXMLNode* psReverseGeoco
     if( poFeature->GetGeometryRef() == NULL && bFoundLon && bFoundLat )
         poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-    poLayer->CreateFeature(poFeature);
+    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
     delete poFeature;
 
     return (OGRLayerH) poLayer;
@@ -922,7 +922,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
         if( psPlace->eType == CXT_Element &&
             strcmp(psPlace->pszValue, "Result") == 0 )
         {
-            int bFoundLat = FALSE, bFoundLon = FALSE;
+            bool bFoundLat = false, bFoundLon = false;
             double dfLat = 0.0, dfLon = 0.0;
 
             /* Second iteration to fill the feature */
@@ -944,12 +944,12 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
                         poFeature->SetField(nIdx, pszVal);
                         if( strcmp(pszName, "latitude") == 0 )
                         {
-                            bFoundLat = TRUE;
+                            bFoundLat = true;
                             dfLat = CPLAtofM(pszVal);
                         }
                         else if( strcmp(pszName, "longitude") == 0 )
                         {
-                            bFoundLon = TRUE;
+                            bFoundLon = true;
                             dfLon = CPLAtofM(pszVal);
                         }
                     }
@@ -987,7 +987,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
             if( bFoundLon && bFoundLat )
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            poLayer->CreateFeature(poFeature);
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
             delete poFeature;
         }
         psPlace = psPlace->psNext;
@@ -1076,7 +1076,7 @@ static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
         if( psPlace->eType == CXT_Element &&
             strcmp(psPlace->pszValue, "Location") == 0 )
         {
-            int bFoundLat = FALSE, bFoundLon = FALSE;
+            bool bFoundLat = false, bFoundLon = false;
             double dfLat = 0.0, dfLon = 0.0;
 
             OGRFeature* poFeature = new OGRFeature(poFDefn);
@@ -1114,12 +1114,12 @@ static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
                                 poFeature->SetField(nIdx, pszVal);
                                 if( strcmp(pszName, "Latitude") == 0 )
                                 {
-                                    bFoundLat = TRUE;
+                                    bFoundLat = true;
                                     dfLat = CPLAtofM(pszVal);
                                 }
                                 else if( strcmp(pszName, "Longitude") == 0 )
                                 {
-                                    bFoundLon = TRUE;
+                                    bFoundLon = true;
                                     dfLon = CPLAtofM(pszVal);
                                 }
                             }
@@ -1145,7 +1145,7 @@ static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
             if( bFoundLon && bFoundLat )
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            poLayer->CreateFeature(poFeature);
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
             delete poFeature;
         }
         psPlace = psPlace->psNext;

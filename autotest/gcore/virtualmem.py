@@ -41,6 +41,9 @@ from osgeo import gdal
 # Test linear and tiled virtual mem interfaces in read-only mode
 
 def virtualmem_1():
+    
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
+        return 'skip'
 
     try:
         from osgeo import gdalnumeric
@@ -126,7 +129,9 @@ def virtualmem_1():
 # Test write mode
 
 def virtualmem_2():
-
+    
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
+        return 'skip'
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
@@ -155,7 +160,9 @@ def virtualmem_2():
 # Test virtual mem auto with a raw driver
 
 def virtualmem_3():
-
+    
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
+        return 'skip'
     try:
         from osgeo import gdalnumeric
     except:
@@ -203,7 +210,9 @@ def virtualmem_3():
 # Test virtual mem auto with GTiff
 
 def virtualmem_4():
-
+    
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
+        return 'skip'
     try:
         from osgeo import gdalnumeric
     except:

@@ -39,6 +39,7 @@
 #include "minidriver_tiled_wms.h"
 #include "minidriver_virtualearth.h"
 #include "minidriver_arcgis_server.h"
+#include "minidriver_iip.h"
 
 /************************************************************************/
 /*              GDALWMSDatasetGetConfigFromURL()                        */
@@ -48,7 +49,7 @@ static
 CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 {
     const char* pszBaseURL = poOpenInfo->pszFilename;
-    if (EQUALN(pszBaseURL, "WMS:", 4))
+    if (STARTS_WITH_CI(pszBaseURL, "WMS:"))
         pszBaseURL += 4;
 
     CPLString osLayer = CPLURLGetValue(pszBaseURL, "LAYERS");
@@ -286,8 +287,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
         osURL = pszURL;
         /* Special hack for http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/ */
         if (strlen(pszURL) > 10 &&
-            strncmp(pszURL, "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/",
-                            strlen("http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/")) == 0 &&
+            STARTS_WITH(pszURL, "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/") &&
             strcmp(pszURL + strlen(pszURL) - strlen("1.0.0/"), "1.0.0/") == 0)
         {
             osURL.resize(strlen(pszURL) - strlen("1.0.0/"));
@@ -585,6 +585,15 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
         dfMaxX = 180;
     }
 
+    const int nLevelCountOri = nLevelCount;
+    while( (double)nTileCountX * nTileWidth * (1 << nLevelCount) > INT_MAX )
+        nLevelCount --;
+    while( (double)nTileHeight * (1 << nLevelCount) > INT_MAX )
+        nLevelCount --;
+    if( nLevelCount != nLevelCountOri )
+        CPLDebug("WMS", "Had to limit level count to %d instead of %d to stay within GDAL raster size limits",
+                 nLevelCount, nLevelCountOri);
+
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
             "  <Service name=\"TMS\">\n"
@@ -624,17 +633,17 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
     const char* pszFilename = poOpenInfo->pszFilename;
     const char* pabyHeader = (const char *) poOpenInfo->pabyHeader;
     if (poOpenInfo->nHeaderBytes == 0 &&
-         EQUALN(pszFilename, "<GDAL_WMS>", 10))
+         STARTS_WITH_CI(pszFilename, "<GDAL_WMS>"))
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes >= 10 &&
-             EQUALN(pabyHeader, "<GDAL_WMS>", 10))
+             STARTS_WITH_CI(pabyHeader, "<GDAL_WMS>"))
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-             (EQUALN(pszFilename, "WMS:", 4) ||
+             (STARTS_WITH_CI(pszFilename, "WMS:") ||
              CPLString(pszFilename).ifind("SERVICE=WMS") != std::string::npos) )
     {
         return TRUE;
@@ -668,13 +677,18 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-             EQUALN(pszFilename, "http", 4) &&
+             STARTS_WITH_CI(pszFilename, "http") &&
              strstr(pszFilename, "/MapServer?f=json") != NULL)
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-              EQUALN(pszFilename, "AGS:", 4))
+              STARTS_WITH_CI(pszFilename, "AGS:"))
+    {
+        return TRUE;
+    }
+    else if (poOpenInfo->nHeaderBytes == 0 &&
+              STARTS_WITH_CI(pszFilename, "IIP:"))
     {
         return TRUE;
     }
@@ -695,21 +709,21 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     const char* pabyHeader = (const char *) poOpenInfo->pabyHeader;
 
     if (poOpenInfo->nHeaderBytes == 0 &&
-        EQUALN(pszFilename, "<GDAL_WMS>", 10))
+        STARTS_WITH_CI(pszFilename, "<GDAL_WMS>"))
     {
         config = CPLParseXMLString(pszFilename);
     }
     else if (poOpenInfo->nHeaderBytes >= 10 &&
-             EQUALN(pabyHeader, "<GDAL_WMS>", 10))
+             STARTS_WITH_CI(pabyHeader, "<GDAL_WMS>"))
     {
         config = CPLParseXMLFile(pszFilename);
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-             (EQUALN(pszFilename, "WMS:http", 8) ||
-              EQUALN(pszFilename, "http", 4)) &&
+             (STARTS_WITH_CI(pszFilename, "WMS:http") ||
+              STARTS_WITH_CI(pszFilename, "http")) &&
              strstr(pszFilename, "/MapServer?f=json") != NULL)
     {
-        if (EQUALN(pszFilename, "WMS:http", 8))
+        if (STARTS_WITH_CI(pszFilename, "WMS:http"))
             pszFilename += 4;
         CPLString osURL(pszFilename);
         if (strstr(pszFilename, "&pretty=true") == NULL)
@@ -728,7 +742,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     else if (poOpenInfo->nHeaderBytes == 0 &&
-             (EQUALN(pszFilename, "WMS:", 4) ||
+             (STARTS_WITH_CI(pszFilename, "WMS:") ||
               CPLString(pszFilename).ifind("SERVICE=WMS") != std::string::npos))
     {
         CPLString osLayers = CPLURLGetValue(pszFilename, "LAYERS");
@@ -806,9 +820,53 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         return poRet;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
-              EQUALN(pszFilename, "AGS:", 4))
+              STARTS_WITH_CI(pszFilename, "AGS:"))
     {
 		return NULL;
+    }
+    else if (poOpenInfo->nHeaderBytes == 0 &&
+              STARTS_WITH_CI(pszFilename, "IIP:"))
+    {
+        CPLString osURL(pszFilename + 4);
+        osURL += "&obj=Basic-Info";
+        CPLHTTPResult *psResult = CPLHTTPFetch(osURL.c_str(), NULL);
+        if (psResult == NULL)
+            return NULL;
+        if (psResult->pabyData == NULL)
+        {
+            CPLHTTPDestroyResult(psResult);
+            return NULL;
+        }
+        int nXSize, nYSize;
+        const char* pszMaxSize = strstr((const char*)psResult->pabyData, "Max-size:");
+        const char* pszResolutionNumber = strstr((const char*)psResult->pabyData, "Resolution-number:");
+        if( pszMaxSize &&
+            sscanf(pszMaxSize + strlen("Max-size:"), "%d %d", &nXSize, &nYSize) == 2 &&
+            pszResolutionNumber )
+        {
+            int nResolutions = atoi(pszResolutionNumber + strlen("Resolution-number:"));
+            char* pszEscapedURL = CPLEscapeString(pszFilename + 4, -1, CPLES_XML);
+            CPLString osXML = CPLSPrintf(
+            "<GDAL_WMS>"
+            "    <Service name=\"IIP\">"
+            "        <ServerUrl>%s</ServerUrl>"
+            "    </Service>"
+            "    <DataWindow>"
+            "        <SizeX>%d</SizeX>"
+            "        <SizeY>%d</SizeY>"
+            "        <TileLevel>%d</TileLevel>"
+            "    </DataWindow>"
+            "    <BlockSizeX>256</BlockSizeX>"
+            "    <BlockSizeY>256</BlockSizeY>"
+            "    <BandsCount>3</BandsCount>"
+            "    <Cache />"
+            "</GDAL_WMS>",
+                pszEscapedURL,
+                nXSize, nYSize, nResolutions - 1);
+            config = CPLParseXMLString(osXML);
+            CPLFree(pszEscapedURL);
+        }
+        CPLHTTPDestroyResult(psResult);
     }
     else
         return NULL;
@@ -925,5 +983,6 @@ void GDALRegister_WMS() {
         mdm->Register(new GDALWMSMiniDriverFactory_TiledWMS());
         mdm->Register(new GDALWMSMiniDriverFactory_VirtualEarth());
         mdm->Register(new GDALWMSMiniDriverFactory_AGS());
+        mdm->Register(new GDALWMSMiniDriverFactory_IIP());
     }
 }

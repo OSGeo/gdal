@@ -159,7 +159,7 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine, OGRLine
                      "Circle (fid=" CPL_FRMT_GIB ") defined by invalid number of vertices (%d)",
                      poLine->GetFID(), oOGRLine->getNumPoints());
         }
-        else if (strlen(ftype) > 2 && EQUALN(ftype, "15", 2) && npoints != 1) {
+        else if (strlen(ftype) > 2 && STARTS_WITH_CI(ftype, "15") && npoints != 1) {
             bValid = FALSE;
             CPLError(CE_Warning, CPLE_AppDefined, 
                      "Circle (fid=" CPL_FRMT_GIB ") defined by invalid number of vertices (%d)",

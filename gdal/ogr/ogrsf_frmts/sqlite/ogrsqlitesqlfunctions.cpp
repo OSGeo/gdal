@@ -458,6 +458,8 @@ static OGRGeometry* OGR2SQLITE_GetGeom(CPL_UNUSED sqlite3_context* pContext,
     if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
                         pabySLBLOB, nBLOBLen, &poGeom, pnSRSId) != OGRERR_NONE )
     {
+        if( poGeom != NULL )
+            delete poGeom;
         return NULL;
     }
 

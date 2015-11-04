@@ -75,8 +75,9 @@ void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrVal
 /*                          OGRMSSQLSpatialTableLayer()                 */
 /************************************************************************/
 
-OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource *poDSIn )
-
+OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource *poDSIn ) :
+    bLaunderColumnNames(FALSE),
+    bPreservePrecision(FALSE)
 {
     poDS = poDSIn;
 
@@ -89,7 +90,7 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
     nSRSId = -1;
 
     poFeatureDefn = NULL;
-    
+
     pszTableName = NULL;
     pszLayerName = NULL;
     pszSchemaName = NULL;
@@ -113,7 +114,7 @@ OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
         DropSpatialIndex();
         CreateSpatialIndex();
     }
-    
+
     CPLFree( pszTableName );
     CPLFree( pszLayerName );
     CPLFree( pszSchemaName );
@@ -1419,7 +1420,7 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
     // Check if date is NULL: 0000-00-00
     if( nOGRFieldType == OFTDate )
     {
-        if( EQUALN( pszStrValue, "0000", 4 ) )
+        if( STARTS_WITH_CI(pszStrValue, "0000") )
         {
             pszStrValue = "null";
             bIsDateNull = TRUE;

@@ -148,10 +148,6 @@ Note: all the following are build options, not required.
 
 * copyright somewhat unclear, not actually part of software. 
 
-=== gdal/dist_docs ===
-
-* All written by me, not used any more.  
-
 === gdal/doc ===
 
 * no copyright messages in .dox files.
@@ -170,10 +166,6 @@ Note: all the following are build options, not required.
 * gdal_vrtmerge.py: Under LGPL (derived from gdal_merge.py), several contributors.
 * histrep.py: corrected copyright message (Atlantis to FrankW), change license to MIT/X.
 * various contributors, all under proper and compatible copyright headers.
-
-=== gdal/wince ===
-
-* all written by Mateusz Loskot.
 
 === gdal/vb6 ===
 

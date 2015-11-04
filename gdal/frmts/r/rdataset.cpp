@@ -149,11 +149,12 @@ CPLErr RRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                              RDataset()                              */
 /************************************************************************/
 
-RDataset::RDataset()
-{
-    fp = NULL;
-    padfMatrixValues = NULL;
-}
+RDataset::RDataset() :
+    fp(NULL),
+    bASCII(FALSE),
+    nStartOfData(0),
+    padfMatrixValues(NULL)
+{ }
 
 /************************************************************************/
 /*                             ~RDataset()                              */
@@ -163,7 +164,7 @@ RDataset::~RDataset()
 {
     FlushCache();
     CPLFree(padfMatrixValues);
-    
+
     if( fp )
         VSIFCloseL( fp );
 }
@@ -341,8 +342,8 @@ int RDataset::Identify( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Is this an ASCII or XDR binary R file?                          */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"RDA2\nA\n",7) 
-        && !EQUALN((const char *)poOpenInfo->pabyHeader,"RDX2\nX\n",7) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDA2\nA\n") 
+        && !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDX2\nX\n") )
         return FALSE;
 
     return TRUE;
@@ -391,7 +392,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    poDS->bASCII = EQUALN((const char *)poOpenInfo->pabyHeader,"RDA2\nA\n",7);
+    poDS->bASCII = STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDA2\nA\n");
 
 /* -------------------------------------------------------------------- */
 /*      Confirm this is a version 2 file.                               */

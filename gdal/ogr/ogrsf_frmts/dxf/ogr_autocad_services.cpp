@@ -33,10 +33,6 @@
 
 CPL_CVSID("$Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif 
-
 /************************************************************************/
 /*                           ACTextUnescape()                           */
 /*                                                                      */
@@ -49,7 +45,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
 {
     CPLString osResult;
     CPLString osInput = pszRawInput;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Translate text from Win-1252 to UTF8.  We approximate this      */
 /*      by treating Win-1252 as Latin-1.  Note that we likely ought     */
@@ -118,20 +114,20 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
             osResult += '\\';
             pszInput++;
         }
-        else if( EQUALN(pszInput,"%%c",3) 
-                 || EQUALN(pszInput,"%%d",3)
-                 || EQUALN(pszInput,"%%p",3) )
+        else if( STARTS_WITH_CI(pszInput, "%%c") 
+                 || STARTS_WITH_CI(pszInput, "%%d")
+                 || STARTS_WITH_CI(pszInput, "%%p") )
         {
             wchar_t anWCharString[2];
 
             anWCharString[1] = 0;
 
             // These are especial symbol representations for autocad.
-            if( EQUALN(pszInput,"%%c",3) )
+            if( STARTS_WITH_CI(pszInput, "%%c") )
                 anWCharString[0] = 0x2300; // diameter (0x00F8 is a good approx)
-            else if( EQUALN(pszInput,"%%d",3) )
+            else if( STARTS_WITH_CI(pszInput, "%%d") )
                 anWCharString[0] = 0x00B0; // degree
-            else if( EQUALN(pszInput,"%%p",3) )
+            else if( STARTS_WITH_CI(pszInput, "%%p") )
                 anWCharString[0] = 0x00B1; // plus/minus
 
             char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,
@@ -516,4 +512,3 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
 
     poFeature->SetStyleString( osNewStyle );
 }
-

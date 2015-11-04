@@ -35,11 +35,6 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 
-#if defined(WIN32CE)
-#  include "cpl_wince.h"
-#  include <wce_stdlib.h>
-#endif
- 
 #define TIMESTAMP_DEBUG
 //#define MEMORY_DEBUG
 
@@ -347,7 +342,7 @@ static int CPLGetProcessMemorySize()
     char szLine[128];
     while (fgets(szLine, sizeof(szLine), fp) != NULL)
     {
-        if (strncmp(szLine, "VmSize:", 7) == 0)
+        if (STARTS_WITH(szLine, "VmSize:"))
         {
             const char* pszPtr = szLine;
             while( !(*pszPtr == '\0' || (*pszPtr >= '0' && *pszPtr <= '9')) )
@@ -624,7 +619,6 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                              const char * pszErrorMsg )
 
 {
-    static int       bLogInit = FALSE;
     static FILE *    fpLog = stderr;
     static int       nCount = 0;
     static int       nMaxErrors = -1;
@@ -633,7 +627,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
     {
         if( nMaxErrors == -1 )
         {
-            nMaxErrors = 
+            nMaxErrors =
                 atoi(CPLGetConfigOption( "CPL_MAX_ERROR_REPORTS", "1000" ));
         }
 
@@ -642,9 +636,10 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
             return;
     }
 
+    static bool bLogInit = false;
     if( !bLogInit )
     {
-        bLogInit = TRUE;
+        bLogInit = true;
 
         fpLog = stderr;
         if( CPLGetConfigOption( "CPL_LOG", NULL ) != NULL )
@@ -698,16 +693,16 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                              const char * pszErrorMsg )
 
 {
-    static int       bLogInit = FALSE;
+    static bool      bLogInit = false;
     static FILE *    fpLog = stderr;
 
     if( !bLogInit )
     {
+        bLogInit = true;
+
         const char *cpl_log = NULL;
 
         CPLSetConfigOption( "CPL_TIMESTAMP", "ON" );
-
-        bLogInit = TRUE;
 
         cpl_log = CPLGetConfigOption("CPL_LOG", NULL );
 
@@ -718,13 +713,12 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
         }
         else if( cpl_log != NULL )
         {
-            char*     pszPath;
-            int       i = 0;
 
-            pszPath = (char*)CPLMalloc(strlen(cpl_log) + 20);
+            char* pszPath = (char*)CPLMalloc(strlen(cpl_log) + 20);
             strcpy(pszPath, cpl_log);
 
-            while( (fpLog = fopen( pszPath, "rt" )) != NULL ) 
+            int i = 0;
+            while( (fpLog = fopen( pszPath, "rt" )) != NULL )
             {
                 fclose( fpLog );
 
@@ -800,7 +794,7 @@ CPLErrorHandler CPL_STDCALL
 CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew, 
                       void* pUserData )
 {
-    CPLErrorHandler     pfnOldHandler = pfnErrorHandler;
+    CPLErrorHandler     pfnOldHandler;
     CPLErrorContext *psCtx = CPLGetErrorContext();
 
     if( psCtx->psHandlerStack != NULL )
@@ -983,6 +977,7 @@ void CPL_STDCALL _CPLAssert( const char * pszExpression, const char * pszFile,
               "Assertion `%s' failed\n"
               "in file `%s', line %d\n",
               pszExpression, pszFile, iLine );
+    abort(); /* just to please compiler so it is aware the function does not return */
 }
 
 

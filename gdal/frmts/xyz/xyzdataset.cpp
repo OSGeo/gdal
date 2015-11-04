@@ -485,7 +485,7 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
     /*  if the /vsigzip/ has not been explicitly passed */
     if (strlen(poOpenInfo->pszFilename) > 6 &&
         EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "xyz.gz") &&
-        !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         osFilename = "/vsigzip/";
         osFilename += poOpenInfo->pszFilename;
@@ -617,7 +617,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     /*  if the /vsigzip/ has not been explicitly passed */
     if (strlen(poOpenInfo->pszFilename) > 6 &&
         EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "xyz.gz") &&
-        !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         osFilename = "/vsigzip/";
         osFilename += poOpenInfo->pszFilename;
@@ -632,7 +632,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* For better performance of CPLReadLine2L() we create a buffered reader */
     /* (except for /vsigzip/ since it has one internally) */
-    if (!EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
+    if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
         fp = (VSILFILE*) VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
     
     const char* pszLine;
@@ -669,15 +669,15 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         for(i=0;i<nTokens;i++)
         {
             if (EQUAL(papszTokens[i], "x") ||
-                EQUALN(papszTokens[i], "lon", 3) ||
-                EQUALN(papszTokens[i], "east", 4))
+                STARTS_WITH_CI(papszTokens[i], "lon") ||
+                STARTS_WITH_CI(papszTokens[i], "east"))
                 nXIndex = i;
             else if (EQUAL(papszTokens[i], "y") ||
-                     EQUALN(papszTokens[i], "lat", 3) ||
-                     EQUALN(papszTokens[i], "north", 5))
+                     STARTS_WITH_CI(papszTokens[i], "lat") ||
+                     STARTS_WITH_CI(papszTokens[i], "north"))
                 nYIndex = i;
             else if (EQUAL(papszTokens[i], "z") ||
-                     EQUALN(papszTokens[i], "alt", 3) ||
+                     STARTS_WITH_CI(papszTokens[i], "alt") ||
                      EQUAL(papszTokens[i], "height"))
                 nZIndex = i;
         }
@@ -1119,9 +1119,9 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
             char szBuf[256];
             double dfX = adfGeoTransform[0] + (i + 0.5) * adfGeoTransform[1];
             if (eReqDT == GDT_Int32)
-                CPLsprintf(szBuf, "%.18g%c%.18g%c%d\n", dfX, pszColSep[0], dfY, pszColSep[0], ((int*)pLineBuffer)[i]);
+                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%d\n", dfX, pszColSep[0], dfY, pszColSep[0], ((int*)pLineBuffer)[i]);
             else
-                CPLsprintf(szBuf, "%.18g%c%.18g%c%.18g\n", dfX, pszColSep[0], dfY, pszColSep[0], ((float*)pLineBuffer)[i]);
+                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%.18g\n", dfX, pszColSep[0], dfY, pszColSep[0], ((float*)pLineBuffer)[i]);
             osBuf += szBuf;
             if( (i & 1023) == 0 || i == nXSize - 1 )
             {

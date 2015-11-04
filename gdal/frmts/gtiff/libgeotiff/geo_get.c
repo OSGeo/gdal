@@ -37,12 +37,12 @@ void GTIFDirectoryInfo(GTIF *gtif, int version[3], int *keycount)
 
 int GTIFKeyInfo(GTIF *gtif, geokey_t key, int *size, tagtype_t* type)
 {
-        int index = gtif->gt_keyindex[ key ];
+        int nIndex = gtif->gt_keyindex[ key ];
         GeoKey *keyptr;
 
-        if (!index) return 0;
+        if (!nIndex) return 0;
 
-        keyptr = gtif->gt_keys + index;
+        keyptr = gtif->gt_keys + nIndex;
         if (size) *size = (int) keyptr->gk_size;
         if (type) *type = keyptr->gk_type;
 
@@ -147,7 +147,7 @@ ValuePair(  VerticalUnitsGeoKey,	4099)  -- Section 6.3.1 (.x) codes   --
 </pre>
 */
 
-int GTIFKeyGet(GTIF *gtif, geokey_t thekey, void *val, int index, int count)
+int GTIFKeyGet(GTIF *gtif, geokey_t thekey, void *val, int nIndex, int count)
 {
         int kindex = gtif->gt_keyindex[ thekey ];
         GeoKey *key;
@@ -158,7 +158,7 @@ int GTIFKeyGet(GTIF *gtif, geokey_t thekey, void *val, int index, int count)
         if (!kindex) return 0;
 
         key = gtif->gt_keys+kindex;
-        if (!count) count = key->gk_count - index;
+        if (!count) count = key->gk_count - nIndex;
         if (count <=0) return 0;
         if (count > key->gk_count) count = key->gk_count;
         size = key->gk_size;
@@ -167,7 +167,7 @@ int GTIFKeyGet(GTIF *gtif, geokey_t thekey, void *val, int index, int count)
         if (count==1 && type==TYPE_SHORT) data = (char *)&key->gk_data;
         else data = key->gk_data;
 
-        _GTIFmemcpy( val, data + index*size, count*size );
+        _GTIFmemcpy( val, data + nIndex*size, count*size );
 
         if (type==TYPE_ASCII)
            ((char *)val)[count-1] = '\0'; /* replace last char with NULL */

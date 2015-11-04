@@ -32,10 +32,6 @@
 
 CPL_CVSID("$Id: ntfstroke.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif 
-
 /************************************************************************/
 /*                   OGROCIArcCenterFromEdgePoints()                    */
 /*                                                                      */
@@ -150,7 +146,7 @@ OGROCIStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
     {
         double      dfAngle;
 
-        dfAngle = (dfStartAngle + iPoint * dfSlice) * PI / 180.0;
+        dfAngle = (dfStartAngle + iPoint * dfSlice) * M_PI / 180.0;
 
         dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
         dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
@@ -214,15 +210,15 @@ OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
         dfDeltaX = dfStartX - dfCenterX;
         dfDeltaY = dfStartY - dfCenterY;
-        dfStartAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+        dfStartAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
 
         dfDeltaX = dfAlongX - dfCenterX;
         dfDeltaY = dfAlongY - dfCenterY;
-        dfAlongAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+        dfAlongAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
 
         dfDeltaX = dfEndX - dfCenterX;
         dfDeltaY = dfEndY - dfCenterY;
-        dfEndAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+        dfEndAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
 
         // Try positive (clockwise?) winding.
         while( dfAlongAngle < dfStartAngle )
@@ -268,4 +264,3 @@ OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
     return bResult;
 }
-

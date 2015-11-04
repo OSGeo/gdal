@@ -56,35 +56,45 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
                           GPXGeometryType gpxGeomType,
                           OGRGPXDataSource* poDS,
                           int bWriteMode) :
-    nFeatures(0),
     eof(FALSE),
     nNextFID(0),
-    pszElementToScan(pszLayerName),
 #ifdef HAVE_EXPAT
     oSchemaParser(NULL),
 #endif
     inInterestingElement(0),
     hasFoundLat(FALSE),
     hasFoundLon(FALSE),
+#ifdef HAVE_EXPAT
     latVal(0.0),
     lonVal(0.0),
     iCurrentField(0),
+#endif
     multiLineString(NULL),
     lineString(NULL),
     depthLevel(0),
     interestingDepthLevel(0),
+#ifdef HAVE_EXPAT
     currentFieldDefn(NULL),
     inExtensions(FALSE),
+    extensionsDepthLevel(0),
     inLink(FALSE),
     iCountLink(0),
+#endif
     trkFID(0),
     trkSegId(0),
     trkSegPtId(0),
     rteFID(0),
+    rtePtId(0)
+#ifdef HAVE_EXPAT
+    ,
+    bStopParsing(FALSE),
     nWithoutEventCounter(0),
     nDataHandlerCounter(0)
+#endif
 {
+#ifdef HAVE_EXPAT
     const char* gpxVersion = poDS->GetVersion();
+#endif
 
     this->poDS = poDS;
     this->bWriteMode = bWriteMode;
@@ -103,7 +113,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-    
+
     if (gpxGeomType == GPX_TRACK_POINT)
     {
         /* Don't move this code. This fields must be number 0, 1 and 2 */
@@ -154,6 +164,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         OGRFieldDefn oFieldTime("time", OFTDateTime );
         poFeatureDefn->AddFieldDefn( &oFieldTime );
         
+#ifdef HAVE_EXPAT
         if (gpxGeomType == GPX_TRACK_POINT &&
             gpxVersion && strcmp(gpxVersion, "1.0") == 0)
         {
@@ -163,7 +174,8 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
             OGRFieldDefn oFieldSpeed("speed", OFTReal );
             poFeatureDefn->AddFieldDefn( &oFieldSpeed );
         }
-        
+#endif
+
         OGRFieldDefn oFieldMagVar("magvar", OFTReal );
         poFeatureDefn->AddFieldDefn( &oFieldMagVar );
     
@@ -183,7 +195,8 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         
         OGRFieldDefn oFieldSrc("src", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldSrc );
-        
+
+#ifdef HAVE_EXPAT
         if (gpxVersion && strcmp(gpxVersion, "1.0") == 0)
         {
             OGRFieldDefn oFieldUrl("url", OFTString );
@@ -193,6 +206,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
             poFeatureDefn->AddFieldDefn( &oFieldUrlName );
         }
         else
+#endif
         {
             for(int i=1;i<=nMaxLinks;i++)
             {
@@ -291,7 +305,6 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     pszSubElementName = NULL;
     pszSubElementValue = NULL;
     nSubElementValueLen = 0;
-    bStopParsing = FALSE;
 
     poSRS = new OGRSpatialReference("GEOGCS[\"WGS 84\", "
         "   DATUM[\"WGS_1984\","
@@ -1034,10 +1047,11 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     if (fpGPX == NULL)
         return NULL;
 
+#ifdef HAVE_EXPAT
+
     if (bStopParsing)
         return NULL;
 
-#ifdef HAVE_EXPAT
     if (nFeatureTabIndex < nFeatureTabLength)
     {
         return ppoFeatureTab[nFeatureTabIndex++];
@@ -1209,7 +1223,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature, int nIdentLevel
                 poDS->PrintLine("<time>%s</time>", pszDate);
                 CPLFree(pszDate);
             }
-            else if (strncmp(pszName, "link", 4) == 0)
+            else if (STARTS_WITH(pszName, "link"))
             {
                 if (strstr(pszName, "href"))
                 {
@@ -1282,8 +1296,8 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature, int nIdentLevel
                     }
 
                     /* Try to detect XML escaped content */
-                    else if (strncmp(pszRaw, "&lt;", 4) == 0 &&
-                            strncmp(pszRaw + strlen(pszRaw) - 4, "&gt;", 4) == 0)
+                    else if (STARTS_WITH(pszRaw, "&lt;") &&
+                            STARTS_WITH(pszRaw + strlen(pszRaw) - 4, "&gt;"))
                     {
                         char* pszUnescapedContent = CPLUnescapeString( pszRaw, NULL, CPLES_XML );
 

@@ -64,7 +64,7 @@ OGRCouchDBDataSource::~OGRCouchDBDataSource()
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("CouchDB:%p", this));
-        CPLHTTPFetch( osURL, papszOptions);
+        CPLHTTPDestroyResult( CPLHTTPFetch( osURL, papszOptions ) );
         CSLDestroy(papszOptions);
     }
 
@@ -207,10 +207,10 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
     int bHTTP = FALSE;
-    if (strncmp(pszFilename, "http://", 7) == 0 ||
-        strncmp(pszFilename, "https://", 8) == 0)
+    if (STARTS_WITH(pszFilename, "http://") ||
+        STARTS_WITH(pszFilename, "https://"))
         bHTTP = TRUE;
-    else if (!EQUALN(pszFilename, "CouchDB:", 8))
+    else if (!STARTS_WITH_CI(pszFilename, "CouchDB:"))
         return FALSE;
 
     bReadWrite = bUpdateIn;
@@ -255,7 +255,7 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     if (poAnswerObj == NULL)
     {
-        if (!EQUALN(pszFilename, "CouchDB:", 8))
+        if (!STARTS_WITH_CI(pszFilename, "CouchDB:"))
             CPLErrorReset();
         return FALSE;
     }
@@ -416,7 +416,7 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
     {
         osValidation = "{\"validate_doc_update\": \"function(new_doc, old_doc, userCtx) {if (userCtx.roles.indexOf('_admin') === -1) { throw({forbidden: \\\"No changes allowed except by admin.\\\"}); } }\" }";
     }
-    else if (strncmp(pszUpdatePermissions, "function(", 9) == 0)
+    else if (STARTS_WITH(pszUpdatePermissions, "function("))
     {
         osValidation = "{\"validate_doc_update\": \"";
         osValidation += pszUpdatePermissions;
@@ -559,7 +559,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 
@@ -573,7 +573,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case 'COMPACT ON ' command.                             */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"COMPACT ON ",11) )
+    if( STARTS_WITH_CI(pszSQLCommand, "COMPACT ON ") )
     {
         const char *pszLayerName = pszSQLCommand + 11;
 
@@ -594,7 +594,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case 'VIEW CLEANUP ON ' command.                        */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"VIEW CLEANUP ON ",16) )
+    if( STARTS_WITH_CI(pszSQLCommand, "VIEW CLEANUP ON ") )
     {
         const char *pszLayerName = pszSQLCommand + 16;
 
@@ -615,7 +615,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Deal with "DELETE FROM layer_name WHERE expression" statement   */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand, "DELETE FROM ", 12) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELETE FROM ") )
     {
         const char* pszIter = pszSQLCommand + 12;
         while(*pszIter && *pszIter != ' ')
@@ -641,7 +641,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         while(*pszIter && *pszIter == ' ')
             pszIter ++;
-        if (!EQUALN(pszIter, "WHERE ", 5))
+        if (!STARTS_WITH_CI(pszIter, "WHERE "))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "WHERE clause missing");
             return NULL;
@@ -683,7 +683,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Try an optimized implementation when doing only stats           */
 /* -------------------------------------------------------------------- */
-    if (poSpatialFilter == NULL && EQUALN(pszSQLCommand, "SELECT", 6))
+    if (poSpatialFilter == NULL && STARTS_WITH_CI(pszSQLCommand, "SELECT"))
     {
         OGRLayer* poRet = ExecuteSQLStats(pszSQLCommand);
         if (poRet)
@@ -1114,7 +1114,7 @@ json_object* OGRCouchDBDataSource::REQUEST(const char* pszVerb,
         return NULL;
 
     const char* pszServer = CSLFetchNameValue(psResult->papszHeaders, "Server");
-    if (pszServer == NULL || !EQUALN(pszServer, "CouchDB", 7))
+    if (pszServer == NULL || !STARTS_WITH_CI(pszServer, "CouchDB"))
     {
         CPLHTTPDestroyResult(psResult);
         return NULL;

@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 from osgeo import gdal
 import array
@@ -231,6 +232,11 @@ def ehdr_12():
 # Test statistics
 
 def ehdr_13():
+    
+    try:
+        os.unlink('data/byte.tif.aux.xml')
+    except:
+        pass
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/byte.bil', src_ds)

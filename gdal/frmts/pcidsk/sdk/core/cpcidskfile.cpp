@@ -262,11 +262,11 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int segment )
         break;
 
       case SEG_SYS:
-        if( strncmp(segment_pointer + 4, "SysBMDir",8) == 0 )
+        if( STARTS_WITH(segment_pointer + 4, "SysBMDir") )
             segobj = new SysBlockMap( this, segment, segment_pointer );
-        else if( strncmp(segment_pointer + 4, "METADATA",8) == 0 )
+        else if( STARTS_WITH(segment_pointer + 4, "METADATA") )
             segobj = new MetadataSegment( this, segment, segment_pointer );
-        else if (strncmp(segment_pointer + 4, "Link    ", 8) == 0)
+        else if (STARTS_WITH(segment_pointer + 4, "Link    ") )
             segobj = new CLinkSegment(this, segment, segment_pointer);
         else
             segobj = new CPCIDSKSegment( this, segment, segment_pointer );
@@ -286,35 +286,35 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int segment )
         break;
 
       case SEG_BIN:
-        if (!strncmp(segment_pointer + 4, "RFMODEL ", 8))
+        if (STARTS_WITH(segment_pointer + 4, "RFMODEL "))
         {
             segobj = new CPCIDSKRPCModelSegment( this, segment, segment_pointer );
         }
-        else if (!strncmp(segment_pointer + 4, "APMODEL ", 8)) 
+        else if (STARTS_WITH(segment_pointer + 4, "APMODEL ")) 
         {
             segobj = new CPCIDSKAPModelSegment(this, segment, segment_pointer);
         }
-        else if (!strncmp(segment_pointer + 4, "ADSMODEL", 8)) 
+        else if (STARTS_WITH(segment_pointer + 4, "ADSMODEL")) 
         {
             segobj = new CPCIDSKADS40ModelSegment(this, segment, segment_pointer);
         }
-        else if (!strncmp(segment_pointer + 4, "POLYMDL ", 8)) 
+        else if (STARTS_WITH(segment_pointer + 4, "POLYMDL ")) 
         {
             segobj = new CPCIDSKBinarySegment(this, segment, segment_pointer);
         }
-        else if (!strncmp(segment_pointer + 4, "TPSMODEL", 8)) 
+        else if (STARTS_WITH(segment_pointer + 4, "TPSMODEL")) 
         {
             segobj = new CPCIDSKGCP2Segment(this, segment, segment_pointer);
         }
-        else if (!strncmp(segment_pointer + 4, "MODEL   ", 8)) 
+        else if (STARTS_WITH(segment_pointer + 4, "MODEL   ")) 
         {
             segobj = new CPCIDSKToutinModelSegment(this, segment, segment_pointer);
         }
-        else if (!strncmp(segment_pointer + 4, "MMSPB   ", 8)) 
+        else if (STARTS_WITH(segment_pointer + 4, "MMSPB   ")) 
         {
             segobj = new CPCIDSKBinarySegment(this, segment, segment_pointer);
         }
-        else if (!strncmp(segment_pointer + 4, "MMADS   ", 8)) 
+        else if (STARTS_WITH(segment_pointer + 4, "MMADS   ")) 
         {
             segobj = new CPCIDSKBinarySegment(this, segment, segment_pointer);
         }
@@ -502,7 +502,7 @@ void CPCIDSKFile::InitializeFromHeader()
         // if we didn't get channel type in header, work out from counts (old).
         // Check this only if we don't have complex channels:
         
-        if (strncmp(pixel_type_string,"        ",8) == 0 ) 
+        if (STARTS_WITH(pixel_type_string,"        ")) 
         {
             assert( count_c32r == 0 && count_c16u == 0 && count_c16s == 0 );
             if( channelnum <= count_8u )
@@ -536,7 +536,7 @@ void CPCIDSKFile::InitializeFromHeader()
         }
 
         else if( interleaving == "FILE" 
-                 && strncmp(filename.c_str(),"/SIS=",5) == 0 )
+                 && STARTS_WITH(filename.c_str(),"/SIS=") )
         {
             channel = new CTiledChannel( ih, ih_offset, fh, 
                                          channelnum, this, pixel_type );
@@ -544,7 +544,7 @@ void CPCIDSKFile::InitializeFromHeader()
 
         else if( interleaving == "FILE" 
                  && filename != ""
-                 && strncmp(((const char*)ih.buffer)+250, "        ", 8 ) != 0 )
+                 && !STARTS_WITH(((const char*)ih.buffer)+250, "        ") )
         {
             channel = new CExternalChannel( ih, ih_offset, fh, filename,
                                             channelnum, this, pixel_type );
@@ -1232,7 +1232,7 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
     int         blocksize = 127;
     std::string compression = "NONE";
 
-    if( strncmp( layout.c_str(), "TILED", 5 ) == 0 )
+    if( STARTS_WITH( layout.c_str(), "TILED") )
     {
         ParseTileFormat( layout, blocksize, compression );
     }

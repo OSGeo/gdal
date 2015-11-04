@@ -33,10 +33,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifndef PI
-#  define PI 3.14159265358979323846
-#endif
-
 CPL_C_START
 void	GDALRegister_GXF(void);
 CPL_C_END
@@ -205,8 +201,8 @@ CPLErr GXFDataset::GetGeoTransform( double * padfTransform )
     if( eErr != CE_None )
         return eErr;
 
-    // Transform to radians. 
-    dfRotation = (dfRotation / 360.0) * 2 * PI;
+    // Transform to radians.
+    dfRotation = (dfRotation / 360.0) * 2 * M_PI;
 
     padfTransform[1] = dfXSize * cos(dfRotation);
     padfTransform[2] = dfYSize * sin(dfRotation);
@@ -256,11 +252,11 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
              || poOpenInfo->pabyHeader[i] == 13)
             && poOpenInfo->pabyHeader[i+1] == '#' )
         {
-            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "include", strlen("include")) == 0 )
+            if( STARTS_WITH((const char*)poOpenInfo->pabyHeader + i + 2, "include") )
                 return NULL;
-            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "define", strlen("define")) == 0 )
+            if( STARTS_WITH((const char*)poOpenInfo->pabyHeader + i + 2, "define") )
                 return NULL;
-            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "ifdef", strlen("ifdef")) == 0 )
+            if( STARTS_WITH((const char*)poOpenInfo->pabyHeader + i + 2, "ifdef") )
                 return NULL;
             bFoundKeyword = TRUE;
         }
@@ -294,7 +290,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( i = 0; i < nBytesRead - 5 && !bGotGrid; i++ )
     {
-        if( pszBigBuf[i] == '#' && EQUALN(pszBigBuf+i+1,"GRID",4) )
+        if( pszBigBuf[i] == '#' && STARTS_WITH_CI(pszBigBuf+i+1, "GRID") )
             bGotGrid = TRUE;
     }
 

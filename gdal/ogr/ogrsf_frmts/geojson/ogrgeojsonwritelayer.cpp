@@ -167,7 +167,7 @@ OGRErr OGRGeoJSONWriteLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
         {
             CPLDebug( "GeoJSON", "Field '%s' already present in schema",
                       poField->GetNameRef() );
-            
+
             // TODO - mloskot: Is this return code correct?
             return OGRERR_NONE;
         }

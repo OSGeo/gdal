@@ -37,6 +37,8 @@
 // Types declarations.
 
 typedef std::vector<GNMGFID> GNMVECTOR, *LPGNMVECTOR;
+typedef const std::vector<GNMGFID> GNMCONSTVECTOR;
+typedef const std::vector<GNMGFID>* LPGNMCONSTVECTOR;
 typedef std::pair<GNMGFID,GNMGFID> EDGEVERTEXPAIR;
 typedef std::vector< EDGEVERTEXPAIR > GNMPATH;
 
@@ -216,7 +218,7 @@ protected:
     virtual GNMPATH DijkstraShortestPath(GNMGFID nStartFID, GNMGFID nEndFID,
                                  const std::map<GNMGFID, GNMStdEdge> &mstEdges);
 
-    virtual const LPGNMVECTOR GetOutEdges(GNMGFID nFID) const;
+    virtual LPGNMCONSTVECTOR GetOutEdges(GNMGFID nFID) const;
     virtual GNMGFID GetOppositVertex(GNMGFID nEdgeFID, GNMGFID nVertexFID) const;
     virtual void TraceTargets(std::queue<GNMGFID> &vertexQueue, 
                                 std::set<GNMGFID> &markedVertIds, 

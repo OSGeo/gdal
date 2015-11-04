@@ -96,7 +96,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 /*                                                                      */
 /*      Where <Family> is one of: Line, Area, Point, and Text           */
 /* -------------------------------------------------------------------- */
-        if( !EQUALN(pszNewName,"gltp:",5) )
+        if( !STARTS_WITH_CI(pszNewName, "gltp:") )
             return FALSE;
 
         pszWorkingName = CPLStrdup( pszNewName );

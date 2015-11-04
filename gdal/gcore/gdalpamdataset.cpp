@@ -820,7 +820,7 @@ CPLErr GDALPamDataset::TrySaveXML()
         const char *pszNewPam;
         const char *pszBasename = GetDescription();
 
-        if( psPam && psPam->osPhysicalFilename.length() > 0 )
+        if( psPam->osPhysicalFilename.length() > 0 )
             pszBasename = psPam->osPhysicalFilename;
             
         if( PamGetProxy(pszBasename) == NULL 
@@ -832,7 +832,7 @@ CPLErr GDALPamDataset::TrySaveXML()
             eErr = TrySaveXML();
         }
         /* No way we can save into a /vsicurl resource */
-        else if( strncmp(psPam->pszPamFilename, "/vsicurl", strlen("/vsicurl")) != 0 )
+        else if( !STARTS_WITH(psPam->pszPamFilename, "/vsicurl") )
         {
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "Unable to save auxiliary information in %s.",
@@ -1293,7 +1293,7 @@ const char *GDALPamDataset::GetMetadataItem( const char *pszName,
             GDALDataset::GetMetadataItem( pszName, pszDomain );
 
         if( pszOverviewFile == NULL 
-            || !EQUALN(pszOverviewFile,":::BASE:::",10) )
+            || !STARTS_WITH_CI(pszOverviewFile, ":::BASE:::") )
             return pszOverviewFile;
         
         CPLString osPath;

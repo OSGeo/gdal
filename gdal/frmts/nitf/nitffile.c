@@ -101,7 +101,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
     VSIFSeekL( fp, 0, SEEK_SET );
     VSIFReadL( szTemp, 1, 9, fp );
 
-    if( !EQUALN(szTemp,"NITF",4) && !EQUALN(szTemp,"NSIF",4) )
+    if( !STARTS_WITH_CI(szTemp, "NITF") && !STARTS_WITH_CI(szTemp, "NSIF") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The file %s is not an NITF file.", 
@@ -126,7 +126,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
 /* -------------------------------------------------------------------- */
 /*      Get header length.                                              */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(szTemp,"NITF01.",7) || EQUALN(achFSDWNG,"999998",6) )
+    if( STARTS_WITH_CI(szTemp, "NITF01.") || STARTS_WITH_CI(achFSDWNG, "999998") )
         nHeaderLenOffset = 394;
     else
         nHeaderLenOffset = 354;
@@ -253,7 +253,7 @@ retry_read_header:
         GetMD( psFile, pachHeader, 240,  20, FSCAUT );
         GetMD( psFile, pachHeader, 260,  20, FSCTLN );
         GetMD( psFile, pachHeader, 280,   6, FSDWNG );
-        if( EQUALN(pachHeader+280,"999998",6) )
+        if( STARTS_WITH_CI(pachHeader+280, "999998") )
         {
             GetMD( psFile, pachHeader, 286,  40, FSDEVT );
             nCOff += 40;
@@ -1025,7 +1025,7 @@ int NITFCreate( const char *pszFilename,
             else if( iBand == 2 )
                 pszIREPBAND = "B";
         }
-        else if( EQUALN(pszIREP,"YCbCr",5) )
+        else if( STARTS_WITH_CI(pszIREP, "YCbCr") )
         {
             if( iBand == 0 )
                 pszIREPBAND = "Y";
@@ -1294,7 +1294,7 @@ static int NITFWriteTREsFromOptions(
         if( !EQUALN(papszOptions[iOption], pszTREPrefix, nTREPrefixLen) )
             continue;
 
-        if( EQUALN(papszOptions[iOption]+nTREPrefixLen,"BLOCKA=",7)
+        if( STARTS_WITH_CI(papszOptions[iOption]+nTREPrefixLen, "BLOCKA=")
             && bIgnoreBLOCKA )
             continue;
         
@@ -1468,7 +1468,7 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLen, int nOffset, const
     for( iSegment = 0; iSegment < nCount; iSegment++ )
     {
         NITFSegmentInfo *psInfo = psFile->pasSegmentInfo+psFile->nSegmentCount;
-        
+
         psInfo->nDLVL = -1;
         psInfo->nALVL = -1;
         psInfo->nLOC_R = -1;
@@ -1477,11 +1477,12 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLen, int nOffset, const
         psInfo->nCCS_C = -1;
 
         psInfo->hAccess = NULL;
-        strcpy( psInfo->szSegmentType, szType );
-        
-        psInfo->nSegmentHeaderSize = 
-            atoi(NITFGetField(szTemp, psFile->pachHeader, 
-                              nOffset + 3 + iSegment * (nHeaderLenSize+nDataLenSize), 
+        strncpy( psInfo->szSegmentType, szType, sizeof(psInfo->szSegmentType) );
+        psInfo->szSegmentType[sizeof(psInfo->szSegmentType)-1] = '\0';
+
+        psInfo->nSegmentHeaderSize =
+            atoi(NITFGetField(szTemp, psFile->pachHeader,
+                              nOffset + 3 + iSegment * (nHeaderLenSize+nDataLenSize),
                               nHeaderLenSize));
         if (strchr(szTemp, '-') != NULL) /* Avoid negative values being mapped to huge unsigned values */
         {
@@ -1556,7 +1557,7 @@ const char *NITFFindTRE( const char *pszTREData, int nTREBytes,
         if (nTREBytes - 11 < nThisTRESize)
         {
             NITFGetField(szTemp, pszTREData, 0, 6 );
-            if (EQUALN(szTemp, "RPFIMG",6))
+            if (STARTS_WITH_CI(szTemp, "RPFIMG"))
             {
                 /* See #3848 */
                 CPLDebug("NITF", "Adjusting RPFIMG TRE size from %d to %d, which is the remaining size", nThisTRESize, nTREBytes - 11);
@@ -1610,7 +1611,7 @@ const char *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
         if (nTREBytes - 11 < nThisTRESize)
         {
             NITFGetField(szTemp, pszTREData, 0, 6 );
-            if (EQUALN(szTemp, "RPFIMG",6))
+            if (STARTS_WITH_CI(szTemp, "RPFIMG"))
             {
                 /* See #3848 */
                 CPLDebug("NITF", "Adjusting RPFIMG TRE size from %d to %d, which is the remaining size", nThisTRESize, nTREBytes - 11);
@@ -1674,7 +1675,7 @@ void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
     if (szWork != pszWork)
         CPLFree(pszWork);
 }
-                          
+
 /************************************************************************/
 /*        NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude()         */
 /*                                                                      */
@@ -1685,7 +1686,7 @@ void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
 /*
  * "The angle L' is called "geocentric latitude" and is defined as the
  * angle between the equatorial plane and the radius from the geocenter.
- * 
+ *
  * The angle L is called "geodetic latitude" and is defined as the angle
  * between the equatorial plane and the normal to the surface of the
  * ellipsoid.  The word "latitude" usually means geodetic latitude.  This
@@ -1698,18 +1699,17 @@ double NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( double dfLat )
 
 {
     /* WGS84 Ellipsoid */
-    double a = 6378137.0;
-    double b = 6356752.3142;
-    double dfPI = 3.14159265358979323;
+    const double a = 6378137.0;
+    const double b = 6356752.3142;
 
     /* convert to radians */
-    dfLat = dfLat * dfPI / 180.0;
+    dfLat = dfLat * M_PI / 180.0;
 
     /* convert to geodetic */
     dfLat = atan( ((a*a)/(b*b)) * tan(dfLat) );
 
     /* convert back to degrees */
-    dfLat = dfLat * 180.0 / dfPI;
+    dfLat = dfLat * 180.0 / M_PI;
 
     return dfLat;
 }
@@ -1993,7 +1993,7 @@ int NITFCollectAttachments( NITFFile *psFile )
 
             // NITF 2.0. (also works for NITF 2.1)
             nSTYPEOffset = 200;
-            if( EQUALN(achSubheader+193,"999998",6) )
+            if( STARTS_WITH_CI(achSubheader+193, "999998") )
                 nSTYPEOffset += 40;
 
 /* -------------------------------------------------------------------- */
@@ -2178,7 +2178,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (*pnMDSize + 1 >= *pnMDAlloc)
                 {
                     *pnMDAlloc = (*pnMDAlloc * 4 / 3) + 32;
-                    papszMD = (char**)CPLRealloc(papszMD, *pnMDAlloc * sizeof(char**));
+                    papszMD = (char**)CPLRealloc(papszMD, *pnMDAlloc * sizeof(char*));
                 }
                 papszMD[*pnMDSize] = papszTmp[0];
                 papszMD[(*pnMDSize) + 1] = NULL;
@@ -2735,7 +2735,7 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
     psTreNode = NITFFindTREXMLDescFromName(psFile, pszTREName);
     if (psTreNode == NULL)
     {
-        if (!(EQUALN(pszTREName, "RPF", 3) || strcmp(pszTREName, "XXXXXX") == 0))
+        if (!(STARTS_WITH_CI(pszTREName, "RPF") || strcmp(pszTREName, "XXXXXX") == 0))
         {
             CPLDebug("NITF", "Cannot find definition of TRE %s in %s",
                     pszTREName, NITF_SPEC_FILE);

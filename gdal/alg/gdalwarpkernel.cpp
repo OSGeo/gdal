@@ -1231,14 +1231,27 @@ static void GWKOverlayDensity( GDALWarpKernel *poWK, int iDstOffset,
 }
 
 /************************************************************************/
-/*                          GWKRoundValueT()                           */
+/*                          GWKRoundValueT()                            */
 /************************************************************************/
 
-template<class T>
-static CPL_INLINE T GWKRoundValueT(double dfValue)
+template<class T, bool is_signed> struct sGWKRoundValueT
 {
-    return (std::numeric_limits<T>::min() < 0) ? (T)floor(dfValue + 0.5) :
-                                                 (T)(dfValue + 0.5);
+    static T eval(double);
+};
+
+template<class T> struct sGWKRoundValueT<T, true> /* signed */
+{
+    static T eval(double dfValue) { return (T)floor(dfValue + 0.5); }
+};
+
+template<class T> struct sGWKRoundValueT<T, false> /* unsigned */
+{
+    static T eval(double dfValue) { return (T)(dfValue + 0.5); }
+};
+
+template<class T> static T GWKRoundValueT(double dfValue)
+{
+    return sGWKRoundValueT<T, std::numeric_limits<T>::is_signed>::eval(dfValue);
 }
 
 template<> float GWKRoundValueT<float>(double dfValue)
@@ -2347,8 +2360,6 @@ static int GWKCubicResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
  * where sinc(x) = sin(PI * x) / (PI * x).
  */
 
-#define GWK_PI 3.14159265358979323846
-
 static double GWKLanczosSinc( double dfX )
 {
     /*if( fabs(dfX) > 3.0 )
@@ -2359,7 +2370,7 @@ static double GWKLanczosSinc( double dfX )
     if ( dfX == 0.0 )
         return 1.0;
 
-    const double dfPIX = GWK_PI * dfX;
+    const double dfPIX = M_PI * dfX;
     const double dfPIXoverR = dfPIX / 3;
     const double dfPIX2overR = dfPIX * dfPIXoverR;
     return sin(dfPIX) * sin(dfPIXoverR) / dfPIX2overR;
@@ -2373,7 +2384,7 @@ static double GWKLanczosSinc4Values( double* padfValues )
             padfValues[i] = 1.0;
         else
         {
-            const double dfPIX = GWK_PI * padfValues[i];
+            const double dfPIX = M_PI * padfValues[i];
             const double dfPIXoverR = dfPIX / 3;
             const double dfPIX2overR = dfPIX * dfPIXoverR;
             padfValues[i] = sin(dfPIX) * sin(dfPIXoverR) / dfPIX2overR;
@@ -2381,8 +2392,6 @@ static double GWKLanczosSinc4Values( double* padfValues )
     }
     return padfValues[0] + padfValues[1] + padfValues[2] + padfValues[3];
 }
-
-//#undef GWK_PI
 
 /************************************************************************/
 /*                           GWKBilinear()                              */
@@ -2906,20 +2915,20 @@ static int GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
             // Optimisation of GWKLanczosSinc(i - dfDeltaX) based on the following
             // trigonometric formulas.
 
-    //sin(GWK_PI * (dfBase + k)) = sin(GWK_PI * dfBase) * cos(GWK_PI * k) + cos(GWK_PI * dfBase) * sin(GWK_PI * k)
-    //sin(GWK_PI * (dfBase + k)) = dfSinPIBase * cos(GWK_PI * k) + dfCosPIBase * sin(GWK_PI * k)
-    //sin(GWK_PI * (dfBase + k)) = dfSinPIBase * cos(GWK_PI * k)
-    //sin(GWK_PI * (dfBase + k)) = dfSinPIBase * (((k % 2) == 0) ? 1 : -1)
+    //sin(M_PI * (dfBase + k)) = sin(M_PI * dfBase) * cos(M_PI * k) + cos(M_PI * dfBase) * sin(M_PI * k)
+    //sin(M_PI * (dfBase + k)) = dfSinPIBase * cos(M_PI * k) + dfCosPIBase * sin(M_PI * k)
+    //sin(M_PI * (dfBase + k)) = dfSinPIBase * cos(M_PI * k)
+    //sin(M_PI * (dfBase + k)) = dfSinPIBase * (((k % 2) == 0) ? 1 : -1)
 
-    //sin(GWK_PI / dfR * (dfBase + k)) = sin(GWK_PI / dfR * dfBase) * cos(GWK_PI / dfR * k) + cos(GWK_PI / dfR * dfBase) * sin(GWK_PI / dfR * k)
-    //sin(GWK_PI / dfR * (dfBase + k)) = dfSinPIBaseOverR * cos(GWK_PI / dfR * k) + dfCosPIBaseOverR * sin(GWK_PI / dfR * k)
+    //sin(M_PI / dfR * (dfBase + k)) = sin(M_PI / dfR * dfBase) * cos(M_PI / dfR * k) + cos(M_PI / dfR * dfBase) * sin(M_PI / dfR * k)
+    //sin(M_PI / dfR * (dfBase + k)) = dfSinPIBaseOverR * cos(M_PI / dfR * k) + dfCosPIBaseOverR * sin(M_PI / dfR * k)
 
-            double dfSinPIDeltaXOver3 = sin((-GWK_PI / 3) * dfDeltaX);
+            double dfSinPIDeltaXOver3 = sin((-M_PI / 3) * dfDeltaX);
             double dfSin2PIDeltaXOver3 = dfSinPIDeltaXOver3 * dfSinPIDeltaXOver3;
-            /* ok to use sqrt(1-sin^2) since GWK_PI / 3 * dfDeltaX < PI/2 */
+            /* ok to use sqrt(1-sin^2) since M_PI / 3 * dfDeltaX < PI/2 */
             double dfCosPIDeltaXOver3 = sqrt(1 - dfSin2PIDeltaXOver3);
             double dfSinPIDeltaX = (3-4*dfSin2PIDeltaXOver3)*dfSinPIDeltaXOver3;
-            const double dfInvPI2Over3 = 3.0 / (GWK_PI * GWK_PI);
+            const double dfInvPI2Over3 = 3.0 / (M_PI * M_PI);
             double dfInvPI2Over3xSinPIDeltaX = dfInvPI2Over3 * dfSinPIDeltaX;
             double dfInvPI2Over3xSinPIDeltaXxm0d5SinPIDeltaXOver3 =
                 -0.5 * dfInvPI2Over3xSinPIDeltaX * dfSinPIDeltaXOver3;
@@ -2967,12 +2976,12 @@ static int GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
         if( iSrcY != psWrkStruct->iLastSrcY ||
             dfDeltaY != psWrkStruct->dfLastDeltaY )
         {
-            double dfSinPIDeltaYOver3 = sin((-GWK_PI / 3) * dfDeltaY);
+            double dfSinPIDeltaYOver3 = sin((-M_PI / 3) * dfDeltaY);
             double dfSin2PIDeltaYOver3 = dfSinPIDeltaYOver3 * dfSinPIDeltaYOver3;
-            /* ok to use sqrt(1-sin^2) since GWK_PI / 3 * dfDeltaY < PI/2 */
+            /* ok to use sqrt(1-sin^2) since M_PI / 3 * dfDeltaY < PI/2 */
             double dfCosPIDeltaYOver3 = sqrt(1 - dfSin2PIDeltaYOver3);
             double dfSinPIDeltaY = (3-4*dfSin2PIDeltaYOver3)*dfSinPIDeltaYOver3;
-            const double dfInvPI2Over3 = 3.0 / (GWK_PI * GWK_PI);
+            const double dfInvPI2Over3 = 3.0 / (M_PI * M_PI);
             double dfInvPI2Over3xSinPIDeltaY = dfInvPI2Over3 * dfSinPIDeltaY;
             double dfInvPI2Over3xSinPIDeltaYxm0d5SinPIDeltaYOver3 =
                 -0.5 * dfInvPI2Over3xSinPIDeltaY * dfSinPIDeltaYOver3;

@@ -107,9 +107,8 @@ int OGRNASDataSource::Open( const char * pszNewName )
     pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
     if( CPLStat( pszGFSFilename, &sGFSStatBuf ) == 0 )
     {
-        CPLStat( pszNewName, &sNASStatBuf );
-
-        if( sNASStatBuf.st_mtime > sGFSStatBuf.st_mtime )
+        if( CPLStat( pszNewName, &sNASStatBuf ) == 0 &&
+            sNASStatBuf.st_mtime > sGFSStatBuf.st_mtime )
         {
             CPLDebug( "NAS",
                       "Found %s but ignoring because it appears\n"
@@ -282,7 +281,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
             eFType = OFTString;
 
         OGRFieldDefn oField( poProperty->GetName(), eFType );
-        if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
+        if ( STARTS_WITH_CI(oField.GetNameRef(), "ogr:") )
           oField.SetName(poProperty->GetName()+4);
         if( poProperty->GetWidth() > 0 )
             oField.SetWidth( poProperty->GetWidth() );
@@ -339,7 +338,7 @@ void OGRNASDataSource::PopulateRelations()
             const char *pszValue = CPLParseNameValue( papszOBProperties[i],
                                                       &pszName );
 
-            if( EQUALN(pszValue,"urn:adv:oid:",12)
+            if( STARTS_WITH_CI(pszValue, "urn:adv:oid:")
                 && psGMLId != NULL && psGMLId->nSubProperties == 1 )
             {
                 poRelationLayer->AddRelation( psGMLId->papszSubProperties[0],

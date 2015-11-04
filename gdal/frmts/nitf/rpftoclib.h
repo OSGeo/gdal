@@ -30,13 +30,12 @@
 #ifndef RPFTOCLIB_H_INCLUDED
 #define RPFTOCLIB_H_INCLUDED
 
+#include "cpl_error.h"
+#include "cpl_port.h"
+
 #include "nitflib.h"
 
-#include "cpl_port.h"
-#include "cpl_error.h"
-
 CPL_C_START
-
 
 typedef struct
 {
@@ -49,7 +48,6 @@ typedef struct
   char             georef[6+1];
   char            *fullFilePath;
 } RPFTocFrameEntry;
-
 
 typedef struct
 {
@@ -72,10 +70,10 @@ typedef struct
     double        horizInterval;
     unsigned int  nVertFrames;
     unsigned int  nHorizFrames;
-    
+
     int           boundaryId;
     int           isOverviewOrLegend;
-    
+
     const char*   seriesAbbreviation;  /* (may be NULL) eg "GNC" */
     const char*   seriesName;          /* (may be NULL) eg "Global Navigation Chart" */
 
@@ -103,4 +101,3 @@ void       CPL_DLL  RPFTOCFree(RPFToc*  nitfToc);
 CPL_C_END
 
 #endif /* ndef RPFTOCLIB_H_INCLUDED */
-

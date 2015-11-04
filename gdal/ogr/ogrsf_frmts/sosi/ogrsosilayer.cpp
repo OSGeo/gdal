@@ -76,7 +76,7 @@ OGRErr OGRSOSILayer::CreateField (OGRFieldDefn *poField, CPL_UNUSED int bApproxO
 /*                           ICreateFeature()                            */
 /************************************************************************/
 OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature) {
-    short nNavn;
+    //short nNavn;
     long nSerial;
     
     const char *pszSosi = NULL;
@@ -98,7 +98,7 @@ OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature) {
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
     }
-    nNavn = LC_NyGr(poFileadm, (char *)pszSosi, &oNextSerial, &nSerial);
+    /*nNavn = */ LC_NyGr(poFileadm, (char *)pszSosi, &oNextSerial, &nSerial);
     /* === WIP - Work in progress === */
     /* PutGI for all headers */
     char pszGi[255];

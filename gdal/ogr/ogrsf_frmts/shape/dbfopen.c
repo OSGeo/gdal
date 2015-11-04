@@ -1355,9 +1355,9 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
         if( (int) sizeof(szSField)-2 < nWidth )
             nWidth = sizeof(szSField)-2;
 
-        sprintf( szFormat, "%%%d.%df", 
+        snprintf( szFormat, sizeof(szFormat), "%%%d.%df",
                     nWidth, psDBF->panFieldDecimals[iField] );
-        CPLsprintf(szSField, szFormat, *((double *) pValue) );
+        CPLsnprintf(szSField, sizeof(szSField), szFormat, *((double *) pValue) );
         if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
         {
             szSField[psDBF->panFieldSize[iField]] = '\0';

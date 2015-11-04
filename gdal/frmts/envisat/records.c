@@ -1207,22 +1207,22 @@ const EnvisatRecordDescr* EnvisatFile_GetRecordDescriptor(
     const EnvisatRecordDescr *pRecordDescr = NULL;
     int nLen;
 
-    if( EQUALN(pszProduct,"ASA",3) )
+    if( STARTS_WITH_CI(pszProduct, "ASA") )
         paRecords = aASAR_Records;
-    else if( EQUALN(pszProduct,"MER",3) )
+    else if( STARTS_WITH_CI(pszProduct, "MER") )
     {
-        if ( EQUALN(pszProduct + 6,"C_2P",4) )
+        if ( STARTS_WITH_CI(pszProduct + 6, "C_2P") )
             paRecords = aMERIS_2P_C_Records;
-        else if ( EQUALN(pszProduct + 6,"V_2P",4) )
+        else if ( STARTS_WITH_CI(pszProduct + 6, "V_2P") )
             paRecords = aMERIS_2P_V_Records;
-        else if ( EQUALN(pszProduct + 8,"1P",2) )
+        else if ( STARTS_WITH_CI(pszProduct + 8, "1P") )
             paRecords = aMERIS_1P_Records;
-        else if ( EQUALN(pszProduct + 8,"2P",2) )
+        else if ( STARTS_WITH_CI(pszProduct + 8, "2P") )
             paRecords = aMERIS_2P_Records;
         else
             return NULL;
     }
-    else if( EQUALN(pszProduct,"SAR",3) )
+    else if( STARTS_WITH_CI(pszProduct, "SAR") )
         /* ERS products in ENVISAT format have the same records of ASAR ones */
         paRecords = aASAR_Records;
     else

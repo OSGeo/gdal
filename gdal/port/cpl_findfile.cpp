@@ -131,27 +131,24 @@ void CPLFinderClean()
 /*                         CPLDefaultFindFile()                         */
 /************************************************************************/
 
-const char *CPLDefaultFindFile( const char *pszClass, 
+const char *CPLDefaultFindFile( const char * /* pszClass */,
                                 const char *pszBasename )
 
 {
     FindFileTLS* pTLSData = CPLGetFindFileTLS();
-    int         i, nLocations = CSLCount( pTLSData->papszFinderLocations );
+    int          nLocations = CSLCount( pTLSData->papszFinderLocations );
 
-    (void) pszClass;
-
-    for( i = nLocations-1; i >= 0; i-- )
+    for( int i = nLocations-1; i >= 0; i-- )
     {
-        const char  *pszResult;
+        const char  *pszResult
+            = CPLFormFilename( pTLSData->papszFinderLocations[i], pszBasename,
+                               NULL );
+
         VSIStatBuf  sStat;
-
-        pszResult = CPLFormFilename( pTLSData->papszFinderLocations[i], pszBasename, 
-                                     NULL );
-
         if( VSIStat( pszResult, &sStat ) == 0 )
             return pszResult;
     }
-    
+
     return NULL;
 }
 
@@ -162,11 +159,9 @@ const char *CPLDefaultFindFile( const char *pszClass,
 const char *CPLFindFile( const char *pszClass, const char *pszBasename )
 
 {
-    int         i;
-
     FindFileTLS* pTLSData = CPLFinderInit();
 
-    for( i = pTLSData->nFileFinders-1; i >= 0; i-- )
+    for( int i = pTLSData->nFileFinders-1; i >= 0; i-- )
     {
         const char * pszResult;
 
@@ -242,12 +237,11 @@ void CPLPushFinderLocation( const char *pszLocation )
 static void CPLPopFinderLocationInternal(FindFileTLS* pTLSData)
 
 {
-    int      nCount;
 
     if( pTLSData->papszFinderLocations == NULL )
         return;
 
-    nCount = CSLCount(pTLSData->papszFinderLocations);
+    int nCount = CSLCount(pTLSData->papszFinderLocations);
     if( nCount == 0 )
         return;
 

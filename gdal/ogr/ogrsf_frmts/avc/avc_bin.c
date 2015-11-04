@@ -133,6 +133,10 @@
 
 #include <ctype.h>      /* for isspace() */
 
+
+/* Used by avc_binwr.c */
+extern int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir);
+
 /*=====================================================================
  * Prototypes for some static functions
  *====================================================================*/
@@ -380,6 +384,7 @@ void    AVCBinReadClose(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
                       AVCCoverType eCoverType)
 {
@@ -575,14 +580,14 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
      *----------------------------------------------------------------*/
     nLen = strlen(psFile->pszFilename);
     if( psFile->eFileType == AVCFileARC &&
-        ((nLen>=3 && EQUALN((pszExt=psFile->pszFilename+nLen-3), "arc", 3)) ||
-         (nLen>=7 && EQUALN((pszExt=psFile->pszFilename+nLen-7),"arc.adf",7))))
+        ((nLen>=3 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-3), "arc")) ||
+         (nLen>=7 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-7), "arc.adf"))))
     {
         bIndexed = TRUE;
     }
     else if( psFile->eFileType == AVCFilePAL &&
-        ((nLen>=3 && EQUALN((pszExt=psFile->pszFilename+nLen-3), "pal", 3)) ||
-         (nLen>=7 && EQUALN((pszExt=psFile->pszFilename+nLen-7),"pal.adf",7))))
+        ((nLen>=3 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-3), "pal")) ||
+         (nLen>=7 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-7), "pal.adf"))))
     {
         bIndexed = TRUE;
     }
@@ -778,6 +783,7 @@ AVCField *AVCBinReadNextTableRec(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
                               int nPrecision)
 {
@@ -878,6 +884,7 @@ AVCArc *AVCBinReadNextArc(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal, 
                               int nPrecision)
 {
@@ -972,6 +979,7 @@ AVCPal *AVCBinReadNextPal(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt, 
                               int nPrecision)
 {
@@ -1060,6 +1068,7 @@ AVCCnt *AVCBinReadNextCnt(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextLab(AVCRawBinFile *psFile, AVCLab *psLab, 
                               int nPrecision)
 {
@@ -1128,6 +1137,7 @@ AVCLab *AVCBinReadNextLab(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextTol(AVCRawBinFile *psFile, AVCTol *psTol, 
                        int nPrecision)
 {
@@ -1261,6 +1271,7 @@ char **AVCBinReadNextPrj(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt, 
                               int nPrecision)
 {
@@ -1373,6 +1384,7 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt, 
                                  int nPrecision)
 {
@@ -1555,6 +1567,7 @@ AVCTxt *AVCBinReadNextTxt(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextRxp(AVCRawBinFile *psFile,
                        AVCRxp *psRxp,
                        CPL_UNUSED int nPrecision)
@@ -1609,6 +1622,7 @@ AVCRxp *AVCBinReadNextRxp(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+
 int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir)
 {
     int i;
@@ -1659,6 +1673,7 @@ int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
 {
     AVCRawBinReadString(psFile, 16, (GByte *)psField->szName);
@@ -1702,6 +1717,7 @@ int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
  * If pszRetFnmae/pszRetNitFile != NULL then the filename with full path 
  * will be copied to the specified buffer.
  **********************************************************************/
+static
 GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath, 
                                  const char *pszBasename,
                                  const char *pszDatOrNit,
@@ -1761,6 +1777,7 @@ GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
  * If pszRetDatFile/pszRetNitFile != NULL then the .DAT and .NIT filename
  * without the info path will be copied to the specified buffers.
  **********************************************************************/
+static
 GBool _AVCBinReadInfoFileExists(const char *pszInfoPath, 
                                 const char *pszBasename,
                                 AVCCoverType eCoverType)
@@ -1895,6 +1912,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     GBool          bFound;
     int            i;
 
+    sTableDef.pasFieldDef = NULL;
+
     /* Alloc a buffer big enough for the longest possible filename...
      */
     pszFname = (char*)CPLMalloc((strlen(pszInfoPath)+81)*sizeof(char));
@@ -1919,8 +1938,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
         {
             if (!sTableDef.bDeletedFlag &&
                 EQUALN(sTableDef.szTableName, pszTableName, 
-                       strlen(pszTableName)) &&
-                _AVCBinReadInfoFileExists(pszInfoPath, 
+                       strlen(pszTableName)) &&                _AVCBinReadInfoFileExists(pszInfoPath, 
                                           sTableDef.szInfoFile, 
                                           eCoverType))
             {
@@ -2161,6 +2179,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextTableRec(AVCRawBinFile *psFile, int nFields,
                             AVCFieldInfo *pasDef, AVCField *pasFields,
                             int nRecordSize)
@@ -2477,6 +2496,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
+static
 int _AVCBinReadNextDBFTableRec(DBFHandle hDBFFile, int *piRecordIndex, 
                                       int nFields, AVCFieldInfo *pasDef,
                                       AVCField *pasFields)

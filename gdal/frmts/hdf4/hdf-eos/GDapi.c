@@ -101,7 +101,6 @@ extern  void inv_init(int32, int32, float64 *, int32, char *, char *, int32 *,
 
 #define	GDIDOFFSET 4194304
 #define SQUARE(x)       ((x) * (x))   /* x**2 */
-#define M_PI1		3.14159265358979323846
 
 static int32 GDXSDcomb[512*5];
 static char  GDXSDname[HDFE_NAMBUFSIZE];
@@ -1090,7 +1089,7 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 
 	/* Build metadata string */
 	/* --------------------- */
-	if ((projcode == GCTP_GEO))
+	if (projcode == GCTP_GEO)
 	{
 	    sprintf(utlbuf,
 		    "%s%s%s",
@@ -1431,7 +1430,7 @@ GDdeforigin(int32 gridID, int32 origincode)
     {
 	/* If proper origin code then write to structural metadata */
 	/* ------------------------------------------------------- */
-	if (origincode >= 0 && origincode < sizeof(originNames))
+	if (origincode >= 0 && origincode < (int32)sizeof(originNames))
 	{
 	    sprintf(utlbuf, "%s%s%s",
 		    "\t\tGridOrigin=", originNames[origincode], "\n");
@@ -1503,7 +1502,7 @@ GDdefpixreg(int32 gridID, int32 pixregcode)
     {
 	/* If proper pix reg code then write to structural metadata */
 	/* -------------------------------------------------------- */
-	if (pixregcode >= 0 && pixregcode < sizeof(pixregNames))
+	if (pixregcode >= 0 && pixregcode < (int32)sizeof(pixregNames))
 	{
 	    sprintf(utlbuf, "%s%s%s",
 		    "\t\tPixelRegistration=", pixregNames[pixregcode], "\n");
@@ -2173,7 +2172,7 @@ GDorigininfo(int32 gridID, int32 * origincode)
 	     * If "GridOrigin" string found in metadata then convert to
 	     * numeric origin code (fixed added: Jan 97)
 	     */
-	    for (i = 0; i < sizeof(originNames); i++)
+	    for (i = 0; i < (intn)sizeof(originNames); i++)
 	    {
 		if (strcmp(utlstr, originNames[i]) == 0)
 		{
@@ -2288,7 +2287,7 @@ GDpixreginfo(int32 gridID, int32 * pixregcode)
 	     * to numeric origin code (fixed added: Jan 97)
 	     */
 
-	    for (i = 0; i < sizeof(pixregNames); i++)
+	    for (i = 0; i < (intn)sizeof(pixregNames); i++)
 	    {
 		if (strcmp(utlstr, pixregNames[i]) == 0)
 		{
@@ -2407,7 +2406,7 @@ GDcompinfo(int32 gridID, char *fieldname, int32 * compcode, intn compparm[])
 		if (statmeta == 0)
 		{
 		    /* Loop through compression types until match */
-		    for (i = 0; i < sizeof(HDFcomp); i++)
+		    for (i = 0; i < (intn)sizeof(HDFcomp); i++)
 		    {
 			if (strcmp(utlstr, HDFcomp[i]) == 0)
 			{
@@ -5398,7 +5397,7 @@ GDdetach(int32 gridID)
 		    return(-1);
 		}
 
-		for (k = 0; k < sizeof(dimbuf1); k++)
+		for (k = 0; k < (intn)sizeof(dimbuf1); k++)
 		    dimbuf1[k] = 0;
 
 
@@ -5420,7 +5419,7 @@ GDdetach(int32 gridID)
 
 		for (j = i + 1, cmbfldcnt = 0; j < nflds; j++)
 		{
-		    for (k = 0; k < sizeof(dimbuf2); k++)
+		    for (k = 0; k < (intn)sizeof(dimbuf2); k++)
 			dimbuf2[k] = 0;
 		    memcpy(dimbuf2, dimptr[j], dimlen[j]);
 		    dum = EHparsestr(dimbuf2, ',', ptr2, slen2);
@@ -6461,8 +6460,8 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 		/* if time-line is paased */
 		if(lonrad < lonrad1)
 		  {
-		    if (lonrad < lonrad0) lonrad += 2.0 * M_PI1;
-		    if (lonrad > lonrad1) lonrad -= 2.0 * M_PI1;
+		    if (lonrad < lonrad0) lonrad += 2.0 * M_PI;
+		    if (lonrad > lonrad1) lonrad -= 2.0 * M_PI;
 		  }
 
 		/* Compute scaled distance to point from origin */
@@ -6754,13 +6753,13 @@ GDrs2ll(int32 projcode, float64 projparm[],
 		{
 		  errorcode = inv_trans[projcode] (xMtr, 0.0,
 						   &lonrad, &latrad);
-		  latrad = - M_PI1/2;
+		  latrad = - M_PI/2;
 		}
 	      else if( beta >= 1)
 		{
 		  errorcode = inv_trans[projcode] (xMtr, 0.0,
 						   &lonrad, &latrad);
-		  latrad = M_PI1/2;
+		  latrad = M_PI/2;
 		}
 	      else
 		{
@@ -6821,7 +6820,7 @@ GDrs2ll(int32 projcode, float64 projparm[],
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-float64
+static float64
 lamazDxDtheta(float64 parms[])
 {
     float64         snTheta, sn2Theta, snTheta1, csTheta1, csLamda;
@@ -6868,7 +6867,7 @@ lamazDxDtheta(float64 parms[])
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-float64
+static float64
 lamazDxDlamda(float64 parms[])
 {
     float64         snTheta, csTheta, snTheta1, csTheta1, csLamda;
@@ -6916,7 +6915,7 @@ lamazDxDlamda(float64 parms[])
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-float64
+static float64
 lamazDyDtheta(float64 parms[])
 {
     float64         snTheta, csTheta, snTheta1, csTheta1, csLamda;
@@ -6966,7 +6965,7 @@ lamazDyDtheta(float64 parms[])
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-float64
+static float64
 homDyDtheta(float64 parms[])
 {
     float64         tnTheta, tnTheta1, snLamda;
@@ -7046,11 +7045,12 @@ GDtangentpnts(int32 projcode, float64 projparm[], float64 cornerlon[],
     float64         orgLat;	/* Latitude of origin */
     float64         dpi;	/* Double precision pi */
 
+#if 0
     float64         lamazDxDtheta();	/* Lambert Azimuthal Dx/Dtheta */
     float64         lamazDxDlamda();	/* Lambert Azimuthal Dx/Dlamda */
     float64         lamazDyDtheta();	/* Lambert Azimuthal Dy/Dtheta */
     float64         homDyDtheta();	/* Oblique Mercator  Dy/Dtheta */
-
+#endif
 
     /* Conpute pi (double precsion) */
     /* ---------------------------- */
@@ -7850,10 +7850,12 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
                       blockindexstop = j;
                    }
                 }
-                templeftpt[0] = upleftpt[0] + ((offset[j]/xdimsize)*abs(upleftpt[0] - lowrightpt[0])) + abs((upleftpt[0] - lowrightpt[0]))*(n-1);
+
+                // E. Rouault: FIXME: was really abs(int) indented here ? Forcing the cast to int to please compilers
+                templeftpt[0] = upleftpt[0] + ((offset[j]/xdimsize)*abs((int)(upleftpt[0] - lowrightpt[0]))) + abs((int)(upleftpt[0] - lowrightpt[0]))*(n-1);
                 templeftpt[1] = upleftpt[1] + ((lowrightpt[1] - upleftpt[1]))*(n-1);
 
-                temprightpt[0] = lowrightpt[0] + ((offset[j]/xdimsize)*abs(lowrightpt[0] - upleftpt[0])) + abs((lowrightpt[0] - upleftpt[0]))*(n-1);
+                temprightpt[0] = lowrightpt[0] + ((offset[j]/xdimsize)*abs((int)(lowrightpt[0] - upleftpt[0]))) + abs((int)(lowrightpt[0] - upleftpt[0]))*(n-1);
                 temprightpt[1] = lowrightpt[1] + ((upleftpt[1] - lowrightpt[1]))*(n-1);
 
                 somupleftpt[0] = templeftpt[0];
@@ -10384,7 +10386,7 @@ Alexis Zubrow
 ********************************************************/
 
 intn
-GDsettilecache(int32 gridID, char *fieldname, int32 maxcache, int32 cachecode)
+GDsettilecache(int32 gridID, char *fieldname, int32 maxcache, CPL_UNUSED int32 cachecode)
 {
 
     intn            status = 0;	/* routine return status variable */
@@ -10510,6 +10512,8 @@ GDsettilecomp(int32 gridID, char *fieldname, int32 tilerank, int32*
     comp_info       c_info;     /* Compression parameter structure */
     HDF_CHUNK_DEF   chunkDef;   /* Tiling structure */
     int32           chunkFlag;  /* Chunking (Tiling) flag */
+ 
+    c_info.nbit.nt = 0;
  
     /* Check for valid grid ID and get SDS interface ID */
     status = GDchkgdid(gridID, "GDsetfillvalue",
@@ -10641,7 +10645,7 @@ static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
 		 float64 projparm[],
 		 int32 xdimsize, int32 ydimsize,
 		 float64 upleftpt[], float64 lowrightpt[], int32 npnts,
-		 float64 lon[],float64 lat[],
+		 CPL_UNUSED float64 lon[],CPL_UNUSED float64 lat[],
 		 float64 x[],float64 y[], float64 *scaleX,float64 *scaleY)
 {
     intn            status = 0;	/* routine return status variable */
@@ -10769,8 +10773,8 @@ static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
 -----------------------------------------------------------------------------*/
 static intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
 		 float64 projparm[],
-		 int32 xdimsize, int32 ydimsize,
-		 float64 upleftpt[], float64 lowrightpt[], int32 npnts,
+		 CPL_UNUSED int32 xdimsize, CPL_UNUSED int32 ydimsize,
+		 CPL_UNUSED float64 upleftpt[], CPL_UNUSED float64 lowrightpt[], int32 npnts,
 		 float64 x[], float64 y[], 
 		 float64 longitude[], float64 latitude[])
 {
@@ -10866,4 +10870,3 @@ GDsdid(int32 gridID, const char *fieldname, int32 *sdid)
 
     return (status);
 }
-

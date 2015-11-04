@@ -31,7 +31,7 @@
 #include <ogr_geometry.h>
 #include "gdal.h"
 
-#include <kml/dom.h>
+#include "libkml_headers.h"
 
 using kmldom::KmlFactory;
 using kmldom::PlacemarkPtr;
@@ -58,6 +58,7 @@ using kmldom::ImagePyramidPtr;
 #include "ogrlibkmlgeometry.h"
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlfeaturestyle.h"
+#include "ogrlibkmlfeature.h"
 
 static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
                                  int iHeading,
@@ -577,8 +578,8 @@ FeaturePtr feat2kml (
         {
             VSILFILE* fp;
             int bIsURL = FALSE;
-            if( EQUALN(pszURL, "http://", strlen("http://")) ||
-                EQUALN(pszURL, "https://", strlen("https://")) )
+            if( STARTS_WITH_CI(pszURL, "http://") ||
+                STARTS_WITH_CI(pszURL, "https://") )
             {
                 bIsURL = TRUE;
                 fp = VSIFOpenL(CPLSPrintf("/vsicurl/%s", pszURL), "rb");
@@ -617,7 +618,7 @@ FeaturePtr feat2kml (
                                 AliasPtr alias = poKmlFactory->CreateAlias();
                                 if( bIsURL && CPLIsFilenameRelative(osImage) )
                                 {
-                                    if( strncmp(pszURL, "http", 4) == 0 )
+                                    if( STARTS_WITH(pszURL, "http") )
                                         alias->set_targethref(CPLSPrintf("%s/%s", CPLGetPath(pszURL), osImage.c_str()));
                                     else
                                         alias->set_targethref(CPLFormFilename(CPLGetPath(pszURL), osImage, NULL));

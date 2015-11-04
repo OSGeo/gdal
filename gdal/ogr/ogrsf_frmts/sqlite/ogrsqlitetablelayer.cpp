@@ -544,7 +544,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                         OGRFieldDefn* poFieldDefn =  poFeatureDefn->GetFieldDefn(idx);
                         if( poFieldDefn->GetType() == OFTString &&
                             !EQUAL(pszDefault, "NULL") &&
-                            !EQUALN(pszDefault, "CURRENT_", strlen("CURRENT_")) &&
+                            !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
                             pszDefault[0] != '(' &&
                             pszDefault[0] != '\'' &&
                             CPLGetValueType(pszDefault) == CPL_VALUE_STRING )
@@ -558,7 +558,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                         }
                         else if( (poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime) &&
                              !EQUAL(pszDefault, "NULL") &&
-                             !EQUALN(pszDefault, "CURRENT_", strlen("CURRENT_")) &&
+                             !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
                              pszDefault[0] != '(' &&
                              pszDefault[0] != '\'' &&
                              !(pszDefault[0] >= '0' && pszDefault[0] <= '9') &&
@@ -2813,7 +2813,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                     CPLString(pszTriggerName).tolower().find(CPLString(pszGeomCol).tolower()) != std::string::npos )
                 {
                     const char* pszExpectedTrigger = 0;
-                    if( strncmp(pszTriggerName, "ggi_", 4) == 0 )
+                    if( STARTS_WITH(pszTriggerName, "ggi_") )
                     {
                         pszExpectedTrigger = CPLSPrintf(
                         "CREATE TRIGGER \"ggi_%s_%s\" BEFORE INSERT ON \"%s\" "
@@ -2828,7 +2828,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                         pszTableName, pszGeomCol,
                         pszGeomCol);
                     }
-                    else if( strncmp(pszTriggerName, "tmi_", 4) == 0 )
+                    else if( STARTS_WITH(pszTriggerName, "tmi_") )
                     {
                         pszExpectedTrigger = CPLSPrintf(
                         "CREATE TRIGGER \"tmi_%s_%s\" AFTER INSERT ON \"%s\" "
@@ -2843,7 +2843,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                     /* that check there's no spatial index active */
                     /* A further potential optimization would be to rebuild the spatial index */
                     /* afterwards... */
-                    /*else if( strncmp(pszTriggerName, "gii_", 4) == 0 )
+                    /*else if( STARTS_WITH(pszTriggerName, "gii_") )
                     {
                         pszExpectedTrigger = CPLSPrintf(
                         "CREATE TRIGGER \"gii_%s_%s\" AFTER INSERT ON \"%s\" "
@@ -3306,8 +3306,8 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
         if( pszDefault != NULL &&
             (!poFieldDefn->IsDefaultDriverSpecific() ||
              (pszDefault[0] == '(' && pszDefault[strlen(pszDefault)-1] == ')' &&
-             (EQUALN(pszDefault+1, "strftime", strlen("strftime")) ||
-              EQUALN(pszDefault+1, " strftime", strlen(" strftime"))))) )
+             (STARTS_WITH_CI(pszDefault+1, "strftime") ||
+              STARTS_WITH_CI(pszDefault+1, " strftime")))) )
         {
             osCommand += " DEFAULT ";
             osCommand += poFieldDefn->GetDefault();

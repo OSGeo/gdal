@@ -244,11 +244,13 @@ def ogr_gml_6():
         feat = lyr.GetNextFeature() 
         while feat is not None: 
             if ( feat.GetFID() < 0 ) or ( feat.GetFID() in fids ): 
+                gml_ds = None
                 os.remove( 'data' + os.sep + filename + '.gfs' ) 
                 gdaltest.post_reason( 'Wrong FID value' ) 
                 return 'fail' 
             fids.append(feat.GetFID()) 
             feat = lyr.GetNextFeature() 
+        gml_ds = None
         os.remove( 'data' + os.sep + filename + '.gfs' ) 
 
     return 'success'
@@ -345,6 +347,7 @@ def ogr_gml_9():
         gdaltest.post_reason('Unexpected content.')
         print(feat.GetField('test'))
         return 'fail'
+    ds = None
 
     os.remove('tmp/broken_utf8.gml')
     os.remove('tmp/broken_utf8.xsd')
@@ -439,6 +442,7 @@ def ogr_gml_10():
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('integer')).GetWidth() != 5:
         gdaltest.post_reason('Unexpected width of integer field.')
         return 'fail'
+    ds = None
 
     os.remove('tmp/fields.gml')
     os.remove('tmp/fields.xsd')
@@ -1967,6 +1971,11 @@ def ogr_gml_48():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
+    try:
+        os.unlink('data/schema_with_geom_in_complextype.gfs')
+    except:
+        pass
+
     ds = ogr.Open('data/schema_with_geom_in_complextype.xml')
     lyr = ds.GetLayer(0)
 
@@ -2266,6 +2275,11 @@ def ogr_gml_56():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
+    try:
+        os.unlink('data/ogr_gml_56.gfs')
+    except:
+        pass
+
     gdal.SetConfigOption('GML_REGISTRY', 'data/ogr_gml_56_registry.xml')
     ds = ogr.Open('data/ogr_gml_56.gml')
     gdal.SetConfigOption('GML_REGISTRY', None)
@@ -2405,6 +2419,11 @@ def ogr_gml_58():
 
     if not gdaltest.have_gml_reader:
         return 'skip'
+
+    try:
+        os.unlink('data/inspire_cadastralparcel.gfs')
+    except:
+        pass
 
     ds = ogr.Open('data/inspire_cadastralparcel.xml')
     lyr = ds.GetLayer(0)

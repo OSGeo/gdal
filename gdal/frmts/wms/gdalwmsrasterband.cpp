@@ -41,8 +41,16 @@ GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, d
         poDS = parent_dataset;
     else
         poDS = NULL;
-    nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale + 0.5);
-    nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale + 0.5);
+    if( parent_dataset->m_mini_driver_caps.m_overview_dim_computation_method == OVERVIEW_ROUNDED )
+    {
+        nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale + 0.5);
+        nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale + 0.5);
+    }
+    else
+    {
+        nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale);
+        nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale);
+    }
     nBand = band;
     eDataType = m_parent_dataset->m_data_type;
     nBlockXSize = m_parent_dataset->m_block_size_x;
@@ -186,9 +194,9 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                     /* check for error xml */
                     if (download_requests[i].nDataLen >= 20) {
                         const char *download_data = reinterpret_cast<char *>(download_requests[i].pabyData);
-                        if (EQUALN(download_data, "<?xml ", 6) 
-                        || EQUALN(download_data, "<!DOCTYPE ", 10)
-                        || EQUALN(download_data, "<ServiceException", 17)) {
+                        if (STARTS_WITH_CI(download_data, "<?xml ") 
+                        || STARTS_WITH_CI(download_data, "<!DOCTYPE ")
+                        || STARTS_WITH_CI(download_data, "<ServiceException")) {
                             if (ReportWMSException(file_name.c_str()) != CE_None) {
                                 CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: The server returned unknown exception.");
                             }
@@ -409,19 +417,19 @@ const char *GDALWMSRasterBand::GetMetadataItem( const char * pszName,
 /* ==================================================================== */
     if( pszDomain != NULL
         && EQUAL(pszDomain,"LocationInfo")
-        && (EQUALN(pszName,"Pixel_",6) || EQUALN(pszName,"GeoPixel_",9)) )
+        && (STARTS_WITH_CI(pszName, "Pixel_") || STARTS_WITH_CI(pszName, "GeoPixel_")) )
     {
         int iPixel, iLine;
 
 /* -------------------------------------------------------------------- */
 /*      What pixel are we aiming at?                                    */
 /* -------------------------------------------------------------------- */
-        if( EQUALN(pszName,"Pixel_",6) )
+        if( STARTS_WITH_CI(pszName, "Pixel_") )
         {
             if( sscanf( pszName+6, "%d_%d", &iPixel, &iLine ) != 2 )
                 return NULL;
         }
-        else if( EQUALN(pszName,"GeoPixel_",9) )
+        else if( STARTS_WITH_CI(pszName, "GeoPixel_") )
         {
             double adfGeoTransform[6];
             double adfInvGeoTransform[6];

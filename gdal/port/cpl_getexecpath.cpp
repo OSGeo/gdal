@@ -32,15 +32,11 @@
 
 CPL_CVSID("$Id$");
 
-#if defined(WIN32) || defined(WIN32CE)
+#if defined(WIN32)
 
 #define HAVE_IMPLEMENTATION 1
 
-#if defined(WIN32CE)
-#  include "cpl_win32ce_api.h"
-#else
-#  include <windows.h>
-#endif
+#include <windows.h>
 
 /************************************************************************/
 /*                           CPLGetExecPath()                           */
@@ -48,7 +44,6 @@ CPL_CVSID("$Id$");
 
 int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 {
-#ifndef WIN32CE
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
@@ -78,12 +73,6 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
         else
             return TRUE;
     }
-#else
-    if( CE_GetModuleFileNameA( NULL, pszPathBuf, nMaxLength ) == 0 )
-        return FALSE;
-    else
-        return TRUE;
-#endif
 }
 
 #endif
@@ -102,10 +91,9 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 {
     long nPID = getpid();
     CPLString osExeLink;
-    ssize_t nResultLen;
 
     osExeLink.Printf( "/proc/%ld/exe", nPID );
-    nResultLen = readlink( osExeLink, pszPathBuf, nMaxLength );
+    ssize_t nResultLen = readlink( osExeLink, pszPathBuf, nMaxLength );
     if( nResultLen >= 0 )
         pszPathBuf[nResultLen] = '\0';
     else
@@ -141,4 +129,3 @@ int CPLGetExecPath( CPL_UNUSED char *pszPathBuf, CPL_UNUSED int nMaxLength )
 }
 
 #endif
-

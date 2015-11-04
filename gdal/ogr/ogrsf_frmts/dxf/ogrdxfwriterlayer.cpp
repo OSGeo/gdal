@@ -36,10 +36,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif 
-
 /************************************************************************/
 /*                         OGRDXFWriterLayer()                          */
 /************************************************************************/
@@ -1133,7 +1129,7 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
             return WriteINSERT( poFeature );
             
         else if( poFeature->GetStyleString() != NULL
-            && EQUALN(poFeature->GetStyleString(),"LABEL",5) )
+            && STARTS_WITH_CI(poFeature->GetStyleString(), "LABEL") )
             return WriteTEXT( poFeature );
         else
             return WritePOINT( poFeature );

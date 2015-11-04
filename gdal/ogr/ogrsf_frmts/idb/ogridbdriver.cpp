@@ -62,7 +62,7 @@ OGRDataSource *OGRIDBDriver::Open( const char * pszFilename,
 {
     OGRIDBDataSource     *poDS;
 
-    if( !EQUALN(pszFilename,"IDB:",4) )
+    if( !STARTS_WITH_CI(pszFilename, "IDB:") )
         return NULL;
 
     poDS = new OGRIDBDataSource();
@@ -86,7 +86,7 @@ OGRDataSource *OGRIDBDriver::CreateDataSource( const char * pszName,
 {
     OGRIDBDataSource     *poDS;
 
-    if( !EQUALN(pszName,"IDB:",4) )
+    if( !STARTS_WITH_CI(pszName, "IDB:") )
         return NULL;
 
     poDS = new OGRIDBDataSource();

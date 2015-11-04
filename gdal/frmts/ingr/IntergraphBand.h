@@ -50,7 +50,7 @@ protected:
     int             nFullBlocksX;
     int             nFullBlocksY;
 
-    GByte	       *pabyBlockBuf;
+    GByte	   *pabyBlockBuf;
     uint32          nTiles;
 
     INGR_TileItem  *pahTiles;
@@ -58,7 +58,7 @@ protected:
     INGR_HeaderOne  hHeaderOne;
     INGR_HeaderTwoA hHeaderTwo;
     INGR_TileHeader hTileDir;
-    
+
     int             nRLEOffset;
 
 public:

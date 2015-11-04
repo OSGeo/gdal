@@ -382,15 +382,16 @@ static const TigerRecordInfo rtS_info =
 /************************************************************************/
 
 TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
-                            CPL_UNUSED const char * pszPrototypeModule )
+                            CPL_UNUSED const char * pszPrototypeModule ) :
+    fpRTS(NULL),
+    bUsingRTS(TRUE),
+    nRTSRecLen(0)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "Polygon" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
-    fpRTS = NULL;
-    bUsingRTS = TRUE;
 
     if( poDS->GetVersion() >= TIGER_2004 ) {
         psRTAInfo = &rtA_2004_info;

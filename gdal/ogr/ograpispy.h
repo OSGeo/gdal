@@ -76,7 +76,7 @@ int OGRAPISpyOpenTakeSnapshot(const char* pszName, int bUpdate);
 void OGRAPISpyOpen(const char* pszName, int bUpdate, int iSnapshot,
                    GDALDatasetH* phDS);
 void OGRAPISpyPreClose(OGRDataSourceH hDS);
-void OGRAPISpyPostClose(OGRDataSourceH hDS);
+void OGRAPISpyPostClose();
 void OGRAPISpyCreateDataSource(OGRSFDriverH hDriver, const char* pszName,
                                char** papszOptions, OGRDataSourceH hDS);
 void OGRAPISpyDeleteDataSource(OGRSFDriverH hDriver, const char* pszName);

@@ -34,7 +34,7 @@
 CPL_CVSID("$Id$");
 
 #define MAX_ENTRY_REPORT   16
-                           
+
 /************************************************************************/
 /* ==================================================================== */
 /*		                HFAField				*/
@@ -45,22 +45,16 @@ CPL_CVSID("$Id$");
 /*                              HFAField()                              */
 /************************************************************************/
 
-HFAField::HFAField()
-
-{
-    nBytes = 0;
-
-    nItemCount = 0;
-    chPointer = '\0';
-    chItemType = '\0';
-
-    pszItemObjectType = NULL;
-    poItemObjectType = NULL;
-
-    papszEnumNames = NULL;
-
-    pszFieldName = NULL;
-}
+HFAField::HFAField() :
+    nBytes(0),
+    nItemCount(0),
+    chPointer('\0'),
+    chItemType('\0'),
+    pszItemObjectType(NULL),
+    poItemObjectType(NULL),
+    papszEnumNames(NULL),
+    pszFieldName(NULL)
+{ }
 
 /************************************************************************/
 /*                             ~HFAField()                              */
@@ -81,8 +75,6 @@ HFAField::~HFAField()
 const char *HFAField::Initialize( const char * pszInput )
 
 {
-    int		i;
-    
 /* -------------------------------------------------------------------- */
 /*      Read the number.                                                */
 /* -------------------------------------------------------------------- */
@@ -120,6 +112,8 @@ const char *HFAField::Initialize( const char * pszInput )
 /* -------------------------------------------------------------------- */
 /*      If this is an object, we extract the type of the object.        */
 /* -------------------------------------------------------------------- */
+    int i;   // TODO: Describe why i needs to span chItemType blocks.
+
     if( chItemType == 'o' )
     {
         for( i = 0; pszInput[i] != '\0' && pszInput[i] != ','; i++ ) {}
@@ -180,7 +174,6 @@ const char *HFAField::Initialize( const char * pszInput )
     if( chItemType == 'e' )
     {
         int	nEnumCount = atoi(pszInput);
-        int	iEnum;
 
         if (nEnumCount < 0 || nEnumCount > 100000)
             return NULL;
@@ -194,17 +187,15 @@ const char *HFAField::Initialize( const char * pszInput )
         papszEnumNames = (char **) VSICalloc(sizeof(char *), nEnumCount+1);
         if (papszEnumNames == NULL)
             return NULL;
-        
-        for( iEnum = 0; iEnum < nEnumCount; iEnum++ )
+
+        for( int iEnum = 0; iEnum < nEnumCount; iEnum++ )
         {
-            char	*pszToken;
-            
             for( i = 0; pszInput[i] != '\0' && pszInput[i] != ','; i++ ) {}
 
             if( pszInput[i] != ',' )
                 return NULL;
 
-            pszToken = (char *) CPLMalloc(i+1);
+            char *pszToken = (char *) CPLMalloc(i+1);
             strncpy( pszToken, pszInput, i );
             pszToken[i] = '\0';
 
@@ -365,9 +356,7 @@ void HFAField::Dump( FILE * fp )
 
     if( papszEnumNames != NULL )
     {
-        int	i;
-        
-        for( i = 0; papszEnumNames[i] != NULL; i++ )
+        for( int i = 0; papszEnumNames[i] != NULL; i++ )
         {
             VSIFPrintf( fp, "        %s=%d\n",
                         papszEnumNames[i], i );
@@ -392,16 +381,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
     if( chPointer != '\0' )
     {
         GUInt32		nCount;
-        GUInt32		nOffset;
 
-         /* set the count for fixed sized arrays */
-        if( nBytes > -1 )
-            nCount = nItemCount;
-
-        // The count returned for BASEDATA's are the contents, 
+        // The count returned for BASEDATA's are the contents,
         // but here we really want to mark it as one BASEDATA instance
         // (see #2144)
-        if( chItemType == 'b' ) 
+        if( chItemType == 'b' )
             nCount = 1;
 
         /* Set the size from string length */
@@ -427,6 +411,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         }
 
         // we will update the object count iff we are writing beyond the end
+        GUInt32		nOffset;
         memcpy( &nOffset, pabyData, 4 );
         HFAStandard( 4, &nOffset );
         if( nOffset < nCount )
@@ -1261,10 +1246,10 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
             /* not go here, but that can happen if the file is corrupted */
             /* so reserve the first 8 bytes before the string to contain null bytes */
             memset(szNumberString, 0, 8);
-            CPLsprintf( szNumberString + 8, "%.14g", dfDoubleRet );
+            CPLsnprintf( szNumberString + 8, sizeof(szNumberString) - 8, "%.14g", dfDoubleRet );
             pszStringRet = szNumberString + 8;
         }
-        
+
         *((char **) pReqReturn) = pszStringRet;
         return( TRUE );
     }

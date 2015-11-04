@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  CPLString implementation.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -34,9 +34,9 @@
 CPL_CVSID("$Id$");
 
 /*
- * The CPLString class is derived from std::string, so the vast majority 
+ * The CPLString class is derived from std::string, so the vast majority
  * of the implementation comes from that.  This module is just the extensions
- * we add. 
+ * we add.
  */
 
 /************************************************************************/
@@ -97,7 +97,8 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
         int nWorkBufferSize = 2000;
-        char *pszWorkBuffer = (char *) CPLMalloc(nWorkBufferSize);
+        char *pszWorkBuffer = reinterpret_cast<char *>(
+            CPLMalloc(nWorkBufferSize));
 
 #ifdef va_copy
         va_end( wrk_args );
@@ -141,7 +142,7 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 
 /**
  * Format double in C locale.
- * 
+ *
  * The passed value is formatted using the C locale (period as decimal 
  * seperator) and appended to the target CPLString. 
  *
@@ -186,18 +187,17 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 CPLString &CPLString::Trim()
 
 {
-    size_t iLeft, iRight;
     static const char szWhitespace[] = " \t\r\n";
 
-    iLeft = find_first_not_of( szWhitespace );
-    iRight = find_last_not_of( szWhitespace );
+    const size_t iLeft = find_first_not_of( szWhitespace );
+    const size_t iRight = find_last_not_of( szWhitespace );
 
     if( iLeft == std::string::npos )
     {
         erase();
         return *this;
     }
-    
+
     assign( substr( iLeft, iRight - iLeft + 1 ) );
 
     return *this;
@@ -236,7 +236,7 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
 /*                               ifind()                                */
 /************************************************************************/
 
-/** 
+/**
  * Case insensitive find() alternative.
  *
  * @param str substring to find.
@@ -298,9 +298,7 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
 CPLString &CPLString::toupper()
 
 {
-    size_t i;
-
-    for( i = 0; i < size(); i++ )
+    for( size_t i = 0; i < size(); i++ )
         (*this)[i] = (char) ::toupper( (*this)[i] );
 
     return *this;
@@ -317,9 +315,7 @@ CPLString &CPLString::toupper()
 CPLString &CPLString::tolower()
 
 {
-    size_t i;
-
-    for( i = 0; i < size(); i++ )
+    for(size_t i = 0; i < size(); i++ )
         (*this)[i] = (char) ::tolower( (*this)[i] );
 
     return *this;
@@ -423,10 +419,11 @@ CPLString CPLOPrintf( const char *pszFormat, ... )
 
 {
     va_list args;
-    CPLString osTarget;
-
     va_start( args, pszFormat );
+
+    CPLString osTarget;
     osTarget.vPrintf( pszFormat, args );
+
     va_end( args );
 
     return osTarget;

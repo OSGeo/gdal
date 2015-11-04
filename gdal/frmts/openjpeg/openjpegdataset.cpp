@@ -1072,7 +1072,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
                 VSIFSeekL(fp, nOffsetJP2C - 8, SEEK_SET);
                 GByte abyBuffer[8];
                 VSIFReadL(abyBuffer, 1, 8, fp);
-                if( EQUALN((const char*)abyBuffer + 4, "jp2c", 4) &&
+                if( STARTS_WITH_CI((const char*)abyBuffer + 4, "jp2c") &&
                     abyBuffer[0] == 0 && abyBuffer[1] == 0 &&
                     abyBuffer[2] == 0 && abyBuffer[3] == 0 )
                 {
@@ -2712,7 +2712,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
 
-    const char* pszAccess = EQUALN(pszFilename, "/vsisubfile/", 12) ? "r+b" : "w+b";
+    const char* pszAccess = STARTS_WITH_CI(pszFilename, "/vsisubfile/") ? "r+b" : "w+b";
     VSILFILE* fp = VSIFOpenL(pszFilename, pszAccess);
     if (fp == NULL)
     {

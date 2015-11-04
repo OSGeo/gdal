@@ -302,7 +302,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
         VSIFSeekL( fpPrimary, 0, SEEK_SET );
         VSIFReadL( achHeader, sizeof(achHeader), 1, fpPrimary );
         
-        if( EQUALN(achHeader,"Copyright",8) )
+        if( STARTS_WITH_CI(achHeader,"Copyright") )
         {
             nRT1RecOffset = 1;
             nFeatures--;

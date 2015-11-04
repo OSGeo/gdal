@@ -469,11 +469,11 @@ void check_GDT_CFloat32and64()
     }
 }
 
-int main(int argc, char* argv[])
+int main(int /* argc */, char* /* argv */ [])
 {
     pIn = (char*)malloc(128);
     pOut = (char*)malloc(128);
-    
+
     check_GDT_Byte();
     check_GDT_Int16();
     check_GDT_UInt16();
@@ -483,14 +483,14 @@ int main(int argc, char* argv[])
     check_GDT_CInt16();
     check_GDT_CInt32();
     check_GDT_CFloat32and64();
-    
+
     free(pIn);
     free(pOut);
-    
+
     if (bErr == FALSE)
         printf("success !\n");
     else
         printf("fail !\n");
-    
+
     return (bErr == FALSE) ? 0 : -1;
 }

@@ -1,15 +1,15 @@
 /******************************************************************************
- * 
+ *
  * Project:  VICAR Driver; JPL/MIPL VICAR Format
- * Purpose:  Implementation of VICARKeywordHandler - a class to read 
+ * Purpose:  Implementation of VICARKeywordHandler - a class to read
  *           keyword data from VICAR data products.
  * Authors:  Sebastian Walter <sebastian dot walter at fu-berlin dot de>
  *
  * NOTE: This driver code is loosely based on the ISIS and PDS drivers.
- * It is not intended to diminish the contribution of the authors 
+ * It is not intended to diminish the contribution of the authors.
  ******************************************************************************
  * Copyright (c) 2014, Sebastian Walter <sebastian dot walter at fu-berlin dot de>
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation

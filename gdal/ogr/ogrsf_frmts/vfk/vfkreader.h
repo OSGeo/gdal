@@ -222,7 +222,7 @@ private:
 
     int                m_nPropertyCount;
     VFKPropertyDefn  **m_papoProperty;
-    
+
     int                AddProperty(const char *, const char *);
 
 protected:
@@ -235,16 +235,17 @@ protected:
     OGRwkbGeometryType m_nGeometryType;
     bool               m_bGeometryPerBlock;
 
-    int                m_nFeatureCount;    
+    int                m_nFeatureCount;
     int                m_iNextFeature;
 
+    // TODO: Make m_poReader const.
     IVFKReader        *m_poReader;
 
     GIntBig            m_nRecordCount[3];
-    
+
     bool               AppendLineToRing(PointListArray *, const OGRLineString *, bool, bool = FALSE);
     int                LoadData();
-    
+
     virtual int        LoadGeometryPoint() = 0;
     virtual int        LoadGeometryLineStringSBP() = 0;
     virtual int        LoadGeometryLineStringHP() = 0;

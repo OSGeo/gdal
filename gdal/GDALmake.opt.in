@@ -1,3 +1,4 @@
+# -*- Makefile -*- for emacs.
 GDAL_ROOT	=	@abs_top_builddir@
 top_builddir	=	$(GDAL_ROOT)
 
@@ -70,7 +71,29 @@ INST_HTML	=	$(HOME)/www/gdal
 CPPFLAGS	= @CPPFLAGS@ -I$(GDAL_ROOT)/port @EXTRA_INCLUDES@ -DGDAL_COMPILATION
 CFLAGS		= @CFLAGS@ @C_WFLAGS@ $(USER_DEFS)
 CXXFLAGS	= @CXXFLAGS@ @CXX_WFLAGS@ $(USER_DEFS)
+CFLAGS_NOFTRAPV          = @CFLAGS_NOFTRAPV@ @C_WFLAGS@ $(USER_DEFS)
+CXXFLAGS_NOFTRAPV        = @CXXFLAGS_NOFTRAPV@ @CXX_WFLAGS@ $(USER_DEFS)
+
+NO_UNUSED_PARAMETER_FLAG = @NO_UNUSED_PARAMETER_FLAG@
+NO_SIGN_COMPARE = @NO_SIGN_COMPARE@
+
+# TODO(schwehr): Make these be configure flags.
+# CFLAGS += -Werror
+# CFLAGS += -std=c11
+# CFLAGS += -fsanitize=address
+# CFLAGS += -D_FORTIFY_SOURCE=2
+# CFLAGS += -fPIE -pie
+# CFLAGS += -fstack-protector-all
+
+# CXXFLAGS += -Werror
+# CXXFLAGS += -std=c++11
+# CXXFLAGS += -fsanitize=address
+# CXXFLAGS += -D_FORTIFY_SOURCE=2
+# CXXFLAGS += -fPIE -pie
+# CXXFLAGS += -fstack-protector-all
+
 LDFLAGS     = @LDFLAGS@
+# LDFLAGS += -fsanitize=address
 
 RANLIB		=	@RANLIB@
 SO_EXT		=	@SO_EXT@
@@ -86,7 +109,7 @@ endif
 GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 			-I$(GDAL_ROOT)/alg \
                         -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts \
-                        -I$(GDAL_ROOT)/gnm
+                        -I$(GDAL_ROOT)/gnm -I$(GDAL_ROOT)/apps
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la

@@ -2265,7 +2265,7 @@ static void Ugly2English (UglyStringType * ugly)
       f_first = 1;
       for (j = 0; j < NUM_UGLY_ATTRIB; j++) {
          if (ugly->attrib[i][j] != 0) {
-            if (ugly->f_priority == 0) {
+            if (ugly->f_priority[i] == 0) {
                if (f_first) {
                   strcat (buffer, " with ");
                   f_first = 0;

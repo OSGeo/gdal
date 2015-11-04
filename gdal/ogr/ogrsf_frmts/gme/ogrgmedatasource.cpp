@@ -42,19 +42,15 @@ CPL_CVSID("$Id$");
 /*                          OGRGMEDataSource()                          */
 /************************************************************************/
 
-OGRGMEDataSource::OGRGMEDataSource()
-
+OGRGMEDataSource::OGRGMEDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bReadWrite(FALSE),
+    bUseHTTPS(FALSE),
+    bMustCleanPersistant(FALSE),
+    nRetries(0)
 {
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-
-    bReadWrite = FALSE;
-    bUseHTTPS = FALSE;
-
-    bMustCleanPersistant = FALSE;
-    nRetries = 0;
 }
 
 /************************************************************************/
@@ -72,7 +68,7 @@ OGRGMEDataSource::~OGRGMEDataSource()
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("GME:%p", this));
-        CPLHTTPFetch( GetAPIURL(), papszOptions);
+        CPLHTTPDestroyResult( CPLHTTPFetch( GetAPIURL(), papszOptions ) );
         CSLDestroy(papszOptions);
     }
 
@@ -86,11 +82,8 @@ OGRGMEDataSource::~OGRGMEDataSource()
 int OGRGMEDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+    if( EQUAL(pszCap, ODsCCreateLayer) )
         return TRUE;
-    //else if( bReadWrite && EQUAL(pszCap,ODsCDeleteLayer) )
-    //    return TRUE;
-    //else
     return FALSE;
 }
 
@@ -111,7 +104,7 @@ OGRLayer *OGRGMEDataSource::GetLayer( int iLayer )
 /*                      OGRGMEGetOptionValue()                          */
 /************************************************************************/
 
-CPLString OGRGMEGetOptionValue(const char* pszFilename,
+static CPLString OGRGMEGetOptionValue(const char* pszFilename,
                                const char* pszOptionName)
 {
     CPLString osOptionName(pszOptionName);
@@ -362,7 +355,7 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
 /*      are transformed info failure.                                   */
 /* -------------------------------------------------------------------- */
     if (psResult && psResult->pszContentType &&
-        strncmp(psResult->pszContentType, "text/html", 9) == 0)
+        STARTS_WITH(psResult->pszContentType, "text/html"))
     {
         CPLDebug( "GME", "MakeRequest HTML Response: %s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -523,7 +516,7 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
 /*      are transformed info failure.                                   */
 /* -------------------------------------------------------------------- */
     if (psResult && psResult->pszContentType &&
-        strncmp(psResult->pszContentType, "text/html", 9) == 0)
+        STARTS_WITH(psResult->pszContentType, "text/html"))
     {
         CPLDebug( "GME", "PostRequest HTML Response:%s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined,

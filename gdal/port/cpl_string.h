@@ -120,6 +120,8 @@ char CPL_DLL **
 void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList, 
                                        const char *pszSeparator );
 
+char CPL_DLL ** CSLParseCommandLine(const char* pszCommandLine);
+
 #define CPLES_BackslashQuotable 0
 #define CPLES_XML               1
 #define CPLES_URL               2
@@ -154,15 +156,15 @@ size_t CPL_DLL CPLStrnlen (const char *pszStr, size_t nMaxLen);
 /* -------------------------------------------------------------------- */
 /*      Locale independant formatting functions.                        */
 /* -------------------------------------------------------------------- */
-int CPL_DLL CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args);
+int CPL_DLL CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args) CPL_PRINT_FUNC_FORMAT (3, 0);
 int CPL_DLL CPLsnprintf(char *str, size_t size, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(3,4);
 int CPL_DLL CPLsprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3);
 int CPL_DLL CPLprintf(const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(1, 2);
-int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...); /* caution: only works with limited number of formats */
+int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...) CPL_SCAN_FUNC_FORMAT(2, 3); /* caution: only works with limited number of formats */
 
-const char CPL_DLL *CPLSPrintf(const char *fmt, ...) CPL_PRINT_FUNC_FORMAT(1, 2);
+const char CPL_DLL *CPLSPrintf(const char *fmt, ...) CPL_PRINT_FUNC_FORMAT(1, 2) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLAppendPrintf(char **papszStrList, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLVASPrintf(char **buf, const char *fmt, va_list args );
+int CPL_DLL CPLVASPrintf(char **buf, const char *fmt, va_list args ) CPL_PRINT_FUNC_FORMAT(2, 0);
 
 /* -------------------------------------------------------------------- */
 /*      RFC 23 character set conversion/recoding API (cpl_recode.cpp).  */
@@ -179,7 +181,7 @@ int CPL_DLL  CPLEncodingCharSize( const char *pszEncoding );
 void CPL_DLL  CPLClearRecodeWarningFlags( void );
 char CPL_DLL *CPLRecode( const char *pszSource, 
                          const char *pszSrcEncoding, 
-                         const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT;
+                         const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource, 
                                   const char *pszSrcEncoding, 
                                   const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT;
@@ -227,17 +229,11 @@ CPL_C_END
 # define gdal_std_string std::string
 #endif 
 
-/* Remove annoying warnings in Microsoft eVC++ and Microsoft Visual C++ */
-#if defined(WIN32CE)
-#  pragma warning(disable:4251 4275 4786)
-#endif
-
 //! Convenient string class based on std::string.
 class CPL_DLL CPLString : public gdal_std_string
 {
 public:
 
-    
     CPLString(void) {}
     CPLString( const std::string &oStr ) : gdal_std_string( oStr ) {}
     CPLString( const char *pszStr ) : gdal_std_string( pszStr ) {}
@@ -280,7 +276,7 @@ public:
 
     /* There seems to be a bug in the way the compiler count indices... Should be CPL_PRINT_FUNC_FORMAT (1, 2) */
     CPLString &Printf( const char *pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
-    CPLString &vPrintf( const char *pszFormat, va_list args );
+    CPLString &vPrintf( const char *pszFormat, va_list args ) CPL_PRINT_FUNC_FORMAT(2, 0);
     CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
     CPLString &Trim();
     CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
@@ -293,7 +289,7 @@ public:
 };
 
 CPLString CPLOPrintf(const char *pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (1, 2);
-CPLString CPLOvPrintf(const char *pszFormat, va_list args);
+CPLString CPLOvPrintf(const char *pszFormat, va_list args) CPL_PRINT_FUNC_FORMAT (1, 0);
 
 /* -------------------------------------------------------------------- */
 /*      URL processing functions, here since they depend on CPLString.  */

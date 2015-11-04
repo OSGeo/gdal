@@ -18,10 +18,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -72,12 +72,14 @@
  *
  * Constructor.
  **********************************************************************/
-TABIDFile::TABIDFile()
+TABIDFile::TABIDFile() :
+    m_pszFname(NULL),
+    m_fp(NULL),
+    m_eAccessMode(TABRead),
+    m_poIDBlock(NULL),
+    m_nBlockSize(0),
+    m_nMaxId(-1)
 {
-    m_fp = NULL;
-    m_pszFname = NULL;
-    m_poIDBlock = NULL;
-    m_nMaxId = -1;
 }
 
 /**********************************************************************
@@ -99,9 +101,9 @@ TABIDFile::~TABIDFile()
 
 int TABIDFile::Open(const char *pszFname, const char* pszAccess)
 {
-    if( EQUALN(pszAccess, "r", 1) )
+    if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead);
-    else if( EQUALN(pszAccess, "w", 1) )
+    else if( STARTS_WITH_CI(pszAccess, "w") )
         return Open(pszFname, TABWrite);
     else
     {
@@ -124,8 +126,6 @@ int TABIDFile::Open(const char *pszFname, const char* pszAccess)
  **********************************************************************/
 int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
 {
-    int         nLen;
-
     if (m_fp)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -166,7 +166,7 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
 
-    nLen = strlen(m_pszFname);
+    int nLen = strlen(m_pszFname);
     if (nLen > 4 && strcmp(m_pszFname+nLen-4, ".MAP")==0)
         strcpy(m_pszFname+nLen-4, ".ID");
     else if (nLen > 4 && strcmp(m_pszFname+nLen-4, ".map")==0)
@@ -262,7 +262,7 @@ int TABIDFile::Close()
      *---------------------------------------------------------------*/
     if (m_eAccessMode != TABRead)
         SyncToDisk();
-    
+
     // Delete all structures 
     delete m_poIDBlock;
     m_poIDBlock = NULL;
@@ -433,8 +433,3 @@ void TABIDFile::Dump(FILE *fpOut /*=NULL*/)
 }
 
 #endif // DEBUG
-
-
-
-
-

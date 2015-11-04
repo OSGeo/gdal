@@ -184,19 +184,19 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
                 poDefn->SetGeomType( wkbPolygon );
             continue;
         }
-        else if( EQUALN(osIngresType,"byte",4) 
-            || EQUALN(osIngresType,"long byte",9) )
+        else if( STARTS_WITH_CI(osIngresType, "byte") 
+            || STARTS_WITH_CI(osIngresType, "long byte") )
         {
             oField.SetType( OFTBinary );
         }
-        else if( EQUALN(osIngresType,"varchar",7) 
+        else if( STARTS_WITH_CI(osIngresType, "varchar") 
                  || EQUAL(osIngresType,"text") 
-                 || EQUALN(osIngresType,"long varchar",12) )
+                 || STARTS_WITH_CI(osIngresType, "long varchar") )
         {
             oField.SetType( OFTString );
             oField.SetWidth( nWidth );
         }
-        else if( EQUALN(osIngresType,"char",4) || EQUAL(osIngresType,"c") )
+        else if( STARTS_WITH_CI(osIngresType, "char") || EQUAL(osIngresType,"c") )
         {
             oField.SetType( OFTString );
             oField.SetWidth( nWidth );
@@ -205,7 +205,7 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
         {
             oField.SetType( OFTInteger );
         }
-        else if( EQUALN(osIngresType,"decimal", 7) )
+        else if( STARTS_WITH_CI(osIngresType, "decimal") )
         {
             if( nScale != 0 )
             {
@@ -219,7 +219,7 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
                 oField.SetWidth( nWidth );
             }
         }
-        else if( EQUALN(osIngresType,"float", 5) )
+        else if( STARTS_WITH_CI(osIngresType, "float") )
         {
             oField.SetType( OFTReal );
         }
@@ -619,7 +619,7 @@ OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry(
                 continue;
             }
             
-            if( EQUALN(osIngresGeomType,"I",1) )
+            if( STARTS_WITH_CI(osIngresGeomType, "I") )
                 osPoint.Printf( "(%d,%d)",
                                 (int) floor(poLS->getX(i)), 
                                 (int) floor(poLS->getY(i)) );
@@ -705,7 +705,7 @@ OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry(
                 continue;
             }
             
-            if( EQUALN(osIngresGeomType,"I",1) )
+            if( STARTS_WITH_CI(osIngresGeomType, "I") )
                 osPoint.Printf( "(%d,%d)",
                                 (int) floor(poLS->getX(i)), 
                                 (int) floor(poLS->getY(i)) );

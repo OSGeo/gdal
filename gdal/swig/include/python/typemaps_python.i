@@ -170,7 +170,6 @@
 {
   /* %typemap(ret) OGRErr */
   if (resultobj == Py_None ) {
-    Py_DECREF(resultobj);
     resultobj = 0;
   }
   if (resultobj == 0) {
@@ -227,7 +226,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
-  int seq_size = PySequence_Size($input);
+  Py_ssize_t seq_size = PySequence_Size($input);
   if ( seq_size != $dim0 ) {
     PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
     SWIG_fail;
@@ -256,7 +255,12 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
-  $1 = PySequence_Size($input);
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
   $2 = (int*) malloc($1*sizeof(int));
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
@@ -288,7 +292,12 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
-  $1 = PySequence_Size($input);
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
   $2 = (GIntBig*) malloc($1*sizeof(GIntBig));
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
@@ -322,7 +331,12 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
-  $1 = PySequence_Size($input);
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
   $2 = (GUIntBig*) malloc($1*sizeof(GUIntBig));
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
@@ -356,7 +370,12 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
-  $1 = PySequence_Size($input);
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
   $2 = (double*) malloc($1*sizeof(double));
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
@@ -716,7 +735,12 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
-  $1 = PySequence_Size($input);
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
   tmpGCPList = (GDAL_GCP*) malloc($1*sizeof(GDAL_GCP));
   $2 = tmpGCPList;
   for( int i = 0; i<$1; i++ ) {
@@ -760,7 +784,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
-   int size = PySequence_Size($input);
+   Py_ssize_t size = PySequence_Size($input);
    if ( size > 4 ) {
      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
      SWIG_fail;
@@ -823,8 +847,12 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   /* %typemap(in) char **dict */
   $1 = NULL;
   if ( PySequence_Check( $input ) ) {
-    int size = PySequence_Size($input);
-    for (int i = 0; i < size; i++) {
+    Py_ssize_t size = PySequence_Size($input);
+    if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
       PyObject* pyObj = PySequence_GetItem($input,i);
       int bFreeStr;
       char* pszStr = GDALPythonObjectToCStr(pyObj, &bFreeStr);
@@ -840,10 +868,10 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   }
   else if ( PyMapping_Check( $input ) ) {
     /* We need to use the dictionary form. */
-    int size = PyMapping_Length( $input );
-    if ( size > 0 ) {
+    Py_ssize_t size = PyMapping_Length( $input );
+    if ( size > 0 && size == (int)size) {
       PyObject *item_list = PyMapping_Items( $input );
-      for( int i=0; i<size; i++ ) {
+      for( int i=0; i<(int)size; i++ ) {
         PyObject *it = PySequence_GetItem( item_list, i );
 
         PyObject *k, *v;
@@ -900,8 +928,12 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     SWIG_fail;
   }
 
-  int size = PySequence_Size($input);
-  for (int i = 0; i < size; i++) {
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  for (int i = 0; i < (int)size; i++) {
     PyObject* pyObj = PySequence_GetItem($input,i);
     if (PyUnicode_Check(pyObj))
     {
@@ -1400,7 +1432,12 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
-  $1 = PySequence_Size($input);
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
   $2 = (type**) CPLMalloc($1*sizeof(type*));
   
   for( int i = 0; i<$1; i++ ) {
@@ -1431,6 +1468,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 %enddef
 
 OBJECT_LIST_INPUT(GDALRasterBandShadow);
+OBJECT_LIST_INPUT(GDALDatasetShadow);
 
 /* ***************************************************************************
  *                       GetHistogram()
@@ -1639,7 +1677,12 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
     SWIG_fail;
   }
 
-  $1 = PySequence_Size($input);
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
   $2 = (double*) VSIMalloc($1*sizeof(double));
   $3 = (double*) VSIMalloc($1*sizeof(double));
   $4 = (double*) VSIMalloc($1*sizeof(double));
@@ -1690,7 +1733,12 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
     SWIG_fail;
   }
 
-  $1 = PySequence_Size($input);
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
   $2 = (double*) VSIMalloc($1*sizeof(double));
   $3 = (double*) VSIMalloc($1*sizeof(double));
   $4 = (double*) VSIMalloc($1*sizeof(double));
@@ -1833,42 +1881,42 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
   }
   if( *($3) == GDT_Byte )
   {
-    buf->format = "B";
+    buf->format = (char*) "B";
     buf->itemsize = 1;
   }
   else if( *($3) == GDT_Int16 )
   {
-    buf->format = "h";
+    buf->format = (char*) "h";
     buf->itemsize = 2;
   }
   else if( *($3) == GDT_UInt16 )
   {
-    buf->format = "H";
+    buf->format = (char*) "H";
     buf->itemsize = 2;
   }
   else if( *($3) == GDT_Int32 )
   {
-    buf->format = "i";
+    buf->format = (char*) "i";
     buf->itemsize = 4;
   }
   else if( *($3) == GDT_UInt32 )
   {
-    buf->format = "I";
+    buf->format = (char*) "I";
     buf->itemsize = 4;
   }
   else if( *($3) == GDT_Float32 )
   {
-    buf->format = "f";
+    buf->format = (char*) "f";
     buf->itemsize = 4;
   }
   else if( *($3) == GDT_Float64 )
   {
-    buf->format = "F";
+    buf->format = (char*) "F";
     buf->itemsize = 8;
   }
   else
   {
-    buf->format = "B";
+    buf->format = (char*) "B";
     buf->itemsize = 1;
   }
   $result = PyMemoryView_FromBuffer(buf);

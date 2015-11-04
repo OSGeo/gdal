@@ -34,10 +34,10 @@
 
 CPL_C_START
 
-void CheckExtensionConsistency(const char* pszDestFilename,
+void CPL_DLL CheckExtensionConsistency(const char* pszDestFilename,
                                const char* pszDriverName);
 
-void EarlySetConfigOptions( int argc, char ** argv );
+void CPL_DLL EarlySetConfigOptions( int argc, char ** argv );
 
 CPL_C_END
 

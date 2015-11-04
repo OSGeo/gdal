@@ -37,57 +37,14 @@
 #ifndef PDFOBJECT_H_INCLUDED
 #define PDFOBJECT_H_INCLUDED
 
+#include "pdfsdk_headers.h"
+
 #include "cpl_string.h"
 #include <map>
 #include <vector>
 
 #define DEFAULT_DPI         (72.0)
 #define USER_UNIT_IN_INCH   (1.0 / DEFAULT_DPI)
-
-#ifdef HAVE_POPPLER
-
-/* begin of poppler xpdf includes */
-#include <poppler/Object.h>
-
-#define private public /* Ugly! Page::pageObj is private but we need it... */
-#include <poppler/Page.h>
-#undef private
-
-#include <poppler/Dict.h>
-
-#define private public /* Ugly! Catalog::optContent is private but we need it... */
-#include <poppler/Catalog.h>
-#undef private
-
-#define private public  /* Ugly! PDFDoc::str is private but we need it... */
-#include <poppler/PDFDoc.h>
-#undef private
-
-#include <poppler/splash/SplashBitmap.h>
-#include <poppler/splash/Splash.h>
-#include <poppler/SplashOutputDev.h>
-#include <poppler/GlobalParams.h>
-#include <poppler/ErrorCodes.h>
-/* end of poppler xpdf includes */
-
-#endif // HAVE_POPPLER
-
-#ifdef HAVE_PODOFO
-/*
- * Some Windows header defines a GetObject macro that
- * shadows a GetObject() method in PoDoFo. This
- * workaround is documented in the PoDoFo source.
- */ 
-#ifdef GetObject
-#undef GetObject
-#endif
-
-#include "podofo.h"
-#endif // HAVE_PODOFO
-
-#ifdef HAVE_PDFIUM
-#include <core/include/fpdfapi/fpdf_objects.h>
-#endif // HAVE_PDFIUM
 
 double ROUND_TO_INT_IF_CLOSE(double x, double eps = 0);
 

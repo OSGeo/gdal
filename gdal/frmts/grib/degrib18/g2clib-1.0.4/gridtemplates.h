@@ -43,7 +43,7 @@
       };
 
 
-const struct gridtemplate *get_templatesgrid();
+const struct gridtemplate *get_templatesgrid(void);
 g2int getgridindex(g2int number);
 
 #endif  /*  _gridtemplates_H  */

@@ -107,6 +107,7 @@
  * case of 2 numbers that are part of the same string but are not separated 
  * by a space.
  **********************************************************************/
+static
 int    AVCE00Str2Int(const char *pszStr, int numChars)
 {
     int nValue = 0;
@@ -140,7 +141,7 @@ int    AVCE00Str2Int(const char *pszStr, int numChars)
  *
  * The structure will eventually have to be freed with AVCE00ParseInfoFree().
  **********************************************************************/
-AVCE00ParseInfo  *AVCE00ParseInfoAlloc()
+AVCE00ParseInfo  *AVCE00ParseInfoAlloc(void)
 {
     AVCE00ParseInfo       *psInfo;
 
@@ -170,6 +171,7 @@ AVCE00ParseInfo  *AVCE00ParseInfoAlloc()
  * Release mem. associated with the psInfo->cur.* object we are
  * currently using.
  **********************************************************************/
+static
 void    _AVCE00ParseDestroyCurObject(AVCE00ParseInfo  *psInfo)
 {
     if (psInfo->eFileType == AVCFileUnknown)
@@ -294,13 +296,13 @@ AVCFileType  AVCE00ParseSuperSectionHeader(AVCE00ParseInfo  *psInfo,
     /*-----------------------------------------------------------------
      * Check if pszLine is a valid supersection header line.
      *----------------------------------------------------------------*/
-    if (EQUALN(pszLine, "RPL  ", 5))
+    if (STARTS_WITH_CI(pszLine, "RPL  "))
         psInfo->eSuperSectionType = AVCFileRPL;
-    else if (EQUALN(pszLine, "TX6  ", 5) || EQUALN(pszLine, "TX7  ", 5))
+    else if (STARTS_WITH_CI(pszLine, "TX6  ") || STARTS_WITH_CI(pszLine, "TX7  "))
         psInfo->eSuperSectionType = AVCFileTX6;
-    else if (EQUALN(pszLine, "RXP  ", 5))
+    else if (STARTS_WITH_CI(pszLine, "RXP  "))
         psInfo->eSuperSectionType = AVCFileRXP;
-    else if (EQUALN(pszLine, "IFO  ", 5))
+    else if (STARTS_WITH_CI(pszLine, "IFO  "))
         psInfo->eSuperSectionType = AVCFileTABLE;
     else
         return AVCFileUnknown;
@@ -344,9 +346,9 @@ GBool  AVCE00ParseSuperSectionEnd(AVCE00ParseInfo  *psInfo,
 {
     if (psInfo->eFileType == AVCFileUnknown &&
         psInfo->eSuperSectionType != AVCFileUnknown &&
-        (EQUALN(pszLine, "JABBERWOCKY", 11) ||
+        (STARTS_WITH_CI(pszLine, "JABBERWOCKY") ||
          (psInfo->eSuperSectionType == AVCFileTABLE && 
-          EQUALN(pszLine, "EOI", 3) )  ) )
+          STARTS_WITH_CI(pszLine, "EOI") )  ) )
     {
         psInfo->eSuperSectionType = AVCFileUnknown;
         /* psInfo->nStartLineNum = -1; */
@@ -387,19 +389,19 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
         /*-------------------------------------------------------------
          * We're looking for a top-level section...
          *------------------------------------------------------------*/
-        if (EQUALN(pszLine, "ARC  ", 5))
+        if (STARTS_WITH_CI(pszLine, "ARC  "))
             eNewType = AVCFileARC;
-        else if (EQUALN(pszLine, "PAL  ", 5))
+        else if (STARTS_WITH_CI(pszLine, "PAL  "))
             eNewType = AVCFilePAL;
-        else if (EQUALN(pszLine, "CNT  ", 5))
+        else if (STARTS_WITH_CI(pszLine, "CNT  "))
             eNewType = AVCFileCNT;
-        else if (EQUALN(pszLine, "LAB  ", 5))
+        else if (STARTS_WITH_CI(pszLine, "LAB  "))
             eNewType = AVCFileLAB;
-        else if (EQUALN(pszLine, "TOL  ", 5))
+        else if (STARTS_WITH_CI(pszLine, "TOL  "))
             eNewType = AVCFileTOL;
-        else if (EQUALN(pszLine, "PRJ  ", 5))
+        else if (STARTS_WITH_CI(pszLine, "PRJ  "))
             eNewType = AVCFilePRJ;
-        else if (EQUALN(pszLine, "TXT  ", 5))
+        else if (STARTS_WITH_CI(pszLine, "TXT  "))
             eNewType = AVCFileTXT;
         else
         {
@@ -449,10 +451,10 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
             eNewType = psInfo->eSuperSectionType;
         }
         else if (strlen(pszLine) > 0 && !isspace((unsigned char)pszLine[0]) && 
-                 !EQUALN(pszLine, "JABBERWOCKY", 11) &&
-                 !EQUALN(pszLine, "EOI", 3) &&
+                 !STARTS_WITH_CI(pszLine, "JABBERWOCKY") &&
+                 !STARTS_WITH_CI(pszLine, "EOI") &&
                  ! ( psInfo->eSuperSectionType == AVCFileRPL &&
-                     EQUALN(pszLine, " 0.00000", 6)  ) )
+                     STARTS_WITH_CI(pszLine, " 0.00000")  ) )
         {
             eNewType = psInfo->eSuperSectionType;
         }
@@ -574,7 +576,7 @@ GBool  AVCE00ParseSectionEnd(AVCE00ParseInfo  *psInfo, const char *pszLine,
            psInfo->eFileType == AVCFileTXT ||
            psInfo->eFileType == AVCFileTX6 ||
            psInfo->eFileType == AVCFileRXP )  && 
-          EQUALN(pszLine, "        -1         0", 20)  ) )
+          STARTS_WITH_CI(pszLine, "        -1         0")  ) )
     {
         /* Reset ParseInfo only if explicitly requested. 
          */
@@ -1246,7 +1248,7 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
      * of the section (the end-of-section line).
      *------------------------------------------------------------*/
 
-    if (EQUALN(pszLine, "EOP", 3))
+    if (STARTS_WITH_CI(pszLine, "EOP"))
     {
         /*-------------------------------------------------------------
          * We reached end of section... return the PRJ.

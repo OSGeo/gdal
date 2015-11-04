@@ -369,7 +369,7 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     /* it transparently with /vsigzip/ */
     if ( ((GByte*)szHeader)[0] == 0x1f && ((GByte*)szHeader)[1] == 0x8b &&
             EQUAL(CPLGetExtension(pszFilename), "gz") &&
-            strncmp(pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0 )
+            !STARTS_WITH(pszFilename, "/vsigzip/") )
     {
         if( fpToClose )
             VSIFCloseL( fpToClose );
@@ -412,9 +412,9 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     const char* pszEncoding = strstr(szPtr, "encoding=");
     if (pszEncoding)
         bExpatCompatibleEncoding = (pszEncoding[9] == '\'' || pszEncoding[9] == '"') &&
-                                    (EQUALN(pszEncoding + 10, "UTF-8", 5) ||
-                                    EQUALN(pszEncoding + 10, "ISO-8859-15", 11) ||
-                                    (EQUALN(pszEncoding + 10, "ISO-8859-1", 10) &&
+                                    (STARTS_WITH_CI(pszEncoding + 10, "UTF-8") ||
+                                    STARTS_WITH_CI(pszEncoding + 10, "ISO-8859-15") ||
+                                    (STARTS_WITH_CI(pszEncoding + 10, "ISO-8859-1") &&
                                         pszEncoding[20] == pszEncoding[9])) ;
     else
         bExpatCompatibleEncoding = TRUE; /* utf-8 is the default */
@@ -474,7 +474,7 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             }
         }
     }
-    else if (strncmp(pszFilename, "/vsimem/tempwfs_", strlen("/vsimem/tempwfs_")) == 0)
+    else if (STARTS_WITH(pszFilename, "/vsimem/tempwfs_"))
     {
         /* http://regis.intergraph.com/wfs/dcmetro/request.asp? returns a <G:FeatureCollection> */
         /* Who knows what servers can return ? Ok, so when in the context of the WFS driver */
@@ -517,9 +517,9 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     if (pszSchemaLocation)
         pszSchemaLocation += strlen("schemaLocation=");
 
-    if (strncmp(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")) == 0)
+    if (STARTS_WITH(pszFilename, "/vsicurl_streaming/"))
         bCheckAuxFile = FALSE;
-    else if (strncmp(pszFilename, "/vsicurl/", strlen("/vsicurl/")) == 0 &&
+    else if (STARTS_WITH(pszFilename, "/vsicurl/") &&
              (strstr(pszFilename, "?SERVICE=") || strstr(pszFilename, "&SERVICE=")) )
         bCheckAuxFile = FALSE;
 
@@ -625,14 +625,14 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     const char *pszOption = CPLGetConfigOption("GML_SAVE_RESOLVED_TO", NULL);
     int bResolve = TRUE;
     int bHugeFile = FALSE;
-    if( pszOption != NULL && EQUALN( pszOption, "SAME", 4 ) )
+    if( pszOption != NULL && STARTS_WITH_CI(pszOption, "SAME") )
     {
         // "SAME" will overwrite the existing gml file
         pszXlinkResolvedFilename = CPLStrdup( pszFilename );
     }
     else if( pszOption != NULL &&
              CPLStrnlen( pszOption, 5 ) >= 5 &&
-             EQUALN( pszOption - 4 + strlen( pszOption ), ".gml", 4 ) )
+             STARTS_WITH_CI(pszOption - 4 + strlen( pszOption ), ".gml") )
     {
         // Any string ending with ".gml" will try and write to it
         pszXlinkResolvedFilename = CPLStrdup( pszOption );
@@ -648,8 +648,8 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         VSIStatBufL sResStatBuf, sGMLStatBuf;
         if( bCheckAuxFile && VSIStatL( pszXlinkResolvedFilename, &sResStatBuf ) == 0 )
         {
-            VSIStatL( pszFilename, &sGMLStatBuf );
-            if( sGMLStatBuf.st_mtime > sResStatBuf.st_mtime )
+            if( VSIStatL( pszFilename, &sGMLStatBuf ) == 0 &&
+                sGMLStatBuf.st_mtime > sResStatBuf.st_mtime )
             {
                 CPLDebug( "GML", 
                           "Found %s but ignoring because it appears\n"
@@ -742,7 +742,7 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     }
 
     CPLString osGFSFilename = CPLResetExtension( pszFilename, "gfs" );
-    if (strncmp(osGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
+    if (STARTS_WITH(osGFSFilename, "/vsigzip/"))
         osGFSFilename = osGFSFilename.substr(strlen("/vsigzip/"));
 
 /* -------------------------------------------------------------------- */
@@ -754,8 +754,8 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         if( bCheckAuxFile && VSIStatL( osGFSFilename, &sGFSStatBuf ) == 0 )
         {
             VSIStatBufL sGMLStatBuf;
-            VSIStatL( pszFilename, &sGMLStatBuf );
-            if( sGMLStatBuf.st_mtime > sGFSStatBuf.st_mtime )
+            if( VSIStatL( pszFilename, &sGMLStatBuf ) == 0 &&
+                sGMLStatBuf.st_mtime > sGFSStatBuf.st_mtime )
             {
                 CPLDebug( "GML", 
                           "Found %s but ignoring because it appears\n"
@@ -803,8 +803,8 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         }
         else
         {
-            if ( strncmp(osXSDFilename, "http://", 7) == 0 ||
-                 strncmp(osXSDFilename, "https://", 8) == 0 ||
+            if ( STARTS_WITH(osXSDFilename, "http://") ||
+                 STARTS_WITH(osXSDFilename, "https://") ||
                  VSIStatExL( osXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
             {
                 bHasFoundXSD = TRUE;
@@ -863,8 +863,8 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                 if( oFeatureType.osSchemaLocation.size() )
                                 {
                                     osXSDFilename = oFeatureType.osSchemaLocation;
-                                    if( strncmp(osXSDFilename, "http://", 7) == 0 ||
-                                        strncmp(osXSDFilename, "https://", 8) == 0 ||
+                                    if( STARTS_WITH(osXSDFilename, "http://") ||
+                                        STARTS_WITH(osXSDFilename, "https://") ||
                                         VSIStatExL( osXSDFilename, &sXSDStatBuf,
                                                     VSI_STAT_EXISTS_FLAG ) == 0 )
                                     {
@@ -1139,12 +1139,12 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /*      can't ... could be read-only directory or something.            */
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema && !poReader->HasStoppedParsing() &&
-        !EQUALN(pszFilename, "/vsitar/", strlen("/vsitar/")) &&
-        !EQUALN(pszFilename, "/vsizip/", strlen("/vsizip/")) &&
-        !EQUALN(pszFilename, "/vsigzip/vsi", strlen("/vsigzip/vsi")) &&
-        !EQUALN(pszFilename, "/vsigzip//vsi", strlen("/vsigzip//vsi")) &&
-        !EQUALN(pszFilename, "/vsicurl/", strlen("/vsicurl/")) &&
-        !EQUALN(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
+        !STARTS_WITH_CI(pszFilename, "/vsitar/") &&
+        !STARTS_WITH_CI(pszFilename, "/vsizip/") &&
+        !STARTS_WITH_CI(pszFilename, "/vsigzip/vsi") &&
+        !STARTS_WITH_CI(pszFilename, "/vsigzip//vsi") &&
+        !STARTS_WITH_CI(pszFilename, "/vsicurl/") &&
+        !STARTS_WITH_CI(pszFilename, "/vsicurl_streaming/"))
     {
         VSILFILE    *fp = NULL;
 
@@ -1504,7 +1504,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             eFType = OFTString;
         
         OGRFieldDefn oField( poProperty->GetName(), eFType );
-        if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
+        if ( STARTS_WITH_CI(oField.GetNameRef(), "ogr:") )
           oField.SetName(poProperty->GetName()+4);
         if( poProperty->GetWidth() > 0 )
             oField.SetWidth( poProperty->GetWidth() );
@@ -1585,13 +1585,13 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     osFilename = pszName;
 
     if( strcmp(pszFilename,"/vsistdout/") == 0 ||
-        strncmp(pszFilename,"/vsigzip/", 9) == 0 )
+        STARTS_WITH(pszFilename, "/vsigzip/") )
     {
         fpOutput = VSIFOpenL(pszFilename, "wb");
         bFpOutputIsNonSeekable = TRUE;
         bFpOutputSingleFile = TRUE;
     }
-    else if ( strncmp(pszFilename,"/vsizip/", 8) == 0)
+    else if ( STARTS_WITH(pszFilename, "/vsizip/"))
     {
         if (EQUAL(CPLGetExtension(pszFilename), "zip"))
         {
@@ -2419,9 +2419,8 @@ void OGRGMLDataSource::InsertHeader()
 /* -------------------------------------------------------------------- */
         int nChunkSize = MIN(nSchemaStart-nSchemaInsertLocation,250000);
         char *pszChunk = (char *) CPLMalloc(nChunkSize);
-        int nEndOfUnmovedData = nSchemaStart;
 
-        for( nEndOfUnmovedData = nSchemaStart;
+        for( int nEndOfUnmovedData = nSchemaStart;
              nEndOfUnmovedData > nSchemaInsertLocation; )
         {
             int nBytesToMove = 
@@ -2729,7 +2728,7 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE* fp)
                 {
                     CPLDebug("GML", "Global SRS = %s", pszSRSName);
 
-                    if (strncmp(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#", 40) == 0)
+                    if (STARTS_WITH(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#"))
                     {
                         std::string osWork;
                         osWork.assign("EPSG:", 5);

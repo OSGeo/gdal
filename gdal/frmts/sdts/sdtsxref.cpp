@@ -35,13 +35,11 @@ CPL_CVSID("$Id$");
 /*                             SDTS_XREF()                              */
 /************************************************************************/
 
-SDTS_XREF::SDTS_XREF()
-
-{
-    pszSystemName = CPLStrdup( "" );
-    pszDatum = CPLStrdup( "" );
-    nZone = 0;
-}
+SDTS_XREF::SDTS_XREF() :
+    pszSystemName(CPLStrdup("")),
+    pszDatum(CPLStrdup("")),
+    nZone(0)
+{}
 
 /************************************************************************/
 /*                             ~SDTS_XREF()                             */
@@ -62,19 +60,17 @@ SDTS_XREF::~SDTS_XREF()
 int SDTS_XREF::Read( const char * pszFilename )
 
 {
-    DDFModule   oXREFFile;
-    DDFRecord   *poRecord;
-
 /* -------------------------------------------------------------------- */
 /*      Open the file, and read the header.                             */
 /* -------------------------------------------------------------------- */
+    DDFModule oXREFFile;
     if( !oXREFFile.Open( pszFilename ) )
         return FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the first record, and verify that this is an XREF record.  */
 /* -------------------------------------------------------------------- */
-    poRecord = oXREFFile.ReadRecord();
+    DDFRecord *poRecord = oXREFFile.ReadRecord();
     if( poRecord == NULL )
         return FALSE;
 

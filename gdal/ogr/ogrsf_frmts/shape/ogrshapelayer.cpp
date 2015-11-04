@@ -34,10 +34,6 @@
 #include "ogr_p.h"
 #include "cpl_time.h"
 
-#if defined(_WIN32_WCE)
-#  include <wce_errno.h>
-#endif
-
 #define FD_OPENED           0
 #define FD_CLOSED           1
 #define FD_CANNOT_REOPEN    2
@@ -52,40 +48,36 @@ CPL_CVSID("$Id$");
 
 OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
                               const char * pszFullNameIn,
-                              SHPHandle hSHPIn, DBFHandle hDBFIn, 
+                              SHPHandle hSHPIn, DBFHandle hDBFIn,
                               OGRSpatialReference *poSRSIn, int bSRSSetIn,
                               int bUpdate,
                               OGRwkbGeometryType eReqType,
                               char ** papszCreateOptions ) :
-                                OGRAbstractProxiedLayer(poDSIn->GetPool())
-
+    OGRAbstractProxiedLayer(poDSIn->GetPool()),
+    poDS(poDSIn),
+    iNextShapeId(0),
+    hSHP(hSHPIn),
+    hDBF(hDBFIn),
+    bUpdateAccess(bUpdate),
+    eRequestedGeomType(eReqType),
+    panMatchingFIDs(NULL),
+    iMatchingFID(0),
+    m_poFilterGeomLastValid(NULL),
+    nSpatialFIDCount(0),
+    panSpatialFIDs(NULL),
+    bHeaderDirty(FALSE),
+    bSHPNeedsRepack(FALSE),
+    bCheckedForQIX(FALSE),
+    hQIX(NULL),
+    bCheckedForSBN(FALSE),
+    hSBN(NULL),
+    bSbnSbxDeleted(FALSE),
+    bTruncationWarningEmitted(FALSE),
+    eFileDescriptorsState(FD_OPENED),
+    bResizeAtClose(FALSE),
+    bCreateSpatialIndexAtClose(FALSE)
 {
-    poDS = poDSIn;
-
     pszFullName = CPLStrdup(pszFullNameIn);
-    
-    hSHP = hSHPIn;
-    hDBF = hDBFIn;
-    bUpdateAccess = bUpdate;
-
-    iNextShapeId = 0;
-    iMatchingFID = 0;
-    panMatchingFIDs = NULL;
-
-    nSpatialFIDCount = 0;
-    panSpatialFIDs = NULL;
-    m_poFilterGeomLastValid = NULL;
-
-    bCheckedForQIX = FALSE;
-    hQIX = NULL;
-
-    bCheckedForSBN = FALSE;
-    hSBN = NULL;
-
-    bSbnSbxDeleted = FALSE;
-
-    bHeaderDirty = FALSE;
-    bSHPNeedsRepack = FALSE;
 
     if( hSHP != NULL )
     {
@@ -96,20 +88,15 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
                      hSHP->nRecords, hDBF->nRecords);
         }
     }
-    else 
+    else
         nTotalShapeCount = hDBF->nRecords;
-    
-    eRequestedGeomType = eReqType;
-
-    bTruncationWarningEmitted = FALSE;
 
     bHSHPWasNonNULL = hSHPIn != NULL;
     bHDBFWasNonNULL = hDBFIn != NULL;
-    eFileDescriptorsState = FD_OPENED;
-    TouchLayer();
-
-    bResizeAtClose = FALSE;
-    bCreateSpatialIndexAtClose = FALSE;
+    if (!TouchLayer())
+    {
+        CPLDebug("Shape", "TouchLayer in shape ctor failed. ");
+    }
 
     if( hDBF != NULL && hDBF->pszCodePage != NULL )
     {
@@ -119,7 +106,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         // Not too sure about this, but it seems like better than nothing.
         osEncoding = ConvertCodePage( hDBF->pszCodePage );
     }
-    
+
     if( hDBF != NULL )
     {
         if( !(hDBF->nUpdateYearSince1900 == 95 &&
@@ -135,7 +122,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         DBFSetLastModifiedDate( hDBF, tm.tm_year,
                                 tm.tm_mon + 1, tm.tm_mday );
     }
-    
+
     const char* pszShapeEncoding = NULL;
     pszShapeEncoding = CSLFetchNameValue(poDS->GetOpenOptions(), "ENCODING");
     if( pszShapeEncoding == NULL && osEncoding == "")
@@ -251,7 +238,7 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
     if( pszCodePage == NULL )
         return osEncoding;
 
-    if( EQUALN(pszCodePage,"LDID/",5) )
+    if( STARTS_WITH_CI(pszCodePage, "LDID/") )
     {
         int nCP = -1; // windows code page. 
 
@@ -340,7 +327,7 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
         osEncoding.Printf( "CP%d", atoi(pszCodePage) );
         return osEncoding;
     }
-    if( EQUALN(pszCodePage,"8859",4) )
+    if( STARTS_WITH_CI(pszCodePage, "8859") )
     {
         if( pszCodePage[4] == '-' )
             osEncoding.Printf( "ISO-8859-%s", pszCodePage + 5 );
@@ -348,7 +335,7 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
             osEncoding.Printf( "ISO-8859-%s", pszCodePage + 4 );
         return osEncoding;
     }
-    if( EQUALN(pszCodePage,"UTF-8",5) )
+    if( STARTS_WITH_CI(pszCodePage, "UTF-8") )
         return CPL_ENC_UTF8;
 
     // try just using the CPG value directly.  Works for stuff like Big5.

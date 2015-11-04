@@ -31,9 +31,7 @@
 
 #include <set>
 
-#include <kml/dom.h>
-#include <kml/engine.h>
-#include <kml/base/color32.h>
+#include "libkml_headers.h"
 
 using kmldom::KmlFactory;;
 using kmldom::ElementPtr;
@@ -725,7 +723,7 @@ OGRStyleLabel *kml2label (
  function to add a kml style to a style table
 ******************************************************************************/
 
-void kml2styletable (
+static void kml2styletable (
     OGRStyleTable * poOgrStyleTable,
     StylePtr poKmlStyle )
 {
@@ -834,7 +832,7 @@ static ContainerPtr MyGetContainerFromRoot (
 
 
 
-StyleSelectorPtr StyleFromStyleURL(
+static StyleSelectorPtr StyleFromStyleURL(
     const StyleMapPtr& stylemap,
     const string styleurl,
     OGRStyleTable * poStyleTable) 

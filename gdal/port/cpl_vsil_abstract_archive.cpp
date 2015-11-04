@@ -54,6 +54,20 @@ VSIArchiveReader::~VSIArchiveReader()
 }
 
 /************************************************************************/
+/*                        ~VSIArchiveContent()                          */
+/************************************************************************/
+
+VSIArchiveContent::~VSIArchiveContent()
+{
+    for(int i=0;i<nEntries;i++)
+    {
+        delete entries[i].file_pos;
+        CPLFree(entries[i].fileName);
+    }
+    CPLFree(entries);
+}
+
+/************************************************************************/
 /*                   VSIArchiveFilesystemHandler()                      */
 /************************************************************************/
 
@@ -73,15 +87,7 @@ VSIArchiveFilesystemHandler::~VSIArchiveFilesystemHandler()
 
     for( iter = oFileList.begin(); iter != oFileList.end(); ++iter )
     {
-        VSIArchiveContent* content = iter->second;
-        int i;
-        for(i=0;i<content->nEntries;i++)
-        {
-            delete content->entries[i].file_pos;
-            CPLFree(content->entries[i].fileName);
-        }
-        CPLFree(content->entries);
-        delete content;
+        delete iter->second;
     }
 
     if( hMutex != NULL )
@@ -104,7 +110,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
     if (oFileList.find(archiveFilename) != oFileList.end() )
     {
         VSIArchiveContent* content = oFileList[archiveFilename];
-        if( sStat.st_mtime > content->mTime ||
+        if( (time_t)sStat.st_mtime > content->mTime ||
             (vsi_l_offset)sStat.st_size != content->nFileSize)
         {
             CPLDebug("VSIArchive", "The content of %s has changed since it was cached",
@@ -302,7 +308,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
         {
             VSIStatBufL statBuf;
             char* archiveFilename = CPLStrdup(pszFilename);
-            int bArchiveFileExists = FALSE;
+            bool bArchiveFileExists = false;
 
             if (archiveFilename[i + nToSkip] == '/' ||
                 archiveFilename[i + nToSkip] == '\\')
@@ -312,7 +318,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
             if (!bCheckMainFileExists)
             {
-                bArchiveFileExists = TRUE;
+                bArchiveFileExists = true;
             }
             else
             {
@@ -320,7 +326,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
                 if (oFileList.find(archiveFilename) != oFileList.end() )
                 {
-                    bArchiveFileExists = TRUE;
+                    bArchiveFileExists = true;
                 }
             }
 
@@ -332,7 +338,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                                       VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
                     !VSI_ISDIR(statBuf.st_mode))
                 {
-                    bArchiveFileExists = TRUE;
+                    bArchiveFileExists = true;
                 }
             }
 
@@ -344,7 +350,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                     char* pszArchiveInFileName = CPLStrdup(pszFilename + i + nToSkip + 1);
 
                     /* Replace a/../b by b and foo/a/../b by foo/b */
-                    while(TRUE)
+                    while(true)
                     {
                         char* pszPrevDir = strstr(pszArchiveInFileName, "/../");
                         if (pszPrevDir == NULL || pszPrevDir == pszArchiveInFileName)

@@ -103,7 +103,7 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
     {
         int nOldFLoc = VSIFTell( psDGN->fp );
         unsigned char abyLeader[2];
-        
+
         if( VSIFSeek( psDGN->fp, psElement->offset, SEEK_SET ) != 0
             || VSIFRead( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1 )
         {
@@ -114,7 +114,7 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
         }
 
         abyLeader[1] |= 0x80;
-        
+
         if( VSIFSeek( psDGN->fp, psElement->offset, SEEK_SET ) != 0
             || VSIFWrite( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1 )
         {
@@ -193,8 +193,6 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
 /* ==================================================================== */
     if( psElement->offset == -1 )
     {
-        int nJunk;
-
         // We must have an index, in order to properly assign the 
         // element id of the newly written element.  Ensure it is built.
         if( !psDGN->index_built )
@@ -204,6 +202,7 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
         if( !DGNGotoElement( hDGN, psDGN->element_count-1 ) )
             return FALSE;
 
+        int nJunk;
         if( !DGNLoadRawElement( psDGN, &nJunk, &nJunk ) )
             return FALSE;
 
@@ -215,16 +214,14 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
         if( psDGN->element_count == psDGN->max_element_count )
         {
             psDGN->max_element_count += 500;
-            
+
             psDGN->element_index = (DGNElementInfo *) 
                 CPLRealloc( psDGN->element_index, 
                             psDGN->max_element_count * sizeof(DGNElementInfo));
         }
 
         // Set up the element info
-        DGNElementInfo *psInfo;
-        
-        psInfo = psDGN->element_index + psDGN->element_count;
+        DGNElementInfo *psInfo = psDGN->element_index + psDGN->element_count;
         psInfo->level = (unsigned char) psElement->level;
         psInfo->type = (unsigned char) psElement->type;
         psInfo->stype = (unsigned char) psElement->stype;
@@ -1222,10 +1219,12 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
     sMax.z = dfOriginZ + MAX(dfPrimaryAxis,dfSecondaryAxis);
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
-    
+
+    // TODO: Coverity wants to free psArc, but that crashes.  CID 1074360
+    // CPLFree(psArc);
     return psCore;
 }
-                                 
+
 /************************************************************************/
 /*                          DGNCreateConeElem()                         */
 /************************************************************************/
@@ -1369,10 +1368,10 @@ DGNCreateConeElem( DGNHandle hDGN,
 //     sMax.z = psCone->center_2.z;
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
-    
+
     return psCore;
 }
-                                 
+
 /************************************************************************/
 /*                         DGNCreateTextElem()                          */
 /************************************************************************/
@@ -1516,12 +1515,12 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     diagonal=sqrt(length*length+height*height);
     sLowLeft.x=sMin.x;
     sLowLeft.y=sMin.y;
-    sLowRight.x=sMin.x+cos(psText->rotation*PI/180.0)*length;
-    sLowRight.y=sMin.y+sin(psText->rotation*PI/180.0)*length;
-    sUpRight.x=sMin.x+cos((psText->rotation*PI/180.0)+atan(height/length))*diagonal;
-    sUpRight.y=sMin.y+sin((psText->rotation*PI/180.0)+atan(height/length))*diagonal;
-    sUpLeft.x=sMin.x+cos((psText->rotation+90.0)*PI/180.0)*height;
-    sUpLeft.y=sMin.y+sin((psText->rotation+90.0)*PI/180.0)*height;
+    sLowRight.x=sMin.x+cos(psText->rotation*M_PI/180.0)*length;
+    sLowRight.y=sMin.y+sin(psText->rotation*M_PI/180.0)*length;
+    sUpRight.x=sMin.x+cos((psText->rotation*M_PI/180.0)+atan(height/length))*diagonal;
+    sUpRight.y=sMin.y+sin((psText->rotation*M_PI/180.0)+atan(height/length))*diagonal;
+    sUpLeft.x=sMin.x+cos((psText->rotation+90.0)*M_PI/180.0)*height;
+    sUpLeft.y=sMin.y+sin((psText->rotation+90.0)*M_PI/180.0)*height;
 
     //calculate new values for bounding box
     sMin.x=MIN(sLowLeft.x,MIN(sLowRight.x,MIN(sUpLeft.x,sUpRight.x)));
@@ -1608,7 +1607,9 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
 /*      Set the core raw data.                                          */
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
-    
+
+    // TODO: Coverity wants a free, but it crashes.  CID 1074357
+    // CPLFree(psCT);
     return psCore;
 }
 
@@ -1691,7 +1692,9 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
 /*      add a dummy bit of attribute data to fill out the length.       */
 /* -------------------------------------------------------------------- */
     DGNAddRawAttrLink( hDGN, psCore, 8, abyRawZeroLinkage );
-    
+
+    // TODO: Coverity wants to free psCH, but that crashes.   CID 1074358
+    // CPLFree(psCH);
     return psCore;
 }
 
@@ -1868,7 +1871,8 @@ DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
     unsigned char abyRawZeroLinkage[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     DGNAddRawAttrLink( hDGN, psCore, 8, abyRawZeroLinkage );
 
-    CPLFree(psCH);
+    // TODO: Refactor to not leak.
+    // CPLFree(psCH);
     return psCore;
 }
 
@@ -2076,9 +2080,9 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
     if( psInfo->dimension == 2 )
     {
         long anTrans[4];
-        double cos_a = cos(-dfRotation * PI / 180.0);
-        double sin_a = sin(-dfRotation * PI / 180.0);
-        
+        double cos_a = cos(-dfRotation * M_PI / 180.0);
+        double sin_a = sin(-dfRotation * M_PI / 180.0);
+
         anTrans[0] = (long) (cos_a * dfXScale * 214748);
         anTrans[1] = (long) (sin_a * dfYScale * 214748);
         anTrans[2] = (long)(-sin_a * dfXScale * 214748);
@@ -2094,10 +2098,10 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
         long anTrans[9];
 
         // NOTE: This is still just rotation in the plane
-        double cos_a = cos(-dfRotation * PI / 180.0);
-        double sin_a = sin(-dfRotation * PI / 180.0);
+        double cos_a = cos(-dfRotation * M_PI / 180.0);
+        double sin_a = sin(-dfRotation * M_PI / 180.0);
         double dfZScale = 1.0; // Should we get this from somewhere?
-        
+
         anTrans[0] = (long) ( cos_a * dfXScale * 214748);
         anTrans[1] = (long) ( sin_a * dfYScale * 214748);
         anTrans[2] = (long) ( sin_a * dfZScale * 214748);
@@ -2125,7 +2129,9 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
 /*      Set the core raw data.                                          */
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
-    
+
+    // TODO: Coverity wants to free psCH, but that crashes.  CID 1074359
+    // CPLFree(psCH);
     return psCore;
 }
 

@@ -44,11 +44,11 @@ CPL_CVSID("$Id$");
 /*                         S57ClassRegistrar()                          */
 /************************************************************************/
 
-S57ClassRegistrar::S57ClassRegistrar()
-
-{
-    papszNextLine = NULL;
-}
+S57ClassRegistrar::S57ClassRegistrar() :
+    nClasses(0),
+    nAttrCount(0),
+    papszNextLine(NULL)
+{ }
 
 /************************************************************************/
 /*                         ~S57ClassRegistrar()                         */
@@ -281,12 +281,10 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
             VSIFCloseL( fp );
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read and form string list.                                      */
 /* -------------------------------------------------------------------- */
-    int        iAttr;
-
     while( (pszLine = ReadLine(fp)) != NULL )
     {
         char    **papszTokens = CSLTokenizeStringComplex( pszLine, ",",
@@ -297,16 +295,17 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
             CPLAssert( FALSE );
             continue;
         }
-        
-        iAttr = atoi(papszTokens[0]);
+
+        int iAttr = atoi(papszTokens[0]);
         if( iAttr >= (int) aoAttrInfos.size() )
             aoAttrInfos.resize(iAttr+1);
 
         if( iAttr < 0 || aoAttrInfos[iAttr] != NULL )
         {
-            CPLDebug( "S57", 
-                      "Duplicate/corrupt definition for attribute %d:%s", 
+            CPLDebug( "S57",
+                      "Duplicate/corrupt definition for attribute %d:%s",
                       iAttr, papszTokens[2] );
+            CSLDestroy( papszTokens );
             continue;
         }
 
@@ -323,7 +322,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
         VSIFCloseL( fp );
 
     nAttrCount = anAttrIndex.size();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Sort index by acronym.                                          */
 /* -------------------------------------------------------------------- */
@@ -331,7 +330,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     do
     {
         bModified = FALSE;
-        for( iAttr = 0; iAttr < nAttrCount-1; iAttr++ )
+        for( int iAttr = 0; iAttr < nAttrCount-1; iAttr++ )
         {
             if( strcmp(aoAttrInfos[anAttrIndex[iAttr]]->osAcronym,
                        aoAttrInfos[anAttrIndex[iAttr+1]]->osAcronym) > 0 )

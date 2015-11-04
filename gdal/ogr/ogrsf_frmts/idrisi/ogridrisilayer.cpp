@@ -218,7 +218,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
             }
         }
         else if (bFieldFound &&
-                 strncmp(pszLine, "data type   :", strlen("data type   :")) == 0)
+                 STARTS_WITH(pszLine, "data type   :"))
         {
             const char* pszFieldType = pszLine + strlen("data type   :");
 

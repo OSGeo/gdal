@@ -146,6 +146,8 @@ public:
                           GDALContourWriter pfnWriter, void *pWriterCBData );
     ~GDALContourGenerator();
 
+    bool                Init();
+
     void                SetNoData( double dfNoDataValue );
     void                SetContourLevels( double dfContourInterval, 
                                           double dfContourOffset = 0.0 )
@@ -217,8 +219,8 @@ GDALContourGenerator::GDALContourGenerator( int nWidthIn, int nHeightIn,
     nWidth = nWidthIn;
     nHeight = nHeightIn;
 
-    padfLastLine = (double *) CPLCalloc(sizeof(double),nWidth);
-    padfThisLine = (double *) CPLCalloc(sizeof(double),nWidth);
+    padfLastLine = NULL;
+    padfThisLine = NULL;
 
     pfnWriter = pfnWriterIn;
     pWriterCBData = pWriterCBDataIn;
@@ -251,6 +253,17 @@ GDALContourGenerator::~GDALContourGenerator()
 
     CPLFree( padfLastLine );
     CPLFree( padfThisLine );
+}
+
+/************************************************************************/
+/*                              Init()                                  */
+/************************************************************************/
+
+bool GDALContourGenerator::Init()
+{
+    padfLastLine = (double *) VSICalloc(sizeof(double),nWidth);
+    padfThisLine = (double *) VSICalloc(sizeof(double),nWidth);
+    return padfLastLine != NULL && padfThisLine != NULL;
 }
 
 /************************************************************************/
@@ -1384,10 +1397,10 @@ CPLErr OGRContourWriter( double dfLevel,
 
     OGR_F_SetGeometryDirectly( hFeat, hGeom );
 
-    OGR_L_CreateFeature( (OGRLayerH) poInfo->hLayer, hFeat );
+    OGRErr eErr = OGR_L_CreateFeature( (OGRLayerH) poInfo->hLayer, hFeat );
     OGR_F_Destroy( hFeat );
 
-    return CE_None;
+    return (eErr == OGRERR_NONE) ? CE_None : CE_Failure;
 }
 #endif // OGR_ENABLED
 
@@ -1582,6 +1595,12 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
     int nYSize = GDALGetRasterBandYSize( hBand );
 
     GDALContourGenerator oCG( nXSize, nYSize, OGRContourWriter, &oCWI );
+    if( !oCG.Init() )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "VSIMalloc(): Out of memory in GDALContourGenerate" );
+        return CE_Failure;
+    }
 
     if( nFixedLevelCount > 0 )
         oCG.SetFixedLevels( nFixedLevelCount, padfFixedLevels );
@@ -1598,7 +1617,7 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
     double *padfScanline;
     CPLErr eErr = CE_None;
 
-    padfScanline = (double *) VSIMalloc(sizeof(double) * nXSize);
+    padfScanline = (double *) VSIMalloc2(sizeof(double), nXSize);
     if (padfScanline == NULL)
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -1608,9 +1627,10 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
 
     for( iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
-        GDALRasterIO( hBand, GF_Read, 0, iLine, nXSize, 1, 
+        eErr = GDALRasterIO( hBand, GF_Read, 0, iLine, nXSize, 1, 
                       padfScanline, nXSize, 1, GDT_Float64, 0, 0 );
-        eErr = oCG.FeedLine( padfScanline );
+        if( eErr == CE_None )
+            eErr = oCG.FeedLine( padfScanline );
 
         if( eErr == CE_None 
             && !pfnProgress( (iLine+1) / (double) nYSize, "", pProgressArg ) )

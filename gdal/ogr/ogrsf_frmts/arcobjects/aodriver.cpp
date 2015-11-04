@@ -101,7 +101,7 @@ OGRDataSource *AODriver::Open( const char* pszFilename,
   // In order to avoid all the COM overhead, we are going to check
   // if we have an AO prefix
 
-  if( !EQUALN(pszFilename,"AO:",3) )
+  if( !STARTS_WITH_CI(pszFilename, "AO:") )
     return NULL;
 
   //OK, it is our turn, let's pay the price
