@@ -1491,10 +1491,6 @@ def tiff_ovr_38():
 
 def tiff_ovr_39():
 
-    src_ds = gdal.Open('data/byte.tif')
-    src_ds.GetRasterBand(1).ReadRaster(0,0,20,20)
-    src_ds = None
-
     for datatype in [gdal.GDT_Byte,
                      gdal.GDT_Int16,
                      gdal.GDT_UInt16,
@@ -1508,7 +1504,6 @@ def tiff_ovr_39():
                      gdal.GDT_CFloat64]:
 
         gdal.Translate('tmp/ovr39.tif', 'data/byte.tif', options = '-ot ' + gdal.GetDataTypeName(datatype))
-
         try:
             os.remove('tmp/ovr39.tif.ovr')
         except:
@@ -1537,6 +1532,7 @@ def tiff_ovr_39():
 
         if cs != expected_cs:
             gdaltest.post_reason('did not get expected checksum for datatype %s' % gdal.GetDataTypeName(datatype))
+            print(cs)
             return 'fail'
 
     return 'success'
