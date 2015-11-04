@@ -34,6 +34,8 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 CPL_C_START
