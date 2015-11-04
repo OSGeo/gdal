@@ -1259,18 +1259,22 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         }
         else if( bUpdate )
         {
-            CPLDebug("SQLITE", "SpatiaLite%s DB found, "
+            CPLError(CE_Failure, CPLE_AppDefined, "SpatiaLite%s DB found, "
                      "but updating tables disabled because no linking against spatialite library !",
                      (bSpatialite4Layout) ? " v4" : "");
-            bUpdate = FALSE;
+            sqlite3_free_table(papszResult);
+            CPLHashSetDestroy(hSet);
+            return FALSE;
         }
 
         if (bSpatialite4Layout && bUpdate && iSpatialiteVersion > 0 && iSpatialiteVersion < 40)
         {
-            CPLDebug("SQLITE", "SpatiaLite v4 DB found, "
+            CPLError(CE_Failure, CPLE_AppDefined, "SpatiaLite v4 DB found, "
                      "but updating tables disabled because runtime spatialite library is v%.1f !",
                      iSpatialiteVersion / 10.0);
-            bUpdate = FALSE;
+            sqlite3_free_table(papszResult);
+            CPLHashSetDestroy(hSet);
+            return FALSE;
         }
         else
         {
