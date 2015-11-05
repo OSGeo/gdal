@@ -265,6 +265,9 @@ void OGRRegisterAllInternal()
 #ifdef CARTODB_ENABLED
     RegisterOGRCartoDB();
 #endif
+#ifdef AMIGOCLOUD_ENABLED
+    RegisterOGRAmigoCloud();
+#endif
 #ifdef SXF_ENABLED
     RegisterOGRSXF();
 #endif
