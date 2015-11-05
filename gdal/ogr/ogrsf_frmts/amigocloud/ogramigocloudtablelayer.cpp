@@ -449,11 +449,11 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             OGRMultiPolygon* poNewGeom = new OGRMultiPolygon();
             poNewGeom->addGeometry(poGeom);
-            pszEWKB = OGRGeometryToHexEWKB(poNewGeom, nSRID, FALSE);
+            pszEWKB = OGRGeometryToHexEWKB(poNewGeom, nSRID, 2, 1);
             delete poNewGeom;
         }
         else
-            pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
+            pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, 2, 1);
         record << "\"" << pszEWKB << "\"";
         CPLFree(pszEWKB);
 
@@ -605,7 +605,7 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
                 int nSRID = poGeomFieldDefn->nSRID;
                 if(nSRID == 0)
                     nSRID = 4326;
-                char *pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
+                char *pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, 2, 1);
                 osSQL += "'";
                 osSQL += pszEWKB;
                 osSQL += "'";
