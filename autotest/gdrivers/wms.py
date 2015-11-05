@@ -735,6 +735,10 @@ def wms_16():
         return 'skip'
 
     if val is None or val.find('<og:cat>86</og:cat>') == -1:
+        if val.find('java.lang.NullPointerException') >= 0:
+            print(val)
+            return 'skip'
+
         gdaltest.post_reason('expected a value')
         print(val)
         return 'fail'
