@@ -337,9 +337,7 @@ void OGRAmigoCloudTableLayer::FlushDeferedInsert()
         json_object_put(poObj);
 
     vsDeferedInsertChangesets.clear();
-
     nNextFID = -1;
-
 }
 
 /************************************************************************/
