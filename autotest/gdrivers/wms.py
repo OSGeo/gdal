@@ -747,18 +747,25 @@ def wms_16():
     val_again = ds.GetRasterBand(1).GetMetadataItem(pixel, "LocationInfo")
     if val_again != val:
         gdaltest.post_reason('expected a value')
+        print(val_again)
         return 'fail'
 
     # Ask another band. Should be cached
     val2 = ds.GetRasterBand(2).GetMetadataItem(pixel, "LocationInfo")
     if val2 != val:
         gdaltest.post_reason('expected a value')
+        print(val2)
         return 'fail'
 
     # Ask an overview band
     val2 = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem(pixel, "LocationInfo")
     if val2 != val:
+        if val2.find('java.lang.NullPointerException') >= 0:
+            print(val2)
+            return 'skip'
+
         gdaltest.post_reason('expected a value')
+        print(val2)
         return 'fail'
 
     ds = None
