@@ -320,7 +320,7 @@ void OGRAmigoCloudTableLayer::FlushDeferedInsert()
     query << "\"parent\":null,\"action\":\"INSERT\",\"data\":[";
 
     int counter=0;
-    for(int i=0; i < vsDeferedInsertChangesets.size(); i++)
+    for(size_t i=0; i < vsDeferedInsertChangesets.size(); i++)
     {
         if(counter>0)
             query << ",";
@@ -328,9 +328,6 @@ void OGRAmigoCloudTableLayer::FlushDeferedInsert()
         counter++;
     }
     query << "]}";
-
-    std::srand(std::time(0));
-    int random_variable = std::rand();
 
     std::stringstream changeset;
     changeset << "{\"change\": \"" << json_encode(query.str()) << "\"}";

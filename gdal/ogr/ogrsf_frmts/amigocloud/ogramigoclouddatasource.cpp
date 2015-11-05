@@ -33,6 +33,8 @@
 
 CPL_CVSID("$Id$");
 
+CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename, const char* pszOptionName);
+
 /************************************************************************/
 /*                        OGRAmigoCloudDataSource()                        */
 /************************************************************************/
@@ -293,8 +295,6 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszName,
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
-    int iLayer;
-
     CPLString osName(pszName);
 
     OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
@@ -810,7 +810,7 @@ OGRLayer * OGRAmigoCloudDataSource::ExecuteSQL( const char *pszSQLCommand,
 
 OGRLayer * OGRAmigoCloudDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
                                                      OGRGeometry *poSpatialFilter,
-                                                     const char *pszDialect,
+                                                     const char *,
                                                      int bRunDeferedActions )
 
 {
