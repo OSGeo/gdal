@@ -47,6 +47,12 @@ extern "C" void RegisterOGRMongoDB();
 using namespace mongo;
 using mongo::client::Options;
 
+#if __cplusplus >= 201103L
+#define UNIQUE_PTR       std::unique_ptr
+#else
+#define UNIQUE_PTR       std::auto_ptr
+#endif
+
 static int bMongoInitialized = -1;
 static CPLString osStaticPEMKeyFile;
 static CPLString osStaticPEMKeyPassword;
@@ -79,7 +85,7 @@ class OGRMongoDBLayer: public OGRLayer
             CPLString                m_osQualifiedCollection;
             int                      m_bHasEstablishedFeatureDefn;
             GIntBig                  m_nIndex, m_nNextFID;
-            std::auto_ptr<DBClientCursor> m_poCursor;
+            UNIQUE_PTR<DBClientCursor> m_poCursor;
             int                      m_bCursorValid;
             BSONObj                  m_oQueryAttr, m_oQuerySpat;
             CPLString                m_osFID;
@@ -572,7 +578,7 @@ std::map< CPLString, CPLString> OGRMongoDBLayer::CollectGeomIndices()
     std::map< CPLString, CPLString> oMapIndices;
     try
     {
-        std::auto_ptr<DBClientCursor> cursor =
+        UNIQUE_PTR<DBClientCursor> cursor =
             m_poDS->GetConn()->enumerateIndexes(m_osQualifiedCollection);
         if( cursor.get() == NULL )
             return oMapIndices;
@@ -611,7 +617,7 @@ int OGRMongoDBLayer::ReadOGRMetadata(std::map< CPLString, CPLString>& oMapIndice
 {
     try
     {
-        std::auto_ptr<DBClientCursor> cursor = m_poDS->GetConn()->query(
+        UNIQUE_PTR<DBClientCursor> cursor = m_poDS->GetConn()->query(
             CPLSPrintf("%s._ogr_metadata", m_osDatabase.c_str()),
             BSON("layer" << m_osCollection.c_str()), 1);
         if( cursor->more() )
@@ -758,7 +764,7 @@ void OGRMongoDBLayer::EstablishFeatureDefn()
         
         try
         {
-            std::auto_ptr<DBClientCursor> cursor = m_poDS->GetConn()->query(
+            UNIQUE_PTR<DBClientCursor> cursor = m_poDS->GetConn()->query(
                                                 m_osQualifiedCollection,
                                                 BSONObj(),
                                                 nCount,
@@ -1240,7 +1246,7 @@ OGRFeature* OGRMongoDBLayer::GetFeature(GIntBig nFID)
     
     try
     {
-        std::auto_ptr<DBClientCursor> cursor = m_poDS->GetConn()->query(
+        UNIQUE_PTR<DBClientCursor> cursor = m_poDS->GetConn()->query(
             m_osQualifiedCollection,
             BSON(m_osFID.c_str() << nFID), 
             1);
