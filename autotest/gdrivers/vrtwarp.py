@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test VRTWarpedDataset support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,6 +29,7 @@
 ###############################################################################
 
 import os
+import shutil
 import sys
 from osgeo import gdal
 
@@ -53,20 +54,20 @@ def vrtwarp_2():
         os.remove( 'tmp/warp.vrt' )
     except:
         pass
-    
+
     gcp_ds = gdal.OpenShared( 'data/rgb_gcp.vrt', gdal.GA_ReadOnly )
 
     gdaltest.vrtwarp_ds = gdal.AutoCreateWarpedVRT( gcp_ds )
 
     gcp_ds = None
-    
+
     checksum = gdaltest.vrtwarp_ds.GetRasterBand(2).Checksum()
     expected = 21504
     if checksum != expected:
         gdaltest.post_reason( 'Got checksum of %d instead of expected %d.' \
                               % (checksum, expected) )
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
@@ -109,7 +110,7 @@ def vrtwarp_4():
 
     vrtwarp_ds = gdal.AutoCreateWarpedVRT( tmp_ds )
     tmp_ds = None
-    
+
     for i in range(3):
         if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 2:
             gdaltest.post_reason('fail')
@@ -136,7 +137,6 @@ def vrtwarp_4():
             vrtwarp_ds.SetDescription( 'tmp/vrtwarp_4.vrt' )
             tmp_ds = None
 
-    
     # Add an explicit overview
     vrtwarp_ds.BuildOverviews( 'NEAR', overviewlist = [2, 4, 8] )
     vrtwarp_ds = None
@@ -145,7 +145,7 @@ def vrtwarp_4():
     ds.GetRasterBand(1).Fill(255)
     expected_cs_ov2 = ds.GetRasterBand(1).Checksum()
     ds = None
-    
+
     vrtwarp_ds = gdal.Open( 'tmp/vrtwarp_4.vrt' )
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 3:
         gdaltest.post_reason('fail')
@@ -163,7 +163,7 @@ def vrtwarp_4():
         gdaltest.post_reason('fail')
         return 'fail'
     vrtwarp_ds = None
-    
+
     gdal.Unlink('tmp/vrtwarp_4.vrt')
     gdal.Unlink('tmp/vrtwarp_4.tif')
 
@@ -192,7 +192,7 @@ def vrtwarp_5():
     ds.GetRasterBand(1).Fill(127)
     expected_cs_ov1 = ds.GetRasterBand(1).Checksum()
     ds = None
-    
+
     tmp_ds = gdal.Open('tmp/vrtwarp_5.tif')
     vrtwarp_ds = gdal.AutoCreateWarpedVRT( tmp_ds )
     vrtwarp_ds.SetMetadataItem('SrcOvrLevel', 'AUTO-1')
@@ -249,7 +249,7 @@ def vrtwarp_6():
     vrtwarp_ds.SetDescription( 'tmp/vrtwarp_6.vrt' )
     vrtwarp_ds = None
     tmp_ds = None
-    
+
     vrtwarp_ds = gdal.Open( 'tmp/vrtwarp_6.vrt' )
 
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 2:
@@ -274,7 +274,7 @@ def vrtwarp_6():
 # Test implicit overviews with GCP (TPS)
 
 def vrtwarp_7():
-    
+
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_7.tif', src_ds)
     cs_main = tmp_ds.GetRasterBand(1).Checksum()
@@ -300,7 +300,7 @@ def vrtwarp_7():
     cs_ov0 = tmp_ds.GetRasterBand(1).GetOverview(0).Checksum()
     cs_ov1 = tmp_ds.GetRasterBand(1).GetOverview(1).Checksum()
     tmp_ds = None
-    
+
     vrtwarp_ds = gdal.Warp('tmp/vrtwarp_7.vrt', 'tmp/vrtwarp_7.tif', options = '-overwrite -of VRT -tps')
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 2:
         gdaltest.post_reason('fail')
@@ -315,7 +315,7 @@ def vrtwarp_7():
         gdaltest.post_reason('fail')
         return 'fail'
     vrtwarp_ds = None
-    
+
     gdal.Unlink('tmp/vrtwarp_7.vrt')
     gdal.Unlink('tmp/vrtwarp_7.tif')
 
@@ -326,13 +326,12 @@ def vrtwarp_7():
 
 def vrtwarp_8():
 
-    import shutil
     shutil.copy('../gcore/data/byte.tif', 'tmp/vrtwarp_8.tif')
     shutil.copy('../gcore/data/test_rpc.txt', 'tmp/vrtwarp_8_rpc.txt')
     ds = gdal.Open('tmp/vrtwarp_8.tif', gdal.GA_Update)
     ds.BuildOverviews( 'NEAR', overviewlist = [2] )
     ds = None
-   
+
     ds = gdal.Warp('', 'tmp/vrtwarp_8.tif', options = '-of MEM -rpc')
     expected_cs_main = ds.GetRasterBand(1).Checksum()
     ds = None
@@ -363,10 +362,8 @@ def vrtwarp_8():
 
 def vrtwarp_9():
 
-    import shutil
     shutil.copy('../gcore/data/sstgeo.tif', 'tmp/sstgeo.tif')
 
-    
     f = open('tmp/sstgeo.vrt', 'wb')
     f.write('''<VRTDataset rasterXSize="60" rasterYSize="39">
   <Metadata domain="GEOLOCATION">
@@ -396,7 +393,7 @@ def vrtwarp_9():
     ds = gdal.Open('tmp/sstgeo.vrt', gdal.GA_Update)
     ds.BuildOverviews( 'NEAR', overviewlist = [2] )
     ds = None
-    
+
     ds = gdal.Warp('', 'tmp/sstgeo.vrt', options = '-of MEM -geoloc')
     expected_cs_main = ds.GetRasterBand(1).Checksum()
     ds = None
@@ -441,11 +438,11 @@ def vrtwarp_10():
     ds = gdal.Warp('', 'tmp/vrtwarp_10.tif', options = '-of MEM -ovr NONE -ts 10 10')
     expected_cs_ov0 = ds.GetRasterBand(1).Checksum()
     ds = None
-    
+
     ds = gdal.Warp('', 'tmp/vrtwarp_10.tif', options = '-of MEM -ovr NONE -ts 5 5')
     expected_cs_ov1 = ds.GetRasterBand(1).Checksum()
     ds = None
-    
+
     tmp_ds = gdal.Open('tmp/vrtwarp_10.tif')
     vrtwarp_ds = gdal.AutoCreateWarpedVRT( tmp_ds )
     vrtwarp_ds.SetMetadataItem('SrcOvrLevel', 'NONE')
@@ -485,7 +482,7 @@ def vrtwarp_11():
 
     gdal.Unlink('tmp/vrtwarp_11.tif')
     gdal.Unlink('tmp/vrtwarp_11.vrt')
-    
+
     if cs1 != 1087 or cs2 != 1218:
         gdaltest.post_reason('fail')
         print(cs1)
@@ -516,4 +513,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
