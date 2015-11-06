@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test VRTRawRasterBand support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -65,7 +65,7 @@ def vrtrawlink_2():
         'subClass=VRTRawRasterBand',
         'SourceFilename=data/small.raw'
         ]
-    
+
     result = ds.AddBand( gdal.GDT_Byte, options )
     if result != gdal.CE_None:
         gdaltest.post_reason( 'AddBand() returned error code' )
@@ -143,7 +143,7 @@ def vrtrawlink_4():
     if chksum != 12481:
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
-    
+
     band_1 = None
     band = None
 
@@ -310,7 +310,7 @@ def vrtrawlink_7():
 
 def vrtrawlink_cleanup():
     gdaltest.rawlink_ds = None
-        
+
     try:
         os.remove( 'tmp/rawlink.vrt' )
         os.remove( 'tmp/rawlink.dat' )
@@ -338,4 +338,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
