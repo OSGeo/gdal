@@ -3,6 +3,7 @@ use warnings;
 use File::Basename;
 use ExtUtils::MakeMaker;
 use Config;
+use Cwd;
 
 my $in_source_tree = -r '../../GDALmake.opt.in';
 print "Building in source tree.\n" if $in_source_tree;
@@ -195,11 +196,14 @@ for my $module (keys %object) {
                    OBJECT => $object{$module},
                    PM => \%PM,
                    BUILD_REQUIRES => {
+                       'strict' => 0,
+                       'warnings' => 0,
                        'File::Basename' => 0,
                        'ExtUtils::MakeMaker' => 0,
                        'Config' => 0,
                        'File::Fetch' => 0,
-                       'Capture::Tiny' => 0 },
+                       'Capture::Tiny' => 0,
+                       'Cwd' => 0 },
                    PREREQ_PM => {
                        Carp => 0,
                        Encode => 0,
@@ -260,6 +264,7 @@ end
     require File::Fetch;
     require Capture::Tiny;
     Capture::Tiny->import(':all');
+    my $pwd = cwd();
     open(my $log, ">", "gdal-build.log") 
         or die "Can't open gdal-build.log: $!.";
     open(my $err, ">", "gdal-build.err") 
@@ -321,12 +326,15 @@ end
     if ($ret) {
         return "./$gdal/apps/gdal-config";
     } else {
+        chdir($pwd);
         open(my $err, "<", "gdal-build.err") 
             or die "Can't open gdal-build.err: $!.";
         my @err = <$err>;
         close $err;
         die "Downloading and compiling of GDAL failed.\n".
-            "The error is probably explained by the build log:\n@err\n";
+            "The error is probably explained by the error log.\n".
+            "It is '$pwd/gdal-build.err', and its contents are:\n".
+            "@err\n";
     }
 }}
 
