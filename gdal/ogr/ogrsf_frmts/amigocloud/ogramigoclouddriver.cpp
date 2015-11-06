@@ -124,7 +124,7 @@ void RegisterOGRAmigoCloud()
     "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
     "</LayerCreationOptionList>");
         
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Text Number Decimal Date" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "String Integer Integer64 Real" );
         poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
