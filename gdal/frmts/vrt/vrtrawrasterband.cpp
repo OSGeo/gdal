@@ -55,7 +55,7 @@ VRTRawRasterBand::VRTRawRasterBand( GDALDataset *poDS, int nBand,
     this->nBand = nBand;
 
     if( eType != GDT_Unknown )
-        this->eDataType = eType;
+        eDataType = eType;
 }
 
 /************************************************************************/
@@ -96,7 +96,7 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         return( CE_Failure );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Do we have overviews that would be appropriate to satisfy       */
 /*      this request?                                                   */
@@ -109,7 +109,7 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               eBufType, nPixelSpace, nLineSpace, psExtraArg ) == CE_None )
             return CE_None;
     }
-    
+
     poRawRaster->SetAccess(eAccess);
 
     return poRawRaster->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
@@ -149,9 +149,9 @@ CPLErr VRTRawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                   "No raw raster band configured on VRTRawRasterBand." );
         return CE_Failure;
     }
-    
+
     poRawRaster->SetAccess(eAccess);
-    
+
     return poRawRaster->WriteBlock( nBlockXOff, nBlockYOff, pImage );
 }
 
@@ -169,20 +169,19 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
 {
     ClearRawLink();
 
-    ((VRTDataset *)poDS)->SetNeedsFlush();
+    reinterpret_cast<VRTDataset *>( poDS )->SetNeedsFlush();
 
 /* -------------------------------------------------------------------- */
 /*      Prepare filename.                                               */
 /* -------------------------------------------------------------------- */
-    char *pszExpandedFilename = NULL;
-
     if( pszFilename == NULL )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "Missing <SourceFilename> element in VRTRasterBand." );
         return CE_Failure;
     }
-    
+
+    char *pszExpandedFilename = NULL;
     if( pszVRTPath != NULL && bRelativeToVRT )
     {
         pszExpandedFilename = CPLStrdup(
@@ -199,7 +198,8 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
     if( fp == NULL )
         fp = CPLOpenShared( pszExpandedFilename, "rb", TRUE );
 
-    if( fp == NULL && ((VRTDataset *)poDS)->GetAccess() == GA_Update )
+    if( fp == NULL
+        && reinterpret_cast<VRTDataset *>( poDS )->GetAccess() == GA_Update )
     {
         fp = CPLOpenShared( pszExpandedFilename, "wb+", TRUE );
     }
@@ -210,7 +210,7 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
                   "Unable to open %s.\n%s", 
                   pszExpandedFilename,
                   VSIStrerror( errno ) );
-        
+
         CPLFree( pszExpandedFilename );
         return CE_Failure;
     }
@@ -271,7 +271,7 @@ void VRTRawRasterBand::ClearRawLink()
         /* since data can be flushed in the destructor */
         if( fp != NULL )
         {
-            CPLCloseShared( (FILE*) fp );
+            CPLCloseShared( reinterpret_cast<FILE*>( fp ) );
         }
     }
     CPLFree( pszSourceFilename );
@@ -286,12 +286,9 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
                                       const char *pszVRTPath )
 
 {
-    CPLErr eErr;
-
-    eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath );
+    CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath );
     if( eErr != CE_None )
         return eErr;
-    
 
 /* -------------------------------------------------------------------- */
 /*      Validate a bit.                                                 */
@@ -308,8 +305,6 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
 /*      Prepare filename.                                               */
 /* -------------------------------------------------------------------- */
-    int  bRelativeToVRT;
-
     const char *pszFilename = 
         CPLGetXMLValue(psTree, "SourceFilename", NULL);
 
@@ -320,17 +315,16 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
         return CE_Failure;
     }
 
-    bRelativeToVRT = atoi(CPLGetXMLValue(psTree,"SourceFilename.relativeToVRT",
-                                         "1"));
-    
+    const int bRelativeToVRT
+        = atoi(CPLGetXMLValue( psTree, "SourceFilename.relativeToVRT", "1" ) );
+
 /* -------------------------------------------------------------------- */
 /*      Collect layout information.                                     */
 /* -------------------------------------------------------------------- */
-    vsi_l_offset nImageOffset;
-    int nPixelOffset, nLineOffset;
+    int nPixelOffset;
     int nWordDataSize = GDALGetDataTypeSize( GetRasterDataType() ) / 8;
 
-    nImageOffset = CPLScanUIntBig(
+    const vsi_l_offset nImageOffset = CPLScanUIntBig(
         CPLGetXMLValue( psTree, "ImageOffset", "0"), 20);
 
     if( CPLGetXMLValue( psTree, "PixelOffset", NULL ) == NULL )
@@ -343,7 +337,8 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
                   "Invalid value for <PixelOffset> element : %d", nPixelOffset );
         return CE_Failure;
     }
-    
+
+    int nLineOffset;
     if( CPLGetXMLValue( psTree, "LineOffset", NULL ) == NULL )
         nLineOffset = nWordDataSize * GetXSize();
     else
@@ -377,7 +372,6 @@ static const char* VRTRawStripSpace(const char* pszStr)
 CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
 
 {
-    CPLXMLNode *psTree;
 
 /* -------------------------------------------------------------------- */
 /*      We can't set the layout if there is no open rawband.            */
@@ -388,8 +382,8 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
                   "VRTRawRasterBand::SerializeToXML() fails because poRawRaster is NULL." );
         return NULL;
     }
-    
-    psTree = VRTRasterBand::SerializeToXML( pszVRTPath );
+
+    CPLXMLNode *psTree = VRTRasterBand::SerializeToXML( pszVRTPath );
 
 /* -------------------------------------------------------------------- */
 /*      Set subclass.                                                   */
@@ -401,12 +395,10 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Setup the filename with relative flag.                          */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psNode;
+    CPLXMLNode *psNode
+        = CPLCreateXMLElementAndValue( psTree, "SourceFilename",
+                                       pszSourceFilename );
 
-    psNode = 
-        CPLCreateXMLElementAndValue( psTree, "SourceFilename", 
-                                     pszSourceFilename );
-    
     CPLCreateXMLNode( 
         CPLCreateXMLNode( psNode, CXT_Attribute, "relativeToVRT" ), 
         CXT_Text, bRelativeToVRT ? "1" : "0"  );
@@ -415,15 +407,15 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
 /*      Set other layout information.                                   */
 /* -------------------------------------------------------------------- */
     char szOffset[22];
-    
+
     CPLPrintUIntBig(szOffset, poRawRaster->GetImgOffset(), sizeof(szOffset)-1);
     szOffset[sizeof(szOffset)-1] = '\0';
     CPLCreateXMLElementAndValue(psTree, "ImageOffset", VRTRawStripSpace(szOffset));
-    
+
     CPLPrintUIntBig(szOffset, poRawRaster->GetPixelOffset(),sizeof(szOffset)-1);
     szOffset[sizeof(szOffset)-1] = '\0';
     CPLCreateXMLElementAndValue(psTree, "PixelOffset", VRTRawStripSpace(szOffset));
-    
+
     CPLPrintUIntBig(szOffset, poRawRaster->GetLineOffset(), sizeof(szOffset)-1);
     szOffset[sizeof(szOffset)-1] = '\0';
     CPLCreateXMLElementAndValue(psTree, "LineOffset", VRTRawStripSpace(szOffset));
@@ -436,7 +428,7 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
         CPLCreateXMLElementAndValue( psTree, "ByteOrder", "LSB" );
     else
         CPLCreateXMLElementAndValue( psTree, "ByteOrder", "MSB" );
-    
+
     return psTree;
 }
 
@@ -449,30 +441,30 @@ void VRTRawRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
 {
     if (pszSourceFilename == NULL)
         return;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Is it already in the list ?                                     */
 /* -------------------------------------------------------------------- */
     if( CPLHashSetLookup(hSetFiles, pszSourceFilename) != NULL )
         return;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Grow array if necessary                                         */
 /* -------------------------------------------------------------------- */
     if (*pnSize + 1 >= *pnMaxSize)
     {
         *pnMaxSize = 2 + 2 * (*pnMaxSize);
-        *ppapszFileList = (char **) CPLRealloc(
-                    *ppapszFileList, sizeof(char*)  * (*pnMaxSize) );
+        *ppapszFileList = reinterpret_cast<char **>(
+            CPLRealloc( *ppapszFileList, sizeof(char*) * (*pnMaxSize) ) );
     }
-            
+
 /* -------------------------------------------------------------------- */
 /*      Add the string to the list                                      */
 /* -------------------------------------------------------------------- */
     (*ppapszFileList)[*pnSize] = CPLStrdup(pszSourceFilename);
     (*ppapszFileList)[(*pnSize + 1)] = NULL;
     CPLHashSetInsert(hSetFiles, (*ppapszFileList)[*pnSize]);
-    
+
     (*pnSize) ++;
 
     VRTRasterBand::GetFileList( ppapszFileList, pnSize,
