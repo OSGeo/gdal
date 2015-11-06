@@ -187,6 +187,11 @@ int main( int argc, char ** argv )
         Usage("No source dataset specified.");
     }
 
+    if( psOptionsForBinary->pszDest == NULL )
+    {
+        Usage("No target dataset specified.");
+    }
+
     if( strcmp(psOptionsForBinary->pszDest, "/vsistdout/") == 0)
     {
         GDALTranslateOptionsSetProgress(psOptions, GDALTermProgress, NULL);
@@ -199,14 +204,11 @@ int main( int argc, char ** argv )
 /*      Attempt to open source file.                                    */
 /* -------------------------------------------------------------------- */
 
-    hDataset = GDALOpenEx( psOptionsForBinary->pszSource, GDAL_OF_RASTER, NULL,
+    hDataset = GDALOpenEx( psOptionsForBinary->pszSource, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
                            (const char* const* )psOptionsForBinary->papszOpenOptions, NULL );
     
     if( hDataset == NULL )
     {
-        fprintf( stderr,
-                 "GDALOpen failed - %d\n%s\n",
-                 CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
         GDALDestroyDriverManager();
         exit( 1 );
     }
