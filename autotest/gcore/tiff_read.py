@@ -1397,6 +1397,7 @@ def tiff_direct_and_virtual_mem_io():
                 padding *= dt_size
                 if not band_interleaved:
                     padding *= nbands
+                padding = int(padding)
 
             to_remove = 1
             if not band_interleaved:
