@@ -403,9 +403,6 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     GetLayerDefn();
-    int bHasUserFieldMatchingFID = FALSE;
-    if( osFIDColName.size() > 0 )
-        bHasUserFieldMatchingFID = poFeatureDefn->GetFieldIndex(osFIDColName) >= 0;
 
     if (!poDS->IsReadWrite())
     {
