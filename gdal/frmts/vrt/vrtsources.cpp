@@ -35,8 +35,6 @@
 #include "cpl_string.h"
 #include "gdal_proxy.h"
 
-#include <cmath>
-
 /* See #5459 */
 #ifdef isnan
 #define HAS_ISNAN_MACRO
@@ -47,6 +45,9 @@
 #if defined(HAS_ISNAN_MACRO) && !defined(isnan)
 #define isnan std::isnan
 #endif
+
+// Include cmath after the #5459 isnan workaround for MingW.
+#include <cmath>
 
 CPL_CVSID("$Id$");
 
