@@ -289,7 +289,6 @@ class VRTPansharpenedDataset : public VRTDataset
     std::map<CPLString,CPLString> oMapToRelativeFilenames; // map from absolute to relative
 
     int               bLoadingOtherBands;
-    int               bHasWarnedDisableAggressiveBandCaching;
 
     GByte            *pabyLastBufferBandRasterIO;
     int               nLastBandRasterIOXOff;

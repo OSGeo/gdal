@@ -117,7 +117,6 @@ VRTPansharpenedDataset::VRTPansharpenedDataset( int nXSize, int nYSize ) :
     poPansharpener(NULL),
     poMainDataset(this),
     bLoadingOtherBands(FALSE),
-    bHasWarnedDisableAggressiveBandCaching(FALSE),
     pabyLastBufferBandRasterIO(NULL),
     nLastBandRasterIOXOff(0),
     nLastBandRasterIOYOff(0),
