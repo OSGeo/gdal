@@ -5,9 +5,6 @@ use ExtUtils::MakeMaker;
 use Config;
 use Cwd;
 
-my $in_source_tree = -r '../../GDALmake.opt.in';
-print "Building in source tree.\n" if $in_source_tree;
-
 # pick up our parameters from @ARGV
 my %ARGV;
 for (@ARGV) {
@@ -16,11 +13,14 @@ for (@ARGV) {
     } else {
         $ARGV{$_} = 1;
     }
+    $_ = '' if /^--gdal-source-tree/;
     $_ = '' if /^--gdal-config/;
     $_ = '' if /^--no-version-check/;
     $_ = '' if /^--no-downloads/;
+    print STDERR "Warning: unknown parameter: '$_'.\n" if $_;
 }
 # ... or from the environment
+$ARGV{'--gdal-source-tree'} = $ENV{PERL_GDAL_SOURCE_TREE} if $ENV{PERL_GDAL_SOURCE_TREE};
 $ARGV{'--gdal-config'} = $ENV{PERL_GDAL_CONFIG} if $ENV{PERL_GDAL_CONFIG};
 $ARGV{'--no-version-check'} = 1 if $ENV{PERL_GDAL_NO_VERSION_CHECK};
 $ARGV{'--no-downloads'} = 1 if $ENV{PERL_GDAL_NO_DOWNLOADS};
@@ -50,6 +50,16 @@ end
 exit;
 }
 
+my $source_tree;
+if ($ARGV{'--gdal-source-tree'}) {
+    $source_tree = $ARGV{'--gdal-source-tree'};
+    die "Path '$source_tree' does not exist." unless -e $source_tree && -d $source_tree;
+}
+elsif (-r '../../GDALmake.opt.in') {
+    $source_tree = '../..';
+    print "Building in source tree.\n" if $source_tree;
+}
+
 # Obtain the version of GDAL for this module distribution.
 
 my $my_gdal_version;
@@ -65,19 +75,22 @@ if (open(my $fh, "lib/Geo/GDAL.pm")) {
 # search and decide which GDAL (gdal-config) to build against if not given
 
 my $versions_may_differ = $ARGV{'--no-version-check'};
-my $downloads_are_ok = !$in_source_tree && !$ARGV{'--no-downloads'};
-my $gdal_config = $ARGV{'--gdal-config'};
+my $downloads_are_ok = !$source_tree && !$ARGV{'--no-downloads'};
+my $gdal_config;
+if ($source_tree) {
+    $gdal_config = "$source_tree/apps/gdal-config";
+    die "There is no gdal-config in '$source_tree'.\n".
+        "You have to first say \"cd $source_tree; make\"." unless -r $gdal_config;
+}
+elsif ($ARGV{'--gdal-config'}) {
+    $gdal_config = $ARGV{'--gdal-config'};
+}
 my $config;
 if ($gdal_config) {
     if (-r $gdal_config) {
         $config = $gdal_config;
     } else {
-        die "The specified gdal-config '$gdal_config' does not exist or is unreadable.\n";
-    }
-} elsif ($in_source_tree) {
-    $config = '../../apps/gdal-config';
-    unless (-r $config) {
-        die "You have to cd ../../; make; first!";
+        die "The gdal-config '$gdal_config' does not exist or is unreadable.\n";
     }
 } else {
     # scan known possible locations in the order of preference:
@@ -97,7 +110,11 @@ if ($gdal_config) {
         }
     }
 }
-$config = download_and_compile_gdal($my_gdal_version) if !$config && $downloads_are_ok;
+
+if (!$config && $downloads_are_ok) {
+    $source_tree = download_and_compile_gdal($my_gdal_version);
+    $config = "$source_tree/apps/gdal-config";
+}
 
 my $uri = gdal_source_location($my_gdal_version);
 
@@ -289,53 +306,57 @@ end
 
     my $gdal = "gdal-$version";
     my $uri = gdal_source_location($version);
-    my $ret = 1;
+    my $ok = 1;
     
-    print "fetch $uri\n";
+    print "get GDAL version $version\n";
     my $code = sub {
-        unless (-s "gdal-$version.tar.gz") { # fetch leaves a zero sized file even when it fails
+        if ($version eq '2.0.0' or $version eq '2.0.1') {
+            print "$version is buggy, get latest from 2.0 branch.\n";
+            $ok = $step->("svn", "checkout", "https://svn.osgeo.org/gdal/branches/2.0/gdal", "gdal");
+            $gdal = "gdal";
+        } 
+        elsif (-r "gdal-$version.tar.gz" and -s "gdal-$version.tar.gz") { # fetch leaves a zero sized file even when it fails
+            print "Using existing \"$gdal.tar.gz\"\n";
+            $ok = $step->("tar", "zxf", "$gdal.tar.gz");
+        }
+        else {
             print "Attempting to fetch '$uri'\n";
             my $ff = File::Fetch->new(uri => $uri);
-            $ret = $ff->fetch() if $ff;
-        } else {
-            print "Using existing \"$gdal.tar.gz\"\n";
+            $ok = $ff->fetch() if $ff;
+            if ($ok) {
+                $ok = $step->("tar", "zxf", "$gdal.tar.gz");
+            } else {
+                print "No luck. Maybe this is the development version?\n";
+                $ok = $step->("svn", "checkout", "https://svn.osgeo.org/gdal/trunk/gdal", "gdal");
+                $gdal = "gdal";
+            }
         }
     };
     my ($stdout, $stderr, $exit) = capture($code);
     print $err $stderr;
     print $log $stdout;
-    if ($ret) {
-        $ret = $step->("tar", "zxf", "$gdal.tar.gz");
-    } else {
-        print "No luck. Maybe this is the development version?\n";
-        $ret = $step->("svn", "checkout", "https://svn.osgeo.org/gdal/trunk/gdal", "gdal");
-        $gdal = "gdal";
-    }
-    if ($ret) {
+    if ($ok) {
         for my $cmd (["cd", $gdal],
                      ["./configure"],
                      ["make", "-j4"],
                      ["cd", ".."]) 
         {
-            $ret = $step->(@$cmd);
-            last unless $ret;
+            $ok = $step->(@$cmd);
+            last unless $ok;
         }
     }
     close $log;
     close $err;
-    if ($ret) {
-        return "./$gdal/apps/gdal-config";
-    } else {
-        chdir($pwd);
-        open(my $err, "<", "gdal-build.err") 
-            or die "Can't open gdal-build.err: $!.";
-        my @err = <$err>;
-        close $err;
-        die "Downloading and compiling of GDAL failed.\n".
-            "The error is probably explained by the error log.\n".
-            "It is '$pwd/gdal-build.err', and its contents are:\n".
-            "@err\n";
-    }
+    return "./$gdal" if $ok;
+    chdir($pwd);
+    open($err, "<", "gdal-build.err") 
+        or die "Can't open gdal-build.err: $!.";
+    my @err = <$err>;
+    close $err;
+    die "Downloading and compiling of GDAL failed.\n".
+        "The error is probably explained by the error log.\n".
+        "It is '$pwd/gdal-build.err'.\n".
+        "@err\n";
 }}
 
 sub get_gdal_version {
@@ -359,15 +380,16 @@ sub get_gdal_version {
 sub get_gdal_inc_lib {
     my $config = shift;
     my ($INC, $LIB) = ('', '');
-    if (-x $config) {
+    if ($source_tree) {
+        $LIB = "-L$source_tree/.libs -L$source_tree -lgdal ";
+        chomp($INC = `$config --cflags`);
+        $INC .= " -I$source_tree/gnm " if $have_gnm;
+    }
+    elsif (-x $config) {
         chomp($INC = `$config --cflags`);
         chomp($LIB = `$config --libs`);
-        if ($in_source_tree) {
-            $LIB = '-L../../.libs -L../.. ';
-            $INC .= ' -I../../gnm ' if $have_gnm;
-        }
     }
-    if (!(-x $config) || $in_source_tree) {
+    else {
         if (open(my $fh, $config) || die "Can't open '$config': $!") {
             for (<$fh>) {
                 if (/^CONFIG_LIBS/) {
