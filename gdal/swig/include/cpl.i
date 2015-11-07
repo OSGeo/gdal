@@ -453,6 +453,8 @@ int wrapper_VSIStatL( const char * utf8_path, StatBuf *psStatBufOut, int nFlags 
 
 #endif
 
+%apply Pointer NONNULL {VSILFILE* fp};
+
 %rename (VSIFOpenL) wrapper_VSIFOpenL;
 %inline %{
 VSILFILE   *wrapper_VSIFOpenL( const char *utf8_path, const char *pszMode )
@@ -462,35 +464,35 @@ VSILFILE   *wrapper_VSIFOpenL( const char *utf8_path, const char *pszMode )
     return VSIFOpenL( utf8_path, pszMode );
 }
 %}
-VSI_RETVAL VSIFCloseL( VSILFILE * );
+VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 
 #if defined(SWIGPYTHON)
-int     VSIFSeekL( VSILFILE *, GIntBig, int );
-GIntBig    VSIFTellL( VSILFILE * );
-int     VSIFTruncateL( VSILFILE *, GIntBig );
+int     VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence);
+GIntBig    VSIFTellL( VSILFILE* fp );
+int     VSIFTruncateL( VSILFILE* fp, GIntBig length );
 #else
-VSI_RETVAL VSIFSeekL( VSILFILE *, long, int );
-long    VSIFTellL( VSILFILE * );
-VSI_RETVAL VSIFTruncateL( VSILFILE *, long );
+VSI_RETVAL VSIFSeekL( VSILFILE* fp, long offset, int whence);
+long    VSIFTellL( VSILFILE* fp );
+VSI_RETVAL VSIFTruncateL( VSILFILE* fp, long length );
 #endif
 
 #if defined(SWIGPYTHON)
 %rename (VSIFWriteL) wrapper_VSIFWriteL;
 %inline {
-int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE * f)
+int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE* fp)
 {
     if (nLen < size * memb)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent buffer size with 'size' and 'memb' values");
         return 0;
     }
-    return VSIFWriteL(pBuf, size, memb, f);
+    return VSIFWriteL(pBuf, size, memb, fp);
 }
 }
 #elif defined(SWIGPERL)
 size_t VSIFWriteL(const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp);
 #else
-int     VSIFWriteL( const char *, int, int, VSILFILE * );
+int     VSIFWriteL( const char *, int, int, VSILFILE *fp );
 #endif
 
 #if defined(SWIGPERL)

@@ -1189,23 +1189,23 @@ def VSIFOpenL(*args):
   return _gdal.VSIFOpenL(*args)
 
 def VSIFCloseL(*args):
-  """VSIFCloseL(VSILFILE * arg1) -> VSI_RETVAL"""
+  """VSIFCloseL(VSILFILE * fp) -> VSI_RETVAL"""
   return _gdal.VSIFCloseL(*args)
 
 def VSIFSeekL(*args):
-  """VSIFSeekL(VSILFILE * arg1, GIntBig arg2, int arg3) -> int"""
+  """VSIFSeekL(VSILFILE * fp, GIntBig offset, int whence) -> int"""
   return _gdal.VSIFSeekL(*args)
 
 def VSIFTellL(*args):
-  """VSIFTellL(VSILFILE * arg1) -> GIntBig"""
+  """VSIFTellL(VSILFILE * fp) -> GIntBig"""
   return _gdal.VSIFTellL(*args)
 
 def VSIFTruncateL(*args):
-  """VSIFTruncateL(VSILFILE * arg1, GIntBig arg2) -> int"""
+  """VSIFTruncateL(VSILFILE * fp, GIntBig length) -> int"""
   return _gdal.VSIFTruncateL(*args)
 
 def VSIFWriteL(*args):
-  """VSIFWriteL(int nLen, int size, int memb, VSILFILE * f) -> int"""
+  """VSIFWriteL(int nLen, int size, int memb, VSILFILE * fp) -> int"""
   return _gdal.VSIFWriteL(*args)
 
 def ParseCommandLine(*args):
