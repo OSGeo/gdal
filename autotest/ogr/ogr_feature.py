@@ -992,6 +992,96 @@ def ogr_feature_default():
 
     return 'success'
 
+###############################################################################
+# Test GetNativeData(), SetNativeData(), GetNativeMediaType(), SetNativeMediaType():
+
+def ogr_feature_native_data():
+
+    feat_def = ogr.FeatureDefn( 'test' )
+    f = ogr.Feature(feat_def)
+    if f.GetNativeData() is not None:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if f.GetNativeMediaType() is not None:
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    f.SetNativeData('native_data')
+    if f.GetNativeData() != 'native_data':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    f.SetNativeMediaType('native_media_type')
+    if f.GetNativeMediaType() != 'native_media_type':
+        gdaltest.post_reason('fail')
+        print(f.GetNativeMediaType())
+        return 'failure'
+
+    f2 = ogr.Feature(feat_def)
+    f2.SetFrom(f)
+    if f2.GetNativeData() != 'native_data':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if f2.GetNativeMediaType() != 'native_media_type':
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    f_clone = f.Clone()
+    if f_clone.GetNativeData() != 'native_data':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if f_clone.GetNativeMediaType() != 'native_media_type':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    f_clone.SetNativeData(None)
+    f_clone.SetNativeMediaType(None)
+    if f_clone.GetNativeData() is not None:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if f_clone.GetNativeMediaType() is not None:
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    lyr.SetMetadataItem('NATIVE_DATA', 'native_data', 'NATIVE_DATA')
+    lyr.SetMetadataItem('NATIVE_MEDIA_TYPE', 'native_media_type', 'NATIVE_DATA')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetNativeData('native_data')
+    f.SetNativeMediaType('native_media_type')
+    lyr.CreateFeature(f)
+    f = None
+
+    dialects = [ 'OGR_SQL' ]
+    if gdal.GetDriverByName('SQLITE') is not None:
+        dialects += [ 'OGR_SQLITE' ]
+    for dialect in dialects:
+        sql_lyr = ds.ExecuteSQL('SELECT * FROM %s' % lyr.GetName(), dialect = dialect)
+        native_data = sql_lyr.GetMetadataItem('NATIVE_DATA', 'NATIVE_DATA')
+        if native_data != 'native_data':
+            gdaltest.post_reason('fail')
+            print(dialect)
+            print(native_data)
+            return 'failure'
+        native_media_type = sql_lyr.GetMetadataItem('NATIVE_MEDIA_TYPE', 'NATIVE_DATA')
+        if native_media_type != 'native_media_type':
+            gdaltest.post_reason('fail')
+            print(dialect)
+            print(native_media_type)
+            return 'failure'
+        f = sql_lyr.GetNextFeature()
+        if f.GetNativeData() != 'native_data':
+            gdaltest.post_reason('fail')
+            print(dialect)
+            print(f.GetNativeData())
+            return 'failure'
+        if f.GetNativeMediaType() != 'native_media_type':
+            gdaltest.post_reason('fail')
+            print(dialect)
+            print(f.GetNativeMediaType())
+            return 'failure'
+        ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
 
 def ogr_feature_cleanup():
 
@@ -1017,6 +1107,7 @@ gdaltest_list = [
     ogr_feature_overflow_64bit_integer,
     ogr_feature_nullable_validate,
     ogr_feature_default,
+    ogr_feature_native_data,
     ogr_feature_cleanup ]
 
 if __name__ == '__main__':

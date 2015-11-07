@@ -59,6 +59,10 @@ single request == single page.</p>
 <p>If a top-level member of GeoJSON data is of any other type than <em>FeatureCollection</em>, the driver will
 produce a layer with only one feature. Otherwise, a layer will consists of a set of features.</p>
 
+<p>If the NATIVE_DATA open option is set to YES, members at the level of the FeatureCollection will be
+stored as a serialized JSon object in the NATIVE_DATA item of the NATIVE_DATA metadata domain of the
+layer object (and "application/vnd.geo+json" in the NATIVE_MEDIA_TYPE of the NATIVE_DATA metadata domain).</p>
+
 <h2>Feature</h2>
 
 <p>The OGR GeoJSON driver maps each object of following types to new <em>OGRFeature</em> object:
@@ -79,6 +83,15 @@ Starting with GDAL 2.0, Integer(Boolean), Date, Time and DateTime fields are als
 <p>It is possible to tell the driver to not to process attributes by setting environment variable 
 <strong>ATTRIBUTES_SKIP=YES</strong>. Default behavior is to preserve all attributes (as an union, see previous paragraph), 
 what is equal to setting <strong>ATTRIBUTES_SKIP=NO</strong>.</p>
+
+<p>If the NATIVE_DATA open option is set to YES, the Feature JSon object will be
+stored as a serialized JSon object in the NativeData property of the OGRFeature object
+(and "application/vnd.geo+json" in the NativeMediaType property). On write, if
+a OGRFeature to be written has its NativeMediaType property set to "application/vnd.geo+json"
+and its NativeData property set to a string that is a serialized JSon object, then
+extra members of this object (i.e. not the "property" dictionary, nor the first 3
+dimensions of geometry coordinates) will be used to enhance the created JSon object from
+the OGRFeature. See <a href="https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr">RFC 60</a> for more details.</p>
 
 <h2>Geometry</h2>
 
@@ -109,6 +122,10 @@ recursively explore nested objects and produce flatten OGR attributes. Defaults 
 of nested attributes. Defaults to '_'</li>
 <li><b>FEATURE_SERVER_PAGING</b> = YES/NO: Whether to automatically scroll through
 results with a ArcGIS Feature Service endpoint.</li>
+<li><b>NATIVE_DATA</b> = YES/NO: (GDAL &gt;= 2.1) Whether to store the native JSon representation at FeatureCollection and Feature level.
+Defaults to NO. This option can be used to improve round-tripping from GeoJSON to GeoJSON by preserving some extra
+JSon objects that would otherwise be ignored by the OGR abstraction. Note that
+ogr2ogr by default enable this option, unless you specify its -noNativeData switch.</li>
 </ul>
 
 <p>To explain FLATTEN_NESTED_ATTRIBUTES, consider the following GeoJSON fragment:</p>
@@ -149,20 +166,60 @@ OGRFeature(OGRGeoJSON):0
 <h2>Layer creation option</h2>
 
 <ul>
-<li><b>WRITE_BBOX</b> = YES/NO: (OGR >= 1.9.0) Set to YES to write a bbox property with the bounding box of the geometries at the feature and feature
+<li><b>WRITE_BBOX</b> = YES/NO: (OGR &gt;= 1.9.0) Set to YES to write a bbox property with the bounding box of the geometries at the feature and feature
 collection level. Defaults to NO.</li>
-<li><b>COORDINATE_PRECISION</b> = int_number: (OGR >= 1.9.0) Maximum number of figures after decimal separator to write in coordinates.
+<li><b>COORDINATE_PRECISION</b> = int_number: (OGR &gt;= 1.9.0) Maximum number of figures after decimal separator to write in coordinates.
 Default to 15. "Smart" truncation will occur to remove trailing zeros.</li>
+<li><b>NATIVE_DATA</b>=string. (OGR &gt;= 2.1) Serialized JSon object that contains extra properties to store at FeatureCollection level.</li>
+<li><b>NATIVE_MEDIA_TYPE</b>=string. (OGR &gt;= 2.1) Format of NATIVE_DATA. Must be "application/vnd.geo+json", otherwise NATIVE_DATA will be ignored.</li>
 </ul>
 
 <h2>VSI Virtual File System API support</h2>
 
-<p>Some features below require OGR >= 1.9.0.</p>
+<p>Some features below require OGR &gt;= 1.9.0.</p>
 
 <p>The driver supports reading and writing to files managed by VSI Virtual File System API, which includes
 "regular" files, as well as files in the /vsizip/ (read-write), /vsigzip/ (read-write), /vsicurl/ (read-only) domains.</p>
 
 <p>Writing to /dev/stdout or /vsistdout/ is also supported.</p>
+
+<h2>Round-tripping of extra JSon members</h2>
+
+<p>See <a href="https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr">RFC 60</a> for more details.</p>
+
+<p>Starting with GDAL 2.1, extra JSon members at the FeatureCollection, Feature or
+geometry levels that are not normally reflected in the OGR abstraction,
+such as the ones called "extra_XXXXX_member" in the below
+snippet, are by default preserved when executing ogr2ogr with GeoJSON both at the
+source and destination. This also applies to extra values in position tuples
+of geometries, beyond the 3rd dimension (100, 101 in the below example), if the
+transformation preserves the geometry structure (for example, reprojection is allowed, but not
+change in the number of coordinates).</p>
+
+<pre>
+{
+  "type": "FeatureCollection",
+  <b>"extra_fc_member": "foo",</b>
+  "features":
+  [
+    {
+      "type": "Feature",
+      <b>"extra_feat_member": "bar",</b>
+      "geometry": {
+        "type": "Point",
+        <b>"extra_geom_member": "baz",</b>
+        "coordinates": [ 2, 49, 3, <b>100, 101</b> ]
+      },
+      "properties": {
+        "a_property": "foo",
+      }
+    }
+  ]
+}
+</pre>
+
+<p>This behaviour can be turned off by specifying the <b>-noNativeData</b> switch
+of the ogr2ogr utility.</p>
 
 <h2>Example</h2>
 

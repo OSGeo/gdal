@@ -55,16 +55,16 @@ CPL_CVSID("$Id$");
  * adhere.
  */
 
-OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
-
+OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
+            nFID(OGRNullFID),
+            poDefn(poDefnIn),
+            m_pszNativeData(NULL),
+            m_pszNativeMediaType(NULL),
+            m_pszStyleString(NULL),
+            m_poStyleTable(NULL),
+            m_pszTmpFieldValue(NULL)
 {
-    m_pszStyleString = NULL;
-    m_poStyleTable = NULL;
-    m_pszTmpFieldValue = NULL;
     poDefnIn->Reference();
-    poDefn = poDefnIn;
-
-    nFID = OGRNullFID;
 
     // Allocate array of fields and initialize them to the unset special value
     pauFields = (OGRField *) CPLMalloc( poDefn->GetFieldCount() *
@@ -165,6 +165,8 @@ OGRFeature::~OGRFeature()
     CPLFree( papoGeometries );
     CPLFree(m_pszStyleString);
     CPLFree(m_pszTmpFieldValue);
+    CPLFree( m_pszNativeData );
+    CPLFree( m_pszNativeMediaType );
 }
 
 /************************************************************************/
@@ -797,6 +799,8 @@ OGRFeature *OGRFeature::Clone()
         poNew->SetStyleString(GetStyleString());
 
     poNew->SetFID( GetFID() );
+    poNew->SetNativeData( GetNativeData() );
+    poNew->SetNativeMediaType( GetNativeMediaType() );
 
     return poNew;
 }
@@ -4527,6 +4531,12 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
     SetStyleString( poSrcFeature->GetStyleString() );
 
 /* -------------------------------------------------------------------- */
+/*      Copy native data.                                               */
+/* -------------------------------------------------------------------- */
+    SetNativeData( poSrcFeature->GetNativeData() );
+    SetNativeMediaType( poSrcFeature->GetNativeMediaType() );
+
+/* -------------------------------------------------------------------- */
 /*      Set the fields by name.                                         */
 /* -------------------------------------------------------------------- */
 
@@ -5294,4 +5304,235 @@ int OGR_F_Validate( OGRFeatureH hFeat, int nValidateFlags, int bEmitError )
     VALIDATE_POINTER1( hFeat, "OGR_F_Validate", FALSE );
 
     return ((OGRFeature *) hFeat)->Validate( nValidateFlags, bEmitError );
+}
+
+/************************************************************************/
+/*                          GetNativeData()                             */
+/************************************************************************/
+
+/**
+ * \fn const char* OGRFeature::GetNativeData() const;
+ *
+ * \brief Returns the native data for the feature.
+ *
+ * The native data is the representation in a "natural" form that comes from
+ * the driver that created this feature, or that is aimed at an output driver.
+ * The native data may be in different format, which is indicated by
+ * GetNativeMediaType().
+ *
+ * Note that most drivers do not support storing the native data in the feature
+ * object, and if they do, generally the NATIVE_DATA open option must be passed
+ * at dataset opening.
+ *
+ * The "native data" does not imply it is something more performant or powerful than
+ * what can be obtained with the rest of the API, but it may be useful in
+ * round-tripping scenarios where some characteristics of the underlying format
+ * are not captured otherwise by the OGR abstraction.
+ *
+ * This function is the same as the C function
+ * OGR_F_GetNativeData().
+ *
+ * @return a string with the native data, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+/************************************************************************/
+/*                      ,  OGR_F_GetNativeData()                        */
+/************************************************************************/
+
+/**
+ * \brief Returns the native data for the feature.
+ *
+ * The native data is the representation in a "natural" form that comes from
+ * the driver that created this feature, or that is aimed at an output driver.
+ * The native data may be in different format, which is indicated by
+ * OGR_F_GetNativeMediaType().
+ *
+ * Note that most drivers do not support storing the native data in the feature
+ * object, and if they do, generally the NATIVE_DATA open option must be passed
+ * at dataset opening.
+ *
+ * The "native data" does not imply it is something more performant or powerful than
+ * what can be obtained with the rest of the API, but it may be useful in
+ * round-tripping scenarios where some characteristics of the underlying format
+ * are not captured otherwise by the OGR abstraction.
+ *
+ * This function is the same as the C++ method
+ * OGRFeature::GetNativeData().
+ *
+ * @param hFeat handle to the feature.
+ * @return a string with the native data, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+const char *OGR_F_GetNativeData( OGRFeatureH hFeat )
+
+{
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetNativeData", NULL );
+
+    return ((const OGRFeature *) hFeat)->GetNativeData();
+}
+
+/************************************************************************/
+/*                        GetNativeMediaType()                          */
+/************************************************************************/
+
+/**
+ * \fn const char* OGRFeature::GetNativeMediaType() const;
+ *
+ * \brief Returns the native media type for the feature.
+ *
+ * The native media type is the identifier for the format of the native data.
+ * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
+ * e.g. "application/vnd.geo+json" for JSon.
+ *
+ * This function is the same as the C function
+ * OGR_F_GetNativeMediaType().
+ *
+ * @return a string with the native media type, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+/************************************************************************/
+/*                       OGR_F_GetNativeMediaType()                     */
+/************************************************************************/
+
+/**
+ * \brief Returns the native media type for the feature.
+ *
+ * The native media type is the identifier for the format of the native data.
+ * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
+ * e.g. "application/vnd.geo+json" for JSon.
+ *
+ * This function is the same as the C function
+ * OGR_F_GetNativeMediaType().
+ *
+ * @param hFeat handle to the feature.
+ * @return a string with the native media type, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+const char *OGR_F_GetNativeMediaType( OGRFeatureH hFeat )
+{
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetNativeMediaType", NULL );
+
+    return ((const OGRFeature *) hFeat)->GetNativeMediaType();
+}
+
+/************************************************************************/
+/*                      ,    SetNativeData()                            */
+/************************************************************************/
+
+/**
+ * \brief Sets the native data for the feature.
+ *
+ * The native data is the representation in a "natural" form that comes from
+ * the driver that created this feature, or that is aimed at an output driver.
+ * The native data may be in different format, which is indicated by
+ * GetNativeMediaType().
+ *
+ * This function is the same as the C function
+ * OGR_F_SetNativeData().
+ *
+ * @param pszNativeData a string with the native data, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+void OGRFeature::SetNativeData( const char* pszNativeData )
+{
+    CPLFree( m_pszNativeData );
+    m_pszNativeData = ( pszNativeData ) ? CPLStrdup( pszNativeData ) : NULL;
+}
+
+/************************************************************************/
+/*                      ,   OGR_F_SetNativeData()                       */
+/************************************************************************/
+
+/**
+ * \brief Sets the native data for the feature.
+ *
+ * The native data is the representation in a "natural" form that comes from
+ * the driver that created this feature, or that is aimed at an output driver.
+ * The native data may be in different format, which is indicated by
+ * OGR_F_GetNativeMediaType().
+ *
+ * This function is the same as the C++ method
+ * OGRFeature::SetNativeData().
+ *
+ * @param hFeat handle to the feature.
+ * @param pszNativeData a string with the native data, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+void OGR_F_SetNativeData( OGRFeatureH hFeat, const char* pszNativeData )
+{
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetNativeData" );
+
+    ((OGRFeature *) hFeat)->SetNativeData(pszNativeData);
+}
+
+/************************************************************************/
+/*                      ,  SetNativeMediaType()                         */
+/************************************************************************/
+
+/**
+ * \brief Sets the native media type for the feature.
+ *
+ * The native media type is the identifier for the format of the native data.
+ * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
+ * e.g. "application/vnd.geo+json" for JSon.
+ *
+ * This function is the same as the C function
+ * OGR_F_SetNativeMediaType().
+ *
+ * @param pszNativeMediaType a string with the native media type, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+void OGRFeature::SetNativeMediaType( const char* pszNativeMediaType )
+{
+    CPLFree( m_pszNativeMediaType );
+    m_pszNativeMediaType = ( pszNativeMediaType ) ? CPLStrdup( pszNativeMediaType ) : NULL;
+}
+
+/************************************************************************/
+/*                        , OGR_F_SetNativeMediaType()                  */
+/************************************************************************/
+
+/**
+ * \brief Sets the native media type for the feature.
+ *
+ * The native media type is the identifier for the format of the native data.
+ * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
+ * e.g. "application/vnd.geo+json" for JSon.
+ *
+ * This function is the same as the C++ method
+ * OGRFeature::SetNativeMediaType().
+ *
+ * @param hFeat handle to the feature.
+ * @param pszNativeMediaType a string with the native media type, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+void OGR_F_SetNativeMediaType( OGRFeatureH hFeat, const char* pszNativeMediaType )
+{
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetNativeMediaType" );
+
+    ((OGRFeature *) hFeat)->SetNativeMediaType(pszNativeMediaType);
 }
