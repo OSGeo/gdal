@@ -1647,6 +1647,21 @@ public:
     OGR_F_FillUnsetWithDefault(self, bNotNullableOnly, options );
   }
 
+  const char* GetNativeData () {
+    return OGR_F_GetNativeData(self);
+  }
+
+  const char* GetNativeMediaType () {
+    return OGR_F_GetNativeMediaType(self);
+  }
+
+  void SetNativeData ( const char* nativeData ) {
+    OGR_F_SetNativeData(self, nativeData);
+  }
+
+  void SetNativeMediaType ( const char* nativeMediaType ) {
+    OGR_F_SetNativeMediaType(self, nativeMediaType);
+  }
 } /* %extend */
 
 
