@@ -1273,9 +1273,8 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
         {
             const int nDTSize = nDTSizeBits / 8;
             poGDS->m_nTempBufferForCommonDirectIOSize =
-                (size_t)(nBlockXSize * nDTSize * ((poGDS->nPlanarConfig == PLANARCONFIG_CONTIG) ? poGDS->nBands : 1));
-            if( TIFFIsTiled(poGDS->hTIFF) )
-                poGDS->m_nTempBufferForCommonDirectIOSize *= nBlockYSize;
+                (size_t)(nBlockXSize * nBlockYSize * nDTSize *
+                ((poGDS->nPlanarConfig == PLANARCONFIG_CONTIG) ? poGDS->nBands : 1));
 
             poGDS->m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(poGDS->m_nTempBufferForCommonDirectIOSize);
             if( poGDS->m_pTempBufferForCommonDirectIO == NULL )
@@ -3197,9 +3196,8 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
         {
             const int nDTSize = nDTSizeBits / 8;
             m_nTempBufferForCommonDirectIOSize =
-                (size_t)(nBlockXSize * nDTSize * ((nPlanarConfig == PLANARCONFIG_CONTIG) ? nBands : 1));
-            if( TIFFIsTiled(hTIFF) )
-                m_nTempBufferForCommonDirectIOSize *= nBlockYSize;
+                (size_t)(nBlockXSize * nBlockYSize * nDTSize *
+                ((nPlanarConfig == PLANARCONFIG_CONTIG) ? nBands : 1));
 
             m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(m_nTempBufferForCommonDirectIOSize);
             if( m_pTempBufferForCommonDirectIO == NULL )
