@@ -1224,8 +1224,8 @@ public:
 /************************************************************************/
 
 /* Reads directly bytes from the file using ReadMultiRange(), and by-pass */
-/* block reading. Restricted to simple TIFF configurations (un-tiled, */
-/* uncompressed data, standard data types). Particularly useful to extract */
+/* block reading. Restricted to simple TIFF configurations */
+/* (uncompressed data, standard data types). Particularly useful to extract */
 /* sub-windows of data on a large /vsicurl dataset). */
 /* Returns -1 if DirectIO() can't be supported on that file */
 
@@ -1236,12 +1236,13 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
                                   GSpacing nPixelSpace, GSpacing nLineSpace,
                                   GDALRasterIOExtraArg* psExtraArg )
 {
+    const int nDTSizeBits = GDALGetDataTypeSize(eDataType);
     if( !(eRWFlag == GF_Read &&
           poGDS->nCompression == COMPRESSION_NONE &&
           (poGDS->nPhotometric == PHOTOMETRIC_MINISBLACK ||
            poGDS->nPhotometric == PHOTOMETRIC_RGB ||
            poGDS->nPhotometric == PHOTOMETRIC_PALETTE) &&
-          poGDS->nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+          poGDS->nBitsPerSample == nDTSizeBits &&
           poGDS->SetDirectory() /* very important to make hTIFF uptodate! */) )
     {
         return -1;
@@ -1270,8 +1271,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     {
         if( poGDS->m_pTempBufferForCommonDirectIO == NULL )
         {
-            const GDALDataType eDataType = GetRasterDataType();
-            const int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
+            const int nDTSize = nDTSizeBits / 8;
             poGDS->m_nTempBufferForCommonDirectIOSize =
                 (size_t)(nBlockXSize * nDTSize * ((poGDS->nPlanarConfig == PLANARCONFIG_CONTIG) ? poGDS->nBands : 1));
             if( TIFFIsTiled(poGDS->hTIFF) )
@@ -1866,7 +1866,6 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg )
 {
-    GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
     if( eAccess == GA_Update || eRWFlag == GF_Write || bStreamingIn )
         return -1;
 
@@ -1881,11 +1880,13 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
     if( !SetDirectory() )
         return CE_Failure;
 
+    const GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
+    const int nDTSizeBits = GDALGetDataTypeSize(eDataType);
     if( !(nCompression == COMPRESSION_NONE &&
         (nPhotometric == PHOTOMETRIC_MINISBLACK ||
         nPhotometric == PHOTOMETRIC_RGB ||
         nPhotometric == PHOTOMETRIC_PALETTE) &&
-        nBitsPerSample == GDALGetDataTypeSize(eDataType)) )
+        nBitsPerSample == nDTSizeBits) )
     {
         eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
         return -1;
@@ -1948,8 +1949,7 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
 
     if( TIFFIsByteSwapped(hTIFF) && m_pTempBufferForCommonDirectIO == NULL )
     {
-        const GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
-        const int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
+        const int nDTSize = nDTSizeBits / 8;
         m_nTempBufferForCommonDirectIOSize = 
             (size_t)(nBlockXSize * nDTSize * ((nPlanarConfig == PLANARCONFIG_CONTIG) ? nBands : 1));
         if( TIFFIsTiled(hTIFF) )
@@ -2080,16 +2080,18 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
         return CE_Failure;
     }
 
-    int iBand;
     bool bUseContigImplementation =
         ( nPlanarConfig == PLANARCONFIG_CONTIG ) && (nBandCount > 1) && (nBandSpace == nBufDTSize);
-    for(iBand = 0; iBand < nBandCount; iBand ++ )
+    if( bUseContigImplementation )
     {
-        int nBand = panBandMap[iBand];
-        if( nBand != iBand + 1 )
+        for(int iBand = 0; iBand < nBandCount; iBand ++ )
         {
-            bUseContigImplementation = false;
-            break;
+            int nBand = panBandMap[iBand];
+            if( nBand != iBand + 1 )
+            {
+                bUseContigImplementation = false;
+                break;
+            }
         }
     }
 
@@ -2837,7 +2839,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
     {
         if( !FetchBuffer::bMinimizeIO && TIFFIsTiled( hTIFF ) )
         {
-            for(iBand = 0; iBand < nBandCount; iBand ++ )
+            for(int iBand = 0; iBand < nBandCount; iBand ++ )
             {
                 const int nBand = panBandMap[iBand];
                 GByte* const pabyData = (GByte*)pData + iBand * nBandSpace;
@@ -2978,8 +2980,8 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             }
                             else
                             {
-                                const GByte* pabyLocalSrcData = pabyLocalSrcDataStartLine;
-                                pabyLocalSrcData += nXOffsetInBlock * nBandsPerBlockDTSize;
+                                const GByte* pabyLocalSrcData = pabyLocalSrcDataStartLine + 
+                                        nXOffsetInBlock * nBandsPerBlockDTSize;
 
                                 REACHED(22);
                                 if( bByteOnly )
@@ -3001,15 +3003,15 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
         }
         else /* non contig reading, stripped */
         {
-            for(iBand = 0; iBand < nBandCount; iBand ++ )
+            for(int iBand = 0; iBand < nBandCount; iBand ++ )
             {
-                int nBand = panBandMap[iBand];
+                const int nBand = panBandMap[iBand];
                 GByte* pabyData = (GByte*)pData + iBand * nBandSpace;
                 for(int y=0;y<nBufYSize;y++)
                 {
-                    int nSrcLine = nYOff + (int)((y + 0.5) * dfSrcYInc);
-                    int nBlockYOff = nSrcLine / nBlockYSize;
-                    int nYOffsetInBlock = nSrcLine % nBlockYSize;
+                    const int nSrcLine = nYOff + (int)((y + 0.5) * dfSrcYInc);
+                    const int nBlockYOff = nSrcLine / nBlockYSize;
+                    const int nYOffsetInBlock = nSrcLine % nBlockYSize;
                     int nBlockId = nBlockYOff;
                     if ( nPlanarConfig == PLANARCONFIG_SEPARATE )
                     {
@@ -3020,7 +3022,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                     {
                         REACHED(24);
                     }
-                    toff_t nCurOffset = panOffsets[nBlockId];
+                    const toff_t nCurOffset = panOffsets[nBlockId];
                     if( nCurOffset == 0 )
                     {
                         REACHED(25);
@@ -3105,8 +3107,8 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
 /************************************************************************/
 
 /* Reads directly bytes from the file using ReadMultiRange(), and by-pass */
-/* block reading. Restricted to simple TIFF configurations (un-tiled, */
-/* uncompressed data, standard data types). Particularly useful to extract */
+/* block reading. Restricted to simple TIFF configurations */
+/* (uncompressed data, standard data types). Particularly useful to extract */
 /* sub-windows of data on a large /vsicurl dataset). */
 /* Returns -1 if DirectIO() can't be supported on that file */
 
@@ -3119,13 +3121,14 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg )
 {
-    GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
+    const GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
+    const int nDTSizeBits = GDALGetDataTypeSize(eDataType);
     if( !(eRWFlag == GF_Read &&
           nCompression == COMPRESSION_NONE &&
           (nPhotometric == PHOTOMETRIC_MINISBLACK ||
            nPhotometric == PHOTOMETRIC_RGB ||
            nPhotometric == PHOTOMETRIC_PALETTE) &&
-          nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+          nBitsPerSample == nDTSizeBits &&
           SetDirectory() /* very important to make hTIFF uptodate! */) )
     {
         return -1;
@@ -3192,8 +3195,7 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     {
         if( m_pTempBufferForCommonDirectIO == NULL )
         {
-            const GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
-            const int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
+            const int nDTSize = nDTSizeBits / 8;
             m_nTempBufferForCommonDirectIOSize =
                 (size_t)(nBlockXSize * nDTSize * ((nPlanarConfig == PLANARCONFIG_CONTIG) ? nBands : 1));
             if( TIFFIsTiled(hTIFF) )
