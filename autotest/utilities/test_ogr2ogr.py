@@ -36,8 +36,7 @@ import shutil
 sys.path.append( '../pymod' )
 sys.path.append( '../ogr' )
 
-from osgeo import ogr
-from osgeo import osr
+from osgeo import gdal, ogr, osr
 import gdaltest
 import ogrtest
 import test_cli_utilities
@@ -2501,6 +2500,39 @@ def test_ogr2ogr_61():
 
     return 'success'
 
+###############################################################################
+# Test -noNativeData
+
+def test_ogr2ogr_62():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    # Default behaviour
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json '{"type": "FeatureCollection", "foo": "bar", "features":[ { "type": "Feature", "bar": "baz", "properties": { "myprop": "myvalue" }, "geometry": null } ]}' """)
+    fp = gdal.VSIFOpenL('tmp/test_ogr2ogr_62.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+    os.unlink('tmp/test_ogr2ogr_62.json')
+
+    if data.find('bar') < 0 or data.find('baz') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    # Test -noNativeData
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json '{"type": "FeatureCollection", "foo": "bar", "features":[ { "type": "Feature", "bar": "baz", "properties": { "myprop": "myvalue" }, "geometry": null } ]}' -noNativeData""")
+    fp = gdal.VSIFOpenL('tmp/test_ogr2ogr_62.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+    os.unlink('tmp/test_ogr2ogr_62.json')
+
+    if data.find('bar') >= 0 or data.find('baz') >= 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2563,7 +2595,8 @@ gdaltest_list = [
     test_ogr2ogr_58,
     test_ogr2ogr_59,
     test_ogr2ogr_60,
-    test_ogr2ogr_61
+    test_ogr2ogr_61,
+    test_ogr2ogr_62
     ]
 
 if __name__ == '__main__':

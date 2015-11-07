@@ -319,7 +319,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-splitlistfields] [-maxsubfields val]\n"
             "               [-explodecollections] [-zfield field_name]\n"
             "               [-gcp pixel line easting northing [elevation]]* [-order n | -tps]\n"
-            "               [-nomd] [-mo \"META-TAG=VALUE\"]*\n");
+            "               [-nomd] [-mo \"META-TAG=VALUE\"]* [-noNativeData]\n");
 
     if (bShort)
     {
