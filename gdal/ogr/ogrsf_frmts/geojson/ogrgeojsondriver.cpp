@@ -524,6 +524,7 @@ void RegisterOGRGeoJSON()
 "  <Option name='FLATTEN_NESTED_ATTRIBUTES' type='boolean' description='Whether to recursively explore nested objects and produce flatten OGR attributes' default='NO'/>"
 "  <Option name='NESTED_ATTRIBUTE_SEPARATOR' type='string' description='Separator between components of nested attributes' default='_'/>"
 "  <Option name='FEATURE_SERVER_PAGING' type='boolean' description='Whether to automatically scroll through results with a ArcGIS Feature Service endpoint'/>"
+"  <Option name='NATIVE_DATA' type='boolean' description='Whether to store the native JSon representation at FeatureCollection and Feature level' default='NO'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
@@ -532,6 +533,8 @@ void RegisterOGRGeoJSON()
 "<LayerCreationOptionList>"
 "  <Option name='WRITE_BBOX' type='boolean' description='whether to write a bbox property with the bounding box of the geometries at the feature and feature collection level' default='NO'/>"
 "  <Option name='COORDINATE_PRECISION' type='int' description='Number of decimal for coordinates' default='10'/>"
+"  <Option name='NATIVE_DATA' type='string' description='FeatureCollection level elements.'/>"
+"  <Option name='NATIVE_MEDIA_TYPE' type='string' description='Format of NATIVE_DATA. Must be \"application/vnd.geo+json\", otherwise NATIVE_DATA will be ignored.'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

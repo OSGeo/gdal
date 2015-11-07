@@ -198,6 +198,36 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszName_,
     papoLayers_[nLayers_++] = poLayer;
 
     VSIFPrintfL( fpOut_, "{\n\"type\": \"FeatureCollection\",\n" );
+    
+    const char* pszNativeData = CSLFetchNameValue(papszOptions, "NATIVE_DATA");
+    const char* pszNativeMediaType = CSLFetchNameValue(papszOptions, "NATIVE_MEDIA_TYPE");
+    if( pszNativeMediaType && EQUAL(pszNativeMediaType, "application/vnd.geo+json") )
+    {
+        json_object *poObj = NULL;
+        if( OGRJSonParse(pszNativeData, &poObj) &&
+            json_object_get_type(poObj) == json_type_object )
+        {
+            json_object_iter it;
+            it.key = NULL;
+            it.val = NULL;
+            it.entry = NULL;
+            CPLString osNativeData;
+            json_object_object_foreachC(poObj, it)
+            {
+                if( strcmp(it.key, "type") == 0 ||
+                    strcmp(it.key, "features") == 0||
+                    strcmp(it.key, "crs") == 0 )
+                {
+                    continue;
+                }
+                json_object* poKey = json_object_new_string(it.key);
+                VSIFPrintfL( fpOut_, "%s: ", json_object_to_json_string(poKey) );
+                json_object_put(poKey);
+                VSIFPrintfL( fpOut_, "%s,\n", json_object_to_json_string(it.val) );
+            }
+            json_object_put(poObj);
+        }
+    }
 
     if (poSRS)
     {
@@ -548,6 +578,9 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
     reader.SetFlattenNestedAttributes(
         (bool)CSLFetchBoolean(papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", FALSE),
         CSLFetchNameValueDef(papszOpenOptions, "NESTED_ATTRIBUTE_SEPARATOR", "_")[0]);
+
+    reader.SetStoreNativeData(
+        (bool)CSLFetchBoolean(papszOpenOptions, "NATIVE_DATA", FALSE));
 
 /* -------------------------------------------------------------------- */
 /*      Parse GeoJSON and build valid OGRLayer instance.                */
