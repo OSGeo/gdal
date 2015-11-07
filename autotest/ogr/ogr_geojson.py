@@ -2128,6 +2128,80 @@ def ogr_geojson_44():
 
     return 'success'
 
+###############################################################################
+# Test native data support
+
+def ogr_geojson_45():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    # Test read support
+    ds = gdal.OpenEx(
+"""{"type": "FeatureCollection", "foo": "bar", "bar": "baz",
+    "features":[ { "type": "Feature", "foo": "bar", "properties": { "myprop": "myvalue" }, "geometry": null } ]}""", gdal.OF_VECTOR, open_options = ['NATIVE_DATA=YES'])
+    lyr = ds.GetLayer(0)
+    native_data = lyr.GetMetadataItem("NATIVE_DATA", "NATIVE_DATA")
+    if native_data != '{ "foo": "bar", "bar": "baz" }':
+        gdaltest.post_reason('fail')
+        print(native_data)
+        return 'fail'
+    native_media_type = lyr.GetMetadataItem("NATIVE_MEDIA_TYPE", "NATIVE_DATA")
+    if native_media_type != 'application/vnd.geo+json':
+        gdaltest.post_reason('fail')
+        print(native_media_type)
+        return 'fail'
+    f = lyr.GetNextFeature()
+    native_data = f.GetNativeData()
+    if native_data != '{ "type": "Feature", "foo": "bar", "properties": { "myprop": "myvalue" }, "geometry": null }':
+        gdaltest.post_reason('fail')
+        print(native_data)
+        return 'fail'
+    native_media_type = f.GetNativeMediaType()
+    if native_media_type != 'application/vnd.geo+json':
+        gdaltest.post_reason('fail')
+        print(native_media_type)
+        return 'fail'
+
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_45.json')
+    lyr = ds.CreateLayer('test', options = [
+            'NATIVE_DATA={ "type": "ignored", "foo": "bar", "bar": "baz", "features": "ignored" }',
+            'NATIVE_MEDIA_TYPE=application/vnd.geo+json'] )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    json_geom = """{ "type": "GeometryCollection", "foo_gc": "bar_gc", "geometries" : [ 
+                        { "type": "Point", "foo_point": "bar_point", "coordinates": [0,1,2, 3] },
+                        { "type": "LineString", "foo_linestring": "bar_linestring", "coordinates": [[0,1,2, 4]] },
+                        { "type": "MultiPoint", "foo_multipoint": "bar_multipoint", "coordinates": [[0,1,2, 5]] },
+                        { "type": "MultiLineString", "foo_multilinestring": "bar_multilinestring", "coordinates": [[[0,1,2, 6]]] },
+                        { "type": "Polygon", "foo_polygon": "bar_polygon", "coordinates": [[[0,1,2, 7]]] },
+                        { "type": "MultiPolygon", "foo_multipolygon": "bar_multipolygon", "coordinates": [[[[0,1,2, 8]]]] }
+                        ] }"""
+    f.SetNativeData('{ "type": "ignored", "bbox": "ignored", "properties" : "ignored", "foo_feature": "bar_feature", "geometry": %s }' % json_geom)
+    f.SetNativeMediaType('application/vnd.geo+json')
+    f.SetGeometry(ogr.CreateGeometryFromJson(json_geom))
+    lyr.CreateFeature(f)
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_45.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/ogr_geojson_45.json')
+
+    if data.find('"foo": "bar"') < 0 or data.find('"bar": "baz"') < 0 or \
+       data.find('"foo_feature": "bar_feature"') < 0 or \
+       data.find('"foo_gc": "bar_gc"') < 0 or \
+       data.find('"foo_point": "bar_point"') < 0 or data.find('3') < 0 or \
+       data.find('"foo_linestring": "bar_linestring"') < 0 or data.find('4') < 0 or \
+       data.find('"foo_multipoint": "bar_multipoint"') < 0 or data.find('5') < 0 or \
+       data.find('"foo_multilinestring": "bar_multilinestring"') < 0 or data.find('6') < 0 or \
+       data.find('"foo_polygon": "bar_polygon"') < 0 or data.find('7') < 0 or \
+       data.find('"foo_multipolygon": "bar_multipolygon"') < 0 or data.find('8') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
 
 ###############################################################################
 
@@ -2210,6 +2284,7 @@ gdaltest_list = [
     ogr_geojson_42,
     ogr_geojson_43,
     ogr_geojson_44,
+    ogr_geojson_45,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
