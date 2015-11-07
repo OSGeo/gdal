@@ -1380,14 +1380,12 @@ CPLErr VRTSourcedRasterBand::SetMetadata( char **papszNewMD, const char *pszDoma
             VRTSource *poSource = poDriver->ParseSource( psTree, NULL );
             CPLDestroyXMLNode( psTree );
 
-            if( poSource != NULL )
-            {
-                CPLErr eErr = AddSource( poSource );
-                if( eErr != CE_None )
-                    return eErr;
-            }
+            if( poSource == NULL )
+                return CE_Failure;
 
-            return CE_Failure;
+            CPLErr eErr = AddSource( poSource );
+            if( eErr != CE_None )
+                return eErr;
         }
 
         return CE_None;
