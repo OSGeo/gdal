@@ -311,6 +311,9 @@ struct GDALVectorTranslateOptions
 
     /*! pointer to the progress data variable */
     void *pProgressData;
+
+    /*! whether layer and feature native data must be transfered */
+    bool bNativeData;
 };
 
 typedef struct
@@ -362,6 +365,7 @@ public:
     int bUnsetFid;
     int bPreserveFID;
     int bCopyMD;
+    bool bNativeData;
 
     TargetLayerInfo*            Setup(OGRLayer * poSrcLayer,
                                       const char *pszNewLayerName,
@@ -389,6 +393,7 @@ public:
     OGRGeometry *poClipDst;
     int bExplodeCollectionsIn;
     vsi_l_offset nSrcFileSize;
+    bool bNativeData;
 
     int                 Translate(TargetLayerInfo* psInfo,
                                   GIntBig nCountLayerFeatures,
@@ -1641,6 +1646,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oSetup.bUnsetFid = psOptions->bUnsetFid;
     oSetup.bPreserveFID = psOptions->bPreserveFID;
     oSetup.bCopyMD = psOptions->bCopyMD;
+    oSetup.bNativeData = psOptions->bNativeData;
 
     LayerTranslator oTranslator;
     oTranslator.poSrcDS = poDS;
@@ -1661,6 +1667,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oTranslator.poClipDst = (OGRGeometry *)psOptions->hClipDst;
     oTranslator.bExplodeCollectionsIn = psOptions->bExplodeCollections;
     oTranslator.nSrcFileSize = nSrcFileSize;
+    oTranslator.bNativeData = psOptions->bNativeData;
 
     if( psOptions->nGroupTransactions )
     {
@@ -2717,6 +2724,20 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             bPreserveFID = TRUE;
         }
 
+        if( bNativeData &&
+            poSrcLayer->GetMetadataItem("NATIVE_DATA", "NATIVE_DATA") != NULL &&
+            poSrcLayer->GetMetadataItem("NATIVE_MEDIA_TYPE", "NATIVE_DATA") != NULL &&
+            poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST) != NULL &&
+            strstr(poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "NATIVE_DATA") != NULL &&
+            strstr(poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "NATIVE_MEDIA_TYPE") != NULL )
+        {
+            papszLCOTemp = CSLSetNameValue(papszLCOTemp, "NATIVE_DATA", 
+                    poSrcLayer->GetMetadataItem("NATIVE_DATA", "NATIVE_DATA"));
+            papszLCOTemp = CSLSetNameValue(papszLCOTemp, "NATIVE_MEDIA_TYPE", 
+                    poSrcLayer->GetMetadataItem("NATIVE_MEDIA_TYPE", "NATIVE_DATA"));
+            CPLDebug("GDALVectorTranslate", "Transfering layer NATIVE_DATA");
+        }
+
         poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
                                            (OGRwkbGeometryType) eGCreateLayerType,
                                            papszLCOTemp );
@@ -3483,7 +3504,14 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
             else if( psInfo->iSrcFIDField >= 0 &&
                      poFeature->IsFieldSet(psInfo->iSrcFIDField))
                 poDstFeature->SetFID( poFeature->GetFieldAsInteger64(psInfo->iSrcFIDField) );
-            
+
+            /* Erase native data if asked explicitly */
+            if( !bNativeData )
+            {
+                poDstFeature->SetNativeData(NULL);
+                poDstFeature->SetNativeMediaType(NULL);
+            }
+
             for( int iGeom = 0; iGeom < nDstGeomFieldCount; iGeom ++ )
             {
                 OGRGeometry* poDstGeometry = poDstFeature->GetGeomFieldRef(iGeom);
@@ -3817,6 +3845,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->pasGCPs = NULL;
     psOptions->nTransformOrder = 0;  /* Default to 0 for now... let the lib decide */
     psOptions->hSpatialFilter = NULL;
+    psOptions->bNativeData = true;
 
     int nArgc = CSLCount(papszArgv);
     for( int i = 0; i < nArgc; i++ )
@@ -4379,6 +4408,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         {
             psOptions->bCopyMD = FALSE;
         }
+        else if( EQUAL(papszArgv[i],"-noNativeData") )
+        {
+            psOptions->bNativeData = false;
+        }
         else if( EQUAL(papszArgv[i],"-mo") && i+1 < nArgc )
         {
             psOptions->papszMetadataOptions = CSLAddString( psOptions->papszMetadataOptions,
@@ -4398,11 +4431,29 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         else
             psOptions->papszLayers = CSLAddString( psOptions->papszLayers, papszArgv[i] );
     }
-    
+
     if( psOptionsForBinary )
     {
         psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
         psOptionsForBinary->eAccessMode = psOptions->eAccessMode;
+
+        if( !(CSLTestBoolean(CSLFetchNameValueDef(
+                psOptionsForBinary->papszOpenOptions, "NATIVE_DATA",
+                CSLFetchNameValueDef(
+                    psOptionsForBinary->papszOpenOptions, "@NATIVE_DATA", "TRUE")))) )
+        {
+            psOptions->bNativeData = false;
+        }
+
+        if( psOptions->bNativeData &&
+            CSLFetchNameValue(psOptionsForBinary->papszOpenOptions,
+                              "NATIVE_DATA") == NULL &&
+            CSLFetchNameValue(psOptionsForBinary->papszOpenOptions,
+                              "@NATIVE_DATA") == NULL )
+        {
+            psOptionsForBinary->papszOpenOptions = CSLAddString(
+                psOptionsForBinary->papszOpenOptions, "@NATIVE_DATA=YES" );
+        }
     }
 
     return psOptions;
