@@ -713,6 +713,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree(pszCurDir);
 
 #if defined(HAVE_READLINK) && defined(HAVE_LSTAT)
+        char filenameBuffer[2048];
 
         while( true ) {
             VSIStatBuf statBuffer;
@@ -736,7 +737,6 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
                 break;
             }
 
-            char filenameBuffer[2048];
             const int bufferSize = readlink( currentVrtFilename,
                                              filenameBuffer,
                                              sizeof(filenameBuffer) );
