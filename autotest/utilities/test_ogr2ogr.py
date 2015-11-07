@@ -2508,8 +2508,16 @@ def test_ogr2ogr_62():
         return 'skip'
 
     # Default behaviour
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json '{"type": "FeatureCollection", "foo": "bar", "features":[ { "type": "Feature", "bar": "baz", "properties": { "myprop": "myvalue" }, "geometry": null } ]}' """)
+
+    fp = open('tmp/test_ogr2ogr_62_in.json', 'wt')
+    fp.write('{"type": "FeatureCollection", "foo": "bar", "features":[ { "type": "Feature", "bar": "baz", "properties": { "myprop": "myvalue" }, "geometry": null } ]}')
+    fp.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json tmp/test_ogr2ogr_62_in.json""")
     fp = gdal.VSIFOpenL('tmp/test_ogr2ogr_62.json', 'rb')
+    if fp is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
     gdal.VSIFCloseL(fp)
     os.unlink('tmp/test_ogr2ogr_62.json')
@@ -2520,11 +2528,15 @@ def test_ogr2ogr_62():
         return 'fail'
 
     # Test -noNativeData
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json '{"type": "FeatureCollection", "foo": "bar", "features":[ { "type": "Feature", "bar": "baz", "properties": { "myprop": "myvalue" }, "geometry": null } ]}' -noNativeData""")
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json tmp/test_ogr2ogr_62_in.json -noNativeData""")
     fp = gdal.VSIFOpenL('tmp/test_ogr2ogr_62.json', 'rb')
+    if fp is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
     gdal.VSIFCloseL(fp)
     os.unlink('tmp/test_ogr2ogr_62.json')
+    os.unlink('tmp/test_ogr2ogr_62_in.json')
 
     if data.find('bar') >= 0 or data.find('baz') >= 0:
         gdaltest.post_reason('fail')
