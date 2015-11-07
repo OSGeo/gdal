@@ -2239,9 +2239,7 @@ GDALCopyWords( void * CPL_RESTRICT pSrcData, GDALDataType eSrcType, int nSrcPixe
 
         if( nWordCount == 1 )
         {
-            if( eSrcType == GDT_Byte )
-                *(GByte*)pDstData = *(GByte*)pSrcData;
-            else if( eSrcType == GDT_Int16 || eSrcType == GDT_UInt16 )
+            if( eSrcType == GDT_Int16 || eSrcType == GDT_UInt16 )
                 memcpy(pDstData, pSrcData, 2);
             else if( eSrcType == GDT_Int32 || eSrcType == GDT_UInt32 ||
                      eSrcType == GDT_Float32 || eSrcType == GDT_CInt16 )
