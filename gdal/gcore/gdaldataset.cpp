@@ -2591,7 +2591,9 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * Open options are validated by default, and a warning is emitted in case the
  * option is not recognized. In some scenarios, it might be not desirable (e.g.
  * when not knowing which driver will open the file), so the special open option
- * VALIDATE_OPEN_OPTIONS can be set to NO to avoid such warnings.
+ * VALIDATE_OPEN_OPTIONS can be set to NO to avoid such warnings. Alternatively,
+ * since GDAL 2.1, an option name can be preceded by the @ character to indicate
+ * that it may not cause a warning if the driver doesn't declare this option.
  *
  * @param papszSiblingFiles  NULL, or a NULL terminated list of strings that are
  * filenames that are auxiliary to the main filename. If NULL is passed, a probing
@@ -2681,7 +2683,18 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
     GDALOpenInfo oOpenInfo(pszFilename,
                            nOpenFlags,
                            (char**) papszSiblingFiles);
-    oOpenInfo.papszOpenOptions = (char**) papszOpenOptions;
+
+    // Remove leading @ if present
+    char** papszOpenOptionsCleaned = CSLDuplicate((char**)papszOpenOptions);
+    for(char** papszIter = papszOpenOptionsCleaned;
+                                        papszIter && *papszIter; ++papszIter)
+    {
+        char* pszOption = *papszIter;
+        if( pszOption[0] == '@' )
+            memmove( pszOption, pszOption+1, strlen(pszOption+1)+1 );
+    }
+
+    oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
 
     for( iDriver = -1; iDriver < poDM->GetDriverCount(); iDriver++ )
     {
@@ -2710,20 +2723,26 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         /* Remove general OVERVIEW_LEVEL open options from list before */
         /* passing it to the driver, if it isn't a driver specific option already */
         char** papszTmpOpenOptions = NULL;
-        if( CSLFetchNameValue((char**)papszOpenOptions, "OVERVIEW_LEVEL") != NULL &&
+        char** papszTmpOpenOptionsToValidate = NULL;
+        char** papszOptionsToValidate = (char**) papszOpenOptions;
+        if( CSLFetchNameValue(papszOpenOptionsCleaned, "OVERVIEW_LEVEL") != NULL &&
             (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == NULL ||
              CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") == std::string::npos) )
         {
-            papszTmpOpenOptions = CSLDuplicate((char**)papszOpenOptions);
+            papszTmpOpenOptions = CSLDuplicate(papszOpenOptionsCleaned);
             papszTmpOpenOptions = CSLSetNameValue(papszTmpOpenOptions, "OVERVIEW_LEVEL", NULL);
             oOpenInfo.papszOpenOptions = papszTmpOpenOptions;
+
+            papszOptionsToValidate = CSLDuplicate(papszOptionsToValidate);
+            papszOptionsToValidate = CSLSetNameValue(papszOptionsToValidate, "OVERVIEW_LEVEL", NULL);
+            papszTmpOpenOptionsToValidate = papszOptionsToValidate;
         }
 
         int bIdentifyRes =
             ( poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0 );
         if( bIdentifyRes )
         {
-            GDALValidateOpenOptions( poDriver, oOpenInfo.papszOpenOptions );
+            GDALValidateOpenOptions( poDriver, papszOptionsToValidate );
         }
 
         if ( poDriver->pfnOpen != NULL )
@@ -2732,7 +2751,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             // If we couldn't determine for sure with Identify() (it returned -1)
             // but that Open() managed to open the file, post validate options.
             if( poDS != NULL && poDriver->pfnIdentify && !bIdentifyRes )
-                GDALValidateOpenOptions( poDriver, oOpenInfo.papszOpenOptions );
+                GDALValidateOpenOptions( poDriver, papszOptionsToValidate );
         }
         else if( poDriver->pfnOpenWithDriverArg != NULL )
         {
@@ -2741,12 +2760,14 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         else
         {
             CSLDestroy(papszTmpOpenOptions);
-            oOpenInfo.papszOpenOptions = (char**) papszOpenOptions;
+            CSLDestroy(papszTmpOpenOptionsToValidate);
+            oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
             continue;
         }
 
         CSLDestroy(papszTmpOpenOptions);
-        oOpenInfo.papszOpenOptions = (char**) papszOpenOptions;
+        CSLDestroy(papszTmpOpenOptionsToValidate);
+        oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
 
         if( poDS != NULL )
         {
@@ -2759,7 +2780,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
                 poDS->poDriver = poDriver;
 
             if( poDS->papszOpenOptions == NULL )
-                poDS->papszOpenOptions = CSLDuplicate((char**)papszOpenOptions);
+            {
+                poDS->papszOpenOptions = papszOpenOptionsCleaned;
+                papszOpenOptionsCleaned = NULL;
+            }
 
             if( !(nOpenFlags & GDAL_OF_INTERNAL) )
             {
@@ -2820,6 +2844,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
                 }
             }
 
+            CSLDestroy(papszOpenOptionsCleaned);
             return (GDALDatasetH) poDS;
         }
 
@@ -2829,9 +2854,12 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             if( pnRecCount )
                 (*pnRecCount) --;
 
+            CSLDestroy(papszOpenOptionsCleaned);
             return NULL;
         }
     }
+
+    CSLDestroy(papszOpenOptionsCleaned);
 
     if( nOpenFlags & GDAL_OF_VERBOSE_ERROR )
     {
