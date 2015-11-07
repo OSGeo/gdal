@@ -140,6 +140,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
     }
     
     poSrcLayer = papoTableLayers[0];
+    SetMetadata( poSrcLayer->GetMetadata( "NATIVE_DATA" ), "NATIVE_DATA" );
 
 /* -------------------------------------------------------------------- */
 /*      If the user has explicitly requested a OGRSQL dialect, then    */
@@ -1313,6 +1314,8 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
     poDstFeat->SetFID( poSrcFeat->GetFID() );
 
     poDstFeat->SetStyleString( poSrcFeat->GetStyleString() );
+    poDstFeat->SetNativeData( poSrcFeat->GetNativeData() );
+    poDstFeat->SetNativeMediaType( poSrcFeat->GetNativeMediaType() );
 
 /* -------------------------------------------------------------------- */
 /*      Evaluate fields that are complex expressions.                   */

@@ -251,6 +251,8 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 
     int                *panFieldOrdinals;
     int                 iFIDCol;
+    int                 iOGRNativeDataCol;
+    int                 iOGRNativeMediaTypeCol;
 
     int                 bIsVirtualShape;
 
