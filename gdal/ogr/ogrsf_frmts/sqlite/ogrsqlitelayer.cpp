@@ -63,6 +63,8 @@ OGRSQLiteLayer::OGRSQLiteLayer()
 
     panFieldOrdinals = NULL;
     iFIDCol = -1;
+    iOGRNativeDataCol = -1;
+    iOGRNativeMediaTypeCol = -1;
 
     bIsVirtualShape = FALSE;
 
@@ -196,6 +198,18 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         // primary key column appearing twice.  Ignore any repeated names.
         if( poFeatureDefn->GetFieldIndex( oField.GetNameRef() ) != -1 )
             continue;
+
+        if( EQUAL(oField.GetNameRef(), "OGR_NATIVE_DATA") )
+        {
+            iOGRNativeDataCol = iCol;
+            continue;
+        }
+
+        if( EQUAL(oField.GetNameRef(), "OGR_NATIVE_MEDIA_TYPE") )
+        {
+            iOGRNativeMediaTypeCol = iCol;
+            continue;
+        }
 
         /* In the case of Spatialite VirtualShape, the PKUID */
         /* should be considered as a primary key */
@@ -813,6 +827,20 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
         default:
             break;
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set native data if found                                        */
+/* -------------------------------------------------------------------- */
+    if( iOGRNativeDataCol >= 0 &&
+        sqlite3_column_type( hStmt, iOGRNativeDataCol ) == SQLITE_TEXT )
+    {
+        poFeature->SetNativeData( (const char*)sqlite3_column_text( hStmt, iOGRNativeDataCol ) );
+    }
+    if( iOGRNativeMediaTypeCol >= 0 &&
+        sqlite3_column_type( hStmt, iOGRNativeMediaTypeCol ) == SQLITE_TEXT )
+    {
+        poFeature->SetNativeMediaType( (const char*)sqlite3_column_text( hStmt, iOGRNativeMediaTypeCol ) );
     }
 
     return poFeature;
