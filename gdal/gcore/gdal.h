@@ -838,7 +838,7 @@ int CPL_DLL CPL_STDCALL GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszAr
 void CPL_DLL CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
                             int nWordSkip );
 void CPL_DLL CPL_STDCALL 
-    GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
+    GDALCopyWords( const void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                    void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
                    int nWordCount );
 
