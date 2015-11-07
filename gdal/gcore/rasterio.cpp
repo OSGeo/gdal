@@ -2172,7 +2172,7 @@ static inline void GDALFastByteCopy(GByte* CPL_RESTRICT pabyDest,
  */
 
 void CPL_STDCALL
-GDALCopyWords( void * CPL_RESTRICT pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
+GDALCopyWords( const void * CPL_RESTRICT pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
                void * CPL_RESTRICT pDstData, GDALDataType eDstType, int nDstPixelStride,
                int nWordCount )
 
@@ -2270,57 +2270,57 @@ GDALCopyWords( void * CPL_RESTRICT pSrcData, GDALDataType eSrcType, int nSrcPixe
     switch (eSrcType)
     {
     case GDT_Byte:
-        GDALCopyWordsFromT<unsigned char>(static_cast<unsigned char *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<unsigned char>(static_cast<const unsigned char *>(pSrcData), nSrcPixelStride, false,
                                  pDstData, eDstType, nDstPixelStride,
                                  nWordCount);
         break;
     case GDT_UInt16:
-        GDALCopyWordsFromT<unsigned short>(static_cast<unsigned short *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<unsigned short>(static_cast<const unsigned short *>(pSrcData), nSrcPixelStride, false,
                                            pDstData, eDstType, nDstPixelStride,
                                            nWordCount);
         break;
     case GDT_Int16:
-        GDALCopyWordsFromT<short>(static_cast<short *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<short>(static_cast<const short *>(pSrcData), nSrcPixelStride, false,
                                   pDstData, eDstType, nDstPixelStride,
                                   nWordCount);
         break;
     case GDT_UInt32:
-        GDALCopyWordsFromT<unsigned int>(static_cast<unsigned int *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<unsigned int>(static_cast<const unsigned int *>(pSrcData), nSrcPixelStride, false,
                                          pDstData, eDstType, nDstPixelStride,
                                          nWordCount);
         break;
     case GDT_Int32:
-        GDALCopyWordsFromT<int>(static_cast<int *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<int>(static_cast<const int *>(pSrcData), nSrcPixelStride, false,
                                 pDstData, eDstType, nDstPixelStride,
                                 nWordCount);
         break;
     case GDT_Float32:
-        GDALCopyWordsFromT<float>(static_cast<float *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<float>(static_cast<const float *>(pSrcData), nSrcPixelStride, false,
                                   pDstData, eDstType, nDstPixelStride,
                                   nWordCount);
         break;
     case GDT_Float64:
-        GDALCopyWordsFromT<double>(static_cast<double *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<double>(static_cast<const double *>(pSrcData), nSrcPixelStride, false,
                                    pDstData, eDstType, nDstPixelStride,
                                    nWordCount);
         break;
     case GDT_CInt16:
-        GDALCopyWordsFromT<short>(static_cast<short *>(pSrcData), nSrcPixelStride, true,
+        GDALCopyWordsFromT<short>(static_cast<const short *>(pSrcData), nSrcPixelStride, true,
                                  pDstData, eDstType, nDstPixelStride,
                                  nWordCount);
         break;
     case GDT_CInt32:
-        GDALCopyWordsFromT<int>(static_cast<int *>(pSrcData), nSrcPixelStride, true,
+        GDALCopyWordsFromT<int>(static_cast<const int *>(pSrcData), nSrcPixelStride, true,
                                  pDstData, eDstType, nDstPixelStride,
                                  nWordCount);
         break;
     case GDT_CFloat32:
-        GDALCopyWordsFromT<float>(static_cast<float *>(pSrcData), nSrcPixelStride, true,
+        GDALCopyWordsFromT<float>(static_cast<const float *>(pSrcData), nSrcPixelStride, true,
                                  pDstData, eDstType, nDstPixelStride,
                                  nWordCount);
         break;
     case GDT_CFloat64:
-        GDALCopyWordsFromT<double>(static_cast<double *>(pSrcData), nSrcPixelStride, true,
+        GDALCopyWordsFromT<double>(static_cast<const double *>(pSrcData), nSrcPixelStride, true,
                                  pDstData, eDstType, nDstPixelStride,
                                  nWordCount);
         break;

@@ -2174,7 +2174,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             nPixelSpace == nBufDTSize * nBands )
                         {
                             REACHED(31);
-                            GDALCopyWords((void*)pabyLocalSrcData,
+                            GDALCopyWords(pabyLocalSrcData,
                                             eDataType, nDTSize,
                                             pabyLocalData,
                                             eBufType, nBufDTSize,
@@ -2188,7 +2188,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                 GByte* pabyLocalDataBand = pabyLocalData + iBand * nBandSpace;
                                 const GByte* pabyLocalSrcDataBand = pabyLocalSrcData + (panBandMap[iBand]-1) * nDTSize;
 
-                                GDALCopyWords((void*)pabyLocalSrcDataBand,
+                                GDALCopyWords(pabyLocalSrcDataBand,
                                                 eDataType, nBandsPerBlockDTSize,
                                                 pabyLocalDataBand,
                                                 eBufType, nPixelSpace,
@@ -2280,7 +2280,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             const GByte* pabyLocalSrcData = 
                                 pabyLocalSrcDataK0 + (k * nBlockXSize + nXOffsetInBlock) * nBandsPerBlockDTSize;
 
-                            GDALCopyWords((void*)pabyLocalSrcData,
+                            GDALCopyWords(pabyLocalSrcData,
                                             eDataType, nBandsPerBlockDTSize,
                                             pabyLocalData,
                                             eBufType, nPixelSpace,
@@ -2413,7 +2413,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                 GByte* pabyLocalDataBand = pabyLocalData + iBand * nBandSpace;
                                 const GByte* pabyLocalSrcDataBand = pabyLocalSrcData + (panBandMap[iBand]-1) * nDTSize;
 
-                                GDALCopyWords((void*)pabyLocalSrcDataBand,
+                                GDALCopyWords(pabyLocalSrcDataBand,
                                                 eDataType, 0,
                                                 pabyLocalDataBand,
                                                 eBufType, 0,
@@ -2557,7 +2557,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             {
                                 REACHED(51);
 
-                                GDALCopyWords((void*)pabyLocalSrcData,
+                                GDALCopyWords(pabyLocalSrcData,
                                                 eDataType, 0,
                                                 pabyLocalData,
                                                 eBufType, 0,
@@ -2663,7 +2663,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                     REACHED(4);
                                     while( nIters-- > 0 )
                                     {
-                                        GDALCopyWords((void*)pabyLocalSrcData,
+                                        GDALCopyWords(pabyLocalSrcData,
                                                       eDataType, nDTSize,
                                                       pabyLocalData,
                                                       eBufType, nBandSpace,
@@ -2733,7 +2733,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             }
                             else
                             {
-                                GDALCopyWords((GByte*)pabyLocalSrcData,
+                                GDALCopyWords(pabyLocalSrcData,
                                             eDataType, nDTSize,
                                             pabyLocalData,
                                             eBufType, nBandSpace,
@@ -2822,7 +2822,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             for(int x=0;x<nBufXSize;x++, dfSrcX += dfSrcXInc)
                             {
                                 int nSrcPixelMinusXOff = (int)dfSrcX;
-                                GDALCopyWords((GByte*)pabyLocalSrcData + nSrcPixelMinusXOff * nBandsPerBlockDTSize,
+                                GDALCopyWords(pabyLocalSrcData + nSrcPixelMinusXOff * nBandsPerBlockDTSize,
                                             eDataType, nDTSize,
                                             pabyLocalData + x * nPixelSpace,
                                             eBufType, nBandSpace,
@@ -2916,7 +2916,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                         return CE_Failure;
 
                                     REACHED(18);
-                                    GDALCopyWords((GByte*)pabyLocalSrcData, eDataType, nBandsPerBlockDTSize,
+                                    GDALCopyWords(pabyLocalSrcData, eDataType, nBandsPerBlockDTSize,
                                                     pabyLocalData, eBufType, nPixelSpace,
                                                     nIters);
                                     pabyLocalData += nIters * nPixelSpace;
@@ -2987,7 +2987,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                     *pabyLocalData = *pabyLocalSrcData;
                                 else
                                 {
-                                    GDALCopyWords((GByte*)pabyLocalSrcData,
+                                    GDALCopyWords(pabyLocalSrcData,
                                                 eDataType, 0,
                                                 pabyLocalData,
                                                 eBufType, 0,
@@ -3060,7 +3060,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             if( bNoXResamplingNoTypeChange )
                             {
                                 REACHED(27);
-                                GDALCopyWords((void*)pabyLocalSrcData,
+                                GDALCopyWords(pabyLocalSrcData,
                                               eDataType, nBandsPerBlockDTSize,
                                               pabyLocalData, eBufType, nPixelSpace,
                                               nBufXSize);
@@ -3083,7 +3083,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                 for(int x=0;x<nBufXSize;x++, dfSrcX += dfSrcXInc)
                                 {
                                     int nSrcPixelMinusXOff = (int)dfSrcX;
-                                    GDALCopyWords((GByte*)pabyLocalSrcData +
+                                    GDALCopyWords(pabyLocalSrcData +
                                                     nSrcPixelMinusXOff * nBandsPerBlockDTSize,
                                                 eDataType, 0,
                                                 pabyLocalData + x * nPixelSpace,
@@ -3795,7 +3795,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
         GByte *pabyOut = poGDS->pabyBlockBuf + iBand*nWordBytes;
 
-        GDALCopyWords((GByte*)pabyThisImage, eDataType, nWordBytes,
+        GDALCopyWords(pabyThisImage, eDataType, nWordBytes,
                       pabyOut, eDataType, nWordBytes * nBands,
                       nBlockXSize * nBlockYSize);
 
