@@ -154,7 +154,7 @@ OGRFeatureDefn * OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
             if(poRows!=NULL && json_object_get_type(poRows) == json_type_array)
             {
                 mFIDs.clear();
-                for(GIntBig i = 0; i < json_object_array_length(poRows); i++)
+                for(int i = 0; i < json_object_array_length(poRows); i++)
                 {
                     json_object *obj = json_object_array_get_idx(poRows, i);
 
@@ -1080,8 +1080,8 @@ bool OGRAmigoCloudTableLayer::IsDatasetExists()
         json_object_put(result);
     }
 
-    // Sleep 1 sec
-    usleep(3000000);
+    // Sleep 3 sec
+	CPLSleep(3);
 
     return false;
 }
