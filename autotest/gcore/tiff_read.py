@@ -1432,7 +1432,8 @@ def tiff_direct_and_virtual_mem_io():
         ref_nbands_data_native_type_downsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
         ref_nbands_data_native_type_downsampled_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
         ref_nbands_data_native_type_downsampled_not_nearest = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
-        ref_nbands_data_native_type_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = nbands * xsize, buf_ysize = nbands * ysize)
+        ref_nbands_data_native_type_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = 4 * xsize, buf_ysize = 4 * ysize)
+        ref_nbands_data_native_type_downsampled_x_upsampled_y = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = 32 * ysize)
         ref_nbands_data_native_type_unordered_list = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [ nbands-i for i in range(nbands) ])
         ref_nbands_data_native_type_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
         ref_nbands_data_native_type_pixel_interleaved_whole = ds.ReadRaster(buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
@@ -1440,6 +1441,8 @@ def tiff_direct_and_virtual_mem_io():
         ref_nbands_data_float32 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
         ref_nbands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32, buf_pixel_space = nbands*sizeof_float, buf_band_space = 1*sizeof_float)
         ref_nbands_data_native_type_custom_spacings = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 2 * nbands * dt_size, buf_band_space = dt_size)
+        if nbands == 3:
+            ref_nbands_data_native_type_custom_spacings_2 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 4 * dt_size, buf_band_space = dt_size)
         if truncated:
             gdal.PopErrorHandler()
         ds = None
@@ -1463,7 +1466,8 @@ def tiff_direct_and_virtual_mem_io():
         got_nbands_data_native_type_downsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
         got_nbands_data_native_type_downsampled_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
         got_nbands_data_native_type_downsampled_not_nearest = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
-        got_nbands_data_native_type_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = nbands * xsize, buf_ysize = nbands * ysize)
+        got_nbands_data_native_type_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = 4 * xsize, buf_ysize = 4 * ysize)
+        got_nbands_data_native_type_downsampled_x_upsampled_y = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = 32 * ysize)
         got_nbands_data_native_type_unordered_list = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [ nbands-i for i in range(nbands) ])
         got_nbands_data_native_type_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
         got_nbands_data_native_type_pixel_interleaved_whole = ds.ReadRaster(buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
@@ -1471,6 +1475,8 @@ def tiff_direct_and_virtual_mem_io():
         got_nbands_data_float32 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
         got_nbands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32, buf_pixel_space = nbands*sizeof_float, buf_band_space = 1*sizeof_float)
         got_nbands_data_native_type_custom_spacings = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 2 * nbands * dt_size, buf_band_space = dt_size)
+        if nbands == 3:
+            got_nbands_data_native_type_custom_spacings_2 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 4 * dt_size, buf_band_space = dt_size)
         ds = None
         gdal.SetConfigOption(option, old_val)
         if truncated:
@@ -1537,6 +1543,15 @@ def tiff_direct_and_virtual_mem_io():
                             print(i)
                             print(x,y,k,band)
                             return 'fail'
+                    if nbands == 3:
+                        for band in range(nbands):
+                            if ref_nbands_data_native_type_custom_spacings_2[(y*xsize+x)*4*dt_size+band*dt_size+k] != got_nbands_data_native_type_custom_spacings_2[(y*xsize+x)*4*dt_size+band*dt_size+k]:
+                                gdaltest.post_reason('fail')
+                                print(gdal.GetDataTypeName(dt))
+                                print(option)
+                                print(i)
+                                print(x,y,k,band)
+                                return 'fail'
 
         if ref_data_float32 != got_data_float32:
             gdaltest.post_reason('fail')
@@ -1562,6 +1577,7 @@ def tiff_direct_and_virtual_mem_io():
                 return 'fail'
         elif ref_nbands_data_native_type_whole != got_nbands_data_native_type_whole:
             gdaltest.post_reason('fail')
+            print(gdal.GetDataTypeName(dt))
             print(option)
             print(i)
             return 'fail'
@@ -1610,6 +1626,26 @@ def tiff_direct_and_virtual_mem_io():
             gdaltest.post_reason('fail')
             print(option)
             print(i)
+            #import struct
+            #f1 = open('out1.txt', 'wb')
+            #f2 = open('out2.txt', 'wb')
+            #for b in range(nbands):
+            #    for y in range(4 * ysize):
+            #        f1.write('%s\n' % str(struct.unpack('B' * 4 * xsize, ref_nbands_data_native_type_upsampled[(b * 4 * ysize + y) * 4 * xsize : (b * 4 * ysize + y + 1) * 4 * xsize])))
+            #        f2.write('%s\n' % str(struct.unpack('B' * 4 * xsize, got_nbands_data_native_type_upsampled[(b * 4 * ysize + y) * 4 * xsize : (b * 4 * ysize + y + 1) * 4 * xsize])))
+            return 'fail'
+
+        if ref_nbands_data_native_type_downsampled_x_upsampled_y != got_nbands_data_native_type_downsampled_x_upsampled_y:
+            gdaltest.post_reason('fail')
+            print(option)
+            print(i)
+            #import struct
+            #f1 = open('out1.txt', 'wb')
+            #f2 = open('out2.txt', 'wb')
+            #for b in range(nbands):
+            #    for y in range(32 * ysize):
+            #        f1.write('%s\n' % str(struct.unpack('B' * int(xsize/2), ref_nbands_data_native_type_downsampled_x_upsampled_y[(b * 32 * ysize + y) * int(xsize/2) : (b * 32 * ysize + y + 1) * int(xsize/2)])))
+            #        f2.write('%s\n' % str(struct.unpack('B' * int(xsize/2), got_nbands_data_native_type_downsampled_x_upsampled_y[(b * 32 * ysize + y) * int(xsize/2) : (b * 32 * ysize + y + 1) * int(xsize/2)])))
             return 'fail'
 
         if ref_nbands_data_native_type_unordered_list != got_nbands_data_native_type_unordered_list:
