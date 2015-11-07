@@ -3338,11 +3338,9 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
                 {
                     for(int iBand = 0; iBand < nBandCount; iBand ++ )
                     {
-                        for(int iX=0;iX<nBufXSize;iX++)
-                        {
-                            pabyDstData[iX * nPixelSpace + iBand * nBandSpace] =
-                                    pabySrcData[iX * nSrcPixelSize + iBand];
-                        }
+                        GDALCopyWords(pabySrcData + iBand, GDT_Byte, nSrcPixelSize,
+                                      pabyDstData + iBand * nBandSpace, GDT_Byte, nPixelSpace,
+                                      nBufXSize);
                     }
                 }
             }
