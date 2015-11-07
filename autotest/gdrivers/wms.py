@@ -735,7 +735,7 @@ def wms_16():
         return 'skip'
 
     if val is None or val.find('<og:cat>86</og:cat>') == -1:
-        if val.find('java.lang.NullPointerException') >= 0:
+        if val.find('java.lang.NullPointerException') >= 0 or val.find('504 Gateway Time-out') >= 0:
             print(val)
             return 'skip'
 
@@ -760,7 +760,7 @@ def wms_16():
     # Ask an overview band
     val2 = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem(pixel, "LocationInfo")
     if val2 != val:
-        if val2.find('java.lang.NullPointerException') >= 0:
+        if val2.find('java.lang.NullPointerException') >= 0 or val2.find('504 Gateway Time-out') >= 0:
             print(val2)
             return 'skip'
 
