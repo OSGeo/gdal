@@ -364,9 +364,9 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         if ( pszLine != NULL )
         {
             /* Detect and remove UTF-8 BOM marker if found (#4623) */
-            if (pszLine[0] == (char)0xEF &&
-                pszLine[1] == (char)0xBB &&
-                pszLine[2] == (char)0xBF)
+            if (((unsigned char*)pszLine)[0] == 0xEF &&
+                ((unsigned char*)pszLine)[1] == 0xBB &&
+                ((unsigned char*)pszLine)[2] == 0xBF)
             {
                 pszLine += 3;
             }
