@@ -3167,6 +3167,22 @@ class Feature(_object):
         """FillUnsetWithDefault(Feature self, int bNotNullableOnly=False, char ** options=None)"""
         return _ogr.Feature_FillUnsetWithDefault(self, *args)
 
+    def GetNativeData(self, *args):
+        """GetNativeData(Feature self) -> char const *"""
+        return _ogr.Feature_GetNativeData(self, *args)
+
+    def GetNativeMediaType(self, *args):
+        """GetNativeMediaType(Feature self) -> char const *"""
+        return _ogr.Feature_GetNativeMediaType(self, *args)
+
+    def SetNativeData(self, *args):
+        """SetNativeData(Feature self, char const * nativeData)"""
+        return _ogr.Feature_SetNativeData(self, *args)
+
+    def SetNativeMediaType(self, *args):
+        """SetNativeMediaType(Feature self, char const * nativeMediaType)"""
+        return _ogr.Feature_SetNativeMediaType(self, *args)
+
     def SetFieldString(self, *args):
         """
         SetFieldString(Feature self, int id, char const * value)
