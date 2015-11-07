@@ -32,8 +32,6 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 
-#include <cmath>
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1159,11 +1157,11 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
             if( !GDALInvGeoTransform( adfGeoTransform, adfInvGeoTransform ) )
                 return NULL;
 
-            iPixel = static_cast<int>( std::floor(
+            iPixel = static_cast<int>( floor(
                 adfInvGeoTransform[0]
                 + adfInvGeoTransform[1] * dfGeoX
                 + adfInvGeoTransform[2] * dfGeoY ) );
-            iLine = static_cast<int>( std::floor(
+            iLine = static_cast<int>( floor(
                 adfInvGeoTransform[3]
                 + adfInvGeoTransform[4] * dfGeoX
                 + adfInvGeoTransform[5] * dfGeoY ) );
