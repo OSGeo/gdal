@@ -1319,13 +1319,13 @@ def tiff_direct_and_virtual_mem_io():
     for truncated in [False, True]:
      if truncated:
          nitermax = 4
-         options = [('GTIFF_VIRTUAL_MEM_IO', '/vsimem')]
+         options = [('GTIFF_DIRECT_IO', '/vsimem'), ('GTIFF_VIRTUAL_MEM_IO', '/vsimem')]
      else:
          nitermax = 8
          options = [('GTIFF_DIRECT_IO', '/vsimem'), ('GTIFF_VIRTUAL_MEM_IO', '/vsimem'), ('GTIFF_VIRTUAL_MEM_IO', 'tmp')]
      for (option, prefix) in options:
       if dt == gdal.GDT_CInt16:
-          niter = 2
+          niter = 3
       elif prefix == 'tmp':
           niter = 4
       else:
@@ -1347,10 +1347,13 @@ def tiff_direct_and_virtual_mem_io():
             out_ds = None
         elif i == 2:
             filename = '%s/tiff_direct_io_tiled_contig.tif' % prefix
+            creation_options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16']
+            if (dt == gdal.GDT_CInt16 or dt == gdal.GDT_Int16):
+                creation_options += [ 'ENDIANNESS=INVERTED' ]
             if option == 'GTIFF_VIRTUAL_MEM_IO' and prefix == '/vsimem':
-                gdal.Translate(filename, src_ds, bandList = [1, 2, 3], creationOptions= ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16'])
+                gdal.Translate(filename, src_ds, bandList = [1, 2, 3], creationOptions= creation_options)
             else:
-                out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16'])
+                out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options = creation_options)
                 out_ds.FlushCache()
                 out_ds = None
         elif i == 3:
