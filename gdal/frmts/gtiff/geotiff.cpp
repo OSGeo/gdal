@@ -410,6 +410,7 @@ class GTiffDataset : public GDALPamDataset
                                GDALRasterIOExtraArg* psExtraArg );
 
     GByte          *m_pTempBufferForCommonDirectIO;
+    size_t          m_nTempBufferForCommonDirectIOSize;
     template<class FetchBuffer> CPLErr CommonDirectIO(
                                FetchBuffer& oFetcher,
                                int nXOff, int nYOff, int nXSize, int nYSize,
@@ -1142,16 +1143,17 @@ GTiffRasterBand::~GTiffRasterBand()
 /*                        FetchBufferDirectIO                           */
 /************************************************************************/
 
-#ifdef notdef
 class FetchBufferDirectIO
 {
     VSILFILE*    fp;
     GByte       *pTempBuffer;
+    size_t       nTempBufferSize;
 
 public:
-            FetchBufferDirectIO(VSILFILE* fp, GByte* pTempBuffer) :
+            FetchBufferDirectIO(VSILFILE* fp, GByte* pTempBuffer, size_t nTempBufferSize) :
                     fp(fp),
-                    pTempBuffer(pTempBuffer) {}
+                    pTempBuffer(pTempBuffer),
+                    nTempBufferSize(nTempBufferSize) {}
 
     const GByte* FetchBytes(vsi_l_offset nOffset, 
                             int nPixels, int nDTSize,
@@ -1172,13 +1174,38 @@ public:
                      bool bIsByteSwapped, bool bIsComplex,
                      int nBlockId)
     {
-        if( VSIFSeekL(fp, nOffset, SEEK_SET) != 0 ||
-            VSIFReadL(pabyDstBuffer, nPixels * nDTSize, 1, fp) != 1 )
+        vsi_l_offset nSeekForward = 0;
+        if( nOffset <= VSIFTellL(fp) ||
+            (nSeekForward = nOffset - VSIFTellL(fp)) > nTempBufferSize )
+        {
+            if( VSIFSeekL(fp, nOffset, SEEK_SET) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Cannot seek to block %d", nBlockId);
+                return false;
+            }
+        }
+        else
+        {
+            while( nSeekForward > 0 )
+            {
+                size_t nToRead = (size_t) MIN( nTempBufferSize, nSeekForward );
+                if( VSIFReadL(pTempBuffer, nToRead, 1, fp) != 1 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Cannot seek to block %d", nBlockId);
+                    return false;
+                }
+                nSeekForward -= nToRead;
+            }
+        }
+        if( VSIFReadL(pabyDstBuffer, nPixels * nDTSize, 1, fp) != 1 )
         {
             CPLError(CE_Failure, CPLE_FileIO,
                     "Missing data for block %d", nBlockId);
             return false;
         }
+
         if( bIsByteSwapped )
         {
             if( bIsComplex )
@@ -1188,8 +1215,9 @@ public:
         }
         return true;
     }
+
+    static const bool bMinimizeIO = true;
 };
-#endif
 
 /************************************************************************/
 /*                           DirectIO()                                 */
@@ -1213,8 +1241,6 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
           (poGDS->nPhotometric == PHOTOMETRIC_MINISBLACK ||
            poGDS->nPhotometric == PHOTOMETRIC_RGB ||
            poGDS->nPhotometric == PHOTOMETRIC_PALETTE) &&
-          (poGDS->nBitsPerSample == 8 || poGDS->nBitsPerSample == 16 ||
-           poGDS->nBitsPerSample == 32 || poGDS->nBitsPerSample == 64) &&
           poGDS->nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
           poGDS->SetDirectory() /* very important to make hTIFF uptodate! */) )
     {
@@ -1242,20 +1268,23 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
 
     if( TIFFIsTiled( poGDS->hTIFF ) )
     {
-        return -1;
-#ifdef notdef
         if( poGDS->m_pTempBufferForCommonDirectIO == NULL )
         {
             const GDALDataType eDataType = GetRasterDataType();
             const int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
-            poGDS->m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(
-                nBlockXSize * nDTSize * ((poGDS->nPlanarConfig == PLANARCONFIG_CONTIG) ? poGDS->nBands : 1));
+            poGDS->m_nTempBufferForCommonDirectIOSize =
+                (size_t)(nBlockXSize * nDTSize * ((poGDS->nPlanarConfig == PLANARCONFIG_CONTIG) ? poGDS->nBands : 1));
+            if( TIFFIsTiled(poGDS->hTIFF) )
+                poGDS->m_nTempBufferForCommonDirectIOSize *= nBlockYSize;
+
+            poGDS->m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(poGDS->m_nTempBufferForCommonDirectIOSize);
             if( poGDS->m_pTempBufferForCommonDirectIO == NULL )
                 return CE_Failure;
         }
 
         VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( poGDS->hTIFF ));
-        FetchBufferDirectIO oFetcher(fp, poGDS->m_pTempBufferForCommonDirectIO);
+        FetchBufferDirectIO oFetcher(fp, poGDS->m_pTempBufferForCommonDirectIO,
+                                     poGDS->m_nTempBufferForCommonDirectIOSize);
 
         return poGDS->CommonDirectIO( oFetcher,
                             nXOff, nYOff, nXSize, nYSize,
@@ -1264,7 +1293,6 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
                             1, &nBand,
                             nPixelSpace, nLineSpace,
                             0 );
-#endif
     }
 
     /* Get strip offsets */
@@ -1302,6 +1330,8 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     }
 
     /* Prepare data extraction */
+    const double dfSrcYInc = nYSize / (double) nBufYSize;
+
     int iLine;
     for(iLine=0;eErr == CE_None && iLine<nReqYSize;iLine++)
     {
@@ -1311,7 +1341,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
             ppData[iLine] = ((GByte*)pTmpBuffer) + iLine * nReqXSize * nSrcPixelSize;
         int nSrcLine;
         if (nBufYSize < nYSize) /* Sub-sampling in y */
-            nSrcLine = nYOff + (int)((iLine + 0.5) * nYSize / nBufYSize);
+            nSrcLine = nYOff + (int)((iLine + 0.5) * dfSrcYInc);
         else
             nSrcLine = nYOff + iLine;
 
@@ -1355,37 +1385,41 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     }
 
     /* Over-sampling/sub-sampling and/or data type conversion */
+    const double dfSrcXInc = nXSize / (double) nBufXSize;
     if (eErr == CE_None && pTmpBuffer != NULL)
     {
         for(int iY=0;iY<nBufYSize;iY++)
         {
             int iSrcY = (nBufYSize <= nYSize) ? iY :
-                            (int)((iY + 0.5) * nYSize / nBufYSize);
-            if (nBufXSize == nXSize && nContigBands == 1)
+                            (int)((iY + 0.5) * dfSrcYInc);
+
+            GByte* pabySrcData = ((GByte*)ppData[iSrcY]) +
+                        ((nContigBands > 1) ? (nBand-1) : 0) * nDTSize;
+            GByte* pabyDstData = ((GByte*)pData) + iY * nLineSpace;
+            if( nBufXSize == nXSize )
             {
-                GDALCopyWords( ppData[iSrcY], eDataType, nDTSize,
-                                ((GByte*)pData) + iY * nLineSpace,
-                                eBufType, nPixelSpace,
-                                nReqXSize);
+                GDALCopyWords( pabySrcData,
+                                eDataType, nSrcPixelSize,
+                                pabyDstData,
+                                eBufType, nPixelSpace, nBufXSize);
             }
             else
             {
-                GByte* pabySrcData = ((GByte*)ppData[iSrcY]) +
-                            ((nContigBands > 1) ? (nBand-1) : 0) * nDTSize;
-                GByte* pabyDstData = ((GByte*)pData) + iY * nLineSpace;
-                if( nBufXSize == nXSize && nDTSize == 1 && eBufType == GDT_Byte )
+                if( eDataType == GDT_Byte && eBufType == GDT_Byte )
                 {
-                    for(int iX=0;iX<nBufXSize;iX++)
+                    double dfSrcX = 0.5 * dfSrcXInc;
+                    for(int iX=0;iX<nBufXSize;iX++, dfSrcX += dfSrcXInc)
                     {
-                        pabyDstData[iX * nPixelSpace] = pabySrcData[iX * nSrcPixelSize];
+                        int iSrcX = (int)dfSrcX;
+                        pabyDstData[iX * nPixelSpace] = pabySrcData[iSrcX * nSrcPixelSize];
                     }
                 }
                 else
                 {
-                    for(int iX=0;iX<nBufXSize;iX++)
+                    double dfSrcX = 0.5 * dfSrcXInc;
+                    for(int iX=0;iX<nBufXSize;iX++, dfSrcX += dfSrcXInc)
                     {
-                        int iSrcX = (nBufXSize == nXSize) ? iX :
-                                        (int)((iX+0.5) * nXSize / nBufXSize);
+                        int iSrcX = (int)dfSrcX;
                         GDALCopyWords( pabySrcData + iSrcX * nSrcPixelSize,
                                     eDataType, 0,
                                     pabyDstData + iX * nPixelSpace,
@@ -1518,8 +1552,6 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
           (poGDS->nPhotometric == PHOTOMETRIC_MINISBLACK ||
            poGDS->nPhotometric == PHOTOMETRIC_RGB ||
            poGDS->nPhotometric == PHOTOMETRIC_PALETTE) &&
-          (poGDS->nBitsPerSample == 8 || poGDS->nBitsPerSample == 16 ||
-           poGDS->nBitsPerSample == 32 || poGDS->nBitsPerSample == 64) &&
           poGDS->nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
           !TIFFIsTiled( poGDS->hTIFF ) && !TIFFIsByteSwapped(poGDS->hTIFF)) )
     {
@@ -1757,47 +1789,6 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                            UnrolledCopy()                            */
-/************************************************************************/
-
-template<int srcStride, int dstStride> 
-static inline void UnrolledCopy(GByte* CPL_RESTRICT pabyDest,
-                                    const GByte* CPL_RESTRICT pabySrc,
-                                    int nIters)
-{
-    if (nIters >= 16)
-    {
-        for ( int i = nIters / 16; i != 0; i -- )
-        {
-            pabyDest[0*dstStride] = pabySrc[0*srcStride];
-            pabyDest[1*dstStride] = pabySrc[1*srcStride];
-            pabyDest[2*dstStride] = pabySrc[2*srcStride];
-            pabyDest[3*dstStride] = pabySrc[3*srcStride];
-            pabyDest[4*dstStride] = pabySrc[4*srcStride];
-            pabyDest[5*dstStride] = pabySrc[5*srcStride];
-            pabyDest[6*dstStride] = pabySrc[6*srcStride];
-            pabyDest[7*dstStride] = pabySrc[7*srcStride];
-            pabyDest[8*dstStride] = pabySrc[8*srcStride];
-            pabyDest[9*dstStride] = pabySrc[9*srcStride];
-            pabyDest[10*dstStride] = pabySrc[10*srcStride];
-            pabyDest[11*dstStride] = pabySrc[11*srcStride];
-            pabyDest[12*dstStride] = pabySrc[12*srcStride];
-            pabyDest[13*dstStride] = pabySrc[13*srcStride];
-            pabyDest[14*dstStride] = pabySrc[14*srcStride];
-            pabyDest[15*dstStride] = pabySrc[15*srcStride];
-            pabyDest += 16*dstStride;
-            pabySrc += 16*srcStride;
-        }
-        nIters = nIters % 16;
-    }
-    for( int i = 0; i < nIters; i++ )
-    {
-        pabyDest[i*dstStride] = *pabySrc;
-        pabySrc += srcStride;
-    }
-}
-
-/************************************************************************/
 /*                        FetchBufferVirtualMemIO                       */
 /************************************************************************/
 
@@ -1858,6 +1849,8 @@ public:
         }
         return true;
     }
+
+    static const bool bMinimizeIO = false;
 };
 
 /************************************************************************/
@@ -1892,8 +1885,6 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
         (nPhotometric == PHOTOMETRIC_MINISBLACK ||
         nPhotometric == PHOTOMETRIC_RGB ||
         nPhotometric == PHOTOMETRIC_PALETTE) &&
-        (nBitsPerSample == 8 || nBitsPerSample == 16 ||
-        nBitsPerSample == 32 || nBitsPerSample == 64) &&
         nBitsPerSample == GDALGetDataTypeSize(eDataType)) )
     {
         eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
@@ -1959,8 +1950,12 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
     {
         const GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
         const int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
-        m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(
-            nBlockXSize * nDTSize * ((nPlanarConfig == PLANARCONFIG_CONTIG) ? nBands : 1));
+        m_nTempBufferForCommonDirectIOSize = 
+            (size_t)(nBlockXSize * nDTSize * ((nPlanarConfig == PLANARCONFIG_CONTIG) ? nBands : 1));
+        if( TIFFIsTiled(hTIFF) )
+            m_nTempBufferForCommonDirectIOSize *= nBlockYSize;
+
+        m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(m_nTempBufferForCommonDirectIOSize);
         if( m_pTempBufferForCommonDirectIO == NULL )
             return CE_Failure;
     }
@@ -1976,12 +1971,88 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                   CopyContigByteMultiBand()                          */
+/************************************************************************/
+
+static inline void CopyContigByteMultiBand(
+                            const GByte* CPL_RESTRICT pabySrc, int nSrcStride,
+                            GByte* CPL_RESTRICT pabyDest, int nDestStride,
+                            int nIters, int nBandCount)
+{
+    if( nBandCount == 3 )
+    {
+        if( nSrcStride == 3 && nDestStride == 4 )
+        {
+            while( nIters >= 8 )
+            {
+                pabyDest[4*0+0] = pabySrc[3*0+0];
+                pabyDest[4*0+1] = pabySrc[3*0+1];
+                pabyDest[4*0+2] = pabySrc[3*0+2];
+                pabyDest[4*1+0] = pabySrc[3*1+0];
+                pabyDest[4*1+1] = pabySrc[3*1+1];
+                pabyDest[4*1+2] = pabySrc[3*1+2];
+                pabyDest[4*2+0] = pabySrc[3*2+0];
+                pabyDest[4*2+1] = pabySrc[3*2+1];
+                pabyDest[4*2+2] = pabySrc[3*2+2];
+                pabyDest[4*3+0] = pabySrc[3*3+0];
+                pabyDest[4*3+1] = pabySrc[3*3+1];
+                pabyDest[4*3+2] = pabySrc[3*3+2];
+                pabyDest[4*4+0] = pabySrc[3*4+0];
+                pabyDest[4*4+1] = pabySrc[3*4+1];
+                pabyDest[4*4+2] = pabySrc[3*4+2];
+                pabyDest[4*5+0] = pabySrc[3*5+0];
+                pabyDest[4*5+1] = pabySrc[3*5+1];
+                pabyDest[4*5+2] = pabySrc[3*5+2];
+                pabyDest[4*6+0] = pabySrc[3*6+0];
+                pabyDest[4*6+1] = pabySrc[3*6+1];
+                pabyDest[4*6+2] = pabySrc[3*6+2];
+                pabyDest[4*7+0] = pabySrc[3*7+0];
+                pabyDest[4*7+1] = pabySrc[3*7+1];
+                pabyDest[4*7+2] = pabySrc[3*7+2];
+                pabySrc += 3 * 8;
+                pabyDest += 4 * 8;
+                nIters -= 8;
+            }
+            while( nIters-- > 0 )
+            {
+                pabyDest[0] = pabySrc[0];
+                pabyDest[1] = pabySrc[1];
+                pabyDest[2] = pabySrc[2];
+                pabySrc += 3;
+                pabyDest += 4;
+            }
+        }
+        else
+        {
+            while( nIters-- > 0 )
+            {
+                pabyDest[0] = pabySrc[0];
+                pabyDest[1] = pabySrc[1];
+                pabyDest[2] = pabySrc[2];
+                pabySrc += nSrcStride;
+                pabyDest += nDestStride;
+            }
+        }
+    }
+    else
+    {
+        while( nIters-- > 0 )
+        {
+            for(int iBand=0;iBand<nBandCount;iBand++)
+                pabyDest[iBand] = pabySrc[iBand];
+            pabySrc += nSrcStride;
+            pabyDest += nDestStride;
+        }
+    }
+}
+
+/************************************************************************/
 /*                         CommonDirectIO()                             */
 /************************************************************************/
 
 //#define DEBUG_REACHED_VIRTUAL_MEM_IO
 #ifdef DEBUG_REACHED_VIRTUAL_MEM_IO
-static int anReachedVirtualMemIO[30] = { 0 };
+static int anReachedVirtualMemIO[52] = { 0 };
 #define REACHED(x)  anReachedVirtualMemIO[x] = 1
 #else
 #define REACHED(x)
@@ -2027,10 +2098,13 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
     const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     const bool bNoTypeChange = (eDataType == eBufType);
     const bool bNoXResampling = (nXSize == nBufXSize );
+    const bool bNoYResampling = (nYSize == nBufYSize );
     const bool bNoXResamplingNoTypeChange = (bNoTypeChange && bNoXResampling);
     const bool bByteOnly = (bNoTypeChange && nDTSize == 1 );
     const bool bByteNoXResampling = ( bByteOnly && bNoXResamplingNoTypeChange );
     const bool bIsByteSwapped = (bool)TIFFIsByteSwapped(hTIFF);
+    const double dfSrcXInc = nXSize / (double) nBufXSize;
+    const double dfSrcYInc = nYSize / (double) nBufYSize;
 
     int bNoDataSet;
     double dfNoData = GetRasterBand(1)->GetNoDataValue( &bNoDataSet );
@@ -2040,14 +2114,470 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
     else if( dfNoData >= 0 && dfNoData <= 255 )
         abyNoData = (GByte) (dfNoData + 0.5);
 
-    if( bUseContigImplementation )
+    if( FetchBuffer::bMinimizeIO &&
+             TIFFIsTiled( hTIFF ) && bNoXResampling && bNoYResampling &&
+             nPlanarConfig == PLANARCONFIG_CONTIG && nBandCount > 1 )
     {
-        if( TIFFIsTiled( hTIFF ) )
+        GByte* pabyData = (GByte*)pData;
+        for(int y=0;y<nBufYSize;)
+        {
+            const int nSrcLine = nYOff + y;
+            const int nBlockYOff = nSrcLine / nBlockYSize;
+            const int nYOffsetInBlock = nSrcLine % nBlockYSize;
+            const int nUsedBlockHeight = MIN(nBufYSize - y, (int)nBlockYSize - nYOffsetInBlock);
+
+            int nBlockXOff = nXOff / nBlockXSize;
+            int nXOffsetInBlock = nXOff % nBlockXSize;
+            int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+
+            int x = 0;
+            while( x < nBufXSize )
+            {
+                const toff_t nCurOffset = panOffsets[nBlockId];
+                const int nUsedBlockWidth = MIN((int)nBlockXSize - nXOffsetInBlock, nBufXSize - x);
+
+                if( nCurOffset == 0 )
+                {
+                    REACHED(30);
+                    for( int k=0;k<nUsedBlockHeight;k++)
+                    {
+                        GByte* pabyLocalData = pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+                        for(int iBand=0;iBand<nBandCount;iBand++)
+                        {
+                            GByte* pabyLocalDataBand = pabyLocalData + iBand * nBandSpace;
+
+                            GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                                    pabyLocalDataBand, eBufType, nPixelSpace,
+                                    nUsedBlockWidth);
+                        }
+                    }
+                }
+                else
+                {
+                    const int nByteOffsetInBlock =
+                        nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
+                    const GByte* pabyLocalSrcDataK0 = oFetcher.FetchBytes(
+                            nCurOffset + nByteOffsetInBlock,
+                            (int)nBlockXSize * nUsedBlockHeight * nBandsPerBlock,
+                            nDTSize, bIsByteSwapped, bIsComplex, nBlockId);
+                    if( pabyLocalSrcDataK0 == NULL )
+                        return CE_Failure;
+
+                    for( int k=0;k<nUsedBlockHeight;k++)
+                    {
+                        GByte* pabyLocalData = pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+                        const GByte* pabyLocalSrcData = 
+                            pabyLocalSrcDataK0 + (k * nBlockXSize + nXOffsetInBlock) * nBandsPerBlockDTSize;
+
+                        if( bUseContigImplementation && nBands == nBandCount &&
+                            nPixelSpace == nBufDTSize * nBands )
+                        {
+                            REACHED(31);
+                            GDALCopyWords((void*)pabyLocalSrcData,
+                                            eDataType, nDTSize,
+                                            pabyLocalData,
+                                            eBufType, nBufDTSize,
+                                            nUsedBlockWidth * nBands);
+                        }
+                        else
+                        {
+                            REACHED(32);
+                            for(int iBand=0;iBand<nBandCount;iBand++)
+                            {
+                                GByte* pabyLocalDataBand = pabyLocalData + iBand * nBandSpace;
+                                const GByte* pabyLocalSrcDataBand = pabyLocalSrcData + (panBandMap[iBand]-1) * nDTSize;
+
+                                GDALCopyWords((void*)pabyLocalSrcDataBand,
+                                                eDataType, nBandsPerBlockDTSize,
+                                                pabyLocalDataBand,
+                                                eBufType, nPixelSpace,
+                                                nUsedBlockWidth);
+                            }
+                        }
+                    }
+                }
+
+                nXOffsetInBlock = 0;
+                nBlockXOff ++;
+                nBlockId ++; 
+                x += nUsedBlockWidth;
+            }
+
+            y += nUsedBlockHeight;
+        }
+    }
+    else if( FetchBuffer::bMinimizeIO &&
+             TIFFIsTiled( hTIFF ) && bNoXResampling && bNoYResampling /*&&
+             (nPlanarConfig == PLANARCONFIG_SEPARATE || nBandCount == 1)*/ )
+    {
+        for(int iBand=0;iBand<nBandCount;iBand++)
+        {
+            GByte* pabyData = (GByte*)pData + iBand * nBandSpace;
+            const int nBand = panBandMap[iBand];
+            for(int y=0;y<nBufYSize;)
+            {
+                const int nSrcLine = nYOff + y;
+                const int nBlockYOff = nSrcLine / nBlockYSize;
+                const int nYOffsetInBlock = nSrcLine % nBlockYSize;
+                const int nUsedBlockHeight = MIN(nBufYSize - y, (int)nBlockYSize - nYOffsetInBlock);
+
+                int nBlockXOff = nXOff / nBlockXSize;
+                int nXOffsetInBlock = nXOff % nBlockXSize;
+                int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+                if ( nPlanarConfig == PLANARCONFIG_SEPARATE )
+                {
+                    REACHED(33);
+                    nBlockId += nBlocksPerBand * (nBand - 1);
+                }
+                else
+                {
+                    REACHED(34);
+                }
+
+                int x = 0;
+                while( x < nBufXSize )
+                {
+                    const toff_t nCurOffset = panOffsets[nBlockId];
+                    const int nUsedBlockWidth = MIN((int)nBlockXSize - nXOffsetInBlock, nBufXSize - x);
+
+                    if( nCurOffset == 0 )
+                    {
+                        REACHED(35);
+                        for( int k=0;k<nUsedBlockHeight;k++)
+                        {
+                            GByte* pabyLocalData = pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+
+                            GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                                    pabyLocalData, eBufType, nPixelSpace,
+                                    nUsedBlockWidth);
+                        }
+                    }
+                    else
+                    {
+                        const int nByteOffsetInBlock =
+                            nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
+                        const GByte* pabyLocalSrcDataK0 = oFetcher.FetchBytes(
+                                nCurOffset + nByteOffsetInBlock,
+                                (int)nBlockXSize * nUsedBlockHeight * nBandsPerBlock,
+                                nDTSize, bIsByteSwapped, bIsComplex, nBlockId);
+                        if( pabyLocalSrcDataK0 == NULL )
+                            return CE_Failure;
+
+                        if ( nPlanarConfig == PLANARCONFIG_CONTIG )
+                        {
+                            REACHED(36);
+                            pabyLocalSrcDataK0 += (nBand - 1) * nDTSize;
+                        }
+                        else
+                        {
+                            REACHED(37);
+                        }
+
+                        for( int k=0;k<nUsedBlockHeight;k++)
+                        {
+                            GByte* pabyLocalData = pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+                            const GByte* pabyLocalSrcData = 
+                                pabyLocalSrcDataK0 + (k * nBlockXSize + nXOffsetInBlock) * nBandsPerBlockDTSize;
+
+                            GDALCopyWords((void*)pabyLocalSrcData,
+                                            eDataType, nBandsPerBlockDTSize,
+                                            pabyLocalData,
+                                            eBufType, nPixelSpace,
+                                            nUsedBlockWidth);
+                        }
+                    }
+
+                    nXOffsetInBlock = 0;
+                    nBlockXOff ++;
+                    nBlockId ++; 
+                    x += nUsedBlockWidth;
+                }
+
+                y += nUsedBlockHeight;
+            }
+        }
+    }
+    else if( FetchBuffer::bMinimizeIO &&
+             TIFFIsTiled( hTIFF ) && 
+             nPlanarConfig == PLANARCONFIG_CONTIG && nBandCount > 1 )
+    {
+        GByte* pabyData = (GByte*)pData;
+        int anSrcYOffset[256];
+        for(int y=0;y<nBufYSize;)
+        {
+            const double dfYOffStart = nYOff + (y + 0.5) * dfSrcYInc;
+            const int nSrcLine = (int)dfYOffStart;
+            const int nYOffsetInBlock = nSrcLine % nBlockYSize;
+            const int nBlockYOff = nSrcLine / nBlockYSize;
+            const int nBaseByteOffsetInBlock = nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
+            int ychunk = 1;
+            int nLastSrcLineK = nSrcLine;
+            anSrcYOffset[0] = 0;
+            for(int k=1;k<nBufYSize-y;k++)
+            {
+                int nSrcLineK = nYOff + (int)((y + k + 0.5) * dfSrcYInc);
+                const int nBlockYOffK = nSrcLineK / nBlockYSize;
+                if( k < 256)
+                    anSrcYOffset[k] = ((nSrcLineK % nBlockYSize) - nYOffsetInBlock) * nBlockXSize * nBandsPerBlockDTSize;
+                if( nBlockYOffK != nBlockYOff )
+                {
+                    break;
+                }
+                ychunk ++;
+                nLastSrcLineK = nSrcLineK;
+            }
+            const int nUsedBlockHeight = nLastSrcLineK - nSrcLine + 1;
+            //CPLAssert(nUsedBlockHeight <= nBlockYSize);
+
+            double dfSrcX = nXOff + 0.5 * dfSrcXInc;
+            int nCurBlockXOff = 0;
+            int nNextBlockXOff = 0;
+            toff_t nCurOffset = 0;
+            const GByte* pabyLocalSrcDataStartLine = NULL;
+            for(int x=0;x<nBufXSize;x++, dfSrcX += dfSrcXInc)
+            {
+                int nSrcPixel = (int)dfSrcX;
+                if( nSrcPixel >= nNextBlockXOff )
+                {
+                    const int nBlockXOff = nSrcPixel / nBlockXSize;
+                    nCurBlockXOff = nBlockXOff * nBlockXSize;
+                    nNextBlockXOff = nCurBlockXOff + nBlockXSize;
+                    int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+                    nCurOffset = panOffsets[nBlockId];
+                    if( nCurOffset != 0 )
+                    {
+                        pabyLocalSrcDataStartLine = oFetcher.FetchBytes(
+                                nCurOffset + nBaseByteOffsetInBlock,
+                                (int)nBlockXSize * nBandsPerBlock * nUsedBlockHeight, nDTSize,
+                                bIsByteSwapped, bIsComplex, nBlockId);
+                        if( pabyLocalSrcDataStartLine == NULL )
+                            return CE_Failure;
+                    }
+                }
+
+                if( nCurOffset == 0 )
+                {
+                    REACHED(38);
+
+                    for( int k = 0; k < ychunk; k ++ )
+                    {
+                        GByte* const pabyLocalData = pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+
+                        GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                                        pabyLocalData, eBufType, nBandSpace,
+                                        nBandCount);
+                    }
+                }
+
+                else
+                {
+                    const int nXOffsetInBlock = nSrcPixel - nCurBlockXOff;
+                    double dfYOff = dfYOffStart;
+                    const GByte* const pabyLocalSrcDataK0 =
+                        pabyLocalSrcDataStartLine + nXOffsetInBlock * nBandsPerBlockDTSize;
+                    GByte* pabyLocalData = pabyData + y * nLineSpace + x * nPixelSpace;
+                    for( int k = 0; k < ychunk; k ++, pabyLocalData += nLineSpace )
+                    {
+                        const GByte* pabyLocalSrcData;
+                        if( ychunk <= 256 )
+                        {
+                            REACHED(39);
+                            pabyLocalSrcData = pabyLocalSrcDataK0 + anSrcYOffset[k];
+                        }
+                        else
+                        {
+                            REACHED(40);
+                            const int nYOffsetInBlockK = ((int)dfYOff) % nBlockYSize;
+                            //CPLAssert(nYOffsetInBlockK - nYOffsetInBlock <= nUsedBlockHeight);
+                            pabyLocalSrcData = pabyLocalSrcDataK0 +
+                                (nYOffsetInBlockK - nYOffsetInBlock) * nBlockXSize * nBandsPerBlockDTSize;
+                            dfYOff += dfSrcYInc;
+                        }
+
+                        if( bByteOnly )
+                        {
+                            REACHED(41);
+                            for(int iBand=0;iBand<nBandCount;iBand++)
+                            {
+                                GByte* pabyLocalDataBand = pabyLocalData + iBand * nBandSpace;
+                                const GByte* pabyLocalSrcDataBand = pabyLocalSrcData + (panBandMap[iBand]-1) /* * nDTSize*/;
+                                *pabyLocalDataBand = *pabyLocalSrcDataBand;
+                            }
+                        }
+                        else
+                        {
+                            REACHED(42);
+                            for(int iBand=0;iBand<nBandCount;iBand++)
+                            {
+                                GByte* pabyLocalDataBand = pabyLocalData + iBand * nBandSpace;
+                                const GByte* pabyLocalSrcDataBand = pabyLocalSrcData + (panBandMap[iBand]-1) * nDTSize;
+
+                                GDALCopyWords((void*)pabyLocalSrcDataBand,
+                                                eDataType, 0,
+                                                pabyLocalDataBand,
+                                                eBufType, 0,
+                                                1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            y += ychunk;
+        }
+    }
+    else if( FetchBuffer::bMinimizeIO &&
+             TIFFIsTiled( hTIFF ) /* && 
+             (nPlanarConfig == PLANARCONFIG_SEPARATE || nBandCount == 1) */ )
+    {
+        for(int iBand=0;iBand<nBandCount;iBand++)
+        {
+            GByte* pabyData = (GByte*)pData + iBand * nBandSpace;
+            const int nBand = panBandMap[iBand];
+            int anSrcYOffset[256];
+            for(int y=0;y<nBufYSize;)
+            {
+                const double dfYOffStart = nYOff + (y + 0.5) * dfSrcYInc;
+                const int nSrcLine = (int)dfYOffStart;
+                const int nYOffsetInBlock = nSrcLine % nBlockYSize;
+                const int nBlockYOff = nSrcLine / nBlockYSize;
+                const int nBaseByteOffsetInBlock = nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
+                int ychunk = 1;
+                int nLastSrcLineK = nSrcLine;
+                anSrcYOffset[0] = 0;
+                for(int k=1;k<nBufYSize-y;k++)
+                {
+                    int nSrcLineK = nYOff + (int)((y + k + 0.5) * dfSrcYInc);
+                    const int nBlockYOffK = nSrcLineK / nBlockYSize;
+                    if( k < 256)
+                        anSrcYOffset[k] = ((nSrcLineK % nBlockYSize) - nYOffsetInBlock) * nBlockXSize * nBandsPerBlockDTSize;
+                    if( nBlockYOffK != nBlockYOff )
+                    {
+                        break;
+                    }
+                    ychunk ++;
+                    nLastSrcLineK = nSrcLineK;
+                }
+                const int nUsedBlockHeight = nLastSrcLineK - nSrcLine + 1;
+                //CPLAssert(nUsedBlockHeight <= nBlockYSize);
+
+                double dfSrcX = nXOff + 0.5 * dfSrcXInc;
+                int nCurBlockXOff = 0;
+                int nNextBlockXOff = 0;
+                toff_t nCurOffset = 0;
+                const GByte* pabyLocalSrcDataStartLine = NULL;
+                for(int x=0;x<nBufXSize;x++, dfSrcX += dfSrcXInc)
+                {
+                    int nSrcPixel = (int)dfSrcX;
+                    if( nSrcPixel >= nNextBlockXOff )
+                    {
+                        const int nBlockXOff = nSrcPixel / nBlockXSize;
+                        nCurBlockXOff = nBlockXOff * nBlockXSize;
+                        nNextBlockXOff = nCurBlockXOff + nBlockXSize;
+                        int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+                        if ( nPlanarConfig == PLANARCONFIG_SEPARATE )
+                        {
+                            REACHED(43);
+                            nBlockId += nBlocksPerBand * (nBand - 1);
+                        }
+                        else
+                        {
+                            REACHED(44);
+                        }
+                        nCurOffset = panOffsets[nBlockId];
+                        if( nCurOffset != 0 )
+                        {
+                            pabyLocalSrcDataStartLine = oFetcher.FetchBytes(
+                                    nCurOffset + nBaseByteOffsetInBlock,
+                                    (int)nBlockXSize * nBandsPerBlock * nUsedBlockHeight, nDTSize,
+                                    bIsByteSwapped, bIsComplex, nBlockId);
+                            if( pabyLocalSrcDataStartLine == NULL )
+                                return CE_Failure;
+
+                            if ( nPlanarConfig == PLANARCONFIG_CONTIG )
+                            {
+                                REACHED(45);
+                                pabyLocalSrcDataStartLine += (nBand - 1) * nDTSize;
+                            }
+                            else
+                            {
+                                REACHED(46);
+                            }
+
+                        }
+                    }
+
+                    if( nCurOffset == 0 )
+                    {
+                        REACHED(47);
+
+                        for( int k = 0; k < ychunk; k ++ )
+                        {
+                            GByte* const pabyLocalData = pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+
+                            GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                                            pabyLocalData, eBufType, 0,
+                                            1);
+                        }
+                    }
+
+                    else
+                    {
+                        const int nXOffsetInBlock = nSrcPixel - nCurBlockXOff;
+                        double dfYOff = dfYOffStart;
+                        const GByte* const pabyLocalSrcDataK0 =
+                            pabyLocalSrcDataStartLine + nXOffsetInBlock * nBandsPerBlockDTSize;
+                        GByte* pabyLocalData = pabyData + y * nLineSpace + x * nPixelSpace;
+                        for( int k = 0; k < ychunk; k ++, pabyLocalData += nLineSpace )
+                        {
+                            const GByte* pabyLocalSrcData;
+                            if( ychunk <= 256 )
+                            {
+                                REACHED(48);
+                                pabyLocalSrcData = pabyLocalSrcDataK0 + anSrcYOffset[k];
+                            }
+                            else
+                            {
+                                REACHED(49);
+                                const int nYOffsetInBlockK = ((int)dfYOff) % nBlockYSize;
+                                //CPLAssert(nYOffsetInBlockK - nYOffsetInBlock <= nUsedBlockHeight);
+                                pabyLocalSrcData = pabyLocalSrcDataK0 +
+                                    (nYOffsetInBlockK - nYOffsetInBlock) * nBlockXSize * nBandsPerBlockDTSize;
+                                dfYOff += dfSrcYInc;
+                            }
+
+                            if( bByteOnly )
+                            {
+                                REACHED(50);
+
+                                *pabyLocalData = *pabyLocalSrcData;
+                            }
+                            else
+                            {
+                                REACHED(51);
+
+                                GDALCopyWords((void*)pabyLocalSrcData,
+                                                eDataType, 0,
+                                                pabyLocalData,
+                                                eBufType, 0,
+                                                1);
+                            }
+                        }
+                    }
+                }
+
+                y += ychunk;
+            }
+        }
+    }
+    else if( bUseContigImplementation )
+    {
+        if( !FetchBuffer::bMinimizeIO && TIFFIsTiled( hTIFF ) )
         {
             GByte* pabyData = (GByte*)pData;
             for(int y=0;y<nBufYSize;y++)
             {
-                const int nSrcLine = nYOff + (int)((y + 0.5) * nYSize / nBufYSize);
+                const int nSrcLine = nYOff + (int)((y + 0.5) * dfSrcYInc);
                 const int nBlockYOff = nSrcLine / nBlockYSize;
                 const int nYOffsetInBlock = nSrcLine % nBlockYSize;
                 const int nBaseByteOffsetInBlock = nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
@@ -2062,15 +2592,12 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                     int x = 0;
                     while( x < nBufXSize )
                     {
-                        const int nByteOffsetInBlock = nBaseByteOffsetInBlock + nXOffsetInBlock * nBandsPerBlockDTSize;
+                        const int nByteOffsetInBlock = nBaseByteOffsetInBlock +
+                                        nXOffsetInBlock * nBandsPerBlockDTSize;
                         const toff_t nCurOffset = panOffsets[nBlockId];
-                        int nIters = MIN((int)nBlockXSize - nXOffsetInBlock, nBufXSize - x);
+                        const int nUsedBlockWidth = MIN((int)nBlockXSize - nXOffsetInBlock, nBufXSize - x);
 
-                        nXOffsetInBlock = 0;
-                        nBlockXOff ++;
-                        nBlockId ++; 
-                        x += nIters;
-
+                        int nIters = nUsedBlockWidth;
                         if( nCurOffset == 0 )
                         {
                             if( bByteNoXResampling )
@@ -2097,33 +2624,38 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         }
                         else
                         {
-                            if( bNoTypeChange && nPixelSpace == nBandsPerBlockDTSize )
+                            if( bNoTypeChange && nBands == nBandCount &&
+                                nPixelSpace == nBandsPerBlockDTSize )
                             {
                                 REACHED(2);
                                 if( !oFetcher.FetchBytes(
                                         pabyLocalData,
                                         nCurOffset + nByteOffsetInBlock,
-                                        nIters * nBandsPerBlock, nDTSize, bIsByteSwapped, bIsComplex, nBlockId) )
+                                        nIters * nBandsPerBlock, nDTSize,
+                                        bIsByteSwapped, bIsComplex, nBlockId) )
+                                {
                                     return CE_Failure;
+                                }
                                 pabyLocalData += nIters * nBandsPerBlock * nDTSize;
                             }
                             else
                             {
                                 const GByte* pabyLocalSrcData = oFetcher.FetchBytes(
                                         nCurOffset + nByteOffsetInBlock,
-                                        nIters * nBandsPerBlock, nDTSize, bIsByteSwapped, bIsComplex, nBlockId);
+                                        nIters * nBandsPerBlock, nDTSize,
+                                        bIsByteSwapped, bIsComplex, nBlockId);
                                 if( pabyLocalSrcData == NULL )
                                     return CE_Failure;
                                 if( bByteNoXResampling )
                                 {
                                     REACHED(3);
-                                    while( nIters-- > 0 )
-                                    {
-                                        for(int iBand=0;iBand<nBandCount;iBand++)
-                                            pabyLocalData[iBand] = pabyLocalSrcData[iBand];
-                                        pabyLocalSrcData += nBandsPerBlockDTSize;
-                                        pabyLocalData += nPixelSpace;
-                                    }
+                                    CopyContigByteMultiBand(pabyLocalSrcData,
+                                                        nBandsPerBlockDTSize,
+                                                        pabyLocalData,
+                                                        nPixelSpace,
+                                                        nIters,
+                                                        nBandCount);
+                                    pabyLocalData += nIters * nPixelSpace;
                                 }
                                 else
                                 {
@@ -2141,47 +2673,72 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                 }
                             }
                         }
+
+                        nXOffsetInBlock = 0;
+                        nBlockXOff ++;
+                        nBlockId ++; 
+                        x += nUsedBlockWidth;
                     }
                 }
                 else /* contig, tiled, potential resampling and data type change */
                 {
                     const GByte* pabyLocalSrcDataStartLine = NULL;
-                    toff_t nLastOffset = 0;
-                    for(int x=0;x<nBufXSize;x++)
+                    GByte* pabyLocalData = pabyData + y * nLineSpace;
+                    double dfSrcX = nXOff + 0.5 * dfSrcXInc;
+                    int nCurBlockXOff = 0;
+                    int nNextBlockXOff = 0;
+                    toff_t nCurOffset = 0;
+                    for(int x=0;x<nBufXSize;x++, dfSrcX += dfSrcXInc)
                     {
-                        const int nSrcPixel = nXOff + (int)((x + 0.5) * nXSize / nBufXSize);
-                        const int nBlockXOff = nSrcPixel / nBlockXSize;
-                        const int nXOffsetInBlock = nSrcPixel % nBlockXSize;
-                        const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
-                        const toff_t nCurOffset = panOffsets[nBlockId];
+                        int nSrcPixel = (int)dfSrcX;
+                        if( nSrcPixel >= nNextBlockXOff )
+                        {
+                            const int nBlockXOff = nSrcPixel / nBlockXSize;
+                            nCurBlockXOff = nBlockXOff * nBlockXSize;
+                            nNextBlockXOff = nCurBlockXOff + nBlockXSize;
+                            int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+                            nCurOffset = panOffsets[nBlockId];
+                            if( nCurOffset != 0 )
+                            {
+                                pabyLocalSrcDataStartLine = oFetcher.FetchBytes(
+                                        nCurOffset + nBaseByteOffsetInBlock,
+                                        (int)nBlockXSize * nBandsPerBlock, nDTSize,
+                                        bIsByteSwapped, bIsComplex, nBlockId);
+                                if( pabyLocalSrcDataStartLine == NULL )
+                                    return CE_Failure;
+                            }
+                        }
+                        const int nXOffsetInBlock = nSrcPixel - nCurBlockXOff;
+
                         if( nCurOffset == 0 )
                         {
                             REACHED(5);
                             GDALCopyWords(&dfNoData, GDT_Float64, 0,
-                                          pabyData + y * nLineSpace + x * nPixelSpace,
+                                          pabyLocalData,
                                           eBufType, nBandSpace,
                                           nBandCount);
+                            pabyLocalData += nPixelSpace;
                         }
                         else
                         {
-                            if( nCurOffset != nLastOffset )
-                            {
-                                nLastOffset = nCurOffset;
-                                pabyLocalSrcDataStartLine = oFetcher.FetchBytes(
-                                        nCurOffset + nBaseByteOffsetInBlock,
-                                        (int)nBlockXSize * nBandsPerBlock, nDTSize, bIsByteSwapped, bIsComplex, nBlockId);
-                                if( pabyLocalSrcDataStartLine == NULL )
-                                    return CE_Failure;
-                            }
-                            const GByte* const pabyLocalSrcData = pabyLocalSrcDataStartLine +
-                                            nXOffsetInBlock * nBandsPerBlockDTSize;
+                            const GByte* pabyLocalSrcData = pabyLocalSrcDataStartLine +
+                                    nXOffsetInBlock * nBandsPerBlockDTSize;
 
                             REACHED(6);
-                            GDALCopyWords((void*)pabyLocalSrcData,
+                            if( bByteOnly )
+                            {
+                                for(int iBand = 0; iBand < nBands; iBand ++ )
+                                    pabyLocalData[iBand] = pabyLocalSrcData[iBand];
+                            }
+                            else
+                            {
+                                GDALCopyWords((GByte*)pabyLocalSrcData,
                                             eDataType, nDTSize,
-                                            pabyData + y * nLineSpace + x * nPixelSpace,
+                                            pabyLocalData,
                                             eBufType, nBandSpace,
                                             nBandCount);
+                            }
+                            pabyLocalData += nPixelSpace;
                         }
                     }
                 }
@@ -2192,7 +2749,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
             GByte* pabyData = (GByte*)pData;
             for(int y=0;y<nBufYSize;y++)
             {
-                const int nSrcLine = nYOff + (int)((y + 0.5) * nYSize / nBufYSize);
+                const int nSrcLine = nYOff + (int)((y + 0.5) * dfSrcYInc);
                 const int nBlockYOff = nSrcLine / nBlockYSize;
                 const int nYOffsetInBlock = nSrcLine % nBlockYSize;
                 const int nBlockId = nBlockYOff;
@@ -2213,7 +2770,8 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                     GByte* pabyLocalData = pabyData + y * nLineSpace;
                     const int nBaseByteOffsetInBlock = (nYOffsetInBlock * nBlockXSize + nXOff) * nBandsPerBlockDTSize;
 
-                    if( bNoXResamplingNoTypeChange && nPixelSpace == nBandsPerBlockDTSize )
+                    if( bNoXResamplingNoTypeChange && nBands == nBandCount &&
+                        nPixelSpace == nBandsPerBlockDTSize )
                     {
                         REACHED(8);
                         if( !oFetcher.FetchBytes(
@@ -2235,30 +2793,34 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         if( bByteNoXResampling )
                         {
                             REACHED(9);
-                            for(int x=0;x<nBufXSize;x++)
-                            {
-                                for(int iBand=0;iBand<nBandCount;iBand++)
-                                    pabyLocalData[iBand] = pabyLocalSrcData[iBand];
-                                pabyLocalSrcData += nBandsPerBlockDTSize;
-                                pabyLocalData += nPixelSpace;
-                            }
+                            CopyContigByteMultiBand(pabyLocalSrcData,
+                                                nBandsPerBlockDTSize,
+                                                pabyLocalData,
+                                                nPixelSpace,
+                                                nBufXSize,
+                                                nBandCount);
                         }
                         else if( bByteOnly )
                         {
                             REACHED(10);
-                            for(int x=0;x<nBufXSize;x++)
+                            double dfSrcX = 0.5 * dfSrcXInc;
+                            for(int x=0;x<nBufXSize;x++, dfSrcX += dfSrcXInc)
                             {
-                                int nSrcPixelMinusXOff = (int)((x + 0.5) * nXSize / nBufXSize);
+                                int nSrcPixelMinusXOff = (int)dfSrcX;
                                 for(int iBand=0;iBand<nBandCount;iBand++)
-                                    pabyLocalData[x * nPixelSpace + iBand /* * nBandSpace*/] = pabyLocalSrcData[nSrcPixelMinusXOff * nBandsPerBlockDTSize + iBand];
+                                {
+                                    pabyLocalData[x * nPixelSpace + iBand /* * nBandSpace*/] =
+                                        pabyLocalSrcData[nSrcPixelMinusXOff * nBandsPerBlockDTSize + iBand];
+                                }
                             }
                         }
                         else
                         {
                             REACHED(11);
-                            for(int x=0;x<nBufXSize;x++)
+                            double dfSrcX = 0.5 * dfSrcXInc;
+                            for(int x=0;x<nBufXSize;x++, dfSrcX += dfSrcXInc)
                             {
-                                int nSrcPixelMinusXOff = (int)((x + 0.5) * nXSize / nBufXSize);
+                                int nSrcPixelMinusXOff = (int)dfSrcX;
                                 GDALCopyWords((GByte*)pabyLocalSrcData + nSrcPixelMinusXOff * nBandsPerBlockDTSize,
                                             eDataType, nDTSize,
                                             pabyLocalData + x * nPixelSpace,
@@ -2273,7 +2835,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
     }
     else /* non contig reading case */
     {
-        if( TIFFIsTiled( hTIFF ) )
+        if( !FetchBuffer::bMinimizeIO && TIFFIsTiled( hTIFF ) )
         {
             for(iBand = 0; iBand < nBandCount; iBand ++ )
             {
@@ -2281,7 +2843,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                 GByte* const pabyData = (GByte*)pData + iBand * nBandSpace;
                 for(int y=0;y<nBufYSize;y++)
                 {
-                    const int nSrcLine = nYOff + (int)((y + 0.5) * nYSize / nBufYSize);
+                    const int nSrcLine = nYOff + (int)((y + 0.5) * dfSrcYInc);
                     const int nBlockYOff = nSrcLine / nBlockYSize;
                     const int nYOffsetInBlock = nSrcLine % nBlockYSize;
 
@@ -2302,46 +2864,38 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         int nBlockXOff = nXOff / nBlockXSize;
                         int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
                         if ( nPlanarConfig == PLANARCONFIG_SEPARATE )
+                        {
+                            REACHED(14);
                             nBlockId += nBlocksPerBand * (nBand - 1);
+                        }
+                        else
+                        {
+                            REACHED(15);
+                        }
                         int nXOffsetInBlock = nXOff % nBlockXSize;
 
                         int x = 0;
                         while( x < nBufXSize )
                         {
-                            const int nByteOffsetInBlock = nBaseByteOffsetInBlock + nXOffsetInBlock * nBandsPerBlockDTSize;
+                            const int nByteOffsetInBlock = nBaseByteOffsetInBlock +
+                                    nXOffsetInBlock * nBandsPerBlockDTSize;
                             const toff_t nCurOffset = panOffsets[nBlockId];
-                            int nIters = MIN((int)nBlockXSize - nXOffsetInBlock, nBufXSize - x);
-
-                            nXOffsetInBlock = 0;
-                            nBlockXOff ++;
-                            nBlockId ++; 
-                            x += nIters;
+                            const int nUsedBlockWidth = MIN((int)nBlockXSize - nXOffsetInBlock, nBufXSize - x);
+                            int nIters = nUsedBlockWidth;
 
                             if( nCurOffset == 0 )
                             {
-                                if( bByteNoXResampling )
-                                {
-                                    REACHED(14);
-                                    while( nIters-- > 0 )
-                                    {
-                                        *pabyLocalData = abyNoData;
-                                        pabyLocalData += nPixelSpace;
-                                    }
-                                }
-                                else
-                                {
-                                    REACHED(15);
-                                    GDALCopyWords(&dfNoData, GDT_Float64, 0,
-                                                  pabyLocalData, eBufType, nPixelSpace,
-                                                  nIters);
-                                    pabyLocalData += nIters * nPixelSpace;
-                                }
+                                REACHED(16);
+                                GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                                              pabyLocalData, eBufType, nPixelSpace,
+                                              nIters);
+                                pabyLocalData += nIters * nPixelSpace;
                             }
                             else
                             {
                                 if( bNoTypeChange && nPixelSpace == nBandsPerBlockDTSize )
                                 {
-                                    REACHED(16);
+                                    REACHED(17);
                                     if( !oFetcher.FetchBytes( pabyLocalData,
                                             nCurOffset + nByteOffsetInBlock,
                                             (nIters - 1) * nBandsPerBlock + 1, nDTSize,
@@ -2359,69 +2913,50 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                         bIsByteSwapped, bIsComplex, nBlockId);
                                     if( pabyLocalSrcData == NULL )
                                         return CE_Failure;
-                                    if( bByteNoXResampling )
-                                    {
-                                        if( nPixelSpace == 1 && nBandsPerBlockDTSize == 3 )
-                                        {
-                                            REACHED(17);
-                                            UnrolledCopy<3,1>(pabyLocalData, pabyLocalSrcData, nIters);
-                                            pabyLocalData += nIters;
-                                        }
-                                        else if( nPixelSpace == 1 && nBandsPerBlockDTSize == 4 )
-                                        {
-                                            REACHED(18);
-                                            UnrolledCopy<4,1>(pabyLocalData, pabyLocalSrcData, nIters);
-                                            pabyLocalData += nIters;
-                                        }
-                                        else
-                                        {
-                                            REACHED(19);
-                                            while( nIters-- > 0 )
-                                            {
-                                                *pabyLocalData = *pabyLocalSrcData;
-                                                pabyLocalData += nPixelSpace;
-                                                pabyLocalSrcData += nBandsPerBlockDTSize;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        REACHED(20);
-                                        GDALCopyWords((GByte*)pabyLocalSrcData, eDataType, nBandsPerBlockDTSize,
-                                                      pabyLocalData, eBufType, nPixelSpace,
-                                                      nIters);
-                                        pabyLocalData += nIters * nPixelSpace;
-                                    }
+
+                                    REACHED(18);
+                                    GDALCopyWords((GByte*)pabyLocalSrcData, eDataType, nBandsPerBlockDTSize,
+                                                    pabyLocalData, eBufType, nPixelSpace,
+                                                    nIters);
+                                    pabyLocalData += nIters * nPixelSpace;
                                 }
                             }
+
+                            nXOffsetInBlock = 0;
+                            nBlockXOff ++;
+                            nBlockId ++; 
+                            x += nUsedBlockWidth;
                         }
                     }
                     else /* non contig reading, tiled, potential resampling and data type change */
                     {
                         const GByte* pabyLocalSrcDataStartLine = NULL;
-                        toff_t nLastOffset = 0;
-                        for(int x=0;x<nBufXSize;x++)
+                        GByte* pabyLocalData = pabyData + y * nLineSpace;
+                        double dfSrcX = nXOff + 0.5 * dfSrcXInc;
+                        int nCurBlockXOff = 0;
+                        int nNextBlockXOff = 0;
+                        toff_t nCurOffset = 0;
+                        for(int x=0;x<nBufXSize;x++, dfSrcX += dfSrcXInc)
                         {
-                            int nSrcPixel = nXOff + (int)((x + 0.5) * nXSize / nBufXSize);
-                            int nBlockXOff = nSrcPixel / nBlockXSize;
-                            int nXOffsetInBlock = nSrcPixel % nBlockXSize;
-                            int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
-                            if ( nPlanarConfig == PLANARCONFIG_SEPARATE )
-                                nBlockId += nBlocksPerBand * (nBand - 1);
-                            toff_t nCurOffset = panOffsets[nBlockId];
-                            if( nCurOffset == 0 )
+                            int nSrcPixel = (int)dfSrcX;
+                            if( nSrcPixel >= nNextBlockXOff )
                             {
-                                REACHED(21);
-                                GDALCopyWords(&dfNoData, GDT_Float64, 0,
-                                              pabyData + y * nLineSpace + x * nPixelSpace,
-                                              eBufType, nPixelSpace,
-                                              1);
-                            }
-                            else
-                            {
-                                if( nCurOffset != nLastOffset )
+                                const int nBlockXOff = nSrcPixel / nBlockXSize;
+                                nCurBlockXOff = nBlockXOff * nBlockXSize;
+                                nNextBlockXOff = nCurBlockXOff + nBlockXSize;
+                                int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+                                if ( nPlanarConfig == PLANARCONFIG_SEPARATE )
                                 {
-                                    nLastOffset = nCurOffset;
+                                    REACHED(19);
+                                    nBlockId += nBlocksPerBand * (nBand - 1);
+                                }
+                                else
+                                {
+                                    REACHED(20);
+                                }
+                                nCurOffset = panOffsets[nBlockId];
+                                if( nCurOffset != 0 )
+                                {
                                     pabyLocalSrcDataStartLine = oFetcher.FetchBytes(
                                             nCurOffset + nBaseByteOffsetInBlock,
                                             (int)nBlockXSize * nBandsPerBlock, nDTSize,
@@ -2429,15 +2964,35 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                     if( pabyLocalSrcDataStartLine == NULL )
                                         return CE_Failure;
                                 }
+                            }
+                            const int nXOffsetInBlock = nSrcPixel - nCurBlockXOff;
+
+                            if( nCurOffset == 0 )
+                            {
+                                REACHED(21);
+                                GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                                              pabyLocalData,
+                                              eBufType, 0,
+                                              1);
+                                pabyLocalData += nPixelSpace;
+                            }
+                            else
+                            {
                                 const GByte* pabyLocalSrcData = pabyLocalSrcDataStartLine;
                                 pabyLocalSrcData += nXOffsetInBlock * nBandsPerBlockDTSize;
 
                                 REACHED(22);
-                                GDALCopyWords((GByte*)pabyLocalSrcData,
-                                            eDataType, nDTSize,
-                                            pabyData + y * nLineSpace + x * nPixelSpace,
-                                            eBufType, nPixelSpace,
-                                            1);
+                                if( bByteOnly )
+                                    *pabyLocalData = *pabyLocalSrcData;
+                                else
+                                {
+                                    GDALCopyWords((GByte*)pabyLocalSrcData,
+                                                eDataType, 0,
+                                                pabyLocalData,
+                                                eBufType, 0,
+                                                1);
+                                }
+                                pabyLocalData += nPixelSpace;
                             }
                         }
                     }
@@ -2452,7 +3007,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                 GByte* pabyData = (GByte*)pData + iBand * nBandSpace;
                 for(int y=0;y<nBufYSize;y++)
                 {
-                    int nSrcLine = nYOff + (int)((y + 0.5) * nYSize / nBufYSize);
+                    int nSrcLine = nYOff + (int)((y + 0.5) * dfSrcYInc);
                     int nBlockYOff = nSrcLine / nBlockYSize;
                     int nYOffsetInBlock = nSrcLine % nBlockYSize;
                     int nBlockId = nBlockYOff;
@@ -2475,7 +3030,8 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                     }
                     else
                     {
-                        int nBaseByteOffsetInBlock = (nYOffsetInBlock * nBlockXSize + nXOff) * nBandsPerBlockDTSize;
+                        int nBaseByteOffsetInBlock =
+                            (nYOffsetInBlock * nBlockXSize + nXOff) * nBandsPerBlockDTSize;
                         if ( nPlanarConfig == PLANARCONFIG_CONTIG )
                             nBaseByteOffsetInBlock += (nBand-1) * nDTSize;
 
@@ -2500,22 +3056,21 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             if( pabyLocalSrcData == NULL )
                                 return CE_Failure;
 
-                            if( bByteNoXResampling )
+                            if( bNoXResamplingNoTypeChange )
                             {
                                 REACHED(27);
-                                for(int x=0;x<nBufXSize;x++)
-                                {
-                                    *pabyLocalData = *pabyLocalSrcData,
-                                    pabyLocalData += nPixelSpace;
-                                    pabyLocalSrcData += nBandsPerBlockDTSize;
-                                }
+                                GDALCopyWords((void*)pabyLocalSrcData,
+                                              eDataType, nBandsPerBlockDTSize,
+                                              pabyLocalData, eBufType, nPixelSpace,
+                                              nBufXSize);
                             }
                             else if( bByteOnly )
                             {
                                 REACHED(28);
-                                for(int x=0;x<nBufXSize;x++)
+                                double dfSrcX = 0.5 * dfSrcXInc;
+                                for(int x=0;x<nBufXSize;x++, dfSrcX += dfSrcXInc)
                                 {
-                                    int nSrcPixelMinusXOff = (int)((x + 0.5) * nXSize / nBufXSize);
+                                    int nSrcPixelMinusXOff = (int)dfSrcX;
                                     pabyLocalData[x * nPixelSpace] =
                                         pabyLocalSrcData[nSrcPixelMinusXOff * nBandsPerBlockDTSize];
                                 }
@@ -2523,14 +3078,15 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             else
                             {
                                 REACHED(29);
-                                for(int x=0;x<nBufXSize;x++)
+                                double dfSrcX = 0.5 * dfSrcXInc;
+                                for(int x=0;x<nBufXSize;x++, dfSrcX += dfSrcXInc)
                                 {
-                                    int nSrcPixelMinusXOff = (int)((x + 0.5) * nXSize / nBufXSize);
+                                    int nSrcPixelMinusXOff = (int)dfSrcX;
                                     GDALCopyWords((GByte*)pabyLocalSrcData +
                                                     nSrcPixelMinusXOff * nBandsPerBlockDTSize,
-                                                eDataType, nDTSize,
+                                                eDataType, 0,
                                                 pabyLocalData + x * nPixelSpace,
-                                                eBufType, nPixelSpace,
+                                                eBufType, 0,
                                                 1);
                                 }
                             }
@@ -2569,8 +3125,6 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
           (nPhotometric == PHOTOMETRIC_MINISBLACK ||
            nPhotometric == PHOTOMETRIC_RGB ||
            nPhotometric == PHOTOMETRIC_PALETTE) &&
-          (nBitsPerSample == 8 || nBitsPerSample == 16 ||
-           nBitsPerSample == 32 || nBitsPerSample == 64) &&
           nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
           SetDirectory() /* very important to make hTIFF uptodate! */) )
     {
@@ -2636,20 +3190,23 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
 
     if( TIFFIsTiled( hTIFF ) )
     {
-        return -1;
-#ifdef notdef
         if( m_pTempBufferForCommonDirectIO == NULL )
         {
             const GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
             const int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
-            m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(
-                nBlockXSize * nDTSize * ((nPlanarConfig == PLANARCONFIG_CONTIG) ? nBands : 1));
+            m_nTempBufferForCommonDirectIOSize =
+                (size_t)(nBlockXSize * nDTSize * ((nPlanarConfig == PLANARCONFIG_CONTIG) ? nBands : 1));
+            if( TIFFIsTiled(hTIFF) )
+                m_nTempBufferForCommonDirectIOSize *= nBlockYSize;
+
+            m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(m_nTempBufferForCommonDirectIOSize);
             if( m_pTempBufferForCommonDirectIO == NULL )
                 return CE_Failure;
         }
 
         VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
-        FetchBufferDirectIO oFetcher(fp, m_pTempBufferForCommonDirectIO);
+        FetchBufferDirectIO oFetcher(fp, m_pTempBufferForCommonDirectIO,
+                                     m_nTempBufferForCommonDirectIOSize);
 
         return CommonDirectIO( oFetcher,
                             nXOff, nYOff, nXSize, nYSize,
@@ -2658,7 +3215,6 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
                             nBandCount, panBandMap,
                             nPixelSpace, nLineSpace,
                             nBandSpace );
-#endif
     }
 
     /* Get strip offsets */
@@ -2697,6 +3253,8 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     }
 
     /* Prepare data extraction */
+    const double dfSrcYInc = nYSize / (double) nBufYSize;
+
     int iLine;
     for(iLine=0;eErr == CE_None && iLine<nReqYSize;iLine++)
     {
@@ -2706,7 +3264,7 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
             ppData[iLine] = ((GByte*)pTmpBuffer) + iLine * nReqXSize * nSrcPixelSize;
         int nSrcLine;
         if (nBufYSize < nYSize) /* Sub-sampling in y */
-            nSrcLine = nYOff + (int)((iLine + 0.5) * nYSize / nBufYSize);
+            nSrcLine = nYOff + (int)((iLine + 0.5) * dfSrcYInc);
         else
             nSrcLine = nYOff + iLine;
 
@@ -2746,12 +3304,13 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     }
 
     /* Over-sampling/sub-sampling and/or data type conversion */
+    const double dfSrcXInc = nXSize / (double) nBufXSize;
     if (eErr == CE_None && pTmpBuffer != NULL)
     {
         for(int iY=0;iY<nBufYSize;iY++)
         {
             int iSrcY = (nBufYSize <= nYSize) ? iY :
-                            (int)((iY + 0.5) * nYSize / nBufYSize);
+                            (int)((iY + 0.5) * dfSrcYInc);
             /* Optimization: no resampling, no data type change, number of bands requested == number of bands */
             /* and buffer is packed pixel-interleaved */
             if (nBufXSize == nXSize && nContigBands == nBandCount &&
@@ -2771,13 +3330,9 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
                 if( nBandSpace == 1 && nPixelSpace > nBandCount )
                 {
                     /* buffer is pixel-interleaved (with some stridding between pixels) */
-                    for(int iX=0;iX<nBufXSize;iX++)
-                    {
-                        for(int iBand = 0; iBand < nBandCount; iBand ++ )
-                        {
-                            pabyDstData[iX * nPixelSpace + iBand] = pabySrcData[iX * nSrcPixelSize + iBand];
-                        }
-                    }
+                    CopyContigByteMultiBand(pabySrcData, nSrcPixelSize,
+                                            pabyDstData, nPixelSpace,
+                                            nBufXSize, nBandCount);
                 }
                 else
                 {
@@ -2798,14 +3353,26 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
                 {
                     GByte* pabySrcData = ((GByte*)ppData[iSrcY]) + iBand * nDTSize;
                     GByte* pabyDstData = ((GByte*)pData) + iBand * nBandSpace + iY * nLineSpace;
-                    for(int iX=0;iX<nBufXSize;iX++)
+                    if( eDataType == GDT_Byte && eBufType == GDT_Byte )
                     {
-                        int iSrcX = (nBufXSize == nXSize) ? iX :
-                                        (int)((iX+0.5) * nXSize / nBufXSize);
-                        GDALCopyWords( pabySrcData + iSrcX * nSrcPixelSize,
-                                    eDataType, 0,
-                                    pabyDstData + iX * nPixelSpace,
-                                    eBufType, 0, 1);
+                        double dfSrcX = 0.5 * dfSrcXInc;
+                        for(int iX=0;iX<nBufXSize;iX++, dfSrcX += dfSrcXInc)
+                        {
+                            int iSrcX = (int)dfSrcX;
+                            pabyDstData[iX * nPixelSpace] = pabySrcData[iSrcX * nSrcPixelSize];
+                        }
+                    }
+                    else
+                    {
+                        double dfSrcX = 0.5 * dfSrcXInc;
+                        for(int iX=0;iX<nBufXSize;iX++, dfSrcX += dfSrcXInc)
+                        {
+                            int iSrcX = (int)dfSrcX;
+                            GDALCopyWords( pabySrcData + iSrcX * nSrcPixelSize,
+                                        eDataType, 0,
+                                        pabyDstData + iX * nPixelSpace,
+                                        eBufType, 0, 1);
+                        }
                     }
                 }
             }
@@ -3072,58 +3639,13 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_None;
     }
 #endif
-        
-/* -------------------------------------------------------------------- */
-/*      Handle simple case of eight bit data, and pixel interleaving.   */
-/* -------------------------------------------------------------------- */
-    if( poGDS->nBitsPerSample == 8 )
-    {
-        int	i, nBlockPixels;
-        GByte	*pabyImage;
-        GByte   *pabyImageDest = (GByte*)pImage;
-        int      nBands = poGDS->nBands;
 
-        pabyImage = poGDS->pabyBlockBuf + nBand - 1;
+    int nWordBytes = poGDS->nBitsPerSample / 8;
+    GByte* pabyImage = poGDS->pabyBlockBuf + (nBand - 1) * nWordBytes;
 
-        nBlockPixels = nBlockXSize * nBlockYSize;
-
-/* ==================================================================== */
-/*     Optimization for high number of words to transfer and some       */
-/*     typical band numbers : we unroll the loop.                       */
-/* ==================================================================== */
-        switch (nBands)
-        {
-            case 3:  UnrolledCopy<3,1>(pabyImageDest, pabyImage, nBlockPixels); break;
-            case 4:  UnrolledCopy<4,1>(pabyImageDest, pabyImage, nBlockPixels); break;
-            default:
-            {
-                for( i = 0; i < nBlockPixels; i++ )
-                {
-                    pabyImageDest[i] = *pabyImage;
-                    pabyImage += nBands;
-                }
-            }
-        }
-    }
-
-    else
-    {
-        int	i, nBlockPixels, nWordBytes;
-        GByte	*pabyImage;
-
-        nWordBytes = poGDS->nBitsPerSample / 8;
-        pabyImage = poGDS->pabyBlockBuf + (nBand - 1) * nWordBytes;
-
-        nBlockPixels = nBlockXSize * nBlockYSize;
-        for( i = 0; i < nBlockPixels; i++ )
-        {
-            for( int j = 0; j < nWordBytes; j++ )
-            {
-                ((GByte *) pImage)[i*nWordBytes + j] = pabyImage[j];
-            }
-            pabyImage += poGDS->nBands * nWordBytes;
-        }
-    }
+    GDALCopyWords(pabyImage, eDataType, poGDS->nBands * nWordBytes,
+                  pImage, eDataType, nWordBytes,
+                  nBlockXSize * nBlockYSize);
 
     if (eErr == CE_None)
         eErr = FillCacheForOtherBands(nBlockXOff, nBlockYOff);
@@ -3273,41 +3795,12 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             pabyThisImage = (GByte *) poBlock->GetDataRef();
         }
 
-        int i, nBlockPixels = nBlockXSize * nBlockYSize;
         GByte *pabyOut = poGDS->pabyBlockBuf + iBand*nWordBytes;
 
-        if (nWordBytes == 1)
-        {
+        GDALCopyWords((GByte*)pabyThisImage, eDataType, nWordBytes,
+                      pabyOut, eDataType, nWordBytes * nBands,
+                      nBlockXSize * nBlockYSize);
 
-/* ==================================================================== */
-/*     Optimization for high number of words to transfer and some       */
-/*     typical band numbers : we unroll the loop.                       */
-/* ==================================================================== */
-            switch (nBands)
-            {
-                case 3:  UnrolledCopy<1,3>(pabyOut, pabyThisImage, nBlockPixels); break;
-                case 4:  UnrolledCopy<1,4>(pabyOut, pabyThisImage, nBlockPixels); break;
-                default:
-                {
-                    for( i = 0; i < nBlockPixels; i++ )
-                    {
-                        *pabyOut = pabyThisImage[i];
-                        pabyOut += nBands;
-                    }
-                }
-            }
-        }
-        else
-        {
-            for( i = 0; i < nBlockPixels; i++ )
-            {
-                memcpy( pabyOut, pabyThisImage, nWordBytes );
-
-                pabyOut += nWordBytes * nBands;
-                pabyThisImage += nWordBytes;
-            }
-        }
-        
         if( poBlock != NULL )
         {
             poBlock->MarkClean();
@@ -5466,6 +5959,7 @@ GTiffDataset::GTiffDataset() :
     hCompressThreadPoolMutex = NULL;
     
     m_pTempBufferForCommonDirectIO = NULL;
+    m_nTempBufferForCommonDirectIOSize = 0;
 }
 
 /************************************************************************/
