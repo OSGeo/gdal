@@ -72,8 +72,8 @@ class HDF4Dataset : public GDALPamDataset
                                     char **ppszAttrClass, char **ppszAttrValue );
      
   protected:
-
-    int32	hGR, hSD;
+    int32	hGR;
+    int32	hSD;
     int32	nImages;
     HDF4SubdatasetType iSubdatasetType;
     const char	*pszSubdatasetType;
