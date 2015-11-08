@@ -351,6 +351,13 @@ def test_gdal_rasterize_6():
 
 def test_gdal_rasterize_7():
 
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except:
+        return 'skip'
+
     if test_cli_utilities.get_gdal_rasterize_path() is None:
         return 'skip'
 
@@ -445,7 +452,8 @@ def test_gdal_rasterize_cleanup():
     os.unlink('tmp/test_gdal_rasterize_6.csv')
     os.unlink('tmp/test_gdal_rasterize_6.prj')
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/test_gdal_rasterize_7.tif' )
+    if os.path.exists('tmp/test_gdal_rasterize_7.tif'):
+        gdal.GetDriverByName('GTiff').Delete( 'tmp/test_gdal_rasterize_7.tif' )
     if os.path.exists('tmp/test_gdal_rasterize_7.csv'):
         os.unlink('tmp/test_gdal_rasterize_7.csv')
 
