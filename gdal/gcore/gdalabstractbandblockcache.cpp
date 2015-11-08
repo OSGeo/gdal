@@ -29,6 +29,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_multiproc.h"
+#include <new>
 
 CPL_CVSID("$Id$");
 
@@ -44,7 +45,8 @@ GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(GDALRasterBand* poBand)
     nKeepAliveCounter = 0;
     hCond = CPLCreateCond();
     hCondMutex = CPLCreateMutex();
-    CPLReleaseMutex(hCondMutex);
+    if( hCondMutex )
+        CPLReleaseMutex(hCondMutex);
 }
 
 /************************************************************************/
@@ -55,9 +57,12 @@ GDALAbstractBandBlockCache::~GDALAbstractBandBlockCache()
 {
     CPLAssert(nKeepAliveCounter == 0);
     FreeDanglingBlocks();
-    CPLDestroyLock(hSpinLock);
-    CPLDestroyMutex(hCondMutex);
-    CPLDestroyCond(hCond);
+    if( hSpinLock )
+        CPLDestroyLock(hSpinLock);
+    if( hCondMutex )
+        CPLDestroyMutex(hCondMutex);
+    if( hCond )
+        CPLDestroyCond(hCond);
 }
 
 /************************************************************************/
@@ -157,6 +162,6 @@ GDALRasterBlock* GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
     if( poBlock )
         poBlock->RecycleFor(nXBlockOff, nYBlockOff);
     else
-        poBlock = new GDALRasterBlock( poBand, nXBlockOff, nYBlockOff );
+        poBlock = new (std::nothrow) GDALRasterBlock( poBand, nXBlockOff, nYBlockOff );
     return poBlock;
 }
