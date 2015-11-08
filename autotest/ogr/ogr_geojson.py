@@ -645,14 +645,20 @@ def ogr_geojson_15():
     expected_out = """{"geometry": {"type": "Point", "coordinates": [1.0, 2.0]}, "type": "Feature", "properties": {"foo": "bar", "boolfield": true}, "id": 0}"""
 
     if out != expected_out:
-        print(out)
-        return 'fail'
+        import json
+        out_json = json.loads(out)
+        expected_out_json = json.loads(expected_out)
+        if out_json != expected_out_json:
+            gdaltest.post_reason('fail')
+            print(out)
+            return 'fail'
 
 
     out = feature.ExportToJson(as_object = True)
     expected_out = {'geometry': {'type': 'Point', 'coordinates': [1.0, 2.0]}, 'type': 'Feature', 'properties': {'foo': 'bar', "boolfield": True}, 'id': 0}
 
     if out != expected_out:
+        gdaltest.post_reason('fail')
         print(out)
         return 'fail'
 

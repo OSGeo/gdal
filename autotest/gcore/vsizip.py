@@ -333,7 +333,9 @@ def vsizip_7():
     content = gdal.ReadDir("/vsizip/data/cp866_plus_utf8.zip")
     ok = 0
     try:
-        exec("if content == [u'\u0430\u0431\u0432\u0433\u0434\u0435', u'\u0436\u0437\u0438\u0439\u043a\u043b']: ok = 1")
+        local_vars = { 'content': content, 'ok': ok }
+        exec("if content == [u'\u0430\u0431\u0432\u0433\u0434\u0435', u'\u0436\u0437\u0438\u0439\u043a\u043b']: ok = 1", None, local_vars)
+        ok = local_vars['ok']
     except:
         if content == ['\u0430\u0431\u0432\u0433\u0434\u0435', '\u0436\u0437\u0438\u0439\u043a\u043b']:
             ok = 1
@@ -396,7 +398,9 @@ def vsizip_10():
     gdal.SetConfigOption('CPL_ZIP_ENCODING', None)
     ok = 0
     try:
-        exec("if content == [u'\u0430\u0431\u0432\u0433\u0434\u0435', u'\u0436\u0437\u0438\u0439\u043a\u043b']: ok = 1")
+        local_vars = { 'content': content, 'ok': ok }
+        exec("if content == [u'\u0430\u0431\u0432\u0433\u0434\u0435', u'\u0436\u0437\u0438\u0439\u043a\u043b']: ok = 1", None, local_vars)
+        ok = local_vars['ok']
     except:
         if content == ['\u0430\u0431\u0432\u0433\u0434\u0435', '\u0436\u0437\u0438\u0439\u043a\u043b']:
             ok = 1
@@ -419,7 +423,9 @@ def vsizip_11():
     content = gdal.ReadDir("/vsizip/data/utf8.zip")
     ok = 0
     try:
-        exec("if content == [u'\u0430\u0431\u0432\u0433\u0434\u0435', u'\u0436\u0437\u0438\u0439\u043a\u043b']: ok = 1")
+        local_vars = { 'content': content, 'ok': ok }
+        exec("if content == [u'\u0430\u0431\u0432\u0433\u0434\u0435', u'\u0436\u0437\u0438\u0439\u043a\u043b']: ok = 1", None, local_vars)
+        ok = local_vars['ok']
     except:
         if content == ['\u0430\u0431\u0432\u0433\u0434\u0435', '\u0436\u0437\u0438\u0439\u043a\u043b']:
             ok = 1

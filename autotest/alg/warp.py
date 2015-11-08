@@ -781,7 +781,7 @@ def warp_22():
     for j in range(h):
         line = ''
         for i in range(w):
-            line = line + '%c' % ((i*i+h*j/(i+1))%256)
+            line = line + '%c' % int((i*i+h*j/(i+1))%256)
         ds.GetRasterBand(1).WriteRaster(0,j,w,1,line)
 
     expected_cs = ds.GetRasterBand(1).Checksum()
