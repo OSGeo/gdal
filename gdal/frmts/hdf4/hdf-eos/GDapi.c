@@ -3540,9 +3540,10 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
     char           *utlstr;/* Utility string */
     char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
+#ifdef broken_logic
     char           *oldmetaptr;	/* Pointer within SM section */
     char           *metaptr;	/* Pointer within SM section */
-
+#endif
 
     /* Allocate space for utility string */
     /* --------------------------------- */
@@ -3596,7 +3597,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 		    return(-1);
 		}  
 
-
+#if broken_logic
 		/* Initialize metaptr to beg. of section */
 		/* ------------------------------------- */
 		metaptr = metaptrs[0];
@@ -3619,9 +3620,9 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 		if (metaptr == NULL)
 		{
 		    sprintf(utlstr, "%s%s%s", "OBJECT=\"", name, "\"\n");
-		    /* metaptr = */ strstr(oldmetaptr, utlstr);
+		    metaptr = strstr(oldmetaptr, utlstr);
 		}
-
+#endif
 
 		/* Get field list and strip off leading and trailing quotes */
 		/* -------------------------------------------------------- */
