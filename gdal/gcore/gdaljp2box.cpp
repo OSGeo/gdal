@@ -222,21 +222,24 @@ int GDALJP2Box::IsSuperBox()
 GByte *GDALJP2Box::ReadBoxData()
 
 {
-    if( GetDataLength() > 100 * 1024 * 1024 )
-        return FALSE;
+    GIntBig nDataLength = GetDataLength();
+    if( nDataLength > 100 * 1024 * 1024 )
+        return NULL;
 
     VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET );
     
-    char *pszData = (char *) CPLMalloc((int)GetDataLength() + 1);
+    char *pszData = (char *) VSIMalloc((int)nDataLength + 1);
+    if( pszData == NULL )
+        return NULL;
 
-    if( (GIntBig) VSIFReadL( pszData, 1, (int)GetDataLength(), fpVSIL ) 
-        != GetDataLength() )
+    if( (GIntBig) VSIFReadL( pszData, 1, (int)nDataLength, fpVSIL ) 
+        != nDataLength )
     {
         CPLFree( pszData );
         return NULL;
     }
 
-    pszData[GetDataLength()] = '\0';
+    pszData[nDataLength] = '\0';
 
     return (GByte *) pszData;
 }
