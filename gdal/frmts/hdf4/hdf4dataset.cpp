@@ -45,7 +45,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_HDF4(void);
+void GDALRegister_HDF4(void);
 CPL_C_END
 
 extern const char *pszGDALSignature;
@@ -346,13 +346,13 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
 
             // Sometimes in bracketed tokens we may found a sort of
             // paragraph formatting. We will remove unneeded spaces and new
-            // lines. 
+            // lines.
             if ( bInBracket )
                 if ( strchr("\r\n", *pszString) != NULL
                      || ( *pszString == ' '
                           && strchr(" \r\n", *(pszString - 1)) != NULL ) )
                 continue;
-            
+
             if ( *pszString == '"' )
             {
                 if ( bInString )
@@ -367,15 +367,15 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
                 }
             }
             else if ( *pszString == '(' )
-	    {
+            {
                 bInBracket = TRUE;
-		continue;
-	    }
+                continue;
+            }
 	    else if ( *pszString == ')' )
-	    {
+            {
 		bInBracket = FALSE;
-		continue;
-	    }
+                continue;
+            }
 
 	    if( nTokenLen >= nTokenMax - 2 )
             {
@@ -421,35 +421,34 @@ char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList,
                                       char **ppszAttrClass,
                                       char **ppszAttrValue )
 {
-    int	    iCount, i, j;
     *ppszAttrName = NULL;
     *ppszAttrClass = NULL;
     *ppszAttrValue = NULL;
 
-    iCount = CSLCount( papszAttrList );
-    for ( i = 0; i < iCount - 2; i++ )
+    const int iCount = CSLCount( papszAttrList );
+    for ( int i = 0; i < iCount - 2; i++ )
     {
 	if ( EQUAL( papszAttrList[i], "OBJECT" ) )
 	{
 	    i += 2;
-	    for ( j = 1; i + j < iCount - 2; j++ )
-	    {
+            for ( int j = 1; i + j < iCount - 2; j++ )
+            {
 	        if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
 		     EQUAL( papszAttrList[i + j], "OBJECT" ) )
 	            return &papszAttrList[i + j];
 	        else if ( EQUAL( papszAttrList[i + j], "CLASS" ) )
-	        {
+                {
 		    *ppszAttrClass = papszAttrList[i + j + 2];
                     continue;
-	        }
+                }
 	        else if ( EQUAL( papszAttrList[i + j], "VALUE" ) )
-	        {
+                {
 		    *ppszAttrName = papszAttrList[i];
 	            *ppszAttrValue = papszAttrList[i + j + 2];
                     continue;
-	        }
-	    }
-	}
+                }
+            }
+        }
     }
 
     return NULL;
@@ -462,30 +461,29 @@ char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList,
 char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     int32 iAttribute, int32 nValues, char **papszMetadata )
 {
-    char	*pszData;
-    
-    pszData = (char *)CPLMalloc( (nValues + 1) * sizeof(char) );
+    char *pszData = reinterpret_cast<char *>(
+        CPLMalloc( (nValues + 1) * sizeof(char) ) );
     pszData[nValues] = '\0';
     SDreadattr( iHandle, iAttribute, pszData );
     // HDF4-EOS attributes has followed structure:
-    // 
+    //
     // GROUP = <name>
     //   GROUPTYPE = <name>
     //
     //   GROUP = <name>
-    //   
+    //
     //     OBJECT = <name>
     //       CLASS = <string>
     //       NUM_VAL = <number>
     //       VALUE = <string> or <number>
     //     END_OBJECT = <name>
-    //     
+    //
     //     .......
     //     .......
     //     .......
-    //     
+    //
     //   END_GROUP = <name>
-    //   
+    //
     // .......
     // .......
     // .......
@@ -523,7 +521,7 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     char *pszAttrName, *pszAttrClass, *pszAttrValue;
     char *pszAddAttrName = NULL;
     char **papszAttrList, **papszAttrs;
-    
+
     papszAttrList = HDF4EOSTokenizeAttrs( pszData );
     papszAttrs = papszAttrList;
     while ( papszAttrs )
@@ -531,29 +529,29 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
 	papszAttrs = HDF4EOSGetObject( papszAttrs, &pszAttrName,
                                        &pszAttrClass, &pszAttrValue );
 	if ( pszAttrName && pszAttrValue )
-	{
+        {
 	    // Now we should recognize special type of HDF EOS metastructures:
 	    // ADDITIONALATTRIBUTENAME = <name>
 	    // PARAMETERVALUE = <value>
 	    if ( EQUAL( pszAttrName, "ADDITIONALATTRIBUTENAME" ) )
 		pszAddAttrName = pszAttrValue;
 	    else if ( pszAddAttrName && EQUAL( pszAttrName, "PARAMETERVALUE" ) )
-	    {
+            {
 		papszMetadata =
 		    CSLAddNameValue( papszMetadata, pszAddAttrName, pszAttrValue );
 		pszAddAttrName = NULL;
-	    }
+            }
 	    else
-	    {
+            {
                 // Add class suffix to the key name if applicable
 		papszMetadata = CSLAddNameValue( papszMetadata,
                     pszAttrClass ?
                     CPLSPrintf("%s.%s", pszAttrName, pszAttrClass) : pszAttrName,
                     pszAttrValue );
-	    }
-	}
+            }
+        }
     }
-    
+
     CSLDestroy( papszAttrList );
     CPLFree( pszData );
 
@@ -570,7 +568,7 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
 {
     void	*pData = NULL;
     char	*pszTemp = NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*     Allocate a buffer to hold the attribute data.                    */
 /* -------------------------------------------------------------------- */
@@ -596,7 +594,7 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
         if ( pszTemp )
 	    CPLFree( pszTemp );
     }
-    
+
     if ( pData )
 	CPLFree( pData );
 
@@ -685,18 +683,18 @@ int HDF4Dataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int32	i;
-
     if( !Identify( poOpenInfo ) )
         return NULL;
-    
+
+    int32 i;
+
     CPLMutexHolderD(&hHDF4Mutex);
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     int32	hHDF4;
-    
+
     // Attempt to increase maximum number of opened HDF files
 #ifdef HDF4_HAS_MAXOPENFILES
     intn        nCurrMax, nSysLimit;
@@ -709,7 +707,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 #endif /* HDF4_HAS_MAXOPENFILES */
 
     hHDF4 = Hopen(poOpenInfo->pszFilename, DFACC_READ, 0);
-    
+
     if( hHDF4 <= 0 )
         return( NULL );
 
@@ -729,7 +727,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFCloseL(poOpenInfo->fpL);
         poOpenInfo->fpL = NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*          Open HDF SDS Interface.                                     */
 /* -------------------------------------------------------------------- */
@@ -745,7 +743,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename );
         return NULL;
     }
-   
+
 /* -------------------------------------------------------------------- */
 /*		Now read Global Attributes.				*/
 /* -------------------------------------------------------------------- */
@@ -766,7 +764,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*		Determine type of file we read.				*/
 /* -------------------------------------------------------------------- */
     const char	*pszValue;
-    
+
     if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
                                        "Signature"))
 	 && EQUAL( pszValue, pszGDALSignature ) )
@@ -820,7 +818,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     int32	aiDimSizes[H4_MAX_VAR_DIMS];
     int32	iRank, iNumType, nAttrs;
     bool        bIsHDF = true;
-    
+
     // Sometimes "HDFEOSVersion" attribute is not defined and we will
     // determine HDF-EOS datasets using other records
     // (see ReadGlobalAttributes() method).
@@ -909,7 +907,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
                 papszFields = CSLTokenizeString2( pszFieldList, ",",
                                                   CSLT_HONOURSTRINGS );
-                
+
                 for ( j = 0; j < nFields; j++ )
                 {
                     SWfieldinfo( hSW, papszFields[j], &iRank, aiDimSizes,
@@ -1018,7 +1016,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
                 papszFields = CSLTokenizeString2( pszFieldList, ",",
                                                   CSLT_HONOURSTRINGS );
-                
+
                 for ( j = 0; j < nFields; j++ )
                 {
                     GDfieldinfo( hGD, papszFields[j], &iRank, aiDimSizes,
@@ -1076,7 +1074,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
         for ( i = 0; i < nDatasets; i++ )
         {
-            int32	iSDS;
+            int32 iSDS;
 
             iSDS = SDselect( poDS->hSD, i );
             if ( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType, &nAttrs) != 0 )
@@ -1219,7 +1217,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                       " datasets.\n" );
             return NULL;
         }
-    
+
     }
 
     return( poDS );
@@ -1237,36 +1235,33 @@ static void HDF4UnloadDriver(CPL_UNUSED GDALDriver* poDriver)
 }
 
 /************************************************************************/
-/*                        GDALRegister_HDF4()				*/
+/*                        GDALRegister_HDF4()                           */
 /************************************************************************/
 
 void GDALRegister_HDF4()
 
 {
-    GDALDriver	*poDriver;
-    
     if (! GDAL_CHECK_VERSION("HDF4 driver"))
         return;
 
-    if( GDALGetDriverByName( "HDF4" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "HDF4" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Hierarchical Data Format Release 4" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_hdf4.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdf" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    if( GDALGetDriverByName( "HDF4" ) != NULL )
+        return;
 
-        poDriver->pfnOpen = HDF4Dataset::Open;
-        poDriver->pfnIdentify = HDF4Dataset::Identify;
-        poDriver->pfnUnloadDriver = HDF4UnloadDriver;
+    GDALDriver *poDriver = new GDALDriver();
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->SetDescription( "HDF4" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Hierarchical Data Format Release 4" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_hdf4.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdf" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+
+    poDriver->pfnOpen = HDF4Dataset::Open;
+    poDriver->pfnIdentify = HDF4Dataset::Identify;
+    poDriver->pfnUnloadDriver = HDF4UnloadDriver;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 
 #ifdef HDF4_PLUGIN
     GDALRegister_HDF4Image();
