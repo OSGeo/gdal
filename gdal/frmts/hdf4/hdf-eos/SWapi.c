@@ -2670,7 +2670,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 		    /* ---------------------------------------------- */
 		    if (compcode != HDFE_COMP_NONE)
 		    {
-			status = SDsetcompress(sdid, (comp_coder_t) compcode, &c_info);
+                        /* status = */ SDsetcompress(sdid, (comp_coder_t) compcode, &c_info);
 		    }
 
 
@@ -5019,8 +5019,8 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 			}
 
 			/* Read records to recover previously written data */
-			status = VSsetfields(vdataID, fieldlist);
-			status = VSseek(vdataID, offset[0]);
+			/* status = */ VSsetfields(vdataID, fieldlist);
+			/* status = */ VSseek(vdataID, offset[0]);
 			nrec = VSread(vdataID, buf, count[0] * incr[0],
 				      FULL_INTERLACE);
 		    }
@@ -9727,7 +9727,7 @@ SWsetfillvalue(int32 swathID, char *fieldname, VOIDP fillval)
 	    /* If unmerged field then call HDF set field routine */
 	    if (solo == 1)
 	    {
-		status = SDsetfillvalue(sdid, fillval);
+                /* status = */ SDsetfillvalue(sdid, fillval);
 	    }
 
 	    /*
