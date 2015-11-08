@@ -574,8 +574,8 @@ def wms_15():
     if ds is None:
         return' fail'
 
-    if ds.RasterXSize != 134217728 \
-       or ds.RasterYSize != 134217728 \
+    if ds.RasterXSize != 1073741824 \
+       or ds.RasterYSize != 1073741824 \
        or ds.RasterCount != 3:
         gdaltest.post_reason( 'wrong size or bands' )
         return 'fail'
@@ -588,15 +588,15 @@ def wms_15():
     gt = ds.GetGeoTransform()
     if abs(gt[0]- -20037508.342787001) > 0.00001 \
        or abs(gt[3]- 20037508.342787001) > 0.00001 \
-       or abs(gt[1] - 0.298582141697407) > 0.00001 \
+       or abs(gt[1] - 0.037322767717361482) > 0.00001 \
        or abs(gt[2] - 0) > 0.00001 \
-       or abs(gt[5] - -0.298582141697407) > 0.00001 \
+       or abs(gt[5] - -0.037322767717361482) > 0.00001 \
        or abs(gt[4] - 0) > 0.00001:
         gdaltest.post_reason( 'wrong geotransform' )
         print(gt)
         return 'fail'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 19:
+    if ds.GetRasterBand(1).GetOverviewCount() != 22:
         gdaltest.post_reason( 'bad overview count' )
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
@@ -666,7 +666,15 @@ def wms_16():
         print(val)
         return 'skip'
 
+    if val is not None and (val.find('Gateway Time-out') >= 0 or \
+       val.find('HTTP error code : 5') >= 0):
+        return 'skip'
+
     if val is None or val.find('<og:cat>86</og:cat>') == -1:
+        if val.find('java.lang.NullPointerException') >= 0 or val.find('504 Gateway Time-out') >= 0:
+            print(val)
+            return 'skip'
+
         gdaltest.post_reason('expected a value')
         print(val)
         return 'fail'
@@ -675,18 +683,25 @@ def wms_16():
     val_again = ds.GetRasterBand(1).GetMetadataItem(pixel, "LocationInfo")
     if val_again != val:
         gdaltest.post_reason('expected a value')
+        print(val_again)
         return 'fail'
 
     # Ask another band. Should be cached
     val2 = ds.GetRasterBand(2).GetMetadataItem(pixel, "LocationInfo")
     if val2 != val:
         gdaltest.post_reason('expected a value')
+        print(val2)
         return 'fail'
 
     # Ask an overview band
     val2 = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem(pixel, "LocationInfo")
     if val2 != val:
+        if val2.find('java.lang.NullPointerException') >= 0 or val2.find('504 Gateway Time-out') >= 0:
+            print(val2)
+            return 'skip'
+
         gdaltest.post_reason('expected a value')
+        print(val2)
         return 'fail'
 
     ds = None
