@@ -354,7 +354,6 @@ def test_gdal_rasterize_7():
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
-        import numpy
     except:
         return 'skip'
 
