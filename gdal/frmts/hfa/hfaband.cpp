@@ -813,7 +813,8 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 /* -------------------------------------------------------------------- */
 /*      Now apply to the output buffer in a type specific way.          */
 /* -------------------------------------------------------------------- */
-        if( nPixelsOutput + nRepeatCount > nMaxPixels )
+        if( nRepeatCount > INT_MAX - nPixelsOutput ||
+            nPixelsOutput + nRepeatCount > nMaxPixels )
         {
             CPLDebug("HFA", "Repeat count too big : %d", nRepeatCount);
             nRepeatCount = nMaxPixels - nPixelsOutput;
