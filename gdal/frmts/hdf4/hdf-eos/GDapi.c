@@ -3219,7 +3219,7 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 		/* --------------------------------------------------------- */
 		if (compcode != HDFE_COMP_NONE && tilecode == HDFE_NOTILE)
 		{
-		    status = SDsetcompress(sdid, (comp_coder_t) compcode, &c_info);
+                    /* status = */ SDsetcompress(sdid, (comp_coder_t) compcode, &c_info);
 		}
 
 
@@ -3278,7 +3278,7 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 
 		    /* Call SDsetchunk routine */
 		    /* ----------------------- */
-		    status = SDsetchunk(sdid, chunkDef, chunkFlag);
+		    /* status = */ SDsetchunk(sdid, chunkDef, chunkFlag);
 		}
 
 
@@ -3619,7 +3619,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 		if (metaptr == NULL)
 		{
 		    sprintf(utlstr, "%s%s%s", "OBJECT=\"", name, "\"\n");
-		    metaptr = strstr(oldmetaptr, utlstr);
+		    /* metaptr = */ strstr(oldmetaptr, utlstr);
 		}
 
 
@@ -4992,7 +4992,7 @@ GDsetfillvalue(int32 gridID, char *fieldname, VOIDP fillval)
 	    /* If unmerged field then call HDF set field routine */
 	    if (solo == 1)
 	    {
-		status = SDsetfillvalue(sdid, fillval);
+                /* status = */ SDsetfillvalue(sdid, fillval);
 	    }
 
 	    /*
