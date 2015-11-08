@@ -3597,7 +3597,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 		    return(-1);
 		}  
 
-#if broken_logic
+#ifdef broken_logic
 		/* Initialize metaptr to beg. of section */
 		/* ------------------------------------- */
 		metaptr = metaptrs[0];
