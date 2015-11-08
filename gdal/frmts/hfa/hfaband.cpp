@@ -727,9 +727,10 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         return CE_Failure;
     }
 
-    if (nNumBits > INT_MAX / nNumRuns ||
-        nNumBits * nNumRuns > INT_MAX - 7 ||
-        (nNumBits * nNumRuns + 7)/8 > INT_MAX - nDataOffset)
+    if (nNumRuns != 0 &&
+        (nNumBits > INT_MAX / nNumRuns ||
+         nNumBits * nNumRuns > INT_MAX - 7 ||
+         (nNumBits * nNumRuns + 7)/8 > INT_MAX - nDataOffset) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Integer overflow : nDataOffset + (nNumBits * nNumRuns + 7)/8");
