@@ -30,6 +30,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_multiproc.h"
+#include <new>
 
 #define SUBBLOCK_SIZE 64
 #define TO_SUBBLOCK(x) ((x) >> 6)
@@ -71,7 +72,7 @@ class GDALArrayBandBlockCache: public GDALAbstractBandBlockCache
 
 GDALAbstractBandBlockCache* GDALArrayBandBlockCacheCreate(GDALRasterBand* poBand)
 {
-    return new GDALArrayBandBlockCache(poBand);
+    return new (std::nothrow) GDALArrayBandBlockCache(poBand);
 }
 
 /************************************************************************/
@@ -245,7 +246,7 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
 /* -------------------------------------------------------------------- */
 /*      Flush all blocks in memory ... this case is without subblocking.*/
 /* -------------------------------------------------------------------- */
-    if( !bSubBlockingActive )
+    if( !bSubBlockingActive && u.papoBlocks != NULL )
     {
         for( int iY = 0; iY < poBand->nBlocksPerColumn; iY++ )
         {
@@ -267,7 +268,7 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
 /* -------------------------------------------------------------------- */
 /*      With subblocking.  We can short circuit missing subblocks.      */
 /* -------------------------------------------------------------------- */
-    else
+    else if( u.papapoBlocks != NULL )
     {
         int iSBX, iSBY;
 

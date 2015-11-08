@@ -798,6 +798,8 @@ int GDALRasterBand::InitBlockInfo()
             CPLDebug("GDAL", "Use hashset band block cache");
         poBandBlockCache = GDALHashSetBandBlockCacheCreate(this);
     }
+    if( poBandBlockCache == NULL )
+        return FALSE;
     return poBandBlockCache->Init();
 }
 
@@ -1099,6 +1101,8 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
         }
 
         poBlock = poBandBlockCache->CreateBlock( nXBlockOff, nYBlockOff );
+        if( poBlock == NULL )
+            return NULL;
 
         poBlock->AddLock();
 
