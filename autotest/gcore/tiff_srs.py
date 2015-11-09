@@ -363,6 +363,33 @@ def tiff_custom_datum_known_ellipsoid():
 
     return 'success'
 
+###############################################################################
+# Test reading a GeoTIFF file with only PCS set, but with a ProjLinearUnitsGeoKey
+# override to another unit (us-feet) ... (#6210)
+
+def tiff_srs_epsg_2853_with_us_feet():
+
+    old_val = gdal.GetConfigOption('GTIFF_IMPORT_FROM_EPSG')
+    gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', 'YES')
+    ds = gdal.Open('data/epsg_2853_with_us_feet.tif')
+    gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', old_val)
+    wkt = ds.GetProjectionRef()
+    if wkt.find('PARAMETER["false_easting",11482916.66') < 0 or wkt.find('UNIT["us_survey_feet",0.3048006') < 0 or wkt.find('2853') >= 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', 'NO')
+    ds = gdal.Open('data/epsg_2853_with_us_feet.tif')
+    gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', old_val)
+    wkt = ds.GetProjectionRef()
+    if wkt.find('PARAMETER["false_easting",11482916.66') < 0 or wkt.find('UNIT["us_survey_feet",0.3048006') < 0 or wkt.find('2853') >= 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = []
 
 tiff_srs_list = [ 2758, #tmerc
@@ -433,6 +460,7 @@ gdaltest_list.append( tiff_srs_weird_mercator_2sp )
 gdaltest_list.append( tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere )
 gdaltest_list.append( tiff_srs_angular_units )
 gdaltest_list.append( tiff_custom_datum_known_ellipsoid )
+gdaltest_list.append( tiff_srs_epsg_2853_with_us_feet )
 
 if __name__ == '__main__':
 

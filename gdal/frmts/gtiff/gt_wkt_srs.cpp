@@ -703,7 +703,27 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                          psDefn->TOWGS84[5],
                          psDefn->TOWGS84[6] );
 #endif
+
+/* -------------------------------------------------------------------- */
+/*      Set projection units if not yet done                            */
+/* -------------------------------------------------------------------- */
+    if( psDefn->Model == ModelTypeProjected && !linearUnitIsSet )
+    {
+        char        *pszUnitsName = NULL;
         
+        GTIFGetUOMLengthInfo( psDefn->UOMLength, &pszUnitsName, NULL );
+
+        if( pszUnitsName != NULL && psDefn->UOMLength != KvUserDefined )
+        {
+            oSRS.SetLinearUnits( pszUnitsName, psDefn->UOMLengthInMeters );
+            oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", psDefn->UOMLength );
+        }
+        else
+            oSRS.SetLinearUnits( "unknown", psDefn->UOMLengthInMeters );
+
+        GTIFFreeMemory( pszUnitsName );
+    }
+
 /* ==================================================================== */
 /*      Try to import PROJCS from ProjectedCSTypeGeoKey if we           */
 /*      have essentially only it. We could relax a bit the constraints  */
@@ -727,12 +747,39 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         const char* pszTmp = CPLGetLastErrorMsg();
         char* pszLastErrorMsg = CPLStrdup(pszTmp ? pszTmp : "");
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        OGRErr eImportErr = oSRS.importFromEPSG(psDefn->PCS);
+        OGRSpatialReference oSRSTmp;
+        OGRErr eImportErr = oSRSTmp.importFromEPSG(psDefn->PCS);
         CPLPopErrorHandler();
         // Restore error state
         CPLErrorSetState( eErr, errNo, pszLastErrorMsg);
         CPLFree(pszLastErrorMsg);
         bGotFromEPSG = (eImportErr == OGRERR_NONE);
+
+        if( bGotFromEPSG )
+        {
+            // See #6210. In case there's an overriden linear units, take it
+            // into account
+            char* pszUnitsName = NULL;
+            double dfUOMLengthInMeters = oSRS.GetLinearUnits( &pszUnitsName );
+            if( dfUOMLengthInMeters != oSRSTmp.GetLinearUnits(NULL) )
+            {
+                CPLDebug("GTiff", "Modify EPSG:%d to have %s linear units...",
+                            psDefn->PCS, pszUnitsName ? pszUnitsName : "unknown");
+
+                if( pszUnitsName )
+                    oSRSTmp.SetLinearUnitsAndUpdateParameters( pszUnitsName, dfUOMLengthInMeters );
+
+                const char* pszAuthorityCode = oSRS.GetAuthorityCode( "PROJCS|UNIT" );
+                const char* pszAuthorityName = oSRS.GetAuthorityName( "PROJCS|UNIT" );
+                if( pszAuthorityCode && pszAuthorityName )
+                    oSRSTmp.SetAuthority( "PROJCS|UNIT",pszAuthorityName, atoi(pszAuthorityCode) );
+
+                if( oSRSTmp.GetRoot()->FindChild( "AUTHORITY" ) != -1 )
+                    oSRSTmp.GetRoot()->DestroyChild( oSRSTmp.GetRoot()->FindChild( "AUTHORITY" ) );
+            }
+
+            oSRS = oSRSTmp;
+        }
     }
         
 /* ==================================================================== */
@@ -761,14 +808,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             adfParm[2] *= psDefn->UOMAngleInDegrees;
             adfParm[3] *= psDefn->UOMAngleInDegrees; 
         }
-        short unitCode = 0;
-        GDALGTIFKeyGetSHORT(hGTIF, ProjLinearUnitsGeoKey, &unitCode, 0, 1  );
-        if(unitCode != KvUserDefined)
-        {
-            adfParm[5] /= psDefn->UOMLengthInMeters;
-            adfParm[6] /= psDefn->UOMLengthInMeters;
-        }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Translation the fundamental projection.                         */
 /* -------------------------------------------------------------------- */
@@ -935,26 +975,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             if( oSRS.IsProjected() )
                 oSRS.GetRoot()->SetValue( "LOCAL_CS" );
             break;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Set projection units.                                           */
-/* -------------------------------------------------------------------- */
-        if(!linearUnitIsSet)
-        {
-            char	*pszUnitsName = NULL;
-          
-            GTIFGetUOMLengthInfo( psDefn->UOMLength, &pszUnitsName, NULL );
-
-            if( pszUnitsName != NULL && psDefn->UOMLength != KvUserDefined )
-            {
-                oSRS.SetLinearUnits( pszUnitsName, psDefn->UOMLengthInMeters );
-                oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", psDefn->UOMLength );
-            }
-            else
-                oSRS.SetLinearUnits( "unknown", psDefn->UOMLengthInMeters );
-
-            GTIFFreeMemory( pszUnitsName );
         }
     }
     
