@@ -344,6 +344,101 @@ typedef int              GPtrDiff_t;
 /*      Provide macros for case insensitive string comparisons.         */
 /* -------------------------------------------------------------------- */
 #ifndef EQUAL
+
+#if defined(AFL_FRIENDLY) && defined(__GNUC__)
+
+static inline int CPL_afl_friendly_memcmp(const void* ptr1, const void* ptr2, size_t len)
+        __attribute__((always_inline));
+
+static inline int CPL_afl_friendly_memcmp(const void* ptr1, const void* ptr2, size_t len)
+{
+    const unsigned char* bptr1 = (const unsigned char*)ptr1;
+    const unsigned char* bptr2 = (const unsigned char*)ptr2;
+    while( len-- )
+    {
+        unsigned char b1 = *(bptr1++);
+        unsigned char b2 = *(bptr2++);
+        if( b1 != b2 ) return b1 - b2;
+    }
+    return 0;
+}
+
+static inline int CPL_afl_friendly_strcmp(const char* ptr1, const char* ptr2)
+        __attribute__((always_inline));
+
+static inline int CPL_afl_friendly_strcmp(const char* ptr1, const char* ptr2)
+{
+    const unsigned char* usptr1 = (const unsigned char*)ptr1;
+    const unsigned char* usptr2 = (const unsigned char*)ptr2;
+    while( 1 )
+    {
+        unsigned char ch1 = *(usptr1++);
+        unsigned char ch2 = *(usptr2++);
+        if( ch1 == 0 || ch1 != ch2 ) return ch1 - ch2;
+    }
+}
+
+static inline int CPL_afl_friendly_strncmp(const char* ptr1, const char* ptr2, size_t len)
+        __attribute__((always_inline));
+
+static inline int CPL_afl_friendly_strncmp(const char* ptr1, const char* ptr2, size_t len)
+{
+    const unsigned char* usptr1 = (const unsigned char*)ptr1;
+    const unsigned char* usptr2 = (const unsigned char*)ptr2;
+    while( len -- )
+    {
+        unsigned char ch1 = *(usptr1++);
+        unsigned char ch2 = *(usptr2++);
+        if( ch1 == 0 || ch1 != ch2 ) return ch1 - ch2;
+    }
+    return 0;
+}
+
+static inline int CPL_afl_friendly_strcasecmp(const char* ptr1, const char* ptr2)
+        __attribute__((always_inline));
+
+static inline int CPL_afl_friendly_strcasecmp(const char* ptr1, const char* ptr2)
+{
+    const unsigned char* usptr1 = (const unsigned char*)ptr1;
+    const unsigned char* usptr2 = (const unsigned char*)ptr2;
+    while( 1 )
+    {
+        unsigned char ch1 = *(usptr1++);
+        unsigned char ch2 = *(usptr2++);
+        ch1 = (unsigned char)toupper(ch1);
+        ch2 = (unsigned char)toupper(ch2);
+        if( ch1 == 0 || ch1 != ch2 ) return ch1 - ch2;
+    }
+}
+
+static inline int CPL_afl_friendly_strncasecmp(const char* ptr1, const char* ptr2, size_t len)
+        __attribute__((always_inline));
+
+static inline int CPL_afl_friendly_strncasecmp(const char* ptr1, const char* ptr2, size_t len)
+{
+    const unsigned char* usptr1 = (const unsigned char*)ptr1;
+    const unsigned char* usptr2 = (const unsigned char*)ptr2;
+    while( len-- )
+    {
+        unsigned char ch1 = *(usptr1++);
+        unsigned char ch2 = *(usptr2++);
+        ch1 = (unsigned char)toupper(ch1);
+        ch2 = (unsigned char)toupper(ch2);
+        if( ch1 == 0 || ch1 != ch2 ) return ch1 - ch2;
+    }
+    return 0;
+}
+
+#undef strcmp
+#undef strncmp
+#define memcmp CPL_afl_friendly_memcmp
+#define strcmp CPL_afl_friendly_strcmp
+#define strncmp CPL_afl_friendly_strncmp
+#define strcasecmp CPL_afl_friendly_strcasecmp
+#define strncasecmp CPL_afl_friendly_strncasecmp
+
+#endif /* defined(AFL_FRIENDLY) && defined(__GNUC__) */
+
 #  if defined(WIN32)
 #    define STRCASECMP(a,b)         (stricmp(a,b))
 #    define STRNCASECMP(a,b,n)      (strnicmp(a,b,n))

@@ -77,6 +77,9 @@ CXXFLAGS_NOFTRAPV        = @CXXFLAGS_NOFTRAPV@ @CXX_WFLAGS@ $(USER_DEFS)
 NO_UNUSED_PARAMETER_FLAG = @NO_UNUSED_PARAMETER_FLAG@
 NO_SIGN_COMPARE = @NO_SIGN_COMPARE@
 
+# Also available -DAFL_FRIENDLY for strcmp(), etc.. variants that will
+# work better with American Fuzzy Lop branch examination logic
+
 # TODO(schwehr): Make these be configure flags.
 # CFLAGS += -Werror
 # CFLAGS += -std=c11
