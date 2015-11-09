@@ -5033,7 +5033,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 
 		    /* Fill buffer with "Fill" value (if any) */
 		    /* -------------------------------------- */
-		    strcpy(attrName, "_FV_");
+		    strncpy(attrName, "_FV_", 80);
 		    strcat(attrName, fieldname);
 
 		    status = SWreadattr(swathID, attrName, (char *) fillbuf);
@@ -10644,6 +10644,8 @@ SWupdatescene(int32 swathID, int32 regionID)
 					   
     int32           ind;        /* index */
     int32           tempnRegions; /* temp number of regions */
+
+    memset(index, 0, sizeof(int32) * MAXNREGIONS);
 
     /* Check for valid swath ID */
     /* ------------------------ */
