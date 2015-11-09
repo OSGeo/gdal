@@ -2619,43 +2619,6 @@ size_t CPLStrnlen (const char *pszStr, size_t nMaxLen)
     return nLen;
 }
 
-#if defined(__linux__) && defined(DEBUG)
-#undef strcmp
-#undef strncmp
-#undef strcasecmp
-#undef strncasecmp
-
-// To catch calls with NULL pointers that crash other platforms
-int GDAL_strcmp(const char *s1, const char *s2)
-{
-    CPLAssert(s1);
-    CPLAssert(s2);
-    return strcmp(s1, s2);
-}
-
-int GDAL_strncmp(const char *s1, const char *s2, size_t n)
-{
-    CPLAssert(s1);
-    CPLAssert(s2);
-    return strncmp(s1, s2, n);
-}
-
-int GDAL_strcasecmp(const char *s1, const char *s2)
-{
-    CPLAssert(s1);
-    CPLAssert(s2);
-    return strcasecmp(s1, s2);
-}
-
-int GDAL_strncasecmp(const char *s1, const char *s2, size_t n)
-{
-    CPLAssert(s1);
-    CPLAssert(s2);
-    return strncasecmp(s1, s2, n);
-}
-
-#endif // defined(__linux__) && defined(DEBUG)
-
 /************************************************************************/
 /*                            CSLParseCommandLine()                     */
 /************************************************************************/
