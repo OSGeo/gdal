@@ -355,7 +355,6 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
     char        **papszRetList = NULL;
 
     char *pszToken = reinterpret_cast<char *>( CPLCalloc( 10, 1 ) );
-    int nTokenLen;
     int nTokenMax = 10;
 
     while( pszString != NULL && *pszString != '\0' )
@@ -363,7 +362,7 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
         bool bInString = false;
         bool bInBracket = false;
 
-        nTokenLen = 0;
+        int nTokenLen = 0;
 
         // Try to find the next delimeter, marking end of token
         for( ; *pszString != '\0'; pszString++ )
@@ -833,7 +832,6 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  If we have HDF-EOS dataset, process it here.                        */
 /* -------------------------------------------------------------------- */
-    const char  *pszName;
     int32 aiDimSizes[H4_MAX_VAR_DIMS];
     int32 iRank, iNumType, nAttrs;
     bool bIsHDF = true;
@@ -1093,12 +1091,14 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Make a list of subdatasets from SDSs contained in input HDF file.   */
 /* -------------------------------------------------------------------- */
-        int32   nDatasets;
+        int32 nDatasets = 0;
 
         if ( SDfileinfo( poDS->hSD, &nDatasets, &nAttrs ) != 0 )
             return NULL;
 
         char szTemp[8192];
+        const char *pszName = NULL;
+
         for( int32 i = 0; i < nDatasets; i++ )
         {
             const int32 iSDS = SDselect( poDS->hSD, i );
