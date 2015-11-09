@@ -226,6 +226,12 @@ protected:
     virtual char** GetFileList(const char *pszFilename, bool* pbGotFileList);
     virtual CPLString GetURLFromDirname( const CPLString& osDirname );
 
+    void AnalyseS3FileList( const CPLString& osBaseURL,
+                            const char* pszXML,
+                            CPLStringList& osFileList,
+                            bool& bIsTruncated,
+                            CPLString& osNextMarker );
+
 public:
     VSICurlFilesystemHandler();
     ~VSICurlFilesystemHandler();
@@ -2265,6 +2271,93 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
     return oFileList.StealList();
 }
 
+/************************************************************************/
+/*                          AnalyseS3FileList()                         */
+/************************************************************************/
+
+#include "cpl_minixml.h"
+void VSICurlFilesystemHandler::AnalyseS3FileList( const CPLString& osBaseURL,
+                                        const char* pszXML,
+                                        CPLStringList& osFileList,
+                                        bool& bIsTruncated,
+                                        CPLString& osNextMarker )
+{
+    //CPLDebug("S3", "%s", pszXML);
+    osNextMarker = "";
+    bIsTruncated = false;
+    CPLXMLNode* psTree = CPLParseXMLString(pszXML);
+    if( psTree == NULL )
+        return;
+    CPLXMLNode* psListBucketResult = CPLGetXMLNode(psTree, "=ListBucketResult");
+    if( psListBucketResult )
+    {
+        CPLString osPrefix = CPLGetXMLValue(psListBucketResult, "Prefix", "");
+        CPLXMLNode* psIter = psListBucketResult->psChild;
+        for( ; psIter != NULL; psIter = psIter->psNext )
+        {
+            if( psIter->eType != CXT_Element )
+                continue;
+            if( strcmp(psIter->pszValue, "Contents") == 0 )
+            {
+                const char* pszKey = CPLGetXMLValue(psIter, "Key", NULL);
+                if( pszKey && strlen(pszKey) > osPrefix.size() )
+                {
+                    CPLString osCachedFilename = osBaseURL + pszKey;
+                    //CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
+
+                    CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
+                    cachedFileProp->eExists = EXIST_YES;
+                    cachedFileProp->bHasComputedFileSize = true;
+                    cachedFileProp->fileSize = (GUIntBig)CPLAtoGIntBig(CPLGetXMLValue(psIter, "Size", "0"));
+                    cachedFileProp->bIsDirectory = false;
+                    cachedFileProp->mTime = 0;
+
+                    int nYear, nMonth, nDay, nHour, nMin, nSec;
+                    if( sscanf( CPLGetXMLValue(psIter, "LastModified", ""),
+                                "%04d-%02d-%02dT%02d:%02d:%02d",
+                                &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec ) == 6 )
+                    {
+                        struct tm brokendowntime;
+                        brokendowntime.tm_year = nYear - 1900;
+                        brokendowntime.tm_mon = nMonth - 1;
+                        brokendowntime.tm_mday = nDay;
+                        brokendowntime.tm_hour = nHour;
+                        brokendowntime.tm_min = nMin;
+                        brokendowntime.tm_sec = nSec;
+                        cachedFileProp->mTime = CPLYMDHMSToUnixTime(&brokendowntime);
+                    }
+
+                    osFileList.AddString(pszKey + osPrefix.size());
+                }
+            }
+            else if( strcmp(psIter->pszValue, "CommonPrefixes") == 0 )
+            {
+                const char* pszKey = CPLGetXMLValue(psIter, "Prefix", NULL);
+                if( pszKey && strncmp(pszKey, osPrefix, osPrefix.size()) == 0  )
+                {
+                    CPLString osKey = pszKey;
+                    if( osKey.size() && osKey[osKey.size()-1] == '/' )
+                        osKey.resize(osKey.size()-1);
+                    if( osKey.size() > osPrefix.size() )
+                    {
+                        CPLString osCachedFilename = osBaseURL + osKey;
+                        //CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
+
+                        CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
+                        cachedFileProp->eExists = EXIST_YES;
+                        cachedFileProp->bIsDirectory = true;
+                        cachedFileProp->mTime = 0;
+
+                        osFileList.AddString(osKey.c_str() + osPrefix.size());
+                    }
+                }
+            }
+        }
+        osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
+        bIsTruncated = (bool)CSLTestBoolean(CPLGetXMLValue(psListBucketResult, "IsTruncated", "false"));
+    }
+    CPLDestroyXMLNode(psTree);
+}
 
 /************************************************************************/
 /*                         VSICurlGetToken()                            */
@@ -2610,10 +2703,34 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGot
 
         if (sWriteFuncData.pBuffer == NULL)
             return NULL;
-            
-        char** papszFileList = ParseHTMLFileList(pszDirname,
-                                                 sWriteFuncData.pBuffer,
-                                                 pbGotFileList);
+
+        char** papszFileList = NULL;
+        if( STARTS_WITH_CI((const char*)sWriteFuncData.pBuffer, "<?xml") &&
+            strstr((const char*)sWriteFuncData.pBuffer, "<ListBucketResult") != NULL )
+        {
+            CPLString osNextMarker;
+            CPLStringList osFileList;
+            CPLString osBaseURL(pszDirname);
+            osBaseURL += "/";
+            bool bIsTruncated = true;
+            AnalyseS3FileList( osBaseURL,
+                               (const char*)sWriteFuncData.pBuffer,
+                               osFileList,
+                               bIsTruncated,
+                               osNextMarker );
+            // If the list is truncated, then don't report it
+            if( !bIsTruncated )
+            {
+                papszFileList = osFileList.StealList();
+                *pbGotFileList = true;
+            }
+        }
+        else
+        {
+            papszFileList = ParseHTMLFileList(pszDirname,
+                                              sWriteFuncData.pBuffer,
+                                              pbGotFileList);
+        }
 
         CPLFree(sWriteFuncData.pBuffer);
         return papszFileList;
@@ -2878,11 +2995,6 @@ int VSICurlUninstallReadCbk(VSILFILE* fp)
 class VSIS3FSHandler: public VSICurlFilesystemHandler
 {
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
-
-    void AnalyseS3FileList( const CPLString& osBaseURL,
-                            const char* pszXML,
-                            CPLStringList& osFileList,
-                            CPLString& osNextMarker );
 
 protected:
     virtual CPLString GetFSPrefix() { return "/vsis3/"; }
@@ -3560,91 +3672,6 @@ VSICurlHandle* VSIS3FSHandler::CreateFileHandle(const char* pszURL)
 }
 
 /************************************************************************/
-/*                          AnalyseS3FileList()                         */
-/************************************************************************/
-
-#include "cpl_minixml.h"
-void VSIS3FSHandler::AnalyseS3FileList( const CPLString& osBaseURL,
-                                        const char* pszXML,
-                                        CPLStringList& osFileList,
-                                        CPLString& osNextMarker )
-{
-    //CPLDebug("S3", "%s", pszXML);
-    osNextMarker = "";
-    CPLXMLNode* psTree = CPLParseXMLString(pszXML);
-    if( psTree == NULL )
-        return;
-    CPLXMLNode* psListBucketResult = CPLGetXMLNode(psTree, "=ListBucketResult");
-    if( psListBucketResult )
-    {
-        CPLString osPrefix = CPLGetXMLValue(psListBucketResult, "Prefix", "");
-        CPLXMLNode* psIter = psListBucketResult->psChild;
-        for( ; psIter != NULL; psIter = psIter->psNext )
-        {
-            if( psIter->eType != CXT_Element )
-                continue;
-            if( strcmp(psIter->pszValue, "Contents") == 0 )
-            {
-                const char* pszKey = CPLGetXMLValue(psIter, "Key", NULL);
-                if( pszKey && strlen(pszKey) > osPrefix.size() )
-                {
-                    CPLString osCachedFilename = osBaseURL + pszKey;
-                    //CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
-
-                    CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
-                    cachedFileProp->eExists = EXIST_YES;
-                    cachedFileProp->bHasComputedFileSize = true;
-                    cachedFileProp->fileSize = (GUIntBig)CPLAtoGIntBig(CPLGetXMLValue(psIter, "Size", "0"));
-                    cachedFileProp->bIsDirectory = false;
-                    cachedFileProp->mTime = 0;
-
-                    int nYear, nMonth, nDay, nHour, nMin, nSec;
-                    if( sscanf( CPLGetXMLValue(psIter, "LastModified", ""),
-                                "%04d-%02d-%02dT%02d:%02d:%02d",
-                                &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec ) == 6 )
-                    {
-                        struct tm brokendowntime;
-                        brokendowntime.tm_year = nYear - 1900;
-                        brokendowntime.tm_mon = nMonth - 1;
-                        brokendowntime.tm_mday = nDay;
-                        brokendowntime.tm_hour = nHour;
-                        brokendowntime.tm_min = nMin;
-                        brokendowntime.tm_sec = nSec;
-                        cachedFileProp->mTime = CPLYMDHMSToUnixTime(&brokendowntime);
-                    }
-
-                    osFileList.AddString(pszKey + osPrefix.size());
-                }
-            }
-            else if( strcmp(psIter->pszValue, "CommonPrefixes") == 0 )
-            {
-                const char* pszKey = CPLGetXMLValue(psIter, "Prefix", NULL);
-                if( pszKey && strncmp(pszKey, osPrefix, osPrefix.size()) == 0  )
-                {
-                    CPLString osKey = pszKey;
-                    if( osKey.size() && osKey[osKey.size()-1] == '/' )
-                        osKey.resize(osKey.size()-1);
-                    if( osKey.size() > osPrefix.size() )
-                    {
-                        CPLString osCachedFilename = osBaseURL + osKey;
-                        //CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
-
-                        CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
-                        cachedFileProp->eExists = EXIST_YES;
-                        cachedFileProp->bIsDirectory = true;
-                        cachedFileProp->mTime = 0;
-
-                        osFileList.AddString(osKey.c_str() + osPrefix.size());
-                    }
-                }
-            }
-        }
-        osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
-    }
-    CPLDestroyXMLNode(psTree);
-}
-
-/************************************************************************/
 /*                          GetURLFromDirname()                         */
 /************************************************************************/
 
@@ -3839,9 +3866,11 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname, bool* pbGotFileList 
         else
         {
             *pbGotFileList = true;
+            bool bIsTrucated;
             AnalyseS3FileList( osBaseURL,
                                (const char*)sWriteFuncData.pBuffer,
                                osFileList,
+                               bIsTrucated,
                                osNextMarker );
 
             CPLFree(sWriteFuncData.pBuffer);
