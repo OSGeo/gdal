@@ -408,8 +408,11 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 /* -------------------------------------------------------------------- */
 /*      Otherwise grow the list to hold the new entry.                  */
 /* -------------------------------------------------------------------- */
-    papoDrivers = (GDALDriver **)
-        VSIRealloc(papoDrivers, sizeof(GDALDriver *) * (nDrivers+1));
+    GDALDriver** papoNewDrivers = (GDALDriver **)
+        VSI_REALLOC_VERBOSE(papoDrivers, sizeof(GDALDriver *) * (nDrivers+1));
+    if( papoNewDrivers == NULL )
+        return -1;
+    papoDrivers = papoNewDrivers;
 
     papoDrivers[nDrivers] = poDriver;
     nDrivers++;

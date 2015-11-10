@@ -58,13 +58,11 @@ GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
 /*      Allocate scanline buffer.                                       */
 /* -------------------------------------------------------------------- */
 
-    T* pDstScanline = (T *) VSIMalloc(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
-    int* panSrcXOff = (int*)VSIMalloc(nDstXWidth * sizeof(int));
+    T* pDstScanline = (T *) VSI_MALLOC_VERBOSE(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
+    int* panSrcXOff = (int*)VSI_MALLOC_VERBOSE(nDstXWidth * sizeof(int));
 
     if( pDstScanline == NULL || panSrcXOff == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunk32R: Out of memory for line buffer." );
         VSIFree(pDstScanline);
         VSIFree(panSrcXOff);
         return CE_Failure;
@@ -193,6 +191,25 @@ static int GDALFindBestEntry(int nEntryCount, const GDALColorEntry* aEntries,
 }
 
 /************************************************************************/
+/*                      ReadColorTableAsArray()                        */
+/************************************************************************/
+
+static bool ReadColorTableAsArray(const GDALColorTable* poColorTable,
+                                  int& nEntryCount,
+                                  GDALColorEntry*& aEntries)
+{
+    nEntryCount = poColorTable->GetColorEntryCount();
+    aEntries = (GDALColorEntry* )VSI_MALLOC2_VERBOSE(sizeof(GDALColorEntry), nEntryCount);
+    if( aEntries == NULL )
+        return false;
+    for(int i=0;i<nEntryCount;i++)
+    {
+        poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                    GDALResampleChunk32R_Average()                    */
 /************************************************************************/
 
@@ -234,13 +251,11 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 /*      Allocate scanline buffer.                                       */
 /* -------------------------------------------------------------------- */
 
-    T *pDstScanline = (T *) VSIMalloc(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
-    int* panSrcXOffShifted = (int*)VSIMalloc(2 * nDstXWidth * sizeof(int));
+    T *pDstScanline = (T *) VSI_MALLOC_VERBOSE(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
+    int* panSrcXOffShifted = (int*)VSI_MALLOC_VERBOSE(2 * nDstXWidth * sizeof(int));
 
     if( pDstScanline == NULL || panSrcXOffShifted == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunk32R: Out of memory for line buffer." );
         VSIFree(pDstScanline);
         VSIFree(panSrcXOffShifted);
         return CE_Failure;
@@ -248,15 +263,11 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
-    if (poColorTable)
+    if(poColorTable && !ReadColorTableAsArray(poColorTable,nEntryCount,aEntries))
     {
-        int i;
-        nEntryCount = poColorTable->GetColorEntryCount();
-        aEntries = (GDALColorEntry* )CPLMalloc(sizeof(GDALColorEntry) * nEntryCount);
-        for(i=0;i<nEntryCount;i++)
-        {
-            poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
-        }
+        VSIFree(pDstScanline);
+        VSIFree(panSrcXOffShifted);
+        return CE_Failure;
     }
 
 /* ==================================================================== */
@@ -566,24 +577,18 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     }
 
     float *pafDstScanline
-        = (float *) VSIMalloc((nDstXOff2 - nDstXOff) * sizeof(float));
+        = (float *) VSI_MALLOC_VERBOSE((nDstXOff2 - nDstXOff) * sizeof(float));
     if( pafDstScanline == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunk32R: Out of memory for line buffer." );
         return CE_Failure;
     }
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
-    if (poColorTable)
+    if(poColorTable && !ReadColorTableAsArray(poColorTable,nEntryCount,aEntries))
     {
-        nEntryCount = poColorTable->GetColorEntryCount();
-        aEntries = (GDALColorEntry* )CPLMalloc(sizeof(GDALColorEntry) * nEntryCount);
-        for(int i=0;i<nEntryCount;i++)
-        {
-            poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
-        }
+        VSIFree(pafDstScanline);
+        return CE_Failure;
     }
 
     int nChunkRightXOff = nChunkXOff + nChunkXSize;
@@ -775,24 +780,18 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
 
-    pafDstScanline = (float *) VSIMalloc((nDstXOff2 - nDstXOff) * sizeof(float));
+    pafDstScanline = (float *) VSI_MALLOC_VERBOSE((nDstXOff2 - nDstXOff) * sizeof(float));
     if( pafDstScanline == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunk32R: Out of memory for line buffer." );
         return CE_Failure;
     }
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
-    if (poColorTable)
+    if(poColorTable && !ReadColorTableAsArray(poColorTable,nEntryCount,aEntries))
     {
-        nEntryCount = poColorTable->GetColorEntryCount();
-        aEntries = (GDALColorEntry* )CPLMalloc(sizeof(GDALColorEntry) * nEntryCount);
-        for(int i=0;i<nEntryCount;i++)
-        {
-            poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
-        }
+        VSIFree(pafDstScanline);
+        return CE_Failure;
     }
 
     int      nMaxNumPx = 0;
@@ -1401,23 +1400,21 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
     double dfYScaleWeight = ( dfYScale >= 1.0 ) ? 1.0 : dfYScale;
     double dfYScaledRadius = nKernelRadius / dfYScaleWeight;
 
-    float* pafDstScanline = (float *) VSIMalloc(nDstXSize * sizeof(float));
+    float* pafDstScanline = (float *) VSI_MALLOC_VERBOSE(nDstXSize * sizeof(float));
 
     /* Temporary array to store result of horizontal filter */
-    double* padfHorizontalFiltered = (double*) VSIMalloc(nChunkYSize * nDstXSize * sizeof(double) * nBands);
+    double* padfHorizontalFiltered = (double*) VSI_MALLOC_VERBOSE(nChunkYSize * nDstXSize * sizeof(double) * nBands);
 
     /* To store convolution coefficients */
-    double* padfWeightsAlloc = (double*) CPLMalloc((int)(
+    double* padfWeightsAlloc = (double*) VSI_MALLOC_VERBOSE((int)(
         2 + 2 * MAX(dfXScaledRadius, dfYScaledRadius) + 0.5 + 1 /* for alignment*/) * sizeof(double));
 
     GByte* pabyChunkNodataMaskHorizontalFiltered = NULL;
     if( pabyChunkNodataMask )
-        pabyChunkNodataMaskHorizontalFiltered = (GByte*) VSIMalloc(nChunkYSize * nDstXSize);
+        pabyChunkNodataMaskHorizontalFiltered = (GByte*) VSI_MALLOC_VERBOSE(nChunkYSize * nDstXSize);
     if( pafDstScanline == NULL || padfHorizontalFiltered == NULL ||
         padfWeightsAlloc == NULL || (pabyChunkNodataMask != NULL && pabyChunkNodataMaskHorizontalFiltered == NULL) )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunk32R_ConvolutionT: Out of memory for work buffers." );
         VSIFree(pafDstScanline);
         VSIFree(padfHorizontalFiltered);
         VSIFree(padfWeightsAlloc);
@@ -1804,11 +1801,9 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
     double dfYRatioDstToSrc = (double)nSrcHeight / nOYSize;
 
     float *pafDstScanline
-        = (float *) VSIMalloc(nOXSize * sizeof(float) * 2);
+        = (float *) VSI_MALLOC_VERBOSE(nOXSize * sizeof(float) * 2);
     if( pafDstScanline == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunkC32R: Out of memory for line buffer." );
         return CE_Failure;
     }
 
@@ -2429,20 +2424,17 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
     GByte *pabyChunkNodataMask = NULL;
     void *pChunk =
-        VSIMalloc3((GDALGetDataTypeSize(eType)/8), nMaxChunkYSizeQueried, nWidth );
+        VSI_MALLOC3_VERBOSE((GDALGetDataTypeSize(eType)/8), nMaxChunkYSizeQueried, nWidth );
     if (bUseNoDataMask)
     {
         pabyChunkNodataMask =
-            (GByte*) VSIMalloc2( nMaxChunkYSizeQueried, nWidth );
+            (GByte*) VSI_MALLOC2_VERBOSE( nMaxChunkYSizeQueried, nWidth );
     }
 
     if( pChunk == NULL || (bUseNoDataMask && pabyChunkNodataMask == NULL))
     {
         CPLFree(pChunk);
         CPLFree(pabyChunkNodataMask);
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Out of memory in GDALRegenerateOverviews()." );
-
         return CE_Failure;
     }
 
@@ -2786,8 +2778,14 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
     bool bUseNoDataMask = (!STARTS_WITH_CI(pszResampling, "NEAR") &&
                           (papoSrcBands[0]->GetMaskFlags() & GMF_ALL_VALID) == 0);
 
-    int* pabHasNoData = (int*)CPLMalloc(nBands * sizeof(int));
-    float* pafNoDataValue = (float*)CPLMalloc(nBands * sizeof(float));
+    int* pabHasNoData = (int*)VSI_MALLOC_VERBOSE(nBands * sizeof(int));
+    float* pafNoDataValue = (float*)VSI_MALLOC_VERBOSE(nBands * sizeof(float));
+    if( pabHasNoData == NULL || pafNoDataValue == NULL )
+    {
+        CPLFree(pabHasNoData);
+        CPLFree(pafNoDataValue);
+        return CE_Failure;
+    }
 
     for(int iBand=0;iBand<nBands;iBand++)
     {
@@ -2831,11 +2829,17 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         int nFullResXChunkQueried = nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
         int nFullResYChunkQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
 
-        void** papaChunk = (void**) CPLMalloc(nBands * sizeof(void*));
+        void** papaChunk = (void**) VSI_MALLOC_VERBOSE(nBands * sizeof(void*));
+        if( papaChunk == NULL )
+        {
+            CPLFree(pabHasNoData);
+            CPLFree(pafNoDataValue);
+            return CE_Failure;
+        }
         GByte* pabyChunkNoDataMask = NULL;
         for(int iBand=0;iBand<nBands;iBand++)
         {
-            papaChunk[iBand] = VSIMalloc3(nFullResXChunkQueried, nFullResYChunkQueried, GDALGetDataTypeSize(eWrkDataType) / 8);
+            papaChunk[iBand] = VSI_MALLOC3_VERBOSE(nFullResXChunkQueried, nFullResYChunkQueried, GDALGetDataTypeSize(eWrkDataType) / 8);
             if( papaChunk[iBand] == NULL )
             {
                 while ( --iBand >= 0)
@@ -2843,15 +2847,12 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                 CPLFree(papaChunk);
                 CPLFree(pabHasNoData);
                 CPLFree(pafNoDataValue);
-
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "GDALRegenerateOverviewsMultiBand: Out of memory." );
                 return CE_Failure;
             }
         }
         if (bUseNoDataMask)
         {
-            pabyChunkNoDataMask = (GByte*) VSIMalloc2(nFullResXChunkQueried, nFullResYChunkQueried);
+            pabyChunkNoDataMask = (GByte*) VSI_MALLOC2_VERBOSE(nFullResXChunkQueried, nFullResYChunkQueried);
             if( pabyChunkNoDataMask == NULL )
             {
                 for(int iBand=0;iBand<nBands;iBand++)
@@ -2861,9 +2862,6 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                 CPLFree(papaChunk);
                 CPLFree(pabHasNoData);
                 CPLFree(pafNoDataValue);
-
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "GDALRegenerateOverviewsMultiBand: Out of memory." );
                 return CE_Failure;
             }
         }
@@ -3041,19 +3039,17 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
     const bool bComplex = GDALDataTypeIsComplex(eType);
     if( bComplex )
     {
-        pafData = (float *) VSIMalloc(nWidth * 2 * sizeof(float));
+        pafData = (float *) VSI_MALLOC_VERBOSE(nWidth * 2 * sizeof(float));
         eWrkType = GDT_CFloat32;
     }
     else
     {
-        pafData = (float *) VSIMalloc(nWidth * sizeof(float));
+        pafData = (float *) VSI_MALLOC_VERBOSE(nWidth * sizeof(float));
         eWrkType = GDT_Float32;
     }
 
     if( pafData == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALComputeBandStats: Out of memory for buffer." );
         return CE_Failure;
     }
 
@@ -3192,19 +3188,17 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
         const bool bComplex = GDALDataTypeIsComplex(eType);
         if( bComplex )
         {
-            pafData = (float *) VSIMalloc2(nWidth, 2 * sizeof(float));
+            pafData = (float *) VSI_MALLOC2_VERBOSE(nWidth, 2 * sizeof(float));
             eWrkType = GDT_CFloat32;
         }
         else
         {
-            pafData = (float *) VSIMalloc2(nWidth, sizeof(float));
+            pafData = (float *) VSI_MALLOC2_VERBOSE(nWidth, sizeof(float));
             eWrkType = GDT_Float32;
         }
 
         if( pafData == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "GDALOverviewMagnitudeCorrection: Out of memory for buffer." );
             return CE_Failure;
         }
 

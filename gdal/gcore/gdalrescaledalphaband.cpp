@@ -109,11 +109,9 @@ CPLErr GDALRescaledAlphaBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         if( pTemp == NULL )
         {
-            pTemp = VSIMalloc2( sizeof(GUInt16), nRasterXSize );
+            pTemp = VSI_MALLOC2_VERBOSE( sizeof(GUInt16), nRasterXSize );
             if (pTemp == NULL)
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "GDALRescaledAlphaBand::IReadBlock: Out of memory for buffer." );
                 return CE_Failure;
             }
         }
