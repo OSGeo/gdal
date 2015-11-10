@@ -37,6 +37,7 @@
 #include "cpl_conv.h"
 
 #include <time.h>
+#include <assert.h>
 
 CPL_CVSID("$Id$");
 
@@ -111,6 +112,13 @@ CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds,
 #ifndef MUTEX_NONE
     pszFile = pszFileIn;
     nLine = nLineIn;
+    
+    if( phMutex == NULL )
+    {
+        fprintf( stderr, "CPLMutexHolder: phMutex )) NULL !\n" );
+        hMutex = NULL;
+        return;
+    }
 
 #ifdef DEBUG_MUTEX
     /*
@@ -390,6 +398,8 @@ CPLMutex *CPLCreateMutex()
 {
 #ifndef MUTEX_NONE
     unsigned char *pabyMutex = (unsigned char *) malloc( 4 );
+    if( pabyMutex == NULL )
+        return NULL;
 
     pabyMutex[0] = 1;
     pabyMutex[1] = 'r';
@@ -650,14 +660,24 @@ void CPLSleep( double dfWaitInSeconds )
 
 static void **papTLSList = NULL;
 
-static void **CPLGetTLSList()
+static void **CPLGetTLSList(int *pbMemoryErrorOccured)
 
 {
+    if( pbMemoryErrorOccured )
+        *pbMemoryErrorOccured = FALSE;
     if( papTLSList == NULL )
     {
         papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
         if( papTLSList == NULL )
+        {
+            if( pbMemoryErrorOccured )
+            {
+                *pbMemoryErrorOccured = TRUE;
+                fprintf(stderr, "CPLGetTLSList() failed to allocate TLS list!\n");
+                return NULL;
+            }
             CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
+        }
     }
 
     return papTLSList;
@@ -1151,16 +1171,24 @@ static DWORD         nTLSKey;
 /*                           CPLGetTLSList()                            */
 /************************************************************************/
 
-static void **CPLGetTLSList()
+static void **CPLGetTLSList(int *pbMemoryErrorOccured)
 
 {
     void **papTLSList;
 
+    if( pbMemoryErrorOccured )
+        *pbMemoryErrorOccured = FALSE;
     if( !bTLSKeySetup )
     {
         nTLSKey = TlsAlloc();
         if( nTLSKey == TLS_OUT_OF_INDEXES )
         {
+            if( pbMemoryErrorOccured )
+            {
+                *pbMemoryErrorOccured = TRUE;
+                fprintf(stderr, "CPLGetTLSList(): TlsAlloc() failed!\n" );
+                return NULL;
+            }
             CPLEmergencyError( "CPLGetTLSList(): TlsAlloc() failed!" );
         }
         bTLSKeySetup = true;
@@ -1171,9 +1199,23 @@ static void **CPLGetTLSList()
     {
         papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
         if( papTLSList == NULL )
+        {
+            if( pbMemoryErrorOccured )
+            {
+                *pbMemoryErrorOccured = TRUE;
+                fprintf(stderr, "CPLGetTLSList() failed to allocate TLS list!\n" );
+                return NULL;
+            }
             CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
+        }
         if( TlsSetValue( nTLSKey, papTLSList ) == 0 )
         {
+            if( pbMemoryErrorOccured )
+            {
+                *pbMemoryErrorOccured = TRUE;
+                fprintf(stderr, "CPLGetTLSList(): TlsSetValue() failed!\n" );
+                return NULL;
+            }
             CPLEmergencyError( "CPLGetTLSList(): TlsSetValue() failed!" );
         }
     }
@@ -1385,7 +1427,10 @@ static CPLMutex *CPLCreateMutexInternal(int bAlreadyInGlobalLock, int nOptions)
 {
     MutexLinkedElt* psItem = (MutexLinkedElt *) malloc(sizeof(MutexLinkedElt));
     if (psItem == NULL)
+    {
+        fprintf(stderr, "CPLCreateMutexInternal() failed.\n");
         return NULL;
+    }
 
     if( !bAlreadyInGlobalLock )
         pthread_mutex_lock(&global_mutex);
@@ -1498,9 +1543,11 @@ void CPLReinitAllMutex()
 CPLCond  *CPLCreateCond()
 {
     pthread_cond_t* pCond = (pthread_cond_t* )malloc(sizeof(pthread_cond_t));
-    if (pCond)
-        pthread_cond_init(pCond, NULL);
-    return (CPLCond*) pCond;
+    if (pCond && pthread_cond_init(pCond, NULL) == 0 )
+        return (CPLCond*) pCond;
+    fprintf(stderr, "CPLCreateCond() failed.\n");
+    free(pCond);
+    return NULL;
 }
 
 /************************************************************************/
@@ -1626,6 +1673,74 @@ GIntBig CPLGetPID()
     return (GIntBig) pthread_self();
 }
 
+static pthread_key_t  oTLSKey;
+static pthread_once_t oTLSKeySetup = PTHREAD_ONCE_INIT;
+
+/************************************************************************/
+/*                             CPLMake_key()                            */
+/************************************************************************/
+
+static void CPLMake_key()
+
+{
+    if( pthread_key_create( &oTLSKey, (void (*)(void*)) CPLCleanupTLSList ) != 0 )
+    {
+        CPLError( CE_Fatal, CPLE_AppDefined, "pthread_key_create() failed!" );
+    }
+}
+
+/************************************************************************/
+/*                           CPLGetTLSList()                            */
+/************************************************************************/
+
+static void **CPLGetTLSList(int* pbMemoryErrorOccured)
+
+{
+    void **papTLSList;
+
+    if( pbMemoryErrorOccured )
+        *pbMemoryErrorOccured = FALSE;
+    if ( pthread_once(&oTLSKeySetup, CPLMake_key) != 0 )
+    {
+        if( pbMemoryErrorOccured )
+        {
+            fprintf(stderr, "CPLGetTLSList(): pthread_once() failed!\n" );
+            *pbMemoryErrorOccured = TRUE;
+            return NULL;
+        }
+        CPLEmergencyError( "CPLGetTLSList(): pthread_once() failed!" );
+    }
+
+    papTLSList = (void **) pthread_getspecific( oTLSKey );
+    if( papTLSList == NULL )
+    {
+        papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
+        if( papTLSList == NULL )
+        {
+            if( pbMemoryErrorOccured )
+            {
+                fprintf(stderr, "CPLGetTLSList() failed to allocate TLS list!\n" );
+                *pbMemoryErrorOccured = TRUE;
+                return NULL;
+            }
+            CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
+        }
+        if( pthread_setspecific( oTLSKey, papTLSList ) != 0 )
+        {
+            if( pbMemoryErrorOccured )
+            {
+                fprintf(stderr, "CPLGetTLSList(): pthread_setspecific() failed!\n" );
+                *pbMemoryErrorOccured = TRUE;
+                return NULL;
+            }
+            CPLEmergencyError( 
+                "CPLGetTLSList(): pthread_setspecific() failed!" );
+        }
+    }
+
+    return papTLSList;
+}
+
 /************************************************************************/
 /*                       CPLStdCallThreadJacket()                       */
 /************************************************************************/
@@ -1634,7 +1749,13 @@ typedef struct {
     void *pAppData;
     CPLThreadFunc pfnMain;
     pthread_t hThread;
-    int bJoinable;
+    bool bJoinable;
+#ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
+    bool bInitSucceeded;
+    bool bInitDone;
+    pthread_mutex_t sMutex;
+    pthread_cond_t sCond;
+#endif
 } CPLStdCallThreadInfo;
 
 static void *CPLStdCallThreadJacket( void *pData )
@@ -1642,12 +1763,34 @@ static void *CPLStdCallThreadJacket( void *pData )
 {
     CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) pData;
 
+#ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
+    int bMemoryError;
+    CPLGetTLSList(&bMemoryError);
+    if( bMemoryError )
+        goto error;
+
+    assert( pthread_mutex_lock( &(psInfo->sMutex) ) == 0);
+    psInfo->bInitDone = true;
+    assert( pthread_cond_signal( &(psInfo->sCond) ) == 0);
+    assert( pthread_mutex_unlock( &(psInfo->sMutex) ) == 0);
+#endif
+
     psInfo->pfnMain( psInfo->pAppData );
 
     if (!psInfo->bJoinable)
         CPLFree( psInfo );
 
     return NULL;
+
+#ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
+error:
+    assert( pthread_mutex_lock( &(psInfo->sMutex) ) == 0);
+    psInfo->bInitSucceeded = false;
+    psInfo->bInitDone = true;
+    assert( pthread_cond_signal( &(psInfo->sCond) ) == 0);
+    assert( pthread_mutex_unlock( &(psInfo->sMutex) ) == 0);
+    return NULL;
+#endif
 }
 
 /************************************************************************/
@@ -1665,19 +1808,61 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     CPLStdCallThreadInfo *psInfo;
     pthread_attr_t hThreadAttr;
 
-    psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
+    psInfo = (CPLStdCallThreadInfo*) VSI_CALLOC_VERBOSE(sizeof(CPLStdCallThreadInfo),1);
+    if( psInfo == NULL )
+        return -1;
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
-    psInfo->bJoinable = FALSE;
+    psInfo->bJoinable = false;
+#ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
+    psInfo->bInitSucceeded = true;
+    psInfo->bInitDone = false;
+    pthread_mutex_t sMutex = PTHREAD_MUTEX_INITIALIZER;
+    psInfo->sMutex = sMutex;
+    if( pthread_cond_init(&(psInfo->sCond), NULL) != 0 )
+    {
+        CPLFree( psInfo );
+        fprintf(stderr, "CPLCreateThread() failed.\n");
+        return -1;
+    }
+#endif
 
     pthread_attr_init( &hThreadAttr );
     pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_DETACHED );
     if( pthread_create( &(psInfo->hThread), &hThreadAttr, 
                         CPLStdCallThreadJacket, (void *) psInfo ) != 0 )
     {
+#ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
+        pthread_cond_destroy(&(psInfo->sCond));
+#endif
         CPLFree( psInfo );
+        fprintf(stderr, "CPLCreateThread() failed.\n");
         return -1;
     }
+
+#ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
+    bool bInitSucceeded;
+    while( true )
+    {
+        assert(pthread_mutex_lock( &(psInfo->sMutex) ) == 0);
+        bool bInitDone = psInfo->bInitDone;
+        if( !bInitDone )
+            assert(pthread_cond_wait( &(psInfo->sCond),  &(psInfo->sMutex)  ) == 0);
+        bInitSucceeded = psInfo->bInitSucceeded;
+        assert(pthread_mutex_unlock( &(psInfo->sMutex) ) == 0);
+        if( bInitDone )
+            break;
+    }
+
+    pthread_cond_destroy(&(psInfo->sCond));
+
+    if( !bInitSucceeded )
+    {
+        CPLFree( psInfo );
+        fprintf(stderr, "CPLCreateThread() failed.\n");
+        return -1;
+    }
+#endif
 
     return 1; /* can we return the actual thread pid? */
 }
@@ -1692,19 +1877,63 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThread
     CPLStdCallThreadInfo *psInfo;
     pthread_attr_t hThreadAttr;
 
-    psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
+    psInfo = (CPLStdCallThreadInfo*) VSI_CALLOC_VERBOSE(sizeof(CPLStdCallThreadInfo),1);
+    if( psInfo == NULL )
+        return NULL;
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
-    psInfo->bJoinable = TRUE;
+    psInfo->bJoinable = true;
+#ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
+    psInfo->bInitSucceeded = true;
+    psInfo->bInitDone = false;
+    pthread_mutex_t sMutex = PTHREAD_MUTEX_INITIALIZER;
+    psInfo->sMutex = sMutex;
+    if( pthread_cond_init(&(psInfo->sCond), NULL) != 0 )
+    {
+        CPLFree( psInfo );
+        fprintf(stderr, "CPLCreateJoinableThread() failed.\n");
+        return NULL;
+    }
+#endif
 
     pthread_attr_init( &hThreadAttr );
     pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_JOINABLE );
     if( pthread_create( &(psInfo->hThread), &hThreadAttr,
                         CPLStdCallThreadJacket, (void *) psInfo ) != 0 )
     {
+#ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
+        pthread_cond_destroy(&(psInfo->sCond));
+#endif
         CPLFree( psInfo );
+        fprintf(stderr, "CPLCreateJoinableThread() failed.\n");
         return NULL;
     }
+
+#ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
+    bool bInitSucceeded;
+    while( true )
+    {
+        assert(pthread_mutex_lock( &(psInfo->sMutex) ) == 0);
+        bool bInitDone = psInfo->bInitDone;
+        if( !bInitDone )
+            assert(pthread_cond_wait( &(psInfo->sCond),  &(psInfo->sMutex)  ) == 0);
+        bInitSucceeded = psInfo->bInitSucceeded;
+        assert(pthread_mutex_unlock( &(psInfo->sMutex) ) == 0);
+        if( bInitDone )
+            break;
+    }
+
+    pthread_cond_destroy(&(psInfo->sCond));
+
+    if( !bInitSucceeded )
+    {
+        void* status;
+        pthread_join( psInfo->hThread, &status);
+        CPLFree( psInfo );
+        fprintf(stderr, "CPLCreateJoinableThread() failed.\n");
+        return NULL;
+    }
+#endif
 
     return (CPLJoinableThread*) psInfo;
 }
@@ -1716,6 +1945,8 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThread
 void CPLJoinThread(CPLJoinableThread* hJoinableThread)
 {
     CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo*) hJoinableThread;
+    if( psInfo == NULL )
+        return;
 
     void* status;
     pthread_join( psInfo->hThread, &status);
@@ -1735,22 +1966,6 @@ void CPLSleep( double dfWaitInSeconds )
     sRequest.tv_sec = (int) floor(dfWaitInSeconds);
     sRequest.tv_nsec = (int) ((dfWaitInSeconds - sRequest.tv_sec)*1000000000);
     nanosleep( &sRequest, &sRemain );
-}
-
-static pthread_key_t  oTLSKey;
-static pthread_once_t oTLSKeySetup = PTHREAD_ONCE_INIT;
-
-/************************************************************************/
-/*                             CPLMake_key()                            */
-/************************************************************************/
-
-static void CPLMake_key()
-
-{
-    if( pthread_key_create( &oTLSKey, (void (*)(void*)) CPLCleanupTLSList ) != 0 )
-    {
-        CPLError( CE_Fatal, CPLE_AppDefined, "pthread_key_create() failed!" );
-    }
 }
 
 /************************************************************************/
@@ -1783,36 +1998,6 @@ void CPLCleanupTLS()
 }
 
 /************************************************************************/
-/*                           CPLGetTLSList()                            */
-/************************************************************************/
-
-static void **CPLGetTLSList()
-
-{
-    void **papTLSList;
-
-    if ( pthread_once(&oTLSKeySetup, CPLMake_key) != 0 )
-    {
-        CPLEmergencyError( "CPLGetTLSList(): pthread_once() failed!" );
-    }
-
-    papTLSList = (void **) pthread_getspecific( oTLSKey );
-    if( papTLSList == NULL )
-    {
-        papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
-        if( papTLSList == NULL )
-            CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
-        if( pthread_setspecific( oTLSKey, papTLSList ) != 0 )
-        {
-            CPLEmergencyError( 
-                "CPLGetTLSList(): pthread_setspecific() failed!" );
-        }
-    }
-
-    return papTLSList;
-}
-
-/************************************************************************/
 /*                          CPLCreateSpinLock()                         */
 /************************************************************************/
 
@@ -1827,12 +2012,14 @@ struct _CPLSpinLock
 CPLSpinLock  *CPLCreateSpinLock( void )
 {
     CPLSpinLock* psSpin = (CPLSpinLock*)malloc(sizeof(CPLSpinLock));
-    if( pthread_spin_init(&(psSpin->spin), PTHREAD_PROCESS_PRIVATE) == 0 )
+    if( psSpin != NULL &&
+        pthread_spin_init(&(psSpin->spin), PTHREAD_PROCESS_PRIVATE) == 0 )
     {
         return psSpin;
     }
     else
     {
+        fprintf(stderr, "CPLCreateSpinLock() failed.\n");
         free(psSpin);
         return NULL;
     }
@@ -1901,7 +2088,23 @@ void  CPLDestroySpinLock( CPLSpinLock* psSpin )
 void *CPLGetTLS( int nIndex )
 
 {
-    void** papTLSList = CPLGetTLSList();
+    void** papTLSList = CPLGetTLSList(NULL);
+
+    CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
+
+    return papTLSList[nIndex];
+}
+
+/************************************************************************/
+/*                            CPLGetTLSEx()                             */
+/************************************************************************/
+
+void *CPLGetTLSEx( int nIndex, int* pbMemoryErrorOccured )
+
+{
+    void** papTLSList = CPLGetTLSList(pbMemoryErrorOccured);
+    if( papTLSList == NULL )
+        return NULL;
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
@@ -1927,7 +2130,7 @@ void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
 void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
 
 {
-    void **papTLSList = CPLGetTLSList();
+    void **papTLSList = CPLGetTLSList(NULL);
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
@@ -1935,6 +2138,23 @@ void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
     papTLSList[CTLS_MAX + nIndex] = (void*) pfnFree;
 }
 
+/************************************************************************/
+/*                      CPLSetTLSWithFreeFuncEx()                       */
+/************************************************************************/
+
+/* Warning : the CPLTLSFreeFunc must not in any case directly or indirectly */
+/* use or fetch any TLS data, or a terminating thread will hang ! */
+void CPLSetTLSWithFreeFuncEx( int nIndex, void *pData,
+                              CPLTLSFreeFunc pfnFree, int* pbMemoryErrorOccured  )
+
+{
+    void **papTLSList = CPLGetTLSList(pbMemoryErrorOccured);
+
+    CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
+
+    papTLSList[nIndex] = pData;
+    papTLSList[CTLS_MAX + nIndex] = (void*) pfnFree;
+}
 #ifndef HAVE_SPINLOCK_IMPL
 
 /* No spinlock specific API ? Fallback to mutex */
@@ -2007,6 +2227,12 @@ CPLLock *CPLCreateLock( CPLLockType eType )
                 return NULL;
             CPLReleaseMutex(hMutex);
             CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
+            if( psLock == NULL )
+            {
+                fprintf(stderr, "CPLCreateLock() failed.\n");
+                CPLDestroyMutex(hMutex);
+                return NULL;
+            }
             psLock->eType = eType;
             psLock->u.hMutex = hMutex;
 #ifdef DEBUG_CONTENTION
@@ -2020,6 +2246,12 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             if( !hSpinLock )
                 return NULL;
             CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
+            if( psLock == NULL )
+            {
+                fprintf(stderr, "CPLCreateLock() failed.\n");
+                CPLDestroySpinLock(hSpinLock);
+                return NULL;
+            }
             psLock->eType = eType;
             psLock->u.hSpinLock = hSpinLock;
 #ifdef DEBUG_CONTENTION
