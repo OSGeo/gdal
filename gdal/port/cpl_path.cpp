@@ -50,6 +50,8 @@ CPL_CVSID("$Id$");
 static const char* CPLStaticBufferTooSmall(char *pszStaticResult)
 {
     CPLError(CE_Failure, CPLE_AppDefined, "Destination buffer too small");
+    if( pszStaticResult == NULL )
+        return "";
     strcpy( pszStaticResult, "" );
     return pszStaticResult;
 }
@@ -61,10 +63,15 @@ static const char* CPLStaticBufferTooSmall(char *pszStaticResult)
 static char *CPLGetStaticResult()
 
 {
-    char *pachBufRingInfo = (char *) CPLGetTLS( CTLS_PATHBUF );
+    int bMemoryError;
+    char *pachBufRingInfo = (char *) CPLGetTLSEx( CTLS_PATHBUF, &bMemoryError );
+    if( bMemoryError )
+        return NULL;
     if( pachBufRingInfo == NULL )
     {
-        pachBufRingInfo = (char *) CPLCalloc(1, sizeof(int) + CPL_PATH_BUF_SIZE * CPL_PATH_BUF_COUNT);
+        pachBufRingInfo = (char *) VSI_CALLOC_VERBOSE(1, sizeof(int) + CPL_PATH_BUF_SIZE * CPL_PATH_BUF_COUNT);
+        if( pachBufRingInfo == NULL )
+            return NULL;
         CPLSetTLS( CTLS_PATHBUF, pachBufRingInfo, TRUE );
     }
 
@@ -132,7 +139,7 @@ const char *CPLGetPath( const char *pszFilename )
     int         iFileStart = CPLFindFilenameStart(pszFilename);
     char       *pszStaticResult = CPLGetStaticResult();
 
-    if( iFileStart >= CPL_PATH_BUF_SIZE )
+    if( pszStaticResult == NULL || iFileStart >= CPL_PATH_BUF_SIZE )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
     CPLAssert( ! (pszFilename >= pszStaticResult && pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
@@ -185,7 +192,7 @@ const char *CPLGetDirname( const char *pszFilename )
     int         iFileStart = CPLFindFilenameStart(pszFilename);
     char       *pszStaticResult = CPLGetStaticResult();
 
-    if( iFileStart >= CPL_PATH_BUF_SIZE )
+    if( pszStaticResult == NULL || iFileStart >= CPL_PATH_BUF_SIZE )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
     CPLAssert( ! (pszFilename >= pszStaticResult && pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
@@ -266,6 +273,8 @@ const char *CPLGetBasename( const char *pszFullFilename )
     const size_t  iFileStart = CPLFindFilenameStart( pszFullFilename );
     size_t  iExtStart;
     char    *pszStaticResult = CPLGetStaticResult();
+    if( pszStaticResult == NULL )
+        return CPLStaticBufferTooSmall(pszStaticResult);
 
     CPLAssert( ! (pszFullFilename >= pszStaticResult && pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
@@ -316,6 +325,8 @@ const char *CPLGetExtension( const char *pszFullFilename )
     size_t  iFileStart = CPLFindFilenameStart( pszFullFilename );
     size_t  iExtStart;
     char    *pszStaticResult = CPLGetStaticResult();
+    if( pszStaticResult == NULL )
+        return CPLStaticBufferTooSmall(pszStaticResult);
 
     CPLAssert( ! (pszFullFilename >= pszStaticResult && pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
@@ -358,7 +369,7 @@ char *CPLGetCurrentDir()
     nPathMax = 8192;
 # endif
 
-    char *pszDirPath = (char*)CPLMalloc( nPathMax );
+    char *pszDirPath = (char*)VSI_MALLOC_VERBOSE( nPathMax );
     if ( !pszDirPath )
         return NULL;
 
@@ -388,6 +399,8 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
 
 {
     char    *pszStaticResult = CPLGetStaticResult();
+    if( pszStaticResult == NULL )
+        return CPLStaticBufferTooSmall(pszStaticResult);
 
     CPLAssert( ! (pszPath >= pszStaticResult && pszPath < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
@@ -461,6 +474,8 @@ const char *CPLFormFilename( const char * pszPath,
 
 {
     char *pszStaticResult = CPLGetStaticResult();
+    if( pszStaticResult == NULL )
+        return CPLStaticBufferTooSmall(pszStaticResult);
     const char  *pszAddedPathSep = "";
     const char  *pszAddedExtSep = "";
 
@@ -545,7 +560,9 @@ const char *CPLFormCIFilename( const char * pszPath,
     if( pszExtension != NULL )
         nLen += strlen(pszExtension);
 
-    char *pszFilename = (char *) CPLMalloc(nLen);
+    char *pszFilename = (char *) VSI_MALLOC_VERBOSE(nLen);
+    if( pszFilename == NULL )
+        return "";
 
     if( pszExtension == NULL )
         pszExtension = "";
@@ -626,6 +643,8 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
 
 {
     char *pszStaticResult = CPLGetStaticResult();
+    if( pszStaticResult == NULL )
+        return CPLStaticBufferTooSmall(pszStaticResult);
 
     CPLAssert( ! (pszProjectDir >= pszStaticResult && pszProjectDir < pszStaticResult + CPL_PATH_BUF_SIZE) );
     CPLAssert( ! (pszSecondaryFilename >= pszStaticResult && pszSecondaryFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
@@ -814,6 +833,8 @@ const char *CPLCleanTrailingSlash( const char *pszPath )
 
 {
     char       *pszStaticResult = CPLGetStaticResult();
+    if( pszStaticResult == NULL )
+        return CPLStaticBufferTooSmall(pszStaticResult);
     CPLAssert( ! (pszPath >= pszStaticResult && pszPath < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     const int iPathLength = strlen(pszPath);
