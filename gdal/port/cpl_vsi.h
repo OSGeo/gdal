@@ -196,6 +196,26 @@ void CPL_DLL *VSIMalloc2( size_t nSize1, size_t nSize2 ) CPL_WARN_UNUSED_RESULT;
 */
 void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 ) CPL_WARN_UNUSED_RESULT;
 
+
+void CPL_DLL   *VSIMallocVerbose( size_t nSize, const char* pszFile, int nLine ) CPL_WARN_UNUSED_RESULT;
+#define VSI_MALLOC_VERBOSE( size ) VSIMallocVerbose(size,__FILE__,__LINE__)
+
+void CPL_DLL   *VSIMalloc2Verbose( size_t nSize1, size_t nSize2, const char* pszFile, int nLine ) CPL_WARN_UNUSED_RESULT;
+#define VSI_MALLOC2_VERBOSE( nSize1, nSize2 ) VSIMalloc2Verbose(nSize1,nSize2,__FILE__,__LINE__)
+
+void CPL_DLL   *VSIMalloc3Verbose( size_t nSize1, size_t nSize2, size_t nSize3, const char* pszFile, int nLine ) CPL_WARN_UNUSED_RESULT;
+#define VSI_MALLOC3_VERBOSE( nSize1, nSize2, nSize3 ) VSIMalloc3Verbose(nSize1,nSize2,nSize3,__FILE__,__LINE__)
+
+void CPL_DLL   *VSICallocVerbose(  size_t nCount, size_t nSize, const char* pszFile, int nLine ) CPL_WARN_UNUSED_RESULT;
+#define VSI_CALLOC_VERBOSE( nCount, nSize ) VSICallocVerbose(nCount,nSize,__FILE__,__LINE__)
+
+void CPL_DLL   *VSIReallocVerbose(  void* pOldPtr, size_t nNewSize, const char* pszFile, int nLine ) CPL_WARN_UNUSED_RESULT;
+#define VSI_REALLOC_VERBOSE( pOldPtr, nNewSize ) VSIReallocVerbose(pOldPtr,nNewSize,__FILE__,__LINE__)
+
+char CPL_DLL   *VSIStrdupVerbose(  const char* pszStr, const char* pszFile, int nLine ) CPL_WARN_UNUSED_RESULT;
+#define VSI_STRDUP_VERBOSE( pszStr ) VSIStrdupVerbose(pszStr,__FILE__,__LINE__)
+
+
 GIntBig CPL_DLL CPLGetPhysicalRAM(void);
 GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
 
