@@ -583,6 +583,8 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
         psThreadData = GWKThreadsCreate(psOptions->papszWarpOptions,
                                         psOptions->pfnTransformer,
                                         psOptions->pTransformerArg);
+        if( psThreadData == NULL )
+            eErr = CE_Failure;
     }
 
     return eErr;

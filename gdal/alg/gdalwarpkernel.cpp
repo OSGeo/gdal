@@ -41,6 +41,7 @@
 #include "cpl_atomic_ops.h"
 #include "cpl_worker_thread_pool.h"
 #include <limits>
+#include <new>
 
 CPL_CVSID("$Id$");
 
@@ -287,7 +288,9 @@ void* GWKThreadsCreate(char** papszWarpOptions,
     if (nThreads > 128)
         nThreads = 128;
     
-    GWKThreadData* psThreadData = (GWKThreadData*)CPLCalloc(1,sizeof(GWKThreadData));
+    GWKThreadData* psThreadData = (GWKThreadData*)VSI_CALLOC_VERBOSE(1,sizeof(GWKThreadData));
+    if( psThreadData == NULL )
+        return NULL;
     
     CPLCond* hCond = NULL;
     if( nThreads )
@@ -299,11 +302,22 @@ void* GWKThreadsCreate(char** papszWarpOptions,
 /* -------------------------------------------------------------------- */
         int i;
         int bTransformerCloningSuccess = TRUE;
-        
-        psThreadData->pasThreadJob =
-                (GWKJobStruct*)CPLCalloc(sizeof(GWKJobStruct), nThreads);
+
         psThreadData->hCond = hCond;
+        psThreadData->pasThreadJob =
+                (GWKJobStruct*)VSI_CALLOC_VERBOSE(sizeof(GWKJobStruct), nThreads);
+        if( psThreadData->pasThreadJob == NULL )
+        {
+            GWKThreadsEnd(psThreadData);
+            return NULL;
+        }
+
         psThreadData->hCondMutex = CPLCreateMutex();
+        if( psThreadData->hCondMutex == NULL )
+        {
+            GWKThreadsEnd(psThreadData);
+            return NULL;
+        }
         CPLReleaseMutex(psThreadData->hCondMutex);
 
         std::vector<void*> apInitData;
@@ -320,10 +334,15 @@ void* GWKThreadsCreate(char** papszWarpOptions,
             apInitData.push_back(&(psThreadData->pasThreadJob[i]));
         }
 
-        psThreadData->poThreadPool = new CPLWorkerThreadPool();
-        psThreadData->poThreadPool->Setup(nThreads,
+        psThreadData->poThreadPool = new (std::nothrow) CPLWorkerThreadPool();
+        if( psThreadData->poThreadPool == NULL ||
+            !psThreadData->poThreadPool->Setup(nThreads,
                                           GWKThreadInitTransformer,
-                                          &apInitData[0]);
+                                          &apInitData[0]) )
+        {
+            GWKThreadsEnd(psThreadData);
+            return NULL;
+        }
 
         for(i=1;i<nThreads;i++)
         {
@@ -362,6 +381,8 @@ void* GWKThreadsCreate(char** papszWarpOptions,
 void GWKThreadsEnd(void* psThreadDataIn)
 {
     GWKThreadData* psThreadData = (GWKThreadData*)psThreadDataIn;
+    if( psThreadData == NULL )
+        return;
     if( psThreadData->poThreadPool )
     {
         int nThreads = psThreadData->poThreadPool->GetThreadCount();
@@ -370,9 +391,9 @@ void GWKThreadsEnd(void* psThreadDataIn)
             if( psThreadData->pasThreadJob[i].pTransformerArg )
                 GDALDestroyTransformer(psThreadData->pasThreadJob[i].pTransformerArg);
         }
-        CPLFree(psThreadData->pasThreadJob);
         delete psThreadData->poThreadPool;
     }
+    CPLFree(psThreadData->pasThreadJob);
     if( psThreadData->hCond )
         CPLDestroyCond(psThreadData->hCond);
     if( psThreadData->hCondMutex )
@@ -4669,7 +4690,7 @@ static void GWKAverageOrModeThread( void* pData)
             {
                 nBins = 65536;
             }
-            panVals = (int*) VSIMalloc(nBins * sizeof(int));
+            panVals = (int*) VSI_MALLOC_VERBOSE(nBins * sizeof(int));
             if( panVals == NULL )
                 return;
         }
@@ -4679,8 +4700,8 @@ static void GWKAverageOrModeThread( void* pData)
 
             if ( nSrcXSize > 0 && nSrcYSize > 0 )
             {
-                pafVals = (float*) VSIMalloc3(nSrcXSize, nSrcYSize, sizeof(float));
-                panSums = (int*) VSIMalloc3(nSrcXSize, nSrcYSize, sizeof(int));
+                pafVals = (float*) VSI_MALLOC3_VERBOSE(nSrcXSize, nSrcYSize, sizeof(float));
+                panSums = (int*) VSI_MALLOC3_VERBOSE(nSrcXSize, nSrcYSize, sizeof(int));
                 if( pafVals == NULL || panSums == NULL )
                 {
                     VSIFree(pafVals);
