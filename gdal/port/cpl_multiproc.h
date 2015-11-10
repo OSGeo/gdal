@@ -216,12 +216,14 @@ class CPL_DLL CPLLockHolder
 
 CPL_C_START
 void CPL_DLL * CPLGetTLS( int nIndex );
+void CPL_DLL * CPLGetTLSEx( int nIndex, int* pbMemoryErrorOccured );
 void CPL_DLL CPLSetTLS( int nIndex, void *pData, int bFreeOnExit );
 
 /* Warning : the CPLTLSFreeFunc must not in any case directly or indirectly */
 /* use or fetch any TLS data, or a terminating thread will hang ! */
 typedef void (*CPLTLSFreeFunc)( void* pData );
 void CPL_DLL CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree );
+void CPL_DLL CPLSetTLSWithFreeFuncEx( int nIndex, void *pData, CPLTLSFreeFunc pfnFree, int* pbMemoryErrorOccured );
 
 void CPL_DLL CPLCleanupTLS( void );
 CPL_C_END
