@@ -40,7 +40,9 @@ CPL_CVSID("$Id$");
 /*                               Usage()                                */
 /* ******************************************************************** */
 
-static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
+static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE) CPL_NO_RETURN;
+
+static void Usage(const char* pszErrorMsg, int bShort)
 
 {
     int iDr;

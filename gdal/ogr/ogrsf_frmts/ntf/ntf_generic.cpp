@@ -223,7 +223,7 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
                           papszFullAttList = 
                               CSLAddString( papszFullAttList, 
                                             papszTypes[iAtt] );
-                      else
+                      else if( poAttDesc != NULL )
                           poClass->SetMultiple( poAttDesc->val_type );
                   }
 

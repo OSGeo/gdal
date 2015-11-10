@@ -139,6 +139,14 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 }
             }
 
+            // To make Coverity happy. Shouldn't happen by design
+            if( pabySrcBlock == NULL )
+            {
+                CPLAssert(FALSE);
+                eErr = CE_Failure;
+                break;
+            }
+
             nSrcByteOffset = ((iSrcY-nLBlockY*nBlockYSize)*nBlockXSize + nXOff)
                 * nBandDataSize;
 
@@ -472,6 +480,14 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     }*/
                 }
 
+                // To make Coverity happy. Shouldn't happen by design
+                if( pabyDstBlock == NULL )
+                {
+                    CPLAssert(FALSE);
+                    eErr = CE_Failure;
+                    break;
+                }
+
     /* -------------------------------------------------------------------- */
     /*      Copy over this pixel of data.                                   */
     /* -------------------------------------------------------------------- */
@@ -593,6 +609,13 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     pabySrcBlock = (GByte *) poBlock->GetDataRef();
                 }
 
+                // To make Coverity happy. Shouldn't happen by design
+                if( pabySrcBlock == NULL )
+                {
+                    CPLAssert(FALSE);
+                    eErr = CE_Failure;
+                    break;
+                }
     /* -------------------------------------------------------------------- */
     /*      Copy over this pixel of data.                                   */
     /* -------------------------------------------------------------------- */
