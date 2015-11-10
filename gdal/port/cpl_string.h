@@ -61,6 +61,7 @@
 CPL_C_START
 
 char CPL_DLL **CSLAddString(char **papszStrList, const char *pszNewString) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL **CSLAddStringMayFail(char **papszStrList, const char *pszNewString) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CSLCount(char **papszStrList);
 const char CPL_DLL *CSLGetField( char **, int );
 void CPL_DLL CPL_STDCALL CSLDestroy(char **papszStrList);

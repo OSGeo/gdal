@@ -69,26 +69,44 @@ CPL_CVSID("$Id$");
  **********************************************************************/
 char **CSLAddString(char **papszStrList, const char *pszNewString)
 {
+    char** papszRet = CSLAddStringMayFail(papszStrList, pszNewString);
+    if( papszRet == NULL && pszNewString != NULL )
+        abort();
+    return papszRet;
+}
+
+char **CSLAddStringMayFail(char **papszStrList, const char *pszNewString)
+{
     if (pszNewString == NULL)
         return papszStrList;    /* Nothing to do!*/
 
     int nItems=0;
+    
+    char* pszDup = VSI_STRDUP_VERBOSE(pszNewString);
+    if( pszDup == NULL )
+        return NULL;
 
     /* Allocate room for the new string */
+    char** papszStrListNew;
     if (papszStrList == NULL)
-        papszStrList = reinterpret_cast<char**>(CPLCalloc(2,sizeof(char*)));
+        papszStrListNew = reinterpret_cast<char**>(VSI_CALLOC_VERBOSE(2,sizeof(char*)));
     else
     {
         nItems = CSLCount(papszStrList);
-        papszStrList = reinterpret_cast<char**>(
-            CPLRealloc(papszStrList, (nItems+2)*sizeof(char*)));
+        papszStrListNew = reinterpret_cast<char**>(
+            VSI_REALLOC_VERBOSE(papszStrList, (nItems+2)*sizeof(char*)));
+    }
+    if( papszStrListNew == NULL )
+    {
+        VSIFree(pszDup);
+        return NULL;
     }
 
     /* Copy the string in the list */
-    papszStrList[nItems] = CPLStrdup(pszNewString);
-    papszStrList[nItems+1] = NULL;
+    papszStrListNew[nItems] = pszDup;
+    papszStrListNew[nItems+1] = NULL;
 
-    return papszStrList;
+    return papszStrListNew;
 }
 
 /************************************************************************/

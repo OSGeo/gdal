@@ -96,10 +96,15 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /*      Fetch the table, and allocate the thread-local pointer to it    */
 /*      if there isn't already one.                                     */
 /* -------------------------------------------------------------------- */
-    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
+    int bMemoryError;
+    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError );
+    if( bMemoryError )
+        return NULL;
     if( ppsCSVTableList == NULL )
     {
-        ppsCSVTableList = (CSVTable **) CPLCalloc(1,sizeof(CSVTable*));
+        ppsCSVTableList = (CSVTable **) VSI_CALLOC_VERBOSE(1,sizeof(CSVTable*));
+        if( ppsCSVTableList == NULL )
+            return NULL;
         CPLSetTLSWithFreeFunc( CTLS_CSVTABLEPTR, ppsCSVTableList, CSVFreeTLS );
     }
 
@@ -131,10 +136,21 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /*      Create an information structure about this table, and add to    */
 /*      the front of the list.                                          */
 /* -------------------------------------------------------------------- */
-    CSVTable *psTable = (CSVTable *) CPLCalloc(sizeof(CSVTable),1);
+    CSVTable *psTable = (CSVTable *) VSI_CALLOC_VERBOSE(sizeof(CSVTable),1);
+    if( psTable == NULL )
+    {
+        VSIFClose(fp);
+        return NULL;
+    }
 
     psTable->fp = fp;
-    psTable->pszFilename = CPLStrdup( pszFilename );
+    psTable->pszFilename = VSI_STRDUP_VERBOSE( pszFilename );
+    if( psTable->pszFilename == NULL )
+    {
+        VSIFree(psTable);
+        VSIFClose(fp);
+        return NULL;
+    }
     psTable->bNonUniqueKey = FALSE; /* as far as we know now */
     psTable->psNext = *ppsCSVTableList;
 
@@ -221,7 +237,8 @@ void CSVDeaccess( const char * pszFilename )
 /*      Fetch the table, and allocate the thread-local pointer to it    */
 /*      if there isn't already one.                                     */
 /* -------------------------------------------------------------------- */
-    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
+    int bMemoryError;
+    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError );
 
     CSVDeaccessInternal(ppsCSVTableList, TRUE, pszFilename);
 }
@@ -240,7 +257,9 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
 {
     char        **papszRetList = NULL;
 
-    char        *pszToken = (char *) CPLCalloc(10,1);
+    char        *pszToken = (char *) VSI_CALLOC_VERBOSE(10,1);
+    if( pszToken == NULL )
+        return NULL;
     int         nTokenMax = 10;
     int         nTokenLen;
 
@@ -277,7 +296,14 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
             if( nTokenLen >= nTokenMax-2 )
             {
                 nTokenMax = nTokenMax * 2 + 10;
-                pszToken = (char *) CPLRealloc( pszToken, nTokenMax );
+                char* pszTokenNew = (char *) VSI_REALLOC_VERBOSE( pszToken, nTokenMax );
+                if( pszTokenNew == NULL )
+                {
+                    VSIFree(pszToken);
+                    CSLDestroy(papszRetList);
+                    return NULL;
+                }
+                pszToken = pszTokenNew;
             }
 
             pszToken[nTokenLen] = *pszString;
@@ -285,21 +311,32 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
         }
 
         pszToken[nTokenLen] = '\0';
-        papszRetList = CSLAddString( papszRetList, pszToken );
+        char** papszRetListNew = CSLAddStringMayFail( papszRetList, pszToken );
+        if( papszRetListNew == NULL )
+        {
+            VSIFree(pszToken);
+            CSLDestroy(papszRetList);
+            return NULL;
+        }
+        papszRetList = papszRetListNew;
 
         /* If the last token is an empty token, then we have to catch
          * it now, otherwise we won't reenter the loop and it will be lost. 
          */
         if ( *pszString == '\0' && *(pszString-1) == chDelimiter )
         {
-            papszRetList = CSLAddString( papszRetList, "" );
+            papszRetListNew = CSLAddStringMayFail( papszRetList, "" );
+            if( papszRetListNew == NULL )
+            {
+                VSIFree(pszToken);
+                CSLDestroy(papszRetList);
+                return NULL;
+            }
+            papszRetList = papszRetListNew;
         }
     }
 
-    if( papszRetList == NULL )
-        papszRetList = (char **) CPLCalloc(sizeof(char *),1);
-
-    CPLFree( pszToken );
+    VSIFree( pszToken );
 
     return papszRetList;
 }
@@ -374,7 +411,9 @@ static void CSVIngest( const char *pszFilename )
     }
     VSIRewind( psTable->fp );
 
-    psTable->pszRawData = (char *) CPLMalloc(nFileLen+1);
+    psTable->pszRawData = (char *) VSI_MALLOC_VERBOSE(nFileLen+1);
+    if( psTable->pszRawData == NULL )
+        return;
     if( (int) VSIFRead( psTable->pszRawData, 1, nFileLen, psTable->fp ) 
         != nFileLen )
     {
@@ -398,7 +437,9 @@ static void CSVIngest( const char *pszFilename )
             nMaxLineCount++;
     }
 
-    psTable->papszLines = (char **) CPLCalloc(sizeof(char*),nMaxLineCount);
+    psTable->papszLines = (char **) VSI_CALLOC_VERBOSE(sizeof(char*),nMaxLineCount);
+    if( psTable->papszLines == NULL )
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of record pointers into the raw data buffer        */
@@ -422,7 +463,9 @@ static void CSVIngest( const char *pszFilename )
 /*      ascending order so that binary searches can be done on the      */
 /*      array.                                                          */
 /* -------------------------------------------------------------------- */
-    psTable->panLineIndex = (int *) CPLMalloc(sizeof(int)*psTable->nLineCount);
+    psTable->panLineIndex = (int *) VSI_MALLOC_VERBOSE(sizeof(int)*psTable->nLineCount);
+    if( psTable->panLineIndex == NULL )
+        return;
     for( int i = 0; i < psTable->nLineCount; i++ )
     {
         psTable->panLineIndex[i] = atoi(psTable->papszLines[i]);
@@ -1024,7 +1067,8 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
 /*      Do we already have this file accessed?  If so, just return      */
 /*      the existing path without any further probing.                  */
 /* -------------------------------------------------------------------- */
-    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
+    int bMemoryError;
+    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError );
     if( ppsCSVTableList != NULL )
     {
         CSVTable *psTable;
@@ -1051,12 +1095,15 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
 /*      Otherwise we need to look harder for it.                        */
 /* -------------------------------------------------------------------- */
     DefaultCSVFileNameTLS* pTLSData =
-            (DefaultCSVFileNameTLS *) CPLGetTLS( CTLS_CSVDEFAULTFILENAME );
-    if (pTLSData == NULL)
+            (DefaultCSVFileNameTLS *) CPLGetTLSEx( CTLS_CSVDEFAULTFILENAME, &bMemoryError );
+    if (pTLSData == NULL && !bMemoryError)
     {
-        pTLSData = (DefaultCSVFileNameTLS*) CPLCalloc(1, sizeof(DefaultCSVFileNameTLS));
-        CPLSetTLS( CTLS_CSVDEFAULTFILENAME, pTLSData, TRUE );
+        pTLSData = (DefaultCSVFileNameTLS*) VSI_CALLOC_VERBOSE(1, sizeof(DefaultCSVFileNameTLS));
+        if( pTLSData )
+            CPLSetTLS( CTLS_CSVDEFAULTFILENAME, pTLSData, TRUE );
     }
+    if( pTLSData == NULL )
+        return "/not_existing_dir/not_existing_path";
 
     const char *pszResult = CPLFindFile( "epsg_csv", pszBasename );
 
