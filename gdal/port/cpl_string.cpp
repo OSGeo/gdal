@@ -384,39 +384,37 @@ char **CSLLoad(const char *pszFname)
  * Returns the number of lines written, or 0 if the file could not
  * be written.
  **********************************************************************/
-int  CSLSave(char **papszStrList, const char *pszFname)
+int CSLSave(char **papszStrList, const char *pszFname)
 {
-    VSILFILE *fp;
-    int     nLines = 0;
+    if( papszStrList == NULL )
+        return 0;
 
-    if (papszStrList)
+    VSILFILE *fp = VSIFOpenL( pszFname, "wt" );
+    if (fp == NULL)
     {
-        if ((fp = VSIFOpenL(pszFname, "wt")) != NULL)
-        {
-            while(*papszStrList != NULL)
-            {
-                if( VSIFPrintfL( fp, "%s\n", *papszStrList ) < 1 )
-                {
-                    CPLError( CE_Failure, CPLE_FileIO,
-                    "CSLSave(\"%s\") failed: unable to write to output file.",
-                              pszFname );
-                    break;  /* A Problem happened... abort */
-                }
-
-                ++nLines;
-                ++papszStrList;
-            }
-
-            VSIFCloseL(fp);
-        }
-        else
-        {
-            /* Unable to open file */
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "CSLSave(\"%s\") failed: unable to open output file.",
-                      pszFname );
-        }
+        // Unable to open file.
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "CSLSave(\"%s\") failed: unable to open output file.",
+                  pszFname );
+        return 0;
     }
+
+    int nLines = 0;
+    while( *papszStrList != NULL )
+    {
+        if( VSIFPrintfL( fp, "%s\n", *papszStrList ) < 1 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "CSLSave(\"%s\") failed: unable to write to output file.",
+                      pszFname );
+            break;  // A Problem happened... abort.
+        }
+
+        ++nLines;
+        ++papszStrList;
+    }
+
+    VSIFCloseL(fp);
 
     return nLines;
 }
@@ -465,15 +463,15 @@ int  CSLPrint(char **papszStrList, FILE *fpOut)
 char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
                         char **papszNewLines)
 {
-    int     nSrcLines, nDstLines, nToInsert;
-    char    **ppszSrc, **ppszDst;
+    if( papszNewLines == NULL )
+        return papszStrList;  // Nothing to do!
 
-    if (papszNewLines == NULL ||
-        ( nToInsert = CSLCount(papszNewLines) ) == 0)
-        return papszStrList;    /* Nothing to do!*/
+    const int nToInsert = CSLCount(papszNewLines);
+    if( nToInsert == 0 )
+        return papszStrList;  // Nothing to do!
 
-    nSrcLines = CSLCount(papszStrList);
-    nDstLines = nSrcLines + nToInsert;
+    const int nSrcLines = CSLCount(papszStrList);
+    const int nDstLines = nSrcLines + nToInsert;
 
     /* Allocate room for the new strings */
     papszStrList = reinterpret_cast<char**>(
@@ -491,8 +489,8 @@ char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
     if (nInsertAtLineNo == -1 || nInsertAtLineNo > nSrcLines)
         nInsertAtLineNo = nSrcLines;
 
-    ppszSrc = papszStrList + nSrcLines;
-    ppszDst = papszStrList + nDstLines;
+    char **ppszSrc = papszStrList + nSrcLines;
+    char **ppszDst = papszStrList + nDstLines;
 
     for (int i=nSrcLines; i>=nInsertAtLineNo; --i)
     {
@@ -1518,7 +1516,7 @@ const char *CSLFetchNameValueDef( char **papszStrList,
 
 {
     const char *pszResult = CSLFetchNameValue( papszStrList, pszName );
-    if( pszResult )
+    if( pszResult != NULL )
         return pszResult;
 
     return pszDefault;
@@ -1543,14 +1541,14 @@ const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
     if (papszStrList == NULL || pszName == NULL)
         return NULL;
 
-    size_t nLen = strlen(pszName);
-    while(*papszStrList != NULL)
+    const size_t nLen = strlen(pszName);
+    while( *papszStrList != NULL )
     {
         if (EQUALN(*papszStrList, pszName, nLen)
             && ( (*papszStrList)[nLen] == '=' || 
                  (*papszStrList)[nLen] == ':' ) )
         {
-            return (*papszStrList)+nLen+1;
+            return (*papszStrList) + nLen + 1;
         }
         ++papszStrList;
     }
@@ -1740,7 +1738,7 @@ char **CSLSetNameValue(char **papszList,
                        const char *pszName, const char *pszValue)
 {
 
-    if (pszName == NULL )
+    if( pszName == NULL )
         return papszList;
 
     const size_t nLen = strlen(pszName);
@@ -1754,7 +1752,7 @@ char **CSLSetNameValue(char **papszList,
             /* Found it!
              * Change the value... make sure to keep the ':' or '='
              */
-            char cSep = (*papszPtr)[nLen];
+            const char cSep = (*papszPtr)[nLen];
 
             CPLFree(*papszPtr);
 

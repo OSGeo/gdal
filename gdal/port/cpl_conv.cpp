@@ -242,18 +242,16 @@ void * CPLRealloc( void * pData, size_t nNewSize )
 char *CPLStrdup( const char * pszString )
 
 {
-    char        *pszReturn;
-
     if( pszString == NULL )
         pszString = "";
 
-    pszReturn = (char *) CPLMalloc(strlen(pszString)+1);
+    char *pszReturn
+        = reinterpret_cast<char *>( CPLMalloc(strlen(pszString) + 1 ) );
     if( pszReturn == NULL )
     {
         CPLError( CE_Fatal, CPLE_OutOfMemory,
                   "CPLStrdup(): Out of memory allocating %ld bytes.\n",
-                  (long) strlen(pszString) );
-        
+                  static_cast<long>( strlen(pszString) ) );
     }
 
     strcpy( pszReturn, pszString );
