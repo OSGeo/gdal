@@ -2319,7 +2319,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
     /*else if (EQUAL(angUnitName, "microradian"))
         GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,
                    9109);*/
-    else if(angUnitName)
+    else
     {
         GTIFKeySet(psGTIF, GeogCitationGeoKey, TYPE_ASCII, 0, 
                    angUnitName ); // it may be rewritten if the gcs is userdefined 

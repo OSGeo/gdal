@@ -418,7 +418,8 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             CPLString osBoxName;
 
             char *pszXML = (char *) oBox.ReadBoxData();
-            if( STARTS_WITH(pszXML, "<GDALMultiDomainMetadata>") )            {
+            if( pszXML != NULL && STARTS_WITH(pszXML, "<GDALMultiDomainMetadata>") )
+            {
                 if( pszGDALMultiDomainMetadata == NULL )
                 {
                     pszGDALMultiDomainMetadata = pszXML;
@@ -429,7 +430,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                     CPLDebug("GDALJP2", "Too many GDAL metadata boxes. Ignoring this one");
                 }
             }
-            else
+            else if( pszXML != NULL )
             {
                 osBoxName.Printf( "BOX_%d", iBox++ );
 

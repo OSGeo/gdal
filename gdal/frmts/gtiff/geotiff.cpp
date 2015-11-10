@@ -2171,7 +2171,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             pabyLocalSrcDataK0 + (k * nBlockXSize + nXOffsetInBlock) * nBandsPerBlockDTSize;
 
                         if( bUseContigImplementation && nBands == nBandCount &&
-                            nPixelSpace == nBufDTSize * nBands )
+                            nPixelSpace == nBandsPerBlockDTSize )
                         {
                             REACHED(31);
                             GDALCopyWords(pabyLocalSrcData,

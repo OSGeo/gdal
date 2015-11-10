@@ -1810,7 +1810,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
     if ( EQUAL(pszFixWktConfig,"YES") )
         pszFixWktConfig = "DATUM";
 
-    if( !EQUAL(pszFixWktConfig, "NO") && poDatum != NULL )
+    if( !EQUAL(pszFixWktConfig, "NO") && poDatum != NULL && pszDatumOrig != NULL )
     { 
         CPLDebug( "OGR_ESRI", 
                   "morphFromESRI() looking for missing TOWGS84, datum=%s, config=%s",
@@ -2360,6 +2360,8 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
     }
 
     long searchCode = -1;
+    if( unitsName == NULL )
+        unitsName = "";
 
     /* Find state plane prj str by pcs code only */
     if( code == 0 && !datumName && pcsCode != 32767 )
@@ -2478,9 +2480,9 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, dou
         return importFromDict( "esri_Wisconsin_extra.wkt", codeS);
     }
     double* tableWISCRS;
-    if(STARTS_WITH_CI(prjName, "Lambert_Conformal_Conic"))
+    if(prjName != NULL && STARTS_WITH_CI(prjName, "Lambert_Conformal_Conic"))
         tableWISCRS = apszWISCRS_LCC_meter;
-    else if(EQUAL(prjName, SRS_PT_TRANSVERSE_MERCATOR))
+    else if(prjName != NULL && EQUAL(prjName, SRS_PT_TRANSVERSE_MERCATOR))
         tableWISCRS = apszWISCRS_TM_meter;
     else
         return OGRERR_FAILURE;
@@ -2495,7 +2497,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, dou
     }
     if(k > 0)
     {
-        if(!EQUAL(unitsName, "meters"))
+        if(unitsName != NULL && !EQUAL(unitsName, "meters"))
             k += 100;
         char codeS[10];
         sprintf(codeS, "%d", k);

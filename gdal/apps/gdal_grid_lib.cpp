@@ -863,6 +863,8 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      End                                                             */
 /* -------------------------------------------------------------------- */
+    GDALGridOptionsFree(psOptionsToFree);
+
     if( eErr == CE_None )
         return hDstDS;
     else
