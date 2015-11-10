@@ -901,7 +901,7 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         int nFullResYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
 
         void * pChunk = 
-            VSIMalloc3((GDALGetDataTypeSize(eWrkDataType)/8),
+            VSI_MALLOC3_VERBOSE((GDALGetDataTypeSize(eWrkDataType)/8),
                         nFullResXSizeQueried, nFullResYSizeQueried );
         GByte * pabyChunkNoDataMask = NULL;
 
@@ -916,15 +916,13 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         if (bUseNoDataMask)
         {
             pabyChunkNoDataMask = (GByte *) 
-                (GByte*) VSIMalloc2( nFullResXSizeQueried, nFullResYSizeQueried );
+                (GByte*) VSI_MALLOC2_VERBOSE( nFullResXSizeQueried, nFullResYSizeQueried );
         }
         if( pChunk == NULL || (bUseNoDataMask && pabyChunkNoDataMask == NULL) )
         {
             GDALClose(poMEMDS);
             CPLFree(pChunk);
             CPLFree(pabyChunkNoDataMask);
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Out of memory in RasterIO()." );
             return CE_Failure;
         }
 
@@ -1312,7 +1310,7 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         int nFullResYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
 
         void * pChunk = 
-            VSIMalloc3((GDALGetDataTypeSize(eWrkDataType)/8) * nBandCount,
+            VSI_MALLOC3_VERBOSE((GDALGetDataTypeSize(eWrkDataType)/8) * nBandCount,
                         nFullResXSizeQueried, nFullResYSizeQueried );
         GByte * pabyChunkNoDataMask = NULL;
 
@@ -1327,15 +1325,13 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         if (bUseNoDataMask)
         {
             pabyChunkNoDataMask = (GByte *) 
-                (GByte*) VSIMalloc2( nFullResXSizeQueried, nFullResYSizeQueried );
+                (GByte*) VSI_MALLOC2_VERBOSE( nFullResXSizeQueried, nFullResYSizeQueried );
         }
         if( pChunk == NULL || (bUseNoDataMask && pabyChunkNoDataMask == NULL) )
         {
             GDALClose(poMEMDS);
             CPLFree(pChunk);
             CPLFree(pabyChunkNoDataMask);
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Out of memory in RasterIO()." );
             return CE_Failure;
         }
 
@@ -3436,13 +3432,9 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     if( bInterleave)
         nPixelSize *= nBandCount;
 
-    void *pSwathBuf = VSIMalloc3(nSwathCols, nSwathLines, nPixelSize );
+    void *pSwathBuf = VSI_MALLOC3_VERBOSE(nSwathCols, nSwathLines, nPixelSize );
     if( pSwathBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                "Failed to allocate %d*%d*%d byte swath buffer in\n"
-                "GDALDatasetCopyWholeRaster()",
-                nSwathCols, nSwathLines, nPixelSize );
         return CE_Failure;
     }
 
@@ -3690,13 +3682,9 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
 
     int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
 
-    void *pSwathBuf = VSIMalloc3(nSwathCols, nSwathLines, nPixelSize );
+    void *pSwathBuf = VSI_MALLOC3_VERBOSE(nSwathCols, nSwathLines, nPixelSize );
     if( pSwathBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                "Failed to allocate %d*%d*%d byte swath buffer in\n"
-                "GDALRasterBandCopyWholeRaster()",
-                nSwathCols, nSwathLines, nPixelSize );
         return CE_Failure;
     }
 

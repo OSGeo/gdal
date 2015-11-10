@@ -911,12 +911,9 @@ CPLErr GDALRasterBlock::Internalize()
 
     if( pNewData == NULL )
     {
-        pNewData = VSIMalloc( nSizeInBytes );
+        pNewData = VSI_MALLOC_VERBOSE( nSizeInBytes );
         if( pNewData == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                    "GDALRasterBlock::Internalize : Out of memory allocating %d bytes.",
-                    nSizeInBytes);
             return( CE_Failure );
         }
     }

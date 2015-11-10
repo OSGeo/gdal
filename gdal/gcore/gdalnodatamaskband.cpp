@@ -115,11 +115,9 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
     GByte *pabySrc;
     CPLErr eErr;
 
-    pabySrc = (GByte *) VSIMalloc3( GDALGetDataTypeSize(eWrkDT)/8, nBlockXSize, nBlockYSize );
+    pabySrc = (GByte *) VSI_MALLOC3_VERBOSE( GDALGetDataTypeSize(eWrkDT)/8, nBlockXSize, nBlockYSize );
     if (pabySrc == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALNoDataMaskBand::IReadBlock: Out of memory for buffer." );
         return CE_Failure;
     }
 

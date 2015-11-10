@@ -224,17 +224,22 @@ GByte *GDALJP2Box::ReadBoxData()
 {
     GIntBig nDataLength = GetDataLength();
     if( nDataLength > 100 * 1024 * 1024 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too big box : " CPL_FRMT_GIB " bytes",
+                 nDataLength);
         return NULL;
+    }
 
     VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET );
     
-    char *pszData = (char *) VSIMalloc((int)nDataLength + 1);
+    char *pszData = (char *) VSI_MALLOC_VERBOSE((int)nDataLength + 1);
     if( pszData == NULL )
         return NULL;
 
     if( (GIntBig) VSIFReadL( pszData, 1, (int)nDataLength, fpVSIL ) 
         != nDataLength )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot read box content");
         CPLFree( pszData );
         return NULL;
     }

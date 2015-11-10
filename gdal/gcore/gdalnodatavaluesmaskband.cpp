@@ -128,11 +128,9 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
     CPLErr eErr;
 
     int nBands = poDS->GetRasterCount();
-    pabySrc = (GByte *) VSIMalloc3( nBands * GDALGetDataTypeSize(eWrkDT)/8, nBlockXSize, nBlockYSize );
+    pabySrc = (GByte *) VSI_MALLOC3_VERBOSE( nBands * GDALGetDataTypeSize(eWrkDT)/8, nBlockXSize, nBlockYSize );
     if (pabySrc == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALNoDataValuesMaskBand::IReadBlock: Out of memory for buffer." );
         return CE_Failure;
     }
 
