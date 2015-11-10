@@ -62,12 +62,19 @@ typedef struct
     CPLCond             *hCond;
 } CPLWorkerThread;
 
+typedef enum
+{
+    CPLWTS_OK,
+    CPLWTS_STOP,
+    CPLWTS_ERROR
+} CPLWorkerThreadState;
+
 class CPL_DLL CPLWorkerThreadPool
 {
         std::vector<CPLWorkerThread> aWT;
         CPLCond* hCond;
         CPLMutex* hMutex;
-        volatile int bStop;
+        volatile CPLWorkerThreadState eState;
         CPLList* psJobQueue;
         volatile int nPendingJobs;
 
@@ -83,11 +90,11 @@ class CPL_DLL CPLWorkerThreadPool
         CPLWorkerThreadPool();
        ~CPLWorkerThreadPool();
 
-        int  Setup(int nThreads,
+        bool Setup(int nThreads,
                    CPLThreadFunc pfnInitFunc,
                    void** pasInitData);
-        void SubmitJob(CPLThreadFunc pfnFunc, void* pData);
-        void SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData);
+        bool SubmitJob(CPLThreadFunc pfnFunc, void* pData);
+        bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData);
         void WaitCompletion(int nMaxRemainingJobs = 0);
 
         int GetThreadCount() const { return (int)aWT.size(); }
