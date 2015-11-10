@@ -51,6 +51,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
+#include <new>
 
 CPL_CVSID("$Id$");
 
@@ -499,7 +500,12 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
     }
 
     const int bReadOnly = strcmp(pszAccess, "rb") == 0 || strcmp(pszAccess, "r") == 0;
-    VSIUnixStdioHandle *poHandle = new VSIUnixStdioHandle(this, fp, bReadOnly );
+    VSIUnixStdioHandle *poHandle = new(std::nothrow) VSIUnixStdioHandle(this, fp, bReadOnly );
+    if( poHandle == NULL )
+    {
+        fclose(fp);
+        return NULL;
+    }
 
     errno = nError;
 
