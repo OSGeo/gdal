@@ -2611,8 +2611,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
     if( hDstDataset == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to create dataset %s %d\n%s", pszDest,
-                 CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
+                 "Unable to create dataset %s", pszDest );
         GDALDEMProcessingOptionsFree(psOptionsToFree);
         CPLFree(pData);
         return NULL;
