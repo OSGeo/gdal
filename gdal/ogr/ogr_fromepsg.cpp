@@ -1643,6 +1643,7 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
         break;
 
       case 9834: /* Lambert Cylindrical Equal Area (Spherical) bug #2659 */
+      case 9835: /* Lambert Cylindrical Equal Area (Ellipsoidal) */
         poSRS->SetCEA( OGR_FP( StdParallel1Lat ), OGR_FP( NatOriginLong ), 
                        OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
         break;
