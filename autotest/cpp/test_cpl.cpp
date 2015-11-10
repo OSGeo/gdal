@@ -710,4 +710,86 @@ namespace tut
         ensure( "10.2", EQUAL(szDigest, "a3051520761ed3cb43876b35ce2dd93ac5b332dc3bad898bb32086f7ac71ffc1") );
     }
 
+    template<>
+    template<>
+    void object::test<11>()
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+
+        // The following tests will fail because of overflows
+        CPLErrorReset();
+        ensure( "11.1", VSIMalloc2( ~(size_t)0, ~(size_t)0 ) == NULL );
+        ensure( "11.1bis", CPLGetLastErrorType() != CE_None );
+
+        CPLErrorReset();
+        ensure( "11.2", VSIMalloc3( 1, ~(size_t)0, ~(size_t)0 ) == NULL );
+        ensure( "11.2bis", CPLGetLastErrorType() != CE_None );
+
+        CPLErrorReset();
+        ensure( "11.3", VSIMalloc3( ~(size_t)0, 1, ~(size_t)0 ) == NULL );
+        ensure( "11.6bis", CPLGetLastErrorType() != CE_None );
+
+        CPLErrorReset();
+        ensure( "11.4", VSIMalloc3( ~(size_t)0, ~(size_t)0, 1 ) == NULL );
+        ensure( "11.4bis", CPLGetLastErrorType() != CE_None );
+
+        if( !CSLTestBoolean(CPLGetConfigOption("SKIP_MEM_INTENSIVE_TEST", "NO")) )
+        {
+            // The following tests will fail because such allocations cannot succeed
+            CPLErrorReset();
+            ensure( "11.6", VSIMalloc( ~(size_t)0 ) == NULL );
+            ensure( "11.6bis", CPLGetLastErrorType() == CE_None ); /* no error reported */
+
+            CPLErrorReset();
+            ensure( "11.7", VSIMalloc2( ~(size_t)0, 1 ) == NULL );
+            ensure( "11.7bis", CPLGetLastErrorType() != CE_None );
+
+            CPLErrorReset();
+            ensure( "11.8", VSIMalloc3( ~(size_t)0, 1, 1 ) == NULL );
+            ensure( "11.8bis", CPLGetLastErrorType() != CE_None );
+
+            CPLErrorReset();
+            ensure( "11.9", VSICalloc( ~(size_t)0, 1 ) == NULL );
+            ensure( "11.9bis", CPLGetLastErrorType() == CE_None ); /* no error reported */
+
+            CPLErrorReset();
+            ensure( "11.10", VSIRealloc( NULL, ~(size_t)0 ) == NULL );
+            ensure( "11.10bis", CPLGetLastErrorType() == CE_None ); /* no error reported */
+
+            CPLErrorReset();
+            ensure( "11.11", VSI_MALLOC_VERBOSE( ~(size_t)0 ) == NULL );
+            ensure( "11.11bis", CPLGetLastErrorType() != CE_None );
+
+            CPLErrorReset();
+            ensure( "11.12", VSI_MALLOC2_VERBOSE( ~(size_t)0, 1 ) == NULL );
+            ensure( "11.12bis", CPLGetLastErrorType() != CE_None );
+
+            CPLErrorReset();
+            ensure( "11.13", VSI_MALLOC3_VERBOSE( ~(size_t)0, 1, 1 ) == NULL );
+            ensure( "11.13bis", CPLGetLastErrorType() != CE_None );
+
+            CPLErrorReset();
+            ensure( "11.14", VSI_CALLOC_VERBOSE( ~(size_t)0, 1 ) == NULL );
+            ensure( "11.14bis", CPLGetLastErrorType() != CE_None );
+
+            CPLErrorReset();
+            ensure( "11.15", VSI_REALLOC_VERBOSE( NULL, ~(size_t)0 ) == NULL );
+            ensure( "11.15bis", CPLGetLastErrorType() != CE_None );
+        }
+
+        CPLPopErrorHandler();
+
+        // The following allocs will return NULL because of 0 byte alloc
+        CPLErrorReset();
+        ensure( "11.16", VSIMalloc2( 0, 1 ) == NULL );
+        ensure( "11.16bis", CPLGetLastErrorType() == CE_None );
+        ensure( "11.17", VSIMalloc2( 1, 0 ) == NULL );
+
+        CPLErrorReset();
+        ensure( "11.18", VSIMalloc3( 0, 1, 1 ) == NULL );
+        ensure( "11.18bis", CPLGetLastErrorType() == CE_None );
+        ensure( "11.19", VSIMalloc3( 1, 0, 1 ) == NULL );
+        ensure( "11.20", VSIMalloc3( 1, 1, 0 ) == NULL );
+    }
+
 } // namespace tut
