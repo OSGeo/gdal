@@ -79,7 +79,9 @@ static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, CPL_UNUSED vo
 
 static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
-    char* pszMsgTmp = CPLStrdup(pszMsg);
+    char* pszMsgTmp = VSIStrdup(pszMsg);
+    if( pszMsgTmp == NULL )
+        return;
     int nLen = (int)strlen(pszMsgTmp);
     while( nLen > 0 && pszMsgTmp[nLen-1] == '\n' )
     {
@@ -388,7 +390,10 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             return eErr;
     }
 
-    poGDS->bEnoughMemoryToLoadOtherBands = poGDS->PreloadBlocks(this, nXOff, nYOff, nXSize, nYSize, 0, NULL);
+    int nRet = poGDS->PreloadBlocks(this, nXOff, nYOff, nXSize, nYSize, 0, NULL);
+    if( nRet < 0 )
+        return CE_Failure;
+    poGDS->bEnoughMemoryToLoadOtherBands = nRet;
 
     CPLErr eErr = GDALPamRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, eBufType,
@@ -433,12 +438,22 @@ public:
     volatile int        nCurPair;
     int                 nBandCount;
     int                *panBandMap;
+    volatile bool       bSuccess;
 };
 
 void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
 {
     int nPair;
     JobStruct* poJob = (JobStruct*) userdata;
+
+    /*void* pDummy = VSIMalloc(128*1024);
+    if( pDummy == NULL )
+    {
+        fprintf(stderr, "Out of memory in thread\n");
+        poJob->bSuccess = false;
+        return;
+    }*/
+
     JP2OpenJPEGDataset* poGDS = poJob->poGDS;
     int nBand = poJob->nBand;
     int nPairs = (int)poJob->oPairs.size();
@@ -448,10 +463,13 @@ void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
     if( fp == NULL )
     {
         CPLDebug("OPENJPEG", "Cannot open %s", poGDS->GetDescription());
+        poJob->bSuccess = false;
+        //VSIFree(pDummy);
         return;
     }
 
-    while( (nPair = CPLAtomicInc(&(poJob->nCurPair))) < nPairs )
+    while( (nPair = CPLAtomicInc(&(poJob->nCurPair))) < nPairs ||
+           !poJob->bSuccess )
     {
         int nBlockXOff = poJob->oPairs[nPair].first;
         int nBlockYOff = poJob->oPairs[nPair].second;
@@ -460,22 +478,23 @@ void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
                 GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
         poGDS->ReleaseMutex();
         if (poBlock == NULL)
-            break;
-
-        void* pDstBuffer = poBlock->GetDataRef();
-        if (!pDstBuffer)
         {
-            poBlock->DropLock();
+            poJob->bSuccess = false;
             break;
         }
 
-        poGDS->ReadBlock(nBand, fp, nBlockXOff, nBlockYOff, pDstBuffer,
-                         nBandCount, panBandMap);
+        void* pDstBuffer = poBlock->GetDataRef();
+        if( poGDS->ReadBlock(nBand, fp, nBlockXOff, nBlockYOff, pDstBuffer,
+                             nBandCount, panBandMap) != CE_None )
+        {
+            poJob->bSuccess = false;
+        }
 
         poBlock->DropLock();
     }
 
     VSIFCloseL(fp);
+    //VSIFree(pDummy);
 }
 
 /************************************************************************/
@@ -500,35 +519,45 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
         if( nReqMem > GDALGetCacheMax64() / (nBandCount == 0 ? 1 : nBandCount) )
             return FALSE;
 
+        JobStruct oJob;
         int nBlocksToLoad = 0;
-        std::vector< std::pair<int,int> > oPairs;
-        for(int nBlockXOff = nXStart; nBlockXOff <= nXEnd; ++nBlockXOff)
+        try
         {
-            for(int nBlockYOff = nYStart; nBlockYOff <= nYEnd; ++nBlockYOff)
+            for(int nBlockXOff = nXStart; nBlockXOff <= nXEnd; ++nBlockXOff)
             {
-                GDALRasterBlock* poBlock = poBand->TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
-                if (poBlock != NULL)
+                for(int nBlockYOff = nYStart; nBlockYOff <= nYEnd; ++nBlockYOff)
                 {
-                    poBlock->DropLock();
-                    continue;
+                    GDALRasterBlock* poBlock = poBand->TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
+                    if (poBlock != NULL)
+                    {
+                        poBlock->DropLock();
+                        continue;
+                    }
+                    oJob.oPairs.push_back( std::pair<int,int>(nBlockXOff, nBlockYOff) );
+                    nBlocksToLoad ++;
                 }
-                oPairs.push_back( std::pair<int,int>(nBlockXOff, nBlockYOff) );
-                nBlocksToLoad ++;
             }
+        }
+        catch( std::bad_alloc& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory error");
+            return -1;
         }
 
         if( nBlocksToLoad > 1 )
         {
             int nThreads = MIN(nBlocksToLoad, nMaxThreads);
-            CPLJoinableThread** pahThreads = (CPLJoinableThread**) CPLMalloc( sizeof(CPLJoinableThread*) * nThreads );
+            CPLJoinableThread** pahThreads = (CPLJoinableThread**) VSI_CALLOC_VERBOSE( sizeof(CPLJoinableThread*), nThreads );
+            if( pahThreads == NULL )
+            {
+                return -1;
+            }
             int i;
 
             CPLDebug("OPENJPEG", "%d blocks to load (%d threads)", nBlocksToLoad, nThreads);
 
-            JobStruct oJob;
             oJob.poGDS = this;
             oJob.nBand = poBand->GetBand();
-            oJob.oPairs = oPairs;
             oJob.nCurPair = -1;
             if( nBandCount > 0 )
             {
@@ -549,6 +578,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
                     oJob.panBandMap = &oJob.nBand;
                 }
             }
+            oJob.bSuccess = true;
 
             /* Flushes all dirty blocks from cache to disk to avoid them */
             /* to be flushed randomly, and simultaneously, from our worker threads, */
@@ -557,10 +587,16 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
             GDALRasterBlock::FlushDirtyBlocks();
 
             for(i=0;i<nThreads;i++)
+            {
                 pahThreads[i] = CPLCreateJoinableThread(JP2OpenJPEGReadBlockInThread, &oJob);
+                if( pahThreads[i] == NULL )
+                    oJob.bSuccess = false;
+            }
             for(i=0;i<nThreads;i++)
                 CPLJoinThread( pahThreads[i] );
             CPLFree(pahThreads);
+            if( !oJob.bSuccess )
+                return -1;
         }
     }
 
@@ -632,6 +668,8 @@ static opj_stream_t* JP2OpenJPEGCreateReadStream(JP2OpenJPEGFile* psJP2OpenJPEGF
                                                  vsi_l_offset nSize)
 {
     opj_stream_t *pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
+    if( pStream == NULL )
+        return NULL;
 
     VSIFSeekL(psJP2OpenJPEGFile->fp, psJP2OpenJPEGFile->nBaseOffset, SEEK_SET);
     opj_stream_set_user_data_length(pStream, nSize);
@@ -657,10 +695,11 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                                       int nBandCount, int* panBandMap )
 {
     CPLErr          eErr = CE_None;
-    opj_codec_t*    pCodec;
-    opj_stream_t *  pStream;
-    opj_image_t *   psImage;
-    
+    opj_codec_t*    pCodec = NULL;
+    opj_stream_t *  pStream = NULL;
+    opj_image_t *   psImage = NULL;
+    JP2OpenJPEGFile sJP2OpenJPEGFile;
+
     JP2OpenJPEGRasterBand* poBand = (JP2OpenJPEGRasterBand*) GetRasterBand(nBand);
     int nBlockXSize = poBand->nBlockXSize;
     int nBlockYSize = poBand->nBlockYSize;
@@ -673,6 +712,12 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
     int nHeightToRead = MIN(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
 
     pCodec = opj_create_decompress(OPJ_CODEC_J2K);
+    if( pCodec == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "opj_create_decompress() failed");
+        eErr = CE_Failure;
+        goto end;
+    }
 
     opj_set_info_handler(pCodec, JP2OpenJPEGDataset_InfoCallback,NULL);
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback, NULL);
@@ -684,18 +729,28 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
     if (! opj_setup_decoder(pCodec,&parameters))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "opj_setup_decoder() failed");
-        return CE_Failure;
+        eErr = CE_Failure;
+        goto end;
     }
 
-    JP2OpenJPEGFile sJP2OpenJPEGFile;
     sJP2OpenJPEGFile.fp = fp;
     sJP2OpenJPEGFile.nBaseOffset = nCodeStreamStart;
     pStream = JP2OpenJPEGCreateReadStream(&sJP2OpenJPEGFile, nCodeStreamLength);
+    if( pStream == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "JP2OpenJPEGCreateReadStream() failed");
+        eErr = CE_Failure;
+        goto end;
+    }
 
     if(!opj_read_header(pStream,pCodec,&psImage))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed");
+        CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed (psImage=%p)", psImage);
+        // We may leak objects, but the cleanup of openjpeg can cause
+        // double frees sometimes...
         return CE_Failure;
+        //eErr = CE_Failure;
+        //goto end;
     }
 
     if (!opj_set_decoded_resolution_factor( pCodec, iLevel ))
@@ -734,6 +789,17 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
         }
     }
 
+    for(unsigned int iBand = 0; iBand < psImage->numcomps; iBand ++)
+    {
+        if( psImage->comps[iBand].data == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "psImage->comps[%d].data == NULL", iBand);
+            eErr = CE_Failure;
+            goto end;
+        }
+    }
+
     for(int xBand = 0; xBand < nBandCount; xBand ++)
     {
         void* pDstBuffer;
@@ -764,11 +830,6 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
             }
 
             pDstBuffer = poBlock->GetDataRef();
-            if (!pDstBuffer)
-            {
-                poBlock->DropLock();
-                continue;
-            }
         }
 
         if (bIs420)
@@ -857,10 +918,14 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
     }
 
 end:
-    opj_end_decompress(pCodec,pStream);
-    opj_stream_destroy(pStream);
-    opj_destroy_codec(pCodec);
-    opj_image_destroy(psImage);
+    if( pCodec && pStream )
+        opj_end_decompress(pCodec,pStream);
+    if( pStream )
+        opj_stream_destroy(pStream);
+    if( pCodec )
+        opj_destroy_codec(pCodec);
+    if( psImage )
+        opj_image_destroy(psImage);
 
     return eErr;
 }
@@ -1397,6 +1462,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     opj_codec_t* pCodec;
 
     pCodec = opj_create_decompress(OPJ_CODEC_J2K);
+    if( pCodec == NULL )
+        return NULL;
 
     opj_set_info_handler(pCodec, JP2OpenJPEGDataset_InfoCallback,NULL);
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback, NULL);
@@ -1407,6 +1474,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (! opj_setup_decoder(pCodec,&parameters))
     {
+        opj_destroy_codec(pCodec);
         return NULL;
     }
 
@@ -1417,6 +1485,14 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                                          nCodeStreamLength);
 
     opj_image_t * psImage = NULL;
+    
+    if( pStream == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "JP2OpenJPEGCreateReadStream() failed");
+        opj_stream_destroy(pStream);
+        opj_destroy_codec(pCodec);
+        return NULL;
+    }
 
     if(!opj_read_header(pStream,pCodec,&psImage))
     {
