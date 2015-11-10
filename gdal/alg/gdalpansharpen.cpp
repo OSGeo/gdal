@@ -34,6 +34,7 @@
 #include "gdal_priv_templates.hpp"
 #include "../frmts/vrt/vrtdataset.h"
 #include "../frmts/mem/memdataset.h"
+#include <new>
 
 // Limit types to practical use cases
 #define LIMIT_TYPES 1
@@ -354,8 +355,9 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
     if( nThreads > 1 )
     {
         CPLDebug("PANSHARPEN", "Using %d theads", nThreads);
-        poThreadPool = new CPLWorkerThreadPool();
-        if( !poThreadPool->Setup( nThreads, NULL, NULL ) )
+        poThreadPool = new (std::nothrow) CPLWorkerThreadPool();
+        if( poThreadPool == NULL ||
+            !poThreadPool->Setup( nThreads, NULL, NULL ) )
         {
             delete poThreadPool;
             poThreadPool = NULL;
