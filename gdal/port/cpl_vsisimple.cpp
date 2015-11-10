@@ -845,6 +845,106 @@ void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 )
     return pReturn;
 }
 
+/************************************************************************/
+/*                          VSIMallocVerbose()                          */
+/************************************************************************/
+
+void *VSIMallocVerbose( size_t nSize, const char* pszFile, int nLine )
+{
+    void* pRet = VSIMalloc(nSize);
+    if( pRet == NULL && nSize != 0 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 pszFile ? pszFile : "(unknown file)",
+                 nLine, (GUIntBig)nSize);
+    }
+    return pRet;
+}
+
+/************************************************************************/
+/*                          VSIMalloc2Verbose()                         */
+/************************************************************************/
+
+void *VSIMalloc2Verbose( size_t nSize1, size_t nSize2, const char* pszFile, int nLine )
+{
+    void* pRet = VSIMalloc2(nSize1, nSize2);
+    if( pRet == NULL && nSize1 != 0 && nSize2 != 0 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 pszFile ? pszFile : "(unknown file)",
+                 nLine, (GUIntBig)nSize1 * (GUIntBig)nSize2);
+    }
+    return pRet;
+}
+
+/************************************************************************/
+/*                          VSIMalloc3Verbose()                         */
+/************************************************************************/
+
+void *VSIMalloc3Verbose( size_t nSize1, size_t nSize2, size_t nSize3, const char* pszFile, int nLine )
+{
+    void* pRet = VSIMalloc3(nSize1, nSize2, nSize3);
+    if( pRet == NULL && nSize1 != 0 && nSize2 != 0 && nSize3 != 0 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 pszFile ? pszFile : "(unknown file)",
+                 nLine, (GUIntBig)nSize1 * (GUIntBig)nSize2 * (GUIntBig)nSize3);
+    }
+    return pRet;
+}
+/************************************************************************/
+/*                          VSICallocVerbose()                          */
+/************************************************************************/
+
+void *VSICallocVerbose(  size_t nCount, size_t nSize, const char* pszFile, int nLine )
+{
+    void* pRet = VSICalloc(nCount, nSize);
+    if( pRet == NULL && nCount != 0 && nSize != 0 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 pszFile ? pszFile : "(unknown file)",
+                 nLine, (GUIntBig)nCount * (GUIntBig)nSize);
+    }
+    return pRet;
+}
+
+/************************************************************************/
+/*                          VSIReallocVerbose()                         */
+/************************************************************************/
+
+void *VSIReallocVerbose( void* pOldPtr, size_t nNewSize, const char* pszFile, int nLine )
+{
+    void* pRet = VSIRealloc(pOldPtr, nNewSize);
+    if( pRet == NULL && nNewSize != 0 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 pszFile ? pszFile : "(unknown file)",
+                 nLine, (GUIntBig)(nNewSize));
+    }
+    return pRet;
+}
+
+/************************************************************************/
+/*                          VSIStrdupVerbose()                          */
+/************************************************************************/
+
+char *VSIStrdupVerbose(  const char* pszStr, const char* pszFile, int nLine )
+{
+    char* pRet = VSIStrdup(pszStr);
+    if( pRet == NULL )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 pszFile ? pszFile : "(unknown file)",
+                 nLine, (GUIntBig)(strlen(pszStr)+1));
+    }
+    return pRet;
+}
 
 /************************************************************************/
 /*                              VSIStat()                               */
