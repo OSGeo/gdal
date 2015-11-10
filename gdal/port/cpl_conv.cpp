@@ -429,9 +429,11 @@ static char *CPLReadLineBuffer( int nRequiredSize )
 /* -------------------------------------------------------------------- */
     if( nRequiredSize == -1 )
     {
-        if( CPLGetTLS( CTLS_RLBUFFERINFO ) != NULL )
+        int bMemoryError;
+        void* pRet = CPLGetTLSEx( CTLS_RLBUFFERINFO, &bMemoryError );
+        if( pRet != NULL )
         {
-            CPLFree( CPLGetTLS( CTLS_RLBUFFERINFO ) );
+            CPLFree( pRet );
             CPLSetTLS( CTLS_RLBUFFERINFO, NULL, FALSE );
         }
         return NULL;
@@ -440,11 +442,16 @@ static char *CPLReadLineBuffer( int nRequiredSize )
 /* -------------------------------------------------------------------- */
 /*      If the buffer doesn't exist yet, create it.                     */
 /* -------------------------------------------------------------------- */
-    GUInt32 *pnAlloc = (GUInt32 *) CPLGetTLS( CTLS_RLBUFFERINFO );
+    int bMemoryError;
+    GUInt32 *pnAlloc = (GUInt32 *) CPLGetTLSEx( CTLS_RLBUFFERINFO, &bMemoryError );
+    if( bMemoryError )
+        return NULL;
 
     if( pnAlloc == NULL )
     {
-        pnAlloc = (GUInt32 *) CPLMalloc(200);
+        pnAlloc = (GUInt32 *) VSI_MALLOC_VERBOSE(200);
+        if( pnAlloc == NULL )
+            return NULL;
         *pnAlloc = 196;
         CPLSetTLS( CTLS_RLBUFFERINFO, pnAlloc, TRUE );
     }
@@ -464,14 +471,11 @@ static char *CPLReadLineBuffer( int nRequiredSize )
             return NULL;
         }
 
-        GUInt32* pnAllocNew = (GUInt32 *) VSIRealloc(pnAlloc,nNewSize);
+        GUInt32* pnAllocNew = (GUInt32 *) VSI_REALLOC_VERBOSE(pnAlloc,nNewSize);
         if( pnAllocNew == NULL )
         {
             VSIFree( pnAlloc );
             CPLSetTLS( CTLS_RLBUFFERINFO, NULL, FALSE );
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "CPLReadLineBuffer(): Out of memory allocating %ld bytes.",
-                      (long) nNewSize );
             return NULL;
         }
         pnAlloc = pnAllocNew;
@@ -819,7 +823,13 @@ char *CPLScanString( const char *pszString, int nMaxLength,
 long CPLScanLong( const char *pszString, int nMaxLength )
 {
     long    iValue;
-    char    *pszValue = (char *)CPLMalloc( nMaxLength + 1);
+    char        szValue[32];
+    char        *pszValue;
+    
+    if( nMaxLength + 1 < (int)sizeof(szValue) )
+        pszValue = szValue;
+    else
+        pszValue = (char *)CPLMalloc( nMaxLength + 1);
 
 /* -------------------------------------------------------------------- */
 /*      Compute string into local buffer, and terminate it.             */
@@ -832,7 +842,8 @@ long CPLScanLong( const char *pszString, int nMaxLength )
 /* -------------------------------------------------------------------- */
     iValue = atol( pszValue );
 
-    CPLFree( pszValue );
+    if( pszValue != szValue )
+        CPLFree( pszValue );
     return iValue;
 }
 
@@ -858,7 +869,13 @@ long CPLScanLong( const char *pszString, int nMaxLength )
 unsigned long CPLScanULong( const char *pszString, int nMaxLength )
 {
     unsigned long    uValue;
-    char    *pszValue = (char *)CPLMalloc( nMaxLength + 1);
+    char        szValue[32];
+    char        *pszValue;
+    
+    if( nMaxLength + 1 < (int)sizeof(szValue) )
+        pszValue = szValue;
+    else
+        pszValue = (char *)CPLMalloc( nMaxLength + 1);
 
 /* -------------------------------------------------------------------- */
 /*      Compute string into local buffer, and terminate it.             */
@@ -871,7 +888,8 @@ unsigned long CPLScanULong( const char *pszString, int nMaxLength )
 /* -------------------------------------------------------------------- */
     uValue = strtoul( pszValue, NULL, 10 );
 
-    CPLFree( pszValue );
+    if( pszValue != szValue )
+        CPLFree( pszValue );
     return uValue;
 }
 
@@ -898,7 +916,13 @@ unsigned long CPLScanULong( const char *pszString, int nMaxLength )
 GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 {
     GUIntBig    iValue;
-    char        *pszValue = (char *)CPLMalloc( nMaxLength + 1);
+    char        szValue[32];
+    char        *pszValue;
+    
+    if( nMaxLength + 1 < (int)sizeof(szValue) )
+        pszValue = szValue;
+    else
+        pszValue = (char *)CPLMalloc( nMaxLength + 1);
 
 /* -------------------------------------------------------------------- */
 /*      Compute string into local buffer, and terminate it.             */
@@ -917,7 +941,8 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
     iValue = atol( pszValue );
 #endif
 
-    CPLFree( pszValue );
+    if( pszValue != szValue )
+        CPLFree( pszValue );
     return iValue;
 }
 
@@ -1108,7 +1133,13 @@ double CPLScanDouble( const char *pszString, int nMaxLength )
 {
     int     i;
     double  dfValue;
-    char    *pszValue = (char *)CPLMalloc( nMaxLength + 1);
+    char        szValue[32];
+    char        *pszValue;
+    
+    if( nMaxLength + 1 < (int)sizeof(szValue) )
+        pszValue = szValue;
+    else
+        pszValue = (char *)CPLMalloc( nMaxLength + 1);
 
 /* -------------------------------------------------------------------- */
 /*      Compute string into local buffer, and terminate it.             */
@@ -1128,7 +1159,8 @@ double CPLScanDouble( const char *pszString, int nMaxLength )
 /* -------------------------------------------------------------------- */
     dfValue = CPLAtof( pszValue );
 
-    CPLFree( pszValue );
+    if( pszValue != szValue )
+        CPLFree( pszValue );
     return dfValue;
 }
 
@@ -1620,7 +1652,8 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 
     const char *pszResult = NULL;
 
-    char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
+    int bMemoryError;
+    char **papszTLConfigOptions = (char **) CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError );
     if( papszTLConfigOptions != NULL )
         pszResult = CSLFetchNameValue( papszTLConfigOptions, pszKey );
 
@@ -1654,7 +1687,8 @@ CPLGetThreadLocalConfigOption( const char *pszKey, const char *pszDefault )
 
     const char *pszResult = NULL;
 
-    char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
+    int bMemoryError;
+    char **papszTLConfigOptions = (char **) CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError );
     if( papszTLConfigOptions != NULL )
         pszResult = CSLFetchNameValue( papszTLConfigOptions, pszKey );
 
@@ -1747,7 +1781,10 @@ CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
     CPLAccessConfigOption(pszKey, FALSE);
 #endif
 
-    char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
+    int bMemoryError;
+    char **papszTLConfigOptions = (char **) CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError );
+    if( bMemoryError )
+        return;
 
     papszTLConfigOptions = 
         CSLSetNameValue( papszTLConfigOptions, pszKey, pszValue );
@@ -1769,7 +1806,8 @@ void CPL_STDCALL CPLFreeConfig()
         CSLDestroy( (char **) papszConfigOptions);
         papszConfigOptions = NULL;
         
-        char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
+        int bMemoryError;
+        char **papszTLConfigOptions = (char **) CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError );
         if( papszTLConfigOptions != NULL )
         {
             CSLDestroy( papszTLConfigOptions );
@@ -2445,7 +2483,13 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 /*      Prepare buffer.                                                 */
 /* -------------------------------------------------------------------- */
     nBufferSize = 1024 * 1024;
-    pabyBuffer = (GByte *) CPLMalloc(nBufferSize);
+    pabyBuffer = (GByte *) VSI_MALLOC_VERBOSE(nBufferSize);
+    if( pabyBuffer == NULL )
+    {
+        VSIFCloseL( fpNew );
+        VSIFCloseL( fpOld );
+        return -1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Copy file over till we run out of stuff.                        */
