@@ -142,13 +142,27 @@ def test_gdalinfo_lib_6():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test with unicode strings
+
+def test_gdalinfo_lib_7():
+
+    ret = gdal.Info('../gcore/data/byte.tif'.encode('ascii').decode('ascii'), options = '-json'.encode('ascii').decode('ascii'))
+    if ret['driverShortName'] != 'GTiff':
+        gdaltest.post_reason('wrong value for driverShortName.')
+        print(ret)
+        return 'fail'
+
+    return 'success'
 gdaltest_list = [
     test_gdalinfo_lib_1,
     test_gdalinfo_lib_2,
     test_gdalinfo_lib_3,
     test_gdalinfo_lib_4,
     test_gdalinfo_lib_5,
-    test_gdalinfo_lib_6
+    test_gdalinfo_lib_6,
+    test_gdalinfo_lib_7
     ]
 
 if __name__ == '__main__':

@@ -378,8 +378,10 @@ def test_gdal_translate_lib_100():
         gdal.TranslateInternal('', gdal.Open('../gcore/data/byte.tif'), None, gdal.TermProgress)
 
     # Null dest name
-    with gdaltest.error_handler():
+    try:
         gdal.TranslateInternal(None, gdal.Open('../gcore/data/byte.tif'), None)
+    except:
+        pass
 
     return 'success'
 

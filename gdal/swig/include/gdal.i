@@ -941,6 +941,8 @@ __version__ = _gdal.VersionInfo("RELEASE_NAME")
 #include "gdal_utils.h"   
 %}
 
+%apply (const char* utf8_path) {(const char* dest)};
+
 //************************************************************************
 // gdal.Info()
 //************************************************************************
@@ -1439,3 +1441,5 @@ GDALDatasetShadow* wrapper_GDALRasterizeDestName( const char* dest,
     return hDSRet;
 }
 %}
+
+%clear (const char* dest);

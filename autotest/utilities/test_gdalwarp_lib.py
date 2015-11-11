@@ -61,7 +61,7 @@ def test_gdalwarp_lib_1():
 def test_gdalwarp_lib_2():
 
     ds1 = gdal.Open('../gcore/data/byte.tif')
-    dstDS = gdal.Warp('tmp/testgdalwarp2.tif',[ds1], format = 'GTiff')
+    dstDS = gdal.Warp('tmp/testgdalwarp2.tif'.encode('ascii').decode('ascii'),[ds1], format = 'GTiff')
 
     if dstDS.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('Bad checksum')
@@ -825,8 +825,10 @@ def test_gdalwarp_lib_121():
         gdal.wrapper_GDALWarpDestName('', [], None, gdal.TermProgress)
 
     # Null dest name
-    with gdaltest.error_handler():
+    try:
         gdal.wrapper_GDALWarpDestName(None, [], None)
+    except:
+        pass
 
     # No option
     with gdaltest.error_handler():
