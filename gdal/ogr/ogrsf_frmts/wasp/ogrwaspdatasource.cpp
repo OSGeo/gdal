@@ -227,12 +227,12 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
     const CPLString sFields( pszFields ? pszFields : "" );
     if ( ! sFields.empty() )
     {
-        /* parse the coma separated list of fields */
-        const size_t iComa = sFields.find(',');
-        if ( std::string::npos != iComa )
+        /* parse the comma separated list of fields */
+        const size_t iComma = sFields.find(',');
+        if ( std::string::npos != iComma )
         {
-            sFirstField = sFields.substr(0, iComa); 
-            sSecondField = sFields.substr( iComa + 1 );
+            sFirstField = sFields.substr(0, iComma);
+            sSecondField = sFields.substr( iComma + 1 );
         }
         else
         {
