@@ -118,6 +118,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
     }
 }
 
+/* wrapped driver methods: */
+%rename (_CreateDataSource) CreateDataSource;
+
 /* wrapped data source methods: */
 %rename (_GetDriver) GetDriver;
 %rename (_TestCapability) TestCapability;
@@ -146,6 +149,7 @@ package Geo::OGR::Driver;
 use strict;
 use warnings;
 use Carp;
+use Scalar::Util 'blessed';
 use vars qw /@CAPABILITIES %CAPABILITIES/;
 for (keys %Geo::OGR::) {
     push(@CAPABILITIES, $1), next if /^ODrC(\w+)/;
@@ -171,7 +175,21 @@ sub TestCapability {
     return _TestCapability($self, $CAPABILITIES{$cap});
 }
 
-*Create = *CreateDataSource;
+sub Create {
+    my ($self, $name, $options) = @_;
+    my $object = 0;
+    if ($name && blessed $name) {
+        $object = $name;
+        my $ref = $object->can('write');
+        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        $name = '/vsistdout/';
+    }
+    my $ds = $self->_CreateDataSource($name, $options);
+    $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+    return $ds;
+}
+
+*CreateDataSource = *Create;
 *Copy = *CopyDataSource;
 *OpenDataSource = *Open;
 *Delete = *DeleteDataSource;

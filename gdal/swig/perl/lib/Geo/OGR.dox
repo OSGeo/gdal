@@ -118,7 +118,7 @@
 ## @method Geo::OGR::DataSource Create($name, hashref options = undef )
 # Create an OGR data source object.
 # @note a.k.a. CreateDataSource
-# @param name The data source name.
+# @param name The data source name or an object, which must be able to write and close.
 # @param options Driver specific options.
 #
 # Usage:

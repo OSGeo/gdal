@@ -1260,6 +1260,27 @@ IF_UNDEF_NULL(const char *, target_key)
         saved_env.data = (SV *)$input;
 }
 
+%typemap(in, numinputs=1) (VSIWriteFunction pFct, FILE* stream = NULL)
+{
+    /* %typemap(in) (VSIWriteFunction pFct) */
+    if (VSIStdoutSetRedirectionFct != &PL_sv_undef) {
+        SvREFCNT_dec(VSIStdoutSetRedirectionFct);
+    }
+    if (SvOK($input)) {
+        if (SvROK($input)) {
+            if (SvTYPE(SvRV($input)) != SVt_PVCV) {
+               croak("The argument is not a reference to a subroutine.");
+            } else {
+               VSIStdoutSetRedirectionFct = newRV_inc(SvRV((SV *)$input));
+               $1 = &callback_fwrite;
+           }
+        } else {
+            croak("The argument is not a reference to a subroutine.");
+        }
+    } else
+        VSIStdoutSetRedirectionFct = &PL_sv_undef;
+}
+
 %typemap(in) (GDALDatasetShadow *)
 {
     /* %typemap(in) (GDALDatasetShadow *) */

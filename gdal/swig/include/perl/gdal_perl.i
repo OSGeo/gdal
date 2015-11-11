@@ -204,6 +204,7 @@ use vars qw/
     %RESAMPLING_STRING2INT %RESAMPLING_INT2STRING
     %RIO_RESAMPLING_STRING2INT %RIO_RESAMPLING_INT2STRING
     %NODE_TYPE_STRING2INT %NODE_TYPE_INT2STRING
+    @error %stdout_redirection
     /;
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
@@ -503,6 +504,7 @@ package Geo::GDAL::Driver;
 use strict;
 use warnings;
 use Carp;
+use Scalar::Util 'blessed';
 use vars qw/@CAPABILITIES @DOMAINS/;
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
@@ -606,7 +608,16 @@ sub Create {
     my $type;
     confess "Unknown data type: '$params{Type}'." unless exists $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
     $type = $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
-    return $self->_Create($params{Name}, $params{Width}, $params{Height}, $params{Bands}, $type, $params{Options});
+    my $object = 0;
+    if ($params{Name} && blessed $params{Name}) {
+        $object = $params{Name};
+        my $ref = $object->can('write');
+        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        $params{Name} = '/vsistdout/';
+    }
+    my $ds = $self->_Create($params{Name}, $params{Width}, $params{Height}, $params{Bands}, $type, $params{Options});
+    $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+    return $ds;
 }
 *CreateDataset = *Create;
 *Copy = *CreateCopy;
