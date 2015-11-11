@@ -2037,6 +2037,33 @@ def gml_OGRMultiCurve():
 
     return 'success'
 
+###############################################################################
+# Test write support for GML namespace declaration
+
+def gml_write_gml_ns():
+
+    geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
+    gml = geom.ExportToGML( options = ['NAMESPACE_DECL=YES'] )
+    expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml"><gml:coordinates>500000,4500000</gml:coordinates></gml:Point>'
+    if gml != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml, expected_gml))
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
+    gml = geom.ExportToGML( options = ['FORMAT=GML3', 'NAMESPACE_DECL=YES'] )
+    expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml"><gml:pos>500000 4500000</gml:pos></gml:Point>'
+    if gml != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml, expected_gml))
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
+    gml = geom.ExportToGML( options = ['FORMAT=GML32', 'GMLID=foo', 'NAMESPACE_DECL=YES'] )
+    expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml/3.2" gml:id="foo"><gml:pos>500000 4500000</gml:pos></gml:Point>'
+    if gml != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml, expected_gml))
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # When imported build a list of units based on the files available.
@@ -2109,6 +2136,7 @@ gdaltest_list.append( gml_OGRCompoundCurve )
 gdaltest_list.append( gml_OGRCurvePolygon )
 gdaltest_list.append( gml_OGRMultiSurface )
 gdaltest_list.append( gml_OGRMultiCurve )
+gdaltest_list.append( gml_write_gml_ns )
 
 if __name__ == '__main__':
 
