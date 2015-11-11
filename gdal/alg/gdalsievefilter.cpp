@@ -301,7 +301,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
     oFirstEnum.CompleteMerges();
 
 /* -------------------------------------------------------------------- */
-/*      Push the sizes of merged polygon fragments into the the         */
+/*      Push the sizes of merged polygon fragments into the             */
 /*      merged polygon id's count.                                      */
 /* -------------------------------------------------------------------- */
     for( iPoly = 0; iPoly < oFirstEnum.nNextPolygonId; iPoly++ )
@@ -311,7 +311,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
             GIntBig nSize = anPolySizes[oFirstEnum.panPolyIdMap[iPoly]];
 
             nSize += anPolySizes[iPoly];
-            
+
             if( nSize > MY_MAX_INT )
                 nSize = MY_MAX_INT;
 

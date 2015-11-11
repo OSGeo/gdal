@@ -31,7 +31,7 @@ typedef unsigned long      GUIntBig;
  * the RasterBand GetNoDataValue, GetMinimum, GetMaximum, GetOffset,
  * GetScale methods. The variable hasval is tested and if it is false
  * (meaning, the value is not set in the raster band) then undef is
- * returned in scalar context.  If is is != 0, then the value is
+ * returned in scalar context.  If it is != 0, then the value is
  * coerced into a long and returned in scalar context. In list context
  * the value and hasval are returned. If hasval is zero, the value is
  * "generally the minimum supported value for the data type".

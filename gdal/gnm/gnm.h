@@ -322,7 +322,7 @@ public:
      *	  "ALLOW CONNECTS layer1 WITH layer2 VIA layer3"
      *
      * @param pszRuleStr Rule string which will parsed. If the parsing was
-     *        successful the the rule will start having effect immediately.
+     *        successful, the rule will start having effect immediately.
      * @return CE_None on success.
      */
     virtual CPLErr CreateRule (const char *pszRuleStr);

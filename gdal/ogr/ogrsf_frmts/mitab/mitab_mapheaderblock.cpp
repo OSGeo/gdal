@@ -156,7 +156,7 @@ inline double round(double r) {
 #define HDR_DEF_REFLECTXAXIS    0
 
 /*---------------------------------------------------------------------
- * The header block starts with an array of map object lenght constants.
+ * The header block starts with an array of map object length constants.
  *--------------------------------------------------------------------*/
 #define HDR_OBJ_LEN_ARRAY_SIZE   73
 static GByte  gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
@@ -281,7 +281,7 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
  * Perform some initialization on the block after its binary data has
  * been set or changed (or loaded from a file).
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, 
@@ -814,7 +814,7 @@ int  TABMAPHeaderBlock::SetProjInfo(TABProjInfo *psProjInfo)
  * block buffer and then calls TABRawBinBlock::CommitToFile() to do
  * the actual writing to disk.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPHeaderBlock::CommitToFile()
@@ -951,7 +951,7 @@ int     TABMAPHeaderBlock::CommitToFile()
  * that puts the block in a stable state without loading any initial
  * data in it.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
@@ -1074,7 +1074,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
         // Dump array of map object lengths... optional
         if (FALSE)
         {
-            fprintf(fpOut, "-- Header bytes 00-FF: Array of map object lenghts --\n");
+            fprintf(fpOut, "-- Header bytes 00-FF: Array of map object lengths --\n");
             for(i=0; i<256; i++)
             {
                 fprintf(fpOut, "0x%2.2x", (int)m_pabyBuf[i]);

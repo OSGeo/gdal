@@ -1746,7 +1746,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
  *
  * @param pszData The GML fragment for the geometry.
  *
- * @return a geometry on succes, or NULL on error.  
+ * @return a geometry on success, or NULL on error.
  */
 
 OGRGeometry *OGRGeometryFactory::createFromGML( const char *pszData )

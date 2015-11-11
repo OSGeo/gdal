@@ -522,7 +522,7 @@ def mask_13():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 0:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask' )
         return 'fail'
 
     ds.GetRasterBand(1).GetMaskBand().Fill(1)
@@ -530,7 +530,7 @@ def mask_13():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask' )
         return 'fail'
 
     ds = None
@@ -550,7 +550,7 @@ def mask_13():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask' )
         return 'fail'
 
     ds = None
@@ -590,7 +590,7 @@ def mask_14():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 0:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask (1)' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask (1)' )
         return 'fail'
 
     ds.GetRasterBand(1).GetMaskBand().Fill(1)
@@ -598,7 +598,7 @@ def mask_14():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask (2)' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask (2)' )
         return 'fail'
 
     ds = None
@@ -618,11 +618,11 @@ def mask_14():
         return 'fail'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
-    
+
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask (3)' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask (3)' )
         return 'fail'
 
     # Test fix for #5884
@@ -638,7 +638,7 @@ def mask_14():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask (4)' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask (4)' )
         return 'fail'
     out_ds = None
     drv.Delete( '/vsimem/byte_with_mask.tif' )
@@ -723,19 +723,19 @@ def mask_and_ovr(order, method):
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask' )
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
     if cs != 100:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask of the first overview' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask of the first overview' )
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
     if cs != 25:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask of the second overview' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask of the second overview' )
         return 'fail'
 
     ds = None
@@ -879,7 +879,7 @@ def mask_22():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 0:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask' )
         return 'fail'
 
     ds.GetRasterBand(1).GetMaskBand().Fill(1)
@@ -887,7 +887,7 @@ def mask_22():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask' )
         return 'fail'
 
     ds = None
@@ -907,7 +907,7 @@ def mask_22():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
         print(cs)
-        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        gdaltest.post_reason( 'Got wrong checksum for the mask' )
         return 'fail'
 
     ds = None
@@ -1044,4 +1044,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

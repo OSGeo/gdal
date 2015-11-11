@@ -626,7 +626,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 
 /**
  * \var int GDALWarpKernel::papabySrcImage;
- * 
+ *
  * Array of source image band data.
  *
  * This is an array of pointers (of size GDALWarpKernel::nBands) pointers
@@ -634,7 +634,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  * block of image data in left to right, then bottom to top order.  The actual
  * type of the image data is determined by GDALWarpKernel::eWorkingDataType.
  *
- * To access the the pixel value for the (x=3,y=4) pixel (zero based) of
+ * To access the pixel value for the (x=3,y=4) pixel (zero based) of
  * the second band with eWorkingDataType set to GDT_Float32 use code like
  * this:
  *
@@ -749,7 +749,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 
 /**
  * \var GByte **GDALWarpKernel::papabyDstImage;
- * 
+ *
  * Array of destination image band data.
  *
  * This is an array of pointers (of size GDALWarpKernel::nBands) pointers
@@ -757,7 +757,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  * block of image data in left to right, then bottom to top order.  The actual
  * type of the image data is determined by GDALWarpKernel::eWorkingDataType.
  *
- * To access the the pixel value for the (x=3,y=4) pixel (zero based) of
+ * To access the pixel value for the (x=3,y=4) pixel (zero based) of
  * the second band with eWorkingDataType set to GDT_Float32 use code like
  * this:
  *

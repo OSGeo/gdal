@@ -610,7 +610,7 @@ Routine g2_addlocal can be used to add a Local Use Section ( Section 2 ).
 Note that this section is optional and need not appear in a GRIB2 message.
 
 Function g2_addgrid is used to encode a grid definition into Section 3.
-This grid definition defines the geometry of the the data values in the
+This grid definition defines the geometry of the data values in the
 fields that follow it.  g2_addgrid can be called again to change the grid
 definition describing subsequent data fields.
 
@@ -1356,7 +1356,7 @@ static void clear (float * ain, sInt4 * iain, sInt4 * nd2x3, sInt4 * idat,
  * Arthur Taylor / MDL
  *
  * PURPOSE
- *   This is so we can copy upto 4 bytes from a big endian 4 byte int data
+ *   This is so we can copy up to 4 bytes from a big endian 4 byte int data
  * stream.
  *
  *   The reason this is needed is because the GRIB2 API required the GRIB2

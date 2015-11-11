@@ -87,7 +87,7 @@ CSF_ATTR_ID CsfPutAttribute(
 		M_ERROR(WRITE_ERROR);
 		goto error;
 	}
-	return(id); 		/* succes */
+	return(id); 		/* success */
 error:	return(0);	/* failure */
 }
 

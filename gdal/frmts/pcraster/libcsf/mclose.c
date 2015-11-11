@@ -7,7 +7,7 @@
  * the Mclose function closes a map
  * if the map is being used for output 
  * all header data is rewritten first
- * returns Upon succesful completion 0 is returned. 
+ * returns Upon successful completion 0 is returned.
  * Otherwise, a non-zero value is returned
  *
  * Merrno

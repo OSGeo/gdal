@@ -1374,7 +1374,7 @@ CPLErr netCDFRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     size_t start[ MAX_NC_DIMS];
     memset( start, 0, sizeof( start ) );
 
-    start[nBandXPos] = 0;          // x dim can move arround in array
+    start[nBandXPos] = 0;          // x dim can move around in array
     // check y order
     if( ( ( netCDFDataset *) poDS )->bBottomUp ) {
         start[nBandYPos] = nRasterYSize - 1 - nBlockYOff;

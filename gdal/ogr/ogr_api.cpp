@@ -898,12 +898,12 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
  * \brief Compute length of a geometry.
  *
  * Computes the length for OGRCurve or MultiCurve objects.
- * Undefined for all other geometry types (returns zero). 
+ * Undefined for all other geometry types (returns zero).
  *
  * This function utilizes the C++ get_Length() method.
  *
  * @param hGeom the geometry to operate on.
- * @return the lenght or 0.0 for unsupported geometry types.
+ * @return the length or 0.0 for unsupported geometry types.
  *
  * @since OGR 1.8.0
  */

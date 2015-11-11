@@ -3055,7 +3055,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
                                                  int bHasM, int bSpatialite2D,
                                                  int bUseComprGeom,
                                                  GByte **ppabyData,
-                                                 int *pnDataLenght )
+                                                 int *pnDataLength )
 
 {
     /* Spatialite does not support curve geometries */
@@ -3064,7 +3064,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
         poWorkGeom = poGeometry->getLinearGeometry();
     else
         poWorkGeom = poGeometry;
-    
+
     bUseComprGeom = bUseComprGeom && !bSpatialite2D && CanBeCompressedSpatialiteGeometry(poWorkGeom);
 
     int     nDataLen = 44 + ComputeSpatiaLiteGeometrySize( poWorkGeom,
@@ -3097,7 +3097,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
     {
         CPLFree(*ppabyData);
         *ppabyData = NULL;
-        *pnDataLenght = 0;
+        *pnDataLength = 0;
         if( poWorkGeom != poGeometry ) delete poWorkGeom;
         return OGRERR_FAILURE;
     }
@@ -3114,7 +3114,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
     {
         CPLFree(*ppabyData);
         *ppabyData = NULL;
-        *pnDataLenght = 0;
+        *pnDataLength = 0;
         return OGRERR_FAILURE;
     }
 
@@ -3130,7 +3130,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
         CPL_SWAP32PTR( *ppabyData + 39 );
     }
 
-    *pnDataLenght = nDataLen;
+    *pnDataLength = nDataLen;
 
     return OGRERR_NONE;
 }

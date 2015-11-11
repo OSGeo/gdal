@@ -587,6 +587,7 @@ void OGROGDILayer::BuildFeatureDefn()
           case Smallint:
           case Integer:
             oField.SetType( OFTInteger );
+            // TODO: Fix spelling - lenght -> length
             if( oaf->oa.oa_val[i].lenght > 0 )
                 oField.SetWidth( oaf->oa.oa_val[i].lenght );
             else
@@ -637,7 +638,3 @@ void OGROGDILayer::BuildFeatureDefn()
     }
     
 }
-
-
-
-

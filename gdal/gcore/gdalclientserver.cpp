@@ -104,7 +104,7 @@ It is also possible to connect to a gdalserver in TCP, possibly on a remote host
 gdalserver must be launched on a host with "gdalserver -tcpserver the_tcp_port". And the client
 must set GDAL_API_PROXY_SERVER="hostname:the_tcp_port", where hostname is a string or a IP address.
 
-On Unix, gdalserver can also be launched on a Unix socket, wich "gdalserver -unixserver /a/filename".
+On Unix, gdalserver can also be launched on a Unix socket, which "gdalserver -unixserver /a/filename".
 Clients should then set GDAL_API_PROXY_SERVER to "/a/filename".
 
 In case of many dataset opening or creation, to avoid the cost of repeated process forking,

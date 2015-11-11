@@ -1754,8 +1754,8 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 double MaxY = adfExtent[3];
                 double MinY = adfExtent[1];
                 int bSuccess = TRUE;
-                
-                /* Check that the the edges of the target image are in the validity area */
+
+                /* Check that the edges of the target image are in the validity area */
                 /* of the target projection */
     #define N_STEPS 20
                 int i,j;

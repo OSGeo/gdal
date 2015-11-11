@@ -44,7 +44,7 @@
  * message in "expect2" bytes or 0 bytes from the start.  Returns -1 if it
  * can't find "GRIB", 1 if "GRIB" is not 0, "expect", or "expect2" bytes from
  * the start.
- *   It stores the bytes it reads (a max of "expect") upto but not including
+ *   It stores the bytes it reads (a max of "expect") up to but not including
  * the 'G' in "GRIB" in wmo.
  *
  *   After it finds section 0, it then parses the 16 bytes that make up

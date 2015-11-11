@@ -191,7 +191,7 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 /**
  * \brief Get data type size in bits.
  *
- * Returns the size of a a GDT_* type in bits, <b>not bytes</b>!
+ * Returns the size of a GDT_* type in bits, <b>not bytes</b>!
  *
  * @param eDataType type, such as GDT_Byte.
  * @return the number of bits or zero if it is not recognised.

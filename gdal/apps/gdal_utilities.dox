@@ -372,7 +372,7 @@ It is also possible to use the "-scale_bn" syntax where bn is a band number
 one or several specific bands.
 </dd>
 <dt> <b>-exponent</b> <i> exp_val</i>:</dt><dd> (From GDAL 1.11) To apply non-linear scaling
-with a power function. exp_val is the exponent of the power function (must be postive). This option
+with a power function. exp_val is the exponent of the power function (must be positive). This option
 must be used with the -scale option.
 If specified only once, -exponent applies to all bands of the output image.
 It can be repeated several times so as to specify per band parameters.
@@ -1704,7 +1704,7 @@ Using this parameter creates a different output structure. The tiles of the base
 are stored in a subdirectory called 0, the pyramids in subdirectories numbered 1,2,....
 Within each of these directories another level of subdirectories is created, numbered from
 0...n, depending of how many tile rows are needed for each level. Finally, a directory contains
-only the the tiles for one row for a specific level. For large images a performance improvement
+only the tiles for one row for a specific level. For large images a performance improvement
 of a factor N could be achieved.
 </dd>
 </dl>

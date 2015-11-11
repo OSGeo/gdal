@@ -45,7 +45,7 @@
  * and reporting can be interested.  The memory access API is aliased
  * so that special application memory management services can be used.
  *
- * Is is intended that each of these functions retains exactly the same
+ * It is intended that each of these functions retains exactly the same
  * calling pattern as the original Standard C functions they relate to.
  * This means we don't have to provide custom documentation, and also means
  * that the default implementation is very simple.

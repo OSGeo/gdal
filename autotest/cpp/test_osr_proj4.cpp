@@ -73,7 +73,7 @@ namespace tut
     typedef group::object object;
     group test_osr_proj4_group("OSR::PROJ.4");
 
-    // Test the the +k_0 flag works as well as +k when
+    // Test the +k_0 flag works as well as +k when
     // consuming PROJ.4 format
     template<>
     template<>

@@ -395,7 +395,7 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for a UTF-8 BOM and skip if found                         */
 /*                                                                      */
-/*      TODO: BOM is variable-lenght parameter and depends on encoding. */
+/*      TODO: BOM is variable-length parameter and depends on encoding. */
 /*            Add BOM detection for other encodings.                    */
 /* -------------------------------------------------------------------- */
 

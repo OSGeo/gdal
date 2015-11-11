@@ -131,7 +131,7 @@ CPL_C_END
 /* The parameter x should be a (void**)  */
 #define CPLMutexHolderExD(x, nOptions)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__,nOptions);
 
-/* This variant assumes the the mutex has already been created. If not, it will */
+/* This variant assumes the mutex has already been created. If not, it will */
 /* be a no-op. The parameter x should be a (void*) */
 #define CPLMutexHolderOptionalLockD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
 
@@ -150,7 +150,7 @@ class CPL_DLL CPLMutexHolder
                     int nLine = __LINE__,
                     int nOptions = CPL_MUTEX_RECURSIVE);
 
-    /* This variant assumes the the mutex has already been created. If not, it will */
+    /* This variant assumes the mutex has already been created. If not, it will */
     /* be a no-op */
     CPLMutexHolder( CPLMutex* hMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
@@ -162,7 +162,7 @@ class CPL_DLL CPLMutexHolder
 /* Instanciates the lock if not already done. The parameter x should be a (CPLLock**) */
 #define CPLLockHolderD(x, eType)  CPLLockHolder oHolder(x,eType,__FILE__,__LINE__);
 
-/* This variant assumes the the lock has already been created. If not, it will */
+/* This variant assumes the lock has already been created. If not, it will */
 /* be a no-op. The parameter should be (CPLLock*) */
 #define CPLLockHolderOptionalLockD(x)  CPLLockHolder oHolder(x,__FILE__,__LINE__);
 
@@ -180,7 +180,7 @@ class CPL_DLL CPLLockHolder
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__);
 
-    /* This variant assumes the the lock has already been created. If not, it will */
+    /* This variant assumes the lock has already been created. If not, it will */
     /* be a no-op */
     CPLLockHolder( CPLLock* hSpin,
                     const char *pszFile = __FILE__,

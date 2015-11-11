@@ -579,7 +579,7 @@ void OGRSpatialReference::dumpReadable()
 /************************************************************************/
 
 /**
- * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ * Convert this SRS into a nicely formatted WKT string for display to a person.
  *
  * Note that the returned WKT string should be freed with OGRFree() or
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
@@ -625,7 +625,7 @@ OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult,
 
 
 /**
- * \brief Convert this SRS into a a nicely formatted WKT string for display to a person.
+ * \brief Convert this SRS into a nicely formatted WKT string for display to a person.
  *
  * This function is the same as OGRSpatialReference::exportToPrettyWkt().
  */
@@ -7148,7 +7148,7 @@ void OSRCleanup( void )
 /**
  * \brief Fetch the orientation of one axis.
  *
- * Fetches the the request axis (iAxis - zero based) from the
+ * Fetches the request axis (iAxis - zero based) from the
  * indicated portion of the coordinate system (pszTargetKey) which
  * should be either "GEOGCS" or "PROJCS". 
  *

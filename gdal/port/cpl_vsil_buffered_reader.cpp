@@ -218,7 +218,7 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
         const int nToReadInFile = nTotalToRead - nReadInBuffer;
         if (nToReadInFile > 0)
         {
-            /* The beginning of the the data to read is located in the buffer */
+            /* The beginning of the data to read is located in the buffer */
             /* but the end must be read from the file */
             if (bNeedBaseHandleSeek)
             {

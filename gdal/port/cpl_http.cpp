@@ -754,7 +754,7 @@ void CPLHTTPDestroyResult( CPLHTTPResult *psResult )
 /************************************************************************/
 
 /**
- * \brief Parses a a MIME multipart message
+ * \brief Parses a MIME multipart message.
  *
  * This function will iterate over each part and put it in a separate
  * element of the pasMimePart array of the provided psResult structure.

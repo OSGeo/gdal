@@ -562,7 +562,7 @@ static void AttachNode( ParseContext *psContext, CPLXMLNode *psNode )
  * done.  The CPLParseXMLFile() convenience function can be used to parse
  * from a file.
  *
- * The returned document tree is is owned by the caller and should be freed
+ * The returned document tree is owned by the caller and should be freed
  * with CPLDestroyXMLNode() when no longer needed.
  *
  * If the document has more than one "root level" element then those after the

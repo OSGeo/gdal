@@ -886,7 +886,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 
 /* -------------------------------------------------------------------- */
 /*      If the line buffer is not filled after reading the line in the  */
-/*      file upto the next line offset, just fill it with zeros.        */
+/*      file up to the next line offset, just fill it with zeros.       */
 /*      (The last pixel value from nPixValue could be a better value?)  */
 /* -------------------------------------------------------------------- */
     while( iPixel < psInfo->nXSize )

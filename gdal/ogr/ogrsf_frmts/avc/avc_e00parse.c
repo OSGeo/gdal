@@ -273,7 +273,7 @@ void    AVCE00ParseReset(AVCE00ParseInfo  *psInfo)
  * files, such as the TX6/TX7, RPL, RXP, ... and also the IFO (TABLEs).
  *
  * The ParseInfo structure won't be ready to read objects until
- * a call to AVCE00ParseSectionHeader() (see below) succesfully
+ * a call to AVCE00ParseSectionHeader() (see below) successfully
  * recognizes the beginning of a subsection of this type.
  *
  * Returns the new supersection type, or AVCFileUnknown if the line is
@@ -612,7 +612,7 @@ GBool  AVCE00ParseSectionEnd(AVCE00ParseInfo  *psInfo, const char *pszLine,
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  *
  * Note for TABLES:
  * When parsing input from info tables, the first valid object that
@@ -685,7 +685,7 @@ void   *AVCE00ParseNextLine(AVCE00ParseInfo  *psInfo, const char *pszLine)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
@@ -719,7 +719,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             psArc->nLPoly = AVCE00Str2Int(pszLine+40, 10);
             psArc->nRPoly = AVCE00Str2Int(pszLine+50, 10);
             psArc->numVertices = AVCE00Str2Int(pszLine+60, 10);
-            
+
             /* Realloc the array of vertices 
              */
             psArc->pasVertices = (AVCVertex*)CPLRealloc(psArc->pasVertices,
@@ -797,7 +797,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
@@ -941,7 +941,7 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
@@ -1055,7 +1055,7 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
@@ -1167,7 +1167,7 @@ AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 AVCTol   *AVCE00ParseNextTolLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
@@ -1234,7 +1234,7 @@ AVCTol   *AVCE00ParseNextTolLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
@@ -1302,7 +1302,7 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
@@ -1534,7 +1534,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
@@ -1733,7 +1733,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 AVCRxp   *AVCE00ParseNextRxpLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
@@ -1797,7 +1797,7 @@ AVCRxp   *AVCE00ParseNextRxpLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo, 
                                            const char *pszLine)
@@ -2094,7 +2094,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
  *
  * If the input is invalid or other problems happen, then a CPLError()
  * will be generated.  CPLGetLastErrorNo() should be called to check
- * that the line was parsed succesfully.
+ * that the line was parsed successfully.
  **********************************************************************/
 AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo, 
                                         const char *pszLine)
@@ -2235,5 +2235,3 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
 
     return pasFields;
 }
-
-

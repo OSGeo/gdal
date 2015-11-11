@@ -3531,7 +3531,7 @@ def ogr_shape_73():
     lyr = ds.CreateLayer('ogr_shape_73', geom_type = ogr.wkbPolygon)
     feat = ogr.Feature(lyr.GetLayerDefn())
     # (5 1) is the first(and last) point, and the pivot point selected by the
-    # algorithm (lowest rightmost vertex), but is is also reused later in the
+    # algorithm (lowest rightmost vertex), but it is also reused later in the
     # coordinate list
     # But the second ring is counter-clock-wise
     geom = ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 10,10 10,10 0,0 0),(5 1,4 3,4 2,5 1,6 2,6 3,5 1))')

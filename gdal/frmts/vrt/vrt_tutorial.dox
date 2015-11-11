@@ -287,7 +287,7 @@ or not relative to the .vrt file (value is 0).  The default is 0.
 
 The shared attribute, added in GDAL 2.0.0, on the SourceFilename indicates whether the
 dataset should be shared (value is 1) or not (value is 0). The default is 1.
-If several VRT datasets refering to the same underlying sources are used in a multithreaded context,
+If several VRT datasets referring to the same underlying sources are used in a multithreaded context,
 shared should be set to 0. Alternatively, the VRT_SHARED_SOURCE configuration
 option can be set to 0 to force non-shared mode.
 
@@ -299,7 +299,7 @@ raster dimensions, the size of the blocks and the data type. If the SourceProper
 tag is not present, the source dataset will be opened at the same time as the VRT itself.
 
 Starting with GDAL 1.8.0, the content of the SourceBand subelement can refer to
-a mask band. For example mask,1 means the the mask band of the first band of the source.
+a mask band. For example mask,1 means the mask band of the first band of the source.
 
 \code
     <SimpleSource>
@@ -1142,7 +1142,7 @@ datasets.
 
 The shared attribute, added in GDAL 2.0.0, on the SourceFilename indicates whether the
 dataset should be shared (value is 1) or not (value is 0). The default is 1.
-If several VRT datasets refering to the same underlying sources are used in a multithreaded context,
+If several VRT datasets referring to the same underlying sources are used in a multithreaded context,
 shared should be set to 0. Alternatively, the VRT_SHARED_SOURCE configuration
 option can be set to 0 to force non-shared mode.
 

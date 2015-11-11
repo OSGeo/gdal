@@ -310,7 +310,7 @@ CPLStringList &CPLStringList::AddString( const char *pszNewString )
 /************************************************************************/
 
 /**
- * A a name=value entry to the list.
+ * Add a name=value entry to the list.
  *
  * A key=value string is prepared and appended to the list.  There is no
  * check for other values for the same key in the list.

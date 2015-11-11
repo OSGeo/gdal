@@ -716,9 +716,9 @@ void myWarnSet (uChar f_outType, uChar f_detail, uChar f_fileDetail,
  *
  * RETURNS: sChar
  *   -1 means no messages in msg (msg should be null)
- *    0 means upto notation msg in msg, but msg should not be null.
- *    1 means upto warning messages in msg, msg should not be null.
- *    2 means upto error messages in msg, msg should not be null.
+ *    0 means up to notation msg in msg, but msg should not be null.
+ *    1 means up to warning messages in msg, msg should not be null.
+ *    2 means up to error messages in msg, msg should not be null.
  *
  * 12/2005 Arthur Taylor (MDL): Created.
  *
@@ -771,9 +771,9 @@ uChar myWarnNotEmpty ()
  *
  * RETURNS: sChar
  *   -1 means no messages in msg (msg should be null)
- *    0 means upto notation msg in msg, but msg should not be null.
- *    1 means upto warning messages in msg, msg should not be null.
- *    2 means upto error messages in msg, msg should not be null.
+ *    0 means up to notation msg in msg, but msg should not be null.
+ *    1 means up to warning messages in msg, msg should not be null.
+ *    2 means up to error messages in msg, msg should not be null.
  *
  * 12/2005 Arthur Taylor (MDL): Created.
  *

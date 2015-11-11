@@ -723,7 +723,7 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
  * fetched. 
  *
  * NOTE: If any fields in the expression are from tables other than the
- * primary table then NULL is returned indicating an error.  In succesful
+ * primary table then NULL is returned indicating an error.  In successful
  * use, no non-empty expression should return an empty list.
  *
  * @return list of field names.  Free list with CSLDestroy() when no longer
@@ -736,9 +736,5 @@ char **OGRFeatureQuery::GetUsedFields( )
     if( pSWQExpr == NULL )
         return NULL;
 
-    
     return FieldCollector( pSWQExpr, NULL );
 }
-
-
-

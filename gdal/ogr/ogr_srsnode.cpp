@@ -795,7 +795,7 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Are the the target node?                                        */
+/*      Is this the target node?                                        */
 /* -------------------------------------------------------------------- */
     if( pszNode != NULL )
         bChildOfHit = EQUAL(pszValue,pszNode);
@@ -811,7 +811,7 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
 
     return OGRERR_NONE;
 }
-                                   
+
 /************************************************************************/
 /*                             StripNodes()                             */
 /************************************************************************/
