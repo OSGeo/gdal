@@ -1630,7 +1630,7 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
  * include a newline character.
  *
  * Call CPLGetLastErrorNo() after calling AVCE00ReadNextLine() to 
- * make sure that the line was generated succesfully.
+ * make sure that the line was generated successfully.
  *
  * Note that AVCE00ReadNextLine() returns a reference to an
  * internal buffer whose contents will

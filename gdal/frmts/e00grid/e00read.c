@@ -147,7 +147,7 @@ E00ReadPtr  E00ReadOpen(const char *pszFname)
         return NULL;
     }
 
-    /* File was succesfully opened, allocate and initialize a 
+    /* File was successfully opened, allocate and initialize a
      * E00ReadPtr handle and check that the file is valid.
      */
     psInfo = (E00ReadPtr)CPLCalloc(1, sizeof(struct _E00ReadInfo));
@@ -366,7 +366,7 @@ static void _ReadNextSourceLine(E00ReadPtr psInfo)
 
         if (!psInfo->bEOF)
         {
-            /* A new line was succesfully read.  Remove trailing '\n' if any.
+            /* A new line was successfully read.  Remove trailing '\n' if any.
              * (Note: For Unix systems, we also have to check for '\r')
              */
             int nLen;

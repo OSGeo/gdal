@@ -86,12 +86,12 @@ def have_proj480():
         return have_proj480_flag
 
 ###############################################################################
-# Test the the +k_0 flag works as well as +k when consuming PROJ.4 format.
+# Test the +k_0 flag works as well as +k when consuming PROJ.4 format.
 # This is from Bugzilla bug 355.
 #
 
 def osr_proj4_1():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromProj4( '+proj=tmerc +lat_0=53.5000000000 +lon_0=-8.0000000000 +k_0=1.0000350000 +x_0=200000.0000000000 +y_0=250000.0000000000 +a=6377340.189000 +rf=299.324965 +towgs84=482.530,-130.596,564.557,-1.042,-0.214,-0.631,8.15' )
 
@@ -793,4 +793,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

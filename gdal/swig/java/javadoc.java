@@ -1234,7 +1234,7 @@ public class gdal:public static int GetCacheUsed()
 /**
  * Get data type size in bits.
  * <p>
- * Returns the size of a a GDT_* type <b>in bits</b>, not bytes!
+ * Returns the size of a GDT_* type <b>in bits</b>, not bytes!
  *
  * @param eDataType type, such as gdalconst.GDT_Byte. 
  * @return the number of bits or zero if it is not recognised.
@@ -8413,7 +8413,7 @@ public class Geometry:public Geometry ConvexHull()
  *
  * @param gml The GML fragment for the geometry.
  *
- * @return a geometry on succes, or null on error.
+ * @return a geometry on success, or null on error.
  *
  * @since Java bindings 1.7.0
  */
@@ -8424,7 +8424,7 @@ public class Geometry:public static Geometry CreateFromGML(String gml)
  *
  * @param json GeoJSON content
  *
- * @return a geometry on succes, or null on error.
+ * @return a geometry on success, or null on error.
  *
  * @since Java bindings 1.7.0
  */
@@ -8436,7 +8436,7 @@ public class Geometry:public static Geometry CreateFromJson(String json)
  *
  * @param wkb input BLOB data.
  *
- * @return a geometry on succes, or null on error.
+ * @return a geometry on success, or null on error.
  *
  * @since Java bindings 1.7.0
  */
@@ -8449,7 +8449,7 @@ public class Geometry:public static Geometry CreateFromWkb(byte[] wkb)
  * @param wkt string containing well known text
  *                representation of the geometry to be created.
  *
- * @return a geometry on succes, or null on error.
+ * @return a geometry on success, or null on error.
  *
  * @since Java bindings 1.7.0
  */
@@ -8466,7 +8466,7 @@ public class Geometry:public static Geometry CreateFromWkt(String wkt)
  *
  * @param other the geometry to compare to this geometry.
  *
- * @return true if they are crossing, otherwise false.  
+ * @return true if they are crossing, otherwise false.
  */
 public class Geometry:public boolean Crosses(Geometry other)
 
@@ -10278,7 +10278,7 @@ public class SpatialReference:public int ExportToMICoordSys(String[] argout)
 public class SpatialReference:public int ExportToPCI(String[] proj, String[] units, double[] parms)
 
 /**
- * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ * Convert this SRS into a nicely formatted WKT string for display to a person.
  * <p>
  * Same as below with simplify == 0 and the string is returned as a return value
  *
@@ -10289,7 +10289,7 @@ public class SpatialReference:public int ExportToPCI(String[] proj, String[] uni
 public class SpatialReference:public String ExportToPrettyWkt()
 
 /**
- * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ * Convert this SRS into a nicely formatted WKT string for display to a person.
  * <p>
  * Same as below but the string is returned as a return value
  *
@@ -10300,7 +10300,7 @@ public class SpatialReference:public String ExportToPrettyWkt()
 public class SpatialReference:public String ExportToPrettyWkt(int simplify)
 
 /**
- * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ * Convert this SRS into a nicely formatted WKT string for display to a person.
  * <p>
  * Same as below with simplify == 0.
  *
@@ -10311,7 +10311,7 @@ public class SpatialReference:public String ExportToPrettyWkt(int simplify)
 public class SpatialReference:public int ExportToPrettyWkt(String[] argout)
 
 /**
- * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ * Convert this SRS into a nicely formatted WKT string for display to a person.
  *
  * @param argout an already allocated array of 1 string to receive the output
  * @param simplify 1 if the AXIS, AUTHORITY and EXTENSION nodes should be stripped off

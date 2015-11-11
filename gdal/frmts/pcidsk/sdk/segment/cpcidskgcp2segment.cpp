@@ -69,12 +69,12 @@ void CPCIDSKGCP2Segment::Load()
     if (loaded_) {
         return;
     }
-    
-    // Read the the segment in. The first block has information about
+
+    // Read the segment in. The first block has information about
     // the structure of the GCP segment (how many, the projection, etc.)
     pimpl_->seg_data.SetSize(data_size - 1024);
     ReadFromFile(pimpl_->seg_data.buffer, 0, data_size - 1024);
-    
+
     // check for 'GCP2    ' in the first 8 bytes
     if (!STARTS_WITH(pimpl_->seg_data.buffer, "GCP2    ")) {
         // Assume it's an empty segment, so we can mark loaded_ = true,
@@ -293,4 +293,3 @@ void  CPCIDSKGCP2Segment::ClearGCPs(void)
     
     RebuildSegmentData();
 }
-

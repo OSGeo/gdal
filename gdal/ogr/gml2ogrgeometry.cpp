@@ -3354,7 +3354,7 @@ OGRGeometryH OGR_G_CreateFromGMLTree( const CPLXMLNode *psTree )
  *
  * @param pszGML The GML fragment for the geometry.
  *
- * @return a geometry on succes, or NULL on error.
+ * @return a geometry on success, or NULL on error.
  */
 
 OGRGeometryH OGR_G_CreateFromGML( const char *pszGML )

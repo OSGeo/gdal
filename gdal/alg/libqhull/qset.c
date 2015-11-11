@@ -1131,7 +1131,7 @@ int qh_setsize(setT *set) {
   >-------------------------------<a name="settemp">-</a>
 
   qh_settemp( setsize )
-    return a stacked, temporary set of upto setsize elements
+    return a stacked, temporary set of up to setsize elements
 
   notes:
     use settempfree or settempfree_all to release from qhmem.tempstack
@@ -1335,5 +1335,3 @@ void qh_setzero(setT *set, int idx, int size) {
   count= size - idx + 1;   /* +1 for NULL terminator */
   memset((char *)SETelemaddr_(set, idx, void), 0, (size_t)count * SETelemsize);
 } /* setzero */
-
-

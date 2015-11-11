@@ -72,7 +72,7 @@ This function is the same as the C++ method OGRSFDriver::GetName().
 Parameters:
 -----------
 
-hDriver:  handle to the the driver to get the name from.
+hDriver:  handle to the driver to get the name from.
 
 driver name. This is an internal string and should not be modified or
 freed. ";

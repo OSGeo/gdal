@@ -95,7 +95,7 @@ ADSRangeLastAfter::ADSRangeLastAfter( EnvisatFile & envfile,
     mjd_m_first = mds.getMJD(0) ;  /* MDJ time of the first MDS record */
     mjd_m_last  = mds.getMJD(-1) ;   /* MDJ time of the last MDS record */
 
-    /* look-up the the first applicable ADSR */ 
+    /* look-up the first applicable ADSR */
 
     int idx = 0;
     TimeDelta t_mds = mjd_m_first + atol ; /*time of the first MDSR + tolerance */ 
@@ -118,7 +118,7 @@ ADSRangeLastAfter::ADSRangeLastAfter( EnvisatFile & envfile,
     idx_first = idx - 1 ; /* sets -1 if no match */
     mjd_first = t_ads_prev ; /* set time of the first rec. if no match */
 
-    /* look-up the the last applicable ADSR */ 
+    /* look-up the last applicable ADSR */ 
 
     idx   = ads.nrec-2 ; 
     t_mds = mjd_m_last - atol ;  /* time of the last MDSR - tolerance */ 

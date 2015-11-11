@@ -227,8 +227,8 @@ GDALGetMetadataDomainList( GDALMajorObjectH hObject)
  *
  * The returned string list is owned by the object, and may change at
  * any time.  It is formated as a "Name=value" list with the last pointer
- * value being NULL.  Use the the CPL StringList functions such as 
- * CSLFetchNameValue() to manipulate it. 
+ * value being NULL.  Use the CPL StringList functions such as
+ * CSLFetchNameValue() to manipulate it.
  *
  * Note that relatively few formats return any metadata at this time. 
  *
@@ -421,4 +421,3 @@ void GDALMajorObject::SetMOFlags( int nNewFlags )
 {
     nFlags = nNewFlags;
 }
-

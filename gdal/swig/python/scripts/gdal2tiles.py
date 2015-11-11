@@ -944,7 +944,7 @@ gdal2tiles temp.vrt""" % self.input )
 
         # MAPTILER - COMMENTED
         #if self.out_gt[1] != (-1 * self.out_gt[5]) and self.options.profile != 'raster':
-            # TODO: Process corectly coordinates with are have swichted Y axis (display in OpenLayers too)
+            # TODO: Process correctly coordinates with are have switched Y axis (display in OpenLayers too)
             #self.error("Size of the pixel in the output differ for X and Y axes.")
 
         # Report error in case rotation/skew is in geotransform (possible only in 'raster' profile)

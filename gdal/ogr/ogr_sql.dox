@@ -258,7 +258,7 @@ The available logical operators are
 <b>ILIKE</b>,
 <b>BETWEEN</b> and
 <b>IN</b>. 
-Most of the operators are self explanitory, but is is worth nothing that <b>
+Most of the operators are self explanitory, but it is worth noting that <b>
 !=</b> is the same as <b>&lt;&gt;</b>, the string equality is
 case insensitive, but the <b>&lt;</b>, <b>&gt;</b>, <b>&lt;=</b> and <b>&gt;=</b> operators <i>are</i> case sensitive.  Both the LIKE and ILIKE operators are case insensitive.
 

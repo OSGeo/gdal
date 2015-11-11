@@ -5,7 +5,7 @@
  * MdelAttribute deletes an attribute
  * from a map, if the attribute is available.
  * returns
- * the id argument if the attribute is succesfully deleted,
+ * the id argument if the attribute is successfully deleted,
  * or 0 in case of error or if the attribute is not found.
  *
  * Merrno

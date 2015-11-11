@@ -48,13 +48,13 @@ static const double XLIM = XDIF*(1.0-NEMPY*(1.0/NBIN));
 /* used by envisatdataset.cpp */
 extern void EnvisatUnwrapGCPs( int cnt, GDAL_GCP *gcp );
 
-// The algoright is based on assumption that the unwrapped 
+// The algorithm is based on assumption that the unwrapped
 // GCPs ('flipped' values) have smaller extent along the longitude.
-// We further assume that the lenght of the striplines is limitted 
-// to one orbit and does not exceeded given limit along the longitude, 
-// e.i., the wrapped-arround coordinates have significantly larger 
-// extent the unwrapped. If the smaller extend exceedes the limit
-// the original tiepoints are returned. 
+// We further assume that the length of the striplines is limited
+// to one orbit and does not exceeded given limit along the longitude,
+// e.i., the wrapped-around coordinates have significantly larger
+// extent the unwrapped. If the smaller extend exceeds the limit
+// the original tiepoints are returned.
 
 static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp ) 
 { 

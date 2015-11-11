@@ -56,7 +56,7 @@ typedef struct
 {
     /*! Pan sharpening algorithm/method. Only weighed Brovey for now. */
     GDALPansharpenAlg    ePansharpenAlg;
-    
+
     /*! Resampling algorithm to upsample spectral bands to pan band resoultion. */
     GDALRIOResampleAlg   eResampleAlg;
 
@@ -65,18 +65,18 @@ typedef struct
 
     /*! Number of weight coefficients in padfWeights. */
     int                  nWeightCount;
-    
+
     /*! Array of nWeightCount weights used by weighted Brovey. */
     double              *padfWeights;
 
     /*! Panchromatic band. */
     GDALRasterBandH      hPanchroBand;
-    
+
     /*! Number of input spectral bands. */
     int                  nInputSpectralBands;
 
     /** Array of nInputSpectralBands input spectral bands. The spectral band have
-     *  generally a coarser resolution than the the panchromatic band, but they
+     *  generally a coarser resolution than the panchromatic band, but they
      *  are assumed to have the same spatial extent (and projection) at that point.
      *  Necessary spatial adjustments must be done priorly, for example by wrapping
      *  inside a VRT dataset.
@@ -88,18 +88,18 @@ typedef struct
 
     /*! Array of nOutPansharpendBands values such as panOutPansharpenedBands[k] is a value in the range [0,nInputSpectralBands-1] . */
     int                 *panOutPansharpenedBands;
-    
+
     /*! Whether the panchromatic and spectral bands have a noData value. */
     int                  bHasNoData;
 
     /** NoData value of the panchromatic and spectral bands (only taken into account if bHasNoData = TRUE).
         This will also be use has the output nodata value. */
     double               dfNoData;
-    
+
     /** Number of threads or -1 to mean ALL_CPUS. By default (0), single threaded mode is enabled
       * unless the GDAL_NUM_THREADS configuration option is set to an integer or ALL_CPUS. */
     int                  nThreads;
-    
+
     double               dfMSShiftX;
     double               dfMSShiftY;
 
@@ -268,4 +268,3 @@ class GDALPansharpenOperation
 #endif /* __cplusplus */
 
 #endif /* GDALPANSHARPEN_H_INCLUDED */
-

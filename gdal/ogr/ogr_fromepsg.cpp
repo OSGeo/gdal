@@ -1818,7 +1818,7 @@ static OGRErr SetEPSGCompdCS( OGRSpatialReference * poSRS, int nCCSCode )
                                                    "COORD_REF_SYS_NAME")) );
 
 /* -------------------------------------------------------------------- */
-/*      Lookup the the projected coordinate system.  Can the            */
+/*      Lookup the projected coordinate system.  Can the            */
 /*      horizontal CRS be a GCS?                                        */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oPCS;

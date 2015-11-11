@@ -260,7 +260,7 @@ typedef GIntBig GSpacing;
 /** Extension handled by the driver. */
 #define GDAL_DMD_EXTENSION "DMD_EXTENSION"
 
-/** Connection prefix to provide as the file name of the the open function.
+/** Connection prefix to provide as the file name of the open function.
  * Typically set for non-file based drivers. Generally used with open options.
  * @since GDAL 2.0
  */

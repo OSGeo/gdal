@@ -185,7 +185,7 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
 /************************************************************************/
 /*                          TranslateFeature()                          */
 /*                                                                      */
-/*      Translate the AVC structure for a feature to the the            */
+/*      Translate the AVC structure for a feature to the                */
 /*      corresponding OGR definition.  It is assumed that the passed    */
 /*      in feature is of a type matching the section type               */
 /*      established by SetupFeatureDefinition().                        */

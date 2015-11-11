@@ -4869,7 +4869,7 @@ int TABArc::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
     else if ( (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint ) ) 
     {
         /*-------------------------------------------------------------
-         * In the case of a POINT GEOMETRY, we will make sure the the 
+         * In the case of a POINT GEOMETRY, we will make sure the
          * feature's m_dCenterX/Y are in sync with the point's X,Y coords.
          *
          * In this case we have to reconstruct the arc inside a temporary

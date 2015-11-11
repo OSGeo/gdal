@@ -436,8 +436,8 @@ int   NITFDESGetTRE( NITFDES* psDES,
 
     if (VSIFReadL(szTREHeader, 1, 11, fp) != 11)
     {
-        /* Some files have a nSegmentSize larger than what is is in reality */
-        /* So exit silently if we're at end of file */ 
+        /* Some files have a nSegmentSize larger than what it is in reality */
+        /* So exit silently if we're at end of file */
         VSIFSeekL(fp, 0, SEEK_END);
         if (VSIFTellL(fp) == psSegInfo->nSegmentStart + nOffset)
             return FALSE;

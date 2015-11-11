@@ -1107,9 +1107,9 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
  *        the attribute name must be the form:
  *            root attribute name
  *            SUBDATASET/subdataset attribute name
- * @param pdfValues pointer wich will store the array of doubles read.
- * @param nLen it stores the length of the array read. If NULL it doesn't 
- *        inform the lenght of the array.
+ * @param pdfValues pointer which will store the array of doubles read.
+ * @param nLen it stores the length of the array read. If NULL it doesn't
+ *        inform the length of the array.
  * @return CPLErr CE_None in case of success, CE_Failure in case of failure
  */
 CPLErr HDF5Dataset::HDF5ReadDoubleAttr(const char* pszAttrFullPath,

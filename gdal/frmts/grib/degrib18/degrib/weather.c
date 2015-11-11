@@ -172,7 +172,7 @@ enum {
    HAZ_PRI2 = 254, HAZ_OR = 255
 };
 
-/* Note: HazCode currently can handle upto (21 + 4) different WxAttrib
+/* Note: HazCode currently can handle up to (21 + 4) different WxAttrib
  * numbers because it is stored in a "sInt4" (2^31 = 21,47,48,36,48) */
 WxTable WxAttrib[] = {
    /* 0 */ {"", "None", HAZ_NOHAZ},

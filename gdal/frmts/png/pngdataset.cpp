@@ -295,7 +295,7 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         + nPixelSize * (nBand - 1);
 
 /* -------------------------------------------------------------------- */
-/*      Transfer between the working buffer the the callers buffer.     */
+/*      Transfer between the working buffer and the callers buffer.     */
 /* -------------------------------------------------------------------- */
     if( nPixelSize == nPixelOffset )
         memcpy( pImage, pabyScanline, nPixelSize * nXSize );

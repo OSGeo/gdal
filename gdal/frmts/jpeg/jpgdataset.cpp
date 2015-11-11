@@ -916,7 +916,7 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return eErr;
 
 /* -------------------------------------------------------------------- */
-/*      Transfer between the working buffer the the callers buffer.     */
+/*      Transfer between the working buffer the callers buffer.         */
 /* -------------------------------------------------------------------- */
     if( poGDS->GetRasterCount() == 1 )
     {

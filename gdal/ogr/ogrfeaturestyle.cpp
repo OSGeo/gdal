@@ -2529,7 +2529,7 @@ const char *OGR_ST_GetStyleString( OGRStyleToolH hST )
  * \brief Return the r,g,b,a components of a color encoded in \#RRGGBB[AA] format
  *
  * Maps to OGRStyleTool::GetRGBFromString().
- * 
+ *
  * @param hST handle to the style tool.
  * @param pszColor the color to parse
  * @param pnRed pointer to an int in which the red value will be returned
@@ -2538,7 +2538,7 @@ const char *OGR_ST_GetStyleString( OGRStyleToolH hST )
  * @param pnAlpha pointer to an int in which the (optional) alpha value will
  * be returned
  *
- * @return TRUE if the color could be succesfully parsed, or FALSE in case of
+ * @return TRUE if the color could be successfully parsed, or FALSE in case of
  * errors.
  */
 
@@ -2949,4 +2949,3 @@ const char *OGRStyleLabel::GetStyleString()
 {   return OGRStyleTool::GetStyleString(asStyleLabel,m_pasStyleValue,
                                         (int)OGRSTLabelLast);
 }
-

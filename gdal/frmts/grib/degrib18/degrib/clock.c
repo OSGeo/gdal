@@ -1897,7 +1897,7 @@ enum {
  */
 /* Start at *Start.  Advance Start until it is at first non-space,
  * non-',' non-'.' character.  Move End to first space, ',' or '.' after
- * new Start location.  Copy upto 30 characters (in caps) into word. */
+ * new Start location.  Copy up to 30 characters (in caps) into word. */
 /* return -1 if no next word, 0 otherwise */
 static int Clock_GetWord (char **Start, char **End, char word[30],
                           int *wordType)

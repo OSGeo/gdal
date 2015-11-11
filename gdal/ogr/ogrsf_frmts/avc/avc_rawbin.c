@@ -152,7 +152,7 @@ AVCRawBinFile *AVCRawBinOpen(const char *pszFname, const char *pszAccess,
     }
 
     /*-----------------------------------------------------------------
-     * Check that file was opened succesfully, and init struct.
+     * Check that file was opened successfully, and init struct.
      *----------------------------------------------------------------*/
     if (psFile->fp == NULL)
     {
@@ -414,14 +414,14 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
 
     /* If the file pointer has been moved by AVCRawBinFSeek(), then
      * we may be at a position past EOF, but VSIFeof() would still
-     * return FALSE. It also returns false if we have read just upto
+     * return FALSE. It also returns false if we have read just up to
      * the end of the file. EOF marker would not have been set unless
      * we try to read past that.
-     * 
+     *
      * To prevent this situation, if the memory buffer is empty,
      * we will try to read 1 byte from the file to force the next
-     * chunk of data to be loaded (and we'll move the the read pointer
-     * back by 1 char after of course!).  
+     * chunk of data to be loaded (and we'll move the read pointer
+     * back by 1 char after of course!).
      * If we are at the end of the file, this will trigger the EOF flag.
      */
     if ((psFile->nCurPos == 0 && psFile->nCurSize == 0) ||
@@ -516,9 +516,9 @@ double  AVCRawBinReadDouble(AVCRawBinFile *psFile)
  *
  * Write the number of bytes from the buffer to the file.
  *
- * If a problem happens, then CPLError() will be called and 
- * CPLGetLastErrNo() can be used to test if a write operation was 
- * succesful.
+ * If a problem happens, then CPLError() will be called and
+ * CPLGetLastErrNo() can be used to test if a write operation was
+ * successful.
  **********************************************************************/
 void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite, 
                          const GByte *pBuf)
@@ -555,7 +555,7 @@ void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
  *
  * If a problem happens, then CPLError() will be called and 
  * CPLGetLastErrNo() can be used to test if a write operation was 
- * succesful.
+ * successful.
  **********************************************************************/
 void  AVCRawBinWriteInt16(AVCRawBinFile *psFile, GInt16 n16Value)
 {
@@ -606,7 +606,7 @@ void  AVCRawBinWriteDouble(AVCRawBinFile *psFile, double dValue)
  *
  * If a problem happens, then CPLError() will be called and 
  * CPLGetLastErrNo() can be used to test if a write operation was 
- * succesful.
+ * successful.
  **********************************************************************/
 void AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite)
 {
@@ -630,7 +630,7 @@ void AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite)
  *
  * If a problem happens, then CPLError() will be called and 
  * CPLGetLastErrNo() can be used to test if a write operation was 
- * succesful.
+ * successful.
  **********************************************************************/
 void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
                                 const GByte *pszString)
@@ -659,4 +659,3 @@ void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
                             (GByte*)acSpaces);
     }
 }
-

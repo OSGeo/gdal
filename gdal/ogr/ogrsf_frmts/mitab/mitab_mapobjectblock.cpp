@@ -151,7 +151,7 @@ TABMAPObjectBlock::~TABMAPObjectBlock()
  * Perform some initialization on the block after its binary data has
  * been set or changed (or loaded from a file).
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
@@ -329,7 +329,7 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
  * block header and then calls TABRawBinBlock::CommitToFile() to do
  * the actual writing to disk.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPObjectBlock::CommitToFile()
@@ -393,7 +393,7 @@ int     TABMAPObjectBlock::CommitToFile()
  * that puts the block in a stable state without loading any initial
  * data in it.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
@@ -457,7 +457,7 @@ int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
  * This means that the returned coordinates are always absolute integer
  * coordinates, even when the source coords are in compressed form.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPObjectBlock::ReadIntCoord(GBool bCompressed, 
@@ -490,7 +490,7 @@ int     TABMAPObjectBlock::ReadIntCoord(GBool bCompressed,
  * This function does not maintain the block's MBR and center... it is 
  * assumed to have been set before the first call to WriteIntCoord()
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPObjectBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
@@ -513,8 +513,8 @@ int     TABMAPObjectBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
 /**********************************************************************
  *                   TABMAPObjectBlock::WriteIntMBRCoord()
  *
- * Write 2 pairs of integer coordinates values to the current position 
- * in the the block after making sure that min values are smaller than
+ * Write 2 pairs of integer coordinates values to the current position
+ * in the block after making sure that min values are smaller than
  * max values.  Use this function to write MBR coordinates for an object.
  *
  * If bCompr=TRUE then the coordinates are written relative to
@@ -523,7 +523,7 @@ int     TABMAPObjectBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
  * This function does not maintain the block's MBR and center... it is 
  * assumed to have been set before the first call to WriteIntCoord()
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPObjectBlock::WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
@@ -547,7 +547,7 @@ int     TABMAPObjectBlock::WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
  *
  * Update the block's MBR and center.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPObjectBlock::UpdateMBR(GInt32 nX, GInt32 nY)
@@ -562,13 +562,13 @@ int     TABMAPObjectBlock::UpdateMBR(GInt32 nX, GInt32 nY)
         m_nMinY = nY;
     if (nY > m_nMaxY)
         m_nMaxY = nY;
-    
+
     if( !m_bLockCenter )
     {
         m_nCenterX = (m_nMinX + m_nMaxX) /2;
         m_nCenterY = (m_nMinY + m_nMaxY) /2;
     }
-    
+
     return 0;
 }
 
@@ -679,7 +679,7 @@ int     TABMAPObjectBlock::PrepareNewObject(TABMAPObjHdr *poObjHdr)
  * PrepareNewObject() once all members of the ObjHdr have
  * been set.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPObjectBlock::CommitNewObject(TABMAPObjHdr *poObjHdr)
@@ -884,7 +884,7 @@ TABMAPObjHdr *TABMAPObjHdr::NewObj(TABGeomType nNewObjType, GInt32 nId /*=0*/)
  *                    TABMAPObjHdr::ReadNextObj()
  *
  * Read next object in this block and allocate/init a new object for it
- * if succesful.  
+ * if successful.
  * Returns NULL in case of error or if we reached end of block.
  **********************************************************************/
 TABMAPObjHdr *TABMAPObjHdr::ReadNextObj(TABMAPObjectBlock *poObjBlock,

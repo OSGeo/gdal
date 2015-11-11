@@ -24241,7 +24241,7 @@ static PyMethodDef SwigMethods[] = {
 		"Parameters:\n"
 		"-----------\n"
 		"\n"
-		"hDriver:  handle to the the driver to get the name from.\n"
+           "hDriver:  handle to the driver to get the name from.\n"
 		"\n"
 		"driver name. This is an internal string and should not be modified or\n"
 		"freed. \n"
@@ -28948,4 +28948,3 @@ SWIG_init(void) {
   return;
 #endif
 }
-
