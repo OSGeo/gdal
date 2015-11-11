@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test WEBP driver
 # Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -76,7 +76,7 @@ def webp_3():
     gdal.Unlink('/vsimem/webp_3.webp')
 
     # 21502 is for libwebp 0.3.0
-    if cs1 != 21464 and cs1 != 21502:
+    if cs1 != 21464 and cs1 != 21502 and cs1 != 21695:
         gdaltest.post_reason('did not get expected checksum on band 1')
         print(cs1)
         return 'fail'
@@ -84,7 +84,7 @@ def webp_3():
     return 'success'
 
 ###############################################################################
-# CreateCopy() on RGBA 
+# CreateCopy() on RGBA
 
 def webp_4():
 
@@ -104,7 +104,7 @@ def webp_4():
     gdal.Unlink('/vsimem/webp_4.webp')
 
     # 22849 is for libwebp 0.3.0
-    if cs1 != 22001 and cs1 != 22849:
+    if cs1 != 22001 and cs1 != 22849 and cs1 != 34422:
         gdaltest.post_reason('did not get expected checksum on band 1')
         print(cs1)
         return 'fail'
@@ -162,4 +162,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

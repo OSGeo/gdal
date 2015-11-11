@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test EOSAT FAST Format support.
 # Author:   Mateusz Loskot <mateusz@loskot.net>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Mateusz Loskot <mateusz@loskot.net>
 # Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -40,7 +40,7 @@ import gdaltest
 # Verify we have the driver.
 
 def fast_1():
-    
+
     try:
         gdaltest.fast_drv = gdal.GetDriverByName( 'FAST' )
     except:
@@ -148,10 +148,10 @@ def fast_5():
 
     tst = gdaltest.GDALTest( 'fast', 'L71230079_07920021111_HTM.FST', 2, 19110,
                              0, 0, 7000, 1 )
-    
+
     # Expected parameters of the geotransform
     gt = (528417.25, 30.0, 0.0, 7071187.0, 0.0, -30.0)
-    
+
     # Expected definition of the projection
     proj = """PROJCS["unnamed",
         GEOGCS["WGS 84",
@@ -174,7 +174,7 @@ def fast_5():
         PARAMETER["false_easting",500000],
         PARAMETER["false_northing",10002288.3],
         UNIT["Meter",1]]"""
-    
+
     return tst.testOpen( check_gt = gt, check_prj = proj )
 
 
@@ -303,4 +303,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
