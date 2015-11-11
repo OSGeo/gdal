@@ -1,0 +1,34 @@
+/*! \page streaming Streaming a dataset
+
+The code here does not have any warranty. It is recommended that
+before using any of this code, you look into it and try to understand
+what it does, what input it needs, etc. Do not blindly execute
+anything!
+
+This example will stream a vector dataset as GML through an object,
+which implements <a
+href="http://search.cpan.org/~miyagawa/PSGI-1.102/PSGI.pod#Delayed_Response_and_Streaming_Body">write
+and close methods</a>.
+
+\code
+
+my $layer = Geo::OGR::DataSource::Open(<data source name here>)->GetLayer(<layer name here>);
+
+{
+    package Writer;
+    sub write {
+        my ($w) = @_;
+        print $w;
+    }
+    sub close {
+        print "done\n";
+    }
+}
+
+my $writer = bless {}, 'Writer';
+
+Geo::OGR::Driver('GML')->Create($writer)->CopyLayer($layer, <layer name here>);
+
+\endcode
+
+*/
