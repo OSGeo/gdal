@@ -374,7 +374,12 @@ int wrapper_HasThreadSupport()
 /* Added for GDAL 1.8 */
 VSI_RETVAL VSIMkdir(const char *utf8_path, int mode );
 VSI_RETVAL VSIRmdir(const char *utf8_path );
+
+%apply (const char* utf8_path) {(const char* pszOld)};
+%apply (const char* utf8_path) {(const char* pszNew)};
 VSI_RETVAL VSIRename(const char * pszOld, const char *pszNew );
+%clear (const char* pszOld);
+%clear (const char* pszNew);
 
 /* Added for GDAL 1.8 
 
