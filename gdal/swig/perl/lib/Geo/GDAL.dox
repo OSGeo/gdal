@@ -498,7 +498,7 @@ sub traverse {
 # @param NewName String.
 # @param OldName String.
 
-## @method Copy($NewName, $OldName)
+## @method CopyFiles($NewName, $OldName)
 # Copy the files of a dataset.
 # @param NewName String.
 # @param OldName String.
@@ -550,12 +550,13 @@ sub traverse {
 #
 # Create a new Geo::GDAL::Dataset
 # @param params named parameters:
-# - \a Name the name of the dataset (default is 'unnamed').
+# - \a Name the name of the dataset (default is 'unnamed') or an object, which must be able to write and close.
 # - \a Width the width of the dataset (default is 256).
 # - \a Height the height of the dataset (default is 256).
 # - \a Bands number of bands in the dataset (default is 1).
 # - \a Type the data type of the pixels the dataset (default is 'Byte'). One of Geo::OGR::Driver::CreationDataTypes.
 # - \a Options creation options as a reference to a hash (default is {}).
+#
 #
 # @return a new Geo::GDAL::Dataset object.
 

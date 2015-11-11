@@ -505,12 +505,21 @@ size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp);
 #endif
 /* VSIFReadL() handled specially in python/gdal_python.i */
 
+#if defined(SWIGPERL)
+void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream );
+%inline {
+void VSIStdoutUnsetRedirection()
+{
+    VSIStdoutSetRedirection( fwrite, stdout );
+}
+}
 #endif
 
+#endif /* !defined(SWIGJAVA) */
 
 %apply (char **CSL) {char **};
 %rename (ParseCommandLine) CSLParseCommandLine;
 char **CSLParseCommandLine( const char * utf8_path );
 %clear char **;
 
-#endif
+#endif /* #ifndef SWIGRUBY */

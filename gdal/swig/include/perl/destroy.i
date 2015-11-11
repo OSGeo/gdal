@@ -10,12 +10,19 @@ sub DESTROY {
         $self = tied(%{$_[0]});
         return unless defined $self;
     }
+    my $code = $Geo::GDAL::stdout_redirection{$self};
+    delete $Geo::GDAL::stdout_redirection{$self};
     delete $ITERATORS{$self};
     if (exists $OWNER{$self}) {
         Geo::modulec::delete_class($self);
         delete $OWNER{$self};
     }
     $self->RELEASE_PARENTS();
+    if ($code) {
+        Geo::GDAL::VSIStdoutUnsetRedirection();
+        $code->close;
+    }
+    
 }
 %}
 %enddef
