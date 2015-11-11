@@ -377,7 +377,7 @@ def vsifile_8():
     gdal.Mkdir('/vsimem/mydir', 438)
     fp = gdal.VSIFOpenL('/vsimem/mydir/a', 'wb')
     gdal.VSIFCloseL(fp)
-    gdal.Rename('/vsimem/mydir', '/vsimem/newdir')
+    gdal.Rename('/vsimem/mydir', '/vsimem/newdir'.encode('ascii').decode('ascii'))
     if gdal.VSIStatL('/vsimem/newdir') is None:
         gdaltest.post_reason('fail')
         return 'fail'
