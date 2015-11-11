@@ -148,6 +148,9 @@ def DontUseExceptions(*args):
 def VSIFReadL(*args):
   """VSIFReadL(int nMembSize, int nMembCount, VSILFILE * fp) -> int"""
   return _gdal.VSIFReadL(*args)
+def _is_str_or_unicode(o):
+    return isinstance(o, str) or str(type(o)) == "<type 'unicode'>"
+
 def InfoOptions(options = [], format = 'text', deserialize = True,
          computeMinMax = False, reportHistograms = False, reportProj4 = False,
          stats = False, approxStats = False, computeChecksum = False,
@@ -158,7 +161,7 @@ def InfoOptions(options = [], format = 'text', deserialize = True,
         options can be be an array of strings, a string or let empty and filled from other keywords."""
     import copy
 
-    if type(options) == type(''):
+    if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
         format = 'text'
         if '-json' in new_options:
@@ -207,11 +210,11 @@ def Info(ds, **kwargs):
           options --- return of gdal.InfoOptions(), string or array of strings
           other keywords arguments of gdal.InfoOptions()
         If options is provided as a gdal.InfoOptions() object, other keywords are ignored. """
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, format, deserialize) = InfoOptions(**kwargs)
     else:
         (opts, format, deserialize) = kwargs['options']
-    if type(ds) == type(''):
+    if _is_str_or_unicode(ds):
         ds = Open(ds)
     ret = InfoInternal(ds, opts)
     if format == 'json' and deserialize:
@@ -266,7 +269,7 @@ def TranslateOptions(options = [], format = 'GTiff',
     """
     import copy
 
-    if type(options) == type(''):
+    if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
@@ -353,11 +356,11 @@ def Translate(destName, srcDS, **kwargs):
           other keywords arguments of gdal.TranslateOptions()
         If options is provided as a gdal.TranslateOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = TranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if type(srcDS) == type(''):
+    if _is_str_or_unicode(srcDS):
         srcDS = Open(srcDS)
 
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
@@ -422,7 +425,7 @@ def WarpOptions(options = [], format = 'GTiff',
     """
     import copy
 
-    if type(options) == type(''):
+    if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
@@ -526,23 +529,23 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
           other keywords arguments of gdal.WarpOptions()
         If options is provided as a gdal.WarpOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = WarpOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if type(srcDSOrSrcDSTab) == type(''):
+    if _is_str_or_unicode(srcDSOrSrcDSTab):
         srcDSTab = [Open(srcDSOrSrcDSTab)]
     elif type(srcDSOrSrcDSTab) == type([]):
         srcDSTab = []
         for elt in srcDSOrSrcDSTab:
-            if type(elt) == type(''):
+            if _is_str_or_unicode(elt):
                 srcDSTab.append(Open(elt))
             else:
                 srcDSTab.append(elt)
     else:
         srcDSTab = [ srcDSOrSrcDSTab ]
 
-    if type(destNameOrDestDS) == type(''):
+    if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALWarpDestName(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
     else:
         return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
@@ -583,7 +586,7 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
     """
     import copy
 
-    if type(options) == type(''):
+    if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
@@ -650,14 +653,14 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
           other keywords arguments of gdal.VectorTranslateOptions()
         If options is provided as a gdal.VectorTranslateOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = VectorTranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if type(srcDS) == type(''):
+    if _is_str_or_unicode(srcDS):
         srcDS = OpenEx(srcDS)
 
-    if type(destNameOrDestDS) == type(''):
+    if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALVectorTranslateDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
     else:
         return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -689,7 +692,7 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
     """
     import copy
 
-    if type(options) == type(''):
+    if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
@@ -732,11 +735,11 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
           other keywords arguments of gdal.DEMProcessingOptions()
         If options is provided as a gdal.DEMProcessingOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, colorFilename, callback, callback_data) = DEMProcessingOptions(**kwargs)
     else:
         (opts, colorFilename, callback, callback_data) = kwargs['options']
-    if type(srcDS) == type(''):
+    if _is_str_or_unicode(srcDS):
         srcDS = Open(srcDS)
 
     return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
@@ -762,7 +765,7 @@ def NearblackOptions(options = [], format = 'GTiff',
     """
     import copy
 
-    if type(options) == type(''):
+    if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
@@ -801,14 +804,14 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
           other keywords arguments of gdal.NearblackOptions()
         If options is provided as a gdal.NearblackOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = NearblackOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if type(srcDS) == type(''):
+    if _is_str_or_unicode(srcDS):
         srcDS = OpenEx(srcDS)
 
-    if type(destNameOrDestDS) == type(''):
+    if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALNearblackDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
     else:
         return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -854,7 +857,7 @@ def GridOptions(options = [], format = 'GTiff',
     """
     import copy
 
-    if type(options) == type(''):
+    if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
@@ -903,11 +906,11 @@ def Grid(destName, srcDS, **kwargs):
           other keywords arguments of gdal.GridOptions()
         If options is provided as a gdal.GridOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = GridOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if type(srcDS) == type(''):
+    if _is_str_or_unicode(srcDS):
         srcDS = OpenEx(srcDS, OF_VECTOR)
 
     return GridInternal(destName, srcDS, opts, callback, callback_data)
@@ -949,7 +952,7 @@ def RasterizeOptions(options = [], format = None,
     """
     import copy
 
-    if type(options) == type(''):
+    if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
@@ -1020,14 +1023,14 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
           other keywords arguments of gdal.RasterizeOptions()
         If options is provided as a gdal.RasterizeOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or type(kwargs['options']) == type(''):
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = RasterizeOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if type(srcDS) == type(''):
+    if _is_str_or_unicode(srcDS):
         srcDS = OpenEx(srcDS)
 
-    if type(destNameOrDestDS) == type(''):
+    if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALRasterizeDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
     else:
         return wrapper_GDALRasterizeDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -1209,7 +1212,7 @@ def VSIFWriteL(*args):
   return _gdal.VSIFWriteL(*args)
 
 def ParseCommandLine(*args):
-  """ParseCommandLine(char const * commandLine) -> char **"""
+  """ParseCommandLine(char const * utf8_path) -> char **"""
   return _gdal.ParseCommandLine(*args)
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class"""

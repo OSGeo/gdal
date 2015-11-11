@@ -315,8 +315,10 @@ def test_ogr2ogr_lib_13():
 def test_ogr2ogr_lib_14():
 
     # Null dest name and no option
-    with gdaltest.error_handler():
+    try:
         gdal.wrapper_GDALVectorTranslateDestName(None, gdal.OpenEx('../ogr/data/poly.shp'), None)
+    except:
+        pass
 
     return 'success'
 
