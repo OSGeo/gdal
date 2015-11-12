@@ -173,6 +173,11 @@ Prints:
 Warning: Driver GTiff does not support my_unknown_option creation option at site/lib/Geo/GDAL.pm line 771.
 \endcode
 
+In some complex cases GDAL may call its error reporting function more
+than once. By default only the most recent one is reported in $\@.
+The whole error history is available in package variable
+\@Geo::GDAL::error.
+
 \section index_progress Progress callback
 
 Some methods accept a callback function for reporting the
@@ -188,6 +193,20 @@ sub progress {
     return $terminate ? 0 : 1;
 }
 \endcode
+
+\section index_stdout_redirection Redirecting stdout to a writer object
+
+The Perl bindings takes advantage of the virtual file system of GDAL
+and offers a way to redirect the output from a format driver to a Perl
+object. The object needs to implement \c write and \c close
+methods. \c write is called for each output from the driver with the
+output byte string as an argument. \c close is called when the dataset
+being used in the creation is destroyed. Note that the destruction of
+the dataset may depend on destruction of all objects that depend on
+it. For a simple example see page \ref streaming.
+
+Due to the limitation of the redirection mechanism only one redirection
+may be active at any time.
 
 \section index_footer Note
 

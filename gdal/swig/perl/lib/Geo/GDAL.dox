@@ -42,6 +42,9 @@
 ## @ignore Rmdir
 ## @ignore Stat
 ## @ignore Unlink
+## @ignore VSIStdoutSetRedirection
+## @ignore VSIStdoutUnsetRedirection
+## @ignore callback_fwrite
 
 ## @ignore FillNodata
 ## @ignore ContourGenerate
