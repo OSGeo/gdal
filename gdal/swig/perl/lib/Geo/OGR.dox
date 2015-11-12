@@ -118,7 +118,7 @@
 ## @method Geo::OGR::DataSource Create($name, hashref options = undef )
 # Create an OGR data source object.
 # @note a.k.a. CreateDataSource
-# @param name The data source name or an object, which must be able to write and close.
+# @param name The data source name or an object, which implements write and close.
 # @param options Driver specific options.
 #
 # Usage:
@@ -282,7 +282,7 @@
 ## @method Geo::GDAL::Dataset Grid($Dest, $Options)
 # Creates a regular raster grid from this data source.
 # This is equivalent to the gdal_grid utility.
-# @param Dest Destination raster dataset definition string (typically filename).
+# @param Dest Destination raster dataset definition string (typically filename) or an object, which implements write and close.
 # @param Options A reference to a hash or list of options. For a
 # hash the keys are without the prefix '-'. For example give { of =>
 # 'PNG' } to set the output format. You must specify at least layer
@@ -295,7 +295,7 @@
 ## @method Geo::GDAL::Dataset Rasterize($Dest, $Options, subref progress, $progress_data)
 # Render data from this data source into a raster.
 # @param Dest Destination raster dataset definition string (typically
-# filename) OR destination dataset.
+# filename), destination dataset, or an object, which implements write and close.
 # @param Options A reference to a hash or list of options. For a hash the keys
 # are without the prefix '-' and the values must be strings. For
 # example give { of => 'PNG' } to set the output format. You must
@@ -312,7 +312,7 @@
 
 ## @method Geo::OGR::DataSource Translate($Dest, $Options, subref progress, $progress_data)
 # Copy data from this data source into another data source.
-# @param Dest Destination data source string OR destination data source object.
+# @param Dest Destination data source string, destination data source object, or an object, which implements write and close.
 # @param Options A reference to a hash or list of options. For a hash the keys
 # are without the prefix '-' and the values must be strings. For a
 # list the options are given as for the command line utility. See 
