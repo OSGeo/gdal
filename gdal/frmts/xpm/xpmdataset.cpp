@@ -221,12 +221,13 @@ XPMCreateCopy( const char * pszFilename,
 /*      If there is no colortable on the source image, create a         */
 /*      greyscale one with 64 levels of grey.                           */
 /* -------------------------------------------------------------------- */
-    GDALRasterBand	*poBand = poSrcDS->GetRasterBand(1);
+    GDALRasterBand *poBand = poSrcDS->GetRasterBand(1);
 
+    GDALColorTable oGreyTable;
     GDALColorTable *poCT = poBand->GetColorTable();
+
     if( poCT == NULL )
     {
-        GDALColorTable oGreyTable;
         poCT = &oGreyTable;
 
         for( int i = 0; i < 256; i++ )
@@ -276,7 +277,7 @@ XPMCreateCopy( const char * pszFilename,
         {
             for( int iColor2 = iColor1+1; iColor2 < nActiveColors; iColor2++ )
             {
-                int	nDistance;
+                int nDistance;
 
                 if( asPixelColor[iColor1].c4 < 128 
                     && asPixelColor[iColor2].c4 < 128 )
