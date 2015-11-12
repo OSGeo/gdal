@@ -31,15 +31,13 @@
 #include "gdal_pam.h"
 #include "cpl_string.h"
 #include "memdataset.h"
-#include "gdal_frmts.h"						      
-
+#include "gdal_frmts.h"
 
 CPL_CVSID("$Id$");
 
 static unsigned char *ParseXPM( const char *pszInput,
                                 int *pnXSize, int *pnYSize, 
                                 GDALColorTable **ppoRetTable );
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -50,20 +48,11 @@ static unsigned char *ParseXPM( const char *pszInput,
 class XPMDataset : public GDALPamDataset
 {
   public:
-                 XPMDataset();
+                 XPMDataset() {};
                  ~XPMDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
-
-/************************************************************************/
-/*                            XPMDataset()                            */
-/************************************************************************/
-
-XPMDataset::XPMDataset()
-
-{
-}
 
 /************************************************************************/
 /*                            ~XPMDataset()                             */
@@ -89,8 +78,10 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      header.                                                         */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 32 
-        || strstr((const char *) poOpenInfo->pabyHeader,"XPM") == NULL 
-        || strstr((const char *) poOpenInfo->pabyHeader,"static") == NULL )
+        || strstr(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ),
+                  "XPM") == NULL
+        || strstr(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ),
+                  "static") == NULL )
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -104,17 +95,15 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the whole file into a memory strings.                      */
 /* -------------------------------------------------------------------- */
-    unsigned int nFileSize;
-    char *pszFileContents;
     VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
     if( fp == NULL )
         return NULL;
 
     VSIFSeekL( fp, 0, SEEK_END );
-    nFileSize = (unsigned int) VSIFTellL( fp );
-    
-    pszFileContents = (char *) VSIMalloc(nFileSize+1);
-    if( pszFileContents == NULL )
+    unsigned int nFileSize = static_cast<unsigned int>( VSIFTellL( fp ) );
+
+    char *pszFileContents = reinterpret_cast<char *>( VSIMalloc(nFileSize+1) );
+    if( pszFileContents == NULL  )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
                   "Insufficient memory for loading XPM file %s into memory.", 
@@ -123,7 +112,7 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
     pszFileContents[nFileSize] = '\0';
-    
+
     VSIFSeekL( fp, 0, SEEK_SET );
 
     if( VSIFReadL( pszFileContents, 1, nFileSize, fp ) != nFileSize)
@@ -135,20 +124,21 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFCloseL(fp);
         return NULL;
     }
-    
+
     VSIFCloseL(fp);
     fp = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Convert into a binary image.                                    */
 /* -------------------------------------------------------------------- */
-    GByte *pabyImage;
-    int   nXSize, nYSize;
-    GDALColorTable *poCT = NULL;
-
     CPLErrorReset();
 
-    pabyImage = ParseXPM( pszFileContents, &nXSize, &nYSize, &poCT );
+    int nXSize;
+    int nYSize;
+    GDALColorTable *poCT = NULL;
+
+    GByte *pabyImage = ParseXPM( pszFileContents, &nXSize, &nYSize, &poCT );
+
     CPLFree( pszFileContents );
 
     if( pabyImage == NULL )
@@ -159,9 +149,7 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    XPMDataset 	*poDS;
-
-    poDS = new XPMDataset();
+    XPMDataset 	*poDS = new XPMDataset();
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -172,10 +160,8 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    MEMRasterBand *poBand;
-
-    poBand = new MEMRasterBand( poDS, 1, pabyImage, GDT_Byte, 1, nXSize, 
-                                TRUE );
+    MEMRasterBand *poBand = new MEMRasterBand( poDS, 1, pabyImage, GDT_Byte, 1,
+                                               nXSize, TRUE );
     poBand->SetColorTable( poCT );
     poDS->SetBand( 1, poBand );
 
@@ -201,20 +187,16 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 static GDALDataset *
 XPMCreateCopy( const char * pszFilename,
-               CPL_UNUSED GDALDataset *poSrcDS,
+               GDALDataset *poSrcDS,
                int bStrict,
-               CPL_UNUSED char ** papszOptions,
-               CPL_UNUSED GDALProgressFunc pfnProgress,
-               CPL_UNUSED void * pProgressData )
+               char ** /* papszOptions */,
+               GDALProgressFunc /* pfnProgress */,
+               void * /* pProgressData */)
 {
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-    GDALColorTable *poCT;
-
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
+    const int nBands = poSrcDS->GetRasterCount();
     if( nBands != 1 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -240,15 +222,14 @@ XPMCreateCopy( const char * pszFilename,
 /*      greyscale one with 64 levels of grey.                           */
 /* -------------------------------------------------------------------- */
     GDALRasterBand	*poBand = poSrcDS->GetRasterBand(1);
-    int                 i;
-    GDALColorTable      oGreyTable;
 
-    poCT = poBand->GetColorTable();
+    GDALColorTable *poCT = poBand->GetColorTable();
     if( poCT == NULL )
     {
+        GDALColorTable oGreyTable;
         poCT = &oGreyTable;
 
-        for( i = 0; i < 256; i++ )
+        for( int i = 0; i < 256; i++ )
         {
             GDALColorEntry sColor;
 
@@ -265,15 +246,17 @@ XPMCreateCopy( const char * pszFilename,
 /*      Build list of active colors, and the mapping from pixels to     */
 /*      our active colormap.                                            */
 /* -------------------------------------------------------------------- */
-    const char *pszColorCodes = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-+=[]|:;,.<>?/";
+    const char *pszColorCodes
+        = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@"
+        "#$%^&*()-+=[]|:;,.<>?/";
 
     int  anPixelMapping[256];
     GDALColorEntry asPixelColor[256];
-    int  nActiveColors = MIN(poCT->GetColorEntryCount(),256);
+    int nActiveColors = MIN(poCT->GetColorEntryCount(),256);
 
     // Setup initial colortable and pixel value mapping. 
     memset( anPixelMapping+0, 0, sizeof(int) * 256 );
-    for( i = 0; i < nActiveColors; i++ )
+    for( int i = 0; i < nActiveColors; i++ )
     {
         poCT->GetColorEntryAsRGB( i, asPixelColor + i );
         anPixelMapping[i] = i;
@@ -282,16 +265,16 @@ XPMCreateCopy( const char * pszFilename,
 /* ==================================================================== */
 /*      Iterate merging colors until we are under our limit (about 85). */
 /* ==================================================================== */
-    while( nActiveColors > (int) strlen(pszColorCodes) )
+    while( nActiveColors > static_cast<int>( strlen(pszColorCodes) ) )
     {
         int nClosestDistance = 768;
-        int iClose1 = -1, iClose2 = -1;
-        int iColor1, iColor2;
+        int iClose1 = -1;
+        int iClose2 = -1;
 
         // Find the closest pair of colors. 
-        for( iColor1 = 0; iColor1 < nActiveColors; iColor1++ )
+        for( int iColor1 = 0; iColor1 < nActiveColors; iColor1++ )
         {
-            for( iColor2 = iColor1+1; iColor2 < nActiveColors; iColor2++ )
+            for( int iColor2 = iColor1+1; iColor2 < nActiveColors; iColor2++ )
             {
                 int	nDistance;
 
@@ -322,7 +305,7 @@ XPMCreateCopy( const char * pszFilename,
 
         // Merge two selected colors - shift icolor2 into icolor1 and
         // move the last active color into icolor2's slot. 
-        for( i = 0; i < 256; i++ )
+        for( int i = 0; i < 256; i++ )
         {
             if( anPixelMapping[i] == iClose2 )
                 anPixelMapping[i] = iClose1;
@@ -333,13 +316,11 @@ XPMCreateCopy( const char * pszFilename,
         asPixelColor[iClose2] = asPixelColor[nActiveColors-1];
         nActiveColors--;
     }
-        
+
 /* ==================================================================== */
 /*      Write the output image.                                         */
 /* ==================================================================== */
-    VSILFILE	*fpPBM;
-
-    fpPBM = VSIFOpenL( pszFilename, "wb+" );
+    VSILFILE *fpPBM = VSIFOpenL( pszFilename, "wb+" );
     if( fpPBM == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -356,14 +337,19 @@ XPMCreateCopy( const char * pszFilename,
     VSIFPrintfL( fpPBM, "static char *%s[] = {\n", 
              CPLGetBasename( pszFilename ) );
     VSIFPrintfL( fpPBM, "/* width height num_colors chars_per_pixel */\n" );
+
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
+
     VSIFPrintfL( fpPBM, "\"  %3d   %3d     %3d             1\",\n",
              nXSize, nYSize, nActiveColors );
+
     VSIFPrintfL( fpPBM, "/* colors */\n" );
 
 /* -------------------------------------------------------------------- */
 /*      Write the color table.                                          */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nActiveColors; i++ )
+    for( int i = 0; i < nActiveColors; i++ )
     {
         if( asPixelColor[i].c4 < 128 )
             VSIFPrintfL( fpPBM, "\"%c c None\",\n", pszColorCodes[i] );
@@ -379,27 +365,27 @@ XPMCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*	Dump image.							*/
 /* -------------------------------------------------------------------- */
-    int iLine;
-    GByte 	*pabyScanline;
+    GByte *pabyScanline = reinterpret_cast<GByte *>( CPLMalloc( nXSize ) );
 
-    pabyScanline = (GByte *) CPLMalloc( nXSize );
-    for( iLine = 0; iLine < nYSize; iLine++ )
+    for( int iLine = 0; iLine < nYSize; iLine++ )
     {
-        if( poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                          (void *) pabyScanline, nXSize, 1, GDT_Byte, 0, 0, NULL ) != CE_None )
+        if( poBand->RasterIO(
+               GF_Read, 0, iLine, nXSize, 1,
+               reinterpret_cast<void *>( pabyScanline), nXSize, 1, GDT_Byte,
+               0, 0, NULL ) != CE_None )
         {
             CPLFree( pabyScanline );
             VSIFCloseL( fpPBM );
             return NULL;
         }
-        
+
         VSIFPutcL( '"', fpPBM );
         for( int iPixel = 0; iPixel < nXSize; iPixel++ )
             VSIFPutcL( pszColorCodes[anPixelMapping[pabyScanline[iPixel]]], 
                    fpPBM);
         VSIFPrintfL( fpPBM, "\",\n" );
     }
-    
+
     CPLFree( pabyScanline );
 
 /* -------------------------------------------------------------------- */
@@ -411,8 +397,8 @@ XPMCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *)
-        GDALOpen( pszFilename, GA_ReadOnly );
+    GDALPamDataset *poDS = reinterpret_cast<GDALPamDataset *>(
+        GDALOpen( pszFilename, GA_ReadOnly ) );
 
     if( poDS )
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
@@ -427,29 +413,24 @@ XPMCreateCopy( const char * pszFilename,
 void GDALRegister_XPM()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "XPM" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "XPM" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "XPM" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "X11 PixMap Format" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#XPM" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xpm" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-xpixmap" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver	*poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = XPMDataset::Open;
-        poDriver->pfnCreateCopy = XPMCreateCopy;
+    poDriver->SetDescription( "XPM" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "X11 PixMap Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#XPM" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xpm" );
+    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-xpixmap" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = XPMDataset::Open;
+    poDriver->pfnCreateCopy = XPMCreateCopy;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 
 /************************************************************************/
@@ -465,12 +446,10 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
 /*      Parse input into an array of strings from within the first C    */
 /*      initializer (list os comma separated strings in braces).        */
 /* ==================================================================== */
-    char **papszXPMList = NULL;
     const char *pszNext = pszInput;
-    int  i;
 
     // Skip till after open brace.
-    while( *pszNext != '\0' && *pszNext != '{' ) 
+    while( *pszNext != '\0' && *pszNext != '{' )
         pszNext++;
 
     if( *pszNext == '\0' )
@@ -479,7 +458,10 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
     pszNext++;
 
     // Read lines till close brace.
-    
+
+    char **papszXPMList = NULL;
+    int  i = 0;
+
     while( *pszNext != '\0' && *pszNext != '}' )
     {
         // skip whole comment. 
@@ -493,8 +475,6 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
         // reading string constants
         else if( *pszNext == '"' )
         {
-            char   *pszLine;
-
             pszNext++;
             i = 0;
 
@@ -507,7 +487,7 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
                 return NULL;
             }
 
-            pszLine = (char *) CPLMalloc(i+1);
+            char *pszLine = reinterpret_cast<char *>( CPLMalloc(i+1) );
             strncpy( pszLine, pszNext, i );
             pszLine[i] = '\0';
 
@@ -526,7 +506,7 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
         CSLDestroy( papszXPMList );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the image information.                                      */
 /* -------------------------------------------------------------------- */
@@ -553,18 +533,15 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
 /* -------------------------------------------------------------------- */
 /*      Parse out colors.                                               */
 /* -------------------------------------------------------------------- */
-    int iColor;
     int anCharLookup[256];
     GDALColorTable oCTable;
 
-    for( i = 0; i < 256; i++ ) 
+    for( int i = 0; i < 256; i++ )
         anCharLookup[i] = -1;
 
-    for( iColor = 0; iColor < nColorCount; iColor++ )
+    for( int iColor = 0; iColor < nColorCount; iColor++ )
     {
         char **papszTokens = CSLTokenizeString( papszXPMList[iColor+1]+1 );
-        GDALColorEntry sColor;
-        int            nRed, nGreen, nBlue;
 
         if( CSLCount(papszTokens) != 2 || !EQUAL(papszTokens[0],"c") )
         {
@@ -576,8 +553,11 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
             return NULL;
         }
 
-        anCharLookup[(int)papszXPMList[iColor+1][0]] = iColor;
-        
+        anCharLookup[static_cast<int>( papszXPMList[iColor+1][0] )] = iColor;
+
+        GDALColorEntry sColor;
+        int nRed, nGreen, nBlue;
+
         if( EQUAL(papszTokens[1],"None") )
         {
             sColor.c1 = 0;
@@ -597,9 +577,9 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
         }
         else
         {
-            sColor.c1 = (short) nRed;
-            sColor.c2 = (short) nGreen;
-            sColor.c3 = (short) nBlue;
+            sColor.c1 = static_cast<short>( nRed );
+            sColor.c2 = static_cast<short>( nGreen );
+            sColor.c3 = static_cast<short>( nBlue );
             sColor.c4 = 255;
         }
 
@@ -611,9 +591,8 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
 /* -------------------------------------------------------------------- */
 /*      Prepare image buffer.                                           */
 /* -------------------------------------------------------------------- */
-    GByte *pabyImage;
-
-    pabyImage = (GByte *) VSIMalloc2(*pnXSize, *pnYSize);
+    GByte *pabyImage
+        = reinterpret_cast<GByte *>( VSIMalloc2(*pnXSize, *pnYSize) );
     if( pabyImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
@@ -641,13 +620,15 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
             return NULL;
         }
 
-        for( int iPixel = 0; 
-             pszInLine[iPixel] != '\0' && iPixel < *pnXSize; 
+        for( int iPixel = 0;
+             pszInLine[iPixel] != '\0' && iPixel < *pnXSize;
              iPixel++ )
         {
-            int nPixelValue = anCharLookup[(int)pszInLine[iPixel]];
+            const int nPixelValue
+                = anCharLookup[static_cast<int>( pszInLine[iPixel] )];
             if( nPixelValue != -1 )
-                pabyImage[iLine * *pnXSize + iPixel] = (GByte) nPixelValue;
+                pabyImage[iLine * *pnXSize + iPixel]
+                    = static_cast<GByte>( nPixelValue );
         }
     }
 
