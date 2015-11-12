@@ -1170,7 +1170,8 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
                 osBuf = "";
             }
         }
-        if (!pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData))
+        if ( pfnProgress 
+             && !pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData ) )
         {
             eErr = CE_Failure;
             break;
