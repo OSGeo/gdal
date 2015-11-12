@@ -840,36 +840,72 @@ sub BuildOverviews {
 }
 
 sub DEMProcessing {
-    my ($self, $Dest, $Processing, $ColorFilename, $o, $progress, $progress_data) = @_;
+    my ($self, $dest, $Processing, $ColorFilename, $o, $progress, $progress_data) = @_;
     $o = Geo::GDAL::GDALDEMProcessingOptions->new(Geo::GDAL::make_processing_options($o));
-    return Geo::GDAL::wrapper_GDALDEMProcessing($Dest, $self, $Processing, $ColorFilename, $o, $progress, $progress_data);
+    my $object = 0;
+    if ($dest && blessed $dest) {
+        $object = $dest;
+        my $ref = $object->can('write');
+        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        $dest = '/vsistdout/';
+    }
+    my $ds = Geo::GDAL::wrapper_GDALDEMProcessing($dest, $self, $Processing, $ColorFilename, $o, $progress, $progress_data);
+    $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+    return $ds;
 }
 
 sub Nearblack {
-    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    my ($self, $dest, $o, $progress, $progress_data) = @_;
     $o = Geo::GDAL::GDALNearblackOptions->new(Geo::GDAL::make_processing_options($o));
-    my $b = blessed($Dest);
+    my $b = blessed($dest);
     if ($b && $b eq 'Geo::GDAL::Dataset') {
-        Geo::GDAL::wrapper_GDALNearblackDestDS($Dest, $self, $o, $progress, $progress_data);
+        Geo::GDAL::wrapper_GDALNearblackDestDS($dest, $self, $o, $progress, $progress_data);
     } else {
-        return Geo::GDAL::wrapper_GDALNearblackDestName($Dest, $self, $o, $progress, $progress_data);
+        my $object = 0;
+        if ($dest && blessed $dest) {
+            $object = $dest;
+            my $ref = $object->can('write');
+            Geo::GDAL::VSIStdoutSetRedirection($ref);
+            $dest = '/vsistdout/';
+        }
+        my $ds = Geo::GDAL::wrapper_GDALNearblackDestName($dest, $self, $o, $progress, $progress_data);
+        $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+        return $ds;
     }
 }
 
 sub Translate {
-    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    my ($self, $dest, $o, $progress, $progress_data) = @_;
     $o = Geo::GDAL::GDALTranslateOptions->new(Geo::GDAL::make_processing_options($o));
-    return Geo::GDAL::wrapper_GDALTranslate($Dest, $self, $o, $progress, $progress_data);
+    my $object = 0;
+    if ($dest && blessed $dest) {
+        $object = $dest;
+        my $ref = $object->can('write');
+        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        $dest = '/vsistdout/';
+    }
+    my $ds = Geo::GDAL::wrapper_GDALTranslate($dest, $self, $o, $progress, $progress_data);
+    $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+    return $ds;
 }
 
 sub Warp {
-    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    my ($self, $dest, $o, $progress, $progress_data) = @_;
     $o = Geo::GDAL::GDALWarpAppOptions->new(Geo::GDAL::make_processing_options($o));
-    my $b = blessed($Dest);
+    my $b = blessed($dest);
     if ($b && $b eq 'Geo::GDAL::Dataset') {
-        Geo::GDAL::wrapper_GDALWarpDestDS($Dest, $self, $o, $progress, $progress_data);
+        Geo::GDAL::wrapper_GDALWarpDestDS($dest, $self, $o, $progress, $progress_data);
     } else {
-        return Geo::GDAL::wrapper_GDALWarpDestName($Dest, $self, $o, $progress, $progress_data);
+      my $object = 0;
+      if ($dest && blessed $dest) {
+        $object = $dest;
+        my $ref = $object->can('write');
+        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        $dest = '/vsistdout/';
+      }
+      my $ds = Geo::GDAL::wrapper_GDALWarpDestName($dest, $self, $o, $progress, $progress_data);
+      $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+      return $ds;
     }
 }
 

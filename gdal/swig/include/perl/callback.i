@@ -54,6 +54,6 @@
         PUTBACK;
         FREETMPS;
         LEAVE;
-        return ret;
+        return size*nmemb;
     }
 %}

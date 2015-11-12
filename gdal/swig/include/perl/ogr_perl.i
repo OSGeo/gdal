@@ -120,6 +120,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 /* wrapped driver methods: */
 %rename (_CreateDataSource) CreateDataSource;
+%rename (_CopyDataSource) CopyDataSource;
 
 /* wrapped data source methods: */
 %rename (_GetDriver) GetDriver;
@@ -189,8 +190,22 @@ sub Create {
     return $ds;
 }
 
+sub Copy {
+    my ($self, $src, $name, $options) = @_;
+    my $object = 0;
+    if ($name && blessed $name) {
+        $object = $name;
+        my $ref = $object->can('write');
+        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        $name = '/vsistdout/';
+    }
+    my $ds = $self->_CopyDataSource($src, $name, $options);
+    $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+    return $ds;
+}
+
 *CreateDataSource = *Create;
-*Copy = *CopyDataSource;
+*CopyDataSource = *Copy;
 *OpenDataSource = *Open;
 *Delete = *DeleteDataSource;
 *Name = *GetName;
@@ -333,30 +348,57 @@ sub DeleteLayer {
 }
 
 sub Grid {
-    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    my ($self, $dest, $o, $progress, $progress_data) = @_;
     $o = Geo::GDAL::GDALGridOptions->new(Geo::GDAL::make_processing_options($o));
-    return Geo::GDAL::wrapper_GDALGrid($Dest, AsDataset($self), $o, $progress, $progress_data);
+    my $object = 0;
+    if ($dest && blessed $dest) {
+        $object = $dest;
+        my $ref = $object->can('write');
+        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        $dest = '/vsistdout/';
+    }
+    my $ds = Geo::GDAL::wrapper_GDALGrid($dest, AsDataset($self), $o, $progress, $progress_data);
+    $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+    return $ds;
 }
 
 sub Rasterize {
-    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    my ($self, $dest, $o, $progress, $progress_data) = @_;
     $o = Geo::GDAL::GDALRasterizeOptions->new(Geo::GDAL::make_processing_options($o));
-    my $b = blessed($Dest);
+    my $b = blessed($dest);
     if ($b && $b eq 'Geo::GDAL::Dataset') {
-        Geo::GDAL::wrapper_GDALRasterizeDestDS($Dest, AsDataset($self), $o, $progress, $progress_data);
+        Geo::GDAL::wrapper_GDALRasterizeDestDS($dest, AsDataset($self), $o, $progress, $progress_data);
     } else {
-        return Geo::GDAL::wrapper_GDALRasterizeDestName($Dest, AsDataset($self), $o, $progress, $progress_data);        
+        my $object = 0;
+        if ($dest && blessed $dest) {
+            $object = $dest;
+            my $ref = $object->can('write');
+            Geo::GDAL::VSIStdoutSetRedirection($ref);
+            $dest = '/vsistdout/';
+        }
+        my $ds = Geo::GDAL::wrapper_GDALRasterizeDestName($dest, AsDataset($self), $o, $progress, $progress_data);
+        $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+        return $ds;
     }
 }
 
 sub Translate {
-    my ($self, $Dest, $o, $progress, $progress_data) = @_;
+    my ($self, $dest, $o, $progress, $progress_data) = @_;
     $o = Geo::GDAL::GDALVectorTranslateOptions->new(Geo::GDAL::make_processing_options($o));
-    my $b = blessed($Dest);
+    my $b = blessed($dest);
     if ($b && $b eq 'Geo::OGR::DataSource') {
-        Geo::GDAL::wrapper_GDALVectorTranslateDestDS(AsDataset($Dest), AsDataset($self), $o, $progress, $progress_data);
+        Geo::GDAL::wrapper_GDALVectorTranslateDestDS(AsDataset($dest), AsDataset($self), $o, $progress, $progress_data);
     } else {
-        return Geo::GDAL::wrapper_GDALVectorTranslateDestName($Dest, AsDataset($self), $o, $progress, $progress_data);
+        my $object = 0;
+        if ($dest && blessed $dest) {
+            $object = $dest;
+            my $ref = $object->can('write');
+            Geo::GDAL::VSIStdoutSetRedirection($ref);
+            $dest = '/vsistdout/';
+        }
+        my $ds = Geo::GDAL::wrapper_GDALVectorTranslateDestName($dest, AsDataset($self), $o, $progress, $progress_data);
+        $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+        return $ds;
     }
 }
 
