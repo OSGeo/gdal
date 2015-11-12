@@ -208,6 +208,10 @@ it. For a simple example see page \ref streaming.
 Due to the limitation of the redirection mechanism only one redirection
 may be active at any time.
 
+Note that the return value of the \c write method does not have any
+effect. Internally the return value is set to the length of the byte
+string.
+
 \section index_footer Note
 
 This documentation is generated from files within the GDAL
