@@ -36,7 +36,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_ZMap(void);
+void GDALRegister_ZMap(void);
 CPL_C_END
 
 /************************************************************************/
@@ -229,7 +229,8 @@ int ZMapDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Chech that it looks roughly as a ZMap dataset                   */
 /* -------------------------------------------------------------------- */
-    const char* pszData = (const char*)poOpenInfo->pabyHeader;
+    const char* pszData
+        = reinterpret_cast<const char *>( poOpenInfo->pabyHeader );
 
     /* Skip comments line at the beginning */
     int i = 0;
