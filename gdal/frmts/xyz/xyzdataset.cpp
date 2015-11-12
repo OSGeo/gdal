@@ -30,13 +30,14 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
 #include "gdal_pam.h"
-#include <vector>
+
 #include <algorithm>
+#include <vector>
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_XYZ(void);
+void GDALRegister_XYZ(void);
 CPL_C_END
 
 /************************************************************************/
@@ -50,7 +51,7 @@ class XYZRasterBand;
 class XYZDataset : public GDALPamDataset
 {
     friend class XYZRasterBand;
-    
+
     VSILFILE   *fp;
     int         bHasHeaderLine;
     int         nCommentLineCount;
@@ -71,9 +72,9 @@ class XYZDataset : public GDALPamDataset
   public:
                  XYZDataset();
     virtual     ~XYZDataset();
-    
+
     virtual CPLErr GetGeoTransform( double * );
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
@@ -108,18 +109,16 @@ class XYZRasterBand : public GDALPamRasterBand
 /*                           XYZRasterBand()                            */
 /************************************************************************/
 
-XYZRasterBand::XYZRasterBand( XYZDataset *poDS, int nBand, GDALDataType eDT )
-
+XYZRasterBand::XYZRasterBand( XYZDataset *poDSIn, int nBandIn, GDALDataType eDT ) :
+    nLastYOff(-1)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = eDT;
 
-    nBlockXSize = poDS->GetRasterXSize();
+    nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = 1;
-
-    nLastYOff = -1;
 }
 
 /************************************************************************/
@@ -130,7 +129,7 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                   int nBlockYOff,
                                   void * pImage )
 {
-    XYZDataset *poGDS = (XYZDataset *) poDS;
+    XYZDataset *poGDS = reinterpret_cast<XYZDataset *>( poDS );
 
     if (poGDS->fp == NULL)
         return CE_Failure;
@@ -146,7 +145,8 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                       nRasterXSize);
     }
 
-    int nLineInFile = nBlockYOff * nBlockXSize; // only valid if bSameNumberOfValuesPerLine
+    // Only valid if bSameNumberOfValuesPerLine.
+    const int nLineInFile = nBlockYOff * nBlockXSize;
     if ( (poGDS->bSameNumberOfValuesPerLine && poGDS->nDataLineNum > nLineInFile) ||
          (!poGDS->bSameNumberOfValuesPerLine && (nLastYOff == -1 || nBlockYOff == 0)) )
     {
@@ -171,11 +171,10 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     if( !poGDS->bSameNumberOfValuesPerLine && nBlockYOff != nLastYOff + 1 )
     {
-        int iY;
         if( nBlockYOff < nLastYOff )
         {
             nLastYOff = -1;
-            for(iY = 0; iY < nBlockYOff; iY++)
+            for( int iY = 0; iY < nBlockYOff; iY++ )
             {
                 if( IReadBlock(0, iY, NULL) != CE_None )
                     return CE_Failure;
@@ -183,7 +182,7 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         }
         else
         {
-            for(iY = nLastYOff + 1; iY < nBlockYOff; iY++)
+            for( int iY = nLastYOff + 1; iY < nBlockYOff; iY++ )
             {
                 if( IReadBlock(0, iY, NULL) != CE_None )
                     return CE_Failure;
@@ -202,23 +201,23 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             const char* pszPtr = pszLine;
             char ch;
             int nCol = 0;
-            int bLastWasSep = TRUE;
+            bool bLastWasSep = true;
             while((ch = *pszPtr) != '\0')
             {
                 if (ch == ' ')
                 {
                     if (!bLastWasSep)
                         nCol ++;
-                    bLastWasSep = TRUE;
+                    bLastWasSep = true;
                 }
                 else if ((ch == ',' && poGDS->chDecimalSep != ',') || ch == '\t' || ch == ';')
                 {
                     nCol ++;
-                    bLastWasSep = TRUE;
+                    bLastWasSep = true;
                 }
                 else
                 {
-                    bLastWasSep = FALSE;
+                    bLastWasSep = false;
                 }
                 pszPtr ++;
             }
@@ -231,21 +230,25 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         }
     }
 
-    double dfExpectedY = poGDS->adfGeoTransform[3] + (0.5 + nBlockYOff) * poGDS->adfGeoTransform[5];
+    const double dfExpectedY
+        = poGDS->adfGeoTransform[3] +
+        (0.5 + nBlockYOff) * poGDS->adfGeoTransform[5];
+
     int idx = -1;
-    while(TRUE)
+    while(true)
     {
         int nCol;
-        int bLastWasSep;
+        bool bLastWasSep;
         do
         {
-            vsi_l_offset nOffsetBefore = VSIFTellL(poGDS->fp);
+            const vsi_l_offset nOffsetBefore = VSIFTellL(poGDS->fp);
             const char* pszLine = CPLReadLine2L(poGDS->fp, 100, 0);
             if (pszLine == NULL)
             {
                 if( poGDS->bSameNumberOfValuesPerLine )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Cannot read line %d", poGDS->nLineNum + 1);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot read line %d", poGDS->nLineNum + 1);
                     return CE_Failure;
                 }
                 else
@@ -259,21 +262,22 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             const char* pszPtr = pszLine;
             char ch;
             nCol = 0;
-            bLastWasSep = TRUE;
+            bLastWasSep = true;
             double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
-            int bUsefulColsFound = 0;
+            int nUsefulColsFound = 0;
             while((ch = *pszPtr) != '\0')
             {
                 if (ch == ' ')
                 {
                     if (!bLastWasSep)
                         nCol ++;
-                    bLastWasSep = TRUE;
+                    bLastWasSep = true;
                 }
-                else if ((ch == ',' && poGDS->chDecimalSep != ',') || ch == '\t' || ch == ';')
+                else if ( ( ch == ',' && poGDS->chDecimalSep != ',' )
+                          || ch == '\t' || ch == ';' )
                 {
                     nCol ++;
-                    bLastWasSep = TRUE;
+                    bLastWasSep = true;
                 }
                 else
                 {
@@ -281,29 +285,29 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                     {
                         if (nCol == poGDS->nXIndex)
                         {
-                            bUsefulColsFound ++;
+                            nUsefulColsFound ++;
                             if( !poGDS->bSameNumberOfValuesPerLine )
                                 dfX = CPLAtofDelim(pszPtr, poGDS->chDecimalSep);
                         }
                         else if (nCol == poGDS->nYIndex)
                         {
-                            bUsefulColsFound ++;
+                            nUsefulColsFound ++;
                             if( !poGDS->bSameNumberOfValuesPerLine )
                                 dfY = CPLAtofDelim(pszPtr, poGDS->chDecimalSep);
                         }
                         else if( nCol == poGDS->nZIndex)
                         {
-                            bUsefulColsFound ++;
+                            nUsefulColsFound ++;
                             dfZ = CPLAtofDelim(pszPtr, poGDS->chDecimalSep);
                         }
                     }
-                    bLastWasSep = FALSE;
+                    bLastWasSep = false;
                 }
                 pszPtr ++;
             }
             nCol ++;
 
-            if( bUsefulColsFound == 3 )
+            if( nUsefulColsFound == 3 )
             {
                 if( poGDS->bSameNumberOfValuesPerLine )
                 {
@@ -315,8 +319,11 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                     {
                         if( idx < 0 )
                         {
-                            CPLError(CE_Failure, CPLE_AppDefined, "At line %d, found %f instead of %f for nBlockYOff = %d",
-                                    poGDS->nLineNum, dfY, dfExpectedY, nBlockYOff);
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                      "At line %d, found %f instead of %f "
+                                      "for nBlockYOff = %d",
+                                      poGDS->nLineNum, dfY, dfExpectedY,
+                                      nBlockYOff);
                             return CE_Failure;
                         }
                         VSIFSeekL(poGDS->fp, nOffsetBefore, SEEK_SET);
@@ -325,7 +332,10 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                         return CE_None;
                     }
 
-                    idx = (int)((dfX - 0.5 * poGDS->adfGeoTransform[1] - poGDS->adfGeoTransform[0]) / poGDS->adfGeoTransform[1] + 0.5);
+                    idx = static_cast<int>(
+                        ( dfX - 0.5 * poGDS->adfGeoTransform[1]
+                          - poGDS->adfGeoTransform[0] )
+                        / poGDS->adfGeoTransform[1] + 0.5 );
                 }
                 CPLAssert(idx >= 0 && idx < nRasterXSize);
 
@@ -333,19 +343,23 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 {
                     if (eDataType == GDT_Float32)
                     {
-                        ((float*)pImage)[idx] = (float)dfZ;
+                        reinterpret_cast<float *>( pImage )[idx]
+                            = static_cast<float>(dfZ);
                     }
                     else if (eDataType == GDT_Int32)
                     {
-                        ((GInt32*)pImage)[idx] = (GInt32)dfZ;
+                        reinterpret_cast<GInt32 *>( pImage )[idx]
+                            = static_cast<GInt32>( dfZ );
                     }
                     else if (eDataType == GDT_Int16)
                     {
-                        ((GInt16*)pImage)[idx] = (GInt16)dfZ;
+                        reinterpret_cast<GInt16 *>( pImage )[idx]
+                            = static_cast<GInt16>( dfZ );
                     }
                     else
                     {
-                        ((GByte*)pImage)[idx] = (GByte)dfZ;
+                        reinterpret_cast<GByte *>( pImage )[idx]
+                            = static_cast<GByte>( dfZ );
                     }
                 }
             }
@@ -376,8 +390,9 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 double XYZRasterBand::GetMinimum(int *pbSuccess)
 {
-    XYZDataset *poGDS = (XYZDataset *) poDS;
-    if( pbSuccess ) *pbSuccess = TRUE;
+    XYZDataset *poGDS = reinterpret_cast<XYZDataset *>( poDS );
+    if( pbSuccess )
+        *pbSuccess = TRUE;
     return poGDS->dfMinZ;
 }
 
@@ -387,8 +402,9 @@ double XYZRasterBand::GetMinimum(int *pbSuccess)
 
 double XYZRasterBand::GetMaximum(int *pbSuccess)
 {
-    XYZDataset *poGDS = (XYZDataset *) poDS;
-    if( pbSuccess ) *pbSuccess = TRUE;
+    XYZDataset *poGDS = reinterpret_cast<XYZDataset *>( poDS );
+    if( pbSuccess )
+        *pbSuccess = TRUE;
     return poGDS->dfMaxZ;
 }
 
@@ -398,7 +414,7 @@ double XYZRasterBand::GetMaximum(int *pbSuccess)
 
 double XYZRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    XYZDataset *poGDS = (XYZDataset *) poDS;
+    XYZDataset *poGDS = reinterpret_cast<XYZDataset *>( poDS );
     if( !poGDS->bSameNumberOfValuesPerLine && 
         poGDS->dfMinZ > -32768 && eDataType != GDT_Byte )
     {
@@ -411,6 +427,7 @@ double XYZRasterBand::GetNoDataValue(int *pbSuccess)
         if( pbSuccess ) *pbSuccess = TRUE;
         return 0;
     }
+
     return GDALPamRasterBand::GetNoDataValue(pbSuccess);
 }
 
@@ -418,27 +435,27 @@ double XYZRasterBand::GetNoDataValue(int *pbSuccess)
 /*                            ~XYZDataset()                            */
 /************************************************************************/
 
-XYZDataset::XYZDataset()
+XYZDataset::XYZDataset() :
+    fp(NULL),
+    bHasHeaderLine(FALSE),
+    nCommentLineCount(0),
+    chDecimalSep('.'),
+    nXIndex(-1),
+    nYIndex(-1),
+    nZIndex(-1),
+    nMinTokens(0),
+    nLineNum(0),
+    nDataLineNum(INT_MAX),
+    bSameNumberOfValuesPerLine(TRUE),
+    dfMinZ(0),
+    dfMaxZ(0)
 {
-    fp = NULL;
-    nDataLineNum = INT_MAX;
-    nLineNum = 0;
-    nCommentLineCount = 0;
-    chDecimalSep = '.';
-    bHasHeaderLine = FALSE;
-    nXIndex = -1;
-    nYIndex = -1;
-    nZIndex = -1;
-    nMinTokens = 0;
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
     adfGeoTransform[2] = 0;
     adfGeoTransform[3] = 0;
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = 1;
-    bSameNumberOfValuesPerLine = TRUE;
-    dfMinZ = 0;
-    dfMaxZ = 0;
 }
 
 /************************************************************************/
@@ -473,8 +490,6 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
                             int& nCommentLineCount)
 
 {
-    int         i;
-
     bHasHeaderLine = FALSE;
     nCommentLineCount = 0;
 
@@ -503,19 +518,20 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
 /*      Chech that it looks roughly as a XYZ dataset                    */
 /* -------------------------------------------------------------------- */
-    const char* pszData = (const char*)poOpenInfo->pabyHeader;
+    const char* pszData
+        = reinterpret_cast<const char *>( poOpenInfo->pabyHeader );
 
     /* Skip comments line at the beginning such as in */
     /* http://pubs.usgs.gov/of/2003/ofr-03-230/DATA/NSLCU.XYZ */
-    i=0;
+    int i = 0;
     if (pszData[i] == '/')
     {
         nCommentLineCount ++;
 
         i++;
-        for(;i<poOpenInfo->nHeaderBytes;i++)
+        for( ; i < poOpenInfo->nHeaderBytes; i++)
         {
-            char ch = pszData[i];
+            const char ch = pszData[i];
             if (ch == 13 || ch == 10)
             {
                 if (ch == 13 && pszData[i+1] == 10)
@@ -531,9 +547,9 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
         }
     }
 
-    for(;i<poOpenInfo->nHeaderBytes;i++)
+    for( ; i < poOpenInfo->nHeaderBytes; i++ )
     {
-        char ch = pszData[i];
+        const char ch = pszData[i];
         if (ch == 13 || ch == 10)
         {
             break;
@@ -552,8 +568,8 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
             return FALSE;
         }
     }
-    int bHasFoundNewLine = FALSE;
-    int bPrevWasSep = TRUE;
+    bool bHasFoundNewLine = false;
+    bool bPrevWasSep = true;
     int nCols = 0;
     int nMaxCols = 0;
     for(;i<poOpenInfo->nHeaderBytes;i++)
@@ -561,14 +577,14 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
         char ch = pszData[i];
         if (ch == 13 || ch == 10)
         {
-            bHasFoundNewLine = TRUE;
+            bHasFoundNewLine = true;
             if (!bPrevWasSep)
             {
                 nCols ++;
                 if (nCols > nMaxCols)
                     nMaxCols = nCols;
             }
-            bPrevWasSep = TRUE;
+            bPrevWasSep = true;
             nCols = 0;
         }
         else if (ch == ' ' || ch == ',' || ch == '\t' || ch == ';')
@@ -579,12 +595,12 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
                 if (nCols > nMaxCols)
                     nMaxCols = nCols;
             }
-            bPrevWasSep = TRUE;
+            bPrevWasSep = true;
         }
         else if ((ch >= '0' && ch <= '9') || ch == '.' || ch == '+' ||
                  ch == '-' || ch == 'e' || ch == 'E')
         {
-            bPrevWasSep = FALSE;
+            bPrevWasSep = false;
         }
         else
         {
@@ -604,7 +620,6 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
 GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int         i;
     int         bHasHeaderLine;
     int         nCommentLineCount = 0;
 
@@ -633,13 +648,14 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     /* For better performance of CPLReadLine2L() we create a buffered reader */
     /* (except for /vsigzip/ since it has one internally) */
     if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
-        fp = (VSILFILE*) VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
-    
-    const char* pszLine;
+        fp = reinterpret_cast<VSILFILE *>(
+            VSICreateBufferedReaderHandle(
+                reinterpret_cast<VSIVirtualHandle *>( fp ) ) );
+
     int nXIndex = -1, nYIndex = -1, nZIndex = -1;
     int nMinTokens = 0;
 
-    for(i=0;i<nCommentLineCount;i++)
+    for( int i = 0; i < nCommentLineCount; i++ )
         CPLReadLine2L(fp, 100, NULL);
 
 /* -------------------------------------------------------------------- */
@@ -647,7 +663,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if (bHasHeaderLine)
     {
-        pszLine = CPLReadLine2L(fp, 100, NULL);
+        const char* pszLine = CPLReadLine2L(fp, 100, NULL);
         if (pszLine == NULL)
         {
             VSIFCloseL(fp);
@@ -665,8 +681,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             VSIFCloseL(fp);
             return NULL;
         }
-        int i;
-        for(i=0;i<nTokens;i++)
+        for( int i = 0; i < nTokens; i++ )
         {
             if (EQUAL(papszTokens[i], "x") ||
                 STARTS_WITH_CI(papszTokens[i], "lon") ||
@@ -700,7 +715,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         nZIndex = 2;
         nMinTokens = 3;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Parse data lines                                                */
 /* -------------------------------------------------------------------- */
@@ -713,9 +728,11 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfLastX = 0, dfLastY = 0;
     std::vector<double> adfStepX, adfStepY;
     GDALDataType eDT = GDT_Byte;
-    int bSameNumberOfValuesPerLine = TRUE;
+    bool bSameNumberOfValuesPerLine = true;
     char chDecimalSep = '\0';
     int bStepYSign = 0;
+
+    const char* pszLine;
     while((pszLine = CPLReadLine2L(fp, 100, NULL)) != NULL)
     {
         nLineNum ++;
@@ -723,7 +740,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         const char* pszPtr = pszLine;
         char ch;
         int nCol = 0;
-        int bLastWasSep = TRUE;
+        bool bLastWasSep = true;
         if( chDecimalSep == '\0' )
         {
             int nCountComma = 0;
@@ -738,21 +755,21 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 else if( ch == ',' )
                 {
                     nCountComma ++;
-                    bLastWasSep = FALSE;
+                    bLastWasSep = false;
                 }
                 else if( ch == ' ' )
                 {
                     if (!bLastWasSep)
                         nCountFieldSep ++;
-                    bLastWasSep = TRUE;
+                    bLastWasSep = true;
                 }
                 else if( ch == '\t' || ch == ';' )
                 {
                     nCountFieldSep ++;
-                    bLastWasSep = TRUE;
+                    bLastWasSep = true;
                 }
                 else
-                    bLastWasSep = FALSE;
+                    bLastWasSep = false;
                 pszPtr ++;
             }
             if( chDecimalSep == '\0' )
@@ -765,7 +782,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                     chDecimalSep = ',';
             }
             pszPtr = pszLine;
-            bLastWasSep = TRUE;
+            bLastWasSep = true;
         }
 
         char chLocalDecimalSep = chDecimalSep ? chDecimalSep : '.';
@@ -775,12 +792,12 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 if (!bLastWasSep)
                     nCol ++;
-                bLastWasSep = TRUE;
+                bLastWasSep = true;
             }
             else if ((ch == ',' && chLocalDecimalSep != ',') || ch == '\t' || ch == ';')
             {
                 nCol ++;
-                bLastWasSep = TRUE;
+                bLastWasSep = true;
             }
             else
             {
@@ -799,12 +816,13 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                             dfMinZ = dfZ;
                         else if( dfZ > dfMaxZ )
                             dfMaxZ = dfZ;
-                        int nZ = (int)dfZ;
-                        if ((double)nZ != dfZ)
+                        int nZ = static_cast<int>( dfZ );
+                        if( static_cast<double>( nZ ) != dfZ )
                         {
                             eDT = GDT_Float32;
                         }
-                        else if ((eDT == GDT_Byte || eDT == GDT_Int16) && (nZ < 0 || nZ > 255))
+                        else if ((eDT == GDT_Byte || eDT == GDT_Int16)
+                                 && (nZ < 0 || nZ > 255))
                         {
                             if (nZ < -32768 || nZ > 32767)
                                 eDT = GDT_Int32;
@@ -813,7 +831,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                         }
                     }
                 }
-                bLastWasSep = FALSE;
+                bLastWasSep = false;
             }
             pszPtr ++;
         }
@@ -854,7 +872,8 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 if( std::find(adfStepX.begin(), adfStepX.end(), dfStepX) == adfStepX.end() )
                 {
-                    int bAddNewValue = TRUE;
+                    bool bAddNewValue = true;
+                    // TODO: Danger!  Erase called on the iterator.
                     std::vector<double>::iterator oIter = adfStepX.begin();
                     while( oIter != adfStepX.end() )
                     {
@@ -864,7 +883,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                         }
                         else if( dfStepX > *oIter && fmod( dfStepX, *oIter ) < 1e-8 )
                         {
-                            bAddNewValue = FALSE;
+                            bAddNewValue = false;
                             break;
                         }
                         else
@@ -934,19 +953,22 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    double dfStepX = adfStepX[0];
-    double dfStepY = adfStepY[0] * bStepYSign;
-    int nXSize = 1 + int((dfMaxX - dfMinX) / dfStepX + 0.5);
-    int nYSize = 1 + int((dfMaxY - dfMinY) / fabs(dfStepY) + 0.5);
+    const double dfStepX = adfStepX[0];
+    const double dfStepY = adfStepY[0] * bStepYSign;
+    const int nXSize = 1 + static_cast<int>((dfMaxX - dfMinX) / dfStepX + 0.5);
+    const int nYSize
+        = 1 + static_cast<int>((dfMaxY - dfMinY) / fabs(dfStepY) + 0.5);
 
-    //CPLDebug("XYZ", "minx=%f maxx=%f stepx=%f", dfMinX, dfMaxX, dfStepX);
-    //CPLDebug("XYZ", "miny=%f maxy=%f stepy=%f", dfMinY, dfMaxY, dfStepY);
+#ifdef DEBUG_VERBOSE
+    CPLDebug("XYZ", "minx=%f maxx=%f stepx=%f", dfMinX, dfMaxX, dfStepX);
+    CPLDebug("XYZ", "miny=%f maxy=%f stepy=%f", dfMinY, dfMaxY, dfStepY);
+#endif
 
     if (nDataLineNum != nXSize * nYSize)
     {
-        bSameNumberOfValuesPerLine = FALSE;
+        bSameNumberOfValuesPerLine = false;
     }
-    
+
     if (poOpenInfo->eAccess == GA_Update)
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -959,9 +981,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    XYZDataset         *poDS;
-
-    poDS = new XYZDataset();
+    XYZDataset *poDS = new XYZDataset();
     poDS->fp = fp;
     poDS->bHasHeaderLine = bHasHeaderLine;
     poDS->nCommentLineCount = nCommentLineCount;
@@ -980,7 +1000,10 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bSameNumberOfValuesPerLine = bSameNumberOfValuesPerLine;
     poDS->dfMinZ = dfMinZ;
     poDS->dfMaxZ = dfMaxZ;
-    //CPLDebug("XYZ", "bSameNumberOfValuesPerLine = %d", bSameNumberOfValuesPerLine);
+#ifdef DEBUG_VERBOSE
+    CPLDebug( "XYZ", "bSameNumberOfValuesPerLine = %d",
+              bSameNumberOfValuesPerLine );
+#endif
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
@@ -992,7 +1015,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = 1;
-    for( i = 0; i < poDS->nBands; i++ )
+    for( int i = 0; i < poDS->nBands; i++ )
         poDS->SetBand( i+1, new XYZRasterBand( poDS, i+1, eDT ) );
 
 /* -------------------------------------------------------------------- */
@@ -1055,7 +1078,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
 
-    GDALDataType eSrcDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    const GDALDataType eSrcDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     GDALDataType eReqDT;
     if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 ||
         eSrcDT == GDT_UInt16 || eSrcDT == GDT_Int32)
@@ -1090,6 +1113,11 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
         pszColSep = ";";
     else if (EQUAL(pszColSep, "\\t") || EQUAL(pszColSep, "TAB"))
         pszColSep = "\t";
+#ifdef DEBUG_VERBOSE
+    else
+        CPLDebug("XYZ", "Using raw column separator: '%s' ",
+                 pszColSep);
+#endif
 
     const char* pszAddHeaderLine =
             CSLFetchNameValue(papszOptions, "ADD_HEADER_LINE");
@@ -1101,10 +1129,10 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy imagery                                                    */
 /* -------------------------------------------------------------------- */
-    void* pLineBuffer = (void*) CPLMalloc(nXSize * sizeof(int));
-    int i, j;
+    void* pLineBuffer
+        = reinterpret_cast<void *>( CPLMalloc( nXSize * sizeof(int) ) );
     CPLErr eErr = CE_None;
-    for(j=0;j<nYSize && eErr == CE_None;j++)
+    for( int j=0; j < nYSize && eErr == CE_None; j++ )
     {
         eErr = poSrcDS->GetRasterBand(1)->RasterIO(
                                             GF_Read, 0, j, nXSize, 1,
@@ -1112,20 +1140,27 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
                                             eReqDT, 0, 0, NULL);
         if (eErr != CE_None)
             break;
-        double dfY = adfGeoTransform[3] + (j + 0.5) * adfGeoTransform[5];
+        const double dfY = adfGeoTransform[3] + (j + 0.5) * adfGeoTransform[5];
         CPLString osBuf;
-        for(i=0;i<nXSize;i++)
+        for( int i = 0; i < nXSize; i++ )
         {
+            const double dfX
+                = adfGeoTransform[0] + (i + 0.5) * adfGeoTransform[1];
             char szBuf[256];
-            double dfX = adfGeoTransform[0] + (i + 0.5) * adfGeoTransform[1];
             if (eReqDT == GDT_Int32)
-                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%d\n", dfX, pszColSep[0], dfY, pszColSep[0], ((int*)pLineBuffer)[i]);
+                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%d\n",
+                            dfX, pszColSep[0], dfY, pszColSep[0],
+                            reinterpret_cast<int *>( pLineBuffer )[i] );
             else
-                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%.18g\n", dfX, pszColSep[0], dfY, pszColSep[0], ((float*)pLineBuffer)[i]);
+                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%.18g\n",
+                            dfX, pszColSep[0], dfY, pszColSep[0],
+                            reinterpret_cast<float *>( pLineBuffer )[i]);
             osBuf += szBuf;
             if( (i & 1023) == 0 || i == nXSize - 1 )
             {
-                if ( VSIFWriteL( osBuf, (int)osBuf.size(), 1, fp ) != 1 )
+                if ( VSIFWriteL( osBuf,
+                                 static_cast<int>( osBuf.size() ), 1, fp ) 
+                     != 1 )
                 {
                     eErr = CE_Failure;
                     CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1143,7 +1178,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
     }
     CPLFree(pLineBuffer);
     VSIFCloseL(fp);
-    
+
     if (eErr != CE_None)
         return NULL;
 
@@ -1192,31 +1227,27 @@ CPLErr XYZDataset::GetGeoTransform( double * padfTransform )
 void GDALRegister_XYZ()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "XYZ" ) != NULL )
+      return;
 
-    if( GDALGetDriverByName( "XYZ" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "XYZ" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "ASCII Gridded XYZ" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_xyz.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xyz" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    GDALDriver  *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "XYZ" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ASCII Gridded XYZ" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_xyz.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xyz" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='COLUMN_SEPARATOR' type='string' default=' ' description='Separator between fields.'/>"
 "   <Option name='ADD_HEADER_LINE' type='boolean' default='false' description='Add an header line with column names.'/>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = XYZDataset::Open;
-        poDriver->pfnIdentify = XYZDataset::Identify;
-        poDriver->pfnCreateCopy = XYZDataset::CreateCopy;
+    poDriver->pfnOpen = XYZDataset::Open;
+    poDriver->pfnIdentify = XYZDataset::Identify;
+    poDriver->pfnCreateCopy = XYZDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
