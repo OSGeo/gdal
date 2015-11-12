@@ -202,22 +202,35 @@ void    CPLError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)
 /*                             CPLErrorV()                              */
 /************************************************************************/
 
-void    CPLErrorV(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, va_list args )
+void    CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
+                   va_list args )
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
     if( psCtx == NULL || IS_PREFEFINED_ERROR_CTX(psCtx) )
     {
         int bMemoryError;
-        char szShortMessage[80];
         if( eErrClass == CE_Warning )
         {
-            CPLSetTLSWithFreeFuncEx( CTLS_ERRORCONTEXT, (void*) &sWarningContext, NULL, &bMemoryError );
+            CPLSetTLSWithFreeFuncEx(
+                CTLS_ERRORCONTEXT,
+                reinterpret_cast<void*>(
+                    const_cast<CPLErrorContext *>( &sWarningContext ) ),
+                NULL, &bMemoryError );
         }
         else if( eErrClass == CE_Failure )
         {
-            CPLSetTLSWithFreeFuncEx( CTLS_ERRORCONTEXT, (void*) &sFailureContext, NULL, &bMemoryError );
+            CPLSetTLSWithFreeFuncEx(
+                CTLS_ERRORCONTEXT,
+                reinterpret_cast<void*>(
+                    const_cast<CPLErrorContext *>( &sFailureContext ) ),
+                NULL, &bMemoryError );
         }
-        CPLvsnprintf (szShortMessage, sizeof(szShortMessage), fmt, args);
+
+        // TODO: Is it possible to move the entire szShortMessage under the if
+        // pfnErrorHandler?
+        char szShortMessage[80];
+        szShortMessage[0] = '\0';
+        CPLvsnprintf( szShortMessage, sizeof(szShortMessage), fmt, args );
 
         CPLMutexHolderD( &hErrorMutex );
         if( pfnErrorHandler != NULL )
