@@ -37,14 +37,14 @@ CPL_CVSID("$Id$");
 /*                       GDALArrayBandBlockCache()                      */
 /************************************************************************/
 
-GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(GDALRasterBand* poBand)
+GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(GDALRasterBand* poBand) :
+    hSpinLock(CPLCreateLock(LOCK_SPIN)),
+    psListBlocksToFree(NULL),
+    hCond(CPLCreateCond()),
+    hCondMutex(CPLCreateMutex()),
+    nKeepAliveCounter(0)
 {
     this->poBand = poBand;
-    hSpinLock = CPLCreateLock(LOCK_SPIN);
-    psListBlocksToFree = NULL;
-    nKeepAliveCounter = 0;
-    hCond = CPLCreateCond();
-    hCondMutex = CPLCreateMutex();
     if( hCondMutex )
         CPLReleaseMutex(hCondMutex);
 }
@@ -114,11 +114,15 @@ void GDALAbstractBandBlockCache::AddBlockToFreeList( GDALRasterBlock *poBlock )
 
 void GDALAbstractBandBlockCache::WaitKeepAliveCounter()
 {
-    //CPLDebug("GDAL", "WaitKeepAliveCounter()");
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GDAL", "WaitKeepAliveCounter()");
+#endif
+
     CPLAcquireMutex(hCondMutex, 1000);
     while( nKeepAliveCounter != 0 )
     {
-        CPLDebug("GDAL", "Waiting for other thread to finish working with our blocks");
+        CPLDebug( "GDAL", "Waiting for other thread to finish working with our "
+                  "blocks" );
         CPLCondWait(hCond, hCondMutex);
     }
     CPLReleaseMutex(hCondMutex);
@@ -162,6 +166,7 @@ GDALRasterBlock* GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
     if( poBlock )
         poBlock->RecycleFor(nXBlockOff, nYBlockOff);
     else
-        poBlock = new (std::nothrow) GDALRasterBlock( poBand, nXBlockOff, nYBlockOff );
+        poBlock = new (std::nothrow) GDALRasterBlock(
+            poBand, nXBlockOff, nYBlockOff );
     return poBlock;
 }
