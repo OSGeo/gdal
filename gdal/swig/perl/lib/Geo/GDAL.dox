@@ -553,7 +553,7 @@ sub traverse {
 #
 # Create a new Geo::GDAL::Dataset
 # @param params named parameters:
-# - \a Name the name of the dataset (default is 'unnamed') or an object, which must be able to write and close.
+# - \a Name the name of the dataset (default is 'unnamed') or an object, which implements write and close.
 # - \a Width the width of the dataset (default is 256).
 # - \a Height the height of the dataset (default is 256).
 # - \a Bands number of bands in the dataset (default is 1).
@@ -776,7 +776,7 @@ sub traverse {
 
 ## @method Geo::GDAL::Dataset DEMProcessing($Dest, $Processing, $ColorFilename, $Options, subref progress, $progress_data)
 # Apply a DEM processing to this dataset.
-# @param Dest Destination raster dataset definition string (typically filename).
+# @param Dest Destination raster dataset definition string (typically filename) or an object, which implements write and close.
 # @param Processing Processing to apply, one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", or "Roughness".
 # @param ColorFilename The color palette for color-relief.
 # @param Options A reference to a hash or list of options. For a hash
@@ -792,8 +792,8 @@ sub traverse {
 ## @method Geo::GDAL::Dataset Nearblack($Dest, $Options, subref progress, $progress_data)
 # Convert nearly black/white pixels to black/white.
 # @param Dest Destination raster dataset definition string (typically
-# filename) OR destination dataset to which to add an alpha or mask
-# band.
+# filename), destination dataset to which to add an alpha or mask
+# band, or an object, which implements write and close.
 # @param Options A reference to a hash or list of options. For a hash
 # the keys are without the prefix '-'. For example give { of => 'PNG'
 # } to set the output format. For a list the options are given as for
@@ -807,7 +807,7 @@ sub traverse {
 ## @method Geo::GDAL::Dataset Translate($Dest, $Options, subref progress, $progress_data)
 # Convert this dataset into another format.
 # @param Dest Destination raster dataset definition string (typically
-# filename).
+# filename) or an object, which implements write and close.
 # @param Options A reference to a hash or list of options. For a hash
 # the keys are without the prefix '-'. For example give { of => 'PNG'
 # } to set the output format. For a list the options are given as for
@@ -818,7 +818,7 @@ sub traverse {
 ## @method Geo::GDAL::Dataset Warp($Dest, $Options, subref progress, $progress_data)
 # Reproject this dataset.
 # @param Dest Destination raster dataset definition string (typically
-# filename).
+# filename) or an object, which implements write and close.
 # @param Options A reference to a hash or list of options. For a hash
 # the keys are without the prefix '-'. For example give { of => 'PNG'
 # } to set the output format. For a list the options are given as for
