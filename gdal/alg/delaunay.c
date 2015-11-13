@@ -131,14 +131,9 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
     }
 #endif
 
-#if INTERNAL_QHULL
-    if(0) gdal_qh_symbols_unused();
-#endif
-
-    points = (coordT*)VSIMalloc2(sizeof(double)*2, nPoints);
+    points = (coordT*)VSI_MALLOC2_VERBOSE(sizeof(double)*2, nPoints);
     if( points == NULL )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate points array");
         CPLReleaseMutex(hMutex);
         return NULL;
     }

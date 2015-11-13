@@ -966,31 +966,6 @@ static void qh_printstats();
 #define qh_stddev gdal_qh_stddev
 static gdal_realT qh_stddev();
 
-static void gdal_qh_symbols_unused()
-{
-    dvertex();
-    dfacet();
-    qh_compare_vertexpoint();
-    qh_minabsval();
-    qh_mindiff();
-    qh_eachvoronoi_all();
-    qh_readpoints();
-    qh_clock();
-    qh_checkflags();
-    qh_clear_outputflags();
-    qh_init_A();
-    qh_findbestfacet();
-    qh_setvoronoi_all();
-    qh_memtotal();
-    qh_checkconnect();
-    qh_vertexsubset();
-    qh_setaddsorted();
-    qh_setduplicate();
-    qh_setendpointer();
-    qh_setfree2();
-    qh_argv_to_command_size();
-}
-
 #include "libqhull.h"
 #include "libqhull.c"
 #include "poly.c"
