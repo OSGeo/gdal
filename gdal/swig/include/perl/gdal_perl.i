@@ -396,8 +396,8 @@ sub OpenEx {
     if (defined $p[1]) { # a list of written flags
         my $f;
         for my $flag (@{$p[1]}) {
-            confess "Unknown access type: '$p[1]'." unless exists $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
-            $p[1] |= $Geo::GDAL::OF_STRING2INT{$flag};
+            confess "Unknown access type: '$flag'." unless exists $Geo::GDAL::OF_STRING2INT{$flag};
+            $f |= $Geo::GDAL::OF_STRING2INT{$flag};
         }
         $p[1] = $f;
     }
