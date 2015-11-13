@@ -1276,7 +1276,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
                 (size_t)(nBlockXSize * nBlockYSize * nDTSize *
                 ((poGDS->nPlanarConfig == PLANARCONFIG_CONTIG) ? poGDS->nBands : 1));
 
-            poGDS->m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(poGDS->m_nTempBufferForCommonDirectIOSize);
+            poGDS->m_pTempBufferForCommonDirectIO = (GByte*)VSI_MALLOC_VERBOSE(poGDS->m_nTempBufferForCommonDirectIOSize);
             if( poGDS->m_pTempBufferForCommonDirectIO == NULL )
                 return CE_Failure;
         }
@@ -1304,10 +1304,10 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
 
     int nReqXSize = nXSize; /* sub-sampling or over-sampling can only be done at last stage */
     int nReqYSize = MIN(nBufYSize, nYSize); /* we can do sub-sampling at the extraction stage */
-    void** ppData = (void**) VSIMalloc(nReqYSize * sizeof(void*));
+    void** ppData = (void**) VSI_MALLOC_VERBOSE(nReqYSize * sizeof(void*));
     vsi_l_offset* panOffsets = (vsi_l_offset*)
-                            VSIMalloc(nReqYSize * sizeof(vsi_l_offset));
-    size_t* panSizes = (size_t*) VSIMalloc(nReqYSize * sizeof(size_t));
+                            VSI_MALLOC_VERBOSE(nReqYSize * sizeof(vsi_l_offset));
+    size_t* panSizes = (size_t*) VSI_MALLOC_VERBOSE(nReqYSize * sizeof(size_t));
     int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
     void* pTmpBuffer = NULL;
     int eErr = CE_None;
@@ -1323,7 +1323,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     {
         /* We need a temporary buffer for over-sampling/sub-sampling */
         /* and/or data type conversion */
-        pTmpBuffer = VSIMalloc(nReqXSize * nReqYSize * nSrcPixelSize);
+        pTmpBuffer = VSI_MALLOC_VERBOSE(nReqXSize * nReqYSize * nSrcPixelSize);
         if (pTmpBuffer == NULL)
             eErr = CE_Failure;
     }
@@ -1604,7 +1604,7 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
             vsi_l_offset nBaseOffset = VSIFTellL(fp);
 
             /* Just write one tile with libtiff to put it in appropriate state */
-            GByte* pabyData = (GByte*)VSICalloc(1, nBlockSize);
+            GByte* pabyData = (GByte*)VSI_CALLOC_VERBOSE(1, nBlockSize);
             if( pabyData == NULL )
             {
                 return NULL;
@@ -1954,7 +1954,7 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
         if( TIFFIsTiled(hTIFF) )
             m_nTempBufferForCommonDirectIOSize *= nBlockYSize;
 
-        m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(m_nTempBufferForCommonDirectIOSize);
+        m_pTempBufferForCommonDirectIO = (GByte*)VSI_MALLOC_VERBOSE(m_nTempBufferForCommonDirectIOSize);
         if( m_pTempBufferForCommonDirectIO == NULL )
             return CE_Failure;
     }
@@ -3199,7 +3199,7 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
                 (size_t)(nBlockXSize * nBlockYSize * nDTSize *
                 ((nPlanarConfig == PLANARCONFIG_CONTIG) ? nBands : 1));
 
-            m_pTempBufferForCommonDirectIO = (GByte*)VSIMalloc(m_nTempBufferForCommonDirectIOSize);
+            m_pTempBufferForCommonDirectIO = (GByte*)VSI_MALLOC_VERBOSE(m_nTempBufferForCommonDirectIOSize);
             if( m_pTempBufferForCommonDirectIO == NULL )
                 return CE_Failure;
         }
@@ -3227,10 +3227,10 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
 
     int nReqXSize = nXSize; /* sub-sampling or over-sampling can only be done at last stage */
     int nReqYSize = MIN(nBufYSize, nYSize); /* we can do sub-sampling at the extraction stage */
-    void** ppData = (void**) VSIMalloc(nReqYSize * sizeof(void*));
+    void** ppData = (void**) VSI_MALLOC_VERBOSE(nReqYSize * sizeof(void*));
     vsi_l_offset* panOffsets = (vsi_l_offset*)
-                            VSIMalloc(nReqYSize * sizeof(vsi_l_offset));
-    size_t* panSizes = (size_t*) VSIMalloc(nReqYSize * sizeof(size_t));
+                            VSI_MALLOC_VERBOSE(nReqYSize * sizeof(vsi_l_offset));
+    size_t* panSizes = (size_t*) VSI_MALLOC_VERBOSE(nReqYSize * sizeof(size_t));
     int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
     void* pTmpBuffer = NULL;
     int eErr = CE_None;
@@ -3247,7 +3247,7 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     {
         /* We need a temporary buffer for over-sampling/sub-sampling */
         /* and/or data type conversion */
-        pTmpBuffer = VSIMalloc(nReqXSize * nReqYSize * nSrcPixelSize);
+        pTmpBuffer = VSI_MALLOC_VERBOSE(nReqXSize * nReqYSize * nSrcPixelSize);
         if (pTmpBuffer == NULL)
             eErr = CE_Failure;
     }
@@ -4704,11 +4704,9 @@ CPLErr GTiffSplitBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         if (poGDS->pabyBlockBuf == NULL)
         {
-            poGDS->pabyBlockBuf = (GByte *) VSIMalloc(TIFFScanlineSize(poGDS->hTIFF));
+            poGDS->pabyBlockBuf = (GByte *) VSI_MALLOC_VERBOSE(TIFFScanlineSize(poGDS->hTIFF));
             if( poGDS->pabyBlockBuf == NULL )
             {
-                CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate " CPL_FRMT_GUIB " bytes.",
-                         (GUIntBig)TIFFScanlineSize(poGDS->hTIFF));
                 return CE_Failure;
             }
         }
@@ -4848,7 +4846,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( poGDS->pabyBlockBuf == NULL )
     {
-        poGDS->pabyBlockBuf = (GByte *) VSIMalloc3( 4, nBlockXSize, nBlockYSize );
+        poGDS->pabyBlockBuf = (GByte *) VSI_MALLOC3_VERBOSE( 4, nBlockXSize, nBlockYSize );
         if( poGDS->pabyBlockBuf == NULL )
             return( CE_Failure );
     }
@@ -5771,11 +5769,9 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         
     if (poGDS->pabyBlockBuf == NULL)
     {
-        poGDS->pabyBlockBuf = (GByte *) VSIMalloc(TIFFScanlineSize(poGDS->hTIFF));
+        poGDS->pabyBlockBuf = (GByte *) VSI_MALLOC_VERBOSE(TIFFScanlineSize(poGDS->hTIFF));
         if( poGDS->pabyBlockBuf == NULL )
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate " CPL_FRMT_GUIB " bytes.",
-                         (GUIntBig)TIFFScanlineSize(poGDS->hTIFF));
             return CE_Failure;
         }
     }
@@ -6285,11 +6281,9 @@ void GTiffDataset::FillEmptyTiles()
     else
         nBlockBytes = TIFFStripSize(hTIFF);
 
-    GByte *pabyData = (GByte *) VSICalloc(nBlockBytes,1);
+    GByte *pabyData = (GByte *) VSI_CALLOC_VERBOSE(nBlockBytes,1);
     if (pabyData == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate %d bytes", nBlockBytes);
         return;
     }
 
@@ -6991,14 +6985,9 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, int bReadFromDisk )
 /* -------------------------------------------------------------------- */
     if( pabyBlockBuf == NULL )
     {
-        pabyBlockBuf = (GByte *) VSICalloc( 1, nBlockBufSize );
+        pabyBlockBuf = (GByte *) VSI_CALLOC_VERBOSE( 1, nBlockBufSize );
         if( pabyBlockBuf == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Unable to allocate %d bytes for a temporary strip "
-                      "buffer in GTIFF driver.",
-                      nBlockBufSize );
-
             return( CE_Failure );
         }
     }
@@ -11254,7 +11243,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     void* pData;
     if( TIFFGetField( hTIFF, TIFFTAG_XMLPACKET, &nTagSize, &pData ) )
     {
-        char* pszXMP = (char*)VSIMalloc(nTagSize + 1);
+        char* pszXMP = (char*)VSI_MALLOC_VERBOSE(nTagSize + 1);
         if (pszXMP)
         {
             memcpy(pszXMP, pData, nTagSize);
@@ -13840,7 +13829,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (poDS->nPlanarConfig == PLANARCONFIG_CONTIG && poDS->nBands > 1)
         {
             int j;
-            GByte* pabyScanline = (GByte *) CPLMalloc(TIFFScanlineSize(hTIFF));
+            GByte* pabyScanline = (GByte *) VSI_MALLOC_VERBOSE(TIFFScanlineSize(hTIFF));
+            if( pabyScanline == NULL )
+                eErr = CE_Failure;
             for(j=0;j<nYSize && eErr == CE_None;j++)
             {
                 eErr = poSrcDS->RasterIO(GF_Read, 0, j, nXSize, 1,
@@ -13862,8 +13853,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         else
         {
             int iBand, j;
-            GByte* pabyScanline = (GByte *) CPLMalloc(nXSize);
-            eErr = CE_None;
+            GByte* pabyScanline = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
+            if( pabyScanline == NULL )
+                eErr = CE_Failure;
+            else
+                eErr = CE_None;
             for(iBand=1;iBand<=nBands && eErr == CE_None;iBand++)
             {
                 for(j=0;j<nYSize && eErr == CE_None;j++)
