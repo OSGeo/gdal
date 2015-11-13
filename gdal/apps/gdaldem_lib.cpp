@@ -2295,7 +2295,7 @@ static Algorithm GetAlgorithm(const char* pszProcessing)
  * @param hSrcDataset the source dataset handle.
  * @param pszProcessing the processing to apply (one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", "Roughness")
  * @param pszColorFilename color file (mandatory for "color-relief" processing, should be NULL otherwise)
- * @param psOptions the options struct returned by GDALDEMProcessingOptionsNew() or NULL.
+ * @param psOptionsIn the options struct returned by GDALDEMProcessingOptionsNew() or NULL.
  * @param pbUsageError the pointer to int variable to determine any usage error has occured or NULL.
  * @return the output dataset (new dataset that must be closed using GDALClose()) or NULL in case of error.
  *

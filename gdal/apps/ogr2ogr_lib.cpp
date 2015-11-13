@@ -1194,7 +1194,7 @@ GDALVectorTranslateOptions* GDALVectorTranslateOptionsClone(const GDALVectorTran
  * @param hDstDS the destination dataset or NULL.
  * @param nSrcCount the number of input datasets (only 1 supported currently)
  * @param pahSrcDS the list of input datasets.
- * @param psOptions the options struct returned by GDALVectorTranslateOptionsNew() or NULL.
+ * @param psOptionsIn the options struct returned by GDALVectorTranslateOptionsNew() or NULL.
  * @param pbUsageError the pointer to int variable to determine any usage error has occured
  * @return the output dataset (new dataset that must be closed using GDALClose(), or hDstDS is not NULL) or NULL in case of error.
  *

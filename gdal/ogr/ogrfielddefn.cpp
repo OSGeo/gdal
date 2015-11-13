@@ -272,7 +272,7 @@ OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
  *
  * This method is the same as the C function OGR_Fld_SetType().
  *
- * @param eType the new field type.
+ * @param eTypeIn the new field type.
  */
 
 void OGRFieldDefn::SetType( OGRFieldType eTypeIn )
@@ -358,7 +358,7 @@ OGRFieldSubType OGR_Fld_GetSubType( OGRFieldDefnH hDefn )
  *
  * This method is the same as the C function OGR_Fld_SetSubType().
  *
- * @param eSubType the new field subtype.
+ * @param eSubTypeIn the new field subtype.
  * @since GDAL 2.0
  */
 void OGRFieldDefn::SetSubType( OGRFieldSubType eSubTypeIn )
@@ -423,7 +423,7 @@ void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
  *
  * This function is the same as the C function OGR_Fld_SetDefault().
  *
- * @param pszDefault new default field value or NULL pointer.
+ * @param pszDefaultIn new default field value or NULL pointer.
  *
  * @since GDAL 2.0
  */

@@ -199,7 +199,7 @@ OGRBoolean OGRMultiCurve::hasCurveGeometry(int bLookForNonLinear) const
  * The passed in geometry is consumed and a new one returned (or NULL in case
  * of failure). 
  * 
- * @param poMS the input geometry - ownership is passed to the method.
+ * @param poMC the input geometry - ownership is passed to the method.
  * @return new geometry.
  */
 
