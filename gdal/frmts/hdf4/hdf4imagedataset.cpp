@@ -2382,9 +2382,9 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     }
     else
     {
-        // aim for 10x10 grid or so.
-        iGCPStepX = std::max( 1, ((nXPoints-1) / 11) );
-        iGCPStepY = std::max( 1, ((nYPoints-1) / 11) );
+        // Aim for 10x10 grid or so.
+        iGCPStepX = std::max( static_cast<int32>(1), ((nXPoints-1) / 11) );
+        iGCPStepY = std::max( static_cast<int32>(1), ((nYPoints-1) / 11) );
     }
 
 /* -------------------------------------------------------------------- */
