@@ -3333,7 +3333,7 @@ const char* GDALDataset::GetDriverName()
  @since GDAL 2.0
 
  @param hDS the dataset handle.
- @param poResultsSet the result of a previous ExecuteSQL() call.
+ @param hLayer the result of a previous ExecuteSQL() call.
 
 */ 
 void GDALDatasetReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer )
@@ -3373,7 +3373,7 @@ void GDALDatasetReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer )
  @since GDAL 2.0
 
  @param hDS the dataset handle.
- @param pszCapability the capability to test.
+ @param pszCap the capability to test.
 
  @return TRUE if capability available otherwise FALSE.
 
@@ -3453,7 +3453,7 @@ OGRLayerH GDALDatasetGetLayer( GDALDatasetH hDS, int iLayer )
  @since GDAL 2.0
 
  @param hDS the dataset handle.
- @param pszLayerName the layer name of the layer to fetch.
+ @param pszName the layer name of the layer to fetch.
 
  @return the layer, or NULL if Layer is not found or an error occurs.
 */
@@ -3515,7 +3515,6 @@ normally documented in the format specific documentation.
  
  In GDAL 1.X, this method used to be in the OGRDataSource class.
 
- @param hDS the dataset handle
  @param pszName the name for the new layer.  This should ideally not 
 match any existing layer on the datasource.
  @param poSpatialRef the coordinate system to use for the new layer, or NULL if
@@ -3600,7 +3599,7 @@ normally documented in the format specific documentation.
  @param hDS the dataset handle
  @param pszName the name for the new layer.  This should ideally not 
 match any existing layer on the datasource.
- @param poSpatialRef the coordinate system to use for the new layer, or NULL if
+ @param hSpatialRef the coordinate system to use for the new layer, or NULL if
 no coordinate system is available. 
  @param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written. 
@@ -3640,7 +3639,7 @@ specific.
 OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS, 
                               const char * pszName,
                               OGRSpatialReferenceH hSpatialRef,
-                              OGRwkbGeometryType eType,
+                              OGRwkbGeometryType eGType,
                               char ** papszOptions )
 
 {
@@ -3652,7 +3651,7 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
         return 0;
     }
     return (OGRLayerH) ((GDALDataset *)hDS)->CreateLayer( 
-        pszName, (OGRSpatialReference *) hSpatialRef, eType, papszOptions );
+        pszName, (OGRSpatialReference *) hSpatialRef, eGType, papszOptions );
 }
 
 
@@ -3852,8 +3851,6 @@ int GDALDataset::ValidateLayerCreationOptions( const char* const* papszLCO )
 /************************************************************************/
 
 /**
- \fn OGRErr OGRDataSource::Release();
-
 \brief Drop a reference to this dataset, and if the reference count drops to one close (destroy) the dataset.
 
 This method is the same as the C function OGRReleaseDataSource().
@@ -4375,7 +4372,7 @@ OGRErr GDALDataset::DeleteLayer( int iLayer )
  
  In GDAL 1.X, this method used to be in the OGRDataSource class.
 
- @param pszLayerName the layer name of the layer to fetch.
+ @param pszName the layer name of the layer to fetch.
 
  @return the layer, or NULL if Layer is not found or an error occurs.
 */
@@ -5817,7 +5814,7 @@ OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
 
  In GDAL 1.X, this method used to be in the OGRDataSource class.
 
- @param pszCapability the capability to test.
+ @param pszCap the capability to test.
 
  @return TRUE if capability available otherwise FALSE.
 

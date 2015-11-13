@@ -303,6 +303,8 @@ double OGRSimpleCurve::getZ( int iVertex ) const
  * This method has no SFCOM analog.
  *
  * @param nNewPointCount the new number of points for geometry.
+ * @param bZeroizeNewContent whether to set to zero the new elements of arrays
+ *                           that are extended.
  */
 
 void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )

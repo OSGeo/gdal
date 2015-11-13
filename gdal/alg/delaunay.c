@@ -98,7 +98,7 @@ int GDALHasTriangulation()
  * 
  * @param nPoints number of points
  * @param padfX x coordinates of the points.
- * @param padfX y coordinates of the points.
+ * @param padfY y coordinates of the points.
  * @return triangulation that must be freed with GDALTriangulationFree(), or
  *         NULL in case of error.
  *
@@ -280,7 +280,7 @@ void GDALTriangulationFree(GDALTriangulation* psDT)
  * @param psDT triangulation.
  * @param padfX x coordinates of the points. Must be identical to the one passed
  *              to GDALTriangulationCreateDelaunay().
- * @param padfX y coordinates of the points. Must be identical to the one passed
+ * @param padfY y coordinates of the points. Must be identical to the one passed
  *              to GDALTriangulationCreateDelaunay().
  *
  * @return TRUE in case of success.
@@ -392,6 +392,7 @@ int  GDALTriangulationComputeBarycentricCoordinates(const GDALTriangulation* psD
  * @param psDT triangulation.
  * @param dfX x coordinate of the point.
  * @param dfY y coordinate of the point.
+ * @param panOutputFacetIdx (output) pointer to the index of the triangle.
  *
  * @return index >= 0 of the triangle in case of success, -1 otherwise.
  *

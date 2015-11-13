@@ -426,9 +426,9 @@ int          OGRCompoundCurve::getNumCurves() const
  * @return pointer to curve.  May be NULL.
  */
 
-OGRCurve    *OGRCompoundCurve::getCurve( int i )
+OGRCurve    *OGRCompoundCurve::getCurve( int iRing )
 {
-    return oCC.getCurve(i);
+    return oCC.getCurve(iRing);
 }
 
 /************************************************************************/
@@ -451,9 +451,9 @@ OGRCurve    *OGRCompoundCurve::getCurve( int i )
  * @return pointer to curve.  May be NULL.
  */
 
-const OGRCurve *OGRCompoundCurve::getCurve( int i ) const
+const OGRCurve *OGRCompoundCurve::getCurve( int iRing ) const
 {
-    return oCC.getCurve(i);
+    return oCC.getCurve(iRing);
 }
 
 /************************************************************************/

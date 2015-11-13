@@ -713,7 +713,7 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
  * The passed in geometry is consumed and a new one returned (or NULL in case
  * of failure). 
  * 
- * @param poMS the input geometry - ownership is passed to the method.
+ * @param poCP the input geometry - ownership is passed to the method.
  * @return new geometry.
  */
 
