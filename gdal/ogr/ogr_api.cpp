@@ -76,6 +76,7 @@ int OGR_G_GetPointCount( OGRGeometryH hGeom )
  * geometry before setPoint() is used to assign them to avoid reallocating
  * the array larger with each call to addPoint(). 
  *
+ * @param hGeom handle to the geometry.
  * @param nNewPointCount the new number of points for geometry.
  */
 
@@ -376,11 +377,11 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
  *
  * @param hGeom handle to the geometry to set the coordinates.
  * @param nPointsIn number of points being passed in padfX and padfY.
- * @param padfX list of X coordinates of points being assigned.
+ * @param pabyX list of X coordinates (double values) of points being assigned.
  * @param nXStride the number of bytes between 2 elements of pabyX.
- * @param padfY list of Y coordinates of points being assigned.
+ * @param pabyY list of Y coordinates (double values) of points being assigned.
  * @param nYStride the number of bytes between 2 elements of pabyY.
- * @param padfZ list of Z coordinates of points being assigned (defaults to NULL for 2D objects).
+ * @param pabyZ list of Z coordinates (double values) of points being assigned (defaults to NULL for 2D objects).
  * @param nZStride the number of bytes between 2 elements of pabyZ.
  */
 
