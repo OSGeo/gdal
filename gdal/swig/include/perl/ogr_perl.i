@@ -147,9 +147,9 @@ sub DESTROY {
         $self = tied(%{$_[0]});
         return unless defined $self;
     }
-    if ($Geo::OGR::DataSource::RESULT_SET{$self}) {
-        $Geo::OGR::DataSource::LAYERS{$self}->_ReleaseResultSet($self);
-        delete $Geo::OGR::DataSource::RESULT_SET{$self}
+    if ($Geo::GDAL::Dataset::RESULT_SET{$self}) {
+        $Geo::GDAL::Dataset::LAYERS{$self}->_ReleaseResultSet($self);
+        delete $Geo::GDAL::Dataset::RESULT_SET{$self}
     }
     delete $ITERATORS{$self};
     if (exists $OWNER{$self}) {
@@ -160,7 +160,7 @@ sub DESTROY {
 
 sub RELEASE_PARENTS {
     my $self = shift;
-    delete $Geo::OGR::DataSource::LAYERS{$self};
+    delete $Geo::GDAL::Dataset::LAYERS{$self};
 }
 
 sub Capabilities {
@@ -180,7 +180,7 @@ sub TestCapability {
 
 sub GetDataSource {
     my $self = shift;
-    return $Geo::OGR::DataSource::LAYERS{$self};
+    return $Geo::GDAL::Dataset::LAYERS{$self};
 }
 *DataSource = *GetDataSource;
 
@@ -1745,30 +1745,4 @@ sub RELEASE_PARENTS {
 *ByteOrders = *Geo::OGR::Geometry::ByteOrders;
 *GeometryTypes = *Geo::OGR::Geometry::GeometryTypes;
 
-sub GetDriverNames {
-    my @names;
-    for my $i (0..GetDriverCount()-1) {
-        push @names, _GetDriver($i)->Name;
-    }
-    return @names;
-}
-
-sub Drivers {
-    my @drivers;
-    for my $i (0..GetDriverCount()-1) {
-        push @drivers, _GetDriver($i);
-    }
-    return @drivers;
-}
-
-sub GetDriver {
-    my($name) = @_;
-    $name = 0 unless defined $name;
-    my $driver;
-    $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
-    $driver = GetDriverByName("$name") unless $driver;
-    return $driver if $driver;
-    confess "Driver not found: '$name'. Maybe support for it was not built in?";
-}
-*Driver = *GetDriver;
 %}
