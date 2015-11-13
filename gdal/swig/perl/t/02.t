@@ -40,7 +40,7 @@ ok($dataset, "OpenEx");
 # sub StartTransaction
 # sub WriteRaster
 
-$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff');
+$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 123);
 my @list = $dataset->GetFileList();
 undef $dataset;
 

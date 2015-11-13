@@ -239,7 +239,7 @@ my $b = $band1->HasArbitraryOverviews;
 ok(!$b, "HasArbitraryOverviews");
 
 Geo::GDAL::VSIF::Unlink('/vsimem/test.gtiff');
-$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Type => 'Float64');
+$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 256, Type => 'Float64');
 $band = $dataset->Band;
 
 $data = $band->ReadTile;

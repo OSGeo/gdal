@@ -785,7 +785,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* PYTHON */
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
 
   /* Note that datasources own their layers */
 #ifndef SWIGJAVA
@@ -872,7 +872,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
         GDALDatasetSetStyleTable(self, (OGRStyleTableH) table);
   }
 
-#endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) */
+#endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL) */
 
 #ifndef SWIGJAVA
   %feature( "kwargs" ) StartTransaction;

@@ -33,7 +33,7 @@ $verbose = $ENV{VERBOSE};
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
 {
-    my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer();
+    my $l = Geo::GDAL::Driver('Memory')->Create()->CreateLayer();
     $l->CreateField(Name => 'value', Type => 'Integer');
     my $s1 = $l->Schema;
     $l->CreateField(Name => 'v', Type => 'Integer');
@@ -43,7 +43,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 }
 
 {
-    my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer({GeometryType=>'Polygon'});
+    my $l = Geo::GDAL::Driver('Memory')->Create()->CreateLayer({GeometryType=>'Polygon'});
     eval {
 	# this is an error because the layer is polygon and this is a point
 	$l->InsertFeature([0,12.2,{wkt=>'POINT(1 1)'}]);
@@ -54,7 +54,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 {
     our $warning;
     BEGIN { $SIG{'__WARN__'} = sub { $warning = $_[0] } }
-    my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer(GeometryType => 'None');
+    my $l = Geo::GDAL::Driver('Memory')->Create()->CreateLayer(GeometryType => 'None');
     $l->CreateField(Name => 'value', Type => 'Integer');
     $l->CreateField(Name => 'geom', GeometryType => 'Point');
     $l->InsertFeature([0,12.2,{wkt=>'POINT(1 1)'}]);
@@ -216,12 +216,12 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     ok($s->{Type} eq 'String', 'fieldefn schema 2');
 }
 {
-    my $driver = Geo::OGR::Driver('Memory');
+    my $driver = Geo::GDAL::Driver('Memory');
     my %cap = map {$_=>1} $driver->Capabilities;
-    ok($cap{CreateDataSource}, "driver capabilities");
-    my $datasource = $driver->CreateDataSource('test');
-    %cap = map {$_=>1} $datasource->Capabilities;
-    ok($cap{CreateLayer} and $cap{DeleteLayer}, "data source capabilities");
+    ok($cap{CREATE}, "driver capabilities");
+    my $datasource = $driver->Create('test');
+    #%cap = map {$_=>1} $datasource->Capabilities;
+    #ok($cap{CreateLayer} and $cap{DeleteLayer}, "data source capabilities");
     
     my $layer = $datasource->CreateLayer('a', undef, 'Point');
     my %cap = map { $_ => 1 } $layer->Capabilities;
@@ -326,8 +326,8 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
 sub ogr_tests {
     my($osr) = @_;
-    for my $driver (Geo::OGR::Drivers) {
-	my $name = $driver->{name};
+    for my $driver (Geo::GDAL::Drivers) {
+	my $name = $driver->Name;
 	
 	unless (defined $name) {
 	    $name = 'unnamed';

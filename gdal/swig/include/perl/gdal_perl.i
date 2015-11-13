@@ -71,10 +71,16 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_OpenShared) OpenShared;
 %newobject _OpenShared;
 
+%rename (_OpenEx) OpenEx;
+%newobject _OpenEx;
+
 %rename (_BuildOverviews) BuildOverviews;
 
 %rename (_ReadRaster) ReadRaster;
 %rename (_WriteRaster) WriteRaster;
+
+%rename (_CreateLayer) CreateLayer;
+%rename (_DeleteLayer) DeleteLayer;
 
 %rename (_GetMaskFlags) GetMaskFlags;
 %rename (_CreateMaskBand) CreateMaskBand;
@@ -96,6 +102,9 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 
 %rename (_Create) Create;
 %newobject _Create;
+
+%rename (_CreateCopy) CreateCopy;
+%newobject _CreateCopy;
 
 %rename (_GetRasterBand) GetRasterBand;
 %rename (_AddBand) AddBand;
@@ -198,8 +207,9 @@ L<https://trac.osgeo.org/gdal>
 =cut
 
 use vars qw/
-    @DATA_TYPES @ACCESS_TYPES @RESAMPLING_TYPES @RIO_RESAMPLING_TYPES @NODE_TYPES
+    @DATA_TYPES @OPEN_FLAGS @ACCESS_TYPES @RESAMPLING_TYPES @RIO_RESAMPLING_TYPES @NODE_TYPES
     %TYPE_STRING2INT %TYPE_INT2STRING
+    %OF_STRING2INT
     %ACCESS_STRING2INT %ACCESS_INT2STRING
     %RESAMPLING_STRING2INT %RESAMPLING_INT2STRING
     %RIO_RESAMPLING_STRING2INT %RIO_RESAMPLING_INT2STRING
@@ -209,6 +219,7 @@ use vars qw/
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
     push(@DATA_TYPES, $1), next if /^GDT_(\w+)/;
+    push(@OPEN_FLAGS, $1), next if /^OF_(\w+)/;
     push(@ACCESS_TYPES, $1), next if /^GA_(\w+)/;
     push(@RESAMPLING_TYPES, $1), next if /^GRA_(\w+)/;
     push(@RIO_RESAMPLING_TYPES, $1), next if /^GRIORA_(\w+)/;
@@ -218,6 +229,10 @@ for my $string (@DATA_TYPES) {
     my $int = eval "\$Geo::GDAL::Const::GDT_$string";
     $TYPE_STRING2INT{$string} = $int;
     $TYPE_INT2STRING{$int} = $string;
+}
+for my $string (@OPEN_FLAGS) {
+    my $int = eval "\$Geo::GDAL::Const::OF_$string";
+    $OF_STRING2INT{$string} = $int;
 }
 for my $string (@ACCESS_TYPES) {
     my $int = eval "\$Geo::GDAL::Const::GA_$string";
@@ -244,6 +259,10 @@ sub RELEASE_PARENTS {
 }
 
 sub DataTypes {
+    return @DATA_TYPES;
+}
+
+sub OpenFlags {
     return @DATA_TYPES;
 }
 
@@ -330,9 +349,6 @@ sub PackCharacter {
 sub GetDriverNames {
     my @names;
     for my $i (0..GetDriverCount()-1) {
-        my $driver = _GetDriver($i);
-        my $md = $driver->GetMetadata;
-        next unless $md->{DCAP_RASTER} and $md->{DCAP_RASTER} eq 'YES';
         push @names, _GetDriver($i)->Name;
     }
     return @names;
@@ -341,9 +357,6 @@ sub GetDriverNames {
 sub Drivers {
     my @drivers;
     for my $i (0..GetDriverCount()-1) {
-        my $driver = _GetDriver($i);
-        my $md = $driver->GetMetadata;
-        next unless $md->{DCAP_RASTER} and $md->{DCAP_RASTER} eq 'YES';
         push @drivers, _GetDriver($i);
     }
     return @drivers;
@@ -355,12 +368,7 @@ sub GetDriver {
     my $driver;
     $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
     $driver = GetDriverByName("$name") unless $driver;
-    if ($driver) {
-        my $md = $driver->GetMetadata;
-        confess "Driver exists but does not have raster capabilities." 
-            unless $md->{DCAP_RASTER} and $md->{DCAP_RASTER} eq 'YES';
-        return $driver;
-    }
+    return $driver if $driver;
     confess "Driver not found: '$name'. Maybe support for it was not built in?";
 }
 *Driver = *GetDriver;
@@ -381,6 +389,19 @@ sub OpenShared {
         $p[1] = $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
     }
     return _OpenShared(@p);
+}
+
+sub OpenEx {
+    my @p = @_; # name, flags, allow_drivers, open_options, sibling_files
+    if (defined $p[1]) { # a list of written flags
+        my $f;
+        for my $flag (@{$p[1]}) {
+            confess "Unknown access type: '$p[1]'." unless exists $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
+            $p[1] |= $Geo::GDAL::OF_STRING2INT{$flag};
+        }
+        $p[1] = $f;
+    }
+    return _OpenEx(@p);
 }
 
 sub ComputeMedianCutPCT {
@@ -474,6 +495,7 @@ sub make_processing_options {
 
 
 
+
 package Geo::GDAL::MajorObject;
 use strict;
 use warnings;
@@ -498,6 +520,8 @@ sub Metadata {
     SetMetadata($self, $metadata, $domain) if defined $metadata;
     GetMetadata($self, $domain) if defined wantarray;
 }
+
+
 
 
 package Geo::GDAL::Driver;
@@ -596,12 +620,15 @@ sub Create {
         %params = %{$_[0]};
     } elsif (exists $defaults{$_[0]} and @_ % 2 == 0) {
         %params = @_;
+    } elsif (@_ == 2) { # old vector create
+        ($params{Name}, $params{Options}) = @_;
     } else {
         ($params{Name}, $params{Width}, $params{Height}, $params{Bands}, $params{Type}, $params{Options}) = @_;
     }
     for my $k (keys %params) {
         carp "Create: unrecognized named parameter '$k'." unless exists $defaults{$k};
     }
+    $defaults{Bands} = 0 unless defined $params{Width}; # avoid bands > 0 for vector ds
     for my $k (keys %defaults) {
         $params{$k} = $defaults{$k} unless defined $params{$k};
     }
@@ -620,7 +647,22 @@ sub Create {
     return $ds;
 }
 *CreateDataset = *Create;
-*Copy = *CreateCopy;
+
+sub Copy {
+    my $self = shift;
+    my @p = @_; # $name, $src, $strict, $options, $callback, $data
+    my $object = 0;
+    if ($p[0] && blessed $p[0]) {
+        $object = $p[0];
+        my $ref = $object->can('write');
+        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        $p[0] = '/vsistdout/';
+    }
+    my $ds = $self->_CreateCopy(@p);
+    $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+    return $ds;
+}
+*CreateCopy = *Copy;
 
 
 
@@ -630,7 +672,7 @@ use strict;
 use warnings;
 use Scalar::Util 'blessed';
 use Carp;
-use vars qw/%BANDS @DOMAINS/;
+use vars qw/@DOMAINS @CAPABILITIES %CAPABILITIES %BANDS %LAYERS %RESULT_SET/;
 @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
 
 sub Domains {
@@ -638,13 +680,8 @@ sub Domains {
 }
 *GetDriver = *_GetDriver;
 
-sub Open {
-    return Geo::GDAL::Open(@_);
-}
-
-sub OpenShared {
-    return Geo::GDAL::OpenShared(@_);
-}
+*Open = *Geo::GDAL::Open;
+*OpenShared = *Geo::GDAL::OpenShared;
 
 sub Size {
     my $self = shift;
@@ -680,6 +717,96 @@ sub AddBand {
 
 sub CreateMaskBand {
     return _CreateMaskBand(@_);
+}
+
+sub ExecuteSQL {
+    my $self = shift;
+    my $layer = $self->_ExecuteSQL(@_);
+    $LAYERS{tied(%$layer)} = $self;
+    $RESULT_SET{tied(%$layer)} = 1;
+    return $layer;
+}
+
+sub ReleaseResultSet {
+    # a no-op, _ReleaseResultSet is called from Layer::DESTROY
+}
+
+sub GetLayer {
+    my($self, $name) = @_;
+    my $layer = defined $name ? GetLayerByName($self, "$name") : GetLayerByIndex($self, 0);
+    $name = '' unless defined $name;
+    confess "No such layer: '$name'." unless $layer;
+    $LAYERS{tied(%$layer)} = $self;
+    return $layer;
+}
+*Layer = *GetLayer;
+
+sub GetLayerNames {
+    my $self = shift;
+    my @names;
+    for my $i (0..$self->GetLayerCount-1) {
+        my $layer = GetLayerByIndex($self, $i);
+        push @names, $layer->GetName;
+    }
+    return @names;
+}
+*Layers = *GetLayerNames;
+
+sub CreateLayer {
+    my $self = shift;
+    my %defaults = ( Name => 'unnamed',
+                     SRS => undef,
+                     Options => {},
+                     GeometryType => 'Unknown',
+                     Schema => undef,
+                     Fields => undef,
+                     ApproxOK => 1);
+    my %params;
+    if (@_ == 0) {
+    } elsif (ref($_[0]) eq 'HASH') {
+        %params = %{$_[0]};
+    } elsif (@_ % 2 == 0 and (defined $_[0] and exists $defaults{$_[0]})) {
+        %params = @_;
+    } else {
+        ($params{Name}, $params{SRS}, $params{GeometryType}, $params{Options}, $params{Schema}) = @_;
+    }
+    for (keys %params) {
+        carp "CreateLayer: unknown named parameter '$_'." unless exists $defaults{$_};
+    }
+    if (exists $params{Schema}) {
+        my $s = $params{Schema};
+        $params{GeometryType} = $s->{GeometryType} if exists $s->{GeometryType};
+        $params{Fields} = $s->{Fields} if exists $s->{Fields};
+        $params{Name} = $s->{Name} if exists $s->{Name};
+    }
+    $defaults{GeometryType} = 'None' if $params{Fields};
+    for (keys %defaults) {
+        $params{$_} = $defaults{$_} unless defined $params{$_};
+    }
+    confess "Unknown geometry type: '$params{GeometryType}'."
+        unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
+    my $gt = $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
+    my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $gt, $params{Options});
+    $LAYERS{tied(%$layer)} = $self;
+    my $f = $params{Fields};
+    if ($f) {
+        confess "Named parameter 'Fields' must be a reference to an array." unless ref($f) eq 'ARRAY';
+        for my $field (@$f) {
+            $layer->CreateField($field);
+        }
+    }
+    return $layer;
+}
+
+sub DeleteLayer {
+    my ($self, $name) = @_;
+    my $index;
+    for my $i (0..$self->GetLayerCount-1) {
+        my $layer = GetLayerByIndex($self, $i);
+        $index = $i, last if $layer->GetName eq $name;
+    }
+    confess "No such layer: '$name'." unless defined $index;
+    _DeleteLayer($self, $index);
 }
 
 sub Projection {
@@ -876,7 +1003,6 @@ sub Nearblack {
 
 sub Translate {
     my ($self, $dest, $o, $progress, $progress_data) = @_;
-    $o = Geo::GDAL::GDALTranslateOptions->new(Geo::GDAL::make_processing_options($o));
     my $object = 0;
     if ($dest && blessed $dest) {
         $object = $dest;
@@ -884,7 +1010,15 @@ sub Translate {
         Geo::GDAL::VSIStdoutSetRedirection($ref);
         $dest = '/vsistdout/';
     }
-    my $ds = Geo::GDAL::wrapper_GDALTranslate($dest, $self, $o, $progress, $progress_data);
+    my $ds;
+    if ($self->_GetRasterBand(1)) {
+        $o = Geo::GDAL::GDALTranslateOptions->new(Geo::GDAL::make_processing_options($o));
+        $ds = Geo::GDAL::wrapper_GDALTranslate($dest, $self, $o, $progress, $progress_data);
+    } else {
+        $o = Geo::GDAL::GDALVectorTranslateOptions->new(Geo::GDAL::make_processing_options($o));
+        Geo::GDAL::wrapper_GDALVectorTranslateDestDS($dest, $self, $o, $progress, $progress_data);
+        $ds = Geo::GDAL::wrapper_GDALVectorTranslateDestName($dest, $self, $o, $progress, $progress_data);
+    }
     $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
     return $ds;
 }
@@ -914,6 +1048,43 @@ sub Info {
     $o = Geo::GDAL::GDALInfoOptions->new(Geo::GDAL::make_processing_options($o));
     return Geo::GDAL::GDALInfo($self, $o);
 }
+
+sub Grid {
+    my ($self, $dest, $o, $progress, $progress_data) = @_;
+    $o = Geo::GDAL::GDALGridOptions->new(Geo::GDAL::make_processing_options($o));
+    my $object = 0;
+    if ($dest && blessed $dest) {
+        $object = $dest;
+        my $ref = $object->can('write');
+        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        $dest = '/vsistdout/';
+    }
+    my $ds = Geo::GDAL::wrapper_GDALGrid($dest, AsDataset($self), $o, $progress, $progress_data);
+    $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+    return $ds;
+}
+
+sub Rasterize {
+    my ($self, $dest, $o, $progress, $progress_data) = @_;
+    $o = Geo::GDAL::GDALRasterizeOptions->new(Geo::GDAL::make_processing_options($o));
+    my $b = blessed($dest);
+    if ($b && $b eq 'Geo::GDAL::Dataset') {
+        Geo::GDAL::wrapper_GDALRasterizeDestDS($dest, AsDataset($self), $o, $progress, $progress_data);
+    } else {
+        my $object = 0;
+        if ($dest && blessed $dest) {
+            $object = $dest;
+            my $ref = $object->can('write');
+            Geo::GDAL::VSIStdoutSetRedirection($ref);
+            $dest = '/vsistdout/';
+        }
+        my $ds = Geo::GDAL::wrapper_GDALRasterizeDestName($dest, AsDataset($self), $o, $progress, $progress_data);
+        $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object if $object;
+        return $ds;
+    }
+}
+
+
 
 
 package Geo::GDAL::Band;
