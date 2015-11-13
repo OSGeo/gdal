@@ -48,19 +48,10 @@
 
 %import destroy.i
 
-ALTERED_DESTROY(OGRDataSourceShadow, OGRc, delete_DataSource)
 ALTERED_DESTROY(OGRFeatureShadow, OGRc, delete_Feature)
 ALTERED_DESTROY(OGRFeatureDefnShadow, OGRc, delete_FeatureDefn)
 ALTERED_DESTROY(OGRFieldDefnShadow, OGRc, delete_FieldDefn)
 ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
-
-#ifndef FROM_GDAL_I
-%extend OGRDataSourceShadow {
-
-  %rename (_ExecuteSQL) ExecuteSQL;
-
- }
-#endif
 
 %extend OGRGeometryShadow {
 

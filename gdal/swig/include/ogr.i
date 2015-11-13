@@ -169,8 +169,10 @@ typedef void GDALMajorObjectShadow;
 
 #ifdef DEBUG 
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
+#ifndef SWIGPERL
 typedef struct OGRDriverHS OGRDriverShadow;
 typedef struct OGRDataSourceHS OGRDataSourceShadow;
+#endif
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRFeatureHS OGRFeatureShadow;
 typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
@@ -180,8 +182,10 @@ typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
 typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
 #else
 typedef void OSRSpatialReferenceShadow;
+#ifndef SWIGPERL
 typedef void OGRDriverShadow;
 typedef void OGRDataSourceShadow;
+#endif
 typedef void OGRLayerShadow;
 typedef void OGRFeatureShadow;
 typedef void OGRFeatureDefnShadow;
@@ -495,6 +499,7 @@ public:
 }
 };
 
+#ifndef SWIGPERL
 /************************************************************************/
 /*                              OGRDriver                               */
 /************************************************************************/
@@ -748,6 +753,7 @@ public:
 }; /* class OGRDataSourceShadow */
 
 #endif /* FROM_GDAL_I */
+#endif /* #ifndef SWIGPERL just before OGRDriver */
 
 /************************************************************************/
 /*                               OGRLayer                               */
@@ -2840,6 +2846,7 @@ public:
 
 #ifndef FROM_GDAL_I
 
+#ifndef SWIGPERL
 %{
 char const *OGRDriverShadow_get_name( OGRDriverShadow *h ) {
   return OGR_Dr_GetName( h );
@@ -2857,6 +2864,7 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
   return OGR_DS_GetName( h );
 }
 %}
+#endif
 
 int OGRGetDriverCount();
 
@@ -2921,6 +2929,7 @@ void OGRSetNonLinearGeometriesEnabledFlag( int bFlag );
 %rename (GetNonLinearGeometriesEnabledFlag) OGRGetNonLinearGeometriesEnabledFlag;
 int OGRGetNonLinearGeometriesEnabledFlag(void);
 
+#ifndef SWIGPERL
 %inline %{
   OGRDataSourceShadow* GetOpenDS(int ds_number) {
     OGRDataSourceShadow* layer = (OGRDataSourceShadow*) OGRGetOpenDS(ds_number);
@@ -2982,6 +2991,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
   return (OGRDriverShadow*) OGRGetDriver(driver_number);
 }
 %}
+#endif /* #ifndef SWIGPERL */
 
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 /* FIXME: other bindings should also use those typemaps to avoid memory leaks */
