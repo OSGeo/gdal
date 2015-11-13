@@ -683,6 +683,10 @@ sub Domains {
 *Open = *Geo::GDAL::Open;
 *OpenShared = *Geo::GDAL::OpenShared;
 
+sub TestCapability {
+    return _TestCapability(@_);
+}
+
 sub Size {
     my $self = shift;
     return ($self->{RasterXSize}, $self->{RasterYSize});
