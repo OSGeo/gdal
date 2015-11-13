@@ -43,17 +43,11 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 typedef struct ctb {
     FILE        *fp;
-
     struct ctb *psNext;
-
     char        *pszFilename;
-
     char        **papszFieldNames;
-
     char        **papszRecFields;
-
     int         iLastLine;
-
     int         bNonUniqueKey;
 
     /* Cache for whole file */
@@ -63,15 +57,15 @@ typedef struct ctb {
     char        *pszRawData;
 } CSVTable;
 
-
-static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS, const char * pszFilename );
+static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS,
+                                 const char * pszFilename );
 
 /************************************************************************/
 /*                            CSVFreeTLS()                              */
 /************************************************************************/
-static void CSVFreeTLS(void* pData)
+static void CSVFreeTLS( void* pData )
 {
-    CSVDeaccessInternal( (CSVTable **)pData, FALSE, NULL );
+    CSVDeaccessInternal( reinterpret_cast<CSVTable **>( pData ), FALSE, NULL );
     CPLFree(pData);
 }
 
@@ -97,12 +91,14 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /*      if there isn't already one.                                     */
 /* -------------------------------------------------------------------- */
     int bMemoryError;
-    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError );
+    CSVTable **ppsCSVTableList = reinterpret_cast<CSVTable **>(
+        CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError ) );
     if( bMemoryError )
         return NULL;
     if( ppsCSVTableList == NULL )
     {
-        ppsCSVTableList = (CSVTable **) VSI_CALLOC_VERBOSE(1,sizeof(CSVTable*));
+        ppsCSVTableList = reinterpret_cast<CSVTable **>(
+            VSI_CALLOC_VERBOSE( 1, sizeof(CSVTable*) ) );
         if( ppsCSVTableList == NULL )
             return NULL;
         CPLSetTLSWithFreeFunc( CTLS_CSVTABLEPTR, ppsCSVTableList, CSVFreeTLS );
@@ -121,7 +117,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
              * Eventually we should consider promoting to the front of
              * the list to accelerate frequently accessed tables.
              */
-            return( psTable );
+            return psTable;
         }
     }
 
@@ -136,7 +132,8 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /*      Create an information structure about this table, and add to    */
 /*      the front of the list.                                          */
 /* -------------------------------------------------------------------- */
-    CSVTable *psTable = (CSVTable *) VSI_CALLOC_VERBOSE(sizeof(CSVTable),1);
+    CSVTable *psTable = reinterpret_cast<CSVTable *>(
+        VSI_CALLOC_VERBOSE( sizeof(CSVTable), 1 ) );
     if( psTable == NULL )
     {
         VSIFClose(fp);
@@ -161,14 +158,15 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     psTable->papszFieldNames = CSVReadParseLine( fp );
 
-    return( psTable );
+    return psTable;
 }
 
 /************************************************************************/
 /*                            CSVDeaccess()                             */
 /************************************************************************/
 
-static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS, const char * pszFilename )
+static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS,
+                                 const char * pszFilename )
 
 {
     if( ppsCSVTableList == NULL )
@@ -180,7 +178,8 @@ static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS, con
     if( pszFilename == NULL )
     {
         while( *ppsCSVTableList != NULL )
-            CSVDeaccessInternal( ppsCSVTableList, bCanUseTLS, (*ppsCSVTableList)->pszFilename );
+            CSVDeaccessInternal( ppsCSVTableList, bCanUseTLS,
+                                 (*ppsCSVTableList)->pszFilename );
 
         return;
     }
@@ -238,7 +237,8 @@ void CSVDeaccess( const char * pszFilename )
 /*      if there isn't already one.                                     */
 /* -------------------------------------------------------------------- */
     int bMemoryError;
-    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError );
+    CSVTable **ppsCSVTableList = reinterpret_cast<CSVTable **>(
+        CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError ) );
 
     CSVDeaccessInternal(ppsCSVTableList, TRUE, pszFilename);
 }
@@ -255,19 +255,19 @@ void CSVDeaccess( const char * pszFilename )
 static char **CSVSplitLine( const char *pszString, char chDelimiter )
 
 {
-    char        **papszRetList = NULL;
 
-    char        *pszToken = (char *) VSI_CALLOC_VERBOSE(10,1);
+    char *pszToken = reinterpret_cast<char *>( VSI_CALLOC_VERBOSE( 10, 1 ) );
     if( pszToken == NULL )
         return NULL;
+
     int         nTokenMax = 10;
-    int         nTokenLen;
+    char **papszRetList = NULL;
 
     while( pszString != NULL && *pszString != '\0' )
     {
         bool bInString = false;
 
-        nTokenLen = 0;
+        int nTokenLen = 0;
 
         /* Try to find the next delimeter, marking end of token */
         for( ; *pszString != '\0'; pszString++ )
@@ -296,7 +296,8 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
             if( nTokenLen >= nTokenMax-2 )
             {
                 nTokenMax = nTokenMax * 2 + 10;
-                char* pszTokenNew = (char *) VSI_REALLOC_VERBOSE( pszToken, nTokenMax );
+                char* pszTokenNew = reinterpret_cast<char *>(
+                    VSI_REALLOC_VERBOSE( pszToken, nTokenMax ) );
                 if( pszTokenNew == NULL )
                 {
                     VSIFree(pszToken);
@@ -354,9 +355,9 @@ static char *CSVFindNextLine( char *pszThisLine )
 
 {
     int  nQuoteCount = 0;
-    int i;
 
-    for( i = 0; pszThisLine[i] != '\0'; i++ )
+    int i = 0;
+    for( ; pszThisLine[i] != '\0'; i++ )
     {
         if( pszThisLine[i] == '\"'
             && (i == 0 || pszThisLine[i-1] != '\\') )
@@ -372,8 +373,8 @@ static char *CSVFindNextLine( char *pszThisLine )
 
     if( pszThisLine[i] == '\0' )
         return NULL;
-    else
-        return pszThisLine + i;
+
+    return pszThisLine + i;
 }
 
 /************************************************************************/
@@ -414,7 +415,8 @@ static void CSVIngest( const char *pszFilename )
     psTable->pszRawData = (char *) VSI_MALLOC_VERBOSE(nFileLen+1);
     if( psTable->pszRawData == NULL )
         return;
-    if( (int) VSIFRead( psTable->pszRawData, 1, nFileLen, psTable->fp ) 
+    if( static_cast<int>( VSIFRead( psTable->pszRawData, 1,
+                                    nFileLen, psTable->fp ) )
         != nFileLen )
     {
         CPLFree( psTable->pszRawData );
@@ -437,7 +439,8 @@ static void CSVIngest( const char *pszFilename )
             nMaxLineCount++;
     }
 
-    psTable->papszLines = (char **) VSI_CALLOC_VERBOSE(sizeof(char*),nMaxLineCount);
+    psTable->papszLines = reinterpret_cast<char **>(
+        VSI_CALLOC_VERBOSE( sizeof(char*), nMaxLineCount ) );
     if( psTable->papszLines == NULL )
         return;
 
@@ -463,9 +466,11 @@ static void CSVIngest( const char *pszFilename )
 /*      ascending order so that binary searches can be done on the      */
 /*      array.                                                          */
 /* -------------------------------------------------------------------- */
-    psTable->panLineIndex = (int *) VSI_MALLOC_VERBOSE(sizeof(int)*psTable->nLineCount);
+    psTable->panLineIndex = reinterpret_cast<int *>(
+        VSI_MALLOC_VERBOSE( sizeof(int) * psTable->nLineCount ) );
     if( psTable->panLineIndex == NULL )
         return;
+
     for( int i = 0; i < psTable->nLineCount; i++ )
     {
         psTable->panLineIndex[i] = atoi(psTable->papszLines[i]);
@@ -506,15 +511,17 @@ char CSVDetectSeperator (const char* pszLine)
 
     for( ; *pszLine != '\0'; pszLine++ )
     {
-        if( !bInString && (*pszLine == ',' || *pszLine == ';' || *pszLine == '\t'))
+        if( !bInString && ( *pszLine == ',' || *pszLine == ';'
+                            || *pszLine == '\t'))
         {
             if (chDelimiter == '\0')
                 chDelimiter = *pszLine;
             else if (chDelimiter != *pszLine)
             {
                 /* The separator is not consistent on the line. */
-                CPLDebug("CSV", "Inconsistent separator. '%c' and '%c' found. Using ',' as default",
-                         chDelimiter, *pszLine);
+                CPLDebug( "CSV", "Inconsistent separator. '%c' and '%c' found. "
+                          "Using ',' as default",
+                          chDelimiter, *pszLine);
                 chDelimiter = ',';
                 break;
             }
@@ -563,11 +570,11 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
 {
     CPLAssert( fp != NULL );
     if( fp == NULL )
-        return( NULL );
+        return NULL;
 
     const char  *pszLine = CPLReadLine( fp );
     if( pszLine == NULL )
-        return( NULL );
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      If there are no quotes, then this is the simple case.           */
@@ -582,7 +589,8 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
 /* -------------------------------------------------------------------- */
     char        *pszWorkLine = CPLStrdup( pszLine );
 
-    int i = 0, nCount = 0;
+    int i = 0;
+    int nCount = 0;
     int nWorkLineLength = strlen(pszWorkLine);
 
     while( true )
@@ -601,15 +609,16 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
         if( pszLine == NULL )
             break;
 
-        int nLineLen = strlen(pszLine);
+        const int nLineLen = strlen(pszLine);
 
-        char* pszWorkLineTmp = (char *)
+        char* pszWorkLineTmp = reinterpret_cast<char *>(
             VSIRealloc(pszWorkLine,
-                       nWorkLineLength + nLineLen + 2);
+                       nWorkLineLength + nLineLen + 2) );
         if (pszWorkLineTmp == NULL)
             break;
         pszWorkLine = pszWorkLineTmp;
-        strcat( pszWorkLine + nWorkLineLength, "\n" ); // This gets lost in CPLReadLine().
+        // This gets lost in CPLReadLine().
+        strcat( pszWorkLine + nWorkLineLength, "\n" );
         strcat( pszWorkLine + nWorkLineLength, pszLine );
 
         nWorkLineLength += nLineLen + 1;
@@ -639,7 +648,7 @@ static bool CSVCompare( const char * pszFieldValue, const char * pszTarget,
     }
     else if( eCriteria == CC_ApproxString )
     {
-        return( EQUAL( pszFieldValue, pszTarget ) );
+        return EQUAL( pszFieldValue, pszTarget );
     }
     else if( eCriteria == CC_Integer )
     {
@@ -672,7 +681,7 @@ char **CSVScanLines( FILE *fp, int iKeyField, const char * pszValue,
     while( !bSelected ) {
         papszFields = CSVReadParseLine( fp );
         if( papszFields == NULL )
-            return( NULL );
+            return NULL;
 
         if( CSLCount( papszFields ) < iKeyField+1 )
         {
@@ -696,7 +705,7 @@ char **CSVScanLines( FILE *fp, int iKeyField, const char * pszValue,
         }
     }
 
-    return( papszFields );
+    return papszFields;
 }
 
 /************************************************************************/
@@ -768,7 +777,7 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
     CPLAssert( pszValue != NULL );
     CPLAssert( iKeyField >= 0 );
 
-    int nTestValue = atoi(pszValue);
+    const int nTestValue = atoi(pszValue);
 
 /* -------------------------------------------------------------------- */
 /*      Short cut for indexed files.                                    */
@@ -785,7 +794,8 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
 
     while( !bSelected && psTable->iLastLine+1 < psTable->nLineCount ) {
         psTable->iLastLine++;
-        papszFields = CSVSplitLine( psTable->papszLines[psTable->iLastLine], ',' );
+        papszFields = CSVSplitLine( psTable->papszLines[psTable->iLastLine],
+                                    ',' );
 
         if( CSLCount( papszFields ) < iKeyField+1 )
         {
@@ -809,7 +819,7 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
         }
     }
 
-    return( papszFields );
+    return papszFields;
 }
 
 /************************************************************************/
@@ -910,7 +920,7 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
             CSVScanLines( psTable->fp, iKeyField, pszValue, eCriteria );
     }
 
-    return( psTable->papszRecFields );
+    return psTable->papszRecFields;
 }
 
 /************************************************************************/
@@ -999,7 +1009,7 @@ char **CSVScanFileByName( const char * pszFilename,
     if( iKeyField == -1 )
         return NULL;
 
-    return( CSVScanFile( pszFilename, iKeyField, pszValue, eCriteria ) );
+    return CSVScanFile( pszFilename, iKeyField, pszValue, eCriteria );
 }
 
 /************************************************************************/
@@ -1044,7 +1054,7 @@ const char *CSVGetField( const char * pszFilename,
     for(int i=0; papszRecord[i] != NULL; ++i)
     {
         if( i == iTargetField )
-            return( papszRecord[iTargetField] );
+            return papszRecord[iTargetField];
     }
     return "";
 }
@@ -1068,17 +1078,18 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
 /*      the existing path without any further probing.                  */
 /* -------------------------------------------------------------------- */
     int bMemoryError;
-    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError );
+    CSVTable **ppsCSVTableList = reinterpret_cast<CSVTable **>(
+      CPLGetTLSEx( CTLS_CSVTABLEPTR, &bMemoryError ) );
     if( ppsCSVTableList != NULL )
     {
-        CSVTable *psTable;
+        CSVTable *psTable = *ppsCSVTableList;
         int nBasenameLen = strlen(pszBasename);
 
-        for( psTable = *ppsCSVTableList; 
+        for( ;
              psTable != NULL; 
              psTable = psTable->psNext )
         {
-            int nFullLen = strlen(psTable->pszFilename);
+            const int nFullLen = strlen(psTable->pszFilename);
 
             if( nFullLen > nBasenameLen 
                 && strcmp(psTable->pszFilename+nFullLen-nBasenameLen,
@@ -1095,10 +1106,12 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
 /*      Otherwise we need to look harder for it.                        */
 /* -------------------------------------------------------------------- */
     DefaultCSVFileNameTLS* pTLSData =
-            (DefaultCSVFileNameTLS *) CPLGetTLSEx( CTLS_CSVDEFAULTFILENAME, &bMemoryError );
+        reinterpret_cast<DefaultCSVFileNameTLS *>(
+            CPLGetTLSEx( CTLS_CSVDEFAULTFILENAME, &bMemoryError ) );
     if (pTLSData == NULL && !bMemoryError)
     {
-        pTLSData = (DefaultCSVFileNameTLS*) VSI_CALLOC_VERBOSE(1, sizeof(DefaultCSVFileNameTLS));
+        pTLSData = reinterpret_cast<DefaultCSVFileNameTLS *>(
+            VSI_CALLOC_VERBOSE( 1, sizeof(DefaultCSVFileNameTLS) ) );
         if( pTLSData )
             CPLSetTLS( CTLS_CSVDEFAULTFILENAME, pTLSData, TRUE );
     }
@@ -1146,7 +1159,7 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
     if( fp != NULL )
         fclose( fp );
 
-    return( pTLSData->szPath );
+    return pTLSData->szPath;
 }
 
 /************************************************************************/
@@ -1165,8 +1178,8 @@ const char * CSVFilename( const char *pszBasename )
 {
     if( pfnCSVFilenameHook == NULL )
         return GDALDefaultCSVFilename( pszBasename );
-    else
-        return( pfnCSVFilenameHook( pszBasename ) );
+
+    return pfnCSVFilenameHook( pszBasename );
 }
 
 /************************************************************************/
@@ -1183,9 +1196,12 @@ const char * CSVFilename( const char *pszBasename )
  * full path for a given filename.
   *
 
-This function allows an application to override how the GTIFGetDefn() and related function find the CSV (Comma Separated
-Value) values required. The pfnHook argument should be a pointer to a function that will take in a CSV filename and return a
-full path to the file. The returned string should be to an internal static buffer so that the caller doesn't have to free the result.
+This function allows an application to override how the GTIFGetDefn()
+and related function find the CSV (Comma Separated Value) values
+required. The pfnHook argument should be a pointer to a function that
+will take in a CSV filename and return a full path to the file. The
+returned string should be to an internal static buffer so that the
+caller doesn't have to free the result.
 
 <b>Example:</b><br>
 
@@ -1214,7 +1230,7 @@ static const char *CSVFileOverride( const char * pszInput )
     sprintf( szPath, "%s/%s", CSVDirName, pszInput );
 #endif
 
-    return( szPath );
+    return szPath;
 }
 </pre>
 
