@@ -253,6 +253,10 @@ the full geotransform (but not GCPs).
 <li> Band pseudo-color tables. 
 </ul>
 
+\section gdalinfo_api C API
+
+Starting with GDAL 2.1, this utility is also callable from C with GDALInfo().
+
 \section gdalinfo_example EXAMPLE
 
 \verbatim
@@ -436,6 +440,10 @@ file name, URL of data source or subdataset name for multi-dataset files.</dd>
 <dt> <i>dst_dataset</i>:</dt><dd> The destination file name.</dd>
 </dl>
 
+\section gdal_translate_api C API
+
+Starting with GDAL 2.1, this utility is also callable from C with GDALTranslate().
+
 \section gdal_translate_example EXAMPLE
 
 \verbatim
@@ -562,6 +570,10 @@ documented in the GeoTIFF driver documentation.
 <br>
 
 See the documentation of the GeoTIFF driver for further explanations on all those options.
+
+\section gdaladdo_api C API
+
+Functionnality of this utility can be done from C with GDALBuildOverviews().
 
 \section gdaladdo_example EXAMPLE
 
@@ -921,6 +933,10 @@ create output in a particular format, default is shapefiles.</dd>
 <dd> Provide a name for the output vector layer.  Defaults to "contour".</dd>
 </dl>
 
+\section gdal_contour_api C API
+
+Functionality of this utility can be done from C with GDALContourGenerate().
+
 \section gdal_contour_example EXAMPLE
 
 This would create 10meter contours from the DEM data in dem.tif and produce
@@ -1073,6 +1089,10 @@ The GDAL supported output file.  Must support update mode access.
 Before GDAL 1.8.0, gdal_rasterize could not create new output files.</dd>
 
 </dl>
+
+\section gdal_rasterize_api C API
+
+Starting with GDAL 2.1, this utility is also callable from C with GDALRasterize().
 
 \section gdal_rasterize_example EXAMPLE
 
@@ -1372,6 +1392,10 @@ The processing is all done in 8bit (Bytes).
 
 If the output file is omitted, the processed results will be written back
 to the input file - which must support update. 
+
+\section nearblack_api C API
+
+Starting with GDAL 2.1, this utility is also callable from C with GDALNearblack().
 
 \if man
 \section nearblack_author AUTHORS
@@ -2058,6 +2082,10 @@ following way:
 <a href="ogr/drv_csv.html">Comma Separated Value</a> description page contains
 details on CSV format supported by GDAL/OGR.
 
+\section gdal_grid_api C API
+
+Starting with GDAL 2.1, this utility is also callable from C with GDALGrid().
+
 \section gdal_grid_example EXAMPLE
 
 The following would create raster TIFF file from VRT datasource described in
@@ -2308,6 +2336,10 @@ Roughness is the largest inter-cell difference of a central pixel and its surrou
 The value -9999 is used as the output nodata value.
 
 There are no specific options.
+
+\section gdaldem_api C API
+
+Starting with GDAL 2.1, this utility is also callable from C with GDALDEMProcessing().
 
 
 \section gdaldem_author AUTHORS
