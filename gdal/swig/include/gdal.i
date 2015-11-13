@@ -74,7 +74,7 @@ typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
 %}
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
 %{
 #ifdef DEBUG 
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;

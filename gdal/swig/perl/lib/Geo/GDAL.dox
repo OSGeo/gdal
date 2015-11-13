@@ -139,6 +139,10 @@
 # @param DataType A GDAL pixel data type (one of those listed by Geo::GDAL::DataTypes).
 # @return true if the data type is a complex number.
 
+## @sub @OpenFlags()
+# @return a list of GDAL data set open modes. These are currently:
+# +list Geo::GDAL::Const OF_
+
 ## @sub @AccessTypes()
 # @return a list of GDAL data set open modes. These are currently:
 # +list Geo::GDAL::Const GA_
@@ -410,6 +414,7 @@ sub traverse {
 # @return a character which can be used in Perl's pack and unpack.
 
 ## @sub Geo::GDAL::Dataset Open($name, $access = 'ReadOnly')
+# @deprecated Use OpenEx
 # An example
 # \code
 # use Geo::GDAL;
@@ -420,12 +425,22 @@ sub traverse {
 # @return a new Geo::GDAL::Dataset object.
 
 ## @sub Geo::GDAL::Dataset OpenShared($name, $access = 'ReadOnly')
+# @deprecated Use OpenEx
 # @param name
 # @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
 # @return a new Geo::GDAL::Dataset object.
 
-## @sub Geo::GDAL::Dataset OpenEx($name, $open_flags = 0, array reference allowed_drivers = undef, array reference open_options = undef, array reference sibling_files = undef);
-# @return a new Geo::GDAL::Dataset object.
+## @sub Geo::GDAL::Dataset OpenEx($name, $open_flags = [], $allowed_drivers = [], $open_options = {}, $sibling_files = [])
+# @param name The name of the data set or source to open.
+# @param open_flags A list of open flags. Available flags are listed by Geo::GDAL::OpenFlags().
+# @param allowed_drivers A list of short names of drivers that may be used.
+# @param open_options A hash of open options passed to candidate drivers.
+# @param sibling_files A list of names of files that are auxiliary to the main file.
+# An example
+# \code
+# $ds = Geo::GDAL::OpenEx('existing.tiff', qw/RASTER UPDATE/);
+# \endcode
+# @return a new Geo::GDAL::Dataset or Geo::OGR::DataSource object.
 
 
 
@@ -481,7 +496,7 @@ sub traverse {
 
 
 ## @class Geo::GDAL::Driver
-# @brief A raster format driver.
+# @brief A driver for a specific dataset format.
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
 
 ## @ignore Register
@@ -546,7 +561,7 @@ sub traverse {
 ## @ignore CreateDataset
 
 ## @method Geo::GDAL::Dataset Create(%params)
-# Create a GDAL dataset using this driver.
+# Create a dataset using this driver.
 # @note a.k.a. CreateDataset
 #
 # @note As a list the parameters are: Name, Width, Height, NumberOfBands, PixelDataType, Options
@@ -554,10 +569,10 @@ sub traverse {
 # Create a new Geo::GDAL::Dataset
 # @param params named parameters:
 # - \a Name the name of the dataset (default is 'unnamed') or an object, which implements write and close.
-# - \a Width the width of the dataset (default is 256).
-# - \a Height the height of the dataset (default is 256).
-# - \a Bands number of bands in the dataset (default is 1).
-# - \a Type the data type of the pixels the dataset (default is 'Byte'). One of Geo::OGR::Driver::CreationDataTypes.
+# - \a Width the width of the raster dataset (default is 256).
+# - \a Height the height of the raster dataset (default is 256).
+# - \a Bands number of bands in the raster dataset (default is 1).
+# - \a Type the data type of the pixels the raster dataset (default is 'Byte'). One of Geo::OGR::Driver::CreationDataTypes.
 # - \a Options creation options as a reference to a hash (default is {}).
 #
 #
@@ -623,7 +638,7 @@ sub traverse {
 
 
 ## @class Geo::GDAL::Dataset
-# @brief A set of associated raster bands.
+# @brief A set of associated raster bands or vector layer source.
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
 
 ## @ignore FlushCache
@@ -637,21 +652,6 @@ sub traverse {
 ## @attr RasterCount
 # scalar (access as $dataset->{RasterCount})
 
-## @sub Geo::GDAL::Dataset Open($name, $access='ReadOnly')
-# An example:
-# \code
-# use Geo::GDAL;
-# $ds = Geo::GDAL::Dataset::Open('/data/dem.tiff', 'Update');
-# \endcode
-# @param name
-# @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
-# @return a new Geo::GDAL::Dataset object.
-
-## @sub Geo::GDAL::Dataset OpenShared($name, $access='ReadOnly')
-# @param name
-# @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
-# @return a new Geo::GDAL::Dataset object.
-
 ## @method @GetFileList()
 # @return list of files GDAL believes to be part of this dataset.
 
@@ -659,7 +659,7 @@ sub traverse {
 # @return (width, height)
 
 ## @method Geo::GDAL::Driver GetDriver()
-# @return a new Geo::GDAL::Driver object
+# @return a Geo::GDAL::Driver object that was used to open or create this dataset.
 
 ## @ignore GetRasterBand
 
@@ -671,6 +671,74 @@ sub traverse {
 
 ## @method @Bands()
 # @return a list of new Geo::GDAL::Band objects
+
+## @ignore GetLayerByIndex
+## @ignore GetLayerByName
+## @ignore Layer
+
+## @method Geo::OGR::Layer GetLayer($name)
+# @param name the name of the requested layer. If not given, then
+# returns the first layer in the data source.
+# @return a new Geo::OGR::Layer object that represents the layer
+# in the data source.
+
+## @ignore GetLayerCount
+## @ignore Layers
+
+## @method @GetLayerNames()
+# @note Delivers the functionality of undocumented method GetLayerCount.
+# @return a list of the names of the layers this data source provides.
+
+## @method Geo::OGR::Layer CreateLayer(%params)
+# @brief Create a new layer into this data source.
+#
+# @param %params A list of named parameters:
+# - \a Name (scalar) name for the new layer.
+# - \a Fields (array reference) a list of field definitions as in 
+# Geo::OGR::Layer::CreateField.
+# - \a ApproxOK (boolean value, default is true) a flag, which is forwarded to Geo::OGR::Layer::CreateField.
+# - \a Options (hash reference) driver specific hash of layer creation options.
+# - \a Schema (hash reference, deprecated) may contain keys Name, Fields, GeomFields, GeometryType.
+# - \a SRS (scalar, deprecated) the spatial reference for the default geometry field.
+# - \a GeometryType (scalar) the type of the default geometry field (if only one geometry field).
+#
+# @note If Fields or Schema|Fields is not given, a default geometry
+# field (Name => '', GeometryType => 'Unknown') is created. The type
+# can be also set with the named parameter.
+#
+# Example:
+# \code
+# my $roads = Geo::OGR::Driver('Memory')->Create('road')->
+# .   CreateLayer(
+# .       Fields => [ { Name => 'class', 
+# .                     Type => 'Integer' },
+# .                   { Name => 'geom', 
+# .                     Type => 'LineString25D' } ] );
+# \endcode
+# @return a new Geo::OGR::Layer object.
+
+## @method Geo::OGR::Layer CopyLayer($layer, $name, hashref options = undef)
+# @param layer A Geo::OGR::Layer object to be copied.
+# @param name A name for the new layer.
+# @param options A ref to a hash of format specific options.
+# @return a new Geo::OGR::Layer object.
+
+## @method DeleteLayer($name)
+# Deletes a layer from the data source. Note that if there is a layer
+# object for the deleted layer, it becomes unusable.
+# @param name name of the layer to delete.
+
+## @method Geo::OGR::Layer ExecuteSQL($statement, $geom = undef, $dialect = "")
+# @param statement A SQL statement.
+# @param geom A Geo::OGR::Geometry object.
+# @param dialect
+# @return a new Geo::OGR::Layer object. The data source object will
+# exist as long as the layer object exists.
+
+## @method ReleaseResultSet($layer)
+# @param layer A layer the has been created with ExecuteSQL.
+# @note There is no need to call this method. The result set layer is
+# released in the destructor of the layer that was created with SQL.
 
 ## @ignore GetProjectionRef
 ## @ignore GetProjection
@@ -806,14 +874,18 @@ sub traverse {
 
 ## @method Geo::GDAL::Dataset Translate($Dest, $Options, subref progress, $progress_data)
 # Convert this dataset into another format.
-# @param Dest Destination raster dataset definition string (typically
+# @param Dest Destination dataset definition string (typically
 # filename) or an object, which implements write and close.
 # @param Options A reference to a hash or list of options. For a hash
 # the keys are without the prefix '-'. For example give { of => 'PNG'
 # } to set the output format. For a list the options are given as for
 # the command line utility. See <a
-# href="http://www.gdal.org/gdal_translate.html">gdal_translate</a> for
-# all options.
+# href="http://www.gdal.org/gdal_translate.html">gdal_translate</a>
+# and <a href="http://www.gdal.org/ogr2ogr.html">ogr2ogr</a> for all
+# options.
+# @return New dataset object if destination dataset definition
+# string was given, otherwise a boolean for success/fail but the
+# method croaks if there was an error.
 
 ## @method Geo::GDAL::Dataset Warp($Dest, $Options, subref progress, $progress_data)
 # Reproject this dataset.
@@ -826,6 +898,37 @@ sub traverse {
 # href="http://www.gdal.org/gdalwarp.html">gdalwarp</a> for
 # all options.
 
+## @method Geo::GDAL::Dataset Grid($Dest, $Options)
+# Creates a regular raster grid from this data source.
+# This is equivalent to the gdal_grid utility.
+# @param Dest Destination raster dataset definition string (typically filename) or an object, which implements write and close.
+# @param Options A reference to a hash or list of options. For a
+# hash the keys are without the prefix '-'. For example give { of =>
+# 'PNG' } to set the output format. You must specify at least layer
+# name (key = l) or SQL to create a layer (key = sql). For a list the
+# options are given as for the command line utility. See 
+# <a href="http://www.gdal.org/gdal_grid.html">gdal_grid</a> for a
+# complete list of options.
+#
+
+## @method Geo::GDAL::Dataset Rasterize($Dest, $Options, subref progress, $progress_data)
+# Render data from this data source into a raster.
+# @param Dest Destination raster dataset definition string (typically
+# filename), destination dataset, or an object, which implements write and close.
+# @param Options A reference to a hash or list of options. For a hash the keys
+# are without the prefix '-' and the values must be strings. For
+# example give { of => 'PNG' } to set the output format. You must
+# specify at least layer name (key = l) or SQL to create a layer (key
+# = sql). To create a new raster, you need to specify either target
+# resolution (tr => xres,yres) or target file size (ts =>
+# width,height). For a list the options are given as for the command
+# line utility.See <a href="http://www.gdal.org/gdal_rasterize.html">gdal_rasterize</a> for a
+# complete list of options.
+# @return Dataset if destination dataset definition string was given,
+# otherwise a boolean for success/fail but the method croaks if there
+# was an error.
+#
+
 ## @method $Info($Options)
 # Information about this dataset.
 # @param Options A reference to a hash or list of options. For a hash
@@ -834,6 +937,7 @@ sub traverse {
 # as for the command line utility. See <a
 # href="http://www.gdal.org/gdalinfo.html">gdalinfo</a> for all
 # options.
+
 
 
 
