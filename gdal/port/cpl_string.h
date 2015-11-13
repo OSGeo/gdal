@@ -355,9 +355,9 @@ class CPL_DLL CPLStringList
     CPLStringList &operator=(const CPLStringList& oOther);
 
     char * operator[](int i);
-    char * operator[](size_t i) { return (*this)[(int)i]; }
+    char * operator[](size_t i) { return (*this)[static_cast<int>(i)]; }
     const char * operator[](int i) const;
-    const char * operator[](size_t i) const { return (*this)[(int)i]; }
+    const char * operator[](size_t i) const { return (*this)[static_cast<int>(i)]; }
 
     char **List() { return papszList; }
     char **StealList();
