@@ -209,28 +209,28 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
         ( (nLen>=3 && STARTS_WITH_CI((pszExt=pszFname+nLen-3), "arc")) ||
           (nLen>=7 && STARTS_WITH_CI((pszExt=pszFname+nLen-7), "arc.adf")) ) )
     {
-        strncpy(pszExt, "arx", 3);
+        memcpy(pszExt, "arx", 3);
         bCreateIndex = TRUE;
     }
     else if ((eType == AVCFilePAL || eType == AVCFileRPL) &&
              ( (nLen>=3 && STARTS_WITH_CI((pszExt=pszFname+nLen-3), "pal")) ||
                (nLen>=7 && STARTS_WITH_CI((pszExt=pszFname+nLen-7), "pal.adf")) ) )
     {
-        strncpy(pszExt, "pax", 3);
+        memcpy(pszExt, "pax", 3);
         bCreateIndex = TRUE;
     }
     else if (eType == AVCFileCNT &&
              ( (nLen>=3 && STARTS_WITH_CI((pszExt=pszFname+nLen-3), "cnt")) ||
                (nLen>=7 && STARTS_WITH_CI((pszExt=pszFname+nLen-7), "cnt.adf")) ) )
     {
-        strncpy(pszExt, "cnx", 3);
+        memcpy(pszExt, "cnx", 3);
         bCreateIndex = TRUE;
     }
     else if ((eType == AVCFileTXT || eType == AVCFileTX6) &&
              ( (nLen>=3 && STARTS_WITH_CI((pszExt=pszFname+nLen-3), "txt")) ||
                (nLen>=7 && STARTS_WITH_CI((pszExt=pszFname+nLen-7), "txt.adf")) ) )
     {
-        strncpy(pszExt, "txx", 3);
+        memcpy(pszExt, "txx", 3);
         bCreateIndex = TRUE;
     }
 

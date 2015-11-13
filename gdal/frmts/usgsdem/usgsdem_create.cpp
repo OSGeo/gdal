@@ -1241,7 +1241,7 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
             break;
         }
     }
-    strncpy( psWInfo->horizdatum, DatumCodes[i], 2 );
+    CPLStrlcpy( psWInfo->horizdatum, DatumCodes[i], 2 );
 
     /* get the UTM zone, if any */
     psWInfo->utmzone = SrcoSRS.GetUTMZone(&bNorth);

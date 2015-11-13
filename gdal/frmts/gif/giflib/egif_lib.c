@@ -1009,11 +1009,11 @@ EGifSpew(GifFileType * GifFileOut) {
         }
     }
 
-    strncpy(SavedStamp, GifVersionPrefix, GIF_STAMP_LEN);
+    memcpy(SavedStamp, GifVersionPrefix, GIF_STAMP_LEN);
     if (gif89) {
-        strncpy(GifVersionPrefix, GIF89_STAMP, GIF_STAMP_LEN);
+        memcpy(GifVersionPrefix, GIF89_STAMP, GIF_STAMP_LEN);
     } else {
-        strncpy(GifVersionPrefix, GIF87_STAMP, GIF_STAMP_LEN);
+        memcpy(GifVersionPrefix, GIF87_STAMP, GIF_STAMP_LEN);
     }
     if (EGifPutScreenDesc(GifFileOut,
                           GifFileOut->SWidth,
@@ -1021,10 +1021,10 @@ EGifSpew(GifFileType * GifFileOut) {
                           GifFileOut->SColorResolution,
                           GifFileOut->SBackGroundColor,
                           GifFileOut->SColorMap) == GIF_ERROR) {
-        strncpy(GifVersionPrefix, SavedStamp, GIF_STAMP_LEN);
+        memcpy(GifVersionPrefix, SavedStamp, GIF_STAMP_LEN);
         return (GIF_ERROR);
     }
-    strncpy(GifVersionPrefix, SavedStamp, GIF_STAMP_LEN);
+    memcpy(GifVersionPrefix, SavedStamp, GIF_STAMP_LEN);
 
     for (i = 0; i < GifFileOut->ImageCount; i++) {
         SavedImage *sp = &GifFileOut->SavedImages[i];

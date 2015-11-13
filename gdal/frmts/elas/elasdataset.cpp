@@ -661,8 +661,8 @@ CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
     CPL_MSBPTR32(&(sHeader.XPixSize));
     CPL_MSBPTR32(&(sHeader.YPixSize));
 
-    strncpy( sHeader.YLabel, "NOR ", 4 );
-    strncpy( sHeader.XLabel, "EAS ", 4 );
+    memcpy( sHeader.YLabel, "NOR ", 4 );
+    memcpy( sHeader.XLabel, "EAS ", 4 );
 
     sHeader.Matrix[0] = 1.0;
     sHeader.Matrix[1] = 0.0;

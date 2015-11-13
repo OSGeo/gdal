@@ -1115,8 +1115,8 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     // clean header so padding (past real header) is all zeros
     memset( head, 0, size );
 
-    strncpy((char *) &head->magic, "IT", 2);
-    strncpy((char *) &head->version, "02", 2);
+    memcpy((char *) &head->magic, "IT", 2);
+    memcpy((char *) &head->version, "02", 2);
 
     head->xSize = poSrcDS->GetRasterXSize();
     gst_swapb(head->xSize);
