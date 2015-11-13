@@ -457,6 +457,10 @@ performance boot. See the PG driver documentation page.
 
 More generally, consult the documentation page of the input and output drivers for performance hints.
 
+\section ogr2ogr_api C API
+
+Starting with GDAL 2.1, this utility is also callable from C with GDALVectorTranslate().
+
 \section ogr2ogr_example EXAMPLE
 
 Example appending to an existing layer (both flags need to be used):
