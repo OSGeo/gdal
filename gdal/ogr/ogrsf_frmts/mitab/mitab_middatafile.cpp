@@ -114,7 +114,7 @@ void MIDDATAFile::SaveLine(const char *pszLine)
     }
     else
     {
-        strncpy(m_szSavedLine,pszLine,MIDMAXCHAR);
+        CPLStrlcpy(m_szSavedLine,pszLine,MIDMAXCHAR);
     }
 }
 
@@ -217,7 +217,7 @@ const char *MIDDATAFile::GetLine()
             while(pszLine && (*pszLine == ' ' || (*m_pszDelimiter != '\t' && *pszLine == '\t')) )
                     pszLine++;
 
-            strncpy(m_szLastRead,pszLine,MIDMAXCHAR);
+            CPLStrlcpy(m_szLastRead,pszLine,MIDMAXCHAR);
         }
         //if (pszLine)
         //  printf("%s\n",pszLine);

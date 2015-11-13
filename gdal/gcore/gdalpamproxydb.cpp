@@ -204,8 +204,8 @@ void GDALPamProxyDB::SaveDB()
     GByte  abyHeader[100];
 
     memset( abyHeader, ' ', sizeof(abyHeader) );
-    strncpy( (char *) abyHeader, "GDAL_PROXY", 10 );
-    sprintf( (char *) abyHeader + 10, "%9d", nUpdateCounter );
+    memcpy( (char *) abyHeader, "GDAL_PROXY", 10 );
+    snprintf( (char *) abyHeader + 10, sizeof(abyHeader) - 10, "%9d", nUpdateCounter );
 
     VSIFWriteL( abyHeader, 1, 100, fpDB );
 
