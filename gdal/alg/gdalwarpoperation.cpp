@@ -765,7 +765,7 @@ typedef struct
     CPLMutex          *hIOMutex;
 
     CPLMutex          *hCondMutex;
-    int                bIOMutexTaken;
+    volatile int       bIOMutexTaken;
     CPLCond           *hCond;
 } ChunkThreadData;
 
