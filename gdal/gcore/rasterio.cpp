@@ -1658,7 +1658,7 @@ namespace {
  * // Assume an input buffer of type GUInt16 named pBufferIn 
  * GByte *pBufferOut = new GByte[numBytesOut];
  * GDALCopyWordsT<GUInt16, GByte>(pSrcData, 2, pDstData, 1, numBytesOut);
- * @code
+ * @endcode
  * @note
  * This is a private function, and should not be exposed outside of rasterio.cpp.
  * External users should call the GDALCopyWords driver function.
