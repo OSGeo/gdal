@@ -207,10 +207,9 @@ L<https://trac.osgeo.org/gdal>
 =cut
 
 use vars qw/
-    @DATA_TYPES @OPEN_FLAGS @ACCESS_TYPES @RESAMPLING_TYPES @RIO_RESAMPLING_TYPES @NODE_TYPES
+    @DATA_TYPES @OPEN_FLAGS @RESAMPLING_TYPES @RIO_RESAMPLING_TYPES @NODE_TYPES
     %TYPE_STRING2INT %TYPE_INT2STRING
     %OF_STRING2INT
-    %ACCESS_STRING2INT %ACCESS_INT2STRING
     %RESAMPLING_STRING2INT %RESAMPLING_INT2STRING
     %RIO_RESAMPLING_STRING2INT %RIO_RESAMPLING_INT2STRING
     %NODE_TYPE_STRING2INT %NODE_TYPE_INT2STRING
@@ -220,7 +219,6 @@ for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
     push(@DATA_TYPES, $1), next if /^GDT_(\w+)/;
     push(@OPEN_FLAGS, $1), next if /^OF_(\w+)/;
-    push(@ACCESS_TYPES, $1), next if /^GA_(\w+)/;
     push(@RESAMPLING_TYPES, $1), next if /^GRA_(\w+)/;
     push(@RIO_RESAMPLING_TYPES, $1), next if /^GRIORA_(\w+)/;
     push(@NODE_TYPES, $1), next if /^CXT_(\w+)/;
@@ -233,11 +231,6 @@ for my $string (@DATA_TYPES) {
 for my $string (@OPEN_FLAGS) {
     my $int = eval "\$Geo::GDAL::Const::OF_$string";
     $OF_STRING2INT{$string} = $int;
-}
-for my $string (@ACCESS_TYPES) {
-    my $int = eval "\$Geo::GDAL::Const::GA_$string";
-    $ACCESS_STRING2INT{$string} = $int;
-    $ACCESS_INT2STRING{$int} = $string;
 }
 for my $string (@RESAMPLING_TYPES) {
     my $int = eval "\$Geo::GDAL::Const::GRA_$string";
@@ -264,10 +257,6 @@ sub DataTypes {
 
 sub OpenFlags {
     return @DATA_TYPES;
-}
-
-sub AccessTypes {
-    return @ACCESS_TYPES;
 }
 
 sub ResamplingTypes {
@@ -349,15 +338,18 @@ sub PackCharacter {
 sub GetDriverNames {
     my @names;
     for my $i (0..GetDriverCount()-1) {
-        push @names, _GetDriver($i)->Name;
+        my $driver = _GetDriver($i);
+        push @names, $driver->Name if $driver->TestCapability('RASTER');
     }
     return @names;
 }
+*DriverNames = *GetDriverNames;
 
 sub Drivers {
     my @drivers;
     for my $i (0..GetDriverCount()-1) {
-        push @drivers, _GetDriver($i);
+        my $driver = _GetDriver($i);
+        push @drivers, $driver if $driver->TestCapability('RASTER');
     }
     return @drivers;
 }
@@ -373,22 +365,28 @@ sub GetDriver {
 }
 *Driver = *GetDriver;
 
+sub AccessTypes {
+    return qw/ReadOnly Update/;
+}
+
 sub Open {
-    my @p = @_;
-    if (defined $p[1]) {
-        confess "Unknown access type: '$p[1]'." unless exists $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
-        $p[1] = $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
-    }
-    return _Open(@p);
+    my @p = @_; # name, update
+    my @flags = qw/RASTER/;
+    $p[1] = 'ReadOnly' unless defined $p[1];
+    confess "Unknown access type: '$p[1]'" unless ($p[1] eq 'ReadOnly' or $p[1] eq 'Update'); 
+    push @flags, qw/READONLY/ if $p[1] eq 'ReadOnly';
+    push @flags, qw/UPDATE/ if $p[1] eq 'Update';
+    OpenEx($p[0], \@flags);
 }
 
 sub OpenShared {
-    my @p = @_;
-    if (defined $p[1]) {
-        confess "Unknown access type: '$p[1]'." unless exists $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
-        $p[1] = $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
-    }
-    return _OpenShared(@p);
+    my @p = @_; # name, update
+    my @flags = qw/RASTER SHARED/;
+    $p[1] = 'ReadOnly' unless defined $p[1];
+    confess "Unknown access type: '$p[1]'" unless ($p[1] eq 'ReadOnly' or $p[1] eq 'Update'); 
+    push @flags, qw/READONLY/ if $p[1] eq 'ReadOnly';
+    push @flags, qw/UPDATE/ if $p[1] eq 'Update';
+    OpenEx($p[0], \@flags);
 }
 
 sub OpenEx {
@@ -396,7 +394,7 @@ sub OpenEx {
     if (defined $p[1]) { # a list of written flags
         my $f;
         for my $flag (@{$p[1]}) {
-            confess "Unknown access type: '$flag'." unless exists $Geo::GDAL::OF_STRING2INT{$flag};
+            confess "Unknown open flag: '$flag'." unless exists $Geo::GDAL::OF_STRING2INT{$flag};
             $f |= $Geo::GDAL::OF_STRING2INT{$flag};
         }
         $p[1] = $f;
@@ -663,6 +661,15 @@ sub Copy {
     return $ds;
 }
 *CreateCopy = *Copy;
+
+sub Open {
+    my $self = shift;
+    my @p = @_; # name, update
+    my @flags = qw/RASTER/;
+    push @flags, qw/READONLY/ if $p[1] eq 'ReadOnly';
+    push @flags, qw/UPDATE/ if $p[1] eq 'Update';
+    Geo::GDAL::OpenEx($p[0], \@flags, [$self->Name()]);
+}
 
 
 

@@ -143,10 +143,6 @@
 # @return a list of GDAL data set open modes. These are currently:
 # +list Geo::GDAL::Const OF_
 
-## @sub @AccessTypes()
-# @return a list of GDAL data set open modes. These are currently:
-# +list Geo::GDAL::Const GA_
-
 ## @sub @ResamplingTypes()
 # @return a list of GDAL resampling methods. These are currently:
 # +list Geo::GDAL::Const GRA_
@@ -225,26 +221,32 @@ sub traverse {
 # @param XMLTree
 # @return XML
 
-## @ignore Drivers
+
 ## @ignore GetDriverCount
-
-## @sub @GetDriverNames()
-# @return a list of the named of all (available and registered) GDAL
-# raster drivers.
-
-## @ignore Driver
+## @ignore GetDriver
 ## @ignore GetDriverByName
+## @ignore GetDriverNames
 
-## @sub Geo::GDAL::Driver GetDriver($name)
-# Create a driver object for the internal GDAL driver.
-# @param name the (short) name of the driver.
-# @return a Geo::GDAL::Driver object, which represents the internal driver.
+## @sub @Drivers()
+# @note Use Geo::OGR::Drivers for vector drivers.
+# @return a list of all available GDAL raster drivers.
+
+## @sub @DriverNames()
+# A.k.a GetDriverNames
+# @note Use Geo::OGR::DriverNames for vector drivers.
+# @return a list of the short names of all available GDAL raster drivers.
+
+## @sub Geo::GDAL::Driver Driver($name)
+# A.k.a GetDriver.
+# @param name the short name of the driver.
+# @note No check is made that the driver is actually a raster driver.
+# @return a Geo::GDAL::Driver object.
 
 ## @sub Geo::GDAL::Driver IdentifyDriver($path, $siblings)
 # @param path a dataset path.
-# @param siblings [optional] A list of names of files in the directory
-# specified by the path.
-# @return a Geo::GDAL::Driver object, which represents an internal driver.
+# @param siblings [optional] A list of names of files that belong to the data format.
+# @return a Geo::GDAL::Driver.
+
 
 ## @ignore make_processing_options
 
@@ -413,24 +415,27 @@ sub traverse {
 # @param DataType A GDAL pixel data type (typically from $band->{DataType}).
 # @return a character which can be used in Perl's pack and unpack.
 
+## @ignore AccessTypes
+
 ## @sub Geo::GDAL::Dataset Open($name, $access = 'ReadOnly')
-# @deprecated Use OpenEx
+# Open a raster dataset.
 # An example
 # \code
 # use Geo::GDAL;
 # $ds = Geo::GDAL::Open('existing.tiff', 'Update');
 # \endcode
-# @param name Dataset definition string (typically a filename).
-# @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
+# @param name Raster dataset string (typically a filename).
+# @param access Access type, either 'ReadOnly' (the default) or 'Update'.
 # @return a new Geo::GDAL::Dataset object.
 
 ## @sub Geo::GDAL::Dataset OpenShared($name, $access = 'ReadOnly')
-# @deprecated Use OpenEx
-# @param name
-# @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
+# Open a raster dataset in shared mode.
+# @param name Raster dataset string (typically a filename).
+# @param access Access type, either 'ReadOnly' (the default) or 'Update'.
 # @return a new Geo::GDAL::Dataset object.
 
 ## @sub Geo::GDAL::Dataset OpenEx($name, $open_flags = [], $allowed_drivers = [], $open_options = {}, $sibling_files = [])
+# The generic dataset open method, used internally by all Open and OpenShared methods.
 # @param name The name of the data set or source to open.
 # @param open_flags A list of open flags. Available flags are listed by Geo::GDAL::OpenFlags().
 # @param allowed_drivers A list of short names of drivers that may be used.
@@ -440,7 +445,7 @@ sub traverse {
 # \code
 # $ds = Geo::GDAL::OpenEx('existing.tiff', qw/RASTER UPDATE/);
 # \endcode
-# @return a new Geo::GDAL::Dataset or Geo::OGR::DataSource object.
+# @return a new Geo::GDAL::Dataset object.
 
 
 
@@ -498,6 +503,9 @@ sub traverse {
 ## @class Geo::GDAL::Driver
 # @brief A driver for a specific dataset format.
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
+
+## @method Open
+# The same as Geo::GDAL::Open except that only this driver is allowed.
 
 ## @ignore Register
 ## @ignore Deregister
@@ -561,12 +569,9 @@ sub traverse {
 ## @ignore CreateDataset
 
 ## @method Geo::GDAL::Dataset Create(%params)
-# Create a dataset using this driver.
+# Create a raster dataset using this driver.
 # @note a.k.a. CreateDataset
 #
-# @note As a list the parameters are: Name, Width, Height, NumberOfBands, PixelDataType, Options
-#
-# Create a new Geo::GDAL::Dataset
 # @param params named parameters:
 # - \a Name the name of the dataset (default is 'unnamed') or an object, which implements write and close.
 # - \a Width the width of the raster dataset (default is 256).
@@ -575,18 +580,19 @@ sub traverse {
 # - \a Type the data type of the pixels the raster dataset (default is 'Byte'). One of Geo::OGR::Driver::CreationDataTypes.
 # - \a Options creation options as a reference to a hash (default is {}).
 #
+# @note As a list the parameters are: Name, Width, Height, NumberOfBands, PixelDataType, Options
 #
 # @return a new Geo::GDAL::Dataset object.
 
 ## @ignore CreateCopy
 
 ## @method Geo::GDAL::Dataset Copy($name, $src, $strict = 1, hashref options = undef)
-# Create a new Geo::GDAL::Dataset as a copy of an existing dataset.
+# Create a new raster Geo::GDAL::Dataset as a copy of an existing dataset.
 # @note a.k.a. CreateCopy 
-# @param name
+# @param name A name for the new raster dataset.
 # @param src A Geo::GDAL::Dataset object.
-# @param strict
-# @param options An anonymous hash of driver specific parameters.
+# @param strict 1 (default) if the copy must be strictly equivalent, or 0 if the copy may adapt.
+# @param options An anonymous hash of driver specific options.
 # @return a new Geo::GDAL::Dataset object.
 
 ## @method Delete($name)
@@ -640,6 +646,12 @@ sub traverse {
 ## @class Geo::GDAL::Dataset
 # @brief A set of associated raster bands or vector layer source.
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
+
+## @sub Geo::GDAL::Dataset Open
+# The same as Geo::GDAL::Open
+
+## @sub Geo::GDAL::Dataset OpenShared
+# The same as Geo::GDAL::OpenShared
 
 ## @ignore FlushCache
 
