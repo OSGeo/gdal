@@ -447,7 +447,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
         if (pszLine == NULL)
         {
             bEOF = TRUE;
-            return poFeature;
+            break;
         }
         if (strlen(pszLine) != 85)
             continue;
@@ -481,7 +481,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
         if (strcmp(pszLine, "================================DELETIONS LIST=================================198326") == 0)
         {
             bEOF = TRUE;
-            return poFeature;
+            break;
         }
 
         if (poFeature == NULL)
@@ -518,7 +518,6 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
                 else
                     poFeature->SetField(0, osName);
                 poLS = new OGRLineString();
-                poFeature->SetGeometryDirectly(poLS);
             }
             continue;
         }
@@ -528,7 +527,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
             if (poLS->getNumPoints() == 0)
                 continue;
             else
-                return poFeature;
+                break;
         }
 
         if (pszLine[29 - 1] == ' ' && pszLine[42 - 1] == ' ')
@@ -536,7 +535,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
         if (strstr(pszLine, "RWY") || strchr(pszLine, '('))
         {
             osLastReadLine = pszLine;
-            return poFeature;
+            break;
         }
 
         double dfLat, dfLon;
@@ -546,6 +545,9 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
                   dfLon);
         poLS->addPoint(dfLon, dfLat);
     }
+
+    poFeature->SetGeometryDirectly(poLS);
+    return poFeature;
 }
 
 /************************************************************************/

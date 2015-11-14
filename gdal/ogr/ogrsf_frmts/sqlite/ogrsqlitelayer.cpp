@@ -650,11 +650,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 
                 pszWKT = (char *) sqlite3_column_text( hStmt, poGeomFieldDefn->iCol );
                 pszWKTCopy = pszWKT;
-                if( OGRGeometryFactory::createFromWkt( 
-                        &pszWKTCopy, NULL, &poGeometry ) == OGRERR_NONE )
-                {
-                    poFeature->SetGeomFieldDirectly( iField, poGeometry );
-                }
+                OGRGeometryFactory::createFromWkt( 
+                        &pszWKTCopy, NULL, &poGeometry );
             }
             else if ( poGeomFieldDefn->eGeomFormat == OSGF_WKB )
             {
@@ -670,45 +667,39 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                         (GByte*)sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol ), nBytes,
                         &poGeometry ) == OGRERR_NONE )
                     {
-                        poFeature->SetGeomFieldDirectly( iField, poGeometry );
                         poGeomFieldDefn->eGeomFormat = OSGF_SpatiaLite;
                     }
                     poGeomFieldDefn->bTriedAsSpatiaLite = TRUE;
                 }
 
-                if( poGeomFieldDefn->eGeomFormat == OSGF_WKB &&
+                if( poGeomFieldDefn->eGeomFormat == OSGF_WKB )
                     OGRGeometryFactory::createFromWkb( 
                         (GByte*)sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol ),
-                        NULL, &poGeometry, nBytes ) == OGRERR_NONE )
-                {
-                    poFeature->SetGeomFieldDirectly( iField, poGeometry );
-                }
+                        NULL, &poGeometry, nBytes );
             }
             else if ( poGeomFieldDefn->eGeomFormat == OSGF_FGF )
             {
                 const int nBytes = sqlite3_column_bytes( hStmt, poGeomFieldDefn->iCol );
 
-                if( OGRGeometryFactory::createFromFgf( 
+                OGRGeometryFactory::createFromFgf( 
                         (GByte*)sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol ),
-                        NULL, &poGeometry, nBytes, NULL ) == OGRERR_NONE )
-                {
-                    poFeature->SetGeomFieldDirectly( iField, poGeometry );
-                }
+                        NULL, &poGeometry, nBytes, NULL );
             }
             else if ( poGeomFieldDefn->eGeomFormat == OSGF_SpatiaLite )
             {
                 const int nBytes = sqlite3_column_bytes( hStmt, poGeomFieldDefn->iCol );
 
-                if( ImportSpatiaLiteGeometry( 
+                ImportSpatiaLiteGeometry( 
                         (GByte*)sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol ), nBytes,
-                        &poGeometry ) == OGRERR_NONE )
-                {
-                    poFeature->SetGeomFieldDirectly( iField, poGeometry );
-                }
+                        &poGeometry );
             }
 
-            if (poGeometry != NULL && poGeomFieldDefn->GetSpatialRef() != NULL)
-                poGeometry->assignSpatialReference(poGeomFieldDefn->GetSpatialRef());
+            if (poGeometry != NULL )
+            {
+                if( poGeomFieldDefn->GetSpatialRef() != NULL)
+                    poGeometry->assignSpatialReference(poGeomFieldDefn->GetSpatialRef());
+                poFeature->SetGeomFieldDirectly( iField, poGeometry );
+            }
         }
     }
 
