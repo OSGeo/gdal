@@ -1039,7 +1039,7 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     {
         //if (ENABLE_DEBUG)
         //    CPLDebug("VSICURL", "Add region %d - %d", startOffset, MIN(DOWNLOAD_CHUNCK_SIZE, nSize));
-        size_t nChunkSize = MIN(DOWNLOAD_CHUNCK_SIZE, nSize);
+        size_t nChunkSize = MIN((size_t)DOWNLOAD_CHUNCK_SIZE, nSize);
         poFS->AddRegion(pszURL, startOffset, nChunkSize, pBuffer);
         startOffset += nChunkSize;
         pBuffer += nChunkSize;
