@@ -524,6 +524,7 @@ OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
         OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(poGeom->getGeometryType());
         poGeom = OGRGeometryFactory::forceTo(poFeature->StealGeometry(), eTargetType);
         poFeature->SetGeomFieldDirectly(0, poGeom);
+        poGeom = poFeature->GetGeometryRef();
     }
 
     return (OGRGeometryH)poGeom;
@@ -610,6 +611,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
         OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(poGeom->getGeometryType());
         poGeom = OGRGeometryFactory::forceTo(poFeature->StealGeometry(iField), eTargetType);
         poFeature->SetGeomFieldDirectly(iField, poGeom);
+        poGeom = poFeature->GetGeomFieldRef(iField);
     }
 
     return (OGRGeometryH)poGeom;
