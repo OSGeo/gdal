@@ -634,7 +634,6 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
                 if( poGeom )
                 {
                     poGeom->assignSpatialReference(poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef());
-                    poNewFeature->SetGeomFieldDirectly(i, poGeom);
 
                     if( bDistinct )
                     {
@@ -644,6 +643,8 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
                         cvs_MD5Update( &sMD5Context, (const GByte*)pabyGeom, nSize);
                         CPLFree(pabyGeom);
                     }
+
+                    poNewFeature->SetGeomFieldDirectly(i, poGeom);
                 }
             }
         }
