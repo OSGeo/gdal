@@ -1121,52 +1121,55 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             // no longer be the case we could create as many MEMDataset as threads
             // pointing to the same buffer.
             
-            std::vector<GDALPansharpenResampleJob> anJobs;
-            anJobs.resize( nTasks );
-            std::vector<void*> ahJobData;
-            ahJobData.resize( nTasks );
-            
-    #ifdef DEBUG_TIMING
-            struct timeval tv;
-    #endif
-            for( int i=0;i<nTasks;i++)
+            std::vector<GDALPansharpenResampleJob> asJobs;
+            asJobs.resize( nTasks );
+            GDALPansharpenResampleJob* pasJobs = &(asJobs[0]);
             {
-                size_t iStartLine = ((size_t)i * nYSize) / nTasks;
-                size_t iNextStartLine = ((size_t)(i+1) * nYSize) / nTasks;
-                anJobs[i].poMEMDS = poMEMDS;
-                anJobs[i].eResampleAlg = eResampleAlg;
-                anJobs[i].dfXOff = sExtraArg.dfXOff - nXOffExtract;
-                anJobs[i].dfYOff = (nYOff + psOptions->dfMSShiftY + iStartLine) / dfRatioY - nYOffExtract;
-                anJobs[i].dfXSize = sExtraArg.dfXSize;
-                anJobs[i].dfYSize = (iNextStartLine - iStartLine) / dfRatioY;
-                if( anJobs[i].dfXOff + anJobs[i].dfXSize > aMSBands[0]->GetXSize() )
-                    anJobs[i].dfXOff = aMSBands[0]->GetXSize() - anJobs[i].dfXSize;
-                if( anJobs[i].dfYOff + anJobs[i].dfYSize > aMSBands[0]->GetYSize() )
-                    anJobs[i].dfYOff = aMSBands[0]->GetYSize() - anJobs[i].dfYSize;
-                anJobs[i].nXOff = (int)anJobs[i].dfXOff;
-                anJobs[i].nYOff = (int)anJobs[i].dfYOff;
-                anJobs[i].nXSize = (int)(0.4999 + anJobs[i].dfXSize);
-                anJobs[i].nYSize = (int)(0.4999 + anJobs[i].dfYSize);
-                if( anJobs[i].nXSize == 0 )
-                    anJobs[i].nXSize = 1;
-                if( anJobs[i].nYSize == 0 )
-                    anJobs[i].nYSize = 1;
-                anJobs[i].pBuffer = pUpsampledSpectralBuffer + (size_t)iStartLine * nXSize * nDataTypeSize;
-                anJobs[i].eDT = eWorkDataType;
-                anJobs[i].nBufXSize = nXSize;
-                anJobs[i].nBufYSize = (int)(iNextStartLine - iStartLine);
-                anJobs[i].nBandCount = psOptions->nInputSpectralBands;
-                anJobs[i].nBandSpace = (GSpacing)nXSize * nYSize * nDataTypeSize;
-    #ifdef DEBUG_TIMING
-                anJobs[i].ptv = &tv;
-    #endif
-                ahJobData[i] = &(anJobs[i]);
+                std::vector<void*> ahJobData;
+                ahJobData.resize( nTasks );
+
+#ifdef DEBUG_TIMING
+                struct timeval tv;
+#endif
+                for( int i=0;i<nTasks;i++)
+                {
+                    size_t iStartLine = ((size_t)i * nYSize) / nTasks;
+                    size_t iNextStartLine = ((size_t)(i+1) * nYSize) / nTasks;
+                    pasJobs[i].poMEMDS = poMEMDS;
+                    pasJobs[i].eResampleAlg = eResampleAlg;
+                    pasJobs[i].dfXOff = sExtraArg.dfXOff - nXOffExtract;
+                    pasJobs[i].dfYOff = (nYOff + psOptions->dfMSShiftY + iStartLine) / dfRatioY - nYOffExtract;
+                    pasJobs[i].dfXSize = sExtraArg.dfXSize;
+                    pasJobs[i].dfYSize = (iNextStartLine - iStartLine) / dfRatioY;
+                    if( pasJobs[i].dfXOff + pasJobs[i].dfXSize > aMSBands[0]->GetXSize() )
+                        pasJobs[i].dfXOff = aMSBands[0]->GetXSize() - pasJobs[i].dfXSize;
+                    if( pasJobs[i].dfYOff + pasJobs[i].dfYSize > aMSBands[0]->GetYSize() )
+                        pasJobs[i].dfYOff = aMSBands[0]->GetYSize() - pasJobs[i].dfYSize;
+                    pasJobs[i].nXOff = (int)pasJobs[i].dfXOff;
+                    pasJobs[i].nYOff = (int)pasJobs[i].dfYOff;
+                    pasJobs[i].nXSize = (int)(0.4999 + pasJobs[i].dfXSize);
+                    pasJobs[i].nYSize = (int)(0.4999 + pasJobs[i].dfYSize);
+                    if( pasJobs[i].nXSize == 0 )
+                        pasJobs[i].nXSize = 1;
+                    if( pasJobs[i].nYSize == 0 )
+                        pasJobs[i].nYSize = 1;
+                    pasJobs[i].pBuffer = pUpsampledSpectralBuffer + (size_t)iStartLine * nXSize * nDataTypeSize;
+                    pasJobs[i].eDT = eWorkDataType;
+                    pasJobs[i].nBufXSize = nXSize;
+                    pasJobs[i].nBufYSize = (int)(iNextStartLine - iStartLine);
+                    pasJobs[i].nBandCount = psOptions->nInputSpectralBands;
+                    pasJobs[i].nBandSpace = (GSpacing)nXSize * nYSize * nDataTypeSize;
+#ifdef DEBUG_TIMING
+                    pasJobs[i].ptv = &tv;
+#endif
+                    ahJobData[i] = &(pasJobs[i]);
+                }
+#ifdef DEBUG_TIMING
+                gettimeofday(&tv, NULL);
+#endif
+                poThreadPool->SubmitJobs(PansharpenResampleJobThreadFunc, ahJobData);
+                poThreadPool->WaitCompletion();
             }
-    #ifdef DEBUG_TIMING
-            gettimeofday(&tv, NULL);
-    #endif
-            poThreadPool->SubmitJobs(PansharpenResampleJobThreadFunc, ahJobData);
-            poThreadPool->WaitCompletion();
         }
 
         GDALClose(poMEMDS);
@@ -1269,40 +1272,44 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     
     if( nTasks > 1 )
     {
-        std::vector<GDALPansharpenJob> anJobs;
-        anJobs.resize( nTasks );
-        std::vector<void*> ahJobData;
-        ahJobData.resize( nTasks );
-#ifdef DEBUG_TIMING
-        struct timeval tv;
-#endif
-        for( int i=0;i<nTasks;i++)
+        std::vector<GDALPansharpenJob> asJobs;
+        asJobs.resize( nTasks );
+        GDALPansharpenJob* pasJobs = &(asJobs[0]);
         {
-            size_t iStartLine = ((size_t)i * nYSize) / nTasks;
-            size_t iNextStartLine = ((size_t)(i+1) * nYSize) / nTasks;
-            anJobs[i].poPansharpenOperation = this;
-            anJobs[i].eWorkDataType = eWorkDataType;
-            anJobs[i].eBufDataType = eBufDataType;
-            anJobs[i].pPanBuffer = pPanBuffer + iStartLine *  nXSize * nDataTypeSize;
-            anJobs[i].pUpsampledSpectralBuffer = pUpsampledSpectralBuffer + iStartLine * nXSize * nDataTypeSize;
-            anJobs[i].pDataBuf = (GByte*)pDataBuf + iStartLine * nXSize * (GDALGetDataTypeSize(eBufDataType) / 8);
-            anJobs[i].nValues = (int)(iNextStartLine - iStartLine) * nXSize;
-            anJobs[i].nBandValues = nXSize * nYSize;
-            anJobs[i].nMaxValue = nMaxValue;
+            std::vector<void*> ahJobData;
+            ahJobData.resize( nTasks );
 #ifdef DEBUG_TIMING
-            anJobs[i].ptv = &tv;
+            struct timeval tv;
 #endif
-            ahJobData[i] = &(anJobs[i]);
+            for( int i=0;i<nTasks;i++)
+            {
+                size_t iStartLine = ((size_t)i * nYSize) / nTasks;
+                size_t iNextStartLine = ((size_t)(i+1) * nYSize) / nTasks;
+                pasJobs[i].poPansharpenOperation = this;
+                pasJobs[i].eWorkDataType = eWorkDataType;
+                pasJobs[i].eBufDataType = eBufDataType;
+                pasJobs[i].pPanBuffer = pPanBuffer + iStartLine *  nXSize * nDataTypeSize;
+                pasJobs[i].pUpsampledSpectralBuffer = pUpsampledSpectralBuffer + iStartLine * nXSize * nDataTypeSize;
+                pasJobs[i].pDataBuf = (GByte*)pDataBuf + iStartLine * nXSize * (GDALGetDataTypeSize(eBufDataType) / 8);
+                pasJobs[i].nValues = (int)(iNextStartLine - iStartLine) * nXSize;
+                pasJobs[i].nBandValues = nXSize * nYSize;
+                pasJobs[i].nMaxValue = nMaxValue;
+#ifdef DEBUG_TIMING
+                pasJobs[i].ptv = &tv;
+#endif
+                ahJobData[i] = &(pasJobs[i]);
+            }
+#ifdef DEBUG_TIMING
+            gettimeofday(&tv, NULL);
+#endif
+            poThreadPool->SubmitJobs(PansharpenJobThreadFunc, ahJobData);
+            poThreadPool->WaitCompletion();
         }
-#ifdef DEBUG_TIMING
-        gettimeofday(&tv, NULL);
-#endif
-        poThreadPool->SubmitJobs(PansharpenJobThreadFunc, ahJobData);
-        poThreadPool->WaitCompletion();
+
         eErr = CE_None;
         for( int i=0;i<nTasks;i++)
         {
-            if( anJobs[i].eErr != CE_None )
+            if( pasJobs[i].eErr != CE_None )
                 eErr = CE_Failure;
         }
     }
