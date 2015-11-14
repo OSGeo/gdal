@@ -851,8 +851,8 @@ static GDALPDFObject* GDALPDFBuildOGC_BP_Datum(const OGRSpatialReference* poSRS)
             {
                 poPDFDatumDict->Add("Description", pszDatumDescription);
 
-                const char* pszEllipsoidCode = NULL;
 #ifdef disabled_because_terrago_toolbar_does_not_like_it
+                const char* pszEllipsoidCode = NULL;
                 if( ABS(dfSemiMajor-6378249.145) < 0.01
                     && ABS(dfInvFlattening-293.465) < 0.0001 )
                 {
@@ -947,13 +947,13 @@ static GDALPDFObject* GDALPDFBuildOGC_BP_Datum(const OGRSpatialReference* poSRS)
                 {
                     pszEllipsoidCode = "WE";
                 }
-#endif
 
                 if( pszEllipsoidCode != NULL )
                 {
                     poPDFDatumDict->Add("Ellipsoid", pszEllipsoidCode);
                 }
                 else
+#endif /* disabled_because_terrago_toolbar_does_not_like_it */
                 {
                     const char* pszEllipsoidDescription =
                         poSpheroidNode->GetChild(0)->GetValue();
