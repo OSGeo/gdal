@@ -5017,7 +5017,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                && nBlockYOff >= 0
                && pImage != NULL );
 
-    if( eDataType == GDT_Float32 && poGDS->nBitsPerSample < 32 )
+    if( eDataType == GDT_Float32 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Writing float data with nBitsPerSample < 32 is unsupported");
@@ -5407,7 +5407,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Handle the case of 16- and 24-bit floating point data as per    */
 /*      TIFF Technical Note 3.                                          */
 /* -------------------------------------------------------------------- */
-    else if( eDataType == GDT_Float32 && poGDS->nBitsPerSample < 32 )
+    else if( eDataType == GDT_Float32 )
     {
         int	i, nBlockPixels, nWordBytes, iSkipBytes;
         GByte	*pabyImage;
@@ -10925,7 +10925,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
     unsigned short	*panRed, *panGreen, *panBlue;
 
-    if( bTreatAsRGBA 
+    if( bTreatAsRGBA || nBitsPerSample > 16
         || TIFFGetField( hTIFF, TIFFTAG_COLORMAP, 
                          &panRed, &panGreen, &panBlue) == 0 )
     {
