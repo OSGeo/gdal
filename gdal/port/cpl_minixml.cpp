@@ -880,37 +880,42 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /*                            _GrowBuffer()                             */
 /************************************************************************/
 
-static void _GrowBuffer( size_t nNeeded,
-                         char **ppszText, unsigned int *pnMaxLength )
+static bool _GrowBuffer( size_t nNeeded,
+                         char **ppszText, size_t *pnMaxLength )
 
 {
     if( nNeeded+1 >= *pnMaxLength )
     {
         *pnMaxLength = MAX(*pnMaxLength * 2,nNeeded+1);
-        *ppszText = (char *) CPLRealloc(*ppszText, *pnMaxLength);
+        char* pszTextNew = (char *) VSIRealloc(*ppszText, *pnMaxLength);
+        if( pszTextNew == NULL )
+            return false;
+        *ppszText = pszTextNew;
     }
+    return true;
 }
 
 /************************************************************************/
 /*                        CPLSerializeXMLNode()                         */
 /************************************************************************/
 
-static void
+static bool
 CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
-                     char **ppszText, unsigned int *pnLength,
-                     unsigned int *pnMaxLength )
+                     char **ppszText, size_t *pnLength,
+                     size_t *pnMaxLength )
 
 {
     if( psNode == NULL )
-        return;
+        return true;
 
 /* -------------------------------------------------------------------- */
 /*      Ensure the buffer is plenty large to hold this additional       */
 /*      string.                                                         */
 /* -------------------------------------------------------------------- */
     *pnLength += strlen(*ppszText + *pnLength);
-    _GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent,
-                 ppszText, pnMaxLength );
+    if( !_GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent,
+                      ppszText, pnMaxLength ) )
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Text is just directly emitted.                                  */
@@ -922,8 +927,12 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
         CPLAssert( psNode->psChild == NULL );
 
         /* Escaped text might be bigger than expected. */
-        _GrowBuffer( strlen(pszEscaped) + *pnLength,
-                     ppszText, pnMaxLength );
+        if( !_GrowBuffer( strlen(pszEscaped) + *pnLength,
+                          ppszText, pnMaxLength ) )
+        {
+            CPLFree( pszEscaped );
+            return false;
+        }
         strcat( *ppszText + *pnLength, pszEscaped );
 
         CPLFree( pszEscaped );
@@ -942,14 +951,19 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 
         char *pszEscaped = CPLEscapeString( psNode->psChild->pszValue, -1, CPLES_XML );
 
-        _GrowBuffer( strlen(pszEscaped) + *pnLength,
-                     ppszText, pnMaxLength );
+        if( !_GrowBuffer( strlen(pszEscaped) + *pnLength,
+                          ppszText, pnMaxLength ) )
+        {
+            CPLFree( pszEscaped );
+            return false;
+        }
         strcat( *ppszText + *pnLength, pszEscaped );
 
         CPLFree( pszEscaped );
 
         *pnLength += strlen(*ppszText + *pnLength);
-        _GrowBuffer( 3 + *pnLength, ppszText, pnMaxLength );
+        if( !_GrowBuffer( 3 + *pnLength, ppszText, pnMaxLength ) )
+            return false;
         strcat( *ppszText + *pnLength, "\"" );
     }
 
@@ -1002,16 +1016,20 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
              psChild = psChild->psNext )
         {
             if( psChild->eType == CXT_Attribute )
-                CPLSerializeXMLNode( psChild, 0, ppszText, pnLength,
-                                     pnMaxLength );
+            {
+                if( !CPLSerializeXMLNode( psChild, 0, ppszText, pnLength,
+                                          pnMaxLength ) )
+                    return false;
+            }
             else
                 bHasNonAttributeChildren = true;
         }
 
         if( !bHasNonAttributeChildren )
         {
-            _GrowBuffer( *pnLength + 40,
-                         ppszText, pnMaxLength );
+            if( !_GrowBuffer( *pnLength + 40,
+                              ppszText, pnMaxLength ) )
+                return false;
 
             if( psNode->pszValue[0] == '?' )
                 strcat( *ppszText + *pnLength, "?>\n" );
@@ -1037,13 +1055,15 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
                     strcat( *ppszText + *pnLength, "\n" );
                 }
 
-                CPLSerializeXMLNode( psChild, nIndent + 2, ppszText, pnLength,
-                                     pnMaxLength );
+                if( !CPLSerializeXMLNode( psChild, nIndent + 2, ppszText, pnLength,
+                                          pnMaxLength ) )
+                    return false;
             }
 
             *pnLength += strlen(*ppszText + *pnLength);
-            _GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent,
-                         ppszText, pnMaxLength );
+            if( !_GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent,
+                              ppszText, pnMaxLength ) )
+                return false;
 
             if( !bJustText )
             {
@@ -1056,6 +1076,8 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
             sprintf( *ppszText + *pnLength, "</%s>\n", psNode->pszValue );
         }
     }
+
+    return true;
 }
 
 /************************************************************************/
@@ -1079,15 +1101,23 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 char *CPLSerializeXMLTree( const CPLXMLNode *psNode )
 
 {
-    unsigned int nMaxLength = 100;
-    char *pszText =  (char *) CPLMalloc(nMaxLength);
+    size_t nMaxLength = 100;
+    char *pszText =  (char *) VSIMalloc(nMaxLength);
+    if( pszText == NULL )
+        return NULL;
     pszText[0] = '\0';
 
-    unsigned int nLength = 0;
+    size_t nLength = 0;
     for( const CPLXMLNode *psThis = psNode;
          psThis != NULL;
          psThis = psThis->psNext )
-        CPLSerializeXMLNode( psThis, 0, &pszText, &nLength, &nMaxLength );
+    {
+        if( !CPLSerializeXMLNode( psThis, 0, &pszText, &nLength, &nMaxLength ) )
+        {
+            VSIFree(pszText);
+            return NULL;
+        }
+    }
 
     return pszText;
 }

@@ -146,7 +146,7 @@ typedef struct
     int          nCacheMaxSizeInPages;   /* maximum size of page array */
     int         *panLRUPageIndices;      /* array with indices of cached pages */
     int          iLRUStart;              /* index in array where to write next page index */
-    int          nLRUSize;               /* current isze of the array */
+    int          nLRUSize;               /* current size of the array */
 
     int          iLastPage;              /* last page accessed */
     int          nRetry;                 /* number of consecutive retries to that last page */
@@ -381,8 +381,8 @@ CPLVirtualMem* CPLVirtualMemNew(size_t nSize,
     }
     /* we need at least 2 pages in case for a rep movs instruction */
     /* that operate in the view */
-    ctxt->nCacheMaxSizeInPages = nCacheMaxSizeInPages;
-    ctxt->panLRUPageIndices = (int*)VSI_MALLOC_VERBOSE(ctxt->nCacheMaxSizeInPages * sizeof(int));
+    ctxt->nCacheMaxSizeInPages = static_cast<int>(nCacheMaxSizeInPages);
+    ctxt->panLRUPageIndices = static_cast<int*>(VSI_MALLOC_VERBOSE(ctxt->nCacheMaxSizeInPages * sizeof(int)));
     if( ctxt->panLRUPageIndices == NULL )
     {
         CPLVirtualMemFreeFileMemoryMapped(ctxt);
@@ -583,7 +583,7 @@ static
 void CPLVirtualMemAddPage(CPLVirtualMemVMA* ctxt, void* target_addr, void* pPageToFill,
                        OpType opType, pthread_t hRequesterThread)
 {
-    size_t iPage = (int)(((char*)target_addr - (char*)ctxt->sBase.pData) / ctxt->sBase.nPageSize);
+    int iPage = static_cast<int>(((char*)target_addr - (char*)ctxt->sBase.pData) / ctxt->sBase.nPageSize);
     if( ctxt->nLRUSize == ctxt->nCacheMaxSizeInPages )
     {
         /* fprintfstderr("uncaching page %d\n", iPage); */
@@ -1435,7 +1435,7 @@ static int CPLVirtualMemManagerPinAddrInternal(CPLVirtualMemMsgToWorkerThread* m
     /* Wait for the helper thread to be ready to process another request */
     while(true)
     {
-        int ret = read(pVirtualMemManager->pipefd_wait_thread[0], &wait_ready, 1);
+        int ret = static_cast<int>(read(pVirtualMemManager->pipefd_wait_thread[0], &wait_ready, 1));
         if( ret < 0 && errno == EINTR )
             ;
         else
@@ -1452,7 +1452,7 @@ static int CPLVirtualMemManagerPinAddrInternal(CPLVirtualMemMsgToWorkerThread* m
     /* Wait that the helper thread has fixed the fault */
     while(true)
     {
-        int ret = read(pVirtualMemManager->pipefd_from_thread[0], response_buf, 4);
+        int ret = static_cast<int>(read(pVirtualMemManager->pipefd_from_thread[0], response_buf, 4));
         if( ret < 0 && errno == EINTR )
             ;
         else

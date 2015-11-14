@@ -263,8 +263,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     virtual int          Close();
 
     void                 DownloadInThread();
-    int                  ReceivedBytes(GByte *buffer, size_t count, size_t nmemb);
-    int                  ReceivedBytesHeader(GByte *buffer, size_t count, size_t nmemb);
+    size_t               ReceivedBytes(GByte *buffer, size_t count, size_t nmemb);
+    size_t               ReceivedBytesHeader(GByte *buffer, size_t count, size_t nmemb);
 
     int                  IsKnownFileSize() const { return bHasComputedFileSize; }
     vsi_l_offset         GetFileSize();
@@ -435,7 +435,7 @@ static void VSICURLStreamingInitWriteFuncStruct(WriteFuncStruct   *psStruct)
 /*                 VSICurlStreamingHandleWriteFuncForHeader()           */
 /************************************************************************/
 
-static int VSICurlStreamingHandleWriteFuncForHeader(void *buffer, size_t count, size_t nmemb, void *req)
+static size_t VSICurlStreamingHandleWriteFuncForHeader(void *buffer, size_t count, size_t nmemb, void *req)
 {
     WriteFuncStruct* psStruct = (WriteFuncStruct*) req;
     size_t nSize = count * nmemb;
@@ -567,7 +567,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
         {
             const char* pszBuffer = sWriteFuncData.pBuffer + strlen("Content-Length: ");
             eExists = EXIST_YES;
-            fileSize = CPLScanUIntBig(pszBuffer, sWriteFuncData.nSize - strlen("Content-Length: "));
+            fileSize = CPLScanUIntBig(pszBuffer, static_cast<int>(sWriteFuncData.nSize - strlen("Content-Length: ")));
             if (ENABLE_DEBUG)
                 CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB,
                         pszURL, fileSize);
@@ -663,11 +663,11 @@ int VSICurlStreamingHandle::Exists()
         if (pszAllowedExtensions)
         {
             char** papszExtensions = CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
-            int nURLLen = strlen(pszURL);
+            size_t nURLLen = strlen(pszURL);
             bool bFound = false;
             for(int i=0;papszExtensions[i] != NULL;i++)
             {
-                int nExtensionLen = strlen(papszExtensions[i]);
+                size_t nExtensionLen = strlen(papszExtensions[i]);
                 if (nURLLen > nExtensionLen &&
                     EQUAL(pszURL + nURLLen - nExtensionLen, papszExtensions[i]))
                 {
@@ -725,7 +725,7 @@ vsi_l_offset VSICurlStreamingHandle::Tell()
 /*                         ReceivedBytes()                              */
 /************************************************************************/
 
-int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nmemb)
+size_t VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nmemb)
 {
     size_t nSize = count * nmemb;
     nBodySize += nSize;
@@ -815,7 +815,7 @@ int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nm
 /*                 VSICurlStreamingHandleReceivedBytes()                */
 /************************************************************************/
 
-static int VSICurlStreamingHandleReceivedBytes(void *buffer, size_t count, size_t nmemb, void *req)
+static size_t VSICurlStreamingHandleReceivedBytes(void *buffer, size_t count, size_t nmemb, void *req)
 {
     return ((VSICurlStreamingHandle*)req)->ReceivedBytes((GByte*)buffer, count, nmemb);
 }
@@ -827,7 +827,7 @@ static int VSICurlStreamingHandleReceivedBytes(void *buffer, size_t count, size_
 
 #define HEADER_SIZE 32768
 
-int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, size_t nmemb)
+size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, size_t nmemb)
 {
     size_t nSize = count * nmemb;
     if (ENABLE_DEBUG)
@@ -883,7 +883,7 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
             {
                 const char* pszVal = pszContentLength + strlen("Content-Length: ");
                 bHasCandidateFileSize = TRUE;
-                nCandidateFileSize = CPLScanUIntBig(pszVal, pszEndOfLine - pszVal);
+                nCandidateFileSize = CPLScanUIntBig(pszVal, static_cast<int>(pszEndOfLine - pszVal));
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL", "Has found candidate file size = " CPL_FRMT_GUIB, nCandidateFileSize);
             }
@@ -912,10 +912,11 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
 /*                 VSICurlStreamingHandleReceivedBytesHeader()          */
 /************************************************************************/
 
-static int VSICurlStreamingHandleReceivedBytesHeader(void *buffer, size_t count, size_t nmemb, void *req)
+static size_t VSICurlStreamingHandleReceivedBytesHeader(void *buffer, size_t count, size_t nmemb, void *req)
 {
     return ((VSICurlStreamingHandle*)req)->ReceivedBytesHeader((GByte*)buffer, count, nmemb);
 }
+
 /************************************************************************/
 /*                       DownloadInThread()                             */
 /************************************************************************/
@@ -1290,7 +1291,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
     {
         const int nErrorBufferMaxSize = 4096;
         GByte* pabyErrorBuffer = (GByte*)CPLMalloc(nErrorBufferMaxSize + 1);
-        int nRead = nBufferRequestSize - nRemaining;
+        int nRead = static_cast<int>(nBufferRequestSize - nRemaining);
         int nErrorBufferSize = MIN(nErrorBufferMaxSize, nRead);
         memcpy( pabyErrorBuffer, pBuffer, nErrorBufferSize );
         if( nRead < nErrorBufferMaxSize )

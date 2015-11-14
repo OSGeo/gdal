@@ -564,7 +564,7 @@ int VSIUnixStdioFilesystemHandler::Mkdir( const char * pszPathname,
                                           long nMode )
 
 {
-    return mkdir( pszPathname, nMode );
+    return mkdir( pszPathname, static_cast<int>(nMode) );
 }
 
 /************************************************************************/

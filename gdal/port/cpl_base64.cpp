@@ -143,7 +143,7 @@ int CPLBase64DecodeInPlace(GByte* pszBase64)
                     break;
             }
         }
-        return(p-pszBase64);
+        return static_cast<int>(p-pszBase64);
     }
     return 0;
 }

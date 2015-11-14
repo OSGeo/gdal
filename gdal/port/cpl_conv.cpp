@@ -339,11 +339,11 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 /*      just the newline (LF).  If it is in binary mode it may well     */
 /*      have both.                                                      */
 /* -------------------------------------------------------------------- */
-    const int nOriginalOffset = VSIFTell( fp );
+    const long nOriginalOffset = VSIFTell( fp );
     if( VSIFGets( pszBuffer, nBufferSize, fp ) == NULL )
         return NULL;
 
-    int nActuallyRead = strlen(pszBuffer);
+    int nActuallyRead = static_cast<int>( strlen(pszBuffer) );
     if ( nActuallyRead == 0 )
         return NULL;
 
@@ -391,7 +391,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 
     if( pszExtraNewline != NULL )
     {
-        nActuallyRead = pszExtraNewline - pszBuffer + 1;
+        nActuallyRead = static_cast<int>(pszExtraNewline - pszBuffer + 1);
 
         *pszExtraNewline = '\0';
         VSIFSeek( fp, nOriginalOffset + nActuallyRead - 1, SEEK_SET );
@@ -543,9 +543,9 @@ const char *CPLReadLine( FILE * fp )
 /*      Loop reading chunks of the line till we get to the end of       */
 /*      the line.                                                       */
 /* -------------------------------------------------------------------- */
-    int nBytesReadThisTime;
+    size_t nBytesReadThisTime;
     char* pszRLBuffer;
-    int nReadSoFar = 0;
+    size_t nReadSoFar = 0;
 
     do {
 /* -------------------------------------------------------------------- */
@@ -556,7 +556,7 @@ const char *CPLReadLine( FILE * fp )
         if( nReadSoFar > 100 * 1024 * 1024 )
              // It is dubious that we need to read a line longer than 100 MB.
             return NULL;
-        pszRLBuffer = CPLReadLineBuffer( nReadSoFar + 129 );
+        pszRLBuffer = CPLReadLineBuffer( static_cast<int>(nReadSoFar) + 129 );
         if( pszRLBuffer == NULL )
             return NULL;
 

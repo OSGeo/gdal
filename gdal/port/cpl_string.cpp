@@ -1029,7 +1029,7 @@ int CPLVASPrintf( char **buf, const char *fmt, va_list ap )
     if( buf )
         *buf = CPLStrdup(osWork.c_str());
 
-    return strlen(osWork);
+    return static_cast<int>(strlen(osWork));
 }
 
 /************************************************************************/
@@ -1890,7 +1890,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                        int nScheme )
 {
     if( nLength == -1 )
-        nLength = strlen(pszInput);
+        nLength = static_cast<int>(strlen(pszInput));
 
     char *pszOutput = reinterpret_cast<char *>( CPLMalloc( nLength * 6 + 1 ) );
 
@@ -2181,7 +2181,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 iIn --;
 
                 char * pszUTF8 = CPLRecodeFromWChar( anVal, "WCHAR_T", CPL_ENC_UTF8);
-                int nLen = strlen(pszUTF8);
+                int nLen = static_cast<int>(strlen(pszUTF8));
                 memcpy(pszOutput + iOut, pszUTF8, nLen);
                 CPLFree(pszUTF8);
                 iOut += nLen;
@@ -2204,7 +2204,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 iIn --;
 
                 char * pszUTF8 = CPLRecodeFromWChar( anVal, "WCHAR_T", CPL_ENC_UTF8);
-                int nLen = strlen(pszUTF8);
+                int nLen = static_cast<int>(strlen(pszUTF8));
                 memcpy(pszOutput + iOut, pszUTF8, nLen);
                 CPLFree(pszUTF8);
                 iOut += nLen;
@@ -2386,7 +2386,7 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
         pabyWKB[i] = (GByte)((h1 << 4) | h2);
     }
     pabyWKB[nHexLen/2] = 0;
-    *pnBytes = nHexLen/2;
+    *pnBytes = static_cast<int>(nHexLen/2);
 
     return pabyWKB;
 

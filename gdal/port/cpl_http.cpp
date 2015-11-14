@@ -67,7 +67,7 @@ CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
 {
     CPLHTTPResult *psResult = (CPLHTTPResult *) reqInfo;
 
-    int  nNewSize = psResult->nDataLen + nmemb*size + 1;
+    int  nNewSize = psResult->nDataLen + static_cast<int>(nmemb)*static_cast<int>(size) + 1;
     if( nNewSize > psResult->nDataAlloc )
     {
         psResult->nDataAlloc = (int) (nNewSize * 1.25 + 100);
@@ -102,7 +102,7 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
     CPLHTTPResult *psResult = (CPLHTTPResult *) reqInfo;
     // copy the buffer to a char* and initialize with zeros (zero terminate as well)
     char* pszHdr = (char*)CPLCalloc(nmemb + 1, size);
-    CPLPrintString(pszHdr, (char *)buffer, nmemb * size);
+    CPLPrintString(pszHdr, (char *)buffer, static_cast<int>(nmemb) * static_cast<int>(size));
     char *pszKey = NULL;
     const char *pszValue = CPLParseNameValue(pszHdr, &pszKey );
     psResult->papszHeaders = CSLSetNameValue(psResult->papszHeaders, pszKey, pszValue);
@@ -192,7 +192,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         }
         else if( nLength != 0 )
         {
-            psResult->nDataLen = (size_t)nLength;
+            psResult->nDataLen = static_cast<int>(nLength);
             psResult->pabyData = (GByte*) CPLMalloc((size_t)nLength + 1);
             memcpy(psResult->pabyData, pabyData, (size_t)nLength);
             psResult->pabyData[(size_t)nLength] = 0;
@@ -878,7 +878,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         psPart->pabyData = (GByte *) pszNext;
 
         int nBytesAvail = psResult->nDataLen - 
-            (pszNext - (const char *) psResult->pabyData);
+            static_cast<int>(pszNext - (const char *) psResult->pabyData);
 
         while( nBytesAvail > 0
                && (*pszNext != '-' 
@@ -895,7 +895,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
             return FALSE;
         }
 
-        psPart->nDataLen = pszNext - (const char *) psPart->pabyData;
+        psPart->nDataLen = static_cast<int>(pszNext - (const char *) psPart->pabyData);
         pszNext += strlen(osBoundary);
 
         if( STARTS_WITH(pszNext, "--") )

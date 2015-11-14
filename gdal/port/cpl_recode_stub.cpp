@@ -146,7 +146,7 @@ char *CPLRecodeStub( const char *pszSource,
     if( strcmp(pszSrcEncoding,CPL_ENC_ISO8859_1) == 0 
         && strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
     {
-        int nCharCount = strlen(pszSource);
+        int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = (char *) CPLCalloc(1,nCharCount*2+1);
         
         utf8froma( pszResult, nCharCount*2+1, pszSource, nCharCount );
@@ -160,7 +160,7 @@ char *CPLRecodeStub( const char *pszSource,
     if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0 
         && strcmp(pszDstEncoding,CPL_ENC_ISO8859_1) == 0 )
     {
-        int nCharCount = strlen(pszSource);
+        int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = (char *) CPLCalloc(1,nCharCount+1);
         
         utf8toa( pszSource, nCharCount, pszResult, nCharCount+1 );
@@ -202,7 +202,7 @@ char *CPLRecodeStub( const char *pszSource,
 /* -------------------------------------------------------------------- */
     if( strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
     {
-        int nCharCount = strlen(pszSource);
+        int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = (char *) CPLCalloc(1,nCharCount*2+1);
 
         if( EQUAL( pszSrcEncoding, "CP437") ) /* For ZIP file handling */
@@ -244,7 +244,7 @@ char *CPLRecodeStub( const char *pszSource,
     if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0 
         && strcmp(pszDstEncoding,CPL_ENC_ISO8859_1) == 0 )
     {
-        int nCharCount = strlen(pszSource);
+        int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = (char *) CPLCalloc(1,nCharCount+1);
 
         if( !bHaveWarned2 )
@@ -436,7 +436,7 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
 /* -------------------------------------------------------------------- */
 /*      Do the UTF-8 to UCS-2 recoding.                                 */
 /* -------------------------------------------------------------------- */
-    int nSrcLen = strlen(pszUTF8Source);
+    int nSrcLen = static_cast<int>(strlen(pszUTF8Source));
     wchar_t *pwszResult = (wchar_t *) CPLCalloc(sizeof(wchar_t),nSrcLen+1);
 
     utf8towc( pszUTF8Source, nSrcLen, pwszResult, nSrcLen+1 );
@@ -465,7 +465,7 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
 int CPLIsUTF8Stub(const char* pabyData, int nLen)
 {
     if (nLen < 0)
-        nLen = strlen(pabyData);
+        nLen = static_cast<int>(strlen(pabyData));
     return utf8test(pabyData, (unsigned)nLen) != 0;
 }
 

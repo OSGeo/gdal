@@ -265,7 +265,7 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
 {
     const char *pszHaystack = c_str();
     char chFirst = (char) ::tolower( s[0] );
-    int nTargetLen = strlen(s);
+    size_t nTargetLen = strlen(s);
 
     if( nPos > size() )
         nPos = size();

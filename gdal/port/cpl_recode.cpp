@@ -268,7 +268,7 @@ int CPLIsUTF8(const char* pabyData, int nLen)
 char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacementChar)
 {
     if (nLen < 0)
-        nLen = strlen(pabyData);
+        nLen = static_cast<int>(strlen(pabyData));
     char* pszOutputString = (char*)CPLMalloc(nLen + 1);
     int i;
     for(i=0;i<nLen;i++)

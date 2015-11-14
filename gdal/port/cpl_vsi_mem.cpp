@@ -650,9 +650,9 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
 
     std::map<CPLString,VSIMemFile*>::const_iterator iter;
     char **papszDir = NULL;
-    int nPathLen = strlen(osPath);
+    size_t nPathLen = strlen(osPath);
 
-    if( osPath[nPathLen-1] == '/' )
+    if( nPathLen > 0 && osPath[nPathLen-1] == '/' )
         nPathLen--;
 
     /* In case of really big number of files in the directory, CSLAddString */
@@ -739,9 +739,9 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
 void VSIMemFilesystemHandler::NormalizePath( CPLString &oPath )
 
 {
-    const int nSize = oPath.size();
+    const size_t nSize = oPath.size();
 
-    for( int i = 0; i < nSize; i++ )
+    for( size_t i = 0; i < nSize; i++ )
     {
         if( oPath[i] == '\\' )
             oPath[i] = '/';

@@ -402,7 +402,7 @@ static void CSVIngest( const char *pszFilename )
 /*      Ingest whole file.                                              */
 /* -------------------------------------------------------------------- */
     VSIFSeek( psTable->fp, 0, SEEK_END );
-    const int nFileLen = VSIFTell( psTable->fp );
+    const long nFileLen = VSIFTell( psTable->fp );
     if( nFileLen == -1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -591,7 +591,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
 
     int i = 0;
     int nCount = 0;
-    int nWorkLineLength = strlen(pszWorkLine);
+    size_t nWorkLineLength = strlen(pszWorkLine);
 
     while( true )
     {
@@ -609,7 +609,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
         if( pszLine == NULL )
             break;
 
-        const int nLineLen = strlen(pszLine);
+        const size_t nLineLen = strlen(pszLine);
 
         char* pszWorkLineTmp = reinterpret_cast<char *>(
             VSIRealloc(pszWorkLine,
@@ -1083,13 +1083,13 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
     if( ppsCSVTableList != NULL )
     {
         CSVTable *psTable = *ppsCSVTableList;
-        int nBasenameLen = strlen(pszBasename);
+        size_t nBasenameLen = strlen(pszBasename);
 
         for( ;
              psTable != NULL; 
              psTable = psTable->psNext )
         {
-            const int nFullLen = strlen(psTable->pszFilename);
+            const size_t nFullLen = strlen(psTable->pszFilename);
 
             if( nFullLen > nBasenameLen 
                 && strcmp(psTable->pszFilename+nFullLen-nBasenameLen,

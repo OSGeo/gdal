@@ -1020,7 +1020,7 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
                         err=UNZ_ERRNO;
 
                     /* Check expected CRC for filename */
-                    if( nameCRC32 == crc32(0, (const Bytef*)szFileName, file_info.size_filename) )
+                    if( nameCRC32 == crc32(0, (const Bytef*)szFileName, static_cast<uInt>(file_info.size_filename)) )
                     {
                         uLong utf8Size = dataSize - 1 - 4;
                         uLong uSizeRead ;
