@@ -2175,8 +2175,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
                        m_poCurObjBlock, &m_poCurCoordBlock) <= 0)
     {
-        delete poNewObjBlock;
-        return NULL;
+        goto error;
     }
 
     // Move nSeed2 to 2nd block
@@ -2184,8 +2183,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
                        poNewObjBlock, &poNewCoordBlock) <= 0)
     {
-        delete poNewObjBlock;
-        return NULL;
+        goto error;
     }
 
     /*-----------------------------------------------------------------
@@ -2211,14 +2209,14 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
         {
             if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
                                poNewObjBlock, &poNewCoordBlock) <= 0)
-                return NULL;
+                goto error;
             continue;
         }
         else if (poNewObjBlock->GetNumUnusedBytes() < nObjSize+nSizeOfObjToAdd)
         {
             if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
                                m_poCurObjBlock, &m_poCurCoordBlock) <= 0)
-                return NULL;
+                goto error;
             continue;
         }
 
@@ -2248,14 +2246,14 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
             // This entry stays in this block
             if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
                                m_poCurObjBlock, &m_poCurCoordBlock) <= 0)
-                return NULL;
+                goto error;
         }
         else
         {
             // This entry goes to new block
             if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
                                poNewObjBlock, &poNewCoordBlock) <= 0)
-                return NULL;
+                goto error;
         }
     }
 
@@ -2275,7 +2273,9 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     if (poNewCoordBlock)
     {
         if (poNewCoordBlock->CommitToFile() != 0)
-            return NULL;
+        {
+            goto error;
+        }
         delete poNewCoordBlock;
     }
 
@@ -2287,7 +2287,9 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
         if (poSrcCoordBlock->GetStartAddress() != nFirstSrcCoordBlock)
         {
             if (poSrcCoordBlock->GotoByteInFile(nFirstSrcCoordBlock, TRUE) != 0)
-                return NULL;
+            {
+                goto error;
+            }
         }
 
         int nNextCoordBlock = poSrcCoordBlock->GetNextCoordBlock();
@@ -2296,14 +2298,17 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
             // Mark this block as deleted
             if (poSrcCoordBlock->CommitAsDeleted(m_oBlockManager.
                                                  GetFirstGarbageBlock()) != 0)
-                return NULL;
+            {
+                goto error;
+            }
             m_oBlockManager.PushGarbageBlockAsFirst(poSrcCoordBlock->GetStartAddress());
 
             // Advance to next
             if (nNextCoordBlock > 0)
             {
                 if (poSrcCoordBlock->GotoByteInFile(nNextCoordBlock, TRUE) != 0)
-                    return NULL;
+                    goto error;
+
                 nNextCoordBlock = poSrcCoordBlock->GetNextCoordBlock();
             }
             else
@@ -2314,12 +2319,24 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
             }
         }
     }
-            
 
     if (poNewObjBlock->CommitToFile() != 0)
-        return NULL;
+        goto error;
 
     return poNewObjBlock;
+
+error:
+    if( papoSrcObjHdrs )
+    {
+        for(i=0; i<numSrcObj; i++)
+        {
+            delete papoSrcObjHdrs[i];
+        }
+        CPLFree(papoSrcObjHdrs);
+    }
+    delete poSrcCoordBlock;
+    delete poNewObjBlock;
+    return NULL;
 }
 
 /**********************************************************************
