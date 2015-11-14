@@ -268,7 +268,7 @@ void    CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
         if ( psCtx->psHandlerStack != NULL &&
              EQUAL(CPLGetConfigOption( "CPL_ACCUM_ERROR_MSG", "" ), "ON"))
         {
-            nPreviousSize = strlen(psCtx->szLastErrMsg);
+            nPreviousSize = static_cast<int>(strlen(psCtx->szLastErrMsg));
             if (nPreviousSize)
             {
                 if (nPreviousSize + 1 + 1 >= psCtx->nLastErrMsgMax)

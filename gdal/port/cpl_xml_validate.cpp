@@ -912,7 +912,7 @@ CPLXMLSchemaPtr CPLLoadXMLSchema(const char* pszXSDFilename)
     xmlSetExternalEntityLoader(CPLExternalEntityLoader);
 
     xmlSchemaParserCtxtPtr pSchemaParserCtxt =
-                            xmlSchemaNewMemParserCtxt(pszStr, strlen(pszStr));
+                            xmlSchemaNewMemParserCtxt(pszStr, static_cast<int>(strlen(pszStr)));
 
     xmlSchemaSetParserErrors(pSchemaParserCtxt,
                              CPLLibXMLWarningErrorCallback,

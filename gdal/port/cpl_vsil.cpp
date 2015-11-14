@@ -844,7 +844,7 @@ int VSIFPrintfL( VSILFILE *fp, const char *pszFormat, ... )
     osResult.vPrintf( pszFormat, args );
     va_end( args );
 
-    return VSIFWriteL( osResult.c_str(), 1, osResult.length(), fp );
+    return static_cast<int>(VSIFWriteL( osResult.c_str(), 1, osResult.length(), fp ));
 }
 
 /************************************************************************/
@@ -873,7 +873,7 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
 
 {
     unsigned char cChar = (unsigned char)nChar;
-    return VSIFWriteL(&cChar, 1, 1, fp);
+    return static_cast<int>(VSIFWriteL(&cChar, 1, 1, fp));
 }
 
 /************************************************************************/
@@ -1185,14 +1185,14 @@ VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
 {
     VSIFileManager *poThis = Get();
     std::map<std::string,VSIFilesystemHandler*>::const_iterator iter;
-    int nPathLen = strlen(pszPath);
+    size_t nPathLen = strlen(pszPath);
 
     for( iter = poThis->oHandlers.begin();
          iter != poThis->oHandlers.end();
          ++iter )
     {
         const char* pszIterKey = iter->first.c_str();
-        int nIterKeyLen = iter->first.size();
+        size_t nIterKeyLen = iter->first.size();
         if( strncmp(pszPath,pszIterKey,nIterKeyLen) == 0 )
             return iter->second;
 

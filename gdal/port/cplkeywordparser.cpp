@@ -74,7 +74,7 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
     for( ; true; )
     {
         char szChunk[513];
-        const int nBytesRead = VSIFReadL( szChunk, 1, 512, fp );
+        const size_t nBytesRead = VSIFReadL( szChunk, 1, 512, fp );
 
         szChunk[nBytesRead] = '\0';
         osHeaderText += szChunk;

@@ -688,7 +688,7 @@ void VSIFree( void * pData )
 char *VSIStrdup( const char * pszString )
 
 {
-    const int nSize = strlen(pszString) + 1;
+    const size_t nSize = strlen(pszString) + 1;
     char* ptr = (char*) VSIMalloc(nSize);
     if (ptr == NULL)
         return NULL;

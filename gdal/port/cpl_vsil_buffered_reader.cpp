@@ -213,9 +213,9 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
         nCurOffset >= nBufferOffset && nCurOffset <= nBufferOffset + nBufferSize)
     {
         /* We try to read from an offset located within the buffer */
-        const int nReadInBuffer = (int) MIN(nTotalToRead, nBufferOffset + nBufferSize - nCurOffset);
+        const size_t nReadInBuffer = static_cast<size_t>( MIN(nTotalToRead, nBufferOffset + nBufferSize - nCurOffset) );
         memcpy(pBuffer, pabyBuffer + nCurOffset - nBufferOffset, nReadInBuffer);
-        const int nToReadInFile = nTotalToRead - nReadInBuffer;
+        const size_t nToReadInFile = nTotalToRead - nReadInBuffer;
         if (nToReadInFile > 0)
         {
             /* The beginning of the data to read is located in the buffer */
@@ -231,10 +231,10 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
             bNeedBaseHandleSeek = FALSE;
             //CPLAssert(poBaseHandle->Tell() == nBufferOffset + nBufferSize);
 
-            const int nReadInFile = poBaseHandle->Read((GByte*)pBuffer + nReadInBuffer, 1, nToReadInFile);
-            const int nRead = nReadInBuffer + nReadInFile;
+            const size_t nReadInFile = poBaseHandle->Read((GByte*)pBuffer + nReadInBuffer, 1, nToReadInFile);
+            const size_t nRead = nReadInBuffer + nReadInFile;
 
-            nBufferSize = MIN(nRead, MAX_BUFFER_SIZE);
+            nBufferSize = static_cast<int>( MIN(nRead, MAX_BUFFER_SIZE) );
             nBufferOffset = nCurOffset + nRead - nBufferSize;
             memcpy(pabyBuffer, (GByte*)pBuffer + nRead - nBufferSize, nBufferSize);
 
@@ -259,8 +259,8 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
         if( !SeekBaseTo(nCurOffset) )
             return 0;
         bNeedBaseHandleSeek = FALSE;
-        const int nReadInFile = poBaseHandle->Read(pBuffer, 1, nTotalToRead);
-        nBufferSize = MIN(nReadInFile, MAX_BUFFER_SIZE);
+        const size_t nReadInFile = poBaseHandle->Read(pBuffer, 1, nTotalToRead);
+        nBufferSize = static_cast<int>( MIN(nReadInFile, MAX_BUFFER_SIZE) );
         nBufferOffset = nCurOffset + nReadInFile - nBufferSize;
         memcpy(pabyBuffer, (GByte*)pBuffer + nReadInFile - nBufferSize, nBufferSize);
 

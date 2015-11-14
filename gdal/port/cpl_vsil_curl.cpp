@@ -522,7 +522,7 @@ static void VSICURLInitWriteFuncStruct(WriteFuncStruct   *psStruct,
 /*                       VSICurlHandleWriteFunc()                       */
 /************************************************************************/
 
-static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void *req)
+static size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void *req)
 {
     WriteFuncStruct* psStruct = (WriteFuncStruct*) req;
     const size_t nSize = count * nmemb;
@@ -542,7 +542,7 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
                 psStruct->nHTTPCode = atoi(pszLine + 9);
             else if (STARTS_WITH_CI(pszLine, "Content-Length: "))
                 psStruct->nContentLength = CPLScanUIntBig(pszLine + 16,
-                                                          strlen(pszLine + 16));
+                                                          static_cast<int>(strlen(pszLine + 16)));
             else if (STARTS_WITH_CI(pszLine, "Content-Range: "))
                 psStruct->bFoundContentRange = true;
 
@@ -629,11 +629,11 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     if (pszAllowedExtensions)
     {
         char** papszExtensions = CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
-        const int nURLLen = strlen(pszURL);
+        const size_t nURLLen = strlen(pszURL);
         bool bFound = false;
         for(int i=0;papszExtensions[i] != NULL;i++)
         {
-            int nExtensionLen = strlen(papszExtensions[i]);
+            const size_t nExtensionLen = strlen(papszExtensions[i]);
             if( EQUAL(papszExtensions[i], "{noext}") )
             {
                 if( nURLLen > 4 && strchr(pszURL + nURLLen - 4, '.') == NULL )
@@ -742,7 +742,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
         {
             const char* pszBuffer = sWriteFuncData.pBuffer + strlen("Content-Length: ");
             eExists = EXIST_YES;
-            fileSize = CPLScanUIntBig(pszBuffer, sWriteFuncData.nSize - strlen("Content-Length: "));
+            fileSize = CPLScanUIntBig(pszBuffer, static_cast<int>(sWriteFuncData.nSize - strlen("Content-Length: ")));
             if (ENABLE_DEBUG)
                 CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB,
                         pszURL, fileSize);
@@ -985,7 +985,7 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
                 if (pszSlash)
                 {
                     pszSlash ++;
-                    fileSize = CPLScanUIntBig(pszSlash, strlen(pszSlash));
+                    fileSize = CPLScanUIntBig(pszSlash, static_cast<int>(strlen(pszSlash)));
                 }
             }
         }
@@ -1004,7 +1004,7 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
                     if (pszEOL)
                         *pszEOL = 0;
 
-                    fileSize = CPLScanUIntBig(pszSize, strlen(pszSize));
+                    fileSize = CPLScanUIntBig(pszSize, static_cast<int>(strlen(pszSize)));
                 }
             }
         }
@@ -1026,23 +1026,24 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     lastDownloadedOffset = startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE;
 
     char* pBuffer = sWriteFuncData.pBuffer;
-    int nSize = sWriteFuncData.nSize;
+    size_t nSize = sWriteFuncData.nSize;
 
-    if (nSize > nBlocks * DOWNLOAD_CHUNCK_SIZE)
+    if (nSize > static_cast<size_t>(nBlocks) * DOWNLOAD_CHUNCK_SIZE)
     {
         if (ENABLE_DEBUG)
-            CPLDebug("VSICURL", "Got more data than expected : %d instead of %d",
-                     nSize, nBlocks * DOWNLOAD_CHUNCK_SIZE);
+            CPLDebug("VSICURL", "Got more data than expected : %u instead of %d",
+                     static_cast<unsigned int>(nSize), nBlocks * DOWNLOAD_CHUNCK_SIZE);
     }
     
     while(nSize > 0)
     {
         //if (ENABLE_DEBUG)
         //    CPLDebug("VSICURL", "Add region %d - %d", startOffset, MIN(DOWNLOAD_CHUNCK_SIZE, nSize));
-        poFS->AddRegion(pszURL, startOffset, MIN(DOWNLOAD_CHUNCK_SIZE, nSize), pBuffer);
-        startOffset += DOWNLOAD_CHUNCK_SIZE;
-        pBuffer += DOWNLOAD_CHUNCK_SIZE;
-        nSize -= DOWNLOAD_CHUNCK_SIZE;
+        size_t nChunkSize = MIN(DOWNLOAD_CHUNCK_SIZE, nSize);
+        poFS->AddRegion(pszURL, startOffset, nChunkSize, pBuffer);
+        startOffset += nChunkSize;
+        pBuffer += nChunkSize;
+        nSize -= nChunkSize;
     }
 
     CPLFree(sWriteFuncData.pBuffer);
@@ -1292,7 +1293,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
     }
 
     char* pBuffer = sWriteFuncData.pBuffer;
-    int nSize = sWriteFuncData.nSize;
+    size_t nSize = sWriteFuncData.nSize;
 
     int nRet = -1;
     char* pszBoundary;
@@ -1997,7 +1998,7 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
         pszMonthFound = strstr(pszStr, szMonth);
         if (pszMonthFound)
         {
-            int nLenMonth = strlen(apszMonths[iMonth]);
+            int nLenMonth = static_cast<int>(strlen(apszMonths[iMonth]));
             if (pszMonthFound - pszStr > 2 &&
                 pszMonthFound[-1] != ',' &&
                 pszMonthFound[-2] != ' ' &&
@@ -2027,7 +2028,7 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
                 while(*pszFilesize == ' ')
                     pszFilesize ++;
                 if (*pszFilesize >= '1' && *pszFilesize <= '9')
-                    nFileSize = CPLScanUIntBig(pszFilesize, strlen(pszFilesize));
+                    nFileSize = CPLScanUIntBig(pszFilesize, static_cast<int>(strlen(pszFilesize)));
 
                 if (nDay >= 1 && nDay <= 31 && nYear >= 1900 &&
                     nHour >= 0 && nHour <= 24 && nMin >= 0 && nMin < 60)
@@ -2069,7 +2070,7 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
                 while(*pszFilesize == ' ')
                     pszFilesize ++;
                 if (*pszFilesize >= '1' && *pszFilesize <= '9')
-                    nFileSize = CPLScanUIntBig(pszFilesize, strlen(pszFilesize));
+                    nFileSize = CPLScanUIntBig(pszFilesize, static_cast<int>(strlen(pszFilesize)));
 
                 if (nDay >= 1 && nDay <= 31 && nYear >= 1900 &&
                     nHour >= 0 && nHour <= 24 && nMin >= 0 && nMin < 60)
@@ -2428,7 +2429,7 @@ static bool VSICurlParseFullFTPLine(char* pszLine,
     {
         /* Regular file */
         bSizeValid = true;
-        nSize = CPLScanUIntBig(pszSize, strlen(pszSize));
+        nSize = CPLScanUIntBig(pszSize, static_cast<int>(strlen(pszSize)));
     }
 
     struct tm brokendowntime;
@@ -2853,7 +2854,7 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname, bool* pbGotFil
     const char* pszUpDir = strstr(osDirname, "/..");
     if (pszUpDir != NULL)
     {
-        int pos = pszUpDir - osDirname.c_str() - 1;
+        int pos = static_cast<int>(pszUpDir - osDirname.c_str() - 1);
         while(pos >= 0 && osDirname[pos] != '/')
             pos --;
         if (pos >= 1)

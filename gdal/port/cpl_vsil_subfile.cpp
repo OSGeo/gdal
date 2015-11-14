@@ -266,7 +266,7 @@ VSISubFileFilesystemHandler::DecomposePath( const char *pszPath,
     nSubFileOffset = 0;
     nSubFileSize = 0;
 
-    nSubFileOffset = CPLScanUIntBig(pszPath+12, strlen(pszPath + 12));
+    nSubFileOffset = CPLScanUIntBig(pszPath+12, static_cast<int>(strlen(pszPath + 12)));
     for( int i = 12; pszPath[i] != '\0'; i++ )
     {
         if( pszPath[i] == '_' && nSubFileSize == 0 )
@@ -277,7 +277,7 @@ VSISubFileFilesystemHandler::DecomposePath( const char *pszPath,
             if (pszPath[i + 1] == '-')
                 nSubFileSize = 0;
             else
-                nSubFileSize = CPLScanUIntBig(pszPath + i + 1, strlen(pszPath + i + 1));
+                nSubFileSize = CPLScanUIntBig(pszPath + i + 1, static_cast<int>(strlen(pszPath + i + 1)));
         }
         else if( pszPath[i] == ',' )
         {

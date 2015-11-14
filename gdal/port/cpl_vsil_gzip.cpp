@@ -128,7 +128,7 @@ class VSIGZipHandle : public VSIVirtualHandle
     vsi_l_offset      compressed_size;
     vsi_l_offset      uncompressed_size;
     vsi_l_offset      offsetEndCompressedData;
-    unsigned int      expected_crc;
+    uLong             expected_crc;
     char             *m_pszBaseFileName; /* optional */
     int               m_bCanSaveInfo;
 
@@ -161,7 +161,7 @@ class VSIGZipHandle : public VSIVirtualHandle
                   vsi_l_offset offset = 0,
                   vsi_l_offset compressed_size = 0,
                   vsi_l_offset uncompressed_size = 0,
-                  unsigned int expected_crc = 0,
+                  uLong expected_crc = 0,
                   int transparent = 0);
     ~VSIGZipHandle();
 
@@ -276,7 +276,7 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
                              vsi_l_offset offset,
                              vsi_l_offset compressed_size,
                              vsi_l_offset uncompressed_size,
-                             unsigned int expected_crc,
+                             uLong expected_crc,
                              int transparent) :
     snapshot_byte_interval(0)
 {
@@ -687,7 +687,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         int size = Z_BUFSIZE;
         if (offset < Z_BUFSIZE) size = (int)offset;
 
-        int read_size = Read(outbuf, 1, (uInt)size);
+        int read_size = static_cast<int>(Read(outbuf, 1, (uInt)size));
         if (read_size == 0) {
             //CPL_VSIL_GZ_RETURN(-1);
             return -1L;
@@ -772,7 +772,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize, size_t const n
         return 0;  /* EOF */
     }
 
-    const unsigned len = nSize * nMemb;
+    const unsigned len = static_cast<unsigned int>(nSize) * static_cast<unsigned int>(nMemb);
     Bytef *pStart = (Bytef*)buf; /* startOffing point for crc computation */
     Byte  *next_out; /* == stream.next_out but not forced far (for MSDOS) */
     next_out = (Byte*)buf;
@@ -871,19 +871,19 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize, size_t const n
             pStart = stream.next_out;
             if (expected_crc)
             {
-                if (ENABLE_DEBUG) CPLDebug("GZIP", "Computed CRC = %X. Expected CRC = %X", (unsigned int)crc, expected_crc);
+                if (ENABLE_DEBUG) CPLDebug("GZIP", "Computed CRC = %X. Expected CRC = %X", static_cast<unsigned int>(crc), static_cast<unsigned int>(expected_crc));
             }
             if (expected_crc != 0 && expected_crc != crc)
             {
-                CPLError(CE_Failure, CPLE_FileIO, "CRC error. Got %X instead of %X", (unsigned int)crc, expected_crc);
+                CPLError(CE_Failure, CPLE_FileIO, "CRC error. Got %X instead of %X", static_cast<unsigned int>(crc), static_cast<unsigned int>(expected_crc));
                 z_err = Z_DATA_ERROR;
             }
             else if (expected_crc == 0)
             {
-                unsigned int read_crc = getLong();
+                uLong read_crc = (unsigned long)getLong();
                 if (read_crc != crc)
                 {
-                    CPLError(CE_Failure, CPLE_FileIO, "CRC error. Got %X instead of %X", (unsigned int)crc, read_crc);
+                    CPLError(CE_Failure, CPLE_FileIO, "CRC error. Got %X instead of %X", static_cast<unsigned int>(crc), static_cast<unsigned int>(read_crc));
                     z_err = Z_DATA_ERROR;
                 }
                 else
@@ -995,7 +995,7 @@ class VSIGZipWriteHandle : public VSIVirtualHandle
     Byte              *pabyOutBuf;
     bool               bCompressActive;
     vsi_l_offset       nCurOffset;
-    GUInt32            nCRC;
+    uLong              nCRC;
     int                bRegularZLib;
     int                bAutoCloseBaseHandle;
 
@@ -1114,7 +1114,7 @@ int VSIGZipWriteHandle::Close()
         {
             GUInt32 anTrailer[2];
 
-            anTrailer[0] = CPL_LSBWORD32( nCRC );
+            anTrailer[0] = CPL_LSBWORD32( static_cast<GUInt32>(nCRC) );
             anTrailer[1] = CPL_LSBWORD32( (GUInt32) nCurOffset );
 
             poBaseHandle->Write( anTrailer, 1, 8 );
@@ -1461,13 +1461,13 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
                 {
                     const char* pszBuffer = pszLine + strlen("compressed_size=");
                     nCompressedSize = 
-                            CPLScanUIntBig(pszBuffer, strlen(pszBuffer));
+                            CPLScanUIntBig(pszBuffer, static_cast<int>(strlen(pszBuffer)));
                 }
                 else if (STARTS_WITH_CI(pszLine, "uncompressed_size="))
                 {
                     const char* pszBuffer = pszLine + strlen("uncompressed_size=");
                     nUncompressedSize =
-                             CPLScanUIntBig(pszBuffer, strlen(pszBuffer));
+                             CPLScanUIntBig(pszBuffer, static_cast<int>(strlen(pszBuffer)));
                 }
             }
 
@@ -2438,9 +2438,9 @@ void* CPLZLibDeflate( const void* ptr,
         nTmpSize = nOutAvailableBytes;
     }
 
-    strm.avail_in = nBytes;
+    strm.avail_in = static_cast<uInt>(nBytes);
     strm.next_in = (Bytef*) ptr;
-    strm.avail_out = nTmpSize;
+    strm.avail_out = static_cast<uInt>(nTmpSize);
     strm.next_out = (Bytef*) pTmp;
     ret = deflate(&strm, Z_FINISH);
     if( ret != Z_STREAM_END )
@@ -2485,7 +2485,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     strm.zalloc = Z_NULL;
     strm.zfree = Z_NULL;
     strm.opaque = Z_NULL;
-    strm.avail_in = nBytes;
+    strm.avail_in = static_cast<uInt>(nBytes);
     strm.next_in = (Bytef*) ptr;
     int ret = inflateInit(&strm);
     if (ret != Z_OK)
@@ -2515,7 +2515,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
         nTmpSize = nOutAvailableBytes;
     }
 
-    strm.avail_out = nTmpSize;
+    strm.avail_out = static_cast<uInt>(nTmpSize);
     strm.next_out = (Bytef*) pszTmp;
 
     while(true)
@@ -2543,7 +2543,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
                 return NULL;
             }
             pszTmp = pszTmpNew;
-            strm.avail_out = nTmpSize - nAlreadyWritten;
+            strm.avail_out = static_cast<uInt>(nTmpSize - nAlreadyWritten);
             strm.next_out = (Bytef*) (pszTmp + nAlreadyWritten);
         }
         else

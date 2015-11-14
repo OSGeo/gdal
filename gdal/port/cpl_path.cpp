@@ -555,7 +555,7 @@ const char *CPLFormCIFilename( const char * pszPath,
         return CPLFormFilename( pszPath, pszBasename, pszExtension );
 
     const char  *pszAddedExtSep = "";
-    int         nLen = strlen(pszBasename)+2, i;
+    size_t       nLen = strlen(pszBasename)+2, i;
 
     if( pszExtension != NULL )
         nLen += strlen(pszExtension);
@@ -837,7 +837,7 @@ const char *CPLCleanTrailingSlash( const char *pszPath )
         return CPLStaticBufferTooSmall(pszStaticResult);
     CPLAssert( ! (pszPath >= pszStaticResult && pszPath < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
-    const int iPathLength = strlen(pszPath);
+    const size_t iPathLength = strlen(pszPath);
     if (iPathLength >= CPL_PATH_BUF_SIZE)
         return CPLStaticBufferTooSmall(pszStaticResult);
 

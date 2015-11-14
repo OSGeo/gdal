@@ -299,7 +299,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
             const CPLString& osExtension = *iter;
             if (EQUALN(pszFilename + i, osExtension.c_str(), strlen(osExtension.c_str())))
             {
-                nToSkip = strlen(osExtension.c_str());
+                nToSkip = static_cast<int>(strlen(osExtension.c_str()));
                 break;
             }
         }
@@ -590,7 +590,7 @@ char** VSIArchiveFilesystemHandler::ReadDir( const char *pszDirname )
     char* archiveFilename = SplitFilename(pszDirname, osInArchiveSubDir, TRUE);
     if (archiveFilename == NULL)
         return NULL;
-    int lenInArchiveSubDir = strlen(osInArchiveSubDir);
+    int lenInArchiveSubDir = static_cast<int>(strlen(osInArchiveSubDir));
 
     char **papszDir = NULL;
     

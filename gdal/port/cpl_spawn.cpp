@@ -535,7 +535,7 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void* data, int length)
     {
         while(true)
         {
-            const int n = read(fin, pabyData, nRemain);
+            const int n = static_cast<int>(read(fin, pabyData, nRemain));
             if( n < 0 )
             {
                 if( errno == EINTR )
@@ -576,7 +576,7 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void* data, int length)
     {
         while(true)
         {
-            const int n = write(fout, pabyData, nRemain);
+            const int n = static_cast<int>(write(fout, pabyData, nRemain));
             if( n < 0 )
             {
                 if( errno == EINTR )
@@ -601,7 +601,7 @@ static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout)
     char buf[PIPE_BUFFER_SIZE];
     while(true)
     {
-        const int nRead = read(pipe_fd, buf, PIPE_BUFFER_SIZE);
+        const int nRead = static_cast<int>(read(pipe_fd, buf, PIPE_BUFFER_SIZE));
         if (nRead <= 0)
             break;
         const int nWritten = static_cast<int>(

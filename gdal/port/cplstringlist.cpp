@@ -565,7 +565,7 @@ int CPLStringList::FindName( const char *pszKey ) const
 
     // If we are sorted, we can do an optimized binary search. 
     int iStart=0, iEnd=nCount-1;
-    int nKeyLen = strlen(pszKey);
+    size_t nKeyLen = strlen(pszKey);
 
     while( iStart <= iEnd )
     {
