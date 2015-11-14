@@ -120,9 +120,7 @@ sub Export {
     my $format;
     $format = pop if @_ == 1;
     my %params = @_;
-    $format = $params{to} unless $format;
-    $format = $params{format} unless $format;
-    $format = $params{as} unless $format;
+    $format //= $params{to} //= $params{format} //= $params{as} //= '';
     if ($format eq 'WKT' or $format eq 'Text') {
         return ExportToWkt($self);
     } elsif ($format eq 'PrettyWKT') {
@@ -140,7 +138,7 @@ sub Export {
     } elsif ($format eq 'MICoordSys' or $format eq 'MapInfoCS') {
         return ExportToMICoordSys();
     } else {
-        confess "Unrecognized export format.";
+        confess "Unrecognized export format; '$format'.";
     }
 }
 *AsText = *ExportToWkt;
@@ -159,7 +157,7 @@ sub Set {
     } elsif (exists $params{LinearUnits} and exists $params{Value}) {
         SetLinearUnitsAndUpdateParameters($self, $params{LinearUnits}, $params{Value});
     } elsif ($params{Parameter} and exists $params{Value}) {
-        croak "Unknown projection parameter '$params{Parameter}'." unless exists $Geo::OSR::PARAMETERS{$params{Parameter}};
+        confess "Unknown projection parameter '$params{Parameter}'." unless exists $Geo::OSR::PARAMETERS{$params{Parameter}};
         $params{Normalized} ?
             SetNormProjParm($self, $params{Parameter}, $params{Value}) :
             SetProjParm($self, $params{Parameter}, $params{Value});
@@ -195,7 +193,7 @@ sub Set {
             SetProjCS($self, $params{CoordinateSystem});
         }
     } elsif ($params{Projection}) {
-        confess "Unknown projection." unless exists $Geo::OSR::PROJECTIONS{$params{Projection}};
+        confess "Unknown projection: '$params{Projection}'." unless exists $Geo::OSR::PROJECTIONS{$params{Projection}};
         my @parameters = ();
         @parameters = @{$params{Parameters}} if ref($params{Parameters});
         if ($params{Projection} eq 'Albers_Conic_Equal_Area') {
@@ -276,8 +274,7 @@ sub Set {
             SetTMSO($self, @parameters);
         } elsif ($params{Projection} =~ /^Transverse_Mercator/) {
             my($variant) = $params{Projection} =~ /^Transverse_Mercator_(\w+)/;
-            $variant = $params{Variant} unless $variant;
-            $variant = $params{Name} unless $variant;
+            $variant //= $params{Variant} //= $params{Name};
             $variant ?
                 SetTMVariant($self, $variant, @parameters) :
                 SetTM($self, @parameters);
