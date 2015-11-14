@@ -1340,8 +1340,8 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     }
     else if( strlen(psDatumInfo->pszOGCDatumName) > 0 )
     {
-        strncpy( szDatumName, psDatumInfo->pszOGCDatumName,
-                 sizeof(szDatumName) );
+        CPLStrlcpy( szDatumName, psDatumInfo->pszOGCDatumName,
+                    sizeof(szDatumName) );
 
         /* For LCC, standard parallel 1 and 2 can be switched indifferently */
         /* So the MapInfo order and the EPSG order are not generally identical */
