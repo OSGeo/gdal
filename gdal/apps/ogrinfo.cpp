@@ -67,7 +67,7 @@ static void RemoveBOM(GByte* pabyData)
 {
     if( pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF )
     {
-        memmove(pabyData, pabyData + 3, strlen((const char*)pabyData) + 1);
+        memmove(pabyData, pabyData + 3, strlen((const char*)pabyData + 3) + 1);
     }
 }
 
