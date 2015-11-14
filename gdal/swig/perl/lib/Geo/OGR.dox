@@ -53,9 +53,91 @@
 # Needed only on IBM DB2.
 
 ## @ignore NullFID
+## @ignore callback_fwrite
 
-## @ignore_class Geo::OGR::Driver
-## @ignore_class Geo::OGR::DataSource
+
+## @ignore GetDriver
+## @ignore GetDriverCount
+## @ignore GetDriverNames
+
+## @sub @Drivers()
+# @note Use Geo::GDAL::Drivers for raster drivers.
+# @return a list of all available GDAL vector drivers.
+
+## @sub @DriverNames()
+# A.k.a GetDriverNames
+# @note Use Geo::GDAL::DriverNames for raster drivers.
+# @return a list of the short names of all available GDAL vector drivers.
+
+## @sub Geo::GDAL::Driver Driver($name)
+# A.k.a GetDriver.
+# @param name the short name of the driver.
+# @note No check is made that the driver is actually a vector driver.
+# @return a Geo::GDAL::Driver object.
+
+
+## @method Geo::GDAL::Dataset Open($name, $update = 0)
+# Open a vector data source.
+# @param name The data source string (directory, filename, etc.).
+# @param update Whether to open the data source in update mode (default is not).
+# @return a new Geo::GDAL::Dataset object.
+
+## @method Geo::GDAL::Dataset OpenShared($name, $update = 0)
+# Open a vector data source in shared mode.
+# @param name The data source string (directory, filename, etc.).
+# @param update Whether to open the data source in update mode.
+# @return a new Geo::GDAL::Dataset object.
+
+
+
+
+
+## @class Geo::OGR::Driver
+# @brief A vector format driver.
+#
+# This is a convenience class, which provides a vector driver only
+# access to the set of all drivers.
+
+## @method Open
+# The same as Geo::OGR::Open except that only this driver is allowed.
+
+## @method Geo::GDAL::Dataset Create($name, hashref options = undef )
+# Create a new vector data source using this driver.
+# @param name The data source name.
+# @param options Driver specific dataset creation options. 
+#
+# Usage:
+# \code
+# $ds = Geo::OGR::Driver('GML')->Create('/tmp/x.gml', {PREFIX => $prefix});
+# \endcode
+# @return a new Geo::GDAL::Dataset object.
+
+## @method Geo::GDAL::Dataset Copy(Geo::GDAL::Dataset source, $name, arrayref options = undef)
+# Copy a vector data source into a new data source with this driver.
+# @param source The Geo::GDAL::Dataset object to be copied.
+# @param name The name for the new data source.
+# @param options Driver specific options. In addition to options
+# specified in GDAL documentation the option STRICT can be set to 'NO'
+# for a more relaxed copy. Otherwise the STRICT is 'YES'.
+# @note The order of the first two parameters is different from that in Geo::GDAL::Driver::Copy.
+# @return a new Geo::GDAL::Dataset object.
+
+
+
+
+
+## @class Geo::OGR::DataSource
+# @brief A legacy class for opening vector datasets. Otherwise see
+# Geo::OGR and Geo::GDAL::Dataset.
+#
+# This is a legacy class, which provides methods to ensure a
+# vector driver is used to open a data source.
+
+## @sub Geo::GDAL::Dataset Open
+# The same as Geo::OGR::Open
+
+## @sub Geo::GDAL::Dataset OpenShared
+# The same as Geo::OGR::OpenShared
 
 
 
