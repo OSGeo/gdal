@@ -269,7 +269,7 @@ OGRFeature *OGRIdrisiLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         if (bEOF)
             return NULL;
@@ -315,7 +315,7 @@ int OGRIdrisiLayer::TestCapability( const char * pszCap )
 
 OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
 {
-    while(TRUE)
+    while( true )
     {
         if (eGeomType == wkbPoint)
         {

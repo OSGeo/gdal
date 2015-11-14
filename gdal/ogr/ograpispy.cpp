@@ -403,7 +403,7 @@ int OGRAPISpyOpenTakeSnapshot(const char* pszName, int bUpdate)
                 CPLString osBaseDir;
                 CPLString osSrcDir;
                 CPLString osWorkingDir;
-                while(TRUE)
+                while( true )
                 {
                     osBaseDir = CPLFormFilename(osSnapshotPath,
                                         CPLSPrintf("snapshot_%d", i), NULL );

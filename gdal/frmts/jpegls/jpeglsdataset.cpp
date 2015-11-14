@@ -399,7 +399,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         GByte abyBuffer[1028];
         GByte abySignature[] = { 0xFF, 0xD8, 0xFF, 0xF7 };
-        while(TRUE)
+        while( true )
         {
             if (VSIFReadL(abyBuffer, 1, 1028, fp) != 1028)
             {

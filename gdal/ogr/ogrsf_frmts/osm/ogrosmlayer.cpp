@@ -270,7 +270,7 @@ OGRFeature *OGROSMLayer::GetNextFeature()
         }
         else
         {
-            while(TRUE)
+            while( true )
             {
                 int bRet = poDS->ParseNextChunk(nIdxLayer);
                 if (nFeatureArraySize != 0)
@@ -824,7 +824,7 @@ void OGROSMLayer::AddComputedAttribute(const char* pszName,
     std::vector<CPLString> aosAttrToBind;
     std::vector<int> anIndexToBind;
     size_t nStartSearch = 0;
-    while(TRUE)
+    while( true )
     {
         size_t nPos = osSQL.find("[", nStartSearch);
         if( nPos == std::string::npos )
@@ -844,7 +844,7 @@ void OGROSMLayer::AddComputedAttribute(const char* pszName,
             anIndexToBind.push_back(poFeatureDefn->GetFieldIndex(osAttr));
         }
     }
-    while(TRUE)
+    while( true )
     {
         size_t nPos = osSQL.find("\\");
         if( nPos == std::string::npos || nPos == osSQL.size() - 1 )

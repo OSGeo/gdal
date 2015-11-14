@@ -103,7 +103,7 @@ OGRFeature *OGRGFTLayer::GetNextFeature()
 
     GetLayerDefn();
 
-    while(TRUE)
+    while( true )
     {
         if (nNextInSeq < nOffset ||
             nNextInSeq >= nOffset + (int)aosRows.size())

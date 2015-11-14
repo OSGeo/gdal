@@ -375,7 +375,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
                 GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
                 //int nCollisions = 0;
                 //static int nMaxCollisions = 0;
-                while( TRUE )
+                while( true )
                 {
                     if( psColorIndexMap[nIdx].nColorCode == nColorCode )
                     {

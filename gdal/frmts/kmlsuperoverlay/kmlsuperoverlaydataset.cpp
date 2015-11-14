@@ -853,7 +853,7 @@ static CPLString KMLRemoveSlash(const char* pszPathIn)
 {
     char* pszPath = CPLStrdup(pszPathIn);
 
-    while(TRUE)
+    while( true )
     {
         char* pszSlashDotDot = strstr(pszPath, "/../");
         if (pszSlashDotDot == NULL || pszSlashDotDot == pszPath)

@@ -215,7 +215,7 @@ OGRFeature *OGROGDILayer::GetNextFeature()
         ResetReading();
     }
 
-    while( TRUE )
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if( poFeature == NULL )

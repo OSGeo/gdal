@@ -55,7 +55,7 @@ void ReprojFunc(void* unused)
     OGRCoordinateTransformation *poCTInThread;
     if (!bCreateCTInThread)
         poCTInThread = poCT;
-    while(TRUE)
+    while( true )
     {
         if (bCreateCTInThread)
             poCTInThread = OGRCreateCoordinateTransformation(&oSrcSRS,&oDstSRS);

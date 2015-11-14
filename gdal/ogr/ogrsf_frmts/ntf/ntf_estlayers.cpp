@@ -1702,7 +1702,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
 /*      Fetch definitions of each field in turn.                        */
 /* -------------------------------------------------------------------- */
         va_start(hVaArgs, poClass);
-        while( TRUE )
+        while( true )
         {
             const char  *pszFieldName = va_arg(hVaArgs, const char *);
             OGRFieldType     eType;

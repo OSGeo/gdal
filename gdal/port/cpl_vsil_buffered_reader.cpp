@@ -180,7 +180,7 @@ int VSIBufferedReaderHandle::SeekBaseTo(vsi_l_offset nTargetOffset)
     if( nCurOffset > nTargetOffset )
         return FALSE;
     char abyTemp[8192];
-    while(TRUE)
+    while( true )
     {
         int nToRead = (int) MIN(8192, nTargetOffset - nCurOffset);
         int nRead = (int)poBaseHandle->Read(abyTemp, 1, nToRead );

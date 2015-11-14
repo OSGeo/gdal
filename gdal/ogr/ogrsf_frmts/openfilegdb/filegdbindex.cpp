@@ -442,7 +442,7 @@ int FileGDBNotIterator::GetNextRowSortedByFID()
             iNextRowBase = poTable->GetTotalRecordCount();
     }
 
-    while( TRUE )
+    while( true )
     {
         if( iRow < iNextRowBase )
         {
@@ -527,7 +527,7 @@ int FileGDBAndIterator::GetNextRowSortedByFID()
         }
     }
 
-    while( TRUE )
+    while( true )
     {
         if( iNextRow1 < iNextRow2 )
         {
@@ -1289,7 +1289,7 @@ int FileGDBIndexIterator::GetNextRow()
     if( bEOF )
         return -1;
 
-    while( TRUE )
+    while( true )
     {
         if( iCurFeatureInPage >= nFeaturesInPage || iCurFeatureInPage < 0 )
         {
@@ -1451,7 +1451,7 @@ int FileGDBIndexIterator::SortRows()
     iSorted = 0;
     int nSortedAlloc = 0;
     Reset();
-    while( TRUE )
+    while( true )
     {
         int nRow = GetNextRow();
         if( nRow < 0 )
@@ -1726,7 +1726,7 @@ template <class Getter> void FileGDBIndexIterator::GetMinMaxSumCount(
     double dfLocalSum = 0.0;
     double dfVal = 0.0;
 
-    while( TRUE )
+    while( true )
     {
         if( iCurFeatureInPage >= nFeaturesInPage )
         {

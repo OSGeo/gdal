@@ -737,7 +737,7 @@ OGRFeature *OGRWAsPLayer::GetNextFeature()
 
     GetLayerDefn();
 
-    while(TRUE)
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)

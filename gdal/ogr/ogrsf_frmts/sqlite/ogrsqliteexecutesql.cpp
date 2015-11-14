@@ -820,7 +820,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
         delete poSQLiteDS;
         poSQLiteDS = NULL;
 #else // HAVE_SPATIALITE
-    if( TRUE )
+    if( true )
     {
 #endif // HAVE_SPATIALITE
         poSQLiteDS = new OGRSQLiteDataSource();

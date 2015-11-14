@@ -116,7 +116,7 @@ OGRFeature *OGRMySQLLayer::GetNextFeature()
 
 {
 
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

@@ -658,7 +658,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
 
             if( pabyDataKeyVal )
             {
-                while (TRUE)
+                while( true )
                 {
                     unsigned int nKey, nVal;
                     READ_VARUINT32(pabyDataKeyVal, pabyDataLimit, nKey);

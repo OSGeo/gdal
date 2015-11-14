@@ -252,7 +252,7 @@ void OGRCSWLayer::ResetReading()
 
 OGRFeature* OGRCSWLayer::GetNextFeature()
 {
-    while(TRUE)
+    while( true )
     {
         if (nFeatureRead == nPagingStartIndex + nFeaturesInCurrentPage)
         {

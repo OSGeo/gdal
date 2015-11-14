@@ -3031,7 +3031,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef()) >= 0 )
             {
                 int nTry = 1;
-                while(TRUE)
+                while( true )
                 {
                     ++nTry;
                     CPLString osTmpName;
@@ -3379,7 +3379,7 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
     }
 
     int bRet = TRUE;
-    while( TRUE )
+    while( true )
     {
         OGRFeature      *poDstFeature = NULL;
 

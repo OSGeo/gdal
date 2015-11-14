@@ -7569,8 +7569,8 @@ CPLErr GTiffDataset::CleanOverviews()
     int iThisOffset = 1;
 
     TIFFSetDirectory( hTIFF, 0 );
-    
-    for( ; TRUE; ) 
+
+    while( true )
     {
         for( i = 0; i < nOverviewCount; i++ )
         {

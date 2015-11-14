@@ -174,7 +174,7 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
     int i = 0, nCount = 0;
     int nWorkLineLength = strlen(pszWorkLine);
 
-    while( TRUE )
+    while( true )
     {
         for( ; pszWorkLine[i] != '\0'; i++ )
         {
@@ -1265,7 +1265,7 @@ char** OGRCSVLayer::GetNextLineTokens()
 /* -------------------------------------------------------------------- */
     char **papszTokens;
 
-    while(TRUE)
+    while( true )
     {
         papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, bDontHonourStrings,
                                             FALSE, bMergeDelimiter );
@@ -1633,7 +1633,7 @@ OGRFeature *OGRCSVLayer::GetNextFeature()
 /*      Read features till we find one that satisfies our current       */
 /*      spatial criteria.                                               */
 /* -------------------------------------------------------------------- */
-    while( TRUE )
+    while( true )
     {
         poFeature = GetNextUnfilteredFeature();
         if( poFeature == NULL )
@@ -2242,7 +2242,7 @@ GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
 
         nTotalFeatures = 0;
         int bLastWasNewLine = FALSE;
-        while( TRUE )
+        while( true )
         {
             int nRead = VSIFReadL(szBuffer, 1, 4096, fpCSV);
             szBuffer[nRead] = 0;
@@ -2269,7 +2269,7 @@ GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
     {
         char **papszTokens;
         nTotalFeatures = 0;
-        while(TRUE)
+        while( true )
         {
             papszTokens = GetNextLineTokens();
             if( papszTokens == NULL )

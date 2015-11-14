@@ -276,7 +276,7 @@ OGRFeature *OGRPGResultLayer::GetNextFeature()
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
         poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(m_iGeomFieldFilter);
 
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

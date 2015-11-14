@@ -541,7 +541,7 @@ GDALDataset* OGRWFSJoinLayer::FetchGetFeature()
 
 OGRFeature* OGRWFSJoinLayer::GetNextFeature()
 {
-    while(TRUE)
+    while( true )
     {
         if (bPagingActive && nFeatureRead == nPagingStartIndex + nFeatureCountRequested)
         {

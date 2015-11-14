@@ -226,8 +226,8 @@ int DDFField::GetRepeatCount()
 /*      much value for testing.                                         */
 /* -------------------------------------------------------------------- */
     int         iOffset = 0, iRepeatCount = 1;
-    
-    while( TRUE )
+
+    while( true )
     {
         for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
         {

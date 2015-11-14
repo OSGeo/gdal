@@ -63,7 +63,7 @@ static int ReadInt( VSILFILE *fp )
     int nRead = 0;
     vsi_l_offset nOffset = VSIFTellL(fp);
 
-    while (TRUE)
+    while( true )
     {
         if (VSIFReadL(&c, 1, 1, fp) != 1)
         {
@@ -89,7 +89,7 @@ static int ReadInt( VSILFILE *fp )
         return 0;
     }
 
-    while (TRUE)
+    while( true )
     {
         if (VSIFReadL(&c, 1, 1, fp) != 1)
             return nSign * nVal;

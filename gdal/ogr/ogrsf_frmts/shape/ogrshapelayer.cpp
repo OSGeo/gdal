@@ -736,7 +736,7 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Loop till we find a feature matching our criteria.              */
 /* -------------------------------------------------------------------- */
-    while( TRUE )
+    while( true )
     {
         //OGREnvelope oShapeExtent;
 
@@ -1075,7 +1075,7 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
     SHPObject sShape;
     memset(&sShape, 0, sizeof(sShape));
 
-    while( TRUE )
+    while( true )
     {
         SHPObject* psShape = NULL;
         int iShape = -1;

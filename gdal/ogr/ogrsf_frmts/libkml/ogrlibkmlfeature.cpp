@@ -155,7 +155,7 @@ static void OGRLIBKMLGetMaxDimensions(const char* pszURL,
     int nMaxLevel = 0;
     *panMaxWidth = 0;
     *panMaxHeight = 0;
-    while( TRUE )
+    while( true )
     {
         CPLString osURL = OGRLIBKMLReplaceLevelXYInURL(pszURL, nMaxLevel, 0, 0);
         if( strstr(osURL, ".kmz/") )

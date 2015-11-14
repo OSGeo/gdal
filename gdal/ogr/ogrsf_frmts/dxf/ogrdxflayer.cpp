@@ -2055,7 +2055,7 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
 OGRFeature *OGRDXFLayer::GetNextFeature()
 
 {
-    while( TRUE )
+    while( true )
     {
         OGRFeature *poFeature = GetNextUnfilteredFeature();
 

@@ -876,7 +876,7 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         int nDstBlockXSize = nBufXSize;
         int nDstBlockYSize = nBufYSize;
         int nFullResXChunk, nFullResYChunk;
-        while(TRUE)
+        while( true )
         {
             nFullResXChunk = 3 + (int)(nDstBlockXSize * dfXRatioDstToSrc);
             nFullResYChunk = 3 + (int)(nDstBlockYSize * dfYRatioDstToSrc);
@@ -1285,7 +1285,7 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         int nDstBlockXSize = nBufXSize;
         int nDstBlockYSize = nBufYSize;
         int nFullResXChunk, nFullResYChunk;
-        while(TRUE)
+        while( true )
         {
             nFullResXChunk = 3 + (int)(nDstBlockXSize * dfXRatioDstToSrc);
             nFullResYChunk = 3 + (int)(nDstBlockYSize * dfYRatioDstToSrc);

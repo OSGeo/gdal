@@ -102,7 +102,7 @@ _tiffWriteProc(thandle_t th, tdata_t buf, tsize_t size)
     {
         const GByte* pabyData = (const GByte*) buf;
         tsize_t nRemainingBytes = size;
-        while( TRUE )
+        while( true )
         {
             if( psGTH->nWriteBufferSize + nRemainingBytes <= BUFFER_SIZE )
             {

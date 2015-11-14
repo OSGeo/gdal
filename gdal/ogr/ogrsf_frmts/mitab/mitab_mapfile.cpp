@@ -497,7 +497,7 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
         {
             int nCurGarbBlock = m_poHeader->m_nFirstGarbageBlock;
             m_oBlockManager.PushGarbageBlockAsLast(nCurGarbBlock);
-            while(TRUE)
+            while( true )
             {
                 GUInt16 nBlockType;
                 int     nNextGarbBlockPtr;

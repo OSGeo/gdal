@@ -335,7 +335,7 @@ int OGREDIGEODataSource::ReadDIC()
 
     const char* pszLine;
     CPLString osRTY, osRID, osLAB, osTYP;
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
         if (pszLine != NULL)
@@ -396,7 +396,7 @@ int OGREDIGEODataSource::ReadSCD()
     CPLString osRTY, osRID, osNameRID, osKND;
     strListType aosAttrRID;
     int nWidth = 0;
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
         if (pszLine != NULL)
@@ -504,7 +504,7 @@ int OGREDIGEODataSource::ReadQAL()
     const char* pszLine;
     CPLString osRTY, osRID;
     int nODA = 0, nUDA = 0;
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
         if (pszLine != NULL)
@@ -647,7 +647,7 @@ int OGREDIGEODataSource::ReadVEC(const char* pszVECName)
     CPLString osQUP_RID;
     int bIso8859_1 = FALSE;
 
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
 skip_read_next_line:
@@ -824,7 +824,7 @@ skip_read_next_line:
         {
             CPLString osAttVal = pszLine + 8;
             int bSkipReadNextLine = FALSE;
-            while(TRUE)
+            while( true )
             {
                 pszLine = CPLReadLine2L(fp, 81, NULL);
                 if (pszLine != NULL &&

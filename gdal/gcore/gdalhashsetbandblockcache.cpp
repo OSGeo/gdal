@@ -275,7 +275,7 @@ GDALRasterBlock *GDALHashSetBandBlockCache::TryGetLockedBlockRef( int nXBlockOff
 {
     GDALRasterBlock oBlockForLookup(nXBlockOff, nYBlockOff);
     GDALRasterBlock* poBlock;
-    while( TRUE )
+    while( true )
     {
         {
             CPLLockHolderOptionalLockD( hLock );

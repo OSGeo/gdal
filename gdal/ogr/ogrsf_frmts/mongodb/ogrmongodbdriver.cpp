@@ -1194,8 +1194,8 @@ OGRFeature* OGRMongoDBLayer::GetNextFeature()
                                               m_poDS->GetBatchSize());
             m_bCursorValid = TRUE;
         }
-    
-        while(TRUE)
+
+        while( true )
         {
             if( !m_poCursor->more() )
                 return NULL;
@@ -1643,7 +1643,7 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
 
         // Workaround bug in  JParse::dateObject() with { "$numberLong": "-123456" }
         // that cannot be parsed successfully
-        while(TRUE)
+        while( true )
         {
             size_t i = osJSon.find("{ \"$date\" : { \"$numberLong\" : \"-");
             if( i == std::string::npos )

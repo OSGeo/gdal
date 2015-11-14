@@ -611,7 +611,7 @@ bool VFKFeature::LoadGeometryLineStringSBP()
         return false;
     
     poLine = this;
-    while (TRUE)
+    while( true )
     {
         id   = poLine->GetProperty(idxBp_Id)->GetValueI();
         ipcb = poLine->GetProperty(idxPCB)->GetValueI();

@@ -805,7 +805,7 @@ void EnvisatDataset::CollectADSMetadata()
 void EnvisatDataset::CollectMetadata( EnvisatFile_HeaderFlag  eMPHOrSPH )
 
 {
-    for( int iKey = 0; TRUE; iKey++ )
+    for( int iKey = 0; true; iKey++ )
     {
         const char *pszKey
             = EnvisatFile_GetKeyByIndex(hEnvisatFile, eMPHOrSPH, iKey);

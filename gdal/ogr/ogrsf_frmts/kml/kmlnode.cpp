@@ -234,7 +234,7 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
         {
             const char* pszCoord = (*pvsContent_)[nCountP].c_str();
             int nComma = 0;
-            while(TRUE)
+            while( true )
             {
                 pszCoord = strchr(pszCoord, ',');
                 if (pszCoord)

@@ -422,7 +422,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
         //         FeatureCountToEstablishFeatureDefn);
         int bFirst = TRUE;
         int nAlreadyQueried = 0;
-        while( TRUE )
+        while( true )
         {
             json_object* poResponse;
             CPLString osRequest, osPostData;
@@ -808,7 +808,7 @@ OGRFeature *OGRElasticLayer::GetNextFeature()
 {
     FinalizeFeatureDefn();
 
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

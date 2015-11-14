@@ -199,7 +199,7 @@ void OGRGeomediaLayer::ResetReading()
 OGRFeature *OGRGeomediaLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

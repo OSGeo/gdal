@@ -168,7 +168,7 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
     /* loop till we find and translate a feature meeting all our
        requirements
     */
-    while (TRUE) {
+    while( true ) {
         /* cleanup last feature, and get a new raw vfk feature */
         if (poOGRGeom != NULL) {
             delete poOGRGeom;

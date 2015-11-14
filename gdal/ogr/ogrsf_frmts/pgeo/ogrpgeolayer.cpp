@@ -205,7 +205,7 @@ void OGRPGeoLayer::ResetReading()
 OGRFeature *OGRPGeoLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

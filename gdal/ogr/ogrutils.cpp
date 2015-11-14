@@ -1150,8 +1150,8 @@ double OGRFastAtof(const char* pszStr)
         dfSign = -1.0;
         p++;
     }
-    
-    while(TRUE)
+
+    while( true )
     {
         if (*p >= '0' && *p <= '9')
         {
@@ -1168,9 +1168,9 @@ double OGRFastAtof(const char* pszStr)
         else
             return dfSign * dfVal;
     }
-    
+
     unsigned int countFractionnal = 0;
-    while(TRUE)
+    while( true )
     {
         if (*p >= '0' && *p <= '9')
         {

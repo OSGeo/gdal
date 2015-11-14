@@ -155,7 +155,7 @@ OGRFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 OGRFeature *OGRDXFBlocksLayer::GetNextFeature()
 
 {
-    while( TRUE )
+    while( true )
     {
         OGRFeature *poFeature = GetNextUnfilteredFeature();
 

@@ -193,7 +193,7 @@ void OGRWalkLayer::ResetReading()
 OGRFeature *OGRWalkLayer::GetNextFeature()
 
 {
-    while( TRUE )
+    while( true )
     {
         OGRFeature      *poFeature;
 

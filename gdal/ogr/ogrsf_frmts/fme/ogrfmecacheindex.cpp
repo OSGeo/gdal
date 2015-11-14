@@ -365,7 +365,7 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
     if( psTree == NULL )
         return FALSE;
 
-    for( psLastDSNode = NULL; TRUE; psLastDSNode = psDSNode )
+    for( psLastDSNode = NULL; true; psLastDSNode = psDSNode )
     {
         if( psLastDSNode != NULL )
             psDSNode = psLastDSNode->psNext;

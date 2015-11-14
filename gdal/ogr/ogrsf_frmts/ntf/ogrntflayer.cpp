@@ -128,7 +128,7 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
 /*      Read features till we find one that satisfies our current       */
 /*      spatial criteria.                                               */
 /* -------------------------------------------------------------------- */
-    while( TRUE )
+    while( true )
     {
         poFeature = poCurrentReader->ReadOGRFeature( this );
         if( poFeature == NULL )

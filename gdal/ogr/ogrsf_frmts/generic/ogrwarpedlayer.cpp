@@ -221,7 +221,7 @@ OGRFeature *OGRWarpedLayer::WarpedFeatureToSrcFeature(OGRFeature* poFeature)
 
 OGRFeature *OGRWarpedLayer::GetNextFeature()
 {
-    while(TRUE)
+    while( true )
     {
         OGRFeature* poFeature = m_poDecoratedLayer->GetNextFeature();
         if( poFeature == NULL )

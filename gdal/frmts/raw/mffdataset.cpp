@@ -788,7 +788,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     int nSkipped = 0;
-    for( int nRawBand = 0; TRUE; nRawBand++ )
+    for( int nRawBand = 0; true; nRawBand++ )
     {
         const char *pszExtension = NULL;
 

@@ -92,8 +92,8 @@ void OGRIDFDataSource::Parse()
     IDFLayerType eLayerType = LAYER_OTHER;
     
     // We assume that layers are in the order Node, Link, LinkCoordinate
-    
-    while(TRUE)
+
+    while( true )
     {
         const char* pszLine = CPLReadLineL(fpL);
         if( pszLine == NULL )

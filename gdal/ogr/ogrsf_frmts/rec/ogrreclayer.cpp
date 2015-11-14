@@ -279,7 +279,7 @@ OGRFeature *OGRRECLayer::GetNextFeature()
 /*      Read features till we find one that satisfies our current       */
 /*      spatial criteria.                                               */
 /* -------------------------------------------------------------------- */
-    while( TRUE )
+    while( true )
     {
         poFeature = GetNextUnfilteredFeature();
         if( poFeature == NULL )

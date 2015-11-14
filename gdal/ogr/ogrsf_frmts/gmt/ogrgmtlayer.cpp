@@ -452,7 +452,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Read lines associated with this feature.                        */
 /* -------------------------------------------------------------------- */
-    for( ; TRUE; ReadLine() )
+    for( ; true; ReadLine() )
     {
         if( osLine.length() == 0 )
             break;
@@ -683,7 +683,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 OGRFeature *OGRGmtLayer::GetNextFeature()
 
 {
-    while( TRUE )
+    while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
 

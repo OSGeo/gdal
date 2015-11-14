@@ -537,7 +537,7 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
 /*      include values for which the selected fields is NULL.           */
 /* -------------------------------------------------------------------- */
 
-    while( TRUE )
+    while( true )
     {
 
         poFeature = poSrcLayer->GetNextFeature();
@@ -1100,11 +1100,11 @@ static int DissolveLayer( OGRDataSource *poSrcDS,
 // 
 //     if( nGroupTransactions )
 //         poDstLayer->StartTransaction();
-// 
-//     while( TRUE )
+//
+//     while( true )
 //     {
 //         OGRFeature      *poDstFeature = NULL;
-// 
+//
 //         if( nFIDToFetch != OGRNullFID )
 //         {
 //             // Only fetch feature on first pass.

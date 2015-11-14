@@ -90,7 +90,7 @@ OGRFeature *OGRARCGENLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)
@@ -122,7 +122,7 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
 
     if (wkbFlatten(eType) == wkbPoint)
     {
-        while(TRUE)
+        while( true )
         {
             pszLine = CPLReadLine2L(fp,256,NULL);
             if (pszLine == NULL || EQUAL(pszLine, "END"))
@@ -159,7 +159,7 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
         (wkbFlatten(eType) == wkbPolygon) ? new OGRLinearRing() : NULL;
     OGRLineString* poLS =
         (wkbFlatten(eType) == wkbLineString) ? new OGRLineString() : poLR;
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fp,256,NULL);
         if (pszLine == NULL)

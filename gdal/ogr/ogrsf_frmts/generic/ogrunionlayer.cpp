@@ -688,7 +688,7 @@ OGRFeature *OGRUnionLayer::GetNextFeature()
     if( iCurLayer == nSrcLayers )
         return NULL;
 
-    while(TRUE)
+    while( true )
     {
         OGRFeature* poSrcFeature = papoSrcLayers[iCurLayer]->GetNextFeature();
         if( poSrcFeature == NULL )

@@ -165,7 +165,7 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
         return NULL;
     poKMLFile->selectLayer(nLayerNumber_);
 
-    while(TRUE)
+    while( true )
     {
         Feature *poFeatureKML = NULL;
         poFeatureKML = poKMLFile->getFeature(iNextKMLId_++, nLastAsked, nLastCount);

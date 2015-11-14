@@ -277,8 +277,8 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 /* -------------------------------------------------------------------- */
 /*      Count the columns.                                              */
 /* -------------------------------------------------------------------- */
-    for( nRawColumnCount = 0; TRUE; nRawColumnCount++ )
-    {                                                           
+    for( nRawColumnCount = 0; true; nRawColumnCount++ )
+    {
         OCIParam     *hParmDesc;
 
         if( OCIParamGet( hStatement, OCI_HTYPE_STMT, poSession->hError, 

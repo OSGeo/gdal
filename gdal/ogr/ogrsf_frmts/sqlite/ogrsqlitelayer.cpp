@@ -558,7 +558,7 @@ void OGRSQLiteLayer::ResetReading()
 OGRFeature *OGRSQLiteLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

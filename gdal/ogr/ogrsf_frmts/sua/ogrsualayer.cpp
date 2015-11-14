@@ -106,7 +106,7 @@ OGRFeature *OGRSUALayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)
@@ -187,7 +187,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
     if (bEOF)
         return NULL;
 
-    while(TRUE)
+    while( true )
     {
         if (bFirst && bHasLastLine)
         {

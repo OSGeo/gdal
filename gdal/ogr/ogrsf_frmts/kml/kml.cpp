@@ -355,7 +355,7 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
             std::size_t nPos = 0;
             std::size_t nLength = sData.length();
             const char* pszData = sData.c_str();
-            while(TRUE)
+            while( true )
             {
                 // Cut off whitespaces
                 while(nPos < nLength &&

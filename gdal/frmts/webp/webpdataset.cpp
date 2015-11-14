@@ -211,7 +211,7 @@ char  **WEBPDataset::GetMetadata( const char * pszDomain )
         VSIFSeekL(fpImage, 12, SEEK_SET);
 
         bool bFirst = true;
-        while(TRUE)
+        while( true )
         {
             char szHeader[5];
             GUInt32 nChunkSize;

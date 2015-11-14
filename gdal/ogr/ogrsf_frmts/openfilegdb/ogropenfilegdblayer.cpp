@@ -1349,13 +1349,13 @@ OGRFeature* OGROpenFileGDBLayer::GetNextFeature()
     if( !BuildLayerDefinition() || m_bEOF )
         return NULL;
 
-    while( TRUE )
+    while( true )
     {
         OGRFeature *poFeature = NULL;
 
         if( m_nFilteredFeatureCount >= 0 )
         {
-            while( TRUE )
+            while( true )
             {
                 if( m_iCurFeat >= m_nFilteredFeatureCount )
                 {
@@ -1377,7 +1377,7 @@ OGRFeature* OGROpenFileGDBLayer::GetNextFeature()
         }
         else if( m_poIterator != NULL )
         {
-            while( TRUE )
+            while( true )
             {
                 int iRow = m_poIterator->GetNextRowSortedByFID();
                 if( iRow < 0 )
@@ -1397,7 +1397,7 @@ OGRFeature* OGROpenFileGDBLayer::GetNextFeature()
         }
         else
         {
-            while( TRUE )
+            while( true )
             {
                 if( m_iCurFeat == m_poLyrTable->GetTotalRecordCount() )
                 {

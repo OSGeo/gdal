@@ -182,7 +182,7 @@ OGRFeature *OGRFMELayerCached::GetNextFeature()
 {
     OGRFeature      *poFeature;
 
-    while( TRUE ) 
+    while( true )
     {
         poFeature = ReadNextIndexFeature();
 
