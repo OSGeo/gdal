@@ -1394,10 +1394,12 @@ void OGRVRTLayer::ClipAndAssignSRS(OGRFeature* poFeature)
             poGeom != NULL)
         {
             poGeom = poGeom->Intersection(apoGeomFieldProps[i]->poSrcRegion);
+            if (poGeom != NULL && apoGeomFieldProps[i]->poSRS != NULL)
+                poGeom->assignSpatialReference(apoGeomFieldProps[i]->poSRS);
+
             poFeature->SetGeomFieldDirectly(i, poGeom);
         }
-
-        if (poGeom != NULL && apoGeomFieldProps[i]->poSRS != NULL)
+        else if (poGeom != NULL && apoGeomFieldProps[i]->poSRS != NULL)
             poGeom->assignSpatialReference(apoGeomFieldProps[i]->poSRS);
     }
 }

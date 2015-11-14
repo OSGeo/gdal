@@ -1091,6 +1091,7 @@ int OGREDIGEODataSource::BuildLineStrings()
         OGRFeature* poFeature = CreateFeature(osFEA);
         if (poFeature)
         {
+            OGRGeometry* poGeom = NULL;
             OGRMultiLineString* poMulti = NULL;
             for(int k=0;k<(int)aosPAR.size();k++)
             {
@@ -1107,27 +1108,28 @@ int OGREDIGEODataSource::BuildLineStrings()
                         poLS->setPoint(i, arc[i].first, arc[i].second);
                     }
 
-                    if (poFeature->GetGeometryRef() != NULL)
+                    if (poGeom != NULL)
                     {
                         if (poMulti == NULL)
                         {
-                            OGRLineString* poPrevLS =
-                                (OGRLineString*) poFeature->StealGeometry();
                             poMulti = new OGRMultiLineString();
-                            poMulti->addGeometryDirectly(poPrevLS);
-                            poFeature->SetGeometryDirectly(poMulti);
+                            poMulti->addGeometryDirectly(poGeom);
+                            poGeom = poMulti;
                         }
                         poMulti->addGeometryDirectly(poLS);
                     }
                     else
-                        poFeature->SetGeometryDirectly(poLS);
+                        poGeom = poLS;
                 }
                 else
                     CPLDebug("EDIGEO",
                              "ERROR: Cannot find ARC %s", aosPAR[k].c_str());
             }
-            if (poFeature->GetGeometryRef())
-                poFeature->GetGeometryRef()->assignSpatialReference(poSRS);
+            if( poGeom != NULL )
+            {
+                poGeom->assignSpatialReference(poSRS);
+                poFeature->SetGeometryDirectly(poGeom);
+            }
         }
     }
 

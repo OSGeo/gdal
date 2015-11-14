@@ -7830,8 +7830,7 @@ int    TABCollection::SyncOGRGeometryCollection(GBool bSyncRegion,
     // poGeometry is defined in the OGRFeature class
     if (poThisGeom == NULL)
     {
-        poThisGeom = poGeomColl = new OGRGeometryCollection();
-        SetGeometryDirectly(poGeomColl);
+        poGeomColl = new OGRGeometryCollection();
     }
     else if (wkbFlatten(poThisGeom->getGeometryType())==wkbGeometryCollection)
     {
@@ -7890,6 +7889,9 @@ int    TABCollection::SyncOGRGeometryCollection(GBool bSyncRegion,
 
     if(bSyncMpoint && m_poMpoint && m_poMpoint->GetGeometryRef() != NULL)
         poGeomColl->addGeometry(m_poMpoint->GetGeometryRef());
+
+    if( poThisGeom == NULL )
+        SetGeometryDirectly(poGeomColl);
 
     return 0;
 }

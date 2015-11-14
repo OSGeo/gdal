@@ -807,10 +807,13 @@ OGRFeature *OGRSEGUKOOALineLayer::GetNextRawFeature()
                     if (poBaseLayer->GetSpatialRef())
                         poLS->assignSpatialReference(
                                     poBaseLayer->GetSpatialRef());
+                    poLS->addPoint(poPoint);
                     poFeature->SetGeometryDirectly(poLS);
                 }
-
-                poLS->addPoint(poPoint);
+                else
+                {
+                    poLS->addPoint(poPoint);
+                }
             }
         }
 

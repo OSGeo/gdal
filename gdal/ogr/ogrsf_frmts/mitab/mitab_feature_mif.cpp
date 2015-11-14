@@ -794,8 +794,8 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                          fp->GetYTrans(CPLAtof(papszToken[2])));
         poLine->setPoint(1, fp->GetXTrans(CPLAtof(papszToken[3])),
                          fp->GetYTrans(CPLAtof(papszToken[4])));
-        SetGeometryDirectly(poLine);
         poLine->getEnvelope(&sEnvelope);
+        SetGeometryDirectly(poLine);
         SetMBR(sEnvelope.MinX, sEnvelope.MinY,sEnvelope.MaxX,sEnvelope.MaxY);
     }
     else if (STARTS_WITH_CI(papszToken[0], "PLINE"))
@@ -875,11 +875,11 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     CPLAssert(FALSE); // Just in case OGR is modified
                 }
             }
+            poMultiLine->getEnvelope(&sEnvelope);
             if (SetGeometryDirectly(poMultiLine) != OGRERR_NONE)
             {
                 CPLAssert(FALSE); // Just in case OGR is modified
             }
-            poMultiLine->getEnvelope(&sEnvelope);
             SetMBR(sEnvelope.MinX, sEnvelope.MinY,
                    sEnvelope.MaxX,sEnvelope.MaxY);
         }
@@ -898,8 +898,8 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 poLine->setPoint(i,fp->GetXTrans(CPLAtof(papszToken[0])),
                                  fp->GetYTrans(CPLAtof(papszToken[1])));
             }
-            SetGeometryDirectly(poLine);
             poLine->getEnvelope(&sEnvelope);
+            SetGeometryDirectly(poLine);
             SetMBR(sEnvelope.MinX, sEnvelope.MinY,
                    sEnvelope.MaxX,sEnvelope.MaxY);
         }
@@ -1117,8 +1117,8 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     if (tabPolygons)
         delete[] tabPolygons;
 
-    SetGeometryDirectly(poGeometry);
     poGeometry->getEnvelope(&sEnvelope);
+    SetGeometryDirectly(poGeometry);
     
     SetMBR(sEnvelope.MinX, sEnvelope.MinY, sEnvelope.MaxX, sEnvelope.MaxY);
 
@@ -2153,12 +2153,12 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         CSLDestroy(papszToken);
     }
 
+    poMultiPoint->getEnvelope(&sEnvelope);
     if( SetGeometryDirectly( poMultiPoint ) != OGRERR_NONE)
     {
         CPLAssert(FALSE); // Just in case OGR is modified
     }
 
-    poMultiPoint->getEnvelope(&sEnvelope);
     SetMBR(sEnvelope.MinX, sEnvelope.MinY,
            sEnvelope.MaxX,sEnvelope.MaxY);
 
@@ -2345,9 +2345,9 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     if(m_poMpoint && m_poMpoint->GetGeometryRef() != NULL)
         poGeomColl->addGeometry(m_poMpoint->GetGeometryRef());
 
+    poGeomColl->getEnvelope(&sEnvelope);
     this->SetGeometryDirectly(poGeomColl);
 
-    poGeomColl->getEnvelope(&sEnvelope);
     SetMBR(sEnvelope.MinX, sEnvelope.MinY,
            sEnvelope.MaxX, sEnvelope.MaxY);
 
