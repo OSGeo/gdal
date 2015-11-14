@@ -3514,7 +3514,7 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
 
             for( int iGeom = 0; iGeom < nDstGeomFieldCount; iGeom ++ )
             {
-                OGRGeometry* poDstGeometry = poDstFeature->GetGeomFieldRef(iGeom);
+                OGRGeometry* poDstGeometry = poDstFeature->StealGeometry(iGeom);
                 if (poDstGeometry == NULL)
                     continue;
 
@@ -3523,7 +3523,7 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                     /* For -explodecollections, extract the iPart(th) of the geometry */
                     OGRGeometry* poPart = ((OGRGeometryCollection*)poDstGeometry)->getGeometryRef(iPart);
                     ((OGRGeometryCollection*)poDstGeometry)->removeGeometry(iPart, FALSE);
-                    poDstFeature->SetGeomFieldDirectly(iGeom, poPart);
+                    delete poDstGeometry;
                     poDstGeometry = poPart;
                 }
 
@@ -3532,7 +3532,7 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                     SetZ(poDstGeometry, poFeature->GetFieldAsDouble(iSrcZField));
                     /* This will correct the coordinate dimension to 3 */
                     OGRGeometry* poDupGeometry = poDstGeometry->clone();
-                    poDstFeature->SetGeomFieldDirectly(iGeom, poDupGeometry);
+                    delete poDstGeometry;
                     poDstGeometry = poDupGeometry;
                 }
 
@@ -3554,7 +3554,7 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                         OGRGeometry* poNewGeom = poDstGeometry->SimplifyPreserveTopology(dfGeomOpParam);
                         if (poNewGeom)
                         {
-                            poDstFeature->SetGeomFieldDirectly(iGeom, poNewGeom);
+                            delete poDstGeometry;
                             poDstGeometry = poNewGeom;
                         }
                     }
@@ -3565,13 +3565,13 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                     OGRGeometry* poClipped = poDstGeometry->Intersection(poClipSrc);
                     if (poClipped == NULL || poClipped->IsEmpty())
                     {
-                        OGRGeometryFactory::destroyGeometry(poClipped);
+                        delete poClipped;
+                        delete poDstGeometry;
                         goto end_loop;
                     }
-                    poDstFeature->SetGeomFieldDirectly(iGeom, poClipped);
                     poDstGeometry = poClipped;
                 }
-                
+
                 OGRCoordinateTransformation* poCT = psInfo->papoCT[iGeom];
                 if( !bTransform )
                     poCT = poGCPCoordTrans;
@@ -3592,6 +3592,7 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                                 {
                                     OGRFeature::DestroyFeature( poFeature );
                                     OGRFeature::DestroyFeature( poDstFeature );
+                                    delete poDstGeometry;
                                     return FALSE;
                                 }
                             }
@@ -3603,11 +3604,12 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                         {
                             OGRFeature::DestroyFeature( poFeature );
                             OGRFeature::DestroyFeature( poDstFeature );
+                            delete poDstGeometry;
                             return FALSE;
                         }
                     }
 
-                    poDstFeature->SetGeomFieldDirectly(iGeom, poReprojectedGeom);
+                    delete poDstGeometry;
                     poDstGeometry = poReprojectedGeom;
                 }
                 else if (poOutputSRS != NULL)
@@ -3623,32 +3625,33 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                     OGRGeometry* poClipped = poDstGeometry->Intersection(poClipDst);
                     if (poClipped == NULL || poClipped->IsEmpty())
                     {
-                        OGRGeometryFactory::destroyGeometry(poClipped);
+                        delete poClipped;
+                        delete poDstGeometry;
                         goto end_loop;
                     }
 
-                    poDstFeature->SetGeomFieldDirectly(iGeom, poClipped);
+                    delete poDstGeometry;
+                    poDstGeometry = poClipped;
                 }
 
                 if( eGType != -2 )
                 {
-                    poDstFeature->SetGeomFieldDirectly(iGeom, 
-                        OGRGeometryFactory::forceTo(
-                            poDstFeature->StealGeometry(iGeom), (OGRwkbGeometryType)eGType) );
+                    poDstGeometry = OGRGeometryFactory::forceTo(
+                            poDstGeometry, (OGRwkbGeometryType)eGType);
                 }
                 else if( eGeomConversion == GEOMTYPE_PROMOTE_TO_MULTI ||
                          eGeomConversion == GEOMTYPE_CONVERT_TO_LINEAR ||
                          eGeomConversion == GEOMTYPE_CONVERT_TO_CURVE )
                 {
-                    poDstGeometry = poDstFeature->StealGeometry(iGeom);
                     if( poDstGeometry != NULL )
                     {
                         OGRwkbGeometryType eTargetType = poDstGeometry->getGeometryType();
                         eTargetType = ConvertType(eGeomConversion, eTargetType);
                         poDstGeometry = OGRGeometryFactory::forceTo(poDstGeometry, eTargetType);
-                        poDstFeature->SetGeomFieldDirectly(iGeom, poDstGeometry);
                     }
                 }
+
+                poDstFeature->SetGeomFieldDirectly(iGeom, poDstGeometry);
             }
 
             CPLErrorReset();
