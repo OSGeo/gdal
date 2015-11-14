@@ -266,8 +266,8 @@ sub CreateField {
     } else {
         ($params{Defn}) = @_;
     }
-    for (keys %defaults) {
-        $params{$_} = $defaults{$_} unless defined $params{$_};
+    for my $k (keys %defaults) {
+        $params{$k} //= $defaults{$k};
     }
     if (blessed($params{Defn}) and $params{Defn}->isa('Geo::OGR::FieldDefn')) {
         $self->_CreateField($params{Defn}, $params{ApproxOK});
@@ -506,7 +506,7 @@ sub new {
     }
     my $fields = $schema{Fields};
     confess "The Fields argument is not a reference to an array." if $fields and ref($fields) ne 'ARRAY';
-    $schema{Name} = '' unless exists $schema{Name};
+    $schema{Name} //= '';
     my $self = Geo::OGRc::new_FeatureDefn($schema{Name});
     bless $self, $pkg;
     my $gt = $schema{GeometryType};
@@ -577,7 +577,7 @@ sub AddField {
     } elsif (@_ % 2 == 0) {
         %params = @_;
     }
-    $params{Type} = '' unless defined $params{Type};
+    $params{Type} //= '';
     if (exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params{Type}}) {
         my $fd = Geo::OGR::FieldDefn->new(%params);
         $self->AddFieldDefn($fd);
@@ -766,7 +766,7 @@ sub Row {
                 }
             }
             next if $f;
-            carp "Feature->Row: Unknown field: '$name'.";
+            carp "Unknown field: '$name'.";
         }
     }
     return unless defined wantarray;
@@ -931,16 +931,16 @@ sub SetField {
     elsif ($type == $Geo::OGR::OFTDate) {
         # year, month, day, hour, minute, second, timezone
         for my $i (0..6) {
-            $list->[$i] = 0 unless defined $list->[$i];
+            $list->[$i] //= 0;
         }
         _SetField($self, $field, @$list[0..6]);
     }
     elsif ($type == $Geo::OGR::OFTTime) {
-        $list->[3] = 0 unless defined $list->[3];
+        $list->[3] //= 0;
         _SetField($self, $field, 0, 0, 0, @$list[0..3]);
     }
     elsif ($type == $Geo::OGR::OFTDateTime) {
-        $list->[6] = 0 unless defined $list->[6];
+        $list->[6] //= 0;
         _SetField($self, $field, @$list[0..6]);
     }
     else {
@@ -991,7 +991,7 @@ sub Geometry {
             confess "$@" if $@;
             $GEOMETRIES{tied(%{$geometry})} = $self;
         } elsif (ref($geometry) eq 'HASH') {
-            $geometry->{GeometryType} = $type unless exists $geometry->{GeometryType};
+            $geometry->{GeometryType} //= $type;
             eval {
                 $geometry = Geo::OGR::Geometry->new($geometry);
             };
@@ -1096,7 +1096,7 @@ sub new {
             if ($Geo::OGR::FieldDefn::SCHEMA_KEYS{$key}) {
                 $args{$key} = $named{$key};
             } else {
-                carp "Unrecognized argument: '$key'." if $key ne 'Index';
+                carp "Unknown parameter: '$key'." if $key ne 'Index';
             }
         }
         $name = $args{Name} if exists $args{Name};
@@ -1232,7 +1232,7 @@ sub new {
             if ($Geo::OGR::GeomFieldDefn::SCHEMA_KEYS{$key}) {
                 $args{$key} = $named{$key};
             } else {
-                carp "Unrecognized argument: '$key'." if $key ne 'Index';
+                carp "Unknown parameter: '$key'." if $key ne 'Index';
             }
         }
         $name = $args{Name} if exists $args{Name};
@@ -1430,17 +1430,17 @@ sub ApproximateArcAngles {
         );
     for my $p (keys %p) {
         if (exists $default{$p}) {
-            $p{$p} = $default{$p} unless defined $p{$p};
+            $p{$p} //= $default{$p};
         } else {
-            carp "Unknown named parameter: '$p'.";
+            carp "Unknown parameter: '$p'.";
         }
     }
     for my $p (keys %default) {
-        $p{$p} = $default{$p} unless exists $p{$p};
+        $p{$p} //= $default{$p};
     }
     confess "Usage: Center => [x,y,z]." unless ref($p{Center}) eq 'ARRAY';
     for my $i (0..2) {
-        $p{Center}->[$i] = 0 unless defined $p{Center}->[$i];
+        $p{Center}->[$i] //= 0;
     }
     return Geo::OGR::ApproximateArcAngles($p{Center}->[0], $p{Center}->[1], $p{Center}->[2], $p{PrimaryRadius}, $p{SecondaryAxis}, $p{Rotation}, $p{StartAngle}, $p{EndAngle}, $p{MaxAngleStepSizeDegrees});
 }
@@ -1455,10 +1455,10 @@ sub As {
     } else {
         ($param{Format}, $param{x}) = @_;
     }
-    $param{ByteOrder} = 'XDR' unless $param{ByteOrder};
+    $param{ByteOrder} //= 'XDR';
     my $f = $param{Format};
     my $x = $param{x};
-    $x = $param{ByteOrder} unless defined $x;
+    $x //= $param{ByteOrder};
     if ($f =~ /text/i) {
         return $self->AsText;
     } elsif ($f =~ /wkt/i) {
@@ -1473,8 +1473,8 @@ sub As {
         if ($f =~ /iso/i) {
             return $self->ExportToIsoWkb;
         } elsif ($f =~ /hexe/i) {
-            $param{srid} = 'XDR' unless $param{srid};
-            $x = $param{srid} unless defined $x;
+            $param{srid} //= 'XDR';
+            $x //= $param{srid};
             return $self->AsHEXEWKB($x);
         } elsif ($f =~ /hex/i) {
             return $self->AsHEXWKB;
@@ -1553,7 +1553,7 @@ sub SetPoint {
 
 sub GetPoint {
     my($self, $i) = @_;
-    $i = 0 unless defined $i;
+    $i //= 0;
     my $point = ($self->GetGeometryType & 0x80000000) == 0 ? GetPoint_2D($self, $i) : GetPoint_3D($self, $i);
     return @$point;
 }

@@ -20,6 +20,7 @@ t/03.t
 t/gdal.t
 t/ogr.t
 t/osr.t
+t/open.t
 Makefile.PL
 gdalconst_wrap.c
 gdal_wrap.cpp

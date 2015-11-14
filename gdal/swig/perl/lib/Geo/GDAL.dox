@@ -412,7 +412,7 @@ sub traverse {
 # Geo::GDAL::Band::WriteRaster. Note that Geo::GDAL::Band::ReadTile
 # and Geo::GDAL::Band::WriteTile have simpler interfaces that do not
 # require pack and unpack.
-# @param DataType A GDAL pixel data type (typically from $band->{DataType}).
+# @param DataType A GDAL pixel data type, typically from $band->DataType.
 # @return a character which can be used in Perl's pack and unpack.
 
 ## @ignore AccessTypes
