@@ -362,8 +362,8 @@ int DGNGetShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElem, int *pnColor )
 
 {
     int iLink;
-    
-    for( iLink = 0; TRUE; iLink++ )
+
+    for( iLink = 0; true; iLink++ )
     {
         int nLinkType, nLinkSize;
         unsigned char *pabyData;
@@ -402,8 +402,8 @@ int DGNGetAssocID( DGNHandle hDGN, DGNElemCore *psElem )
 
 {
     int iLink;
-    
-    for( iLink = 0; TRUE; iLink++ )
+
+    for( iLink = 0; true; iLink++ )
     {
         int nLinkType, nLinkSize;
         unsigned char *pabyData;
@@ -1029,8 +1029,8 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
         int iLink;
 
         fprintf( fp, "Attributes (%d bytes):\n", psElement->attr_bytes );
-        
-        for( iLink = 0; TRUE; iLink++ )
+
+        for( iLink = 0; true; iLink++ )
 
         {
             int nLinkType, nEntityNum=0, nMSLink=0, nLinkSize, i;

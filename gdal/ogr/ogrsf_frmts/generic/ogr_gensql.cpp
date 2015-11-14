@@ -1557,7 +1557,7 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Handle ordered sets.                                            */
 /* -------------------------------------------------------------------- */
-    while( TRUE )
+    while( true )
     {
         OGRFeature *poFeature;
 

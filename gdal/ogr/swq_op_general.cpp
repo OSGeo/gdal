@@ -219,7 +219,7 @@ char* OGRHStoreGetValue(const char* pszHStore, const char* pszSearchedKey)
     char* pszHStoreIter = pszHStoreDup;
     char* pszRet = NULL;
 
-    while( TRUE )
+    while( true )
     {
         char* pszKey, *pszValue;
         pszHStoreIter = OGRHStoreGetNextKeyValue(pszHStoreIter, &pszKey, &pszValue);

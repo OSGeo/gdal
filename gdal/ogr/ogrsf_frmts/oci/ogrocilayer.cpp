@@ -113,7 +113,7 @@ void OGROCILayer::ResetReading()
 OGRFeature *OGROCILayer::GetNextFeature()
 
 {
-    while( TRUE )
+    while( true )
     {
         OGRFeature      *poFeature;
 

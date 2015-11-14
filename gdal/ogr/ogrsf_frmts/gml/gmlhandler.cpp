@@ -758,7 +758,7 @@ void GMLHandler::DealWithAttributes(const char *pszName, int nLenName, void* att
     GMLReadState *poState = m_poReader->GetState();
     GMLFeatureClass *poClass = poState->m_poFeature->GetClass();
 
-    for(unsigned int idx=0; TRUE ;idx++)
+    for(unsigned int idx=0; true ;idx++)
     {
         char* pszAttrKey = NULL;
         char* pszAttrVal = NULL;

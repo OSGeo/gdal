@@ -138,7 +138,7 @@ static char *BuildTmpNam( const char *pszLayerName )
 /* -------------------------------------------------------------------- */
 /*      Look for an unused name.                                        */
 /* -------------------------------------------------------------------- */
-    for( i = -1; TRUE; i++ )
+    for( i = -1; true; i++ )
     {
         if( i == -1 )
             sprintf( szFilename, "%s%c%s_%s", 
@@ -675,7 +675,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
 /* -------------------------------------------------------------------- */
     FME_Boolean         eEndOfSchema;
 
-    while( TRUE )
+    while( true )
     {
         err = poReader->readSchema( *poFMEFeature, eEndOfSchema );
         if( err )

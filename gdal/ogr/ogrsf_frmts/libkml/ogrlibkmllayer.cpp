@@ -421,7 +421,7 @@ OGRLIBKMLLayer::~OGRLIBKMLLayer (  )
 OGRFeature *OGRLIBKMLLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

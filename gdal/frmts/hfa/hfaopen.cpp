@@ -85,7 +85,7 @@ static char * HFAGetDictionary( HFAHandle hHFA )
 
     VSIFSeekL( hHFA->fp, hHFA->nDictionaryPos, SEEK_SET );
 
-    while( TRUE )
+    while( true )
     {
         if( nDictSize >= nDictMax-1 )
         {

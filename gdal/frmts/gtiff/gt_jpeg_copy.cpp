@@ -79,7 +79,7 @@ static int IsBaselineDCTJPEG(VSILFILE* fp)
     }
 
     int nOffset = 2;
-    while(TRUE)
+    while( true )
     {
         VSIFSeekL(fp, nOffset, SEEK_SET);
         if (VSIFReadL(abyBuf, 1, 4, fp) != 4 ||

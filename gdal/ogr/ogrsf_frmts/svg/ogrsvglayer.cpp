@@ -234,7 +234,7 @@ static void OGRSVGParseD(OGRLineString* poLS, const char* pszD)
     int bRelativeLineto = FALSE;
     double dfX = 0, dfY = 0;
     int nPointCount = 0;
-    while(TRUE)
+    while( true )
     {
         ch = *(pszIter ++);
 

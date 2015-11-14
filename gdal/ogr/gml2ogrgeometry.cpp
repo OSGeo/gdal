@@ -56,7 +56,7 @@ static const char* GMLGetCoordTokenPos(const char* pszStr,
                                        const char** ppszNextToken)
 {
     char ch;
-    while(TRUE)
+    while( true )
     {
         ch = *pszStr;
         if (ch == '\0')

@@ -4004,7 +4004,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 bHasLib.test(PDFLIB_PDFIUM) ? "PDFIUM" :
                 bHasLib.test(PDFLIB_POPPLER) ? "POPPLER" : "PODOFO";
         const char* pszPDFLib = GetOption(poOpenInfo->papszOpenOptions, "PDF_LIB", pszDefaultLib );
-        while( TRUE )
+        while( true )
         {
             if (EQUAL(pszPDFLib, "POPPLER"))
                 bUseLib.set(PDFLIB_POPPLER);
@@ -4066,7 +4066,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE")));
     }
 
-    while(TRUE)
+    while( true )
     {
         VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
         if (fp == NULL)

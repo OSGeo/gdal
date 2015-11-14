@@ -99,7 +99,7 @@ OGRFeature *OGROpenAirLabelLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)
@@ -127,7 +127,7 @@ OGRFeature *OGROpenAirLabelLayer::GetNextRawFeature()
     double dfLat = 0, dfLon = 0;
     int bHasCoord = FALSE;
 
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fpOpenAir, 1024, NULL);
         if (pszLine == NULL)

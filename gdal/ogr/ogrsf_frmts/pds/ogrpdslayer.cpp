@@ -155,7 +155,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
               osColumnBytes, osColumnFormat, osColumnUnit,
               osColumnItems, osColumnItemBytes;
     int nRowBytes = nRecordSize;
-    while(TRUE)
+    while( true )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
         pszLine = CPLReadLine2L(fpStructure, 256, NULL);
@@ -310,7 +310,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
             {
                 CSLDestroy(papszTokens);
                 papszTokens = NULL;
-                while(TRUE)
+                while( true )
                 {
                     CPLPushErrorHandler(CPLQuietErrorHandler);
                     pszLine = CPLReadLine2L(fpStructure, 256, NULL);
@@ -441,7 +441,7 @@ OGRFeature *OGRPDSLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)

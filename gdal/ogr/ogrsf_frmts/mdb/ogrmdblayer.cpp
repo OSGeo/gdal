@@ -215,7 +215,7 @@ GIntBig OGRMDBLayer::GetFeatureCount(int bForce)
 OGRFeature *OGRMDBLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

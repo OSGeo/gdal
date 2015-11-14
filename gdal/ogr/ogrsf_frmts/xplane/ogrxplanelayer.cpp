@@ -171,7 +171,7 @@ OGRFeature *OGRXPlaneLayer::GetNextFeature()
 
     if (poReader)
     {
-        while(TRUE)
+        while( true )
         {
             if ( nFeatureArrayIndex == nFeatureArraySize)
             {

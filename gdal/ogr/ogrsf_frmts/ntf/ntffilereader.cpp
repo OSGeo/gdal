@@ -1456,7 +1456,7 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
 /*      Loop looking for a group we can translate, and that if          */
 /*      needed matches our layer request.                               */
 /* -------------------------------------------------------------------- */
-    while( TRUE )
+    while( true )
     {
         if( GetProductId() == NPC_UNKNOWN && nNTFLevel > 2 )
             papoGroup = GetNextIndexedRecordGroup( apoCGroup + 1 );

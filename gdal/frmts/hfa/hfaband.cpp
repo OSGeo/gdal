@@ -142,7 +142,7 @@ CPLErr HFABand::LoadOverviews()
 
     if( poRRDNames != NULL )
     {
-        for( int iName = 0; TRUE; iName++ )
+        for( int iName = 0; true; iName++ )
         {
             char  szField[128];
             sprintf( szField, "nameList[%d].string", iName );

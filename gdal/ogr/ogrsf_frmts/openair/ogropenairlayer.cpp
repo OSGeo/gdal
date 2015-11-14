@@ -111,7 +111,7 @@ OGRFeature *OGROpenAirLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)
@@ -152,7 +152,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
     if (bEOF)
         return NULL;
 
-    while(TRUE)
+    while( true )
     {
         if (bFirst && bHasLastLine)
         {

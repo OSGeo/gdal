@@ -2025,7 +2025,7 @@ OGRFeature *OGRSDELayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Fetch the next record.                                          */
 /* -------------------------------------------------------------------- */
-    while( TRUE )
+    while( true )
     {
         nSDEErr = SE_stream_fetch( hStream );
         if( nSDEErr == SE_FINISHED )

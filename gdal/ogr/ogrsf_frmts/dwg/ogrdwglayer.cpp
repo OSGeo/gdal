@@ -1424,7 +1424,7 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
 OGRFeature *OGRDWGLayer::GetNextFeature()
 
 {
-    while( TRUE )
+    while( true )
     {
         OGRFeature *poFeature = GetNextUnfilteredFeature();
 

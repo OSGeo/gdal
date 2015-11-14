@@ -2720,8 +2720,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Do we have any XML boxes we want to preserve?                   */
 /* -------------------------------------------------------------------- */
     int iBox;
-    
-    for( iBox = 0; TRUE; iBox++ )
+
+    for( iBox = 0; true; iBox++ )
     {
         CPLString oName;
         char **papszMD;

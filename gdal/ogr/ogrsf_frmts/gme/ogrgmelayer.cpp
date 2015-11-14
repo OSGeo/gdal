@@ -410,8 +410,8 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
 OGRFeature *OGRGMELayer::GetNextFeature()
 {
     OGRFeature *poFeature = NULL;
-    
-    while( TRUE )
+
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if( poFeature == NULL )

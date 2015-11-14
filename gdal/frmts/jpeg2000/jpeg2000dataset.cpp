@@ -1219,7 +1219,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 GUInt32   nLBox;
                 GUInt32   nTBox;
 
-                while(TRUE)
+                while( true )
                 {
                     if( VSIFReadL(&nLBox, 4, 1, fp) != 1 ||
                         VSIFReadL(&nTBox, 4, 1, fp) != 1 )

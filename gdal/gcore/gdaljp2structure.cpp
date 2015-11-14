@@ -816,7 +816,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
     CPLXMLNode* psCSBox = CPLCreateXMLNode( psBox, CXT_Element, "JP2KCodeStream" );
     GByte* pabyMarkerData = (GByte*)CPLMalloc(65535+1);
     GIntBig nNextTileOffset = 0;
-    while( TRUE )
+    while( true )
     {
         GIntBig nOffset = (GIntBig)VSIFTellL(fp);
         if( nOffset == nBoxDataOffset + nBoxDataLength )

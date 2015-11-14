@@ -99,7 +99,7 @@ void OGRIngresLayer::ResetReading()
 OGRFeature *OGRIngresLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

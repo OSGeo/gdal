@@ -2040,7 +2040,7 @@ static void JPIPWorkerFunc(void *req)
         NULL 
     };
 
-    while (TRUE)
+    while( true )
     {
         // modulate the len= parameter to use the currently available bandwidth
         long nStart = clock();

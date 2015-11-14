@@ -235,7 +235,7 @@ void OGRIDBLayer::ResetReading()
 OGRFeature *OGRIDBLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

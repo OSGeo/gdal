@@ -199,7 +199,7 @@ static int ReadVarUInt(GByte*& pabyIter, GByte* pabyEnd, OutType& nOutVal)
     GByte* pabyLocalIter = pabyIter + 1;
     int nShift = 7;
     OutType nVal = ( b & 0x7F );
-    while(TRUE)
+    while( true )
     {
         if( !(ControleType::check_bounds) )
         {
@@ -991,7 +991,7 @@ int FileGDBTable::Open(const char* pszFilename,
                 /* here. When there are 3, the first one is zmin and the second */
                 /* one is zmax */
                 int nCountDoubles = 0;
-                while( TRUE )
+                while( true )
                 {
                     returnErrorIf(nRemaining < 5 );
 
@@ -1050,7 +1050,7 @@ static int SkipVarUInt(GByte*& pabyIter, GByte* pabyEnd, int nIter = 1)
     returnErrorIf(pabyLocalIter /*+ nIter - 1*/ >= pabyEnd);
     while( nIter -- > 0 )
     {
-        while(TRUE)
+        while( true )
         {
             GByte b = *pabyLocalIter;
             pabyLocalIter ++;
@@ -1084,7 +1084,7 @@ static void ReadVarIntAndAddNoCheck(GByte*& pabyIter, GIntBig& nOutVal)
 
     GByte* pabyLocalIter = pabyIter + 1;
     int nShift = 6;
-    while(TRUE)
+    while( true )
     {
         GUIntBig b = *pabyLocalIter;
         pabyLocalIter ++;

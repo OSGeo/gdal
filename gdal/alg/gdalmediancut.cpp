@@ -169,7 +169,7 @@ static inline int FindColorCount(const HashHistogram* psHashHistogram,
 {
     GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
     /*int nCollisions = 0; */
-    while( TRUE )
+    while( true )
     {
         if( (int)psHashHistogram[nIdx].nColorCode < 0 )
         {
@@ -223,7 +223,7 @@ static inline int* FindAndInsertColorCount(HashHistogram* psHashHistogram,
 {
     GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
     /*int nCollisions = 0;*/
-    while( TRUE )
+    while( true )
     {
         if( psHashHistogram[nIdx].nColorCode == nColorCode )
         {

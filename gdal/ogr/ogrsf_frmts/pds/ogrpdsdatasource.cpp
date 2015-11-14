@@ -334,7 +334,7 @@ int OGRPDSDataSource::Open( const char * pszFilename )
         if (fp == NULL)
             return FALSE;
 
-        while(TRUE)
+        while( true )
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
             const char* pszLine = CPLReadLine2L(fp, 256, NULL);

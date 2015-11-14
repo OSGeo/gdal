@@ -837,7 +837,7 @@ static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
 
     /* Find the index of the first element in the LUT input array that */
     /* is not smaller than the dfVal value. */
-    while(TRUE)
+    while( true )
     {
         mid = (lower + upper) / 2;
         if (upper - lower <= 1)

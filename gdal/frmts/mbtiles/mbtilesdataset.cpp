@@ -1596,7 +1596,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     }
 
-    while( TRUE )
+    while( true )
     {
         if (hSQLLyr == NULL && bFirstSelect)
         {

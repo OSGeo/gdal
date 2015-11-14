@@ -730,7 +730,7 @@ static CPLString GDALGMLJP2EvalExpr(const CPLString& osTemplate,
 {
     CPLString osXMLRes;
     size_t nPos = 0;
-    while( TRUE )
+    while( true )
     {
         // Get next expression
         size_t nStartPos = osTemplate.find("{{{", nPos);

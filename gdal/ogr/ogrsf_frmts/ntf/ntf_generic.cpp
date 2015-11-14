@@ -169,7 +169,7 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
 /* ==================================================================== */
 /*      Read all record groups in the file.                             */
 /* ==================================================================== */
-    while( TRUE )
+    while( true )
     {
 /* -------------------------------------------------------------------- */
 /*      Read a record group                                             */

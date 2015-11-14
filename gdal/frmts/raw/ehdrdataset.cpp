@@ -1598,7 +1598,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         GDALColorTable oColorTable;
         int bHasWarned = FALSE;
 
-        while(TRUE)
+        while( true )
         {
             const char  *pszLine =  CPLReadLineL(fp);
             if ( !pszLine )

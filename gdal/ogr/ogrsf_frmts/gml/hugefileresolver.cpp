@@ -378,7 +378,7 @@ static int gmlHugeFileResolveEdges( struct huge_helper *helper )
     }
 
     /* looping on the QUERY result-set */
-    while ( TRUE )
+    while( true )
     {
         const char      *pszGmlId;
         const char      *pszGmlString = NULL;
@@ -1499,7 +1499,7 @@ static int gmlHugeResolveEdges( CPL_UNUSED struct huge_helper *helper,
                   "Unable to create QUERY stmt for EDGES" );
         return FALSE;
     }
-    while ( TRUE )
+    while( true )
     {
         rc = sqlite3_step( hStmtEdges );
         if( rc == SQLITE_DONE )
@@ -1646,7 +1646,7 @@ static int gmlHugeFileWriteResolved ( struct huge_helper *helper,
     VSIFPrintfL ( fp, "  <ResolvedTopoFeatureMembers>\n" );
     /* exporting Nodes */
     GFSTemplateList *pCC = new GFSTemplateList();
-    while ( TRUE )
+    while( true )
     {
         rc = sqlite3_step( hStmtNodes );
         if( rc == SQLITE_DONE )

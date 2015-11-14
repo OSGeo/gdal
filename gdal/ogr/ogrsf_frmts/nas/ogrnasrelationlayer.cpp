@@ -102,7 +102,7 @@ OGRFeature *OGRNASRelationLayer::GetNextFeature()
 /*      Loop till we find and translate a feature meeting all our       */
 /*      requirements.                                                   */
 /* ==================================================================== */
-    while( TRUE )
+    while( true )
     {
         // out of features?
         if( iNextFeature >= (int) aoRelationCollection.size() )

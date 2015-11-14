@@ -209,7 +209,7 @@ void OGRODBCLayer::ResetReading()
 OGRFeature *OGRODBCLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

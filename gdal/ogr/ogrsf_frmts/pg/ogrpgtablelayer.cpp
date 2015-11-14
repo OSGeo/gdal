@@ -780,7 +780,7 @@ OGRFeature *OGRPGTableLayer::GetNextFeature()
         poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(m_iGeomFieldFilter);
     poFeatureDefn->GetFieldCount();
 
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

@@ -1961,7 +1961,7 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
                 nSRID = 0;
 
                 /* Enumerate SRS from ESRI DB and find a match */
-                while(TRUE)
+                while( true )
                 {
                     if ( poSRS->IsProjected() )
                     {
@@ -2160,7 +2160,7 @@ bool FGdbLayer::CreateFeatureDataset(FGdbDataSource* pParentDataSource,
     CPLAddXMLChild(defn_xml, extent_xml);
 
     /* Add the SRS */
-    if( TRUE ) // TODO: conditional on existence of SRS
+    if( true ) // TODO: conditional on existence of SRS
     {
         CPLXMLNode *srs_xml = XMLSpatialReference(poSRS, papszOptions);
         if ( srs_xml )
@@ -3439,7 +3439,7 @@ GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
             return 0;
 
         int nFeatures = 0;
-        while( TRUE )
+        while( true )
         {
             long hr;
 

@@ -93,7 +93,7 @@ OGRFeature *OGRAeronavFAALayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         if (bEOF)
             return NULL;
@@ -230,7 +230,7 @@ OGRFeature *OGRAeronavFAADOFLayer::GetNextRawFeature()
     const char* pszLine;
     char szBuffer[130];
 
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fpAeronavFAA, 130, NULL);
         if (pszLine == NULL)
@@ -335,7 +335,7 @@ OGRFeature *OGRAeronavFAANAVAIDLayer::GetNextRawFeature()
     const char* pszLine;
     char szBuffer[134];
 
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fpAeronavFAA, 134, NULL);
         if (pszLine == NULL)
@@ -436,7 +436,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
     OGRFeature* poFeature = NULL;
     OGRLineString* poLS = NULL;
 
-    while(TRUE)
+    while( true )
     {
         if (osLastReadLine.size() != 0)
             pszLine = osLastReadLine.c_str();
@@ -635,7 +635,7 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
     char szBuffer[87];
     int nCountUnderscoreLines = 0;
 
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fpAeronavFAA, 87, NULL);
         if (pszLine == NULL)

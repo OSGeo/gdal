@@ -298,7 +298,7 @@ void OGRMSSQLSpatialLayer::ResetReading()
 OGRFeature *OGRMSSQLSpatialLayer::GetNextFeature()
 
 {
-    while( TRUE )
+    while( true )
     {
         OGRFeature      *poFeature;
 

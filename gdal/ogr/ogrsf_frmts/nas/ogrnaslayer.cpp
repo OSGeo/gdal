@@ -115,7 +115,7 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 /*      Loop till we find and translate a feature meeting all our       */
 /*      requirements.                                                   */
 /* ==================================================================== */
-    while( TRUE )
+    while( true )
     {
 /* -------------------------------------------------------------------- */
 /*      Cleanup last feature, and get a new raw nas feature.            */

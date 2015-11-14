@@ -784,7 +784,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
     int         nStartOfData;
 
-    for( i = 2; TRUE ; i++ )
+    for( i = 2; true ; i++ )
     {
         if( poOpenInfo->pabyHeader[i] == '\0' )
         {

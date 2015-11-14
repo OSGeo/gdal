@@ -1162,7 +1162,7 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
 {
     GetLayerDefn();
 
-    while(TRUE)
+    while( true )
     {
         if (bPagingActive && nFeatureRead == nPagingStartIndex + nFeatureCountRequested)
         {

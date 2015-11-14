@@ -107,7 +107,7 @@ OGRLIBKMLDataSource::OGRLIBKMLDataSource ( KmlFactory * poKmlFactory ) :
 static void OGRLIBKMLPreProcessInput(std::string& oKml)
 {
     size_t nPos = 0;
-    while( TRUE )
+    while( true )
     {
         nPos = oKml.find("<snippet>", nPos);
         if( nPos == std::string::npos )
@@ -131,7 +131,7 @@ static void OGRLIBKMLPreProcessInput(std::string& oKml)
 static void OGRLIBKMLRemoveSpaces(std::string& oKml, const std::string& osNeedle)
 {
     size_t nPos = 0;
-    while( TRUE )
+    while( true )
     {
         nPos = oKml.find("<" + osNeedle, nPos);
         if( nPos == std::string::npos )
@@ -173,7 +173,7 @@ static void OGRLIBKMLPostProcessOutput(std::string& oKml)
     if( !(oKml[0] == '<' && oKml[1] == '?') )
         oKml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + oKml;
 
-    while( TRUE )
+    while( true )
     {
         nPos = oKml.find("<Snippet>", nPos);
         if( nPos == std::string::npos )

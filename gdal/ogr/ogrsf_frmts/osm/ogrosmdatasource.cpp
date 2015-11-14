@@ -930,7 +930,7 @@ void OGROSMDataSource::LookupNodes( )
                     bEnableHashedIndex = FALSE;
                     break;
                 }
-                while( TRUE )
+                while( true )
                 {
                     int iNext = psCollisionBuckets[iBucket].nNext;
                     if( iNext < 0 )
@@ -1328,7 +1328,7 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
 static void WriteVarInt(unsigned int nVal, GByte** ppabyData)
 {
     GByte* pabyData = *ppabyData;
-    while(TRUE)
+    while( true )
     {
         if( (nVal & (~0x7fU)) == 0 )
         {
@@ -1350,7 +1350,7 @@ static void WriteVarInt(unsigned int nVal, GByte** ppabyData)
 static void WriteVarInt64(GUIntBig nVal, GByte** ppabyData)
 {
     GByte* pabyData = *ppabyData;
-    while(TRUE)
+    while( true )
     {
         if( (nVal & (~0x7fU)) == 0 )
         {
@@ -1378,7 +1378,7 @@ static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData)
         nVal = ((-1-nSVal) << 1) + 1;
 
     GByte* pabyData = *ppabyData;
-    while(TRUE)
+    while( true )
     {
         if( (nVal & (~0x7f)) == 0 )
         {
@@ -1643,7 +1643,7 @@ void OGROSMDataSource::ProcessWaysBatch()
                 if( nIdx < -1 )
                 {
                     int iBucket = -nIdx - 2;
-                    while( TRUE )
+                    while( true )
                     {
                         nIdx = psCollisionBuckets[iBucket].nInd;
                         if( panReqIds[nIdx] == psWayFeaturePairs->panNodeRefs[i] )
@@ -3688,7 +3688,7 @@ int OGROSMDataSource::ParseNextChunk(int nIdxLayer)
 
     bHasParsedFirstChunk = TRUE;
     bFeatureAdded = FALSE;
-    while( TRUE )
+    while( true )
     {
 #ifdef DEBUG_MEM_USAGE
         static int counter = 0;

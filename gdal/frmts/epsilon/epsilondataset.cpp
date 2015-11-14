@@ -471,7 +471,7 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
     bRegularTiling = TRUE;
     
     eps_block_header hdr;
-    while(TRUE)
+    while( true )
     {
         Seek(nStartBlockFileOff + nBlockDataSize);
         

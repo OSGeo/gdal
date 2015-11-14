@@ -771,7 +771,7 @@ OGRFeature* OGROpenFileGDBSimpleSQLLayer::GetFeature( GIntBig nFeatureId )
 
 OGRFeature* OGROpenFileGDBSimpleSQLLayer::GetNextFeature()
 {
-    while(TRUE)
+    while( true )
     {
         int nRow = poIter->GetNextRowSortedByValue();
         if( nRow < 0 )

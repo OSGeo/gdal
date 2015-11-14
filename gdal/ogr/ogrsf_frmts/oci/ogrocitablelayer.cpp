@@ -262,7 +262,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
-    for( int iRawFld = 0; TRUE; iRawFld++ )
+    for( int iRawFld = 0; true; iRawFld++ )
     {
         OGRFieldDefn    oField( "", OFTString);
         OCIParam     *hParmDesc;
@@ -668,7 +668,7 @@ OGRFeature *OGROCITableLayer::GetNextFeature()
 
 {
 
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 

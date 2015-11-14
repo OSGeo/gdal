@@ -503,7 +503,7 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
     char        achShapeRec[OGR_TIGER_RECBUF_LEN];
     int         nShapeRecLen = psRT2Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
-    for( ; TRUE; nShapeRecId++ )
+    for( ; true; nShapeRecId++ )
     {
         int  nBytesRead = 0;
 

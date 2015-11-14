@@ -864,7 +864,7 @@ void PNGDataset::CollectXMPMetadata()
     VSIFSeekL( fpImage, nOffset, SEEK_SET );
 
     /* Loop over chunks */
-    while(TRUE)
+    while( true )
     {
         int nLength;
 

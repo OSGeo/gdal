@@ -164,7 +164,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /*      Loop till we find and translate a feature meeting all our       */
 /*      requirements.                                                   */
 /* ==================================================================== */
-    while( TRUE )
+    while( true )
     {
         GMLFeature  *poGMLFeature = NULL;
         OGRGeometry *poGeom = NULL;

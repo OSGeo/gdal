@@ -879,7 +879,7 @@ DDFRecord* SRPDataset::FindRecordInGENForIMG(DDFModule& module,
     DDFFieldDefn *fieldDefn;
 
     /* Now finds the record */
-    while (TRUE)
+    while( true )
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
         DDFRecord* record = module.ReadRecord();
@@ -1028,7 +1028,7 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
 
     CPLString osDirName(CPLGetDirname(pszFileName));
 
-    while (TRUE)
+    while( true )
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
         record = module.ReadRecord();
@@ -1170,7 +1170,7 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
 
     CPLString osDirName(CPLGetDirname(pszFileName));
 
-    while (TRUE)
+    while( true )
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
         record = module.ReadRecord();
@@ -1295,7 +1295,7 @@ char** SRPDataset::GetIMGListFromGEN(const char* pszFileName,
     if (!module.Open(pszFileName, TRUE))
         return NULL;    
 
-    while (TRUE)
+    while( true )
     {
         nRecordIndex ++;
 

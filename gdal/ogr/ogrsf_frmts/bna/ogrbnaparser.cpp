@@ -237,7 +237,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
     record = (BNARecord*)CPLMalloc(sizeof(BNARecord));
     memset(record, 0, sizeof(BNARecord));
 
-    while (TRUE)
+    while( true )
     {
       numChar = 0;
       (*curLine)++;
