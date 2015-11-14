@@ -2991,7 +2991,6 @@ OGRDriverShadow* GetDriver(int driver_number) {
   return (OGRDriverShadow*) OGRGetDriver(driver_number);
 }
 %}
-#endif /* #ifndef SWIGPERL */
 
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 /* FIXME: other bindings should also use those typemaps to avoid memory leaks */
@@ -3049,6 +3048,8 @@ OGRDriverShadow* GetDriver(int driver_number) {
 %clear char **;
 
 #endif /* FROM_GDAL_I */
+
+#endif /* #ifndef SWIGPERL */
 
 #ifdef SWIGJAVA
 class FeatureNative {
