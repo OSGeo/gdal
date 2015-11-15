@@ -434,13 +434,13 @@ sub traverse {
 # \endcode
 # @param name Raster dataset string (typically a filename).
 # @param access Access type, either 'ReadOnly' (the default) or 'Update'.
-# @return a new Geo::GDAL::Dataset object.
+# @return a new Geo::GDAL::Dataset object or undef.
 
 ## @sub Geo::GDAL::Dataset OpenShared($name, $access = 'ReadOnly')
 # Open a raster dataset in shared mode.
 # @param name Raster dataset string (typically a filename).
 # @param access Access type, either 'ReadOnly' (the default) or 'Update'.
-# @return a new Geo::GDAL::Dataset object.
+# @return a new Geo::GDAL::Dataset object or undef.
 
 ## @sub Geo::GDAL::Dataset OpenEx($name, $open_flags = [], $allowed_drivers = [], $open_options = {}, $sibling_files = [])
 # The generic dataset open method, used internally by all Open and OpenShared methods.
