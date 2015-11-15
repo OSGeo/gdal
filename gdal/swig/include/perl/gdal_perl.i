@@ -250,10 +250,35 @@ for my $string (@NODE_TYPES) {
 }
 
 sub error {
+    if (@_) {
+        my $error;
+        if (@_ == 3) {
+            my ($ecode, $offender, $hash) = @_;
+            my @k = sort keys %$hash;
+            $error = "Unknown value: '$offender'. Expected one of ".join(', ', @k).".";
+        } else {
+            $error = shift;
+        }
+        push @error, $error;
+        confess($error);
+    }
     my @stack = @error;
     chomp(@stack);
     @error = ();
     return wantarray ? @stack : join("\n", @stack);
+}
+
+sub last_error {
+    my $error = $error[$#error] // '';
+    chomp($error);
+    return $error;
+}
+
+sub errstr {
+    my @stack = @error;
+    chomp(@stack);
+    @error = ();
+    return join("\n", @stack);
 }
 
 sub RELEASE_PARENTS {
@@ -303,7 +328,7 @@ sub Child {
 sub GetDataTypeSize {
     my $t = shift;
     unless (exists $TYPE_INT2STRING{$t}) {
-        confess "Unknown data type: '$t'." unless exists $TYPE_STRING2INT{$t};
+        Geo::GDAL::error(1, $t, \%TYPE_STRING2INT) unless exists $TYPE_STRING2INT{$t};
         $t = $TYPE_STRING2INT{$t};
     }
     return _GetDataTypeSize($t);
@@ -311,7 +336,7 @@ sub GetDataTypeSize {
 
 sub DataTypeValueRange {
     my $t = shift;
-    confess "Unknown data type: '$t'." unless exists $TYPE_STRING2INT{$t};
+    Geo::GDAL::error(1, $t, \%TYPE_STRING2INT) unless exists $TYPE_STRING2INT{$t};
     # these values are from gdalrasterband.cpp
     return (0,255) if $t =~ /Byte/;
     return (0,65535) if $t =~/UInt16/;
@@ -324,7 +349,7 @@ sub DataTypeValueRange {
 
 sub DataTypeIsComplex {
     my $t = shift;
-    confess "Unknown data type: '$t'." unless exists $TYPE_STRING2INT{$t};
+    Geo::GDAL::error(1, $t, \%TYPE_STRING2INT) unless exists $TYPE_STRING2INT{$t};
     $t = $TYPE_STRING2INT{$t};
     return _DataTypeIsComplex($t);
 }
@@ -332,7 +357,7 @@ sub DataTypeIsComplex {
 sub PackCharacter {
     my $t = shift;
     $t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
-    confess "Unknown data type: '$t'." unless exists $TYPE_STRING2INT{$t};
+    Geo::GDAL::error(1, $t, \%TYPE_STRING2INT) unless exists $TYPE_STRING2INT{$t};
     my $is_big_endian = unpack("h*", pack("s", 1)) =~ /01/; # from Programming Perl
     return 'C' if $t =~ /^Byte$/;
     return ($is_big_endian ? 'n': 'v') if $t =~ /^UInt16$/;
@@ -369,7 +394,7 @@ sub GetDriver {
     $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
     $driver //= GetDriverByName("$name");
     return $driver if $driver;
-    confess "Driver not found: '$name'. Maybe support for it was not built in?";
+    Geo::GDAL::error("Driver not found: '$name'. Maybe support for it was not built in?");
 }
 *Driver = *GetDriver;
 
@@ -381,7 +406,7 @@ sub Open {
     my @p = @_; # name, update
     my @flags = qw/RASTER/;
     $p[1] //= 'ReadOnly';
-    confess "Unknown access type: '$p[1]'" unless ($p[1] eq 'ReadOnly' or $p[1] eq 'Update'); 
+    Geo::GDAL::error(1, $p[1], {ReadOnly => 1, Update => 1}) unless ($p[1] eq 'ReadOnly' or $p[1] eq 'Update'); 
     push @flags, qw/READONLY/ if $p[1] eq 'ReadOnly';
     push @flags, qw/UPDATE/ if $p[1] eq 'Update';
     OpenEx($p[0], \@flags);
@@ -391,7 +416,7 @@ sub OpenShared {
     my @p = @_; # name, update
     my @flags = qw/RASTER SHARED/;
     $p[1] //= 'ReadOnly';
-    confess "Unknown access type: '$p[1]'" unless ($p[1] eq 'ReadOnly' or $p[1] eq 'Update'); 
+    Geo::GDAL::error(1, $p[1], {ReadOnly => 1, Update => 1}) unless ($p[1] eq 'ReadOnly' or $p[1] eq 'Update'); 
     push @flags, qw/READONLY/ if $p[1] eq 'ReadOnly';
     push @flags, qw/UPDATE/ if $p[1] eq 'Update';
     OpenEx($p[0], \@flags);
@@ -402,7 +427,7 @@ sub OpenEx {
     if (defined $p[1]) { # a list of written flags
         my $f;
         for my $flag (@{$p[1]}) {
-            confess "Unknown open flag: '$flag'." unless exists $Geo::GDAL::OF_STRING2INT{$flag};
+            Geo::GDAL::error(1, $flag, \%OF_STRING2INT) unless exists $OF_STRING2INT{$flag};
             $f |= $Geo::GDAL::OF_STRING2INT{$flag};
         }
         $p[1] = $f;
@@ -465,7 +490,7 @@ sub ReprojectImage {
     my @p = @_;
     $p[8] = 1 if $p[7] and not defined $p[8];
     if (defined $p[4]) {
-        confess "Unknown resampling type: '$p[4]'." unless exists $Geo::GDAL::RESAMPLING_STRING2INT{$p[4]};
+        Geo::GDAL::error(1, $p[4], \%RESAMPLING_STRING2INT) unless exists $RESAMPLING_STRING2INT{$p[4]};
         $p[4] = $Geo::GDAL::RESAMPLING_STRING2INT{$p[4]};
     }
     return _ReprojectImage(@p);
@@ -479,7 +504,7 @@ sub AutoCreateWarpedVRT {
         }
     }
     if (defined $p[3]) {
-        confess "Unknown resampling type: '$p[3]'." unless exists $Geo::GDAL::RESAMPLING_STRING2INT{$p[3]};
+        Geo::GDAL::error(1, $p[3], \%RESAMPLING_STRING2INT) unless exists $RESAMPLING_STRING2INT{$p[3]};
         $p[3] = $Geo::GDAL::RESAMPLING_STRING2INT{$p[3]};
     }
     return _AutoCreateWarpedVRT(@p);
@@ -633,7 +658,7 @@ sub stdout_redirection_wrapper {
             $object->close;
         }
     }
-    confess $@ if $@;
+    confess(Geo::GDAL->last_error) if $@;
     return $ds;
 }
 
@@ -664,7 +689,7 @@ sub Create {
         $params{$k} //= $defaults{$k};
     }
     my $type;
-    confess "Unknown data type: '$params{Type}'." unless exists $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
+    Geo::GDAL::error(1, $params{Type}, \%Geo::GDAL::TYPE_STRING2INT) unless exists $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
     $type = $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
 
     return $self->stdout_redirection_wrapper(
@@ -740,7 +765,7 @@ sub GetRasterBand {
 sub AddBand {
     my @p = @_;
     if (defined $p[1]) {
-        confess "Unknown data type: '$p[1]'." unless exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
+        Geo::GDAL::error(1, $p[1], \%Geo::GDAL::TYPE_STRING2INT) unless exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
         $p[1] = $Geo::GDAL::TYPE_STRING2INT{$p[1]};
     }
     return _AddBand(@p);
@@ -766,7 +791,7 @@ sub GetLayer {
     my($self, $name) = @_;
     my $layer = defined $name ? GetLayerByName($self, "$name") : GetLayerByIndex($self, 0);
     $name //= '';
-    confess "No such layer: '$name'." unless $layer;
+    Geo::GDAL::error("No such layer: '$name'.") unless $layer;
     $LAYERS{tied(%$layer)} = $self;
     return $layer;
 }
@@ -814,14 +839,14 @@ sub CreateLayer {
     for my $k (keys %defaults) {
         $params{$k} //= $defaults{$k};
     }
-    confess "Unknown geometry type: '$params{GeometryType}'."
+    Geo::GDAL::error(1, $params{GeometryType}, \%Geo::OGR::Geometry::TYPE_STRING2INT)
         unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
     my $gt = $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
     my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $gt, $params{Options});
     $LAYERS{tied(%$layer)} = $self;
     my $f = $params{Fields};
     if ($f) {
-        confess "Named parameter 'Fields' must be a reference to an array." unless ref($f) eq 'ARRAY';
+        Geo::GDAL::error("Named parameter 'Fields' must be a reference to an array.") unless ref($f) eq 'ARRAY';
         for my $field (@$f) {
             $layer->CreateField($field);
         }
@@ -836,7 +861,7 @@ sub DeleteLayer {
         my $layer = GetLayerByIndex($self, $i);
         $index = $i, last if $layer->GetName eq $name;
     }
-    confess "No such layer: '$name'." unless defined $index;
+    Geo::GDAL::error("No such layer: '$name'.") unless defined $index;
     _DeleteLayer($self, $index);
 }
 
@@ -861,7 +886,7 @@ sub GeoTransform {
             SetGeoTransform($self, \@_);
         }
     };
-    confess $@ if $@;
+    confess(Geo::GDAL->last_error) if $@;
     return unless defined wantarray;
     my $t = GetGeoTransform($self);
     if (wantarray) {
@@ -927,11 +952,11 @@ sub ReadRaster {
     for my $k (keys %d) {
         $p{$k} //= $d{$k};
     }
-    confess "Unknown resampling algorithm: '$p{RESAMPLEALG}'." 
+    Geo::GDAL::error(1, $p{RESAMPLEALG}, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT) 
         unless exists $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
     $p{RESAMPLEALG} = $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
     unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
-        confess "Unknown data type: '$p{BUFTYPE}'." 
+        Geo::GDAL::error(1, $p{BUFTYPE}, \%Geo::GDAL::TYPE_STRING2INT) 
             unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
         $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
     }
@@ -980,7 +1005,7 @@ sub WriteRaster {
         $p{$k} //= $d{$k};
     }
     unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
-        confess "Unknown data type: '$p{BUFTYPE}'." 
+        Geo::GDAL::error(1, $p{BUFTYPE}, \%Geo::GDAL::TYPE_STRING2INT) 
             unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
         $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
     }
@@ -994,7 +1019,7 @@ sub BuildOverviews {
     eval {
         $self->_BuildOverviews(@p);
     };
-    confess $@ if $@;
+    confess(Geo::GDAL->last_error) if $@;
 }
 
 sub stdout_redirection_wrapper {
@@ -1018,7 +1043,7 @@ sub stdout_redirection_wrapper {
             $object->close;
         }
     }
-    confess $@ if $@;
+    confess(Geo::GDAL->last_error) if $@;
     return $ds;
 }
 
@@ -1259,7 +1284,7 @@ sub WriteTile {
 sub ColorInterpretation {
     my($self, $ci) = @_;
     if (defined $ci) {
-        confess "Unknown color interpretation: '$ci'." unless exists $COLOR_INTERPRETATION_STRING2INT{$ci};
+        Geo::GDAL::error(1, $ci, \%COLOR_INTERPRETATION_STRING2INT) unless exists $COLOR_INTERPRETATION_STRING2INT{$ci};
         $ci = $COLOR_INTERPRETATION_STRING2INT{$ci};
         SetRasterColorInterpretation($self, $ci);
     }
@@ -1424,11 +1449,11 @@ sub ReadRaster {
     for my $k (keys %d) {
         $p{$k} //= $d{$k};
     }
-    confess "Unknown resampling algorithm: '$p{RESAMPLEALG}'." 
+    Geo::GDAL::error(1, $p{RESAMPLEALG}, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT) 
         unless exists $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
     $p{RESAMPLEALG} = $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
     unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
-        confess "Unknown data type: '$p{BUFTYPE}'." 
+        Geo::GDAL::error(1, $p{BUFTYPE}, \%Geo::GDAL::TYPE_STRING2INT)
             unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
         $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
     }
@@ -1475,7 +1500,7 @@ sub WriteRaster {
         $p{$k} //= $d{$k};
     }
     unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
-        confess "Unknown data type: '$p{BUFTYPE}'." 
+        Geo::GDAL::error(1, $p{BUFTYPE}, \%Geo::GDAL::TYPE_STRING2INT) 
             unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
         $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
     }
@@ -1549,7 +1574,7 @@ use Carp;
 sub new {
     my($pkg, $pi) = @_;
     $pi //= 'RGB';
-    confess "Unknown palette interpretation: '$pi'." unless exists $PALETTE_INTERPRETATION_STRING2INT{$pi};
+    Geo::GDAL::error(1, $pi, \%PALETTE_INTERPRETATION_STRING2INT) unless exists $PALETTE_INTERPRETATION_STRING2INT{$pi};
     $pi = $PALETTE_INTERPRETATION_STRING2INT{$pi};
     my $self = Geo::GDALc::new_ColorTable($pi);
     bless $self, $pkg if defined($self);
@@ -1574,7 +1599,7 @@ sub SetColorEntry {
     eval {
         $self->_SetColorEntry($index, $color);
     };
-    confess $@ if $@;
+    confess(Geo::GDAL->last_error) if $@;
 }
 
 sub ColorEntry {
@@ -1678,8 +1703,8 @@ sub Columns {
 
 sub CreateColumn {
     my($self, $name, $type, $usage) = @_;
-    confess "Unknown RAT column type: '$type'." unless exists $FIELD_TYPE_STRING2INT{$type};
-    confess "Unknown RAT column usage: '$usage'." unless exists $FIELD_USAGE_STRING2INT{$usage};
+    Geo::GDAL::error(1, $type, \%FIELD_TYPE_STRING2INT) unless exists $FIELD_TYPE_STRING2INT{$type};
+    Geo::GDAL::error(1, $usage, \%FIELD_USAGE_STRING2INT) unless exists $FIELD_USAGE_STRING2INT{$usage};
     for my $color (qw/Red Green Blue Alpha/) {
         carp "RAT column type will be 'Integer' for usage '$color'." if $usage eq $color and $type ne 'Integer';
     }
@@ -1733,12 +1758,7 @@ sub Write {
 
 sub Close {
     my ($self, $data) = @_;
-    eval {
-        Geo::GDAL::VSIFCloseL($self);
-    };
-    if ($@) {
-        confess "Cannot close file: $@.";
-    }
+    Geo::GDAL::VSIFCloseL($self);
 }
 
 sub Read {
@@ -1758,23 +1778,13 @@ sub Tell {
 
 sub Truncate {
     my ($self, $new_size) = @_;
-    eval {
-        Geo::GDAL::VSIFTruncateL($self, $new_size);
-    };
-    if ($@) {
-        confess "Cannot truncate file: $@.";
-    }
+    Geo::GDAL::VSIFTruncateL($self, $new_size);
 }
 
 sub MkDir {
     my ($path) = @_;
-    my $mode = 0; # unused in CPL
-    eval {
-        Geo::GDAL::Mkdir($path, $mode);
-    };
-    if ($@) {
-        confess "Cannot make directory \"$path\": $@.";
-    }
+    # mode unused in CPL
+    Geo::GDAL::Mkdir($path, 0);
 }
 *Mkdir = *MkDir;
 
@@ -1790,12 +1800,7 @@ sub ReadDirRecursive {
 
 sub Rename {
     my ($old, $new) = @_;
-    eval {
-        Geo::GDAL::Rename($old, $new);
-    };
-    if ($@) {
-        confess "Cannot rename file \"$old\": $@.";
-    }
+    Geo::GDAL::Rename($old, $new);
 }
 
 sub RmDir {
@@ -1819,29 +1824,19 @@ sub RmDir {
     };
     if ($@) {
         my $r = $recursive ? ' recursively' : '';
-        confess "Cannot remove directory \"$dirname\"$r: $@.";
+        Geo::GDAL::error("Cannot remove directory \"$dirname\"$r.");
     }
 }
 *Rmdir = *RmDir;
 
 sub Stat {
     my ($path) = @_;
-    eval {
-        Geo::GDAL::Stat($path);
-    };
-    if ($@) {
-        confess "Cannot stat file \"$path\": $@.";
-    }
+    Geo::GDAL::Stat($path);
 }
 
 sub Unlink {
     my ($filename) = @_;
-    eval {
-        Geo::GDAL::Unlink($filename);
-    };
-    if ($@) {
-        confess "Cannot unlink file \"$filename\": $@.";
-    }
+    Geo::GDAL::Unlink($filename);
 }
 
 

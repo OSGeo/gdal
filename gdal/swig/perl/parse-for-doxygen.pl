@@ -38,6 +38,7 @@ for my $pm (@pm) {
             $sub = $_;
             $sub =~ s/^(\S+)\s+//;
             $sub =~ s/\W.*//;
+            next if $sub eq ''; # skip anonymous subs
             $package{$package}{subs}{$sub} = 1;
             $attr = '';
             next;
