@@ -1968,13 +1968,11 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         bCallerWillKeepPointArraysAlive = TRUE;
     if( !bCallerWillKeepPointArraysAlive )
     {
-        double* padfXNew = (double*)VSIMalloc2(nPoints, sizeof(double));
-        double* padfYNew = (double*)VSIMalloc2(nPoints, sizeof(double));
-        double* padfZNew = (double*)VSIMalloc2(nPoints, sizeof(double));
+        double* padfXNew = (double*)VSI_MALLOC2_VERBOSE(nPoints, sizeof(double));
+        double* padfYNew = (double*)VSI_MALLOC2_VERBOSE(nPoints, sizeof(double));
+        double* padfZNew = (double*)VSI_MALLOC2_VERBOSE(nPoints, sizeof(double));
         if( padfXNew == NULL || padfYNew == NULL || padfZNew == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Not enough memory to duplicate X,Y,Z arrays");
             VSIFree(padfXNew);
             VSIFree(padfYNew);
             VSIFree(padfZNew);

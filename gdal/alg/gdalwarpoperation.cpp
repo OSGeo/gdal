@@ -1286,12 +1286,9 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         return CE_Failure;
     }
 
-    pDstBuffer = VSIMalloc( nBandSize * psOptions->nBandCount );
+    pDstBuffer = VSI_MALLOC_VERBOSE( nBandSize * psOptions->nBandCount );
     if( pDstBuffer == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "Out of memory allocating %d byte destination buffer.",
-                  nBandSize * psOptions->nBandCount );
         return CE_Failure;
     }
 
@@ -1578,13 +1575,10 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.papabySrcImage = (GByte **) 
         CPLCalloc(sizeof(GByte*),psOptions->nBandCount);
     oWK.papabySrcImage[0] = (GByte *)
-        VSIMalloc( nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS) * psOptions->nBandCount );
+        VSI_MALLOC_VERBOSE( nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS) * psOptions->nBandCount );
 
     if( nSrcXSize != 0 && nSrcYSize != 0 && oWK.papabySrcImage[0] == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Failed to allocate %d byte source buffer.",
-                  nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS) * psOptions->nBandCount );
         eErr = CE_Failure;
     }
         
@@ -2073,13 +2067,10 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
         else
             nBytes = (nXSize * nYSize + nExtraElts + 31) / 8;
 
-        *ppMask = VSIMalloc( nBytes );
+        *ppMask = VSI_MALLOC_VERBOSE( nBytes );
 
         if( *ppMask == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                      "Out of memory allocating %d bytes for %s mask.", 
-                      nBytes, pszType );
             return CE_Failure;
         }
 

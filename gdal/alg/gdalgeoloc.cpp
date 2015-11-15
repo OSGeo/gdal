@@ -120,15 +120,13 @@ static int GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
     psTransform->nGeoLocYSize = nYSize;
     
     psTransform->padfGeoLocY = (double *) 
-        VSIMalloc3(sizeof(double), nXSize, nYSize);
+        VSI_MALLOC3_VERBOSE(sizeof(double), nXSize, nYSize);
     psTransform->padfGeoLocX = (double *) 
-        VSIMalloc3(sizeof(double), nXSize, nYSize);
+        VSI_MALLOC3_VERBOSE(sizeof(double), nXSize, nYSize);
     
     if( psTransform->padfGeoLocX == NULL ||
         psTransform->padfGeoLocY == NULL )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "GeoLocLoadFullData : Out of memory");
         return FALSE;
     }
 
@@ -138,14 +136,12 @@ static int GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
         /* The XBAND contains the x coordinates for all lines */
         /* The YBAND contains the y coordinates for all columns */
 
-        double* padfTempX = (double*)VSIMalloc2(nXSize, sizeof(double));
-        double* padfTempY = (double*)VSIMalloc2(nYSize, sizeof(double));
+        double* padfTempX = (double*)VSI_MALLOC2_VERBOSE(nXSize, sizeof(double));
+        double* padfTempY = (double*)VSI_MALLOC2_VERBOSE(nYSize, sizeof(double));
         if (padfTempX == NULL || padfTempY == NULL)
         {
             CPLFree(padfTempX);
             CPLFree(padfTempY);
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "GeoLocLoadFullData : Out of memory");
             return FALSE;
         }
 
@@ -282,20 +278,17 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     GByte  *pabyValidFlag;
 
     pabyValidFlag = (GByte *) 
-        VSICalloc(nBMXSize, nBMYSize); 
+        VSI_CALLOC_VERBOSE(nBMXSize, nBMYSize); 
 
     psTransform->pafBackMapX = (float *) 
-        VSIMalloc3(nBMXSize, nBMYSize, sizeof(float)); 
+        VSI_MALLOC3_VERBOSE(nBMXSize, nBMYSize, sizeof(float)); 
     psTransform->pafBackMapY = (float *) 
-        VSIMalloc3(nBMXSize, nBMYSize, sizeof(float)); 
+        VSI_MALLOC3_VERBOSE(nBMXSize, nBMYSize, sizeof(float)); 
 
     if( pabyValidFlag == NULL ||
         psTransform->pafBackMapX == NULL ||
         psTransform->pafBackMapY == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Unable to allocate %dx%d back-map for geolocation array transformer.",
-                  nBMXSize, nBMYSize );
         CPLFree( pabyValidFlag );
         return FALSE;
     }

@@ -472,17 +472,15 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
     CPLErr eErr = CE_None;
     int nXSize = GDALGetRasterBandXSize( hSrcBand );
     int nYSize = GDALGetRasterBandYSize( hSrcBand );
-    DataType *panLastLineVal = (DataType *) VSIMalloc2(sizeof(DataType),nXSize + 2);
-    DataType *panThisLineVal = (DataType *) VSIMalloc2(sizeof(DataType),nXSize + 2);
-    GInt32 *panLastLineId =  (GInt32 *) VSIMalloc2(sizeof(GInt32),nXSize + 2);
-    GInt32 *panThisLineId =  (GInt32 *) VSIMalloc2(sizeof(GInt32),nXSize + 2);
-    GByte *pabyMaskLine = (hMaskBand != NULL) ? (GByte *) VSIMalloc(nXSize) : NULL;
+    DataType *panLastLineVal = (DataType *) VSI_MALLOC2_VERBOSE(sizeof(DataType),nXSize + 2);
+    DataType *panThisLineVal = (DataType *) VSI_MALLOC2_VERBOSE(sizeof(DataType),nXSize + 2);
+    GInt32 *panLastLineId =  (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32),nXSize + 2);
+    GInt32 *panThisLineId =  (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32),nXSize + 2);
+    GByte *pabyMaskLine = (hMaskBand != NULL) ? (GByte *) VSI_MALLOC_VERBOSE(nXSize) : NULL;
     if (panLastLineVal == NULL || panThisLineVal == NULL ||
         panLastLineId == NULL || panThisLineId == NULL ||
         (hMaskBand != NULL && pabyMaskLine == NULL))
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Could not allocate enough memory for temporary buffers");
         CPLFree( panThisLineId );
         CPLFree( panLastLineId );
         CPLFree( panThisLineVal );

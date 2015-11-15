@@ -648,11 +648,9 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
               (poDS->GetRasterYSize()+nYChunkSize-1) / nYChunkSize,
               nYChunkSize );
 
-    pabyChunkBuf = (unsigned char *) VSIMalloc(nYChunkSize * nScanlineBytes);
+    pabyChunkBuf = (unsigned char *) VSI_MALLOC2_VERBOSE(nYChunkSize, nScanlineBytes);
     if( pabyChunkBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Unable to allocate rasterization buffer." );
         return CE_Failure;
     }
 
@@ -861,11 +859,9 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     CPLDebug( "GDAL", "Rasterizer operating on %d swaths of %d scanlines.",
               (poDS->GetRasterYSize()+nYChunkSize-1) / nYChunkSize,
               nYChunkSize );
-    pabyChunkBuf = (unsigned char *) VSIMalloc(nYChunkSize * nScanlineBytes);
+    pabyChunkBuf = (unsigned char *) VSI_MALLOC2_VERBOSE(nYChunkSize, nScanlineBytes);
     if( pabyChunkBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Unable to allocate rasterization buffer." );
         return CE_Failure;
     }
 
@@ -881,8 +877,6 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                              eType, nBandCount, panBandList, 0, 0, 0, NULL )
              != CE_None )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                      "Unable to read buffer." );
             CPLFree( pabyChunkBuf );
             return CE_Failure;
         }

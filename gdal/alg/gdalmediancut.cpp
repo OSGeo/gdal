@@ -392,11 +392,9 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
     }
     else
     {
-        histogram = (T*) VSICalloc(nCLevels*nCLevels*nCLevels,sizeof(T));
+        histogram = (T*) VSI_CALLOC_VERBOSE(nCLevels*nCLevels*nCLevels,sizeof(T));
         if( histogram == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "VSICalloc(): Out of memory in GDALComputeMedianCutPCT" );
             return CE_Failure;
         }
     }
@@ -436,16 +434,14 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* -------------------------------------------------------------------- */
 /*      Collect histogram.                                              */
 /* -------------------------------------------------------------------- */
-    pabyRedLine = (GByte *) VSIMalloc(nXSize);
-    pabyGreenLine = (GByte *) VSIMalloc(nXSize);
-    pabyBlueLine = (GByte *) VSIMalloc(nXSize);
+    pabyRedLine = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
+    pabyGreenLine = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
+    pabyBlueLine = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
     
     if (pabyRedLine == NULL ||
         pabyGreenLine == NULL ||
         pabyBlueLine == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "VSIMalloc(): Out of memory in GDALComputeMedianCutPCT" );
         err = CE_Failure;
         goto end_and_cleanup;
     }
