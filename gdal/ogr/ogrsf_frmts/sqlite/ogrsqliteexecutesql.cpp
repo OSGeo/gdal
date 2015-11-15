@@ -777,7 +777,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     /* The following configuration option is useful mostly for debugging/testing */
     if( pabyEmptyDB != NULL && CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_DIALECT_USE_SPATIALITE", "YES")) )
     {
-        GByte* pabyEmptyDBClone = (GByte*)VSIMalloc(nEmptyDBSize);
+        GByte* pabyEmptyDBClone = (GByte*)VSI_MALLOC_VERBOSE(nEmptyDBSize);
         if( pabyEmptyDBClone == NULL )
         {
             CPLFree(pszTmpDBName);

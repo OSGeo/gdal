@@ -162,7 +162,7 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText,
         return OGRERR_NONE;
     }
 
-    *ppszDstText = (char *) VSIMalloc( nMaxString );
+    *ppszDstText = (char *) VSI_MALLOC_VERBOSE( nMaxString );
     if( *ppszDstText == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
 

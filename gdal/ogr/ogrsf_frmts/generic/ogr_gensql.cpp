@@ -1773,7 +1773,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                 return;
             }
             OGRField* pasNewIndexFields = (OGRField *)
-                VSIRealloc(pasIndexFields,
+                VSI_REALLOC_VERBOSE(pasIndexFields,
                            sizeof(OGRField) * nOrderItems * (size_t)nNewFeaturesAlloc);
             if (pasNewIndexFields == NULL)
             {
@@ -1786,7 +1786,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             pasIndexFields = pasNewIndexFields;
 
             GIntBig* panNewFIDList = (GIntBig *)
-                VSIRealloc(panFIDList, sizeof(GIntBig) *  (size_t)nNewFeaturesAlloc);
+                VSI_REALLOC_VERBOSE(panFIDList, sizeof(GIntBig) *  (size_t)nNewFeaturesAlloc);
             if (panNewFIDList == NULL)
             {
                 VSIFree(pasIndexFields);
@@ -1868,10 +1868,9 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /* -------------------------------------------------------------------- */
 /*      Initialize panFIDIndex                                          */
 /* -------------------------------------------------------------------- */
-    panFIDIndex = (GIntBig *) VSIMalloc(sizeof(GIntBig) * (size_t)nIndexSize);
+    panFIDIndex = (GIntBig *) VSI_MALLOC_VERBOSE(sizeof(GIntBig) * (size_t)nIndexSize);
     if( panFIDIndex == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate panFIDIndex");
         VSIFree(pasIndexFields);
         VSIFree(panFIDList);
         nIndexSize = 0;
@@ -1990,10 +1989,9 @@ int OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields,
         !SortIndexSection( pasIndexFields, nSecondStart, nSecondGroup ) )
         return FALSE;
 
-    panMerged = (GIntBig *) VSIMalloc( sizeof(GIntBig) * (size_t)nEntries );
+    panMerged = (GIntBig *) VSI_MALLOC_VERBOSE( sizeof(GIntBig) * (size_t)nEntries );
     if( panMerged == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocated panMerged");
         return FALSE;
     }
         

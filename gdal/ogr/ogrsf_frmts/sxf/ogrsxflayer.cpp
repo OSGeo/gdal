@@ -764,7 +764,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     OGRFeature *poFeature = NULL;
     if( stRecordHeader.nGeometryLength > 100 * 1024 * 1024 )
         return NULL;
-    char * recordCertifBuf = (char *)VSIMalloc(stRecordHeader.nGeometryLength);
+    char * recordCertifBuf = (char *)VSI_MALLOC_VERBOSE(stRecordHeader.nGeometryLength);
     if( recordCertifBuf == NULL )
         return NULL;
     nObjectRead = VSIFReadL(recordCertifBuf, stRecordHeader.nGeometryLength, 1, fpSXF);
@@ -851,7 +851,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
             delete poFeature;
             return NULL;
         }
-        char * psSemanticsdBuf = (char *)VSIMalloc(nSemanticsSize);
+        char * psSemanticsdBuf = (char *)VSI_MALLOC_VERBOSE(nSemanticsSize);
         if( psSemanticsdBuf == NULL )
         {
             CPLFree(recordCertifBuf);

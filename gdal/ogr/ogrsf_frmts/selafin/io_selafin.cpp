@@ -261,8 +261,8 @@ namespace Selafin {
     /*                         TimeStep                             */
     /****************************************************************/
     TimeStep::TimeStep(long nRecordsP,long nFieldsP):nFields(nFieldsP) {
-        papadfData=(double**)VSIMalloc2(sizeof(double*),nFieldsP);
-        for (long i=0;i<nFieldsP;++i) papadfData[i]=(double*)VSIMalloc2(sizeof(double),nRecordsP);
+        papadfData=(double**)VSI_MALLOC2_VERBOSE(sizeof(double*),nFieldsP);
+        for (long i=0;i<nFieldsP;++i) papadfData[i]=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),nRecordsP);
     }
     
     TimeStep::~TimeStep() {
@@ -368,7 +368,7 @@ namespace Selafin {
         }
         else {
             if (nLength==0) panData=0; else {
-                panData=(long *)VSIMalloc2(nLength/4,sizeof(long));
+                panData=(long *)VSI_MALLOC2_VERBOSE(nLength/4,sizeof(long));
                 if (panData==0) return -1;
             }
             for (long i=0;i<nLength/4;++i) if (read_integer(fp,panData[i])==0) {
@@ -435,7 +435,7 @@ namespace Selafin {
         }
         else {
             if (nLength==0) *papadfData=0; else {
-                *papadfData=(double*)VSIMalloc2(sizeof(double),nLength/4);
+                *papadfData=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),nLength/4);
                 if (papadfData==0) return -1;
             }
             for (long i=0;i<nLength/4;++i) if (read_float(fp,(*papadfData)[i])==0) {
@@ -497,7 +497,7 @@ namespace Selafin {
             return 0;
         }
         // For each variable, read its name as a string of 32 characters
-        poHeader->papszVariables=(char**)VSIMalloc2(sizeof(char*),poHeader->nVar);
+        poHeader->papszVariables=(char**)VSI_MALLOC2_VERBOSE(sizeof(char*),poHeader->nVar);
         for (long i=0;i<poHeader->nVar;++i) {
             nLength=read_string(fp,poHeader->papszVariables[i]);
             if (nLength==0) {
@@ -609,7 +609,7 @@ namespace Selafin {
         if (write_intarray(fp,poHeader->panConnectivity,poHeader->nElements*poHeader->nPointsPerElement)==0) return 0;
         if (write_intarray(fp,poHeader->panBorder,poHeader->nPoints)==0) return 0;
         double *dfVals;
-        dfVals=(double*)VSIMalloc2(sizeof(double),poHeader->nPoints);
+        dfVals=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nPoints);
         if (poHeader->nPoints>0 && dfVals==0) return 0;
         for (size_t i=0;i<2;++i) {
             for (long j=0;j<poHeader->nPoints;++j) dfVals[j]=poHeader->paadfCoords[i][j]-poHeader->adfOrigin[i];

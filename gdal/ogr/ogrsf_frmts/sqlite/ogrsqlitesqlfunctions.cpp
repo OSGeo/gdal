@@ -727,7 +727,7 @@ void OGR2SQLITE_ST_AsBinary(sqlite3_context* pContext,
     if( poGeom != NULL )
     {
         int nBLOBLen = poGeom->WkbSize();
-        GByte* pabyGeomBLOB = (GByte*) VSIMalloc(nBLOBLen);
+        GByte* pabyGeomBLOB = (GByte*) VSI_MALLOC_VERBOSE(nBLOBLen);
         if( pabyGeomBLOB != NULL )
         {
             if( poGeom->exportToWkb(wkbNDR, pabyGeomBLOB) == OGRERR_NONE )

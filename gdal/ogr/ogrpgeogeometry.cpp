@@ -279,7 +279,9 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
 /* -------------------------------------------------------------------- */
     if ( ! poGeom || poGeom->IsEmpty() )
     {
-        *ppabyShape = (GByte*)VSIMalloc(nShpSize);
+        *ppabyShape = (GByte*)VSI_MALLOC_VERBOSE(nShpSize);
+        if( *ppabyShape == NULL )
+            return OGRERR_FAILURE;
         GUInt32 zero = SHPT_NULL;
         memcpy(*ppabyShape, &zero, nShpSize);
         *pnBytes = nShpSize;
@@ -401,7 +403,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
 
     /* Allocate our shape buffer */
-    *ppabyShape = (GByte*)VSIMalloc(nShpSize);
+    *ppabyShape = (GByte*)VSI_MALLOC_VERBOSE(nShpSize);
     if ( ! *ppabyShape )
         return OGRERR_FAILURE;
 

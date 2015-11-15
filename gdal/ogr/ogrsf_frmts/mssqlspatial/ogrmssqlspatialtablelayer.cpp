@@ -43,7 +43,7 @@ void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrVal
         poStatement->Append("null");
     
     size_t  iIn, iOut , nTextLen = strlen(pszStrValue);
-    char    *pszEscapedText = (char *) VSIMalloc(nTextLen*2 + 3);
+    char    *pszEscapedText = (char *) CPLMalloc(nTextLen*2 + 3);
 
     pszEscapedText[0] = '\'';
     

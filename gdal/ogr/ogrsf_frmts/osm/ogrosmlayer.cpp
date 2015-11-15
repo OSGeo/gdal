@@ -331,7 +331,7 @@ int  OGROSMLayer::AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold)
     {
         nFeatureArrayMaxSize = nFeatureArrayMaxSize + nFeatureArrayMaxSize / 2 + 128;
         CPLDebug("OSM", "For layer %s, new max size is %d", GetName(), nFeatureArrayMaxSize);
-        OGRFeature** papoNewFeatures = (OGRFeature**)VSIRealloc(papoFeatures,
+        OGRFeature** papoNewFeatures = (OGRFeature**)VSI_REALLOC_VERBOSE(papoFeatures,
                                 nFeatureArrayMaxSize * sizeof(OGRFeature*));
         if (papoNewFeatures == NULL)
         {

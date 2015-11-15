@@ -1853,7 +1853,7 @@ OGRErr create_field_map(OGRFeatureDefn *poDefn, int **map)
     OGRErr ret = OGRERR_NONE;
     int n = poDefn->GetFieldCount();
     if (n > 0) {
-        *map = (int*)VSIMalloc(sizeof(int) * n);
+        *map = (int*)VSI_MALLOC_VERBOSE(sizeof(int) * n);
         if (!(*map)) return OGRERR_NOT_ENOUGH_MEMORY;
         for(int i=0;i<n;i++)
             (*map)[i] = -1;

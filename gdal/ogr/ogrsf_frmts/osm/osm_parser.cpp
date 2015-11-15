@@ -384,7 +384,7 @@ int ReadStringTable(GByte* pabyData, GByte* pabyDataLimit,
         int* panStrOffNew;
         psCtxt->nStrAllocated = MAX(psCtxt->nStrAllocated * 2,
                                           (unsigned int)(pabyDataLimit - pabyData));
-        panStrOffNew = (int*) VSIRealloc(
+        panStrOffNew = (int*) VSI_REALLOC_VERBOSE(
             panStrOff, psCtxt->nStrAllocated * sizeof(int));
         if( panStrOffNew == NULL )
             GOTO_END_ERROR;
@@ -487,7 +487,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
                 OSMNode* pasNodesNew;
                 psCtxt->nNodesAllocated = MAX(psCtxt->nNodesAllocated * 2,
                                                  nSize);
-                pasNodesNew = (OSMNode*) VSIRealloc(
+                pasNodesNew = (OSMNode*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasNodes, psCtxt->nNodesAllocated * sizeof(OSMNode));
                 if( pasNodesNew == NULL )
                     GOTO_END_ERROR;
@@ -565,7 +565,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
 
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSIRealloc(
+                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -845,7 +845,7 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
 
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSIRealloc(
+                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -971,7 +971,7 @@ int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
 
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSIRealloc(
+                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -1041,7 +1041,7 @@ int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
                 GIntBig* panNodeRefsNew;
                 psCtxt->nNodeRefsAllocated =
                     MAX(psCtxt->nNodeRefsAllocated * 2, nSize);
-                panNodeRefsNew = (GIntBig*) VSIRealloc(
+                panNodeRefsNew = (GIntBig*) VSI_REALLOC_VERBOSE(
                         psCtxt->panNodeRefs,
                         psCtxt->nNodeRefsAllocated * sizeof(GIntBig));
                 if( panNodeRefsNew == NULL )
@@ -1135,7 +1135,7 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
 
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSIRealloc(
+                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -1204,7 +1204,7 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
                 OSMMember* pasMembersNew;
                 psCtxt->nMembersAllocated =
                     MAX(psCtxt->nMembersAllocated * 2, nSize);
-                pasMembersNew = (OSMMember*) VSIRealloc(
+                pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
                         psCtxt->pasMembers,
                         psCtxt->nMembersAllocated * sizeof(OSMMember));
                 if( pasMembersNew == NULL )
@@ -1542,7 +1542,7 @@ int ReadBlob(GByte* pabyData, unsigned int nDataSize, BlobType eType,
                     GByte* pabyUncompressedNew;
                     psCtxt->nUncompressedAllocated =
                         MAX(psCtxt->nUncompressedAllocated * 2, nUncompressedSize);
-                    pabyUncompressedNew = (GByte*)VSIRealloc(psCtxt->pabyUncompressed,
+                    pabyUncompressedNew = (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyUncompressed,
                                         psCtxt->nUncompressedAllocated + EXTRA_BYTES);
                     if( pabyUncompressedNew == NULL )
                         GOTO_END_ERROR;
@@ -1924,7 +1924,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
             OSMMember* pasMembersNew;
             int nMembersAllocated =
                 MAX(psCtxt->nMembersAllocated * 2, psCtxt->sRelation.nMembers + 1);
-            pasMembersNew = (OSMMember*) VSIRealloc(
+            pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasMembers,
                     nMembersAllocated * sizeof(OSMMember));
             if( pasMembersNew == NULL )
@@ -2206,7 +2206,7 @@ OSMContext* OSM_Open( const char* pszFilename,
 
     VSIFSeekL(fp, 0, SEEK_SET);
 
-    psCtxt = (OSMContext*) VSIMalloc(sizeof(OSMContext));
+    psCtxt = (OSMContext*) VSI_MALLOC_VERBOSE(sizeof(OSMContext));
     if (psCtxt == NULL)
     {
         VSIFCloseL(fp);
@@ -2239,7 +2239,7 @@ OSMContext* OSM_Open( const char* pszFilename,
         psCtxt->nBlobSizeAllocated = XML_BUFSIZE;
 
         psCtxt->nStrAllocated = 65536;
-        psCtxt->pszStrBuf = (char*) VSIMalloc(psCtxt->nStrAllocated);
+        psCtxt->pszStrBuf = (char*) VSI_MALLOC_VERBOSE(psCtxt->nStrAllocated);
         if( psCtxt->pszStrBuf )
             psCtxt->pszStrBuf[0] = '\0';
 
@@ -2253,18 +2253,18 @@ OSMContext* OSM_Open( const char* pszFilename,
         psCtxt->bTryToFetchBounds = TRUE;
 
         psCtxt->nNodesAllocated = 1;
-        psCtxt->pasNodes = (OSMNode*) VSIMalloc(sizeof(OSMNode) * psCtxt->nNodesAllocated);
+        psCtxt->pasNodes = (OSMNode*) VSI_MALLOC_VERBOSE(sizeof(OSMNode) * psCtxt->nNodesAllocated);
 
         psCtxt->nTagsAllocated = 256;
-        psCtxt->pasTags = (OSMTag*) VSIMalloc(sizeof(OSMTag) * psCtxt->nTagsAllocated);
+        psCtxt->pasTags = (OSMTag*) VSI_MALLOC_VERBOSE(sizeof(OSMTag) * psCtxt->nTagsAllocated);
 
         /* 300 is the recommended value, but there are files with more than 2000 so we should be able */
         /* to realloc over that value */
         psCtxt->nMembersAllocated = 2000;
-        psCtxt->pasMembers = (OSMMember*) VSIMalloc(sizeof(OSMMember) * psCtxt->nMembersAllocated);
+        psCtxt->pasMembers = (OSMMember*) VSI_MALLOC_VERBOSE(sizeof(OSMMember) * psCtxt->nMembersAllocated);
 
         psCtxt->nNodeRefsAllocated = 2000;
-        psCtxt->panNodeRefs = (GIntBig*) VSIMalloc(sizeof(GIntBig) * psCtxt->nNodeRefsAllocated);
+        psCtxt->panNodeRefs = (GIntBig*) VSI_MALLOC_VERBOSE(sizeof(GIntBig) * psCtxt->nNodeRefsAllocated);
 
         if( psCtxt->pszStrBuf == NULL ||
             psCtxt->pasNodes == NULL ||
@@ -2279,7 +2279,7 @@ OSMContext* OSM_Open( const char* pszFilename,
     }
 #endif
 
-    psCtxt->pabyBlob = (GByte*)VSIMalloc(psCtxt->nBlobSizeAllocated);
+    psCtxt->pabyBlob = (GByte*)VSI_MALLOC_VERBOSE(psCtxt->nBlobSizeAllocated);
     if( psCtxt->pabyBlob == NULL )
     {
         OSM_Close(psCtxt);
@@ -2393,7 +2393,7 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
     {
         GByte* pabyBlobNew;
         psCtxt->nBlobSizeAllocated = MAX(psCtxt->nBlobSizeAllocated * 2, nBlobSize);
-        pabyBlobNew = (GByte*)VSIRealloc(psCtxt->pabyBlob,
+        pabyBlobNew = (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyBlob,
                                         psCtxt->nBlobSizeAllocated + EXTRA_BYTES);
         if( pabyBlobNew == NULL )
             GOTO_END_ERROR;

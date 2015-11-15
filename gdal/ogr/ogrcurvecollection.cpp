@@ -64,7 +64,7 @@ OGRCurveCollection::OGRCurveCollection( const OGRCurveCollection& other ) :
     if( other.nCurveCount > 0 )
     {
         nCurveCount = other.nCurveCount;
-        papoCurves = (OGRCurve **) VSICalloc(sizeof(void*), nCurveCount);
+        papoCurves = (OGRCurve **) VSI_CALLOC_VERBOSE(sizeof(void*), nCurveCount);
         
         if( papoCurves )
         {
@@ -108,7 +108,7 @@ OGRCurveCollection& OGRCurveCollection::operator=( const OGRCurveCollection& oth
         if( other.nCurveCount > 0 )
         {
             nCurveCount = other.nCurveCount;
-            papoCurves = (OGRCurve **) VSIMalloc2(sizeof(void*), nCurveCount);
+            papoCurves = (OGRCurve **) VSI_MALLOC2_VERBOSE(sizeof(void*), nCurveCount);
             
             if( papoCurves )
             {
@@ -187,7 +187,7 @@ OGRErr OGRCurveCollection::importPreambuleFromWkb( OGRGeometry* poGeom,
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    papoCurves = (OGRCurve **) VSICalloc(sizeof(void*), nCurveCount);
+    papoCurves = (OGRCurve **) VSI_CALLOC_VERBOSE(sizeof(void*), nCurveCount);
     if (nCurveCount != 0 && papoCurves == NULL)
     {
         nCurveCount = 0;
@@ -302,7 +302,7 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
 /* -------------------------------------------------------------------- */
 /*      Allocate the right amount of space for the aggregated string    */
 /* -------------------------------------------------------------------- */
-    *ppszDstText = (char *) VSIMalloc(nCumulativeLength + nCurveCount +
+    *ppszDstText = (char *) VSI_MALLOC_VERBOSE(nCumulativeLength + nCurveCount +
                                     strlen(poGeom->getGeometryName()) + 10);
 
     if( *ppszDstText == NULL )

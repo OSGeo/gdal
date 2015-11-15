@@ -1459,7 +1459,7 @@ int FileGDBIndexIterator::SortRows()
         if( nSortedCount == nSortedAlloc )
         {
             int nNewSortedAlloc = 4 * nSortedAlloc / 3 + 16;
-            int* panNewSortedRows = (int*)VSIRealloc(panSortedRows,
+            int* panNewSortedRows = (int*)VSI_REALLOC_VERBOSE(panSortedRows,
                                             sizeof(int) * nNewSortedAlloc);
             if( panNewSortedRows == NULL )
             {

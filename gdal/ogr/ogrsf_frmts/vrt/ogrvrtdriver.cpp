@@ -113,7 +113,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
         int nLen = (int) sStatBuf.st_size;
 
-        pszXML = (char *) VSIMalloc(nLen+1);
+        pszXML = (char *) VSI_MALLOC_VERBOSE(nLen+1);
         if (pszXML == NULL)
             return NULL;
 

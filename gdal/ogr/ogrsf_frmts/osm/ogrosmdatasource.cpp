@@ -523,7 +523,7 @@ int OGROSMDataSource::AllocBucket(int iBucket)
     {
         int nRem = iBucket % (PAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
         if( papsBuckets[iBucket - nRem].u.panSectorSize == NULL )
-            papsBuckets[iBucket - nRem].u.panSectorSize = (GByte*)VSICalloc(1, PAGE_SIZE);
+            papsBuckets[iBucket - nRem].u.panSectorSize = (GByte*)VSI_CALLOC_VERBOSE(1, PAGE_SIZE);
         if( papsBuckets[iBucket - nRem].u.panSectorSize != NULL )
         {
             papsBuckets[iBucket].u.panSectorSize = papsBuckets[iBucket - nRem].u.panSectorSize + nRem * BUCKET_SECTOR_SIZE_ARRAY_SIZE;
@@ -535,7 +535,7 @@ int OGROSMDataSource::AllocBucket(int iBucket)
     {
         int nRem = iBucket % (PAGE_SIZE / BUCKET_BITMAP_SIZE);
         if( papsBuckets[iBucket - nRem].u.pabyBitmap == NULL )
-            papsBuckets[iBucket - nRem].u.pabyBitmap = (GByte*)VSICalloc(1, PAGE_SIZE);
+            papsBuckets[iBucket - nRem].u.pabyBitmap = (GByte*)VSI_CALLOC_VERBOSE(1, PAGE_SIZE);
         if( papsBuckets[iBucket - nRem].u.pabyBitmap != NULL )
         {
             papsBuckets[iBucket].u.pabyBitmap = papsBuckets[iBucket - nRem].u.pabyBitmap + nRem * BUCKET_BITMAP_SIZE;
