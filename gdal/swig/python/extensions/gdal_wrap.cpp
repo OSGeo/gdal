@@ -25567,7 +25567,7 @@ SWIGINTERN PyObject *_wrap_InfoInternal(PyObject *SWIGUNUSEDPARM(self), PyObject
   int res2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
-  char *result = 0 ;
+  retStringAndCPLFree *result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"OO:InfoInternal",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
@@ -25584,7 +25584,7 @@ SWIGINTERN PyObject *_wrap_InfoInternal(PyObject *SWIGUNUSEDPARM(self), PyObject
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)GDALInfo(arg1,arg2);
+    result = (retStringAndCPLFree *)GDALInfo(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -25592,7 +25592,14 @@ SWIGINTERN PyObject *_wrap_InfoInternal(PyObject *SWIGUNUSEDPARM(self), PyObject
       }
     }
   }
-  resultobj = SWIG_FromCharPtr((const char *)result);
+  {
+    /* %typemap(out) (retStringAndCPLFree*) */
+    if(result)
+    {
+      resultobj = GDALPythonObjectFromCStr( (const char *)result);
+      CPLFree(result);
+    }
+  }
   return resultobj;
 fail:
   return NULL;
@@ -28266,7 +28273,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"new_GDALInfoOptions", _wrap_new_GDALInfoOptions, METH_VARARGS, (char *)"new_GDALInfoOptions(char ** options) -> GDALInfoOptions"},
 	 { (char *)"delete_GDALInfoOptions", _wrap_delete_GDALInfoOptions, METH_VARARGS, (char *)"delete_GDALInfoOptions(GDALInfoOptions self)"},
 	 { (char *)"GDALInfoOptions_swigregister", GDALInfoOptions_swigregister, METH_VARARGS, NULL},
-	 { (char *)"InfoInternal", _wrap_InfoInternal, METH_VARARGS, (char *)"InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> char *"},
+	 { (char *)"InfoInternal", _wrap_InfoInternal, METH_VARARGS, (char *)"InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> retStringAndCPLFree *"},
 	 { (char *)"new_GDALTranslateOptions", _wrap_new_GDALTranslateOptions, METH_VARARGS, (char *)"new_GDALTranslateOptions(char ** options) -> GDALTranslateOptions"},
 	 { (char *)"delete_GDALTranslateOptions", _wrap_delete_GDALTranslateOptions, METH_VARARGS, (char *)"delete_GDALTranslateOptions(GDALTranslateOptions self)"},
 	 { (char *)"GDALTranslateOptions_swigregister", GDALTranslateOptions_swigregister, METH_VARARGS, NULL},
