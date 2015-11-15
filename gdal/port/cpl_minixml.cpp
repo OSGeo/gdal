@@ -1126,6 +1126,10 @@ char *CPLSerializeXMLTree( const CPLXMLNode *psNode )
 /*                          CPLCreateXMLNode()                          */
 /************************************************************************/
 
+#ifdef DEBUG
+static CPLXMLNode* psDummyStaticNode;
+#endif
+
 /**
  * \brief Create an document tree item.
  *
@@ -1171,6 +1175,16 @@ CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
             psLink->psNext = psNode;
         }
     }
+#ifdef DEBUG
+    else
+    {
+        // Coverity sometimes doesn't realize that this function is passed
+        // with a non NULL parent and thinks that this branch is taken, leading
+        // to creating object being leak by caller. This ugly hack hopefully
+        // makes it believe that someone will reference it...
+        psDummyStaticNode = psNode;
+    }
+#endif
 
     return psNode;
 }
