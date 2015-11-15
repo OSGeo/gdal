@@ -165,6 +165,12 @@ GDALECWCompressor::~GDALECWCompressor()
     for(i=0;i<nJP2UserBox;i++)
         delete papoJP2UserBox[i];
     CPLFree(papoJP2UserBox);
+
+#if ECWSDK_VERSION>=50
+    NCSFreeFileInfo(&sFileInfo);
+#else
+    NCSFreeFileInfoEx(&sFileInfo);
+#endif
 }
 
 /************************************************************************/
@@ -174,12 +180,6 @@ GDALECWCompressor::~GDALECWCompressor()
 CPLErr GDALECWCompressor::CloseDown()
 
 {
-#if ECWSDK_VERSION>=50
-    NCSFreeFileInfo(&sFileInfo);
-#else
-    NCSFreeFileInfoEx(&sFileInfo);
-#endif
-
     Close( true );
     m_OStream.Close();
 
@@ -989,7 +989,7 @@ CPLErr GDALECWCompressor::Initialize(
         if( fpVSIL == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to open %s.", pszFilename );
+                      "Failed to open/create %s.", pszFilename );
             return CE_Failure;
         }
 
@@ -1272,6 +1272,9 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
         ECWReportError(oErr);
+        for (i=0;i<nBands;i++)
+            CPLFree(papszBandDescriptions[i]);
+        CPLFree(papszBandDescriptions);
         return NULL;
     }
 
@@ -1543,7 +1546,7 @@ class IRasterIORequest
 };
 #endif
 
-class CPL_DLL ECWWriteDataset : public GDALDataset
+class ECWWriteDataset : public GDALDataset
 {
     friend class ECWWriteRasterBand;
 
@@ -2088,6 +2091,11 @@ ECWCreateJPEG2000(const char *pszFilename, int nXSize, int nYSize, int nBands,
                   GDALDataType eType, char **papszOptions )
 
 {
+    if( nBands == 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "0 band not supported");
+        return NULL;
+    }
     ECWInitialize();
 
     return new ECWWriteDataset( pszFilename, nXSize, nYSize, nBands, 
@@ -2103,6 +2111,11 @@ ECWCreateECW( const char *pszFilename, int nXSize, int nYSize, int nBands,
               GDALDataType eType, char **papszOptions )
 
 {
+    if( nBands == 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "0 band not supported");
+        return NULL;
+    }
     ECWInitialize();
 
     return new ECWWriteDataset( pszFilename, nXSize, nYSize, nBands, 
