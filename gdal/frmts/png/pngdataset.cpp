@@ -670,14 +670,10 @@ CPLErr PNGDataset::LoadInterlacedChunk( int iLine )
     if( pabyBuffer == NULL )
     {
       pabyBuffer = reinterpret_cast<GByte *>(
-          VSIMalloc(nPixelOffset*GetRasterXSize()*nMaxChunkLines) );
+          VSI_MALLOC_VERBOSE(nPixelOffset*GetRasterXSize()*nMaxChunkLines) );
 
         if( pabyBuffer == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                      "Unable to allocate buffer for whole interlaced PNG"
-                      "image of size %dx%d.\n", 
-                      GetRasterXSize(), GetRasterYSize() );
             return CE_Failure;
         }
 #ifdef notdef

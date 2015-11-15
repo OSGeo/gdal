@@ -273,10 +273,9 @@ CPLErr JPEGLSDataset::Uncompress()
 
     int nUncompressedSize = nRasterXSize * nRasterYSize *
                             nBands * (GDALGetDataTypeSize(GetRasterBand(1)->GetRasterDataType()) / 8);
-    pabyUncompressedData = (GByte*)VSIMalloc(nUncompressedSize);
+    pabyUncompressedData = (GByte*)VSI_MALLOC_VERBOSE(nUncompressedSize);
     if (pabyUncompressedData == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
         VSIFree(pabyCompressedData);
         return CE_Failure;
     }
@@ -542,11 +541,10 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int nWordSize = GDALGetDataTypeSize(eDT) / 8;
     int nUncompressedSize = nXSize * nYSize * nBands * nWordSize;
     int nCompressedSize = nUncompressedSize + 256; /* FIXME? bug in charls-1.0beta ?. I needed a "+ something" to avoid erros on byte.tif */
-    GByte* pabyDataCompressed = (GByte*)VSIMalloc(nCompressedSize);
-    GByte* pabyDataUncompressed = (GByte*)VSIMalloc(nUncompressedSize);
+    GByte* pabyDataCompressed = (GByte*)VSI_MALLOC_VERBOSE(nCompressedSize);
+    GByte* pabyDataUncompressed = (GByte*)VSI_MALLOC_VERBOSE(nUncompressedSize);
     if (pabyDataCompressed == NULL || pabyDataUncompressed == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
         VSIFree(pabyDataCompressed);
         VSIFree(pabyDataUncompressed);
         return NULL;

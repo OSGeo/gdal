@@ -315,15 +315,12 @@ CPLErr	HFABand::LoadBlockInfo()
         return CE_Failure;
     }
 
-    panBlockStart = (vsi_l_offset *)VSIMalloc2(sizeof(vsi_l_offset), nBlocks);
-    panBlockSize = (int *) VSIMalloc2(sizeof(int), nBlocks);
-    panBlockFlag = (int *) VSIMalloc2(sizeof(int), nBlocks);
+    panBlockStart = (vsi_l_offset *)VSI_MALLOC2_VERBOSE(sizeof(vsi_l_offset), nBlocks);
+    panBlockSize = (int *) VSI_MALLOC2_VERBOSE(sizeof(int), nBlocks);
+    panBlockFlag = (int *) VSI_MALLOC2_VERBOSE(sizeof(int), nBlocks);
 
     if (panBlockStart == NULL || panBlockSize == NULL || panBlockFlag == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                 "HFABand::LoadBlockInfo : Out of memory\n");
-
         CPLFree(panBlockStart);
         CPLFree(panBlockSize);
         CPLFree(panBlockFlag);
@@ -441,11 +438,9 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
 /*      Allocate blockmap.                                              */
 /* -------------------------------------------------------------------- */
-    panBlockFlag = (int *) VSIMalloc2(sizeof(int), nBlocks);
+    panBlockFlag = (int *) VSI_MALLOC2_VERBOSE(sizeof(int), nBlocks);
     if (panBlockFlag == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                 "HFABand::LoadExternalBlockInfo : Out of memory\n");
         return CE_Failure;
     }
 
@@ -454,11 +449,9 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
     const int nBytesPerRow = (nBlocksPerRow + 7) / 8;
     unsigned char *pabyBlockMap = (unsigned char *) 
-        VSIMalloc(nBytesPerRow*nBlocksPerColumn+20);
+        VSI_MALLOC_VERBOSE(nBytesPerRow*nBlocksPerColumn+20);
     if (pabyBlockMap == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                 "HFABand::LoadExternalBlockInfo : Out of memory\n");
         return CE_Failure;
     }
 
@@ -1152,11 +1145,9 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
 /* -------------------------------------------------------------------- */
     if( panBlockFlag[iBlock] & BFLG_COMPRESSED )
     {
-        GByte *pabyCData = (GByte *) VSIMalloc( (size_t) nBlockSize );
+        GByte *pabyCData = (GByte *) VSI_MALLOC_VERBOSE( (size_t) nBlockSize );
         if (pabyCData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "HFABand::GetRasterBlock : Out of memory\n");
             return CE_Failure;
         }
 
@@ -1370,7 +1361,6 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         if( compress.getCounts() == NULL ||
             compress.getValues() == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
             return CE_Failure;
         }
 
@@ -1783,10 +1773,9 @@ CPLErr HFABand::GetPCT( int * pnColors,
         nPCTColors = poColumnEntry->GetIntField( "numRows" );
         for( int iColumn = 0; iColumn < 4; iColumn++ )
         {
-            apadfPCT[iColumn] = (double *)VSIMalloc2(sizeof(double),nPCTColors);
+            apadfPCT[iColumn] = (double *)VSI_MALLOC2_VERBOSE(sizeof(double),nPCTColors);
             if (apadfPCT[iColumn] == NULL)
             {
-                CPLError(CE_Failure, CPLE_OutOfMemory, "Color palette will be ignored");
                 return CE_Failure;
             }
 

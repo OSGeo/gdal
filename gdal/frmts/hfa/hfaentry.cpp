@@ -463,11 +463,9 @@ void HFAEntry::LoadData()
 /* -------------------------------------------------------------------- */
 /*      Allocate buffer, and read data.                                 */
 /* -------------------------------------------------------------------- */
-    pabyData = (GByte *) VSIMalloc(nDataSize + 1);
+    pabyData = (GByte *) VSI_MALLOC_VERBOSE(nDataSize + 1);
     if (pabyData == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "VSIMalloc() failed in HFAEntry::LoadData()." );
         return;
     }
 

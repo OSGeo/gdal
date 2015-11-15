@@ -1562,12 +1562,10 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             return CE_Failure;
         }
         GByte* pabyTemp = reinterpret_cast<GByte *>(
-            VSIRealloc( poGDS->pabyLastBufferBandRasterIO,
+            VSI_REALLOC_VERBOSE( poGDS->pabyLastBufferBandRasterIO,
                         static_cast<size_t>( nBufferSize) ) );
         if( pabyTemp == NULL )
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Out of memory error while allocating working buffers");
             return CE_Failure;
         }
         poGDS->nLastBandRasterIOXOff = nXOff;

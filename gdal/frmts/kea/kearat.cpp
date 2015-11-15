@@ -110,11 +110,9 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
 
         if( eGDALType == GFT_Integer )
         {
-            int *panColData = (int*)VSIMalloc2(sizeof(int), m_poKEATable->getSize());
+            int *panColData = (int*)VSI_MALLOC2_VERBOSE(sizeof(int), m_poKEATable->getSize());
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::Clone");
                 delete poRAT;
                 return NULL;
             }
@@ -135,11 +133,9 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
         }
         if( eGDALType == GFT_Real )
         {
-            double *padfColData = (double*)VSIMalloc2(sizeof(double), m_poKEATable->getSize());
+            double *padfColData = (double*)VSI_MALLOC2_VERBOSE(sizeof(double), m_poKEATable->getSize());
             if( padfColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::Clone");
                 delete poRAT;
                 return NULL;
             }
@@ -159,11 +155,9 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
         }
         if( eGDALType == GFT_String )
         {
-            char **papszColData = (char**)VSIMalloc2(sizeof(char*), m_poKEATable->getSize());
+            char **papszColData = (char**)VSI_MALLOC2_VERBOSE(sizeof(char*), m_poKEATable->getSize());
             if( papszColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::Clone");
                 delete poRAT;
                 return NULL;
             }
@@ -391,11 +385,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_int:
         {
             // allocate space for ints
-            int *panColData = (int*)VSIMalloc2(iLength, sizeof(int) );
+            int *panColData = (int*)VSI_MALLOC2_VERBOSE(iLength, sizeof(int) );
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -443,11 +435,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_string:
         {
             // allocate space for string pointers
-            char **papszColData = (char**)VSIMalloc2(iLength, sizeof(char*));
+            char **papszColData = (char**)VSI_MALLOC2_VERBOSE(iLength, sizeof(char*));
             if( papszColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -525,11 +515,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_bool:
         {
             // need to convert to/from bools
-            bool *panColData = (bool*)VSIMalloc2(iLength, sizeof(bool) );
+            bool *panColData = (bool*)VSI_MALLOC2_VERBOSE(iLength, sizeof(bool) );
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -567,11 +555,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_int:
         {
             // need to convert to/from int64_t
-            int64_t *panColData = (int64_t*)VSIMalloc2(iLength, sizeof(int64_t) );
+            int64_t *panColData = (int64_t*)VSI_MALLOC2_VERBOSE(iLength, sizeof(int64_t) );
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -608,11 +594,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_float:
         {
             // allocate space for doubles
-            double *padfColData = (double*)VSIMalloc2(iLength, sizeof(double) );
+            double *padfColData = (double*)VSI_MALLOC2_VERBOSE(iLength, sizeof(double) );
             if( padfColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -644,11 +628,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_string:
         {
             // allocate space for string pointers
-            char **papszColData = (char**)VSIMalloc2(iLength, sizeof(char*));
+            char **papszColData = (char**)VSI_MALLOC2_VERBOSE(iLength, sizeof(char*));
             if( papszColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -727,11 +709,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_int:
         {
             // allocate space for ints
-            int *panColData = (int*)VSIMalloc2(iLength, sizeof(int) );
+            int *panColData = (int*)VSI_MALLOC2_VERBOSE(iLength, sizeof(int) );
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
             if( eRWFlag == GF_Write )
@@ -765,11 +745,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_float:
         {
             // allocate space for doubles
-            double *padfColData = (double*)VSIMalloc2(iLength, sizeof(double) );
+            double *padfColData = (double*)VSI_MALLOC2_VERBOSE(iLength, sizeof(double) );
             if( padfColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
             

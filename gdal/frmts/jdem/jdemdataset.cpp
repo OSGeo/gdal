@@ -167,11 +167,9 @@ CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         if (bBufferAllocFailed)
             return CE_Failure;
 
-        pszRecord = (char *) VSIMalloc(nRecordSize);
+        pszRecord = (char *) VSI_MALLOC_VERBOSE(nRecordSize);
         if (pszRecord == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate scanline buffer");
             bBufferAllocFailed = TRUE;
             return CE_Failure;
         }

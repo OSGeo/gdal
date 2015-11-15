@@ -813,7 +813,7 @@ CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
         if( pBlock == NULL )
         {
             if( oHeader.data_size() > (size_t)(-1)
-                    || ( pBlock = VSIMalloc( oHeader.data_size() ) ) == NULL )
+                    || ( pBlock = VSI_MALLOC_VERBOSE( oHeader.data_size() ) ) == NULL )
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory,
                         "Cannot allocate buffer for the complete data set.\n"
@@ -844,11 +844,9 @@ CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
 
         if( pBlock == NULL )
         {
-            pBlock = VSIMalloc2( oHeader.element_size(), nBlockXSize );
+            pBlock = VSI_MALLOC2_VERBOSE( oHeader.element_size(), nBlockXSize );
             if( pBlock == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "Cannot allocate scanline buffer" );
                 return CE_Failure;
             }
         }
@@ -1133,10 +1131,9 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else
         {
-            poDS->pasGCPs = (GDAL_GCP *)VSIMalloc2( poDS->nGCPs, sizeof(GDAL_GCP) );
+            poDS->pasGCPs = (GDAL_GCP *)VSI_MALLOC2_VERBOSE( poDS->nGCPs, sizeof(GDAL_GCP) );
             if( poDS->pasGCPs == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate GCP list" );
                 delete poDS;
                 return NULL;
             }
@@ -1187,10 +1184,9 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
             const char *pDomainEnd = strchr( pszTagName + 10, '/' );
             if( pDomainEnd && pDomainEnd - (pszTagName + 10) > 0 )
             {
-                char *pszDomain = (char *)VSIMalloc( pDomainEnd - (pszTagName + 10) + 1 );
+                char *pszDomain = (char *)VSI_MALLOC_VERBOSE( pDomainEnd - (pszTagName + 10) + 1 );
                 if( !pszDomain )
                 {
-                    CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate metadata buffer" );
                     delete poDS;
                     return NULL;
                 }
@@ -1314,10 +1310,9 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       pszCompressionValue );
     }
 
-    gta::type *peGTATypes = (gta::type *)VSIMalloc2( poSrcDS->GetRasterCount(), sizeof(gta::type) );
+    gta::type *peGTATypes = (gta::type *)VSI_MALLOC2_VERBOSE( poSrcDS->GetRasterCount(), sizeof(gta::type) );
     if( peGTATypes == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate GTA type list" );
         return NULL;
     }
     for( int i = 0; i < poSrcDS->GetRasterCount(); i++ )
@@ -1609,10 +1604,9 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    void *pLine = VSIMalloc2( oHeader.element_size(), oHeader.dimension_size(0) );
+    void *pLine = VSI_MALLOC2_VERBOSE( oHeader.element_size(), oHeader.dimension_size(0) );
     if( pLine == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate scanline buffer.\n" );
         VSIFree( pLine );
         return NULL;
     }

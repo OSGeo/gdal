@@ -495,22 +495,19 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Allocate segment info structures.                               */
 /* -------------------------------------------------------------------- */
         poDS->panSegType =
-            (int *) VSICalloc( sizeof(int), poDS->nSegCount );
+            (int *) VSI_CALLOC_VERBOSE( sizeof(int), poDS->nSegCount );
         poDS->papszSegName =
-            (char **) VSICalloc( sizeof(char*), poDS->nSegCount );
+            (char **) VSI_CALLOC_VERBOSE( sizeof(char*), poDS->nSegCount );
         poDS->panSegOffset = (vsi_l_offset *) 
-            VSICalloc( sizeof(vsi_l_offset), poDS->nSegCount );
+            VSI_CALLOC_VERBOSE( sizeof(vsi_l_offset), poDS->nSegCount );
         poDS->panSegSize = (vsi_l_offset *) 
-            VSICalloc( sizeof(vsi_l_offset), poDS->nSegCount );
+            VSI_CALLOC_VERBOSE( sizeof(vsi_l_offset), poDS->nSegCount );
 
         if (poDS->panSegType == NULL ||
             poDS->papszSegName == NULL ||
             poDS->panSegOffset == NULL ||
             poDS->panSegSize == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                       "Not enough memory to hold segment description of %s",
-                      poOpenInfo->pszFilename );
             delete poDS;
             return NULL;
         }

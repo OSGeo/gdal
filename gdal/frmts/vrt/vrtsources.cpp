@@ -1447,11 +1447,9 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     float *pafSrc;
 
-    pafSrc = (float *) VSIMalloc3(sizeof(float), nReqXSize, nReqYSize);
+    pafSrc = (float *) VSI_MALLOC3_VERBOSE(sizeof(float), nReqXSize, nReqYSize);
     if( pafSrc == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Out of memory allocating working buffer in VRTAveragedSource::RasterIO()." );
         return CE_Failure;
     }
 
@@ -2082,10 +2080,9 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
     }
     else
     {
-        pafData = (float *) VSIMalloc3(nOutXSize,nOutYSize,nWordSize);
+        pafData = (float *) VSI_MALLOC3_VERBOSE(nOutXSize,nOutYSize,nWordSize);
         if (pafData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
             return CE_Failure;
         }
 

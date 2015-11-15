@@ -127,13 +127,9 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
 /*      Read the remainder of the record into a buffer.  Ensure that    */
 /*      the first 12 bytes gets moved into this buffer as well.         */
 /* -------------------------------------------------------------------- */
-    psRecord->pachData = (char *) VSIMalloc(psRecord->nLength );
+    psRecord->pachData = (char *) VSI_MALLOC_VERBOSE(psRecord->nLength );
     if( psRecord->pachData == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "Out of memory allocated %d bytes for CEOS record data.\n"
-                  "Are you sure you aren't leaking CEOSRecords?\n",
-                  psRecord->nLength );
         CPLFree( psRecord );
         return NULL;
     }

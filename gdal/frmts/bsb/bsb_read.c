@@ -328,7 +328,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             if (iPCT < 0 || iPCT > 128)
             {
                 CSLDestroy( papszTokens );
-                CPLError( CE_Failure, CPLE_OutOfMemory, 
+                CPLError( CE_Failure, CPLE_AppDefined, 
                             "BSBOpen : Invalid color table index. Probably due to corrupted BSB file (iPCT = %d).",
                             iPCT);
                 BSBClose( psInfo );
@@ -337,13 +337,10 @@ BSBInfo *BSBOpen( const char *pszFilename )
             if( iPCT > psInfo->nPCTSize-1 )
             {
                 unsigned char* pabyNewPCT = (unsigned char *) 
-                    VSIRealloc(psInfo->pabyPCT,(iPCT+1) * 3);
+                    VSI_REALLOC_VERBOSE(psInfo->pabyPCT,(iPCT+1) * 3);
                 if (pabyNewPCT == NULL)
                 {
                     CSLDestroy( papszTokens );
-                    CPLError( CE_Failure, CPLE_OutOfMemory, 
-                              "BSBOpen : Out of memory. Probably due to corrupted BSB file (iPCT = %d).",
-                              iPCT);
                     BSBClose( psInfo );
                     return NULL;
                 }
@@ -468,12 +465,9 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /*      Initialize memory for line offset list.                         */
 /* -------------------------------------------------------------------- */
     psInfo->panLineOffset = (int *) 
-        VSIMalloc2(sizeof(int), psInfo->nYSize);
+        VSI_MALLOC2_VERBOSE(sizeof(int), psInfo->nYSize);
     if (psInfo->panLineOffset == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "BSBOpen : Out of memory. Probably due to corrupted BSB file (nYSize = %d).",
-                  psInfo->nYSize );
         BSBClose( psInfo );
         return NULL;
     }

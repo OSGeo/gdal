@@ -683,14 +683,11 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
             nLength = static_cast<int>( VSIFTellL( fp ) );
             VSIFSeekL( fp, 0, SEEK_SET );
 
-            pszXML = reinterpret_cast<char *>( VSIMalloc(nLength+1) );
+            pszXML = reinterpret_cast<char *>( VSI_MALLOC_VERBOSE(nLength+1) );
 
             if( pszXML == NULL )
             {
                 VSIFCloseL(fp);
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                          "Failed to allocate %d byte buffer to hold VRT xml file.",
-                          nLength );
                 return NULL;
             }
 

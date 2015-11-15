@@ -440,12 +440,11 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
     // Load the tile table (first tile s already read)
     // ----------------------------------------------------------------
 
-    *pahTiles  = (INGR_TileItem*) VSICalloc( nTiles, SIZEOF_TILE );
-    GByte *pabyBuf  = (GByte*) VSICalloc( ( nTiles - 1 ), SIZEOF_TILE );
+    *pahTiles  = (INGR_TileItem*) VSI_CALLOC_VERBOSE( nTiles, SIZEOF_TILE );
+    GByte *pabyBuf  = (GByte*) VSI_CALLOC_VERBOSE( ( nTiles - 1 ), SIZEOF_TILE );
 
     if (*pahTiles == NULL || pabyBuf == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
         CPLFree( *pahTiles );
         *pahTiles = NULL;
         CPLFree( pabyBuf );
@@ -586,13 +585,12 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
 
     INGR_ColorTableVar hVLTColors;
 
-    hVLTColors.Entry = (vlt_slot*) VSICalloc( nEntries, SIZEOF_VLTS );
+    hVLTColors.Entry = (vlt_slot*) VSI_CALLOC_VERBOSE( nEntries, SIZEOF_VLTS );
 
-    GByte *pabyBuf = (GByte*) VSICalloc( nEntries, SIZEOF_VLTS );
+    GByte *pabyBuf = (GByte*) VSI_CALLOC_VERBOSE( nEntries, SIZEOF_VLTS );
 
     if (hVLTColors.Entry == NULL || pabyBuf == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
         CPLFree( pabyBuf );
         CPLFree( hVLTColors.Entry );
         return;

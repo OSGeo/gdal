@@ -1851,15 +1851,10 @@ bool GeoRasterWrapper::InitializeIO( void )
 
     long nMaxBufferSize = MAX( nBlockBytes, nGDALBlockBytes );
 
-    pabyBlockBuf = (GByte*) VSIMalloc( sizeof(GByte) * nMaxBufferSize );
+    pabyBlockBuf = (GByte*) VSI_MALLOC_VERBOSE( nMaxBufferSize );
 
     if ( pabyBlockBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-            "InitializeIO - Block Buffer error\n"
-            "Cannot allocate memory buffer of (%ld) bytes "
-            "Consider the use of *smaller* block size",
-            nMaxBufferSize );
         return false;
     }
 
@@ -1869,15 +1864,10 @@ bool GeoRasterWrapper::InitializeIO( void )
 
     if( bUpdate && ! EQUAL( sCompressionType.c_str(), "NONE") )
     {
-        pabyCompressBuf = (GByte*) VSIMalloc( sizeof(GByte) * nMaxBufferSize );
+        pabyCompressBuf = (GByte*) VSI_MALLOC_VERBOSE( nMaxBufferSize );
 
         if ( pabyCompressBuf == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                "InitializeIO - Compression Buffer error\n"
-                "Cannot allocate memory buffer of (%ld) bytes "
-                "Consider the use of *smaller* block size",
-                nMaxBufferSize );
             return false;
         }
     }
@@ -1886,15 +1876,10 @@ bool GeoRasterWrapper::InitializeIO( void )
     // Allocate array of LOB Locators
     // --------------------------------------------------------------------
 
-    pahLocator = (OCILobLocator**) VSIMalloc( sizeof(void*) * nBlockCount );
+    pahLocator = (OCILobLocator**) VSI_MALLOC_VERBOSE( sizeof(void*) * nBlockCount );
 
     if ( pahLocator == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                "InitializeIO - LobLocator Array error\n"
-                "Cannot allocate memory buffer of (%ld) bytes "
-                "Consider the use of *bigger* block size",
-                (sizeof(void*) * nBlockCount) );
         return false;
     }
 
@@ -3576,11 +3561,10 @@ void GeoRasterWrapper::PackNBits( GByte* pabyData )
 {
     int nPixCount = nBandBlockSize * nRowBlockSize * nColumnBlockSize;
 
-    GByte* pabyBuffer = (GByte*) VSIMalloc( nPixCount * sizeof(GByte*) );
+    GByte* pabyBuffer = (GByte*) VSI_MALLOC_VERBOSE( nPixCount * sizeof(GByte*) );
 
     if( pabyBuffer == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "PackNBits" );
         return;
     }
 
@@ -3922,11 +3906,10 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
 
 bool GeoRasterWrapper::UncompressDeflate( unsigned long nBufferSize )
 {
-    GByte* pabyBuf = (GByte*) VSIMalloc( nBufferSize );
+    GByte* pabyBuf = (GByte*) VSI_MALLOC_VERBOSE( nBufferSize );
 
     if( pabyBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "UncompressDeflate" );
         return false;
     }
 
@@ -3964,11 +3947,10 @@ unsigned long GeoRasterWrapper::CompressDeflate( void )
 {
     unsigned long nLen = ((unsigned long)(nBlockBytes * 1.1)) + 12;
 
-    GByte* pabyBuf = (GByte*) VSIMalloc( nBlockBytes );
+    GByte* pabyBuf = (GByte*) VSI_MALLOC_VERBOSE( nBlockBytes );
 
     if( pabyBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "CompressDeflate" );
         return 0;
     }
 

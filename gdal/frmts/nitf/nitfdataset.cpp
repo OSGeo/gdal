@@ -2272,11 +2272,10 @@ void NITFDataset::InitializeNITFDESs()
         {
             nDESDataSize = psSegInfo->nSegmentHeaderSize + psSegInfo->nSegmentSize;
             pachDESData  = reinterpret_cast<char *>(
-                VSIMalloc( nDESDataSize + 1 ) );
+                VSI_MALLOC_VERBOSE( nDESDataSize + 1 ) );
 
             if (pachDESData == NULL)
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory for DES segment" );
                 return;
             }
 
@@ -2620,10 +2619,9 @@ void NITFDataset::InitializeCGMMetadata()
 /* -------------------------------------------------------------------- */
 
         char *pabyCGMData = reinterpret_cast<char *>(
-            VSICalloc( 1, static_cast<size_t>( psSegment->nSegmentSize ) ) );
+            VSI_CALLOC_VERBOSE( 1, static_cast<size_t>( psSegment->nSegmentSize ) ) );
         if (pabyCGMData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
             CSLDestroy( papszCGMMetadata );
             return;
         }
@@ -2647,7 +2645,6 @@ void NITFDataset::InitializeCGMMetadata()
 
         if (pszEscapedCGMData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
             CPLFree(pabyCGMData);
             CSLDestroy( papszCGMMetadata );
             return;
@@ -2728,10 +2725,9 @@ void NITFDataset::InitializeTextMetadata()
 /* -------------------------------------------------------------------- */
         /* Allocate one extra byte for the NULL terminating character */
         char *pabyTextData = reinterpret_cast<char *>(
-            VSICalloc( 1, (size_t)psSegment->nSegmentSize + 1 ) );
+            VSI_CALLOC_VERBOSE( 1, (size_t)psSegment->nSegmentSize + 1 ) );
         if (pabyTextData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
             return;
         }
         if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart, 
@@ -2841,7 +2837,6 @@ void NITFDataset::InitializeTREMetadata()
                                                     CPLES_BackslashQuotable );
             if (pszEscapedData == NULL)
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
                 return;
             }
 
@@ -2885,7 +2880,6 @@ void NITFDataset::InitializeTREMetadata()
                                                 CPLES_BackslashQuotable );
             if (pszEscapedData == NULL)
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
                 NITFDESFreeTREData(pabyTREData);
                 NITFDESDeaccess(psDES);
                 return;
@@ -3357,11 +3351,10 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 /*      Allocate offset array                                           */
 /* -------------------------------------------------------------------- */
     panJPEGBlockOffset = reinterpret_cast<GIntBig *>(
-        VSICalloc(sizeof(GIntBig),
+        VSI_CALLOC_VERBOSE(sizeof(GIntBig),
                   psImage->nBlocksPerRow*psImage->nBlocksPerColumn) );
     if (panJPEGBlockOffset == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
         return CE_Failure;
     }
     panJPEGBlockOffset[0] = nJPEGStart;
@@ -3476,11 +3469,10 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
 /*      the whole file. We just use the psImage->panBlockStart table    */
 /* -------------------------------------------------------------------- */
             panJPEGBlockOffset = reinterpret_cast<GIntBig *>(
-                VSICalloc(sizeof(GIntBig),
+                VSI_CALLOC_VERBOSE(sizeof(GIntBig),
                           psImage->nBlocksPerRow*psImage->nBlocksPerColumn) );
             if (panJPEGBlockOffset == NULL)
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
                 return CE_Failure;
             }
             for ( int i=0;i< psImage->nBlocksPerRow*psImage->nBlocksPerColumn;i++)
@@ -3520,11 +3512,10 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
     {
         /* Allocate enough memory to hold 12bit JPEG data */
         pabyJPEGBlock = reinterpret_cast<GByte *>(
-            VSICalloc(psImage->nBands,
+            VSI_CALLOC_VERBOSE(psImage->nBands,
                       psImage->nBlockWidth * psImage->nBlockHeight * 2) );
         if (pabyJPEGBlock == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
             return CE_Failure;
         }
     }

@@ -1638,13 +1638,9 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         {
             int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
             GByte *pabyIntermediate = (GByte *) 
-                VSIMalloc3(dims.size.x, dims.size.y, nDataTypeSize*nBandCount );
+                VSI_MALLOC3_VERBOSE(dims.size.x, dims.size.y, nDataTypeSize*nBandCount );
             if( pabyIntermediate == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory, 
-                          "Failed to allocate %d byte intermediate decompression buffer for jpeg2000.", 
-                          dims.size.x * dims.size.y * nDataTypeSize * nBandCount );
-
                 return CE_Failure;
             }
 

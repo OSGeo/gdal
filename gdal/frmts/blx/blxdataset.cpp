@@ -365,10 +365,9 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 // --------------------------------------------------------------------
 
     GInt16 *pabyTile
-        = (GInt16 *) VSIMalloc( sizeof(GInt16)*ctx->cell_xsize*ctx->cell_ysize );
+        = (GInt16 *) VSI_MALLOC_VERBOSE( sizeof(GInt16)*ctx->cell_xsize*ctx->cell_ysize );
     if (pabyTile == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
         blxclose(ctx);
         blx_free_context(ctx);
         return NULL;

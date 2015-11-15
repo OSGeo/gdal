@@ -862,12 +862,10 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
         else
 #endif
             pData = reinterpret_cast<GByte *>(
-                VSICalloc((size_t)nTmp, GetRasterYSize() ) );
+                VSI_CALLOC_VERBOSE((size_t)nTmp, GetRasterYSize() ) );
 
         if( pData == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Unable to create band arrays ... out of memory." );
             return CE_Failure;
         }
 
@@ -1100,7 +1098,7 @@ GDALDataset *MEMDataset::Create( CPL_UNUSED const char * pszFilename,
     if( bPixelInterleaved )
     {
         apbyBandData.push_back(
-            reinterpret_cast<GByte *>( VSICalloc( 1, nGlobalSize ) ) );
+            reinterpret_cast<GByte *>( VSI_CALLOC_VERBOSE( 1, nGlobalSize ) ) );
 
         if( apbyBandData[0] == NULL )
             bAllocOK = FALSE;
@@ -1116,7 +1114,7 @@ GDALDataset *MEMDataset::Create( CPL_UNUSED const char * pszFilename,
         {
             apbyBandData.push_back(
                 reinterpret_cast<GByte *>(
-                    VSICalloc( 1, ((size_t)nWordSize) * nXSize * nYSize ) ) );
+                    VSI_CALLOC_VERBOSE( 1, ((size_t)nWordSize) * nXSize * nYSize ) ) );
             if( apbyBandData[iBand] == NULL )
             {
                 bAllocOK = FALSE;
@@ -1134,8 +1132,6 @@ GDALDataset *MEMDataset::Create( CPL_UNUSED const char * pszFilename,
             if( apbyBandData[iBand] )
                 VSIFree( apbyBandData[iBand] );
         }
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Unable to create band arrays ... out of memory." );
         return NULL;
     }
 

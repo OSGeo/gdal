@@ -1256,11 +1256,8 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
     // Matches nBands
     int nTuples = PQntuples(poResult);
     
-    poBMD = (BandMetadata *)VSIMalloc2(nTuples, sizeof(BandMetadata));
+    poBMD = (BandMetadata *)VSI_MALLOC2_VERBOSE(nTuples, sizeof(BandMetadata));
     if (poBMD == NULL) {
-        ReportError(CE_Failure, CPLE_OutOfMemory, 
-            "Out of memory getting metadata from bands");
-            
         PQclear(poResult);
         
         return NULL;
@@ -1708,13 +1705,9 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
 #endif
         
         papoSourcesHolders = (PostGISRasterTileDataset **)
-            VSIMalloc2(nTiles, sizeof(PostGISRasterTileDataset *));
+            VSI_MALLOC2_VERBOSE(nTiles, sizeof(PostGISRasterTileDataset *));
     
         if (papoSourcesHolders == NULL) {
-            ReportError(CE_Failure, CPLE_OutOfMemory, 
-                "Out of memory allocating space for dataset bands "
-                "sources");
-                
             VSIFree(poBandMetaData);
             
             return false;

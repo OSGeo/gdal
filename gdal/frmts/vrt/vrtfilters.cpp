@@ -197,13 +197,11 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
     // FIXME? : risk of multiplication overflow
     GByte *pabyWorkData = reinterpret_cast<GByte *>(
-        VSICalloc( nExtraXSize * nExtraYSize,
+        VSI_CALLOC_VERBOSE( nExtraXSize * nExtraYSize,
                    GDALGetDataTypeSize(eOperDataType) / 8 ) );
 
     if( pabyWorkData == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Work buffer allocation failed." );
         return CE_Failure;
     }
 
@@ -221,12 +219,10 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         || eOperDataType != eBufType )
     {
         pabyOutData = reinterpret_cast<GByte *>(
-            VSIMalloc3( nOutXSize, nOutYSize, nPixelOffset ) );
+            VSI_MALLOC3_VERBOSE( nOutXSize, nOutYSize, nPixelOffset ) );
 
         if( pabyOutData == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Work buffer allocation failed." );
             CPLFree( pabyWorkData );
             return CE_Failure;
         }

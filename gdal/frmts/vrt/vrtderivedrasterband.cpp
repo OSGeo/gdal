@@ -333,7 +333,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         = reinterpret_cast<void **>( CPLMalloc(sizeof(void *) * nSources) );
     for( int iSource = 0; iSource < nSources; iSource++ ) {
         pBuffers[iSource] = reinterpret_cast<void *>(
-            VSIMalloc(sourcesize * nBufXSize * nBufYSize) );
+            VSI_MALLOC_VERBOSE(sourcesize * nBufXSize * nBufYSize) );
         if (pBuffers[iSource] == NULL)
         {
             for (int i = 0; i < iSource; i++) {
@@ -341,11 +341,6 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
                 VSIFree(pBuffers[iSource]);
             }
             CPLFree(pBuffers);
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "VRTDerivedRasterBand::IRasterIO:"
-                      "Out of memory allocating " CPL_FRMT_GIB " bytes.\n",
-                      static_cast<GIntBig>(nPixelSpace)  * nBufXSize
-                      * nBufYSize);
             return CE_Failure;
         }
 

@@ -1282,12 +1282,9 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
 /*      Allocate output array, and pre-initialize to NODATA value.      */
 /* -------------------------------------------------------------------- */
     psWInfo->panData = reinterpret_cast<GInt16 *>(
-        VSIMalloc3( 2, psWInfo->nXSize, psWInfo->nYSize ) );
+        VSI_MALLOC3_VERBOSE( 2, psWInfo->nXSize, psWInfo->nYSize ) );
     if( psWInfo->panData == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Out of memory allocating %d byte internal copy of DEM.", 
-                  2 * psWInfo->nXSize * psWInfo->nYSize );
         return FALSE;
     }
 
