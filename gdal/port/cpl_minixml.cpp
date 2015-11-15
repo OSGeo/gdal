@@ -537,14 +537,16 @@ static void AttachNode( ParseContext *psContext, CPLXMLNode *psNode )
         psContext->psLastNode->psNext = psNode;
         psContext->psLastNode = psNode;
     }
-    else if( psContext->papsStack[psContext->nStackSize-1].psFirstNode->psChild == NULL )
-    {
-        psContext->papsStack[psContext->nStackSize-1].psFirstNode->psChild = psNode;
-        psContext->papsStack[psContext->nStackSize-1].psLastChild = psNode;
-    }
     else
     {
-        psContext->papsStack[psContext->nStackSize-1].psLastChild->psNext = psNode;
+        if( psContext->papsStack[psContext->nStackSize-1].psFirstNode->psChild == NULL )
+        {
+            psContext->papsStack[psContext->nStackSize-1].psFirstNode->psChild = psNode;
+        }
+        else
+        {
+            psContext->papsStack[psContext->nStackSize-1].psLastChild->psNext = psNode;
+        }
         psContext->papsStack[psContext->nStackSize-1].psLastChild = psNode;
     }
 }
