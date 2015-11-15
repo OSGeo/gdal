@@ -145,7 +145,7 @@ class GTAIO : public gta::custom_io
     {
     }
 
-    virtual ~GTAIO( )
+    ~GTAIO( )
     {
         close( );
     }
