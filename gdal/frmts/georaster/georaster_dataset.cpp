@@ -1011,13 +1011,11 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     poDstDS->GetRasterBand( 1 )->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
-    void *pData = VSIMalloc( nBlockXSize * nBlockYSize *
+    void *pData = VSI_MALLOC_VERBOSE( nBlockXSize * nBlockYSize *
         GDALGetDataTypeSize( eType ) / 8 );
 
     if( pData == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-            "GeoRaster::CreateCopy : Out of memory " );
         delete poDstDS;
         return NULL;
     }

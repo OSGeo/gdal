@@ -1737,10 +1737,9 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         poDS->nColorTableSize = 1 << poDS->sHeader.nBitDepth;
         poDS->sHeader.nClrTblSize = poDS->nColorTableSize * 4;
         poDS->pabyColorTable = reinterpret_cast<GByte *>(
-            VSIMalloc( poDS->sHeader.nClrTblSize ) );
+            VSI_MALLOC_VERBOSE( poDS->sHeader.nClrTblSize ) );
         if (poDS->pabyColorTable == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
             delete poDS;
             return NULL;
         }

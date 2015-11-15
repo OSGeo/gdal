@@ -470,13 +470,10 @@ int DDFRecord::ReadHeader()
             return FALSE;
         }
         
-        char *tmpBuf = (char*)VSIMalloc(nFieldEntryWidth);
+        char *tmpBuf = (char*)VSI_MALLOC_VERBOSE(nFieldEntryWidth);
 
         if( tmpBuf == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                      "Attempt to allocate %d byte ISO8211 record buffer failed.", 
-                      nFieldEntryWidth );
             return FALSE;
         }
       
@@ -529,11 +526,9 @@ int DDFRecord::ReadHeader()
                                           _sizeFieldLength);
             char *tmpBuf = NULL;
             if( nFieldLength >= 0 )
-                tmpBuf = (char*)VSIMalloc(nFieldLength);
+                tmpBuf = (char*)VSI_MALLOC_VERBOSE(nFieldLength);
             if( tmpBuf == NULL )
             {
-                CPLError(CE_Failure, CPLE_OutOfMemory,
-                         "Cannot allocate %d bytes", nFieldLength);
                 return FALSE;
             }
 
@@ -547,11 +542,9 @@ int DDFRecord::ReadHeader()
             }
       
             // move this temp buffer into more permanent storage:
-            char *newBuf = (char*)VSIMalloc(nDataSize+nFieldLength);
+            char *newBuf = (char*)VSI_MALLOC_VERBOSE(nDataSize+nFieldLength);
             if( newBuf == NULL )
             {
-                CPLError(CE_Failure, CPLE_OutOfMemory,
-                         "Cannot allocate %d bytes", nDataSize + nFieldLength);
                 CPLFree(tmpBuf);
                 return FALSE;
             }

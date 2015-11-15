@@ -153,11 +153,10 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /*      Setup tile infos, but defer reading of tile data.               */
 /* -------------------------------------------------------------------- */
     psInfo->pasTileInfo = (AIGTileInfo *) 
-        VSICalloc(sizeof(AIGTileInfo),
+        VSI_CALLOC_VERBOSE(sizeof(AIGTileInfo),
                   psInfo->nTilesPerRow * psInfo->nTilesPerColumn);
     if (psInfo->pasTileInfo == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate tile info array");
         AIGClose( psInfo );
         return NULL;
     }

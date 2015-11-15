@@ -626,10 +626,9 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 
     const int numItems
         = (static_cast<int>( poDS->image.bpc ) == 1) ? 256 : 65536;
-    poDS->image.tmp = (unsigned char*)VSICalloc(poDS->image.xsize,numItems);
+    poDS->image.tmp = (unsigned char*)VSI_CALLOC_VERBOSE(poDS->image.xsize,numItems);
     if (poDS->image.tmp == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
         delete poDS;
         return NULL;
     }
@@ -641,12 +640,11 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
     {
         const int x = poDS->image.ysize * poDS->nBands * sizeof(GUInt32);
         poDS->image.rowStart = reinterpret_cast<GUInt32*>(
-            VSIMalloc2(poDS->image.ysize, poDS->nBands * sizeof(GUInt32) ) );
+            VSI_MALLOC2_VERBOSE(poDS->image.ysize, poDS->nBands * sizeof(GUInt32) ) );
         poDS->image.rowSize = reinterpret_cast<GInt32 *>(
-            VSIMalloc2(poDS->image.ysize, poDS->nBands * sizeof(GUInt32) ) );
+            VSI_MALLOC2_VERBOSE(poDS->image.ysize, poDS->nBands * sizeof(GUInt32) ) );
         if (poDS->image.rowStart == NULL || poDS->image.rowSize == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
             delete poDS;
             return NULL;
         }

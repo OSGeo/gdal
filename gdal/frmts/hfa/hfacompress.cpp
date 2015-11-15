@@ -49,9 +49,9 @@ HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, int nDataType ) :
 
   /* Allocate some memory for the count and values - probably too big */
   /* About right for worst case scenario tho */
-  m_pCounts     = (GByte*)VSIMalloc( m_nBlockCount * sizeof(GUInt32) + sizeof(GUInt32) );
+  m_pCounts     = (GByte*)VSI_MALLOC_VERBOSE( m_nBlockCount * sizeof(GUInt32) + sizeof(GUInt32) );
 
-  m_pValues     = (GByte*)VSIMalloc( m_nBlockCount * sizeof(GUInt32) + sizeof(GUInt32) );
+  m_pValues     = (GByte*)VSI_MALLOC_VERBOSE( m_nBlockCount * sizeof(GUInt32) + sizeof(GUInt32) );
 }
 
 HFACompress::~HFACompress()

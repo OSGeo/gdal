@@ -186,12 +186,9 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
     nBlockYSize = 1;
 
     panLineOffset =
-	(vsi_l_offset *)VSICalloc( poDS->nRasterYSize+1, sizeof(vsi_l_offset) );
+	(vsi_l_offset *)VSI_CALLOC_VERBOSE( poDS->nRasterYSize+1, sizeof(vsi_l_offset) );
     if( panLineOffset == NULL )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "GSAGRasterBand::GSAGRasterBand : Out of memory allocating %d * %d bytes",
-                 (int) poDS->nRasterYSize+1, (int) sizeof(vsi_l_offset) );
 	return;
     }
 
@@ -217,11 +214,9 @@ GSAGRasterBand::~GSAGRasterBand()
 CPLErr GSAGRasterBand::ScanForMinMaxZ()
 
 {
-    double *padfRowValues = (double *)VSIMalloc2( nBlockXSize, sizeof(double) );
+    double *padfRowValues = (double *)VSI_MALLOC2_VERBOSE( nBlockXSize, sizeof(double) );
     if( padfRowValues == NULL )
     {
-	CPLError( CE_Failure, CPLE_OutOfMemory,
-		  "Unable to allocate memory for grid row values.\n" );
 	return CE_Failure;
     }
 
@@ -342,11 +337,9 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                  - panLineOffset[nBlockYOff] + 1);
     }
 
-    char *szLineBuf = (char *)VSIMalloc( nLineBufSize );
+    char *szLineBuf = (char *)VSI_MALLOC_VERBOSE( nLineBufSize );
     if( szLineBuf == NULL )
     {
-	CPLError( CE_Failure, CPLE_OutOfMemory,
-		  "Unable to read block, unable to allocate line buffer.\n" );
 	return CE_Failure;
     }
 
@@ -567,21 +560,17 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( padfRowMinZ == NULL || padfRowMaxZ == NULL
 	|| nMinZRow < 0 || nMaxZRow < 0 )
     {
-	padfRowMinZ = (double *)VSIMalloc2( nRasterYSize,sizeof(double) );
+	padfRowMinZ = (double *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(double) );
 	if( padfRowMinZ == NULL )
 	{
-	    CPLError( CE_Failure, CPLE_OutOfMemory,
-		      "Unable to allocate space for row minimums array.\n" );
 	    return CE_Failure;
 	}
 
-	padfRowMaxZ = (double *)VSIMalloc2( nRasterYSize,sizeof(double) );
+	padfRowMaxZ = (double *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(double) );
 	if( padfRowMaxZ == NULL )
 	{
 	    VSIFree( padfRowMinZ );
 	    padfRowMinZ = NULL;
-	    CPLError( CE_Failure, CPLE_OutOfMemory,
-		      "Unable to allocate space for row maximums array.\n" );
 	    return CE_Failure;
 	}
 
@@ -874,11 +863,9 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
 	bMustFreeHeader = true;
-	pabyHeader = (char *)VSIMalloc( nMAX_HEADER_SIZE );
+	pabyHeader = (char *)VSI_MALLOC_VERBOSE( nMAX_HEADER_SIZE );
 	if( pabyHeader == NULL )
 	{
-	    CPLError( CE_Failure, CPLE_OutOfMemory,
-		      "Unable to open dataset, unable to malloc header buffer.\n" );
             delete poDS;
 	    return NULL;
 	}
@@ -1254,11 +1241,9 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
 
     /* prepare buffer for real shifting */
     size_t nBufferSize = (1024 >= abs(nShiftSize)*2) ? 1024 : abs(nShiftSize)*2;
-    char *pabyBuffer = (char *)VSIMalloc( nBufferSize );
+    char *pabyBuffer = (char *)VSI_MALLOC_VERBOSE( nBufferSize );
     if( pabyBuffer == NULL)
     {
-	CPLError( CE_Failure, CPLE_OutOfMemory,
-		  "Unable to allocate space for shift buffer.\n" );
 	return CE_Failure;
     }
 
@@ -1595,12 +1580,10 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy band data.							*/
 /* -------------------------------------------------------------------- */
-    double *pdfData = (double *)VSIMalloc2( nXSize, sizeof( double ) );
+    double *pdfData = (double *)VSI_MALLOC2_VERBOSE( nXSize, sizeof( double ) );
     if( pdfData == NULL )
     {
 	VSIFCloseL( fp );
-	CPLError( CE_Failure, CPLE_OutOfMemory,
-		  "Unable to create copy, unable to allocate line buffer.\n" );
 	return NULL;
     }
 

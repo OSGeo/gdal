@@ -515,11 +515,9 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
             // ok now copy data
             if( eFieldType == GFT_Integer )
             {
-                int *panIntData = (int*)VSIMalloc2(numRows, sizeof(int));
+                int *panIntData = (int*)VSI_MALLOC2_VERBOSE(numRows, sizeof(int));
                 if( panIntData == NULL )
                 {
-                    CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "Memory Allocation failed in KEARasterAttributeTable::SetDefaultRAT");
                     return CE_Failure;
                 }
 
@@ -531,11 +529,9 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
             }
             else if( eFieldType == GFT_Real )
             {
-                double *padfFloatData = (double*)VSIMalloc2(numRows, sizeof(double));
+                double *padfFloatData = (double*)VSI_MALLOC2_VERBOSE(numRows, sizeof(double));
                 if( padfFloatData == NULL )
                 {
-                    CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "Memory Allocation failed in KEARasterAttributeTable::SetDefaultRAT");
                     return CE_Failure;
                 }
 
@@ -547,11 +543,9 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
             }
             else
             {
-                char **papszStringData = (char**)VSIMalloc2(numRows, sizeof(char*));
+                char **papszStringData = (char**)VSI_MALLOC2_VERBOSE(numRows, sizeof(char*));
                 if( papszStringData == NULL )
                 {
-                    CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "Memory Allocation failed in KEARasterAttributeTable::SetDefaultRAT");
                     return CE_Failure;
                 }
 

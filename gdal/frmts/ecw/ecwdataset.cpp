@@ -1825,12 +1825,9 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         psExtraArg->eResampleAlg != GRIORA_NearestNeighbour )
     {
         int nBufDataTypeSize = (GDALGetDataTypeSize(eBufType) / 8);
-        GByte* pabyTemp = (GByte*)VSIMalloc3(nXSize, nYSize, nBufDataTypeSize * nBandCount);
+        GByte* pabyTemp = (GByte*)VSI_MALLOC3_VERBOSE(nXSize, nYSize, nBufDataTypeSize * nBandCount);
         if( pabyTemp == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                          "Failed to allocate %d byte intermediate decompression buffer for jpeg2000.", 
-                          nXSize * nYSize * nBufDataTypeSize * nBandCount );
             return CE_Failure;
         }
 

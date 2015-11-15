@@ -1185,10 +1185,9 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
             else
                 poDS->nColorTableSize = 1 << poDS->sInfoHeader.iBitCount;
             poDS->pabyColorTable =
-                (GByte *)VSIMalloc2( poDS->nColorElems, poDS->nColorTableSize );
+                (GByte *)VSI_MALLOC2_VERBOSE( poDS->nColorElems, poDS->nColorTableSize );
             if (poDS->pabyColorTable == NULL)
             {
-                CPLError(CE_Failure, CPLE_OutOfMemory, "Color palette will be ignored");
                 poDS->nColorTableSize = 0;
                 break;
             }

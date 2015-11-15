@@ -209,12 +209,10 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         if (bBufferAllocFailed)
             return CE_Failure;
 
-        pszRecord = (unsigned char *) VSIMalloc(nBlockXSize*nDataLength);
+        pszRecord = (unsigned char *) VSI_MALLOC_VERBOSE(nBlockXSize*nDataLength);
 
         if (pszRecord == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate scanline buffer");
             bBufferAllocFailed = TRUE;
             return CE_Failure;
         }

@@ -2594,12 +2594,9 @@ void JPGDatasetCommon::CheckForMask()
 /*      We seem to have a mask.  Read it in.                            */
 /* -------------------------------------------------------------------- */
     nCMaskSize = (int) (nFileSize - nImageSize - 4);
-    pabyCMask = (GByte *) VSIMalloc(nCMaskSize);
+    pabyCMask = (GByte *) VSI_MALLOC_VERBOSE(nCMaskSize);
     if (pabyCMask == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate memory (%d bytes) for mask compressed buffer",
-                 nCMaskSize);
         goto end;
     }
     VSIFReadL( pabyCMask, nCMaskSize, 1, fpImage );
@@ -2625,12 +2622,9 @@ void JPGDatasetCommon::DecompressMask()
 /*      Allocate 1bit buffer - may be slightly larger than needed.      */
 /* -------------------------------------------------------------------- */
     const int nBufSize = nRasterYSize * ((nRasterXSize+7)/8);
-    pabyBitMask = (GByte *) VSIMalloc( nBufSize );
+    pabyBitMask = (GByte *) VSI_MALLOC_VERBOSE( nBufSize );
     if (pabyBitMask == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate memory (%d bytes) for mask uncompressed buffer",
-                 nBufSize);
         CPLFree(pabyCMask);
         pabyCMask = NULL;
         return;
@@ -2861,12 +2855,11 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
 /* -------------------------------------------------------------------- */
 /*      Allocate uncompressed bit buffer.                               */
 /* -------------------------------------------------------------------- */
-    pabyBitBuf = (GByte *) VSICalloc(1,nBitBufSize);
+    pabyBitBuf = (GByte *) VSI_CALLOC_VERBOSE(1,nBitBufSize);
 
-    pabyMaskLine = (GByte *) VSIMalloc(nXSize);
+    pabyMaskLine = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
     if (pabyBitBuf == NULL || pabyMaskLine == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
         eErr = CE_Failure;
     }
 
@@ -2925,10 +2918,9 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
 
     if( eErr == CE_None )
     {
-        pabyCMask = (GByte *) VSIMalloc(nBitBufSize + 30);
+        pabyCMask = (GByte *) VSI_MALLOC_VERBOSE(nBitBufSize + 30);
         if (pabyCMask == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
             eErr = CE_Failure;
         }
     }

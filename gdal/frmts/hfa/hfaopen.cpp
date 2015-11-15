@@ -2554,11 +2554,9 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
         }
         else
         {
-            char *pszMDValue = (char*) VSIMalloc(nMaxNumChars);
+            char *pszMDValue = (char*) VSI_MALLOC_VERBOSE(nMaxNumChars);
             if (pszMDValue == NULL)
             {
-                CPLError(CE_Failure, CPLE_OutOfMemory,
-                         "HFAGetMetadata : Out of memory while allocating %d bytes", nMaxNumChars);
                 continue;
             }
 
@@ -3139,10 +3137,9 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 
     *pnValidFlagsOffset = VSIFTellL( fpVSIL );
 
-    pabyBlockMap = (unsigned char *) VSIMalloc( nBlockMapSize );
+    pabyBlockMap = (unsigned char *) VSI_MALLOC_VERBOSE( nBlockMapSize );
     if (pabyBlockMap == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "HFACreateSpillStack : Out of memory");
         VSIFCloseL( fpVSIL );
         return FALSE;
     }

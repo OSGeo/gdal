@@ -711,10 +711,9 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( 1 );
     GInt16 *panData = (GInt16 *)
-        VSIMalloc(sizeof(GInt16) * psDTED->nXSize * psDTED->nYSize);
+        VSI_MALLOC_VERBOSE(sizeof(GInt16) * psDTED->nXSize * psDTED->nYSize);
     if (panData == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
         DTEDClose(psDTED);
         return NULL;
     }

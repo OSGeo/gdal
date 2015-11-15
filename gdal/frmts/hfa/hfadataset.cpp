@@ -650,11 +650,9 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
 
         if( aoFields[iCol].eType == GFT_Integer )
         {
-            int *panColData = (int*)VSIMalloc2(sizeof(int), this->nRows);
+            int *panColData = (int*)VSI_MALLOC2_VERBOSE(sizeof(int), this->nRows);
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::Clone");
                 delete poRAT;
                 return NULL;
             }
@@ -675,11 +673,9 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
         }
         if( aoFields[iCol].eType == GFT_Real )
         {
-            double *padfColData = (double*)VSIMalloc2(sizeof(double), this->nRows);
+            double *padfColData = (double*)VSI_MALLOC2_VERBOSE(sizeof(double), this->nRows);
             if( padfColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::Clone");
                 delete poRAT;
                 return NULL;
             }
@@ -700,11 +696,9 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
         }
         if( aoFields[iCol].eType == GFT_String )
         {
-            char **papszColData = (char**)VSIMalloc2(sizeof(char*), this->nRows);
+            char **papszColData = (char**)VSI_MALLOC2_VERBOSE(sizeof(char*), this->nRows);
             if( papszColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::Clone");
                 delete poRAT;
                 return NULL;
             }
@@ -917,11 +911,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
     if( aoFields[iField].bConvertColors )
     {
         // convert to/from float color field
-        int *panColData = (int*)VSIMalloc2(iLength, sizeof(int) );
+        int *panColData = (int*)VSI_MALLOC2_VERBOSE(iLength, sizeof(int) );
         if( panColData == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
             CPLFree(panColData);
             return CE_Failure;
         }
@@ -950,11 +942,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case GFT_Integer:
         {
             // allocate space for ints
-            int *panColData = (int*)VSIMalloc2(iLength, sizeof(int) );
+            int *panColData = (int*)VSI_MALLOC2_VERBOSE(iLength, sizeof(int) );
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
                 CPLFree(panColData);
                 return CE_Failure;
             }
@@ -1032,11 +1022,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case GFT_String:
         {
             // allocate space for string pointers
-            char **papszColData = (char**)VSIMalloc2(iLength, sizeof(char*));
+            char **papszColData = (char**)VSI_MALLOC2_VERBOSE(iLength, sizeof(char*));
             if( papszColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -1123,11 +1111,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case GFT_Integer:
         {
             VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET );
-            GInt32 *panColData = (GInt32*)VSIMalloc2(iLength, sizeof(GInt32));
+            GInt32 *panColData = (GInt32*)VSI_MALLOC2_VERBOSE(iLength, sizeof(GInt32));
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -1172,11 +1158,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case GFT_Real:
         {
             // allocate space for doubles
-            double *padfColData = (double*)VSIMalloc2(iLength, sizeof(double) );
+            double *padfColData = (double*)VSI_MALLOC2_VERBOSE(iLength, sizeof(double) );
             if( padfColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -1208,11 +1192,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case GFT_String:
         {
             // allocate space for string pointers
-            char **papszColData = (char**)VSIMalloc2(iLength, sizeof(char*));
+            char **papszColData = (char**)VSI_MALLOC2_VERBOSE(iLength, sizeof(char*));
             if( papszColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -1291,11 +1273,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
     if( aoFields[iField].bConvertColors )
     {
         // convert to/from float color field
-        int *panColData = (int*)VSIMalloc2(iLength, sizeof(int) );
+        int *panColData = (int*)VSI_MALLOC2_VERBOSE(iLength, sizeof(int) );
         if( panColData == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
             CPLFree(panColData);
             return CE_Failure;
         }
@@ -1327,11 +1307,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case GFT_Integer:
         {
             // allocate space for ints
-            int *panColData = (int*)VSIMalloc2(iLength, sizeof(int) );
+            int *panColData = (int*)VSI_MALLOC2_VERBOSE(iLength, sizeof(int) );
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -1366,11 +1344,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case GFT_Real:
         {
             // allocate space for doubles
-            double *padfColData = (double*)VSIMalloc2(iLength, sizeof(double) );
+            double *padfColData = (double*)VSI_MALLOC2_VERBOSE(iLength, sizeof(double) );
             if( padfColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -1404,11 +1380,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case GFT_String:
         {
             VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET );
-            char *pachColData = (char*)VSIMalloc2(iLength, aoFields[iField].nElementSize);
+            char *pachColData = (char*)VSI_MALLOC2_VERBOSE(iLength, aoFields[iField].nElementSize);
             if( pachColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -1474,11 +1448,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
 
                     // re-allocate our buffer
                     CPLFree(pachColData);
-                    pachColData = (char*)VSIMalloc2(iLength, nNewMaxChars);
+                    pachColData = (char*)VSI_MALLOC2_VERBOSE(iLength, nNewMaxChars);
                     if(pachColData == NULL )
                     {
-                        CPLError( CE_Failure, CPLE_OutOfMemory,
-                            "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
                         return CE_Failure;
                     }
 
@@ -1516,11 +1488,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
 CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength, int *pnData)
 {
     // allocate space for doubles
-    double *padfData = (double*)VSIMalloc2(iLength, sizeof(double) );
+    double *padfData = (double*)VSI_MALLOC2_VERBOSE(iLength, sizeof(double) );
     if( padfData == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-            "Memory Allocation failed in HFARasterAttributeTable::ColorsIO");
         return CE_Failure;
     }
 
@@ -1610,11 +1580,9 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
             if( this->nRows > 0 )
             {
                 // temp buffer for this column
-                void *pData = VSIMalloc2(this->nRows, aoFields[iCol].nElementSize);
+                void *pData = VSI_MALLOC2_VERBOSE(this->nRows, aoFields[iCol].nElementSize);
                 if( pData == NULL )
                 {
-                    CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "Memory Allocation failed in HFARasterAttributeTable::SetRowCount");
                     return;
                 }
                 // read old data
@@ -2225,12 +2193,11 @@ void HFARasterBand::ReadHistogramMetadata()
     if( pszType != NULL && STARTS_WITH_CI(pszType, "real") )
         nBinSize = 8;
 
-    GUIntBig *panHistValues = (GUIntBig *) VSIMalloc2(sizeof(GUIntBig), nNumBins);
-    GByte  *pabyWorkBuf = (GByte *) VSIMalloc2(nBinSize, nNumBins);
+    GUIntBig *panHistValues = (GUIntBig *) VSI_MALLOC2_VERBOSE(sizeof(GUIntBig), nNumBins);
+    GByte  *pabyWorkBuf = (GByte *) VSI_MALLOC2_VERBOSE(nBinSize, nNumBins);
 
     if (panHistValues == NULL || pabyWorkBuf == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory");
         VSIFree(panHistValues);
         VSIFree(pabyWorkBuf);
         return;
@@ -2335,10 +2302,9 @@ void HFARasterBand::ReadHistogramMetadata()
         if ( ( nBinValuesLen + strlen( szBuf ) + 2 ) > nBufSize )
         {
             nBufSize *= 2;
-            char* pszNewBinValues = (char *)VSIRealloc( pszBinValues, nBufSize );
+            char* pszNewBinValues = (char *)VSI_REALLOC_VERBOSE( pszBinValues, nBufSize );
             if (pszNewBinValues == NULL)
             {
-                CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory");
                 break;
             }
             pszBinValues = pszNewBinValues;

@@ -290,13 +290,11 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         CPL_MSBPTR32( &toc->entries[i].nHorizFrames );
 
         toc->entries[i].frameEntries = reinterpret_cast<RPFTocFrameEntry*>(
-            VSIMalloc3( toc->entries[i].nVertFrames,
+            VSI_MALLOC3_VERBOSE( toc->entries[i].nVertFrames,
                         toc->entries[i].nHorizFrames,
                         sizeof(RPFTocFrameEntry) ) );
         if (toc->entries[i].frameEntries == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "RPFTOCReadFromBuffer : Out of memory. Probably due to corrupted TOC file.");
             RPFTOCFree(toc);
             return NULL;
         }

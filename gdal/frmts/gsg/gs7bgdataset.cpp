@@ -204,12 +204,10 @@ GS7BGRasterBand::~GS7BGRasterBand( )
 CPLErr GS7BGRasterBand::ScanForMinMaxZ()
 
 {
-    double *pafRowVals = (double *)VSIMalloc2( nRasterXSize, sizeof(double));
+    double *pafRowVals = (double *)VSI_MALLOC2_VERBOSE( nRasterXSize, sizeof(double));
 
     if( pafRowVals == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-          "Unable to allocate row buffer to scan grid file.\n" );
         return CE_Failure;
     }
 
@@ -348,21 +346,17 @@ CPLErr GS7BGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( pafRowMinZ == NULL || pafRowMaxZ == NULL
         || nMinZRow < 0 || nMaxZRow < 0 )
     {
-        pafRowMinZ = (double *)VSIMalloc2( nRasterYSize,sizeof(double) );
+        pafRowMinZ = (double *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(double) );
         if( pafRowMinZ == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-              "Unable to allocate space for row minimums array.\n" );
             return CE_Failure;
         }
 
-        pafRowMaxZ = (double *)VSIMalloc2( nRasterYSize,sizeof(double) );
+        pafRowMaxZ = (double *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(double) );
         if( pafRowMaxZ == NULL )
         {
             VSIFree( pafRowMinZ );
             pafRowMinZ = NULL;
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-              "Unable to allocate space for row maximums array.\n" );
             return CE_Failure;
         }
 
@@ -1258,12 +1252,10 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy band data.                                                 */
 /* -------------------------------------------------------------------- */
-    double *pfData = (double *)VSIMalloc2( nXSize, sizeof( double ) );
+    double *pfData = (double *)VSI_MALLOC2_VERBOSE( nXSize, sizeof( double ) );
     if( pfData == NULL )
     {
         VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-              "Unable to create copy, unable to allocate line buffer.\n" );
         return NULL;
     }
 

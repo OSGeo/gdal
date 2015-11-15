@@ -99,10 +99,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         return NULL;
     }
 
-    pachHeader = (char*) VSIMalloc(psSegInfo->nSegmentHeaderSize);
+    pachHeader = (char*) VSI_MALLOC_VERBOSE(psSegInfo->nSegmentHeaderSize);
     if (pachHeader == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory for segment header");
         return NULL;
     }
 
@@ -408,10 +407,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      Read per-band information.                                      */
 /* -------------------------------------------------------------------- */
     psImage->pasBandInfo = (NITFBandInfo *) 
-        VSICalloc(sizeof(NITFBandInfo),psImage->nBands);
+        VSI_CALLOC_VERBOSE(sizeof(NITFBandInfo),psImage->nBands);
     if (psImage->pasBandInfo == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory for band info");
         NITFImageDeaccess(psImage);
         return NULL;
     }
@@ -756,11 +754,10 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
     /* Int overflow already checked above */
     psImage->panBlockStart = (GUIntBig *) 
-        VSICalloc( psImage->nBlocksPerRow * psImage->nBlocksPerColumn 
+        VSI_CALLOC_VERBOSE( psImage->nBlocksPerRow * psImage->nBlocksPerColumn 
                    * psImage->nBands, sizeof(GUIntBig) );
     if (psImage->panBlockStart == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate block map");
         NITFImageDeaccess(psImage);
         return NULL;
     }
@@ -1315,13 +1312,11 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
     if( psImage->szIC[0] == 'N' )
     {
-        GByte *pabyWrkBuf = (GByte *) VSIMalloc(nWrkBufSize);
+        GByte *pabyWrkBuf = (GByte *) VSI_MALLOC_VERBOSE(nWrkBufSize);
         int   iPixel, iLine;
 
         if (pabyWrkBuf == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                      "Cannot allocate working buffer" );
             return BLKREAD_FAIL;
         }
 
@@ -1427,11 +1422,9 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                                 - psImage->panBlockStart[iFullBlock]);
         }
 
-        pabyRawData = (GByte *) VSIMalloc( nRawBytes );
+        pabyRawData = (GByte *) VSI_MALLOC_VERBOSE( nRawBytes );
         if (pabyRawData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                      "Cannot allocate working buffer" );
             return BLKREAD_FAIL;
         }
 
@@ -1487,11 +1480,9 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                             - psImage->panBlockStart[iFullBlock] );
         }
 
-        pabyRawData = (GByte *) VSIMalloc( nRawBytes );
+        pabyRawData = (GByte *) VSI_MALLOC_VERBOSE( nRawBytes );
         if (pabyRawData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                      "Cannot allocate working buffer" );
             return BLKREAD_FAIL;
         }
 
@@ -1677,11 +1668,9 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 /*      Allocate a buffer for all the interleaved data, and read        */
 /*      it.                                                             */
 /* -------------------------------------------------------------------- */
-    pabyLineBuf = (unsigned char *) VSIMalloc(nLineSize);
+    pabyLineBuf = (unsigned char *) VSI_MALLOC_VERBOSE(nLineSize);
     if (pabyLineBuf == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                "Cannot allocate working buffer" );
         return BLKREAD_FAIL;
     }
 
@@ -1791,11 +1780,9 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 /*      Allocate a buffer for all the interleaved data, and read        */
 /*      it.                                                             */
 /* -------------------------------------------------------------------- */
-    pabyLineBuf = (unsigned char *) VSIMalloc(nLineSize);
+    pabyLineBuf = (unsigned char *) VSI_MALLOC_VERBOSE(nLineSize);
     if (pabyLineBuf == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                "Cannot allocate working buffer" );
         return BLKREAD_FAIL;
     }
 
@@ -3177,11 +3164,9 @@ NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
 
     VSIFSeekL(fp, nCurOffset + nLocSectionOffset, SEEK_SET);
 
-    pasLocations = (NITFLocation *)  VSICalloc(sizeof(NITFLocation), nLocCount);
+    pasLocations = (NITFLocation *)  VSI_CALLOC_VERBOSE(sizeof(NITFLocation), nLocCount);
     if (pasLocations == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate memory for location table");
         return NULL;
     }
 

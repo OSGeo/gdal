@@ -158,18 +158,16 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
 /* -------------------------------------------------------------------- */
 /*      Read the whole file header.                                     */
 /* -------------------------------------------------------------------- */
-    pachHeader = (char *) VSIMalloc(nHeaderLen);
+    pachHeader = (char *) VSI_MALLOC_VERBOSE(nHeaderLen);
     if (pachHeader == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Cannot allocate memory for NITF header");
         VSIFCloseL(fp);
         return NULL;
     }
     VSIFSeekL( fp, 0, SEEK_SET );
     if ((int)VSIFReadL( pachHeader, 1, nHeaderLen, fp ) != nHeaderLen)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
+        CPLError( CE_Failure, CPLE_FileIO, 
                   "Cannot read %d bytes for NITF header", (nHeaderLen));
         VSIFCloseL(fp);
         CPLFree(pachHeader);
@@ -384,11 +382,9 @@ retry_read_header:
             return NULL;
         }
 
-        psFile->pachTRE = (char *) VSIMalloc(psFile->nTREBytes);
+        psFile->pachTRE = (char *) VSI_MALLOC_VERBOSE(psFile->nTREBytes);
         if (psFile->pachTRE == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate %d bytes", psFile->nTREBytes);
             NITFClose(psFile);
             return NULL;
         }
@@ -428,12 +424,10 @@ retry_read_header:
             }
 
             pachNewTRE = (char *) 
-                VSIRealloc( psFile->pachTRE, 
+                VSI_REALLOC_VERBOSE( psFile->pachTRE, 
                             psFile->nTREBytes + nXHDL );
             if (pachNewTRE == NULL)
             {
-                CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate %d bytes", psFile->nTREBytes + nXHDL);
                 NITFClose(psFile);
                 return NULL;
             }

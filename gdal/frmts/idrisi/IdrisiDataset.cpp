@@ -1462,14 +1462,7 @@ IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDS,
 
     nRecordSize  = poDS->GetRasterXSize() * GDALGetDataTypeSize( eDataType ) / 8;
 
-    pabyScanLine = (GByte*) VSIMalloc2( nRecordSize, poDS->nBands );
-
-    if( pabyScanLine == NULL )
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "IdrisiRasterBand::IdrisiRasterBand : Out of memory (nRasterXSize = %d)",
-                  poDS->GetRasterXSize());
-    }
+    pabyScanLine = (GByte*) VSI_MALLOC2_VERBOSE( nRecordSize, poDS->nBands );
 
     nRecordSize *= poDS->nBands;
 }

@@ -244,13 +244,12 @@ int PCIDSKTiledRasterBand::BuildTileMap()
 
     nTileCount = nBPR * nBPC;
     panTileOffset = (vsi_l_offset *) 
-        VSICalloc( sizeof(vsi_l_offset), nTileCount );
-    panTileSize = (int *) VSICalloc( sizeof(int), nTileCount );
+        VSI_CALLOC_VERBOSE( sizeof(vsi_l_offset), nTileCount );
+    panTileSize = (int *) VSI_CALLOC_VERBOSE( sizeof(int), nTileCount );
 
-    char *pachTileInfo = (char *) VSIMalloc( 20 * nTileCount );
+    char *pachTileInfo = (char *) VSI_MALLOC_VERBOSE( 20 * nTileCount );
     if ( panTileOffset == NULL || panTileSize == NULL || pachTileInfo == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory" );
         nTileCount = -1;
         CPLFree( pachTileInfo );
         return FALSE;

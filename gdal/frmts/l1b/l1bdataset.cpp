@@ -889,11 +889,10 @@ void L1BDataset::ProcessRecordHeaders()
 /* -------------------------------------------------------------------- */
 /*      Initialize the GCP list.                                        */
 /* -------------------------------------------------------------------- */
-    pasGCPList = (GDAL_GCP *)VSICalloc( nTargetLines * nGCPsPerLine,
+    pasGCPList = (GDAL_GCP *)VSI_CALLOC_VERBOSE( nTargetLines * nGCPsPerLine,
                                         sizeof(GDAL_GCP) );
     if (pasGCPList == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
         CPLFree( pRecordHeader );
         return;
     }

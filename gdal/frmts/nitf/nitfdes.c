@@ -75,11 +75,9 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
         return NULL;
     }
 
-    pachHeader = (char*) VSIMalloc(psSegInfo->nSegmentHeaderSize);
+    pachHeader = (char*) VSI_MALLOC_VERBOSE(psSegInfo->nSegmentHeaderSize);
     if (pachHeader == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate memory for segment header");
         return NULL;
     }
 
@@ -295,11 +293,10 @@ retry:
         }
         else
         {
-            char* pachData = (char*)VSIMalloc((size_t)psSegInfo->nSegmentSize);
+            char* pachData = (char*)VSI_MALLOC_VERBOSE((size_t)psSegInfo->nSegmentSize);
             if (pachData == NULL )
             {
-                CPLDebug("NITF", "Cannot allocate " CPL_FRMT_GUIB " bytes DES data",
-                         psSegInfo->nSegmentSize);
+                /* nothing */
             }
             else if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart,
                         SEEK_SET ) != 0
@@ -472,12 +469,9 @@ int   NITFDESGetTRE( NITFDES* psDES,
     if (ppabyTREData)
     {
         /* Allocate one extra byte for the NULL terminating character */
-        *ppabyTREData = (char*) VSIMalloc(nTRESize + 1);
+        *ppabyTREData = (char*) VSI_MALLOC_VERBOSE(nTRESize + 1);
         if (*ppabyTREData  == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                    "Cannot allocate %d bytes for TRE %s",
-                    nTRESize, szTRETempName);
             return FALSE;
         }
         (*ppabyTREData)[nTRESize] = '\0';
@@ -547,7 +541,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
             return FALSE;
     }
 
-    pszFilename = (char*) VSIMalloc(strlen(pszRadixFileName) + 4 + 1);
+    pszFilename = (char*) VSI_MALLOC_VERBOSE(strlen(pszRadixFileName) + 4 + 1);
     if (pszFilename == NULL)
         return FALSE;
 
@@ -557,7 +551,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
         GByte* pabyBuffer;
         int nSize = anOffset[iShpFile+1] - anOffset[iShpFile];
 
-        pabyBuffer = (GByte*) VSIMalloc(nSize);
+        pabyBuffer = (GByte*) VSI_MALLOC_VERBOSE(nSize);
         if (pabyBuffer == NULL)
         {
             VSIFree(pszFilename);

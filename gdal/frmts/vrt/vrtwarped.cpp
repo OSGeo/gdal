@@ -1338,13 +1338,10 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         = nBlockXSize * nBlockYSize * psWO->nBandCount * nWordSize;
 
     GByte *pabyDstBuffer = reinterpret_cast<GByte *>(
-        VSIMalloc(nDstBufferSize) );
+        VSI_MALLOC_VERBOSE(nDstBufferSize) );
 
     if( pabyDstBuffer == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "Out of memory allocating %d byte buffer in VRTWarpedDataset::ProcessBlock()",
-                  nDstBufferSize );
         return CE_Failure;
     }
 

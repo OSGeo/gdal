@@ -102,12 +102,9 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFSeekL( fp, 0, SEEK_END );
     unsigned int nFileSize = static_cast<unsigned int>( VSIFTellL( fp ) );
 
-    char *pszFileContents = reinterpret_cast<char *>( VSIMalloc(nFileSize+1) );
+    char *pszFileContents = reinterpret_cast<char *>( VSI_MALLOC_VERBOSE(nFileSize+1) );
     if( pszFileContents == NULL  )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Insufficient memory for loading XPM file %s into memory.", 
-                  poOpenInfo->pszFilename );
         VSIFCloseL(fp);
         return NULL;
     }
@@ -593,12 +590,9 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
 /*      Prepare image buffer.                                           */
 /* -------------------------------------------------------------------- */
     GByte *pabyImage
-        = reinterpret_cast<GByte *>( VSIMalloc2(*pnXSize, *pnYSize) );
+        = reinterpret_cast<GByte *>( VSI_MALLOC2_VERBOSE(*pnXSize, *pnYSize) );
     if( pabyImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Insufficient memory for %dx%d XPM image buffer.", 
-                  *pnXSize, *pnYSize );
         CSLDestroy( papszXPMList );
         return NULL;
     }

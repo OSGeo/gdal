@@ -163,12 +163,9 @@ AAIGRasterBand::AAIGRasterBand( AAIGDataset *poDS, int nDataStart )
     nBlockYSize = 1;
 
     panLineOffset = 
-        (GUIntBig *) VSICalloc( poDS->nRasterYSize, sizeof(GUIntBig) );
+        (GUIntBig *) VSI_CALLOC_VERBOSE( poDS->nRasterYSize, sizeof(GUIntBig) );
     if (panLineOffset == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "AAIGRasterBand::AAIGRasterBand : Out of memory (nRasterYSize = %d)",
-                 poDS->nRasterYSize);
         return;
     }
     panLineOffset[0] = nDataStart;
@@ -820,10 +817,9 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
     {
         /* Allocate 100K chunk + 1 extra byte for NULL character. */
         const size_t nChunkSize = 1024 * 100;
-        GByte* pabyChunk = (GByte *) VSICalloc( nChunkSize + 1, sizeof(GByte) );
+        GByte* pabyChunk = (GByte *) VSI_CALLOC_VERBOSE( nChunkSize + 1, sizeof(GByte) );
         if (pabyChunk == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
             delete poDS;
             return NULL;
         }

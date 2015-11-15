@@ -288,11 +288,9 @@ CPLErr AIGProcessFFBlock( GByte *pabyCur, int nDataSize, int nMin,
     int i, nDstBytes = (nBlockXSize * nBlockYSize + 7) / 8;
     unsigned char *pabyIntermediate;
 
-    pabyIntermediate = (unsigned char *) VSIMalloc(nDstBytes);
+    pabyIntermediate = (unsigned char *) VSI_MALLOC_VERBOSE(nDstBytes);
     if (pabyIntermediate == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate %d bytes", nDstBytes);
         return CE_Failure;
     }
     
@@ -930,11 +928,9 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /*      into the buffer.                                                */
 /* -------------------------------------------------------------------- */
     psTInfo->nBlocks = (nLength-100) / 8;
-    panIndex = (GUInt32 *) VSIMalloc2(psTInfo->nBlocks, 8);
+    panIndex = (GUInt32 *) VSI_MALLOC2_VERBOSE(psTInfo->nBlocks, 8);
     if (panIndex == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "AIGReadBlockIndex: Out of memory. Probably due to corrupted w001001x.adf file");
         VSIFCloseL( fp );
         return CE_Failure;
     }
@@ -953,13 +949,11 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /* -------------------------------------------------------------------- */
 /*	Allocate AIGInfo block info arrays.				*/
 /* -------------------------------------------------------------------- */
-    psTInfo->panBlockOffset = (GUInt32 *) VSIMalloc2(4, psTInfo->nBlocks);
-    psTInfo->panBlockSize = (int *) VSIMalloc2(4, psTInfo->nBlocks);
+    psTInfo->panBlockOffset = (GUInt32 *) VSI_MALLOC2_VERBOSE(4, psTInfo->nBlocks);
+    psTInfo->panBlockSize = (int *) VSI_MALLOC2_VERBOSE(4, psTInfo->nBlocks);
     if (psTInfo->panBlockOffset == NULL || 
         psTInfo->panBlockSize == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "AIGReadBlockIndex: Out of memory. Probably due to corrupted w001001x.adf file");
         CPLFree( psTInfo->panBlockOffset );
         CPLFree( psTInfo->panBlockSize );
         CPLFree( panIndex );

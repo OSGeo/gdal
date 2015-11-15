@@ -1332,13 +1332,10 @@ JPIPKAKDataset::BeginAsyncReader(int xOff, int yOff,
         ario->nAppLineSpace = nLineSpace;
         ario->nAppBandSpace = nBandSpace;
 
-        ario->pBuf = VSIMalloc3(bufXSize,bufYSize,ario->nPixelSpace*nBandCount);
+        ario->pBuf = VSI_MALLOC3_VERBOSE(bufXSize,bufYSize,ario->nPixelSpace*nBandCount);
         if( ario->pBuf == NULL )
         {
             delete ario;
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Failed to allocate %d byte work buffer.",
-                      bufXSize * bufYSize * ario->nPixelSpace );
             return NULL;
         }
 

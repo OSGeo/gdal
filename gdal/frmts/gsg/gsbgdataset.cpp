@@ -197,12 +197,10 @@ GSBGRasterBand::~GSBGRasterBand( )
 CPLErr GSBGRasterBand::ScanForMinMaxZ()
 
 {
-    float *pafRowVals = (float *)VSIMalloc2( nRasterXSize, 4 );
+    float *pafRowVals = (float *)VSI_MALLOC2_VERBOSE( nRasterXSize, 4 );
 
     if( pafRowVals == NULL )
     {
-	CPLError( CE_Failure, CPLE_OutOfMemory,
-		  "Unable to allocate row buffer to scan grid file.\n" );
 	return CE_Failure;
     }
 
@@ -342,21 +340,17 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( pafRowMinZ == NULL || pafRowMaxZ == NULL
 	|| nMinZRow < 0 || nMaxZRow < 0 )
     {
-	pafRowMinZ = (float *)VSIMalloc2( nRasterYSize,sizeof(float) );
+	pafRowMinZ = (float *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(float) );
 	if( pafRowMinZ == NULL )
 	{
-	    CPLError( CE_Failure, CPLE_OutOfMemory,
-		      "Unable to allocate space for row minimums array.\n" );
 	    return CE_Failure;
 	}
 
-	pafRowMaxZ = (float *)VSIMalloc2( nRasterYSize,sizeof(float) );
+	pafRowMaxZ = (float *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(float) );
 	if( pafRowMaxZ == NULL )
 	{
 	    VSIFree( pafRowMinZ );
 	    pafRowMinZ = NULL;
-	    CPLError( CE_Failure, CPLE_OutOfMemory,
-		      "Unable to allocate space for row maximums array.\n" );
 	    return CE_Failure;
 	}
 
@@ -1056,12 +1050,10 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy band data.							*/
 /* -------------------------------------------------------------------- */
-    float *pfData = (float *)VSIMalloc2( nXSize, sizeof( float ) );
+    float *pfData = (float *)VSI_MALLOC2_VERBOSE( nXSize, sizeof( float ) );
     if( pfData == NULL )
     {
 	VSIFCloseL( fp );
-	CPLError( CE_Failure, CPLE_OutOfMemory,
-		  "Unable to create copy, unable to allocate line buffer.\n" );
 	return NULL;
     }
 
