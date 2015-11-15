@@ -370,11 +370,8 @@ GCExtent GCIOAPI_CALL1(*) CreateExtent_GCIO (
 {
   GCExtent* theExtent;
 
-  if( !(theExtent= CPLMalloc(sizeof(GCExtent))) )
+  if( !(theExtent= VSI_MALLOC_VERBOSE(sizeof(GCExtent))) )
   {
-    CPLError( CE_Failure, CPLE_OutOfMemory,
-              "failed to create a Geoconcept extent for '[%g %g,%g %g]'.\n",
-              Xmin, Ymin,Xmax, Ymax);
     return NULL;
   }
   _InitExtent_GCIO(theExtent);
@@ -489,11 +486,8 @@ static GCField GCIOAPI_CALL1(*) _CreateField_GCIO (
 {
   GCField* theField;
 
-  if( !(theField= CPLMalloc(sizeof(GCField))) )
+  if( !(theField= VSI_MALLOC_VERBOSE(sizeof(GCField))) )
   {
-    CPLError( CE_Failure, CPLE_OutOfMemory,
-              "failed to create a Geoconcept field for '%s'.\n",
-              name);
     return NULL;
   }
   _InitField_GCIO(theField);
@@ -612,11 +606,8 @@ static GCSubType GCIOAPI_CALL1(*) _CreateSubType_GCIO (
 {
   GCSubType* theSubType;
 
-  if( !(theSubType= CPLMalloc(sizeof(GCSubType))) )
+  if( !(theSubType= VSI_MALLOC_VERBOSE(sizeof(GCSubType))) )
   {
-    CPLError( CE_Failure, CPLE_OutOfMemory,
-              "failed to create a Geoconcept subtype for '%s'.\n",
-              subtypName);
     return NULL;
   }
   _InitSubType_GCIO(theSubType);
@@ -743,11 +734,8 @@ static GCType GCIOAPI_CALL1(*) _CreateType_GCIO (
 {
   GCType* theClass;
 
-  if( !(theClass= CPLMalloc(sizeof(GCType))) )
+  if( !(theClass= VSI_MALLOC_VERBOSE(sizeof(GCType))) )
   {
-    CPLError( CE_Failure, CPLE_OutOfMemory,
-              "failed to create a Geoconcept type for '%s#%ld'.\n",
-              typName, id);
     return NULL;
   }
   _InitType_GCIO(theClass);
@@ -893,10 +881,8 @@ GCExportFileMetadata GCIOAPI_CALL1(*) CreateHeader_GCIO ( void )
 {
   GCExportFileMetadata* m;
 
-  if( !(m= CPLMalloc(sizeof(GCExportFileMetadata)) ) )
+  if( !(m= VSI_MALLOC_VERBOSE(sizeof(GCExportFileMetadata)) ) )
   {
-    CPLError( CE_Failure, CPLE_OutOfMemory,
-              "failed to create Geoconcept metadata.\n");
     return NULL;
   }
   _InitHeader_GCIO(m);
@@ -1008,11 +994,8 @@ static GCExportFileH GCIOAPI_CALL1(*) _Create_GCIO (
   GCExportFileH* hGXT;
 
   CPLDebug("GEOCONCEPT","allocating %d bytes for GCExportFileH", (int)sizeof(GCExportFileH));
-  if( !(hGXT= CPLMalloc(sizeof(GCExportFileH)) ) )
+  if( !(hGXT= VSI_MALLOC_VERBOSE(sizeof(GCExportFileH)) ) )
   {
-    CPLError( CE_Failure, CPLE_OutOfMemory,
-              "failed to create a Geoconcept handle for '%s' (%s).\n",
-              pszGeoconceptFile, mode);
     return NULL;
   }
 

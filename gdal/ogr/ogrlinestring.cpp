@@ -325,11 +325,9 @@ void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
     if( nNewPointCount > nPointCount )
     {
         OGRRawPoint* paoNewPoints = (OGRRawPoint *)
-            VSIRealloc(paoPoints, sizeof(OGRRawPoint) * nNewPointCount);
+            VSI_REALLOC_VERBOSE(paoPoints, sizeof(OGRRawPoint) * nNewPointCount);
         if (paoNewPoints == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Could not allocate array for %d points", nNewPointCount);
             return;
         }
         paoPoints = paoNewPoints;
@@ -341,11 +339,9 @@ void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
         if( getCoordinateDimension() == 3 )
         {
             double* padfNewZ = (double *)
-                VSIRealloc( padfZ, sizeof(double)*nNewPointCount );
+                VSI_REALLOC_VERBOSE( padfZ, sizeof(double)*nNewPointCount );
             if (padfNewZ == NULL)
             {
-                CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Could not allocate array for %d points", nNewPointCount);
                 return;
             }
             padfZ = padfNewZ;

@@ -281,10 +281,9 @@ void OGRGeoRSSLayer::AddStrToSubElementValue(const char* pszStr)
 {
     int len = strlen(pszStr);
     char* pszNewSubElementValue = (char*)
-            VSIRealloc(pszSubElementValue, nSubElementValueLen + len + 1);
+            VSI_REALLOC_VERBOSE(pszSubElementValue, nSubElementValueLen + len + 1);
     if (pszNewSubElementValue == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
         XML_StopParser(oParser, XML_FALSE);
         bStopParsing = TRUE;
         return;
@@ -863,11 +862,10 @@ void OGRGeoRSSLayer::dataHandlerCbk(const char *data, int nLen)
         bInGeoLat == TRUE || bInGeoLong == TRUE ||
         pszSubElementName != NULL)
     {
-        char* pszNewSubElementValue = (char*) VSIRealloc(pszSubElementValue,
+        char* pszNewSubElementValue = (char*) VSI_REALLOC_VERBOSE(pszSubElementValue,
                                                nSubElementValueLen + nLen + 1);
         if (pszNewSubElementValue == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
             XML_StopParser(oSchemaParser, XML_FALSE);
             bStopParsing = TRUE;
             return;
@@ -2153,10 +2151,9 @@ void OGRGeoRSSLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
 
     if (pszSubElementName)
     {
-        char* pszNewSubElementValue = (char*) VSIRealloc(pszSubElementValue, nSubElementValueLen + nLen + 1);
+        char* pszNewSubElementValue = (char*) VSI_REALLOC_VERBOSE(pszSubElementValue, nSubElementValueLen + nLen + 1);
         if (pszNewSubElementValue == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
             XML_StopParser(oSchemaParser, XML_FALSE);
             bStopParsing = TRUE;
             return;
