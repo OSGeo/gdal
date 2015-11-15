@@ -21,6 +21,13 @@
 ## @ignore GetLastErrorNo
 ## @ignore GetLastErrorType
 
+## @ignore do_confess
+
+## @sub error
+# Return and clear the stack of GDAL error messages.
+# @return in list context the chomped stack, in scalar context
+# the chomped stack joined with newlines.
+
 ## @ignore GeneralCmdLineProcessor
 
 ## @ignore GetDataTypeName
