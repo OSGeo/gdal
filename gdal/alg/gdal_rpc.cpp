@@ -1055,7 +1055,7 @@ static int GDALRPCTransformWholeLineWithDEM( GDALRPCTransformInfo *psTransform,
 {
     int i;
 
-    double* padfDEMBuffer = (double*) VSIMalloc2(sizeof(double), nXWidth * nYHeight);
+    double* padfDEMBuffer = (double*) VSI_MALLOC2_VERBOSE(sizeof(double), nXWidth * nYHeight);
     if( padfDEMBuffer == NULL )
     {
         for( i = 0; i < nPointCount; i++ )

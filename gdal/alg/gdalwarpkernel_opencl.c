@@ -396,7 +396,7 @@ cl_int alloc_pinned_mem(struct oclWarper *warper, int imgNum, size_t dataSz,
         CPLDebug("OpenCL", "Using fallback non-pinned memory!");
 #endif
         //Fallback to regular allocation
-        wrkPtr[imgNum] = (void *)VSIMalloc(dataSz);
+        wrkPtr[imgNum] = (void *)VSI_MALLOC_VERBOSE(dataSz);
         
         if (wrkPtr[imgNum] == NULL)
             handleErr(err = CL_OUT_OF_HOST_MEMORY);
@@ -436,15 +436,15 @@ cl_int alloc_working_arr(struct oclWarper *warper,
     }
     
     //Alloc space for pointers to the main image data
-    warper->realWork.v = (void **)VSICalloc(ptrSz, warper->numImages);
-    warper->dstRealWork.v = (void **)VSICalloc(ptrSz, warper->numImages);
+    warper->realWork.v = (void **)VSI_CALLOC_VERBOSE(ptrSz, warper->numImages);
+    warper->dstRealWork.v = (void **)VSI_CALLOC_VERBOSE(ptrSz, warper->numImages);
     if (warper->realWork.v == NULL || warper->dstRealWork.v == NULL)
         handleErr(err = CL_OUT_OF_HOST_MEMORY);
     
     if (warper->imagWorkCL != NULL) {
         //Alloc space for pointers to the extra channel, if it exists
-        warper->imagWork.v = (void **)VSICalloc(ptrSz, warper->numImages);
-        warper->dstImagWork.v = (void **)VSICalloc(ptrSz, warper->numImages);
+        warper->imagWork.v = (void **)VSI_CALLOC_VERBOSE(ptrSz, warper->numImages);
+        warper->dstImagWork.v = (void **)VSI_CALLOC_VERBOSE(ptrSz, warper->numImages);
         if (warper->imagWork.v == NULL || warper->dstImagWork.v == NULL)
             handleErr(err = CL_OUT_OF_HOST_MEMORY);
     } else {
