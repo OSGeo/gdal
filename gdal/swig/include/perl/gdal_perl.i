@@ -612,6 +612,31 @@ sub CreationDataTypes {
     return split /\s+/, $h->{DMD_CREATIONDATATYPES} if $h->{DMD_CREATIONDATATYPES};
 }
 
+sub stdout_redirection_wrapper {
+    my ($self, $name, $sub, @params) = @_;
+    my $object = 0;
+    if ($name && blessed $name) {
+        $object = $name;
+        my $ref = $object->can('write');
+        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        $name = '/vsistdout/';
+    }
+    my $ds;
+    eval {
+        $ds = $sub->($self, $name, @params);
+    };
+    if ($object) {
+        if ($ds) {
+            $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object;
+        } else {
+            Geo::GDAL::VSIStdoutUnsetRedirection();
+            $object->close;
+        }
+    }
+    confess $@ if $@;
+    return $ds;
+}
+
 sub Create {
     my $self = shift;
     my %defaults = ( Name => 'unnamed',
@@ -641,54 +666,19 @@ sub Create {
     my $type;
     confess "Unknown data type: '$params{Type}'." unless exists $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
     $type = $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
-    my $object = 0;
-    if ($params{Name} && blessed $params{Name}) {
-        $object = $params{Name};
-        my $ref = $object->can('write');
-        Geo::GDAL::VSIStdoutSetRedirection($ref);
-        $params{Name} = '/vsistdout/';
-    }
-    my $ds;
-    eval {
-        $ds = $self->_Create($params{Name}, $params{Width}, $params{Height}, $params{Bands}, $type, $params{Options});
-    };
-    if ($object) {
-        if ($ds) {
-            $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object;
-        } else {
-            Geo::GDAL::VSIStdoutUnsetRedirection();
-            $object->close;
-        }
-    }
-    confess $@ if $@;
-    return $ds;
+
+    return $self->stdout_redirection_wrapper(
+        $params{Name}, 
+        $self->can('_Create'), 
+        $params{Width}, $params{Height}, $params{Bands}, $type, $params{Options}
+    );
 }
 *CreateDataset = *Create;
 
 sub Copy {
     my $self = shift;
-    my @p = @_; # $name, $src, $strict, $options, $callback, $data
-    my $object = 0;
-    if ($p[0] && blessed $p[0]) {
-        $object = $p[0];
-        my $ref = $object->can('write');
-        Geo::GDAL::VSIStdoutSetRedirection($ref);
-        $p[0] = '/vsistdout/';
-    }
-    my $ds;
-    eval {
-        $ds = $self->_CreateCopy(@p);
-    };
-    if ($object) {
-        if ($ds) {
-            $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object;
-        } else {
-            Geo::GDAL::VSIStdoutUnsetRedirection();
-            $object->close;
-        }
-    }
-    confess $@ if $@;
-    return $ds;
+    my $name = shift; # $name, $src, $strict, $options, $callback, $data
+    return $self->stdout_redirection_wrapper($name, $self->can('_CreateCopy'), @_);
 }
 *CreateCopy = *Copy;
 
@@ -1007,19 +997,18 @@ sub BuildOverviews {
     confess $@ if $@;
 }
 
-sub DEMProcessing {
-    my ($self, $dest, $Processing, $ColorFilename, $o, $progress, $progress_data) = @_;
-    $o = Geo::GDAL::GDALDEMProcessingOptions->new(Geo::GDAL::make_processing_options($o));
+sub stdout_redirection_wrapper {
+    my ($self, $name, $sub, @params) = @_;
     my $object = 0;
-    if ($dest && blessed $dest) {
-        $object = $dest;
+    if ($name && blessed $name) {
+        $object = $name;
         my $ref = $object->can('write');
         Geo::GDAL::VSIStdoutSetRedirection($ref);
-        $dest = '/vsistdout/';
+        $name = '/vsistdout/';
     }
     my $ds;
     eval {
-        $ds = Geo::GDAL::wrapper_GDALDEMProcessing($dest, $self, $Processing, $ColorFilename, $o, $progress, $progress_data);
+        $ds = $sub->($name, $self, @params); # self and name opposite to what is in Geo::GDAL!
     };
     if ($object) {
         if ($ds) {
@@ -1033,97 +1022,63 @@ sub DEMProcessing {
     return $ds;
 }
 
+sub DEMProcessing {
+    my ($self, $dest, $Processing, $ColorFilename, $options, $progress, $progress_data) = @_;
+    $options = Geo::GDAL::GDALDEMProcessingOptions->new(Geo::GDAL::make_processing_options($options));
+    return $self->stdout_redirection_wrapper(
+        $dest,
+        \&Geo::GDAL::wrapper_GDALDEMProcessing,
+        $Processing, $ColorFilename, $options, $progress, $progress_data
+    );
+}
+
 sub Nearblack {
-    my ($self, $dest, $o, $progress, $progress_data) = @_;
-    $o = Geo::GDAL::GDALNearblackOptions->new(Geo::GDAL::make_processing_options($o));
+    my ($self, $dest, $options, $progress, $progress_data) = @_;
+    $options = Geo::GDAL::GDALNearblackOptions->new(Geo::GDAL::make_processing_options($options));
     my $b = blessed($dest);
     if ($b && $b eq 'Geo::GDAL::Dataset') {
-        Geo::GDAL::wrapper_GDALNearblackDestDS($dest, $self, $o, $progress, $progress_data);
+        Geo::GDAL::wrapper_GDALNearblackDestDS($dest, $self, $options, $progress, $progress_data);
     } else {
-        my $object = 0;
-        if ($dest && blessed $dest) {
-            $object = $dest;
-            my $ref = $object->can('write');
-            Geo::GDAL::VSIStdoutSetRedirection($ref);
-            $dest = '/vsistdout/';
-        }
-        my $ds;
-        eval {
-            $ds = Geo::GDAL::wrapper_GDALNearblackDestName($dest, $self, $o, $progress, $progress_data);
-        };
-        if ($object) {
-            if ($ds) {
-                $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object;
-            } else {
-                Geo::GDAL::VSIStdoutUnsetRedirection();
-                $object->close;
-            }
-        }
-        confess $@ if $@;
-        return $ds;
+        return $self->stdout_redirection_wrapper(
+            $dest,
+            \&Geo::GDAL::wrapper_GDALNearblackDestName,
+            $options, $progress, $progress_data
+        );
     }
 }
 
 sub Translate {
-    my ($self, $dest, $o, $progress, $progress_data) = @_;
-    my $object = 0;
-    if ($dest && blessed $dest) {
-        $object = $dest;
-        my $ref = $object->can('write');
-        Geo::GDAL::VSIStdoutSetRedirection($ref);
-        $dest = '/vsistdout/';
-    }
-    my $ds;
-    eval {
-        if ($self->_GetRasterBand(1)) {
-            $o = Geo::GDAL::GDALTranslateOptions->new(Geo::GDAL::make_processing_options($o));
-            $ds = Geo::GDAL::wrapper_GDALTranslate($dest, $self, $o, $progress, $progress_data);
-        } else {
-            $o = Geo::GDAL::GDALVectorTranslateOptions->new(Geo::GDAL::make_processing_options($o));
-            Geo::GDAL::wrapper_GDALVectorTranslateDestDS($dest, $self, $o, $progress, $progress_data);
-            $ds = Geo::GDAL::wrapper_GDALVectorTranslateDestName($dest, $self, $o, $progress, $progress_data);
+    my ($self, $dest, $options, $progress, $progress_data) = @_;
+    return $self->stdout_redirection_wrapper(
+        $dest,
+        sub {
+            my ($dest, $self) = @_;
+            my $ds;
+            if ($self->_GetRasterBand(1)) {
+                $options = Geo::GDAL::GDALTranslateOptions->new(Geo::GDAL::make_processing_options($options));
+                $ds = Geo::GDAL::wrapper_GDALTranslate($dest, $self, $options, $progress, $progress_data);
+            } else {
+                $options = Geo::GDAL::GDALVectorTranslateOptions->new(Geo::GDAL::make_processing_options($options));
+                Geo::GDAL::wrapper_GDALVectorTranslateDestDS($dest, $self, $options, $progress, $progress_data);
+                $ds = Geo::GDAL::wrapper_GDALVectorTranslateDestName($dest, $self, $options, $progress, $progress_data);
+            }
+            return $ds;
         }
-    };
-    if ($object) {
-        if ($ds) {
-            $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object;
-        } else {
-            Geo::GDAL::VSIStdoutUnsetRedirection();
-            $object->close;
-        }
-    }
-    confess $@ if $@;
-    return $ds;
+    );
 }
 
 sub Warp {
-    my ($self, $dest, $o, $progress, $progress_data) = @_;
-    $o = Geo::GDAL::GDALWarpAppOptions->new(Geo::GDAL::make_processing_options($o));
+    my ($self, $dest, $options, $progress, $progress_data) = @_;
+    $options = Geo::GDAL::GDALWarpAppOptions->new(Geo::GDAL::make_processing_options($options));
     my $b = blessed($dest);
     if ($b && $b eq 'Geo::GDAL::Dataset') {
-        Geo::GDAL::wrapper_GDALWarpDestDS($dest, $self, $o, $progress, $progress_data);
+        Geo::GDAL::wrapper_GDALWarpDestDS($dest, $self, $options, $progress, $progress_data);
     } else {
-      my $object = 0;
-      if ($dest && blessed $dest) {
-        $object = $dest;
-        my $ref = $object->can('write');
-        Geo::GDAL::VSIStdoutSetRedirection($ref);
-        $dest = '/vsistdout/';
-      }
-      my $ds;
-      eval {
-          $ds = Geo::GDAL::wrapper_GDALWarpDestName($dest, $self, $o, $progress, $progress_data);
-      };
-      if ($object) {
-          if ($ds) {
-              $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object;
-          } else {
-              Geo::GDAL::VSIStdoutUnsetRedirection();
-              $object->close;
-          }
-      }
-      confess $@ if $@;
-      return $ds;
+        return $self->stdout_redirection_wrapper(
+            $dest,
+            \&Geo::GDAL::wrapper_GDALWarpDestName,
+            $options, $progress, $progress_data
+        );
     }
 }
 
@@ -1134,59 +1089,27 @@ sub Info {
 }
 
 sub Grid {
-    my ($self, $dest, $o, $progress, $progress_data) = @_;
-    $o = Geo::GDAL::GDALGridOptions->new(Geo::GDAL::make_processing_options($o));
-    my $object = 0;
-    if ($dest && blessed $dest) {
-        $object = $dest;
-        my $ref = $object->can('write');
-        Geo::GDAL::VSIStdoutSetRedirection($ref);
-        $dest = '/vsistdout/';
-    }
-    my $ds;
-    eval {
-        $ds = Geo::GDAL::wrapper_GDALGrid($dest, AsDataset($self), $o, $progress, $progress_data);
-    };
-    if ($object) {
-        if ($ds) {
-            $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object;
-        } else {
-            Geo::GDAL::VSIStdoutUnsetRedirection();
-            $object->close;
-        }
-    }
-    confess $@ if $@;
-    return $ds;
+    my ($self, $dest, $options, $progress, $progress_data) = @_;
+    $options = Geo::GDAL::GDALGridOptions->new(Geo::GDAL::make_processing_options($options));
+    return $self->stdout_redirection_wrapper(
+        $dest,
+        \&Geo::GDAL::wrapper_GDALGrid,
+        $options, $progress, $progress_data
+    );
 }
 
 sub Rasterize {
-    my ($self, $dest, $o, $progress, $progress_data) = @_;
-    $o = Geo::GDAL::GDALRasterizeOptions->new(Geo::GDAL::make_processing_options($o));
+    my ($self, $dest, $options, $progress, $progress_data) = @_;
+    $options = Geo::GDAL::GDALRasterizeOptions->new(Geo::GDAL::make_processing_options($options));
     my $b = blessed($dest);
     if ($b && $b eq 'Geo::GDAL::Dataset') {
-        Geo::GDAL::wrapper_GDALRasterizeDestDS($dest, AsDataset($self), $o, $progress, $progress_data);
+        Geo::GDAL::wrapper_GDALRasterizeDestDS($dest, $self, $options, $progress, $progress_data);
     } else {
-        my $object = 0;
-        if ($dest && blessed $dest) {
-            $object = $dest;
-            my $ref = $object->can('write');
-            Geo::GDAL::VSIStdoutSetRedirection($ref);
-            $dest = '/vsistdout/';
-        }
-        my $ds;
-        eval {
-            $ds = Geo::GDAL::wrapper_GDALRasterizeDestName($dest, AsDataset($self), $o, $progress, $progress_data);
-        };
-        if ($object) {
-            if ($ds) {
-                $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object;
-            } else {
-                Geo::GDAL::VSIStdoutUnsetRedirection();
-                $object->close;
-            }
-        }
-        confess $@ if $@;
-        return $ds;
+        return $self->stdout_redirection_wrapper(
+            $dest,
+            \&Geo::GDAL::wrapper_GDALRasterizeDestName,
+            $options, $progress, $progress_data
+        );
     }
 }
 
