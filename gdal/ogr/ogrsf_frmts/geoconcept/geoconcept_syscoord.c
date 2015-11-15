@@ -650,11 +650,8 @@ GCSysCoord GCSRSAPI_CALL1(*) CreateSysCoord_GCSRS (
   int iSysCoord;
   GCSysCoord* theSysCoord, *gcsc;
 
-  if( !(theSysCoord= CPLMalloc(sizeof(GCSysCoord))) )
+  if( !(theSysCoord= VSI_MALLOC_VERBOSE(sizeof(GCSysCoord))) )
   {
-    CPLError( CE_Failure, CPLE_OutOfMemory,
-              "failed to create a Geoconcept coordinate system.\n"
-              );
     return NULL;
   }
   _InitSysCoord_GCSRS(theSysCoord);

@@ -506,11 +506,10 @@ void OGRSVGLayer::dataHandlerCbk(const char *data, int nLen)
 
     if (iCurrentField >= 0)
     {
-        char* pszNewSubElementValue = (char*) VSIRealloc(pszSubElementValue,
+        char* pszNewSubElementValue = (char*) VSI_REALLOC_VERBOSE(pszSubElementValue,
                                            nSubElementValueLen + nLen + 1);
         if (pszNewSubElementValue == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
             XML_StopParser(oParser, XML_FALSE);
             bStopParsing = TRUE;
             return;

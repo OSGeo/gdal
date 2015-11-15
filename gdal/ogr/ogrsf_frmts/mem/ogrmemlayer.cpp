@@ -198,11 +198,9 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
         }
 
         OGRFeature** papoNewFeatures = (OGRFeature **) 
-            VSIRealloc( papoFeatures, (size_t)(sizeof(OGRFeature *) * nNewCount) );
+            VSI_REALLOC_VERBOSE( papoFeatures, (size_t)(sizeof(OGRFeature *) * nNewCount) );
         if (papoNewFeatures == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate array of " CPL_FRMT_GIB " elements", nNewCount);
             return OGRERR_FAILURE;
         }
         papoFeatures = papoNewFeatures;

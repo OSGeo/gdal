@@ -386,11 +386,10 @@ void OGRJMLLayer::AddStringToElementValue(const char *data, int nLen)
 {
     if( nElementValueLen + nLen + 1 > nElementValueAlloc )
     {
-        char* pszNewElementValue = (char*) VSIRealloc(pszElementValue,
+        char* pszNewElementValue = (char*) VSI_REALLOC_VERBOSE(pszElementValue,
                                         nElementValueLen + nLen + 1 + 1000);
         if (pszNewElementValue == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
             XML_StopParser(oParser, XML_FALSE);
             bStopParsing = TRUE;
             return;

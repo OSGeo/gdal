@@ -568,7 +568,7 @@ int OGROSMDataSource::AllocMoreBuckets(int nNewBucketIdx, int bAllocBucket)
         return FALSE;
     }
 
-    Bucket* papsNewBuckets = (Bucket*) VSIRealloc(papsBuckets, nNewSize);
+    Bucket* papsNewBuckets = (Bucket*) VSI_REALLOC_VERBOSE(papsBuckets, nNewSize);
     if( papsNewBuckets == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "AllocMoreBuckets() failed. Use OSM_USE_CUSTOM_INDEXING=NO");
@@ -2722,19 +2722,19 @@ int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptions )
           papoLayers[IDX_LYR_MULTIPOLYGONS]->HasUID() ||
           papoLayers[IDX_LYR_MULTIPOLYGONS]->HasUser() );
 
-    pasLonLatCache = (LonLat*)VSIMalloc(MAX_NODES_PER_WAY * sizeof(LonLat));
-    pabyWayBuffer = (GByte*)VSIMalloc(WAY_BUFFER_SIZE);
+    pasLonLatCache = (LonLat*)VSI_MALLOC_VERBOSE(MAX_NODES_PER_WAY * sizeof(LonLat));
+    pabyWayBuffer = (GByte*)VSI_MALLOC_VERBOSE(WAY_BUFFER_SIZE);
 
-    panReqIds = (GIntBig*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
+    panReqIds = (GIntBig*)VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
-    panHashedIndexes = (int*)VSIMalloc(HASHED_INDEXES_ARRAY_SIZE * sizeof(int));
-    psCollisionBuckets = (CollisionBucket*)VSIMalloc(COLLISION_BUCKET_ARRAY_SIZE * sizeof(CollisionBucket));
+    panHashedIndexes = (int*)VSI_MALLOC_VERBOSE(HASHED_INDEXES_ARRAY_SIZE * sizeof(int));
+    psCollisionBuckets = (CollisionBucket*)VSI_MALLOC_VERBOSE(COLLISION_BUCKET_ARRAY_SIZE * sizeof(CollisionBucket));
 #endif
-    pasLonLatArray = (LonLat*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(LonLat));
-    panUnsortedReqIds = (GIntBig*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
-    pasWayFeaturePairs = (WayFeaturePair*)VSIMalloc(MAX_DELAYED_FEATURES * sizeof(WayFeaturePair));
-    pasAccumulatedTags = (IndexedKVP*) VSIMalloc(MAX_ACCUMULATED_TAGS * sizeof(IndexedKVP));
-    pabyNonRedundantValues = (GByte*) VSIMalloc(MAX_NON_REDUNDANT_VALUES);
+    pasLonLatArray = (LonLat*)VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(LonLat));
+    panUnsortedReqIds = (GIntBig*)VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
+    pasWayFeaturePairs = (WayFeaturePair*)VSI_MALLOC_VERBOSE(MAX_DELAYED_FEATURES * sizeof(WayFeaturePair));
+    pasAccumulatedTags = (IndexedKVP*) VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_TAGS * sizeof(IndexedKVP));
+    pabyNonRedundantValues = (GByte*) VSI_MALLOC_VERBOSE(MAX_NON_REDUNDANT_VALUES);
 
     if( pasLonLatCache == NULL ||
         pabyWayBuffer == NULL ||
@@ -2745,8 +2745,6 @@ int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptions )
         pasAccumulatedTags == NULL ||
         pabyNonRedundantValues == NULL )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Out-of-memory when allocating one of the buffer used for the processing.");
         return FALSE;
     }
 
@@ -2762,12 +2760,10 @@ int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptions )
 
     if( bCustomIndexing )
     {
-        pabySector = (GByte*) VSICalloc(1, SECTOR_SIZE);
+        pabySector = (GByte*) VSI_CALLOC_VERBOSE(1, SECTOR_SIZE);
 
         if( pabySector == NULL || !AllocMoreBuckets(INIT_BUCKET_COUNT) )
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                    "Out-of-memory when allocating one of the buffer used for the processing.");
             return FALSE;
         }
 
