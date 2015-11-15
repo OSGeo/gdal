@@ -332,13 +332,12 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     void **pBuffers
         = reinterpret_cast<void **>( CPLMalloc(sizeof(void *) * nSources) );
     for( int iSource = 0; iSource < nSources; iSource++ ) {
-        pBuffers[iSource] = reinterpret_cast<void *>(
-            VSI_MALLOC_VERBOSE(sourcesize * nBufXSize * nBufYSize) );
+        pBuffers[iSource] = 
+            VSI_MALLOC_VERBOSE(sourcesize * nBufXSize * nBufYSize);
         if (pBuffers[iSource] == NULL)
         {
             for (int i = 0; i < iSource; i++) {
-                // TODO: How is this not a bug?  Ticket #6201
-                VSIFree(pBuffers[iSource]);
+                VSIFree(pBuffers[i]);
             }
             CPLFree(pBuffers);
             return CE_Failure;
@@ -367,9 +366,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 
     /* ---- Load values for sources into packed buffers ---- */
     CPLErr eErr = CE_None;
-    for( int iSource = 0; iSource < nSources; iSource++ ) {
-        // TODO: This does not track if one of the RasterIO calls fails.
-        // Only the last.  Ticket #6201
+    for( int iSource = 0; iSource < nSources && eErr == CE_None; iSource++ ) {
         eErr = reinterpret_cast<VRTSource *>( papoSources[iSource] )->RasterIO(
 	    nXOff, nYOff, nXSize, nYSize,
             pBuffers[iSource], nBufXSize, nBufYSize,
