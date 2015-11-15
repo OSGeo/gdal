@@ -968,6 +968,11 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /* -------------------------------------------------------------------- */
 /*      Loop over image in designated chunks.                           */
 /* -------------------------------------------------------------------- */
+
+        double *padfAttrValues = (double *) VSI_MALLOC_VERBOSE(sizeof(double) * nBandCount);
+        if( padfAttrValues == NULL )
+            eErr = CE_Failure;
+
         int     iY;
         for( iY = 0; 
              iY < poDS->GetRasterYSize() && eErr == CE_None; 
@@ -992,7 +997,6 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                     break;
             }
 
-            double *padfAttrValues = (double *) VSIMalloc(sizeof(double) * nBandCount);
             while( (poFeat = poLayer->GetNextFeature()) != NULL )
             {
                 OGRGeometry *poGeom = poFeat->GetGeometryRef();
@@ -1019,7 +1023,6 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
                 delete poFeat;
             }
-            VSIFree( padfAttrValues );
 
             // Only write image if not a single chunk is being rendered
             if ( nYChunkSize < poDS->GetRasterYSize() )
@@ -1041,6 +1044,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                 eErr = CE_Failure;
             }
         }
+
+        VSIFree( padfAttrValues );
 
         if ( bNeedToFreeTransformer )
         {

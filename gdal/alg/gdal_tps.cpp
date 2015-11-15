@@ -180,15 +180,21 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
         afXY[0] = pasGCPList[iGCP].dfGCPX;
         afXY[1] = pasGCPList[iGCP].dfGCPY;
 
+        bool bOK = true;
         if( bReversed )
         {
-            psInfo->poReverse->add_point( afPL[0], afPL[1], afXY );
-            psInfo->poForward->add_point( afXY[0], afXY[1], afPL );
+            bOK &= psInfo->poReverse->add_point( afPL[0], afPL[1], afXY );
+            bOK &= psInfo->poForward->add_point( afXY[0], afXY[1], afPL );
         }
         else
         {
-            psInfo->poForward->add_point( afPL[0], afPL[1], afXY );
-            psInfo->poReverse->add_point( afXY[0], afXY[1], afPL );
+            bOK &= psInfo->poForward->add_point( afPL[0], afPL[1], afXY );
+            bOK &= psInfo->poReverse->add_point( afXY[0], afXY[1], afPL );
+        }
+        if( !bOK )
+        {
+            GDALDestroyTPSTransformer(psInfo);
+            return NULL;
         }
     }
 

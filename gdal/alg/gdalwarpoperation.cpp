@@ -2145,8 +2145,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
         nSampleMax = nStepCount * 4;
     }
 
-    pabSuccess = (int *) VSIMalloc2(sizeof(int), nSampleMax);
-    padfX = (double *) VSIMalloc2(sizeof(double) * 3, nSampleMax);
+    pabSuccess = (int *) VSI_MALLOC2_VERBOSE(sizeof(int), nSampleMax);
+    padfX = (double *) VSI_MALLOC2_VERBOSE(sizeof(double) * 3, nSampleMax);
     if (pabSuccess == NULL || padfX == NULL)
     {
         CPLFree( padfX );

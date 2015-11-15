@@ -52,23 +52,37 @@
 static int matrixInvert( int N, double input[], double output[] );
 #endif
 
-void VizGeorefSpline2D::grow_points()
+bool VizGeorefSpline2D::grow_points()
 
 {
     int new_max = _max_nof_points*2 + 2 + 3;
     int i;
 
-    x = (double *) VSIRealloc( x, sizeof(double) * new_max );
-    y = (double *) VSIRealloc( y, sizeof(double) * new_max );
-    u = (double *) VSIRealloc( u, sizeof(double) * new_max );
-    unused = (int *) VSIRealloc( unused, sizeof(int) * new_max );
-    index = (int *) VSIRealloc( index, sizeof(int) * new_max );
+    double *new_x = (double *) VSI_REALLOC_VERBOSE( x, sizeof(double) * new_max );
+    if( !new_x ) return false;
+    x = new_x;
+    double *new_y = (double *) VSI_REALLOC_VERBOSE( y, sizeof(double) * new_max );
+    if( !new_y ) return false;
+    y = new_y;
+    double *new_u = (double *) VSI_REALLOC_VERBOSE( u, sizeof(double) * new_max );
+    if( !new_u ) return false;
+    u = new_u;
+    int *new_unused = (int *) VSI_REALLOC_VERBOSE( unused, sizeof(int) * new_max );
+    if( !new_unused ) return false;
+    unused = new_unused;
+    int *new_index = (int *) VSI_REALLOC_VERBOSE( index, sizeof(int) * new_max );
+    if( !new_index ) return false;
+    index = new_index;
     for( i = 0; i < VIZGEOREF_MAX_VARS; i++ )
     {
-        rhs[i] = (double *) 
-            VSIRealloc( rhs[i], sizeof(double) * new_max );
-        coef[i] = (double *) 
-            VSIRealloc( coef[i], sizeof(double) * new_max );
+        double* rhs_i_new = (double *) 
+            VSI_REALLOC_VERBOSE( rhs[i], sizeof(double) * new_max );
+        if( !rhs_i_new ) return false;
+        rhs[i] = rhs_i_new;
+        double* coef_i_new = (double *) 
+            VSI_REALLOC_VERBOSE( coef[i], sizeof(double) * new_max );
+        if( !coef_i_new ) return false;
+        coef[i] = coef_i_new;
         if( _max_nof_points == 0 )
         {
             memset(rhs[i], 0, 3 * sizeof(double));
@@ -77,15 +91,19 @@ void VizGeorefSpline2D::grow_points()
     }
 
     _max_nof_points = new_max - 3;
+    return true;
 }
 
-int VizGeorefSpline2D::add_point( const double Px, const double Py, const double *Pvars )
+bool VizGeorefSpline2D::add_point( const double Px, const double Py, const double *Pvars )
 {
     type = VIZ_GEOREF_SPLINE_POINT_WAS_ADDED;
     int i;
 
     if( _nof_points == _max_nof_points )
-        grow_points();
+    {
+        if( !grow_points() )
+            return false;
+    }
 
     i = _nof_points;
     //A new point is added
@@ -94,7 +112,7 @@ int VizGeorefSpline2D::add_point( const double Px, const double Py, const double
     for ( int j = 0; j < _nof_vars; j++ )
         rhs[j][i+3] = Pvars[j];
     _nof_points++;
-    return 1;
+    return true;
 }
 
 #if 0
@@ -475,12 +493,11 @@ int VizGeorefSpline2D::solve(void)
         return 0;
     }
 	
-    double* _AA = ( double * )VSICalloc( _nof_eqs * _nof_eqs, sizeof( double ) );
-    double* _Ainv = ( double * )VSICalloc( _nof_eqs * _nof_eqs, sizeof( double ) );
+    double* _AA = ( double * )VSI_CALLOC_VERBOSE( _nof_eqs * _nof_eqs, sizeof( double ) );
+    double* _Ainv = ( double * )VSI_CALLOC_VERBOSE( _nof_eqs * _nof_eqs, sizeof( double ) );
     
     if( _AA == NULL || _Ainv == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Out-of-memory while allocating temporary arrays. Computation aborted.");
         VSIFree(_AA);
         VSIFree(_Ainv);
         return 0;

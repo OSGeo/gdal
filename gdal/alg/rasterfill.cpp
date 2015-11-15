@@ -175,8 +175,8 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
 /*      Allocate rotating buffers.                                      */
 /* -------------------------------------------------------------------- */
-    pabyTMaskBuf = (GByte *) VSIMalloc2(nXSize, nBufLines);
-    pabyFMaskBuf = (GByte *) VSIMalloc2(nXSize, nBufLines);
+    pabyTMaskBuf = (GByte *) VSI_MALLOC2_VERBOSE(nXSize, nBufLines);
+    pabyFMaskBuf = (GByte *) VSI_MALLOC2_VERBOSE(nXSize, nBufLines);
 
     paf3PassLineBuf = (float *) VSI_MALLOC3_VERBOSE(nXSize, nBufLines, 3 * sizeof(float));
     if (pabyTMaskBuf == NULL || pabyFMaskBuf == NULL || paf3PassLineBuf == NULL)

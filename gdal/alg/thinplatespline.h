@@ -51,6 +51,8 @@ typedef enum
 
 class VizGeorefSpline2D
 {
+    bool grow_points();
+
   public:
 
     VizGeorefSpline2D(int nof_vars = 1) :
@@ -142,8 +144,7 @@ class VizGeorefSpline2D
 	}
 #endif
 
-    void grow_points();
-    int add_point( const double Px, const double Py, const double *Pvars );
+    bool add_point( const double Px, const double Py, const double *Pvars );
     int get_point( const double Px, const double Py, double *Pvars );
 #if 0
     int delete_point(const double Px, const double Py );

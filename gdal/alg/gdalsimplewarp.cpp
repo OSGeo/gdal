@@ -135,8 +135,15 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     papabySrcData = (GByte **) CPLCalloc(nBandCount,sizeof(GByte*));
     for( iBand = 0; iBand < nBandCount; iBand++ )
     {
-        papabySrcData[iBand] = (GByte *) VSIMalloc(nSrcXSize*nSrcYSize);
-        
+        papabySrcData[iBand] = (GByte *) VSI_MALLOC2_VERBOSE(nSrcXSize, nSrcYSize);
+        if( papabySrcData[iBand] == NULL )
+        {
+            for( int i=0;i<=iBand;i++)
+                VSIFree(papabySrcData[i]);
+            CPLFree(papabySrcData);
+            return FALSE;
+        }
+
         if( GDALRasterIO( GDALGetRasterBand(hSrcDS,panBandList[iBand]), GF_Read,
                       0, 0, nSrcXSize, nSrcYSize, 
                       papabySrcData[iBand], nSrcXSize, nSrcYSize, GDT_Byte, 

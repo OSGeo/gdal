@@ -1652,7 +1652,7 @@ static void GDALGridJobProcess(void* user_data)
     /*  and use GDALCopyWords() to copy values into output data array with  */
     /*  appropriate data type conversion.                                   */
     /* -------------------------------------------------------------------- */
-    double      *padfValues = (double *)VSIMalloc2( sizeof(double), nXSize );
+    double      *padfValues = (double *)VSI_MALLOC2_VERBOSE( sizeof(double), nXSize );
     if( padfValues == NULL )
     {
         *(psJob->pbStop) = TRUE;
@@ -1815,9 +1815,9 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                     if( CSLTestBoolean(CPLGetConfigOption("GDAL_USE_AVX", "YES")) &&
                         CPLHaveRuntimeAVX() )
                     {
-                        pabyX = (float*)VSIMalloc(sizeof(float) * nPoints + 31);
-                        pabyY = (float*)VSIMalloc(sizeof(float) * nPoints + 31);
-                        pabyZ = (float*)VSIMalloc(sizeof(float) * nPoints + 31);
+                        pabyX = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31);
+                        pabyY = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31);
+                        pabyZ = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31);
                         if( pabyX != NULL && pabyY != NULL && pabyZ != NULL)
                         {
                             CPLDebug("GDAL_GRID", "Using AVX optimized version");
@@ -1851,9 +1851,9 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                         CSLTestBoolean(CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
                         CPLHaveRuntimeSSE() )
                     {
-                        pabyX = (float*)VSIMalloc(sizeof(float) * nPoints + 15);
-                        pabyY = (float*)VSIMalloc(sizeof(float) * nPoints + 15);
-                        pabyZ = (float*)VSIMalloc(sizeof(float) * nPoints + 15);
+                        pabyX = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15);
+                        pabyY = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15);
+                        pabyZ = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15);
                         if( pabyX != NULL && pabyY != NULL && pabyZ != NULL)
                         {
                             CPLDebug("GDAL_GRID", "Using SSE optimized version");
@@ -2083,7 +2083,7 @@ void GDALGridContextCreateQuadTree(GDALGridContext* psContext)
 {
     GUInt32 nPoints = psContext->nPoints;
     psContext->pasGridPoints = (GDALGridPoint*)
-            VSIMalloc2(nPoints, sizeof(GDALGridPoint));
+            VSI_MALLOC2_VERBOSE(nPoints, sizeof(GDALGridPoint));
     if( psContext->pasGridPoints != NULL )
     {
         const double* padfX = psContext->padfX;
