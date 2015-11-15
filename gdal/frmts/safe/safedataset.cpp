@@ -754,7 +754,6 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
             GDALDataset *poBandFile = reinterpret_cast<GDALDataset *>(
                 GDALOpen( pszFullname, GA_ReadOnly ) );
-            CPLFree( pszFullname );
             if( poBandFile == NULL )
             {
                 // NOP
@@ -779,6 +778,8 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 poDS->SetBand( poDS->GetRasterCount() + 1, poBand );
             }
+
+            CPLFree( pszFullname );
         }
     }
 
