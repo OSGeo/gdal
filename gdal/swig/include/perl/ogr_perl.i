@@ -36,7 +36,7 @@
 %}
 
 %include callback.i
-
+%include confess.i
 %include cpl_exceptions.i
 
 %rename (GetDriverCount) OGRGetDriverCount;
@@ -311,7 +311,7 @@ sub AlterFieldDefn {
         $flags |= 16 if exists $params{Default};
         _AlterFieldDefn($self, $index, $definition, $flags);
     } else {
-        croak "Usage: AlterFieldDefn(\$Name, \%NamedParameters)";
+        confess "Usage: AlterFieldDefn(\$Name, \%NamedParameters)";
     }
 }
 
@@ -1122,7 +1122,7 @@ sub Schema {
         my %args = @_;
         for my $key (keys %SCHEMA_KEYS) {
             eval '$self->'.$key.'($args{'.$key.'}) if exists $args{'.$key.'}';
-            croak $@ if $@;
+            confess $@ if $@;
         }
     }
     return unless defined wantarray;
@@ -1260,7 +1260,7 @@ sub Schema {
         my %args = @_;
         for my $key (keys %SCHEMA_KEYS) {
             eval '$self->'.$key.'($args{'.$key.'}) if exists $args{'.$key.'}';
-            croak $@ if $@;
+            confess $@ if $@;
         }
     }
     return unless defined wantarray;

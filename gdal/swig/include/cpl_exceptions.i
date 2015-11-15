@@ -60,16 +60,12 @@ void DontUseExceptions() {
 %include exception.i
 
 %exception {
-#if defined(SWIGPERL)
-    AV* error_stack = get_av("Geo::GDAL::error", 0);
-    av_clear(error_stack);
-#endif
     CPLErrorReset();
     $action
     CPLErr eclass = CPLGetLastErrorType();
     if ( eclass == CE_Failure || eclass == CE_Fatal ) {
 #if defined(SWIGPERL)
-      croak( CPLGetLastErrorMsg() );
+      do_confess( CPLGetLastErrorMsg() );
 #elif defined(SWIGCSHARP)
       SWIG_CSharpException(SWIG_RuntimeError, CPLGetLastErrorMsg());
 #else
