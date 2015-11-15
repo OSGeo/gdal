@@ -669,12 +669,9 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
     GByte *pabySrcMask;
 
-    pabySrcMask = (GByte *) VSIMalloc2(nXSize,nYSize);
+    pabySrcMask = (GByte *) VSI_MALLOC2_VERBOSE(nXSize,nYSize);
     if( pabySrcMask == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "Failed to allocate pabySrcMask (%dx%d) in GDALWarpSrcMaskMasker()", 
-                  nXSize, nYSize );
         return CE_Failure;
     }
 

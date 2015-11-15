@@ -160,10 +160,9 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
     points = NULL;
 
     /* Establish a map from QHull facet id to the index in our array of sequential facets */
-    panMapQHFacetIdToFacetIdx = (int*)VSIMalloc2(sizeof(int), qh facet_id);
+    panMapQHFacetIdToFacetIdx = (int*)VSI_MALLOC2_VERBOSE(sizeof(int), qh facet_id);
     if( panMapQHFacetIdToFacetIdx == NULL )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate points array");
         goto end;
     }
     memset(panMapQHFacetIdToFacetIdx, 0xFF, sizeof(int) * qh facet_id);
@@ -189,11 +188,9 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
         panMapQHFacetIdToFacetIdx[facet->id] = j++;
     }
 
-    pasFacets = (GDALTriFacet*) VSIMalloc2( j, sizeof(GDALTriFacet) );
+    pasFacets = (GDALTriFacet*) VSI_MALLOC2_VERBOSE( j, sizeof(GDALTriFacet) );
     if(pasFacets == NULL )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate pasFacets array");
         VSIFree(panMapQHFacetIdToFacetIdx);
         goto end;
     }
@@ -292,11 +289,10 @@ int  GDALTriangulationComputeBarycentricCoefficients(GDALTriangulation* psDT,
     {
         return TRUE;
     }
-    psDT->pasFacetCoefficients = (GDALTriBarycentricCoefficients*)VSIMalloc2(
+    psDT->pasFacetCoefficients = (GDALTriBarycentricCoefficients*)VSI_MALLOC2_VERBOSE(
         sizeof(GDALTriBarycentricCoefficients), psDT->nFacets);
     if( psDT->pasFacetCoefficients == NULL )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate pasFacetCoefficients array");
         return FALSE;
     }
 

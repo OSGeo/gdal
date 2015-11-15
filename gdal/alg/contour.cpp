@@ -261,8 +261,8 @@ GDALContourGenerator::~GDALContourGenerator()
 
 bool GDALContourGenerator::Init()
 {
-    padfLastLine = (double *) VSICalloc(sizeof(double),nWidth);
-    padfThisLine = (double *) VSICalloc(sizeof(double),nWidth);
+    padfLastLine = (double *) VSI_CALLOC_VERBOSE(sizeof(double),nWidth);
+    padfThisLine = (double *) VSI_CALLOC_VERBOSE(sizeof(double),nWidth);
     return padfLastLine != NULL && padfThisLine != NULL;
 }
 
@@ -1597,8 +1597,6 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
     GDALContourGenerator oCG( nXSize, nYSize, OGRContourWriter, &oCWI );
     if( !oCG.Init() )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "VSIMalloc(): Out of memory in GDALContourGenerate" );
         return CE_Failure;
     }
 
@@ -1617,11 +1615,9 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
     double *padfScanline;
     CPLErr eErr = CE_None;
 
-    padfScanline = (double *) VSIMalloc2(sizeof(double), nXSize);
+    padfScanline = (double *) VSI_MALLOC2_VERBOSE(sizeof(double), nXSize);
     if (padfScanline == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "VSIMalloc(): Out of memory in GDALContourGenerate" );
         return CE_Failure;
     }
 

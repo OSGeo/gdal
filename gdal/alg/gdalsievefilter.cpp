@@ -206,19 +206,17 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
     CPLErr eErr = CE_None;
     int nXSize = GDALGetRasterBandXSize( hSrcBand );
     int nYSize = GDALGetRasterBandYSize( hSrcBand );
-    GInt32 *panLastLineVal = (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
-    GInt32 *panThisLineVal = (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
-    GInt32 *panLastLineId =  (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
-    GInt32 *panThisLineId =  (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
-    GInt32 *panThisLineWriteVal = (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
-    GByte *pabyMaskLine = (hMaskBand != NULL) ? (GByte *) VSIMalloc(nXSize) : NULL;
+    GInt32 *panLastLineVal = (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize);
+    GInt32 *panThisLineVal = (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize);
+    GInt32 *panLastLineId =  (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize);
+    GInt32 *panThisLineId =  (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize);
+    GInt32 *panThisLineWriteVal = (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize);
+    GByte *pabyMaskLine = (hMaskBand != NULL) ? (GByte *) VSI_MALLOC_VERBOSE(nXSize) : NULL;
     if (panLastLineVal == NULL || panThisLineVal == NULL ||
         panLastLineId == NULL || panThisLineId == NULL ||
         panThisLineWriteVal == NULL ||
         (hMaskBand != NULL && pabyMaskLine == NULL))
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Could not allocate enough memory for temporary buffers");
         CPLFree( panThisLineId );
         CPLFree( panLastLineId );
         CPLFree( panThisLineVal );

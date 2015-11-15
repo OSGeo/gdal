@@ -955,13 +955,11 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         eWorkDataType = GDT_Float64;
 #endif
     const int nDataTypeSize = GDALGetDataTypeSize(eWorkDataType) / 8;
-    GByte* pUpsampledSpectralBuffer = (GByte*)VSIMalloc3(nXSize, nYSize,
+    GByte* pUpsampledSpectralBuffer = (GByte*)VSI_MALLOC3_VERBOSE(nXSize, nYSize,
         psOptions->nInputSpectralBands * nDataTypeSize);
-    GByte* pPanBuffer = (GByte*)VSIMalloc3(nXSize, nYSize, nDataTypeSize);
+    GByte* pPanBuffer = (GByte*)VSI_MALLOC3_VERBOSE(nXSize, nYSize, nDataTypeSize);
     if( pUpsampledSpectralBuffer == NULL || pPanBuffer == NULL )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Out of memory error while allocating working buffers");
         VSIFree(pUpsampledSpectralBuffer);
         VSIFree(pPanBuffer);
         return CE_Failure;
@@ -1029,12 +1027,10 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         if( nYOffExtract + nYSizeExtract > aMSBands[0]->GetYSize() )
             nYSizeExtract = aMSBands[0]->GetYSize() - nYOffExtract;
         
-        GByte* pSpectralBuffer = (GByte*)VSIMalloc3(nXSizeExtract, nYSizeExtract,
+        GByte* pSpectralBuffer = (GByte*)VSI_MALLOC3_VERBOSE(nXSizeExtract, nYSizeExtract,
                             psOptions->nInputSpectralBands * nDataTypeSize);
         if( pSpectralBuffer == NULL )
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Out of memory error while allocating working buffers");
             VSIFree(pUpsampledSpectralBuffer);
             VSIFree(pPanBuffer);
             return CE_Failure;
@@ -1256,12 +1252,10 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     if( eBufDataType == GDT_CFloat64 )
 #endif
     {
-        padfTempBuffer = (double*)VSIMalloc3(nXSize, nYSize,
+        padfTempBuffer = (double*)VSI_MALLOC3_VERBOSE(nXSize, nYSize,
                     psOptions->nOutPansharpenedBands * sizeof(double));
         if( padfTempBuffer == NULL )
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                "Out of memory error while allocating working buffers");
             VSIFree(pUpsampledSpectralBuffer);
             VSIFree(pPanBuffer);
             return CE_Failure;

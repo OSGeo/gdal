@@ -247,13 +247,13 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
     int nCLevels = 1 << nBits;
     ColorIndex* psColorIndexMap = NULL;
 
-    pabyRed = (GByte *) VSIMalloc(nXSize);
-    pabyGreen = (GByte *) VSIMalloc(nXSize);
-    pabyBlue = (GByte *) VSIMalloc(nXSize);
+    pabyRed = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
+    pabyGreen = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
+    pabyBlue = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
 
-    pabyIndex = (GByte *) VSIMalloc(nXSize);
+    pabyIndex = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
 
-    panError = (int *) VSICalloc(sizeof(int),(nXSize+2) * 3);
+    panError = (int *) VSI_CALLOC_VERBOSE(sizeof(int),(nXSize+2) * 3);
     
     if (pabyRed == NULL ||
         pabyGreen == NULL ||
@@ -261,8 +261,6 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
         pabyIndex == NULL ||
         panError == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "VSIMalloc(): Out of memory in GDALDitherRGB2PCT" );
         err = CE_Failure;
         goto end_and_cleanup;
     }
@@ -273,12 +271,10 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 /*      Build a 24bit to 8 bit color mapping.                           */
 /* -------------------------------------------------------------------- */
 
-        pabyColorMap = (GByte *) VSIMalloc(nCLevels * nCLevels * nCLevels 
+        pabyColorMap = (GByte *) VSI_MALLOC_VERBOSE(nCLevels * nCLevels * nCLevels 
                                         * sizeof(GByte));
         if( pabyColorMap == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "VSIMalloc(): Out of memory in GDALDitherRGB2PCT" );
             err = CE_Failure;
             goto end_and_cleanup;
         }

@@ -74,12 +74,9 @@ GDALChecksumImage( GDALRasterBandH hBand,
         double* padfLineData;
         GDALDataType eDstDataType = (bComplex) ? GDT_CFloat64 : GDT_Float64;
 
-        padfLineData = (double *) VSIMalloc2(nXSize, sizeof(double) * 2);
+        padfLineData = (double *) VSI_MALLOC2_VERBOSE(nXSize, sizeof(double) * 2);
         if (padfLineData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "VSIMalloc2(): Out of memory in GDALChecksumImage. "
-                    "Checksum value couldn't be computed\n");
             return 0;
         }
 
@@ -134,12 +131,9 @@ GDALChecksumImage( GDALRasterBandH hBand,
         int  *panLineData;
         GDALDataType eDstDataType = (bComplex) ? GDT_CInt32 : GDT_Int32;
 
-        panLineData = (GInt32 *) VSIMalloc2(nXSize, sizeof(GInt32) * 2);
+        panLineData = (GInt32 *) VSI_MALLOC2_VERBOSE(nXSize, sizeof(GInt32) * 2);
         if (panLineData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "VSIMalloc2(): Out of memory in GDALChecksumImage. "
-                    "Checksum value couldn't be computed\n");
             return 0;
         }
 
