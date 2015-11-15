@@ -461,14 +461,14 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                           (long) (szStart - szLineBuf) );
 
 		while( *szEnd == '\0' &&
-		       static_cast<size_t>(szStart - szLineBuf) < nCharsRead )
+		       static_cast<size_t>(szEnd - szLineBuf) < nCharsRead )
 		    szEnd++;
 
 		continue;
 	    }
 
 	    /* End of buffer, could be interrupting a number */
-	    if( VSIFSeekL( poGDS->fp, szStart - szEnd, SEEK_CUR ) != 0 )
+	    if( VSIFSeekL( poGDS->fp, VSIFTellL(poGDS->fp) + szStart - szEnd, SEEK_SET ) != 0 )
 	    {
 		VSIFree( szLineBuf );
 		CPLError( CE_Failure, CPLE_FileIO,
