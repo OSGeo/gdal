@@ -1410,6 +1410,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 #endif
 
     GDALWarpAppOptionsFree(psOptions);
+    
+    if( bHasGotErr && bMustCloseDstDSInCaseOfError )
+        GDALClose(hDstDS);
     return (bHasGotErr) ? NULL : hDstDS;
 }
 
