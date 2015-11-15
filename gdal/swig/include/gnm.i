@@ -46,6 +46,10 @@
 %include swig_csharp_extensions.i
 #endif
 
+#ifdef SWIGPERL
+%include confess.i
+#endif
+
 #ifndef SWIGJAVA
 %feature ("compactdefaultargs");
 #endif
