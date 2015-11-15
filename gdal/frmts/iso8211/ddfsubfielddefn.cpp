@@ -772,15 +772,17 @@ int DDFSubfieldDefn::GetDefaultValue( char *pachData, int nBytesAvailable,
     }
     else
     {
+        char chFillChar;
         if( GetBinaryFormat() == NotBinary )
         {
             if( GetType() == DDFInt || GetType() == DDFFloat )
-                memset( pachData, '0', nDefaultSize );
+                chFillChar = '0'; /* ASCII zero intended */
             else
-                memset( pachData, ' ', nDefaultSize );
+                chFillChar = ' ';
         }
         else
-            memset( pachData, 0, nDefaultSize );
+            chFillChar = 0;
+        memset( pachData, chFillChar, nDefaultSize );
     }
 
     return TRUE;
@@ -902,10 +904,13 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
         switch( GetBinaryFormat() )
         {
           case NotBinary:
-            memset( pachData, '0', nSize );
+          {
+            char chFillChar = '0'; /* ASCII zero intended */
+            memset( pachData, chFillChar, nSize );
             strncpy( pachData + nSize - strlen(szWork), szWork,
                      strlen(szWork) );
             break;
+          }
 
           case UInt:
           case SInt:
