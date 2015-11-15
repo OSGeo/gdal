@@ -5713,3 +5713,5 @@ def TermProgress_nocb(*args, **kwargs):
   return _ogr.TermProgress_nocb(*args, **kwargs)
 TermProgress = _ogr.TermProgress
 # This file is compatible with both classic and new-style classes.
+
+

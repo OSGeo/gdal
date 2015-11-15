@@ -965,7 +965,7 @@ struct GDALInfoOptions {
 #ifdef SWIGPYTHON
 %rename (InfoInternal) GDALInfo;
 #endif
-char *GDALInfo( GDALDatasetShadow *hDataset, GDALInfoOptions *infoOptions );
+retStringAndCPLFree *GDALInfo( GDALDatasetShadow *hDataset, GDALInfoOptions *infoOptions );
 
 #ifdef SWIGJAVA
 %rename (TranslateOptions) GDALTranslateOptions;

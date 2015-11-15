@@ -2734,7 +2734,7 @@ GDALInfoOptions_swigregister(GDALInfoOptions)
 
 
 def InfoInternal(*args):
-  """InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> char *"""
+  """InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> retStringAndCPLFree *"""
   return _gdal.InfoInternal(*args)
 InfoInternal = _gdal.InfoInternal
 class GDALTranslateOptions(_object):
