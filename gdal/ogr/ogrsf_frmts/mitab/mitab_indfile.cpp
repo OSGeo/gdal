@@ -2127,10 +2127,10 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
                 GInt32 nInt32;
                 GInt16 nInt16;
                 GUInt32 nUInt32;
+                nRecordPtr = ReadIndexEntry(i, aKeyValBuf);
                 memcpy(&nInt32, aKeyValBuf, 4);
                 memcpy(&nInt16, aKeyValBuf + 2, 2);
                 memcpy(&nUInt32, aKeyValBuf, 4);
-                nRecordPtr = ReadIndexEntry(i, aKeyValBuf);
                 fprintf(fpOut, "   nRecordPtr = %d\n", nRecordPtr);
                 fprintf(fpOut, "   Int Value = %d\n", nInt32);
                 fprintf(fpOut, "   Int16 Val= %d\n",nInt16);
