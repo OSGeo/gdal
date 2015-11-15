@@ -1756,7 +1756,7 @@ OGRErr GMLHandler::dataHandlerAttribute(const char *data, int nLen)
         {
             m_nCurFieldAlloc = m_nCurFieldAlloc * 4 / 3 + nCharsLen + 1;
             char *pszNewCurField = (char *)
-                VSIRealloc( m_pszCurField, m_nCurFieldAlloc );
+                VSI_REALLOC_VERBOSE( m_pszCurField, m_nCurFieldAlloc );
             if (pszNewCurField == NULL)
             {
                 return OGRERR_NOT_ENOUGH_MEMORY;
@@ -1799,7 +1799,7 @@ OGRErr GMLHandler::dataHandlerGeometry(const char *data, int nLen)
         {
             m_nGeomAlloc = m_nGeomAlloc * 4 / 3 + nCharsLen + 1;
             char* pszNewGeometry = (char *)
-                VSIRealloc( m_pszGeometry, m_nGeomAlloc);
+                VSI_REALLOC_VERBOSE( m_pszGeometry, m_nGeomAlloc);
             if (pszNewGeometry == NULL)
             {
                 return OGRERR_NOT_ENOUGH_MEMORY;

@@ -249,7 +249,7 @@ int OGRPDSDataSource::LoadTable(const char* pszFilename,
         osTableStructure = CPLFormCIFilename( osTPath, osTableStructure, NULL );
     }
 
-    GByte* pabyRecord = (GByte*) VSIMalloc(nRecordSize + 1);
+    GByte* pabyRecord = (GByte*) VSI_MALLOC_VERBOSE(nRecordSize + 1);
     if (pabyRecord == NULL)
     {
         VSIFCloseL(fp);

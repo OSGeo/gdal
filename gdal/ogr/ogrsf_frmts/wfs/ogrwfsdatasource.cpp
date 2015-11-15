@@ -807,7 +807,7 @@ CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
     nLen = (int) VSIFTellL( fp );
     VSIFSeekL( fp, 0, SEEK_SET );
 
-    char* pszXML = (char *) VSIMalloc(nLen+1);
+    char* pszXML = (char *) VSI_MALLOC_VERBOSE(nLen+1);
     if (pszXML == NULL)
     {
         VSIFCloseL( fp );

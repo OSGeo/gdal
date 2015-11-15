@@ -456,7 +456,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    papoGeoms = (OGRGeometry **) VSICalloc(sizeof(void*), nGeomCount);
+    papoGeoms = (OGRGeometry **) VSI_CALLOC_VERBOSE(sizeof(void*), nGeomCount);
     if (nGeomCount != 0 && papoGeoms == NULL)
     {
         nGeomCount = 0;
@@ -782,7 +782,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
 /*      Allocate the right amount of space for the aggregated string    */
 /* -------------------------------------------------------------------- */
-    *ppszDstText = (char *) VSIMalloc(nCumulativeLength + nGeomCount + 25);
+    *ppszDstText = (char *) VSI_MALLOC_VERBOSE(nCumulativeLength + nGeomCount + 25);
 
     if( *ppszDstText == NULL )
     {

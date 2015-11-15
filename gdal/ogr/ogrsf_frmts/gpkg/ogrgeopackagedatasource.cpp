@@ -888,7 +888,7 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
     nRasterXSize = (int)dfRasterXSize;
     nRasterYSize = (int)dfRasterYSize;
 
-    m_pabyCachedTiles = (GByte*) VSIMalloc3(4 * 4, nTileWidth, nTileHeight);
+    m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4, nTileWidth, nTileHeight);
     if( m_pabyCachedTiles == NULL )
     {
         return FALSE;
@@ -2841,7 +2841,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             return FALSE;
         }
 
-        m_pabyCachedTiles = (GByte*) VSIMalloc3(4 * 4, nTileWidth, nTileHeight);
+        m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4, nTileWidth, nTileHeight);
         if( m_pabyCachedTiles == NULL )
         {
             return FALSE;

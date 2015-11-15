@@ -192,7 +192,7 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
         int nLineLen = strlen(pszLine);
 
         char* pszWorkLineTmp = (char *)
-            VSIRealloc(pszWorkLine,
+            VSI_REALLOC_VERBOSE(pszWorkLine,
                        nWorkLineLength + nLineLen + 2);
         if (pszWorkLineTmp == NULL)
             break;
@@ -948,7 +948,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
     int bQuotedFieldAsString = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions,
                                                       "QUOTED_FIELDS_AS_STRING", "NO"));
 
-    char* pszData = (char*) VSIMalloc( nBytes );
+    char* pszData = (char*) VSI_MALLOC_VERBOSE( nBytes );
     if( pszData != NULL && (vsi_l_offset)nBytes > VSIFTellL(fpCSV) )
     {
         int nRequested = nBytes - 1 - (int)VSIFTellL(fpCSV);

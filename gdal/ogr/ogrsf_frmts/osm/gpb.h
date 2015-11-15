@@ -216,7 +216,7 @@ static void SkipVarInt(GByte** ppabyData)
 #define READ_TEXT(pabyData, pabyDataLimit, pszTxt) \
         unsigned int nDataLength; \
         READ_SIZE(pabyData, pabyDataLimit, nDataLength); \
-        pszTxt = (char*)VSIMalloc(nDataLength + 1); \
+        pszTxt = (char*)VSI_MALLOC_VERBOSE(nDataLength + 1); \
         if( pszTxt == NULL ) GOTO_END_ERROR; \
         memcpy(pszTxt, pabyData, nDataLength); \
         pszTxt[nDataLength] = 0; \

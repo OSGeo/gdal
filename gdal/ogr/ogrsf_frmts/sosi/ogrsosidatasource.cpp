@@ -267,10 +267,8 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
 
     /* allocate room for one pointer per feature */
     nNumFeatures = poFileadm->lAntGr;
-    void* mem = VSIMalloc2(nNumFeatures, sizeof(void*));
+    void* mem = VSI_MALLOC2_VERBOSE(nNumFeatures, sizeof(void*));
     if (mem == NULL) {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Memory allocation for SOSI features failed." );
         return FALSE;
     } else {
         papoBuiltGeometries = (OGRGeometry**)mem;
@@ -433,7 +431,12 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     if (bTextLayer) nLayers++;
     this->nLayers = nLayers;
     /* allocate some memory for up to three layers */
-    papoLayers = (OGRSOSILayer **) VSIMalloc2(sizeof(void*), nLayers);
+    papoLayers = (OGRSOSILayer **) VSI_MALLOC2_VERBOSE(sizeof(void*), nLayers);
+    if( papoLayers == NULL )
+    {
+        this->nLayers = 0;
+        return FALSE;
+    }
 
     /* Define each layer, using a proper feature definition, geometry type,
      * and adding every SOSI header encountered in the file as field. */

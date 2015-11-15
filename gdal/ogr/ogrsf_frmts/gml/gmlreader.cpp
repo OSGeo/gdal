@@ -411,7 +411,7 @@ int GMLReader::SetupParserExpat()
     XML_SetUserData(oParser, m_poGMLHandler);
 
     if (pabyBuf == NULL)
-        pabyBuf = (char*)VSIMalloc(PARSER_BUF_SIZE);
+        pabyBuf = (char*)VSI_MALLOC_VERBOSE(PARSER_BUF_SIZE);
     if (pabyBuf == NULL)
         return FALSE;
 

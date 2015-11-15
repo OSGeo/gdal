@@ -845,7 +845,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             else
                 osTmpFileName += CPLSPrintf("file_%d", i);
 
-            GByte* pData = (GByte*)VSIMalloc(psResult->pasMimePart[i].nDataLen);
+            GByte* pData = (GByte*)VSI_MALLOC_VERBOSE(psResult->pasMimePart[i].nDataLen);
             if (pData)
             {
                 memcpy(pData, psResult->pasMimePart[i].pabyData, psResult->pasMimePart[i].nDataLen);

@@ -391,7 +391,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                 continue;
             }
 
-            OGRRawPoint* poRawPoints = (OGRRawPoint*)VSIMalloc2(sizeof(OGRRawPoint), nNodes);
+            OGRRawPoint* poRawPoints = (OGRRawPoint*)VSI_MALLOC2_VERBOSE(sizeof(OGRRawPoint), nNodes);
             if (poRawPoints == NULL)
             {
                 return NULL;
@@ -467,7 +467,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                 continue;
             }
 
-            OGRRawPoint* poRawPoints = (OGRRawPoint*)VSIMalloc2(sizeof(OGRRawPoint), nTotalNodes);
+            OGRRawPoint* poRawPoints = (OGRRawPoint*)VSI_MALLOC2_VERBOSE(sizeof(OGRRawPoint), nTotalNodes);
             if (poRawPoints == NULL)
             {
                 return NULL;

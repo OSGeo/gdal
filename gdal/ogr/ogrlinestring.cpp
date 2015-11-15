@@ -1105,7 +1105,7 @@ OGRErr OGRSimpleCurve::exportToWkt( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
 /*      General case.                                                   */
 /* -------------------------------------------------------------------- */
-    *ppszDstText = (char *) VSIMalloc( nMaxString );
+    *ppszDstText = (char *) VSI_MALLOC_VERBOSE( nMaxString );
     if( *ppszDstText == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
 
@@ -1640,8 +1640,8 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
 /*   or keeping intact the original geometry if only full reprojection  */
 /*   allowed.                                                           */
 /* -------------------------------------------------------------------- */
-    xyz = (double *) VSIMalloc(sizeof(double) * nPointCount * 3);
-    pabSuccess = (int *) VSICalloc(sizeof(int), nPointCount);
+    xyz = (double *) VSI_MALLOC_VERBOSE(sizeof(double) * nPointCount * 3);
+    pabSuccess = (int *) VSI_CALLOC_VERBOSE(sizeof(int), nPointCount);
     if( xyz == NULL || pabSuccess == NULL )
     {
         VSIFree(xyz);

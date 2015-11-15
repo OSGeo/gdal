@@ -583,7 +583,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
 /*      Allocate exactly the right amount of space for the              */
 /*      aggregated string.                                              */
 /* -------------------------------------------------------------------- */
-    *ppszDstText = (char *) VSIMalloc(nCumulativeLength + nNonEmptyRings + 15);
+    *ppszDstText = (char *) VSI_MALLOC_VERBOSE(nCumulativeLength + nNonEmptyRings + 15);
 
     if( *ppszDstText == NULL )
     {

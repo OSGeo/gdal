@@ -573,8 +573,8 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     }
 #endif
 
-    GByte* pabyData = (GByte*) VSIMalloc( nDataSize * nSamples );
-    double* padfValues = (double*) VSICalloc( nSamples, sizeof(double) );
+    GByte* pabyData = (GByte*) VSI_MALLOC_VERBOSE( nDataSize * nSamples );
+    double* padfValues = (double*) VSI_CALLOC_VERBOSE( nSamples, sizeof(double) );
     if (pabyData == NULL || padfValues == NULL)
     {
         VSIFSeekL( fp, nDataSize * nSamples, SEEK_CUR );

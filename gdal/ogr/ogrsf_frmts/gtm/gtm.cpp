@@ -545,7 +545,9 @@ Waypoint* GTM::fetchNextWaypoint()
     /* Read String Length */
     stringSize = readUShort(pGTMFile);
     /* Read Comment String */
-    comment = (char*) VSIMalloc2(sizeof(char), stringSize+1);
+    comment = (char*) VSI_MALLOC2_VERBOSE(sizeof(char), stringSize+1);
+    if( comment == NULL )
+        return NULL;
     if ( stringSize != 0 && !readFile( comment, 1, sizeof(char)*stringSize ) )
     {
         CPLFree(comment);
@@ -625,7 +627,9 @@ Track* GTM::fetchNextTrack()
     /* Read string length */
     stringSize = readUShort(pGTMFile);
     /* Read name string */
-    pszName = (char*) VSIMalloc2(sizeof(char), stringSize+1);
+    pszName = (char*) VSI_MALLOC2_VERBOSE(sizeof(char), stringSize+1);
+    if( pszName == NULL )
+        return NULL;
     if ( stringSize != 0 && !readFile( pszName, 1, sizeof(char) * stringSize ) )
     {
         CPLFree(pszName);

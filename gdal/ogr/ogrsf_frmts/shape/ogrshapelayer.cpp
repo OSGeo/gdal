@@ -2213,7 +2213,7 @@ OGRErr OGRShapeLayer::Repack()
                         return OGRERR_FAILURE;
                     }
                     nDeleteCountAlloc = nDeleteCountAllocNew;
-                    int* panRecordsToDeleteNew = (int*) VSIRealloc(
+                    int* panRecordsToDeleteNew = (int*) VSI_REALLOC_VERBOSE(
                         panRecordsToDelete, nDeleteCountAlloc * sizeof(int) );
                     if( panRecordsToDeleteNew == NULL )
                     {

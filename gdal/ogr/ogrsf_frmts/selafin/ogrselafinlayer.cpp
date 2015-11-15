@@ -155,7 +155,7 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
     } else {
         if (nFID>=poHeader->nElements) return NULL;
         double *anData;
-        anData=(double*)VSIMalloc2(sizeof(double),poHeader->nVar);
+        anData=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nVar);
         if (poHeader->nVar>0 && anData==0) return NULL;
         for (long i=0;i<poHeader->nVar;++i) anData[i]=0;
         double nData;
@@ -328,9 +328,8 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
 
         // Now we look for vertices that are already referenced as points in the file
         int *anMap;
-        anMap=(int*)VSIMalloc2(sizeof(int),poHeader->nPointsPerElement);
+        anMap=(int*)VSI_MALLOC2_VERBOSE(sizeof(int),poHeader->nPointsPerElement);
         if (anMap==0) {
-            CPLError(CE_Failure,CPLE_AppDefined,"%s","Not enough memory for operation");
             return OGRERR_FAILURE;
         }
         for (long i=0;i<poHeader->nPointsPerElement;++i) anMap[i]=-1;
@@ -440,7 +439,7 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
     poHeader->nVar++;
     poHeader->setUpdated();
     poHeader->papszVariables=(char**)CPLRealloc(poHeader->papszVariables,sizeof(char*)*poHeader->nVar);
-    poHeader->papszVariables[poHeader->nVar-1]=(char*)VSIMalloc2(sizeof(char),33);
+    poHeader->papszVariables[poHeader->nVar-1]=(char*)VSI_MALLOC2_VERBOSE(sizeof(char),33);
     strncpy(poHeader->papszVariables[poHeader->nVar-1],poField->GetNameRef(),32);
     poHeader->papszVariables[poHeader->nVar-1][32]=0;
     poFeatureDefn->AddFieldDefn(poField);
@@ -486,7 +485,7 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
             }
             CPLFree(padfValues);   
         }
-        padfValues=(double*)VSIMalloc2(sizeof(double),poHeader->nPoints);
+        padfValues=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nPoints);
         for (long k=0;k<poHeader->nPoints;++k) padfValues[k]=0;
         if (Selafin::write_floatarray(fpNew,padfValues,poHeader->nPoints)==0) {
             CPLFree(padfValues);
@@ -571,7 +570,7 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap) {
     CPLDebug("Selafin","ReorderFields()");
     if (VSIFSeekL(poHeader->fp,poHeader->getPosition(0),SEEK_SET)!=0) return OGRERR_FAILURE;
     // Change the header according to the map
-    char **papszNew=(char**)VSIMalloc2(sizeof(char*),poHeader->nVar);
+    char **papszNew=(char**)VSI_MALLOC2_VERBOSE(sizeof(char*),poHeader->nVar);
     for (long i=0;i<poHeader->nVar;++i) papszNew[i]=poHeader->papszVariables[panMap[i]];
     CPLFree(poHeader->papszVariables);
     poHeader->papszVariables=papszNew;
@@ -638,7 +637,7 @@ OGRErr OGRSelafinLayer::AlterFieldDefn(int iField,
     }
     // Since the field type can't change, only the field name is changed. We change it in the header
     CPLFree(poHeader->papszVariables[iField]);
-    poHeader->papszVariables[iField]=(char*)VSIMalloc2(sizeof(char),33);
+    poHeader->papszVariables[iField]=(char*)VSI_MALLOC2_VERBOSE(sizeof(char),33);
     strncpy(poHeader->papszVariables[iField],poNewFieldDefn->GetNameRef(),32);
     poHeader->papszVariables[iField][32]=0;
     // And we update the file

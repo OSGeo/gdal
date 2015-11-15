@@ -4391,7 +4391,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
     int         iField, *panMap;
     OGRErr      eErr;
 
-    panMap = (int *) VSIMalloc( sizeof(int) * poSrcFeature->GetFieldCount() );
+    panMap = (int *) CPLMalloc( sizeof(int) * poSrcFeature->GetFieldCount() );
     for( iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
     {
         panMap[iField] = GetFieldIndex(

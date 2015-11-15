@@ -221,7 +221,7 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
         GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLength, FALSE); 
         if( pabyBuf )
         {
-            psResult->pabyData = (GByte*) VSIMalloc(1 + nDataLength);
+            psResult->pabyData = (GByte*) VSI_MALLOC_VERBOSE(1 + nDataLength);
             if( psResult->pabyData )
             {
                 memcpy(psResult->pabyData, pabyBuf, nDataLength);

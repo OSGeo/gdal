@@ -306,7 +306,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
 
     if( nRowBlobLength > nBufferMaxSize )
     {
-        GByte* pabyNewBuffer = (GByte*) VSIRealloc( pabyBuffer,
+        GByte* pabyNewBuffer = (GByte*) VSI_REALLOC_VERBOSE( pabyBuffer,
                                 nRowBlobLength + ZEROES_AFTER_END_OF_BUFFER );
         if( pabyNewBuffer == NULL )
             return FALSE;
@@ -586,7 +586,7 @@ int FileGDBTable::ReadTableXHeader()
 
             // Allocate a bit mask array for blocks of 1024 features.
             int nSizeInBytes = BIT_ARRAY_SIZE_IN_BYTES(nBitsForBlockMap);
-            pabyTablXBlockMap = (GByte*) VSIMalloc( nSizeInBytes );
+            pabyTablXBlockMap = (GByte*) VSI_MALLOC_VERBOSE( nSizeInBytes );
             returnErrorIf(pabyTablXBlockMap == NULL );
             returnErrorIf(VSIFReadL( pabyTablXBlockMap, nSizeInBytes, 1, fpTableX ) != 1 );
             /* returnErrorIf(nMagic2 == 0 ); */
@@ -727,7 +727,7 @@ int FileGDBTable::Open(const char* pszFilename,
 
     GUInt32 nRemaining = nFieldDescLength - 10;
     nBufferMaxSize = nRemaining;
-    pabyBuffer = (GByte*)VSIMalloc(nBufferMaxSize + ZEROES_AFTER_END_OF_BUFFER);
+    pabyBuffer = (GByte*)VSI_MALLOC_VERBOSE(nBufferMaxSize + ZEROES_AFTER_END_OF_BUFFER);
     returnErrorIf(pabyBuffer == NULL );
     returnErrorIf(VSIFReadL(pabyBuffer, nRemaining, 1, fpTable) != 1 );
 
@@ -1260,7 +1260,7 @@ int FileGDBTable::SelectRow(int iRow)
                     returnErrorAndCleanupIf( nOffsetTable + 4 + nRowBlobLength > nFileSize, nCurRow = -1 );
                 }
 
-                GByte* pabyNewBuffer = (GByte*) VSIRealloc( pabyBuffer,
+                GByte* pabyNewBuffer = (GByte*) VSI_REALLOC_VERBOSE( pabyBuffer,
                                 nRowBlobLength + ZEROES_AFTER_END_OF_BUFFER );
                 returnErrorAndCleanupIf(pabyNewBuffer == NULL, nCurRow = -1 );
 
@@ -1640,7 +1640,7 @@ int FileGDBTable::GetIndexCount()
     vsi_l_offset nFileSize = VSIFTellL(fpIndexes);
     returnErrorAndCleanupIf(nFileSize > 1024 * 1024, VSIFCloseL(fpIndexes) );
 
-    GByte* pabyIdx = (GByte*)VSIMalloc((size_t)nFileSize);
+    GByte* pabyIdx = (GByte*)VSI_MALLOC_VERBOSE((size_t)nFileSize);
     returnErrorAndCleanupIf(pabyIdx == NULL, VSIFCloseL(fpIndexes) );
 
     VSIFSeekL(fpIndexes, 0, SEEK_SET);
@@ -2125,7 +2125,7 @@ int FileGDBOGRGeometryConverterImpl::ReadPartDefs( GByte*& pabyCur,
     if( nParts > nPointCountMax )
     {
         GUInt32* panPointCountNew =
-            (GUInt32*) VSIRealloc( panPointCount, nParts * sizeof(GUInt32) );
+            (GUInt32*) VSI_REALLOC_VERBOSE( panPointCount, nParts * sizeof(GUInt32) );
         returnErrorIf(panPointCountNew == NULL );
         panPointCount = panPointCountNew;
         nPointCountMax = nParts;
@@ -2630,8 +2630,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                     poPoly->setCoordinateDimension(3);
                 return poPoly;
             }
-            int* panPartType = (int*) VSIMalloc(sizeof(int) * nParts);
-            double* padfXYZ =  (double*) VSIMalloc(3 * sizeof(double) * nPoints);
+            int* panPartType = (int*) VSI_MALLOC_VERBOSE(sizeof(int) * nParts);
+            double* padfXYZ =  (double*) VSI_MALLOC_VERBOSE(3 * sizeof(double) * nPoints);
             double* padfX = padfXYZ;
             double* padfY = padfXYZ + nPoints;
             double* padfZ = padfXYZ + 2 * nPoints;

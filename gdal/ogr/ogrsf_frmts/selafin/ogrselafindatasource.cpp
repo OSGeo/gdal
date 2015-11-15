@@ -521,7 +521,12 @@ OGRLayer *OGRSelafinDataSource::ICreateLayer( const char *pszLayerName, OGRSpati
         return NULL;
     }
     double *pdfValues=0;
-    if (poHeader->nPoints>0) pdfValues=(double*)VSIMalloc2(sizeof(double),poHeader->nPoints);
+    if (poHeader->nPoints>0)
+    {
+        pdfValues=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nPoints);
+        if( pdfValues == NULL )
+            return NULL;
+    }
     for (long i=0;i<poHeader->nVar;++i) {
         if (Selafin::write_floatarray(poHeader->fp,pdfValues,poHeader->nPoints)==0) {
             CPLError( CE_Failure, CPLE_FileIO, "Could not write to Selafin file %s.\n",pszName);

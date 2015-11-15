@@ -669,8 +669,15 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
     int nSizeInBytesOut = BIT_ARRAY_SIZE_IN_BYTES(n1024BlocksOut);
     /* Round to the next multiple of 128 bytes (32 int4 words) */
     nSizeInBytesOut = ((nSizeInBytesOut + 127) / 128) * 128;
-    GByte* pabyBlockMapOut = (GByte*) CPLCalloc( 1, nSizeInBytesOut );
-    GByte* pabyPage = (GByte*)VSIMalloc( 1024 * nRecordSize );
+    GByte* pabyBlockMapOut = (GByte*) VSI_CALLOC_VERBOSE( 1, nSizeInBytesOut );
+    GByte* pabyPage = (GByte*)VSI_MALLOC_VERBOSE( 1024 * nRecordSize );
+    if( pabyBlockMapOut == NULL || pabyPage == NULL )
+    {
+        VSIFree(pabyBlockMapOut);
+        VSIFree(pabyPage);
+        VSIFCloseL(fp);
+        return FALSE;
+    }
     GByte abyEmptyOffset[6];
     memset(abyEmptyOffset, 0, 6);
     int nNonEmptyPages = 0;

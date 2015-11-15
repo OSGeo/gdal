@@ -438,7 +438,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
               }
 
               record->tabCoords =
-                  (double(*)[2])VSIMalloc(record->nCoords * 2 * sizeof(double));
+                  (double(*)[2])VSI_MALLOC_VERBOSE(record->nCoords * 2 * sizeof(double));
               if (record->tabCoords == NULL)
               {
                   detailedErrorMsg = NOT_ENOUGH_MEMORY;
