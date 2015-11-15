@@ -107,9 +107,9 @@ sub new {
         eval {
             SetWellKnownGeogCS($self, 'WGS'.$param{WGS});
         };
-        confess "$@" if $@;
+        confess Geo::GDAL->last_error if $@;
     } else {
-        confess "Unrecognized/missing parameters: @_.";
+        Geo::GDAL::error("Unrecognized/missing parameters: @_.");
     }
     bless $self, $pkg if defined $self;
 }
@@ -122,25 +122,22 @@ sub Export {
     $format = pop if @_ == 1;
     my %params = @_;
     $format //= $params{to} //= $params{format} //= $params{as} //= '';
-    if ($format eq 'WKT' or $format eq 'Text') {
-        return ExportToWkt($self);
-    } elsif ($format eq 'PrettyWKT') {
-        my $simplify = exists $params{simplify} ? $params{simplify} : 0;
-        return ExportToPrettyWkt($self, $simplify);
-    } elsif ($format eq 'Proj4') {
-        return ExportToProj4($self);
-    } elsif ($format eq 'PCI') {            
-        return ExportToPCI($self);
-    } elsif ($format eq 'USGS') {
-        return ExportToUSGS($self);
-    } elsif ($format eq 'GML' or $format eq 'XML') {
-        my $dialect = exists $params{dialect} ? $params{dialect} : '';
-        return ExportToXML($self, $dialect);
-    } elsif ($format eq 'MICoordSys' or $format eq 'MapInfoCS') {
-        return ExportToMICoordSys();
-    } else {
-        confess "Unrecognized export format; '$format'.";
-    }
+    my $simplify = $params{simplify} // 0;
+    my $dialect = $params{dialect} // '';
+    my %converters = (
+        WKT => sub { return ExportToWkt($self) },
+        Text => sub { return ExportToWkt($self) },
+        PrettyWKT => sub { return ExportToPrettyWkt($self, $simplify) },
+        Proj4 => sub { return ExportToProj4($self) },
+        PCI => sub { return ExportToPCI($self) },
+        USGS => sub { return ExportToUSGS($self) },
+        GML => sub { return ExportToXML($self, $dialect) },
+        XML => sub { return ExportToXML($self, $dialect) },
+        MICoordSys => sub { return ExportToMICoordSys() },
+        MapInfoCS => sub { return ExportToMICoordSys() },
+        );
+    Geo::GDAL::error(1, $format, \%converters);
+    return $converters{$format}->();
 }
 *AsText = *ExportToWkt;
 *As = *Export;
@@ -158,7 +155,7 @@ sub Set {
     } elsif (exists $params{LinearUnits} and exists $params{Value}) {
         SetLinearUnitsAndUpdateParameters($self, $params{LinearUnits}, $params{Value});
     } elsif ($params{Parameter} and exists $params{Value}) {
-        confess "Unknown projection parameter '$params{Parameter}'." unless exists $Geo::OSR::PARAMETERS{$params{Parameter}};
+        Geo::GDAL::error(1, $params{Parameter}, \%Geo::OSR::PARAMETERS) unless exists $Geo::OSR::PARAMETERS{$params{Parameter}};
         $params{Normalized} ?
             SetNormProjParm($self, $params{Parameter}, $params{Value}) :
             SetProjParm($self, $params{Parameter}, $params{Value});
@@ -194,7 +191,7 @@ sub Set {
             SetProjCS($self, $params{CoordinateSystem});
         }
     } elsif ($params{Projection}) {
-        confess "Unknown projection: '$params{Projection}'." unless exists $Geo::OSR::PROJECTIONS{$params{Projection}};
+        Geo::GDAL::error(1, $params{Projection}, \%Geo::OSR::PROJECTIONS) unless exists $Geo::OSR::PROJECTIONS{$params{Projection}};
         my @parameters = ();
         @parameters = @{$params{Parameters}} if ref($params{Parameters});
         if ($params{Projection} eq 'Albers_Conic_Equal_Area') {
@@ -292,7 +289,7 @@ sub Set {
             SetProjection($self, $params{Projection});
         }
     } else {
-        confess "Not enough information for a spatial reference object.";
+        Geo::GDAL::error("Not enough information to create a spatial reference object.");
     }
 }
 

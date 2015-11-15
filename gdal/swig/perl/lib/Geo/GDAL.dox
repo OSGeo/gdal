@@ -22,11 +22,12 @@
 ## @ignore GetLastErrorType
 
 ## @ignore do_confess
+## @ignore last_error
+## @ignore error
 
-## @sub error
-# Return and clear the stack of GDAL error messages.
-# @return in list context the chomped stack, in scalar context
-# the chomped stack joined with newlines.
+## @sub $errstr
+# Clear the error stack and return all generated GDAL error messages in one (possibly multiline) string.
+# @return the chomped error stack joined with newlines.
 
 ## @ignore GeneralCmdLineProcessor
 
