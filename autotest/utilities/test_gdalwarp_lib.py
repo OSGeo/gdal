@@ -852,6 +852,18 @@ def test_gdalwarp_lib_122():
     return 'success'
 
 ###############################################################################
+# Test failure during warping
+
+def test_gdalwarp_lib_123():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/byte_truncated.tif', format = 'MEM')
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -921,6 +933,7 @@ gdaltest_list = [
     test_gdalwarp_lib_120,
     test_gdalwarp_lib_121,
     test_gdalwarp_lib_122,
+    test_gdalwarp_lib_123,
     test_gdalwarp_lib_cleanup,
     ]
 
