@@ -121,16 +121,31 @@ OGRVRTDataSource::~OGRVRTDataSource()
 {
     CPLFree( pszName );
 
-    for( int i = 0; i < nLayers; i++ )
-        delete papoLayers[i];
+    CloseDependentDatasets();
 
-    CPLFree( papoLayers );
     CPLFree( paeLayerType );
 
     if( psTree != NULL)
         CPLDestroyXMLNode( psTree );
 
     delete poLayerPool;
+}
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int OGRVRTDataSource::CloseDependentDatasets()
+{
+    int bHasClosedDependentDatasets = (nLayers > 0);
+    for( int i = 0; i < nLayers; i++ )
+    {
+        delete papoLayers[i];
+    }
+    CPLFree( papoLayers );
+    nLayers = 0;
+    papoLayers = NULL;
+    return bHasClosedDependentDatasets;
 }
 
 /************************************************************************/
