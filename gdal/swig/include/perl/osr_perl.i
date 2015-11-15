@@ -1,3 +1,4 @@
+%include confess.i
 %include cpl_exceptions.i
 %import typemaps_perl.i
 
