@@ -459,8 +459,13 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 
     GDALInfoReportMetadata( hDataset, psOptions->bListMDD, psOptions->bShowMetadata, 
         psOptions->papszExtraMDDomains, FALSE, bJson, poMetadata, osStr );
-    if(bJson && psOptions->bShowMetadata)
-        json_object_object_add( poJsonObject, "metadata", poMetadata );
+    if(bJson)
+    {
+        if( psOptions->bShowMetadata )
+            json_object_object_add( poJsonObject, "metadata", poMetadata );
+        else
+            json_object_put(poMetadata);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup projected to lat/long transform if appropriate.           */
@@ -1060,8 +1065,13 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 
         GDALInfoReportMetadata( hBand, psOptions->bListMDD, psOptions->bShowMetadata, psOptions->papszExtraMDDomains, 
             TRUE, bJson, poBandMetadata, osStr );
-        if(bJson && psOptions->bShowMetadata)  
-            json_object_object_add( poBand, "metadata", poBandMetadata );
+        if(bJson)
+        {
+            if (psOptions->bShowMetadata)  
+                json_object_object_add( poBand, "metadata", poBandMetadata );
+            else
+                json_object_put(poBandMetadata);
+        }
 
         if( GDALGetRasterColorInterpretation(hBand) == GCI_PaletteIndex 
             && (hTable = GDALGetRasterColorTable( hBand )) != NULL )
