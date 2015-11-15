@@ -241,6 +241,8 @@ class OGRVRTDataSource : public OGRDataSource
                         OGRVRTDataSource(GDALDriver* poDriver);
                         ~OGRVRTDataSource();
 
+    virtual int         CloseDependentDatasets();
+
     OGRLayer*           InstanciateLayer(CPLXMLNode *psLTree,
                                     const char *pszVRTDirectory,
                                     int bUpdate,
