@@ -853,6 +853,7 @@ LIBTOOL
 OBJDUMP
 DLLTOOL
 AS
+NO_NON_VIRTUAL_DTOR_FLAG
 NO_SIGN_COMPARE
 NO_UNUSED_PARAMETER_FLAG
 C_WFLAGS
@@ -4790,7 +4791,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__Wnon_virtual_dtor" >&5
 $as_echo "$ax_cv_check_cxxflags___Werror__Wnon_virtual_dtor" >&6; }
 if test "x$ax_cv_check_cxxflags___Werror__Wnon_virtual_dtor" = xyes; then :
-  CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor"
+  CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor" NO_NON_VIRTUAL_DTOR_FLAG="-Wno-non-virtual-dtor"
 else
   :
 fi
@@ -4809,6 +4810,8 @@ C_WFLAGS=$C_WFLAGS
 NO_UNUSED_PARAMETER_FLAG=$NO_UNUSED_PARAMETER_FLAG
 
 NO_SIGN_COMPARE=$NO_SIGN_COMPARE
+
+NO_NON_VIRTUAL_DTOR_FLAG=$NO_NON_VIRTUAL_DTOR_FLAG
 
 
 ac_ext=c

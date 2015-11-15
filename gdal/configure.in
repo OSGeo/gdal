@@ -67,13 +67,14 @@ AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Werror -Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor" NO_NON_VIRTUAL_DTOR_FLAG="-Wno-non-virtual-dtor"])
 AC_LANG_POP([C++])
 
 AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)
 AC_SUBST(C_WFLAGS,$C_WFLAGS)
 AC_SUBST(NO_UNUSED_PARAMETER_FLAG,$NO_UNUSED_PARAMETER_FLAG)
 AC_SUBST(NO_SIGN_COMPARE,$NO_SIGN_COMPARE)
+AC_SUBST(NO_NON_VIRTUAL_DTOR_FLAG,$NO_NON_VIRTUAL_DTOR_FLAG)
 
 dnl Checks for programs.
 AC_PROG_CC

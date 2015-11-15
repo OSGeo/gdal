@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	gtadataset.o
 
-
+CPPFLAGS := $(CPPFLAGS) $(NO_NON_VIRTUAL_DTOR_FLAG)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
