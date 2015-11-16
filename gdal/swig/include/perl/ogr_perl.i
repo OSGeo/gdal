@@ -201,12 +201,10 @@ for my $s (@CAPABILITIES) {
 }
 
 sub DESTROY {
-    my $self;
-    if ($_[0]->isa('SCALAR')) {
-        $self = $_[0];
-    } else {
-        return unless $_[0]->isa('HASH');
-        $self = tied(%{$_[0]});
+    my $self = shift;
+    unless ($_[0]->isa('SCALAR')) {
+        return unless $self->isa('HASH');
+        $self = tied(%{$self});
         return unless defined $self;
     }
     if ($Geo::GDAL::Dataset::RESULT_SET{$self}) {
@@ -297,21 +295,19 @@ sub AlterFieldDefn {
     eval {
         $index = $self->GetFieldIndex($field);
     };
-    Geo::GDAL::error("Only non-spatial fields can be altered.") if $@;
+    Geo::GDAL::error(2, $field, 'Non-spatial field') if $@;
     if (blessed($_[0]) and $_[0]->isa('Geo::OGR::FieldDefn')) {
         _AlterFieldDefn($self, $index, @_);
-    } elsif (@_ % 2 == 0) {
-        my %params = @_;
-        my $definition = Geo::OGR::FieldDefn->new(%params);
-        my $flags = 0;
-        $flags |= 1 if exists $params{Name};
-        $flags |= 2 if exists $params{Type};
-        $flags |= 4 if exists $params{Width} or exists $params{Precision};
-        $flags |= 8 if exists $params{Nullable};
-        $flags |= 16 if exists $params{Default};
-        _AlterFieldDefn($self, $index, $definition, $flags);
     } else {
-        Geo::GDAL::error("Usage: AlterFieldDefn(\$Name, \%NamedParameters)");
+        my $params = @_ % 2 == 0 ? {@_} : shift;
+        my $definition = Geo::OGR::FieldDefn->new($params);
+        my $flags = 0;
+        $flags |= 1 if exists $params->{Name};
+        $flags |= 2 if exists $params->{Type};
+        $flags |= 4 if exists $params->{Width} or exists $params->{Precision};
+        $flags |= 8 if exists $params->{Nullable};
+        $flags |= 16 if exists $params->{Default};
+        _AlterFieldDefn($self, $index, $definition, $flags);
     }
 }
 
@@ -323,7 +319,7 @@ sub DeleteField {
     eval {
         _DeleteField($self, $index);
     };
-    Geo::GDAL::error("Field not found: '$fn'. Only non-spatial fields can be deleted.") if $@;
+    Geo::GDAL::error(2, $fn, 'Non-spatial field') if $@;
 }
 
 sub GetSchema {
@@ -449,7 +445,7 @@ sub GetFieldDefn {
         my $fd = $d->GetGeomFieldDefn($i);
         return $fd if $fd->Name eq $name;
     }
-    Geo::GDAL::error("No such field: '$name'.");
+    Geo::GDAL::error(2, $name, 'Field');
 }
 
 sub GeometryType {
@@ -505,7 +501,7 @@ sub new {
         %schema = @_;
     }
     my $fields = $schema{Fields};
-    Geo::GDAL::error("The Fields argument is not a reference to an array.") if $fields and ref($fields) ne 'ARRAY';
+    Geo::GDAL::error("The 'Fields' argument must be an array reference.") if $fields and ref($fields) ne 'ARRAY';
     $schema{Name} //= '';
     my $self = Geo::OGRc::new_FeatureDefn($schema{Name});
     bless $self, $pkg;
@@ -596,7 +592,7 @@ sub DeleteField {
     for my $i (0..$self->GetGeomFieldCount-1) {
         $self->DeleteGeomFieldDefn($i) if $self->GetGeomFieldDefn($i)->Name eq $name;
     }
-    Geo::GDAL::error("No such field: '$name'.");
+    Geo::GDAL::error(2, $name, 'Field');
 }
 
 sub GetFieldNames {
@@ -621,7 +617,7 @@ sub GetFieldDefn {
         my $fd = $self->GetGeomFieldDefn($i);
         return $fd if $fd->Name eq $name;
     }
-    Geo::GDAL::error("No such field: '$name'.");
+    Geo::GDAL::error(2, $name, 'Field');
 }
 
 sub GeomType {
@@ -838,7 +834,7 @@ sub _GetFieldIndex {
             return $i if $self->GetFieldDefnRef($i)->Name eq $field;
         }
     }
-    Geo::GDAL::error("No such field: '$field'.");
+    Geo::GDAL::error(2, $field, 'Field');
 }
 
 sub GetField {
@@ -967,7 +963,7 @@ sub _GetGeomFieldIndex {
         }
         return 0 if $self->GetGeomFieldCount > 0 and $field eq 'Geometry';
     }
-    Geo::GDAL::error("No such field: '$field'.");
+    Geo::GDAL::error(2, $field, 'Field');
 }
 
 sub Geometry {
@@ -1084,35 +1080,31 @@ sub JustifyValues {
 use Carp;
 sub new {
     my $pkg = shift;
-    my ($name, $type) = ('unnamed', 'String');
-    my %args;
+    my $params = {Name => 'unnamed', Type => 'String'};
     if (@_ == 0) {
-    } elsif (@_ == 1) {
-        $name = shift;
+    } elsif (@_ == 1 and not ref $_[0]) {
+        $params->{Name} = shift;
     } elsif (@_ == 2 and not $Geo::OGR::FieldDefn::SCHEMA_KEYS{$_[0]}) {
-        $name = shift;
-        $type = shift;
+        $params->{Name} = shift;
+        $params->{Type} = shift;
     } else {
-        my %named = @_;
-        for my $key (keys %named) {
+        my $tmp = @_ % 2 == 0 ? {@_} : shift;
+        for my $key (keys %$tmp) {
             if ($Geo::OGR::FieldDefn::SCHEMA_KEYS{$key}) {
-                $args{$key} = $named{$key};
+                $params->{$key} = $tmp->{$key};
             } else {
                 carp "Unknown parameter: '$key'." if $key ne 'Index';
             }
         }
-        $name = $args{Name} if exists $args{Name};
-        delete $args{Name};
-        $type = $args{Type} if exists $args{Type};
-        delete $args{Type};
     }
-    Geo::GDAL::error(1, $type, \%Geo::OGR::FieldDefn::TYPE_STRING2INT) unless exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$type};
-    $type = $Geo::OGR::FieldDefn::TYPE_STRING2INT{$type};
-    my $self = Geo::OGRc::new_FieldDefn($name, $type);
-    if (defined($self)) {
-        bless $self, $pkg;
-        $self->Schema(%args);
-    }
+    Geo::GDAL::error(1, $params->{Type}, \%Geo::OGR::FieldDefn::TYPE_STRING2INT) 
+        unless exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params->{Type}};
+    $params->{Type} = $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params->{Type}};
+    my $self = Geo::OGRc::new_FieldDefn($params->{Name}, $params->{Type});
+    bless $self, $pkg;
+    delete $params->{Name};
+    delete $params->{Type};
+    $self->Schema($params);
     return $self;
 }
 %}
@@ -1121,9 +1113,11 @@ sub new {
 sub Schema {
     my $self = shift;
     if (@_) {
-        my %args = @_;
+        my $params = @_ % 2 == 0 ? {@_} : shift;
         for my $key (keys %SCHEMA_KEYS) {
-            eval '$self->'.$key.'($args{'.$key.'}) if exists $args{'.$key.'}';
+            next unless exists $params->{$key};
+            eval "\$self->$key(\$params->{$key})";
+            confess(Geo::GDAL->last_error()) if $@;
         }
     }
     return unless defined wantarray;
@@ -1219,37 +1213,32 @@ use Scalar::Util 'blessed';
 use Carp;
 sub new {
     my $pkg = shift;
-    my ($name, $type) = ('geom', 'Unknown');
-    my %args;
+    my $params = {Name => 'geom', Type => 'Unknown'};
     if (@_ == 0) {
     } elsif (@_ == 1) {
-        $name = shift;
+        $params->{Name} = shift;
     } elsif (@_ == 2 and not $Geo::OGR::GeomFieldDefn::SCHEMA_KEYS{$_[0]}) {
-        $name = shift;
-        $type = shift;
+        $params->{Name} = shift;
+        $params->{Type} = shift;
     } else {
-        my %named = @_;
-        for my $key (keys %named) {
+        my $tmp = @_ % 2 == 0 ? {@_} : shift;
+        for my $key (keys %$tmp) {
             if ($Geo::OGR::GeomFieldDefn::SCHEMA_KEYS{$key}) {
-                $args{$key} = $named{$key};
+                $params->{$key} = $tmp->{$key};
             } else {
-                carp "Unknown parameter: '$key'." if $key ne 'Index';
+                carp "Unknown parameter: '$key'." if $key ne 'Index' && $key ne 'GeometryType';
             }
         }
-        $name = $args{Name} if exists $args{Name};
-        delete $args{Name};
-        $type = $args{Type} if $args{Type};
-        delete $args{Type};
-        $type = $args{GeometryType} if $args{GeometryType};
-        delete $args{GeometryType};
+        $params->{Type} //= $tmp->{GeometryType};
     }
-    Geo::GDAL::error(1, $type, \%Geo::OGR::Geometry::TYPE_STRING2INT) unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
-    $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
-    my $self = Geo::OGRc::new_GeomFieldDefn($name, $type);
-    if (defined($self)) {
-        bless $self, $pkg;
-        $self->Schema(%args);
-    }
+    Geo::GDAL::error(1, $params->{Type}, \%Geo::OGR::Geometry::TYPE_STRING2INT) 
+        unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params->{Type}};
+    $params->{Type} = $Geo::OGR::Geometry::TYPE_STRING2INT{$params->{Type}};
+    my $self = Geo::OGRc::new_GeomFieldDefn($params->{Name}, $params->{Type});
+    bless $self, $pkg;
+    delete $params->{Name};
+    delete $params->{Type};
+    $self->Schema($params);
     return $self;
 }
 %}
@@ -1258,9 +1247,11 @@ sub new {
 sub Schema {
     my $self = shift;
     if (@_) {
-        my %args = @_;
+        my $params = @_ % 2 == 0 ? {@_} : shift;
         for my $key (keys %SCHEMA_KEYS) {
-            eval '$self->'.$key.'($args{'.$key.'}) if exists $args{'.$key.'}';
+            next unless exists $params->{$key};
+            eval "\$self->$key(\$params->{$key})";
+            confess Geo::GDAL->last_error() if $@;
         }
     }
     return unless defined wantarray;
@@ -1360,7 +1351,6 @@ sub RELEASE_PARENTS {
 use Carp;
 sub new {
     my $pkg = shift;
-    my ($type, $wkt, $wkb, $gml, $json, $srs, $points, $arc);
     my %param;
     if (@_ == 1 and ref($_[0]) eq 'HASH') {
         %param = %{$_[0]};
@@ -1369,18 +1359,18 @@ sub new {
     } else {
         ($param{GeometryType}) = @_;
     }
-    $type = ($param{type} or $param{Type} or $param{GeometryType});
-    $srs = ($param{srs} or $param{SRS});
-    $wkt = ($param{wkt} or $param{WKT});
-    $wkb = ($param{wkb} or $param{WKB});
-    my $hex = ($param{hexewkb} or $param{HEXEWKB}); # PostGIS HEX EWKB
+    my $type = $param{GeometryType} // $param{Type} // $param{type};
+    my $srs = $param{SRS} // $param{srs};
+    my $wkt = $param{WKT} // $param{wkt};
+    my $wkb = $param{WKB} // $param{wkb};
+    my $hex = $param{HEXEWKB} // $param{HEX_EWKB} // $param{hexewkb} // $param{hex_ewkb};
     my $srid;
     if ($hex) {
-        # get and remove SRID
+        # EWKB contains SRID
         $srid = substr($hex, 10, 8);
         substr($hex, 10, 8) = '';
     } else {
-        $hex = ($param{hexwkb} or $param{HEXWKB});
+        $hex = $param{HEXWKB} // $param{HEX_WKB} // $param{hexwkb} // $param{hex_wkb};
     }
     if ($hex) {
         $wkb = '';
@@ -1388,10 +1378,10 @@ sub new {
             $wkb .= chr(hex(substr($hex,$i,2)));
         }
     }
-    $gml = ($param{gml} or $param{GML});
-    $json = ($param{geojson} or $param{GeoJSON});
-    $points = $param{Points};
-    $arc = ($param{arc} or $param{Arc});
+    my $gml = $param{GML} // $param{gml};
+    my $json = $param{GeoJSON} // $param{geojson} // $param{JSON} // $param{json};
+    my $points = $param{Points} // $param{points};
+    my $arc = $param{Arc} // $param{arc};
     my $self;
     if (defined $wkt) {
         $self = Geo::OGRc::CreateGeometryFromWkt($wkt, $srs);
@@ -1409,7 +1399,7 @@ sub new {
     } elsif (defined $arc) {
         $self = Geo::OGRc::ApproximateArcAngles(@$arc);
     } else {
-        Geo::GDAL::error("Missing a parameter when creating a Geo::OGR::Geometry object.");
+        Geo::GDAL::error(1, undef, map {$_=>} qw/GeometryType WKT WKB HEXEWKB HEXWKB GML GeoJSON Arc/);
     }
     bless $self, $pkg if defined $self;
     $self->Points($points) if $points;
@@ -1472,7 +1462,7 @@ sub As {
     } elsif ($f =~ /wkb/i) {
         if ($f =~ /iso/i) {
             return $self->ExportToIsoWkb;
-        } elsif ($f =~ /hexe/i) {
+        } elsif ($f =~ /ewkb/i) {
             $param{srid} //= 'XDR';
             $x //= $param{srid};
             return $self->AsHEXEWKB($x);
@@ -1488,7 +1478,7 @@ sub As {
     } elsif ($f =~ /json/i) {
         return $self->AsJSON;
     } else {
-        Geo::GDAL::error("Unsupported format: $f.");
+        Geo::GDAL::error(1, $f, map {$_=>1} qw/Text WKT ISO_WKT ISO_WKB HEX_WKB HEX_EWKB Binary GML KML JSON/);
     }
 }
 
