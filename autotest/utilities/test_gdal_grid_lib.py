@@ -107,12 +107,23 @@ def test_gdal_grid_lib_2():
         for (key,value) in env_list:
             gdal.SetConfigOption(key,value)
 
+        # Point strictly on grid
+        ds1 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format = 'MEM', \
+                        outputBounds = [ -0.5, -0.5, 0.5, 0.5 ], \
+                        width = 1, height = 1, outputType = gdal.GDT_Byte)
+
         ds2 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format = 'MEM', \
                         outputBounds = [ -0.4, -0.4, 0.6, 0.6 ], \
                         width = 10, height = 10, outputType = gdal.GDT_Byte)
 
         gdal.SetConfigOption('GDAL_USE_AVX', None)
         gdal.SetConfigOption('GDAL_USE_SSE', None)
+
+        cs = ds1.GetRasterBand(1).Checksum() 
+        if cs != 2:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
 
         cs = ds2.GetRasterBand(1).Checksum() 
         if cs != 1064:
