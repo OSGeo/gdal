@@ -864,6 +864,33 @@ def test_gdalwarp_lib_123():
     return 'success'
 
 ###############################################################################
+# Test warping to dataset with existing nodata
+
+def test_gdalwarp_lib_124():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    src_ds.SetGeoTransform([10,1,0,10,0,-1])
+    src_ds.GetRasterBand(1).SetNoDataValue(12)
+    src_ds.GetRasterBand(1).Fill(12)
+
+    out_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    out_ds.SetGeoTransform([10,1,0,10,0,-1])
+    out_ds.GetRasterBand(1).SetNoDataValue(21)
+    out_ds.GetRasterBand(1).Fill(21)
+    expected_cs = out_ds.GetRasterBand(1).Checksum()
+
+    gdal.Warp(out_ds, src_ds, format = 'MEM')
+
+    cs = out_ds.GetRasterBand(1).Checksum()
+    if cs != expected_cs:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -934,6 +961,7 @@ gdaltest_list = [
     test_gdalwarp_lib_121,
     test_gdalwarp_lib_122,
     test_gdalwarp_lib_123,
+    test_gdalwarp_lib_124,
     test_gdalwarp_lib_cleanup,
     ]
 

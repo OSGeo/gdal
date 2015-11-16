@@ -1239,7 +1239,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                            GDALGetDataTypeName(GDALGetRasterDataType(hBand)));
                 }
 
-                if( psOptions->bCreateOutput )
+                if( psOptions->bCreateOutput && iSrc == 0 )
                 {
                     GDALSetRasterNoDataValue( 
                         GDALGetRasterBand( hDstDS, psWO->panDstBands[i] ), 
@@ -1250,8 +1250,36 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             CSLDestroy( papszTokens );
         }
 
+        /* check if the output dataset has already nodata */
+        if ( psOptions->pszDstNodata == NULL )
+        {
+            int bHaveNodataAll = TRUE;
+            for( i = 0; i < psWO->nBandCount; i++ )
+            {
+                GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, i+1 );
+                int bHaveNodata = FALSE;
+                GDALGetRasterNoDataValue( hBand, &bHaveNodata );
+                bHaveNodataAll &= bHaveNodata;
+            }
+            if( bHaveNodataAll )
+            {
+                psWO->padfDstNoDataReal = (double *) 
+                    CPLMalloc(psWO->nBandCount*sizeof(double));
+                psWO->padfDstNoDataImag = (double *) 
+                    CPLCalloc(psWO->nBandCount, sizeof(double));
+                for( i = 0; i < psWO->nBandCount; i++ )
+                {
+                    GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, i+1 );
+                    int bHaveNodata = FALSE;
+                    psWO->padfDstNoDataReal[i] = GDALGetRasterNoDataValue( hBand, &bHaveNodata );
+                    CPLDebug("WARP", "band=%d dstNoData=%f", i, psWO->padfDstNoDataReal[i] );
+                }
+            }
+        }
+
         /* else try to fill dstNoData from source bands */
-        if ( psOptions->pszDstNodata == NULL && psWO->padfSrcNoDataReal != NULL )
+        if ( psOptions->pszDstNodata == NULL && psWO->padfSrcNoDataReal != NULL &&
+             psWO->padfDstNoDataReal == NULL )
         {
             psWO->padfDstNoDataReal = (double *) 
                 CPLMalloc(psWO->nBandCount*sizeof(double));
@@ -1278,7 +1306,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                              psWO->padfSrcNoDataReal[i], psWO->padfDstNoDataReal[i] );
                 }
 
-                if( psOptions->bCreateOutput )
+                if( psOptions->bCreateOutput && iSrc == 0 )
                 {
                     CPLDebug("WARP", "calling GDALSetRasterNoDataValue() for band#%d", i );
                     GDALSetRasterNoDataValue( 
