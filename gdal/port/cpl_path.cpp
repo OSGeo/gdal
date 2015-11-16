@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
@@ -1005,10 +1006,12 @@ const char *CPLGenerateTempFilename( const char *pszStem )
     if( pszStem == NULL )
         pszStem = "";
 
-    static volatile int nTempFileCounter = 0;
+    static int nTempFileCounter = 0;
     CPLString osFilename;
-    osFilename.Printf( "%s%u_%d", pszStem,
-                       (unsigned int)(CPLGetPID() & 0xFFFFFFFFU), nTempFileCounter++ );
+    osFilename.Printf( "%s" CPL_FRMT_GIB "_%d",
+                       pszStem,
+                       CPLGetPID(),
+                       CPLAtomicInc( &nTempFileCounter ) );
 
     return CPLFormFilename( pszDir, osFilename, NULL );
 }
