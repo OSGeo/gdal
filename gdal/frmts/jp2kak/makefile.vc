@@ -29,6 +29,11 @@ KAK_APPS_OBJ = $(KAK_APPS_OBJ) \
        $(OBJ_PREFIX)\render\$(OBJ_CONFIG)\ssse3_region_decompressor.obj \
 !ENDIF
 
+# TODO: add kdu_client_window.obj
+#!IFDEF KAKADU_7_7_OR_LATER
+#
+#!ENDIF
+
 OBJ	=	jp2kakdataset.obj
 EXTRAFLAGS = 	$(KAKINC) /DKDU_PENTIUM_MSVC /EHsc $(KAKFLAGS)
 
