@@ -550,11 +550,9 @@ sub Description {
 }
 
 sub Metadata {
-    my $self = shift;
-    my $metadata;
-    $metadata = shift if ref $_[0];
-    my $domain = shift;
-    $domain //= '';
+    my $self = shift,
+    my $metadata = ref $_[0] ? shift : undef;
+    my $domain = shift // '';
     SetMetadata($self, $metadata, $domain) if defined $metadata;
     GetMetadata($self, $domain) if defined wantarray;
 }
@@ -881,7 +879,7 @@ sub Projection {
 sub SpatialReference {
     my($self, $sr) = @_;
     SetProjection($self, $sr->As('WKT')) if defined $sr;
-    return Geo::OSR::SpatialReference->new(GetProjection($self)) if defined wantarray;
+    return Geo::OSR::SpatialReference->new(WKT => GetProjection($self)) if defined wantarray;
 }
 
 sub GeoTransform {
