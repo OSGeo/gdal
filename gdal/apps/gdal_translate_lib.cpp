@@ -1403,36 +1403,11 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
         if( psOptions->bSetNoData )
         {
-            double dfVal = psOptions->dfNoDataReal;
             int bClamped = FALSE, bRounded = FALSE;
+            double dfVal = GDALAdjustValueToDataType(eBandType,
+                                                     psOptions->dfNoDataReal,
+                                                     &bClamped, &bRounded );
 
-#define CLAMP(val,type,minval,maxval) \
-    do { if (val < minval) { bClamped = TRUE; val = minval; } \
-    else if (val > maxval) { bClamped = TRUE; val = maxval; } \
-    else if (val != (type)val) { bRounded = TRUE; val = (type)(val + 0.5); } } \
-    while(0)
-
-            switch(eBandType)
-            {
-                case GDT_Byte:
-                    CLAMP(dfVal, GByte, 0.0, 255.0);
-                    break;
-                case GDT_Int16:
-                    CLAMP(dfVal, GInt16, -32768.0, 32767.0);
-                    break;
-                case GDT_UInt16:
-                    CLAMP(dfVal, GUInt16, 0.0, 65535.0);
-                    break;
-                case GDT_Int32:
-                    CLAMP(dfVal, GInt32, -2147483648.0, 2147483647.0);
-                    break;
-                case GDT_UInt32:
-                    CLAMP(dfVal, GUInt32, 0.0, 4294967295.0);
-                    break;
-                default:
-                    break;
-            }
-                
             if (bClamped)
             {
                 CPLError( CE_Warning, CPLE_AppDefined, "for band %d, nodata value has been clamped "
@@ -1446,7 +1421,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                        i + 1, dfVal,
                        GDALGetDataTypeName(eBandType));
             }
-            
+
             poVRTBand->SetNoDataValue( dfVal );
         }
 

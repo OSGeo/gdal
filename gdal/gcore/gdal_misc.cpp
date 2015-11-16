@@ -34,6 +34,7 @@
 #include "cpl_multiproc.h"
 #include <ctype.h>
 #include <string>
+#include <limits>
 
 CPL_CVSID("$Id$");
 
@@ -350,6 +351,78 @@ GDALDataType CPL_STDCALL GDALGetDataTypeByName( const char *pszName )
     }
 
     return GDT_Unknown;
+}
+
+/************************************************************************/
+/*                      GDALAdjustValueToDataType()                     */
+/************************************************************************/
+
+template<class T> static inline void ClampAndRound(double& dfValue, int& bClamped, int &bRounded)
+{
+    if (dfValue < std::numeric_limits<T>::min())
+    {
+        bClamped = TRUE;
+        dfValue = static_cast<double>(std::numeric_limits<T>::min());
+    }
+    else if (dfValue > std::numeric_limits<T>::max())
+    {
+        bClamped = TRUE;
+        dfValue = static_cast<double>(std::numeric_limits<T>::max());
+    }
+    else if (std::numeric_limits<T>::is_integer &&
+             dfValue != static_cast<double>(static_cast<T>(dfValue)))
+    {
+        bRounded = TRUE;
+        dfValue = static_cast<double>(static_cast<T>(floor(dfValue + 0.5)));
+    }
+}
+
+/**
+ * \brief Adjust a value to the output data type
+ *
+ * Adjustment consist in clamping to minimum/maxmimum values of the data type
+ * and rounding for integral types.
+ *
+ * @param eDT target data type.
+ * @param dfValue value to adjust.
+ * @param pbClamped pointer to a integer(boolean) to indicate if clamping has been made, or NULL
+ * @param pbRounded pointer to a integer(boolean) to indicate if rounding has been made, or NULL
+ * 
+ * @return adjusted value
+ * @since GDAL 2.1
+ */
+
+double GDALAdjustValueToDataType( GDALDataType eDT, double dfValue, int* pbClamped, int* pbRounded )
+{
+    int bClamped = FALSE, bRounded = FALSE;
+    switch(eDT)
+    {
+        case GDT_Byte:
+            ClampAndRound<GByte>(dfValue, bClamped, bRounded);
+            break;
+        case GDT_Int16:
+            ClampAndRound<GInt16>(dfValue, bClamped, bRounded);
+            break;
+        case GDT_UInt16:
+            ClampAndRound<GUInt16>(dfValue, bClamped, bRounded);
+            break;
+        case GDT_Int32:
+            ClampAndRound<GInt32>(dfValue, bClamped, bRounded);
+            break;
+        case GDT_UInt32:
+            ClampAndRound<GUInt32>(dfValue, bClamped, bRounded);
+            break;
+        case GDT_Float32:
+            ClampAndRound<float>(dfValue, bClamped, bRounded);
+            break;
+        default:
+            break;
+    }
+    if( pbClamped )
+        *pbClamped = bClamped;
+    if( pbRounded )
+        *pbRounded = bRounded;
+    return dfValue;
 }
 
 /************************************************************************/
