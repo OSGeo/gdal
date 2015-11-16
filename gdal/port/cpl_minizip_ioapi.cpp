@@ -20,55 +20,12 @@
 
 #include "cpl_vsi.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include "zlib.h"
 #include "cpl_minizip_ioapi.h"
-
-
-static
-voidpf ZCALLBACK fopen_file_func OF((
-   voidpf opaque,
-   const char* filename,
-   int mode));
-
-static
-uLong ZCALLBACK fread_file_func OF((
-   voidpf opaque,
-   voidpf stream,
-   void* buf,
-   uLong size));
-
-static
-uLong ZCALLBACK fwrite_file_func OF((
-   voidpf opaque,
-   voidpf stream,
-   const void* buf,
-   uLong size));
-
-static
-uLong64 ZCALLBACK ftell_file_func OF((
-   voidpf opaque,
-   voidpf stream));
-
-static
-long ZCALLBACK fseek_file_func OF((
-   voidpf opaque,
-   voidpf stream,
-   uLong64 offset,
-   int origin));
-
-static
-int ZCALLBACK fclose_file_func OF((
-   voidpf opaque,
-   voidpf stream));
-
-static
-int ZCALLBACK ferror_file_func OF((
-   voidpf opaque,
-   voidpf stream));
 
 static
 voidpf ZCALLBACK fopen_file_func (CPL_UNUSED voidpf opaque, const char* filename, int mode)
