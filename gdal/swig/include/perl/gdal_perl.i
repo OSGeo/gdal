@@ -253,9 +253,16 @@ sub error {
     if (@_) {
         my $error;
         if (@_ == 3) {
-            my ($ecode, $offender, $hash) = @_;
-            my @k = sort keys %$hash;
-            $error = "Unknown value: '$offender'. Expected one of ".join(', ', @k).".";
+            my ($ecode, $offender, $ex) = @_;
+            if ($ecode == 1) {
+                my @k = sort keys %$ex;
+                $error = "Unknown value: '$offender'. " if defined $offender;
+                $error .= "Expected one of ".join(', ', @k).".";
+            } elsif ($ecode == 2) {
+                $error = "$ex not found: '$offender'.";
+            } else {
+                die("error in error: $ecode, $offender, $ex");
+            }
         } else {
             $error = shift;
         }
@@ -394,7 +401,7 @@ sub GetDriver {
     $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
     $driver //= GetDriverByName("$name");
     return $driver if $driver;
-    Geo::GDAL::error("Driver not found: '$name'. Maybe support for it was not built in?");
+    Geo::GDAL::error(2, $name, 'Driver');
 }
 *Driver = *GetDriver;
 
@@ -791,7 +798,7 @@ sub GetLayer {
     my($self, $name) = @_;
     my $layer = defined $name ? GetLayerByName($self, "$name") : GetLayerByIndex($self, 0);
     $name //= '';
-    Geo::GDAL::error("No such layer: '$name'.") unless $layer;
+    Geo::GDAL::error(2, $name, 'Layer') unless $layer;
     $LAYERS{tied(%$layer)} = $self;
     return $layer;
 }
@@ -846,7 +853,7 @@ sub CreateLayer {
     $LAYERS{tied(%$layer)} = $self;
     my $f = $params{Fields};
     if ($f) {
-        Geo::GDAL::error("Named parameter 'Fields' must be a reference to an array.") unless ref($f) eq 'ARRAY';
+        Geo::GDAL::error("The 'Fields' argument must be an array reference.") unless ref($f) eq 'ARRAY';
         for my $field (@$f) {
             $layer->CreateField($field);
         }
@@ -861,7 +868,7 @@ sub DeleteLayer {
         my $layer = GetLayerByIndex($self, $i);
         $index = $i, last if $layer->GetName eq $name;
     }
-    Geo::GDAL::error("No such layer: '$name'.") unless defined $index;
+    Geo::GDAL::error(2, $name, 'Layer') unless defined $index;
     _DeleteLayer($self, $index);
 }
 
@@ -1178,12 +1185,10 @@ sub MaskFlags {
 }
 
 sub DESTROY {
-    my $self;
-    if ($_[0]->isa('SCALAR')) {
-        $self = $_[0];
-    } else {
-        return unless $_[0]->isa('HASH');
-        $self = tied(%{$_[0]});
+    my $self = shift;
+    unless ($self->isa('SCALAR')) {
+        return unless $self->isa('HASH');
+        $self = tied(%{$self});
         return unless defined $self;
     }
     delete $ITERATORS{$self};

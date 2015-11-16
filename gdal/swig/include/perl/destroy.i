@@ -2,12 +2,10 @@
 %feature("shadow") ~class()
 %{
 sub DESTROY {
-    my $self;
-    if ($_[0]->isa('SCALAR')) {
-        $self = $_[0];
-    } else {
-        return unless $_[0]->isa('HASH');
-        $self = tied(%{$_[0]});
+    my $self = shift;
+    unless ($self->isa('SCALAR')) {
+        return unless $self->isa('HASH');
+        $self = tied(%{$self});
         return unless defined $self;
     }
     my $code = $Geo::GDAL::stdout_redirection{$self};
