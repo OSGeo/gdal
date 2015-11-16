@@ -34,6 +34,7 @@
 #include <gdal.h>
 #include <gdal_priv.h>
 #include <string>
+#include <limits>
 
 namespace tut
 {
@@ -125,6 +126,59 @@ namespace tut
 #else
         ensure(true); // Skip
 #endif
+    }
+
+    // Test GDALDataTypeUnion()
+    template<> template<> void object::test<6>()
+    {
+        for(int i=GDT_Byte;i<GDT_TypeCount;i++)
+        {
+            for(int j=GDT_Byte;j<GDT_TypeCount;j++)
+            {
+                GDALDataType eDT1 = static_cast<GDALDataType>(i);
+                GDALDataType eDT2 = static_cast<GDALDataType>(j);
+                GDALDataType eDT = GDALDataTypeUnion(eDT1,eDT2 );
+                ensure( eDT == GDALDataTypeUnion(eDT2,eDT1) );
+                ensure( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT1) );
+                ensure( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT2) );
+                ensure( (GDALDataTypeIsComplex(eDT) && (GDALDataTypeIsComplex(eDT1) || GDALDataTypeIsComplex(eDT2))) ||
+                        (!(GDALDataTypeIsComplex(eDT) && !GDALDataTypeIsComplex(eDT1) && !GDALDataTypeIsComplex(eDT2))) );
+            }
+        }
+    }
+
+    // Test GDALAdjustValueToDataType()
+    template<> template<> void object::test<7>()
+    {
+        int bClamped, bRounded;
+
+        ensure( GDALAdjustValueToDataType(GDT_Byte,255.0,NULL,NULL) == 255.0);
+        ensure( GDALAdjustValueToDataType(GDT_Byte,255.0,&bClamped,&bRounded) == 255.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Byte,254.4,&bClamped,&bRounded) == 254.0 && !bClamped && bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Byte,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Byte,256.0,&bClamped,&bRounded) == 255.0 && bClamped && !bRounded);
+
+        ensure( GDALAdjustValueToDataType(GDT_UInt16,65535.0,&bClamped,&bRounded) == 65535.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_UInt16,65534.4,&bClamped,&bRounded) == 65534.0 && !bClamped && bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_UInt16,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_UInt16,65536.0,&bClamped,&bRounded) == 65535.0 && bClamped && !bRounded);
+
+        ensure( GDALAdjustValueToDataType(GDT_Int16,-32768.0,&bClamped,&bRounded) == -32768.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int16,32767.0,&bClamped,&bRounded) == 32767.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int16,-32767.4,&bClamped,&bRounded) == -32767.0 && !bClamped && bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int16,32766.4,&bClamped,&bRounded) == 32766.0 && !bClamped && bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int16,-32769.0,&bClamped,&bRounded) == -32768.0 && bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int16,32768.0,&bClamped,&bRounded) == 32767.0 && bClamped && !bRounded);
+
+        ensure( GDALAdjustValueToDataType(GDT_UInt32,10000000.0,&bClamped,&bRounded) == 10000000.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_UInt32,10000000.4,&bClamped,&bRounded) == 10000000.0 && !bClamped && bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_UInt32,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
+
+        ensure( GDALAdjustValueToDataType(GDT_Int32,-10000000.0,&bClamped,&bRounded) == -10000000.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int32,10000000.0,&bClamped,&bRounded) == 10000000.0 && !bClamped && !bRounded);
+        
+        ensure( GDALAdjustValueToDataType(GDT_Float32, 1.23,&bClamped,&bRounded) ==  1.23 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float32, 1e300,&bClamped,&bRounded) == std::numeric_limits<float>::max() && bClamped && !bRounded);
     }
 
 } // namespace tut

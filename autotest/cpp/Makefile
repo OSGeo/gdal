@@ -45,6 +45,7 @@ quick_test:
 OBJ = \
     gdal_unit_test.o \
     test_cpl.o \
+    test_gdal.o \
     test_gdal_aaigrid.o \
     test_gdal_dted.o \
     test_gdal_gtiff.o \
