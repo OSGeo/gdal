@@ -44,8 +44,6 @@ import ogrtest
 
 def test_gdal_grid_lib_1():
 
-    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
-
     # Create an OGR grid from the values of n43.dt0
     ds = gdal.Open('../gdrivers/data/n43.dt0')
     geotransform = ds.GetGeoTransform()
@@ -93,6 +91,38 @@ def test_gdal_grid_lib_1():
     return 'success'
 
 ###############################################################################
+# Test with a point number not multiple of 8 or 16
+
+def test_gdal_grid_lib_2():
+
+    shape_ds = ogr.Open( '/vsimem/tmp', update = 1 )
+    shape_lyr = shape_ds.CreateLayer( 'test_gdal_grid_lib_2' )
+    dst_feat = ogr.Feature( feature_def = shape_lyr.GetLayerDefn() )
+    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0 100)'))
+    shape_lyr.CreateFeature( dst_feat )
+    shape_ds = None
+
+    for env_list in [ [('GDAL_USE_AVX', 'NO'), ('GDAL_USE_SSE', 'NO')], [('GDAL_USE_AVX', 'NO')], [] ]:
+
+        for (key,value) in env_list:
+            gdal.SetConfigOption(key,value)
+
+        ds2 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format = 'MEM', \
+                        outputBounds = [ -0.4, -0.4, 0.6, 0.6 ], \
+                        width = 10, height = 10, outputType = gdal.GDT_Byte)
+
+        gdal.SetConfigOption('GDAL_USE_AVX', None)
+        gdal.SetConfigOption('GDAL_USE_SSE', None)
+
+        cs = ds2.GetRasterBand(1).Checksum() 
+        if cs != 1064:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_grid_lib_cleanup():
@@ -103,6 +133,7 @@ def test_gdal_grid_lib_cleanup():
 
 gdaltest_list = [
     test_gdal_grid_lib_1,
+    test_gdal_grid_lib_2,
     test_gdal_grid_lib_cleanup,
     ]
 
