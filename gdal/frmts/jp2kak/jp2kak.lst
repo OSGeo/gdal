@@ -26,3 +26,10 @@ KAK_OBJ +=	\
     $(KAKDIR)/apps/make/ssse3_region_decompressor.o \
     $(KAKDIR)/apps/make/avx2_stripe_transfer.o
 endif
+
+# The following are for Kakadu 7.7 and later
+# for kdu_supp::kdu_window::add_metareq(unsigned int, int, bool, int, bool, long long, int)
+ifneq ($(wildcard $(KAKDIR)/apps/make/kdu_client_windo?.o),)
+KAK_OBJ +=      \
+    $(KAKDIR)/apps/make/kdu_client_window.o
+endif
