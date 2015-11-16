@@ -891,6 +891,31 @@ def test_gdalwarp_lib_124():
     return 'success'
 
 ###############################################################################
+# Test that statistics are not propagated
+
+def test_gdalwarp_lib_125():
+
+    for i in range(3):
+
+        src_ds_1 = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds_1.SetGeoTransform([10,1,0,10,0,-1])
+        if i == 1 or i == 3:
+            src_ds_1.GetRasterBand(1).SetMetadataItem('STATISTICS_MINIUM', '5')
+
+        src_ds_2 = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds_2.SetGeoTransform([10,1,0,10,0,-1])
+        if i == 2 or i == 3:
+            src_ds_2.GetRasterBand(1).SetMetadataItem('STATISTICS_MINIUM', '5')
+
+        out_ds = gdal.Warp('', [ src_ds_1, src_ds_2 ], format = 'MEM')
+
+        if out_ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIUM') is not None:
+            print(i)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -962,6 +987,7 @@ gdaltest_list = [
     test_gdalwarp_lib_122,
     test_gdalwarp_lib_123,
     test_gdalwarp_lib_124,
+    test_gdalwarp_lib_125,
     test_gdalwarp_lib_cleanup,
     ]
 
