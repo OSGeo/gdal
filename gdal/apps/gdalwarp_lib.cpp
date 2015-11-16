@@ -2279,8 +2279,12 @@ RemoveConflictingMetadata( GDALMajorObjectH hObj, char **papszMetadata,
             if ( ( pszValueRef == NULL || pszValueComp == NULL ||
                 ! EQUAL( pszValueRef, pszValueComp ) ) &&
                 ( pszValueComp == NULL ||
-                ! EQUAL( pszValueComp, pszValueConflict ) ) ) {
-                GDALSetMetadataItem( hObj, pszKey, pszValueConflict, NULL ); 
+                ! EQUAL( pszValueComp, pszValueConflict ) ) )
+            {
+                if( STARTS_WITH(pszKey, "STATISTICS_") )
+                    GDALSetMetadataItem( hObj, pszKey, NULL, NULL ); 
+                else
+                    GDALSetMetadataItem( hObj, pszKey, pszValueConflict, NULL ); 
             }
             CPLFree( pszKey );
         }
