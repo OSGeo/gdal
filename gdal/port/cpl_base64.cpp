@@ -63,7 +63,8 @@ static const unsigned char CPLBase64DecodeChar[256] = {
     /* not Base64 characters */
     64,64,64,64,64,64,
     /* a-z */
-    26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,
+    26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,
+    51,
     /* not Base64 characters */
     64,64,64,64,64,
     /* not Base64 characters (upper 128 characters) */
@@ -87,59 +88,51 @@ static const unsigned char CPLBase64DecodeChar[256] = {
 int CPLBase64DecodeInPlace(GByte* pszBase64)
 {
     if (pszBase64 && *pszBase64) {
-
         unsigned char *p = pszBase64;
-        int i, j, k;
+        int offset_1 = 0;
+        int offset_2 = 0;
 
         /* Drop illegal chars first */
-        for (i=0, j=0; pszBase64[i]; i++) {
-            unsigned char c = pszBase64[i];
+        for ( ; pszBase64[offset_1]; ++offset_1) {
+            unsigned char c = pszBase64[offset_1];
             if ( (CPLBase64DecodeChar[c] != 64) || (c == '=') ) {
-                pszBase64[j++] = c;
+                pszBase64[offset_2++] = c;
             }
         }
 
-        for (k=0; k<j; k+=4) {
-            register unsigned char b1, b2, b3, b4, c3, c4;
+        for (int idx = 0; idx < offset_2; idx += 4) {
+            unsigned char b1 = CPLBase64DecodeChar[pszBase64[idx]];
+            unsigned char b2 = 0;
+            unsigned char c3 = 'A';
+            unsigned char c4 = 'A';
 
-            b1 = CPLBase64DecodeChar[pszBase64[k]];
-
-            if (k+3<j) {
-                b2 = CPLBase64DecodeChar[pszBase64[k+1]];
-                c3 = pszBase64[k+2];
-                c4 = pszBase64[k+3];
-            }
-            else if (k+2<j) {
-                b2 = CPLBase64DecodeChar[pszBase64[k+1]];
-                c3 = pszBase64[k+2];
-                c4 = 'A';
-            }
-            else if (k+1<j) {
-                b2 = CPLBase64DecodeChar[pszBase64[k+1]];
+            if (idx + 3 < offset_2) {
+                b2 = CPLBase64DecodeChar[pszBase64[idx+1]];
+                c3 = pszBase64[idx+2];
+                c4 = pszBase64[idx+3];
+            } else if (idx + 2 < offset_2) {
+                b2 = CPLBase64DecodeChar[pszBase64[idx+1]];
+                c3 = pszBase64[idx+2];
+            } else if (idx + 1 < offset_2) {
+                b2 = CPLBase64DecodeChar[pszBase64[idx+1]];
                 c3 = 'A';
-                c4 = 'A';
-            }
-            else
-            {
-                b2 = 0;
-                c3 = 'A';
-                c4 = 'A';
-            }
+            }  // Else: Use the default values.
 
-            b3 = CPLBase64DecodeChar[c3];
-            b4 = CPLBase64DecodeChar[c4];
 
-            *p++=((b1<<2)|(b2>>4) );
-            if( p - pszBase64 == i )
+            const unsigned char b3 = CPLBase64DecodeChar[c3];
+            const unsigned char b4 = CPLBase64DecodeChar[c4];
+
+            *p++ = ( (b1 << 2) | (b2 >> 4) );
+            if (p - pszBase64 == offset_1)
                 break;
             if (c3 != '=') {
-                *p++=(((b2&0xf)<<4)|(b3>>2) );
-                if( p - pszBase64 == i )
+                *p++ = ( ((b2 & 0xf) << 4) | (b3 >> 2) );
+                if (p - pszBase64 == offset_1)
                     break;
             }
             if (c4 != '=') {
-                *p++=(((b3&0x3)<<6)|b4 );
-                if( p - pszBase64 == i )
+                *p++ = ( ((b3 & 0x3) << 6) | b4);
+                if (p - pszBase64 == offset_1)
                     break;
             }
         }
@@ -151,7 +144,8 @@ int CPLBase64DecodeInPlace(GByte* pszBase64)
 /*
  * This function was extracted from the base64 cpp utility published by
  * René Nyffenegger. The code was modified into a form suitable for use in
- * CPL.  The original code can be found at 
+ * CPL.  The original code can be found at:
+ *
  * http://www.adp-gmbh.ch/cpp/common/base64.html.
  *
  * The following is the original notice of this function.
@@ -169,9 +163,9 @@ int CPLBase64DecodeInPlace(GByte* pszBase64)
  *  freely, subject to the following restrictions:
  *
  *  1. The origin of this source code must not be misrepresented; you must not
- *     claim that you wrote the original source code. If you use this source code
- *     in a product, an acknowledgment in the product documentation would be
- *     appreciated but is not required.
+ *     claim that you wrote the original source code. If you use this source
+ *     code in a product, an acknowledgment in the product documentation would
+ *     be appreciated but is not required.
  *
  *  2. Altered source versions must be plainly marked as such, and must not be
  *     misrepresented as being the original source code.
@@ -185,58 +179,57 @@ int CPLBase64DecodeInPlace(GByte* pszBase64)
 /*                          CPLBase64Encode()                           */
 /************************************************************************/
 
-char *CPLBase64Encode( int nDataLen, const GByte *pabyBytesToEncode )
+char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode) {
+    static const char base64Chars[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-{
-    static const std::string base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const int kCharArray3Size = 3;
+    const int kCharArray4Size = 4;
+    unsigned char charArray3[kCharArray3Size];
 
-    int           i = 0;
-    int           j = 0;
-    std::string   result("");
-    unsigned char charArray3[3];
-    unsigned char charArray4[4];
+    std::string result("");
+    int array3_idx = 0;
+    while (nDataLen--) {
+        charArray3[array3_idx++] = *(pabyBytesToEncode++);
 
-    while( nDataLen-- )
-    {
-        charArray3[i++] = *(pabyBytesToEncode++);
+        if (array3_idx == kCharArray3Size) {
+            unsigned char charArray4[kCharArray4Size];
 
-        if( i == 3 )
-        {
             charArray4[0] = (charArray3[0] & 0xfc) >> 2;
-            charArray4[1] = ((charArray3[0] & 0x03) << 4) + ((charArray3[1] & 0xf0) >> 4);
-            charArray4[2] = ((charArray3[1] & 0x0f) << 2) + ((charArray3[2] & 0xc0) >> 6);
+            charArray4[1] = ((charArray3[0] & 0x03) << 4)
+                + ((charArray3[1] & 0xf0) >> 4);
+            charArray4[2] = ((charArray3[1] & 0x0f) << 2)
+                + ((charArray3[2] & 0xc0) >> 6);
             charArray4[3] = charArray3[2] & 0x3f;
 
-            for( i = 0; i < 4; i++ )
-            {
-                result += base64Chars[charArray4[i]];
+            for (int idx = 0; idx < kCharArray4Size; ++idx) {
+                result += base64Chars[charArray4[idx]];
             }
 
-            i = 0;
+            array3_idx = 0;
         }
     }
 
-    if( i )
-    {
-        for( j = i; j < 3; j++ )
-        {
-            charArray3[j] = '\0';
+    if (array3_idx) {
+        for (int idx = array3_idx; idx < kCharArray3Size; ++idx) {
+            charArray3[idx] = '\0';
         }
 
+        unsigned char charArray4[kCharArray4Size];
         charArray4[0] = (charArray3[0]  & 0xfc) >> 2;
-        charArray4[1] = ((charArray3[0] & 0x03) << 4) + ((charArray3[1] & 0xf0) >> 4);
-        charArray4[2] = ((charArray3[1] & 0x0f) << 2) + ((charArray3[2] & 0xc0) >> 6);
+        charArray4[1] = ((charArray3[0] & 0x03) << 4)
+            + ((charArray3[1] & 0xf0) >> 4);
+        charArray4[2] = ((charArray3[1] & 0x0f) << 2)
+            + ((charArray3[2] & 0xc0) >> 6);
         charArray4[3] = charArray3[2] & 0x3f;
 
-        for ( j = 0; j < (i + 1); j++ )
-        {
-            result += base64Chars[charArray4[j]];
+        for (int idx = 0; idx < (array3_idx + 1); ++idx) {
+            result += base64Chars[charArray4[idx]];
         }
 
-        while( i++ < 3 )
+        while (array3_idx++ < kCharArray3Size)
             result += '=';
     }
 
-    return (CPLStrdup(result.c_str()));
+    return CPLStrdup(result.c_str());
 }
-
