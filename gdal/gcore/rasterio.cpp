@@ -819,7 +819,13 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         }
 
         GDALWarpOptions* psWarpOptions = GDALCreateWarpOptions();
-        psWarpOptions->eResampleAlg = (GDALResampleAlg)psExtraArg->eResampleAlg;
+        CPL_STATIC_ASSERT( (int)GRIORA_NearestNeighbour == (int)GRA_NearestNeighbour );
+        CPL_STATIC_ASSERT( (int)GRIORA_Cubic == (int)GRA_Cubic );
+        CPL_STATIC_ASSERT( (int)GRIORA_CubicSpline == (int)GRA_CubicSpline );
+        CPL_STATIC_ASSERT( (int)GRIORA_Lanczos == (int)GRA_Lanczos );
+        CPL_STATIC_ASSERT( (int)GRIORA_Average == (int)GRA_Average );
+        CPLAssert( psExtraArg->eResampleAlg != GRIORA_Gauss );
+        psWarpOptions->eResampleAlg = static_cast<GDALResampleAlg>(static_cast<int>(psExtraArg->eResampleAlg));
         psWarpOptions->hSrcDS = (GDALDatasetH) (hVRTDS ? hVRTDS : GetDataset());
         psWarpOptions->hDstDS = (GDALDatasetH) poMEMDS;
         psWarpOptions->nBandCount = 1;
