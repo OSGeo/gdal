@@ -94,6 +94,7 @@ OGRSpatialReference *OGRAVCLayer::GetSpatialRef()
 int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
 
 {
+    int bRet = FALSE;
     switch( eSectionType )
     {
       case AVCFileARC:
@@ -113,8 +114,10 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
             poFeatureDefn->AddFieldDefn( &oTNode );
             poFeatureDefn->AddFieldDefn( &oLPoly );
             poFeatureDefn->AddFieldDefn( &oRPoly );
+
+            bRet = TRUE;
+            break;
         }
-        return TRUE;
 
       case AVCFilePAL:
       case AVCFileRPL:
@@ -125,8 +128,10 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
 
             OGRFieldDefn	oArcIds( "ArcIds", OFTIntegerList );
             poFeatureDefn->AddFieldDefn( &oArcIds );
+
+            bRet = TRUE;
+            break;
         }
-        return TRUE;
 
       case AVCFileCNT:
         {
@@ -136,8 +141,10 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
 
             OGRFieldDefn	oLabelIds( "LabelIds", OFTIntegerList );
             poFeatureDefn->AddFieldDefn( &oLabelIds );
+
+            bRet = TRUE;
+            break;
         }
-        return TRUE;
 
       case AVCFileLAB:
         {
@@ -150,8 +157,10 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
 
             OGRFieldDefn	oPolyId( "PolyId", OFTInteger );
             poFeatureDefn->AddFieldDefn( &oPolyId );
+
+            bRet = TRUE;
+            break;
         }
-        return TRUE;
 
       case AVCFileTXT:
       case AVCFileTX6:
@@ -171,15 +180,18 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
 
             OGRFieldDefn	oLevel( "Level", OFTInteger );
             poFeatureDefn->AddFieldDefn( &oLevel );
+
+            bRet = TRUE;
+            break;
         }
-        return TRUE;
 
       default:
         poFeatureDefn = NULL;
-        return FALSE;
+        break;
     }
 
     SetDescription( pszName );
+    return bRet;
 }
 
 /************************************************************************/
