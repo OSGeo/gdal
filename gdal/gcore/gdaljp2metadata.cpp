@@ -1414,11 +1414,11 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
             return NULL;
         }
         
-        VSIFSeekL( fp, 0, SEEK_END );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_END ));
         int nLength = (int) VSIFTellL( fp );
         pszGML = (char *) CPLCalloc(1,nLength+1);
-        VSIFSeekL( fp, 0, SEEK_SET );
-        VSIFReadL( pszGML, 1, nLength, fp );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_SET ));
+        CPL_IGNORE_RET_VAL(VSIFReadL( pszGML, 1, nLength, fp ));
         VSIFCloseL( fp );
 
         GDALJP2Box *apoGMLBoxes[2];

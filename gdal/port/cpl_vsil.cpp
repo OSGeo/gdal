@@ -628,7 +628,7 @@ vsi_l_offset VSIFTellL( VSILFILE * fp )
 void VSIRewindL( VSILFILE * fp )
 
 {
-    VSIFSeekL( fp, 0, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_SET ));
 }
 
 /************************************************************************/
@@ -935,13 +935,21 @@ int VSIIngestFile( VSILFILE* fp,
         bFreeFP = true;
     }
     else
-        VSIFSeekL(fp, 0, SEEK_SET);
+    {
+        if( VSIFSeekL(fp, 0, SEEK_SET) != 0 )
+            return FALSE;
+    }
 
     if( pszFilename == NULL ||
         strcmp(pszFilename, "/vsistdin/") == 0 )
     {
         vsi_l_offset nDataAlloc = 0;
-        VSIFSeekL( fp, 0, SEEK_SET );
+        if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
+        {
+            if( bFreeFP )
+                VSIFCloseL( fp );
+            return FALSE;
+        }
         while(true)
         {
             if( nDataLen + 8192 + 1 > nDataAlloc )
@@ -996,7 +1004,12 @@ int VSIIngestFile( VSILFILE* fp,
     }
     else
     {
-        VSIFSeekL( fp, 0, SEEK_END );
+        if( VSIFSeekL( fp, 0, SEEK_END ) != 0 )
+        {
+            if( bFreeFP )
+                VSIFCloseL( fp );
+            return FALSE;
+        }
         nDataLen = VSIFTellL( fp );
 
         // With "large" VSI I/O API we can read data chunks larger than VSIMalloc
@@ -1011,7 +1024,12 @@ int VSIIngestFile( VSILFILE* fp,
             return FALSE;
         }
 
-        VSIFSeekL( fp, 0, SEEK_SET );
+        if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
+        {
+            if( bFreeFP )
+                VSIFCloseL( fp );
+            return FALSE;
+        }
 
         *ppabyRet = (GByte*)VSIMalloc((size_t)(nDataLen + 1));
         if( NULL == *ppabyRet )

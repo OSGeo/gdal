@@ -401,7 +401,13 @@ static void CSVIngest( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Ingest whole file.                                              */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( psTable->fp, 0, SEEK_END );
+    if( VSIFSeek( psTable->fp, 0, SEEK_END ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed using seek end and tell to get file length: %s",
+                  pszFilename );
+        return;
+    }
     const long nFileLen = VSIFTell( psTable->fp );
     if( nFileLen == -1 )
     {

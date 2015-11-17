@@ -368,9 +368,11 @@ void ENVIDataset::FlushCache()
     // If opening an existing file in Update mode (i.e. "r+") we need to make
     // sure any existing content is cleared, otherwise the file may contain
     // trailing content from the previous write.
-    VSIFTruncateL( fp, 0 ); 
+    if( VSIFTruncateL( fp, 0 ) != 0 )
+        return;
 
-    VSIFSeekL( fp, 0, SEEK_SET );
+    if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
+        return;
 /* -------------------------------------------------------------------- */
 /*      Rewrite out the header.                                           */
 /* -------------------------------------------------------------------- */
@@ -382,22 +384,22 @@ void ENVIDataset::FlushCache()
 #endif
         ;
 
-    VSIFPrintfL( fp, "ENVI\n" );
+    bool bOK = VSIFPrintfL( fp, "ENVI\n" ) >= 0;
     if ("" != sDescription)
-        VSIFPrintfL( fp, "description = {\n%s}\n", sDescription.c_str());
-    VSIFPrintfL( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
-                 nRasterXSize, nRasterYSize, nBands );
+        bOK &= VSIFPrintfL( fp, "description = {\n%s}\n", sDescription.c_str()) >= 0;
+    bOK &= VSIFPrintfL( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
+                 nRasterXSize, nRasterYSize, nBands ) >= 0;
 
     char** catNames = band->GetCategoryNames();
 
-    VSIFPrintfL( fp, "header offset = 0\n");
+    bOK &= VSIFPrintfL( fp, "header offset = 0\n") >= 0;
     if (0 == catNames)
-        VSIFPrintfL( fp, "file type = ENVI Standard\n" );
+        bOK &= VSIFPrintfL( fp, "file type = ENVI Standard\n" ) >= 0;
     else
-        VSIFPrintfL( fp, "file type = ENVI Classification\n" );
+        bOK &= VSIFPrintfL( fp, "file type = ENVI Classification\n" ) >= 0;
 
     const int iENVIType = GetEnviType(band->GetRasterDataType());
-    VSIFPrintfL( fp, "data type = %d\n", iENVIType );
+    bOK &= VSIFPrintfL( fp, "data type = %d\n", iENVIType ) >= 0;
     const char	*pszInterleaving;
     switch (interleave)
     {
@@ -414,8 +416,8 @@ void ENVIDataset::FlushCache()
     	pszInterleaving = "bsq";
         break;
     }
-    VSIFPrintfL( fp, "interleave = %s\n", pszInterleaving);
-    VSIFPrintfL( fp, "byte order = %d\n", iBigEndian );
+    bOK &= VSIFPrintfL( fp, "interleave = %s\n", pszInterleaving) >= 0;
+    bOK &= VSIFPrintfL( fp, "byte order = %d\n", iBigEndian ) >= 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write class and color information                               */
@@ -429,7 +431,7 @@ void ENVIDataset::FlushCache()
 
         if (nrClasses > 0)
         {
-            VSIFPrintfL( fp, "classes = %d\n", nrClasses );
+            bOK &= VSIFPrintfL( fp, "classes = %d\n", nrClasses ) >= 0;
 
             GDALColorTable* colorTable = band->GetColorTable();
             if (0 != colorTable)
@@ -437,33 +439,35 @@ void ENVIDataset::FlushCache()
                 int nrColors = colorTable->GetColorEntryCount();
                 if (nrColors > nrClasses)
                     nrColors = nrClasses;
-                VSIFPrintfL( fp, "class lookup = {\n");
+                bOK &= VSIFPrintfL( fp, "class lookup = {\n") >= 0;
                 for (int i = 0; i < nrColors; ++i)
                 {
                     const GDALColorEntry* color = colorTable->GetColorEntry(i);
-                    VSIFPrintfL(fp, "%d, %d, %d", color->c1, color->c2, color->c3);
+                    bOK &= VSIFPrintfL(fp, "%d, %d, %d", color->c1, color->c2, color->c3) >= 0;
                     if (i < nrColors - 1)
                     {
-                        VSIFPrintfL(fp, ", ");
+                        bOK &= VSIFPrintfL(fp, ", ") >= 0;
                         if (0 == (i+1) % 5)
-                            VSIFPrintfL(fp, "\n");
+                            bOK &= VSIFPrintfL(fp, "\n") >= 0;
                     }
                 }
-                VSIFPrintfL(fp, "}\n");
+                bOK &= VSIFPrintfL(fp, "}\n") >= 0;
             }
 
             catNames = band->GetCategoryNames();
             if (0 != *catNames)
             {
-                VSIFPrintfL( fp, "class names = {\n%s", *catNames++);
+                bOK &= VSIFPrintfL( fp, "class names = {\n%s", *catNames) >= 0;
+                catNames ++;
                 int i = 0;
                 while (*catNames) {
-                    VSIFPrintfL( fp, ",");
+                    bOK &= VSIFPrintfL( fp, ",") >= 0;
                     if (0 == (++i) % 5)
-                        VSIFPrintfL(fp, "\n");
-                    VSIFPrintfL( fp, " %s", *catNames++);
+                        bOK &= VSIFPrintfL(fp, "\n") >= 0;
+                    bOK &= VSIFPrintfL( fp, " %s", *catNames) >= 0;
+                    catNames ++;
                 }
-                VSIFPrintfL( fp, "}\n");
+                bOK &= VSIFPrintfL( fp, "}\n") >= 0;
             }
         }
     }
@@ -485,18 +489,18 @@ void ENVIDataset::FlushCache()
     }
 
 
-    VSIFPrintfL( fp, "band names = {\n" );
+    bOK &= VSIFPrintfL( fp, "band names = {\n" ) >= 0;
     for ( int i = 1; i <= nBands; i++ )
     {
         CPLString sBandDesc = GetRasterBand( i )->GetDescription();
 
         if ( sBandDesc == "" )
             sBandDesc = CPLSPrintf( "Band %d", i );
-        VSIFPrintfL( fp, "%s", sBandDesc.c_str() );
+        bOK &= VSIFPrintfL( fp, "%s", sBandDesc.c_str() ) >= 0;
         if ( i != nBands )
-            VSIFPrintfL( fp, ",\n" );
+            bOK &= VSIFPrintfL( fp, ",\n" ) >= 0;
     }
-    VSIFPrintfL( fp, "}\n" );
+    bOK &= VSIFPrintfL( fp, "}\n" ) >= 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write the metadata that was read into the ENVI domain           */
@@ -533,9 +537,12 @@ void ENVIDataset::FlushCache()
             CSLDestroy( papszTokens );
             continue;
         }
-        VSIFPrintfL( fp, "%s = %s\n", poKey.c_str(), papszTokens[1]);
+        bOK &= VSIFPrintfL( fp, "%s = %s\n", poKey.c_str(), papszTokens[1]) >= 0;
         CSLDestroy( papszTokens );
     }
+    
+    if( !bOK )
+        return;
 
     /* Clean dirty flag */
     bHeaderDirty = FALSE;
@@ -670,8 +677,9 @@ void ENVIDataset::WriteProjectionInfo()
             || adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0 )
         {
             const char* pszHemisphere = "North";
-            VSIFPrintfL( fp, "map info = {Arbitrary, %s, %d, %s}\n",
-                         osLocation.c_str(), 0, pszHemisphere);
+            if( VSIFPrintfL( fp, "map info = {Arbitrary, %s, %d, %s}\n",
+                         osLocation.c_str(), 0, pszHemisphere) < 0 )
+                return;
         }
         return;
     }
@@ -733,6 +741,7 @@ void ENVIDataset::WriteProjectionInfo()
     const char  *pszProjName = oSRS.GetAttrValue("PROJECTION");
     int		bNorth;
     const int iUTMZone = oSRS.GetUTMZone( &bNorth );
+    bool bOK = true;
     if ( iUTMZone )
     {
         if ( bNorth )
@@ -740,14 +749,14 @@ void ENVIDataset::WriteProjectionInfo()
         else
             pszHemisphere = "South";
 
-        VSIFPrintfL( fp, "map info = {UTM, %s, %d, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {UTM, %s, %d, %s%s%s}\n",
                      osLocation.c_str(), iUTMZone, pszHemisphere,
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
     }
     else if( oSRS.IsGeographic() )
     {
-        VSIFPrintfL( fp, "map info = {Geographic Lat/Lon, %s%s}\n",
-                     osLocation.c_str(), osCommaDatum.c_str());
+        bOK &= VSIFPrintfL( fp, "map info = {Geographic Lat/Lon, %s%s}\n",
+                     osLocation.c_str(), osCommaDatum.c_str()) >= 0;
     }
     else if( pszProjName == NULL )
     {
@@ -755,41 +764,41 @@ void ENVIDataset::WriteProjectionInfo()
     }
     else if( EQUAL(pszProjName,SRS_PT_NEW_ZEALAND_MAP_GRID) )
     {
-        VSIFPrintfL( fp, "map info = {New Zealand Map Grid, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {New Zealand Map Grid, %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {39, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, New Zealand Map Grid}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {39, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, New Zealand Map Grid}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else if( EQUAL(pszProjName,SRS_PT_TRANSVERSE_MERCATOR) )
     {
-        VSIFPrintfL( fp, "map info = {Transverse Mercator, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {Transverse Mercator, %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {3, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Transverse Mercator}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {3, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Transverse Mercator}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else if( EQUAL(pszProjName,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
              || EQUAL(pszProjName,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
     {
-        VSIFPrintfL( fp, "map info = {Lambert Conformal Conic, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {Lambert Conformal Conic, %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {4, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Lambert Conformal Conic}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {4, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Lambert Conformal Conic}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -797,16 +806,16 @@ void ENVIDataset::WriteProjectionInfo()
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                      oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else if( EQUAL(pszProjName,
                    SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
     {
-        VSIFPrintfL( fp, "map info = {Hotine Oblique Mercator A, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {Hotine Oblique Mercator A, %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {5, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Hotine Oblique Mercator A}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {5, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Hotine Oblique Mercator A}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,0.0),
@@ -816,15 +825,15 @@ void ENVIDataset::WriteProjectionInfo()
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else if( EQUAL(pszProjName,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
-        VSIFPrintfL( fp, "map info = {Hotine Oblique Mercator B, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {Hotine Oblique Mercator B, %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {6, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Hotine Oblique Mercator B}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {6, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Hotine Oblique Mercator B}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -832,31 +841,31 @@ void ENVIDataset::WriteProjectionInfo()
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else if( EQUAL(pszProjName,SRS_PT_STEREOGRAPHIC) 
              || EQUAL(pszProjName,SRS_PT_OBLIQUE_STEREOGRAPHIC) )
     {
-        VSIFPrintfL( fp, "map info = {Stereographic (ellipsoid), %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {Stereographic (ellipsoid), %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {7, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %s, Stereographic (ellipsoid)}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {7, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %s, Stereographic (ellipsoid)}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else if( EQUAL(pszProjName,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
-        VSIFPrintfL( fp, "map info = {Albers Conical Equal Area, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {Albers Conical Equal Area, %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {9, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Albers Conical Equal Area}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {9, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Albers Conical Equal Area}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -864,68 +873,68 @@ void ENVIDataset::WriteProjectionInfo()
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                      oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else if( EQUAL(pszProjName,SRS_PT_POLYCONIC) )
     {
-        VSIFPrintfL( fp, "map info = {Polyconic, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {Polyconic, %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {10, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Polyconic}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {10, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Polyconic}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else if( EQUAL(pszProjName,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
-        VSIFPrintfL( fp, "map info = {Lambert Azimuthal Equal Area, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {Lambert Azimuthal Equal Area, %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {11, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Lambert Azimuthal Equal Area}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {11, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Lambert Azimuthal Equal Area}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else if( EQUAL(pszProjName,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
-        VSIFPrintfL( fp, "map info = {Azimuthal Equadistant, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {Azimuthal Equadistant, %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {12, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Azimuthal Equadistant}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {12, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Azimuthal Equadistant}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else if( EQUAL(pszProjName,SRS_PT_POLAR_STEREOGRAPHIC) )
     {
-        VSIFPrintfL( fp, "map info = {Polar Stereographic, %s%s%s}\n",
+        bOK &= VSIFPrintfL( fp, "map info = {Polar Stereographic, %s%s%s}\n",
                      osLocation.c_str(), 
-                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
+                     osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
-        VSIFPrintfL( fp, "projection info = {31, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Polar Stereographic}\n",
+        bOK &= VSIFPrintfL( fp, "projection info = {31, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Polar Stereographic}\n",
                      dfA, dfB, 
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,90.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
-                     osCommaDatum.c_str() );
+                     osCommaDatum.c_str() ) >= 0;
     }
     else
     {
-        VSIFPrintfL( fp, "map info = {%s, %s}\n",
-                     pszProjName, osLocation.c_str());
+        bOK &= VSIFPrintfL( fp, "map info = {%s, %s}\n",
+                     pszProjName, osLocation.c_str()) >= 0;
     }
 
     // write out coordinate system string
@@ -935,10 +944,15 @@ void ENVIDataset::WriteProjectionInfo()
         if ( oSRS.exportToWkt(&pszProjESRI) == OGRERR_NONE )
         {
             if ( strlen(pszProjESRI) )
-                VSIFPrintfL( fp, "coordinate system string = {%s}\n", pszProjESRI);
+                bOK &= VSIFPrintfL( fp, "coordinate system string = {%s}\n", pszProjESRI) >= 0;
         }
         CPLFree(pszProjESRI);
         pszProjESRI = NULL;
+    }
+    
+    if( !bOK )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Write error");
     }
 }
 
@@ -1033,30 +1047,29 @@ int ENVIDataset::WriteRpcInfo()
     }
 
     // ok all the needed 93 values are present so write the rpcs into the envi header
+    bRet = true;
     {
         int x = 1;
-        VSIFPrintfL(fp, "rpc info = {\n");
+        bRet &= VSIFPrintfL(fp, "rpc info = {\n") >= 0;
         for (int iR=0; iR<93; iR++)
         {
           if (papszVal[iR][0] == '-')
-              VSIFPrintfL(fp, " %s", papszVal[iR]);
+              bRet &= VSIFPrintfL(fp, " %s", papszVal[iR]) >= 0;
           else
-              VSIFPrintfL(fp, "  %s", papszVal[iR]);
+              bRet &= VSIFPrintfL(fp, "  %s", papszVal[iR]) >= 0;
 
           if (iR<92)
-              VSIFPrintfL(fp, ",");
+              bRet &= VSIFPrintfL(fp, ",") >= 0;
 
           if ((x % 4) == 0)
-              VSIFPrintfL(fp, "\n");
+              bRet &= VSIFPrintfL(fp, "\n") >= 0;
 
           x++;
           if (x > 4)
               x = 1;
         }
     }
-    VSIFPrintfL(fp, "}\n" );
-
-    bRet = TRUE;
+    bRet &= VSIFPrintfL(fp, "}\n" ) >= 0;
 
 end:
     for ( int i = 0; i < idx; i++ )
@@ -1085,19 +1098,19 @@ int ENVIDataset::WritePseudoGcpInfo()
     //    double      dfGCPX;     /** X position of GCP in georeferenced space */
     //    double      dfGCPY;     /** Y position of GCP in georeferenced space */
 
-    VSIFPrintfL(fp, "geo points = {\n");
+    bool bRet = VSIFPrintfL(fp, "geo points = {\n") >= 0;
     for (int iR=0; iR<iNum; iR++)
     {
-      VSIFPrintfL(fp, " %#0.4f, %#0.4f, %#0.8f, %#0.8f",
+      bRet &= VSIFPrintfL(fp, " %#0.4f, %#0.4f, %#0.8f, %#0.8f",
                   pGcpStructs[iR].dfGCPPixel, pGcpStructs[iR].dfGCPLine,
-                  pGcpStructs[iR].dfGCPY, pGcpStructs[iR].dfGCPX);
+                  pGcpStructs[iR].dfGCPY, pGcpStructs[iR].dfGCPX) >= 0;
       if (iR<iNum-1)
-        VSIFPrintfL(fp, ",\n");
+        bRet &= VSIFPrintfL(fp, ",\n") >= 0;
     }
 
-    VSIFPrintfL(fp, "}\n" );
+    bRet &= VSIFPrintfL(fp, "}\n" ) >= 0;
 
-    return TRUE;
+    return bRet;
 }
 
 /************************************************************************/
@@ -1737,12 +1750,12 @@ void ENVIDataset::ProcessStatsFile()
         nb = nBands;
     }
 
-    VSIFSeekL(fpStaFile,40+(nb+1)*4,SEEK_SET);
 
     int lOffset;
-    if (VSIFReadL(&lOffset,sizeof(int),1,fpStaFile) == 1)
+    if (VSIFSeekL(fpStaFile,40+(nb+1)*4,SEEK_SET) == 0 &&
+        VSIFReadL(&lOffset,sizeof(int),1,fpStaFile) == 1 &&
+        VSIFSeekL(fpStaFile,40+(nb+1)*8+byteSwapInt(lOffset)+nb,SEEK_SET) == 0)
     {
-        VSIFSeekL(fpStaFile,40+(nb+1)*8+byteSwapInt(lOffset)+nb,SEEK_SET);
         // This should be the beginning of the statistics
         if (isFloat)
         {
@@ -2567,9 +2580,11 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 /*      Just write out a couple of bytes to establish the binary        */
 /*      file, and then close it.                                        */
 /* -------------------------------------------------------------------- */
-    VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
-                2, 1, fp );
+    bool bRet = VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
+                2, 1, fp ) == 1;
     VSIFCloseL( fp );
+    if( !bRet )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create the .hdr filename.                                       */

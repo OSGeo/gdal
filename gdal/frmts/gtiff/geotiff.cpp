@@ -747,14 +747,24 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
             }
             osFileToOpen = poGDS->osTmpFilename;
 
-            VSIFSeekL(fp, poGDS->nJPEGTableSize + nByteCount - 1, SEEK_SET);
+            bool bError = FALSE;
+            if( VSIFSeekL(fp, poGDS->nJPEGTableSize + nByteCount - 1, SEEK_SET) != 0 )
+                bError = true;
             char ch = 0;
-            VSIFWriteL(&ch, 1, 1, fp);
+            if( !bError && VSIFWriteL(&ch, 1, 1, fp) != 1 )
+                bError = true;
             GByte* pabyBuffer = VSIGetMemFileBuffer( poGDS->osTmpFilename, NULL, FALSE);
             memcpy(pabyBuffer, poGDS->pabyJPEGTable, poGDS->nJPEGTableSize);
             VSILFILE* fpTIF = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
-            VSIFSeekL(fpTIF, nOffset, SEEK_SET);
-            VSIFReadL(pabyBuffer + poGDS->nJPEGTableSize, 1, (size_t)nByteCount, fpTIF);
+            if( !bError && VSIFSeekL(fpTIF, nOffset, SEEK_SET) != 0 )
+                bError = true;
+            if( VSIFReadL(pabyBuffer + poGDS->nJPEGTableSize, (size_t)nByteCount, 1, fpTIF) != 1 )
+                bError = true;
+            if( bError )
+            {
+                VSIFCloseL(fp);
+                return CE_Failure;
+            }
         }
         else
         {
@@ -770,7 +780,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
             }
             osFileToOpen = CPLSPrintf("/vsisparse/%s", poGDS->osTmpFilename.c_str());
 
-            VSIFPrintfL(fp, "<VSISparseFile><SubfileRegion><Filename relative='0'>%s</Filename>"
+            if( VSIFPrintfL(fp, "<VSISparseFile><SubfileRegion><Filename relative='0'>%s</Filename>"
                         "<DestinationOffset>0</DestinationOffset>"
                         "<SourceOffset>0</SourceOffset>"
                         "<RegionLength>%d</RegionLength>"
@@ -786,7 +796,11 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
                         poGDS->poParentDS->GetDescription(),
                         (int)poGDS->nJPEGTableSize,
                         nOffset,
-                        nByteCount);
+                        nByteCount) < 0 )
+            {
+                VSIFCloseL(fp);
+                return CE_Failure;
+            }
         }
         VSIFCloseL(fp);
 
@@ -1600,7 +1614,8 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
             {
                 return NULL;
             }
-            VSIFSeekL(fp, 0, SEEK_END);
+            if( VSIFSeekL(fp, 0, SEEK_END) != 0 )
+                return NULL;
             vsi_l_offset nBaseOffset = VSIFTellL(fp);
 
             /* Just write one tile with libtiff to put it in appropriate state */
@@ -1621,7 +1636,8 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
 
             /* Now simulate the writing of other blocks */
             vsi_l_offset nDataSize = (vsi_l_offset)nBlockSize * nBlocks;
-            VSIFSeekL(fp, nBaseOffset + nDataSize - 1, SEEK_SET);
+            if( VSIFSeekL(fp, nBaseOffset + nDataSize - 1, SEEK_SET) != 0 )
+                return NULL;
             char ch = 0;
             if( VSIFWriteL(&ch, 1, 1, fp) != 1 )
             {
@@ -1910,7 +1926,11 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
             eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
             return -1;
         }
-        VSIFSeekL(fp, 0, SEEK_END);
+        if( VSIFSeekL(fp, 0, SEEK_END) != 0 )
+        {
+            eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
+            return -1;
+        }
         vsi_l_offset nLength = VSIFTellL(fp);
         if( (size_t)nLength != nLength )
         {
@@ -7176,7 +7196,10 @@ void GTiffDataset::Crystalize()
             TIFFSetDirectory( hTIFF, 0 );
             TIFFWriteDirectory( hTIFF );
 
-            VSIFSeekL( fpL, 0, SEEK_END );
+            if( VSIFSeekL( fpL, 0, SEEK_END ) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Could not seek");
+            }
             int nSize = (int) VSIFTellL(fpL);
 
             TIFFSetDirectory( hTIFF, 0 );
@@ -7246,7 +7269,11 @@ void GTiffCacheOffsetOrCount(VSILFILE* fp,
         panVals[nBlockId] = 0;
         return;
     }
-    VSIFSeekL(fp, nOffsetStartPage, SEEK_SET);
+    if( VSIFSeekL(fp, nOffsetStartPage, SEEK_SET) != 0 )
+    {
+        panVals[nBlockId] = 0;
+        return;
+    }
     size_t nToRead = (size_t)(nOffsetEndPage - nOffsetStartPage);
     size_t nRead = VSIFReadL(buffer, 1, nToRead, fp);
     if( nRead < nToRead )
@@ -7388,7 +7415,8 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
                                             sizeof(uint64));
                 }
             }
-            VSIFSeekL(fp, nCurOffset, SEEK_SET);
+            if( VSIFSeekL(fp, nCurOffset, SEEK_SET) != 0 )
+                return FALSE;
         }
         return hTIFF->tif_dir.td_stripbytecount[nBlockId] != 0;
     }
@@ -9384,9 +9412,11 @@ static int GTIFFExtendMemoryFile(const CPLString& osTmpFilename,
 {
     if( nNewLength <= (int)nDataLength )
         return TRUE;
-    VSIFSeekL(fpTemp, nNewLength - 1, SEEK_SET);
+    if( VSIFSeekL(fpTemp, nNewLength - 1, SEEK_SET) != 0 )
+        return FALSE;
     char ch = 0;
-    VSIFWriteL(&ch, 1, 1, fpTemp);
+    if( VSIFWriteL(&ch, 1, 1, fpTemp) != 1 )
+        return FALSE;
     int nOldDataLength = nDataLength;
     pabyBuffer = (GByte*)VSIGetMemFileBuffer( osTmpFilename, &nDataLength, FALSE);
     int nToRead = nNewLength - nOldDataLength;
@@ -9413,9 +9443,17 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
     if( fpTemp == NULL )
         return FALSE;
     /* The seek is needed for /vsistdin/ that has some rewind capabilities */
-    VSIFSeekL(poOpenInfo->fpL, poOpenInfo->nHeaderBytes, SEEK_SET);
+    if( VSIFSeekL(poOpenInfo->fpL, poOpenInfo->nHeaderBytes, SEEK_SET) != 0 )
+    {
+        VSIFCloseL(fpTemp);
+        return FALSE;
+    }
     CPLAssert( (int)VSIFTellL(poOpenInfo->fpL) == poOpenInfo->nHeaderBytes );
-    VSIFWriteL(poOpenInfo->pabyHeader, 1, poOpenInfo->nHeaderBytes, fpTemp);
+    if( VSIFWriteL(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes, 1, fpTemp) != 1 )
+    {
+        VSIFCloseL(fpTemp);
+        return FALSE;
+    }
     vsi_l_offset nDataLength;
     GByte* pabyBuffer = (GByte*)VSIGetMemFileBuffer( osTmpFilename, &nDataLength, FALSE);
     int bLittleEndian = (pabyBuffer[0] == 'I');
@@ -13511,7 +13549,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         TIFFSetDirectory( hTIFF, 0 );
         TIFFWriteDirectory( hTIFF );
 
-        VSIFSeekL( fpL, 0, SEEK_END );
+        if( VSIFSeekL( fpL, 0, SEEK_END ) != 0 )
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot seek");
         int nSize = (int) VSIFTellL(fpL);
 
         vsi_l_offset nDataLength;
@@ -14364,8 +14403,9 @@ void GTiffDataset::LoadEXIFMetadata()
     VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
 
     GByte          abyHeader[2];
-    VSIFSeekL(fp, 0, SEEK_SET);
-    VSIFReadL(abyHeader, 1, 2, fp);
+    if( VSIFSeekL(fp, 0, SEEK_SET) != 0 ||
+        VSIFReadL(abyHeader, 1, 2, fp) != 2 )
+        return;
 
     int bLittleEndian = abyHeader[0] == 'I' && abyHeader[1] == 'I';
     int bSwabflag = bLittleEndian ^ CPL_IS_LSB;

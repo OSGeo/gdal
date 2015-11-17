@@ -99,7 +99,11 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
     if( fp == NULL )
         return NULL;
 
-    VSIFSeekL( fp, 0, SEEK_END );
+    if( VSIFSeekL( fp, 0, SEEK_END ) != 0 )
+    {
+        VSIFCloseL(fp);
+        return NULL;
+    }
     unsigned int nFileSize = static_cast<unsigned int>( VSIFTellL( fp ) );
 
     char *pszFileContents = reinterpret_cast<char *>( VSI_MALLOC_VERBOSE(nFileSize+1) );
@@ -110,9 +114,8 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     pszFileContents[nFileSize] = '\0';
 
-    VSIFSeekL( fp, 0, SEEK_SET );
-
-    if( VSIFReadL( pszFileContents, 1, nFileSize, fp ) != nFileSize)
+    if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 ||
+        VSIFReadL( pszFileContents, 1, nFileSize, fp ) != nFileSize)
     {
         CPLFree( pszFileContents );
         CPLError( CE_Failure, CPLE_FileIO, 
@@ -331,33 +334,33 @@ XPMCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write the header lines.                                         */
 /* -------------------------------------------------------------------- */
-    VSIFPrintfL( fpPBM, "/* XPM */\n" );
-    VSIFPrintfL( fpPBM, "static char *%s[] = {\n", 
-             CPLGetBasename( pszFilename ) );
-    VSIFPrintfL( fpPBM, "/* width height num_colors chars_per_pixel */\n" );
+    bool bOK = VSIFPrintfL( fpPBM, "/* XPM */\n" ) >= 0;
+    bOK &= VSIFPrintfL( fpPBM, "static char *%s[] = {\n", 
+             CPLGetBasename( pszFilename ) ) >= 0;
+    bOK &= VSIFPrintfL( fpPBM, "/* width height num_colors chars_per_pixel */\n" ) >= 0;
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
 
-    VSIFPrintfL( fpPBM, "\"  %3d   %3d     %3d             1\",\n",
-             nXSize, nYSize, nActiveColors );
+    bOK &= VSIFPrintfL( fpPBM, "\"  %3d   %3d     %3d             1\",\n",
+             nXSize, nYSize, nActiveColors ) >= 0;
 
-    VSIFPrintfL( fpPBM, "/* colors */\n" );
+    bOK &= VSIFPrintfL( fpPBM, "/* colors */\n" ) >= 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write the color table.                                          */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < nActiveColors; i++ )
+    for( int i = 0; bOK && i < nActiveColors; i++ )
     {
         if( asPixelColor[i].c4 < 128 )
-            VSIFPrintfL( fpPBM, "\"%c c None\",\n", pszColorCodes[i] );
+            bOK &= VSIFPrintfL( fpPBM, "\"%c c None\",\n", pszColorCodes[i] ) >= 0;
         else
-            VSIFPrintfL( fpPBM, 
+            bOK &= VSIFPrintfL( fpPBM, 
                      "\"%c c #%02x%02x%02x\",\n",
                      pszColorCodes[i],
                      asPixelColor[i].c1, 
                      asPixelColor[i].c2, 
-                     asPixelColor[i].c3 );
+                     asPixelColor[i].c3 ) >= 0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -365,7 +368,7 @@ XPMCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     GByte *pabyScanline = reinterpret_cast<GByte *>( CPLMalloc( nXSize ) );
 
-    for( int iLine = 0; iLine < nYSize; iLine++ )
+    for( int iLine = 0; bOK && iLine < nYSize; iLine++ )
     {
         if( poBand->RasterIO(
                GF_Read, 0, iLine, nXSize, 1,
@@ -377,11 +380,11 @@ XPMCreateCopy( const char * pszFilename,
             return NULL;
         }
 
-        VSIFPutcL( '"', fpPBM );
+        bOK &= VSIFPutcL( '"', fpPBM ) >= 0;
         for( int iPixel = 0; iPixel < nXSize; iPixel++ )
-            VSIFPutcL( pszColorCodes[anPixelMapping[pabyScanline[iPixel]]], 
-                   fpPBM);
-        VSIFPrintfL( fpPBM, "\",\n" );
+            bOK &= VSIFPutcL( pszColorCodes[anPixelMapping[pabyScanline[iPixel]]], 
+                   fpPBM) >= 0;
+        bOK &= VSIFPrintfL( fpPBM, "\",\n" ) >= 0;
     }
 
     CPLFree( pabyScanline );
@@ -389,8 +392,11 @@ XPMCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    VSIFPrintfL( fpPBM, "};\n" );
+    bOK &= VSIFPrintfL( fpPBM, "};\n" ) >= 0;
     VSIFCloseL( fpPBM );
+
+    if( !bOK )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxiliary pam information.         */

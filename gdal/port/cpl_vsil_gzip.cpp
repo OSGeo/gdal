@@ -298,14 +298,16 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
     }
     else
     {
-        VSIFSeekL((VSILFILE*)poBaseHandle, 0, SEEK_END);
+        if( VSIFSeekL((VSILFILE*)poBaseHandle, 0, SEEK_END) != 0 )
+            CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
         this->compressed_size = VSIFTellL((VSILFILE*)poBaseHandle) - offset;
         compressed_size = this->compressed_size;
     }
     this->uncompressed_size = uncompressed_size;
     offsetEndCompressedData = offset + compressed_size;
 
-    VSIFSeekL((VSILFILE*)poBaseHandle, offset, SEEK_SET);
+    if( VSIFSeekL((VSILFILE*)poBaseHandle, offset, SEEK_SET) != 0 )
+        CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
 
     m_nLastReadOffset = 0;
     stream.zalloc = (alloc_func)0;
@@ -421,7 +423,8 @@ void VSIGZipHandle::check_header()
         if (VSIFTellL((VSILFILE*)m_poBaseHandle) > offsetEndCompressedData)
         {
             len = len + (uInt) (offsetEndCompressedData - VSIFTellL((VSILFILE*)m_poBaseHandle));
-            VSIFSeekL((VSILFILE*)m_poBaseHandle, offsetEndCompressedData, SEEK_SET);
+            if(VSIFSeekL((VSILFILE*)m_poBaseHandle, offsetEndCompressedData, SEEK_SET) != 0)
+                z_err = Z_DATA_ERROR;
         }
         if (len == 0 /* && ferror(file)*/)
         {
@@ -491,7 +494,8 @@ int VSIGZipHandle::get_byte()
         if (VSIFTellL((VSILFILE*)m_poBaseHandle) > offsetEndCompressedData)
         {
             stream.avail_in = stream.avail_in + (uInt) (offsetEndCompressedData - VSIFTellL((VSILFILE*)m_poBaseHandle));
-            VSIFSeekL((VSILFILE*)m_poBaseHandle, offsetEndCompressedData, SEEK_SET);
+            if( VSIFSeekL((VSILFILE*)m_poBaseHandle, offsetEndCompressedData, SEEK_SET) != 0 )
+                return EOF;
         }
         if (stream.avail_in == 0) {
             z_eof = 1;
@@ -664,7 +668,8 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
                                                         " offset=" CPL_FRMT_GUIB,
                          i, snapshots[i].uncompressed_pos, snapshots[i].in, snapshots[i].out, out, offset);
             offset = out + offset - snapshots[i].out;
-            VSIFSeekL((VSILFILE*)m_poBaseHandle, snapshots[i].uncompressed_pos, SEEK_SET);
+            if( VSIFSeekL((VSILFILE*)m_poBaseHandle, snapshots[i].uncompressed_pos, SEEK_SET) != 0 )
+                CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
             inflateEnd(&stream);
             inflateCopy(&stream, &snapshots[i].stream);
             crc = snapshots[i].crc;
@@ -732,12 +737,12 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
                 CPLPrintUIntBig(szBuffer, compressed_size, 31);
                 pszFirstNonSpace = szBuffer;
                 while (*pszFirstNonSpace == ' ') pszFirstNonSpace ++;
-                VSIFPrintfL(fpCacheLength, "compressed_size=%s\n", pszFirstNonSpace);
+                CPL_IGNORE_RET_VAL(VSIFPrintfL(fpCacheLength, "compressed_size=%s\n", pszFirstNonSpace));
 
                 CPLPrintUIntBig(szBuffer, uncompressed_size, 31);
                 pszFirstNonSpace = szBuffer;
                 while (*pszFirstNonSpace == ' ') pszFirstNonSpace ++;
-                VSIFPrintfL(fpCacheLength, "uncompressed_size=%s\n", pszFirstNonSpace);
+                CPL_IGNORE_RET_VAL(VSIFPrintfL(fpCacheLength, "uncompressed_size=%s\n", pszFirstNonSpace));
 
                 VSIFCloseL(fpCacheLength);
             }
@@ -850,7 +855,8 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize, size_t const n
             {
                 if (ENABLE_DEBUG) CPLDebug("GZIP", "avail_in before = %d", stream.avail_in);
                 stream.avail_in = stream.avail_in + (uInt) (offsetEndCompressedData - VSIFTellL((VSILFILE*)m_poBaseHandle));
-                VSIFSeekL((VSILFILE*)m_poBaseHandle, offsetEndCompressedData, SEEK_SET);
+                if( VSIFSeekL((VSILFILE*)m_poBaseHandle, offsetEndCompressedData, SEEK_SET) != 0 )
+                    CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
                 if (ENABLE_DEBUG) CPLDebug("GZIP", "avail_in after = %d", stream.avail_in);
             }
             if  (stream.avail_in == 0) {

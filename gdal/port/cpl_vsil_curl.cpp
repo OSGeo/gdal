@@ -1665,10 +1665,12 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
         size_t          nSizeCached;
         while(true)
         {
-            if (VSIFReadL(&pszURLHashCached, 1, sizeof(unsigned long), fp) == 0)
+            if (VSIFReadL(&pszURLHashCached, sizeof(unsigned long), 1, fp) == 0)
                 break;
-            VSIFReadL(&nFileOffsetStartCached, 1, sizeof(vsi_l_offset), fp);
-            VSIFReadL(&nSizeCached, 1, sizeof(size_t), fp);
+            if( VSIFReadL(&nFileOffsetStartCached, sizeof(vsi_l_offset), 1, fp) == 0)
+                break;
+            if( VSIFReadL(&nSizeCached, sizeof(size_t), 1, fp) == 0)
+                break;
             if (pszURLHash == pszURLHashCached &&
                 nFileOffsetStart == nFileOffsetStartCached)
             {
@@ -1677,7 +1679,11 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
                 if (nSizeCached)
                 {
                     char* pBuffer = (char*) CPLMalloc(nSizeCached);
-                    VSIFReadL(pBuffer, 1, nSizeCached, fp);
+                    if( VSIFReadL(pBuffer, 1, nSizeCached, fp) != nSizeCached )
+                    {
+                        CPLFree(pBuffer);
+                        break;
+                    }
                     AddRegion(pszURL, nFileOffsetStart, nSizeCached, pBuffer);
                     CPLFree(pBuffer);
                 }
@@ -1690,7 +1696,8 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
             }
             else
             {
-                VSIFSeekL(fp, nSizeCached, SEEK_CUR);
+                if( VSIFSeekL(fp, nSizeCached, SEEK_CUR) != 0 )
+                    break;
             }
         }
         VSIFCloseL(fp);
@@ -1715,8 +1722,10 @@ void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
         {
             if (VSIFReadL(&pszURLHashCached, 1, sizeof(unsigned long), fp) == 0)
                 break;
-            VSIFReadL(&nFileOffsetStartCached, 1, sizeof(vsi_l_offset), fp);
-            VSIFReadL(&nSizeCached, 1, sizeof(size_t), fp);
+            if( VSIFReadL(&nFileOffsetStartCached, sizeof(vsi_l_offset), 1, fp) == 0 )
+                break;
+            if( VSIFReadL(&nSizeCached, sizeof(size_t), 1, fp) == 0 )
+                break;
             if (psRegion->pszURLHash == pszURLHashCached &&
                 psRegion->nFileOffsetStart == nFileOffsetStartCached)
             {
@@ -1726,7 +1735,8 @@ void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
             }
             else
             {
-                VSIFSeekL(fp, nSizeCached, SEEK_CUR);
+                if( VSIFSeekL(fp, nSizeCached, SEEK_CUR) != 0 )
+                    break;
             }
         }
     }
@@ -1738,11 +1748,11 @@ void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
     {
         if (ENABLE_DEBUG)
              CPLDebug("VSICURL", "Write data at offset " CPL_FRMT_GUIB " to disk" , psRegion->nFileOffsetStart);
-        VSIFWriteL(&psRegion->pszURLHash, 1, sizeof(unsigned long), fp);
-        VSIFWriteL(&psRegion->nFileOffsetStart, 1, sizeof(vsi_l_offset), fp);
-        VSIFWriteL(&psRegion->nSize, 1, sizeof(size_t), fp);
+        CPL_IGNORE_RET_VAL(VSIFWriteL(&psRegion->pszURLHash, 1, sizeof(unsigned long), fp));
+        CPL_IGNORE_RET_VAL(VSIFWriteL(&psRegion->nFileOffsetStart, 1, sizeof(vsi_l_offset), fp));
+        CPL_IGNORE_RET_VAL(VSIFWriteL(&psRegion->nSize, 1, sizeof(size_t), fp));
         if (psRegion->nSize)
-            VSIFWriteL(psRegion->pData, 1, psRegion->nSize, fp);
+            CPL_IGNORE_RET_VAL(VSIFWriteL(psRegion->pData, 1, psRegion->nSize, fp));
 
         VSIFCloseL(fp);
     }

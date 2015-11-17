@@ -439,7 +439,8 @@ int  CSLPrint(char **papszStrList, FILE *fpOut)
 
     while(*papszStrList != NULL)
     {
-        VSIFPrintf(fpOut, "%s\n", *papszStrList);
+        if( VSIFPrintf(fpOut, "%s\n", *papszStrList) < 0 )
+            return nLines;
         ++nLines;
         ++papszStrList;
     }

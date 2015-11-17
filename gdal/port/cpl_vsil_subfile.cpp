@@ -337,7 +337,11 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
     poHandle->nSubregionOffset = nOff;
     poHandle->nSubregionSize = nSize;
 
-    VSIFSeekL( fp, nOff, SEEK_SET );
+    if( VSIFSeekL( fp, nOff, SEEK_SET ) != 0 )
+    {
+        delete poHandle;
+        poHandle = NULL;
+    }
 
     return poHandle;
 }

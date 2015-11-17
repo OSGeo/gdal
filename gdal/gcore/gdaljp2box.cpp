@@ -180,9 +180,11 @@ int GDALJP2Box::ReadBox()
 
     if( nBoxLength == 0 )
     {
-        VSIFSeekL( fpVSIL, 0, SEEK_END );
+        if( VSIFSeekL( fpVSIL, 0, SEEK_END ) != 0 )
+            return FALSE;
         nBoxLength = VSIFTellL( fpVSIL ) - nBoxOffset;
-        VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET );
+        if( VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET ) != 0 )
+            return FALSE;
     }
 
     if( EQUAL(szBoxType,"uuid") )
@@ -230,7 +232,8 @@ GByte *GDALJP2Box::ReadBoxData()
         return NULL;
     }
 
-    VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET );
+    if( VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET ) != 0 )
+        return NULL;
     
     char *pszData = (char *) VSI_MALLOC_VERBOSE((int)nDataLength + 1);
     if( pszData == NULL )

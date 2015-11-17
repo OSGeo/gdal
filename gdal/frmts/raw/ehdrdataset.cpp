@@ -304,7 +304,7 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    VSIFReadL( pabyBuffer, 1, nLineBytes, GetFPL() );
+    CPL_IGNORE_RET_VAL(VSIFReadL( pabyBuffer, nLineBytes, 1, GetFPL() ));
 
 /* -------------------------------------------------------------------- */
 /*      Copy data, promoting to 8bit.                                   */
@@ -555,9 +555,14 @@ void EHdrDataset::RewriteColorTable( GDALColorTable *poTable )
                 CPLString oLine;
                 oLine.Printf( "%3d %3d %3d %3d\n",
                               iColor, sEntry.c1, sEntry.c2, sEntry.c3 );
-                VSIFWriteL(
+                if( VSIFWriteL(
                     reinterpret_cast<void *>( const_cast<char *>( oLine.c_str() ) ),
-                    1, strlen(oLine), fp );
+                    strlen(oLine), 1, fp ) != 1 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO, "Error while write color table");
+                    VSIFCloseL( fp );
+                    return;
+                }
             }
             VSIFCloseL( fp );
         }
@@ -617,10 +622,15 @@ CPLErr EHdrDataset::SetProjection( const char *pszSRS )
     VSILFILE *fp = VSIFOpenL( osPrjFilename.c_str(), "wt" );
     if( fp != NULL )
     {
-        VSIFWriteL( pszESRI_SRS, 1, strlen(pszESRI_SRS), fp );
-        VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\n" ) ),
+        size_t nCount = VSIFWriteL( pszESRI_SRS, strlen(pszESRI_SRS), 1, fp );
+        nCount += VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\n" ) ),
                     1, 1, fp );
         VSIFCloseL( fp );
+        if( nCount != 2 )
+        {
+            CPLFree( pszESRI_SRS );
+            return CE_Failure;
+        }
     }
 
     CPLFree( pszESRI_SRS );
@@ -725,9 +735,14 @@ CPLErr EHdrDataset::RewriteHDR()
 
     for( int i = 0; papszHDR[i] != NULL; i++ )
     {
-        VSIFWriteL( papszHDR[i], 1, strlen(papszHDR[i]), fp );
-        VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\n" ) ),
+        size_t nCount = VSIFWriteL( papszHDR[i], strlen(papszHDR[i]), 1, fp );
+        nCount += VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\n" ) ),
                     1, 1, fp );
+        if( nCount != 2 )
+        {
+            VSIFCloseL( fp );
+            return CE_Failure;
+        }
     }
 
     VSIFCloseL( fp );
@@ -758,25 +773,26 @@ CPLErr EHdrDataset::RewriteSTX()
         return CE_Failure;
     }
 
-    for ( int i = 0; i < nBands; ++i )
+    bool bOK = true;
+    for ( int i = 0; bOK && i < nBands; ++i )
     {
         EHdrRasterBand* poBand
             = reinterpret_cast<EHdrRasterBand *>( papoBands[i] );
-        VSIFPrintfL( fp, "%d %.10f %.10f ", i+1, poBand->dfMin, poBand->dfMax );
+        bOK &= VSIFPrintfL( fp, "%d %.10f %.10f ", i+1, poBand->dfMin, poBand->dfMax ) >= 0;
         if ( poBand->minmaxmeanstddev & HAS_MEAN_FLAG )
-            VSIFPrintfL( fp, "%.10f ", poBand->dfMean);
+            bOK &= VSIFPrintfL( fp, "%.10f ", poBand->dfMean) >= 0;
         else
-            VSIFPrintfL( fp, "# ");
+            bOK &= VSIFPrintfL( fp, "# ") >= 0;
 
         if ( poBand->minmaxmeanstddev & HAS_STDDEV_FLAG )
-            VSIFPrintfL( fp, "%.10f\n", poBand->dfStdDev);
+            bOK &= VSIFPrintfL( fp, "%.10f\n", poBand->dfStdDev) >= 0;
         else
-            VSIFPrintfL( fp, "#\n");
+            bOK &= VSIFPrintfL( fp, "#\n") >= 0;
     }
 
     VSIFCloseL( fp );
 
-    return CE_None;
+    return (bOK) ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -1716,9 +1732,11 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 /*      Just write out a couple of bytes to establish the binary        */
 /*      file, and then close it.                                        */
 /* -------------------------------------------------------------------- */
-    VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
-                2, 1, fp );
+    bool bOK = VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
+                2, 1, fp ) == 1;
     VSIFCloseL( fp );
+    if( !bOK )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create the hdr filename.                                        */
@@ -1759,23 +1777,23 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out the raw definition for the dataset as a whole.        */
 /* -------------------------------------------------------------------- */
-    VSIFPrintfL( fp, "BYTEORDER      I\n" );
-    VSIFPrintfL( fp, "LAYOUT         BIL\n" );
-    VSIFPrintfL( fp, "NROWS          %d\n", nYSize );
-    VSIFPrintfL( fp, "NCOLS          %d\n", nXSize );
-    VSIFPrintfL( fp, "NBANDS         %d\n", nBands );
-    VSIFPrintfL( fp, "NBITS          %d\n", nBits );
-    VSIFPrintfL( fp, "BANDROWBYTES   %d\n", nRowBytes );
-    VSIFPrintfL( fp, "TOTALROWBYTES  %d\n", nRowBytes * nBands );
+    bOK &= VSIFPrintfL( fp, "BYTEORDER      I\n" ) >= 0;
+    bOK &= VSIFPrintfL( fp, "LAYOUT         BIL\n" ) >= 0;
+    bOK &= VSIFPrintfL( fp, "NROWS          %d\n", nYSize ) >= 0;
+    bOK &= VSIFPrintfL( fp, "NCOLS          %d\n", nXSize ) >= 0;
+    bOK &= VSIFPrintfL( fp, "NBANDS         %d\n", nBands ) >= 0;
+    bOK &= VSIFPrintfL( fp, "NBITS          %d\n", nBits ) >= 0;
+    bOK &= VSIFPrintfL( fp, "BANDROWBYTES   %d\n", nRowBytes ) >= 0;
+    bOK &= VSIFPrintfL( fp, "TOTALROWBYTES  %d\n", nRowBytes * nBands ) >= 0;
 
     if( eType == GDT_Float32 )
-        VSIFPrintfL( fp, "PIXELTYPE      FLOAT\n");
+        bOK &= VSIFPrintfL( fp, "PIXELTYPE      FLOAT\n") >= 0;
     else if( eType == GDT_Int16 || eType == GDT_Int32 )
-        VSIFPrintfL( fp, "PIXELTYPE      SIGNEDINT\n");
+        bOK &= VSIFPrintfL( fp, "PIXELTYPE      SIGNEDINT\n") >= 0;
     else if( eType == GDT_Byte && EQUAL(pszPixelType,"SIGNEDBYTE") )
-        VSIFPrintfL( fp, "PIXELTYPE      SIGNEDINT\n");
+        bOK &= VSIFPrintfL( fp, "PIXELTYPE      SIGNEDINT\n") >= 0;
     else
-        VSIFPrintfL( fp, "PIXELTYPE      UNSIGNEDINT\n");
+        bOK &= VSIFPrintfL( fp, "PIXELTYPE      UNSIGNEDINT\n") >= 0;
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
@@ -1784,6 +1802,8 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 
     CPLFree( pszHdrFilename );
 
+    if( !bOK )
+        return NULL;
     return
         reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
 }
