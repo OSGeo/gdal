@@ -509,6 +509,11 @@ static bool PushNode( ParseContext *psContext, CPLXMLNode *psNode )
         }
         psContext->papsStack = papsStack;
     }
+#ifdef DEBUG
+    // To make Coverity happy, but cannot happen
+    if( psContext->papsStack == NULL )
+        return false;
+#endif
 
     psContext->papsStack[psContext->nStackSize].psFirstNode = psNode;
     psContext->papsStack[psContext->nStackSize].psLastChild = NULL;
