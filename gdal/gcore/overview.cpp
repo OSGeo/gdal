@@ -3048,8 +3048,9 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
         eWrkType = GDT_Float32;
     }
 
-    if( pafData == NULL )
+    if( nWidth == 0 || pafData == NULL )
     {
+        VSIFree(pafData);
         return CE_Failure;
     }
 
@@ -3058,9 +3059,10 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     double dfSum=0.0;
     double dfSum2=0.0;
+    int iLine = 0;
     int nSamples = 0;
 
-    for( int iLine = 0; iLine < nHeight; iLine += nSampleStep )
+    do
     {
         if( !pfnProgress( iLine / (double) nHeight,
                           NULL, pProgressData ) )
@@ -3100,7 +3102,9 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
         }
 
         nSamples += nWidth;
-    }
+        iLine += nSampleStep;
+
+    } while( iLine < nHeight );
 
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
     {
