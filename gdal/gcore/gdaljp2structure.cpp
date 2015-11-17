@@ -811,9 +811,13 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                                       GIntBig nBoxDataOffset,
                                       GIntBig nBoxDataLength)
 {
-    VSIFSeekL(fp, nBoxDataOffset, SEEK_SET);
     GByte abyMarker[2];
     CPLXMLNode* psCSBox = CPLCreateXMLNode( psBox, CXT_Element, "JP2KCodeStream" );
+    if( VSIFSeekL(fp, nBoxDataOffset, SEEK_SET) != 0 )
+    {
+        AddError(psCSBox, "Cannot read codestream", 0);
+        return psCSBox;
+    }
     GByte* pabyMarkerData = (GByte*)CPLMalloc(65535+1);
     GIntBig nNextTileOffset = 0;
     while( true )
@@ -843,8 +847,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             if( nNextTileOffset == 0 )
             {
                 nMarkerSize = (nBoxDataOffset + nBoxDataLength - 2) - nOffset - 2;
-                VSIFSeekL(fp, nBoxDataOffset + nBoxDataLength - 2, SEEK_SET);
-                if( VSIFReadL(abyMarker, 2, 1, fp) != 1 ||
+                if( VSIFSeekL(fp, nBoxDataOffset + nBoxDataLength - 2, SEEK_SET) != 0 ||
+                    VSIFReadL(abyMarker, 2, 1, fp) != 1 ||
                     abyMarker[0] != 0xFF || abyMarker[1] != 0xD9 )
                 {
                     /* autotest/gdrivers/data/rgb16_ecwsdk.jp2 does not end */
@@ -867,7 +871,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             }
             else if( nNextTileOffset && nNextTileOffset >= nOffset + 2 )
             {
-                VSIFSeekL(fp, nNextTileOffset, SEEK_SET);
+                if( VSIFSeekL(fp, nNextTileOffset, SEEK_SET) != 0 )
+                    AddError(psCSBox, "Cannot seek to", nNextTileOffset);
                 nNextTileOffset = 0;
             }
             else
@@ -1185,7 +1190,11 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             }
         }
 
-        VSIFSeekL(fp, nOffset + 2 + nMarkerSize, SEEK_SET);
+        if( VSIFSeekL(fp, nOffset + 2 + nMarkerSize, SEEK_SET) != 0 )
+        {
+            AddError(psCSBox, "Cannot seek to next marker", nOffset + 2 + nMarkerSize);
+            break;
+        }
     }
     CPLFree(pabyMarkerData);
     return psCSBox;
@@ -1407,10 +1416,12 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
         if( CSLFetchBoolean(papszOptions, "CODESTREAM", FALSE) ||
             CSLFetchBoolean(papszOptions, "ALL", FALSE) )
         {
-            VSIFSeekL(fp, 0, SEEK_END);
-            GIntBig nBoxDataLength = (GIntBig)VSIFTellL(fp);
-            psParent = DumpJPK2CodeStream(NULL, fp, 0, nBoxDataLength);
-            CPLAddXMLAttributeAndValue(psParent, "filename", pszFilename );
+            if( VSIFSeekL(fp, 0, SEEK_END) == 0 )
+            {
+                GIntBig nBoxDataLength = (GIntBig)VSIFTellL(fp);
+                psParent = DumpJPK2CodeStream(NULL, fp, 0, nBoxDataLength);
+                CPLAddXMLAttributeAndValue(psParent, "filename", pszFilename );
+            }
         }
     }
     else

@@ -89,6 +89,8 @@
 
 #include "avc.h"
 
+static void CPL_INLINE CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 #include <ctype.h>  /* tolower() */
 
 /*=====================================================================
@@ -437,16 +439,16 @@ void    AVCBinWriteClose(AVCBinFile *psFile)
                 AVCRawBinWriteZeros(psFile->psRawBinFile, 
                                     512 - psFile->psRawBinFile->nCurPos%512);
                 
-            VSIFSeek(psFile->psRawBinFile->fp, 2, SEEK_SET);
+            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psRawBinFile->fp, 2, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psRawBinFile, n32Size);
 
-            VSIFSeek(psFile->psRawBinFile->fp, 256+24, SEEK_SET);
+            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psRawBinFile->fp, 256+24, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psRawBinFile, n32Size);
         }
         else
         {
             /* V7 Cover ... only 1 header */
-            VSIFSeek(psFile->psRawBinFile->fp, 24, SEEK_SET);
+            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psRawBinFile->fp, 24, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psRawBinFile, n32Size);
         }
     }
@@ -474,16 +476,16 @@ void    AVCBinWriteClose(AVCBinFile *psFile)
                 AVCRawBinWriteZeros(psFile->psIndexFile, 
                                     512 - psFile->psIndexFile->nCurPos%512);
                 
-            VSIFSeek(psFile->psIndexFile->fp, 2, SEEK_SET);
+            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psIndexFile->fp, 2, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psIndexFile, n32Size);
 
-            VSIFSeek(psFile->psIndexFile->fp, 256+24, SEEK_SET);
+            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psIndexFile->fp, 256+24, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psIndexFile, n32Size);
         }
         else
         {
             /* V7 Cover ... only 1 header */
-            VSIFSeek(psFile->psIndexFile->fp, 24, SEEK_SET);
+            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psIndexFile->fp, 24, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psIndexFile, n32Size);
         }
 
@@ -1575,7 +1577,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
      * ARC.DIR does not have a header and we will close it right away.
      *----------------------------------------------------------------*/
     if (bFound)
-        VSIFSeek(hRawBinFile->fp, iEntry*380, SEEK_SET);
+        CPL_IGNORE_RET_VAL_INT(VSIFSeek(hRawBinFile->fp, iEntry*380, SEEK_SET));
     else
     {
         /* Not found... Use the next logical table index */
@@ -1586,7 +1588,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
          * between read and writes... this had never been a problem before
          * on any system except with NT4 network drives.
          */
-        VSIFSeek(hRawBinFile->fp, numDirEntries*380, SEEK_SET);
+        CPL_IGNORE_RET_VAL_INT(VSIFSeek(hRawBinFile->fp, numDirEntries*380, SEEK_SET));
     }
 
     sprintf(psTableDef->szInfoFile, "ARC%4.4d", nTableIndex);
@@ -1845,7 +1847,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
         fpOut = VSIFOpen(pszFname, "wt");
         if (fpOut)
         {
-            VSIFPrintf(fpOut, "%-80.80s", psTableDef->szDataFile);
+            CPL_IGNORE_RET_VAL_INT(VSIFPrintf(fpOut, "%-80.80s", psTableDef->szDataFile));
             VSIFClose(fpOut);
         }
         else

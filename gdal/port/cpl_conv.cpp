@@ -394,7 +394,8 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
         nActuallyRead = static_cast<int>(pszExtraNewline - pszBuffer + 1);
 
         *pszExtraNewline = '\0';
-        VSIFSeek( fp, nOriginalOffset + nActuallyRead - 1, SEEK_SET );
+        if( VSIFSeek( fp, nOriginalOffset + nActuallyRead - 1, SEEK_SET ) != 0)
+            return NULL;
 
         /*
          * This hackery is necessary to try and find our correct
@@ -745,7 +746,8 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
     {
         const size_t nBytesToPush = nChunkBytesRead - nChunkBytesConsumed;
 
-        VSIFSeekL( fp, VSIFTellL( fp ) - nBytesToPush, SEEK_SET );
+        if( VSIFSeekL( fp, VSIFTellL( fp ) - nBytesToPush, SEEK_SET ) != 0 )
+            return NULL;
     }
 
     pszRLBuffer[nBufLength] = '\0';

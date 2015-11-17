@@ -1731,10 +1731,10 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
     if( fpTFW == NULL )
         return FALSE;
 
-    VSIFWriteL( (void *) osTFWText.c_str(), 1, osTFWText.size(), fpTFW );
+    int bRet = ( VSIFWriteL( (void *) osTFWText.c_str(), osTFWText.size(), 1, fpTFW ) == 1 );
     VSIFCloseL( fpTFW );
 
-    return TRUE;
+    return bRet;
 }
 
 /************************************************************************/
@@ -1811,13 +1811,16 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 
         if( fp != NULL )
         {
-            VSIFSeekL( fp, 0, SEEK_END );
-            nLength = (int) VSIFTellL( fp ) + 1;
-            VSIFSeekL( fp, SEEK_SET, 0 );
-
-            pszResultLicence = (char *) VSICalloc(1,nLength);
-            if (pszResultLicence)
-                VSIFReadL( pszResultLicence, 1, nLength-1, fp );
+            if( VSIFSeekL( fp, 0, SEEK_END ) == 0 )
+            {
+                nLength = (int) VSIFTellL( fp ) + 1;
+                if( VSIFSeekL( fp, SEEK_SET, 0 ) == 0 )
+                {
+                    pszResultLicence = (char *) VSICalloc(1,nLength);
+                    if (pszResultLicence)
+                        CPL_IGNORE_RET_VAL(VSIFReadL( pszResultLicence, 1, nLength-1, fp ));
+                }
+            }
 
             VSIFCloseL( fp );
         }

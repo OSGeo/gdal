@@ -287,11 +287,19 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
 /* -------------------------------------------------------------------- */
     fp = VSIFOpen( pszMetadataFilename, "rb" );
     if( fp == NULL )
-        return OGRERR_NONE;
+        return OGRERR_FAILURE;
 
-    VSIFSeek( fp, 0, SEEK_END );
+    if( VSIFSeek( fp, 0, SEEK_END ) != 0 )
+    {
+        VSIFClose(fp);
+        return OGRERR_FAILURE;
+    }
     nXMLSize = VSIFTell( fp );
-    VSIFSeek( fp, 0, SEEK_SET );
+    if( VSIFSeek( fp, 0, SEEK_SET ) != 0 )
+    {
+        VSIFClose(fp);
+        return OGRERR_FAILURE;
+    }
 
     pszRawXML = (char *) CPLMalloc(nXMLSize+1);
     pszRawXML[nXMLSize] = '\0';

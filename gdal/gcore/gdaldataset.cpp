@@ -2995,7 +2995,7 @@ static int GDALDumpOpenSharedDatasetsForeach(void* elt, void* user_data)
         pszDriverName = poDS->GetDriver()->GetDescription();
 
     poDS->Reference();
-    VSIFPrintf( fp, "  %d %c %-6s %7d %dx%dx%d %s\n", 
+    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "  %d %c %-6s %7d %dx%dx%d %s\n", 
                 poDS->Dereference(), 
                 poDS->GetShared() ? 'S' : 'N',
                 pszDriverName, 
@@ -3003,7 +3003,7 @@ static int GDALDumpOpenSharedDatasetsForeach(void* elt, void* user_data)
                 poDS->GetRasterXSize(),
                 poDS->GetRasterYSize(),
                 poDS->GetRasterCount(),
-                poDS->GetDescription() );
+                poDS->GetDescription() ));
 
     return TRUE;
 }
@@ -3024,7 +3024,7 @@ static int GDALDumpOpenDatasetsForeach(GDALDataset* poDS, FILE *fp)
         pszDriverName = poDS->GetDriver()->GetDescription();
 
     poDS->Reference();
-    VSIFPrintf( fp, "  %d %c %-6s %7d %dx%dx%d %s\n", 
+    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "  %d %c %-6s %7d %dx%dx%d %s\n", 
                 poDS->Dereference(), 
                 poDS->GetShared() ? 'S' : 'N',
                 pszDriverName, 
@@ -3032,7 +3032,7 @@ static int GDALDumpOpenDatasetsForeach(GDALDataset* poDS, FILE *fp)
                 poDS->GetRasterXSize(),
                 poDS->GetRasterYSize(),
                 poDS->GetRasterCount(),
-                poDS->GetDescription() );
+                poDS->GetDescription() ));
 
     return TRUE;
 }
@@ -3056,7 +3056,7 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
 
     if (poAllDatasetMap != NULL)
     {
-        VSIFPrintf( fp, "Open GDAL Datasets:\n" );
+        CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "Open GDAL Datasets:\n" ));
         std::map<GDALDataset*, GIntBig>::iterator oIter = poAllDatasetMap->begin();
         for(; oIter != poAllDatasetMap->end(); ++oIter )
         {

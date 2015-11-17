@@ -233,7 +233,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
             if( fp )
             {
                 GByte* pabyRet = NULL;
-                VSIIngestFile( fp, pszLayerMapping, &pabyRet, NULL, -1);
+                CPL_IGNORE_RET_VAL(VSIIngestFile( fp, pszLayerMapping, &pabyRet, NULL, -1));
                 if( pabyRet )
                 {
                     osLayerMapping = (char*)pabyRet;
@@ -534,7 +534,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
         if( fp )
         {
             GByte* pabyRet = NULL;
-            VSIIngestFile( fp, pszMetaFile, &pabyRet, NULL, -1);
+            CPL_IGNORE_RET_VAL(VSIIngestFile( fp, pszMetaFile, &pabyRet, NULL, -1));
             if( pabyRet )
             {
                 this->m_pszMapping = (char*)pabyRet;

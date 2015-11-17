@@ -389,10 +389,12 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
     else
         sprintf( szHeader, "P5\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
 
-    VSIFWriteL( reinterpret_cast<void *>( szHeader ),
-                strlen(szHeader) + 2, 1, fp );
+    bool bOK = VSIFWriteL( reinterpret_cast<void *>( szHeader ),
+                strlen(szHeader) + 2, 1, fp ) == 1;
     VSIFCloseL( fp );
 
+    if( !bOK )
+        return NULL;
     return reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
 }
 

@@ -818,7 +818,11 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
 /*      long.                                                           */
 /* -------------------------------------------------------------------- */
 
-    VSIFReadL( abyData, 1, 308, fp );
+    if( VSIFReadL( abyData, 1, 308, fp ) != 308 )
+    {
+        VSIFCloseL( fp );
+        return( CE_Failure );
+    }
 
     VSIFCloseL( fp );
     
@@ -892,7 +896,11 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /*      Verify the magic number.  This is often corrupted by CR/LF      */
 /*      translation.                                                    */
 /* -------------------------------------------------------------------- */
-    VSIFReadL( abyHeader, 1, 8, fp );
+    if( VSIFReadL( abyHeader, 1, 8, fp ) != 8 )
+    {
+        VSIFCloseL( fp );
+        return CE_Failure;
+    }
     if( abyHeader[3] == 0x0D && abyHeader[4] == 0x0A )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -917,8 +925,12 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /* -------------------------------------------------------------------- */
 /*      Get the file length (in 2 byte shorts)                          */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( fp, 24, SEEK_SET );
-    VSIFReadL( &nValue, 1, 4, fp );
+    if( VSIFSeekL( fp, 24, SEEK_SET ) != 0 ||
+        VSIFReadL( &nValue, 1, 4, fp ) != 4 )
+    {
+        VSIFCloseL( fp );
+        return CE_Failure;
+    }
 
     // FIXME? : risk of overflow in multiplication
     nLength = CPL_MSBWORD32(nValue) * 2;
@@ -934,8 +946,8 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
         VSIFCloseL( fp );
         return CE_Failure;
     }
-    VSIFSeekL( fp, 100, SEEK_SET );
-    if ((int)VSIFReadL( panIndex, 8, psTInfo->nBlocks, fp ) != psTInfo->nBlocks)
+    if( VSIFSeekL( fp, 100, SEEK_SET ) != 0 ||
+        (int)VSIFReadL( panIndex, 8, psTInfo->nBlocks, fp ) != psTInfo->nBlocks)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "AIGReadBlockIndex: Cannot read block info");
@@ -1010,7 +1022,11 @@ CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
 /*      Get the contents - four doubles.                                */
 /* -------------------------------------------------------------------- */
-    VSIFReadL( adfBound, 1, 32, fp );
+    if( VSIFReadL( adfBound, 1, 32, fp ) != 32 )
+    {
+        VSIFCloseL( fp );
+        return CE_Failure;
+    }
 
     VSIFCloseL( fp );
 
@@ -1070,7 +1086,11 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
 /*      Get the contents - four doubles.                                */
 /* -------------------------------------------------------------------- */
-    VSIFReadL( adfStats, 1, 32, fp );
+    if( VSIFReadL( adfStats, 1, 32, fp ) != 32 )
+    {
+        VSIFCloseL( fp );
+        return CE_Failure;
+    }
 
     VSIFCloseL( fp );
 

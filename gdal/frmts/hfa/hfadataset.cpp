@@ -985,7 +985,8 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             }
             else
             {
-                VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET );
+                if(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+                    return CE_Failure;
 
                 if( eRWFlag == GF_Read )
                 {
@@ -1110,7 +1111,8 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
     {
         case GFT_Integer:
         {
-            VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET );
+            if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+                return CE_Failure;
             GInt32 *panColData = (GInt32*)VSI_MALLOC2_VERBOSE(iLength, sizeof(GInt32));
             if( panColData == NULL )
             {
@@ -1379,7 +1381,8 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         break;
         case GFT_String:
         {
-            VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET );
+            if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+                return CE_Failure;
             char *pachColData = (char*)VSI_MALLOC2_VERBOSE(iLength, aoFields[iField].nElementSize);
             if( pachColData == NULL )
             {
@@ -1426,15 +1429,23 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                     for( int i = 0; i < this->nRows; i++ )
                     {
                         // seek to the old place
-                        VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (i*aoFields[iField].nElementSize), SEEK_SET );
+                        CPL_IGNORE_RET_VAL(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (i*aoFields[iField].nElementSize), SEEK_SET ));
                         // read in old data
-                        VSIFReadL(pszBuffer, aoFields[iField].nElementSize, 1, hHFA->fp );
+                        CPL_IGNORE_RET_VAL(VSIFReadL(pszBuffer, aoFields[iField].nElementSize, 1, hHFA->fp ));
                         // seek to new place
-                        VSIFSeekL( hHFA->fp, nNewOffset + (i*nNewMaxChars), SEEK_SET );
+                        bool bOK = VSIFSeekL( hHFA->fp, nNewOffset + (i*nNewMaxChars), SEEK_SET ) == 0;
                         // write data to new place
-                        VSIFWriteL(pszBuffer, aoFields[iField].nElementSize, 1, hHFA->fp);
+                        bOK &= VSIFWriteL(pszBuffer, aoFields[iField].nElementSize, 1, hHFA->fp) == 1;
                         // make sure there is a terminating null byte just to be safe
-                        VSIFWriteL(&cNullByte, sizeof(char), 1, hHFA->fp);
+                        bOK &= VSIFWriteL(&cNullByte, sizeof(char), 1, hHFA->fp) == 1;
+                        if( !bOK )
+                        {
+                            CPLFree(pszBuffer);
+                            CPLFree(pachColData);
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                "HFARasterAttributeTable::ValuesIO : Cannot write values");
+                            return CE_Failure;
+                        }
                     }
                     // update our data structures
                     aoFields[iField].nElementSize = nNewMaxChars;
@@ -1455,7 +1466,8 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                     }
 
                     // lastly seek to the right place in the new space ready to write
-                    VSIFSeekL( hHFA->fp, nNewOffset + (iStartRow*nNewMaxChars), SEEK_SET );
+                    if( VSIFSeekL( hHFA->fp, nNewOffset + (iStartRow*nNewMaxChars), SEEK_SET ) != 0 )
+                        return CE_Failure;
                 }
 
                 // copy from application buffer
@@ -1503,7 +1515,11 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iSt
             padfData[i] = pnData[i] / 255.0;
     }
 
-    VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET );
+    if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+    {
+        CPLFree(padfData);
+        return CE_Failure;
+    }
 
     if( eRWFlag == GF_Read )
     {
@@ -1511,6 +1527,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iSt
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                 "HFARasterAttributeTable::ColorsIO : Cannot read values");
+            CPLFree(padfData);
             return CE_Failure;
         }
 #ifdef CPL_MSB
@@ -1527,6 +1544,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iSt
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                 "HFARasterAttributeTable::ColorsIO : Cannot write values");
+            CPLFree(padfData);
             return CE_Failure;
         }
     }
@@ -1586,8 +1604,8 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
                     return;
                 }
                 // read old data
-                VSIFSeekL( hHFA->fp, aoFields[iCol].nDataOffset, SEEK_SET );
-                if((int)VSIFReadL(pData, aoFields[iCol].nElementSize, this->nRows, hHFA->fp) != this->nRows )
+                if( VSIFSeekL( hHFA->fp, aoFields[iCol].nDataOffset, SEEK_SET ) != 0 ||
+                    (int)VSIFReadL(pData, aoFields[iCol].nElementSize, this->nRows, hHFA->fp) != this->nRows )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                         "HFARasterAttributeTable::SetRowCount : Cannot read values");
@@ -1596,8 +1614,8 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
                 }
 
                 // write data - new space will be uninitialised
-                VSIFSeekL( hHFA->fp, nNewOffset, SEEK_SET );
-                if((int)VSIFWriteL(pData, aoFields[iCol].nElementSize, this->nRows, hHFA->fp) != this->nRows )
+                if( VSIFSeekL( hHFA->fp, nNewOffset, SEEK_SET ) != 0 ||
+                    (int)VSIFWriteL(pData, aoFields[iCol].nElementSize, this->nRows, hHFA->fp) != this->nRows )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                             "HFARasterAttributeTable::SetRowCount : Cannot write values");
@@ -2203,9 +2221,8 @@ void HFARasterBand::ReadHistogramMetadata()
         return;
     }
 
-    VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-
-    if( (int)VSIFReadL( pabyWorkBuf, nBinSize, nNumBins, hHFA->fp ) != nNumBins)
+    if( VSIFSeekL( hHFA->fp, nOffset, SEEK_SET ) != 0 ||
+        (int)VSIFReadL( pabyWorkBuf, nBinSize, nNumBins, hHFA->fp ) != nNumBins)
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Cannot read histogram values." );
@@ -3102,8 +3119,13 @@ CPLErr HFARasterBand::WriteNamedRAT( CPL_UNUSED const char *pszName,
 #ifdef CPL_MSB
             GDALSwapWords( padfColData, 8, nRowCount, 8 );
 #endif
-            VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-            VSIFWriteL( padfColData, nRowCount, sizeof(double), hHFA->fp );
+            if( VSIFSeekL( hHFA->fp, nOffset, SEEK_SET ) != 0 ||
+                VSIFWriteL( padfColData, nRowCount, sizeof(double), hHFA->fp ) != sizeof(double) )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "WriteNamedRAT() failed");
+                CPLFree( padfColData );
+                return CE_Failure;
+            }
             CPLFree( padfColData );
         }
         else if( poRAT->GetTypeOfCol(col) == GFT_String )
@@ -3131,8 +3153,13 @@ CPLErr HFARasterBand::WriteNamedRAT( CPL_UNUSED const char *pszName,
             {
                 strcpy(&pachColData[nMaxNumChars*i],poRAT->GetValueAsString(i,col));
             }
-            VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-            VSIFWriteL( pachColData, nRowCount, nMaxNumChars, hHFA->fp );
+            if( VSIFSeekL( hHFA->fp, nOffset, SEEK_SET ) != 0 ||
+                VSIFWriteL( pachColData, nRowCount, nMaxNumChars, hHFA->fp ) != nMaxNumChars )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "WriteNamedRAT() failed");
+                CPLFree( pachColData );
+                return CE_Failure;
+            }
             CPLFree( pachColData );
         }
         else if (poRAT->GetTypeOfCol(col) == GFT_Integer)
@@ -3150,8 +3177,13 @@ CPLErr HFARasterBand::WriteNamedRAT( CPL_UNUSED const char *pszName,
 #ifdef CPL_MSB
             GDALSwapWords( panColData, 4, nRowCount, 4 );
 #endif
-            VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-            VSIFWriteL( panColData, nRowCount, sizeof(GInt32), hHFA->fp );
+            if( VSIFSeekL( hHFA->fp, nOffset, SEEK_SET ) != 0 ||
+                VSIFWriteL( panColData, nRowCount, sizeof(GInt32), hHFA->fp ) != sizeof(GInt32) )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "WriteNamedRAT() failed");
+                CPLFree( panColData );
+                return CE_Failure;
+            }
             CPLFree( panColData );
         }
         else

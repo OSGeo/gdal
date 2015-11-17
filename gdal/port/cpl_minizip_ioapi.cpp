@@ -74,7 +74,6 @@ static
 long ZCALLBACK fseek_file_func (CPL_UNUSED voidpf  opaque, voidpf stream, uLong64 offset, int origin)
 {
     int fseek_origin=0;
-    long ret;
     switch (origin)
     {
     case ZLIB_FILEFUNC_SEEK_CUR :
@@ -88,9 +87,7 @@ long ZCALLBACK fseek_file_func (CPL_UNUSED voidpf  opaque, voidpf stream, uLong6
         break;
     default: return -1;
     }
-    ret = 0;
-    VSIFSeekL((VSILFILE *)stream, offset, fseek_origin);
-    return ret;
+    return VSIFSeekL((VSILFILE *)stream, offset, fseek_origin);
 }
 
 static

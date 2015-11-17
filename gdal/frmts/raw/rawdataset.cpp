@@ -248,12 +248,15 @@ CPLErr RawRasterBand::FlushCache()
     // If we have unflushed raw, flush it to disk now.
     if ( bDirty )
     {
+        int nRet = 0;
         if( bIsVSIL )
-            VSIFFlushL( fpRawL );
+            nRet = VSIFFlushL( fpRawL );
         else
-            VSIFFlush( fpRaw );
+            /*nRet = */VSIFFlush( fpRaw );
 
         bDirty = FALSE;
+        if( nRet < 0 )
+            return CE_Failure;
     }
 
     return CE_None;

@@ -861,9 +861,17 @@ char* CPLLoadContentFromFile(const char* pszFilename)
     if (fp == NULL)
         return NULL;
     vsi_l_offset nSize;
-    VSIFSeekL(fp, 0, SEEK_END);
+    if( VSIFSeekL(fp, 0, SEEK_END) != 0 )
+    {
+        VSIFCloseL(fp);
+        return NULL;
+    }
     nSize = VSIFTellL(fp);
-    VSIFSeekL(fp, 0, SEEK_SET);
+    if( VSIFSeekL(fp, 0, SEEK_SET) != 0 )
+    {
+        VSIFCloseL(fp);
+        return NULL;
+    }
     if ((vsi_l_offset)(int)nSize != nSize ||
         nSize > INT_MAX - 1 )
     {
@@ -876,7 +884,12 @@ char* CPLLoadContentFromFile(const char* pszFilename)
         VSIFCloseL(fp);
         return NULL;
     }
-    VSIFReadL(pszBuffer, 1, nSize, fp);
+    if( VSIFReadL(pszBuffer, 1, nSize, fp) != (size_t)nSize )
+    {
+        VSIFree(pszBuffer);
+        VSIFCloseL(fp);
+        return NULL;
+    }
     pszBuffer[nSize] = '\0';
     VSIFCloseL(fp);
     return pszBuffer;
@@ -1034,12 +1047,12 @@ int CPLValidateXML(const char* pszXMLFilename,
             osTmpXSDFilename = CPLSPrintf("/vsimem/CPLValidateXML_%p_%p.xsd", pszXMLFilename, pszXSDFilename);
             char* pszEscapedXSDFilename = CPLEscapeString(pszXSDFilename, -1, CPLES_XML);
             VSILFILE* fpMEM = VSIFOpenL(osTmpXSDFilename, "wb");
-            VSIFPrintfL(fpMEM, "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n");
-            VSIFPrintfL(fpMEM, "   <xs:import namespace=\"%s\" schemaLocation=\"%s\"/>\n", pszWFSSchemaNamespace, pszWFSSchemaLocation);
-            VSIFPrintfL(fpMEM, "   <xs:import namespace=\"ignored\" schemaLocation=\"%s\"/>\n", pszEscapedXSDFilename);
+            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n"));
+            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "   <xs:import namespace=\"%s\" schemaLocation=\"%s\"/>\n", pszWFSSchemaNamespace, pszWFSSchemaLocation));
+            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "   <xs:import namespace=\"ignored\" schemaLocation=\"%s\"/>\n", pszEscapedXSDFilename));
             if (pszGMLSchemaLocation)
-                VSIFPrintfL(fpMEM, "   <xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"%s\"/>\n", pszGMLSchemaLocation);
-            VSIFPrintfL(fpMEM, "</xs:schema>\n");
+                CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "   <xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"%s\"/>\n", pszGMLSchemaLocation));
+            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "</xs:schema>\n"));
             VSIFCloseL(fpMEM);
             CPLFree(pszEscapedXSDFilename);
         }

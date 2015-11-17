@@ -415,8 +415,8 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
             unsigned char *data = (unsigned char *)VSIMalloc(space);
 
             if (data) {
-                VSIFSeekL(fp,poTIFFDirEntry->tdir_offset+nTIFFHEADER,SEEK_SET);
-                VSIFReadL(data, 1, space, fp);
+                CPL_IGNORE_RET_VAL(VSIFSeekL(fp,poTIFFDirEntry->tdir_offset+nTIFFHEADER,SEEK_SET));
+                CPL_IGNORE_RET_VAL(VSIFReadL(data, 1, space, fp));
 
                 if (bSwabflag) {
                     switch (poTIFFDirEntry->tdir_type) {

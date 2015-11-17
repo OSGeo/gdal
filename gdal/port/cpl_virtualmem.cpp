@@ -1894,14 +1894,15 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
     /* We need to ensure that the requested extent fits into the file size */
     /* otherwise SIGBUS errors will occur when using the mapping */
     vsi_l_offset nCurPos = VSIFTellL(fp);
-    VSIFSeekL(fp, 0, SEEK_END);
+    if( VSIFSeekL(fp, 0, SEEK_END) != 0 )
+        return NULL;
     vsi_l_offset nFileSize = VSIFTellL(fp);
     if( nFileSize < nOffset + nLength )
     {
         if( eAccessMode != VIRTUALMEM_READWRITE )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Trying to map an extent outside of the file");
-            VSIFSeekL(fp, nCurPos, SEEK_SET);
+            CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nCurPos, SEEK_SET));
             return NULL;
         }
         else
@@ -1911,12 +1912,13 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
                 VSIFWriteL(&ch, 1, 1, fp) != 1 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot extend file to mapping size");
-                VSIFSeekL(fp, nCurPos, SEEK_SET);
+                CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nCurPos, SEEK_SET));
                 return NULL;
             }
         }
     }
-    VSIFSeekL(fp, nCurPos, SEEK_SET);
+    if( VSIFSeekL(fp, nCurPos, SEEK_SET) != 0 )
+        return NULL;
 
     CPLVirtualMem* ctxt = (CPLVirtualMem* )VSI_CALLOC_VERBOSE(1, sizeof(CPLVirtualMem));
     if( ctxt == NULL )

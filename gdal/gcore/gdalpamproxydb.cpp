@@ -110,6 +110,7 @@ void GDALPamProxyDB::LoadDB()
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Problem reading %s header - short or corrupt?", 
                   osDBName.c_str() );
+        VSIFCloseL(fpDB);
         return;
     }
 
@@ -121,12 +122,24 @@ void GDALPamProxyDB::LoadDB()
     int nBufLength;
     char *pszDBData;
 
-    VSIFSeekL( fpDB, 0, SEEK_END );
+    if( VSIFSeekL( fpDB, 0, SEEK_END ) != 0 )
+    {
+        VSIFCloseL(fpDB);
+        return;
+    }
     nBufLength = (int) (VSIFTellL(fpDB) - 100);
-
+    if( VSIFSeekL( fpDB, 100, SEEK_SET ) != 0 )
+    {
+        VSIFCloseL(fpDB);
+        return;
+    }
     pszDBData = (char *) CPLCalloc(1,nBufLength+1);
-    VSIFSeekL( fpDB, 100, SEEK_SET );
-    VSIFReadL( pszDBData, 1, nBufLength, fpDB );
+    if( VSIFReadL( pszDBData, 1, nBufLength, fpDB ) != (size_t)nBufLength )
+    {
+        CPLFree(pszDBData);
+        VSIFCloseL(fpDB);
+        return;
+    }
 
     VSIFCloseL( fpDB );
 
@@ -207,24 +220,34 @@ void GDALPamProxyDB::SaveDB()
     memcpy( (char *) abyHeader, "GDAL_PROXY", 10 );
     snprintf( (char *) abyHeader + 10, sizeof(abyHeader) - 10, "%9d", nUpdateCounter );
 
-    VSIFWriteL( abyHeader, 1, 100, fpDB );
+    if( VSIFWriteL( abyHeader, 1, 100, fpDB ) != 100 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Failed to write complete %s Pam Proxy DB.\n%s",
+                    osDBName.c_str(), 
+                    VSIStrerror( errno ) );
+        VSIFCloseL( fpDB );
+        VSIUnlink( osDBName );
+        if( hLock )
+            CPLUnlockFile( hLock );
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write names.                                                    */
 /* -------------------------------------------------------------------- */
     for( unsigned int i = 0; i < aosOriginalFiles.size(); i++ )
     {
-        size_t nBytesWritten;
         const char *pszProxyFile;
 
-        VSIFWriteL( aosOriginalFiles[i].c_str(), 1, 
-                    strlen(aosOriginalFiles[i].c_str())+1, fpDB );
+        size_t nCount = VSIFWriteL( aosOriginalFiles[i].c_str(), 
+                    strlen(aosOriginalFiles[i].c_str())+1, 1, fpDB );
 
         pszProxyFile = CPLGetFilename(aosProxyFiles[i]);
-        nBytesWritten = VSIFWriteL( pszProxyFile, 1, 
-                                    strlen(pszProxyFile)+1, fpDB );
+        nCount += VSIFWriteL( pszProxyFile, 
+                                    strlen(pszProxyFile)+1, 1, fpDB );
 
-        if( nBytesWritten != strlen(pszProxyFile)+1 )
+        if( nCount != 2 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Failed to write complete %s Pam Proxy DB.\n%s",

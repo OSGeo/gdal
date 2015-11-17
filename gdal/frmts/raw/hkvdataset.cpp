@@ -1567,9 +1567,11 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
         return NULL;
     }
 
-    VSIFWrite( reinterpret_cast<void *>( const_cast<char *>( "" ) ), 1, 1, fp );
+    bool bOK = VSIFWrite( reinterpret_cast<void *>( const_cast<char *>( "" ) ), 1, 1, fp ) == 1;
     VSIFClose( fp );
 
+    if( !bOK )
+        return NULL;
 /* -------------------------------------------------------------------- */
 /*      Open the dataset normally.                                      */
 /* -------------------------------------------------------------------- */
