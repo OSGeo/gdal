@@ -327,9 +327,10 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
     }
 
     poSrcPoint = (OGRPoint *) poMPGeom->getGeometryRef( iPointOffset++ );
+    CPLAssert( poSrcPoint != NULL );
     poPoint->SetGeometry( poSrcPoint );
 
-    if( poPoint != NULL && (nOptionFlags & S57M_ADD_SOUNDG_DEPTH) )
+    if( (nOptionFlags & S57M_ADD_SOUNDG_DEPTH) )
         poPoint->SetField( "DEPTH", poSrcPoint->getZ() );
 
     if( iPointOffset >= poMPGeom->getNumGeometries() )
