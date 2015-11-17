@@ -3957,19 +3957,16 @@ int GDALPDFWriter::WriteJavascript(const char* pszJavascript)
     VSIFPrintfL(fp, "stream\n");
     vsi_l_offset nStreamStart = VSIFTellL(fp);
 
-    VSILFILE* fpGZip = NULL;
-    VSILFILE* fpBack = fp;
     if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
     {
-        fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
-        fp = fpGZip;
+        VSILFILE* fpTemp = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
+        VSIFWriteL(pszJavascript, strlen(pszJavascript), 1, fpTemp);
+        VSIFCloseL(fpTemp);
     }
-
-    VSIFWriteL(pszJavascript, strlen(pszJavascript), 1, fp);
-
-    if (fpGZip)
-        VSIFCloseL(fpGZip);
-    fp = fpBack;
+    else
+    {
+        VSIFWriteL(pszJavascript, strlen(pszJavascript), 1, fp);
+    }
 
     vsi_l_offset nStreamEnd = VSIFTellL(fp);
     VSIFPrintfL(fp,
