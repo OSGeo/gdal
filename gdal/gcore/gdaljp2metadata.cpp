@@ -224,13 +224,13 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                 else if( EQUAL(oSubChildBox.GetType(),"xml ") )
                 {
                     pszXML = (char *) oSubChildBox.ReadBoxData();
+                    GIntBig nXMLLength = oSubChildBox.GetDataLength();
 
                     // Some GML data contains \0 instead of \n !
                     // See http://trac.osgeo.org/gdal/ticket/5760
-                    if( pszXML )
+                    if( pszXML != NULL && nXMLLength < 100 * 1024 * 1024 )
                     {
-                        int nXMLLength = (int)oSubChildBox.GetDataLength();
-                        int i;
+                        GIntBig i;
                         for(i=nXMLLength-1; i >= 0; i--)
                         {
                             if( pszXML[i] == '\0' )
