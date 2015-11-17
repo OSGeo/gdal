@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.194 2015-11-17 12:17:31 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.195 2015-11-17 16:21:02 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3759,6 +3759,7 @@ TIFFReadDirectory(TIFF* tif)
 					/* used as a denial of service vector */
 					if (tif->tif_dir.td_bitspersample > 24)
 					{
+					    fip = TIFFFieldWithTag(tif,dp->tdir_tag);
 					    TIFFWarningExt(tif->tif_clientdata,module,
 						"Ignoring %s because BitsPerSample=%d>24",
 						fip ? fip->field_name : "unknown tagname",
