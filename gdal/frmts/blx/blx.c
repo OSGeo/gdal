@@ -1299,7 +1299,8 @@ short *blx_readcell(blxcontext_t *ctx, int row, int col, short *buffer, int bufs
 	for(i=0; i<npoints; i++)
 	    buffer[i] = BLX_UNDEF;
     } else {
-	BLXfseek(ctx->fh, ci->offset, SEEK_SET);
+	if(BLXfseek(ctx->fh, ci->offset, SEEK_SET) != 0)
+            goto error;
 
 	chunk = BLXmalloc(ci->datasize);
 	cchunk = BLXmalloc(ci->compdatasize);
