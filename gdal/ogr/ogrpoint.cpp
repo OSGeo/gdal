@@ -441,7 +441,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
         nCoordDimension = 2;
 
     *ppszInput = (char *) pszInput;
-    
+
     return OGRERR_NONE;
 }
 
@@ -449,7 +449,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 /*                            exportToWkt()                             */
 /*                                                                      */
 /*      Translate this structure into it's well known text format       */
-/*      equivelent.                                                     */
+/*      equivalent.                                                     */
 /************************************************************************/
 
 OGRErr OGRPoint::exportToWkt( char ** ppszDstText,

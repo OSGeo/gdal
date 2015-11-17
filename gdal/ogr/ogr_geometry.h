@@ -519,7 +519,7 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
 /**
  * Concrete representation of a closed ring.
  *
- * This class is functionally equivelent to an OGRLineString, but has a
+ * This class is functionally equivalent to an OGRLineString, but has a
  * separate identity to maintain alignment with the OpenGIS simple feature
  * data model.  It exists to serve as a component of an OGRPolygon.  
  *
@@ -529,7 +529,7 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
  *
  * Because OGRLinearRing is not a "proper" free standing simple features 
  * object, it cannot be directly used on a feature via SetGeometry(), and
- * cannot genearally be used with GEOS for operations like Intersects(). 
+ * cannot generally be used with GEOS for operations like Intersects(). 
  * Instead the polygon should be used, or the OGRLinearRing should be
  * converted to an OGRLineString for such operations. 
  *

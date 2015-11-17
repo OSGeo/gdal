@@ -199,7 +199,7 @@ class CPG_STOKESRasterBand : public GDALRasterBand
 /*                           AdjustFilename()                           */
 /*                                                                      */
 /*      Try to find the file with the request polarization and          */
-/*      extention and update the passed filename accordingly.           */
+/*      extension and update the passed filename accordingly.           */
 /*                                                                      */
 /*      Return TRUE if file found otherwise FALSE.                      */
 /************************************************************************/

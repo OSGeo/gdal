@@ -1596,21 +1596,21 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
 	  int iPart;
 
           CPLAssert( nPartCount == nSubPartCount );
-              
+
           for( iPart = 0; iPart < nPartCount; iPart++ )
           {
               OGRLineString *poLine = new OGRLineString();
               int i, nLineVertCount;
 
-              CPLAssert( panParts[iPart] == iPart ); // 1:1 correspondance
-          
+              CPLAssert( panParts[iPart] == iPart ); // 1:1 correspondence
+
               if( iPart == nPartCount-1 )
                   nLineVertCount = nPointCount - panSubParts[iPart];
               else
                   nLineVertCount = panSubParts[iPart+1] - panSubParts[iPart];
 
               poLine->setNumPoints( nLineVertCount );
-              
+
               for( i = 0; i < nLineVertCount; i++ )
               {
                   int iVert = i + panSubParts[iPart];
