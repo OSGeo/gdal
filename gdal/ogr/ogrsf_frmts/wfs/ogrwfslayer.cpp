@@ -1181,6 +1181,7 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         {
             bHasFetched = TRUE;
             poBaseDS = FetchGetFeature(0);
+            poBaseLayer = NULL;
             if (poBaseDS)
             {
                 poBaseLayer = poBaseDS->GetLayer(0);
@@ -1207,7 +1208,7 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
                 }
             }
         }
-        if (!poBaseLayer)
+        if (poBaseDS == NULL || poBaseLayer == NULL)
             return NULL;
 
         OGRFeature* poSrcFeature = poBaseLayer->GetNextFeature();
