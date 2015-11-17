@@ -56,7 +56,7 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
 {
     nBlockXSize = poNodeIn->GetIntField( "blockWidth" );
     nBlockYSize = poNodeIn->GetIntField( "blockHeight" );
-    nDataType = poNodeIn->GetIntField( "pixelType" );
+    int nDataType = poNodeIn->GetIntField( "pixelType" );
 
     nWidth = poNodeIn->GetIntField( "width" );
     nHeight = poNodeIn->GetIntField( "height" );
@@ -70,13 +70,14 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
                  "HFABand::HFABand : (nWidth <= 0 || nHeight <= 0 || nBlockXSize <= 0 || nBlockYSize <= 0)");
         return;
     }
-    if (HFAGetDataTypeBits(nDataType) == 0)
+    if (nDataType < EPT_MIN || nDataType > EPT_MAX)
     {
         nWidth = nHeight = 0;
         CPLError(CE_Failure, CPLE_AppDefined,
                  "HFABand::HFABand : nDataType=%d unhandled", nDataType);
         return;
     }
+    eDataType = static_cast<EPTType>(nDataType);
 
     /* FIXME? : risk of overflow in additions and multiplication */
     nBlocksPerRow = (nWidth + nBlockXSize - 1) / nBlockXSize;
@@ -474,7 +475,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
     nBlockStart = poDMS->GetBigIntField( "layerStackDataOffset" );
     nBlockSize = (nBlockXSize*static_cast<vsi_l_offset>(nBlockYSize)
-                  *HFAGetDataTypeBits(nDataType)+7) / 8;
+                  *HFAGetDataTypeBits(eDataType)+7) / 8;
 
     for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
     {
@@ -504,7 +505,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 
 static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                                GByte *pabyDest, int nMaxPixels, 
-                               int nDataType )
+                               EPTType eDataType )
 
 {
     GUInt32  nDataMin;
@@ -610,18 +611,18 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 /* -------------------------------------------------------------------- */
 /*      Now apply to the output buffer in a type specific way.          */
 /* -------------------------------------------------------------------- */
-            if( nDataType == EPT_u8 )
+            if( eDataType == EPT_u8 )
             {
                 ((GByte *) pabyDest)[nPixelsOutput] = (GByte) nDataValue;
             }
-            else if( nDataType == EPT_u1 )
+            else if( eDataType == EPT_u1 )
             {
                 if( nDataValue == 1 )
                     pabyDest[nPixelsOutput>>3] |= (1 << (nPixelsOutput & 0x7));
                 else
                     pabyDest[nPixelsOutput>>3] &= ~(1<<(nPixelsOutput & 0x7));
             }
-            else if( nDataType == EPT_u2 )
+            else if( eDataType == EPT_u2 )
             {
                 if( (nPixelsOutput & 0x3) == 0 )
                     pabyDest[nPixelsOutput>>2] = (GByte) nDataValue;
@@ -632,34 +633,34 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                 else
                     pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<6);
             }
-            else if( nDataType == EPT_u4 )
+            else if( eDataType == EPT_u4 )
             {
                 if( (nPixelsOutput & 0x1) == 0 )
                     pabyDest[nPixelsOutput>>1] = (GByte) nDataValue;
                 else
                     pabyDest[nPixelsOutput>>1] |= (GByte) (nDataValue<<4);
             }
-            else if( nDataType == EPT_s8 ) 
+            else if( eDataType == EPT_s8 ) 
             { 
                 ((GByte *) pabyDest)[nPixelsOutput] = (GByte) nDataValue; 
             } 
-            else if( nDataType == EPT_u16 )
+            else if( eDataType == EPT_u16 )
             {
                 ((GUInt16 *) pabyDest)[nPixelsOutput] = (GUInt16) nDataValue;
             }
-            else if( nDataType == EPT_s16 )
+            else if( eDataType == EPT_s16 )
             {
                 ((GInt16 *) pabyDest)[nPixelsOutput] = (GInt16) nDataValue;
             }
-            else if( nDataType == EPT_s32 )
+            else if( eDataType == EPT_s32 )
             {
                 ((GInt32 *) pabyDest)[nPixelsOutput] = nDataValue;
             }
-            else if( nDataType == EPT_u32 )
+            else if( eDataType == EPT_u32 )
             {
                 ((GUInt32 *) pabyDest)[nPixelsOutput] = nDataValue;
             }
-            else if( nDataType == EPT_f32 )
+            else if( eDataType == EPT_f32 )
             {
 /* -------------------------------------------------------------------- */
 /*      Note, floating point values are handled as if they were signed  */
@@ -813,7 +814,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             nRepeatCount = nMaxPixels - nPixelsOutput;
         }
 
-        if( nDataType == EPT_u8 )
+        if( eDataType == EPT_u8 )
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
@@ -821,14 +822,14 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                 ((GByte *) pabyDest)[nPixelsOutput++] = (GByte)nDataValue;
             }
         }
-        else if( nDataType == EPT_u16 )
+        else if( eDataType == EPT_u16 )
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
                 ((GUInt16 *) pabyDest)[nPixelsOutput++] = (GUInt16)nDataValue;
             }
         }
-        else if( nDataType == EPT_s8 )
+        else if( eDataType == EPT_s8 )
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
@@ -836,28 +837,28 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                 ((GByte *) pabyDest)[nPixelsOutput++] = (GByte)nDataValue;
             }
         }
-        else if( nDataType == EPT_s16 )
+        else if( eDataType == EPT_s16 )
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
                 ((GInt16 *) pabyDest)[nPixelsOutput++] = (GInt16)nDataValue;
             }
         }
-        else if( nDataType == EPT_u32 )
+        else if( eDataType == EPT_u32 )
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
                 ((GUInt32 *) pabyDest)[nPixelsOutput++] = (GUInt32)nDataValue;
             }
         }
-        else if( nDataType == EPT_s32 )
+        else if( eDataType == EPT_s32 )
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
                 ((GInt32 *) pabyDest)[nPixelsOutput++] = (GInt32)nDataValue;
             }
         }
-        else if( nDataType == EPT_f32 )
+        else if( eDataType == EPT_f32 )
         {
             float fDataValue;
 
@@ -867,7 +868,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                 ((float *) pabyDest)[nPixelsOutput++] = fDataValue;
             }
         }
-        else if( nDataType == EPT_u1 )
+        else if( eDataType == EPT_u1 )
         {
             //CPLAssert( nDataValue == 0 || nDataValue == 1 );
 
@@ -888,7 +889,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                 }
             }
         }
-        else if( nDataType == EPT_u2 )
+        else if( eDataType == EPT_u2 )
         {
             //CPLAssert( nDataValue >= 0 && nDataValue < 4 );
 
@@ -905,7 +906,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                 nPixelsOutput++;
             }
         }
-        else if( nDataType == EPT_u4 )
+        else if( eDataType == EPT_u4 )
         {
             //CPLAssert( nDataValue >= 0 && nDataValue < 16 );
 
@@ -945,14 +946,14 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 void HFABand::NullBlock( void *pData )
 
 {
-    int nChunkSize = MAX(1,HFAGetDataTypeBits(nDataType)/8);
+    int nChunkSize = MAX(1,HFAGetDataTypeBits(eDataType)/8);
     int nWords = nBlockXSize * nBlockYSize;
 
     if( !bNoDataSet )
     {
 #ifdef ESRI_BUILD
         // We want special defaulting for 1 bit data in ArcGIS.
-        if ( nDataType >= EPT_u2 )
+        if ( eDataType >= EPT_u2 )
             memset( pData,   0, nChunkSize*nWords );
         else
             memset( pData, 255, nChunkSize*nWords );
@@ -964,7 +965,7 @@ void HFABand::NullBlock( void *pData )
     {
         GByte abyTmp[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        switch( nDataType )
+        switch( eDataType )
         {
           case EPT_u1:
           {
@@ -1125,7 +1126,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
         if ( psInfo->eAccess == HFA_Update )
         {
             memset( pData, 0, 
-                    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+                    HFAGetDataTypeBits(eDataType)*nBlockXSize*nBlockYSize/8 );
             return CE_None;
         }
         else
@@ -1159,7 +1160,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
             if ( psInfo->eAccess == HFA_Update )
             {
                 memset( pData, 0, 
-                    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+                    HFAGetDataTypeBits(eDataType)*nBlockXSize*nBlockYSize/8 );
                 return CE_None;
             }
             else
@@ -1176,7 +1177,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
 
         CPLErr eErr = UncompressBlock( pabyCData, (int) nBlockSize,
                                        (GByte *) pData, nBlockXSize*nBlockYSize,
-                                       nDataType );
+                                       eDataType );
 
         CPLFree( pabyCData );
 
@@ -1197,7 +1198,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
     if( VSIFReadL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
     {
 	memset( pData, 0, 
-	    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+	    HFAGetDataTypeBits(eDataType)*nBlockXSize*nBlockYSize/8 );
 
         if( fpData != fpExternal )
             CPLDebug( "HFABand", 
@@ -1217,27 +1218,27 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
 /* -------------------------------------------------------------------- */
 
 #ifdef CPL_MSB
-    if( HFAGetDataTypeBits(nDataType) == 16 )
+    if( HFAGetDataTypeBits(eDataType) == 16 )
     {
         for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
             CPL_SWAP16PTR( ((unsigned char *) pData) + ii*2 );
     }
-    else if( HFAGetDataTypeBits(nDataType) == 32 )
+    else if( HFAGetDataTypeBits(eDataType) == 32 )
     {
         for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
             CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
     }
-    else if( nDataType == EPT_f64 )
+    else if( eDataType == EPT_f64 )
     {
         for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
             CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
     }
-    else if( nDataType == EPT_c64 )
+    else if( eDataType == EPT_c64 )
     {
         for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
             CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
     }
-    else if( nDataType == EPT_c128 )
+    else if( eDataType == EPT_c128 )
     {
         for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
             CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
@@ -1354,10 +1355,10 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         /* ------------------------------------------------------------ */
         /*      Write compressed data.				        */
         /* ------------------------------------------------------------ */
-        int nInBlockSize = (nBlockXSize * nBlockYSize * HFAGetDataTypeBits(nDataType) + 7 ) / 8;
+        int nInBlockSize = (nBlockXSize * nBlockYSize * HFAGetDataTypeBits(eDataType) + 7 ) / 8;
 
         /* create the compressor object */
-        HFACompress compress( pData, nInBlockSize, nDataType );
+        HFACompress compress( pData, nInBlockSize, eDataType );
         if( compress.getCounts() == NULL ||
             compress.getValues() == NULL)
         {
@@ -1497,27 +1498,27 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 
 #ifdef CPL_MSB
-        if( HFAGetDataTypeBits(nDataType) == 16 )
+        if( HFAGetDataTypeBits(eDataType) == 16 )
         {
             for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
                 CPL_SWAP16PTR( ((unsigned char *) pData) + ii*2 );
         }
-        else if( HFAGetDataTypeBits(nDataType) == 32 )
+        else if( HFAGetDataTypeBits(eDataType) == 32 )
         {
             for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
                 CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
         }
-        else if( nDataType == EPT_f64 )
+        else if( eDataType == EPT_f64 )
         {
             for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
                 CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
         }
-        else if( nDataType == EPT_c64 )
+        else if( eDataType == EPT_c64 )
         {
             for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
                 CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
         }
-        else if( nDataType == EPT_c128 )
+        else if( eDataType == EPT_c128 )
         {
             for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
                 CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
@@ -1563,27 +1564,27 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 
 #ifdef CPL_MSB
-    if( HFAGetDataTypeBits(nDataType) == 16 )
+    if( HFAGetDataTypeBits(eDataType) == 16 )
     {
         for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
             CPL_SWAP16PTR( ((unsigned char *) pData) + ii*2 );
     }
-    else if( HFAGetDataTypeBits(nDataType) == 32 )
+    else if( HFAGetDataTypeBits(eDataType) == 32 )
     {
         for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
             CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
     }
-    else if( nDataType == EPT_f64 )
+    else if( eDataType == EPT_f64 )
     {
         for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
             CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
     }
-    else if( nDataType == EPT_c64 )
+    else if( eDataType == EPT_c64 )
     {
         for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
             CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
     }
-    else if( nDataType == EPT_c128 )
+    else if( eDataType == EPT_c128 )
     {
         for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
             CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
@@ -2005,10 +2006,10 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /*      this is the same as the base layer, but when                    */
 /*      AVERAGE_BIT2GRAYSCALE is in effect we force it to u8 from u1.   */
 /* -------------------------------------------------------------------- */
-    int nOverviewDataType = nDataType;
+    EPTType eOverviewDataType = eDataType;
 
     if( STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2GR") )
-        nOverviewDataType = EPT_u8;
+        eOverviewDataType = EPT_u8;
 
 /* -------------------------------------------------------------------- */
 /*      Eventually we need to decide on the whether to use the spill    */
@@ -2022,13 +2023,13 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 
     if( (psRRDInfo->nEndOfFile 
          + (nOXSize * (double) nOYSize)
-         * (HFAGetDataTypeBits(nOverviewDataType) / 8)) > 2000000000.0 )
+         * (HFAGetDataTypeBits(eOverviewDataType) / 8)) > 2000000000.0 )
         bCreateLargeRaster = TRUE;
 
     if( bCreateLargeRaster )
     {
         if( !HFACreateSpillStack( psRRDInfo, nOXSize, nOYSize, 1, 
-                                  64, nOverviewDataType, 
+                                  64, eOverviewDataType, 
                                   &nValidFlagsOffset, &nDataOffset ) )
 	{
 	    return -1;
@@ -2060,7 +2061,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 
     if( !HFACreateLayer( psRRDInfo, poParent, osLayerName, 
                          TRUE, 64, bCompressionType, bCreateLargeRaster, FALSE,
-                         nOXSize, nOYSize, nOverviewDataType, NULL,
+                         nOXSize, nOYSize, eOverviewDataType, NULL,
                          nValidFlagsOffset, nDataOffset, 1, 0 ) )
         return -1;
 

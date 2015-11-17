@@ -43,6 +43,8 @@
    void HFAStandard( int, void *);
 #endif
 
+#include "hfa.h"
+
 class HFAEntry;
 class HFAType;
 class HFADictionary;
@@ -63,7 +65,7 @@ typedef enum {
 /*      This is just a structure, and used hold info about the whole    */
 /*      dataset within hfaopen.cpp                                      */
 /************************************************************************/
-typedef struct hfainfo {
+struct hfainfo {
     VSILFILE	*fp;
 
     char	*pszPath;
@@ -96,14 +98,16 @@ typedef struct hfainfo {
     void        *pProParameters;
 
     struct hfainfo *psDependent;
-} HFAInfo_t;
+};
+
+typedef struct hfainfo HFAInfo_t;
 
 GUInt32 HFAAllocateSpace( HFAInfo_t *, GUInt32 );
 CPLErr  HFAParseBandInfo( HFAInfo_t * );
 HFAInfo_t *HFAGetDependent( HFAInfo_t *, const char * );
 HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase );
 int HFACreateSpillStack( HFAInfo_t *, int nXSize, int nYSize, int nLayers, 
-                         int nBlockSize, int nDataType,
+                         int nBlockSize, EPTType eDataType,
                          GIntBig *pnValidFlagsOffset, 
                          GIntBig *pnDataOffset );
 
@@ -111,9 +115,25 @@ const char ** GetHFAAuxMetaDataList();
 
 double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors );
 
-#define HFA_PRIVATE
+int CPL_DLL 
+HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
+                const char *pszLayerName,
+                int bOverview, int nBlockSize, 
+                int bCreateCompressed, int bCreateLargeRaster,
+                int bDependentLayer,
+                int nXSize, int nYSize, EPTType eDataType, 
+                char **papszOptions,
+                
+                // these are only related to external (large) files
+                GIntBig nStackValidFlagsOffset, 
+                GIntBig nStackDataOffset,
+                int nStackCount, int nStackIndex );
 
-#include "hfa.h"
+char *
+HFAPCSStructToWKT( const Eprj_Datum *psDatum,
+                   const Eprj_ProParameters *psPro,
+                   const Eprj_MapInfo *psMapInfo,
+                   HFAEntry *poMapInformation );
 
 /************************************************************************/
 /*                               HFABand                                */
@@ -157,7 +177,7 @@ class HFABand
 
     VSILFILE	*fpExternal;
 
-    int		nDataType;
+    EPTType	eDataType;
     HFAEntry	*poNode;
 
     int		nBlockXSize;
@@ -424,14 +444,14 @@ class HFADictionary
 class HFACompress
 {
 public:
-  HFACompress( void *pData, GUInt32 nBlockSize, int nDataType );
+  HFACompress( void *pData, GUInt32 nBlockSize, EPTType eDataType );
   ~HFACompress();
 
   // This is the method that does the work.
   bool compressBlock();
 
   // static method to allow us to query whether HFA type supported
-  static bool QueryDataTypeSupported( int nHFADataType );
+  static bool QueryDataTypeSupported( EPTType eHFADataType );
 
   // Get methods - only valid after compressBlock has been called.
   GByte*  getCounts()     { return m_pCounts; };
@@ -451,7 +471,7 @@ private:
   void *m_pData;
   GUInt32 m_nBlockSize;
   GUInt32 m_nBlockCount;
-  int m_nDataType;
+  EPTType m_eDataType;
   int m_nDataTypeNumBits; // the number of bits the datatype we are trying to compress takes
 
   GByte   *m_pCounts;

@@ -343,7 +343,7 @@ class HFARasterBand : public GDALPamRasterBand
 
     GDALColorTable *poCT;
 
-    int		nHFADataType;
+    EPTType	eHFADataType;
 
     int         nOverviews;
     int		nThisOverview;
@@ -1903,7 +1903,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
     this->nOverviews = -1; 
 
     int nCompression;
-    HFAGetBandInfo( hHFA, nBand, &nHFADataType,
+    HFAGetBandInfo( hHFA, nBand, &eHFADataType,
                     &nBlockXSize, &nBlockYSize, &nCompression );
 
 /* -------------------------------------------------------------------- */
@@ -1912,12 +1912,12 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
 /* -------------------------------------------------------------------- */
     if( iOverview > -1 )
     {
-        int nHFADataTypeO;
+        EPTType eHFADataTypeO;
 
         nOverviews = 0;
         if (HFAGetOverviewInfo( hHFA, nBand, iOverview,
                                 &nRasterXSize, &nRasterYSize,
-                                &nBlockXSize, &nBlockYSize, &nHFADataTypeO ) != CE_None)
+                                &nBlockXSize, &nBlockYSize, &eHFADataTypeO ) != CE_None)
         {
             nRasterXSize = nRasterYSize = 0;
             return;
@@ -1927,12 +1927,12 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
 /*      If we are an 8bit overview of a 1bit layer, we need to mark     */
 /*      ourselves as being "resample: average_bit2grayscale".           */
 /* -------------------------------------------------------------------- */
-        if( nHFADataType == EPT_u1 && nHFADataTypeO == EPT_u8 )
+        if( eHFADataType == EPT_u1 && eHFADataTypeO == EPT_u8 )
         {
             GDALMajorObject::SetMetadataItem( "RESAMPLING", 
                                               "AVERAGE_BIT2GRAYSCALE" );
             GDALMajorObject::SetMetadataItem( "NBITS", "8" );
-            nHFADataType = nHFADataTypeO;
+            eHFADataType = eHFADataTypeO;
         }
     }
 
@@ -1943,7 +1943,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
         GDALMajorObject::SetMetadataItem( "COMPRESSION", "RLE", 
                                           "IMAGE_STRUCTURE" );
 
-    switch( nHFADataType )
+    switch( eHFADataType )
     {
       case EPT_u1:
       case EPT_u2:
@@ -1990,18 +1990,18 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
         /* notdef: this should really report an error, but this isn't
            so easy from within constructors. */
         CPLDebug( "GDAL", "Unsupported pixel type in HFARasterBand: %d.",
-                  (int) nHFADataType );
+                  eHFADataType );
         break;
     }
 
-    if( HFAGetDataTypeBits( nHFADataType ) < 8 )
+    if( HFAGetDataTypeBits( eHFADataType ) < 8 )
     {
         GDALMajorObject::SetMetadataItem( 
             "NBITS", 
-            CPLString().Printf( "%d", HFAGetDataTypeBits( nHFADataType ) ), "IMAGE_STRUCTURE" );
+            CPLString().Printf( "%d", HFAGetDataTypeBits( eHFADataType ) ), "IMAGE_STRUCTURE" );
     }
 
-    if( nHFADataType == EPT_s8 )
+    if( eHFADataType == EPT_s8 )
     {
         GDALMajorObject::SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", 
                                           "IMAGE_STRUCTURE" );
@@ -2470,7 +2470,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                            nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8));
     }
 
-    if( eErr == CE_None && nHFADataType == EPT_u4 )
+    if( eErr == CE_None && eHFADataType == EPT_u4 )
     {
         GByte	*pabyData = (GByte *) pImage;
 
@@ -2481,7 +2481,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             pabyData[ii]   = (pabyData[k]) & 0xf;
         }
     }
-    if( eErr == CE_None && nHFADataType == EPT_u2 )
+    if( eErr == CE_None && eHFADataType == EPT_u2 )
     {
         GByte	*pabyData = (GByte *) pImage;
 
@@ -2494,7 +2494,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             pabyData[ii]   = (pabyData[k]) & 0x3;
         }
     }
-    if( eErr == CE_None && nHFADataType == EPT_u1)
+    if( eErr == CE_None && eHFADataType == EPT_u1)
     {
         GByte	*pabyData = (GByte *) pImage;
 
@@ -2523,16 +2523,16 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Do we need to pack 1/2/4 bit data?                              */
 /* -------------------------------------------------------------------- */
-    if( nHFADataType == EPT_u1 
-        || nHFADataType == EPT_u2
-        || nHFADataType == EPT_u4 )
+    if( eHFADataType == EPT_u1 
+        || eHFADataType == EPT_u2
+        || eHFADataType == EPT_u4 )
     {
         const int nPixCount =  nBlockXSize * nBlockYSize;
         pabyOutBuf = (GByte *) VSIMalloc2(nBlockXSize, nBlockYSize);
         if (pabyOutBuf == NULL)
             return CE_Failure;
 
-        if( nHFADataType == EPT_u1 )
+        if( eHFADataType == EPT_u1 )
         {
             for( int ii = 0; ii < nPixCount - 7; ii += 8 )
             {
@@ -2548,7 +2548,7 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     | ((((GByte *) pImage)[ii+7]&0x1) << 7);
             }
         }
-        else if( nHFADataType == EPT_u2 )
+        else if( eHFADataType == EPT_u2 )
         {
             for( int ii = 0; ii < nPixCount - 3; ii += 4 )
             {
@@ -2560,7 +2560,7 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     | ((((GByte *) pImage)[ii+3]&0x3) << 6);
             }
         }
-        else if( nHFADataType == EPT_u4 )
+        else if( eHFADataType == EPT_u4 )
         {
             for( int ii = 0; ii < nPixCount - 1; ii += 2 )
             {
@@ -5555,52 +5555,52 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Translate the data type.                                        */
 /* -------------------------------------------------------------------- */
-    int	nHfaDataType;
+    EPTType	eHfaDataType;
     switch( eType )
     {
       case GDT_Byte:
         if( nBits == 1 )
-            nHfaDataType = EPT_u1;
+            eHfaDataType = EPT_u1;
         else if( nBits == 2 )
-            nHfaDataType = EPT_u2;
+            eHfaDataType = EPT_u2;
         else if( nBits == 4 )
-            nHfaDataType = EPT_u4;
+            eHfaDataType = EPT_u4;
         else if( EQUAL(pszPixelType,"SIGNEDBYTE") )
-            nHfaDataType = EPT_s8;
+            eHfaDataType = EPT_s8;
         else
-            nHfaDataType = EPT_u8;
+            eHfaDataType = EPT_u8;
         break;
 
       case GDT_UInt16:
-        nHfaDataType = EPT_u16;
+        eHfaDataType = EPT_u16;
         break;
 
       case GDT_Int16:
-        nHfaDataType = EPT_s16;
+        eHfaDataType = EPT_s16;
         break;
 
       case GDT_Int32:
-        nHfaDataType = EPT_s32;
+        eHfaDataType = EPT_s32;
         break;
 
       case GDT_UInt32:
-        nHfaDataType = EPT_u32;
+        eHfaDataType = EPT_u32;
         break;
 
       case GDT_Float32:
-        nHfaDataType = EPT_f32;
+        eHfaDataType = EPT_f32;
         break;
 
       case GDT_Float64:
-        nHfaDataType = EPT_f64;
+        eHfaDataType = EPT_f64;
         break;
 
       case GDT_CFloat32:
-        nHfaDataType = EPT_c64;
+        eHfaDataType = EPT_c64;
         break;
 
       case GDT_CFloat64:
-        nHfaDataType = EPT_c128;
+        eHfaDataType = EPT_c128;
         break;
 
       default:
@@ -5614,7 +5614,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 /*      Create the new file.                                            */
 /* -------------------------------------------------------------------- */
     HFAHandle hHFA = HFACreate( pszFilenameIn, nXSize, nYSize, nBands,
-                                nHfaDataType, papszParmList );
+                                eHfaDataType, papszParmList );
     if( hHFA == NULL )
         return NULL;
 
