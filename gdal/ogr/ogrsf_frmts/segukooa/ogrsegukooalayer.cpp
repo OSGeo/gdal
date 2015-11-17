@@ -790,6 +790,7 @@ OGRFeature *OGRSEGUKOOALineLayer::GetNextRawFeature()
                 strcmp(poFeature->GetFieldAsString(0),
                     poNextBaseFeature->GetFieldAsString(0)) != 0)
             {
+                poFeature->SetGeometryDirectly(poLS);
                 return poFeature;
             }
 
@@ -807,13 +808,9 @@ OGRFeature *OGRSEGUKOOALineLayer::GetNextRawFeature()
                     if (poBaseLayer->GetSpatialRef())
                         poLS->assignSpatialReference(
                                     poBaseLayer->GetSpatialRef());
-                    poLS->addPoint(poPoint);
-                    poFeature->SetGeometryDirectly(poLS);
                 }
-                else
-                {
-                    poLS->addPoint(poPoint);
-                }
+
+                poLS->addPoint(poPoint);
             }
         }
 
@@ -822,5 +819,7 @@ OGRFeature *OGRSEGUKOOALineLayer::GetNextRawFeature()
     }
 
     bEOF = TRUE;
+    if( poFeature )
+        poFeature->SetGeometryDirectly(poLS);
     return poFeature;
 }
