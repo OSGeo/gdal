@@ -1,6 +1,8 @@
 ## @class Geo::OSR
 # @brief Base class for projection related classes.
 
+## @ignore do_confess
+
 ## @sub @Projections()
 # @return list of known projections.
 

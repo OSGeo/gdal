@@ -662,6 +662,7 @@ sub traverse {
 # The same as Geo::GDAL::OpenShared
 
 ## @ignore FlushCache
+## @ignore stdout_redirection_wrapper
 
 ## @attr RasterXSize
 # scalar (access as $dataset->{RasterXSize})

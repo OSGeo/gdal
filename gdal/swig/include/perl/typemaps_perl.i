@@ -26,6 +26,33 @@ typedef unsigned long      GUIntBig;
 %apply (double *OUTPUT) { double *argout };
 %apply (double *OUTPUT) { double *defaultval };
 
+%fragment("sv_to_utf8_string", "header") %{
+    char *sv_to_utf8_string(SV *sv, U8 **tmpbuf) {
+        /* if tmpbuf, only tmpbuf is freed; if not, ret is freed*/
+        char *ret;
+        if (SvOK(sv)) {
+            STRLEN len;
+            ret = SvPV(sv, len);
+            if (!SvUTF8(sv)) {
+                if (tmpbuf) {
+                    *tmpbuf = bytes_to_utf8((const U8*)ret, &len);
+                    ret = (char *)(*tmpbuf);
+                } else {
+                    ret = (char *)bytes_to_utf8((const U8*)ret, &len);
+                }
+            } else {
+                if (!tmpbuf)
+                    ret = strdup(ret);
+            }
+        } else {
+            ret = (char*)""; /* avoid "Use of uninitialized value in subroutine entry" errors */
+            if (!tmpbuf)
+                ret = strdup(ret);
+        }
+        return ret;
+    }
+%}
+
 /*
  * double *val, int*hasval, is a special contrived typemap used for
  * the RasterBand GetNoDataValue, GetMinimum, GetMaximum, GetOffset,
@@ -519,26 +546,6 @@ CreateArrayFromStringArray( char **first ) {
     CPLFree((void*) $2);
 }
 
-%typemap(in) (char **pList)
-{
-    /* %typemap(in) (char **pList) */
-    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        do_confess(NEED_ARRAY_REF, 1);
-    AV *av = (AV*)(SvRV($input));
-    for (int i = 0; i < av_len(av)+1; i++) {
-        SV *sv = *(av_fetch(av, i, 0));
-        sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
-        char *pszItem = SvPV_nolen(sv);
-        $1 = CSLAddString( $1, pszItem );
-    }
-}
-%typemap(freearg) (char **pList)
-{
-    /* %typemap(freearg) (char **pList) */
-    if ($1)
-        CSLDestroy( $1 );
-}
-
 %typemap(in,numinputs=1) (int defined, double value)
 {
     /* %typemap(in,numinputs=1) (int defined, double value) */
@@ -837,7 +844,7 @@ CreateArrayFromStringArray( char **first ) {
 /*
  * Typemap char **options <-> AV
  */
-%typemap(in) char **options
+%typemap(in, fragment="sv_to_utf8_string") char **options
 {
     /* %typemap(in) char **options */
     if (SvOK($input)) {
@@ -846,9 +853,7 @@ CreateArrayFromStringArray( char **first ) {
                 AV *av = (AV*)(SvRV($input));
                 for (int i = 0; i < av_len(av)+1; i++) {
                     SV *sv = *(av_fetch(av, i, 0));
-                    sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
-                    char *pszItem = SvPV_nolen(sv);
-                    $1 = CSLAddString( $1, pszItem );
+                    $1 = CSLAddString( $1, sv_to_utf8_string(sv, NULL) );
                 }
             } else if (SvTYPE(SvRV($input))==SVt_PVHV) {
                 HV *hv = (HV*)SvRV($input);
@@ -858,8 +863,7 @@ CreateArrayFromStringArray( char **first ) {
                 $1 = NULL;
                 hv_iterinit(hv);
                 while(sv = hv_iternextsv(hv,&key,&klen)) {
-                    sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
-                    $1 = CSLAddNameValue( $1, key, SvPV_nolen(sv) );
+                    $1 = CSLAddNameValue( $1, key, sv_to_utf8_string(sv, NULL) );
                 }
             } else
                 do_confess(NEED_REF, 1);
@@ -895,12 +899,16 @@ CreateArrayFromStringArray( char **first ) {
  * Typemaps map mutable char ** arguments from AV.  Does not
  * return the modified argument
  */
-%typemap(in) (char **ignorechange) ( char *val )
+%typemap(in, fragment="sv_to_utf8_string") (char **ignorechange) (char *val, U8 *tmpbuf = NULL)
 {
     /* %typemap(in) (char **ignorechange) */
-    sv_utf8_upgrade($input); /* GDAL expects UTF-8 */
-    val = SvPV_nolen($input);
+    val = sv_to_utf8_string($input, &tmpbuf);
     $1 = &val;
+}
+%typemap(freearg) (char **ignorechange)
+{
+    /* %typemap(freearg) (char **ignorechange) */
+    if (tmpbuf$argnum) free(tmpbuf$argnum);
 }
 
 /*
@@ -963,16 +971,20 @@ CreateArrayFromStringArray( char **first ) {
  * Formats the object using str and returns the string representation
  */
 
-%typemap(in) (tostring argin)
+%typemap(in, fragment="sv_to_utf8_string") (tostring argin) (U8 *tmpbuf = NULL)
 {
-  /* %typemap(in) (tostring argin) */
-  sv_utf8_upgrade($input); /* GDAL expects UTF-8 */
-  $1 = SvPV_nolen( $input ); 
+    /* %typemap(in) (tostring argin) */
+    $1 = sv_to_utf8_string($input, &tmpbuf);
 }
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
   $1 = 1;
+}
+%typemap(freearg) (tostring argin)
+{
+    /* %typemap(freearg) (tostring argin) */
+    if (tmpbuf$argnum) free(tmpbuf$argnum);
 }
 
 /*
@@ -1010,7 +1022,7 @@ CreateArrayFromStringArray( char **first ) {
 /************************************************************************/
 /*                          AVToXMLTree()                               */
 /************************************************************************/
-  static CPLXMLNode *AVToXMLTree( AV *av, int *err )
+static CPLXMLNode *AVToXMLTree( AV *av, int *err )
 {
     int      nChildCount = 0, iChild, nType;
     CPLXMLNode *psThisNode;
@@ -1025,9 +1037,7 @@ CreateArrayFromStringArray( char **first ) {
 
     nType = SvIV(*(av_fetch(av,0,0)));
     SV *sv = *(av_fetch(av,1,0));
-    sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
-    pszText = SvPV_nolen(sv);
-    psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, pszText );
+    psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, sv_to_utf8_string(sv, NULL) );
     
     for( iChild = 0; iChild < nChildCount; iChild++ )
     {
@@ -1392,24 +1402,39 @@ IF_UNDEF_NULL(const char *, target_key)
  * Driver__Create, Driver_CreateCopy, Driver_Delete, Open__SWIG_1,
  * OpenShared__SWIG_1, IdentifyDriver
  */
-%typemap(in,numinputs=1) (const char* utf8_path)
+%typemap(in, numinputs=1, fragment="sv_to_utf8_string") (const char* utf8_path) (U8 *tmpbuf = NULL)
 {
-  /* %typemap(in,numinputs=1) (const char* utf8_path) */
-  sv_utf8_upgrade($input);
-  $1 = SvPV_nolen($input);
+    /* %typemap(in,numinputs=1) (const char* utf8_path) (U8 *tmpbuf) */
+    $1 = sv_to_utf8_string($input, &tmpbuf);
 }
-%typemap(in,numinputs=1) (const char* layer_name)
+%typemap(freearg) (const char* utf8_path)
+{
+    /* %typemap(freearg) (const char* utf8_path) */
+    if (tmpbuf$argnum) free(tmpbuf$argnum);
+}
+
+%typemap(in, numinputs=1, fragment="sv_to_utf8_string") (const char* layer_name) (U8 *tmpbuf = NULL)
 {
   /* %typemap(in,numinputs=1) (const char* layer_name) */
-  sv_utf8_upgrade($input);
-  $1 = SvPV_nolen($input);
+  $1 = sv_to_utf8_string($input, &tmpbuf);
 }
-%typemap(in,numinputs=1) (const char* name)
+%typemap(freearg) (const char* layer_name)
+{
+    /* %typemap(freearg) (const char* layer_name) */
+    if (tmpbuf$argnum) free(tmpbuf$argnum);
+}
+
+%typemap(in, numinputs=1, fragment="sv_to_utf8_string") (const char* name) (U8 *tmpbuf = NULL)
 {
   /* %typemap(in,numinputs=1) (const char* name) */
-  sv_utf8_upgrade($input);
-  $1 = SvPV_nolen($input);
+  $1 = sv_to_utf8_string($input, &tmpbuf);
 }
+%typemap(freearg) (const char* name)
+{
+    /* %typemap(freearg) (const char* name) */
+    if (tmpbuf$argnum) free(tmpbuf$argnum);
+}
+
 %typemap(in,numinputs=0) (int *pnBytes) (int bytes)
 {
   /* %typemap(in,numinputs=0) (int *pnBytes) (int bytes) */
