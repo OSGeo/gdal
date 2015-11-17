@@ -326,7 +326,7 @@ static void DumpCOLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             nMeth = *pabyIter;
             AddField(psDecodedContent, "METH", nMeth,
                         (nMeth == 0) ? "Enumerated Colourspace":
-                        (nMeth == 0) ? "Restricted ICC profile": NULL);
+                        (nMeth == 1) ? "Restricted ICC profile": NULL);
             pabyIter += 1;
             nRemainingLength -= 1;
         }
@@ -1012,7 +1012,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         }
         else if( abyMarker[1] == 0x52 ) /* COD */
         {
-            bool bHasPrecincts = true;
+            bool bHasPrecincts = false;
             if( nRemainingMarkerSize >= 1 ) {
                 nLastVal = *pabyMarkerDataIter;
                 CPLString osInterp;
