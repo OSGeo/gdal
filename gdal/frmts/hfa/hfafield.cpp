@@ -477,11 +477,13 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
     if( chReqType == 's' )
     {
+        CPLAssert( pValue != NULL );
         nIntValue = atoi((char *) pValue);
         dfDoubleValue = CPLAtof((char *) pValue);
     }
     else if( chReqType == 'd' )
     {
+        CPLAssert( pValue != NULL );
         dfDoubleValue = *((double *) pValue);
         if( dfDoubleValue > INT_MAX )
             nIntValue = INT_MAX;
@@ -492,8 +494,9 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
     }
     else if( chReqType == 'i' )
     {
-        dfDoubleValue = *((int *) pValue);
+        CPLAssert( pValue != NULL );
         nIntValue = *((int *) pValue);
+        dfDoubleValue = nIntValue;
     }
     else if( chReqType == 'p' )
     {
@@ -525,7 +528,10 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         }
 
         if( chReqType == 's' )
+        {
+            CPLAssert( pValue != NULL );
             pabyData[nIndexValue] = ((char *) pValue)[0];
+        }
         else
             pabyData[nIndexValue] = (char) nIntValue;
         break;
@@ -535,6 +541,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       {
           if( chItemType == 'e' && chReqType == 's' )
           {
+              CPLAssert( pValue != NULL );
               nIntValue = CSLFindString( papszEnumNames, (char *) pValue );
               if( nIntValue == -1 )
               {
