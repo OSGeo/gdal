@@ -532,9 +532,9 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     INGR_HeaderTwoA hHdr2;
     INGR_ColorTable256 hCTab;
 
-    memset(&hHdr1, 0, SIZEOF_HDR1);
-    memset(&hHdr2, 0, SIZEOF_HDR2_A);
-    memset(&hCTab, 0, SIZEOF_CTAB);
+    memset(&hHdr1, 0, sizeof(hHdr1));
+    memset(&hHdr2, 0, sizeof(hHdr2));
+    memset(&hCTab, 0, sizeof(hCTab));
 
     hHdr1.HeaderType.Version    = INGR_HEADER_VERSION;
     hHdr1.HeaderType.Type       = INGR_HEADER_TYPE;
