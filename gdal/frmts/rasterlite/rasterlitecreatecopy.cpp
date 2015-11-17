@@ -133,7 +133,10 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
 
             char    *pszProj4 = NULL;
             if( OSRExportToProj4( hSRS, &pszProj4 ) != OGRERR_NONE )
+            {
+                CPLFree(pszProj4);
                 pszProj4 = CPLStrdup("");
+            }
             osProj4 = pszProj4;
             CPLFree(pszProj4);
         }
