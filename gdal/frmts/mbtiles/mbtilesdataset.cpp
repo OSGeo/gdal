@@ -596,7 +596,13 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine,
     GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
 
     int nUncompressedSize = 256*256;
-    GByte* pabyUncompressed = (GByte*)CPLMalloc(nUncompressedSize + 1);
+    GByte* pabyUncompressed = (GByte*)VSIMalloc(nUncompressedSize + 1);
+    if( pabyUncompressed == NULL )
+    {
+        OGR_F_Destroy(hFeat);
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        return NULL;
+    }
 
     z_stream sStream;
     memset(&sStream, 0, sizeof(sStream));
@@ -735,8 +741,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine,
 end:
     if (jsobj)
         json_object_put(jsobj);
-    if (pabyUncompressed)
-        CPLFree(pabyUncompressed);
+    VSIFree(pabyUncompressed);
     if (hFeat)
         OGR_F_Destroy(hFeat);
     if (hSQLLyr)
