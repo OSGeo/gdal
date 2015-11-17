@@ -89,7 +89,6 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
     ClearStatement();
     ClearInsertStmt();
 
-    char* pszErrMsg = NULL;
     int nGeomFieldCount = (poFeatureDefn) ? poFeatureDefn->GetGeomFieldCount() : 0;
     for(int i=0;i<nGeomFieldCount; i++)
     {
@@ -101,12 +100,9 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
                      poGeomFieldDefn->aosDisabledTriggers[j].first.c_str());
             // This may fail since CreateSpatialIndex() reinstalls triggers, so
             // don't check result
-            sqlite3_exec( poDS->GetDB(),
+            CPL_IGNORE_RET_VAL(sqlite3_exec( poDS->GetDB(),
                           poGeomFieldDefn->aosDisabledTriggers[j].second.c_str(),
-                          NULL, NULL, &pszErrMsg );
-            if( pszErrMsg )
-                sqlite3_free( pszErrMsg );
-            pszErrMsg = NULL;
+                          NULL, NULL, NULL ));
         }
     
         // Update geometry_columns_time
@@ -116,10 +112,7 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
                 "UPDATE geometry_columns_time SET last_insert = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ', 'now') "
                 "WHERE Lower(f_table_name) = Lower('%q') AND Lower(f_geometry_column) = Lower('%q')",
                 pszTableName, poGeomFieldDefn->GetNameRef());
-            sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, &pszErrMsg );
-            if( pszErrMsg )
-                sqlite3_free( pszErrMsg );
-            pszErrMsg = NULL;
+            CPL_IGNORE_RET_VAL(sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, NULL ));
         }
     }
 
@@ -3351,6 +3344,9 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
         rc = sqlite3_exec( poDS->GetDB(), osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to run %s: %s",
+                  osCommand.c_str(), pszErrMsg );
             sqlite3_free( pszErrMsg );
             return OGRERR_FAILURE;
         }
@@ -3369,7 +3365,15 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
     if( poDS->IsSpatialiteDB() && poDS->GetLayerCount() == 1)
     {
         /* To create the layer_statistics and spatialite_history tables */
-        sqlite3_exec( poDS->GetDB(), "SELECT UpdateLayerStatistics()", NULL, NULL, NULL );
+        rc = sqlite3_exec( poDS->GetDB(), "SELECT UpdateLayerStatistics()", NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to run %s: %s",
+                  osCommand.c_str(), pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return OGRERR_FAILURE;
+        }
     }
 
     return OGRERR_NONE;
