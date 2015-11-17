@@ -3049,10 +3049,9 @@ static int GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
             dfColAccWeight += padfWeightsY[j-poWK->nFiltInitY];
         }
         dfAccumulatorWeight = dfRowAccWeight * dfColAccWeight;
-
-        if( !GDALDataTypeIsComplex(poWK->eWorkingDataType) )
-            padfRowImag = NULL;
     }
+
+    const bool bIsNonComplex = !GDALDataTypeIsComplex(poWK->eWorkingDataType);
 
     // Loop over pixel rows in the kernel
     for ( int j = jMin; j <= jMax; ++j )
@@ -3093,7 +3092,7 @@ static int GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
                 dfAccumulatorWeight += dfWeight2;
             }
         }
-        else if( padfRowImag == NULL )
+        else if( bIsNonComplex )
         {
             double dfRowAccReal = 0.0;
             for (int i = iMin; i <= iMax; ++i )
