@@ -1160,12 +1160,12 @@ sub traverse {
 # .    return $_[0] < $_[1] ? $_[0] : $_[1];
 # }
 # \endcode
-# @param xoff
-# @param yoff
-# @param xsize
-# @param ysize
+# @param xoff Number of pixels to skip before starting to read from a row. Pixels are read from left to right.
+# @param yoff Number of pixels to skip before starting to read from a column. Pixels are read from top to bottom.
+# @param xsize Number of pixels to read from each row.
+# @param ysize Number of pixels to read from each column.
 # @return a two-dimensional Perl array, organizes as data->[y][x], y =
-# 0..height-1, x = 0..width-1.
+# 0..height-1, x = 0..width-1. I.e., y is row and x is column.
 
 ## @method WriteRaster(%params)
 # Write data into the band.
@@ -1614,7 +1614,7 @@ sub traverse {
 # (column,row) is the location in pixel coordinates<br/>
 # (x,y) is the location in projection coordinates<br/>
 # or vice versa.
-# A Geo::GDAL::GeoTransform object is a reference to an anonymous array.
+# A Geo::GDAL::GeoTransform object is a reference to an anonymous array [a,b,c,d,e,f].
 # @isa = ( Geo::GDAL )
 
 ## @cmethod new(@coeffs)

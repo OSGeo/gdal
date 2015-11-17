@@ -879,7 +879,11 @@ sub Projection {
 sub SpatialReference {
     my($self, $sr) = @_;
     SetProjection($self, $sr->As('WKT')) if defined $sr;
-    return Geo::OSR::SpatialReference->new(WKT => GetProjection($self)) if defined wantarray;
+    if (defined wantarray) {
+        my $p = GetProjection($self);
+        Geo::GDAL::error('The dataset does not have a spatial reference.') unless $p;
+        return Geo::OSR::SpatialReference->new(WKT => $p);
+    }
 }
 
 sub GeoTransform {
