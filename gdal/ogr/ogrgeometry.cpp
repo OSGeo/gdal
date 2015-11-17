@@ -415,11 +415,9 @@ OGRBoolean OGRGeometry::Intersects( const OGRGeometry *poOtherGeom ) const
         return FALSE;
 
 #ifndef HAVE_GEOS
-
-    // Without GEOS we assume that envelope overlap is equivelent to
+    // Without GEOS we assume that envelope overlap is equivalent to
     // actual intersection.
     return TRUE;
-
 #else
 
     GEOSGeom hThisGeosGeom = NULL;
@@ -428,7 +426,7 @@ OGRBoolean OGRGeometry::Intersects( const OGRGeometry *poOtherGeom ) const
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
     hThisGeosGeom = exportToGEOS(hGEOSCtxt);
     hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-    
+
     OGRBoolean bResult = FALSE;
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {

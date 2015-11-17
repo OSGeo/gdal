@@ -2030,7 +2030,7 @@ int WCSDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
 /*      Is this a WCS_GDAL service description file or "in url"         */
-/*      equivelent?                                                     */
+/*      equivalent?                                                     */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes == 0
         && STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "<WCS_GDAL>") )
@@ -2062,7 +2062,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 /* -------------------------------------------------------------------- */
 /*      Is this a WCS_GDAL service description file or "in url"         */
-/*      equivelent?                                                     */
+/*      equivalent?                                                     */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psService = NULL;
 

@@ -696,7 +696,7 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
  * LOCAL_CS coordinate systems are not translatable.  An empty string
  * will be returned along with OGRERR_NONE.  
  *
- * This method is the equivelent of the C function OSRExportToXML().
+ * This method is the equivalent of the C function OSRExportToXML().
  *
  * @param ppszRawXML pointer to which dynamically allocated XML definition 
  * will be assigned. 

@@ -1849,7 +1849,7 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * This function will "escape" a variety of special characters
  * to make the string suitable to embed within a string constant
  * or to write within a text stream but in a form that can be
- * reconstitued to it's original form.  The escaping will even preserve
+ * reconstituted to it's original form.  The escaping will even preserve
  * zero bytes allowing preservation of raw binary data.
  *
  * CPLES_BackslashQuotable(0): This scheme turns a binary string into
@@ -1858,7 +1858,7 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * the usual C style.
  *
  * CPLES_XML(1): This scheme converts the '<', '>', '"' and '&' characters into
- * their XML/HTML equivelent (&lt;, &gt;, &quot; and &amp;) making a string safe
+ * their XML/HTML equivalent (&lt;, &gt;, &quot; and &amp;) making a string safe
  * to embed as CDATA within an XML element.  The '\\0' is not escaped and
  * should not be included in the input.
  *

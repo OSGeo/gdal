@@ -1721,7 +1721,7 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
                       + 0.5 * padfGeoTransform[5] );
 
 /* -------------------------------------------------------------------- */
-/*      Update extention, and write to disk.                            */
+/*      Update extension, and write to disk.                            */
 /* -------------------------------------------------------------------- */
     const char  *pszTFW;
     VSILFILE    *fpTFW;
@@ -2229,9 +2229,9 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 /**
  * \brief Compose two geotransforms.
  *
- * The resulting geotransform is the equivelent to padfGT1 and then padfGT2
+ * The resulting geotransform is the equivalent to padfGT1 and then padfGT2
  * being applied to a point.
- * 
+ *
  * @param padfGT1 the first geotransform, six values.
  * @param padfGT2 the second geotransform, six values.
  * @param padfGTOut the output geotransform, six values, may safely be the same

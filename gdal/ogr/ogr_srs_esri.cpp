@@ -644,7 +644,7 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
  * EQUIDISTANT_CONIC, TRANSVERSE (mercator), POLAR, MERCATOR and POLYCONIC
  * projections are supported from old style files.
  *
- * At this time there is no equivelent exportToESRI() method.  Writing old
+ * At this time there is no equivalent exportToESRI() method.  Writing old
  * style .prj files is not supported by OGRSpatialReference. However the
  * morphToESRI() and exportToWkt() methods can be used to generate output
  * suitable to write to new style (Arc 8) .prj files. 

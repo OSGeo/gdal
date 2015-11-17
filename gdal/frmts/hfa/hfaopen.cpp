@@ -1266,7 +1266,7 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 
 /* -------------------------------------------------------------------- */
 /*      If we are setting an empty string then a missing entry is       */
-/*      equivelent.                                                     */
+/*      equivalent.                                                     */
 /* -------------------------------------------------------------------- */
         if( strlen(pszPEString) == 0 && poProX == NULL )
             continue;

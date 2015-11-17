@@ -75,11 +75,11 @@ GDALDriver::~GDALDriver()
 
 /**
  * \brief Destroy a GDALDriver.
- * 
- * This is roughly equivelent to deleting the driver, but is guaranteed
+ *
+ * This is roughly equivalent to deleting the driver, but is guaranteed
  * to take place in the GDAL heap.  It is important this that function
  * not be called on a driver that is registered with the GDALDriverManager.
- * 
+ *
  * @param hDriver the driver to destroy.
  */
 
@@ -115,8 +115,8 @@ void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
  * In GDAL 2, the arguments nXSize, nYSize and nBands can be passed to 0 when
  * creating a vector-only dataset for a compatible driver.
  *
- * Equivelent of the C function GDALCreate().
- * 
+ * Equivalent of the C function GDALCreate().
+ *
  * @param pszFilename the name of the dataset to create.  UTF-8 encoded.
  * @param nXSize width of created raster in pixels.
  * @param nYSize height of created raster in pixels.
@@ -671,7 +671,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  * implement the Create() method but do implement this CreateCopy() method.
  * If the driver doesn't implement CreateCopy(), but does implement Create()
  * then the default CreateCopy() mechanism built on calling Create() will
- * be used.                                                             
+ * be used.
  *
  * It is intended that CreateCopy() will often be used with a source dataset
  * which is a virtual dataset allowing configuration of band types, and
@@ -692,7 +692,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  *
  * @param pszFilename the name for the new dataset.  UTF-8 encoded.
  * @param poSrcDS the dataset being duplicated. 
- * @param bStrict TRUE if the copy must be strictly equivelent, or more
+ * @param bStrict TRUE if the copy must be strictly equivalent, or more
  * normally FALSE indicating that the copy may adapt as needed for the 
  * output format. 
  * @param papszOptions additional format dependent options controlling 
@@ -929,7 +929,7 @@ CPLErr GDALDriver::QuietDelete( const char *pszName )
  * It is unwise to have open dataset handles on this dataset when it is
  * deleted.
  *
- * Equivelent of the C function GDALDeleteDataset().
+ * Equivalent of the C function GDALDeleteDataset().
  *
  * @param pszFilename name of dataset to delete.
  *
@@ -1102,7 +1102,7 @@ CPLErr GDALDriver::DefaultRename( const char * pszNewName,
  * It is unwise to have open dataset handles on this dataset when it is
  * being renamed. 
  *
- * Equivelent of the C function GDALRenameDataset().
+ * Equivalent of the C function GDALRenameDataset().
  *
  * @param pszNewName new name for the dataset.
  * @param pszOldName old name for the dataset.
@@ -1225,7 +1225,7 @@ CPLErr GDALDriver::DefaultCopyFiles( const char * pszNewName,
  *
  * Copy all the files associated with a dataset.
  *
- * Equivelent of the C function GDALCopyDatasetFiles().
+ * Equivalent of the C function GDALCopyDatasetFiles().
  *
  * @param pszNewName new name for the dataset.
  * @param pszOldName old name for the dataset.

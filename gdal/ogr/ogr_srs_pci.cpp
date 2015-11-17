@@ -770,18 +770,18 @@ OGRErr OSRExportToPCI( OGRSpatialReferenceH hSRS,
  * LOCAL_CS coordinate systems are not translatable.  An empty string
  * will be returned along with OGRERR_NONE.  
  *
- * This method is the equivelent of the C function OSRExportToPCI().
+ * This method is the equivalent of the C function OSRExportToPCI().
  *
  * @param ppszProj pointer to which dynamically allocated PCI projection
  * definition will be assigned.
- * 
+ *
  * @param ppszUnits pointer to which dynamically allocated units definition 
  * will be assigned.
  *
  * @param ppadfPrjParams pointer to which dynamically allocated array of
  * 17 projection parameters will be assigned. See importFromPCI() for the list
  * of parameters.
- * 
+ *
  * @return OGRERR_NONE on success or an error code on failure. 
  */
 
