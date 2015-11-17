@@ -974,7 +974,7 @@ int ISIS2Dataset::WriteRaster(CPLString osFilename,
 GUIntBig ISIS2Dataset::RecordSizeCalculation(unsigned int nXSize, unsigned int nYSize, unsigned int nBands, GDALDataType eType )
 
 {
-    const GUIntBig n = nXSize * nYSize * nBands * (  GDALGetDataTypeSize(eType) / 8);
+    const GUIntBig n = static_cast<GUIntBig>(nXSize) * nYSize * nBands * (  GDALGetDataTypeSize(eType) / 8);
     // size of pds file is a multiple of RECORD_SIZE Bytes.
     CPLDebug("ISIS2","n = %i", static_cast<int>(n));
     CPLDebug("ISIS2","RECORD SIZE = %i", RECORD_SIZE);

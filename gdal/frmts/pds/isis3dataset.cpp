@@ -109,7 +109,7 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDS, VSILFILE *fpVSIL,
 
     if( nXTileOffset == 0 && nYTileOffset == 0 )
     {
-        nXTileOffset = (GDALGetDataTypeSize(eDT)/8) * nTileXSize * nTileYSize;
+        nXTileOffset = static_cast<GIntBig>(GDALGetDataTypeSize(eDT)/8) * nTileXSize * nTileYSize;
         nYTileOffset = nXTileOffset * nBlocksPerRow;
     }
 
