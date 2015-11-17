@@ -3046,6 +3046,8 @@ int OGROSMDataSource::SetCacheSize()
             sqlite3_free( pszErrMsg );
             return TRUE;
         }
+        if( iSqlitePageSize == 0 )
+            return TRUE;
 
         /* computing the CacheSize as #Pages */
         iSqliteCachePages = iSqliteCacheBytes / iSqlitePageSize;
