@@ -1014,8 +1014,8 @@ void blxprintinfo(blxcontext_t *ctx) {
     BLXnotice1("Max chunksize: %d\n", ctx->maxchunksize);
 }
 
-int blx_checkheader(char *header) {
-    short *signature=(short *)header;
+int blx_checkheader(const char *header) {
+    const short *signature=(const short *)header;
 
     return ((signature[0]==0x4) && (signature[1]==0x66)) ||
 	((signature[0]==0x400) && (signature[1]==0x6600));

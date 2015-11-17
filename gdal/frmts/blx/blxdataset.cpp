@@ -87,7 +87,7 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 102 )
         return NULL;
 
-    if(!blx_checkheader((char *)poOpenInfo->pabyHeader))
+    if(!blx_checkheader((const char *)poOpenInfo->pabyHeader))
 	return NULL;
 
     // --------------------------------------------------------------------
@@ -439,6 +439,8 @@ void GDALRegister_BLX()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_various.html#BLX" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "blx" );
+
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = BLXDataset::Open;
     poDriver->pfnCreateCopy = BLXCreateCopy;
