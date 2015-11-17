@@ -129,7 +129,7 @@ static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
 
     if( static_cast<int>( image->type ) != 1)
     {
-        VSIFSeekL(image->file, 512+(y*image->xsize)+(z*image->xsize*image->ysize), SEEK_SET);
+        VSIFSeekL(image->file, 512+(y*static_cast<vsi_l_offset>(image->xsize))+(z*static_cast<vsi_l_offset>(image->xsize)*static_cast<vsi_l_offset>(image->ysize)), SEEK_SET);
         if(VSIFReadL(buf, 1, image->xsize, image->file) != image->xsize)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "file read error: row (%d) of (%s)\n", y, image->fileName.empty() ? "none" : image->fileName.c_str());
@@ -316,8 +316,8 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
     if( image->type == 0 )
     {
         VSIFSeekL(image->file, 
-                  512 + (nBlockYOff*image->xsize)
-                  + ((nBand-1)*image->xsize*image->ysize ), 
+                  512 + (nBlockYOff*static_cast<vsi_l_offset>(image->xsize))
+                  + ((nBand-1)*static_cast<vsi_l_offset>(image->xsize)*static_cast<vsi_l_offset>(image->ysize) ), 
                   SEEK_SET);
         if(VSIFWriteL(pImage, 1, image->xsize, image->file) != image->xsize)
         {
@@ -498,8 +498,9 @@ SGIDataset::~SGIDataset()
                      image.ysize * image.zsize );
 
         VSIFSeekL( fpImage, 512, SEEK_SET );
-        VSIFWriteL( image.rowStart, 4, image.ysize * image.zsize, fpImage );
-        VSIFWriteL( image.rowSize, 4, image.ysize * image.zsize, fpImage );
+        size_t nSize = static_cast<size_t>(image.ysize) * static_cast<size_t>(image.zsize);
+        VSIFWriteL( image.rowStart, 4, nSize, fpImage );
+        VSIFWriteL( image.rowSize, 4, nSize, fpImage );
         image.rleTableDirty = FALSE;
     }
 
@@ -638,7 +639,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
     if( static_cast<int>( poDS->image.type ) == 1 ) // RLE compressed
     {
-        const int x = poDS->image.ysize * poDS->nBands * sizeof(GUInt32);
+        const size_t x = static_cast<size_t>(poDS->image.ysize) * poDS->nBands * sizeof(GUInt32);
         poDS->image.rowStart = reinterpret_cast<GUInt32*>(
             VSI_MALLOC2_VERBOSE(poDS->image.ysize, poDS->nBands * sizeof(GUInt32) ) );
         poDS->image.rowSize = reinterpret_cast<GInt32 *>(
@@ -652,18 +653,14 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
         memset(poDS->image.rowSize, 0, x);
         poDS->image.rleEnd = 512 + (2 * x);
         VSIFSeekL(poDS->fpImage, 512, SEEK_SET);
-        if( static_cast<int>(
-               VSIFReadL(poDS->image.rowStart, 1, x, poDS->image.file ) )
-            != x )
+        if( VSIFReadL(poDS->image.rowStart, 1, x, poDS->image.file ) != x )
         {
             delete poDS;
             CPLError(CE_Failure, CPLE_OpenFailed, 
                      "file read error while reading start positions in sgidataset.cpp");
             return NULL;
         }
-        if( static_cast<int>(
-               VSIFReadL(poDS->image.rowSize, 1, x, poDS->image.file) )
-            != x)
+        if( VSIFReadL(poDS->image.rowSize, 1, x, poDS->image.file) != x)
         {
             delete poDS;
             CPLError(CE_Failure, CPLE_OpenFailed, 
