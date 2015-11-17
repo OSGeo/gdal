@@ -7027,8 +7027,7 @@ char **NCDFTokenizeArray( const char *pszValue )
     const int nLen = strlen(pszValue);
 
     if ( ( pszValue[0] == '{' ) && ( pszValue[nLen-1] == '}' ) ) {
-        char *pszTemp = reinterpret_cast<char *> (
-            CPLCalloc( nLen-2, sizeof(char*) ) );
+        char *pszTemp = reinterpret_cast<char *> (CPLMalloc( nLen-2 ) );
         strncpy( pszTemp, pszValue+1, nLen-2);
         pszTemp[nLen-2] = '\0';
         papszValues = CSLTokenizeString2( pszTemp, ",", CSLT_ALLOWEMPTYTOKENS );
