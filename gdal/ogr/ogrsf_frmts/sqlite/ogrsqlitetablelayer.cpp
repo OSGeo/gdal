@@ -2805,7 +2805,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                 if( pszTriggerName!= NULL && pszTriggerSQL != NULL &&
                     CPLString(pszTriggerName).tolower().find(CPLString(pszGeomCol).tolower()) != std::string::npos )
                 {
-                    const char* pszExpectedTrigger = 0;
+                    const char* pszExpectedTrigger = NULL;
                     if( STARTS_WITH(pszTriggerName, "ggi_") )
                     {
                         pszExpectedTrigger = CPLSPrintf(
@@ -2852,7 +2852,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                         pszTableName, pszGeomCol, pszGeomCol);
                     }*/
 
-                    if( AreTriggersSimilar(pszExpectedTrigger, pszTriggerSQL) )
+                    if( pszExpectedTrigger != NULL && AreTriggersSimilar(pszExpectedTrigger, pszTriggerSQL) )
                     {
                         // And drop them
                         pszSQL3 = sqlite3_mprintf("DROP TRIGGER %s", pszTriggerName);
