@@ -425,7 +425,7 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
     }
 
     // Set the spatial filter to the new table 
-    if( m_poFilterGeom != NULL &&  m_poCurBaseTable )
+    if( m_poFilterGeom != NULL )
     {
         m_poCurBaseTable->SetSpatialFilter( m_poFilterGeom );
     }
