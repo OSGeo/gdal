@@ -32,10 +32,10 @@
 
 CPL_CVSID("$Id$");
 
-HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, int nDataType ) :
+HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, EPTType eDataType ) :
     m_pData(pData),
     m_nBlockSize(nBlockSize),
-    m_nDataType(nDataType),
+    m_eDataType(eDataType),
     m_pCurrCount(NULL),
     m_nSizeCounts(0),
     m_pCurrValues(NULL),
@@ -44,7 +44,7 @@ HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, int nDataType ) :
     m_nNumRuns(0),
     m_nNumBits(0)
 {
-  m_nDataTypeNumBits    = HFAGetDataTypeBits( m_nDataType );
+  m_nDataTypeNumBits    = HFAGetDataTypeBits( m_eDataType );
   m_nBlockCount = (nBlockSize * 8) / m_nDataTypeNumBits;
 
   /* Allocate some memory for the count and values - probably too big */
@@ -124,7 +124,7 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
     /* Should not get to here - check in compressBlock() should return false if 
     we can't compress this blcok because we don't know about the type */
     CPLError( CE_Failure, CPLE_FileIO, "Imagine Datatype 0x%x (0x%x bits) not supported\n", 
-          m_nDataType,
+          m_eDataType,
           m_nDataTypeNumBits );
     CPLAssert( FALSE );
   }
@@ -239,10 +239,10 @@ bool HFACompress::compressBlock()
       If we can't compress it we should return false so that 
       the block cannot be compressed (we can handle just about 
       any type uncompressed) */
-  if( ! QueryDataTypeSupported( m_nDataType ) )
+  if( ! QueryDataTypeSupported( m_eDataType ) )
   {
     CPLDebug( "HFA", "Cannot compress HFA datatype 0x%x (0x%x bits). Writing uncompressed instead.\n", 
-              m_nDataType,
+              m_eDataType,
               m_nDataTypeNumBits );
     return false; 
   }
@@ -287,9 +287,9 @@ bool HFACompress::compressBlock()
   return ( m_nSizeCounts +  m_nSizeValues + 13 ) < m_nBlockSize;
 }
 
-bool HFACompress::QueryDataTypeSupported( int nHFADataType )
+bool HFACompress::QueryDataTypeSupported( EPTType eHFADataType )
 {
-  int nBits = HFAGetDataTypeBits( nHFADataType );
+  int nBits = HFAGetDataTypeBits( eHFADataType );
 
   return ( nBits == 8 ) || ( nBits == 16 ) || ( nBits == 32 ) || (nBits == 4)
       || (nBits == 2) || (nBits == 1);

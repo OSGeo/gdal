@@ -49,10 +49,10 @@ static void Usage()
 /************************************************************************/
 #ifndef WIN32
 char *
-HFAPCSStructToWKT( const Eprj_Datum *psDatum,
-                   const Eprj_ProParameters *psPro,
-                   const Eprj_MapInfo *psMapInfo,
-                   HFAEntry *poMapInformation )
+HFAPCSStructToWKT( const Eprj_Datum *,
+                   const Eprj_ProParameters *,
+                   const Eprj_MapInfo *,
+                   HFAEntry * )
 {
     return NULL;
 }
@@ -135,17 +135,17 @@ int main( int argc, char ** argv )
 
         for( int i = 1; i <= nBands; i++ )
         {
-            int nDataType;
+            EPTType eDataType;
             int nBlockXSize;
             int nBlockYSize;
             int nCompressionType;
 
-            HFAGetBandInfo( hHFA, i, &nDataType, &nBlockXSize, &nBlockYSize, 
+            HFAGetBandInfo( hHFA, i, &eDataType, &nBlockXSize, &nBlockYSize, 
                             &nCompressionType );
             int nOverviews = HFAGetOverviewCount( hHFA, i );
 
             printf( "Band %d: %dx%d tiles, type = %d\n",
-                    i, nBlockXSize, nBlockYSize, nDataType );
+                    i, nBlockXSize, nBlockYSize, eDataType );
 
             for( int iOverview=0; iOverview < nOverviews; iOverview++ )
             {

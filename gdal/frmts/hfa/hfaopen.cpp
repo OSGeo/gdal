@@ -536,7 +536,7 @@ CPLErr HFAGetRasterInfo( HFAHandle hHFA, int * pnXSize, int * pnYSize,
 /*                           HFAGetBandInfo()                           */
 /************************************************************************/
 
-CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
+CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, EPTType * peDataType,
                        int * pnBlockXSize, int * pnBlockYSize,
                        int *pnCompressionType )
 
@@ -549,8 +549,8 @@ CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
 
     HFABand *poBand = hHFA->papoBand[nBand-1];
 
-    if( pnDataType != NULL )
-        *pnDataType = poBand->nDataType;
+    if( peDataType != NULL )
+        *peDataType = poBand->eDataType;
 
     if( pnBlockXSize != NULL )
         *pnBlockXSize = poBand->nBlockXSize;
@@ -652,7 +652,7 @@ int HFAGetOverviewCount( HFAHandle hHFA, int nBand )
 CPLErr HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int iOverview,
                            int * pnXSize, int * pnYSize,
                            int * pnBlockXSize, int * pnBlockYSize,
-                           int * pnHFADataType )
+                           EPTType * peHFADataType )
 
 {
     HFABand	*poBand;
@@ -689,8 +689,8 @@ CPLErr HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int iOverview,
     if( pnBlockYSize != NULL )
         *pnBlockYSize = poBand->nBlockYSize;
 
-    if( pnHFADataType != NULL )
-        *pnHFADataType = poBand->nDataType;
+    if( peHFADataType != NULL )
+        *peHFADataType = poBand->eDataType;
 
     return( CE_None );
 }
@@ -809,10 +809,10 @@ void HFASetBandName( HFAHandle hHFA, int nBand, const char *pszName )
 /*                         HFAGetDataTypeBits()                         */
 /************************************************************************/
 
-int HFAGetDataTypeBits( int nDataType )
+int HFAGetDataTypeBits( EPTType eDataType )
 
 {
-    switch( nDataType )
+    switch( eDataType )
     {
       case EPT_u1:
         return 1;
@@ -844,17 +844,18 @@ int HFAGetDataTypeBits( int nDataType )
         return 128;
     }
 
-    return 0;
+    CPLAssert(FALSE);
+    return 1;
 }
 
 /************************************************************************/
 /*                         HFAGetDataTypeName()                         */
 /************************************************************************/
 
-const char *HFAGetDataTypeName( int nDataType )
+const char *HFAGetDataTypeName( EPTType eDataType )
 
 {
-    switch( nDataType )
+    switch( eDataType )
     {
       case EPT_u1:
         return "u1";
@@ -896,6 +897,7 @@ const char *HFAGetDataTypeName( int nDataType )
         return "c128";
 
       default:
+        CPLAssert(FALSE);
         return "unknown";
     }
 }
@@ -2053,7 +2055,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 int bOverview, int nBlockSize,
                 int bCreateCompressed, int bCreateLargeRaster,
                 int bDependentLayer,
-                int nXSize, int nYSize, int nDataType,
+                int nXSize, int nYSize, EPTType eDataType,
                 CPL_UNUSED char **papszOptions,
 
                 // these are only related to external (large) files
@@ -2086,7 +2088,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
     nBlocks = nBlocksPerRow * nBlocksPerColumn;
     nBytesPerBlock = (nBlockSize * nBlockSize
-                      * HFAGetDataTypeBits(nDataType) + 7) / 8;
+                      * HFAGetDataTypeBits(eDataType) + 7) / 8;
 
 /* -------------------------------------------------------------------- */
 /*      Create the Eimg_Layer for the band.                             */
@@ -2097,7 +2099,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
     poEimg_Layer->SetIntField( "width", nXSize );
     poEimg_Layer->SetIntField( "height", nYSize );
     poEimg_Layer->SetStringField( "layerType", "athematic" );
-    poEimg_Layer->SetIntField( "pixelType", nDataType );
+    poEimg_Layer->SetIntField( "pixelType", eDataType );
     poEimg_Layer->SetIntField( "blockWidth", nBlockSize );
     poEimg_Layer->SetIntField( "blockHeight", nBlockSize );
 
@@ -2256,33 +2258,33 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
     GUInt32  nLDict;
     char     szLDict[128], chBandType;
     
-    if( nDataType == EPT_u1 )
+    if( eDataType == EPT_u1 )
         chBandType = '1';
-    else if( nDataType == EPT_u2 )
+    else if( eDataType == EPT_u2 )
         chBandType = '2';
-    else if( nDataType == EPT_u4 )
+    else if( eDataType == EPT_u4 )
         chBandType = '4';
-    else if( nDataType == EPT_u8 )
+    else if( eDataType == EPT_u8 )
         chBandType = 'c';
-    else if( nDataType == EPT_s8 )
+    else if( eDataType == EPT_s8 )
         chBandType = 'C';
-    else if( nDataType == EPT_u16 )
+    else if( eDataType == EPT_u16 )
         chBandType = 's';
-    else if( nDataType == EPT_s16 )
+    else if( eDataType == EPT_s16 )
         chBandType = 'S';
-    else if( nDataType == EPT_u32 )
+    else if( eDataType == EPT_u32 )
         // for some reason erdas imagine expects an L for unsinged 32 bit ints
         // otherwise it gives strange "out of memory errors"
         chBandType = 'L';
-    else if( nDataType == EPT_s32 )
+    else if( eDataType == EPT_s32 )
         chBandType = 'L';
-    else if( nDataType == EPT_f32 )
+    else if( eDataType == EPT_f32 )
         chBandType = 'f';
-    else if( nDataType == EPT_f64 )
+    else if( eDataType == EPT_f64 )
         chBandType = 'd';
-    else if( nDataType == EPT_c64 )
+    else if( eDataType == EPT_c64 )
         chBandType = 'm';
-    else if( nDataType == EPT_c128 )
+    else if( eDataType == EPT_c128 )
         chBandType = 'M';
     else
     {
@@ -2315,7 +2317,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 
 HFAHandle HFACreate( const char * pszFilename,
                      int nXSize, int nYSize, int nBands,
-                     int nDataType, char ** papszOptions )
+                     EPTType eDataType, char ** papszOptions )
 
 {
     HFAHandle	psInfo;
@@ -2373,7 +2375,7 @@ HFAHandle HFACreate( const char * pszFilename,
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
     nBlocks = nBlocksPerRow * nBlocksPerColumn;
     nBytesPerBlock = (nBlockSize * nBlockSize
-                      * HFAGetDataTypeBits(nDataType) + 7) / 8;
+                      * HFAGetDataTypeBits(eDataType) + 7) / 8;
 
     CPLDebug( "HFACreate", "Blocks per row %d, blocks per column %d, "
 	      "total number of blocks %d, bytes per block %d.",
@@ -2423,7 +2425,7 @@ HFAHandle HFACreate( const char * pszFilename,
     if( bCreateLargeRaster )
     {
         if( !HFACreateSpillStack( psInfo, nXSize, nYSize, nBands, 
-                                  nBlockSize, nDataType, 
+                                  nBlockSize, eDataType, 
                                   &nValidFlagsOffset, &nDataOffset ) )
 	{
 	    CPLFree( pszRawFilename );
@@ -2445,7 +2447,7 @@ HFAHandle HFACreate( const char * pszFilename,
 
         if( !HFACreateLayer( psInfo, psInfo->poRoot, szName, FALSE, nBlockSize,
                              bCreateCompressed, bCreateLargeRaster, bCreateAux,
-                             nXSize, nYSize, nDataType, papszOptions,
+                             nXSize, nYSize, eDataType, papszOptions,
                              nValidFlagsOffset, nDataOffset,
                              nBands, iBand ) )
         {
@@ -3029,7 +3031,7 @@ const char *HFAGetIGEFilename( HFAHandle hHFA )
 /************************************************************************/
 
 int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize, 
-                         int nLayers, int nBlockSize, int nDataType,
+                         int nLayers, int nBlockSize, EPTType eDataType,
                          GIntBig *pnValidFlagsOffset, 
                          GIntBig *pnDataOffset )
 
@@ -3095,7 +3097,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
     /* nBlocks = nBlocksPerRow * nBlocksPerColumn; */
     nBytesPerBlock = (nBlockSize * nBlockSize
-                      * HFAGetDataTypeBits(nDataType) + 7) / 8;
+                      * HFAGetDataTypeBits(eDataType) + 7) / 8;
 
     nBytesPerRow = ( nBlocksPerRow + 7 ) / 8;
     nBlockMapSize = nBytesPerRow * nBlocksPerColumn;

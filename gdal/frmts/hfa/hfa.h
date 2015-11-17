@@ -38,11 +38,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-#ifdef HFA_PRIVATE
-typedef HFAInfo_t *HFAHandle;
-#else
-typedef void *HFAHandle;
-#endif
+typedef struct hfainfo *HFAHandle;
 
 /* -------------------------------------------------------------------- */
 /*      Structure definitions from eprj.h, with some type               */
@@ -127,6 +123,28 @@ typedef struct {
 } Efga_Polynomial;
 
 /* -------------------------------------------------------------------- */
+/*      data types.                                                     */
+/* -------------------------------------------------------------------- */
+typedef enum
+{
+    EPT_MIN = 0,
+    EPT_u1 = 0,
+    EPT_u2 = 1,
+    EPT_u4 = 2,
+    EPT_u8 = 3,
+    EPT_s8 = 4,
+    EPT_u16 = 5,
+    EPT_s16 = 6,
+    EPT_u32 = 7,
+    EPT_s32 = 8,
+    EPT_f32 = 9,
+    EPT_f64 = 10,
+    EPT_c64 = 11,
+    EPT_c128 = 12,
+    EPT_MAX = EPT_c128
+} EPTType;
+
+/* -------------------------------------------------------------------- */
 /*      Prototypes                                                      */
 /* -------------------------------------------------------------------- */
 
@@ -139,7 +157,7 @@ CPLErr HFARenameReferences( HFAHandle, const char *, const char * );
 
 HFAHandle CPL_DLL HFACreateLL( const char *pszFilename );
 HFAHandle CPL_DLL HFACreate( const char *pszFilename, int nXSize, int nYSize, 
-                             int nBands, int nDataType, char ** papszOptions );
+                             int nBands, EPTType eDataType, char ** papszOptions );
 const char CPL_DLL *HFAGetIGEFilename( HFAHandle );
 CPLErr  CPL_DLL HFAFlush( HFAHandle );
 int CPL_DLL HFACreateOverview( HFAHandle hHFA, int nBand, int nOverviewLevel,
@@ -158,7 +176,7 @@ CPLErr CPL_DLL HFASetProParameters( HFAHandle, const Eprj_ProParameters * );
 
 CPLErr CPL_DLL HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
                                  int *pnBands );
-CPLErr CPL_DLL HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
+CPLErr CPL_DLL HFAGetBandInfo( HFAHandle hHFA, int nBand, EPTType* peDataType,
                                int * pnBlockXSize, int * pnBlockYSize, 
                                int *pnCompressionType );
 int    CPL_DLL HFAGetBandNoData( HFAHandle hHFA, int nBand, double *pdfValue );
@@ -167,7 +185,7 @@ int    CPL_DLL HFAGetOverviewCount( HFAHandle hHFA, int nBand );
 CPLErr CPL_DLL HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int nOverview, 
                                    int * pnXSize, int * pnYSize,
                                    int * pnBlockXSize, int * pnBlockYSize,
-                                   int * pnHFADataType );
+                                   EPTType * peHFADataType );
 CPLErr CPL_DLL HFAGetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, 
                                   int nYBlock, void * pData );
 CPLErr CPL_DLL HFAGetRasterBlockEx( HFAHandle hHFA, int nBand, int nXBlock, 
@@ -186,8 +204,8 @@ CPLErr CPL_DLL HFASetOverviewRasterBlock(
     void * pData );
 const char * HFAGetBandName( HFAHandle hHFA, int nBand );
 void HFASetBandName( HFAHandle hHFA, int nBand, const char *pszName );
-int     CPL_DLL HFAGetDataTypeBits( int );
-const char CPL_DLL *HFAGetDataTypeName( int );
+int     CPL_DLL HFAGetDataTypeBits( EPTType eDataType );
+const char CPL_DLL *HFAGetDataTypeName( EPTType eDataType );
 CPLErr	CPL_DLL HFAGetPCT( HFAHandle, int, int *, 
                            double **, double **, double ** , double **,
                            double **);
@@ -198,19 +216,6 @@ CPLErr  CPL_DLL HFAGetDataRange( HFAHandle, int, double *, double * );
 char  CPL_DLL **HFAGetMetadata( HFAHandle hHFA, int nBand );
 CPLErr  CPL_DLL HFASetMetadata( HFAHandle hHFA, int nBand, char ** );
 char  CPL_DLL **HFAGetClassNames( HFAHandle hHFA, int nBand );
-int CPL_DLL 
-HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
-                const char *pszLayerName,
-                int bOverview, int nBlockSize, 
-                int bCreateCompressed, int bCreateLargeRaster,
-                int bDependentLayer,
-                int nXSize, int nYSize, int nDataType, 
-                char **papszOptions,
-                
-                // these are only related to external (large) files
-                GIntBig nStackValidFlagsOffset, 
-                GIntBig nStackDataOffset,
-                int nStackCount, int nStackIndex );
 
 int CPL_DLL
 HFAReadXFormStack( HFAHandle psInfo, 
@@ -227,28 +232,6 @@ HFAEvaluateXFormStack( int nStepCount, int bForward,
 
 char CPL_DLL **HFAReadCameraModel( HFAHandle psInfo );
 
-char *
-HFAPCSStructToWKT( const Eprj_Datum *psDatum,
-                   const Eprj_ProParameters *psPro,
-                   const Eprj_MapInfo *psMapInfo,
-                   HFAEntry *poMapInformation );
-
-/* -------------------------------------------------------------------- */
-/*      data types.                                                     */
-/* -------------------------------------------------------------------- */
-#define EPT_u1	0
-#define EPT_u2	1
-#define EPT_u4	2
-#define EPT_u8	3
-#define EPT_s8	4
-#define EPT_u16	5
-#define EPT_s16	6
-#define EPT_u32	7
-#define EPT_s32	8
-#define EPT_f32	9
-#define EPT_f64	10
-#define EPT_c64	11
-#define EPT_c128 12
 
 /* -------------------------------------------------------------------- */
 /*      Projection codes.                                               */
