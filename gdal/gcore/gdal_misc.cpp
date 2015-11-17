@@ -1587,8 +1587,7 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
         if( oBaseExt.length() > sizeof(szDerivedExtension)-2 )
             return FALSE;
 
-        strcpy( szDerivedExtension, oBaseExt.c_str() );
-        strcat( szDerivedExtension, "w" );
+        snprintf( szDerivedExtension, sizeof(szDerivedExtension), "%sw", oBaseExt.c_str() );
         return GDALReadWorldFile2( pszBaseFilename, szDerivedExtension,
                                   padfGeoTransform, papszSiblingFiles,
                                   ppszWorldFileNameOut );
