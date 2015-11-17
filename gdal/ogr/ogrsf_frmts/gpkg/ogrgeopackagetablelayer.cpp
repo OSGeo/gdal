@@ -195,7 +195,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
     }
 
     /* Bind the attributes using appropriate SQLite data types */
-    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    err = SQLITE_OK;
+    for( int i = 0; err == SQLITE_OK && i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( i == m_iFIDAsRegularColumnIndex )
             continue;
@@ -298,8 +299,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                     }
                     err = sqlite3_bind_text(poStmt, nColCount++, pszVal, nValLengthBytes, SQLITE_TRANSIENT);
                     break;
-                }            
-            }            
+                }
+            }
         }
         else
         {
@@ -307,9 +308,9 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                 err = sqlite3_bind_null(poStmt, nColCount++);
         }
     }
-    
+
     *pnColCount = nColCount;
-    return OGRERR_NONE;
+    return (err == SQLITE_OK) ? OGRERR_NONE : OGRERR_FAILURE;
 }
 
 //----------------------------------------------------------------------
