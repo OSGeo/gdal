@@ -234,7 +234,11 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
         {
             timeout.tv_sec = 0;
             timeout.tv_usec = 100000;
-            select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
+            if( select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout) < 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "select() failed");
+                break;
+            }
         }
         while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
     }
