@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.193 2015-11-02 09:52:08 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.194 2015-11-17 12:17:31 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3754,6 +3754,17 @@ TIFFReadDirectory(TIFF* tif)
                                        fip ? fip->field_name : "unknown tagname");
                         continue;
                     }
+					/* ColorMap or TransferFunction for high bit */
+					/* depths do not make much sense and could be */
+					/* used as a denial of service vector */
+					if (tif->tif_dir.td_bitspersample > 24)
+					{
+					    TIFFWarningExt(tif->tif_clientdata,module,
+						"Ignoring %s because BitsPerSample=%d>24",
+						fip ? fip->field_name : "unknown tagname",
+						tif->tif_dir.td_bitspersample);
+					    continue;
+					}
 					countpersample=(1L<<tif->tif_dir.td_bitspersample);
 					if ((dp->tdir_tag==TIFFTAG_TRANSFERFUNCTION)&&(dp->tdir_count==(uint64)countpersample))
 					{
