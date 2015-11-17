@@ -3187,6 +3187,7 @@ HFADataset::HFADataset()
     bForceToPEString = FALSE;
 
     nGCPCount = 0;
+    memset(asGCPList, 0, sizeof(asGCPList));
 }
 
 /************************************************************************/
