@@ -434,14 +434,15 @@ double GXFParseBase90( GXFInfo_t * psGXF, const char * pszText,
 /*                       GXFReadRawScanlineFrom()                       */
 /************************************************************************/
 
-static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
+static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                                    long * pnNewOffset, double * padfLineBuf )
 
 {
     const char	*pszLine;
     int		nValuesRead = 0, nValuesSought = psGXF->nRawXSize;
     
-    VSIFSeek( psGXF->fp, iOffset, SEEK_SET );
+    if( VSIFSeek( psGXF->fp, iOffset, SEEK_SET ) != 0 )
+        return CE_Failure;
 
     while( nValuesRead < nValuesSought )
     {
@@ -659,7 +660,7 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
 
 {
     GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
-    CPLErr	nErr;
+    CPLErr	eErr;
     
 /* -------------------------------------------------------------------- */
 /*      Validate scanline.                                              */
@@ -686,9 +687,9 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
         {
             if( psGXF->panRawLineOffset[i+1] == 0 )
             {
-                nErr = GXFGetRawScanline( hGXF, i, padfLineBuf );
-                if( nErr != CE_None )
-                    return( nErr );
+                eErr = GXFGetRawScanline( hGXF, i, padfLineBuf );
+                if( eErr != CE_None )
+                    return( eErr );
             }
         }
     }
@@ -696,12 +697,12 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
 /* -------------------------------------------------------------------- */
 /*      Get this scanline, and update the offset for the next line.     */
 /* -------------------------------------------------------------------- */
-    nErr = (CPLErr)
+    eErr =
         GXFReadRawScanlineFrom( psGXF, psGXF->panRawLineOffset[iScanline],
                                 psGXF->panRawLineOffset+iScanline+1,
                                 padfLineBuf );
 
-    return nErr;
+    return eErr;
 }
 
 /************************************************************************/
