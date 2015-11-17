@@ -228,7 +228,9 @@ for my $module (keys %object) {
                        POSIX => 0 },
                    TEST_REQUIRES => {
                        'Scalar::Util' => 0,
-                       'Test::More' => 0 },
+                       'Test::More' => 0,
+                       'Encode' => 0,
+                   }
         );
 }
 

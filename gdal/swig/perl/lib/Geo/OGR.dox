@@ -4,6 +4,8 @@
 # A wrapper for many OGR utility functions and a root class for all
 # OGR classes.
 
+## @ignore do_confess
+
 ## @ignore TermProgress
 ## @ignore TermProgress_nocb
 
