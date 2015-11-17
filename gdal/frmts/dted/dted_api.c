@@ -676,7 +676,7 @@ int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
                         (pabyRecord[8+psDInfo->nYSize*2+2] << 8) |
                         pabyRecord[8+psDInfo->nYSize*2+3];
 
-        if ((GIntBig)fileCheckSum > (GIntBig)(0xff * (8+psDInfo->nYSize*2)))
+        if (fileCheckSum > 0xff * (8+(unsigned int)psDInfo->nYSize*2))
         {
             static int bWarned = FALSE;
             if (! bWarned)
