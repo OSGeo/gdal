@@ -73,7 +73,7 @@ bool VizGeorefSpline2D::grow_points()
     int *new_index = (int *) VSI_REALLOC_VERBOSE( index, sizeof(int) * new_max );
     if( !new_index ) return false;
     index = new_index;
-    for( i = 0; i < VIZGEOREF_MAX_VARS; i++ )
+    for( i = 0; i < _nof_vars; i++ )
     {
         double* rhs_i_new = (double *) 
             VSI_REALLOC_VERBOSE( rhs[i], sizeof(double) * new_max );

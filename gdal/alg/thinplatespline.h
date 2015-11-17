@@ -158,7 +158,7 @@ class VizGeorefSpline2D
 
     vizGeorefInterType type;
 
-    int _nof_vars;
+    const int _nof_vars;
     int _nof_points;
     int _max_nof_points;
     int _nof_eqs;
