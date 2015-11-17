@@ -277,7 +277,7 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
                 nPixelOffset = poBand->nPixelOffset;
                 nLineOffset = poBand->nLineOffset;
                 eDTSize = GDALGetDataTypeSize(eDT) / 8;
-                if( nPixelOffset != nBands * eDTSize )
+                if( nPixelOffset != static_cast<GSpacing>(nBands) * eDTSize )
                     break;
             }
             else if( poBand->GetRasterDataType() != eDT ||
