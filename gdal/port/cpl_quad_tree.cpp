@@ -697,7 +697,7 @@ void** CPLQuadTreeSearch(const CPLQuadTree *hQuadTree,
   CPLQuadTreeCollectFeatures(hQuadTree, hQuadTree->psRoot, pAoi,
                             pnFeatureCount, &nMaxFeatures, &ppFeatureList);
 
-  return(ppFeatureList);
+  return ppFeatureList;
 }
 
 /************************************************************************/
