@@ -451,8 +451,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
         }
 
         const char* pszCur = pszPos;
-        const char* pszX = (pszCur != NULL) ?
-                            GMLGetCoordTokenPos(pszCur, &pszCur) : NULL;
+        const char* pszX = GMLGetCoordTokenPos(pszCur, &pszCur);
         const char* pszY = (pszCur != NULL) ?
                             GMLGetCoordTokenPos(pszCur, &pszCur) : NULL;
         const char* pszZ = (pszCur != NULL) ?
@@ -462,7 +461,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Did not get 2+ values in <gml:pos>%s</gml:pos> tuple.",
-                      pszPos ? pszPos : "" );
+                      pszPos );
             return false;
         }
 
@@ -532,7 +531,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Did not get at least %d values or invalid number of \n"
                         "set of coordinates <gml:posList>%s</gml:posList>",
-                        nDimension, pszPosList ? pszPosList : "");
+                        nDimension, pszPosList);
                 return false;
             }
 
