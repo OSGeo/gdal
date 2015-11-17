@@ -1831,7 +1831,10 @@ static CPLErr CPLErrOnlyRet(GDALPipe* p)
 class GDALServerErrorDesc
 {
     public:
-        GDALServerErrorDesc() {}
+        GDALServerErrorDesc(CPLErr eErr = CE_None,
+                            CPLErrorNum nErrNo = CPLE_None,
+                            const CPLString& osMsg = "") :
+                eErr(eErr), nErrNo(nErrNo), osErrorMsg(osMsg) {}
 
         CPLErr    eErr;
         CPLErrorNum       nErrNo;
@@ -1841,10 +1844,7 @@ class GDALServerErrorDesc
 static void CPL_STDCALL RunErrorHandler(CPLErr eErr, CPLErrorNum nErrNo,
                                         const char* pszErrorMsg)
 {
-    GDALServerErrorDesc oDesc;
-    oDesc.eErr = eErr;
-    oDesc.nErrNo = nErrNo;
-    oDesc.osErrorMsg = pszErrorMsg;
+    GDALServerErrorDesc oDesc(eErr, nErrNo, pszErrorMsg);
     std::vector<GDALServerErrorDesc>* paoErrors =
         (std::vector<GDALServerErrorDesc>*) CPLGetErrorHandlerUserData();
     if( paoErrors )
@@ -3761,14 +3761,14 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
     int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
     int bDirectCopy;
     if( nPixelSpace == nDataTypeSize &&
-        nLineSpace == nBufXSize * nDataTypeSize &&
+        nLineSpace == static_cast<GSpacing>(nBufXSize) * nDataTypeSize &&
         (nBandSpace == nBufYSize * nLineSpace ||
             (nBandSpace == 0 && nBandCount == 1)) )
     {
         bDirectCopy = TRUE;
     }
     else if( nBandCount > 1 &&
-                nPixelSpace == nBandCount * nDataTypeSize &&
+                nPixelSpace == static_cast<GSpacing>(nBandCount) * nDataTypeSize &&
                 nLineSpace == nBufXSize * nPixelSpace &&
                 nBandSpace == nBandCount )
     {
@@ -5037,7 +5037,7 @@ CPLErr GDALClientRasterBand::IRasterIO_read_internal(
     if( nSize != nExpectedSize )
         return CE_Failure;
     if( nPixelSpace == nDataTypeSize &&
-        nLineSpace == nBufXSize * nDataTypeSize )
+        nLineSpace == static_cast<GSpacing>(nBufXSize) * nDataTypeSize )
     {
         if( !GDALPipeRead_nolength(p, nSize, pData) )
             return CE_Failure;
@@ -5152,7 +5152,8 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                         eRet = IRasterIO_read_internal( nXOff, nYOff, nXSize, nLinesToRead,
                                                         pabyCachedLines, nXSize, nLinesToRead,
                                                         eBufType,
-                                                        nBufTypeSize, nBufTypeSize * nXSize );
+                                                        nBufTypeSize,
+                                                        static_cast<GSpacing>(nBufTypeSize) * nXSize );
                         if( eRet == CE_None )
                         {
                             eCachedBufType = eBufType;
@@ -5207,7 +5208,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         if( nSizeBig != nSize )
             return CE_Failure;
         if( nPixelSpace == nDataTypeSize &&
-            nLineSpace == nBufXSize * nDataTypeSize )
+            nLineSpace == static_cast<GSpacing>(nBufXSize) * nDataTypeSize )
         {
             if( !GDALPipeWrite(p, nSize, pData) )
                 return CE_Failure;
