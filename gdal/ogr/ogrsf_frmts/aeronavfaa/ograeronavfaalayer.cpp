@@ -546,7 +546,8 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
         poLS->addPoint(dfLon, dfLat);
     }
 
-    poFeature->SetGeometryDirectly(poLS);
+    if( poFeature != NULL )
+        poFeature->SetGeometryDirectly(poLS);
     return poFeature;
 }
 
