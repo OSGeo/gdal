@@ -294,6 +294,26 @@ def minixml_7():
 
     return 'success'
 
+###############################################################################
+# Parse XML with too many nesting
+
+def minixml_8():
+
+    xml_str = ''.join('<a>' for i in range(10001))
+    xml_str += ''.join('</a>' for i in range(10001))
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        tree = gdal.ParseXMLString( xml_str )
+    if tree is not None:
+        gdaltest.post_reason('expected None tree')
+        return 'fail'
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('expected error message')
+        return 'fail'
+
+    return 'success'
+
 
 ###############################################################################
 # Cleanup
@@ -309,6 +329,7 @@ gdaltest_list = [
     minixml_5,
     minixml_6,
     minixml_7,
+    minixml_8,
     minixml_cleanup ]
 
 if __name__ == '__main__':
