@@ -66,6 +66,12 @@
 
 CPL_C_START
 
+#ifdef ENABLE_EXPERIMENTAL_CPL_WARN_UNUSED_RESULT
+#define EXPERIMENTAL_CPL_WARN_UNUSED_RESULT CPL_WARN_UNUSED_RESULT
+#else
+#define EXPERIMENTAL_CPL_WARN_UNUSED_RESULT
+#endif
+
 /* ==================================================================== */
 /*      stdio file access functions.  These may not support large       */
 /*      files, and don't necessarily go through the virtualization      */
@@ -74,21 +80,21 @@ CPL_C_START
 
 FILE CPL_DLL *  VSIFOpen( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFClose( FILE * );
-int CPL_DLL     VSIFSeek( FILE *, long, int );
-long CPL_DLL    VSIFTell( FILE * );
+int CPL_DLL     VSIFSeek( FILE *, long, int ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+long CPL_DLL    VSIFTell( FILE * ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL    VSIRewind( FILE * );
 void CPL_DLL    VSIFFlush( FILE * );
 
-size_t CPL_DLL  VSIFRead( void *, size_t, size_t, FILE * );
-size_t CPL_DLL  VSIFWrite( const void *, size_t, size_t, FILE * );
-char CPL_DLL   *VSIFGets( char *, int, FILE * );
-int CPL_DLL     VSIFPuts( const char *, FILE * );
-int CPL_DLL     VSIFPrintf( FILE *, const char *, ... ) CPL_PRINT_FUNC_FORMAT(2, 3);
+size_t CPL_DLL  VSIFRead( void *, size_t, size_t, FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+size_t CPL_DLL  VSIFWrite( const void *, size_t, size_t, FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+char CPL_DLL   *VSIFGets( char *, int, FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+int CPL_DLL     VSIFPuts( const char *, FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+int CPL_DLL     VSIFPrintf( FILE *, const char *, ... ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT CPL_PRINT_FUNC_FORMAT(2, 3);
 
-int CPL_DLL     VSIFGetc( FILE * );
-int CPL_DLL     VSIFPutc( int, FILE * );
-int CPL_DLL     VSIUngetc( int, FILE * );
-int CPL_DLL     VSIFEof( FILE * );
+int CPL_DLL     VSIFGetc( FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+int CPL_DLL     VSIFPutc( int, FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+int CPL_DLL     VSIUngetc( int, FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+int CPL_DLL     VSIFEof( FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 
 /* ==================================================================== */
 /*      VSIStat() related.                                              */
@@ -132,23 +138,23 @@ typedef FILE VSILFILE;
 
 VSILFILE CPL_DLL *  VSIFOpenL( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFCloseL( VSILFILE * );
-int CPL_DLL     VSIFSeekL( VSILFILE *, vsi_l_offset, int );
-vsi_l_offset CPL_DLL VSIFTellL( VSILFILE * );
+int CPL_DLL     VSIFSeekL( VSILFILE *, vsi_l_offset, int ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+vsi_l_offset CPL_DLL VSIFTellL( VSILFILE * ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL    VSIRewindL( VSILFILE * );
-size_t CPL_DLL  VSIFReadL( void *, size_t, size_t, VSILFILE * );
-int CPL_DLL     VSIFReadMultiRangeL( int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes, VSILFILE * );
-size_t CPL_DLL  VSIFWriteL( const void *, size_t, size_t, VSILFILE * );
-int CPL_DLL     VSIFEofL( VSILFILE * );
-int CPL_DLL     VSIFTruncateL( VSILFILE *, vsi_l_offset );
-int CPL_DLL     VSIFFlushL( VSILFILE * );
-int CPL_DLL     VSIFPrintfL( VSILFILE *, const char *, ... ) CPL_PRINT_FUNC_FORMAT(2, 3);
-int CPL_DLL     VSIFPutcL( int, VSILFILE * );
+size_t CPL_DLL  VSIFReadL( void *, size_t, size_t, VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+int CPL_DLL     VSIFReadMultiRangeL( int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes, VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+size_t CPL_DLL  VSIFWriteL( const void *, size_t, size_t, VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+int CPL_DLL     VSIFEofL( VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+int CPL_DLL     VSIFTruncateL( VSILFILE *, vsi_l_offset ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+int CPL_DLL     VSIFFlushL( VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+int CPL_DLL     VSIFPrintfL( VSILFILE *, const char *, ... ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT CPL_PRINT_FUNC_FORMAT(2, 3);
+int CPL_DLL     VSIFPutcL( int, VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 
 int CPL_DLL     VSIIngestFile( VSILFILE* fp,
                                const char* pszFilename,
                                GByte** ppabyRet,
                                vsi_l_offset* pnSize,
-                               GIntBig nMaxSize );
+                               GIntBig nMaxSize ) CPL_WARN_UNUSED_RESULT;
 
 #if defined(VSI_STAT64_T)
 typedef struct VSI_STAT64_T VSIStatBufL;
