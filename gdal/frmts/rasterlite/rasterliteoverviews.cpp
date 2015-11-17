@@ -397,7 +397,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
     GDALDataset* poPrevOvrLevel =
         (papoOverviews != NULL && iLev >= 2 && iLev <= nResolutions && papoOverviews[iLev-2]) ?
             papoOverviews[iLev-2] : this;
-    const double dfRatioPrevOvr = poPrevOvrLevel->GetRasterBand(1)->GetXSize() / nOvrXSize;
+    const double dfRatioPrevOvr = static_cast<double>(poPrevOvrLevel->GetRasterBand(1)->GetXSize()) / nOvrXSize;
     const int nPrevOvrBlockXSize = static_cast<int>( nBlockXSize * dfRatioPrevOvr + 0.5 );
     const int nPrevOvrBlockYSize = static_cast<int>(nBlockYSize * dfRatioPrevOvr + 0.5 );
     GByte* pabyPrevOvrMEMDSBuffer = NULL;
