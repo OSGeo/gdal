@@ -2328,8 +2328,9 @@ HFAHandle HFACreate( const char * pszFilename,
     {
         nBlockSize = atoi( pszValue );
         // check for sane values
-        if ( (( nBlockSize < 32 ) || (nBlockSize > 2048))
-            && !CSLTestBoolean(CPLGetConfigOption("FORCE_BLOCKSIZE", "NO")) )
+        if ( nBlockSize == 0 ||
+            ((( nBlockSize < 32 ) || (nBlockSize > 2048))
+            && !CSLTestBoolean(CPLGetConfigOption("FORCE_BLOCKSIZE", "NO"))) )
         {
             nBlockSize = 64;
         }
