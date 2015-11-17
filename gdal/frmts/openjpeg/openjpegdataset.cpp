@@ -846,26 +846,36 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                 CPLAssert((int)psImage->comps[3].h >= nHeightToRead);
             }
 
-            OPJ_INT32* pSrcY = psImage->comps[0].data;
-            OPJ_INT32* pSrcCb = psImage->comps[1].data;
-            OPJ_INT32* pSrcCr = psImage->comps[2].data;
-            OPJ_INT32* pSrcA = (nBands == 4) ? psImage->comps[3].data : NULL;
             GByte* pDst = (GByte*)pDstBuffer;
-            for(int j=0;j<nHeightToRead;j++)
+            if( iBand == 4 )
             {
-                for(int i=0;i<nWidthToRead;i++)
+                const OPJ_INT32* pSrcA = psImage->comps[3].data;
+                for(int j=0;j<nHeightToRead;j++)
                 {
-                    int Y = pSrcY[j * psImage->comps[0].w + i];
-                    int Cb = pSrcCb[(j/2) * psImage->comps[1].w + (i/2)];
-                    int Cr = pSrcCr[(j/2) * psImage->comps[2].w + (i/2)];
-                    if (iBand == 1)
-                        pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.402 * (Cr - 128)));
-                    else if (iBand == 2)
-                        pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128)));
-                    else if (iBand == 3)
-                        pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.772 * (Cb - 128)));
-                    else if (iBand == 4)
-                        pDst[j * nBlockXSize + i] = pSrcA[j * psImage->comps[0].w + i];
+                    memcpy(pDst + j*nBlockXSize,
+                            pSrcA + j * psImage->comps[0].w,
+                            nWidthToRead);
+                }
+            }
+            else
+            {
+                const OPJ_INT32* pSrcY = psImage->comps[0].data;
+                const OPJ_INT32* pSrcCb = psImage->comps[1].data;
+                const OPJ_INT32* pSrcCr = psImage->comps[2].data;
+                for(int j=0;j<nHeightToRead;j++)
+                {
+                    for(int i=0;i<nWidthToRead;i++)
+                    {
+                        int Y = pSrcY[j * psImage->comps[0].w + i];
+                        int Cb = pSrcCb[(j/2) * psImage->comps[1].w + (i/2)];
+                        int Cr = pSrcCr[(j/2) * psImage->comps[2].w + (i/2)];
+                        if (iBand == 1)
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.402 * (Cr - 128)));
+                        else if (iBand == 2)
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128)));
+                        else if (iBand == 3)
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.772 * (Cb - 128)));
+                    }
                 }
             }
             
