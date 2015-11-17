@@ -823,7 +823,6 @@ skip_read_next_line:
         else if (STARTS_WITH(pszLine, "ATVS"))
         {
             CPLString osAttVal = pszLine + 8;
-            int bSkipReadNextLine = FALSE;
             while( true )
             {
                 pszLine = CPLReadLine2L(fp, 81, NULL);
@@ -836,7 +835,6 @@ skip_read_next_line:
                 }
                 else
                 {
-                    bSkipReadNextLine = TRUE;
                     break;
                 }
             }
@@ -855,8 +853,7 @@ skip_read_next_line:
                 aosAttIdVal.push_back( strstrType (osAttId, osAttVal) );
             osAttId = "";
             bIso8859_1 = FALSE;
-            if (bSkipReadNextLine)
-                goto skip_read_next_line;
+            goto skip_read_next_line;
         }
         else if (STARTS_WITH(pszLine, "ATVCP"))
         {
