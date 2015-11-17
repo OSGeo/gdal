@@ -29,6 +29,11 @@
 
 #include <stdio.h>
 
+#ifdef GDALDRIVER
+#include "cpl_conv.h"
+#include "cpl_vsi.h"
+#endif
+
 /* Constants */
 #define BLX_UNDEF -32768
 #define BLX_OVERVIEWLEVELS 4
@@ -68,7 +73,11 @@ struct blxcontext_s {
 			a cell is written */ 
     int fillundefval; 
 
+#ifdef GDALDRIVER
+    VSILFILE* fh;
+#else
     FILE *fh;
+#endif
     int write;
     int open;
 };
@@ -91,13 +100,12 @@ struct component_s {
 
 /* Define memory allocation and I/O function macros */
 #ifdef GDALDRIVER
-#include "cpl_conv.h"
-#define BLXfopen VSIFOpen
-#define BLXfclose VSIFClose
-#define BLXfread VSIFRead
-#define BLXfwrite VSIFWrite
-#define BLXfseek VSIFSeek
-#define BLXftell VSIFTell
+#define BLXfopen VSIFOpenL
+#define BLXfclose VSIFCloseL
+#define BLXfread VSIFReadL
+#define BLXfwrite VSIFWriteL
+#define BLXfseek VSIFSeekL
+#define BLXftell VSIFTellL
 #define BLXmalloc VSIMalloc
 #define BLXfree CPLFree
 #define BLXdebug0(text)              CPLDebug("BLX", text)
@@ -141,7 +149,7 @@ int blxclose(blxcontext_t *ctx);
 void blxprintinfo(blxcontext_t *ctx);
 short *blx_readcell(blxcontext_t *ctx, int row, int col, short *buffer, int bufsize, int overviewlevel);
 int blx_encode_celldata(blxcontext_t *ctx, blxdata *indata, int side, unsigned char *outbuf, int outbufsize);
-int blx_checkheader(char *header);
+int blx_checkheader(const char *header);
 int blx_writecell(blxcontext_t *ctx, blxdata *cell, int cellrow, int cellcol);
 
 #endif
