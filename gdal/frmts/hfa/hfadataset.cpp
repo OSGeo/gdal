@@ -4370,20 +4370,22 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
           /* Historically, hfa used esri state plane zone code. Try esri pe string first. */ 
           int zoneCode = ESRIToUSGSZone(psPro->proZone);
-          char nad[32];
-          strcpy(nad, "HARN");
+          const char* pszDatum;
           if(psDatum)
-              strcpy(nad, psDatum->datumname);
-          char units[32];
-          strcpy(units, "meters");
+              pszDatum = psDatum->datumname;
+          else
+              pszDatum = "HARN";
+          const char* pszUnits;
           if(psMapInfo)
-              strcpy(units, psMapInfo->units);
+              pszUnits = psMapInfo->units;
           else if(pszUnitsName && strlen(pszUnitsName) > 0)
-              strcpy(units, pszUnitsName);
+              pszUnits = pszUnitsName;
+          else
+              pszUnits = "meters";
           int proNu = 0;
           if(psPro)
               proNu = psPro->proNumber;
-          if(oSRS.ImportFromESRIStatePlaneWKT(zoneCode, nad, units, proNu) == OGRERR_NONE)
+          if(oSRS.ImportFromESRIStatePlaneWKT(zoneCode, pszDatum, pszUnits, proNu) == OGRERR_NONE)
           {
               CPLFree( pszUnitsName );
               oSRS.morphFromESRI();
