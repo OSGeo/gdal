@@ -866,7 +866,7 @@ CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
 /* -------------------------------------------------------------------- */
 /*      ensure existing file gets opened if there is one.               */
 /* -------------------------------------------------------------------- */
-    HaveMaskFile();
+    CPL_IGNORE_RET_VAL(HaveMaskFile());
 
 /* -------------------------------------------------------------------- */
 /*      Try creating the mask file.                                     */
