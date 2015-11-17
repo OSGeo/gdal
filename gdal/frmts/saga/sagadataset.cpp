@@ -222,7 +222,7 @@ CPLErr SAGARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
 		return CE_Failure;
 
-    SAGADataset *poGDS = dynamic_cast<SAGADataset *>( poDS );
+    SAGADataset *poGDS = static_cast<SAGADataset *>( poDS );
     vsi_l_offset offset = static_cast<vsi_l_offset>( m_nBits / 8 )
         * nRasterXSize * (nRasterYSize - nBlockYOff - 1);
 
@@ -265,7 +265,7 @@ CPLErr SAGARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     const vsi_l_offset offset = static_cast<vsi_l_offset> (m_nBits / 8)
         * nRasterXSize * (nRasterYSize - nBlockYOff - 1);
-    SAGADataset *poGDS = dynamic_cast<SAGADataset *>(poDS);
+    SAGADataset *poGDS = static_cast<SAGADataset *>(poDS);
     assert( poGDS != NULL );
 
     if( VSIFSeekL( poGDS->fp, offset, SEEK_SET ) != 0 )
@@ -670,7 +670,7 @@ CPLErr SAGADataset::GetGeoTransform( double *padfGeoTransform )
     if( padfGeoTransform == NULL )
 		return CE_Failure;
 
-    SAGARasterBand *poGRB = dynamic_cast<SAGARasterBand *>(GetRasterBand( 1 ));
+    SAGARasterBand *poGRB = static_cast<SAGARasterBand *>(GetRasterBand( 1 ));
 
     if( poGRB == NULL )
     {
@@ -717,7 +717,7 @@ CPLErr SAGADataset::SetGeoTransform( double *padfGeoTransform )
         return CE_Failure;
     }
 
-    SAGARasterBand *poGRB = dynamic_cast<SAGARasterBand *>(GetRasterBand( 1 ));
+    SAGARasterBand *poGRB = static_cast<SAGARasterBand *>(GetRasterBand( 1 ));
 
     if( poGRB == NULL || padfGeoTransform == NULL)
         return CE_Failure;
