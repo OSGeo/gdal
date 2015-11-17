@@ -1204,8 +1204,8 @@ VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
             return iter->second;
 
         /* /vsimem should be treated as a match for /vsimem/ */
-        if( nPathLen == nIterKeyLen - 1
-            && strncmp(pszPath,pszIterKey,nIterKeyLen-1) == 0 )
+        if( nPathLen + 1 == nIterKeyLen
+            && strncmp(pszPath,pszIterKey,nPathLen) == 0 )
             return iter->second;
     }
     
