@@ -568,12 +568,14 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
         !STARTS_WITH(pszAPIURL, "/vsimem/") ? AddHTTPOptions(): NULL, osSQL);
     CPLHTTPResult * psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
     CSLDestroy(papszOptions);
+    if( psResult == NULL )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Check for some error conditions and report.  HTML Messages      */
 /*      are transformed info failure.                                   */
 /* -------------------------------------------------------------------- */
-    if (psResult && psResult->pszContentType &&
+    if (psResult->pszContentType &&
         STARTS_WITH(psResult->pszContentType, "text/html"))
     {
         CPLDebug( "CARTODB", "RunSQL HTML Response:%s", psResult->pabyData );
@@ -582,12 +584,12 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult && psResult->pszErrBuf != NULL) 
+    if (psResult->pszErrBuf != NULL) 
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RunSQL Error Message:%s", psResult->pszErrBuf );
     }
-    else if (psResult && psResult->nStatus != 0) 
+    else if (psResult->nStatus != 0) 
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RunSQL Error Status:%d", psResult->nStatus );
