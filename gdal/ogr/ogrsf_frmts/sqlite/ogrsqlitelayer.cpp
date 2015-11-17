@@ -673,9 +673,11 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                 }
 
                 if( poGeomFieldDefn->eGeomFormat == OSGF_WKB )
-                    OGRGeometryFactory::createFromWkb( 
+                {
+                    CPL_IGNORE_RET_VAL(OGRGeometryFactory::createFromWkb( 
                         (GByte*)sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol ),
-                        NULL, &poGeometry, nBytes );
+                        NULL, &poGeometry, nBytes ));
+                }
             }
             else if ( poGeomFieldDefn->eGeomFormat == OSGF_FGF )
             {
@@ -689,9 +691,9 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
             {
                 const int nBytes = sqlite3_column_bytes( hStmt, poGeomFieldDefn->iCol );
 
-                ImportSpatiaLiteGeometry( 
+                CPL_IGNORE_RET_VAL(ImportSpatiaLiteGeometry( 
                         (GByte*)sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol ), nBytes,
-                        &poGeometry );
+                        &poGeometry ));
             }
 
             if (poGeometry != NULL )
