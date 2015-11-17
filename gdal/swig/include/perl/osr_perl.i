@@ -136,7 +136,7 @@ sub Export {
         MICoordSys => sub { return ExportToMICoordSys() },
         MapInfoCS => sub { return ExportToMICoordSys() },
         );
-    Geo::GDAL::error(1, $format, \%converters);
+    Geo::GDAL::error(1, $format, \%converters) unless $converters{$format};
     return $converters{$format}->();
 }
 *AsText = *ExportToWkt;

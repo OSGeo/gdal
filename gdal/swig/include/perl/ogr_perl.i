@@ -1399,7 +1399,7 @@ sub new {
     } elsif (defined $arc) {
         $self = Geo::OGRc::ApproximateArcAngles(@$arc);
     } else {
-        Geo::GDAL::error(1, undef, map {$_=>} qw/GeometryType WKT WKB HEXEWKB HEXWKB GML GeoJSON Arc/);
+        Geo::GDAL::error(1, undef, map {$_=>1} qw/GeometryType WKT WKB HEXEWKB HEXWKB GML GeoJSON Arc/);
     }
     bless $self, $pkg if defined $self;
     $self->Points($points) if $points;
