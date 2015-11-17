@@ -140,7 +140,12 @@ HFADictionary::~HFADictionary()
 void HFADictionary::AddType( HFAType *poType )
 
 {
-    if( nTypes == nTypesMax )
+    if( nTypes == nTypesMax
+#ifdef DEBUG
+        // To please Coverity.
+        || papoTypes == NULL
+#endif
+        )
     {
         nTypesMax = nTypes * 2 + 10;
         papoTypes = (HFAType **) CPLRealloc( papoTypes,
