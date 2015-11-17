@@ -164,6 +164,8 @@ class VSIGZipHandle : public VSIVirtualHandle
                   uLong expected_crc = 0,
                   int transparent = 0);
     ~VSIGZipHandle();
+    
+    bool              IsInitOK() const { return inbuf != NULL; }
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -235,6 +237,11 @@ VSIGZipHandle* VSIGZipHandle::Duplicate()
                                                 0,
                                                 compressed_size,
                                                 uncompressed_size);
+    if( !(poHandle->IsInitOK()) )
+    {
+        delete poHandle;
+        return NULL;
+    }
 
     poHandle->m_nLastReadOffset = m_nLastReadOffset;
 
@@ -313,6 +320,8 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
     out = 0;
     crc = crc32(0L, Z_NULL, 0);
     this->transparent = transparent;
+    startOff = 0;
+    snapshots = NULL;
 
     stream.next_in  = inbuf = (Byte*)ALLOC(Z_BUFSIZE);
 
@@ -325,6 +334,9 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
         */
     if (err != Z_OK || inbuf == Z_NULL) {
         CPLError(CE_Failure, CPLE_NotSupported, "inflateInit2 init failed");
+        TRYFREE(inbuf);
+        inbuf = NULL;
+        return;
     }
     stream.avail_out = Z_BUFSIZE;
 
@@ -335,10 +347,6 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
     {
         snapshot_byte_interval = MAX(Z_BUFSIZE, compressed_size / 100);
         snapshots = (GZipSnapshot*)CPLCalloc(sizeof(GZipSnapshot), (size_t) (compressed_size / snapshot_byte_interval + 1));
-    }
-    else
-    {
-        snapshots = NULL;
     }
 }
 
@@ -1414,7 +1422,13 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly( const char *pszFilena
         poHandleLastGZipFile = NULL;
     }
 
-    return new VSIGZipHandle(poVirtualHandle, pszFilename + strlen("/vsigzip/"));
+    VSIGZipHandle* poHandle = new VSIGZipHandle(poVirtualHandle, pszFilename + strlen("/vsigzip/"));
+    if( !(poHandle->IsInitOK()) )
+    {
+        delete poHandle;
+        return NULL;
+    }
+    return poHandle;
 }
 
 /************************************************************************/
@@ -1963,6 +1977,12 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
                              file_info.uncompressed_size,
                              file_info.crc,
                              file_info.compression_method == 0);
+    if( !(poGZIPHandle->IsInitOK()) )
+    {
+        delete poGZIPHandle;
+        return NULL;
+    }
+
     /* Wrap the VSIGZipHandle inside a buffered reader that will */
     /* improve dramatically performance when doing small backward */
     /* seeks */
