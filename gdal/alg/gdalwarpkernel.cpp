@@ -4098,8 +4098,10 @@ static void GWKGeneralCaseThread( void* pData)
                 if ( poWK->eResample == GRA_NearestNeighbour ||
                      nSrcXSize == 1 || nSrcYSize == 1)
                 {
-                    GWKGetPixelValue( poWK, iBand, iSrcOffset,
-                                      &dfBandDensity, &dfValueReal, &dfValueImag );
+                    // FALSE is returned if dfBandDensity == 0, which is
+                    // checked below
+                    CPL_IGNORE_RET_VAL(GWKGetPixelValue( poWK, iBand, iSrcOffset,
+                                      &dfBandDensity, &dfValueReal, &dfValueImag ));
                 }
                 else if ( poWK->eResample == GRA_Bilinear &&
                           bUse4SamplesFormula )
