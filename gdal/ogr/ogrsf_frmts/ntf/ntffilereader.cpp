@@ -1090,6 +1090,8 @@ void NTFFileReader::ApplyAttributeValues( OGRFeature * poFeature,
                              papszTypes, papszValues );
     }
 
+    va_end(hVaArgs);
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
