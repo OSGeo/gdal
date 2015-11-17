@@ -935,7 +935,7 @@ CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
     {
         // we write only the info for this band, unless we are
         // using PER_DATASET in which case we write for all.
-        if( nBand != iBand + 1 && !(nFlags | GMF_PER_DATASET) )
+        if( nBand != iBand + 1 && !(nFlags & GMF_PER_DATASET) )
             continue;
 
         poMaskDS->SetMetadataItem( 
