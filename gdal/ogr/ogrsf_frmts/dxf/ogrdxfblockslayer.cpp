@@ -98,7 +98,7 @@ OGRFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 /*      Are we done reading the current blocks features?                */
 /* -------------------------------------------------------------------- */
     DXFBlockDefinition *psBlock = &(oIt->second);
-    unsigned int nSubFeatureCount = psBlock->apoFeatures.size();
+    size_t nSubFeatureCount = psBlock->apoFeatures.size();
 
     if( psBlock->poGeometry != NULL )
         nSubFeatureCount++;

@@ -114,8 +114,8 @@ void OGRDXFReader::LoadDiskChunk()
         iSrcBufferOffset = 0;
     }
 
-    nSrcBufferBytes += VSIFReadL( achSrcBuffer + nSrcBufferBytes, 
-                                  1, 512, fp );
+    nSrcBufferBytes += static_cast<int>(VSIFReadL( achSrcBuffer + nSrcBufferBytes, 
+                                  1, 512, fp ));
     achSrcBuffer[nSrcBufferBytes] = '\0';
 
     CPLAssert( nSrcBufferBytes <= 1024 );
