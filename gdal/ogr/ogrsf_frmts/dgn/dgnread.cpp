@@ -1011,7 +1011,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 /* -------------------------------------------------------------------- */
     psElement->element_id = psDGN->next_element_id - 1;
 
-    psElement->offset = VSIFTell( psDGN->fp ) - psDGN->nElemBytes;
+    psElement->offset = static_cast<int>(VSIFTell( psDGN->fp )) - psDGN->nElemBytes;
     psElement->size = psDGN->nElemBytes;
 
     return psElement;

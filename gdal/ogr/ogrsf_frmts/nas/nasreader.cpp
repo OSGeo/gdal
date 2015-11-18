@@ -363,7 +363,7 @@ bool NASReader::IsFeatureElement( const char *pszElement )
     CPLAssert( m_poState != NULL );
 
     const char *pszLast = m_poState->GetLastComponent();
-    int        nLen = strlen(pszLast);
+    int        nLen = static_cast<int>(strlen(pszLast));
 
     // There seem to be two major NAS classes of feature identifiers
     // -- either a wfs:Insert or a gml:featureMember.
@@ -706,7 +706,7 @@ bool NASReader::LoadClasses( const char *pszFile )
     }
 
     VSIFSeek( fp, 0, SEEK_END );
-    nLength = VSIFTell( fp );
+    nLength = static_cast<int>(VSIFTell( fp ));
     VSIFSeek( fp, 0, SEEK_SET );
 
     pszWholeText = (char *) VSIMalloc(nLength+1);

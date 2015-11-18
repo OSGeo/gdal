@@ -273,7 +273,7 @@ int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbos
 {
     GByte* pabyDataBefore = pabyData;
     SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, verbose);
-    return pabyData - pabyDataBefore;
+    return static_cast<int>(pabyData - pabyDataBefore);
 end_error:
     return -1;
 }

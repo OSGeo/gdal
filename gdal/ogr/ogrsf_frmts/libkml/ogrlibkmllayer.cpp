@@ -184,7 +184,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
 
         /***** get the number of features on the layer *****/
 
-        nFeatures = m_poKmlLayer->get_feature_array_size (  );
+        nFeatures = static_cast<int>(m_poKmlLayer->get_feature_array_size (  ));
 
         /***** get the field config *****/
         
@@ -683,7 +683,7 @@ GIntBig OGRLIBKMLLayer::GetFeatureCount (
 
     int i = 0; 
     if (m_poFilterGeom != NULL || m_poAttrQuery != NULL ) {
-        i = OGRLayer::GetFeatureCount( bForce );
+        i = static_cast<int>(OGRLayer::GetFeatureCount( bForce ));
     }
 
     else if( m_poKmlLayer != NULL ) {
@@ -869,7 +869,7 @@ void OGRLIBKMLLayer::SetStyleTableDirectly (
         /***** delete all the styles *****/
 
         DocumentPtr poKmlDocument = AsDocument ( m_poKmlLayer );
-        size_t nKmlStyles = poKmlDocument->get_schema_array_size (  );
+        int nKmlStyles = static_cast<int>(poKmlDocument->get_schema_array_size (  ));
         int iKmlStyle;
 
         for ( iKmlStyle = nKmlStyles - 1; iKmlStyle >= 0; iKmlStyle-- ) {

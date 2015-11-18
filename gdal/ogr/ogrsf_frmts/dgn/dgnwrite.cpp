@@ -101,7 +101,7 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
 
     if( psElement->offset != -1 )
     {
-        int nOldFLoc = VSIFTell( psDGN->fp );
+        long nOldFLoc = VSIFTell( psDGN->fp );
         unsigned char abyLeader[2];
 
         if( VSIFSeek( psDGN->fp, psElement->offset, SEEK_SET ) != 0
@@ -124,7 +124,7 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
             return FALSE;
         }
 
-        VSIFSeek( psDGN->fp, SEEK_SET, nOldFLoc );
+        VSIFSeek( psDGN->fp, nOldFLoc, SEEK_SET );
 
         if( psElement->element_id != -1 && psDGN->index_built )
             psDGN->element_index[psElement->element_id].flags 
@@ -207,7 +207,7 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
             return FALSE;
 
         // Establish the position of the new element.
-        psElement->offset = VSIFTell( psDGN->fp );
+        psElement->offset = static_cast<int>(VSIFTell( psDGN->fp ));
         psElement->element_id = psDGN->element_count;
 
         // Grow element buffer if needed.

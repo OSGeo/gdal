@@ -310,5 +310,5 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
     *( pabNext++ )      = 63;           // Last DCT coefficient 
     *( pabNext++ )      = 0;            // Spectral selection
 
-    return pabNext - pabyBuffer;
+    return static_cast<int>(pabNext - pabyBuffer);
 }

@@ -245,7 +245,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
     while ((pszLine = ReadLine()) != NULL) {
         iLine++;
-        int nLength = strlen(pszLine);
+        int nLength = static_cast<int>(strlen(pszLine));
         if (nLength < 2) {
             CPLFree(pszLine);
             continue;
@@ -289,7 +289,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                     pszMultiLine += pszLine;
                     CPLFree(pszLine);
 
-                    nLength = pszMultiLine.size();
+                    nLength = static_cast<int>(pszMultiLine.size());
                     pszLine = (char *) CPLMalloc(nLength + 1);
                     strncpy(pszLine, pszMultiLine.c_str(), nLength);
                     pszLine[nLength] = '\0';
@@ -446,7 +446,7 @@ int VFKReader::LoadGeometry()
     
     CPLDebug("OGR_VFK", "VFKReader::LoadGeometry(): invalid=%ld", nfeatures);
     
-    return nfeatures;
+    return static_cast<int>(nfeatures);
 }
 
 /*!

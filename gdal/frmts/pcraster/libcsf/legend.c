@@ -6,7 +6,7 @@
  */
 static int NrLegendEntries(MAP *m)
 {
-	int size = CsfAttributeSize(m, ATTR_ID_LEGEND_V2);
+	int size = (int)CsfAttributeSize(m, ATTR_ID_LEGEND_V2);
 	if (size == 0)
 	{
 		if ( (size = -(int)CsfAttributeSize(m, ATTR_ID_LEGEND_V1)) != 0 )

@@ -344,7 +344,8 @@ JPIPKAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         poBaseDS->BeginAsyncReader(nXOff, nYOff, nXSize, nYSize,
                                    pData, nBufXSize, nBufYSize, eBufType, 
                                    1, &nBand,
-                                   nPixelSpace, nLineSpace, 0, NULL);
+                                   static_cast<int>(nPixelSpace),
+                                   static_cast<int>(nLineSpace), 0, NULL);
     
     if( ario == NULL )
         return CE_Failure;
@@ -926,10 +927,10 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
                 return NULL;
             }
             else if (m >= 2) {
-                nClassId = ReadVBAS(pabyData, nLen);
+                nClassId = static_cast<int>(ReadVBAS(pabyData, nLen));
                 if (m > 2)
                 {
-                    nCodestream = ReadVBAS(pabyData, nLen);
+                    nCodestream = static_cast<int>(ReadVBAS(pabyData, nLen));
                     if( nCodestream < 0 )
                     {
                         bError = TRUE;
@@ -1064,8 +1065,10 @@ int JPIPKAKDataset::ReadFromInput(GByte* pabyData, int nLen, int &bError )
         {
             // add data to kakadu
             //CPLDebug("JPIPKAK", "Parsed JPIP Segment class=%i stream=%i id=%i offset=%i len=%i isFinal=%i isEOR=%i", pSegment->GetClassId(), pSegment->GetCodestreamIdx(), pSegment->GetId(), pSegment->GetOffset(), pSegment->GetLen(), pSegment->IsFinal(), pSegment->IsEOR());
-            poCache->add_to_databin(KakaduClassId(pSegment->GetClassId()), pSegment->GetCodestreamIdx(),
-                                    pSegment->GetId(), pSegment->GetData(), pSegment->GetOffset(), pSegment->GetLen(), pSegment->IsFinal());
+            poCache->add_to_databin(KakaduClassId(static_cast<int>(pSegment->GetClassId())), pSegment->GetCodestreamIdx(),
+                                    pSegment->GetId(), pSegment->GetData(),
+                                    static_cast<int>(pSegment->GetOffset()),
+                                    static_cast<int>(pSegment->GetLen()), pSegment->IsFinal());
             
             delete pSegment;
         }
@@ -1169,7 +1172,9 @@ CPLErr JPIPKAKDataset::IRasterIO( GDALRWFlag eRWFlag,
         BeginAsyncReader(nXOff, nYOff, nXSize, nYSize,
                          pData, nBufXSize, nBufYSize, eBufType, 
                          nBandCount, panBandMap, 
-                         nPixelSpace, nLineSpace, nBandSpace, NULL);
+                         static_cast<int>(nPixelSpace),
+                         static_cast<int>(nLineSpace),
+                         static_cast<int>(nBandSpace), NULL);
 
     if( ario == NULL )
         return CE_Failure;
@@ -1834,7 +1839,7 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
         kdu_dims region_pass = region;
 
         poJDS->poCodestream->apply_input_restrictions(
-            component_indices.size(), &(component_indices[0]), 
+            static_cast<int>(component_indices.size()), &(component_indices[0]), 
             nLevel, nQualityLayers, &region_pass, 
             KDU_WANT_CODESTREAM_COMPONENTS);
 

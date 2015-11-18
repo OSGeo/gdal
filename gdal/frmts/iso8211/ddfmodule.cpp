@@ -506,7 +506,7 @@ void DDFModule::Dump( FILE * fp )
 
 {
     fprintf( fp, "DDFModule:\n" );
-    fprintf( fp, "    _recLength = %ld\n", _recLength );
+    fprintf( fp, "    _recLength = %d\n", _recLength );
     fprintf( fp, "    _interchangeLevel = %c\n", _interchangeLevel );
     fprintf( fp, "    _leaderIden = %c\n", _leaderIden );
     fprintf( fp, "    _inlineCodeExtensionIndicator = %c\n",
@@ -515,10 +515,10 @@ void DDFModule::Dump( FILE * fp )
     fprintf( fp, "    _appIndicator = %c\n", _appIndicator );
     fprintf( fp, "    _extendedCharSet = `%s'\n", _extendedCharSet );
     fprintf( fp, "    _fieldControlLength = %d\n", _fieldControlLength );
-    fprintf( fp, "    _fieldAreaStart = %ld\n", _fieldAreaStart );
-    fprintf( fp, "    _sizeFieldLength = %ld\n", _sizeFieldLength );
-    fprintf( fp, "    _sizeFieldPos = %ld\n", _sizeFieldPos );
-    fprintf( fp, "    _sizeFieldTag = %ld\n", _sizeFieldTag );
+    fprintf( fp, "    _fieldAreaStart = %d\n", _fieldAreaStart );
+    fprintf( fp, "    _sizeFieldLength = %d\n", _sizeFieldLength );
+    fprintf( fp, "    _sizeFieldPos = %d\n", _sizeFieldPos );
+    fprintf( fp, "    _sizeFieldTag = %d\n", _sizeFieldTag );
 
     for( int i = 0; i < nFieldDefnCount; i++ )
     {

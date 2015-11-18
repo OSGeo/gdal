@@ -276,8 +276,8 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML(const char* pszRawXML)
 
 OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
 {
-    FILE *fp;
-    int  nXMLSize;
+    VSILFILE *fp;
+    vsi_l_offset  nXMLSize;
     char *pszRawXML;
 
     CPLAssert( poINDFile == NULL );
@@ -285,27 +285,28 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
 /* -------------------------------------------------------------------- */
 /*      Read the XML file.                                              */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszMetadataFilename, "rb" );
+    fp = VSIFOpenL( pszMetadataFilename, "rb" );
     if( fp == NULL )
         return OGRERR_FAILURE;
 
-    if( VSIFSeek( fp, 0, SEEK_END ) != 0 )
+    if( VSIFSeekL( fp, 0, SEEK_END ) != 0 )
     {
-        VSIFClose(fp);
+        VSIFCloseL(fp);
         return OGRERR_FAILURE;
     }
-    nXMLSize = VSIFTell( fp );
-    if( VSIFSeek( fp, 0, SEEK_SET ) != 0 )
+    nXMLSize = VSIFTellL( fp );
+    if( nXMLSize > 10 * 1024 * 1024 ||
+        VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
     {
-        VSIFClose(fp);
+        VSIFCloseL(fp);
         return OGRERR_FAILURE;
     }
 
-    pszRawXML = (char *) CPLMalloc(nXMLSize+1);
+    pszRawXML = (char *) CPLMalloc((size_t)nXMLSize+1);
     pszRawXML[nXMLSize] = '\0';
-    VSIFRead( pszRawXML, nXMLSize, 1, fp );
+    VSIFReadL( pszRawXML, (size_t)nXMLSize, 1, fp );
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     OGRErr eErr = LoadConfigFromXML(pszRawXML);
     CPLFree(pszRawXML);

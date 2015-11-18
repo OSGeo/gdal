@@ -93,13 +93,13 @@ typedef struct {
 static int JPEG2000_VSIL_read(jas_stream_obj_t *obj, char *buf, int cnt)
 {
 	jas_stream_VSIFL_t *fileobj = JAS_CAST(jas_stream_VSIFL_t *, obj);
-	return VSIFReadL(buf, 1, cnt, fileobj->fp);
+	return static_cast<int>(VSIFReadL(buf, 1, cnt, fileobj->fp));
 }
 
 static int JPEG2000_VSIL_write(jas_stream_obj_t *obj, char *buf, int cnt)
 {
 	jas_stream_VSIFL_t *fileobj = JAS_CAST(jas_stream_VSIFL_t *, obj);
-	return VSIFWriteL(buf, 1, cnt, fileobj->fp);
+	return static_cast<int>(VSIFWriteL(buf, 1, cnt, fileobj->fp));
 }
 
 static long JPEG2000_VSIL_seek(jas_stream_obj_t *obj, long offset, int origin)

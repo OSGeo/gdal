@@ -2039,7 +2039,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
     int   nOffset;
     int   nOldWidth;
     int   nOldRecordLength;
-    int   nRecordOffset;
+    SAOffset  nRecordOffset;
     char* pszFInfo;
     char  chOldType;
     int   bIsNULL;

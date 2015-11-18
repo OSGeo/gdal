@@ -783,7 +783,7 @@ CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
         return NULL;
 
     int nRead;
-    if( (nRead = VSIFReadL( achHeader, 1, sizeof(achHeader) - 1, fp )) == 0 )
+    if( (nRead = static_cast<int>(VSIFReadL( achHeader, 1, sizeof(achHeader) - 1, fp ))) == 0 )
     {
         VSIFCloseL( fp );
         return NULL;

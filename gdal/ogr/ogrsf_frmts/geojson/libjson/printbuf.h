@@ -45,7 +45,7 @@ do {                                                         \
     memcpy(p->buf + p->bpos, (bufptr), bufsize);             \
     p->bpos += bufsize;                                      \
     p->buf[p->bpos]= '\0';                                   \
-  } else {  printbuf_memappend(p, (bufptr), bufsize); }      \
+  } else {  printbuf_memappend(p, (bufptr), (int)(bufsize)); }      \
 } while (0)
 
 #define printbuf_length(p) ((p)->bpos)

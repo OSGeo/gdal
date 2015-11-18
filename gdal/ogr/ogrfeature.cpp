@@ -2919,7 +2919,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     {
         errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
         long nVal = strtol(pszValue, &pszLast, 10);
-        nVal = OGRFeatureGetIntegerValue(poFDefn, nVal);
+        nVal = OGRFeatureGetIntegerValue(poFDefn, (int)nVal);
         pauFields[iField].Integer = (nVal > INT_MAX) ? INT_MAX : (nVal < INT_MIN) ? INT_MIN : (int) nVal;
         if( bWarn && (errno == ERANGE || nVal != (long)pauFields[iField].Integer || !pszLast || *pszLast ) )
             CPLError(CE_Warning, CPLE_AppDefined,

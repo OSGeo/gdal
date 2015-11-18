@@ -751,7 +751,7 @@ static int GDALPipeWrite_internal(GDALPipe* p, const void* data, int length)
         int nRemain = length;
         while( nRemain > 0 )
         {
-            int nRet = send(p->nSocket, pabyData, nRemain, 0);
+            int nRet = static_cast<int>(send(p->nSocket, pabyData, nRemain, 0));
             if( nRet < 0 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Write to socket failed");
@@ -806,7 +806,7 @@ static int GDALPipeReadSocketInternal(GDALPipe* p, void* data, int length)
     int nRemain = length;
     while( nRemain > 0 )
     {
-        int nRet = recv(p->nSocket, pabyData, nRemain, 0);
+        int nRet = static_cast<int>(recv(p->nSocket, pabyData, nRemain, 0));
         if( nRet <= 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Read from socket failed");

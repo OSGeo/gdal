@@ -855,7 +855,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         if ( pszTemp )
         {
             nValueLen = strspn( pszTemp, "+-.0123456789" );
-            pszValue = CPLScanString( pszTemp, nValueLen, TRUE, TRUE );
+            pszValue = CPLScanString( pszTemp, static_cast<int>(nValueLen), TRUE, TRUE );
             poDS->SetMetadataItem( CPLSPrintf(pszFirst, i ), pszValue );
             CPLFree( pszValue );
         }
@@ -864,7 +864,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         if ( pszTemp )
         {
             nValueLen = strspn( pszTemp, "+-.0123456789" );
-            pszValue = CPLScanString( pszTemp, nValueLen, TRUE, TRUE );
+            pszValue = CPLScanString( pszTemp, static_cast<int>(nValueLen), TRUE, TRUE );
             poDS->SetMetadataItem( CPLSPrintf(pszSecond, i ), pszValue );
             CPLFree( pszValue );
         }

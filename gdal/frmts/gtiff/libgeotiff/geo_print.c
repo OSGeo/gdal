@@ -135,7 +135,7 @@ static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
 {
     char *data;
     geokey_t keyid = (geokey_t) key->gk_key;
-    int count = key->gk_count;
+    int count = (int) key->gk_count;
     int vals_now,i;
     pinfo_t *sptr;
     double *dptr;

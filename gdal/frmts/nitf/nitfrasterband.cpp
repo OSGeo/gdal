@@ -741,7 +741,7 @@ CPLErr NITFRasterBand::SetColorTable( GDALColorTable *poNewCT )
 
 void NITFRasterBand::Unpack( GByte* pData )
 {
-  const long n = nBlockXSize*nBlockYSize;
+  const int n = nBlockXSize*nBlockYSize;
 
   GByte abyTempData[7] = {0, 0, 0, 0, 0, 0, 0};
   const GByte* pDataSrc = pData;

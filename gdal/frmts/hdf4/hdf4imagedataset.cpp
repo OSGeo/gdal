@@ -968,7 +968,7 @@ void HDF4ImageDataset::FlushCache()
                                    adfGeoTransform[2], adfGeoTransform[3],
                                    adfGeoTransform[4], adfGeoTransform[5] );
     if ( (SDsetattr( hSD, "TransformationMatrix", DFNT_CHAR8,
-                     strlen(pszValue) + 1, pszValue )) < 0 )
+                     static_cast<int>(strlen(pszValue)) + 1, pszValue )) < 0 )
     {
         CPLDebug( "HDF4Image",
                   "Cannot write transformation matrix to output file" );
@@ -978,7 +978,7 @@ void HDF4ImageDataset::FlushCache()
     if ( pszProjection != NULL && !EQUAL( pszProjection, "" ) )
     {
         if ( (SDsetattr( hSD, "Projection", DFNT_CHAR8,
-                         strlen(pszProjection) + 1, pszProjection )) < 0 )
+                         static_cast<int>(strlen(pszProjection)) + 1, pszProjection )) < 0 )
             {
                 CPLDebug( "HDF4Image",
                           "Cannot write projection information to output file");
@@ -995,7 +995,7 @@ void HDF4ImageDataset::FlushCache()
             pszName = NULL;
             pszValue = CPLParseNameValue( *papszMeta++, &pszName );
             if ( pszName != NULL && (SDsetattr( hSD, pszName, DFNT_CHAR8,
-                             strlen(pszValue) + 1, pszValue )) < 0 )
+                             static_cast<int>(strlen(pszValue)) + 1, pszValue )) < 0 )
             {
                 CPLDebug( "HDF4Image",
                           "Cannot write metadata information to output file");
@@ -1016,7 +1016,7 @@ void HDF4ImageDataset::FlushCache()
             pszName = CPLStrdup( CPLSPrintf( "NoDataValue%d", iBand ) );
             pszValue = CPLSPrintf( "%f", poBand->dfNoDataValue );
             if ( (SDsetattr( hSD, pszName, DFNT_CHAR8,
-                             strlen(pszValue) + 1, pszValue )) < 0 )
+                             static_cast<int>(strlen(pszValue)) + 1, pszValue )) < 0 )
                 {
                     CPLDebug( "HDF4Image",
                               "Cannot write NoData value for band %d "
@@ -1038,7 +1038,7 @@ void HDF4ImageDataset::FlushCache()
         if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
         {
             if ( (SDsetattr( hSD, pszName, DFNT_CHAR8,
-                             strlen(pszValue) + 1, pszValue )) < 0 )
+                             static_cast<int>(strlen(pszValue)) + 1, pszValue )) < 0 )
             {
                 CPLDebug( "HDF4Image",
                           "Cannot write band's %d description to output file",
@@ -3895,7 +3895,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     for( int iBand = 1; iBand <= nBands; iBand++ )
         poDS->SetBand( iBand, new HDF4ImageRasterBand( poDS, iBand, eType ) );
 
-    SDsetattr( poDS->hSD, "Signature", DFNT_CHAR8, strlen(pszGDALSignature) + 1,
+    SDsetattr( poDS->hSD, "Signature", DFNT_CHAR8, static_cast<int>(strlen(pszGDALSignature)) + 1,
                pszGDALSignature );
 
     return reinterpret_cast<GDALDataset *>( poDS );

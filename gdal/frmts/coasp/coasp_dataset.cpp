@@ -202,7 +202,7 @@ COASPMetadataItem *COASPMetadataReader::GetNextItem()
 		int nCount = CSLCount(papszMDTokens);
                 char *pszItemValue = CPLStrdup(papszMDTokens[1]);
 		for (int i = 2; i < nCount; i++) {
-			int nSize = strlen(papszMDTokens[i]);
+			int nSize = static_cast<int>(strlen(papszMDTokens[i]));
 			pszItemValue = (char *)CPLRealloc(pszItemValue, 
 				strlen(pszItemValue) + 1 + nSize);
 			sprintf(pszItemValue,"%s %s",pszItemValue, 
@@ -408,7 +408,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 	char *pszBaseName = VSIStrdup(CPLGetBasename(poDS->pszFileName));
 	char *pszDir = VSIStrdup(CPLGetPath(poDS->pszFileName));
 	const char *pszExt = "rc";
-	int nNull = strlen(pszBaseName) - 1;
+	int nNull = static_cast<int>(strlen(pszBaseName)) - 1;
 	char *pszBase = (char *)CPLMalloc(nNull);
 	strncpy(pszBase, pszBaseName, nNull);
 	pszBase[nNull - 1] = '\0';

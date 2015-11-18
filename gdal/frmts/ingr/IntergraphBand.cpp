@@ -1026,7 +1026,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
         return 0;
     }
 
-    return VSIFReadL( pabyBlock, 1, nReadSize, poGDS->fp );
+    return static_cast<int>(VSIFReadL( pabyBlock, 1, nReadSize, poGDS->fp ));
 }
 
 //  ----------------------------------------------------------------------------

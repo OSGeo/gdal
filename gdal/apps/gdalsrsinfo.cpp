@@ -558,7 +558,7 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget )
         pszTemp = strstr(pszLine,",");
         if (pszTemp)
         {
-            nPos = pszTemp - pszLine;
+            nPos = static_cast<int>(pszTemp - pszLine);
 
             if ( nPos == 0 )
                 continue;

@@ -103,7 +103,7 @@ class OGRILI2DataSource : public OGRDataSource
     int         Create( const char *pszFile, char **papszOptions );
 
     const char *GetName() { return pszName; }
-    int         GetLayerCount() { return listLayer.size(); }
+    int         GetLayerCount() { return static_cast<int>(listLayer.size()); }
     OGRLayer   *GetLayer( int );
 
     virtual OGRLayer *ICreateLayer( const char *, 

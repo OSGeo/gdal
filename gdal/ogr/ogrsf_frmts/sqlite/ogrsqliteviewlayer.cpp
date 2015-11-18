@@ -211,7 +211,7 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
                          OGRSQLiteEscapeName(pszFIDColumn).c_str(),
                          pszEscapedTableName );
 
-    rc = sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL ); 
+    rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL ); 
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -278,7 +278,7 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
                   pszEscapedTableName, 
                   osWHERE.c_str() );
 
-    rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(),
+    rc = sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
 		          &hStmt, NULL );
 
     if( rc == SQLITE_OK )
@@ -343,7 +343,7 @@ OGRFeature *OGRSQLiteViewLayer::GetFeature( GIntBig nFeatureId )
 
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
-    rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(), 
+    rc = sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()), 
                           &hStmt, NULL );
     if( rc != SQLITE_OK )
     {

@@ -675,7 +675,7 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
                         int j;
                         for(j=0;j<nCount;j++)
                         {
-                            int nWidth = strlen(paList[j]);
+                            int nWidth = static_cast<int>(strlen(paList[j]));
                             if (nWidth > pasListFields[i].nWidth)
                                 pasListFields[i].nWidth = nWidth;
                         }
@@ -1075,10 +1075,10 @@ void ApplySpatialFilter(OGRLayer* poLayer, OGRGeometry* poSpatialFilter,
 static int GetFieldType(const char* pszArg, int* pnSubFieldType)
 {
     *pnSubFieldType = OFSTNone;
-    int nLengthBeforeParenthesis = strlen(pszArg);
+    int nLengthBeforeParenthesis = static_cast<int>(strlen(pszArg));
     const char* pszOpenParenthesis = strchr(pszArg, '(');
     if( pszOpenParenthesis )
-        nLengthBeforeParenthesis = pszOpenParenthesis - pszArg;
+        nLengthBeforeParenthesis = static_cast<int>(pszOpenParenthesis - pszArg);
     for( int iType = 0; iType <= (int) OFTMaxType; iType++ )
     {
          const char* pszFieldTypeName = OGRFieldDefn::GetFieldTypeName(

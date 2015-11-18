@@ -341,7 +341,7 @@ void OGRLIBKMLDataSource::WriteKmz (
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
         if ( CPLCreateFileInZip( hZIP, "doc.kml", NULL ) != CE_None ||
-             CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
+             CPLWriteFileInZip( hZIP, oKmlOut.data(), static_cast<int>(oKmlOut.size()) ) != CE_None )
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR adding %s to %s", "doc.kml", pszName );
         CPLCloseFileInZip(hZIP);
@@ -394,7 +394,7 @@ void OGRLIBKMLDataSource::WriteKmz (
             pszLayerFileName = papoLayers[iLayer]->GetFileName (  );
 
         if ( CPLCreateFileInZip( hZIP, pszLayerFileName , NULL ) != CE_None ||
-             CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
+             CPLWriteFileInZip( hZIP, oKmlOut.data(), static_cast<int>(oKmlOut.size()) ) != CE_None )
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR adding %s to %s", papoLayers[iLayer]->GetFileName (  ), pszName );
         CPLCloseFileInZip(hZIP);
@@ -413,7 +413,7 @@ void OGRLIBKMLDataSource::WriteKmz (
 
         if ( CPLCreateFileInZip( hZIP, "style/", NULL ) != CE_None ||
              CPLCreateFileInZip( hZIP, "style/style.kml", NULL ) != CE_None ||
-             CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
+             CPLWriteFileInZip( hZIP, oKmlOut.data(), static_cast<int>(oKmlOut.size()) ) != CE_None )
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR adding %s to %s", "style/style.kml", pszName );
         CPLCloseFileInZip(hZIP);
@@ -854,7 +854,8 @@ int OGRLIBKMLDataSource::ParseLayers (
 
             AddLayer ( oKmlFeatName.c_str (  ),
                        poOgrSRS, wkbUnknown, this,
-                       NULL, AsContainer( poKmlFeat ), "", FALSE, bUpdate, nKmlFeatures );
+                       NULL, AsContainer( poKmlFeat ), "", FALSE, bUpdate,
+                       static_cast<int>(nKmlFeatures) );
 
         }
 
@@ -971,7 +972,7 @@ int OGRLIBKMLDataSource::OpenKml (
         return FALSE;
     }
     int nRead;
-    while ((nRead = VSIFReadL(szBuffer, 1, 1024, fp)) != 0)
+    while ((nRead = static_cast<int>(VSIFReadL(szBuffer, 1, 1024, fp))) != 0)
     {
         try
         {
@@ -1069,7 +1070,7 @@ int OGRLIBKMLDataSource::OpenKmz (
         return FALSE;
     }
     int nRead;
-    while ((nRead = VSIFReadL(szBuffer, 1, 1024, fp)) != 0)
+    while ((nRead = static_cast<int>(VSIFReadL(szBuffer, 1, 1024, fp))) != 0)
     {
         try
         {
@@ -1215,7 +1216,7 @@ int OGRLIBKMLDataSource::OpenKmz (
                            ( poKmlHref->get_path (  ).c_str (  ) ), poOgrSRS,
                            wkbUnknown, this, poKmlLyrRoot, poKmlLyrContainer,
                            poKmlHref->get_path (  ).c_str (  ), FALSE, bUpdate,
-                           nKmlFeatures );
+                           static_cast<int>(nKmlFeatures) );
 
             }
         }
@@ -1325,7 +1326,7 @@ int OGRLIBKMLDataSource::OpenDir (
         }
 
         int nRead;
-        while ((nRead = VSIFReadL(szBuffer, 1, 1024, fp)) != 0)
+        while ((nRead = static_cast<int>(VSIFReadL(szBuffer, 1, 1024, fp))) != 0)
         {
             try
             {
@@ -1468,7 +1469,7 @@ int OGRLIBKMLDataSource::Open (
         if (fp == NULL)
             return FALSE;
 
-        int nRead = VSIFReadL(szBuffer, 1, 1024, fp);
+        int nRead = static_cast<int>(VSIFReadL(szBuffer, 1, 1024, fp));
         szBuffer[nRead] = 0;
 
         VSIFCloseL(fp);
@@ -2388,7 +2389,7 @@ void OGRLIBKMLDataSource::SetStyleTable2Kml (
     /***** delete all the styles *****/
 
     DocumentPtr poKmlDocument = AsDocument ( m_poKmlDSContainer );
-    size_t nKmlStyles = poKmlDocument->get_styleselector_array_size (  );
+    int nKmlStyles = static_cast<int>(poKmlDocument->get_styleselector_array_size (  ));
     int iKmlStyle;
 
     for ( iKmlStyle = nKmlStyles - 1; iKmlStyle >= 0; iKmlStyle-- ) {

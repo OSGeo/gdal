@@ -789,7 +789,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         const vsi_l_offset nBandOffset = CPLScanUIntBig(papszTokens[1],
-                                               strlen(papszTokens[1]));
+                                               static_cast<int>(strlen(papszTokens[1])));
         const int nPixelOffset = atoi(papszTokens[2]);
         const int nLineOffset = atoi(papszTokens[3]);
 
@@ -901,7 +901,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         CPLMalloc( strlen( pszFilename ) + 5 ) );
     strcpy( pszAuxFilename, pszFilename );;
 
-    for( int i = strlen(pszAuxFilename)-1; i > 0; i-- )
+    for( int i = static_cast<int>(strlen(pszAuxFilename))-1; i > 0; i-- )
     {
         if( pszAuxFilename[i] == '.' )
         {
@@ -929,7 +929,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /*      We need to write out the original filename but without any      */
 /*      path components in the AuxilaryTarget line.  Do so now.         */
 /* -------------------------------------------------------------------- */
-    int iStart = strlen(pszFilename)-1;
+    int iStart = static_cast<int>(strlen(pszFilename))-1;
     while( iStart > 0 && pszFilename[iStart-1] != '/'
            && pszFilename[iStart-1] != '\\' )
         iStart--;

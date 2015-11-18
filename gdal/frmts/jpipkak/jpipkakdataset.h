@@ -69,12 +69,12 @@ private:
     int bIsFinal;
     int bIsEOR;
 public:
-    int GetId(){return nId;}
-    int GetAux(){return nAux;}
-    int GetClassId(){return nClassId;}
-    int GetCodestreamIdx(){return nCodestream;}
-    int GetOffset(){return nOffset;}
-    int GetLen(){return nLen;}
+    long GetId(){return nId;}
+    long GetAux(){return nAux;}
+    long GetClassId(){return nClassId;}
+    long GetCodestreamIdx(){return nCodestream;}
+    long GetOffset(){return nOffset;}
+    long GetLen(){return nLen;}
     GByte* GetData(){return pabyData;}
     int IsFinal(){return bIsFinal;}
     int IsEOR(){return bIsEOR;}

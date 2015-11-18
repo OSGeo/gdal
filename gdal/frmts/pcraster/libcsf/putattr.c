@@ -135,10 +135,10 @@ CSF_FADDR32 CsfSeekAttrSpace(
 		{
 			if (m->main.attrTable == 0)
 			{ /* FIRST BLOCK */
-				newPos =( (CSF_FADDR)(m->raster.nrRows)*
+				newPos =(CSF_FADDR32)(( (CSF_FADDR)(m->raster.nrRows)*
 					   (CSF_FADDR)(m->raster.nrCols)*
 					  (CSF_FADDR)(CELLSIZE(RgetCellRepr(m))))
-					  + ADDR_DATA;
+					  + ADDR_DATA);
 				m->main.attrTable = newPos;
 			}
 			else
@@ -199,7 +199,7 @@ CSF_FADDR32 CsfSeekAttrSpace(
 			currBlockPos = b.next;
  	} /* while */
 
-	b.attrs[i].attrSize = size;
+	b.attrs[i].attrSize = (UINT4)size;
 	b.attrs[i].attrId   = id;
 	resultPos = b.attrs[i].attrOffset;
 

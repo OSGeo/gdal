@@ -2634,7 +2634,7 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
             pszValue = CSLFetchNameValue( papszParms, "min_points" );
             ((GDALGridDataMetricsOptions *)*ppOptions)->
-                nMinPoints = (pszValue) ? atol(pszValue) : 0;
+                nMinPoints = (pszValue) ? atoi(pszValue) : 0;
 
             pszValue = CSLFetchNameValue( papszParms, "nodata" );
             ((GDALGridDataMetricsOptions *)*ppOptions)->

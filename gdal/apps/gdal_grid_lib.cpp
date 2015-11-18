@@ -494,7 +494,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         * ((nYSize + nBlockYSize - 1) / nBlockYSize);
 
     GDALGridContext* psContext = GDALGridContextCreate( eAlgorithm, pOptions,
-                                                        adfX.size(),
+                                                        static_cast<int>(adfX.size()),
                                                         &(adfX[0]), &(adfY[0]), &(adfZ[0]),
                                                         TRUE );
     if( psContext == NULL )

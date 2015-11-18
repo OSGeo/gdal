@@ -770,13 +770,13 @@ opt_where:
 opt_joins:
     | SWQT_JOIN table_def SWQT_ON value_expr opt_joins
         {
-            context->poCurSelect->PushJoin( $2->int_value,
+            context->poCurSelect->PushJoin( static_cast<int>($2->int_value),
                                             $4 );
             delete $2;
         }
     | SWQT_LEFT SWQT_JOIN table_def SWQT_ON value_expr opt_joins
         {
-            context->poCurSelect->PushJoin( $3->int_value,
+            context->poCurSelect->PushJoin( static_cast<int>($3->int_value),
                                             $5 );
             delete $3;
 	    }

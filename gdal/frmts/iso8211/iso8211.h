@@ -48,7 +48,7 @@ typedef enum {
 /*      mostly conveniences.                                            */
 /************************************************************************/
 
-long CPL_ODLL DDFScanInt( const char *pszString, int nMaxChars );
+int CPL_ODLL  DDFScanInt( const char *pszString, int nMaxChars );
 int  CPL_ODLL DDFScanVariable( const char * pszString, int nMaxChars, int nDelimChar );
 char CPL_ODLL *DDFFetchVariable( const char *pszString, int nMaxChars,
                         int nDelimChar1, int nDelimChar2,
@@ -131,12 +131,12 @@ class CPL_ODLL DDFModule
     int         _fieldControlLength;
     char        _extendedCharSet[4];
 
-    long _recLength;
+    int _recLength;
     char _leaderIden;
-    long _fieldAreaStart;
-    long _sizeFieldLength;
-    long _sizeFieldPos;
-    long _sizeFieldTag;
+    int _fieldAreaStart;
+    int _sizeFieldLength;
+    int _sizeFieldPos;
+    int _sizeFieldTag;
 
     // One DirEntry per field.  
     int         nFieldDefnCount;

@@ -661,7 +661,7 @@ static bool gmlHugeFileResolveEdges( struct huge_helper *helper )
                         sqlite3_reset ( hUpdateStmt );
                         sqlite3_clear_bindings ( hUpdateStmt );
                         sqlite3_bind_blob( hUpdateStmt, 1, gmlText,
-                                           strlen(gmlText), SQLITE_STATIC );
+                                           (int)strlen(gmlText), SQLITE_STATIC );
                         sqlite3_bind_text( hUpdateStmt, 2, pszGmlId, -1,
                                            SQLITE_STATIC );
                         rc = sqlite3_step( hUpdateStmt );
@@ -796,13 +796,13 @@ static int gmlHugeFileSQLiteInsert( struct huge_helper *helper )
         {
             sqlite3_bind_null( helper->hEdges, 2 );
             sqlite3_bind_blob( helper->hEdges, 3, pItem->gmlTagValue->c_str(),
-                               strlen( pItem->gmlTagValue->c_str() ),
+                               (int)strlen( pItem->gmlTagValue->c_str() ),
                                SQLITE_STATIC );
         }
         else
         {
             sqlite3_bind_blob( helper->hEdges, 2, pItem->gmlTagValue->c_str(),
-                               strlen( pItem->gmlTagValue->c_str() ),
+                               (int)strlen( pItem->gmlTagValue->c_str() ),
                                SQLITE_STATIC );
             sqlite3_bind_null( helper->hEdges, 3 );
         }

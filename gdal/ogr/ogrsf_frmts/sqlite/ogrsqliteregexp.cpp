@@ -156,7 +156,7 @@ void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc, sqlite3_
 
     int rc;
     CPLAssert(p);
-    rc = pcre_exec(p, e, str, strlen(str), 0, 0, NULL, 0);
+    rc = pcre_exec(p, e, str, static_cast<int>(strlen(str)), 0, 0, NULL, 0);
     sqlite3_result_int(ctx, rc >= 0);
 }
 

@@ -161,7 +161,7 @@ GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
     GIntBig i;
     
     /* Prepare the SQL */
-    rc = sqlite3_prepare_v2(poDb, pszSQL, strlen(pszSQL), &poStmt, NULL);
+    rc = sqlite3_prepare_v2(poDb, pszSQL, -1, &poStmt, NULL);
     if ( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare_v2(%s) failed: %s",
@@ -580,7 +580,8 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
     size_t szWkb = szGpkg - oHeader.szHeader;
 
     /* Parse WKB */
-    err = OGRGeometryFactory::createFromWkb((GByte*)pabyWkb, poSrs, &poGeom, szWkb);
+    err = OGRGeometryFactory::createFromWkb((GByte*)pabyWkb, poSrs, &poGeom,
+                                            static_cast<int>(szWkb));
     if ( err != OGRERR_NONE )
         return NULL;
 

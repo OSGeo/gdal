@@ -63,7 +63,7 @@ void CLinkSegment::Load()
     
     assert(data_size - 1024 == 1 * 512);
     
-    seg_data.SetSize(data_size - 1024); // should be 1 * 512
+    seg_data.SetSize(static_cast<int>(data_size) - 1024); // should be 1 * 512
     
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
     
@@ -95,7 +95,7 @@ void CLinkSegment::Write(void)
     }
       
     seg_data.Put("SysLinkF",0,8);
-    seg_data.Put(path.c_str(), 8, path.size(), true);
+    seg_data.Put(path.c_str(), 8, static_cast<int>(path.size()), true);
 
     WriteToFile(seg_data.buffer, 0, data_size-1024);
     modified_ = false;

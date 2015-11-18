@@ -734,7 +734,7 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     strncpy( poDS->szTitle, (const char *) poOpenInfo->pabyHeader+38, 80 );
     poDS->szTitle[80] = '\0';
 
-    int nLastTitleChar = strlen(poDS->szTitle)-1;
+    int nLastTitleChar = static_cast<int>(strlen(poDS->szTitle))-1;
     while( nLastTitleChar > -1 
            && (poDS->szTitle[nLastTitleChar] == 10 
                || poDS->szTitle[nLastTitleChar] == 13 

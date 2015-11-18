@@ -644,7 +644,7 @@ void OGRODSDataSource::endElementTable(CPL_UNUSED const char *pszName)
             OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
             for(i = 0; i < apoFirstLineValues.size(); i++)
             {
-                SetField(poFeature, i, apoFirstLineValues[i].c_str());
+                SetField(poFeature, static_cast<int>(i), apoFirstLineValues[i].c_str());
             }
             CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
             delete poFeature;
@@ -845,7 +845,7 @@ void OGRODSDataSource::endElementRow(CPL_UNUSED const char *pszName)
                 poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
                 for(i = 0; i < apoFirstLineValues.size(); i++)
                 {
-                    SetField(poFeature, i, apoFirstLineValues[i].c_str());
+                    SetField(poFeature, static_cast<int>(i), apoFirstLineValues[i].c_str());
                 }
                 CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
                 delete poFeature;
@@ -883,7 +883,7 @@ void OGRODSDataSource::endElementRow(CPL_UNUSED const char *pszName)
                                                 apoCurLineValues[i].c_str(),
                                                 apoCurLineTypes[i].c_str());
                         OGRFieldType eFieldType =
-                            poCurLayer->GetLayerDefn()->GetFieldDefn(i)->GetType();
+                            poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i))->GetType();
                         if (eFieldType == OFTDateTime &&
                             (eValType == OFTDate || eValType == OFTTime) )
                         {
@@ -900,7 +900,7 @@ void OGRODSDataSource::endElementRow(CPL_UNUSED const char *pszName)
                         else if (eFieldType != OFTString && eValType != eFieldType)
                         {
                             OGRFieldDefn oNewFieldDefn(
-                                poCurLayer->GetLayerDefn()->GetFieldDefn(i));
+                                poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
                             if ((eFieldType == OFTDate || eFieldType == OFTTime) &&
                                    eValType == OFTDateTime)
                                 oNewFieldDefn.SetType(OFTDateTime);
@@ -911,7 +911,7 @@ void OGRODSDataSource::endElementRow(CPL_UNUSED const char *pszName)
                                 oNewFieldDefn.SetType(OFTInteger64);
                             else
                                 oNewFieldDefn.SetType(OFTString);
-                            poCurLayer->AlterFieldDefn(i, &oNewFieldDefn,
+                            poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
                                                        ALTER_TYPE_FLAG);
                         }
                     }
@@ -924,7 +924,7 @@ void OGRODSDataSource::endElementRow(CPL_UNUSED const char *pszName)
                 poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
                 for(i = 0; i < apoCurLineValues.size(); i++)
                 {
-                    SetField(poFeature, i, apoCurLineValues[i].c_str());
+                    SetField(poFeature, static_cast<int>(i), apoCurLineValues[i].c_str());
                 }
                 CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
                 delete poFeature;
@@ -1793,7 +1793,7 @@ int ODSCellEvaluator::EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
         return FALSE;
     }
 
-    int nIndexBackup = poLayer->GetNextReadFID();
+    int nIndexBackup = static_cast<int>(poLayer->GetNextReadFID());
 
     if (poLayer->SetNextByIndex(nRow1) != OGRERR_NONE)
     {

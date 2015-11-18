@@ -653,7 +653,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
 	    /* Use the lookuptable only when it pays off to do do.
 	       For some reason there cannot be lookup tables in level 4.
                Otherwise Mapsend crashes. */
-	    coutsize = cout-coutstart;
+	    coutsize = (int)(cout-coutstart);
 	    if((lutsize < 255) && (coutsize+2*lutsize+1 < 2*side*side/4) && (level < 4)) {
 		*p++ = (unsigned char)(lutsize+1);
 		for(j=0; j<lutsize; j++) 
@@ -694,7 +694,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
     BLXfree(tc1);
     BLXfree(tmpdata);
 
-    return p-outbuf;
+    return (int)(p-outbuf);
 }
 
 STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len, int *side, blxdata *outbuf, int outbufsize, int overviewlevel) {
@@ -1101,7 +1101,7 @@ int blx_writecell(blxcontext_t *ctx, blxdata *cell, int cellrow, int cellcol) {
     if(uncompsize > ctx->maxchunksize)
 	ctx->maxchunksize = uncompsize;
 
-    ctx->cellindex[cellrow*ctx->cell_cols + cellcol].offset = BLXftell(ctx->fh);
+    ctx->cellindex[cellrow*ctx->cell_cols + cellcol].offset = (int)BLXftell(ctx->fh);
     ctx->cellindex[cellrow*ctx->cell_cols + cellcol].datasize = uncompsize;
     ctx->cellindex[cellrow*ctx->cell_cols + cellcol].compdatasize = compsize;
 

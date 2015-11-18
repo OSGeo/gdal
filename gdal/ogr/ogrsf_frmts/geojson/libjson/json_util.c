@@ -83,7 +83,7 @@ struct json_object* json_object_from_file(const char *filename)
     MC_ERROR("json_object_from_file: printbuf_new failed\n");
     return NULL;
   }
-  while((ret = read(fd, buf, JSON_FILE_BUF_SIZE)) > 0) {
+  while((ret = (int)read(fd, buf, JSON_FILE_BUF_SIZE)) > 0) {
     printbuf_memappend(pb, buf, ret);
   }
   close(fd);
@@ -125,7 +125,7 @@ int json_object_to_file_ext(char *filename, struct json_object *obj, int flags)
   wsize = (unsigned int)(strlen(json_str) & UINT_MAX); /* CAW: probably unnecessary, but the most 64bit safe */
   wpos = 0;
   while(wpos < wsize) {
-    if((ret = write(fd, json_str + wpos, wsize-wpos)) < 0) {
+    if((ret = (int)write(fd, json_str + wpos, wsize-wpos)) < 0) {
       close(fd);
       MC_ERROR("json_object_to_file: error writing file %s: %s\n",
 	     filename, strerror(errno));

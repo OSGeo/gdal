@@ -72,7 +72,7 @@ void CPCIDSKGCP2Segment::Load()
 
     // Read the segment in. The first block has information about
     // the structure of the GCP segment (how many, the projection, etc.)
-    pimpl_->seg_data.SetSize(data_size - 1024);
+    pimpl_->seg_data.SetSize(static_cast<int>(data_size) - 1024);
     ReadFromFile(pimpl_->seg_data.buffer, 0, data_size - 1024);
 
     // check for 'GCP2    ' in the first 8 bytes
@@ -166,7 +166,7 @@ std::vector<PCIDSK::GCP> const& CPCIDSKGCP2Segment::GetGCPs(void) const
 // exists, it will be replaced with this one.
 void CPCIDSKGCP2Segment::SetGCPs(std::vector<PCIDSK::GCP> const& gcps)
 {
-    pimpl_->num_gcps = gcps.size();
+    pimpl_->num_gcps = static_cast<unsigned int>(gcps.size());
     pimpl_->gcps = gcps; // copy them in
     pimpl_->changed = true;
     
@@ -210,9 +210,9 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
     std::vector<PCIDSK::GCP>::const_iterator iter =
         pimpl_->gcps.begin();
     
-    unsigned int id = 0;
+    int id = 0;
     while (iter != pimpl_->gcps.end()) {
-        std::size_t offset = 512 + id * 256;
+        int offset = 512 + id * 256;
         
         if ((*iter).IsCheckPoint()) {
             pimpl_->seg_data.Put("C", offset, 1);

@@ -73,7 +73,7 @@ void CPCIDSKADS40ModelSegment::Load()
     
     assert(data_size - 1024 == 1 * 512);
     
-    pimpl_->seg_data.SetSize(data_size - 1024); // should be 1 * 512
+    pimpl_->seg_data.SetSize(static_cast<int>(data_size) - 1024); // should be 1 * 512
     
     ReadFromFile(pimpl_->seg_data.buffer, 0, data_size - 1024);
     
@@ -110,7 +110,7 @@ void CPCIDSKADS40ModelSegment::Write(void)
     }
       
     pimpl_->seg_data.Put("ADS40   ",0,8);
-    pimpl_->seg_data.Put(pimpl_->path.c_str(),8,pimpl_->path.size());
+    pimpl_->seg_data.Put(pimpl_->path.c_str(),8,static_cast<int>(pimpl_->path.size()));
 
     WriteToFile(pimpl_->seg_data.buffer,0,data_size-1024);
     mbModified = false;

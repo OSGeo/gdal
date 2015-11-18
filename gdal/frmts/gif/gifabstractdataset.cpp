@@ -110,7 +110,7 @@ static CPLString GIFCollectXMPMetadata(VSILFILE* fp)
     int iStartSearchOffset = 1024;
     while(true)
     {
-        int nRead = VSIFReadL( abyBuffer + 1024, 1, 1024, fp );
+        int nRead = static_cast<int>(VSIFReadL( abyBuffer + 1024, 1, 1024, fp ));
         if (nRead <= 0)
             break;
         abyBuffer[1024 + nRead] = 0;
@@ -146,7 +146,7 @@ static CPLString GIFCollectXMPMetadata(VSILFILE* fp)
                     break;
                 pszXMP = pszNewXMP;
 
-                nRead = VSIFReadL( pszXMP + nSize, 1, 1024, fp );
+                nRead = static_cast<int>(VSIFReadL( pszXMP + nSize, 1, 1024, fp ));
                 if (nRead <= 0)
                     break;
 
@@ -414,8 +414,8 @@ int GIFAbstractDataset::ReadFunc( GifFileType *psGFile, GifByteType *pabyBuffer,
                                         int nBytesToRead )
 
 {
-    return VSIFReadL( pabyBuffer, 1, nBytesToRead, 
-                      (VSILFILE *) psGFile->UserData );
+    return static_cast<int>(VSIFReadL( pabyBuffer, 1, nBytesToRead, 
+                      (VSILFILE *) psGFile->UserData ));
 }
 
 /************************************************************************/

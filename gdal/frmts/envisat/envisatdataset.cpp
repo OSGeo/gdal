@@ -690,7 +690,7 @@ void EnvisatDataset::CollectDSDMetadata()
         strncat( szKey, pszDSName, max_len - strlen(szKey) - 1 );
 
         // strip trailing spaces.
-        for( int i = strlen(szKey)-1; i && szKey[i] == ' '; i-- )
+        for( int i = static_cast<int>(strlen(szKey))-1; i && szKey[i] == ' '; i-- )
             szKey[i] = '\0';
 
         // convert spaces into underscores.
@@ -704,7 +704,7 @@ void EnvisatDataset::CollectDSDMetadata()
 
         char szTrimmedName[max_len];
         strcpy( szTrimmedName, pszFilename );
-        for( int i = strlen(szTrimmedName)-1; i && szTrimmedName[i] == ' '; i--)
+        for( int i = static_cast<int>(strlen(szTrimmedName))-1; i && szTrimmedName[i] == ' '; i--)
             szTrimmedName[i] = '\0';
 
         SetMetadataItem( szKey, szTrimmedName );
@@ -747,7 +747,7 @@ void EnvisatDataset::CollectADSMetadata()
             szPrefix[sizeof(szPrefix) - 1] = '\0';
 
             // strip trailing spaces
-            for( int i = strlen(szPrefix)-1; i && szPrefix[i] == ' '; --i )
+            for( int i = static_cast<int>(strlen(szPrefix))-1; i && szPrefix[i] == ' '; --i )
                 szPrefix[i] = '\0';
 
             // convert spaces into underscores

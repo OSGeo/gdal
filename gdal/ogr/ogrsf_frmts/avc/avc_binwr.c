@@ -1530,7 +1530,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
     /* On Unix we can still use fstat() */
     if ( VSIStat(pszArcDirFile, &sStatBuf) != -1 )
     {
-        numDirEntries = sStatBuf.st_size/380;
+        numDirEntries = (int)(sStatBuf.st_size/380);
         hRawBinFile = AVCRawBinOpen(pszArcDirFile, "r+",
                                     AVC_COVER_BYTE_ORDER(AVCCoverV7),
                                     psDBCSInfo);

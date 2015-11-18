@@ -476,7 +476,7 @@ static int ParseSect2_Wx (float *rdat, sInt4 nrdat, sInt4 *idat,
       Wx->data = (char **) realloc ((void *) Wx->data,
                                     Wx->dataLen * sizeof (char *));
       /* Assert: buffLen is 1 more than strlen(buffer). -- FALSE -- */
-      buffLen = strlen (buffer) + 1;
+      buffLen = static_cast<int>(strlen (buffer)) + 1;
 
       Wx->data[Wx->dataLen - 1] = (char *) malloc (buffLen * sizeof (char));
       if (Wx->maxLen < buffLen) {
@@ -496,7 +496,7 @@ static int ParseSect2_Wx (float *rdat, sInt4 nrdat, sInt4 *idat,
       /* Assert: Already initialized Wx->maxEng[i]. */
       for (j = 0; j < Wx->dataLen; j++) {
          if (Wx->ugly[j].english[i] != NULL) {
-            len = strlen (Wx->ugly[j].english[i]);
+            len = static_cast<int>(strlen (Wx->ugly[j].english[i]));
             if (len > Wx->maxEng[i]) {
                Wx->maxEng[i] = len;
             }

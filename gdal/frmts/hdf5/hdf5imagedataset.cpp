@@ -385,7 +385,7 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     count[poGDS->GetYIndex()]  = nBlockYSize;
     count[poGDS->GetXIndex()]  = nBlockXSize;
 
-    nSizeOfData = H5Tget_size( poGDS->native );
+    nSizeOfData = static_cast<int>(H5Tget_size( poGDS->native ));
     memset( pImage,0,nBlockXSize*nBlockYSize*nSizeOfData );
 
     /*  blocksize may not be a multiple of imagesize */

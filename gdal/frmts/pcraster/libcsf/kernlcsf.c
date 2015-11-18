@@ -106,7 +106,7 @@ void CsfRegisterMap(
   }
 
   mapList[i] =   m;
-  m->mapListId = i;
+  m->mapListId = (int)i;
 }
 
 /* remove map from run time structure (LIBRARY_INTERNAL)

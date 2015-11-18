@@ -3160,11 +3160,11 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
     //
 
 
-    size_t mappedFieldCount = m_vOGRFieldToESRIField.size();
+    int mappedFieldCount = static_cast<int>(m_vOGRFieldToESRIField.size());
 
     bool foundBadColumn = false;
 
-    for (size_t i = 0; i < mappedFieldCount; ++i)
+    for (int i = 0; i < mappedFieldCount; ++i)
     {
         OGRFieldDefn* poFieldDefn = m_pFeatureDefn->GetFieldDefn(i);
         // The IsNull() and GetXXX() API are very slow when there are a 

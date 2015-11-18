@@ -457,7 +457,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         return CE_Failure; 
     }
 
-    NullBuffer(pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace);
+    NullBuffer(pData, nBufXSize, nBufYSize, eBufType, static_cast<int>(nPixelSpace), static_cast<int>(nLineSpace));
 
     if( poRDS->bBuildQuadTreeDynamically && !bSameWindowAsOtherBand )
     {

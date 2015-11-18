@@ -77,7 +77,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     int nOffset = 0;
 
     if (pszLBLSIZE)
-        nOffset = pszLBLSIZE - (const char *)pabyHeader;
+        nOffset = static_cast<int>(pszLBLSIZE - (const char *)pabyHeader);
 
     char *pch1 = strstr(reinterpret_cast<char *>( pabyHeader + nOffset ), "=");
     if( pch1 == NULL )
@@ -98,7 +98,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     char* pszChunk = reinterpret_cast<char *>(  VSIMalloc( LabelSize + 1 ) );
     if( pszChunk == NULL )
         return FALSE;
-    int nBytesRead = VSIFReadL( pszChunk, 1, LabelSize, fp );
+    int nBytesRead = static_cast<int>(VSIFReadL( pszChunk, 1, LabelSize, fp ));
     pszChunk[nBytesRead] = 0;
 
     osHeaderText += pszChunk ;
@@ -153,13 +153,13 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
     }
     char szChunk[100];
-    nBytesRead = VSIFReadL( szChunk, 1, 30, fp );
+    nBytesRead = static_cast<int>(VSIFReadL( szChunk, 1, 30, fp ));
     szChunk[nBytesRead] = '\0';
     pszLBLSIZE = strstr( szChunk, "LBLSIZE" );
     nOffset = 0;
 
     if (pszLBLSIZE)
-        nOffset = pszLBLSIZE - (const char *)szChunk;
+        nOffset = static_cast<int>(pszLBLSIZE - (const char *)szChunk);
     pch1 = strstr( reinterpret_cast<char *>( szChunk + nOffset ), "=" ) + 1;
     pch2 = strstr( reinterpret_cast<char *>( szChunk + nOffset ), " " );
     strncpy( keyval, pch1, pch2-pch1 );
@@ -173,7 +173,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
     }
 
-    nBytesRead = VSIFReadL( szChunk, 1, EOLabelSize, fp );
+    nBytesRead = static_cast<int>(VSIFReadL( szChunk, 1, EOLabelSize, fp ));
     szChunk[nBytesRead] = '\0';
     osHeaderText += szChunk ;
     osHeaderText.append("END");

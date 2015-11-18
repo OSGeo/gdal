@@ -324,7 +324,7 @@ int GDALWMSRasterBand::HasArbitraryOverviews() {
 }
 
 int GDALWMSRasterBand::GetOverviewCount() {
-    return m_overviews.size();
+    return static_cast<int>(m_overviews.size());
 }
 
 GDALRasterBand *GDALWMSRasterBand::GetOverview(int n) {

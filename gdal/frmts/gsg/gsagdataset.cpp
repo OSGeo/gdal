@@ -1681,7 +1681,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
     ssRange << dfMin << " " << dfMax << "\x0D\x0A";
     if( ssRange.str().length() != nDummyRangeLen )
     {
-	int nShiftSize = ssRange.str().length() - nDummyRangeLen;
+	int nShiftSize = static_cast<int>(ssRange.str().length() - nDummyRangeLen);
 	if( ShiftFileContents( fp, nRangeStart + nDummyRangeLen,
 			       nShiftSize, "\x0D\x0A" ) != CE_None )
 	{

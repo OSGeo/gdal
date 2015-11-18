@@ -186,7 +186,7 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, const char* psz
     ptr = pszVer;
     // get Version string
     while (*ptr && *ptr != ' ') ptr++;
-    iLen = ptr-pszVer;
+    iLen = static_cast<int>(ptr-pszVer);
     if ( iLen > sizeof(szVer) - 1 ) iLen = sizeof(szVer) - 1;
     strncpy(szVer,pszVer,iLen);
     szVer[iLen] = '\0';
@@ -195,7 +195,7 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, const char* psz
 
     // get Major number
     while (*ptr && *ptr != '.') ptr++;
-    iLen = ptr-pszVer;
+    iLen = static_cast<int>(ptr-pszVer);
     if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
     strncpy(szNum,pszVer,iLen);
     szNum[iLen] = '\0';
@@ -207,7 +207,7 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, const char* psz
 
     // get Minor number
     while (*ptr && *ptr != '.') ptr++;
-    iLen = ptr-pszVer;
+    iLen = static_cast<int>(ptr-pszVer);
     if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
     strncpy(szNum,pszVer,iLen);
     szNum[iLen] = '\0';
@@ -220,7 +220,7 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, const char* psz
 
         // get Release number
         while (*ptr && *ptr != '.') ptr++;
-        iLen = ptr-pszVer;
+        iLen = static_cast<int>(ptr-pszVer);
         if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
         strncpy(szNum,pszVer,iLen);
         szNum[iLen] = '\0';
@@ -864,7 +864,7 @@ void OGRPGDataSource::LoadTables()
                 {
                     *pos = '\0';
                     pszGeomColumnName = pos+1;
-                    int len = strlen(pszGeomColumnName);
+                    int len = static_cast<int>(strlen(pszGeomColumnName));
                     if (len > 0)
                         pszGeomColumnName[len - 1] = '\0';
                 }
@@ -1471,7 +1471,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     const char* pszDotPos = strstr(pszLayerName,".");
     if ( pszDotPos != NULL && bExtractSchemaFromLayerName )
     {
-      int length = pszDotPos - pszLayerName;
+      int length = static_cast<int>(pszDotPos - pszLayerName);
       pszSchemaName = (char*)CPLMalloc(length+1);
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
@@ -1969,7 +1969,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     {
         *pos = '\0';
         pszGeomColumnName = CPLStrdup(pos+1);
-        int len = strlen(pszGeomColumnName);
+        int len = static_cast<int>(strlen(pszGeomColumnName));
         if (len > 0)
             pszGeomColumnName[len - 1] = '\0';
     }
@@ -2653,7 +2653,7 @@ OGRFeature *OGRPGNoResetResultLayer::GetNextFeature()
     return RecordToFeature(hCursorResult,
                            m_panMapFieldNameToIndex,
                            m_panMapFieldNameToGeomIndex,
-                           iNextShapeId ++);
+                           static_cast<int>(iNextShapeId ++));
 }
 
 /************************************************************************/

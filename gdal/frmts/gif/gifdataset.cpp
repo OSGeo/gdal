@@ -679,12 +679,12 @@ static int VSIGIFWriteFunc( GifFileType *psGFile,
         /* Most readers don't even care if it is GIF87a or GIF89a, but it is */
         /* better to write the right version */
 
-        int nRet = VSIFWriteL("GIF89a", 1, 6, fp);
+        size_t nRet = VSIFWriteL("GIF89a", 1, 6, fp);
         nRet += VSIFWriteL( (char *) pabyBuffer + 6, 1, nBytesToWrite - 6, fp );
-        return nRet;
+        return static_cast<int>(nRet);
     }
     else
-        return VSIFWriteL( (void *) pabyBuffer, 1, nBytesToWrite, fp );
+        return static_cast<int>(VSIFWriteL( (void *) pabyBuffer, 1, nBytesToWrite, fp ));
 }
 
 /************************************************************************/

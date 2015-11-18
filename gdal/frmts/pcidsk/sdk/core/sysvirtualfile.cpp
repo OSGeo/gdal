@@ -382,7 +382,7 @@ void SysVirtualFile::FlushDirtyBlock(void)
 /************************************************************************/
 void SysVirtualFile::GrowVirtualFile(std::ptrdiff_t requested_block)
 {
-    LoadBMEntrysTo( requested_block );
+    LoadBMEntrysTo( static_cast<int>(requested_block) );
 
     if( requested_block == blocks_loaded )
     {
@@ -396,7 +396,7 @@ void SysVirtualFile::GrowVirtualFile(std::ptrdiff_t requested_block)
 
         offset = 
             sysblockmap->GrowVirtualFile( image_index, last_bm_index, new_seg);
-        SetBlockInfo( requested_block, (uint16) new_seg, offset );
+        SetBlockInfo( static_cast<int>(requested_block), (uint16) new_seg, offset );
     }
 }
 
@@ -431,23 +431,23 @@ void SysVirtualFile::WriteBlocks(int first_block,
     std::size_t blocks_written = 0;
     std::size_t current_first_block = first_block;
     while (blocks_written < (std::size_t) block_count) {
-        LoadBMEntrysTo( current_first_block+1 );
+        LoadBMEntrysTo( static_cast<int>(current_first_block+1) );
 
-        unsigned int cur_segment = GetBlockSegment( current_first_block );
-        unsigned int cur_block = current_first_block;
+        unsigned int cur_segment = GetBlockSegment( static_cast<int>(current_first_block) );
+        unsigned int cur_block = static_cast<unsigned int>(current_first_block);
         while (cur_block < (unsigned int)block_count + first_block &&
                (unsigned int) GetBlockSegment(cur_block + 1) == cur_segment)
         {
             cur_block++;
-            LoadBMEntrysTo( current_first_block+1 );
+            LoadBMEntrysTo( static_cast<int>(current_first_block+1) );
         }
         
         // Find largest span of contiguous blocks we can write
-        uint64 write_start = GetBlockIndexInSegment(current_first_block);
+        uint64 write_start = GetBlockIndexInSegment(static_cast<int>(current_first_block));
         uint64 write_cur = write_start * block_size;
         unsigned int count_to_write = 1;
         while (write_cur + block_size ==
-               (uint64)GetBlockIndexInSegment(count_to_write + current_first_block - 1) * block_size &&
+               (uint64)GetBlockIndexInSegment(static_cast<int>(count_to_write + current_first_block - 1)) * block_size &&
             count_to_write < (cur_block - current_first_block))
         {
             write_cur += block_size;

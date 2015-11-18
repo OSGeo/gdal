@@ -357,7 +357,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
             GDALCopyWords( pabyOutData + i * (nPixelOffset * nOutXSize),
                            eOperDataType, nPixelOffset,
                            reinterpret_cast<GByte *>( pData ) + i * nLineSpace,
-                           eBufType, nPixelSpace, nOutXSize );
+                           eBufType, static_cast<int>(nPixelSpace), nOutXSize );
         }
 
         VSIFree( pabyOutData );

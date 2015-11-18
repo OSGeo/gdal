@@ -967,7 +967,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( header.iOptions == 0x00 )
     {
-        offsets[0] = VSIFTellL( poOpenInfo->fpL );
+        offsets[0] = static_cast<GUInt32>(VSIFTellL( poOpenInfo->fpL ));
 
         for( GUInt32 i = 1; i < blocks; i++ )
         {
@@ -1010,7 +1010,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END );
-    GUInt32 fileSize = VSIFTellL( poOpenInfo->fpL );
+    GUInt32 fileSize = static_cast<GUInt32>(VSIFTellL( poOpenInfo->fpL ));
 
 #if RIK_HEADER_DEBUG
     CPLDebug( "RIK",

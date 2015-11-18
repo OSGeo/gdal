@@ -237,7 +237,7 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
         return NULL;
     }
 
-    int nRet = VSIFWriteL("KRO\01", 4, 1, fp);
+    size_t nRet = VSIFWriteL("KRO\01", 4, 1, fp);
 
 /* -------------------------------------------------------------------- */
 /*      Create a file level header.                                     */

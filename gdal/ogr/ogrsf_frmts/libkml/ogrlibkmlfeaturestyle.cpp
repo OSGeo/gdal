@@ -256,7 +256,7 @@ void kml2featurestyle (
         
         else {
 
-            int nPathLen = strlen ( poOgrDS->GetStylePath (  ) );
+            int nPathLen = static_cast<int>(strlen ( poOgrDS->GetStylePath (  ) ));
 
             if (    nPathLen == 0
                  || EQUALN ( pszUrl, poOgrDS->GetStylePath (  ), nPathLen ))

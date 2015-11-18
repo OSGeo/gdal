@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 /*      as an integer.                                                  */
 /************************************************************************/
 
-long DDFScanInt( const char * pszString, int nMaxChars )
+int DDFScanInt( const char * pszString, int nMaxChars )
 
 {
     char        szWorking[33];

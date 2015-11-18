@@ -1785,7 +1785,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             /* try upper case */
             if( process_fp == NULL )
             {
-                for( int i = strlen(pszFilename)-1;
+                for( int i = static_cast<int>(strlen(pszFilename))-1;
                      i >= 0 && pszFilename[i] != '/' && pszFilename[i] != '\\';
                      i-- )
                 {

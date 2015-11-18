@@ -501,7 +501,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
         CSLDestroy(papszOptions);
         return NULL;
     }
-    int nTIFFHeaderSize = sStat.st_size;
+    int nTIFFHeaderSize = static_cast<int>(sStat.st_size);
     VSIUnlink(osTmpFilename);
 
 

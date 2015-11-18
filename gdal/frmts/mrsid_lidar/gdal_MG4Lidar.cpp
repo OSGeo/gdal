@@ -630,7 +630,7 @@ CPLErr MG4LidarDataset::OpenZoomLevel( int iZoom )
    /* -------------------------------------------------------------------- */
    /*      Create band information objects.                                */
    /* -------------------------------------------------------------------- */
-   size_t BandCount = 0;
+   int BandCount = 0;
    CPLXMLNode* xmlBand = poXMLPCView;
    bool bClass = false;
    bool bNumRets = false;

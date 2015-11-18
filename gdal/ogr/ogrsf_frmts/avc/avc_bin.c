@@ -2111,7 +2111,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
              sTableDef.nRecSize > 0 &&
              sStatBuf.st_size/sTableDef.nRecSize != sTableDef.numRecords)
         {
-            sTableDef.numRecords = sStatBuf.st_size/sTableDef.nRecSize;
+            sTableDef.numRecords = (int)(sStatBuf.st_size/sTableDef.nRecSize);
         }
 
     }

@@ -1227,7 +1227,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy them back to ints
                 for( int i = 0; i < iLength; i++ )
-                    pnData[i] = atol(papszColData[i]);
+                    pnData[i] = atoi(papszColData[i]);
             }
 
             // either we allocated them for write, or they were allocated
@@ -1285,7 +1285,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         if( eRWFlag == GF_Write )
         {
             for( int i = 0; i < iLength; i++ )
-                panColData[i] = atol(papszStrList[i]);
+                panColData[i] = atoi(papszStrList[i]);
         }
 
         CPLErr ret = ColorsIO(eRWFlag, iField, iStartRow, iLength, panColData);
@@ -1319,7 +1319,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // convert user supplied strings to ints
                 for( int i = 0; i < iLength; i++ )
-                    panColData[i] = atol(papszStrList[i]);
+                    panColData[i] = atoi(papszStrList[i]);
             }
 
             // call values IO to read/write ints

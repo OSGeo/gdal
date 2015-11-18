@@ -255,7 +255,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                 continue;
 			}
             if ((pszLine[0] == '\'')||(pszLine[0] == '\"')) { /* If the value is quoted, ignore these */
-                int nLen = strlen(pszLine);
+                int nLen = static_cast<int>(strlen(pszLine));
                 char *pszNline = (char*)CPLMalloc(nLen-1);
                 strncpy(pszNline, pszLine+1, nLen-2);
                 pszNline[nLen-2] = '\0';

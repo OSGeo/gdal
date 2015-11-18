@@ -1030,7 +1030,7 @@ pass2_fs_dither (j_decompress_ptr cinfo,
       /* If we have not seen this color before, find nearest colormap */
       /* entry and update the cache */
       if (*cachep == 0)
-	fill_inverse_cmap(cinfo, cur0>>C0_SHIFT,cur1>>C1_SHIFT,cur2>>C2_SHIFT);
+	fill_inverse_cmap(cinfo, (int)(cur0>>C0_SHIFT),(int)(cur1>>C1_SHIFT),(int)(cur2>>C2_SHIFT));
       /* Now emit the colormap index for this cell */
       { register int pixcode = *cachep - 1;
 	*outptr = (JSAMPLE) pixcode;

@@ -362,7 +362,7 @@ void CPCIDSKRPCModelSegment::Write(void)
 
     // Sensor name:
     pimpl_->seg_data.Put("SENSOR",30,6);
-    pimpl_->seg_data.Put(pimpl_->sensor_name.c_str(),36,pimpl_->sensor_name.size());
+    pimpl_->seg_data.Put(pimpl_->sensor_name.c_str(),36,static_cast<int>(pimpl_->sensor_name.size()));
   
     // Block 2:
     // Bytes     0-3: Number of coefficients

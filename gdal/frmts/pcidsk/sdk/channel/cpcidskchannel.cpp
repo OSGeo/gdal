@@ -187,7 +187,7 @@ int CPCIDSKChannel::GetOverviewCount()
 {
     EstablishOverviewInfo();
 
-    return overview_infos.size();
+    return static_cast<int>(overview_infos.size());
 }
 
 /************************************************************************/

@@ -225,7 +225,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
         for( i = 0; apszURNNames[i*2+0] != NULL; i++ )
         {
             const char *pszTarget = apszURNNames[i*2+0];
-            int nTLen = strlen(pszTarget);
+            int nTLen = static_cast<int>(strlen(pszTarget));
 
             // Are we just looking for a prefix match?
             if( pszTarget[nTLen-1] == '*' )

@@ -2971,7 +2971,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
     for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
     {
         GPtrDiff_t  iBufOffset;
-        int         iSrcOffset;
+        GPtrDiff_t  iSrcOffset;
 
         dfSrcY = (iBufYOff+0.5) * dfSrcYInc + nYOff;
         iSrcY = (int) dfSrcY;

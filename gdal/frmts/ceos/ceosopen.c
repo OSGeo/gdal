@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 /*      as an integer.                                                  */
 /************************************************************************/
 
-static long CEOSScanInt( const char * pszString, int nMaxChars )
+static int CEOSScanInt( const char * pszString, int nMaxChars )
 
 {
     char	szWorking[33];

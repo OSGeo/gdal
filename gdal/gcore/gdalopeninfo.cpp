@@ -162,7 +162,7 @@ retry:
             /* we will be able to open it by passing my_remote_utm.tif */
             /* This helps a lot for GDAL based readers that only provide file explorers to open datasets */
             char szPointerFilename[2048];
-            int nBytes = readlink(pszFilename, szPointerFilename, sizeof(szPointerFilename));
+            int nBytes = static_cast<int>(readlink(pszFilename, szPointerFilename, sizeof(szPointerFilename)));
             if (nBytes != -1)
             {
                 szPointerFilename[MIN(nBytes, (int)sizeof(szPointerFilename)-1)] = 0;

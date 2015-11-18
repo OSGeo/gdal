@@ -2315,7 +2315,7 @@ yyreduce:
   case 73:
 #line 772 "swq_parser.y" /* yacc.c:1646  */
     {
-            context->poCurSelect->PushJoin( (yyvsp[-3])->int_value,
+            context->poCurSelect->PushJoin( static_cast<int>((yyvsp[-3])->int_value),
                                             (yyvsp[-1]) );
             delete (yyvsp[-3]);
         }
@@ -2325,7 +2325,7 @@ yyreduce:
   case 74:
 #line 778 "swq_parser.y" /* yacc.c:1646  */
     {
-            context->poCurSelect->PushJoin( (yyvsp[-3])->int_value,
+            context->poCurSelect->PushJoin( static_cast<int>((yyvsp[-3])->int_value),
                                             (yyvsp[-1]) );
             delete (yyvsp[-3]);
 	    }

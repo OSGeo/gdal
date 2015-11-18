@@ -72,7 +72,7 @@ bool GDBErr(long int hr, std::string desc, CPLErr errType, const char* pszAddMsg
 {
     std::wstring fgdb_error_desc_w;
     fgdbError er;
-    er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
+    er = FileGDBAPI::ErrorInfo::GetErrorDescription(static_cast<fgdbError>(hr), fgdb_error_desc_w);
     if ( er == S_OK )
     {
         std::string fgdb_error_desc = WStringToString(fgdb_error_desc_w);
@@ -99,7 +99,7 @@ bool GDBDebug(long int hr, std::string desc)
 {
     std::wstring fgdb_error_desc_w;
     fgdbError er;
-    er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
+    er = FileGDBAPI::ErrorInfo::GetErrorDescription(static_cast<fgdbError>(hr), fgdb_error_desc_w);
     if ( er == S_OK )
     {
         std::string fgdb_error_desc = WStringToString(fgdb_error_desc_w);
@@ -456,7 +456,7 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
 
     OGRErr eErr = OGRCreateFromShapeBin( pGdbGeometry->shapeBuffer,
                                 &pOGRGeometry,
-                                pGdbGeometry->inUseLength);
+                                static_cast<int>(pGdbGeometry->inUseLength));
 
     //OGRErr eErr = OGRGeometryFactory::createFromWkb(pGdbGeometry->shapeBuffer, pOGRSR, &pOGRGeometry, pGdbGeometry->inUseLength );
 

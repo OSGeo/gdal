@@ -991,7 +991,7 @@ static void decode_geohash_bbox(const char *geohash, double lat[2], double lon[2
     static const char bits[] = {16,8,4,2,1};
     lat[0] = -90.0; lat[1] = 90.0;
     lon[0] = -180.0; lon[1] = 180.0;
-    hashlen = strlen(geohash);
+    hashlen = static_cast<int>(strlen(geohash));
     for (i=0; i<hashlen; i++) {
         c = tolower(geohash[i]);
         cd = strchr(BASE32, c)-BASE32;

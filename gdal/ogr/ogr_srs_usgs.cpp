@@ -108,7 +108,7 @@ CPL_CVSID("$Id$");
 /*  Correspondence between GCTP and EPSG ellipsoid codes.               */
 /************************************************************************/
 
-static const long aoEllips[] =
+static const int aoEllips[] =
 {
     7008,   // Clarke, 1866 (NAD1927)
     7034,   // Clarke, 1880
@@ -456,7 +456,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                     iZone = -iZone;
                     bNorth = FALSE;
                 }
-                SetUTM( iZone, bNorth );
+                SetUTM( (int)iZone, bNorth );
             }
             break;
 
@@ -471,7 +471,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                               "Wrong datum for State Plane projection %d. "
                               "Should be 0 or 8.", (int) iDatum );
                 
-                SetStatePlane( iZone, bNAD83 );
+                SetStatePlane( (int)iZone, bNAD83 );
             }
             break;
 

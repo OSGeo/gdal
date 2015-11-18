@@ -223,7 +223,9 @@ GDALDataset* PCRasterDataset::createCopy(
   for(size_t row = 0; errorCode == CE_None && row < nrRows; ++row) {
 
     // Get row from source.
-    if(raster->RasterIO(GF_Read, 0, row, nrCols, 1, buffer, nrCols, 1,
+    if(raster->RasterIO(GF_Read, 0, static_cast<int>(row),
+        static_cast<int>(nrCols), 1, buffer,
+        static_cast<int>(nrCols), 1,
          raster->GetRasterDataType(), 0, 0, NULL) != CE_None) {
       CPLError(CE_Failure, CPLE_FileIO,
          "PCRaster driver: Error reading from source raster");
@@ -295,8 +297,8 @@ PCRasterDataset::PCRasterDataset( MAP* map) :
     d_location_changed(false)
 {
   // Read header info.
-  nRasterXSize = RgetNrCols(d_map);
-  nRasterYSize = RgetNrRows(d_map);
+  nRasterXSize = static_cast<int>(RgetNrCols(d_map));
+  nRasterYSize = static_cast<int>(RgetNrRows(d_map));
   d_west = static_cast<double>(RgetXUL(d_map));
   d_north = static_cast<double>(RgetYUL(d_map));
   d_cellSize = static_cast<double>(RgetCellSize(d_map));

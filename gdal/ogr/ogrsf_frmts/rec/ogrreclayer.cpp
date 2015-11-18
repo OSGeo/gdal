@@ -128,7 +128,7 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
     nRecordLength = panFieldOffset[nFieldCount-1]+panFieldWidth[nFieldCount-1];
     bIsValid = TRUE;
 
-    nStartOfData = VSIFTell( fp );
+    nStartOfData = static_cast<int>(VSIFTell( fp ));
 }
 
 /************************************************************************/

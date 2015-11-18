@@ -633,7 +633,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
             int nBytes;
 
             pszBuffer = (char *) CPLMalloc(nBufMax);
-            nBytes = VSIFReadL( pszBuffer, 1, nBufMax-1, fp );
+            nBytes = static_cast<int>(VSIFReadL( pszBuffer, 1, nBufMax-1, fp ));
             VSIFCloseL( fp );
 
             pszBuffer[nBytes] = '\0';

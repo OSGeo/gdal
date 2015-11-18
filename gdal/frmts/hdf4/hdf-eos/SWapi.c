@@ -1036,7 +1036,7 @@ SWdiminfo(int32 swathID, char *dimname)
 
 	    if (status == 0)
 	    {
-		size = atol(utlstr);
+		size = atoi(utlstr);
 	    }
 	    else
 	    {
@@ -1155,7 +1155,7 @@ SWmapinfo(int32 swathID, char *geodim, char *datadim, int32 * offset,
 	    statmeta = EHgetmetavalue(metaptrs, "Offset", utlstr);
 	    if (statmeta == 0)
 	    {
-		*offset = atol(utlstr);
+		*offset = atoi(utlstr);
 	    }
 	    else
 	    {
@@ -1169,7 +1169,7 @@ SWmapinfo(int32 swathID, char *geodim, char *datadim, int32 * offset,
 	    statmeta = EHgetmetavalue(metaptrs, "Increment", utlstr);
 	    if (statmeta == 0)
 	    {
-		*increment = atol(utlstr);
+		*increment = atoi(utlstr);
 	    }
 	    else
 	    {
@@ -3425,7 +3425,7 @@ SWinqdims(int32 swathID, char *dimnames, int32 dims[])
 		    if (dims != NULL)
 		    {
 			EHgetmetavalue(metaptrs, "Size", utlstr);
-			size = atol(utlstr);
+			size = atoi(utlstr);
 			dims[nDim] = size;
 		    }
 		    /* Increment number of dimensions */
@@ -3582,7 +3582,7 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
 		    if (offset != NULL)
 		    {
 			EHgetmetavalue(metaptrs, "Offset", utlstr);
-			off = atol(utlstr);
+			off = atoi(utlstr);
 			offset[nMap] = off;
 		    }
 
@@ -3590,7 +3590,7 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
 		    if (increment != NULL)
 		    {
 			EHgetmetavalue(metaptrs, "Increment", utlstr);
-			incr = atol(utlstr);
+			incr = atoi(utlstr);
 			increment[nMap] = incr;
 		    }
 
@@ -8953,7 +8953,7 @@ SWdefvrtregion(int32 swathID, int32 regionID, char *vertObj, float64 range[])
 	{
 	    /* Get string length of vertObj (minus "DIM:) */
 	    /* ------------------------------------------ */
-	    slen = strlen(vertObj) - 4;
+	    slen = (int)strlen(vertObj) - 4;
 
 
 	    /* If regionID = -1 then setup swath region entry */
@@ -9045,7 +9045,7 @@ SWdefvrtregion(int32 swathID, int32 regionID, char *vertObj, float64 range[])
 	    {
 		/* Get string length of vertical dimension */
 		/* --------------------------------------- */
-		slen = strlen(dimlist);
+		slen = (int)strlen(dimlist);
 
 
 		/* Get size in bytes of vertical field numbertype */
@@ -9514,7 +9514,7 @@ SWdefscanregion(int32 swathID, char *fieldname, float64 range[], CPL_UNUSED int3
     }
     else
     {
-       slen = strlen(fieldname);
+       slen = (int)strlen(fieldname);
        tfieldname = (char *)calloc(slen + 1, sizeof(char));
        strcpy(tfieldname, fieldname);
     }
@@ -9614,7 +9614,7 @@ SWdefscanregion(int32 swathID, char *fieldname, float64 range[], CPL_UNUSED int3
 
     if (status == 0)
     {
-          slen = strlen(tfieldname);
+          slen = (int)strlen(tfieldname);
 
           SETSWTHREG;
 

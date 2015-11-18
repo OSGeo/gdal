@@ -959,7 +959,7 @@ long Convert_UPS_To_MGRS (char   Hemisphere,
 
     grid_northing = Northing;
     grid_northing = grid_northing - false_northing;
-    letters[2] = (long)(grid_northing / ONEHT);
+    letters[2] = (int)(grid_northing / ONEHT);
 
     if (letters[2] > LETTER_H)
       letters[2] = letters[2] + 1;
@@ -969,7 +969,7 @@ long Convert_UPS_To_MGRS (char   Hemisphere,
 
     grid_easting = Easting;
     grid_easting = grid_easting - false_easting;
-    letters[1] = ltr2_low_value + ((long)(grid_easting / ONEHT)); 
+    letters[1] = (int)(ltr2_low_value + ((long)(grid_easting / ONEHT))); 
 
     if (Easting < TWOMIL)
     {
@@ -1037,7 +1037,7 @@ long Convert_MGRS_To_UPS ( char   *MGRS,
       {
         *Hemisphere = 'N';
 
-        index = letters[0] - 22;
+        index = (int)(letters[0] - 22);
         ltr2_low_value = UPS_Constant_Table[index].ltr2_low_value;
         ltr2_high_value = UPS_Constant_Table[index].ltr2_high_value;
         ltr3_high_value = UPS_Constant_Table[index].ltr3_high_value;

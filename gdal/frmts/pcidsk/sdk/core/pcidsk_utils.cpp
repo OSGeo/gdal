@@ -153,12 +153,12 @@ void PCIDSK::SwapPixels(void* const data,
     case CHN_16U:
     case CHN_16S:
     case CHN_32R:
-        SwapData(data, DataTypeSize(type), count);
+        SwapData(data, DataTypeSize(type), static_cast<int>(count));
         break;
     case CHN_C16U:
     case CHN_C16S:
     case CHN_C32R:
-        SwapData(data, DataTypeSize(type) / 2, count * 2);
+        SwapData(data, DataTypeSize(type) / 2, static_cast<int>(count) * 2);
         break;
     default:
         ThrowPCIDSKException("Unknown data type passed to SwapPixels."
@@ -477,7 +477,7 @@ std::string PCIDSK::ExtractPath( std::string filename )
 {
     int i;
 
-    for( i = filename.size()-1; i >= 0; i-- )
+    for( i = static_cast<int>(filename.size())-1; i >= 0; i-- )
     {
         if( filename[i] == '\\' || filename[i] == '/' )
             break;

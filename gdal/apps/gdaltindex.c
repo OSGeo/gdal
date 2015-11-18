@@ -318,14 +318,14 @@ int main(int argc, char *argv[])
         {
             OGRFieldDefnH hFieldDefn = OGR_Fld_Create( tile_index, OFTString );
             if( nMaxFieldSize )
-                OGR_Fld_SetWidth( hFieldDefn, nMaxFieldSize);
+                OGR_Fld_SetWidth( hFieldDefn, (int)nMaxFieldSize);
             OGR_L_CreateField( hLayer, hFieldDefn, TRUE );
             OGR_Fld_Destroy(hFieldDefn);
             if( pszSrcSRSName != NULL )
             {
                 hFieldDefn = OGR_Fld_Create( pszSrcSRSName, OFTString );
                 if( nMaxFieldSize )
-                    OGR_Fld_SetWidth( hFieldDefn, nMaxFieldSize);
+                    OGR_Fld_SetWidth( hFieldDefn, (int)nMaxFieldSize);
                 OGR_L_CreateField( hLayer, hFieldDefn, TRUE );
                 OGR_Fld_Destroy(hFieldDefn);
             }

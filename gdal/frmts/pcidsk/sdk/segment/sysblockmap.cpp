@@ -426,7 +426,7 @@ int SysBlockMap::CreateVirtualFile()
 /* -------------------------------------------------------------------- */
     if( layer_index == virtual_files.size() )
     {
-        layer_index = virtual_files.size();
+        layer_index = static_cast<int>(virtual_files.size());
         layer_data.SetSize( (layer_index+1) * 24 );
         virtual_files.push_back( NULL );
     }

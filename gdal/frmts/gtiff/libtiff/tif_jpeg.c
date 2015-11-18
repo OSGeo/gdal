@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.119 2015-08-15 20:13:07 bfriesen Exp $ */
+/* $Id: tif_jpeg.c,v 1.120 2015-11-18 20:35:10 erouault Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1893,7 +1893,7 @@ JPEGEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 
         if( sp->cinfo.c.data_precision == 12 )
         {
-            line16_count = (sp->bytesperline * 2) / 3;
+            line16_count = (int)((sp->bytesperline * 2) / 3);
             line16 = (short *) _TIFFmalloc(sizeof(short) * line16_count);
             if (!line16)
             {
@@ -2138,8 +2138,7 @@ JPEGVSetField(TIFF* tif, uint32 tag, va_list ap)
 			/* XXX */
 			return (0);
 		}
-		_TIFFsetByteArray(&sp->jpegtables, va_arg(ap, void*),
-		    (long) v32);
+		_TIFFsetByteArray(&sp->jpegtables, va_arg(ap, void*), v32);
 		sp->jpegtables_length = v32;
 		TIFFSetFieldBit(tif, FIELD_JPEGTABLES);
 		break;

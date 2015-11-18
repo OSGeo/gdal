@@ -468,7 +468,7 @@ static char* OGRGPX_GetOGRCompatibleTagName(const char* pszName)
 
 void OGRGPXLayer::AddStrToSubElementValue(const char* pszStr)
 {
-    int len = strlen(pszStr);
+    int len = (int)strlen(pszStr);
     char* pszNewSubElementValue = (char*)
             VSI_REALLOC_VERBOSE(pszSubElementValue, nSubElementValueLen + len + 1);
     if (pszNewSubElementValue == NULL)

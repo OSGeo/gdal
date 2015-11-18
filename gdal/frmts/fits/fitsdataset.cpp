@@ -380,14 +380,14 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 
   // Determine image dimensions - we assume BSQ ordering
   if (naxis == 2) {
-    nRasterXSize = naxes[0];
-    nRasterYSize = naxes[1];
+    nRasterXSize = static_cast<int>(naxes[0]);
+    nRasterYSize = static_cast<int>(naxes[1]);
     nBands = 1;
   }
   else if (naxis == 3) {
-    nRasterXSize = naxes[0];
-    nRasterYSize = naxes[1];
-    nBands = naxes[2];
+    nRasterXSize = static_cast<int>(naxes[0]);
+    nRasterYSize = static_cast<int>(naxes[1]);
+    nBands = static_cast<int>(naxes[2]);
   }
   else {
     CPLError(CE_Failure, CPLE_AppDefined,

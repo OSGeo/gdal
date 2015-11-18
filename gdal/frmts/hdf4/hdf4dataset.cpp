@@ -128,7 +128,7 @@ char **HDF4Dataset::GetMetadata( const char *pszDomain )
 char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
                           int nValues, const char *pszDelimiter )
 {
-    const int iFieldSize = 32 + strlen( pszDelimiter );
+    const int iFieldSize = 32 + (int)strlen( pszDelimiter );
     char *pszField = reinterpret_cast<char *>( CPLMalloc( iFieldSize + 1 ) );
     const int iStringSize = nValues * iFieldSize + 1;
     char *pszString = reinterpret_cast<char *>( CPLMalloc( iStringSize ) );

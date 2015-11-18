@@ -121,7 +121,7 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
         
         pszTrimmedLine = CPLStrdup( pszLine );
 
-        for( i = strlen(pszLine)-1; i >= 0 && pszLine[i] == ' '; i-- ) 
+        for( i = (int)strlen(pszLine)-1; i >= 0 && pszLine[i] == ' '; i-- ) 
             pszTrimmedLine[i] = '\0';
 
         if( bContinuedLine )

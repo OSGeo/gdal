@@ -1696,7 +1696,7 @@ static void TDL_ScaleData (double *Src, sInt4 *Dst, sInt4 numData,
          src++;
          f_actualSec = 1;
       } else {
-         *(dst) = (long int) (floor ((*(src++) / scale) + .5));
+         *(dst) = (sInt4) (floor ((*(src++) / scale) + .5));
          /* Check if scaled value == primary missing value. */
          if (((*f_primMiss) || (*f_secMiss)) && (*dst == li_primMiss)) {
             *dst = *dst - 1;
@@ -3219,9 +3219,9 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
           (group[i].bit > minBit)) {
          f_keep = 0;
          doSplit (Data, numData, &(group[i]), &subGroup, &numSubGroup,
-                  f_primMiss, li_primMiss, f_secMiss, li_secMiss, xFactor);
+                  f_primMiss, li_primMiss, f_secMiss, li_secMiss, static_cast<int>(xFactor));
          if (numSubGroup != 1) {
-            scoreA = group[i].bit * group[i].num + xFactor;
+            scoreA = static_cast<sInt4>(group[i].bit * group[i].num + xFactor);
             scoreB = 0;
             for (sub = 0; sub < numSubGroup; sub++) {
                scoreB += subGroup[sub].bit * subGroup[sub].num + xFactor;
@@ -3253,7 +3253,7 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
                subGroup[1].f_trySplit = 1;
                subGroup[1].f_tryShift = 1;
                numSubGroup = 2;
-               scoreB = subGroup[0].bit * subGroup[0].num + xFactor;
+               scoreB = static_cast<sInt4>(subGroup[0].bit * subGroup[0].num + xFactor);
                scoreB += subGroup[1].bit * subGroup[1].num + xFactor;
                if (scoreB < scoreA) {
                   f_keep = 1;
@@ -3270,8 +3270,8 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
             doSplitRight (Data, numData, &(group[i]), &(subGroup[1]),
                           &(subGroup[0]), f_primMiss, li_primMiss, f_secMiss,
                           li_secMiss);
-            scoreA = group[i].bit * group[i].num + xFactor;
-            scoreB = subGroup[0].bit * subGroup[0].num + xFactor;
+            scoreA = static_cast<sInt4>(group[i].bit * group[i].num + xFactor);
+            scoreB = static_cast<sInt4>(subGroup[0].bit * subGroup[0].num + xFactor);
             scoreB += subGroup[1].bit * subGroup[1].num + xFactor;
             if (scoreB < scoreA) {
                f_keep = 1;
@@ -3371,7 +3371,7 @@ static void shiftGroup (sInt4 *Data,
                         char f_secMiss, sInt4 li_secMiss, int xFactor)
 {
    TDLGroupType *group = (*Group); /* Local pointer to Group. */
-   int numGroup = (*NumGroup); /* # elements in group. */
+   int numGroup = static_cast<int>(*NumGroup); /* # elements in group. */
    int i, j;            /* loop counters. */
    sInt4 A_max;         /* Max value of a given group. */
    sInt4 A_min;         /* Min value of a given group. */
@@ -3477,7 +3477,7 @@ static void shiftGroup (sInt4 *Data,
                   G1.f_tryShift = 1;
                }
                G2.num += (group[i].start - begin);
-               G2.start = begin;
+               G2.start = static_cast<uInt4>(begin);
                G2.f_trySplit = 1;
                G2.f_tryShift = 1;
                scoreA = group[i].bit * group[i].num + xFactor;
@@ -3663,7 +3663,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
                   G.min = Data[i];
                   G.max = Data[i];
                   G.num = 1;
-                  G.start = i;
+                  G.start = static_cast<uInt4>(i);
                }
             } else {
                /* Close a missing group */
@@ -3681,7 +3681,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
                G.min = Data[i];
                G.max = Data[i];
                G.num = 1;
-               G.start = i;
+               G.start = static_cast<uInt4>(i);
             }
          } else {
             if (Data[i] == li_primMiss) {
@@ -3705,7 +3705,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
                G.min = Data[i];
                G.max = Data[i];
                G.num = 1;
-               G.start = i;
+               G.start = static_cast<uInt4>(i);
             } else {
                if (G.min > Data[i]) {
                   G.min = Data[i];
@@ -3749,13 +3749,13 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
    } else {
       /* Already handled the f_primMiss case */
       if (f_secMiss) {
-         findMaxMin2 (Data, 0, numData, li_primMiss, li_secMiss, &A_min,
+         findMaxMin2 (Data, 0, static_cast<int>(numData), li_primMiss, li_secMiss, &A_min,
                       &A_max);
       } else {
-         findMaxMin0 (Data, 0, numData, &A_min, &A_max);
+         findMaxMin0 (Data, 0, static_cast<int>(numData), &A_min, &A_max);
       }
       G.start = 0;
-      G.num = numData;
+      G.num = static_cast<uInt4>(numData);
       G.min = A_min;
       G.max = A_max;
       G.bit = (char) power ((uInt4) (A_max - A_min), f_secMiss + f_primMiss);
@@ -3768,7 +3768,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
 
    lclGroup = NULL;
    numLclGroup = 0;
-   *groupSize = ComputeGroupSize (*group, *numGroup, ibit, jbit, kbit);
+   *groupSize = ComputeGroupSize (*group, static_cast<int>(*numGroup), ibit, jbit, kbit);
    xFactor = *ibit + *jbit + *kbit;
 #ifdef DEBUG
 /*
@@ -3779,7 +3779,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
 
    f_adjust = 1;
    while (f_adjust) {
-      f_adjust = splitGroup (Data, numData, *group, *numGroup, &lclGroup,
+      f_adjust = splitGroup (Data, static_cast<int>(numData), *group, static_cast<int>(*numGroup), &lclGroup,
                              &numLclGroup, f_primMiss, li_primMiss,
                              f_secMiss, li_secMiss, xFactor);
       free (*group);
@@ -3787,9 +3787,9 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
       *numGroup = numLclGroup;
 
       if (f_adjust) {
-         shiftGroup (Data, numData, group, numGroup, f_primMiss,
-                     li_primMiss, f_secMiss, li_secMiss, xFactor);
-         *groupSize = ComputeGroupSize (*group, *numGroup, ibit, jbit, kbit);
+         shiftGroup (Data, static_cast<int>(numData), group, numGroup, f_primMiss,
+                     li_primMiss, f_secMiss, li_secMiss, static_cast<int>(xFactor));
+         *groupSize = ComputeGroupSize (*group, static_cast<int>(*numGroup), ibit, jbit, kbit);
          if (xFactor != *ibit + *jbit + *kbit) {
             for (i = 0; i < *numGroup; i++) {
                if (((*group)[i].num > *ibit + *jbit + *kbit) &&
@@ -4075,7 +4075,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    uChar pbuf;          /* A buffer of bits that weren't written to disk */
    sChar pbufLoc;       /* Where in pbuf to add more bits. */
 
-   commentLen = strlen (comment);
+   commentLen = static_cast<int>(strlen (comment));
    if (commentLen > 32) {
       errSprintf ("Error: '%s' is > 32 bytes long\n", comment);
       return -1;
@@ -4213,7 +4213,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    if (f_bitmap) {
       i |= 2;
    }
-   fputc (i, fp);
+   fputc (static_cast<int>(i), fp);
 /*   tempTime = gmtime (&(refTime));*/
    Clock_PrintDate (refTime, &year, &month, &day, &hour, &min, &sec);
 /* year = tempTime->tm_year + 1900;
@@ -4239,9 +4239,9 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    fputc (processNum, fp);
    fputc (seqNum, fp);
    i = (DSF < 0) ? 128 - DSF : DSF;
-   fputc (i, fp);
+   fputc (static_cast<int>(i), fp);
    i = (BSF < 0) ? 128 - BSF : BSF;
-   fputc (i, fp);
+   fputc (static_cast<int>(i), fp);
    /* Reserved: 3 bytes of 0. */
    li_temp = 0;
    fwrite (&li_temp, sizeof (char), 3, fp);
@@ -4327,7 +4327,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
       i |= 8;
    if (!f_grid)
       i |= 16;
-   fputc (i, fp);
+   fputc (static_cast<int>(i), fp);
    li_temp = DataLen;
    FWRITE_BIG (&li_temp, sizeof (sInt4), 1, fp);
    if (f_primMiss) {

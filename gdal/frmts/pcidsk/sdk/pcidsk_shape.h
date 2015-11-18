@@ -210,7 +210,7 @@ namespace PCIDSK
                 type = FieldTypeCountedInt; 
                 v.integer_list_val = (int32*)
                     malloc(sizeof(int32) * (val.size()+1) );
-                v.integer_list_val[0] = val.size();
+                v.integer_list_val[0] = static_cast<int>(val.size());
                 if( val.size() > 0 )
                     memcpy( v.integer_list_val+1, &(val[0]), 
                             sizeof(int32) * val.size() ); 

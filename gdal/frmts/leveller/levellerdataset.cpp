@@ -361,7 +361,7 @@ class digital_axis
 			if(m_eStyle == LEV_DA_PIXEL_SIZED)
 				return m_d[1 - m_fixedEnd];
 
-			return this->length(pixels) / (pixels - 1);
+			return this->length(static_cast<int>(pixels)) / (pixels - 1);
 		}
 
 		double length(int pixels) const

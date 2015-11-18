@@ -75,8 +75,8 @@ bool KML::open(const char * pszFilename)
 
 void KML::parse()
 {
-    std::size_t nDone = 0;
-    std::size_t nLen = 0;
+    int nDone = 0;
+    int nLen = 0;
     char aBuf[BUFSIZ] = { 0 };
 
     if( NULL == pKMLFile_ )
@@ -135,8 +135,8 @@ void KML::parse()
 
 void KML::checkValidity()
 {
-    std::size_t nDone = 0;
-    std::size_t nLen = 0;
+    int nDone = 0;
+    int nLen = 0;
     char aBuf[BUFSIZ] = { 0 };
 
     if(poTrunk_ != NULL)

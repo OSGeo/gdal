@@ -535,7 +535,7 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
 #ifdef DEBUG_VERBOSE
             CPLDebug("GPKG", "%s", pszSQLNew);
 #endif
-            rc = sqlite3_prepare_v2(m_hTempDB, pszSQLNew, strlen(pszSQLNew), &hStmt, NULL);
+            rc = sqlite3_prepare_v2(m_hTempDB, pszSQLNew, -1, &hStmt, NULL);
             if ( rc != SQLITE_OK )
             {
                 memset(pabyData, 0, nBands * nBlockXSize * nBlockYSize );
@@ -1285,7 +1285,7 @@ CPLErr GDALGeoPackageDataset::FlushRemainingShiftedTiles()
     CPLDebug("GPKG", "%s", pszSQL);
 #endif
     sqlite3_stmt* hStmt = NULL;
-    int rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, strlen(pszSQL), &hStmt, NULL);
+    int rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, -1, &hStmt, NULL);
     if ( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
@@ -1534,7 +1534,7 @@ CPLErr GDALGeoPackageDataset::WriteShiftedTile(int nRow, int nCol, int nBand,
     CPLDebug("GPKG", "%s", pszSQL);
 #endif
     sqlite3_stmt* hStmt = NULL;
-    int rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, strlen(pszSQL), &hStmt, NULL);
+    int rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, -1, &hStmt, NULL);
     if ( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
@@ -1621,7 +1621,7 @@ CPLErr GDALGeoPackageDataset::WriteShiftedTile(int nRow, int nCol, int nBand,
                 CPLDebug("GPKG", "%s", pszSQL);
 #endif
                 hStmt = NULL;
-                rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, strlen(pszSQL), &hStmt, NULL);
+                rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, -1, &hStmt, NULL);
                 if ( rc != SQLITE_OK )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",

@@ -269,7 +269,7 @@ int main( int nArgc, char ** papszArgv )
                 GDALDataset       *poDS;
                 char* filename = CPLStrdup(existingLayersTab[i]);
                 int j;
-                for(j=strlen(filename)-1;j>=0;j--)
+                for(j=static_cast<int>(strlen(filename))-1;j>=0;j--)
                 {
                     if (filename[j] == ',')
                         break;

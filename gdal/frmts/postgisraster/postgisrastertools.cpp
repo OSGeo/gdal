@@ -45,7 +45,7 @@ char * ReplaceQuotes(const char * pszInput, int nLength) {
     char * pszOutput = NULL;
 
     if (nLength == -1)
-        nLength = strlen(pszInput);
+        nLength = static_cast<int>(strlen(pszInput));
 
     pszOutput = (char*) CPLCalloc(nLength + 1, sizeof (char));
 
@@ -69,7 +69,7 @@ char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
     char* pszOutput = NULL;
 
     if (nLength == -1)
-        nLength = strlen(pszInput);
+        nLength = static_cast<int>(strlen(pszInput));
 
     pszOutput = (char*) CPLCalloc(nLength + 1, sizeof (char));
 

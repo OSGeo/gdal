@@ -229,7 +229,7 @@ void CTiledChannel::SaveTileInfoBlock( int block )
 
 {
     assert( tile_offsets[block].size() != 0 );
-    int tiles_in_block = tile_offsets[block].size();
+    int tiles_in_block = static_cast<int>(tile_offsets[block].size());
 
 /* -------------------------------------------------------------------- */
 /*      Write the offset and size data to disk.                         */

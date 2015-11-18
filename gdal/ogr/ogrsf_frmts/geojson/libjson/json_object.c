@@ -575,7 +575,7 @@ static int json_object_double_to_json_string(struct json_object* jso,
     }
     /* drop trailing zeroes */
     *(++p) = 0;
-    size = p-buf;
+    size = (int)(p-buf);
   }
   printbuf_memappend(pb, buf, size);
   return size;

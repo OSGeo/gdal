@@ -106,7 +106,8 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     CPLDebug( "OGR_GPKG", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
-    rc = sqlite3_prepare( m_poDS->GetDB(), poBehaviour->osSQLCurrent, poBehaviour->osSQLCurrent.size(),
+    rc = sqlite3_prepare( m_poDS->GetDB(), poBehaviour->osSQLCurrent,
+                          static_cast<int>(poBehaviour->osSQLCurrent.size()),
                           &m_poQueryStatement, NULL );
 
     if( rc == SQLITE_OK )

@@ -987,7 +987,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                                eDataType, nTmpPixelSize, 
                                ((GByte *)pData) + iLine*nLineSpace 
                                + iBand * nBandSpace, 
-                               eBufType, nPixelSpace,
+                               eBufType, static_cast<int>(nPixelSpace),
                                nBufXSize );
 	    }
 	}
@@ -1103,7 +1103,7 @@ char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec
                     break;
             }
 
-            iLength = strlen(pszMetadata) + strlen(osTemp) + 2;
+            iLength = static_cast<int>(strlen(pszMetadata) + strlen(osTemp) + 2);
 
             pszMetadata = (char *)CPLRealloc( pszMetadata, iLength );
             if ( !EQUAL( pszMetadata, "" ) )

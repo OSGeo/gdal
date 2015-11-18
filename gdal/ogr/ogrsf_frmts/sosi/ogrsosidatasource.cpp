@@ -266,7 +266,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
      * --------------------------------------------------------------------*/
 
     /* allocate room for one pointer per feature */
-    nNumFeatures = poFileadm->lAntGr;
+    nNumFeatures = static_cast<unsigned int>(poFileadm->lAntGr);
     void* mem = VSI_MALLOC2_VERBOSE(nNumFeatures, sizeof(void*));
     if (mem == NULL) {
         return FALSE;
@@ -323,28 +323,28 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
                 switch (nName) {             /* Add to header list for the corresponding layer, if it is not */
                 case L_FLATE: {            /* in there already */
                     if (poPolyHeaders->find(osKey) == poPolyHeaders->end()) {
-                        iH = poPolyHeaders->size();
+                        iH = static_cast<int>(poPolyHeaders->size());
                         (*poPolyHeaders)[osKey] = iH;
                     }
                     break;
                 }
                 case L_KURVE: {
                     if (poCurveHeaders->find(osKey) == poCurveHeaders->end()) {
-                        iH = poCurveHeaders->size();
+                        iH = static_cast<int>(poCurveHeaders->size());
                         (*poCurveHeaders)[osKey] = iH;
                     }
                     break;
                 }
                 case L_PUNKT: {
                     if (poPointHeaders->find(osKey) == poPointHeaders->end()) {
-                        iH = poPointHeaders->size();
+                        iH = static_cast<int>(poPointHeaders->size());
                         (*poPointHeaders)[osKey] = iH;
                     }
                     break;
                 }
                 case L_TEKST: {
                     if (poTextHeaders->find(osKey) == poTextHeaders->end()) {
-                        iH = poTextHeaders->size();
+                        iH = static_cast<int>(poTextHeaders->size());
                         (*poTextHeaders)[osKey] = iH;
                     }
                     break;
@@ -371,14 +371,14 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
         case L_KURVE: {
             /* Pre-build a line feature. Activate line/curve layer. */
             bCurveLayer = TRUE;
-            buildOGRLineString(nNumCoo, oNextSerial.lNr);
+            buildOGRLineString(static_cast<int>(nNumCoo), oNextSerial.lNr);
             break;
         }
         case L_TEKST: {
             /* Pre-build a text line contour feature. Activate text layer. */
             /* Todo: observe only points 2ff if more than one point is given for follow mode */
             bTextLayer = TRUE;
-            buildOGRMultiPoint(nNumCoo, oNextSerial.lNr);
+            buildOGRMultiPoint(static_cast<int>(nNumCoo), oNextSerial.lNr);
             break;
         }
         case L_HODE: {
@@ -594,7 +594,7 @@ void OGRSOSIDataSource::buildOGRLineString(int nNumCoo, long iSerial) {
     OGRLineString *poLS = new OGRLineString();
     poLS->setNumPoints(nNumCoo);
 
-    long i;
+    int i;
     double dfEast = 0, dfNorth = 0;
     for (i=1; i<=nNumCoo; i++) {
         LC_GetTK(i, &dfEast, &dfNorth);

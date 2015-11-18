@@ -328,7 +328,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 }
                 else if( psImage->nZone == 0 )
                 {
-                    psImage->nZone = nZone;
+                    psImage->nZone = (int)nZone;
                 }
             }
         }
@@ -1441,7 +1441,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             return BLKREAD_FAIL;
         }
         
-        success = NITFUncompressARIDPCM( psImage, pabyRawData, nRawBytes, pData );
+        success = NITFUncompressARIDPCM( psImage, pabyRawData, (int)nRawBytes, pData );
         
         CPLFree( pabyRawData );
 
@@ -2071,7 +2071,7 @@ char *NITFTrimWhite( char *pszTarget )
 {
     int i;
 
-    i = strlen(pszTarget)-1;
+    i = (int)strlen(pszTarget)-1;
     while( i >= 0 && pszTarget[i] == ' ' )
         pszTarget[i--] = '\0';
 

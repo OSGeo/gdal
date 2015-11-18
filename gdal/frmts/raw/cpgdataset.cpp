@@ -255,7 +255,7 @@ int CPGDataset::AdjustFilename( char **pszFilename,
 /************************************************************************/
 int CPGDataset::FindType1( const char *pszFilename )
 {
-  const int nNameLen = strlen(pszFilename);
+  const int nNameLen = static_cast<int>(strlen(pszFilename));
 
   if ((strstr(pszFilename,"sso") == NULL) && 
       (strstr(pszFilename,"polgasp") == NULL))
@@ -285,7 +285,7 @@ int CPGDataset::FindType1( const char *pszFilename )
 
 int CPGDataset::FindType2( const char *pszFilename )
 {
-  const int nNameLen = strlen( pszFilename );
+  const int nNameLen = static_cast<int>(strlen( pszFilename ));
 
   if (( strlen(pszFilename) < 9) ||
       (!EQUAL(pszFilename+nNameLen-8,"SIRC.hdr")
@@ -302,7 +302,7 @@ int CPGDataset::FindType2( const char *pszFilename )
 
 int CPGDataset::FindType3( const char *pszFilename )
 {
-  const int nNameLen = strlen( pszFilename );
+  const int nNameLen = static_cast<int>(strlen( pszFilename ));
 
   if ((strstr(pszFilename,"sso") == NULL) && 
       (strstr(pszFilename,"polgasp") == NULL))
@@ -585,7 +585,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     static const char *apszPolarizations[4] = { "hh", "hv", "vv", "vh" };
 
-    const int nNameLen = strlen(pszWorkname);
+    const int nNameLen = static_cast<int>(strlen(pszWorkname));
 
     if ( EQUAL(pszWorkname+nNameLen-7,"IRC.hdr") ||
          EQUAL(pszWorkname+nNameLen-7,"IRC.img") )
@@ -1057,7 +1057,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ( CPGType == 0 )
     {
-      int nNameLen = strlen(poOpenInfo->pszFilename);
+      int nNameLen = static_cast<int>(strlen(poOpenInfo->pszFilename));
       if ( (nNameLen > 8) && 
            ( ( strstr(poOpenInfo->pszFilename,"sso") != NULL ) ||
              ( strstr(poOpenInfo->pszFilename,"polgasp") != NULL ) ) &&

@@ -952,7 +952,7 @@ int NITFCreate( const char *pszFilename,
         const char* pszICOM = CSLFetchNameValue( papszOptions, "ICOM");
         if (pszICOM != NULL)
         {
-            int nLenICOM = strlen(pszICOM);
+            int nLenICOM = (int)strlen(pszICOM);
             int nICOM = (79 + nLenICOM) / 80;
             if (nICOM > 9)
             {
@@ -1272,7 +1272,7 @@ static int NITFWriteTREsFromOptions(
     int bIgnoreBLOCKA = 
         CSLFetchNameValue(papszOptions,"BLOCKA_BLOCK_COUNT") != NULL;
     int iOption;
-    int nTREPrefixLen = strlen(pszTREPrefix);
+    int nTREPrefixLen = (int)strlen(pszTREPrefix);
 
     if( papszOptions == NULL )
         return TRUE;
@@ -1906,7 +1906,7 @@ const NITFSeries* NITFGetSeriesInfo(const char* pszFilename)
     int i;
     char seriesCode[3] = {0,0,0};
     if (pszFilename == NULL) return NULL;
-    for (i=strlen(pszFilename)-1;i>=0;i--)
+    for (i=(int)strlen(pszFilename)-1;i>=0;i--)
     {
         if (pszFilename[i] == '.')
         {
@@ -2086,7 +2086,7 @@ static const char* NITFFindValFromEnd(char** papszMD,
                                       const char* pszVar,
                                       CPL_UNUSED const char* pszDefault)
 {
-    int nVarLen = strlen(pszVar);
+    int nVarLen = (int)strlen(pszVar);
     int nIter = nMDSize-1;
     for(;nIter >= 0;nIter--)
     {

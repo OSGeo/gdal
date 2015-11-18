@@ -189,7 +189,7 @@ void OGRNASRelationLayer::AddRelation( const char *pszFromID,
                                        const char *pszToID )
 
 {
-    int nMergedLen = strlen(pszFromID) + strlen(pszType) + strlen(pszToID) + 3;
+    size_t nMergedLen = strlen(pszFromID) + strlen(pszType) + strlen(pszToID) + 3;
     char *pszMerged = (char *) CPLMalloc(nMergedLen);
 
     strcpy( pszMerged, pszFromID );

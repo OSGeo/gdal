@@ -109,7 +109,7 @@ void MetadataSegment::FetchGroupMetadata( const char *group, int id,
 /*      Establish the key prefix we are searching for.                  */
 /* -------------------------------------------------------------------- */
     char key_prefix[200];
-    int  prefix_len;
+    size_t  prefix_len;
 
     std::sprintf( key_prefix, "METADATA_%s_%d_", group, id );
     prefix_len = std::strlen(key_prefix);
@@ -274,7 +274,7 @@ void MetadataSegment::Save()
                          '\0' );
     }
 
-    seg_data.SetSize( new_data.size() );
+    seg_data.SetSize( static_cast<int>(new_data.size()) );
     std::memcpy( seg_data.buffer, new_data.c_str(), new_data.size() );
 
     WriteToFile( seg_data.buffer, 0, seg_data.buffer_size );

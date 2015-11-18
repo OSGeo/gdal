@@ -1931,7 +1931,7 @@ VRTComplexSource::LookupValue( double dfInput )
 {
     // Find the index of the first element in the LUT input array that
     // is not smaller than the input value.
-    int i = std::lower_bound(padfLUTInputs, padfLUTInputs + nLUTItemCount, dfInput) - padfLUTInputs;
+    int i = static_cast<int>(std::lower_bound(padfLUTInputs, padfLUTInputs + nLUTItemCount, dfInput) - padfLUTInputs);
 
     if (i == 0)
 	return padfLUTOutputs[0];
