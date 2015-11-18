@@ -911,7 +911,7 @@ static int OGR_json_double_with_precision_to_string(struct json_object *jso,
     {
         CPLsnprintf(szBuffer, sizeof(szBuffer), "%.18g", jso->o.c_double);
     }
-    return printbuf_memappend(pb, szBuffer, strlen(szBuffer)); 
+    return printbuf_memappend(pb, szBuffer, static_cast<int>(strlen(szBuffer))); 
 }
 
 /************************************************************************/
