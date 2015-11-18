@@ -176,7 +176,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 /* -------------------------------------------------------------------- */
 /*      Do coordsys lookup                                              */
 /* -------------------------------------------------------------------- */
-    double dXMin, dYMin, dXMax, dYMax;
+    double dXMin = 0.0, dYMin = 0.0, dXMax = 0.0, dYMax = 0.0;
     int bHasBounds = FALSE;
     if (sTABProj.nProjId > 1 &&
         MITABLookupCoordSysBounds(&sTABProj, dXMin, dYMin, dXMax, dYMax, TRUE) == TRUE)

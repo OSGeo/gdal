@@ -313,7 +313,7 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
      * Make sure filename has a .MIF or .MID extension... 
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
-    nFnameLen = strlen(m_pszFname);
+    nFnameLen = static_cast<int>(strlen(m_pszFname));
     if (nFnameLen > 4 && (strcmp(m_pszFname+nFnameLen-4, ".MID")==0 ||
                      strcmp(m_pszFname+nFnameLen-4, ".MIF")==0 ) )
         strcpy(m_pszFname+nFnameLen-4, ".MIF");

@@ -188,7 +188,7 @@ static char **MIDTokenize( const char *pszLine, const char *pszDelim )
     char **papszResult = NULL;
     int iChar, iTokenChar = 0, bInQuotes = FALSE;
     char *pszToken = (char *) CPLMalloc(strlen(pszLine)+1);
-    int nDelimLen = strlen(pszDelim);
+    int nDelimLen = static_cast<int>(strlen(pszDelim));
 
     for( iChar = 0; pszLine[iChar] != '\0'; iChar++ )
     {
@@ -206,7 +206,7 @@ static char **MIDTokenize( const char *pszLine, const char *pszDelim )
             pszToken[iTokenChar++] = '\0';
             papszResult = CSLAddString( papszResult, pszToken );
             
-            iChar += strlen(pszDelim) - 1;
+            iChar += static_cast<int>(strlen(pszDelim)) - 1;
             iTokenChar = 0;
         }
         else
@@ -282,7 +282,7 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
                 if (strlen(papszToken[i]) == 9)
                 {
                     sscanf(papszToken[i],"%2d%2d%2d%3d",&nHour, &nMin, &nSec, &nMS);
-                    SetField(i, nYear, nMonth, nDay, nHour, nMin, nSec + nMS / 1000.0f,
+                    SetField(i, nYear, nMonth, nDay, nHour, nMin, static_cast<float>(nSec + nMS / 1000.0f),
                              0);
                 }
                 break;
@@ -292,7 +292,7 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
                 if (strlen(papszToken[i]) == 8)
                 {
                     sscanf(papszToken[i], "%4d%2d%2d", &nYear, &nMonth, &nDay);
-                    SetField(i, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
+                    SetField(i, nYear, nMonth, nDay, nHour, nMin, static_cast<float>(nSec), 0);
                 }
                 break;
             }
@@ -302,7 +302,7 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
                 {
                     sscanf(papszToken[i], "%4d%2d%2d%2d%2d%2d%3d",
                            &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec, &nMS);
-                    SetField(i, nYear, nMonth, nDay, nHour, nMin, nSec + nMS / 1000.0f,
+                    SetField(i, nYear, nMonth, nDay, nHour, nMin, static_cast<float>(nSec + nMS / 1000.0f),
                              0);
                 }
                 break;
@@ -356,7 +356,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
         {
           case OFTString: 
           {
-            int nStringLen = strlen(GetFieldAsString(iField));
+            int nStringLen = static_cast<int>(strlen(GetFieldAsString(iField)));
             char *pszString = (char*)CPLMalloc((nStringLen+1)*sizeof(char));
             strcpy(pszString, GetFieldAsString(iField));
             char *pszWorkString = (char*)CPLMalloc((2*(nStringLen)+1)*sizeof(char));

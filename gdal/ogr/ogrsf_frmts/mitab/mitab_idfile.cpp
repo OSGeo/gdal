@@ -166,7 +166,7 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
 
-    int nLen = strlen(m_pszFname);
+    int nLen = static_cast<int>(strlen(m_pszFname));
     if (nLen > 4 && strcmp(m_pszFname+nLen-4, ".MAP")==0)
         strcpy(m_pszFname+nLen-4, ".ID");
     else if (nLen > 4 && strcmp(m_pszFname+nLen-4, ".map")==0)

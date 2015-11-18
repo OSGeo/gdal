@@ -1594,7 +1594,7 @@ const char *TABFontPoint::GetStyleString()
         /* Get the SymbolStyleString, and add the outline Color 
            (halo/border in MapInfo Symbol terminology) */
         char *pszSymbolStyleString = CPLStrdup(GetSymbolStyleString(GetSymbolAngle()));
-        int nStyleStringlen = strlen(pszSymbolStyleString);
+        int nStyleStringlen = static_cast<int>(strlen(pszSymbolStyleString));
         pszSymbolStyleString[nStyleStringlen-1] = '\0';
 
         const char *outlineColor;
@@ -5649,7 +5649,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     // This string was escaped before 20050714
     char *pszTmpString = m_pszString;
 
-    nStringLen = strlen(pszTmpString);
+    nStringLen = static_cast<int>(strlen(pszTmpString));
 
     if (nStringLen > 0)
     {
@@ -6170,7 +6170,7 @@ int TABText::IsFontUnderline()
 const char *TABText::GetLabelStyleString()
 {
     const char *pszStyle = NULL;
-    int nStringLen = strlen(GetTextString());
+    int nStringLen = static_cast<int>(strlen(GetTextString()));
     // ALL Caps, Extpanded need to modify the string value
     char *pszTextString = (char*)CPLMalloc((nStringLen+1)*sizeof(char));
     /* char szPattern[20]; */
@@ -8411,7 +8411,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
 
     // Use the Style Manager to retreive all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
-    OGRStyleTool *poStylePart;
+    OGRStyleTool *poStylePart = NULL;
 
     // Init the StyleMgr with the StyleString.
     poStyleMgr->InitStyleString(pszStyleString);
@@ -8436,7 +8436,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     }
 
     // If the no Pen found, do nothing.
-    if(i >= numParts)
+    if(poStylePart == NULL)
     {
         delete poStyleMgr;
         return;
@@ -8672,7 +8672,7 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
 
     // Use the Style Manager to retreive all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
-    OGRStyleTool *poStylePart;
+    OGRStyleTool *poStylePart = NULL;
 
     // Init the StyleMgr with the StyleString.
     poStyleMgr->InitStyleString(pszStyleString);
@@ -8697,7 +8697,7 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     }
 
     // If the no Brush found, do nothing.
-    if(i >= numParts)
+    if(poStylePart == NULL)
     {
         delete poStyleMgr;
         return;
@@ -8943,7 +8943,7 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
 
     // Use the Style Manager to retreive all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
-    OGRStyleTool *poStylePart;
+    OGRStyleTool *poStylePart = NULL;
 
     // Init the StyleMgr with the StyleString.
     poStyleMgr->InitStyleString(pszStyleString);
@@ -8968,7 +8968,7 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     }
 
     // If the no Symbol found, do nothing.
-    if(i >= numParts)
+    if(poStylePart == NULL)
     {
         delete poStyleMgr;
         return;

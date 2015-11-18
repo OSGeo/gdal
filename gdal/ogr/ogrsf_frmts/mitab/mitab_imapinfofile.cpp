@@ -214,7 +214,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
     int nLen = 0;
 
     if (pszFname)
-        nLen = strlen(pszFname);
+        nLen = static_cast<int>(strlen(pszFname));
 
     if (nLen > 4 && (EQUAL(pszFname + nLen-4, ".MIF") ||
                      EQUAL(pszFname + nLen-4, ".MID") ) )

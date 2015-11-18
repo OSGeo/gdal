@@ -269,7 +269,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
      * Make sure filename has a .TAB extension... 
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
-    nFnameLen = strlen(m_pszFname);
+    nFnameLen = static_cast<int>(strlen(m_pszFname));
 
     if (nFnameLen > 4 && (strcmp(m_pszFname+nFnameLen-4, ".TAB")==0 ||
                      strcmp(m_pszFname+nFnameLen-4, ".MAP")==0 ||
