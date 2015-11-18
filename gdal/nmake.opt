@@ -164,7 +164,7 @@ WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4018 
 # 
 !IFNDEF SSEFLAGS
 SSEFLAGS = /DHAVE_SSE_AT_COMPILE_TIME
-SSE_ARCH_FLAGS = /arch:SSE
+#SSE_ARCH_FLAGS = /arch:SSE
 !ENDIF
 
 # VS2010 SP1 or later in fact required for runtime detection of AVX instruction set
