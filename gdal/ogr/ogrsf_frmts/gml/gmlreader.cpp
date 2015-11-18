@@ -63,10 +63,10 @@ IGMLReader::~IGMLReader()
 /*                          CreateGMLReader()                           */
 /************************************************************************/
 
-IGMLReader *CreateGMLReader(CPL_UNUSED int bUseExpatParserPreferably,
-                            CPL_UNUSED int bInvertAxisOrderIfLatLong,
-                            CPL_UNUSED int bConsiderEPSGAsURN,
-                            CPL_UNUSED int bGetSecondaryGeometryOption)
+IGMLReader *CreateGMLReader(bool /*bUseExpatParserPreferably*/,
+                            bool /*bInvertAxisOrderIfLatLong*/,
+                            bool /*bConsiderEPSGAsURN*/,
+                            bool /*bGetSecondaryGeometryOption*/)
 {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Unable to create Xerces C++ or Expat based GML reader, Xerces or Expat support\n"
