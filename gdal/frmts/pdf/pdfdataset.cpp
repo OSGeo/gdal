@@ -4528,10 +4528,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 else
                 {
-                    poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[2] * dfY2;
+                    poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[2] * dfY2 + poDS->adfCTM[0] * dfX1;
                     poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfUserUnit;
                     poDS->adfGeoTransform[2] = - poDS->adfCTM[2] / dfUserUnit;
-                    poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[3] * dfY2;
+                    poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[3] * dfY2 + poDS->adfCTM[1] * dfX1;
                     poDS->adfGeoTransform[4] = poDS->adfCTM[1] / dfUserUnit;
                     poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfUserUnit;
                 }
@@ -4560,7 +4560,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 else
                 {
-                    poDS->pasGCPList[i].dfGCPPixel = poDS->pasGCPList[i].dfGCPPixel * dfUserUnit;
+                    poDS->pasGCPList[i].dfGCPPixel = (-dfX1 + poDS->pasGCPList[i].dfGCPPixel) * dfUserUnit;
                     poDS->pasGCPList[i].dfGCPLine = (dfY2 - poDS->pasGCPList[i].dfGCPLine) * dfUserUnit;
                 }
             }
@@ -4717,7 +4717,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 else
                 {
-                    x = poRing->getX(i) * dfUserUnit;
+                    x = (-dfX1 + poRing->getX(i)) * dfUserUnit;
                     y = (dfY2 - poRing->getY(i)) * dfUserUnit;
                 }
                 double X = poDS->adfGeoTransform[0] + x * poDS->adfGeoTransform[1] +
