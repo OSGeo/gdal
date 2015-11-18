@@ -89,7 +89,7 @@
 
 #include "avc.h"
 
-static void CPL_INLINE CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 
 #include <ctype.h>  /* tolower() */
 
