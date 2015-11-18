@@ -391,7 +391,7 @@ int OGRGTMDataSource::Create( const char* pszFilename,
 /*     Output header of GTM file.                                       */
 /* -------------------------------------------------------------------- */
     char* pszBaseFileName = CPLStrdup( CPLGetBasename(pszFilename) );
-    int sizeBuffer = 175 + strlen(pszBaseFileName);
+    size_t sizeBuffer = 175 + strlen(pszBaseFileName);
     void* pBuffer = CPLCalloc(1, sizeBuffer);
     void* pCurrentPos = pBuffer;
 

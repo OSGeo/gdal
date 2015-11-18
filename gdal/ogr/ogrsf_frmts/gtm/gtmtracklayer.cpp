@@ -147,9 +147,9 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     if (psztrackname == NULL)
         psztrackname = CPLStrdup( "" );
 
-    const int trackNameLength = strlen(psztrackname);
+    const size_t trackNameLength = strlen(psztrackname);
 
-    const int bufferSize = 14 + trackNameLength;
+    const size_t bufferSize = 14 + trackNameLength;
     void* pBuffer = CPLMalloc(bufferSize);
     void* pBufferAux = pBuffer;
     /* Write track string name size to buffer */
