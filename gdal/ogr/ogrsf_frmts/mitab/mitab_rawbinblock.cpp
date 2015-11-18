@@ -149,7 +149,7 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
      * Read from the file
      *---------------------------------------------------------------*/
     if (VSIFSeekL(fpSrc, nOffset, SEEK_SET) != 0 ||
-        (m_nSizeUsed = VSIFReadL(pabyBuf, sizeof(GByte), nSize, fpSrc) ) == 0 ||
+        (m_nSizeUsed = static_cast<int>(VSIFReadL(pabyBuf, sizeof(GByte), nSize, fpSrc)) ) == 0 ||
         (m_bHardBlockSize && m_nSizeUsed != nSize ) )
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -960,7 +960,7 @@ int  TABRawBinBlock::WritePaddedString(int nFieldSize, const char *pszString)
     int i, nLen, numSpaces;
     int nStatus = 0;
 
-    nLen = strlen(pszString);
+    nLen = static_cast<int>(strlen(pszString));
     nLen = MIN(nLen, nFieldSize);
     numSpaces = nFieldSize - nLen;
 

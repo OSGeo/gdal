@@ -176,7 +176,7 @@ int TABINDFile::Open(const char *pszFname, const char *pszAccess,
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
 
-    nLen = strlen(m_pszFname);
+    nLen = static_cast<int>(strlen(m_pszFname));
     if (nLen > 4 && !EQUAL(m_pszFname+nLen-4, ".IND") )
         strcpy(m_pszFname+nLen-4, ".ind");
 

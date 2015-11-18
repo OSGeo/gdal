@@ -263,7 +263,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
      * to build the filename of the base tables
      *----------------------------------------------------------------*/
     m_pszPath = CPLStrdup(m_pszFname);
-    nFnameLen = strlen(m_pszPath);
+    nFnameLen = static_cast<int>(strlen(m_pszPath));
     for( ; nFnameLen > 0; nFnameLen--)
     {
         if (m_pszPath[nFnameLen-1] == '/' || 

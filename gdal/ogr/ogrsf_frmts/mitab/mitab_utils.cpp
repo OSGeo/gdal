@@ -360,7 +360,7 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     /*-----------------------------------------------------------------
      * Try using uppercase extension (we assume that fname contains a '.')
      *----------------------------------------------------------------*/
-    for(i = strlen(pszFname)-1; i >= 0 && pszFname[i] != '.'; i--)
+    for(i = static_cast<int>(strlen(pszFname))-1; i >= 0 && pszFname[i] != '.'; i--)
     {
         pszFname[i] = (char)toupper(pszFname[i]);
     }
@@ -373,7 +373,7 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     /*-----------------------------------------------------------------
      * Try using lowercase extension
      *----------------------------------------------------------------*/
-    for(i = strlen(pszFname)-1; i >= 0 && pszFname[i] != '.'; i--)
+    for(i = static_cast<int>(strlen(pszFname))-1; i >= 0 && pszFname[i] != '.'; i--)
     {
         pszFname[i] = (char)tolower(pszFname[i]);
     }
@@ -421,7 +421,7 @@ char *TABGetBasename(const char *pszFname)
      *----------------------------------------------------------------*/
     char *pszBasename = CPLStrdup(pszTmp);
     int i;
-    for(i=strlen(pszBasename)-1; i >= 0; i-- )
+    for(i=static_cast<int>(strlen(pszBasename))-1; i >= 0; i-- )
     {
         if (pszBasename[i] == '.')
         {

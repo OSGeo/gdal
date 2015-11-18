@@ -304,7 +304,7 @@ int TABView::OpenForRead(const char *pszFname,
      * to build the filename of the sub-tables
      *----------------------------------------------------------------*/
     pszPath = CPLStrdup(m_pszFname);
-    nFnameLen = strlen(pszPath);
+    nFnameLen = static_cast<int>(strlen(pszPath));
     for( ; nFnameLen > 0; nFnameLen--)
     {
         if (pszPath[nFnameLen-1] == '/' || 
@@ -424,7 +424,7 @@ int TABView::OpenForWrite(const char *pszFname)
      * Extract the path component from the main .TAB filename
      *----------------------------------------------------------------*/
     char *pszPath = CPLStrdup(m_pszFname);
-    nFnameLen = strlen(pszPath);
+    nFnameLen = static_cast<int>(strlen(pszPath));
     for( ; nFnameLen > 0; nFnameLen--)
     {
         if (pszPath[nFnameLen-1] == '/' || 
@@ -550,7 +550,7 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
                  CSLCount(papszTok) >= 3)
         {
             // Source table name may be either "filename" or "filename.tab"
-            int nLen = strlen(papszTok[2]);
+            int nLen = static_cast<int>(strlen(papszTok[2]));
             if (nLen > 4 && EQUAL(papszTok[2]+nLen-4, ".tab"))
                 papszTok[2][nLen-4] = '\0';
 

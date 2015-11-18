@@ -1618,7 +1618,7 @@ const char *TABDATFile::ReadCharField(int nWidth)
     // with spaces... get rid of the trailing spaces.
     if (m_eTableType == TABTableDBF)
     {
-        int nLen = strlen(m_szBuffer)-1;
+        int nLen = static_cast<int>(strlen(m_szBuffer))-1;
         while(nLen>=0 && m_szBuffer[nLen] == ' ')
             m_szBuffer[nLen--] = '\0';
     }
@@ -2038,7 +2038,7 @@ int TABDATFile::WriteCharField(const char *pszStr, int nWidth,
     // be padded with zeros if source string is shorter than specified
     // field width.
     //
-    int nLen = strlen(pszStr);
+    int nLen = static_cast<int>(strlen(pszStr));
     nLen = MIN(nLen, nWidth);
 
     if ((nLen>0 && m_poRecordBlock->WriteBytes(nLen, (GByte*)pszStr) != 0) ||

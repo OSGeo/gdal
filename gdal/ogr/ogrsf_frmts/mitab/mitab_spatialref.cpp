@@ -1951,7 +1951,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     {
         char **papszFields;
 
-        sTABProj.nDatumId = atoi(pszWKTDatum+4);
+        sTABProj.nDatumId = static_cast<GInt16>(atoi(pszWKTDatum+4));
         papszFields =
             CSLTokenizeStringComplex( pszWKTDatum+4, ",", FALSE, TRUE);
 
