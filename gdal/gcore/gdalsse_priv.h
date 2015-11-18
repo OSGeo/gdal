@@ -483,6 +483,13 @@ class XMMReg2Double
         return reg;
     }
 
+    static inline XMMReg2Double Load2Val(const unsigned short* ptr)
+    {
+        XMMReg2Double reg;
+        reg.nsLoad2Val(ptr);
+        return reg;
+    }
+
     inline void nsLoad1ValHighAndLow(const double* pval)
     {
         low = pval[0];
