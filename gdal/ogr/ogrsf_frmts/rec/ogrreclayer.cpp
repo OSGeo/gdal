@@ -197,7 +197,7 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
         }
 
         // If the end-of-line markers is '?' the record is deleted.
-        iSegLen = strlen(pszLine);
+        iSegLen = (int)strlen(pszLine);
         if( pszLine[iSegLen-1] == '?' )
         {
             pszRecord[0] = '\0';
