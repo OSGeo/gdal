@@ -1122,7 +1122,8 @@ OGRErr OGRSimpleCurve::exportToWkt( char ** ppszDstText,
                       "OGRSimpleCurve::exportToWkt() ... buffer overflow.\n"
                       "nMaxString=%d, strlen(*ppszDstText) = %d, i=%d\n"
                       "*ppszDstText = %s", 
-                      nMaxString, (int) strlen(*ppszDstText), i, *ppszDstText );
+                      static_cast<int>(nMaxString),
+                      static_cast<int>(strlen(*ppszDstText)), i, *ppszDstText );
 
             VSIFree( *ppszDstText );
             *ppszDstText = NULL;
