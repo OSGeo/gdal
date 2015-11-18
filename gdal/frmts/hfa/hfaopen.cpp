@@ -280,7 +280,7 @@ HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
     HFAEntry *poDF = new HFAEntry( psDep, "DependentFile", 
                                    "Eimg_DependentFile", psDep->poRoot );
 
-    poDF->MakeData( strlen(pszDependentFile) + 50 );
+    poDF->MakeData( static_cast<int>(strlen(pszDependentFile) + 50) );
     poDF->SetPosition();
     poDF->SetStringField( "dependent.string", pszDependentFile );
     
@@ -1157,9 +1157,9 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
         int	nSize;
         GByte   *pabyData;
 
-        nSize = 48 + 40
+        nSize = static_cast<int>(48 + 40
             + strlen(poMapInfo->proName) + 1
-            + strlen(poMapInfo->units) + 1;
+            + strlen(poMapInfo->units) + 1);
 
         pabyData = poMIEntry->MakeData( nSize );
         memset( pabyData, 0, nSize );
@@ -1287,7 +1287,7 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /* -------------------------------------------------------------------- */
 /*      Prepare the data area with some extra space just in case.       */
 /* -------------------------------------------------------------------- */
-        GByte *pabyData = poProX->MakeData( 700 + strlen(pszPEString) );
+        GByte *pabyData = poProX->MakeData( static_cast<int>(700 + strlen(pszPEString)) );
         if( !pabyData ) 
           return CE_Failure;
 
@@ -1326,7 +1326,7 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /* -------------------------------------------------------------------- */
         iOffset += 8;
 
-        nSize = strlen(pszPEString) + 9;
+        nSize = static_cast<GUInt32>(strlen(pszPEString) + 9);
 
         HFAStandard( 4, &nSize );
         memcpy( pabyData, &nSize, 4 );
@@ -1339,7 +1339,7 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /* -------------------------------------------------------------------- */
 /*      Set the size and offset of the string value.                    */
 /* -------------------------------------------------------------------- */
-        nSize = strlen(pszPEString) + 1;
+        nSize = static_cast<GUInt32>(strlen(pszPEString) + 1);
     
         HFAStandard( 4, &nSize );
         memcpy( pabyData, &nSize, 4 );
@@ -1456,12 +1456,12 @@ CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
         int	nSize;
         GByte   *pabyData;
 
-        nSize = 34 + 15 * 8
+        nSize = static_cast<int>(34 + 15 * 8
             + 8 + strlen(poPro->proName) + 1
-            + 32 + 8 + strlen(poPro->proSpheroid.sphereName) + 1;
+            + 32 + 8 + strlen(poPro->proSpheroid.sphereName) + 1);
 
         if( poPro->proExeName != NULL )
-            nSize += strlen(poPro->proExeName) + 1;
+            nSize += static_cast<int>(strlen(poPro->proExeName) + 1);
 
         pabyData = poMIEntry->MakeData( nSize );
         if(!pabyData)
@@ -1613,10 +1613,10 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
         int	nSize;
         GByte   *pabyData;
 
-        nSize = 26 + strlen(poDatum->datumname) + 1 + 7*8;
+        nSize = static_cast<int>(26 + strlen(poDatum->datumname) + 1 + 7*8);
 
         if( poDatum->gridname != NULL )
-            nSize += strlen(poDatum->gridname) + 1;
+            nSize += static_cast<int>(strlen(poDatum->gridname) + 1);
 
         pabyData = poDatumEntry->MakeData( nSize );
         if(!pabyData)
@@ -1905,7 +1905,7 @@ HFAHandle HFACreateLL( const char * pszFilename )
     int      nDictLen = 0, iChunk;
 
     for( iChunk = 0; aszDefaultDD[iChunk] != NULL; iChunk++ )
-        nDictLen += strlen(aszDefaultDD[iChunk]);
+        nDictLen += static_cast<int>(strlen(aszDefaultDD[iChunk]));
 
     psInfo->pszDictionary = (char *) CPLMalloc(nDictLen+1);
     psInfo->pszDictionary[0] = '\0';
@@ -2217,7 +2217,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         poEdms_State =
             new HFAEntry( psInfo, "ExternalRasterDMS",
                           "ImgExternalRaster", poEimg_Layer );
-        poEdms_State->MakeData( 8 + strlen(psInfo->pszIGEFilename) + 1 + 6 * 4 );
+        poEdms_State->MakeData( static_cast<int>(8 + strlen(psInfo->pszIGEFilename) + 1 + 6 * 4) );
 
         poEdms_State->SetStringField( "fileName.string", 
                                       psInfo->pszIGEFilename );
@@ -2245,7 +2245,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         poDepLayerName = 
             new HFAEntry( psInfo, "DependentLayerName",
                           "Eimg_DependentLayerName", poEimg_Layer );
-        poDepLayerName->MakeData( 8 + strlen(pszLayerName) + 2 );
+        poDepLayerName->MakeData( static_cast<int>(8 + strlen(pszLayerName) + 2) );
 
         poDepLayerName->SetStringField( "ImageLayerName.string", 
                                         pszLayerName );
@@ -2299,7 +2299,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                                  poEimg_Layer );
     poEhfa_Layer->MakeData();
     poEhfa_Layer->SetPosition();
-    nLDict = HFAAllocateSpace( psInfo, strlen(szLDict) + 1 );
+    nLDict = HFAAllocateSpace( psInfo, static_cast<GUInt32>(strlen(szLDict) + 1) );
 
     poEhfa_Layer->SetStringField( "type", "raster" );
     poEhfa_Layer->SetIntField( "dictionaryPtr", nLDict );
@@ -2362,7 +2362,7 @@ HFAHandle HFACreate( const char * pszFilename,
         HFAEntry *poDF = new HFAEntry( psInfo, "DependentFile", 
                                        "Eimg_DependentFile", psInfo->poRoot );
 
-        poDF->MakeData( strlen(pszDependentFile) + 50 );
+        poDF->MakeData( static_cast<int>(strlen(pszDependentFile) + 50) );
         poDF->SetPosition();
         poDF->SetStringField( "dependent.string", pszDependentFile );
     }
@@ -2566,7 +2566,7 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
             if( VSIFSeekL( hHFA->fp, columnDataPtr, SEEK_SET ) != 0 )
                 continue;
 
-            int nMDBytes = VSIFReadL( pszMDValue, 1, nMaxNumChars, hHFA->fp );
+            int nMDBytes = static_cast<int>(VSIFReadL( pszMDValue, 1, nMaxNumChars, hHFA->fp ));
             if( nMDBytes == 0 )
             {
                 CPLFree( pszMDValue );
@@ -2668,7 +2668,7 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 
         poEdsc_Column->SetIntField( "numRows", 1 );
         poEdsc_Column->SetStringField( "dataType", "string" );
-        poEdsc_Column->SetIntField( "maxNumChars", strlen(pszValue)+1 );
+        poEdsc_Column->SetIntField( "maxNumChars", static_cast<GUInt32>(strlen(pszValue)+1) );
 
 /* -------------------------------------------------------------------- */
 /*      Write the data out.                                             */
@@ -3777,7 +3777,7 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
         {
             poMI = new HFAEntry( hHFA, "MapInformation", 
                                  "Eimg_MapInformation", poBandNode );
-            poMI->MakeData( 18 + strlen(pszProName) + strlen(pszUnits) );
+            poMI->MakeData( static_cast<int>(18 + strlen(pszProName) + strlen(pszUnits)) );
             poMI->SetPosition();
         }
 
@@ -3870,8 +3870,8 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
         if( strlen(pszNewBase) > strlen(pszOldBase) )
         {
             CPLDebug( "HFA", "Growing RRDNamesList to hold new names" );
-            poRRDNL->MakeData( poRRDNL->GetDataSize() 
-                               + nNameCount * (strlen(pszNewBase) - strlen(pszOldBase)) );
+            poRRDNL->MakeData( static_cast<int>(poRRDNL->GetDataSize() 
+                               + nNameCount * (strlen(pszNewBase) - strlen(pszOldBase))) );
         }
 
         // Initialize the whole thing to zeros for a clean start.
@@ -3930,8 +3930,8 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
         if( strlen(pszNewBase) > strlen(pszOldBase) )
         {
             CPLDebug( "HFA", "Growing ExternalRasterDMS to hold new names" );
-            poERDMS->MakeData( poERDMS->GetDataSize() 
-                               + (strlen(pszNewBase) - strlen(pszOldBase)) );
+            poERDMS->MakeData( static_cast<int>(poERDMS->GetDataSize() 
+                               + (strlen(pszNewBase) - strlen(pszOldBase))) );
         }
 
         // Initialize the whole thing to zeros for a clean start.
@@ -3968,9 +3968,9 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
         if( strlen(pszNewBase) > strlen(pszOldBase) )
         {
             CPLDebug( "HFA", "Growing DependentFile to hold new names" );
-            apoNodeList[iNode]->MakeData( apoNodeList[iNode]->GetDataSize() 
+            apoNodeList[iNode]->MakeData( static_cast<int>(apoNodeList[iNode]->GetDataSize() 
                                           + (strlen(pszNewBase) 
-                                             - strlen(pszOldBase)) );
+                                             - strlen(pszOldBase))) );
         }
 
         // Update the filename. 

@@ -54,7 +54,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     {
         int      i;
 
-        for( i = strlen(pszCoverName)-1; i > 0; i-- )
+        for( i = (int)strlen(pszCoverName)-1; i > 0; i-- )
         {
             if( pszCoverName[i] == '\\' || pszCoverName[i] == '/' )
             {
@@ -461,7 +461,7 @@ VSILFILE *AIGLLOpen( const char *pszFilename, const char *pszAccess )
         char *pszUCFilename = CPLStrdup(pszFilename);
         int  i;
 
-        for( i = strlen(pszUCFilename)-1; 
+        for( i = (int)strlen(pszUCFilename)-1; 
              pszUCFilename[i] != '/' && pszUCFilename[i] != '\\';
              i-- )
         {

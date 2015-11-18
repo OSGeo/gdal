@@ -280,8 +280,8 @@ bool HFACompress::compressBlock()
   m_nNumRuns++;
 
   /* set the size variables */
-  m_nSizeCounts = m_pCurrCount - m_pCounts;
-  m_nSizeValues = m_pCurrValues - m_pValues;
+  m_nSizeCounts = static_cast<GUInt32>(m_pCurrCount - m_pCounts);
+  m_nSizeValues = static_cast<GUInt32>(m_pCurrValues - m_pValues);
 
   // The 13 is for the header size - maybe this should live with some constants somewhere?
   return ( m_nSizeCounts +  m_nSizeValues + 13 ) < m_nBlockSize;
