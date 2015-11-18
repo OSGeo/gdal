@@ -319,7 +319,7 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
 
         //read year
         memcpy(date, buff, 2);
-        passport.dtCrateDate.nYear = atoi(date);
+        passport.dtCrateDate.nYear = static_cast<GUInt16>(atoi(date));
         if (passport.dtCrateDate.nYear < 50)
             passport.dtCrateDate.nYear += 2000;
         else
@@ -327,11 +327,11 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
 
         memcpy(date, buff + 2, 2);
 
-        passport.dtCrateDate.nMonth = atoi(date);
+        passport.dtCrateDate.nMonth = static_cast<GUInt16>(atoi(date));
 
         memcpy(date, buff + 4, 2);
 
-        passport.dtCrateDate.nDay = atoi(date);
+        passport.dtCrateDate.nDay = static_cast<GUInt16>(atoi(date));
 
         char szName[26] = { 0 };
         memcpy(szName, buff + 8, 24);
@@ -358,16 +358,16 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
 
         //read year
         memcpy(date, buff, 4);
-        passport.dtCrateDate.nYear = atoi(date);
+        passport.dtCrateDate.nYear = static_cast<GUInt16>(atoi(date));
 
         memset(date, 0, 5);
         memcpy(date, buff + 4, 2);
 
-        passport.dtCrateDate.nMonth = atoi(date);
+        passport.dtCrateDate.nMonth = static_cast<GUInt16>(atoi(date));
 
         memcpy(date, buff + 6, 2);
 
-        passport.dtCrateDate.nDay = atoi(date);
+        passport.dtCrateDate.nDay = static_cast<GUInt16>(atoi(date));
 
         char szName[32] = { 0 };
         memcpy(szName, buff + 12, 32);
@@ -848,13 +848,13 @@ void OGRSXFDataSource::FillLayers()
     if (oSXFPassport.version == 3)
     {
         VSIFSeekL(fpSXF, 288, SEEK_SET);
-        nObjectsRead = VSIFReadL(&nRecordCountMax, 4, 1, fpSXF);
+        nObjectsRead = static_cast<int>(VSIFReadL(&nRecordCountMax, 4, 1, fpSXF));
         nOffset = 300;
     }
     else if (oSXFPassport.version == 4)
     {
         VSIFSeekL(fpSXF, 440, SEEK_SET);
-        nObjectsRead = VSIFReadL(&nRecordCountMax, 4, 1, fpSXF);
+        nObjectsRead = static_cast<int>(VSIFReadL(&nRecordCountMax, 4, 1, fpSXF));
         nOffset = 452;
     }
     /* else nOffset and nObjectsRead will be 0 */
@@ -870,7 +870,7 @@ void OGRSXFDataSource::FillLayers()
     for (nFID = 0; nFID < nRecordCountMax; nFID++)
     {
         GInt32 buff[6];
-        nObjectsRead = VSIFReadL(&buff, 24, 1, fpSXF);
+        nObjectsRead = static_cast<int>(VSIFReadL(&buff, 24, 1, fpSXF));
 
         if (nObjectsRead != 1 || buff[0] != IDSXFOBJ)
         {
@@ -878,7 +878,7 @@ void OGRSXFDataSource::FillLayers()
             return;
         }
 
-        bool bHasSemantic = CHECK_BIT(buff[5], 9);
+        bool bHasSemantic = CPL_TO_BOOL(CHECK_BIT(buff[5], 9));
         if (bHasSemantic) //check has attributes
         {
             //we have already 24 byte readed
@@ -949,7 +949,7 @@ void OGRSXFDataSource::CreateLayers()
     nLayers++;
 
     //default codes
-    for (size_t i = 1000000001; i < 1000000015; i++)
+    for (unsigned int i = 1000000001; i < 1000000015; i++)
     {
         pLayer->AddClassifyCode(i);
     }
@@ -1203,7 +1203,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
 
     RSCHeader stRSCFileHeader;
     int nFileHeaderSize = sizeof(stRSCFileHeader);
-    int nObjectsRead = VSIFReadL(&stRSCFileHeader, nFileHeaderSize, 1, fpRSC);
+    int nObjectsRead = static_cast<int>(VSIFReadL(&stRSCFileHeader, nFileHeaderSize, 1, fpRSC));
 
     if (nObjectsRead != 1)
     {
@@ -1234,7 +1234,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         VSIFReadL(&LAYER, nLayerStructSize, 1, fpRSC);
 
         papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-        bool bLayerFullName = CSLTestBoolean(CPLGetConfigOption("SXF_LAYER_FULLNAME", "NO"));
+        bool bLayerFullName = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("SXF_LAYER_FULLNAME", "NO")));
 
         char* pszRecoded;
         if (bLayerFullName)

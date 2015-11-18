@@ -299,7 +299,7 @@ int OGRPDSDataSource::Open( const char * pszFilename )
         return FALSE;
     }
 
-    if (!oKeywords.Ingest(fp, pszPos - szBuffer))
+    if (!oKeywords.Ingest(fp, static_cast<int>(pszPos - szBuffer)))
     {
         VSIFCloseL(fp);
         return FALSE;
