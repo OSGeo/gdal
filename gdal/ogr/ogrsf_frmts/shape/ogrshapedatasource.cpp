@@ -282,7 +282,7 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
 #ifdef IMMEDIATE_OPENING
         int nDirLayers = nLayers;
 #else
-        int nDirLayers = oVectorLayerName.size();
+        int nDirLayers = static_cast<int>(oVectorLayerName.size());
 #endif
 
         CPLErrorReset();

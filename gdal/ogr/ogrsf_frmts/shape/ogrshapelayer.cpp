@@ -1541,7 +1541,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     else
         osFieldName = poFieldDefn->GetNameRef();
 
-    size_t nNameSize = osFieldName.size();
+    int nNameSize = static_cast<int>(osFieldName.size());
     pszTmp = CPLScanString( osFieldName,
                             MIN( nNameSize, 10) , TRUE, TRUE);
     strncpy(szNewFieldName, pszTmp, 10);
@@ -2588,7 +2588,7 @@ OGRErr OGRShapeLayer::ResizeDBF()
                     continue;
 
                 const char* pszVal = DBFReadStringAttribute(hDBF, i, panColMap[j]);
-                int nLen = strlen(pszVal);
+                int nLen =  static_cast<int>(strlen(pszVal));
                 if (nLen > panBestWidth[j])
                     panBestWidth[j] = nLen;
             }
