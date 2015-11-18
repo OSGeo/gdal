@@ -122,7 +122,7 @@ const char *RECGetField( const char *pszSrc, int nStart, int nWidth )
     strncpy( szWorkField, pszSrc+nStart-1, nWidth );
     szWorkField[nWidth] = '\0';
 
-    i = strlen(szWorkField)-1;
+    i = (int)strlen(szWorkField)-1;
     
     while( i >= 0 && szWorkField[i] == ' ' )
         szWorkField[i--] = '\0';
@@ -153,7 +153,7 @@ int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
             return FALSE;
 
         // If the end-of-line markers is '?' the record is deleted.
-        iSegLen = strlen(pszLine);
+        iSegLen = (int)strlen(pszLine);
         if( pszLine[iSegLen-1] == '?' )
         {
             pszRecord[0] = '\0';
