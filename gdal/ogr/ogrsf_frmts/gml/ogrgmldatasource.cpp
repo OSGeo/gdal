@@ -493,12 +493,12 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     const char* pszExposeGMLId = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
         "EXPOSE_GML_ID", CPLGetConfigOption("GML_EXPOSE_GML_ID", NULL));
     if (pszExposeGMLId)
-        bExposeGMLId = CSLTestBoolean(pszExposeGMLId);
+        bExposeGMLId = CSLTestBoolean(pszExposeGMLId) != FALSE;
 
     const char* pszExposeFid = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
         "EXPOSE_FID", CPLGetConfigOption("GML_EXPOSE_FID", NULL));
     if (pszExposeFid)
-        bExposeFid = CSLTestBoolean(pszExposeFid);
+        bExposeFid = CSLTestBoolean(pszExposeFid) != FALSE;
 
     bHintConsiderEPSGAsURN = strstr(szPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != NULL;
 
@@ -550,14 +550,14 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     m_bInvertAxisOrderIfLatLong = 
         CSLTestBoolean(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
             "INVERT_AXIS_ORDER_IF_LAT_LONG",
-            CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES")));
+            CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"))) != FALSE;
 
     const char* pszConsiderEPSGAsURN =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
             "CONSIDER_EPSG_AS_URN",
             CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "AUTO"));
     if( !EQUAL(pszConsiderEPSGAsURN, "AUTO") )
-        m_bConsiderEPSGAsURN = CSLTestBoolean(pszConsiderEPSGAsURN);
+        m_bConsiderEPSGAsURN = CSLTestBoolean(pszConsiderEPSGAsURN) != FALSE;
     else if (bHintConsiderEPSGAsURN)
     {
         /* GML produced by FME (at least CanVec GML) seem to honour EPSG axis ordering */
@@ -605,7 +605,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     ((GMLReader*)poReader)->SetEmptyAsNull(bEmptyAsNull);
     ((GMLReader*)poReader)->SetReportAllAttributes(
         CSLFetchBoolean(poOpenInfo->papszOpenOptions, "GML_ATTRIBUTES_TO_OGR_FIELDS",
-            CSLTestBoolean(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"))));
+            CSLTestBoolean(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"))) != FALSE);
 
 /* -------------------------------------------------------------------- */
 /*      Find <gml:description>, <gml:name> and <gml:boundedBy>          */
@@ -1573,10 +1573,10 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
         bIsOutputGML3 = true;
 
     bIsLongSRSRequired =
-        CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "GML3_LONGSRS", "YES"));
+        CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "GML3_LONGSRS", "YES")) != FALSE;
 
     bWriteSpaceIndentation =
-        CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "SPACE_INDENTATION", "YES"));
+        CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "SPACE_INDENTATION", "YES")) != FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
@@ -2545,7 +2545,7 @@ OGRLayer * OGRGMLDataSource::ExecuteSQL( const char *pszSQLCommand,
         if (osXSDFilename.size())
         {
             CPLErrorReset();
-            bIsValid = CPLValidateXML(osFilename, osXSDFilename, NULL);
+            bIsValid = CPLValidateXML(osFilename, osXSDFilename, NULL) != FALSE;
         }
         return new OGRGMLSingleFeatureLayer(bIsValid);
     }

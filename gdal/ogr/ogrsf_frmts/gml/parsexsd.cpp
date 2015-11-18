@@ -420,7 +420,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         /* not as a simpleType definition */
         const char* pszType = CPLGetXMLValue( psAttrDef, "type", NULL );
         const char* pszElementName = CPLGetXMLValue( psAttrDef, "name", NULL );
-        int bNullable = EQUAL(CPLGetXMLValue( psAttrDef, "minOccurs", "1" ), "0");
+        bool bNullable = EQUAL(CPLGetXMLValue( psAttrDef, "minOccurs", "1" ), "0");
         const char* pszMaxOccurs = CPLGetXMLValue( psAttrDef, "maxOccurs", NULL );
         if (pszType != NULL)
         {

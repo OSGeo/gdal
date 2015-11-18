@@ -133,7 +133,7 @@ static void AppendCoordinateList( OGRLineString *poLine,
 
 {
     char        szCoordinate[256];
-    bool        b3D = wkbHasZ(poLine->getGeometryType());
+    bool        b3D = wkbHasZ(poLine->getGeometryType()) != FALSE;
 
     *pnLength += strlen(*ppszText + *pnLength);
     _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );

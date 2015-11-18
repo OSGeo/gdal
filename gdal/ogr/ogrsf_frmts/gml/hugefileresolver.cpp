@@ -991,7 +991,7 @@ static void gmlHugeAddPendingToHelper( struct huge_helper *helper,
                                        CPLString *gmlId,
                                        const CPLXMLNode *psParent,
                                        const CPLXMLNode *psNode,
-                                       int bIsDirectedEdge,
+                                       bool bIsDirectedEdge,
                                        char cOrientation )
 {
 /* inserting an item into the linked list */
@@ -1113,7 +1113,7 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
         {
             char cOrientation = '+';
             const char *pszGmlId = NULL;
-            int bIsHref = false;
+            bool bIsHref = false;
             const CPLXMLNode *psAttr = psChild->psChild;
             while( psAttr != NULL )
             {
