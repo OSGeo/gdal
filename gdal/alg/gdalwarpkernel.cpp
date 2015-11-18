@@ -3273,7 +3273,7 @@ static int GWKResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
-#if 1 // defined(__x86_64) || defined(_M_X64)
+#if defined(__x86_64) || defined(_M_X64)
 
 #include <gdalsse_priv.h>
 
