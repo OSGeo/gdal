@@ -576,11 +576,11 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
     }
 
     reader.SetFlattenNestedAttributes(
-        (bool)CSLFetchBoolean(papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", FALSE),
+        CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", FALSE)),
         CSLFetchNameValueDef(papszOpenOptions, "NESTED_ATTRIBUTE_SEPARATOR", "_")[0]);
 
     reader.SetStoreNativeData(
-        (bool)CSLFetchBoolean(papszOpenOptions, "NATIVE_DATA", FALSE));
+        CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptions, "NATIVE_DATA", FALSE)));
 
 /* -------------------------------------------------------------------- */
 /*      Parse GeoJSON and build valid OGRLayer instance.                */

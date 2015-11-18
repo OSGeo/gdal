@@ -255,7 +255,7 @@ OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
 
     OGRField sWrkField;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    const bool bSuccess = OGRParseDate( pszStr, &sWrkField, 0 );
+    const bool bSuccess = CPL_TO_BOOL(OGRParseDate( pszStr, &sWrkField, 0 ));
     CPLPopErrorHandler();
     CPLErrorReset();
     if( bSuccess )
