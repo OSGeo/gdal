@@ -327,7 +327,7 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
             (*ppszDstText)[nCumulativeLength++] = ',';
 
         /* We must strip the explicit "LINESTRING " prefix */
-        int nSkip = 0;
+        size_t nSkip = 0;
         if( !papoCurves[iGeom]->IsEmpty() &&
             STARTS_WITH_CI(papszGeoms[iGeom], "LINESTRING ") )
         {

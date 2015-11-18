@@ -809,7 +809,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
             (*ppszDstText)[nCumulativeLength++] = ',';
         bMustWriteComma = true;
 
-        int nSkip = 0;
+        size_t nSkip = 0;
         if( pszSkipPrefix != NULL &&
             EQUALN(papszGeoms[iGeom], pszSkipPrefix, strlen(pszSkipPrefix)) &&
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
