@@ -437,7 +437,7 @@ int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
 
         sprintf(szBuf, "%10.7E", 123.45);
         numExpDigits = 0;
-        for(i=strlen(szBuf)-1; i>0; i--)
+        for(i=(int)strlen(szBuf)-1; i>0; i--)
         {
             if (szBuf[i] == '+' || szBuf[i] == '-')
                 break;
@@ -489,7 +489,7 @@ int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
     if (numExpDigits > 2)
     {
         int n;
-        n = strlen(pszBuf);
+        n = (int)strlen(pszBuf);
 
         pszBuf[n - numExpDigits]    = pszBuf[n-2];
         pszBuf[n - numExpDigits +1] = pszBuf[n-1];

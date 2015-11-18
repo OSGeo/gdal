@@ -578,7 +578,7 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
     /*-----------------------------------------------------------------
      * Determine some information from based on the coverage type.    
      *----------------------------------------------------------------*/
-    nLen = strlen(psFile->pszFilename);
+    nLen = (int)strlen(psFile->pszFilename);
     if( psFile->eFileType == AVCFileARC &&
         ((nLen>=3 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-3), "arc")) ||
          (nLen>=7 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-7), "arc.adf"))))
@@ -1837,7 +1837,7 @@ char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
      *----------------------------------------------------------------*/
     if (pszCoverName != NULL)
         sprintf(szNameToFind, "%-.28s.", pszCoverName);
-    nLen = strlen(szNameToFind);
+    nLen = (int)strlen(szNameToFind);
 
     /*----------------------------------------------------------------- 
      * Open the arc.dir and add all entries that match the criteria
@@ -1982,7 +1982,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
             AVCRawBinReadBytes(hFile, 80, (GByte *)sTableDef.szDataFile);
             sTableDef.szDataFile[80] = '\0';
 
-            for(i = strlen(sTableDef.szDataFile)-1;
+            for(i = (int)strlen(sTableDef.szDataFile)-1;
                 isspace((unsigned char)sTableDef.szDataFile[i]);
                 i--)
             {
@@ -2333,7 +2333,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
 
     sprintf(psTableDef->szTableName, "%-32.32s", pszArcInfoTableName);
 
-    psTableDef->numFields = DBFGetFieldCount(hDBFFile);
+    psTableDef->numFields = (GInt16)DBFGetFieldCount(hDBFFile);
 
     /* We'll compute nRecSize value when we read fields info later */
     psTableDef->nRecSize = 0;  
@@ -2372,7 +2372,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
         pasFieldDef[iField].nFmtPrec = (GInt16)nDecimals;
 
         /* nIndex is the 1-based field index that we see in the E00 header */
-        pasFieldDef[iField].nIndex = iField+1;
+        pasFieldDef[iField].nIndex = (GInt16)(iField+1);
 
         if (cNativeType == 'F' || (cNativeType == 'N' && nDecimals > 0) )
         {
@@ -2406,7 +2406,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
              * DATE - Actually handled as a string internally
              *--------------------------------------------------------*/
             pasFieldDef[iField].nType1 = AVC_FT_DATE/10;
-            pasFieldDef[iField].nSize = nWidth;
+            pasFieldDef[iField].nSize = (GInt16)nWidth;
             pasFieldDef[iField].nFmtPrec = -1;
 
         }
@@ -2416,7 +2416,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
              * CHAR STRINGS ... and all unknown types also handled as strings
              *--------------------------------------------------------*/
             pasFieldDef[iField].nType1 = AVC_FT_CHAR/10;
-            pasFieldDef[iField].nSize = nWidth;
+            pasFieldDef[iField].nSize = (GInt16)nWidth;
             pasFieldDef[iField].nFmtPrec = -1;
 
         }

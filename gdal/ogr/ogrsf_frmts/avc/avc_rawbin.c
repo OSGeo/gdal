@@ -260,7 +260,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
         if (psFile->nCurPos == psFile->nCurSize)
         {
             psFile->nOffset += psFile->nCurSize;
-            psFile->nCurSize = VSIFRead(psFile->abyBuf, sizeof(GByte),
+            psFile->nCurSize = (int)VSIFRead(psFile->abyBuf, sizeof(GByte),
                                         AVCRAWBIN_READBUFSIZE, psFile->fp);
             psFile->nCurPos = 0;
         }
@@ -644,7 +644,7 @@ void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
     pszString = AVCE00Convert2ArcDBCS(psFile->psDBCSInfo,
                                       pszString, nFieldSize);
 
-    nLen = strlen((const char *)pszString);
+    nLen = (int)strlen((const char *)pszString);
     nLen = MIN(nLen, nFieldSize);
     numSpaces = nFieldSize - nLen;
 

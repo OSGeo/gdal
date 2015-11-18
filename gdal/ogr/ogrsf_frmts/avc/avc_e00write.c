@@ -249,7 +249,7 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
     /*-----------------------------------------------------------------
      * Make sure coverage directory name is terminated with a '/' (or '\\')
      *----------------------------------------------------------------*/
-    nLen = strlen(pszCoverPath);
+    nLen = (int)strlen(pszCoverPath);
 
     if (pszCoverPath[nLen-1] == '/' || pszCoverPath[nLen-1] == '\\')
         psInfo->pszCoverPath = CPLStrdup(pszCoverPath);
@@ -270,7 +270,7 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
      * but for now we'll just produce an error if this happens.
      *----------------------------------------------------------------*/
     nLen = 0;
-    for( i = strlen(psInfo->pszCoverPath)-1; 
+    for( i = (int)strlen(psInfo->pszCoverPath)-1; 
 	 i > 0 && psInfo->pszCoverPath[i-1] != '/' &&
 	          psInfo->pszCoverPath[i-1] != '\\'&&
 	          psInfo->pszCoverPath[i-1] != ':';
@@ -473,7 +473,7 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
 
     strcpy(szNewName, pszNewCoverName);
     for(i=0; szNewName[i] != '\0'; i++)
-        szNewName[i] = toupper(szNewName[i]);
+        szNewName[i] = (char) toupper(szNewName[i]);
 
     /*-----------------------------------------------------------------
      * Extract components from the current table name.
@@ -649,7 +649,7 @@ int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
      * Make sure filename is all lowercase and attempt to create the file
      *----------------------------------------------------------------*/
     for(i=0; szFname[i] != '\0'; i++)
-        szFname[i] = tolower(szFname[i]);
+        szFname[i] = (char) tolower(szFname[i]);
 
     if (nStatus == 0)
     {
@@ -959,7 +959,7 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
         {
             /* Convert table filename to lowercases */
             for(j=0; papszFiles[i] && papszFiles[i][j]!='\0'; j++)
-                papszFiles[i][j] = tolower(papszFiles[i][j]);
+                papszFiles[i][j] = (char) tolower(papszFiles[i][j]);
 
             /* Delete the .DAT file */
             pszFname = CPLSPrintf("%s%s.dat", pszInfoPath, papszFiles[i]);

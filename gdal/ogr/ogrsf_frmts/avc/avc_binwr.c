@@ -206,7 +206,7 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
      * For each type there is 3 possibilities, e.g. "pal", "pal.adf", "ttt.pal"
      *----------------------------------------------------------------*/
     pszFname = CPLStrdup(psFile->pszFilename);
-    nLen = strlen(pszFname);
+    nLen = (int)strlen(pszFname);
     if (eType == AVCFileARC &&
         ( (nLen>=3 && STARTS_WITH_CI((pszExt=pszFname+nLen-3), "arc")) ||
           (nLen>=7 && STARTS_WITH_CI((pszExt=pszFname+nLen-7), "arc.adf")) ) )
@@ -1092,7 +1092,7 @@ int _AVCBinWriteTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
      *----------------------------------------------------------------*/
     /* String uses a multiple of 4 bytes of storage */
     if (psTxt->pszText)
-        nStrLen = ((strlen((char*)psTxt->pszText) + 3)/4)*4;
+        nStrLen = (((int)strlen((char*)psTxt->pszText) + 3)/4)*4;
     else
         nStrLen = 0;
 
@@ -1209,7 +1209,7 @@ int _AVCBinWritePCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
      * spaces anyways (was probably a bug in the software!).
      */
     if (psTxt->pszText)
-        nStrLen = ((strlen((char*)psTxt->pszText) + 4)/4)*4;
+        nStrLen = (((int)strlen((char*)psTxt->pszText) + 4)/4)*4;
     else
         nStrLen = 4;
 
@@ -1786,14 +1786,14 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
         int nLen;
         FILE *fpOut;
 
-        nLen = strlen(psTableDef->szTableName);
+        nLen = (int)strlen(psTableDef->szTableName);
         CPLAssert(nLen <= 32);
         if (nLen > 32) return NULL;
         pszPtr = psTableDef->szTableName;
 
         for(i=0; *pszPtr!='\0' && *pszPtr!='.' && *pszPtr!=' ';  i++, pszPtr++)
         {
-            szCoverName[i] = tolower(*pszPtr);
+            szCoverName[i] = (char) tolower(*pszPtr);
         }
         szCoverName[i] = '\0';
 
@@ -1802,13 +1802,13 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
 
         for(i=0; i<3 && *pszPtr!='\0' && *pszPtr!=' ';  i++, pszPtr++)
         {
-            szExt[i] = tolower(*pszPtr);
+            szExt[i] = (char) tolower(*pszPtr);
         }
         szExt[i] = '\0';
 
         for(i=0; *pszPtr!='\0' && *pszPtr!=' ';  i++, pszPtr++)
         {
-            szSubclass[i] = tolower(*pszPtr);
+            szSubclass[i] = (char) tolower(*pszPtr);
         }
         szSubclass[i] = '\0';
 
@@ -1976,9 +1976,9 @@ AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
 
     strcpy(psFile->pszFilename, pszPath);
 
-    for(i=strlen(psFile->pszFilename); *pszDBFBasename; i++, pszDBFBasename++)
+    for(i=(int)strlen(psFile->pszFilename); *pszDBFBasename; i++, pszDBFBasename++)
     {
-        psFile->pszFilename[i] = tolower(*pszDBFBasename);
+        psFile->pszFilename[i] = (char) tolower(*pszDBFBasename);
     }
 
     strcat(psFile->pszFilename, ".dbf");

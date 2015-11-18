@@ -690,7 +690,7 @@ void   *AVCE00ParseNextLine(AVCE00ParseInfo  *psInfo, const char *pszLine)
 AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
     AVCArc *psArc;
-    int     nLen;
+    size_t  nLen;
 
     CPLAssert(psInfo->eFileType == AVCFileARC);
 
@@ -802,7 +802,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
     AVCPal *psPal;
-    int     nLen;
+    size_t  nLen;
 
     CPLAssert(psInfo->eFileType == AVCFilePAL ||
               psInfo->eFileType == AVCFileRPL );
@@ -946,7 +946,7 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
     AVCCnt *psCnt;
-    int     nLen;
+    size_t  nLen;
 
     CPLAssert(psInfo->eFileType == AVCFileCNT);
 
@@ -1009,7 +1009,7 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         /*-------------------------------------------------------------
          * Each line can contain up to 8 label ids (10 chars each)
          *------------------------------------------------------------*/
-        int i=0;
+        size_t i=0;
         while(psInfo->iCurItem < psInfo->numItems && nLen >= (i+1)*10)
         {
             psCnt->panLabelIds[psInfo->iCurItem++] = 
@@ -1060,7 +1060,7 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
     AVCLab *psLab;
-    int     nLen;
+    size_t  nLen;
 
     CPLAssert(psInfo->eFileType == AVCFileLAB);
 
@@ -1172,7 +1172,7 @@ AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 AVCTol   *AVCE00ParseNextTolLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
     AVCTol *psTol;
-    int     nLen;
+    size_t  nLen;
 
     CPLAssert(psInfo->eFileType == AVCFileTOL);
 
@@ -1307,7 +1307,8 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
     AVCTxt *psTxt;
-    int     i, nLen, numFixedLines;
+    int     i, numFixedLines;
+    size_t  nLen;
 
     CPLAssert(psInfo->eFileType == AVCFileTXT);
 
@@ -1487,7 +1488,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         if (iLine == numLines-1)
         {
             strncpy((char*)psTxt->pszText+(iLine*80), pszLine, 
-                    MIN( nLen, (psTxt->numChars - (iLine*80)) ) );
+                    MIN( (int)nLen, (psTxt->numChars - (iLine*80)) ) );
         }
         else
         {
@@ -1539,7 +1540,8 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
     AVCTxt *psTxt;
-    int     i, nLen;
+    int     i;
+    size_t  nLen;
 
     CPLAssert(psInfo->eFileType == AVCFileTX6);
 
@@ -1623,7 +1625,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
             numValPerLine = 6;
 
         for(i=0; i<numValPerLine; i++)
-            pValue[i] = AVCE00Str2Int(pszLine + i*10, 10);
+            pValue[i] = (GInt16)AVCE00Str2Int(pszLine + i*10, 10);
 
         psInfo->iCurItem++;
     }
@@ -1685,7 +1687,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         if (iLine == numLines-1)
         {
             strncpy((char*)psTxt->pszText+(iLine*80), pszLine, 
-                    MIN( nLen, (psTxt->numChars - (iLine*80)) ) );
+                    MIN( (int)nLen, (psTxt->numChars - (iLine*80)) ) );
         }
         else
         {
@@ -1738,7 +1740,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 AVCRxp   *AVCE00ParseNextRxpLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
     AVCRxp *psRxp;
-    int     nLen;
+    size_t  nLen;
 
     CPLAssert(psInfo->eFileType == AVCFileRXP);
 
@@ -1803,7 +1805,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
                                            const char *pszLine)
 {
     AVCTableDef *psTableDef;
-    int     nLen;
+    size_t   nLen;
 
     CPLAssert(psInfo->eFileType == AVCFileTABLE);
 
@@ -1838,8 +1840,8 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
             strncpy(psTableDef->szExternal, pszLine+32, 2);
             psTableDef->szExternal[2] = '\0';
 
-            psTableDef->numFields  = AVCE00Str2Int(pszLine+34, 4);
-            psTableDef->nRecSize   = AVCE00Str2Int(pszLine+42, 4);
+            psTableDef->numFields  = (GInt16)AVCE00Str2Int(pszLine+34, 4);
+            psTableDef->nRecSize   = (GInt16)AVCE00Str2Int(pszLine+42, 4);
             psTableDef->numRecords = AVCE00Str2Int(pszLine+46, 10);
 
             /*---------------------------------------------------------
@@ -1886,26 +1888,26 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
             AVCFieldInfo *psDef;
             psDef = &(psTableDef->pasFieldDef[psInfo->iCurItem]);
 
-            psDef->nIndex   = nIndex;
+            psDef->nIndex   = (GInt16)nIndex;
             
             strncpy(psDef->szName, pszLine, 16);
             psDef->szName[16] = '\0';
 
-            psDef->nSize    = AVCE00Str2Int(pszLine + 16, 3);
-            psDef->v2       = AVCE00Str2Int(pszLine + 19, 2);
+            psDef->nSize    = (GInt16)AVCE00Str2Int(pszLine + 16, 3);
+            psDef->v2       = (GInt16)AVCE00Str2Int(pszLine + 19, 2);
 
-            psDef->nOffset  = AVCE00Str2Int(pszLine + 21, 4);
+            psDef->nOffset  = (GInt16)AVCE00Str2Int(pszLine + 21, 4);
 
-            psDef->v4       = AVCE00Str2Int(pszLine + 25, 1);
-            psDef->v5       = AVCE00Str2Int(pszLine + 26, 2);
-            psDef->nFmtWidth= AVCE00Str2Int(pszLine + 28, 4);
-            psDef->nFmtPrec = AVCE00Str2Int(pszLine + 32, 2);
-            psDef->nType1   = AVCE00Str2Int(pszLine + 34, 3)/10;
+            psDef->v4       = (GInt16)AVCE00Str2Int(pszLine + 25, 1);
+            psDef->v5       = (GInt16)AVCE00Str2Int(pszLine + 26, 2);
+            psDef->nFmtWidth= (GInt16)AVCE00Str2Int(pszLine + 28, 4);
+            psDef->nFmtPrec = (GInt16)AVCE00Str2Int(pszLine + 32, 2);
+            psDef->nType1   = (GInt16)AVCE00Str2Int(pszLine + 34, 3)/10;
             psDef->nType2   = AVCE00Str2Int(pszLine + 34, 3)%10;
-            psDef->v10      = AVCE00Str2Int(pszLine + 37, 2);
-            psDef->v11      = AVCE00Str2Int(pszLine + 39, 4);
-            psDef->v12      = AVCE00Str2Int(pszLine + 43, 4);
-            psDef->v13      = AVCE00Str2Int(pszLine + 47, 2);
+            psDef->v10      = (GInt16)AVCE00Str2Int(pszLine + 37, 2);
+            psDef->v11      = (GInt16)AVCE00Str2Int(pszLine + 39, 4);
+            psDef->v12      = (GInt16)AVCE00Str2Int(pszLine + 43, 4);
+            psDef->v13      = (GInt16)AVCE00Str2Int(pszLine + 47, 2);
 
             strncpy(psDef->szAltName, pszLine+49, 16);
             psDef->szAltName[16] = '\0';
@@ -2037,7 +2039,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
         }
         else if (nType == AVC_FT_BININT && nSize == 2)
         {
-            pasFields[i].nInt16 = AVCE00Str2Int(pszBuf, 6);
+            pasFields[i].nInt16 = (GInt16)AVCE00Str2Int(pszBuf, 6);
             pszBuf += 6;
         }
         else if (nType == AVC_FT_BINFLOAT && pasDef[i].nSize == 4)
@@ -2196,7 +2198,7 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
          *------------------------------------------------------------*/
         int nSrcLen, nLenToCopy;
 
-        nSrcLen = strlen(pszLine);
+        nSrcLen = (int)strlen(pszLine);
         nLenToCopy = MIN(80, MIN(nSrcLen,(psInfo->numItems-psInfo->iCurItem)));
         strncpy(psInfo->pszBuf+psInfo->iCurItem, pszLine, nLenToCopy);
 
