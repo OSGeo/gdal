@@ -38,22 +38,22 @@
 
 const char* GML_ExtractSrsNameFromGeometry(const CPLXMLNode* const * papsGeometry,
                                      std::string& osWork,
-                                     int bConsiderEPSGAsURN);
+                                     bool bConsiderEPSGAsURN);
 
-int GML_IsSRSLatLongOrder(const char* pszSRSName);
+bool GML_IsSRSLatLongOrder(const char* pszSRSName);
 
 void* GML_BuildOGRGeometryFromList_CreateCache();
 void GML_BuildOGRGeometryFromList_DestroyCache(void* hCacheSRS);
 
 OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry,
-                                          int bTryToMakeMultipolygons,
-                                          int bInvertAxisOrderIfLatLong,
+                                          bool bTryToMakeMultipolygons,
+                                          bool bInvertAxisOrderIfLatLong,
                                           const char* pszDefaultSRSName,
-                                          int bConsiderEPSGAsURN,
-                                          int bGetSecondaryGeometryOption,
+                                          bool bConsiderEPSGAsURN,
+                                          int nPseudoBoolGetSecondaryGeometryOption,
                                           void* hCacheSRS,
-                                          int bFaceHoleNegative = FALSE );
+                                          bool bFaceHoleNegative = false );
 
-char* GML_GetSRSName(const OGRSpatialReference* poSRS, int bLongSRS, int *pbCoordSwap);
+char* GML_GetSRSName(const OGRSpatialReference* poSRS, bool bLongSRS, bool *pbCoordSwap);
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */

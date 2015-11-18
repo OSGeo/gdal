@@ -55,7 +55,7 @@
 /************************************************************************/
 
 static void MakeGMLCoordinate( char *pszTarget, 
-                               double x, double y, double z, int b3D )
+                               double x, double y, double z, bool b3D )
 
 {
     OGRMakeWktCoordinate( pszTarget, x, y, z, b3D ? 3 : 2 );
@@ -133,7 +133,7 @@ static void AppendCoordinateList( OGRLineString *poLine,
 
 {
     char        szCoordinate[256];
-    int         b3D = wkbHasZ(poLine->getGeometryType());
+    bool        b3D = wkbHasZ(poLine->getGeometryType());
 
     *pnLength += strlen(*ppszText + *pnLength);
     _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );
@@ -170,7 +170,7 @@ static void AppendCoordinateList( OGRLineString *poLine,
 static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
                                    char **ppszText, int *pnLength,
                                    int *pnMaxLength,
-                                   int bIsSubGeometry,
+                                   bool bIsSubGeometry,
                                    const char* pszNamespaceDecl )
 
 {
@@ -240,7 +240,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
         MakeGMLCoordinate( szCoordinate, 
-                           poPoint->getX(), poPoint->getY(), 0.0, FALSE );
+                           poPoint->getX(), poPoint->getY(), 0.0, false );
 
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 60 + nAttrsLength,
                      ppszText, pnMaxLength );
@@ -261,7 +261,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
         MakeGMLCoordinate( szCoordinate, 
                            poPoint->getX(), poPoint->getY(), poPoint->getZ(), 
-                           TRUE );
+                           true );
                            
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
                      ppszText, pnMaxLength );
@@ -278,7 +278,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbLineString )
     {
-        int bRing = EQUAL(poGeometry->getGeometryName(),"LINEARRING");
+        bool bRing = EQUAL(poGeometry->getGeometryName(),"LINEARRING");
 
         // Buffer for tag name + srsName attribute if set
         const size_t nLineTagLength = 16;
@@ -344,7 +344,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
             if( !OGR2GMLGeometryAppend( poPolygon->getExteriorRing(),
                                         ppszText, pnLength, pnMaxLength,
-                                        TRUE, NULL ) )
+                                        true, NULL ) )
             {
                 return false;
             }
@@ -361,7 +361,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
                           "<gml:innerBoundaryIs>" );
 
             if( !OGR2GMLGeometryAppend( poRing, ppszText, pnLength,
-                                        pnMaxLength, TRUE, NULL ) )
+                                        pnMaxLength, true, NULL ) )
                 return false;
 
             AppendString( ppszText, pnLength, pnMaxLength,
@@ -433,7 +433,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
             if( !OGR2GMLGeometryAppend( poMember,
                                         ppszText, pnLength, pnMaxLength,
-                                        TRUE, NULL ) )
+                                        true, NULL ) )
             {
                 return false;
             }
@@ -492,7 +492,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
     psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
     
     MakeGMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0, 
-                       FALSE );
+                       false );
     pszY = strstr(szCoordinate,",") + 1;
     pszY[-1] = '\0';
 
@@ -505,7 +505,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
     psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
     
     MakeGMLCoordinate( szCoordinate, sEnvelope.MaxX, sEnvelope.MaxY, 0.0, 
-                       FALSE );
+                       false );
     pszY = strstr(szCoordinate,",") + 1;
     pszY[-1] = '\0';
 
@@ -520,7 +520,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 /*                     AppendGML3CoordinateList()                       */
 /************************************************************************/
 
-static void AppendGML3CoordinateList( const OGRSimpleCurve *poLine, int bCoordSwap,
+static void AppendGML3CoordinateList( const OGRSimpleCurve *poLine, bool bCoordSwap,
                                       char **ppszText, int *pnLength,
                                       int *pnMaxLength, int nSRSDimensionLocFlags )
 
@@ -575,12 +575,12 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                     const OGRSpatialReference* poParentSRS,
                                     char **ppszText, int *pnLength,
                                     int *pnMaxLength,
-                                    int bIsSubGeometry,
-                                    int bLongSRS,
-                                    int bLineStringAsCurve,
+                                    bool bIsSubGeometry,
+                                    bool bLongSRS,
+                                    bool bLineStringAsCurve,
                                     const char* pszGMLId,
                                     int nSRSDimensionLocFlags,
-                                    int bForceLineStringAsLinearRing,
+                                    bool bForceLineStringAsLinearRing,
                                     const char* pszNamespaceDecl)
 
 {
@@ -601,7 +601,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
     else
         poParentSRS = poSRS = poGeometry->getSpatialReference();
 
-    int bCoordSwap = FALSE;
+    bool bCoordSwap = false;
     
     if( pszNamespaceDecl != NULL )
     {
@@ -639,7 +639,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                         if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
                         {
                             if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
-                                bCoordSwap = TRUE;
+                                bCoordSwap = true;
                         }
                     }
 
@@ -744,7 +744,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbLineString )
     {
-        int bRing = EQUAL(poGeometry->getGeometryName(),"LINEARRING") ||
+        bool bRing = EQUAL(poGeometry->getGeometryName(),"LINEARRING") ||
                     bForceLineStringAsLinearRing;
         if (!bRing && bLineStringAsCurve)
         {
@@ -864,9 +864,9 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:curveMember>" );
             if( !OGR2GML3GeometryAppend( poCC->getCurve(i), poSRS, ppszText, pnLength,
-                                         pnMaxLength, TRUE, bLongSRS,
+                                         pnMaxLength, true, bLongSRS,
                                          bLineStringAsCurve,
-                                         NULL, nSRSDimensionLocFlags, FALSE, NULL) )
+                                         NULL, nSRSDimensionLocFlags, false, NULL) )
                 return false;
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:curveMember>" );
@@ -905,8 +905,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 
             if( !OGR2GML3GeometryAppend( poCP->getExteriorRingCurve(), poSRS,
                                          ppszText, pnLength, pnMaxLength,
-                                         TRUE, bLongSRS, bLineStringAsCurve,
-                                         NULL, nSRSDimensionLocFlags, TRUE, NULL) )
+                                         true, bLongSRS, bLineStringAsCurve,
+                                         NULL, nSRSDimensionLocFlags, true, NULL) )
             {
                 return false;
             }
@@ -923,9 +923,9 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                           "<gml:interior>" );
 
             if( !OGR2GML3GeometryAppend( poRing, poSRS, ppszText, pnLength,
-                                         pnMaxLength, TRUE, bLongSRS,
+                                         pnMaxLength, true, bLongSRS,
                                          bLineStringAsCurve,
-                                         NULL, nSRSDimensionLocFlags, TRUE, NULL) )
+                                         NULL, nSRSDimensionLocFlags, true, NULL) )
                 return false;
 
             AppendString( ppszText, pnLength, pnMaxLength,
@@ -1003,8 +1003,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 
             if( !OGR2GML3GeometryAppend( poMember, poSRS,
                                          ppszText, pnLength, pnMaxLength,
-                                         TRUE, bLongSRS, bLineStringAsCurve,
-                                         pszGMLIdSub, nSRSDimensionLocFlags, FALSE, NULL ) )
+                                         true, bLongSRS, bLineStringAsCurve,
+                                         pszGMLIdSub, nSRSDimensionLocFlags, false, NULL ) )
             {
                 CPLFree(pszGMLIdSub);
                 return false;
@@ -1132,12 +1132,12 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
     pszText[0] = '\0';
 
     const char* pszFormat = CSLFetchNameValue(papszOptions, "FORMAT");
-    bool bNamespaceDecl = (bool)CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "NAMESPACE_DECL", "NO"));
+    bool bNamespaceDecl = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "NAMESPACE_DECL", "NO")) != FALSE;
     if (pszFormat && (EQUAL(pszFormat, "GML3") || EQUAL(pszFormat, "GML32")) )
     {
         const char* pszLineStringElement = CSLFetchNameValue(papszOptions, "GML3_LINESTRING_ELEMENT");
-        int bLineStringAsCurve = (pszLineStringElement && EQUAL(pszLineStringElement, "curve"));
-        int bLongSRS = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "GML3_LONGSRS", "YES"));
+        bool bLineStringAsCurve = (pszLineStringElement && EQUAL(pszLineStringElement, "curve"));
+        bool bLongSRS = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "GML3_LONGSRS", "YES")) != FALSE;
         const char* pszGMLId = CSLFetchNameValue(papszOptions, "GMLID");
         if( pszGMLId == NULL && EQUAL(pszFormat, "GML32") )
             CPLError(CE_Warning, CPLE_AppDefined, "FORMAT=GML32 specified but not GMLID set");
@@ -1161,8 +1161,8 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
         else if( bNamespaceDecl )
             pszNamespaceDecl = "http://www.opengis.net/gml";
         if( !OGR2GML3GeometryAppend( (OGRGeometry *) hGeometry, NULL, &pszText,
-                                     &nLength, &nMaxLength, FALSE, bLongSRS,
-                                     bLineStringAsCurve, pszGMLId, nSRSDimensionLocFlags, FALSE,
+                                     &nLength, &nMaxLength, false, bLongSRS,
+                                     bLineStringAsCurve, pszGMLId, nSRSDimensionLocFlags, false,
                                      pszNamespaceDecl ))
         {
             CPLFree( pszText );
@@ -1176,7 +1176,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
     if( bNamespaceDecl )
         pszNamespaceDecl = "http://www.opengis.net/gml";
     if( !OGR2GMLGeometryAppend( (OGRGeometry *) hGeometry, &pszText,
-                                &nLength, &nMaxLength, FALSE,
+                                &nLength, &nMaxLength, false,
                                 pszNamespaceDecl ))
     {
         CPLFree( pszText );

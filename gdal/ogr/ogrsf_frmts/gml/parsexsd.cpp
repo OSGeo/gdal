@@ -59,7 +59,7 @@ const char *StripNS( const char *pszFullValue )
 /************************************************************************/
 
 static
-int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
+bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
                             GMLPropertyType *pGMLType,
                             int *pnWidth,
                             int *pnPrecision)
@@ -79,19 +79,19 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
                         "restriction.fractionDigits.value", "0" );
         *pnWidth = atoi(pszWidth);
         *pnPrecision = atoi(pszPrecision);
-        return TRUE;
+        return true;
     }
     
      else if( EQUAL(pszBase,"float") )
     {
         *pGMLType = GMLPT_Float;
-        return TRUE;
+        return true;
     }
 
     else if( EQUAL(pszBase,"double") )
     {
         *pGMLType = GMLPT_Real;
-        return TRUE;
+        return true;
     }
 
     else if( EQUAL(pszBase,"integer") )
@@ -101,7 +101,7 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
             CPLGetXMLValue( psTypeNode,
                         "restriction.totalDigits.value", "0" );
         *pnWidth = atoi(pszWidth);
-        return TRUE;
+        return true;
     }
 
     else if( EQUAL(pszBase,"long") )
@@ -111,7 +111,7 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
             CPLGetXMLValue( psTypeNode,
                         "restriction.totalDigits.value", "0" );
         *pnWidth = atoi(pszWidth);
-        return TRUE;
+        return true;
     }
 
     else if( EQUAL(pszBase,"long") )
@@ -121,7 +121,7 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
             CPLGetXMLValue( psTypeNode,
                         "restriction.totalDigits.value", "0" );
         *pnWidth = atoi(pszWidth);
-        return TRUE;
+        return true;
     }
 
     else if( EQUAL(pszBase,"string") )
@@ -131,7 +131,7 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
             CPLGetXMLValue( psTypeNode,
                         "restriction.maxLength.value", "0" );
         *pnWidth = atoi(pszWidth);
-        return TRUE;
+        return true;
     }
 
     /* TODO: Would be nice to have a proper date type */
@@ -139,22 +139,22 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
              EQUAL(pszBase,"dateTime") )
     {
         *pGMLType = GMLPT_String;
-        return TRUE;
+        return true;
     }
 
     else if( EQUAL(pszBase,"boolean") )
     {
         *pGMLType = GMLPT_Boolean;
-        return TRUE;
+        return true;
     }
 
     else if( EQUAL(pszBase,"short") )
     {
         *pGMLType = GMLPT_Short;
-        return TRUE;
+        return true;
     }
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -162,7 +162,7 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
 /************************************************************************/
 
 static
-int LookForSimpleType(CPLXMLNode *psSchemaNode,
+bool LookForSimpleType(CPLXMLNode *psSchemaNode,
                       const char* pszStrippedNSType,
                       GMLPropertyType *pGMLType,
                       int *pnWidth,
@@ -180,7 +180,7 @@ int LookForSimpleType(CPLXMLNode *psSchemaNode,
         }
     }
     if (psThis == NULL)
-        return FALSE;
+        return false;
 
     return GetSimpleTypeProperties(psThis, pGMLType, pnWidth, pnPrecision);
 }
@@ -352,7 +352,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
     CPLXMLNode *psAttrDef;
     int nAttributeIndex = 0;
 
-    int bGotUnrecognizedType = FALSE;
+    bool bGotUnrecognizedType = false;
 
     for( psAttrDef = psAttrSeq->psChild;
             psAttrDef != NULL;
@@ -375,8 +375,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         if( strcmp(psAttrDef->pszValue,"choice") == 0 )
         {
             CPLXMLNode* psChild = psAttrDef->psChild;
-            int bPolygon = FALSE;
-            int bMultiPolygon = FALSE;
+            bool bPolygon = false;
+            bool bMultiPolygon = false;
             for( ; psChild; psChild = psChild->psNext )
             {
                 if( psChild->eType != CXT_Element )
@@ -387,9 +387,9 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                     if( pszRef != NULL )
                     {
                         if( strcmp(pszRef, "gml:polygonProperty") == 0 )
-                            bPolygon = TRUE;
+                            bPolygon = true;
                         else if( strcmp(pszRef, "gml:multiPolygonProperty") == 0 )
-                            bMultiPolygon = TRUE;
+                            bMultiPolygon = true;
                         else
                         {
                             delete poClass;
@@ -406,7 +406,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             if( bPolygon && bMultiPolygon )
             {
                 poClass->AddGeometryProperty( new GMLGeometryPropertyDefn(
-                    "", "", wkbMultiPolygon, nAttributeIndex, TRUE ) );
+                    "", "", wkbMultiPolygon, nAttributeIndex, true ) );
 
                 nAttributeIndex ++;
             }
@@ -496,7 +496,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 }
 
                 if (poClass->GetGeometryPropertyCount() == 0)
-                    bGotUnrecognizedType = TRUE;
+                    bGotUnrecognizedType = true;
 
                 continue;
             }
@@ -615,7 +615,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                         else
                         {
                             poClass->AddGeometryProperty( new GMLGeometryPropertyDefn(
-                                pszElementName, pszElementName, psIter->eType, nAttributeIndex, TRUE ) );
+                                pszElementName, pszElementName, psIter->eType, nAttributeIndex, true ) );
 
                             nAttributeIndex ++;
                         }
@@ -635,7 +635,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 }
 
                 if (poClass->GetGeometryPropertyCount() == 0)
-                    bGotUnrecognizedType = TRUE;
+                    bGotUnrecognizedType = true;
 
                 continue;
             }
@@ -702,13 +702,13 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
     if( poClass->GetGeometryPropertyCount() == 0 &&
         bGotUnrecognizedType )
     {
-        poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", "", wkbUnknown, -1, TRUE ) );
+        poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", "", wkbUnknown, -1, true ) );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Class complete, add to reader class list.                       */
 /* -------------------------------------------------------------------- */
-    poClass->SetSchemaLocked( TRUE );
+    poClass->SetSchemaLocked( true );
 
     return poClass;
 }
@@ -785,12 +785,12 @@ void CPLXMLSchemaResolveInclude( const char* pszMainSchemaLocation,
 {
     std::set<CPLString> osAlreadyIncluded;
 
-    int bTryAgain;
+    bool bTryAgain;
     do
     {
         CPLXMLNode *psThis;
         CPLXMLNode *psLast = NULL;
-        bTryAgain = FALSE;
+        bTryAgain = false;
 
         for( psThis = psSchemaNode->psChild; 
             psThis != NULL; psThis = psThis->psNext )
@@ -840,7 +840,7 @@ void CPLXMLSchemaResolveInclude( const char* pszMainSchemaLocation,
 
                                 /* In case the included schema also contains */
                                 /* includes */
-                                bTryAgain = TRUE;
+                                bTryAgain = true;
                             }
 
                         }
@@ -865,15 +865,15 @@ void CPLXMLSchemaResolveInclude( const char* pszMainSchemaLocation,
 /*                          GMLParseXSD()                               */
 /************************************************************************/
 
-int GMLParseXSD( const char *pszFile,
+bool GMLParseXSD( const char *pszFile,
                  std::vector<GMLFeatureClass*> & aosClasses,
-                 int& bFullyUnderstood)
+                 bool& bFullyUnderstood)
 
 {
-    bFullyUnderstood = FALSE;
+    bFullyUnderstood = false;
 
     if( pszFile == NULL )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Load the raw XML file.                                          */
@@ -881,7 +881,7 @@ int GMLParseXSD( const char *pszFile,
     CPLXMLNode *psXSDTree = GMLParseXMLFile( pszFile );
     
     if( psXSDTree == NULL )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Strip off any namespace qualifiers.                             */
@@ -895,7 +895,7 @@ int GMLParseXSD( const char *pszFile,
     if( psSchemaNode == NULL )
     {
         CPLDestroyXMLNode( psXSDTree );
-        return FALSE;
+        return false;
     }
 
 /* ==================================================================== */
@@ -905,7 +905,7 @@ int GMLParseXSD( const char *pszFile,
 
     //CPLSerializeXMLTreeToFile(psSchemaNode, "/vsistdout/");
 
-    bFullyUnderstood = TRUE;
+    bFullyUnderstood = true;
 
 /* ==================================================================== */
 /*      Process each feature class definition.                          */
@@ -965,7 +965,7 @@ int GMLParseXSD( const char *pszFile,
                 if (poClass)
                     aosClasses.push_back(poClass);
                 else
-                    bFullyUnderstood = FALSE;
+                    bFullyUnderstood = false;
             }
             continue;
         }
@@ -1005,15 +1005,15 @@ int GMLParseXSD( const char *pszFile,
         if (poClass)
             aosClasses.push_back(poClass);
         else
-            bFullyUnderstood = FALSE;
+            bFullyUnderstood = false;
     }
 
     CPLDestroyXMLNode( psXSDTree );
 
     if( aosClasses.size() > 0 )
     {
-        return TRUE;
+        return true;
     }
     else
-        return FALSE;
+        return false;
 }

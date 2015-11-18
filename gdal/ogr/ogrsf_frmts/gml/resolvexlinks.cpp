@@ -179,11 +179,11 @@ static void RemoveIDs( CPLXMLNode * psRoot )
 /*      Returns TRUE if there is a gml:id node in the descendents.      */
 /************************************************************************/
 
-static int TrimTree( CPLXMLNode * psRoot )
+static bool TrimTree( CPLXMLNode * psRoot )
 
 {
     if( psRoot == NULL )
-        return FALSE;
+        return false;
 
     CPLXMLNode *psChild = psRoot->psChild;
 
@@ -192,10 +192,10 @@ static int TrimTree( CPLXMLNode * psRoot )
         psChild = psChild->psNext;
 
     if( psChild != NULL )
-        return TRUE;
+        return true;
 
 // search the child elements of psRoot
-    int bReturn = FALSE, bRemove;
+    bool bReturn = false, bRemove;
     for( psChild = psRoot->psChild; psChild != NULL;)
     {
         CPLXMLNode* psNextChild = psChild->psNext;
@@ -527,13 +527,13 @@ static CPLErr Resolve( CPLXMLNode * psNode,
 /*      saved to.                                                       */
 /************************************************************************/
 
-int GMLReader::ResolveXlinks( const char *pszFile,
-                              int* pbOutIsTempFile,
+bool GMLReader::ResolveXlinks( const char *pszFile,
+                              bool* pbOutIsTempFile,
                               char **papszSkip,
-                              const int bStrict)
+                              const bool bStrict)
 
 {
-    *pbOutIsTempFile = FALSE;
+    *pbOutIsTempFile = false;
 
 // Check if the original source file is set.
     if( m_pszFilename == NULL )
@@ -541,7 +541,7 @@ int GMLReader::ResolveXlinks( const char *pszFile,
         CPLError( CE_Failure, CPLE_NotSupported,
                   "GML source file needs to be set first with "
                   "GMLReader::SetSourceFile()." );
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -554,7 +554,7 @@ int GMLReader::ResolveXlinks( const char *pszFile,
     if( papsSrcTree[0] == NULL )
     {
         CPLFree(papsSrcTree);
-        return FALSE;
+        return false;
     }
 
     //make all the URLs absolute
@@ -571,23 +571,23 @@ int GMLReader::ResolveXlinks( const char *pszFile,
     CPLErr eReturned = CE_None;
     eReturned = Resolve( papsSrcTree[0], &papsSrcTree, &papszResourceHREF, papszSkip, bStrict );
 
-    int bReturn = TRUE;
+    bool bReturn = true;
     if( eReturned != CE_Failure )
     {
         char *pszTmpName = NULL;
-        int bTryWithTempFile = FALSE;
+        bool bTryWithTempFile = false;
         if( STARTS_WITH_CI(pszFile, "/vsitar/") ||
             STARTS_WITH_CI(pszFile, "/vsigzip/") ||
             STARTS_WITH_CI(pszFile, "/vsizip/") )
         {
-            bTryWithTempFile = TRUE;
+            bTryWithTempFile = true;
         }
         else if( !CPLSerializeXMLTreeToFile( papsSrcTree[0], pszFile ) )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Cannot serialize resolved file %s to %s.",
                       m_pszFilename, pszFile );
-            bTryWithTempFile = TRUE;
+            bTryWithTempFile = true;
         }
 
         if (bTryWithTempFile)
@@ -599,14 +599,14 @@ int GMLReader::ResolveXlinks( const char *pszFile,
                           "Cannot serialize resolved file %s to %s either.",
                           m_pszFilename, pszTmpName );
                 CPLFree( pszTmpName );
-                bReturn = FALSE;
+                bReturn = false;
             }
             else
             {
             //set the source file to the resolved file
                 CPLFree( m_pszFilename );
                 m_pszFilename = pszTmpName;
-                *pbOutIsTempFile = TRUE;
+                *pbOutIsTempFile = true;
             }
         }
         else
@@ -618,7 +618,7 @@ int GMLReader::ResolveXlinks( const char *pszFile,
     }
     else
     {
-        bReturn = FALSE;
+        bReturn = false;
     }
 
     int nItems = CSLCount( papszResourceHREF );
