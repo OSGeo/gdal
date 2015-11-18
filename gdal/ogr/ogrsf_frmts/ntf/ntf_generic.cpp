@@ -215,7 +215,7 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
                       {
                           poClass->CheckAddAttr( poAttDesc->val_type,
                                                  poAttDesc->finter,
-                                                 strlen(papszValues[iAtt]) );
+                                                 static_cast<int>(strlen(papszValues[iAtt])) );
                       }
 
                       if( CSLFindString( papszFullAttList, 

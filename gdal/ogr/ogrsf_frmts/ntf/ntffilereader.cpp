@@ -364,12 +364,12 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         {
             int         iChar;
             pszProduct = CPLStrdup(poRecord->GetField(3,22));
-            for( iChar = strlen(pszProduct)-1;
+            for( iChar = static_cast<int>(strlen(pszProduct))-1;
                  iChar > 0 && pszProduct[iChar] == ' ';
                  pszProduct[iChar--] = '\0' ) {}
 
             pszPVName = CPLStrdup(poRecord->GetField(76+3,76+22));
-            for( iChar = strlen(pszPVName)-1;
+            for( iChar = static_cast<int>(strlen(pszPVName))-1;
                  iChar > 0 && pszPVName[iChar] == ' ';
                  pszPVName[iChar--] = '\0' ) {}
 
@@ -1004,7 +1004,7 @@ int NTFFileReader::ProcessAttValue( const char *pszValType,
              *pszDecimalPortion != ',' && *pszDecimalPortion != '\0';
              pszDecimalPortion++ ) {}
 
-        nWidth = strlen(pszRawValue);
+        nWidth = static_cast<int>(strlen(pszRawValue));
         nPrecision = atoi(pszDecimalPortion+1);
 
         strncpy( szRealString, pszRawValue, nWidth - nPrecision );
