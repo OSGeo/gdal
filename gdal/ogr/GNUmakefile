@@ -88,5 +88,8 @@ parser:
 	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < swq_parser.cpp > swq_parser.cpp.tmp
 	mv swq_parser.cpp.tmp swq_parser.cpp
 
+# The sed hack is to please MSVC
 osr_cs_wkt_parser:
 	bison --no-lines -p osr_cs_wkt_ -d -oosr_cs_wkt_parser.c osr_cs_wkt_grammar.y
+	sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" < osr_cs_wkt_parser.c > osr_cs_wkt_parser.c.tmp
+	mv osr_cs_wkt_parser.c.tmp osr_cs_wkt_parser.c
