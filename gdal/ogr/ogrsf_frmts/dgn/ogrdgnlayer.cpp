@@ -375,8 +375,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
                 sprintf( szEntityList + nEntityLen, "%d", anEntityNum[iLink]);
                 sprintf( szMSLinkList + nMSLinkLen, "%d", anMSLink[iLink] );
                 
-                nEntityLen += strlen(szEntityList + nEntityLen );
-                nMSLinkLen += strlen(szMSLinkList + nMSLinkLen );
+                nEntityLen += static_cast<int>(strlen(szEntityList + nEntityLen ));
+                nMSLinkLen += static_cast<int>(strlen(szMSLinkList + nMSLinkLen ));
             }
 
             poFeature->SetField( "EntityNum", szEntityList );
@@ -1096,7 +1096,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
             asPoints[0].y = 0;
             asPoints[0].z = 0;
             papsGroup[0] = DGNCreateCellHeaderFromGroup(hDGN, "", 1, NULL,
-                    dgnElements.size(), papsGroup + 1, asPoints + 0, 1.0, 1.0,
+                     static_cast<int>(dgnElements.size()), papsGroup + 1, asPoints + 0, 1.0, 1.0,
                     0.0);
             DGNAddShapeFillInfo(hDGN, papsGroup[0], 6);
         } else {

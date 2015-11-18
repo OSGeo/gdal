@@ -468,7 +468,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     else if( psSrcElement->stype == DGNST_MULTIPOINT )
     {
         DGNElemMultiPoint *psMP, *psSrcMP;
-        int               nSize;
+        size_t             nSize;
 
         psSrcMP = (DGNElemMultiPoint *) psSrcElement;
 
@@ -492,7 +492,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     else if( psSrcElement->stype == DGNST_TEXT )
     {
         DGNElemText       *psText, *psSrcText;
-        int               nSize;
+        size_t             nSize;
 
         psSrcText = (DGNElemText *) psSrcElement;
         nSize = sizeof(DGNElemText) + strlen(psSrcText->string);
@@ -630,7 +630,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     else if( psSrcElement->stype == DGNST_BSPLINE_SURFACE_BOUNDARY )
     {
         DGNElemBSplineSurfaceBoundary *psBSB, *psSrcBSB;
-        int               nSize;
+        size_t             nSize;
 
         psSrcBSB = (DGNElemBSplineSurfaceBoundary *) psSrcElement;
 
@@ -645,7 +645,8 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     else if( psSrcElement->stype == DGNST_KNOT_WEIGHT )
     {
         DGNElemKnotWeight *psArray /* , *psSrcArray*/;
-        int               nSize, numelems;
+        size_t             nSize;
+        int                numelems;
 
         // FIXME: Is it OK to assume that the # of elements corresponds
         // directly to the element size? kintel 20051218.
@@ -1445,9 +1446,9 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
 /*      Setup Raw data for the text specific portion.                   */
 /* -------------------------------------------------------------------- */
     if( psDGN->dimension == 2 )
-        psCore->raw_bytes = 60 + strlen(pszText);
+        psCore->raw_bytes = 60 + static_cast<int>(strlen(pszText));
     else
-        psCore->raw_bytes = 76 + strlen(pszText);
+        psCore->raw_bytes = 76 + static_cast<int>(strlen(pszText));
 
     psCore->raw_bytes += (psCore->raw_bytes % 2);
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);

@@ -118,7 +118,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /*      Verify the format ... add later.                                */
 /* -------------------------------------------------------------------- */
     GByte abyHeader[512];
-    const size_t nHeaderBytes = VSIFRead( abyHeader, 1, sizeof(abyHeader), fp );
+    const int nHeaderBytes = static_cast<int>(VSIFRead( abyHeader, 1, sizeof(abyHeader), fp ));
     if( !DGNTestOpen( abyHeader, nHeaderBytes ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,

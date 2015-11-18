@@ -1249,8 +1249,9 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
 {
     DGNElemCore *psElement;
     DGNElemTagSet *psTagSet;
-    int          nDataOffset, iTag;
-            
+    size_t      nDataOffset;
+    int         iTag;
+
     psTagSet = (DGNElemTagSet *) CPLCalloc(sizeof(DGNElemTagSet),1);
     psElement = (DGNElemCore *) psTagSet;
     psElement->stype = DGNST_TAG_SET;
@@ -1291,7 +1292,7 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
     {
         DGNTagDef *tagDef = psTagSet->tagList + iTag;
 
-        CPLAssert( nDataOffset < psDGN->nElemBytes );
+        CPLAssert( nDataOffset < static_cast<size_t>(psDGN->nElemBytes) );
 
         /* collect tag name. */
         tagDef->name = CPLStrdup( (char *) psDGN->abyElem + nDataOffset );

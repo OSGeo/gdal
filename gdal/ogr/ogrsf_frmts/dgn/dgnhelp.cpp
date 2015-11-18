@@ -1046,7 +1046,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                 fprintf( fp, ", EntityNum=%d, MSLink=%d", 
                          nEntityNum, nMSLink );
 
-            int nBytes = psElement->attr_data + psElement->attr_bytes - pabyData;
+            int nBytes = static_cast<int>(psElement->attr_data + psElement->attr_bytes - pabyData);
             if( nBytes < nLinkSize )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
