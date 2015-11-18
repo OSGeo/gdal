@@ -177,9 +177,9 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
     if (pszcomment == NULL)
         pszcomment = CPLStrdup( "" );
 
-    const int commentLength = strlen(pszcomment);
+    const size_t commentLength = strlen(pszcomment);
 
-    const int bufferSize = 27 + commentLength;
+    const size_t bufferSize = 27 + commentLength;
     void* pBuffer = CPLMalloc(bufferSize);
     void* pBufferAux = pBuffer;
     /* Write waypoint name to buffer */
@@ -328,7 +328,7 @@ OGRFeature* GTMWaypointLayer::GetNextFeature()
                                  brokendownTime.tm_mday,
                                  brokendownTime.tm_hour,
                                  brokendownTime.tm_min,
-                                 brokendownTime.tm_sec);
+                                 static_cast<float>(brokendownTime.tm_sec));
         }
         
         poFeature->SetFID( nNextFID++ );

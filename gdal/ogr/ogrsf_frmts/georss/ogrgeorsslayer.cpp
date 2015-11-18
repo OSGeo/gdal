@@ -957,7 +957,7 @@ static int OGRGeoRSSLayerIsStandardFieldInternal(const char* pszName,
         const char* pszUnderscore = strchr(papszNames[i], '_');
         if (pszUnderscore == NULL)
         {
-            int nLen = strlen(papszNames[i]);
+            size_t nLen = strlen(papszNames[i]);
             if (strncmp(pszName, papszNames[i], nLen) == 0)
             {
                 int k = nLen;
@@ -969,10 +969,10 @@ static int OGRGeoRSSLayerIsStandardFieldInternal(const char* pszName,
         }
         else
         {
-            int nLen = pszUnderscore - papszNames[i];
+            size_t nLen = static_cast<size_t>(pszUnderscore - papszNames[i]);
             if (strncmp(pszName, papszNames[i], nLen) == 0)
             {
-                int k = nLen;
+                size_t k = nLen;
                 while(pszName[k] >= '0' && pszName[k] <= '9')
                     k++;
                 if (pszName[k] == '_' && strcmp(pszName + k, pszUnderscore) == 0)

@@ -146,7 +146,7 @@ void  OGRXPlaneLayer::AutoAdjustColumnsWidth()
                 int nMaxLen = 0;
                 for(int i=0;i<nFeatureArraySize;i++)
                 {
-                    int nLen = strlen(papoFeatures[i]->GetFieldAsString(col));
+                    int nLen = static_cast<int>(strlen(papoFeatures[i]->GetFieldAsString(col)));
                     if (nLen > nMaxLen)
                         nMaxLen = nLen;
                 }
