@@ -1002,7 +1002,8 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                                                     brokendowntime.tm_mday,
                                                     brokendowntime.tm_hour,
                                                     brokendowntime.tm_min,
-                                                    brokendowntime.tm_sec + fmod(dfAvg, 1), 0);
+                                                    static_cast<float>(brokendowntime.tm_sec + fmod(dfAvg, 1)),
+                                                    0);
                     }
                     else
                         poSummaryFeature->SetField( iField,
@@ -1188,7 +1189,7 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
             case OFTString:
             {
                 char *pszEscaped = CPLEscapeString( psSrcField->String, 
-                                                    strlen(psSrcField->String),
+                                                    static_cast<int>(strlen(psSrcField->String)),
                                                     CPLES_SQL );
                 CPLString osRes = "'";
                 osRes += pszEscaped;
