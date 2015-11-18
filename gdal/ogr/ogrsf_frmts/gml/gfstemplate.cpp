@@ -76,7 +76,7 @@ public:
         if (poClass != NULL)
             poClass->SetFeatureCount( 0 );
     }
-    int m_bValid = FALSE;
+    bool bValid = false;
     GFSTemplateItem *pItem = pCC->GetFirst();
     while ( pItem != NULL )
     {
@@ -86,12 +86,12 @@ public:
         {
             poClass->SetFeatureCount( pItem->GetCount() );
             if ( pItem->GetGeomCount() != 0 && poClass->GetGeometryPropertyCount() == 0 )
-                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", "", wkbUnknown, -1, TRUE ) );
-            m_bValid = TRUE;
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", "", wkbUnknown, -1, true ) );
+            bValid = true;
         }
         pItem = pItem->GetNext();
     }
-    if ( m_bValid == TRUE && pCC->HaveSequentialLayers() == TRUE )
+    if ( bValid && pCC->HaveSequentialLayers() )
         *pbSequentialLayers = TRUE;
 }
 
@@ -99,7 +99,7 @@ public:
 /*       GMLReader::ReArrangeTemplateClasses()     */
 /***************************************************/
 
-int GMLReader::ReArrangeTemplateClasses ( GFSTemplateList *pCC )
+bool GMLReader::ReArrangeTemplateClasses ( GFSTemplateList *pCC )
 {
 /* rearranging the final FeatureClass list [SEQUENTIAL] */
     int m_nSavedClassCount = GetClassCount();
@@ -115,7 +115,7 @@ int GMLReader::ReArrangeTemplateClasses ( GFSTemplateList *pCC )
     }
 
 /* cleaning the previous FeatureClass list */
-    SetClassListLocked( FALSE );
+    SetClassListLocked( false );
     CPLFree( m_papoClass );
     m_nClassCount = 0;
     m_papoClass = NULL;
@@ -144,37 +144,36 @@ int GMLReader::ReArrangeTemplateClasses ( GFSTemplateList *pCC )
         }
         pItem = pItem->GetNext();
     }
-    SetClassListLocked( TRUE );
+    SetClassListLocked( true );
 
 /* destroying the saved List and any unused FeatureClass */
     for( int iClass = 0; iClass < m_nSavedClassCount; iClass++ )
     {
-        int bUnused = TRUE;
+        bool bUnused = true;
         GMLFeatureClass* poClass = m_papoSavedClass[iClass];
         for( int iClass2 = 0; iClass2 < m_nClassCount; iClass2++ )
         {
             if (m_papoClass[iClass2] == poClass)
             {
-                bUnused = FALSE;
+                bUnused = false;
                 break;
             }
         }
-        if ( bUnused == TRUE )
+        if ( bUnused )
             delete poClass;
     }
     CPLFree( m_papoSavedClass );
-    return 1;
+    return true;
 }
 
 /***************************************************/
 /*       GMLReader::PrescanForTemplate()           */
 /***************************************************/
 
-int GMLReader::PrescanForTemplate ()
+bool GMLReader::PrescanForTemplate ()
 {
     int iCount = 0;
     GMLFeature      *poFeature;
-    //int bSequentialLayers = TRUE;
     GFSTemplateList *pCC = new GFSTemplateList();
 
     /* processing GML features */
@@ -182,7 +181,7 @@ int GMLReader::PrescanForTemplate ()
     {
         GMLFeatureClass *poClass = poFeature->GetClass();
         const CPLXMLNode* const * papsGeomList = poFeature->GetGeometryList();
-        int b_has_geom = FALSE;
+        bool b_has_geom = false;
 
         if( papsGeomList != NULL )
         {
@@ -190,7 +189,7 @@ int GMLReader::PrescanForTemplate ()
             const CPLXMLNode *psNode = papsGeomList[i];
             while( psNode != NULL )
             {
-                b_has_geom = TRUE;
+                b_has_geom = true;
                 i++;
                 psNode = papsGeomList[i];
             }
@@ -200,8 +199,8 @@ int GMLReader::PrescanForTemplate ()
         delete poFeature;
     }
 
-    gmlUpdateFeatureClasses( pCC, this, &m_bSequentialLayers );
-    if ( m_bSequentialLayers == TRUE )
+    gmlUpdateFeatureClasses( pCC, this, &m_nHasSequentialLayers );
+    if ( m_nHasSequentialLayers == TRUE )
         ReArrangeTemplateClasses( pCC );
     iCount = pCC->GetClassCount();
     delete pCC;
@@ -216,7 +215,7 @@ int GMLReader::PrescanForTemplate ()
 
 GFSTemplateList::GFSTemplateList( void )
 {
-    m_bSequentialLayers = TRUE;
+    m_bSequentialLayers = true;
     pFirst = NULL;
     pLast = NULL;
 }
@@ -283,7 +282,7 @@ void GFSTemplateList::Update( const char *pszName, int bHasGeom )
         if( EQUAL(pszName, pItem->GetName() ))
         {
         /* Class Item previously declared: NOT SEQUENTIAL */
-            m_bSequentialLayers = FALSE;
+            m_bSequentialLayers = false;
             pItem->Update( bHasGeom );
             return;
         }

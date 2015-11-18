@@ -55,7 +55,7 @@ GMLPropertyDefn::GMLPropertyDefn( const char *pszName,
     m_nWidth = 0; 
     m_nPrecision = 0;
     m_pszCondition = NULL;
-    m_bNullable = TRUE;
+    m_bNullable = true;
 }
 
 /************************************************************************/
@@ -108,13 +108,13 @@ void GMLPropertyDefn::SetCondition( const char *pszCondition )
 /************************************************************************/
 
 void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
-                                            int bSetWidth )
+                                            bool bSetWidth )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Does the string consist entirely of numeric values?             */
 /* -------------------------------------------------------------------- */
-    int bIsReal = FALSE;
+    bool bIsReal = false;
 
     int j;
     for(j=0;j<psGMLProperty->nSubProperties;j++)
@@ -216,7 +216,7 @@ GMLGeometryPropertyDefn::GMLGeometryPropertyDefn( const char *pszName,
                                                   const char *pszSrcElement,
                                                   int nType,
                                                   int nAttributeIndex,
-                                                  int bNullable )
+                                                  bool bNullable )
 {
     m_pszName = (pszName == NULL || pszName[0] == '\0') ?
                         CPLStrdup(pszSrcElement) : CPLStrdup(pszName);

@@ -84,9 +84,9 @@ NASHandler::NASHandler( NASReader *poReader ) :
     m_nGeometryDepth(0),
     m_nDepth(0),
     m_nDepthFeature(0),
-    m_bIgnoreFeature(FALSE),
-    m_bInUpdate(FALSE),
-    m_bInUpdateProperty(FALSE),
+    m_bIgnoreFeature(false),
+    m_bInUpdate(false),
+    m_bInUpdateProperty(false),
     m_nDepthElement(0)
 { }
 
@@ -230,14 +230,14 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
         if ( pszFilteredClassName != NULL &&
              strcmp("Delete", pszFilteredClassName) != 0 )
         {
-            m_bIgnoreFeature = TRUE;
+            m_bIgnoreFeature = true;
             m_nDepthFeature = m_nDepth;
             m_nDepth ++;
 
             return;
         }
 
-        m_bIgnoreFeature = FALSE;
+        m_bIgnoreFeature = false;
 
         m_poReader->PushFeature( "Delete", attrs );
 
@@ -303,14 +303,14 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
         if ( pszFilteredClassName != NULL &&
              strcmp(szElementName, pszFilteredClassName) != 0 )
         {
-            m_bIgnoreFeature = TRUE;
+            m_bIgnoreFeature = true;
             m_nDepthFeature = m_nDepth;
             m_nDepth ++;
 
             return;
         }
 
-        m_bIgnoreFeature = FALSE;
+        m_bIgnoreFeature = false;
 
         m_poReader->PushFeature( szElementName, attrs );
 
@@ -345,13 +345,13 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
 
         if( EQUAL(szElementName,"Update") )
         {
-            m_bInUpdate = TRUE;
+            m_bInUpdate = true;
         }
     }
 
     else if ( m_bInUpdate && EQUAL(szElementName, "Property") )
     {
-        m_bInUpdateProperty = TRUE;
+        m_bInUpdateProperty = true;
     }
 
     else if ( m_bInUpdateProperty && ( EQUAL(szElementName, "Name" ) || EQUAL(szElementName, "Value" ) ) )
@@ -436,7 +436,7 @@ void NASHandler::endElement(CPL_UNUSED const XMLCh* const uri,
     {
         if (m_nDepth == m_nDepthFeature)
         {
-            m_bIgnoreFeature = FALSE;
+            m_bIgnoreFeature = false;
             m_nDepthFeature = 0;
         }
         return;
@@ -496,7 +496,7 @@ void NASHandler::endElement(CPL_UNUSED const XMLCh* const uri,
 
            m_osLastPropertyName = "";
            m_osLastPropertyValue = "";
-           m_bInUpdateProperty = FALSE;
+           m_bInUpdateProperty = false;
        }
 
        poState->PopPath();
@@ -506,7 +506,7 @@ void NASHandler::endElement(CPL_UNUSED const XMLCh* const uri,
 
    if ( m_bInUpdate && EQUAL( szElementName, "Update" ) )
    {
-       m_bInUpdate = FALSE;
+       m_bInUpdate = false;
    }
 
 /* -------------------------------------------------------------------- */
@@ -639,7 +639,7 @@ void NASHandler::endElement(CPL_UNUSED const XMLCh* const uri,
             poState->PopPath();
         else
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
         }
     }
 }
@@ -729,7 +729,7 @@ void NASHandler::fatalError( const SAXParseException &exception)
 /*                         IsGeometryElement()                          */
 /************************************************************************/
 
-int NASHandler::IsGeometryElement( const char *pszElement )
+bool NASHandler::IsGeometryElement( const char *pszElement )
 
 {
     return strcmp(pszElement,"Polygon") == 0

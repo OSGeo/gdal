@@ -43,15 +43,15 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRGMLLayer::OGRGMLLayer( const char * pszName,
-                          int bWriterIn,
+                          bool bWriterIn,
                           OGRGMLDataSource *poDSIn )
 
 {
     iNextGMLId = 0;
     nTotalGMLCount = -1;
-    bInvalidFIDFound = FALSE;
+    bInvalidFIDFound = false;
     pszFIDPrefix = NULL;
-    bFaceHoleNegative = FALSE;
+    bFaceHoleNegative = false;
         
     poDS = poDSIn;
 
@@ -64,7 +64,7 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
     poFeatureDefn->SetGeomType( wkbNone );
 
     bWriter = bWriterIn;
-    bSameSRS = FALSE;
+    bSameSRS = false;
 
 /* -------------------------------------------------------------------- */
 /*      Reader's should get the corresponding GMLFeatureClass and       */
@@ -79,10 +79,10 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
 
     /* Compatibility option. Not advertized, because hopefully won't be needed */
     /* Just put here in provision... */
-    bUseOldFIDFormat = CSLTestBoolean(CPLGetConfigOption("GML_USE_OLD_FID_FORMAT", "FALSE"));
+    bUseOldFIDFormat = CSLTestBoolean(CPLGetConfigOption("GML_USE_OLD_FID_FORMAT", "FALSE")) != FALSE;
 
     /* Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer() and GMLReader::GMLReader() */
-    bFaceHoleNegative = CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
+    bFaceHoleNegative = CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")) != FALSE;
 
 }
 
@@ -220,7 +220,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         }
         else if( pszGML_FID == NULL )
         {
-            bInvalidFIDFound = TRUE;
+            bInvalidFIDFound = true;
             nFID = iNextGMLId++;
         }
         else if( iNextGMLId == 0 )
@@ -245,7 +245,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
             else
             {
-                bInvalidFIDFound = TRUE;
+                bInvalidFIDFound = true;
                 nFID = iNextGMLId++;
             }
         }
@@ -264,7 +264,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
             else
             { /* fid without the aforementioned prefix or a valid numerical part */
-                bInvalidFIDFound = TRUE;
+                bInvalidFIDFound = true;
                 nFID = iNextGMLId++;
             }
         }
@@ -289,7 +289,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                     const CPLXMLNode* myGeometryList[2];
                     myGeometryList[0] = psGeom;
                     myGeometryList[1] = NULL;
-                    poGeom = GML_BuildOGRGeometryFromList(myGeometryList, TRUE,
+                    poGeom = GML_BuildOGRGeometryFromList(myGeometryList, true,
                                                   poDS->GetInvertAxisOrderIfLatLong(),
                                                   pszSRSName,
                                                   poDS->GetConsiderEPSGAsURN(),
@@ -337,7 +337,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         else if (papsGeometry[0] != NULL)
         {
             const char* pszSRSName = poDS->GetGlobalSRSName();
-            poGeom = GML_BuildOGRGeometryFromList(papsGeometry, TRUE,
+            poGeom = GML_BuildOGRGeometryFromList(papsGeometry, true,
                                                   poDS->GetInvertAxisOrderIfLatLong(),
                                                   pszSRSName,
                                                   poDS->GetConsiderEPSGAsURN(),
@@ -652,7 +652,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
 
     if( iNextGMLId == 0 )
     {
-        bSameSRS = TRUE;
+        bSameSRS = true;
         for( int iGeomField = 1; iGeomField < poFeatureDefn->GetGeomFieldCount(); iGeomField++ )
         {
             OGRGeomFieldDefn *poFieldDefn0 = poFeatureDefn->GetGeomFieldDefn(0);
@@ -660,13 +660,13 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
             OGRSpatialReference* poSRS0 = poFieldDefn0->GetSpatialRef();
             OGRSpatialReference* poSRS = poFieldDefn->GetSpatialRef();
             if( poSRS0 != NULL && poSRS == NULL )
-                bSameSRS = FALSE;
+                bSameSRS = false;
             else if( poSRS0 == NULL && poSRS != NULL )
-                bSameSRS = FALSE;
+                bSameSRS = false;
             else if( poSRS0 != NULL && poSRS != NULL &&
                      poSRS0 != poSRS && !poSRS0->IsSame(poSRS) )
             {
-                bSameSRS = FALSE;
+                bSameSRS = false;
             }
         }
     }
@@ -741,7 +741,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
 
             if (bIsGML3Output && poDS->WriteFeatureBoundedBy())
             {
-                int bCoordSwap;
+                bool bCoordSwap;
 
                 char* pszSRSName = GML_GetSRSName(poGeom->getSpatialReference(), poDS->IsLongSRSRequired(), &bCoordSwap);
                 char szLowerCorner[75], szUpperCorner[75];

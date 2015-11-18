@@ -60,13 +60,13 @@ class NASHandler : public DefaultHandler
     int        m_nGeomLen;
 
     int        m_nGeometryDepth;
-    int        IsGeometryElement( const char * );
+    bool       IsGeometryElement( const char * );
 
     int        m_nDepth;
     int        m_nDepthFeature;
-    int        m_bIgnoreFeature;
-    int        m_bInUpdate;
-    int        m_bInUpdateProperty;
+    bool       m_bIgnoreFeature;
+    bool       m_bInUpdate;
+    bool       m_bInUpdateProperty;
     int        m_nDepthElement;
     CPLString  m_osIgnoredElement;
 
@@ -144,7 +144,7 @@ public:
 class NASReader : public IGMLReader
 {
 private:
-    int           m_bClassListLocked;
+    bool         m_bClassListLocked;
 
     int         m_nClassCount;
     GMLFeatureClass **m_papoClass;
@@ -153,14 +153,14 @@ private:
 
     NASHandler    *m_poNASHandler;
     SAX2XMLReader *m_poSAXReader;
-    int           m_bReadStarted;
+    bool          m_bReadStarted;
     XMLPScanToken m_oToFill;
 
     GMLReadState *m_poState;
 
     GMLFeature   *m_poCompleteFeature;
 
-    int           SetupParser();
+    bool          SetupParser();
     void          CleanupParser();
 
     char         *m_pszFilteredClassName;
@@ -169,8 +169,8 @@ public:
                 NASReader();
     virtual     ~NASReader();
 
-    int              IsClassListLocked() const { return m_bClassListLocked; }
-    void             SetClassListLocked( int bFlag )
+    bool            IsClassListLocked() const { return m_bClassListLocked; }
+    void             SetClassListLocked( bool bFlag )
         { m_bClassListLocked = bFlag; }
 
     void             SetSourceFile( const char *pszFilename );
@@ -185,24 +185,24 @@ public:
 
     GMLFeature       *NextFeature();
 
-    int              LoadClasses( const char *pszFile = NULL );
-    int              SaveClasses( const char *pszFile = NULL );
+    bool             LoadClasses( const char *pszFile = NULL );
+    bool             SaveClasses( const char *pszFile = NULL );
 
-    int              PrescanForSchema(int bGetExtents = TRUE,
-                                      int bAnalyzeSRSPerFeature = TRUE,
-                                      int bOnlyDetectSRS = FALSE);
-    int              PrescanForTemplate( void );
+    bool             PrescanForSchema(bool bGetExtents = true,
+                                      bool bAnalyzeSRSPerFeature = true,
+                                      bool bOnlyDetectSRS = false);
+    bool             PrescanForTemplate( void );
     void             ResetReading();
 
-    int              ParseXSD( CPL_UNUSED const char *pszFile ) { return FALSE; }
+    bool             ParseXSD( CPL_UNUSED const char *pszFile ) { return false; }
 
-    int              ResolveXlinks( const char *pszFile,
-                                    int* pbOutIsTempFile,
+    bool             ResolveXlinks( const char *pszFile,
+                                    bool* pbOutIsTempFile,
                                     char **papszSkip = NULL,
-                                    const int bStrict = FALSE );
+                                    const bool bStrict = false );
 
-    int              HugeFileResolver( const char *pszFile,
-                                       int bSqliteIsTempFile,
+    bool             HugeFileResolver( const char *pszFile,
+                                       bool bSqliteIsTempFile,
                                        int iSqliteCacheMB );
 
 // ---
@@ -211,8 +211,8 @@ public:
     void             PopState();
     void             PushState( GMLReadState * );
 
-    int         IsFeatureElement( const char *pszElement );
-    int         IsAttributeElement( const char *pszElement );
+    bool        IsFeatureElement( const char *pszElement );
+    bool        IsAttributeElement( const char *pszElement );
 
     void        PushFeature( const char *pszElement,
                              const Attributes &attrs );
@@ -220,7 +220,7 @@ public:
     void        SetFeaturePropertyDirectly( const char *pszElement,
                                     char *pszValue );
 
-    int         HasStoppedParsing() { return FALSE; }
+    bool        HasStoppedParsing() { return false; }
 
     void        CheckForFID( const Attributes &attrs, char **ppszCurField );
     void        CheckForRelations( const char *pszElement,
@@ -229,9 +229,9 @@ public:
 
     virtual const char* GetGlobalSRSName() { return NULL; }
 
-    virtual int         CanUseGlobalSRSName() { return FALSE; }
+    virtual bool        CanUseGlobalSRSName() { return false; }
 
-    int         SetFilteredClassName(const char* pszClassName);
+    bool        SetFilteredClassName(const char* pszClassName);
     const char* GetFilteredClassName() { return m_pszFilteredClassName; }
 
     static CPLMutex* hMutex;

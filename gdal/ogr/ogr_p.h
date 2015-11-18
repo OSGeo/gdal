@@ -136,12 +136,12 @@ OGRErr CPL_DLL OGRCheckPermutation(int* panPermutation, int nSize);
 /* GML related */
 
 OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
-                                      int bGetSecondaryGeometryOption,
+                                      int nPseudoBoolGetSecondaryGeometryOption,
                                       int nRecLevel = 0,
                                       int nSRSDimension = 0,
-                                      int bIgnoreGSG = FALSE,
-                                      int bOrientation = TRUE,
-                                      int bFaceHoleNegative = FALSE);
+                                      bool bIgnoreGSG = false,
+                                      bool bOrientation = true,
+                                      bool bFaceHoleNegative = false);
 
 /************************************************************************/
 /*                        PostGIS EWKB encoding                         */
