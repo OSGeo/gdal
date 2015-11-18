@@ -1046,7 +1046,7 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
 
         // copy data into record buffer.
         memcpy( achRawData + nRawSize, pszATVL, strlen(pszATVL) );
-        nRawSize += strlen(pszATVL);
+        nRawSize += static_cast<int>(strlen(pszATVL));
         achRawData[nRawSize++] = DDF_UNIT_TERMINATOR;
     
         nACount++;
