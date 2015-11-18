@@ -1539,7 +1539,7 @@ typedef struct {
     sp->bit = BitsAvail;						\
     sp->data = BitAcc;							\
     sp->EOLcnt = EOLcnt;						\
-    rawcc -= (unsigned char *) cp - rawcp;				\
+    rawcc -= (int)((unsigned char *) cp - rawcp);			\
     rawcp = (unsigned char *) cp;					\
 } while (0)
 

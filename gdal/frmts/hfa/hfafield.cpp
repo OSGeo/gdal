@@ -394,7 +394,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
             if( pValue == NULL )
                 nCount = 0;
             else
-                nCount = strlen((char *) pValue) + 1;
+                nCount = static_cast<GUInt32>(strlen((char *) pValue) + 1);
         }
 
         /* set size based on index ... assumes in-order setting of array */
@@ -447,7 +447,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
             if( pValue == NULL )
                 nBytesToCopy = 0;
             else
-                nBytesToCopy = strlen((char *) pValue) + 1;
+                nBytesToCopy = static_cast<int>(strlen((char *) pValue) + 1);
         }
         else
             nBytesToCopy = nBytes;
@@ -1557,7 +1557,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
 
                 VSIFPrintf( fpOut, "\n" );
                 
-                nByteOffset = ((GByte *) pReturn) - pabyData;
+                nByteOffset = static_cast<int>(((GByte *) pReturn) - pabyData);
             
                 sprintf( szLongFieldName, "%s    ", pszPrefix );
             

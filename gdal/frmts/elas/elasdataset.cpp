@@ -94,7 +94,7 @@ ELASHeader::ELASHeader() :
 {
     fill( YLabel, YLabel + CPL_ARRAYSIZE(YLabel), 0 );
     fill( XLabel, XLabel + CPL_ARRAYSIZE(XLabel), 0 );
-    fill( Matrix, Matrix + CPL_ARRAYSIZE(Matrix), 0 );
+    fill( Matrix, Matrix + CPL_ARRAYSIZE(Matrix), 0.f );
     fill( IH19, IH19 + CPL_ARRAYSIZE(IH19), 0 );
     fill( unused1, unused1 + CPL_ARRAYSIZE(unused1), 0 );
     fill( Comment1, Comment1 + CPL_ARRAYSIZE(Comment1), 0 );

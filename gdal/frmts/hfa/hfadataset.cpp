@@ -732,7 +732,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
 
 int HFARasterAttributeTable::GetColumnCount() const
 {
-    return this->aoFields.size();
+    return static_cast<int>(aoFields.size());
 }
 
 /************************************************************************/
@@ -921,7 +921,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         if( eRWFlag == GF_Write )
         {
             for( int i = 0; i < iLength; i++ )
-                panColData[i] = pdfData[i];
+                panColData[i] = static_cast<int>(pdfData[i]);
         }
 
         CPLErr ret = ColorsIO(eRWFlag, iField, iStartRow, iLength, panColData);
@@ -953,7 +953,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy the application supplied doubles to ints
                 for( int i = 0; i < iLength; i++ )
-                    panColData[i] = pdfData[i];
+                    panColData[i] = static_cast<int>(pdfData[i]);
             }
 
             // do the ValuesIO as ints
@@ -1185,7 +1185,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy them back to ints
                 for( int i = 0; i < iLength; i++ )
-                    pnData[i] = padfColData[i];
+                    pnData[i] = static_cast<int>(padfColData[i]);
             }
 
             CPLFree(padfColData);
@@ -1412,7 +1412,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                 int nNewMaxChars = aoFields[iField].nElementSize;
                 for( int i = 0; i < iLength; i++ )
                 {
-                    int nStringSize = strlen(papszStrList[i]) + 1;
+                    int nStringSize = static_cast<int>(strlen(papszStrList[i])) + 1;
                     if( nStringSize > nNewMaxChars )
                         nNewMaxChars = nStringSize;
                 }
@@ -2328,7 +2328,7 @@ void HFARasterBand::ReadHistogramMetadata()
         }
         strcat( pszBinValues+nBinValuesLen, szBuf );
         strcat( pszBinValues+nBinValuesLen, "|" );
-        nBinValuesLen += strlen(pszBinValues+nBinValuesLen);
+        nBinValuesLen += static_cast<int>(strlen(pszBinValues+nBinValuesLen));
     }
 
     SetMetadataItem( "STATISTICS_HISTOBINVALUES", pszBinValues );
@@ -3135,7 +3135,7 @@ CPLErr HFARasterBand::WriteNamedRAT( CPL_UNUSED const char *pszName,
             for( int i = 0; i < nRowCount; i++)
             {
                 /* Include terminating byte */
-                nNumChars = strlen(poRAT->GetValueAsString(i,col)) + 1;
+                nNumChars = static_cast<int>(strlen(poRAT->GetValueAsString(i,col)) + 1);
                 if(nMaxNumChars < nNumChars)
                 {
                     nMaxNumChars = nNumChars;
@@ -3382,7 +3382,7 @@ CPLErr HFADataset::WriteProjection()
         }
 
         /* Verify if we need to write a ESRI PE string */
-        bPEStringStored = WritePeStringIfNeeded(&oSRS, hHFA);
+        bPEStringStored = CPL_TO_BOOL(WritePeStringIfNeeded(&oSRS, hHFA));
 
         sPro.proSpheroid.sphereName = (char *)
             poGeogSRS->GetAttrValue( "GEOGCS|DATUM|SPHEROID" );
@@ -4075,9 +4075,9 @@ int WritePeStringIfNeeded(OGRSpatialReference* poSRS, HFAHandle hHFA)
   if( pszDatum == NULL )
       pszDatum = "";
   if(strstr(pszGEOGCS, "GCS_"))
-    gcsNameOffset = strlen("GCS_");
+    gcsNameOffset = static_cast<int>(strlen("GCS_"));
   if(strstr(pszDatum, "D_"))
-    datumNameOffset = strlen("D_");
+    datumNameOffset = static_cast<int>(strlen("D_"));
 
   if(!EQUAL(pszGEOGCS+gcsNameOffset, pszDatum+datumNameOffset))
     ret = TRUE;
@@ -5794,7 +5794,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we really just want to create an .aux file?                  */
 /* -------------------------------------------------------------------- */
-    bool bCreateAux = CSLFetchBoolean( papszOptions, "AUX", FALSE );
+    bool bCreateAux = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "AUX", FALSE ));
 
 /* -------------------------------------------------------------------- */
 /*      Establish a representative data type to use.                    */
@@ -5988,7 +5988,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     strcat( pszBinValues+nBinValuesLen, 
                             osValue.Printf( CPL_FRMT_GUIB, panHistogram[iBin]) );
                     strcat( pszBinValues+nBinValuesLen, "|" );
-                    nBinValuesLen += strlen(pszBinValues+nBinValuesLen);
+                    nBinValuesLen += static_cast<int>(strlen(pszBinValues+nBinValuesLen));
                 }
                 papszStatsMD = 
                     CSLSetNameValue( papszStatsMD, "STATISTICS_HISTOBINVALUES",

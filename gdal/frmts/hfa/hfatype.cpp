@@ -210,7 +210,7 @@ HFAType::SetInstValue( const char * pszFieldPath,
         const char	*pszEnd = strchr(pszFieldPath,'[');
 
         nArrayIndex = atoi(pszEnd+1);
-        nNameLen = pszEnd - pszFieldPath;
+        nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
         pszRemainder = strchr(pszFieldPath,'.');
         if( pszRemainder != NULL )
@@ -221,14 +221,14 @@ HFAType::SetInstValue( const char * pszFieldPath,
     {
         const char	*pszEnd = strchr(pszFieldPath,'.');
 
-        nNameLen = pszEnd - pszFieldPath;
+        nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
         pszRemainder = pszEnd + 1;
     }
 
     else
     {
-        nNameLen = strlen(pszFieldPath);
+        nNameLen = static_cast<int>(strlen(pszFieldPath));
         pszRemainder = pszFieldPath/*NULL*/;
     }
 
@@ -293,7 +293,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
         const char	*pszEnd = strchr(pszFieldPath,'[');
 
         /* nArrayIndex = atoi(pszEnd+1); */
-        nNameLen = pszEnd - pszFieldPath;
+        nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
         pszRemainder = strchr(pszFieldPath,'.');
         if( pszRemainder != NULL )
@@ -304,14 +304,14 @@ HFAType::GetInstCount( const char * pszFieldPath,
     {
         const char	*pszEnd = strchr(pszFieldPath,'.');
 
-        nNameLen = pszEnd - pszFieldPath;
+        nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
         pszRemainder = pszEnd + 1;
     }
 
     else
     {
-        nNameLen = strlen(pszFieldPath);
+        nNameLen = static_cast<int>(strlen(pszFieldPath));
         pszRemainder = NULL;
     }
 
@@ -392,7 +392,7 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
         const char	*pszEnd = pszFirstArray;
 
         nArrayIndex = atoi(pszEnd+1);
-        nNameLen = pszEnd - pszFieldPath;
+        nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
         pszRemainder = strchr(pszFieldPath,'.');
         if( pszRemainder != NULL )
@@ -403,14 +403,14 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
     {
         const char	*pszEnd = pszFirstDot;
 
-        nNameLen = pszEnd - pszFieldPath;
+        nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
         pszRemainder = pszEnd + 1;
     }
 
     else
     {
-        nNameLen = strlen(pszFieldPath);
+        nNameLen = static_cast<int>(strlen(pszFieldPath));
         pszRemainder = NULL;
     }
 
