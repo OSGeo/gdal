@@ -237,7 +237,7 @@ int json_parse_int64(const char *buf, int64_t *retval)
 		}
 		// No need to skip leading spaces or zeros here.
 
-		buf_cmp_len = strlen(buf_cmp_start);
+		buf_cmp_len = (int)strlen(buf_cmp_start);
 		/**
 		 * If the sign is different, or
 		 * some of the digits are different, or

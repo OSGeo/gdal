@@ -312,7 +312,7 @@ static int json_object_object_to_json_string(struct json_object* jso,
 			sprintbuf(pb, " ");
 		indent(pb, level+1, flags);
 		sprintbuf(pb, "\"");
-		json_escape_str(pb, iter.key, strlen(iter.key));
+		json_escape_str(pb, iter.key, (int)strlen(iter.key));
 		if (flags & JSON_C_TO_STRING_SPACED)
 			sprintbuf(pb, "\": ");
 		else
@@ -634,7 +634,7 @@ struct json_object* json_object_new_string(const char *s)
   jso->_delete = &json_object_string_delete;
   jso->_to_json_string = &json_object_string_to_json_string;
   jso->o.c_string.str = strdup(s);
-  jso->o.c_string.len = strlen(s);
+  jso->o.c_string.len = (int)strlen(s);
   return jso;
 }
 
