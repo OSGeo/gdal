@@ -442,7 +442,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
             else
                 bHasWidth = TRUE;
             const char* pszColor = poPen->Color(bDefault);
-            int nColorLen = CPLStrnlen(pszColor, 10);
+            int nColorLen = static_cast<int>(CPLStrnlen(pszColor, 10));
             if( pszColor != NULL && pszColor[0] == '#' && !bDefault && nColorLen >= 7)
             {
                 char acColor[9] = {0};
