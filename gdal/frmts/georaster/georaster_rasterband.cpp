@@ -659,7 +659,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
                 int nOffset = iEntry * nVATStrSize;
                 char* pszTarget = ((char*)papWriteFields[iCol + 1]) + nOffset;
                 const char *pszStrValue = poRAT->GetValueAsString(iEntry, iCol);
-                int nLen = strlen( pszStrValue );
+                int nLen = static_cast<int>(strlen( pszStrValue ));
                 nLen = nLen > ( nVATStrSize - 1 ) ? nVATStrSize : ( nVATStrSize - 1 );
                 strncpy( pszTarget, pszStrValue, nLen );
                 pszTarget[nLen] = '\0';

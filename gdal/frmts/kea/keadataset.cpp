@@ -422,8 +422,8 @@ KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccess )
 
         // get the dimensions
         this->nBands = m_pImageIO->getNumOfImageBands();
-        this->nRasterXSize = pSpatialInfo->xSize;
-        this->nRasterYSize = pSpatialInfo->ySize;
+        this->nRasterXSize = static_cast<int>(pSpatialInfo->xSize);
+        this->nRasterYSize = static_cast<int>(pSpatialInfo->ySize);
         this->eAccess = eAccess;
 
         // create all the bands
@@ -703,17 +703,17 @@ CPLErr KEADataset::AddBand(GDALDataType eType, char **papszOptions)
     if (papszOptions != NULL) {
         const char *pszValue = CSLFetchNameValue(papszOptions,"IMAGEBLOCKSIZE");
         if ( pszValue != NULL ) {
-            nimageBlockSize = atol(pszValue);
+            nimageBlockSize = atoi(pszValue);
         }
 
         pszValue = CSLFetchNameValue(papszOptions, "ATTBLOCKSIZE");
         if (pszValue != NULL) {
-            nattBlockSize = atol(pszValue);
+            nattBlockSize = atoi(pszValue);
         }
 
         pszValue = CSLFetchNameValue(papszOptions, "DEFLATE");
         if (pszValue != NULL) {
-            ndeflate = atol(pszValue);
+            ndeflate = atoi(pszValue);
         }
     }
     

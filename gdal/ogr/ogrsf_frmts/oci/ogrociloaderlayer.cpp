@@ -361,7 +361,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
         }
         else 
         {
-            int nLength = strlen(pszStrValue);
+            int nLength = static_cast<int>(strlen(pszStrValue));
 
             if( poFldDefn->GetWidth() > 0 && nLength > poFldDefn->GetWidth() )
             {
@@ -482,7 +482,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
         }
         else 
         {
-            int nLength = strlen(pszStrValue);
+            int nLength = static_cast<int>(strlen(pszStrValue));
 
             if( poFldDefn->GetWidth() > 0 && nLength > poFldDefn->GetWidth() )
             {
@@ -677,7 +677,7 @@ void OGROCILoaderLayer::FinalizeNewLayer()
 
     sDimUpdate.Append( ")" );
 
-    sDimUpdate.Appendf( strlen(poFeatureDefn->GetName()) + 100,
+    sDimUpdate.Appendf( static_cast<int>(strlen(poFeatureDefn->GetName()) + 100),
                         " WHERE table_name = UPPER('%s')",
                         poFeatureDefn->GetName() );
 

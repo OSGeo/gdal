@@ -176,7 +176,7 @@ int OGROCISession::EstablishSession( const char *pszUserid,
     }
 
     if( Failed( OCIServerAttach( hServer, hError, (text*) pszDatabase,
-                strlen((char*) pszDatabase), 0) ) )
+                static_cast<int>(strlen((char*) pszDatabase)), 0) ) )
     {
         return FALSE;
     }

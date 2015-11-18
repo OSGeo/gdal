@@ -1594,7 +1594,7 @@ const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
 
     pszEnd++;
 
-    int nLength = pszEnd - pszStart + 1;
+    int nLength = static_cast<int>(pszEnd - pszStart + 1);
 
     char szBuffer[OWTEXT];
 

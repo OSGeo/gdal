@@ -328,10 +328,10 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     OGROCIStringBuf     oCommand;
     OGROCIStatement     oAddField( poSession );
 
-    oCommand.MakeRoomFor( 70 + strlen(poFeatureDefn->GetName())
+    oCommand.MakeRoomFor( static_cast<int>(70 + strlen(poFeatureDefn->GetName())
                           + strlen(oField.GetNameRef())
                           + strlen(szFieldType)
-                          + (oField.GetDefault() ? strlen(oField.GetDefault()) : 0) );
+                          + (oField.GetDefault() ? strlen(oField.GetDefault()) : 0)) );
 
     snprintf( szFieldName, sizeof( szFieldName ), "%s", oField.GetNameRef());
     szFieldName[sizeof( szFieldName )-1] = '\0';
