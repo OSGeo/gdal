@@ -22,6 +22,7 @@ t/ogr.t
 t/osr.t
 t/open.t
 t/utf8.t
+t/gcp.t
 Makefile.PL
 gdalconst_wrap.c
 gdal_wrap.cpp
