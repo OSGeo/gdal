@@ -149,7 +149,7 @@ enum
 static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], VSILFILE* f)
 {
     char* ptrCurLine = szLineBuffer;
-    int nRead = VSIFReadL(szLineBuffer, 1, LINE_BUFFER_SIZE, f);
+    int nRead = static_cast<int>(VSIFReadL(szLineBuffer, 1, LINE_BUFFER_SIZE, f));
     szLineBuffer[nRead] = 0;
     if (nRead == 0)
     {
@@ -180,7 +180,7 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], VSILFILE* f)
         if (ptrCurLine == szLineBuffer + LINE_BUFFER_SIZE - 1)
         {
             char c;
-            nRead = VSIFReadL(&c, 1, 1, f);
+            nRead = static_cast<int>(VSIFReadL(&c, 1, 1, f));
             if (nRead == 1)
             {
                 if (c == 0x0a)
@@ -261,7 +261,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
 
       while(1)
       {
-        numChar = ptrCurLine - ptrBeginLine;
+        numChar = static_cast<int>(ptrCurLine - ptrBeginLine);
         c = *ptrCurLine;
         if (c == 0) c = 10;
         if (inQuotes)
@@ -303,7 +303,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
             do
             {
               ptrCurLine++;
-              numChar = ptrCurLine - ptrBeginLine;
+              numChar = static_cast<int>(ptrCurLine - ptrBeginLine);
               c = *ptrCurLine;
               if (!(c == ' ' || c == '\t'))
                 break;
