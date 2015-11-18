@@ -254,7 +254,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /* -------------------------------------------------------------------- */
 /*      Read all directory entries                                      */
 /* -------------------------------------------------------------------- */
-    n = VSIFReadL(poTIFFDir, 1,nEntryCount*sizeof(TIFFDirEntry),fp);
+    n = static_cast<int>(VSIFReadL(poTIFFDir, 1,nEntryCount*sizeof(TIFFDirEntry),fp));
     if (n != nEntryCount*sizeof(TIFFDirEntry))
     {
         CPLError( CE_Failure, CPLE_AppDefined,

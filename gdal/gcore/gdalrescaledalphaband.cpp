@@ -134,7 +134,7 @@ CPLErr GDALRescaledAlphaBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( pSrc[i] > 0 && pSrc[i] < 257 )
                     pabyImage[i] = 1;
                 else
-                    pabyImage[i] = (pSrc[i] * 255) / 65535;
+                    pabyImage[i] = static_cast<GByte>((pSrc[i] * 255) / 65535);
             }
         }
         return CE_None;

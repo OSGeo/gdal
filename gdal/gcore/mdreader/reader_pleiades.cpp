@@ -52,12 +52,12 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
 
     // find last underline
     char sBaseName[512];
-    int nLastUnderline = 0;
+    size_t nLastUnderline = 0;
     for(size_t i = 4; i < nBaseNameLen; i++)
     {
         sBaseName[i - 4] = pszBaseName[i];
         if(pszBaseName[i] == '_')
-            nLastUnderline = i - 4;
+            nLastUnderline = i - 4U;
     }
 
     sBaseName[nLastUnderline] = 0;

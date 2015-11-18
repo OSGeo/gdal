@@ -1146,7 +1146,7 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
     else
     {
         //offset = nPageSize * (band * nTilesPerRow * nTilesPerCol + nTile)
-        band = nOffset / (nPageSize * nTilesPerRow * nTilesPerCol);
+        band = static_cast<int>(nOffset / (nPageSize * nTilesPerRow * nTilesPerCol));
         nTile = nOffset / nPageSize - band * nTilesPerRow * nTilesPerCol;
         nPixelSpace = nDataTypeSize;
         nLineSpace = nPixelSpace * nTileXSize;
@@ -1163,7 +1163,8 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
     if( hDS != NULL )
     {
         CPL_IGNORE_RET_VAL(GDALDatasetRasterIO( hDS, eRWFlag,
-                            nXOff + nXTile * nTileXSize, nYOff + nYTile * nTileYSize,
+                            static_cast<int>(nXOff + nXTile * nTileXSize),
+                            static_cast<int>(nYOff + nYTile * nTileYSize),
                             nReqXSize, nReqYSize,
                             pPage,
                             nReqXSize, nReqYSize,
@@ -1175,7 +1176,8 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
     else
     {
         CPL_IGNORE_RET_VAL(GDALRasterIO(hBand, eRWFlag,
-                     nXOff + nXTile * nTileXSize, nYOff + nYTile * nTileYSize,
+                      static_cast<int>(nXOff + nXTile * nTileXSize),
+                      static_cast<int>(nYOff + nYTile * nTileYSize),
                      nReqXSize, nReqYSize,
                      pPage,
                      nReqXSize, nReqYSize,

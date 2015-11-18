@@ -205,7 +205,7 @@ GBool GDALFloatEquals(float A, float B);
 
 struct FloatEqualityTest
 {
-    bool operator()(float a, float b) { return GDALFloatEquals(a,b); }
+    bool operator()(float a, float b) { return GDALFloatEquals(a,b) == TRUE; }
 };
 
 #endif /* OGR_ENABLED */

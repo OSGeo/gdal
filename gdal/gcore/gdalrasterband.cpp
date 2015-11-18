@@ -272,7 +272,7 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
 /*      Call the format specific function.                              */
 /* -------------------------------------------------------------------- */
 
-    const bool bCallLeaveReadWrite = EnterReadWrite(eRWFlag);
+    const bool bCallLeaveReadWrite = CPL_TO_BOOL(EnterReadWrite(eRWFlag));
 
     CPLErr eErr;
     if( bForceCachedIO )
@@ -592,7 +592,7 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
 
-    const bool bCallLeaveReadWrite = EnterReadWrite(GF_Write);
+    const bool bCallLeaveReadWrite = CPL_TO_BOOL(EnterReadWrite(GF_Write));
     CPLErr eErr = IWriteBlock( nXBlockOff, nYBlockOff, pImage );
     if( bCallLeaveReadWrite ) LeaveReadWrite();
 
@@ -1222,7 +1222,7 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
     GDALCopyWords(complexSrc, GDT_CFloat64, 0,
                   srcBlock, eDataType, elementSize, blockSize);
 
-    const bool bCallLeaveReadWrite = EnterReadWrite(GF_Write);
+    const bool bCallLeaveReadWrite = CPL_TO_BOOL(EnterReadWrite(GF_Write));
 
     // Write block to block cache
     for (int j = 0; j < nBlocksPerColumn; ++j) {

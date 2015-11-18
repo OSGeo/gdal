@@ -1099,7 +1099,7 @@ void GDALDefaultRasterAttributeTable::AnalyseColumns()
 int GDALDefaultRasterAttributeTable::GetColumnCount() const
 
 {
-    return aoFields.size();
+    return static_cast<int>(aoFields.size());
 }
 
 /************************************************************************/
@@ -1840,7 +1840,7 @@ CPLErr GDALDefaultRasterAttributeTable::CreateColumn( const char *pszFieldName,
                                                GDALRATFieldUsage eFieldUsage )
 
 {
-    int iNewField = aoFields.size();
+    size_t iNewField = aoFields.size();
 
     aoFields.resize( iNewField+1 );
 

@@ -162,7 +162,7 @@ GDALDriverManager::~GDALDriverManager()
         {
             //CPLDebug("GDAL", "Call CloseDependentDatasets() on %s",
             //      papoDSList[i]->GetDescription() );
-            bHasDroppedRef = papoDSList[i]->CloseDependentDatasets();
+            bHasDroppedRef = CPL_TO_BOOL(papoDSList[i]->CloseDependentDatasets());
         }
     } while(bHasDroppedRef);
 

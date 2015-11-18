@@ -218,13 +218,13 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
         {
             INITIALIZE_LOCK;
         }
-        bSleepsForBockCacheDebug = CSLTestBoolean(CPLGetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "NO"));
+        bSleepsForBockCacheDebug = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "NO")));
 
         const char* pszCacheMax = CPLGetConfigOption("GDAL_CACHEMAX",NULL);
         bCacheMaxInitialized = true;
         if( pszCacheMax != NULL )
         {
-            GIntBig nNewCacheMax = (GIntBig)CPLScanUIntBig(pszCacheMax, strlen(pszCacheMax));
+            GIntBig nNewCacheMax = (GIntBig)CPLScanUIntBig(pszCacheMax, static_cast<int>(strlen(pszCacheMax)));
             if( nNewCacheMax < 100000 )
             {
                 if (nNewCacheMax < 0)

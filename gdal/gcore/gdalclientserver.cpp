@@ -40,6 +40,7 @@
   #ifndef HAVE_GETADDRINFO
     #define HAVE_GETADDRINFO 1
   #endif
+  #define CONNECT_LEN(x) static_cast<int>(x)
 #else
   #include <sys/types.h>
   #include <sys/socket.h>
@@ -54,6 +55,7 @@
   #define WSAGetLastError() errno
   #define WSACleanup()
   #define closesocket(s) close(s)
+  #define CONNECT_LEN(x) (x)
 #endif
 
 #ifdef BUFFER_READ
@@ -1664,7 +1666,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
                 continue;
 
             if (connect(nConnSocket, psResultsIter->ai_addr,
-                        psResultsIter->ai_addrlen) != SOCKET_ERROR)
+                        CONNECT_LEN(psResultsIter->ai_addrlen)) != SOCKET_ERROR)
                 break;
 
             closesocket(nConnSocket);
@@ -3847,7 +3849,7 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
                         GDALCopyWords( pBuf + (iBand * nBufYSize + j) * nBufXSize * nDataTypeSize,
                                        eBufType, nDataTypeSize,
                                        (GByte*)pData + iBand * nBandSpace + j * nLineSpace,
-                                       eBufType, nPixelSpace,
+                                       eBufType, static_cast<int>(nPixelSpace),
                                        nBufXSize);
                     }
                 }
@@ -3876,7 +3878,7 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
                 for(int j=0;j<nBufYSize;j++)
                 {
                     GDALCopyWords( (GByte*)pData + iBand * nBandSpace + j * nLineSpace,
-                                   eBufType, nPixelSpace,
+                                   eBufType, static_cast<int>(nPixelSpace),
                                    pBuf + (iBand * nBufYSize + j) * nBufXSize * nDataTypeSize,
                                    eBufType, nDataTypeSize,
                                    nBufXSize );
@@ -5057,7 +5059,7 @@ CPLErr GDALClientRasterBand::IRasterIO_read_internal(
             GDALCopyWords( pBuf + j * nBufXSize * nDataTypeSize,
                             eBufType, nDataTypeSize,
                             (GByte*)pData + j * nLineSpace,
-                            eBufType, nPixelSpace,
+                            eBufType, static_cast<int>(nPixelSpace),
                             nBufXSize );
         }
         VSIFree(pBuf);
@@ -5124,7 +5126,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 int nCachedBufTypeSize = GDALGetDataTypeSize(eCachedBufType) / 8;
                 GDALCopyWords(pabyCachedLines + (nYOff - nCachedYStart) * nXSize * nCachedBufTypeSize,
                               eCachedBufType, nCachedBufTypeSize,
-                              pData, eBufType, nPixelSpace,
+                              pData, eBufType, static_cast<int>(nPixelSpace),
                               nXSize);
                 nLastYOff = nYOff;
                 eLastBufType = eBufType;
@@ -5162,7 +5164,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                             int nCachedBufTypeSize = GDALGetDataTypeSize(eCachedBufType) / 8;
                             GDALCopyWords(pabyCachedLines + (nYOff - nCachedYStart) * nXSize * nCachedBufTypeSize,
                                         eCachedBufType, nCachedBufTypeSize,
-                                        pData, eBufType, nPixelSpace,
+                                        pData, eBufType, static_cast<int>(nPixelSpace),
                                         nXSize);
                             nLastYOff = nYOff;
                             eLastBufType = eBufType;
@@ -5221,7 +5223,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             for(int j=0;j<nBufYSize;j++)
             {
                 GDALCopyWords( (GByte*)pData + j * nLineSpace,
-                               eBufType, nPixelSpace,
+                               eBufType, static_cast<int>(nPixelSpace),
                                pBuf + j * nBufXSize * nDataTypeSize,
                                eBufType, nDataTypeSize,
                                nBufXSize );
