@@ -960,7 +960,7 @@ static int OGRGeoRSSLayerIsStandardFieldInternal(const char* pszName,
             size_t nLen = strlen(papszNames[i]);
             if (strncmp(pszName, papszNames[i], nLen) == 0)
             {
-                int k = nLen;
+                size_t k = nLen;
                 while(pszName[k] >= '0' && pszName[k] <= '9')
                     k++;
                 if (pszName[k] == '\0')
