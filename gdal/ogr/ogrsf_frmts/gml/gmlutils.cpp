@@ -48,7 +48,7 @@ const char* GML_ExtractSrsNameFromGeometry(const CPLXMLNode* const * papsGeometr
         const char* pszSRSName = CPLGetXMLValue((CPLXMLNode*)papsGeometry[0], "srsName", NULL);
         if (pszSRSName)
         {
-            int nLen = strlen(pszSRSName);
+            int nLen = static_cast<int>(strlen(pszSRSName));
 
             if (STARTS_WITH(pszSRSName, "EPSG:") &&
                 bConsiderEPSGAsURN)

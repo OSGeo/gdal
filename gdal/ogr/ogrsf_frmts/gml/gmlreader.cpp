@@ -908,7 +908,7 @@ int GMLReader::GetAttributeElementIndex( const char *pszElement, int nLen,
             return poClass->GetPropertyIndexBySrcElement(pszElement, nLen);
         else
         {
-            int nFullLen = nLen + 1 + strlen(pszAttrKey);
+            int nFullLen = nLen + 1 + static_cast<int>(strlen(pszAttrKey));
             osElemPath.reserve(nFullLen);
             osElemPath.assign(pszElement, nLen);
             osElemPath.append(1, '@');
@@ -918,9 +918,9 @@ int GMLReader::GetAttributeElementIndex( const char *pszElement, int nLen,
     }
     else
     {
-        int nFullLen = nLen + m_poState->osPath.size() + 1;
+        int nFullLen = nLen + static_cast<int>(m_poState->osPath.size()) + 1;
         if( pszAttrKey != NULL )
-            nFullLen += 1 + strlen(pszAttrKey);
+            nFullLen += 1 + static_cast<int>(strlen(pszAttrKey));
         osElemPath.reserve(nFullLen);
         osElemPath.assign(m_poState->osPath);
         osElemPath.append(1, '|');
