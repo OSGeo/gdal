@@ -80,7 +80,7 @@ void DDFSubfieldDefn::SetName( const char * pszNewName )
 
     pszName = CPLStrdup( pszNewName );
 
-    for( i = strlen(pszName)-1; i > 0 && pszName[i] == ' '; i-- )
+    for( i = static_cast<int>(strlen(pszName))-1; i > 0 && pszName[i] == ' '; i-- )
         pszName[i] = '\0';
 }
 
@@ -808,7 +808,7 @@ int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable,
     int nSize;
 
     if( nValueLength == -1 )
-        nValueLength = strlen(pszValue);
+        nValueLength = static_cast<int>(strlen(pszValue));
 
     if( bIsVariable )
     {
@@ -872,7 +872,7 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
 
     if( bIsVariable )
     {
-        nSize = strlen(szWork) + 1;
+        nSize = static_cast<int>(strlen(szWork)) + 1;
     }
     else
     {                                                                  
@@ -964,7 +964,7 @@ int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable,
 
     if( bIsVariable )
     {
-        nSize = strlen(szWork) + 1;
+        nSize = static_cast<int>(strlen(szWork)) + 1;
     }
     else
     {

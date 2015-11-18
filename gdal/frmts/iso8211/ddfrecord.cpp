@@ -261,7 +261,7 @@ int DDFRecord::ReadHeader()
     char        achLeader[nLeaderSize];
     int         nReadBytes;
 
-    nReadBytes = VSIFReadL(achLeader,1,nLeaderSize,poModule->GetFP());
+    nReadBytes = static_cast<int>(VSIFReadL(achLeader,1,nLeaderSize,poModule->GetFP()));
     if( nReadBytes == 0 && VSIFEofL( poModule->GetFP() ) )
     {
         return FALSE;
@@ -923,7 +923,7 @@ DDFRecord * DDFRecord::Clone()
     {
         int     nOffset;
 
-        nOffset = (paoFields[i].GetData() - pachData);
+        nOffset = static_cast<int>(paoFields[i].GetData() - pachData);
         poNR->paoFields[i].Initialize( paoFields[i].GetFieldDefn(),
                                        poNR->pachData + nOffset,
                                        paoFields[i].GetDataSize() );
@@ -1122,7 +1122,7 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
 /*      How much data needs to be shifted up or down after this field?  */
 /* -------------------------------------------------------------------- */
     nBytesToMove = nDataSize 
-        - (poField->GetData()+poField->GetDataSize()-pachOldData+nBytesToAdd);
+        - static_cast<int>(poField->GetData()+poField->GetDataSize()-pachOldData+nBytesToAdd);
 
 /* -------------------------------------------------------------------- */
 /*      Update fields to point into newly allocated buffer.             */
@@ -1131,7 +1131,7 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
     {
         int     nOffset;
 
-        nOffset = paoFields[i].GetData() - pachOldData;
+        nOffset = static_cast<int>(paoFields[i].GetData() - pachOldData);
         paoFields[i].Initialize( paoFields[i].GetFieldDefn(), 
                                  pachData + nOffset, 
                                  paoFields[i].GetDataSize() );
@@ -1348,7 +1348,7 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
 
     pachNewImage = (char *) CPLMalloc(nNewFieldSize);
 
-    nPreBytes = pachWrkData - poField->GetData();
+    nPreBytes = static_cast<int>(pachWrkData - poField->GetData());
     nPostBytes = poField->GetDataSize() - nPreBytes - nInstanceSize;
 
     memcpy( pachNewImage, poField->GetData(), nPreBytes );
@@ -1405,7 +1405,7 @@ DDFRecord::UpdateFieldRaw( DDFField *poField, int iIndexWithinField,
         
     pachWrkData = (char *) poField->GetInstanceData( iIndexWithinField, 
                                                      &nInstanceSize );
-    nPreBytes = pachWrkData - poField->GetData() + nStartOffset;
+    nPreBytes = static_cast<int>(pachWrkData - poField->GetData() + nStartOffset);
     nPostBytes = poField->GetDataSize() - nPreBytes - nOldSize;
 
 /* -------------------------------------------------------------------- */
@@ -1501,7 +1501,7 @@ int DDFRecord::ResetDirectory()
             int nOffset;
             DDFField *poField = GetField( iField );
 
-            nOffset = poField->GetData() - pachData - nFieldOffset + nDirSize;
+            nOffset = static_cast<int>(poField->GetData() - pachData - nFieldOffset + nDirSize);
             poField->Initialize( poField->GetFieldDefn(), 
                                  pachNewData + nOffset, 
                                  poField->GetDataSize() );
@@ -1674,7 +1674,7 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
     pachFieldInstData = poField->GetInstanceData( iFieldIndex,
                                                   &nInstanceSize );
 
-    nStartOffset = pachSubfieldData - pachFieldInstData;
+    nStartOffset = static_cast<int>(pachSubfieldData - pachFieldInstData);
 
     pachNewData = (char *) CPLMalloc(nFormattedLen);
     poSFDefn->FormatStringValue( pachNewData, nFormattedLen, NULL, 
@@ -1785,7 +1785,7 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
     pachFieldInstData = poField->GetInstanceData( iFieldIndex,
                                                   &nInstanceSize );
 
-    nStartOffset = pachSubfieldData - pachFieldInstData;
+    nStartOffset = static_cast<int>(pachSubfieldData - pachFieldInstData);
 
     pachNewData = (char *) CPLMalloc(nFormattedLen);
     poSFDefn->FormatIntValue( pachNewData, nFormattedLen, NULL, 
