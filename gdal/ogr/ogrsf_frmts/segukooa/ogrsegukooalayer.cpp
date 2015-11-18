@@ -171,7 +171,7 @@ void OGRUKOOAP190Layer::ParseHeaders()
             break;
         }
 
-        int nLineLen = strlen(pszLine);
+        int nLineLen = static_cast<int>(strlen(pszLine));
         while(nLineLen > 0 && pszLine[nLineLen-1] == ' ')
         {
             ((char*)pszLine)[nLineLen-1] = '\0';
@@ -277,7 +277,7 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
             return NULL;
         }
 
-        int nLineLen = strlen(pszLine);
+        int nLineLen = static_cast<int>(strlen(pszLine));
         while(nLineLen > 0 && pszLine[nLineLen-1] == ' ')
         {
             ((char*)pszLine)[nLineLen-1] = '\0';
@@ -401,7 +401,7 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
             ExtractField(szH, pszLine, 74-1, 2);
             ExtractField(szM, pszLine, 74-1+2, 2);
             ExtractField(szS, pszLine, 74-1+2+2, 2);
-            poFeature->SetField(FIELD_TIME, 0, 0, 0, atoi(szH), atoi(szM), atoi(szS) );
+            poFeature->SetField(FIELD_TIME, 0, 0, 0, atoi(szH), atoi(szM), static_cast<float>(atoi(szS)) );
 
             if (nYear != 0)
             {
@@ -425,7 +425,7 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
                     nMonth ++;
 
                     poFeature->SetField(FIELD_DATETIME, nYear, nMonth, nDayOfMonth,
-                                        atoi(szH), atoi(szM), atoi(szS) );
+                                        atoi(szH), atoi(szM), static_cast<float>(atoi(szS)) );
                 }
 
             }
@@ -556,7 +556,7 @@ OGRFeature *OGRSEGP1Layer::GetNextRawFeature()
             return NULL;
         }
 
-        int nLineLen = strlen(pszLine);
+        int nLineLen = static_cast<int>(strlen(pszLine));
         while(nLineLen > 0 && pszLine[nLineLen-1] == ' ')
         {
             ((char*)pszLine)[nLineLen-1] = '\0';
@@ -565,7 +565,7 @@ OGRFeature *OGRSEGP1Layer::GetNextRawFeature()
 
         char* pszExpandedLine = ExpandTabs(pszLine);
         pszLine = pszExpandedLine;
-        nLineLen = strlen(pszLine);
+        nLineLen = static_cast<int>(strlen(pszLine));
 
         OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
         poFeature->SetFID(nNextFID ++);
@@ -697,7 +697,7 @@ char* OGRSEGP1Layer::ExpandTabs(const char* pszLine)
 
 int OGRSEGP1Layer::DetectLatitudeColumn(const char* pszLine)
 {
-    int nLen = strlen(pszLine);
+    int nLen = static_cast<int>(strlen(pszLine));
     if (nLen >= 45 && pszLine[0] == ' ' &&
         (pszLine[35-1] == 'N' || pszLine[35-1] == 'S') &&
         (pszLine[45-1] == 'E' || pszLine[45-1] == 'W'))

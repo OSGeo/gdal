@@ -131,7 +131,7 @@ public:
 
     virtual const char*     GetName() { return pszName; }
 
-    virtual int             GetLayerCount() { return nLayers; }
+    virtual int             GetLayerCount() { return static_cast<int>(nLayers); }
     virtual OGRLayer*       GetLayer( int );
 
     virtual int             TestCapability( const char * );

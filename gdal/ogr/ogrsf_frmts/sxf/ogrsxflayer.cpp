@@ -140,7 +140,7 @@ int OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset,
                 SXFRecordAttributeInfo stAttrInfo;
                 bool bAddField = false;
                 size_t nCurrOff = 0;
-                int nReadObj = VSIFReadL(&stAttrInfo, 4, 1, fpSXF);
+                int nReadObj = static_cast<int>(VSIFReadL(&stAttrInfo, 4, 1, fpSXF));
                 if (nReadObj == 1)
                 {
                     CPLString oFieldName;
@@ -292,7 +292,7 @@ OGRErr OGRSXFLayer::SetNextByIndex(GIntBig nIndex)
 
 OGRFeature *OGRSXFLayer::GetFeature(GIntBig nFID)
 {
-    std::map<long, vsi_l_offset>::const_iterator IT = mnRecordDesc.find(nFID);
+    std::map<long, vsi_l_offset>::const_iterator IT = mnRecordDesc.find(static_cast<long>(nFID));
     if (IT != mnRecordDesc.end())
     {
         VSIFSeekL(fpSXF, IT->second, SEEK_SET);
@@ -609,7 +609,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     SXFRecordHeader stRecordHeader;
     int nObjectRead;
 
-    nObjectRead = VSIFReadL(&stRecordHeader, sizeof(SXFRecordHeader), 1, fpSXF);
+    nObjectRead = static_cast<int>(VSIFReadL(&stRecordHeader, sizeof(SXFRecordHeader), 1, fpSXF));
 
     if (nObjectRead != 1 || stRecordHeader.nID != IDSXFOBJ)
     {
@@ -694,8 +694,8 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     else if (code == 0x22)
         eGeomType = SXF_GT_VectorScaled;
 
-    bool bHasAttributes = CHECK_BIT(stRecordHeader.nRef[1], 1);
-    bool bHasRefVector = CHECK_BIT(stRecordHeader.nRef[1], 3);
+    bool bHasAttributes = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[1], 1));
+    bool bHasRefVector = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[1], 3));
     if (bHasRefVector == true)
         CPLError(CE_Failure, CPLE_NotSupported,
         "SXF. Parsing the vector of the tying not support.");
@@ -715,16 +715,16 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     bool b3D(true);
     if (m_nSXFFormatVer == 3)
     {
-        b3D = CHECK_BIT(stRecordHeader.nRef[2], 1);
-        bFloatType = CHECK_BIT(stRecordHeader.nRef[2], 2);
-        bBigType = CHECK_BIT(stRecordHeader.nRef[1], 2);
+        b3D = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[2], 1));
+        bFloatType = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[2], 2));
+        bBigType = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[1], 2));
         stCertInfo.bHasTextSign = CHECK_BIT(stRecordHeader.nRef[2], 5);
     }
     else if (m_nSXFFormatVer == 4)
     {
-        b3D = CHECK_BIT(stRecordHeader.nRef[2], 1);
-        bFloatType = CHECK_BIT(stRecordHeader.nRef[2], 2);
-        bBigType = CHECK_BIT(stRecordHeader.nRef[1], 2);
+        b3D = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[2], 1));
+        bFloatType = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[2], 2));
+        bBigType = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[1], 2));
         stCertInfo.bHasTextSign = CHECK_BIT(stRecordHeader.nRef[2], 3);
     }
     // Else trouble.
@@ -767,7 +767,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     char * recordCertifBuf = (char *)VSI_MALLOC_VERBOSE(stRecordHeader.nGeometryLength);
     if( recordCertifBuf == NULL )
         return NULL;
-    nObjectRead = VSIFReadL(recordCertifBuf, stRecordHeader.nGeometryLength, 1, fpSXF);
+    nObjectRead = static_cast<int>(VSIFReadL(recordCertifBuf, stRecordHeader.nGeometryLength, 1, fpSXF));
     if (nObjectRead != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -859,7 +859,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
             return NULL;
         }
         char * psSemanticsdBufOrig = psSemanticsdBuf;
-        nObjectRead = VSIFReadL(psSemanticsdBuf, nSemanticsSize, 1, fpSXF);
+        nObjectRead = static_cast<int>(VSIFReadL(psSemanticsdBuf, nSemanticsSize, 1, fpSXF));
         if (nObjectRead == 1)
         {
             size_t offset = 0;
@@ -1471,7 +1471,7 @@ OGRFeature *OGRSXFLayer::TranslateText(const SXFRecordDescription& certifInfo,
 
 /*------------------     READING TEXT VALUE   ---------------------------------------*/
 
-    if ( certifInfo.nSubObjectCount == 0 && certifInfo.bHasTextSign == true)
+    if ( certifInfo.nSubObjectCount == 0 && certifInfo.bHasTextSign )
     {
         if( nOffset + 1 > nBufLen )
             return poFeature;
