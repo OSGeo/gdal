@@ -4098,7 +4098,7 @@ onError:
               {
                 v= CSLGetField(GetFieldList_GCIO(theField),il);
                 snprintf(l+ll,kExtraSize_GCIO-ll-1,"%s;", v), l[kExtraSize_GCIO-1]= '\0';
-                ll+= strlen(v);
+                ll+= (int)strlen(v);
               }
             }
             for (it= 0; it<nt; it++)
@@ -4192,7 +4192,7 @@ onError:
                         {
                           v= CSLGetField(GetFieldList_GCIO(theField),il);
                           snprintf(l+ll,kExtraSize_GCIO-ll-1,"%s;", v), l[kExtraSize_GCIO-1]= '\0';
-                          ll+= strlen(v);
+                          ll+= (int)strlen(v);
                         }
                       }
                       if( AddSubTypeField_GCIO(hGCT,GetTypeName_GCIO(theClass),
@@ -4713,7 +4713,7 @@ static char GCIOAPI_CALL1(*) _escapeString_GCIO (
   int l, i, o;
   char *res;
   if( !theString ||
-      (l= strlen(theString))==0 )
+      (l= (int)strlen(theString))==0 )
   {
     res= CPLStrdup(theString);
     return res;
