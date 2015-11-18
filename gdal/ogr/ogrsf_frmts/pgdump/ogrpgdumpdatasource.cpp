@@ -226,7 +226,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     const char* pszDotPos = strstr(pszLayerName,".");
     if ( pszDotPos != NULL && bExtractSchemaFromLayerName )
     {
-      int length = pszDotPos - pszLayerName;
+      int length = static_cast<int>(pszDotPos - pszLayerName);
       pszSchemaName = (char*)CPLMalloc(length+1);
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';

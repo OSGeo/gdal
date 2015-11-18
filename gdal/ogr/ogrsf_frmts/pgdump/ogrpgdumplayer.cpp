@@ -537,7 +537,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
                 if( j != 0 )
                     strcat( pszNeedToFree+nOff, "," );
 
-                nOff += strlen(pszNeedToFree+nOff);
+                nOff += static_cast<int>(strlen(pszNeedToFree+nOff));
                 sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
             }
             strcat( pszNeedToFree+nOff, "}" );
@@ -556,7 +556,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
                 if( j != 0 )
                     strcat( pszNeedToFree+nOff, "," );
 
-                nOff += strlen(pszNeedToFree+nOff);
+                nOff += static_cast<int>(strlen(pszNeedToFree+nOff));
                 sprintf( pszNeedToFree+nOff, CPL_FRMT_GIB, panItems[j] );
             }
             strcat( pszNeedToFree+nOff, "}" );
@@ -576,7 +576,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
                 if( j != 0 )
                     strcat( pszNeedToFree+nOff, "," );
 
-                nOff += strlen(pszNeedToFree+nOff);
+                nOff += static_cast<int>(strlen(pszNeedToFree+nOff));
                 //Check for special values. They need to be quoted.
                 if( CPLIsNan(padfItems[j]) )
                     sprintf( pszNeedToFree+nOff, "NaN" );
@@ -684,7 +684,7 @@ OGRErr OGRPGDumpLayer::StartCopy(int bSetFID)
 
     CPLString osFields = BuildCopyFields(bSetFID);
 
-    int size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
+    size_t size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     sprintf( pszCommand,
@@ -802,7 +802,7 @@ CPLString OGRPGDumpEscapeString(
     /* We need to quote and escape string fields. */
     osCommand += "'";
 
-    int nSrcLen = strlen(pszStrValue);
+    int nSrcLen = static_cast<int>(strlen(pszStrValue));
     int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
 
     if (nMaxLength > 0 && nSrcLenUTF > nMaxLength)
@@ -970,7 +970,7 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
             if( j != 0 )
                 strcat( pszNeedToFree+nOff, "," );
 
-            nOff += strlen(pszNeedToFree+nOff);
+            nOff += static_cast<int>(strlen(pszNeedToFree+nOff));
             sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
         }
         strcat( pszNeedToFree+nOff, "}'" );
@@ -994,7 +994,7 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
             if( j != 0 )
                 strcat( pszNeedToFree+nOff, "," );
 
-            nOff += strlen(pszNeedToFree+nOff);
+            nOff += static_cast<int>(strlen(pszNeedToFree+nOff));
             sprintf( pszNeedToFree+nOff, CPL_FRMT_GIB, panItems[j] );
         }
         strcat( pszNeedToFree+nOff, "}'" );
@@ -1019,7 +1019,7 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
             if( j != 0 )
                 strcat( pszNeedToFree+nOff, "," );
 
-            nOff += strlen(pszNeedToFree+nOff);
+            nOff += static_cast<int>(strlen(pszNeedToFree+nOff));
             //Check for special values. They need to be quoted.
             if( CPLIsNan(padfItems[j]) )
                 sprintf( pszNeedToFree+nOff, "NaN" );
