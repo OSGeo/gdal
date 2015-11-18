@@ -3036,7 +3036,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
     GDALDataType eWrkType;
     float *pafData;
     GDALDataType eType = poSrcBand->GetRasterDataType();
-    const bool bComplex = GDALDataTypeIsComplex(eType);
+    const bool bComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eType));
     if( bComplex )
     {
         pafData = (float *) VSI_MALLOC_VERBOSE(nWidth * 2 * sizeof(float));
@@ -3189,7 +3189,7 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
         GDALDataType eWrkType;
         float *pafData;
         const GDALDataType eType = poOverview->GetRasterDataType();
-        const bool bComplex = GDALDataTypeIsComplex(eType);
+        const bool bComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eType));
         if( bComplex )
         {
             pafData = (float *) VSI_MALLOC2_VERBOSE(nWidth, 2 * sizeof(float));

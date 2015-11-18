@@ -594,7 +594,7 @@ int GDALPamDataset::IsPamFilenameAPotentialSiblingFile()
     if( strlen(pszPhysicalFile) == 0 && GetDescription() != NULL )
         pszPhysicalFile = GetDescription();
 
-    int nLenPhysicalFile = strlen(pszPhysicalFile);
+    size_t nLenPhysicalFile = strlen(pszPhysicalFile);
     int bIsSiblingPamFile = strncmp(psPam->pszPamFilename, pszPhysicalFile,
                                     nLenPhysicalFile) == 0 &&
                             strcmp(psPam->pszPamFilename + nLenPhysicalFile,

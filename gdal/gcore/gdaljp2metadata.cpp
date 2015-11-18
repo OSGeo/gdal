@@ -1876,7 +1876,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 
             json_object* poCRSURL = json_object_object_get(poRootInstance, "crs_url");
             if( poCRSURL && json_object_get_type(poCRSURL) == json_type_boolean )
-                bCRSURL = json_object_get_boolean(poCRSURL);
+                bCRSURL = CPL_TO_BOOL(json_object_get_boolean(poCRSURL));
 
 
             json_object* poMetadatas = json_object_object_get(poRootInstance, "metadata"); 
@@ -2991,7 +2991,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
 
     GDALJP2Box* poBox = new GDALJP2Box();
     poBox->SetType("xml ");
-    poBox->SetWritableData(strlen(pszXML) + 1, (const GByte*)pszXML);
+    poBox->SetWritableData(static_cast<int>(strlen(pszXML) + 1), (const GByte*)pszXML);
     CPLFree(pszXML);
 
     return poBox;
@@ -3019,7 +3019,7 @@ GDALJP2Box** GDALJP2Metadata::CreateXMLBoxes( GDALDataset* poSrcDS,
             {
                 GDALJP2Box* poBox = new GDALJP2Box();
                 poBox->SetType("xml ");
-                poBox->SetWritableData(strlen(*papszSrcMD) + 1,
+                poBox->SetWritableData(static_cast<int>(strlen(*papszSrcMD) + 1),
                                        (const GByte*)*papszSrcMD);
                 papoBoxes = (GDALJP2Box**)CPLRealloc(papoBoxes,
                                         sizeof(GDALJP2Box*) * (*pnBoxes + 1));
@@ -3042,7 +3042,7 @@ GDALJP2Box *GDALJP2Metadata::CreateXMPBox ( GDALDataset* poSrcDS )
     if( papszSrcMD && * papszSrcMD )
     {
         poBox = GDALJP2Box::CreateUUIDBox(xmp_uuid,
-                                          strlen(*papszSrcMD) + 1,
+                                          static_cast<int>(strlen(*papszSrcMD) + 1),
                                           (const GByte*)*papszSrcMD);
     }
     return poBox;
@@ -3060,7 +3060,7 @@ GDALJP2Box *GDALJP2Metadata::CreateIPRBox ( GDALDataset* poSrcDS )
     {
         poBox = new GDALJP2Box();
         poBox->SetType("jp2i");
-        poBox->SetWritableData(strlen(*papszSrcMD) + 1,
+        poBox->SetWritableData(static_cast<int>(strlen(*papszSrcMD) + 1),
                                         (const GByte*)*papszSrcMD);
     }
     return poBox;

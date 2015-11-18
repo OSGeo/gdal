@@ -791,8 +791,8 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
     OGRGNMWrappedResultLayer* poResLayer =
                               new OGRGNMWrappedResultLayer(poMEMDS, poMEMLayer);
 
-    bool bReturnEdges = CSLFetchBoolean(papszOptions, GNM_MD_FETCHEDGES, TRUE);
-    bool bReturnVertices = CSLFetchBoolean(papszOptions, GNM_MD_FETCHVERTEX, TRUE);
+    bool bReturnEdges = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, GNM_MD_FETCHEDGES, TRUE));
+    bool bReturnVertices = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, GNM_MD_FETCHVERTEX, TRUE));
 
     switch (eAlgorithm)
     {
@@ -817,7 +817,7 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
             // fill features in result layer
             for(size_t i = 0; i < paths.size(); ++i)
             {
-                FillResultLayer(poResLayer, paths[i], i + 1, bReturnVertices,
+                FillResultLayer(poResLayer, paths[i], static_cast<int>(i + 1), bReturnVertices,
                                 bReturnEdges);
             }
         }
@@ -1059,9 +1059,9 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     }
 
     OGRFieldDefn oFieldKey(GNM_SYSFIELD_PARAMNAME, OFTString);
-    oFieldKey.SetWidth(nFieldSize);
+    oFieldKey.SetWidth(static_cast<int>(nFieldSize));
     OGRFieldDefn oFieldValue(GNM_SYSFIELD_PARAMVALUE, OFTString);
-    oFieldValue.SetWidth(nFieldSize);
+    oFieldValue.SetWidth(static_cast<int>(nFieldSize));
 
     if(pMetadataLayer->CreateField(&oFieldKey) != OGRERR_NONE ||
        pMetadataLayer->CreateField(&oFieldValue) != OGRERR_NONE)
@@ -1225,7 +1225,7 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
     }
 
     std::map<int, GNMRule> moRules;
-    int nRulePrefixLen = CPLStrnlen(GNM_MD_RULE, 255);
+    int nRulePrefixLen = static_cast<int>(CPLStrnlen(GNM_MD_RULE, 255));
     OGRFeature *poFeature;
     m_poMetadataLayer->ResetReading();
     while ((poFeature = m_poMetadataLayer->GetNextFeature()) != NULL)

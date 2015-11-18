@@ -1108,7 +1108,8 @@ PamHistogramToXMLTree( double dfMin, double dfMax,
 
 {
     char *pszHistCounts;
-    int iBucket, iHistOffset;
+    int iBucket;
+    size_t iHistOffset;
     CPLXMLNode *psXMLHist;
     CPLString oFmt;
 

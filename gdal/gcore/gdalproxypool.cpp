@@ -559,7 +559,7 @@ GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescripti
     this->nRasterYSize = nRasterYSize;
     this->eAccess = eAccess;
 
-    this->bShared = bShared;
+    this->bShared = static_cast<GByte>(bShared);
 
     this->responsiblePID = GDALGetResponsiblePIDForCurrentThread();
 

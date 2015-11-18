@@ -2091,7 +2091,7 @@ GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
     if (poAllDatasetMap != NULL)
     {
         int i = 0;
-        *pnCount = poAllDatasetMap->size();
+        *pnCount = static_cast<int>(poAllDatasetMap->size());
         ppDatasets = (GDALDataset**) CPLRealloc(ppDatasets, (*pnCount) * sizeof(GDALDataset*));
         std::map<GDALDataset*, GIntBig>::iterator oIter = poAllDatasetMap->begin();
         for(; oIter != poAllDatasetMap->end(); ++oIter, i++ )

@@ -1006,7 +1006,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             for(int i=0;i<CSiz;i++)
             {
                 READ_MARKER_FIELD_UINT8_COMMENT(CPLSPrintf("Ssiz%d", i),
-                                                GetInterpretationOfBPC(nLastVal));
+                        GetInterpretationOfBPC(static_cast<GByte>(nLastVal)));
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("XRsiz%d", i));
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("YRsiz%d", i));
             }

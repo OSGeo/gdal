@@ -365,7 +365,7 @@ void GDALJP2Box::AppendWritableData( int nLength, const void *pabyDataIn )
         nBoxLength = 8;
     }
 
-    pabyData = (GByte *) CPLRealloc(pabyData, GetDataLength() + nLength);
+    pabyData = (GByte *) CPLRealloc(pabyData, static_cast<size_t>(GetDataLength() + nLength));
     memcpy( pabyData + GetDataLength(), pabyDataIn, nLength );
 
     nBoxLength += nLength;
@@ -489,7 +489,7 @@ GDALJP2Box *GDALJP2Box::CreateLblBox( const char *pszLabel )
 
     poBox = new GDALJP2Box();
     poBox->SetType( "lbl " );
-    poBox->SetWritableData( strlen(pszLabel)+1, (const GByte *) pszLabel );
+    poBox->SetWritableData( static_cast<int>(strlen(pszLabel)+1), (const GByte *) pszLabel );
 
     return poBox;
 }
@@ -506,10 +506,10 @@ GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc( const char *pszLabel,
     GDALJP2Box *aoList[2];
 
     oLabel.SetType( "lbl " );
-    oLabel.SetWritableData( strlen(pszLabel)+1, (const GByte *) pszLabel );
+    oLabel.SetWritableData( static_cast<int>(strlen(pszLabel)+1), (const GByte *) pszLabel );
 
     oXML.SetType( "xml " );
-    oXML.SetWritableData( strlen(pszXML)+1, (const GByte *) pszXML );
+    oXML.SetWritableData( static_cast<int>(strlen(pszXML)+1), (const GByte *) pszXML );
 
     aoList[0] = &oLabel;
     aoList[1] = &oXML;

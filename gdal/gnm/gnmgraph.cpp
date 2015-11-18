@@ -202,7 +202,7 @@ GNMPATH GNMGraph::DijkstraShortestPath( GNMGFID nStartFID, GNMGFID nEndFID,
             aoShortestPath.push_back( std::make_pair(nNextVertexId, -1) );
 
             // Revert array because the first vertex is now the last in path.
-            int size = aoShortestPath.size();
+            int size = static_cast<int>(aoShortestPath.size());
             for (int i = 0; i < size / 2; ++i)
             {
                 buf = aoShortestPath[i];

@@ -371,7 +371,7 @@ const char *PamAllocateProxy( const char *pszOriginal )
     CPLString osRevProxyFile;
     int   i;
 
-    i = strlen(pszOriginal) - 1;
+    i = static_cast<int>(strlen(pszOriginal)) - 1;
     while( i >= 0 && osRevProxyFile.size() < 220 )
     {
         if( i > 6 && STARTS_WITH_CI(pszOriginal+i-5, ":::OVR") )
@@ -402,7 +402,7 @@ const char *PamAllocateProxy( const char *pszOriginal )
     osCounter.Printf( "%06d_", poProxyDB->nUpdateCounter++ );
     osProxy += osCounter;
 
-    for( i = osRevProxyFile.size()-1; i >= 0; i-- )
+    for( i = static_cast<int>(osRevProxyFile.size())-1; i >= 0; i-- )
         osProxy += osRevProxyFile[i];
 
     if( osOriginal.find(":::OVR") != CPLString::npos )

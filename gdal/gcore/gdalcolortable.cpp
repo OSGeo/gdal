@@ -297,7 +297,7 @@ GDALColorTableH CPL_STDCALL GDALCloneColorTable( GDALColorTableH hTable )
 int GDALColorTable::GetColorEntryCount() const
 
 {
-    return aoEntries.size();
+    return static_cast<int>(aoEntries.size());
 }
 
 /************************************************************************/

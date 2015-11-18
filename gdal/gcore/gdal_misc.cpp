@@ -1066,7 +1066,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                         poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );
                         if ( poTransform )
                         {
-                            bReadOk = poTransform->Transform( 1, &dfLon, &dfLat );
+                            bReadOk = CPL_TO_BOOL(poTransform->Transform( 1, &dfLon, &dfLat ));
                             delete poTransform;
                         }
                         delete poLatLong;

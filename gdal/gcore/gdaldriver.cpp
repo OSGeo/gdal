@@ -753,7 +753,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
     const bool bAppendSubdataset
-        = CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE);
+        = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE));
     if( !bAppendSubdataset &&
         CSLFetchBoolean(papszOptions, "QUIET_DELETE_ON_CREATE_COPY", TRUE) )
         QuietDelete( pszFilename );
@@ -778,7 +778,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     bool bInternalDataset = false;
     if( iIdxInternalDataset >= 0 )
     {
-        bInternalDataset = CSLFetchBoolean(papszOptions, "_INTERNAL_DATASET", FALSE);
+        bInternalDataset = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "_INTERNAL_DATASET", FALSE));
         if( papszOptionsToDelete == NULL )
             papszOptionsToDelete = CSLDuplicate(papszOptions);
         papszOptions = CSLRemoveStrings(papszOptionsToDelete, iIdxInternalDataset, 1, NULL);
