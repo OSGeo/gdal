@@ -1525,6 +1525,7 @@ yyerrlab:
 /*---------------------------------------------------.
 | yyerrorlab -- error raised explicitly by YYERROR.  |
 `---------------------------------------------------*/
+#if 0
 yyerrorlab:
 
   /* Pacify compilers like GCC when the user code never invokes
@@ -1545,6 +1546,7 @@ yyerrorlab:
 /*-------------------------------------------------------------.
 | yyerrlab1 -- common code for both syntax error and YYERROR.  |
 `-------------------------------------------------------------*/
+#endif
 yyerrlab1:
   yyerrstatus = 3;      /* Each real token shifted decrements this.  */
 
