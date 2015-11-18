@@ -114,9 +114,9 @@ OGRWAsPLayer::~OGRWAsPLayer()
         /* candidates for merging are pairs of neighbors with corresponding */
         /* left/right values. Finally we merge */
 
-        typedef std::map< std::pair<double,double>, std::vector<size_t> > PointMap;
+        typedef std::map< std::pair<double,double>, std::vector<int> > PointMap;
         PointMap oMap;
-        for ( size_t i = 0; i < oBoundaries.size(); i++)
+        for ( int i = 0; i < static_cast<int>(oBoundaries.size()); i++)
         {
             const Boundary & p = oBoundaries[i]; 
             OGRPoint startP, endP;
@@ -131,8 +131,8 @@ OGRWAsPLayer::~OGRWAsPLayer()
         for ( PointMap::const_iterator it = oMap.begin(); it != oMap.end(); it++ )
         {
             if ( it->second.size() != 2 ) continue;
-            size_t i = it->second[0];
-            size_t j = it->second[1];
+            int i = it->second[0];
+            int j = it->second[1];
 
             const Boundary & p = oBoundaries[i]; 
             OGRPoint startP, endP;
