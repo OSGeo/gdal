@@ -40,7 +40,7 @@
 #include "ogrsf_frmts.h"
 #include "org_sxf_defs.h"
 
-#define CHECK_BIT(var,pos) ((var) & (1<<(pos)))
+#define CHECK_BIT(var,pos) (((var) & (1<<(pos))) != 0)
 #define TO_DEGREES 57.2957795130823208766
 #define TO_RADIANS 0.017453292519943295769
 

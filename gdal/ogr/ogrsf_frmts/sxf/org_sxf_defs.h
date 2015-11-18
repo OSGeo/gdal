@@ -252,7 +252,7 @@ typedef struct
     SXFValueType eValType;      // size of values (Note 3)
     int bFormat;                 // Has 3D vector (Note 4) /* Format of the certificate (0- linear size, 1-vector format ) */
     GByte bDim;                 // Dimensionality of the idea (0- 2D, 1- 3D) (Note 6)
-    int bHasTextSign;           // Sign of certificate with the text (Note 8)
+    bool bHasTextSign;           // Sign of certificate with the text (Note 8)
     GUInt32 nPointCount;        // Point count
     GUInt16 nSubObjectCount;    // The sub object count
 

@@ -694,8 +694,8 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     else if (code == 0x22)
         eGeomType = SXF_GT_VectorScaled;
 
-    bool bHasAttributes = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[1], 1));
-    bool bHasRefVector = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[1], 3));
+    bool bHasAttributes = CHECK_BIT(stRecordHeader.nRef[1], 1);
+    bool bHasRefVector = CHECK_BIT(stRecordHeader.nRef[1], 3);
     if (bHasRefVector == true)
         CPLError(CE_Failure, CPLE_NotSupported,
         "SXF. Parsing the vector of the tying not support.");
@@ -715,16 +715,16 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     bool b3D(true);
     if (m_nSXFFormatVer == 3)
     {
-        b3D = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[2], 1));
-        bFloatType = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[2], 2));
-        bBigType = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[1], 2));
+        b3D = CHECK_BIT(stRecordHeader.nRef[2], 1);
+        bFloatType = CHECK_BIT(stRecordHeader.nRef[2], 2);
+        bBigType = CHECK_BIT(stRecordHeader.nRef[1], 2);
         stCertInfo.bHasTextSign = CHECK_BIT(stRecordHeader.nRef[2], 5);
     }
     else if (m_nSXFFormatVer == 4)
     {
-        b3D = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[2], 1));
-        bFloatType = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[2], 2));
-        bBigType = CPL_TO_BOOL(CHECK_BIT(stRecordHeader.nRef[1], 2));
+        b3D = CHECK_BIT(stRecordHeader.nRef[2], 1);
+        bFloatType = CHECK_BIT(stRecordHeader.nRef[2], 2);
+        bBigType = CHECK_BIT(stRecordHeader.nRef[1], 2);
         stCertInfo.bHasTextSign = CHECK_BIT(stRecordHeader.nRef[2], 3);
     }
     // Else trouble.
@@ -1486,7 +1486,9 @@ OGRFeature *OGRSXFLayer::TranslateText(const SXFRecordDescription& certifInfo,
         pszTextBuf[nTextL] = '\0';
 
         //TODO: Check encoding from sxf
-        poFeature->SetField("TEXT", pszTextBuf);
+        char* pszRecoded = CPLRecode(pszTextBuf, "CP1251", CPL_ENC_UTF8);
+        poFeature->SetField("TEXT", pszRecoded);
+        CPLFree(pszRecoded);
 
         CPLFree( pszTextBuf );
     }
