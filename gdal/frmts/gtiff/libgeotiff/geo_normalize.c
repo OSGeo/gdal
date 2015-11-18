@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2679 2015-11-02 10:40:01Z rouault $
+ * $Id: geo_normalize.c 2685 2015-11-18 18:46:20Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -1110,8 +1110,6 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG, int bReturnExtendedCTCode )
       default: /* use the EPSG code for other methods */
         return nEPSG;
     }
-
-    return( KvUserDefined );
 }
 
 /************************************************************************/
@@ -2478,7 +2476,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 #if !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
     psDefn->TOWGS84Count = 
-        GTIFKeyGetDOUBLE(psGTIF, GeogTOWGS84GeoKey, psDefn->TOWGS84, 0, 7 );
+        (short)GTIFKeyGetDOUBLE(psGTIF, GeogTOWGS84GeoKey, psDefn->TOWGS84, 0, 7 );
 #endif
 
 /* -------------------------------------------------------------------- */

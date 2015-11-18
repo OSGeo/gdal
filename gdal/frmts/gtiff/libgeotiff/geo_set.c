@@ -127,7 +127,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
       case TYPE_DOUBLE: dval=va_arg(ap, dblparam_t); val=(char *)&dval;  break;
       case TYPE_ASCII: 
         val=va_arg(ap, char*);
-        count = strlen(val) + 1; /* force = string length */
+        count = (int)strlen(val) + 1; /* force = string length */
         break;
       default:
         assert( FALSE );
