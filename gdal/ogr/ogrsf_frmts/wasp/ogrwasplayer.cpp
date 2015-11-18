@@ -114,7 +114,7 @@ OGRWAsPLayer::~OGRWAsPLayer()
         /* candidates for merging are pairs of neighbors with corresponding */
         /* left/right values. Finally we merge */
 
-        typedef std::map< std::pair<double,double>, std::vector<int> > PointMap;
+        typedef std::map< std::pair<double,double>, std::vector<size_t> > PointMap;
         PointMap oMap;
         for ( size_t i = 0; i < oBoundaries.size(); i++)
         {
@@ -131,8 +131,8 @@ OGRWAsPLayer::~OGRWAsPLayer()
         for ( PointMap::const_iterator it = oMap.begin(); it != oMap.end(); it++ )
         {
             if ( it->second.size() != 2 ) continue;
-            int i = it->second[0];
-            int j = it->second[1];
+            size_t i = it->second[0];
+            size_t j = it->second[1];
 
             const Boundary & p = oBoundaries[i]; 
             OGRPoint startP, endP;
@@ -275,7 +275,7 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
     OGRPoint startPt, endPt;
     poLine->StartPoint( &startPt );
     poLine->EndPoint( &endPt );
-    const bool isRing = startPt.Equals( &endPt );
+    const bool isRing = CPL_TO_BOOL(startPt.Equals( &endPt ));
 
     if ( pdfAdjacentPointTolerance.get() && *pdfAdjacentPointTolerance > 0)
     {
@@ -441,7 +441,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
     poGeom->getEnvelope( &oEnvelope );
     for ( size_t i=0; i<oZones.size(); i++)
     {
-        const bool bIntersects = oEnvelope.Intersects( oZones[i].oEnvelope );
+        const bool bIntersects = CPL_TO_BOOL(oEnvelope.Intersects( oZones[i].oEnvelope ));
         if ( bIntersects && ( !bMerge || !isEqual( dfZ, oZones[i].dfZ ) ) ) /* boundary */
         {
             OGRGeometry * poIntersection = oZones[i].poPolygon->Intersection( poGeom );
@@ -788,7 +788,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
     poFeature->SetFID( ++iFeatureCount );
     for ( int i=0; i<iNumValues-1; i++ ) poFeature->SetField( i, dfValues[i] );
 
-    const int iNumValuesToRead = 2*dfValues[iNumValues-1];
+    const int iNumValuesToRead = static_cast<int>(2*dfValues[iNumValues-1]);
     int iReadValues = 0;
     std::vector<double> values(iNumValuesToRead);
     for ( pszLine = CPLReadLineL( hFile ); 

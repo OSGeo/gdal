@@ -120,7 +120,7 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 
     while( oStmt.Fetch() )
     {
-        int i, iNew = apapszGeomColumns.size();
+        int i, iNew = static_cast<int>(apapszGeomColumns.size());
         char **papszRecord = NULL;
         
         for( i = 1; i < 7; i++ )

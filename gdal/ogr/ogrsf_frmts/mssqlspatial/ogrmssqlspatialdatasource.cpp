@@ -124,7 +124,7 @@ OGRLayer *OGRMSSQLSpatialDataSource::GetLayerByName( const char* pszLayerName )
     const char* pszDotPos = strstr(pszLayerName,".");
     if ( pszDotPos != NULL )
     {
-      int length = pszDotPos - pszLayerName;
+      int length = static_cast<int>(pszDotPos - pszLayerName);
       pszSchemaName = (char*)CPLMalloc(length+1);
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
@@ -245,7 +245,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     const char* pszDotPos = strstr(pszLayerName,".");
     if ( pszDotPos != NULL )
     {
-      int length = pszDotPos - pszLayerName;
+      int length = static_cast<int>(pszDotPos - pszLayerName);
       pszSchemaName = (char*)CPLMalloc(length+1);
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
@@ -538,7 +538,7 @@ int OGRMSSQLSpatialDataSource::GetLayerCount()
 
 int OGRMSSQLSpatialDataSource::ParseValue(char** pszValue, char* pszSource, const char* pszKey, int nStart, int nNext, int nTerm, int bRemove)
 {
-    int nLen = strlen(pszKey);
+    int nLen = static_cast<int>(strlen(pszKey));
     if ((*pszValue) == NULL && nStart + nLen < nNext && 
             EQUALN(pszSource + nStart, pszKey, nLen))
     {
@@ -586,7 +586,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     char* pszConnectionName = CPLStrdup(pszNewName + 6);
     char* pszDriver = NULL;
     int nCurrent, nNext, nTerm;
-    nCurrent = nNext = nTerm = strlen(pszConnectionName);
+    nCurrent = nNext = nTerm = static_cast<int>(strlen(pszConnectionName));
 
     while (nCurrent > 0)
     {
@@ -686,7 +686,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
                 {
                     *pos = '\0';
                     pszGeomColumnName = pos+1;
-                    int len = strlen(pszGeomColumnName);
+                    int len = static_cast<int>(strlen(pszGeomColumnName));
                     if (len > 0)
                         pszGeomColumnName[len - 1] = '\0';
                 }

@@ -440,7 +440,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
     // Create two layers for each selected time step: one for points, the other for elements
     int nNewLayers;
     poRange.setMaxValue(poHeader->nSteps);
-    nNewLayers=poRange.getSize();
+    nNewLayers=static_cast<int>(poRange.getSize());
     if (EQUAL(pszFilename, "/vsistdin/")) osBaseLayerName = "layer";
     CPLString osLayerName;
     papoLayers = (OGRSelafinLayer **) CPLRealloc(papoLayers, sizeof(void*) * (nLayers+nNewLayers));

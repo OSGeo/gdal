@@ -257,7 +257,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
         }
         CPLError(CE_Warning,CPLE_AppDefined,"The attributes of elements layer in Selafin files can't be updated.");
         CPLDebug("Selafin","SetFeature(" CPL_FRMT_GIB ",%f,%f,%f,%f,%f,%f)",poFeature->GetFID(),poLinearRing->getX(0),poLinearRing->getY(0),poLinearRing->getX(1),poLinearRing->getY(1),poLinearRing->getX(2),poLinearRing->getY(2));   //!< This is not safe as we can't be sure there are at least three vertices in the linear ring, but we can assume that for a debug mode
-        long nFID=poFeature->GetFID();
+        long nFID=static_cast<long>(poFeature->GetFID());
         // Now we change the coordinates of points in the layer based on the vertices of the new polygon. We don't look at the order of points and we assume that it is the same as in the original layer.
         for (long i=0;i<poHeader->nPointsPerElement;++i) {
             long nPointId=poHeader->panConnectivity[nFID*poHeader->nPointsPerElement+i]-1;

@@ -232,7 +232,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
             else
             {
                 char* pszDefault = CPLStrdup(poStmt->GetColColumnDef(iCol));
-                int nLen = strlen(pszDefault);
+                int nLen = static_cast<int>(strlen(pszDefault));
                 if (nLen >= 1 && pszDefault[0] == '(' && pszDefault[nLen-1] == ')')
                 {
                     /* all default values are encapsulated in backets by MSSQL server */
