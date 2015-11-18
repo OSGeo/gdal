@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.195 2015-11-17 16:21:02 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.196 2015-11-18 18:26:03 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3690,7 +3690,7 @@ TIFFReadDirectory(TIFF* tif)
 			case TIFFTAG_SMAXSAMPLEVALUE:
 				{
 
-					double *data;
+					double *data = NULL;
 					enum TIFFReadDirEntryErr err;
 					uint32 saved_flags;
 					int m;
