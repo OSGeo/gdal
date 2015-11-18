@@ -135,7 +135,7 @@ static void MakeKMLCoordinate( char *pszTarget,
 /*                            _GrowBuffer()                             */
 /************************************************************************/
 
-static void _GrowBuffer( int nNeeded, char **ppszText, int *pnMaxLength )
+static void _GrowBuffer( size_t nNeeded, char **ppszText, size_t *pnMaxLength )
 
 {
     if( nNeeded+1 >= *pnMaxLength )
@@ -149,7 +149,7 @@ static void _GrowBuffer( int nNeeded, char **ppszText, int *pnMaxLength )
 /*                            AppendString()                            */
 /************************************************************************/
 
-static void AppendString( char **ppszText, int *pnLength, int *pnMaxLength,
+static void AppendString( char **ppszText, size_t *pnLength, size_t *pnMaxLength,
                           const char *pszTextToAppend )
 
 {
@@ -166,8 +166,8 @@ static void AppendString( char **ppszText, int *pnLength, int *pnMaxLength,
 /************************************************************************/
 
 static void AppendCoordinateList( OGRLineString *poLine, 
-                                  char **ppszText, int *pnLength, 
-                                  int *pnMaxLength )
+                                  char **ppszText, size_t *pnLength, 
+                                  size_t *pnMaxLength )
 
 {
     char szCoordinate[256]= { 0 };
@@ -206,8 +206,8 @@ static void AppendCoordinateList( OGRLineString *poLine,
 /************************************************************************/
 
 static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry, 
-                                  char **ppszText, int *pnLength, 
-                                  int *pnMaxLength, char * szAltitudeMode )
+                                  char **ppszText, size_t *pnLength, 
+                                  size_t *pnMaxLength, char * szAltitudeMode )
 
 {
 /* -------------------------------------------------------------------- */
@@ -473,8 +473,8 @@ CPLXMLNode* OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
 char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
 {
     char* pszText = NULL;
-    int nLength = 0;
-    int nMaxLength = 1;
+    size_t nLength = 0;
+    size_t nMaxLength = 1;
     char szAltitudeMode[128]; 
 
     // TODO - mloskot: Shouldn't we use VALIDATE_POINTER1 here?
