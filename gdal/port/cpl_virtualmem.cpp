@@ -2104,7 +2104,7 @@ CPLVirtualMem *CPLVirtualMemDerivedNew(CPLVirtualMem* pVMemBase,
     ctxt->eAccessMode = pVMemBase->eAccessMode;
     ctxt->pData = (GByte*) pVMemBase->pData + nOffset;
     ctxt->pDataToFree = NULL;
-    ctxt->nSize = nSize;
+    ctxt->nSize = static_cast<size_t>(nSize);
     ctxt->nPageSize = pVMemBase->nPageSize;
     ctxt->bSingleThreadUsage = pVMemBase->bSingleThreadUsage;
     ctxt->pfnFreeUserData = pfnFreeUserData;
