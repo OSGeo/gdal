@@ -1243,7 +1243,7 @@ YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
   yyssp++;
 
  yysetstate:
-  *yyssp = yystate;
+  *yyssp = (yytype_int16)yystate;
 
   if (yyss + yystacksize - 1 <= yyssp)
     {
