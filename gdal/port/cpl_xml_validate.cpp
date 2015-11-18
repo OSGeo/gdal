@@ -112,7 +112,7 @@ static void CPLHasLibXMLBugWarningCallback (void * ctx, const char * msg, ...)
 static bool CPLHasLibXMLBug()
 {
     if (bHasLibXMLBug >= 0)
-        return bHasLibXMLBug;
+        return CPL_TO_BOOL(bHasLibXMLBug);
 
     static const char szLibXMLBugTester[] =
     "<schema targetNamespace=\"http://foo\" xmlns:foo=\"http://foo\" xmlns=\"http://www.w3.org/2001/XMLSchema\">"
@@ -158,7 +158,7 @@ static bool CPLHasLibXMLBug()
                  "Will try to workaround for GML schemas.");
     }
 
-    return bHasLibXMLBug;
+    return CPL_TO_BOOL(bHasLibXMLBug);
 }
 
 #endif
@@ -878,13 +878,13 @@ char* CPLLoadContentFromFile(const char* pszFilename)
         VSIFCloseL(fp);
         return NULL;
     }
-    char* pszBuffer = (char*)VSIMalloc(nSize + 1);
+    char* pszBuffer = (char*)VSIMalloc((size_t)nSize + 1);
     if (pszBuffer == NULL)
     {
         VSIFCloseL(fp);
         return NULL;
     }
-    if( VSIFReadL(pszBuffer, 1, nSize, fp) != (size_t)nSize )
+    if( (size_t)VSIFReadL(pszBuffer, 1, (size_t)nSize, fp) != (size_t)nSize )
     {
         VSIFree(pszBuffer);
         VSIFCloseL(fp);

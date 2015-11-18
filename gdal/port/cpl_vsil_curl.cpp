@@ -388,7 +388,7 @@ int   VSICurlHandle::InstallReadCbk(VSICurlReadCbkFunc pfnReadCbkIn,
 
     pfnReadCbk = pfnReadCbkIn;
     pReadCbkUserData = pfnUserDataIn;
-    bStopOnInterrruptUntilUninstall = bStopOnInterrruptUntilUninstallIn;
+    bStopOnInterrruptUntilUninstall = CPL_TO_BOOL(bStopOnInterrruptUntilUninstallIn);
     bInterrupted = false;
     return TRUE;
 }
@@ -2365,7 +2365,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList( const CPLString& osBaseURL,
             }
         }
         osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
-        bIsTruncated = (bool)CSLTestBoolean(CPLGetXMLValue(psListBucketResult, "IsTruncated", "false"));
+        bIsTruncated = CPL_TO_BOOL(CSLTestBoolean(CPLGetXMLValue(psListBucketResult, "IsTruncated", "false")));
     }
     CPLDestroyXMLNode(psTree);
 }

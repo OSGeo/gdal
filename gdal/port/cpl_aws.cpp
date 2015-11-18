@@ -412,11 +412,11 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI,
     {
         return NULL;
     }
-    bool bUseHTTPS = (bool)CSLTestBoolean(CPLGetConfigOption("AWS_HTTPS", "YES"));
+    bool bUseHTTPS = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("AWS_HTTPS", "YES")));
     bool bIsValidNameForVirtualHosting = (osBucket.find('.') == std::string::npos);
-    bool bUseVirtualHosting = (bool)CSLTestBoolean(
+    bool bUseVirtualHosting = CPL_TO_BOOL(CSLTestBoolean(
             CPLGetConfigOption("AWS_VIRTUAL_HOSTING",
-                               bIsValidNameForVirtualHosting ? "TRUE" : "FALSE"));
+                               bIsValidNameForVirtualHosting ? "TRUE" : "FALSE")));
     return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId,
                                     osAWSS3Endpoint, osAWSRegion,
                                     osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting);
