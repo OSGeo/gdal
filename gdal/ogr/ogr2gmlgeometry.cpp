@@ -181,7 +181,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
     // Buffer for xmlns:gml and srsName attributes (srsName="...")
     char szAttributes[64] = { 0 };
-    int nAttrsLength = 0;
+    size_t nAttrsLength = 0;
     
     szAttributes[0] = 0;
 
@@ -591,7 +591,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 
     // Buffer for srsName, xmlns:gml, srsDimension and gml:id attributes (srsName="..." gml:id="...")
     char szAttributes[256];
-    int nAttrsLength = 0;
+    size_t nAttrsLength = 0;
 
     szAttributes[0] = 0;
 
