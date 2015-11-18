@@ -72,7 +72,7 @@ static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
         i ++;
     if( !STARTS_WITH_CI(pszIter + i, "SECTION") )
         return FALSE;
-    i += strlen("SECTION");
+    i += static_cast<int>(strlen("SECTION"));
     return pszIter[i] == '\n' || pszIter[i] == '\r';
 }
 

@@ -1397,7 +1397,7 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
 /* -------------------------------------------------------------------- */
 /*      Interpolate spline                                              */
 /* -------------------------------------------------------------------- */
-    int nControlPoints = adfControlPoints.size() / 3;
+    int nControlPoints = static_cast<int>(adfControlPoints.size()) / 3;
     std::vector<double> h, p;
 
     h.push_back(1.0);
