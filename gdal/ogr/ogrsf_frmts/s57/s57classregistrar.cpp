@@ -321,7 +321,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     if( fp != NULL )
         VSIFCloseL( fp );
 
-    nAttrCount = anAttrIndex.size();
+    nAttrCount = static_cast<int>(anAttrIndex.size());
 
 /* -------------------------------------------------------------------- */
 /*      Sort index by acronym.                                          */
