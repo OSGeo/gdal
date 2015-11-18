@@ -556,8 +556,8 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
 /*      Build a list of strings containing the stuff for each ring.     */
 /* -------------------------------------------------------------------- */
     char **papszRings = (char **) CPLCalloc(sizeof(char *),oCC.nCurveCount);
-    int nCumulativeLength = 0;
-    int nNonEmptyRings = 0;
+    size_t nCumulativeLength = 0;
+    size_t nNonEmptyRings = 0;
 
     for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
     {
@@ -612,7 +612,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
             (*ppszDstText)[nCumulativeLength++] = ',';
         bMustWriteComma = true;
 
-        int nRingLen = strlen(papszRings[iRing] + 11);
+        size_t nRingLen = strlen(papszRings[iRing] + 11);
         memcpy( *ppszDstText + nCumulativeLength, papszRings[iRing] + 11, nRingLen );
         nCumulativeLength += nRingLen;
         VSIFree( papszRings[iRing] );

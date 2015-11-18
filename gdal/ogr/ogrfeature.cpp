@@ -3677,7 +3677,7 @@ void OGR_F_SetFieldDateTime( OGRFeatureH hFeat, int iField,
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDateTime" );
 
     ((OGRFeature *)hFeat)->SetField( iField, nYear, nMonth, nDay,
-                                     nHour, nMinute, nSecond, nTZFlag );
+                                     nHour, nMinute, static_cast<float>(nSecond), nTZFlag );
 }
 
 /************************************************************************/
@@ -5108,7 +5108,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
                                 brokendown.tm_mday,
                                 brokendown.tm_hour,
                                 brokendown.tm_min,
-                                brokendown.tm_sec,
+                                static_cast<float>(brokendown.tm_sec),
                                 100 );
                 }
                 else

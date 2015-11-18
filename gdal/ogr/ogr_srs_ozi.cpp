@@ -192,17 +192,17 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                     CSLDestroy(papszTok);
                     continue;
                 }
-                SetUTM( CPLAtofM(papszTok[13]), EQUAL(papszTok[16], "N") );
+                SetUTM( atoi(papszTok[13]), EQUAL(papszTok[16], "N") );
                 CSLDestroy(papszTok);
                 break;
             }
         }
         if ( iLine == nLines )    /* Try to guess the UTM zone */
         {
-            float fMinLongitude = INT_MAX;
-            float fMaxLongitude = INT_MIN;
-            float fMinLatitude = INT_MAX;
-            float fMaxLatitude = INT_MIN;
+            float fMinLongitude = 1000.0f;
+            float fMaxLongitude = -1000.0f;;
+            float fMinLatitude = 1000.0f;
+            float fMaxLatitude = -1000.0f;
             bool bFoundMMPLL = false;
             for ( iLine = 5; iLine < nLines; iLine++ )
             {
@@ -218,8 +218,8 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                         CSLDestroy(papszTok);
                         continue;
                     }
-                    float fLongitude = CPLAtofM(papszTok[2]);
-                    float fLatitude = CPLAtofM(papszTok[3]);
+                    float fLongitude = static_cast<float>(CPLAtofM(papszTok[2]));
+                    float fLatitude = static_cast<float>(CPLAtofM(papszTok[3]));
                     CSLDestroy(papszTok);
 
                     bFoundMMPLL = true;

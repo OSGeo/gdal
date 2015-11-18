@@ -147,8 +147,8 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText,
                                    OGRwkbVariant eWkbVariant ) const
 
 {
-    int         nMaxString = getNumGeometries() * 22 + 128;
-    int         nRetLen = 0;
+    size_t      nMaxString = static_cast<size_t>(getNumGeometries()) * 22 + 128;
+    size_t      nRetLen = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Return MULTIPOINT EMPTY if we get no valid points.              */

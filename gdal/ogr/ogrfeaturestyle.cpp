@@ -871,11 +871,11 @@ const char *OGRStyleTable::GetStyleName(const char *pszStyleString)
         if (pszStyleStringBegin && EQUAL(&pszStyleStringBegin[1],
                                          pszStyleString))
         {
-            int nColon;
+            size_t nColon;
 
             osLastRequestedStyleName = m_papszStyleTable[i];
             nColon = osLastRequestedStyleName.find( ':' );
-            if( nColon != -1 )
+            if( nColon != std::string::npos )
                 osLastRequestedStyleName = 
                     osLastRequestedStyleName.substr(0,nColon);
 
@@ -1294,11 +1294,11 @@ const char *OGRStyleTable::GetNextStyle()
 
         pszDash = strstr(pszOutput,":");
 
-        int nColon;
+        size_t nColon;
 
         osLastRequestedStyleName = pszOutput;
         nColon = osLastRequestedStyleName.find( ':' );
-        if( nColon != -1 )
+        if( nColon != std::string::npos )
             osLastRequestedStyleName = 
                 osLastRequestedStyleName.substr(0,nColon);
 

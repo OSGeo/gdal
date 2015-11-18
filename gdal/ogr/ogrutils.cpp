@@ -194,7 +194,7 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 
     szZ[0] = '\0';
 
-    int nLenX, nLenY;
+    size_t nLenX, nLenY;
 
     if( CPL_IS_DOUBLE_A_INT(x) && CPL_IS_DOUBLE_A_INT(y) )
     {
@@ -898,7 +898,7 @@ int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )
             psField->Date.Day = (GByte)day;
             psField->Date.Hour = (GByte)hour;
             psField->Date.Minute = (GByte)minute;
-            psField->Date.Second = second;
+            psField->Date.Second = static_cast<float>(second);
             psField->Date.TZFlag = (GByte)TZ;
             psField->Date.Reserved = 0;
         }

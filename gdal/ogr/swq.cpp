@@ -38,7 +38,7 @@ void swqerror( swq_parse_context *context, const char *msg )
     CPLString osMsg;
     osMsg.Printf( "SQL Expression Parsing Error: %s. Occured around :\n", msg );
 
-    int n = context->pszLastValid - context->pszInput;
+    int n = static_cast<int>(context->pszLastValid - context->pszInput);
 
     for( int i = MAX(0,n-40); i < n + 40 && context->pszInput[i] != '\0'; i ++ )
         osMsg += context->pszInput[i];

@@ -726,7 +726,8 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 
 {
     char        **papszGeoms;
-    int         iGeom, nCumulativeLength = 0;
+    int         iGeom;
+    size_t      nCumulativeLength = 0;
     OGRErr      eErr;
     bool bMustWriteComma = false;
 
@@ -741,7 +742,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
         if( eErr != OGRERR_NONE )
             goto error;
 
-        int nSkip = 0;
+        size_t nSkip = 0;
         if( pszSkipPrefix != NULL &&
             EQUALN(papszGeoms[iGeom], pszSkipPrefix, strlen(pszSkipPrefix)) &&
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )

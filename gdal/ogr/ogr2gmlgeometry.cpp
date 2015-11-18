@@ -97,7 +97,7 @@ static void MakeGMLCoordinate( char *pszTarget,
 /*                            _GrowBuffer()                             */
 /************************************************************************/
 
-static void _GrowBuffer( int nNeeded, char **ppszText, int *pnMaxLength )
+static void _GrowBuffer( size_t nNeeded, char **ppszText, size_t *pnMaxLength )
 
 {
     if( nNeeded+1 >= *pnMaxLength )
@@ -111,7 +111,7 @@ static void _GrowBuffer( int nNeeded, char **ppszText, int *pnMaxLength )
 /*                            AppendString()                            */
 /************************************************************************/
 
-static void AppendString( char **ppszText, int *pnLength, int *pnMaxLength,
+static void AppendString( char **ppszText, size_t *pnLength, size_t *pnMaxLength,
                           const char *pszTextToAppend )
 
 {
@@ -128,8 +128,8 @@ static void AppendString( char **ppszText, int *pnLength, int *pnMaxLength,
 /************************************************************************/
 
 static void AppendCoordinateList( OGRLineString *poLine, 
-                                  char **ppszText, int *pnLength, 
-                                  int *pnMaxLength )
+                                  char **ppszText, size_t *pnLength, 
+                                  size_t *pnMaxLength )
 
 {
     char        szCoordinate[256];
@@ -168,8 +168,8 @@ static void AppendCoordinateList( OGRLineString *poLine,
 /************************************************************************/
 
 static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
-                                   char **ppszText, int *pnLength,
-                                   int *pnMaxLength,
+                                   char **ppszText, size_t *pnLength,
+                                   size_t *pnMaxLength,
                                    bool bIsSubGeometry,
                                    const char* pszNamespaceDecl )
 
@@ -521,8 +521,8 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 /************************************************************************/
 
 static void AppendGML3CoordinateList( const OGRSimpleCurve *poLine, bool bCoordSwap,
-                                      char **ppszText, int *pnLength,
-                                      int *pnMaxLength, int nSRSDimensionLocFlags )
+                                      char **ppszText, size_t *pnLength,
+                                      size_t *pnMaxLength, int nSRSDimensionLocFlags )
 
 {
     char        szCoordinate[256];
@@ -573,8 +573,8 @@ static void AppendGML3CoordinateList( const OGRSimpleCurve *poLine, bool bCoordS
 
 static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                     const OGRSpatialReference* poParentSRS,
-                                    char **ppszText, int *pnLength,
-                                    int *pnMaxLength,
+                                    char **ppszText, size_t *pnLength,
+                                    size_t *pnMaxLength,
                                     bool bIsSubGeometry,
                                     bool bLongSRS,
                                     bool bLineStringAsCurve,
@@ -1123,7 +1123,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
 
 {
     char        *pszText;
-    int         nLength = 0, nMaxLength = 1;
+    size_t       nLength = 0, nMaxLength = 1;
 
     if( hGeometry == NULL )
         return CPLStrdup( "" );
