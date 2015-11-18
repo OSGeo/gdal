@@ -52,7 +52,7 @@ static char GifVersionPrefix[GIF_STAMP_LEN + 1] = GIF87_STAMP;
 
 #define WRITE(_gif,_buf,_len)   \
   (((GifFilePrivateType*)_gif->Private)->Write ?    \
-   ((GifFilePrivateType*)_gif->Private)->Write(_gif,_buf,_len) :    \
+   ((GifFilePrivateType*)_gif->Private)->Write(_gif,_buf,(int)(_len)) :    \
    fwrite(_buf, 1, _len, ((GifFilePrivateType*)_gif->Private)->File))
 
 static int EGifPutWord(int Word, GifFileType * GifFile);
@@ -244,7 +244,7 @@ EGifPutScreenDesc(GifFileType * GifFile,
 /* First write the version prefix into the file. */
 #ifndef DEBUG_NO_PREFIX
     if (WRITE(GifFile, (unsigned char *)GifVersionPrefix,
-              strlen(GifVersionPrefix)) != strlen(GifVersionPrefix)) {
+              (int)strlen(GifVersionPrefix)) != strlen(GifVersionPrefix)) {
         _GifError = E_GIF_ERR_WRITE_FAILED;
         return GIF_ERROR;
     }
@@ -472,7 +472,7 @@ EGifPutComment(GifFileType * GifFile,
     unsigned int length;
     char *buf;
 
-    length = strlen(Comment);
+    length = (unsigned int)strlen(Comment);
     if (length <= 255) {
         return EGifPutExtension(GifFile, COMMENT_EXT_FUNC_CODE,
                                 length, Comment);
@@ -839,7 +839,7 @@ EGifCompressLine(GifFileType * GifFile,
          * CrntCode as Prefix string with Pixel as postfix char.
          */
         NewKey = (((UINT32) CrntCode) << 8) + Pixel;
-        if ((NewCode = _ExistsHashTable(HashTable, NewKey)) >= 0) {
+        if ((NewCode = _ExistsHashTable(HashTable, (UINT32)NewKey)) >= 0) {
             /* This Key is already there, or the string is old one, so
              * simple take new code as our CrntCode:
              */
@@ -870,7 +870,7 @@ EGifCompressLine(GifFileType * GifFile,
                 _ClearHashTable(HashTable);
             } else {
                 /* Put this unique key with its relative Code in hash table: */
-                _InsertHashTable(HashTable, NewKey, Private->RunningCode++);
+                _InsertHashTable(HashTable, (UINT32)NewKey, Private->RunningCode++);
             }
         }
 

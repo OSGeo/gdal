@@ -188,7 +188,7 @@ png_text_compress(png_structp png_ptr,
    if (compression == PNG_TEXT_COMPRESSION_NONE)
    {
        comp->input = text;
-       comp->input_len = text_len;
+       comp->input_len = (int)text_len;
        return((int)text_len);
    }
 
@@ -856,7 +856,7 @@ png_write_sPLT(png_structp png_ptr, png_sPLT_tp spalette)
    png_charp new_name;
    png_byte entrybuf[10];
    int entry_size = (spalette->depth == 8 ? 6 : 10);
-   int palette_size = entry_size * spalette->nentries;
+   int palette_size = (int)(entry_size * spalette->nentries);
    png_sPLT_entryp ep;
 #ifndef PNG_POINTER_INDEXING_SUPPORTED
    int i;

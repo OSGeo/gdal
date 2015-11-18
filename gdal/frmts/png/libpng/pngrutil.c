@@ -225,7 +225,7 @@ png_inflate(png_structp png_ptr, const png_byte *data, png_size_t size,
    png_size_t count = 0;
 
    png_ptr->zstream.next_in = (png_bytep)data; /* const_cast: VALID */
-   png_ptr->zstream.avail_in = size;
+   png_ptr->zstream.avail_in = (uInt)size;
 
    while (1)
    {
@@ -235,10 +235,10 @@ png_inflate(png_structp png_ptr, const png_byte *data, png_size_t size,
        * after every inflate call.
        */
       png_ptr->zstream.next_out = png_ptr->zbuf;
-      png_ptr->zstream.avail_out = png_ptr->zbuf_size;
+      png_ptr->zstream.avail_out = (uInt)png_ptr->zbuf_size;
 
       ret = inflate(&png_ptr->zstream, Z_NO_FLUSH);
-      avail = png_ptr->zbuf_size - png_ptr->zstream.avail_out;
+      avail = (int)(png_ptr->zbuf_size - png_ptr->zstream.avail_out);
 
       /* First copy/count any new output - but only if we didn't
        * get an error code.
@@ -1235,7 +1235,7 @@ png_handle_sPLT(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
 
    new_palette.depth = *entry_start++;
    entry_size = (new_palette.depth == 8 ? 6 : 10);
-   data_length = (slength - (entry_start - (png_bytep)png_ptr->chunkdata));
+   data_length = (int)(slength - (entry_start - (png_bytep)png_ptr->chunkdata));
 
    /* Integrity-check the data length */
    if (data_length % entry_size)
@@ -1538,7 +1538,7 @@ png_handle_hIST(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
       return;
    }
 
-   num = length / 2 ;
+   num = (unsigned int)(length / 2);
 
    for (i = 0; i < num; i++)
    {

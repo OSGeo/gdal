@@ -40,8 +40,8 @@ KEAOverview::KEAOverview(KEADataset *pDataset, int nSrcBand, GDALAccess eAccess,
     // overridden from the band - not the same size as the band obviously
     this->nBlockXSize = pImageIO->getOverviewBlockSize(nSrcBand, nOverviewIndex);
     this->nBlockYSize = pImageIO->getOverviewBlockSize(nSrcBand, nOverviewIndex);
-    this->nRasterXSize = nXSize;
-    this->nRasterYSize = nYSize;
+    this->nRasterXSize = static_cast<int>(nXSize);
+    this->nRasterYSize = static_cast<int>(nYSize);
 }
 
 KEAOverview::~KEAOverview()

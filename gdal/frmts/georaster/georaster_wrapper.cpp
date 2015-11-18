@@ -111,7 +111,7 @@ GeoRasterWrapper::~GeoRasterWrapper()
 
     if( pahLocator && nBlockCount )
     {
-        OWStatement::Free( pahLocator, nBlockCount );
+        OWStatement::Free( pahLocator, static_cast<int>(nBlockCount) );
     }
 
     CPLFree( pahLocator );
@@ -1910,7 +1910,7 @@ bool GeoRasterWrapper::InitializeIO( void )
     poBlockStmt->Bind( &nRasterId );
     poBlockStmt->Define( pahLocator, nBlockCount );
 
-    if( ! poBlockStmt->Execute( nBlockCount ) )
+    if( ! poBlockStmt->Execute( static_cast<int>(nBlockCount) ) )
     {
         return false;
     }
@@ -1979,7 +1979,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
 
         nBytesRead = poBlockStmt->ReadBlob( pahLocator[nBlock],
                                             pabyBlockBuf,
-                                            nBlockBytes );
+                                            static_cast<int>(nBlockBytes) );
 
         CPLDebug( "Load  ", "Block = %4ld Size = %7ld", nBlock, nBlockBytes );
 
@@ -2140,7 +2140,7 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
         nBytesRead = poBlockStmt->ReadBlob( pahLocator[nBlock],
                                             pabyBlockBuf,
-                                            nBlockBytes );
+                                            static_cast<int>(nBlockBytes) );
 
         CPLDebug( "Reload", "Block = %4ld Size = %7ld", nBlock, nBlockBytes );
 
@@ -2264,7 +2264,7 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
 
     if( ! poBlockStmt->WriteBlob( pahLocator[nCacheBlock],
                                   pabyFlushBuffer,
-                                  nFlushBlockSize ) )
+                                  static_cast<int>(nFlushBlockSize) ) )
     {
         return false;
     }

@@ -142,7 +142,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
         pszUserid = CPLStrdup( pszNewName + 4 );
 
         // Is there a table list? 
-        for( i = strlen(pszUserid)-1; i > 1; i-- )
+        for( i = static_cast<int>(strlen(pszUserid))-1; i > 1; i-- )
         {
             if( pszUserid[i] == ':' )
             {

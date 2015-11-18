@@ -78,7 +78,7 @@ void OGROCIStringBuf::MakeRoomFor( int nCharacters )
 void OGROCIStringBuf::Append( const char *pszNewText )
 
 {
-    int  nNewLen = strlen(pszNewText);
+    int  nNewLen = static_cast<int>(strlen(pszNewText));
 
     MakeRoomFor( nNewLen );
     strcat( pszString+nLen, pszNewText );

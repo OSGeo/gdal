@@ -140,7 +140,7 @@ CPLErr OGROCIStatement::Prepare( const char *pszSQLStatement )
 /* -------------------------------------------------------------------- */
     if( poSession->Failed(
         OCIStmtPrepare( hStatement, poSession->hError, 
-                        (text *) pszSQLStatement, strlen(pszSQLStatement),
+                        (text *) pszSQLStatement, static_cast<unsigned int>(strlen(pszSQLStatement)),
                         (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DEFAULT ),
         "OCIStmtPrepare" ) )
         return CE_Failure;

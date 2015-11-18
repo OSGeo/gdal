@@ -103,7 +103,7 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
                 break;
         }
         poRAT->CreateColumn(sName, eGDALType, eGDALUsage);
-        poRAT->SetRowCount(m_poKEATable->getSize());
+        poRAT->SetRowCount(static_cast<int>(m_poKEATable->getSize()));
         
         if( m_poKEATable->getSize() == 0 )
             continue;
@@ -118,7 +118,7 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
             }
 
             if( (const_cast<KEARasterAttributeTable*>(this))->
-                        ValuesIO(GF_Read, iCol, 0, m_poKEATable->getSize(), panColData ) != CE_None )
+                        ValuesIO(GF_Read, iCol, 0, static_cast<int>(m_poKEATable->getSize()), panColData ) != CE_None )
             {
                 CPLFree(panColData);
                 delete poRAT;
@@ -140,7 +140,7 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
                 return NULL;
             }
             if( (const_cast<KEARasterAttributeTable*>(this))->
-                        ValuesIO(GF_Read, iCol, 0, m_poKEATable->getSize(), padfColData ) != CE_None )
+                        ValuesIO(GF_Read, iCol, 0, static_cast<int>(m_poKEATable->getSize()), padfColData ) != CE_None )
             {
                 CPLFree(padfColData);
                 delete poRAT;
@@ -163,7 +163,7 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
             }
 
             if( (const_cast<KEARasterAttributeTable*>(this))->
-                    ValuesIO(GF_Read, iCol, 0, m_poKEATable->getSize(), papszColData ) != CE_None )
+                    ValuesIO(GF_Read, iCol, 0, static_cast<int>(m_poKEATable->getSize()), papszColData ) != CE_None )
             {
                 CPLFree(papszColData);
                 delete poRAT;
@@ -586,7 +586,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy them back to ints
                 for( int i = 0; i < iLength; i++ )
-                    pnData[i] = panColData[i];
+                    pnData[i] = static_cast<int>(panColData[i]);
             }
             CPLFree(panColData);
         }
@@ -661,7 +661,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy them back to ints
                 for( int i = 0; i < iLength; i++ )
-                    pnData[i] = atol(papszColData[i]);
+                    pnData[i] = atoi(papszColData[i]);
             }
 
             // either we allocated them for write, or they were allocated
@@ -718,7 +718,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // convert user supplied strings to ints
                 for( int i = 0; i < iLength; i++ )
-                    panColData[i] = atol(papszStrList[i]);
+                    panColData[i] = atoi(papszStrList[i]);
             }
 
             // call values IO to read/write ints
