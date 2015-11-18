@@ -46,7 +46,7 @@ int GTIFKeyInfo(GTIF *gtif, geokey_t key, int *size, tagtype_t* type)
         if (size) *size = (int) keyptr->gk_size;
         if (type) *type = keyptr->gk_type;
 
-        return keyptr->gk_count;
+        return (int)keyptr->gk_count;
 }
 
 /** 
@@ -158,9 +158,9 @@ int GTIFKeyGet(GTIF *gtif, geokey_t thekey, void *val, int nIndex, int count)
         if (!kindex) return 0;
 
         key = gtif->gt_keys+kindex;
-        if (!count) count = key->gk_count - nIndex;
+        if (!count) count = (int) (key->gk_count - nIndex);
         if (count <=0) return 0;
-        if (count > key->gk_count) count = key->gk_count;
+        if (count > key->gk_count) count = (int) key->gk_count;
         size = key->gk_size;
         type = key->gk_type;
 

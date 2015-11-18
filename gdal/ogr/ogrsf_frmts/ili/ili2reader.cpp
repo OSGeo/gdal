@@ -91,7 +91,7 @@ string ltrim(string tmpstr) {
 
 string rtrim(string tmpstr) {
   if (tmpstr.length() == 0) return tmpstr;
-  unsigned int i = tmpstr.length() - 1;
+  unsigned int i = static_cast<unsigned int>(tmpstr.length()) - 1;
   while (tmpstr[i] == ' ' || tmpstr[i] == '\t' || tmpstr[i] == '\r' || tmpstr[i] == '\n') --i;
   return i < tmpstr.length() - 1 ? tmpstr.substr(0, i+1) : tmpstr;
 }
@@ -630,7 +630,7 @@ list<OGRLayer *> ILI2Reader::GetLayers() {
 }
 
 int ILI2Reader::GetLayerCount() {
-  return m_listLayer.size();
+  return static_cast<int>(m_listLayer.size());
 }
 
 OGRLayer* ILI2Reader::GetLayer(const char* pszName) {

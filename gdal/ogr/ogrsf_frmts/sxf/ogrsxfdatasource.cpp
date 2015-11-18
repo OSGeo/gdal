@@ -474,7 +474,7 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
     if (!CSLTestBoolean(CPLGetConfigOption("SXF_SET_VERTCS", "NO")))
         return;
 
-    const long nEPSG = aoVCS[iVCS];
+    const int nEPSG = static_cast<int>(aoVCS[iVCS]);
 
     if (nEPSG == 0)
     {
@@ -486,13 +486,13 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
     OGRErr eImportFromEPSGErr = sr->importFromEPSG(nEPSG);
     if (eImportFromEPSGErr != OGRERR_NONE)
     {
-        CPLError( CE_Warning, CPLE_None, "SXF. Vertical coordinate system (SXF index %ld, EPSG %ld) import from EPSG error", iVCS, nEPSG);
+        CPLError( CE_Warning, CPLE_None, "SXF. Vertical coordinate system (SXF index %ld, EPSG %d) import from EPSG error", iVCS, nEPSG);
         return;
     }
 
     if (sr->IsVertical() != 1)
     {
-        CPLError( CE_Warning, CPLE_None, "SXF. Coordinate system (SXF index %ld, EPSG %ld) is not Vertical", iVCS, nEPSG);
+        CPLError( CE_Warning, CPLE_None, "SXF. Coordinate system (SXF index %ld, EPSG %d) is not Vertical", iVCS, nEPSG);
         return;
     }
 
@@ -500,7 +500,7 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
     OGRErr eSetVertCSErr = passport.stMapDescription.pSpatRef->SetVertCS(sr->GetAttrValue("VERT_CS"), sr->GetAttrValue("VERT_DATUM"));
     if (eSetVertCSErr != OGRERR_NONE)
     {
-        CPLError(CE_Warning, CPLE_None, "SXF. Vertical coordinate system (SXF index %ld, EPSG %ld) set error", iVCS, nEPSG);
+        CPLError(CE_Warning, CPLE_None, "SXF. Vertical coordinate system (SXF index %ld, EPSG %d) set error", iVCS, nEPSG);
         return;
     }
 }

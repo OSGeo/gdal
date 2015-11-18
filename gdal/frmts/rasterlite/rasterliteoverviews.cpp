@@ -97,7 +97,7 @@ CPLErr RasterliteDataset::ReloadOverviews()
 /*      Rebuild arrays                                                  */
 /* -------------------------------------------------------------------- */
 
-    nResolutions = OGR_L_GetFeatureCount(hSQLLyr, TRUE);
+    nResolutions = static_cast<int>(OGR_L_GetFeatureCount(hSQLLyr, TRUE));
 
     padfXResolutions =
         reinterpret_cast<double *>( CPLMalloc(sizeof(double) * nResolutions) );

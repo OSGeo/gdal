@@ -293,7 +293,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
             GDALCopyWords(
                 &dfWriteValue, GDT_Float64, 0,
                 reinterpret_cast<GByte *>( pData ) + nLineSpace * iLine,
-                eBufType, nPixelSpace, nBufXSize );
+                eBufType, static_cast<int>(nPixelSpace), nBufXSize );
         }
     }
 
@@ -378,7 +378,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     if (eErr == CE_None) {
         eErr = pfnPixelFunc( reinterpret_cast<void **>( pBuffers ), nSources,
 			     pData, nBufXSize, nBufYSize,
-			     eSrcType, eBufType, nPixelSpace, nLineSpace );
+			     eSrcType, eBufType, static_cast<int>(nPixelSpace), static_cast<int>(nLineSpace) );
     }
 
     /* ---- Release buffers ---- */

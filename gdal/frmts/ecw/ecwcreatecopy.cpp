@@ -1536,7 +1536,7 @@ class IRasterIORequest
             for(int iY = 0; iY < nBufYSize; iY ++)
             {
                 GDALCopyWords((GByte*)pData + iY * nLineSpace,
-                              eBufType, nPixelSpace,
+                              eBufType, static_cast<int>(nPixelSpace),
                               pabyData + iY * nBufXSize * nDataTypeSize,
                               eDataType, nDataTypeSize,
                               nBufXSize);

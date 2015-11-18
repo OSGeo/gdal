@@ -1208,7 +1208,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             size_t nBytes
                 = static_cast<size_t>( sStatBuf.st_size/nCols/nRows/nBands );
             if( nBytes > 0 && nBytes != 3 )
-                nBits = nBytes*8;
+                nBits = static_cast<int>(nBytes*8);
 
             if( nBytes == 4 )
                 chPixelType = 'F';

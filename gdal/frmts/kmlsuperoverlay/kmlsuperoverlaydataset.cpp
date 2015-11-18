@@ -1407,7 +1407,8 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
             for(int j = 0; j < nBufYSize; j ++ )
             {
                 GDALCopyWords( &nVal, GDT_Byte, 0,
-                            ((GByte*) pData) + j * nLineSpace + iBandIdx * nBandSpace, eBufType, nPixelSpace,
+                            ((GByte*) pData) + j * nLineSpace + iBandIdx * nBandSpace, eBufType,
+                            static_cast<int>(nPixelSpace),
                             nBufXSize );
             }
             continue;

@@ -674,7 +674,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
     for(size_t i=0; i<oComputedAttributes.size();i++)
     {
         const OGROSMComputedAttribute& oAttr = oComputedAttributes[i];
-        for(size_t j=0;j<oAttr.anIndexToBind.size();j++)
+        for(int j=0;j<static_cast<int>(oAttr.anIndexToBind.size());j++)
         {
             if( oAttr.anIndexToBind[j] >= 0 )
             {

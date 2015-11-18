@@ -42,21 +42,21 @@ class Range {
     private:
         typedef struct List {
             SelafinTypeDef eType;
-            long nMin,nMax;
+            int nMin,nMax;
             List *poNext;
             List():poNext(0) {}
-            List(SelafinTypeDef eTypeP,long nMinP,long nMaxP,List *poNextP):eType(eTypeP),nMin(nMinP),nMax(nMaxP),poNext(poNextP) {}
+            List(SelafinTypeDef eTypeP,int nMinP,int nMaxP,List *poNextP):eType(eTypeP),nMin(nMinP),nMax(nMaxP),poNext(poNextP) {}
         } List;
         List *poVals,*poActual;
-        long nMaxValue;
+        int nMaxValue;
         static void sortList(List *&poList,List *poEnd=0);
         static void deleteList(List *poList);
     public:
         Range():poVals(0),poActual(0),nMaxValue(0) {}
         void setRange(const char *pszStr);
         ~Range();
-        void setMaxValue(long nMaxValueP);
-        bool contains(SelafinTypeDef eType,long nValue) const;
+        void setMaxValue(int nMaxValueP);
+        bool contains(SelafinTypeDef eType,int nValue) const;
         size_t getSize() const;
 };
 
@@ -69,7 +69,7 @@ class OGRSelafinLayer : public OGRLayer {
     private:
         SelafinTypeDef eType;
         int bUpdate;
-        long nStepNumber;
+        int nStepNumber;
         Selafin::Header *poHeader;
         OGRFeatureDefn *poFeatureDefn;
         OGRSpatialReference *poSpatialRef;
@@ -78,7 +78,7 @@ class OGRSelafinLayer : public OGRLayer {
         OGRSelafinLayer( const char *pszLayerNameP, int bUpdateP,OGRSpatialReference *poSpatialRefP,Selafin::Header *poHeaderP,int nStepNumberP,SelafinTypeDef eTypeP);
         ~OGRSelafinLayer();
         OGRSpatialReference *GetSpatialRef() {return poSpatialRef;}
-        long GetStepNumber() {return nStepNumber;}
+        int GetStepNumber() {return nStepNumber;}
         OGRFeature *GetNextFeature();
         OGRFeature *GetFeature(GIntBig nFID);
         void ResetReading();

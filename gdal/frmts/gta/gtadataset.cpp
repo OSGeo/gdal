@@ -1066,8 +1066,8 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    poDS->nRasterXSize = poDS->oHeader.dimension_size(0);
-    poDS->nRasterYSize = poDS->oHeader.dimension_size(1);
+    poDS->nRasterXSize = static_cast<int>(poDS->oHeader.dimension_size(0));
+    poDS->nRasterYSize = static_cast<int>(poDS->oHeader.dimension_size(1));
 
     // Check the number of bands (called components in GTA)
     if( poDS->oHeader.components() > INT_MAX-1
@@ -1079,7 +1079,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    poDS->nBands = poDS->oHeader.components();
+    poDS->nBands = static_cast<int>(poDS->oHeader.components());
 
     // Check the data types (called component types in GTA)
     for( int iBand = 0; iBand < poDS->nBands; iBand++ )

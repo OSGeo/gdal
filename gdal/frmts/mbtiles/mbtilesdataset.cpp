@@ -1538,7 +1538,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
                 if (OGR_F_IsFieldSet(hFeat, 0))
                 {
                     const char* pszPointer = OGR_F_GetFieldAsString(hFeat, 0);
-                    fpCURLOGR = (VSILFILE* )CPLScanPointer( pszPointer, strlen(pszPointer) );
+                    fpCURLOGR = (VSILFILE* )CPLScanPointer( pszPointer, static_cast<int>(strlen(pszPointer)) );
                 }
                 OGR_F_Destroy(hFeat);
             }

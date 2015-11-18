@@ -38,32 +38,32 @@ namespace Selafin {
      */
     class Header {
         private:
-            long nHeaderSize; //!< Size (in bytes) of the header of the file (seeking to this location brings to the first "feature")
-            long nStepSize;    //!< Size (in bytes) of one feature in the file
-            long nMinxIndex;    //!< Index of the point at the western border of the bounding box
-            long nMaxxIndex;    //!< Index of the point at the eastern border of the bounding box
-            long nMinyIndex;    //!< Index of the point at the southern border of the bounding box
-            long nMaxyIndex;    //!< Index of the point at the northern border of the bounding box
+            int nHeaderSize; //!< Size (in bytes) of the header of the file (seeking to this location brings to the first "feature")
+            int nStepSize;    //!< Size (in bytes) of one feature in the file
+            int nMinxIndex;    //!< Index of the point at the western border of the bounding box
+            int nMaxxIndex;    //!< Index of the point at the eastern border of the bounding box
+            int nMinyIndex;    //!< Index of the point at the southern border of the bounding box
+            int nMaxyIndex;    //!< Index of the point at the northern border of the bounding box
             bool bTreeUpdateNeeded;  //!< Tell if the quad tree has to be updated
         public:
             //size_t nRefCount;   //!< Number of references to this object
             VSILFILE *fp;   //!< Pointer to the file with the layers
             char *pszFilename;  //!< Name of the Selafin file
             char *pszTitle; //!< Title of the simulation
-            long nVar;   //!< Number of variables
+            int nVar;   //!< Number of variables
             char **papszVariables;  //!< Name of the variables
-            long nPoints;    //!< Total number of points
-            long nElements;  //!< Total number of elements
-            long nPointsPerElement;  //!< Number of points per element
-            long *panConnectivity;   //!< Connectivity table of elements: first nPointsPerElement elements are the indices of the points making the first element, and so on. In the Selafin file, the first point has index 1.
+            int nPoints;    //!< Total number of points
+            int nElements;  //!< Total number of elements
+            int nPointsPerElement;  //!< Number of points per element
+            int *panConnectivity;   //!< Connectivity table of elements: first nPointsPerElement elements are the indices of the points making the first element, and so on. In the Selafin file, the first point has index 1.
             double *paadfCoords[2]; //!< Table of coordinates of points: x then y
             CPLQuadTree *poTree;    //!< Quad-tree for spatially indexing points in the array paadfCoords. The tree will mostly contain a Null value, until a request is made to find a closest neighbour, in which case it will be built and maintained
             double adfOrigin[2];  //!< Table of coordinates of the origin of the axis
-            long *panBorder;    //!< Array of integers defining border points (0 for an inner point, and the index of the border point otherwise). This table is not used by the driver but stored to allow to rewrite the header if needed
-            long *panStartDate;    //!< Table with the starting date of the simulation (may be 0 if date is not defined). Date is registered as a set of six elements: year, month, day, hour, minute, second.
-            long nSteps;    //!< Number of steps in the Selafin file
-            long nEpsg; //!< EPSG of the file
-            long anUnused[7];   //!< Array of integers for storing the eight values read from the header but not actually used by the driver. These values are merely saved to rewrite them in the file if it is changed.
+            int *panBorder;    //!< Array of integers defining border points (0 for an inner point, and the index of the border point otherwise). This table is not used by the driver but stored to allow to rewrite the header if needed
+            int *panStartDate;    //!< Table with the starting date of the simulation (may be 0 if date is not defined). Date is registered as a set of six elements: year, month, day, hour, minute, second.
+            int nSteps;    //!< Number of steps in the Selafin file
+            int nEpsg; //!< EPSG of the file
+            int anUnused[7];   //!< Array of integers for storing the eight values read from the header but not actually used by the driver. These values are merely saved to rewrite them in the file if it is changed.
 
             Header(); //!< Standard constructor
             ~Header();  //!< Destructor of structure
@@ -77,7 +77,7 @@ namespace Selafin {
              * \param nAttribute Index of the attribute, starting with 0
              * \return Position (in bytes) from the start of the file
              */
-            long getPosition(long nStep,long nFeature=-1,long nAttribute=-1) const; // {return nHeaderSize+nStep*nStepSize+(nFeature!=-1)?(12+nAttribute*(nPoints+2)*4+4+nFeature*4):0;}
+            int getPosition(int nStep,int nFeature=-1,int nAttribute=-1) const; // {return nHeaderSize+nStep*nStepSize+(nFeature!=-1)?(12+nAttribute*(nPoints+2)*4+4+nFeature*4):0;}
 
             /**
              * \brief Return the bounding box of the points
@@ -103,7 +103,7 @@ namespace Selafin {
              * \param dfMax Maximum distance allowed to the point
              * \return Index of the closest point in the array, -1 if there was no point at all in the array closer than distance dfMax
              */
-            long getClosestPoint(const double &dfx,const double &dfy,const double &dfMax);
+            int getClosestPoint(const double &dfx,const double &dfy,const double &dfMax);
 
             /**
              * \brief Tells that the header has been changed
@@ -127,7 +127,7 @@ namespace Selafin {
              * This function removes a point at position nIndex from the array of points. The bounding box is updated. All the elements which referenced this point are also removed.
              * \param nIndex Index of the point which has to be removed
              */
-            void removePoint(long nIndex);
+            void removePoint(int nIndex);
 
     };
 
@@ -137,8 +137,8 @@ namespace Selafin {
      */
     class TimeStep {
         private:
-            //long nRecords;  //!< Number of records (first index) in the TimeStep::papadfData array, which should correspond to the number of features (either points or elements) in a Selafin layer
-            long nFields;   //!< Number of fields for each record (second index) in the TimeStep::papadfData array, which should correspond to the number of attributes in a Selafin layer
+            //int nRecords;  //!< Number of records (first index) in the TimeStep::papadfData array, which should correspond to the number of features (either points or elements) in a Selafin layer
+            int nFields;   //!< Number of fields for each record (second index) in the TimeStep::papadfData array, which should correspond to the number of attributes in a Selafin layer
         public:
             double dfDate;  //!< Date of the time step (usually in seconds after the starting date)
             double **papadfData;    //!< Double-indexed array with values of all atributes for all features. The first index is the number of the attribute, the second is the number of the feature.
@@ -150,7 +150,7 @@ namespace Selafin {
              * \param nRecords Number of records (first index) in the TimeStep::papadfData array, which should correspond to the number of features (either points or elements) in a Selafin layer
              * \param nFields Number of fields for each record (second index) in the TimeStep::papadfData array, which should correspond to the number of attributes in a Selafin layer
              */
-            TimeStep(long nRecordsP,long nFieldsP);
+            TimeStep(int nRecordsP,int nFieldsP);
 
             ~TimeStep();    //!< Standard destructor
     };
@@ -177,7 +177,7 @@ namespace Selafin {
      * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
      * \return 1 if the integer was successfully read, 0 otherwise
      */
-    int read_integer(VSILFILE *fp,long &nData,bool bDiscard=false);
+    int read_integer(VSILFILE *fp,int &nData,bool bDiscard=false);
 
     /**
      * \brief Write an integer to a Selafin file
@@ -187,7 +187,7 @@ namespace Selafin {
      * \param nData Value to be written to the file
      * \return 1 if the integer was successfully written, 0 otherwise
      */
-    int write_integer(VSILFILE *fp,long nData);
+    int write_integer(VSILFILE *fp,int nData);
 
     /**
      * \brief Read a string from a Selafin file
@@ -202,7 +202,7 @@ namespace Selafin {
      * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
      * \return Number of characters in string read
      */
-    long read_string(VSILFILE *fp,char *&pszData,bool bDiscard=false);
+    int read_string(VSILFILE *fp,char *&pszData,bool bDiscard=false);
 
     /**
      * \brief Write a string to a Selafin file
@@ -228,7 +228,7 @@ namespace Selafin {
      * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
      * \return Number of elements in array read, -1 if an error occurred
      */
-    long read_intarray(VSILFILE *fp,long *&panData,bool bDiscard=false);
+    int read_intarray(VSILFILE *fp,int *&panData,bool bDiscard=false);
 
     /**
      * \brief Write an array of integers to a Selafin file
@@ -239,7 +239,7 @@ namespace Selafin {
      * \param nLength Number of elements in the array
      * \return 1 if the array was successfully written, 0 otherwise
      */
-    int write_intarray(VSILFILE *fp,long *panData,size_t nLength);
+    int write_intarray(VSILFILE *fp,int *panData,size_t nLength);
 
     /**
      * \brief Read a floating point number from a Selafin file
@@ -275,7 +275,7 @@ namespace Selafin {
      * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
      * \return Number of elements in array read, -1 if an error occurred
      */
-    long read_floatarray(VSILFILE *fp,double **papadfData,bool bDiscard=false);
+    int read_floatarray(VSILFILE *fp,double **papadfData,bool bDiscard=false);
         
     /**
      * \brief Write an array of floats to a Selafin file

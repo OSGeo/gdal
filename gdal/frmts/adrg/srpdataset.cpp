@@ -248,7 +248,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         int    nBytesRead, iPixel, iSrc, bHalfByteUsed = FALSE;
         GByte *pabyCData = (GByte *) CPLCalloc(nBufSize,1);
 
-        nBytesRead = VSIFReadL(pabyCData, 1, nBufSize, poDS->fdIMG);
+        nBytesRead = static_cast<int>(VSIFReadL(pabyCData, 1, nBufSize, poDS->fdIMG));
         if( nBytesRead == 0 )
         {
             CPLError(CE_Failure, CPLE_FileIO, 
@@ -1529,7 +1529,7 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
                 return NULL;
             }
 
-            nRecordIndex = CPLScanLong( basename + 6, 2 );
+            nRecordIndex = static_cast<int>(CPLScanLong( basename + 6, 2 ));
 
             CPLString path = CPLGetDirname( osFileName );
             CPLString basename01 = ResetTo01( basename );

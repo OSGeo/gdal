@@ -64,8 +64,8 @@ class subfile_source : public kdu_compressed_source {
               char** papszTokens = CSLTokenizeString2(fname + 12, ",", 0);
               if (CSLCount(papszTokens) >= 2)
               {
-                  subfile_offset = (int) CPLScanUIntBig(papszTokens[0], strlen(papszTokens[0]));
-                  subfile_size = (int) CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
+                  subfile_offset = (int) CPLScanUIntBig(papszTokens[0], static_cast<int>(strlen(papszTokens[0])));
+                  subfile_size = (int) CPLScanUIntBig(papszTokens[1], static_cast<int>(strlen(papszTokens[1])));
               }
               else
               {
@@ -154,7 +154,7 @@ class subfile_source : public kdu_compressed_source {
       { 
         assert(file != NULL);
 
-        num_bytes = VSIFReadL(buf,1,(size_t) num_bytes,file);
+        num_bytes = static_cast<int>(VSIFReadL(buf,1,(size_t) num_bytes,file));
         return num_bytes;
       }
 

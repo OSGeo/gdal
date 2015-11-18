@@ -491,7 +491,7 @@ static int json_gme_double_to_string(json_object *pjo,
     }
     /* drop trailing zeroes */
     *(++p) = 0;
-    size = p-buf;
+    size = static_cast<int>(p-buf);
   }
   printbuf_memappend(pb, buf, size);
   return size;

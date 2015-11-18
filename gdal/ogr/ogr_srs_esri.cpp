@@ -2033,13 +2033,13 @@ int RemapImgWGSProjcsName( OGRSpatialReference* pOgr, const char* pszProjCSName,
 int RemapImgUTMNames( OGRSpatialReference* pOgr, const char* pszProjCSName, const char* pszProgCSName, 
                       char **mappingTable )
 {
-    long i;
-    long iIndex = -1;
+    int i;
+    int iIndex = -1;
     for( i = 0; mappingTable[i] != NULL; i += 5 )
     {
         if( EQUAL(pszProjCSName, mappingTable[i]) )
         {
-            long j = i;
+            int j = i;
             while(mappingTable[j] != NULL && EQUAL(mappingTable[i], mappingTable[j]))
             {
                 if( EQUAL(pszProgCSName, mappingTable[j+1]) )
@@ -2088,8 +2088,8 @@ int RemapImgUTMNames( OGRSpatialReference* pOgr, const char* pszProjCSName, cons
 int RemapNameBasedOnKeyName( OGRSpatialReference* pOgr, const char* pszName, const char* pszkeyName, 
                              char **mappingTable )
 {
-    long i;
-    long iIndex = -1;
+    int i;
+    int iIndex = -1;
     for( i = 0; mappingTable[i] != NULL; i += 2 )
     {
         if( EQUAL(pszName, mappingTable[i]) )
@@ -2120,16 +2120,16 @@ int RemapNamesBasedOnTwo( OGRSpatialReference* pOgr, const char* name1, const ch
                           char **mappingTable, long nTableStepSize, 
                           char** pszkeyNames, long nKeys )
 {
-    long i;
+    int i;
     size_t n, n1;
-    long iIndex = -1;
+    int iIndex = -1;
     for( i = 0; mappingTable[i] != NULL; i += nTableStepSize )
     {
         n = strlen(name1);
         n1 = strlen(mappingTable[i]); 
         if( EQUALN(name1, mappingTable[i], n1<=n? n1 : n) )
         {
-            long j = i;
+            int j = i;
             while(mappingTable[j] != NULL && EQUAL(mappingTable[i], mappingTable[j]))
             {
                 if( EQUALN(name2, mappingTable[j+1], strlen(mappingTable[j+1])) )
@@ -2168,7 +2168,7 @@ int RemapNamesBasedOnTwo( OGRSpatialReference* pOgr, const char* name1, const ch
 int RemapPValuesBasedOnProjCSAndPName( OGRSpatialReference* pOgr, const char* pszProgCSName, 
                                        char **mappingTable )
 {
-    long ret = 0;
+    int ret = 0;
     OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
     for( int i = 0; mappingTable[i] != NULL; i += 4 )
     {
@@ -2208,7 +2208,7 @@ int RemapPValuesBasedOnProjCSAndPName( OGRSpatialReference* pOgr, const char* ps
 int RemapPNamesBasedOnProjCSAndPName( OGRSpatialReference* pOgr, const char* pszProgCSName, 
                                                                      char **mappingTable )
 {
-  long ret = 0;
+  int ret = 0;
   OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
   for( int i = 0; mappingTable[i] != NULL; i += 3 )
   {
@@ -2245,7 +2245,7 @@ int RemapPNamesBasedOnProjCSAndPName( OGRSpatialReference* pOgr, const char* psz
 int DeleteParamBasedOnPrjName( OGRSpatialReference* pOgr, const char* pszProjectionName, 
                                char **mappingTable )
 {
-    long iIndex = -1, ret = -1;
+    int iIndex = -1, ret = -1;
     for( int i = 0; mappingTable[i] != NULL; i += 2 )
     {
         if( EQUALN(pszProjectionName, mappingTable[i], strlen(mappingTable[i])) )
@@ -2283,7 +2283,7 @@ int DeleteParamBasedOnPrjName( OGRSpatialReference* pOgr, const char* pszProject
 int AddParamBasedOnPrjName( OGRSpatialReference* pOgr, const char* pszProjectionName, 
                             char **mappingTable )
 {
-    long ret = -1;
+    int ret = -1;
     OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
     for( int i = 0; mappingTable[i] != NULL; i += 3 )
     {
@@ -2360,7 +2360,7 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
         return importFromDict( "esri_StatePlane_extra.wkt", codeS);
     }
 
-    long searchCode = -1;
+    int searchCode = -1;
     if( unitsName == NULL )
         unitsName = "";
 
@@ -2426,7 +2426,7 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
                 break;
             }
         }
-        searchCode = (long)code * 10;
+        searchCode = code * 10;
         if (!datumName)
         {
             CPLError( CE_Failure, CPLE_AppDefined, "datumName is NULL.");
@@ -2492,7 +2492,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, dou
     {
         if( fabs(centralMeridian - tableWISCRS[i]) <= 0.0000000001 && fabs(latOfOrigin - tableWISCRS[i+1]) <= 0.0000000001) 
         {
-            k = (long)tableWISCRS[i+2];
+            k = tableWISCRS[i+2];
             break;
         }
     }

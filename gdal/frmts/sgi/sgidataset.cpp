@@ -651,7 +651,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
         }
         memset(poDS->image.rowStart, 0, x);
         memset(poDS->image.rowSize, 0, x);
-        poDS->image.rleEnd = 512 + (2 * x);
+        poDS->image.rleEnd = static_cast<GUInt32>(512 + (2 * x));
         VSIFSeekL(poDS->fpImage, 512, SEEK_SET);
         if( VSIFReadL(poDS->image.rowStart, 1, x, poDS->image.file ) != x )
         {
@@ -668,9 +668,9 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
             return NULL;
         }
         ConvertLong(poDS->image.rowStart,
-                    x / static_cast<int>( sizeof(GUInt32)) );
+                    static_cast<int>(x / static_cast<int>( sizeof(GUInt32))) );
         ConvertLong(reinterpret_cast<GUInt32 *>( poDS->image.rowSize ),
-                    x / static_cast<int>( sizeof(GInt32) ) );
+                    static_cast<int>(x / static_cast<int>( sizeof(GInt32) )) );
     }
     else // uncompressed.
     {

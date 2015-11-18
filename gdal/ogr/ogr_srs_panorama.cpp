@@ -96,7 +96,7 @@ CPL_CVSID("$Id$");
 /*  Correspondence between "Panorama" and EPSG datum codes.             */
 /************************************************************************/
 
-static const long aoDatums[] =
+static const int aoDatums[] =
 {
     0,
     4284,   // Pulkovo, 1942
@@ -116,7 +116,7 @@ static const long aoDatums[] =
 /*  Correspondence between "Panorama" and EPSG ellipsoid codes.         */
 /************************************************************************/
 
-static const long aoEllips[] =
+static const int aoEllips[] =
 {
     0,
     7024,   // Krassovsky, 1940
@@ -272,12 +272,12 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
         case PAN_PROJ_UTM:
             {
-                long nZone;
+                int nZone;
 
                 if ( padfPrjParams[7] == 0.0 )
-                    nZone = (long)TO_ZONE(padfPrjParams[3]);
+                    nZone = (int) TO_ZONE(padfPrjParams[3]);
                 else
-                    nZone = (long) padfPrjParams[7];
+                    nZone = (int) padfPrjParams[7];
 
                 // XXX: no way to determine south hemisphere. Always assume
                 // nothern hemisphere.

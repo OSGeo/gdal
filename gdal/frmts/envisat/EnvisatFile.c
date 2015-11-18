@@ -1168,7 +1168,7 @@ int EnvisatFile_SetKeyValueAsDouble( EnvisatFile *self,
         return FAILURE;
     }
 
-    length = strlen(prototype_value);
+    length = (int)strlen(prototype_value);
     if( prototype_value[length-4] == 'E' )
     {
         sprintf( format, "%%+%dE", length-4 );
@@ -1231,7 +1231,7 @@ int EnvisatFile_GetDatasetIndex( EnvisatFile *self, const char *ds_name )
      */
     strncpy( padded_ds_name, ds_name, sizeof(padded_ds_name) );
     padded_ds_name[sizeof(padded_ds_name)-1] = 0;
-    for( i = strlen(padded_ds_name); (size_t)i < sizeof(padded_ds_name)-1; i++ )
+    for( i = (int)strlen(padded_ds_name); (size_t)i < sizeof(padded_ds_name)-1; i++ )
     {
         padded_ds_name[i] = ' ';
     }
@@ -1487,7 +1487,7 @@ int EnvisatFile_WriteDatasetRecord( EnvisatFile *self,
         return FAILURE;
     }
 
-    result = VSIFWriteL( buffer, 1, self->ds_info[ds_index]->dsr_size, self->fp );
+    result = (int)VSIFWriteL( buffer, 1, self->ds_info[ds_index]->dsr_size, self->fp );
     if( result != self->ds_info[ds_index]->dsr_size )
     {
         SendError( "write failed in EnvisatFile_WriteDatasetRecord()" );
@@ -1611,7 +1611,7 @@ int EnvisatFile_ReadDatasetRecordChunk( EnvisatFile *self,
         return FAILURE;
     }
 
-    result = VSIFReadL( buffer, 1, size, self->fp );
+    result = (int)VSIFReadL( buffer, 1, size, self->fp );
     if( result != size )
     {
         SendError( "read failed in EnvisatFile_ReadDatasetRecord()" );
@@ -1789,7 +1789,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
          * shouldn't be any white space, but if so, we take it as part of the
          * key.
          */
-        equal_index = strstr(line, "=") - line;
+        equal_index = (int)(strstr(line, "=") - line);
         entry->key = (char *) CPLMalloc(equal_index+1);
         strncpy( entry->key, line, equal_index );
         entry->key[equal_index] = '\0';

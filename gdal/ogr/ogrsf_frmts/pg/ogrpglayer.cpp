@@ -1398,7 +1398,9 @@ static int OGRPGIsKnownGeomFuncPrefix(const char* pszFieldName)
     for(size_t i=0; i<sizeof(papszKnownGeomFuncPrefixes) / sizeof(char*); i++)
     {
         if( EQUALN(pszFieldName, papszKnownGeomFuncPrefixes[i],
-                   strlen(papszKnownGeomFuncPrefixes[i])) )            return i;    }
+                   static_cast<int>(strlen(papszKnownGeomFuncPrefixes[i]))) )
+            return static_cast<int>(i);
+    }
     return -1;
 }
 

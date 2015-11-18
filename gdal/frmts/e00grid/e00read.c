@@ -370,7 +370,7 @@ static void _ReadNextSourceLine(E00ReadPtr psInfo)
              * (Note: For Unix systems, we also have to check for '\r')
              */
             int nLen;
-            nLen = strlen(psInfo->szInBuf);
+            nLen = (int)strlen(psInfo->szInBuf);
             while(nLen > 0 && (psInfo->szInBuf[nLen-1] == '\n' ||
                                psInfo->szInBuf[nLen-1] == '\r'   ) )
             {

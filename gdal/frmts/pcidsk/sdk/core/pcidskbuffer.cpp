@@ -215,7 +215,7 @@ void PCIDSKBuffer::Put( const char *value, int offset, int size, bool null_term 
     if( offset + size > buffer_size )
         ThrowPCIDSKException( "Put() past end of PCIDSKBuffer." );
 
-    int v_size = strlen(value);
+    int v_size = static_cast<int>(strlen(value));
     if( v_size > size )
         v_size = size;
 

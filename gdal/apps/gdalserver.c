@@ -443,7 +443,7 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
         sockAddrUnix.sun_family = AF_UNIX;
         CPLStrlcpy(sockAddrUnix.sun_path, pszUnixSocketFilename, sizeof(sockAddrUnix.sun_path));
         unlink(sockAddrUnix.sun_path);
-        len = strlen(sockAddrUnix.sun_path) + sizeof(sockAddrUnix.sun_family);
+        len = (int)(strlen(sockAddrUnix.sun_path) + sizeof(sockAddrUnix.sun_family));
         if (bind(nListenSocket, (struct sockaddr *)&sockAddrUnix, len) == -1)
         {
             perror("bind");

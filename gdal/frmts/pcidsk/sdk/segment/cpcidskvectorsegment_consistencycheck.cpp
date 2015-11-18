@@ -61,7 +61,7 @@ public:
             if( offsets.size() == 0 )
                 return 0;
 
-            uint32 start=0, end=offsets.size()-1;
+            uint32 start=0, end=static_cast<uint32>(offsets.size())-1;
 
             while( end > start )
             {

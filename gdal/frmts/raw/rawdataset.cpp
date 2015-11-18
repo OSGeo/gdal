@@ -315,7 +315,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
     const int nBytesToRead = std::abs(nPixelOffset) * (nBlockXSize - 1)
         + GDALGetDataTypeSize(GetRasterDataType()) / 8;
 
-    const int nBytesActuallyRead = Read( pLineBuffer, 1, nBytesToRead );
+    const int nBytesActuallyRead = static_cast<int>(Read( pLineBuffer, 1, nBytesToRead ));
     if( nBytesActuallyRead < nBlockXSize )
     {
         if (poDS != NULL && poDS->GetAccess() == GA_ReadOnly)
@@ -511,7 +511,7 @@ CPLErr RawRasterBand::AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
 /* -------------------------------------------------------------------- */
 /*      Read the block.                                                 */
 /* -------------------------------------------------------------------- */
-    const int nBytesActuallyRead = Read( pData, 1, nBlockSize );
+    const int nBytesActuallyRead = static_cast<int>(Read( pData, 1, nBlockSize ));
     if( nBytesActuallyRead < nBlockSize )
     {
 
@@ -718,7 +718,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                    reinterpret_cast<GByte *>( pData ) +
                                    static_cast<vsi_l_offset>( iLine ) *
                                    nLineSpace,
-                                   eBufType, nPixelSpace, nXSize );
+                                   eBufType, static_cast<int>(nPixelSpace), nXSize );
                 }
                 else
                 {
@@ -733,7 +733,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                             static_cast<vsi_l_offset>( iLine ) *
                             nLineSpace +
                             static_cast<vsi_l_offset>( iPixel) * nPixelSpace,
-                            eBufType, nPixelSpace, 1 );
+                            eBufType, static_cast<int>(nPixelSpace), 1 );
                     }
                 }
 
@@ -802,7 +802,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
             nBytesToRW = nXSize * nYSize * nBandDataSize;
 
-            const int nBytesActuallyWritten = Write( pData, 1, nBytesToRW );
+            const int nBytesActuallyWritten = static_cast<int>(Write( pData, 1, nBytesToRW ));
             if( nBytesActuallyWritten < nBytesToRW )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
@@ -866,7 +866,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     GDALCopyWords(
                         reinterpret_cast<GByte *>( pData ) +
                         static_cast<vsi_l_offset>( iLine ) * nLineSpace,
-                        eBufType, nPixelSpace,
+                        eBufType, static_cast<int>(nPixelSpace),
                         pabyData, eDataType, nPixelOffset, nXSize );
                 }
                 else
@@ -877,7 +877,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                             reinterpret_cast<GByte *>(pData) +
                             static_cast<vsi_l_offset>( iLine ) * nLineSpace +
                             static_cast<vsi_l_offset>( iPixel ) * nPixelSpace,
-                            eBufType, nPixelSpace,
+                            eBufType, static_cast<int>(nPixelSpace),
                             pabyData +
                             static_cast<vsi_l_offset>( iPixel * dfSrcXInc ) *
                             nPixelOffset,
@@ -918,7 +918,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Write the line of block.                                        */
 /* -------------------------------------------------------------------- */
-                const int nBytesActuallyWritten = Write( pabyData, 1, nBytesToRW );
+                const int nBytesActuallyWritten = static_cast<int>(Write( pabyData, 1, nBytesToRW ));
                 if( nBytesActuallyWritten < nBytesToRW )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,

@@ -1482,7 +1482,7 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
     osCommand += "'";
 
 
-    int nSrcLen = strlen(pszStrValue);
+    int nSrcLen = static_cast<int>(strlen(pszStrValue));
     int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
 
     if (nMaxLength > 0 && nSrcLenUTF > nMaxLength)
@@ -1847,7 +1847,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
     /* This is for postgresql  7.4 and higher */
 #if !defined(PG_PRE74)
-    int copyResult = PQputCopyData(hPGConn, osCommand.c_str(), strlen(osCommand.c_str()));
+    int copyResult = PQputCopyData(hPGConn, osCommand.c_str(),
+                                   static_cast<int>(strlen(osCommand.c_str())));
 #ifdef DEBUG_VERBOSE
     CPLDebug("PG", "PQputCopyData(%s)", osCommand.c_str());
 #endif
@@ -2720,7 +2721,7 @@ OGRErr OGRPGTableLayer::StartCopy()
 
     CPLString osFields = BuildCopyFields();
 
-    int size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
+    size_t size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     sprintf( pszCommand,

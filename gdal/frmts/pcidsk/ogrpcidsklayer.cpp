@@ -297,7 +297,7 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
               case PCIDSK::FieldTypeCountedInt:
                 std::vector<PCIDSK::int32> list = aoFields[i].GetValueCountedInt();
 
-                poFeature->SetField( i, list.size(), &(list[0]) );
+                poFeature->SetField( i, static_cast<int>(list.size()), &(list[0]) );
                 break;
             }
         }
@@ -345,7 +345,7 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
             {
                 OGRLineString *poLS = new OGRLineString();
 
-                poLS->setNumPoints( aoVertices.size() );
+                poLS->setNumPoints( static_cast<int>(aoVertices.size()) );
 
                 for( unsigned int i = 0; i < aoVertices.size(); i++ )
                     poLS->setPoint( i,
@@ -388,7 +388,7 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
 
                 int iEndVertex;
                 if( iRing == anRingStart.size() )
-                    iEndVertex = aoVertices.size() - 1;
+                    iEndVertex = static_cast<int>(aoVertices.size()) - 1;
                 else
                     iEndVertex = anRingStart[iRing] - 1;
 

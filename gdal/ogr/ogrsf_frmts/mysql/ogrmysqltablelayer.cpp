@@ -1265,7 +1265,7 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
 			OGRGeometryFactory::createFromWkb(((GByte *)row[0]) + 4, 
 											  NULL,
 											  &poGeometry,
-											  panLengths[0] - 4 );
+											  static_cast<int>(panLengths[0] - 4) );
 
 			if ( poGeometry != NULL )
 			{

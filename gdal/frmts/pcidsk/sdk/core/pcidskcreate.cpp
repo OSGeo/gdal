@@ -463,7 +463,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         sysbmdir_size = (int) (sysbmdir_size * 1.1 + 100);
         int segment = file->CreateSegment( "SysBMDir", 
                                            "System Block Map Directory - Do not modify.",
-                                           SEG_SYS, sysbmdir_size );
+                                           SEG_SYS, static_cast<int>(sysbmdir_size) );
         
         SysBlockMap *bm = 
             dynamic_cast<SysBlockMap *>(file->GetSegment( segment ));

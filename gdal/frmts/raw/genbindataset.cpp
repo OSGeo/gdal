@@ -584,7 +584,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char achHeader[1000];
 
-    int nRead = VSIFReadL( achHeader, 1, sizeof(achHeader) - 1, fp );
+    int nRead = static_cast<int>(VSIFReadL( achHeader, 1, sizeof(achHeader) - 1, fp ));
     achHeader[nRead] = '\0';
     VSIFSeekL( fp, 0, SEEK_SET );
 

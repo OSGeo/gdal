@@ -473,7 +473,7 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
             {
                 memcpy(psResult->pabyData, pabyBuf, static_cast<size_t>( nDataLength ) );
                 psResult->pabyData[nDataLength] = 0;
-                psResult->nDataLen = static_cast<size_t>( nDataLength );
+                psResult->nDataLen = static_cast<int>( nDataLength );
             }
         }
         else

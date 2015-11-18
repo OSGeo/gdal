@@ -80,7 +80,7 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
 
 {
     // First check if we have to do any work.
-    int nLen = strlen(pszFilename);
+    size_t nLen = strlen(pszFilename);
     if(! ((nLen >= 4 && EQUAL(pszFilename + nLen - 4, ".gdb")) ||
           (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gdb/"))) )
         return NULL;
@@ -129,7 +129,7 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
                 std::wstring fgdb_error_desc_w;
                 std::string fgdb_error_desc("Unknown error");
                 fgdbError er;
-                er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
+                er = FileGDBAPI::ErrorInfo::GetErrorDescription(static_cast<fgdbError>(hr), fgdb_error_desc_w);
                 if ( er == S_OK )
                 {
                     fgdb_error_desc = WStringToString(fgdb_error_desc_w);

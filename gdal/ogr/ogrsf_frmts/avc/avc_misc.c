@@ -277,7 +277,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     }
 
     pszTmpPath = CPLStrdup(pszFname);
-    nTotalLen = strlen(pszTmpPath);
+    nTotalLen = (int)strlen(pszTmpPath);
 
     /*-----------------------------------------------------------------
      * Try all lower case, check if the filename is OK as that.

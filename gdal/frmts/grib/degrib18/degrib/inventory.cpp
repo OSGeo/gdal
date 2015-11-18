@@ -901,7 +901,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             free (msg);
             /* find out how big the file is. */
             fp.DataSourceFseek (0L, SEEK_END);
-            fileLen = fp.DataSourceFtell();
+            fileLen = static_cast<int>(fp.DataSourceFtell());
             /* fseek (fp, 0L, SEEK_SET); */
             printf ("There were %d trailing bytes in the file.\n",
                     fileLen - offset);
@@ -1133,7 +1133,7 @@ int GRIB2RefTime (char *filename, double *refTime)
             free (msg);
             /* find out how big the file is. */
             fp.DataSourceFseek (0L, SEEK_END);
-            fileLen = fp.DataSourceFtell();
+            fileLen = static_cast<int>(fp.DataSourceFtell());
             /* fseek (fp, 0L, SEEK_SET); */
             printf ("There were %d trailing bytes in the file.\n",
                     fileLen - offset);

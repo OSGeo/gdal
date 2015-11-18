@@ -989,7 +989,7 @@ int VRTRasterBand::GetOverviewCount()
 {
     // First: overviews declared in <Overview> element
     if( apoOverviews.size() > 0 )
-        return apoOverviews.size();
+        return static_cast<int>(apoOverviews.size());
 
     // If not found, external .ovr overviews
     const int nOverviewCount = GDALRasterBand::GetOverviewCount();

@@ -597,7 +597,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         GDALRasterBand	*poBand
             = new RawRasterBand( poDS, i+1, poDS->fpImage, nSkipBytes + nBandOffset * i,
-                                 nPixelOffset, nLineOffset, eDataType,
+                                 static_cast<int>(nPixelOffset), static_cast<int>(nLineOffset), eDataType,
 #ifdef CPL_LSB
                                    chByteOrder == 'I' || chByteOrder == 'L',
 #else

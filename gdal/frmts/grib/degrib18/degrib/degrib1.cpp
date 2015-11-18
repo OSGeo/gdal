@@ -1839,7 +1839,7 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 
    if (ComputeUnit (meta->convert, meta->unitName, f_unit, &unitM, &unitB,
                     unitName) == 0) {
-      unitLen = strlen (unitName);
+      unitLen = static_cast<int>(strlen (unitName));
       meta->unitName = (char *) realloc ((void *) (meta->unitName),
                                          1 + unitLen * sizeof (char));
       strncpy (meta->unitName, unitName, unitLen);

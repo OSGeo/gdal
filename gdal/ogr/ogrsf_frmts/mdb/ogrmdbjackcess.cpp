@@ -683,7 +683,7 @@ void OGRMDBTable::DumpTable()
 {
     ResetReading();
     int iRow = 0;
-    int nCols = apoColumnNames.size();
+    int nCols = static_cast<int>(apoColumnNames.size());
     while(GetNextRow())
     {
         printf("Row = %d\n", iRow ++);
@@ -726,7 +726,7 @@ void OGRMDBTable::DumpTable()
 
 int OGRMDBTable::GetColumnIndex(const char* pszColName, int bEmitErrorIfNotFound)
 {
-    int nCols = apoColumnNames.size();
+    int nCols = static_cast<int>(apoColumnNames.size());
     CPLString osColName(pszColName);
     for(int i=0;i<nCols;i++)
     {

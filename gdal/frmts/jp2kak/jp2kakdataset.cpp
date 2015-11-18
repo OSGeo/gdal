@@ -560,7 +560,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     eErr = poBaseDS->DirectRasterIO( GF_Read, 
                                      nWXOff, nWYOff, nWXSize, nWYSize,
                                      pabyWrkBuffer, nXSize, nYSize,
-                                     eDataType, anBands.size(), &anBands[0],
+                                     eDataType, static_cast<int>(anBands.size()), &anBands[0],
                                      nWordSize, nWordSize*nBlockXSize, 
                                      nWordSize*nBlockXSize*nBlockYSize,
                                      &sExtraArg );
@@ -1592,23 +1592,23 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                 if( eBufType == GDT_Byte )
                 {
                     is_signed[i] = false;
-                    sample_offsets[i] = i * nBandSpace;
-                    sample_gaps[i] = nPixelSpace;
-                    row_gaps[i] = nLineSpace;
+                    sample_offsets[i] = static_cast<int>(i * nBandSpace);
+                    sample_gaps[i] = static_cast<int>(nPixelSpace);
+                    row_gaps[i] = static_cast<int>(nLineSpace);
                 }
                 else if( eBufType == GDT_Int16 )
                 {
                     is_signed[i] = true;
-                    sample_offsets[i] = i * nBandSpace / 2;
-                    sample_gaps[i] = nPixelSpace / 2;
-                    row_gaps[i] = nLineSpace / 2;
+                    sample_offsets[i] = static_cast<int>(i * nBandSpace / 2);
+                    sample_gaps[i] = static_cast<int>(nPixelSpace / 2);
+                    row_gaps[i] = static_cast<int>(nLineSpace / 2);
                 }
                 else if( eBufType == GDT_UInt16 )
                 {
                     is_signed[i] = false;
-                    sample_offsets[i] = i * nBandSpace / 2;
-                    sample_gaps[i] = nPixelSpace / 2;
-                    row_gaps[i] = nLineSpace / 2;
+                    sample_offsets[i] = static_cast<int>(i * nBandSpace / 2);
+                    sample_gaps[i] = static_cast<int>(nPixelSpace / 2);
+                    row_gaps[i] = static_cast<int>(nLineSpace / 2);
                     /* Introduced in r25136 with an unrelated commit message.
                     Reverted per ticket #5328
                     if( precisions[i] == 12 )
@@ -2731,7 +2731,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GDALJP2Box *poXMLBox = new GDALJP2Box();
 
         poXMLBox->SetType( "xml " );
-        poXMLBox->SetWritableData( strlen(papszMD[0])+1, 
+        poXMLBox->SetWritableData( static_cast<int>(strlen(papszMD[0])+1), 
                                    (GByte *) papszMD[0] );
         JP2KAKWriteBox( &jp2_out, poXMLBox );
     }

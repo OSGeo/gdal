@@ -158,7 +158,7 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 /* -------------------------------------------------------------------- */
 /*      Read enough data that we are sure we have a whole record.       */
 /* -------------------------------------------------------------------- */
-    nRecordStart = VSIFTell( fp );
+    nRecordStart = static_cast<int>(VSIFTell( fp ));
     nBytesRead = static_cast<int>(VSIFRead( pszLine, 1, MAX_RECORD_LEN+2, fp ));
 
     if( nBytesRead == 0 )

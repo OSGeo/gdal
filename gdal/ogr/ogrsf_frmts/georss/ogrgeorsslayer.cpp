@@ -279,7 +279,7 @@ void OGRGeoRSSLayer::ResetReading()
 
 void OGRGeoRSSLayer::AddStrToSubElementValue(const char* pszStr)
 {
-    int len = strlen(pszStr);
+    int len = static_cast<int>(strlen(pszStr));
     char* pszNewSubElementValue = (char*)
             VSI_REALLOC_VERBOSE(pszSubElementValue, nSubElementValueLen + len + 1);
     if (pszNewSubElementValue == NULL)
@@ -555,7 +555,7 @@ static void OGRGeoRSSLayerTrimLeadingAndTrailingSpaces(char* pszStr)
     memmove(pszStr, pszStr + i, strlen(pszStr + i) + 1);
 
     /* Trim trailing spaces, tabs and newlines */
-    i = strlen(pszStr) - 1;
+    i = static_cast<int>(strlen(pszStr)) - 1;
     while(i >= 0 &&
           (pszStr[i] == ' ' || pszStr[i] == '\t' || pszStr[i] == '\n'))
     {

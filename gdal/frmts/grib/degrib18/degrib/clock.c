@@ -1802,7 +1802,7 @@ void Clock_ScanDate (double *clock, sInt4 year, int mon, int day)
 
 int Clock_ScanDateNumber (double *clock, char *buffer)
 {
-   int buffLen = strlen (buffer);
+   int buffLen = (int)strlen (buffer);
    sInt4 year;
    int mon = 1;
    int day = 1;
@@ -2073,7 +2073,7 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          Stack = (stackType *) realloc ((void *) Stack,
                                         lenStack * sizeof (stackType));
          Stack[lenStack - 1].val = atoi (word);
-         Stack[lenStack - 1].len = strlen (word);
+         Stack[lenStack - 1].len = (int)strlen (word);
       } else if (strcmp (word, "AM") == 0) {
          if (f_ampm != -1) {
             printf ("Detected multiple am/pm\n");

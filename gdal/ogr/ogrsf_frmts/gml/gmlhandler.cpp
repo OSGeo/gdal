@@ -79,7 +79,7 @@ void GMLXercesHandler::startElement(CPL_UNUSED const XMLCh* const uri,
     else
         tr_strcpy( szElementName, localname );
 
-    if (GMLHandler::startElement(szElementName, strlen(szElementName), (void*) &attrs) == OGRERR_NOT_ENOUGH_MEMORY)
+    if (GMLHandler::startElement(szElementName, (int)strlen(szElementName), (void*) &attrs) == OGRERR_NOT_ENOUGH_MEMORY)
     {
         throw SAXNotSupportedException("Out of memory");
     }
@@ -115,7 +115,7 @@ void GMLXercesHandler::characters(const XMLCh* const chars_in,
 
 {
     char* utf8String = tr_strdup(chars_in);
-    int nLen = strlen(utf8String);
+    int nLen = (int)strlen(utf8String);
     OGRErr eErr = GMLHandler::dataHandler(utf8String, nLen);
     CPLFree(utf8String);
     if (eErr == OGRERR_NOT_ENOUGH_MEMORY)

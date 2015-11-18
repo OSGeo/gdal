@@ -1176,7 +1176,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     const char* pszPDSVersionID = strstr((const char *)poOpenInfo->pabyHeader,"PDS_VERSION_ID");
     int nOffset = 0;
     if (pszPDSVersionID)
-        nOffset = pszPDSVersionID - (const char *)poOpenInfo->pabyHeader;
+        nOffset = static_cast<int>(pszPDSVersionID - (const char *)poOpenInfo->pabyHeader);
 
     if( ! poDS->oKeywords.Ingest( fpQube, nOffset ) )
     {

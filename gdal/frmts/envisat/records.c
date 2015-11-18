@@ -1229,7 +1229,7 @@ const EnvisatRecordDescr* EnvisatFile_GetRecordDescriptor(
         return NULL;
 
     /* strip trailing spaces */
-    for( nLen = strlen(pszDataset); nLen && pszDataset[nLen-1] == ' '; --nLen );
+    for( nLen = (int)strlen(pszDataset); nLen && pszDataset[nLen-1] == ' '; --nLen );
 
     pRecordDescr = paRecords;
     while ( pRecordDescr->szName != NULL )

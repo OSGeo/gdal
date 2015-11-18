@@ -495,7 +495,7 @@ sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
     
     CPLDebug("OGR-VFK", "VFKReaderSQLite::PrepareStatement(): %s", pszSQLCommand);
 
-    rc = sqlite3_prepare(m_poDB, pszSQLCommand, strlen(pszSQLCommand),
+    rc = sqlite3_prepare(m_poDB, pszSQLCommand, -1,
                          &hStmt, NULL);
     
     if (rc != SQLITE_OK) {

@@ -373,9 +373,9 @@ void CeosUpdateHeaderFromBuffer(CeosRecord_t *record)
 #ifdef CPL_LSB
 
 static
-void swapbyte(void *dst,void *src,int toswap)
+void swapbyte(void *dst,void *src,size_t toswap)
 {
-    int i,e;
+    size_t i,e;
     unsigned char *in = (unsigned char *) src;
     unsigned char *out = (unsigned char *) dst;
 
@@ -387,9 +387,9 @@ void swapbyte(void *dst,void *src,int toswap)
 
 void NativeToCeos( void *dst, const void *src, const size_t len, const size_t swapunit)
 {
-    int i;
-    int remainder;
-    int units;
+    size_t i;
+    size_t remainder;
+    size_t units;
 
 
     remainder = len % swapunit;

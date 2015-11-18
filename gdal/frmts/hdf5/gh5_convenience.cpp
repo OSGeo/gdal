@@ -59,7 +59,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
 
     if( H5Tget_class( hAttrNativeType ) == H5T_STRING ) 
     {
-	int nAttrSize = H5Tget_size( hAttrTypeID );
+	size_t nAttrSize = H5Tget_size( hAttrTypeID );
         char *pachBuffer = (char *) CPLCalloc(nAttrSize+1,1);
 	H5Aread( hAttr, hAttrNativeType, pachBuffer );
         

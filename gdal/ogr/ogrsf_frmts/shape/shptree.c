@@ -1040,7 +1040,7 @@ int* SHPSearchDiskTreeEx( SHPTreeDiskHandle hDiskTree,
 static int SHPGetSubNodeOffset( SHPTreeNode *node) 
 {
     int i;
-    long offset=0;
+    int offset=0;
 
     for(i=0; i<node->nSubNodes; i++ ) 
     {

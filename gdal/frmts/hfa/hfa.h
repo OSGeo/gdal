@@ -105,12 +105,12 @@ typedef struct {
 
 typedef struct {
 	Eprj_ProType proType;		/* projection type */
-	long proNumber;			/* projection number for internal 
+	int proNumber;			/* projection number for internal 
 					   projections */
 	char * proExeName;	/* projection executable name for
 					   EXTERNal projections */
 	char * proName;	/* projection name */
-	long proZone;			/* projection zone (UTM, SP only) */
+	int proZone;			/* projection zone (UTM, SP only) */
 	double proParams[15];	/* projection parameters array in the
 					   GCTP form */
 	Eprj_Spheroid proSpheroid;	/* projection spheroid */

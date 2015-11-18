@@ -199,7 +199,7 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
                 ((GByte *)papszRow[iField]) + 4, 
                 NULL,
                 &poGeometry,
-                panLengths[iField] - 4 );
+                static_cast<int>(panLengths[iField] - 4) );
 
             if( poGeometry != NULL )
             {
@@ -221,7 +221,7 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
 
         if( psFieldDefn->GetType() == OFTBinary )
         {
-            poFeature->SetField( iOGRField, panLengths[iField], 
+            poFeature->SetField( iOGRField, static_cast<int>(panLengths[iField]), 
                                  (GByte *) papszRow[iField] );
         }
         else

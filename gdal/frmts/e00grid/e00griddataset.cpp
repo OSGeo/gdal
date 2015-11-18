@@ -763,7 +763,7 @@ void E00GRIDDataset::ReadMetadata()
             i++; \
     } \
 
-        while ((nRead = VSIFReadL(pabyBuffer, 1, nToRead, fp)) != 0)
+        while ((nRead = static_cast<int>(VSIFReadL(pabyBuffer, 1, nToRead, fp))) != 0)
         {
             int i;
             for(i = 0; i < nRead; i++)

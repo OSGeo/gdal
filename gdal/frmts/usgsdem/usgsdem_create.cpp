@@ -1320,7 +1320,7 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
     sprintf( szDataPointer, "DATAPOINTER=" );
     CPLPrintPointer( szDataPointer+strlen(szDataPointer), 
                      psWInfo->panData, 
-                     sizeof(szDataPointer) - strlen(szDataPointer) );
+                     static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );
 
     if( poMemDS->AddBand( GDT_Int16, apszOptions ) != CE_None )
         return FALSE;

@@ -118,7 +118,7 @@ static CPLString OGRLIBKMLReplaceLevelXYInURL(const char* pszURL,
                                               int level, int x, int y)
 {
     CPLString osRet(pszURL);
-    int nPos = osRet.find("$[level]");
+    size_t nPos = osRet.find("$[level]");
     osRet = osRet.substr(0, nPos) + CPLSPrintf("%d", level) + osRet.substr(nPos + strlen("$[level]"));
     nPos = osRet.find("$[x]");
     osRet = osRet.substr(0, nPos) + CPLSPrintf("%d", x) + osRet.substr(nPos + strlen("$[x]"));

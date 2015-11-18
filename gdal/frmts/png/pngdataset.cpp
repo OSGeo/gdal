@@ -953,7 +953,7 @@ void PNGDataset::LoadICCProfile()
     {
         /* Escape the profile */
         char *pszBase64Profile = CPLBase64Encode(
-            nProfileLength, reinterpret_cast<const GByte *>( pProfileData ) );
+            static_cast<int>(nProfileLength), reinterpret_cast<const GByte *>( pProfileData ) );
 
         /* Set ICC profile metadata */
         SetMetadataItem( "SOURCE_ICC_PROFILE", pszBase64Profile, "COLOR_PROFILE" );
@@ -1105,7 +1105,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     if (poDS->hPNG == NULL)
     {
 #if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 2) || PNG_LIBPNG_VER_MAJOR > 1
-        int version = png_access_version_number();
+        int version = static_cast<int>(png_access_version_number());
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "The PNG driver failed to access libpng with version '%s',"
                   " library is actually version '%d'.\n",
@@ -1143,8 +1143,8 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = png_get_image_width( poDS->hPNG, poDS->psPNGInfo);
-    poDS->nRasterYSize = png_get_image_height( poDS->hPNG,poDS->psPNGInfo);
+    poDS->nRasterXSize = static_cast<int>(png_get_image_width( poDS->hPNG, poDS->psPNGInfo));
+    poDS->nRasterYSize = static_cast<int>(png_get_image_height( poDS->hPNG,poDS->psPNGInfo));
 
     poDS->nBands = png_get_channels( poDS->hPNG, poDS->psPNGInfo );
     poDS->nBitDepth = png_get_bit_depth( poDS->hPNG, poDS->psPNGInfo );

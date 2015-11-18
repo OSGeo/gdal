@@ -119,7 +119,7 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
     {
         *pszLeftParenthesis = '\0';
         pszGeomColumnName = CPLStrdup(pszLeftParenthesis+1);
-        int len = strlen(pszGeomColumnName);
+        int len = static_cast<int>(strlen(pszGeomColumnName));
         if (len > 0 && pszGeomColumnName[len - 1] == ')')
             pszGeomColumnName[len - 1] = '\0';
     }

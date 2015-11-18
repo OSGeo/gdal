@@ -326,7 +326,8 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     CPLDebug( "OGR_SQLITE", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
-    rc = sqlite3_prepare( poDS->GetDB(), poBehaviour->osSQLCurrent, poBehaviour->osSQLCurrent.size(),
+    rc = sqlite3_prepare( poDS->GetDB(), poBehaviour->osSQLCurrent,
+                          static_cast<int>(poBehaviour->osSQLCurrent.size()),
                           &hStmt, NULL );
 
     if( rc == SQLITE_OK )

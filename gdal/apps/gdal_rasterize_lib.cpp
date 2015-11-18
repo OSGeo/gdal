@@ -292,8 +292,8 @@ static CPLErr ProcessLayer(
 /* -------------------------------------------------------------------- */
 /*      Perform the burn.                                               */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = GDALRasterizeGeometries( hDstDS, anBandList.size(), &(anBandList[0]), 
-                             ahGeometries.size(), &(ahGeometries[0]), 
+    CPLErr eErr = GDALRasterizeGeometries( hDstDS, static_cast<int>(anBandList.size()), &(anBandList[0]), 
+                             static_cast<int>(ahGeometries.size()), &(ahGeometries[0]), 
                              NULL, NULL, &(adfFullBurnValues[0]), 
                              papszRasterizeOptions,
                              pfnProgress, pProgressData );
@@ -303,7 +303,7 @@ static CPLErr ProcessLayer(
 /* -------------------------------------------------------------------- */
     int iGeom;
 
-    for( iGeom = ahGeometries.size()-1; iGeom >= 0; iGeom-- )
+    for( iGeom = static_cast<int>(ahGeometries.size())-1; iGeom >= 0; iGeom-- )
         OGR_G_DestroyGeometry( ahGeometries[iGeom] );
     
     return eErr;
@@ -639,7 +639,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                                  hDriver, pszDest,
                                  psOptions->nXSize, psOptions->nYSize, psOptions->dfXRes, psOptions->dfYRes,
                                  psOptions->bTargetAlignedPixels,
-                                 psOptions->anBandList.size(), psOptions->eOutputType,
+                                 static_cast<int>(psOptions->anBandList.size()), psOptions->eOutputType,
                                  psOptions->papszCreationOptions, psOptions->adfInitVals,
                                  psOptions->bNoDataSet, psOptions->dfNoData);
                 if( hDstDS == NULL )
@@ -686,7 +686,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                                 hDriver, pszDest,
                                 psOptions->nXSize, psOptions->nYSize, psOptions->dfXRes, psOptions->dfYRes,
                                 psOptions->bTargetAlignedPixels,
-                                psOptions->anBandList.size(), psOptions->eOutputType,
+                                static_cast<int>(psOptions->anBandList.size()), psOptions->eOutputType,
                                 psOptions->papszCreationOptions, psOptions->adfInitVals,
                                 psOptions->bNoDataSet, psOptions->dfNoData);
         if( hDstDS == NULL )
@@ -1106,10 +1106,10 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         int nBandCount = 1;
 
         if (psOptions->adfBurnValues.size() != 0)
-            nBandCount = psOptions->adfBurnValues.size();
+            nBandCount = static_cast<int>(psOptions->adfBurnValues.size());
 
         if ((int)psOptions->adfInitVals.size() > nBandCount)
-            nBandCount = psOptions->adfInitVals.size();
+            nBandCount = static_cast<int>(psOptions->adfInitVals.size());
 
         if (psOptions->adfInitVals.size() == 1)
         {

@@ -191,7 +191,7 @@ void PCIDSK::LibJPEG_CompressBlock(
 /* -------------------------------------------------------------------- */
     jpeg_finish_compress( &sJCompInfo );
 
-    dst_bytes = dst_bytes - sDstMgr.free_in_buffer;
+    dst_bytes = static_cast<int>(dst_bytes - sDstMgr.free_in_buffer);
     
     jpeg_destroy_compress( &sJCompInfo );
 }

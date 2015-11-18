@@ -70,7 +70,7 @@ static void RPFTOCTrim(char* str)
         memmove(str, c, strlen(c)+1);
     }
 
-    int i = strlen(str) - 1;
+    int i = static_cast<int>(strlen(str)) - 1;
     while (i >= 0 && str[i] == ' ')
     {
         str[i] = 0;

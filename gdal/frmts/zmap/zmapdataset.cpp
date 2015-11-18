@@ -471,7 +471,7 @@ GDALDataset *ZMapDataset::Open( GDALOpenInfo * poOpenInfo )
 
 static void WriteRightJustified(VSILFILE* fp, const char *pszValue, int nWidth)
 {
-    int nLen = strlen(pszValue);
+    int nLen = (int)strlen(pszValue);
     CPLAssert(nLen <= nWidth);
     for( int i=0; i < nWidth - nLen; i++ )
         VSIFWriteL(" ", 1, 1, fp);

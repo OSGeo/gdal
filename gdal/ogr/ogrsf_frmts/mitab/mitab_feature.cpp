@@ -8476,7 +8476,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
         if(pszPenColor[0] == '#')
             pszPenColor++;
         // The Pen color is an Hexa string that need to be convert in a int
-        nPenColor = strtol(pszPenColor, NULL, 16);
+        nPenColor = static_cast<int>(strtol(pszPenColor, NULL, 16));
         SetPenColor(nPenColor);
     }
 
@@ -8735,7 +8735,7 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     {
         if(pszBrushColor[0] == '#')
             pszBrushColor++;
-        nBrushColor = strtol(pszBrushColor, NULL, 16);
+        nBrushColor = static_cast<int>(strtol(pszBrushColor, NULL, 16));
         SetBrushBGColor((GInt32)nBrushColor);
     }
     else
@@ -8751,7 +8751,7 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     {
         if(pszBrushColor[0] == '#')
             pszBrushColor++;
-        nBrushColor = strtol(pszBrushColor, NULL, 16);
+        nBrushColor = static_cast<int>(strtol(pszBrushColor, NULL, 16));
         SetBrushFGColor((GInt32)nBrushColor);
     }
 
@@ -9056,7 +9056,7 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     {
         if(pszSymbolColor[0] == '#')
             pszSymbolColor++;
-        nSymbolColor = strtol(pszSymbolColor, NULL, 16);
+        nSymbolColor = static_cast<int>(strtol(pszSymbolColor, NULL, 16));
         SetSymbolColor((GInt32)nSymbolColor);
     }
 

@@ -424,7 +424,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     {
         int     iZone;
 
-        iZone = CPLScanLong( (char *)pszProj + 5, 4 );
+        iZone = (int)CPLScanLong( (char *)pszProj + 5, 4 );
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
@@ -434,7 +434,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     {
         int     iZone;
 
-        iZone = CPLScanLong( (char *)pszProj + 5, 4 );
+        iZone = (int)CPLScanLong( (char *)pszProj + 5, 4 );
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT,
@@ -445,7 +445,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     {
         int     iZone;
 
-        iZone = CPLScanLong( (char *)pszProj + 5, 4 );
+        iZone = (int)CPLScanLong( (char *)pszProj + 5, 4 );
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT,
@@ -463,7 +463,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     {
         int     iZone, bNorth = TRUE;
 
-        iZone = CPLScanLong( (char *)pszProj + 4, 5 );;
+        iZone = (int)CPLScanLong( (char *)pszProj + 4, 5 );;
         if ( iZone < 0 )
         {
             iZone = -iZone;

@@ -735,7 +735,7 @@ GIntBig VFKDataBlock::GetFeatureCount(const char *pszName, const char *pszValue)
 */
 int VFKDataBlock::LoadGeometryPoint()
 {
-    long nInvalid = 0;
+    int nInvalid = 0;
     int i_idxY = GetPropertyIndex("SOURADNICE_Y");
     int i_idxX = GetPropertyIndex("SOURADNICE_X");
     if (i_idxY < 0 || i_idxX < 0) {
@@ -827,7 +827,7 @@ int VFKDataBlock::LoadGeometryLineStringSBP()
 */
 int VFKDataBlock::LoadGeometryLineStringHP()
 {
-    long nInvalid = 0;
+    int nInvalid = 0;
 
     VFKDataBlock  *poDataBlockLines
         = (VFKDataBlock *) m_poReader->GetDataBlock("SBP");
@@ -876,7 +876,7 @@ int VFKDataBlock::LoadGeometryLineStringHP()
 */
 int VFKDataBlock::LoadGeometryPolygon()
 {
-    long nInvalid = 0;
+    int nInvalid = 0;
 
     GUIntBig id;
     int idxBud = 0;
@@ -969,7 +969,7 @@ int VFKDataBlock::LoadGeometryPolygon()
         /* collect rings (points) */
         bool bFound = false;
         int nCount = 0;
-        int nCountMax = poLineList.size() * 2;
+        int nCountMax = static_cast<int>(poLineList.size()) * 2;
         while (poLineList.size() > 0 && nCount < nCountMax) {
             bool bNewRing = !bFound;
             bFound = false;

@@ -234,7 +234,7 @@ static GBool TABAdjustCaseSensitiveFilename(char *
      * go backwards until we find a portion of the path that is valid.
      *----------------------------------------------------------------*/
     pszTmpPath = CPLStrdup(pszFname);
-    nTotalLen = strlen(pszTmpPath);
+    nTotalLen = static_cast<int>(strlen(pszTmpPath));
     iTmpPtr = nTotalLen;
     bValidPath = FALSE;
 

@@ -142,7 +142,7 @@ int BSBGetc( BSBInfo *psInfo, int bNO1, int* pbErrorFlag )
     {
         psInfo->nBufferOffset = 0;
         psInfo->nBufferSize = 
-            VSIFReadL( psInfo->pabyBuffer, 1, psInfo->nBufferAllocation,
+            (int)VSIFReadL( psInfo->pabyBuffer, 1, psInfo->nBufferAllocation,
                        psInfo->fp );
         if( psInfo->nBufferSize <= 0 )
         {

@@ -1244,10 +1244,10 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                 GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
                 CPLErr eErr =
                     poBand->RasterIO( GF_Read, // eRWFlag
-                                      x * blockX, // nXOff
-                                      y * blockY, // nYOff
-                                      readX, // nXSize
-                                      readY, // nYSize
+                                      static_cast<int>(x * blockX), // nXOff
+                                      static_cast<int>(y * blockY), // nYOff
+                                      static_cast<int>(readX), // nXSize
+                                      static_cast<int>(readY), // nYSize
                                       output + iBand * bytesPerComponent,
                                       // pData
                                       blockX, // nBufXSize

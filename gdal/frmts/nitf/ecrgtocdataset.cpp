@@ -530,7 +530,7 @@ static const char* BuildFullName(const char* pszTOCFilename,
     const char* pszFirstSlashInName = strchr(pszName, '/');
     if (pszFirstSlashInName != NULL)
     {
-        int nFirstDirLen = pszFirstSlashInName - pszName;
+        int nFirstDirLen = static_cast<int>(pszFirstSlashInName - pszName);
         if (static_cast<int>( strlen(pszTOCPath) ) >= nFirstDirLen + 1 &&
             (pszTOCPath[strlen(pszTOCPath) - (nFirstDirLen + 1)] == '/' ||
                 pszTOCPath[strlen(pszTOCPath) - (nFirstDirLen + 1)] == '\\') &&

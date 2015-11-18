@@ -183,7 +183,7 @@ EHopen(char *filename, intn access)
 		    sprintf(hdfeosVersion, "%s%s", "HDFEOS_V",
 			    HDFEOSVERSION1);
 		    SDsetattr(sdInterfaceID, "HDFEOSVersion", DFNT_CHAR8,
-			      strlen(hdfeosVersion), hdfeosVersion);
+			      (int)strlen(hdfeosVersion), hdfeosVersion);
 
 
 		    /* Get HDF file ID */
@@ -278,7 +278,7 @@ EHopen(char *filename, intn access)
 			  sprintf(hdfeosVersion, "%s%s", "HDFEOS_V",
 				  HDFEOSVERSION1);
 			  SDsetattr(sdInterfaceID, "HDFEOSVersion", DFNT_CHAR8,
-				    strlen(hdfeosVersion), hdfeosVersion);
+				    (int)strlen(hdfeosVersion), hdfeosVersion);
 			}
 		       /* Set open access to write */
 		       /* ------------------------ */
@@ -888,7 +888,7 @@ EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
 
     /* Get length of input string list & Point to first delimitor */
     /* ---------------------------------------------------------- */
-    slen = strlen(instring);
+    slen = (int)strlen(instring);
     delimitor = strchr(instring, delim);
 
     /* If NULL string set count to zero otherwise set to 1 */
@@ -1114,7 +1114,7 @@ EHloadliststr(char *ptr[], int32 nentries, char *liststr, char delim)
     {
 	/* Get string length of string array entry */
 	/* --------------------------------------- */
-	slen = strlen(ptr[i]);
+	slen = (int)strlen(ptr[i]);
 
 
 	/* Copy string entry to string list */
@@ -1766,13 +1766,13 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
     {
 	sprintf(utlstr, "%s%d", "StructMetadata.", i);
 	attrIndex = SDfindattr(sdInterfaceID, utlstr);
-	metalen = strlen(metabuf);
+	metalen = (int)strlen(metabuf);
 	SDreadattr(sdInterfaceID, attrIndex, metabuf + metalen);
     }
 
     /* Determine length (# of characters) of metadata */
     /* ---------------------------------------------- */
-    metalen = strlen(metabuf);
+    metalen = (int)strlen(metabuf);
 
 
 
@@ -2300,11 +2300,11 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
     /* Get length of metadata string to insert */
     /* --------------------------------------- */
-    seglen = strlen(utlstr);
+    seglen = (int)strlen(utlstr);
 
     /* Get offset of entry postion within existing metadata */
     /* ---------------------------------------------------- */
-    offset = metaptr - metabuf;
+    offset = (int)(metaptr - metabuf);
 
 
     /* If end of new metadata string outside of current metadata buffer ... */
@@ -2416,7 +2416,7 @@ EHgetmetavalue(char *metaptrs[], char *parameter, char *retstr)
 
     /* Get string length of parameter string + 1 */
     /* ----------------------------------------- */
-    slen = strlen(parameter) + 1;
+    slen = (int)strlen(parameter) + 1;
 
 
     /* Build search string (parameter string + "=") */
@@ -2564,13 +2564,13 @@ EHmetagroup(int32 sdInterfaceID, char *structname, char *structcode,
     {
 	sprintf(utlstr, "%s%d", "StructMetadata.", i);
 	attrIndex = SDfindattr(sdInterfaceID, utlstr);
-	metalen = strlen(metabuf);
+	metalen = (int)strlen(metabuf);
 	SDreadattr(sdInterfaceID, attrIndex, metabuf + metalen);
     }
 
     /* Determine length (# of characters) of metadata */
     /* ---------------------------------------------- */
-    metalen = strlen(metabuf);
+    metalen = (int)strlen(metabuf);
 
 
 
@@ -3323,7 +3323,7 @@ EHattrcat(int32 fid, int32 attrVgrpID, char *attrnames, int32 * strbufsize)
 		}
 		/* Increment attribute names string length */
 		/* --------------------------------------- */
-		slen = (nattr == 1) ? strlen(name) : strlen(name) + 1;
+		slen = (nattr == 1) ? (int)strlen(name) : (int)strlen(name) + 1;
 		*strbufsize += slen;
 	    }
 	    VSdetach(vdataID);
@@ -3444,7 +3444,7 @@ EHinquire(char *filename, char *type, char *objectlist, int32 * strbufsize)
 	    }
 	    /* Compute string length of object entry */
 	    /* ------------------------------------- */
-	    slen = (nobj == 1) ? strlen(name) : strlen(name) + 1;
+	    slen = (nobj == 1) ? (int)strlen(name) : (int)strlen(name) + 1;
 
 
 	    /* If string buffer size is requested then increment buffer size */

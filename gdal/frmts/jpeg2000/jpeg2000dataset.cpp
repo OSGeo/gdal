@@ -636,9 +636,9 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
             switch (box->type)
             {
                 case JP2_BOX_IHDR:
-                poDS->nBands = box->data.ihdr.numcmpts;
-                poDS->nRasterXSize = box->data.ihdr.width;
-                poDS->nRasterYSize = box->data.ihdr.height;
+                poDS->nBands = static_cast<int>(box->data.ihdr.numcmpts);
+                poDS->nRasterXSize = static_cast<int>(box->data.ihdr.width);
+                poDS->nRasterYSize = static_cast<int>(box->data.ihdr.height);
                 CPLDebug( "JPEG2000",
                           "IHDR box found. Dump: "
                           "width=%d, height=%d, numcmpts=%d, bpp=%d",
@@ -730,8 +730,8 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         poDS->nBands = jas_image_numcmpts( poDS->psImage );
-        poDS->nRasterXSize = jas_image_cmptwidth( poDS->psImage, 0 );
-        poDS->nRasterYSize = jas_image_cmptheight( poDS->psImage, 0 );
+        poDS->nRasterXSize = static_cast<int>(jas_image_cmptwidth( poDS->psImage, 0 ));
+        poDS->nRasterYSize = static_cast<int>(jas_image_cmptheight( poDS->psImage, 0 ));
         paiDepth = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
         pabSignedness = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
         for ( iBand = 0; iBand < poDS->nBands; iBand++ )
@@ -1030,10 +1030,12 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLDebug( "JPEG2000", "%s\n", papszOptions[i] );
             for ( j = 0; apszComprOptions[j] != NULL; j++ )
                 if( EQUALN( apszComprOptions[j], papszOptions[i],
-                            strlen(apszComprOptions[j]) ) )                {                    int m, n;
+                            strlen(apszComprOptions[j]) ) )
+                {
+                    int m, n;
 
-                    n = strlen( pszOptionBuf );
-                    m = n + strlen( papszOptions[i] ) + 1;
+                    n = static_cast<int>(strlen( pszOptionBuf ));
+                    m = n + static_cast<int>(strlen( papszOptions[i] )) + 1;
                     if ( m > OPTSMAX )
                         break;
                     if ( n > 0 )

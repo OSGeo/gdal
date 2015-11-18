@@ -174,7 +174,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         {
             size_t szWkb;
             pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs, &szWkb);
-            err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb, szWkb, CPLFree);
+            err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb,
+                                    static_cast<int>(szWkb), CPLFree);
 
             // FIXME: in case the geometry is a GeometryCollection, we should
             // inspect its subgeometries to see if there's non-linear ones.
@@ -799,7 +800,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
                             OGRSQLiteEscape(m_pszFidColumn).c_str(),
                             m_pszTableName);
         sqlite3_stmt* hColStmt = NULL;
-        int rc = sqlite3_prepare( poDb, pszSQLStatic, strlen(pszSQLStatic), &hColStmt, NULL ); 
+        int rc = sqlite3_prepare( poDb, pszSQLStatic, -1, &hColStmt, NULL ); 
         if( rc == SQLITE_OK )
         {
             rc = sqlite3_step( hColStmt );

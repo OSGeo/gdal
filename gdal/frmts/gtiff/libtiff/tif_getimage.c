@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.91 2015-10-17 10:13:14 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.92 2015-11-18 20:35:10 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -338,7 +338,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			}
 
 			/* copy the colormaps so we can modify them */
-			n_color = (1L << img->bitspersample);
+			n_color = (1U << img->bitspersample);
 			img->redcmap = (uint16 *) _TIFFmalloc(sizeof(uint16)*n_color);
 			img->greencmap = (uint16 *) _TIFFmalloc(sizeof(uint16)*n_color);
 			img->bluecmap = (uint16 *) _TIFFmalloc(sizeof(uint16)*n_color);

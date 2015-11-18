@@ -620,7 +620,7 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
                     else
                     {
                         const char* pszStr = poNewFeature->GetFieldAsString(i);
-                        cvs_MD5Update( &sMD5Context, (const GByte*)pszStr, strlen(pszStr));
+                        cvs_MD5Update( &sMD5Context, (const GByte*)pszStr, static_cast<int>(strlen(pszStr)));
                     }
                 }
             }

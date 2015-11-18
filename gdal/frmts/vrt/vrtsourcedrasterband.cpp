@@ -223,7 +223,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             GDALCopyWords( &dfWriteValue, GDT_Float64, 0,
                            reinterpret_cast<GByte *>( pData )
                            + static_cast<GIntBig>( nLineSpace ) * iLine,
-                           eBufType, nPixelSpace, nBufXSize );
+                           eBufType, static_cast<int>(nPixelSpace), nBufXSize );
         }
     }
 

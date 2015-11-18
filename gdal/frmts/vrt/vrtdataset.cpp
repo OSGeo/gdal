@@ -734,9 +734,9 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
                 break;
             }
 
-            const int bufferSize = readlink( currentVrtFilename,
+            const int bufferSize = static_cast<int>(readlink( currentVrtFilename,
                                              filenameBuffer,
-                                             sizeof(filenameBuffer) );
+                                             sizeof(filenameBuffer) ));
             if (bufferSize != -1) {
                 filenameBuffer[std::min(bufferSize, static_cast<int>(
                     sizeof(filenameBuffer) ) - 1)] = 0;

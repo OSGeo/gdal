@@ -402,7 +402,7 @@ int ReadStringTable(GByte* pabyData, GByte* pabyDataLimit,
             unsigned int nDataLength;
             READ_SIZE(pabyData, pabyDataLimit, nDataLength);
 
-            panStrOff[nStrCount ++] = pabyData - (GByte*)pszStrBuf;
+            panStrOff[nStrCount ++] = static_cast<int>(pabyData - (GByte*)pszStrBuf);
             pbSaved = &pabyData[nDataLength];
 
             pabyData += nDataLength;

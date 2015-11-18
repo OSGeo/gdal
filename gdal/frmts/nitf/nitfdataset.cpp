@@ -1639,7 +1639,7 @@ static OGRErr LoadDODDatum( OGRSpatialReference *poSRS,
     szExpanded[3] = '\0';
     if( pszDatumName[3] != ' ' )
     {
-        int nLen;
+        size_t nLen;
         strcat( szExpanded, "-" );
         nLen = strlen(szExpanded);
         szExpanded[nLen] = pszDatumName[3];

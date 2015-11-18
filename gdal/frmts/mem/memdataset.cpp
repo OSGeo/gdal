@@ -201,7 +201,7 @@ CPLErr MEMRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize,
                                          eBufType,
-                                         nPixelSpaceBuf, nLineSpaceBuf,
+                                         static_cast<int>(nPixelSpaceBuf), nLineSpaceBuf,
                                          psExtraArg);
     }
 
@@ -214,10 +214,10 @@ CPLErr MEMRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             GDALCopyWords( pabyData + nLineOffset*(size_t)(iLine + nYOff) + nXOff*nPixelOffset,
                            eDataType,
-                           nPixelOffset,
+                           static_cast<int>(nPixelOffset),
                            reinterpret_cast<GByte*>( pData ) + nLineSpaceBuf*(size_t)iLine,
                            eBufType,
-                           nPixelSpaceBuf,
+                           static_cast<int>(nPixelSpaceBuf),
                            nXSize);
         }
     }
@@ -227,10 +227,10 @@ CPLErr MEMRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             GDALCopyWords( reinterpret_cast<GByte *>( pData ) + nLineSpaceBuf*(size_t)iLine,
                            eBufType,
-                           nPixelSpaceBuf,
+                           static_cast<int>(nPixelSpaceBuf),
                            pabyData + nLineOffset*(size_t)(iLine + nYOff) + nXOff*nPixelOffset,
                            eDataType,
-                           nPixelOffset,
+                           static_cast<int>(nPixelOffset),
                            nXSize);
         }
     }
@@ -764,7 +764,7 @@ void *MEMDataset::GetInternalHandle( const char * pszRequest)
     // digits, or even omitted)
     if( STARTS_WITH_CI(pszRequest, "MEMORY"))
     {
-        if(int BandNumber = CPLScanLong(&pszRequest[6], 10))
+        if(int BandNumber = static_cast<int>(CPLScanLong(&pszRequest[6], 10)))
         {
             MEMRasterBand *RequestedRasterBand =
                 reinterpret_cast<MEMRasterBand *>( GetRasterBand(BandNumber) );
@@ -881,7 +881,7 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
 /* -------------------------------------------------------------------- */
     const char *pszDataPointer = CSLFetchNameValue(papszOptions,"DATAPOINTER");
     GByte *pData = reinterpret_cast<GByte *>(
-        CPLScanPointer( pszDataPointer, strlen(pszDataPointer) ) );
+        CPLScanPointer( pszDataPointer, static_cast<int>(strlen(pszDataPointer)) ) );
 
     const char *pszOption = CSLFetchNameValue(papszOptions,"PIXELOFFSET");
     GSpacing nPixelOffset;
@@ -1005,25 +1005,25 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pszOption == NULL )
         nPixelOffset = GDALGetDataTypeSize(eType) / 8;
     else
-        nPixelOffset = CPLScanUIntBig(pszOption, strlen(pszOption));
+        nPixelOffset = CPLScanUIntBig(pszOption, static_cast<int>(strlen(pszOption)));
 
     pszOption = CSLFetchNameValue(papszOptions,"LINEOFFSET");
     GSpacing nLineOffset;
     if( pszOption == NULL )
         nLineOffset = poDS->nRasterXSize * (size_t) nPixelOffset;
     else
-        nLineOffset = CPLScanUIntBig(pszOption, strlen(pszOption));
+        nLineOffset = CPLScanUIntBig(pszOption, static_cast<int>(strlen(pszOption)));
 
     pszOption = CSLFetchNameValue(papszOptions,"BANDOFFSET");
     GSpacing nBandOffset;
     if( pszOption == NULL )
         nBandOffset = nLineOffset * (size_t) poDS->nRasterYSize;
     else
-        nBandOffset = CPLScanUIntBig(pszOption, strlen(pszOption));
+        nBandOffset = CPLScanUIntBig(pszOption, static_cast<int>(strlen(pszOption)));
 
     const char *pszDataPointer = CSLFetchNameValue(papszOptions,"DATAPOINTER");
     GByte *pabyData = reinterpret_cast<GByte *>(
-        CPLScanPointer( pszDataPointer, strlen(pszDataPointer) ) );
+        CPLScanPointer( pszDataPointer, static_cast<int>(strlen(pszDataPointer)) ) );
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */

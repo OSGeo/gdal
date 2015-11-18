@@ -181,7 +181,7 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDS, int nBand,
             sEntry.c3 = ECSRASTERINFO(psResult).cat.cat_val[i].b;
             sEntry.c4 = 255;
 
-            poCT->SetColorEntry( ECSRASTERINFO(psResult).cat.cat_val[i].no_cat, 
+            poCT->SetColorEntry( static_cast<int>(ECSRASTERINFO(psResult).cat.cat_val[i].no_cat), 
                                  &sEntry );
         }
     }
@@ -292,14 +292,14 @@ CPLErr OGDIRasterBand::IRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         if( eFamily == Matrix )
         {
             GDALCopyWords( ECSRASTER(psResult), GDT_UInt32, 4, 
-                           pLineData, eBufType, nPixelSpace,
+                           pLineData, eBufType, static_cast<int>(nPixelSpace),
                            nBufXSize );
         }
         else if( nOGDIImageType == 1 )
         {
             GDALCopyWords( ((GByte *) ECSRASTER(psResult)) + nComponent, 
                            GDT_Byte, 4,
-                           pLineData, eBufType, nPixelSpace, nBufXSize );
+                           pLineData, eBufType, static_cast<int>(nPixelSpace), nBufXSize );
 
             if( nComponent == 3 )
             {
@@ -318,25 +318,25 @@ CPLErr OGDIRasterBand::IRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         else if( nOGDIImageType == 2 )
         {
             GDALCopyWords( ECSRASTER(psResult), GDT_Byte, 1,
-                           pLineData, eBufType, nPixelSpace,
+                           pLineData, eBufType, static_cast<int>(nPixelSpace),
                            nBufXSize );
         }
         else if( nOGDIImageType == 3 )
         {
             GDALCopyWords( ECSRASTER(psResult), GDT_UInt16, 2,
-                           pLineData, eBufType, nPixelSpace,
+                           pLineData, eBufType, static_cast<int>(nPixelSpace),
                            nBufXSize );
         }
         else if( nOGDIImageType == 4 )
         {
             GDALCopyWords( ECSRASTER(psResult), GDT_Int16, 2,
-                           pLineData, eBufType, nPixelSpace,
+                           pLineData, eBufType, static_cast<int>(nPixelSpace),
                            nBufXSize );
         }
         else if( nOGDIImageType == 5 )
         {
             GDALCopyWords( ECSRASTER(psResult), GDT_Int32, 4,
-                           pLineData, eBufType, nPixelSpace,
+                           pLineData, eBufType, static_cast<int>(nPixelSpace),
                            nBufXSize );
         }
     }
@@ -596,7 +596,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     int       nC1=-1, nC2=-1, i, bInQuotes = FALSE;
     char      *pszURL = CPLStrdup(poOpenInfo->pszFilename);
 
-    for( i = strlen(pszURL)-1; i > 0; i-- )
+    for( i = static_cast<int>(strlen(pszURL))-1; i > 0; i-- )
     {
         if( pszURL[i] == '/' )
             break;

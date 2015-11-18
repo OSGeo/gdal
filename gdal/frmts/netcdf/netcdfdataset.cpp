@@ -116,7 +116,7 @@ class netCDFRasterBand : public GDALPamRasterBand
 
     CPLErr	    CreateBandMetadata( int *paDimIds ); 
     template <class T> void CheckData ( void * pImage, 
-                                        int nTmpBlockXSize, int nTmpBlockYSize,
+                                        long nTmpBlockXSize, long nTmpBlockYSize,
                                         int bCheckIsNan=FALSE ) ;
 
   protected:
@@ -1101,7 +1101,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
 /************************************************************************/
 template <class T>
 void  netCDFRasterBand::CheckData ( void * pImage, 
-                                    int nTmpBlockXSize, int nTmpBlockYSize,
+                                    long nTmpBlockXSize, long nTmpBlockYSize,
                                     int bCheckIsNan ) 
 {
   CPLAssert( pImage != NULL );
@@ -1111,11 +1111,11 @@ void  netCDFRasterBand::CheckData ( void * pImage,
   if ( nTmpBlockXSize != nBlockXSize ) {
     T* ptr = (T *) CPLCalloc( nTmpBlockXSize*nTmpBlockYSize, sizeof( T ) );
     memcpy( ptr, pImage, nTmpBlockXSize*nTmpBlockYSize*sizeof( T ) );
-    for( int j=0; j<nTmpBlockYSize; j++) {
-      int k = j*nBlockXSize;
-      for( int i=0; i<nTmpBlockXSize; i++,k++)
+    for( long j=0; j<nTmpBlockYSize; j++) {
+      long k = j*nBlockXSize;
+      for( long i=0; i<nTmpBlockXSize; i++,k++)
         ((T *) pImage)[k] = ptr[j*nTmpBlockXSize+i];
-      for( int i=nTmpBlockXSize; i<nBlockXSize; i++,k++)
+      for( long i=nTmpBlockXSize; i<nBlockXSize; i++,k++)
         ((T *) pImage)[k] = (T)dfNoDataValue;
     }
     CPLFree( ptr );
@@ -1125,10 +1125,10 @@ void  netCDFRasterBand::CheckData ( void * pImage,
   if ( (adfValidRange[0] != dfNoDataValue) || 
        (adfValidRange[1] != dfNoDataValue) ||
        bCheckIsNan ) {
-    for( int j=0; j<nTmpBlockYSize; j++) {
+    for( long j=0; j<nTmpBlockYSize; j++) {
       // k moves along the gdal block, skipping the out-of-range pixels
-      int k = j*nBlockXSize;
-      for( int i=0; i<nTmpBlockXSize; i++,k++) {
+      long k = j*nBlockXSize;
+      for( long i=0; i<nTmpBlockXSize; i++,k++) {
         /* check for nodata and nan */
         if ( CPLIsEqual( (double) ((T *)pImage)[k], dfNoDataValue ) )
           continue;
@@ -4769,7 +4769,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     size_t xdim;
     poDS->nXDimID = paDimIds[nd-1];
     nc_inq_dimlen ( cdfid, poDS->nXDimID, &xdim );
-    poDS->nRasterXSize = xdim;
+    poDS->nRasterXSize = static_cast<int>(xdim);
 
 /* -------------------------------------------------------------------- */
 /*      Get Y dimension information                                     */
@@ -4777,7 +4777,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     size_t ydim;
     poDS->nYDimID = paDimIds[nd-2];
     nc_inq_dimlen ( cdfid, poDS->nYDimID, &ydim );
-    poDS->nRasterYSize = ydim;
+    poDS->nRasterYSize = static_cast<int>(ydim);
 
     unsigned int k = 0;
     for( int j=0; j < nd; j++ ){
@@ -4858,7 +4858,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 ( paDimIds[j] != poDS->nYDimID ) ){
                 nc_inq_dimlen ( cdfid, paDimIds[j], &lev_count );
                 nTotLevCount *= lev_count;
-                panBandZLev[ nDim-2 ] = lev_count;
+                panBandZLev[ nDim-2 ] = static_cast<int>(lev_count);
                 panBandDimPos[ nDim++ ] = j; //Save Position of ZDim
                 //Save non-spatial dimension names
                 if ( nc_inq_dimname( cdfid, paDimIds[j], szDimName ) 
@@ -6457,7 +6457,7 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
     for ( size_t i=0; i<nAttrLen; i++ ) {
         nTmpAttrType = NC_CHAR;
         errno = 0;
-        nValue = strtol( papszValues[i], &pszTemp, 10 );
+        nValue = static_cast<int>(strtol( papszValues[i], &pszTemp, 10 ));
         dfValue = (double) nValue;
         /* test for int */
         /* TODO test for Byte and short - can this be done safely? */
@@ -6497,7 +6497,7 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
                 int *pnTemp = reinterpret_cast<int *> (
                     CPLCalloc( nAttrLen, sizeof( int ) ) );
                 for( size_t i=0; i < nAttrLen; i++) {
-                    pnTemp[i] = strtol( papszValues[i], &pszTemp, 10 );
+                    pnTemp[i] = static_cast<int>(strtol( papszValues[i], &pszTemp, 10 ));
                 }
                 status = nc_put_att_int( nCdfId, nVarId, pszAttrName, 
                                          NC_INT, nAttrLen, pnTemp );  
@@ -6732,7 +6732,7 @@ CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
                     CPLCalloc( nVarLen, sizeof( int ) ) );
                 for(size_t i=0; i < nVarLen; i++) {
                     char *pszTemp = NULL;
-                    pnTemp[i] = strtol( papszValues[i], &pszTemp, 10 );
+                    pnTemp[i] = static_cast<int>(strtol( papszValues[i], &pszTemp, 10 ));
                 }
                 status = nc_put_vara_int( nCdfId, nVarId, start, count, pnTemp );  
                 NCDF_ERR(status);
@@ -7024,7 +7024,7 @@ char **NCDFTokenizeArray( const char *pszValue )
         return NULL;
 
     char **papszValues = NULL;
-    const int nLen = strlen(pszValue);
+    const int nLen = static_cast<int>(strlen(pszValue));
 
     if ( ( pszValue[0] == '{' ) && ( pszValue[nLen-1] == '}' ) ) {
         char *pszTemp = reinterpret_cast<char *> (CPLMalloc( nLen-2 ) );

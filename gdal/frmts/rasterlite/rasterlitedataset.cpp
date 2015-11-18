@@ -1144,7 +1144,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
             if (hSQLLyr != NULL)
             {
-                nResolutions = OGR_L_GetFeatureCount(hSQLLyr, TRUE);
+                nResolutions = static_cast<int>(OGR_L_GetFeatureCount(hSQLLyr, TRUE));
                 if( nResolutions == 0 )
                 {
                     OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
@@ -1166,7 +1166,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             if (hSQLLyr == NULL)
                 goto end;
 
-            nResolutions = OGR_L_GetFeatureCount(hSQLLyr, TRUE);
+            nResolutions = static_cast<int>(OGR_L_GetFeatureCount(hSQLLyr, TRUE));
 
             if (nResolutions == 0)
             {

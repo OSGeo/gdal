@@ -131,7 +131,7 @@ GFFRasterBand::GFFRasterBand( GFFDataset *poDS, int nBand,
     }
 
     nRasterBandMemory = nBytes * poDS->GetRasterXSize();
-    nSampleSize = nBytes;
+    nSampleSize = static_cast<int>(nBytes);
 }
 
 /************************************************************************/

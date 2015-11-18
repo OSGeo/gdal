@@ -1177,7 +1177,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         }
                     }
                 }
-                int iSize = VSIFWriteL( pData, 1, nLineSize, desBand->fpRaw );
+                int iSize = static_cast<int>(VSIFWriteL( pData, 1, nLineSize, desBand->fpRaw ));
                 if ( iSize < 1 )
                 {
                     CPLFree( pData );
@@ -2020,7 +2020,7 @@ int ValueRange::iRaw(double rValue)
     double rVal = floor(rValue+0.5);
     rVal -= _r0;
     long iVal = longConv(rVal);
-    return iVal;
+    return static_cast<int>(iVal);
 }
 
 

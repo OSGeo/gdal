@@ -88,7 +88,7 @@ typedef struct {
                         + ((p)[3] << 8) \
                         + ((p)[1] << 24) \
                         + ((p)[0] << 16))
-#define DGN_WRITE_INT32( n, p ) { GInt32 nMacroWork = (n);                   \
+#define DGN_WRITE_INT32( n, p ) { GInt32 nMacroWork = (GInt32)(n);                   \
  ((unsigned char *)p)[0] = (unsigned char)((nMacroWork & 0x00ff0000) >> 16); \
  ((unsigned char *)p)[1] = (unsigned char)((nMacroWork & 0xff000000) >> 24); \
  ((unsigned char *)p)[2] = (unsigned char)((nMacroWork & 0x000000ff) >> 0);  \

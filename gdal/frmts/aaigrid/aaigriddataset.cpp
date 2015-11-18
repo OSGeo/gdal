@@ -387,7 +387,7 @@ char AAIGDataset::Getc()
         return achReadBuf[nOffsetInBuffer++];
 
     nBufferOffset = VSIFTellL( fp );
-    int nRead = VSIFReadL( achReadBuf, 1, sizeof(achReadBuf), fp );
+    int nRead = static_cast<int>(VSIFReadL( achReadBuf, 1, sizeof(achReadBuf), fp ));
     unsigned int i;
     for(i=nRead;i<sizeof(achReadBuf);i++)
         achReadBuf[i] = '\0';

@@ -285,7 +285,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     char *pszBigBuf = (char *) CPLMalloc(BIGBUFSIZE);
-    nBytesRead = VSIFRead( pszBigBuf, 1, BIGBUFSIZE, fp );
+    nBytesRead = static_cast<int>(VSIFRead( pszBigBuf, 1, BIGBUFSIZE, fp ));
     VSIFClose( fp );
 
     for( i = 0; i < nBytesRead - 5 && !bGotGrid; i++ )

@@ -311,7 +311,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     count[0]  = nBlockYSize;
     count[1]  = nBlockXSize;
 
-    int nSizeOfData = H5Tget_size( native );
+    int nSizeOfData = static_cast<int>(H5Tget_size( native ));
     memset( pImage,0,nBlockXSize*nBlockYSize*nSizeOfData );
 
 /*  blocksize may not be a multiple of imagesize */
@@ -355,7 +355,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Y flip the data.                                                */
 /* -------------------------------------------------------------------- */
-    int nLinesToFlip = count[0];
+    int nLinesToFlip = static_cast<int>(count[0]);
     int nLineSize = nSizeOfData * nBlockXSize;
     GByte *pabyTemp = (GByte *) CPLMalloc(nLineSize);
 

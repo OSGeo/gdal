@@ -493,7 +493,7 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
     }
     else
     {
-        int nCounter = moParts.size();
+        int nCounter = static_cast<int>(moParts.size());
         std::map<double, OGRFeature *>::iterator IT = moParts.begin();
         OGRLineString *pOutLine = new OGRLineString();
         //get first part

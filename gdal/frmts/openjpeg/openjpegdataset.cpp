@@ -106,7 +106,7 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
     JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
-    int nRet = VSIFReadL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp);
+    int nRet = static_cast<int>(VSIFReadL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp));
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Read(%d) = %d", (int)nBytes, nRet);
 #endif
@@ -124,7 +124,7 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
     JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
-    int nRet = VSIFWriteL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp);
+    int nRet = static_cast<int>(VSIFWriteL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp));
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Write(%d) = %d", (int)nBytes, nRet);
 #endif

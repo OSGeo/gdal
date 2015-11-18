@@ -541,7 +541,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         /* collect rings from lines */
         bFound = FALSE;
         nCount = 0;
-        nCountMax = nLines * 2;
+        nCountMax = static_cast<int>(nLines) * 2;
 	while (poLineList.size() > 0 && nCount < nCountMax) {
             bNewRing = !bFound ? TRUE : FALSE;
             bFound = FALSE;

@@ -97,7 +97,7 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
     {
         char szChunk[513];
 
-        int nBytesRead = VSIFReadL( szChunk, 1, 512, fp );
+        int nBytesRead = static_cast<int>(VSIFReadL( szChunk, 1, 512, fp ));
 
         szChunk[nBytesRead] = '\0';
         osHeaderText += szChunk;

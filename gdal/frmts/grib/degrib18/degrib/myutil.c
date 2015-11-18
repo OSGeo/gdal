@@ -194,7 +194,7 @@ int myAtoI (const char *ptr, sInt4 *value)
    *value = 0;
    while (*ptr != '\0') {
       if (isdigit (*ptr) || (*ptr == '+') || (*ptr == '-')) {
-         *value = strtol (ptr, &extra, 10);
+         *value = (int)strtol (ptr, &extra, 10);
          myAssert (extra != NULL);
          if (*extra == '\0') {
             return 1;
@@ -388,7 +388,7 @@ int myStat (char *filename, char *perm, sInt4 *size, double *mtime)
    if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {
       /* Is a directory */
       if (size)
-         *size = stbuf.st_size;
+         *size = (sInt4)stbuf.st_size;
       if (mtime)
          *mtime = stbuf.st_mtime;
       if (perm) {
@@ -402,7 +402,7 @@ int myStat (char *filename, char *perm, sInt4 *size, double *mtime)
    } else if ((stbuf.st_mode & S_IFMT) == S_IFREG) {
       /* Is a file */
       if (size)
-         *size = stbuf.st_size;
+         *size = (sInt4)stbuf.st_size;
       if (mtime)
          *mtime = stbuf.st_mtime;
       if (perm) {

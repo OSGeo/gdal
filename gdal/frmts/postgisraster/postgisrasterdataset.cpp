@@ -2631,7 +2631,7 @@ GetConnectionInfo(const char * pszFilename,
 
     /* Parse ppszWhere, if needed */
     if (*ppszWhere) {
-        pszTmp = ReplaceQuotes(*ppszWhere, strlen(*ppszWhere));
+        pszTmp = ReplaceQuotes(*ppszWhere, static_cast<int>(strlen(*ppszWhere)));
         CPLFree(*ppszWhere);
         *ppszWhere = pszTmp;
     }

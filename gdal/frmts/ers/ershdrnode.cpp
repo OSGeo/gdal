@@ -307,7 +307,7 @@ const char *ERSHdrNode::Find( const char *pszPath, const char *pszDefault )
 /* -------------------------------------------------------------------- */
     CPLString osPathFirst, osPathRest, osPath = pszPath;
 
-    int iDot = osPath.find_first_of('.');
+    size_t iDot = osPath.find_first_of('.');
     osPathFirst = osPath.substr(0,iDot);
     osPathRest = osPath.substr(iDot+1);
 
@@ -367,8 +367,8 @@ ERSHdrNode *ERSHdrNode::FindNode( const char *pszPath )
 
 {
     CPLString osPathFirst, osPathRest, osPath = pszPath;
-    int iDot = osPath.find_first_of('.');
-    if( iDot == -1 )
+    size_t iDot = osPath.find_first_of('.');
+    if( iDot == std::string::npos )
     {
         osPathFirst = osPath;
     }
@@ -407,13 +407,13 @@ void ERSHdrNode::Set( const char *pszPath, const char *pszValue )
 
 {
     CPLString  osPath = pszPath;
-    int iDot = osPath.find_first_of('.');
+    size_t iDot = osPath.find_first_of('.');
 
 /* -------------------------------------------------------------------- */
 /*      We have an intermediate node, find or create it and             */
 /*      recurse.                                                        */
 /* -------------------------------------------------------------------- */
-    if( iDot != -1 )
+    if( iDot != std::string::npos )
     {
         CPLString osPathFirst = osPath.substr(0,iDot);
         CPLString osPathRest = osPath.substr(iDot+1);

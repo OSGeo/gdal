@@ -456,7 +456,7 @@ GIntBig OGROGDILayer::GetFeatureCount( int bForce )
 {
     if( m_nTotalShapeCount == -1)
     {
-        m_nTotalShapeCount = OGRLayer::GetFeatureCount( bForce );
+        m_nTotalShapeCount = static_cast<int>(OGRLayer::GetFeatureCount( bForce ));
     }
 
     return m_nTotalShapeCount;

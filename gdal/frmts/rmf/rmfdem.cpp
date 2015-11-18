@@ -273,6 +273,6 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
     }
   }
 
-  return ((GByte*)paiOut - pabyOut);
+  return static_cast<int>((GByte*)paiOut - pabyOut);
 }
 

@@ -3766,7 +3766,7 @@ TIFFReadDirectory(TIFF* tif)
 						tif->tif_dir.td_bitspersample);
 					    continue;
 					}
-					countpersample=(1L<<tif->tif_dir.td_bitspersample);
+					countpersample=(1U<<tif->tif_dir.td_bitspersample);
 					if ((dp->tdir_tag==TIFFTAG_TRANSFERFUNCTION)&&(dp->tdir_count==(uint64)countpersample))
 					{
 						countrequired=countpersample;

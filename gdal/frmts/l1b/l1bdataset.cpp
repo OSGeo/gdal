@@ -3241,7 +3241,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
             if (!poDS->ComputeFileOffsets())
                 goto bad;
 
-            nTempYSize = (sStat.st_size - poDS->nDataStartOffset) / poDS->nRecordSize;
+            nTempYSize = static_cast<int>((sStat.st_size - poDS->nDataStartOffset) / poDS->nRecordSize);
             if (nTempYSize < 5)
                 continue;
 
@@ -3301,7 +3301,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     // Compute number of lines dinamycally, so we can read partially
     // downloaded files
     poDS->nRasterYSize =
-        (sStat.st_size - poDS->nDataStartOffset) / poDS->nRecordSize;
+        static_cast<int>((sStat.st_size - poDS->nDataStartOffset) / poDS->nRecordSize);
 
 /* -------------------------------------------------------------------- */
 /*      Deal with GCPs                                                  */

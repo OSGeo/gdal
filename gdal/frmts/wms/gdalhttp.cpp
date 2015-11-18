@@ -251,7 +251,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
 
         long response_code = 0;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_RESPONSE_CODE, &response_code);
-        psRequest->nStatus = response_code;
+        psRequest->nStatus = static_cast<int>(response_code);
 
         char *content_type = 0;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_CONTENT_TYPE, &content_type);

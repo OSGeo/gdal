@@ -1072,7 +1072,7 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 		}
 		strcat(projparmbuf, utlbuf);
 	    }
-	    slen = strlen(projparmbuf);
+	    slen = (int)strlen(projparmbuf);
 
 	    /* Add trailing ")" */
 	    projparmbuf[slen - 1] = ')';
@@ -1630,7 +1630,7 @@ GDdiminfo(int32 gridID, char *dimname)
 
 	    if (status == 0)
 	    {
-		size = atol(utlstr);
+		size = atoi(utlstr);
 	    }
 	    else
 	    {
@@ -1744,7 +1744,7 @@ GDgridinfo(int32 gridID, int32 * xdimsize, int32 * ydimsize,
 	    statmeta = EHgetmetavalue(metaptrs, "XDim", utlstr);
 	    if (statmeta == 0)
 	    {
-		*xdimsize = atol(utlstr);
+		*xdimsize = atoi(utlstr);
 	    }
 	    else
 	    {
@@ -1762,7 +1762,7 @@ GDgridinfo(int32 gridID, int32 * xdimsize, int32 * ydimsize,
 	    statmeta = EHgetmetavalue(metaptrs, "YDim", utlstr);
 	    if (statmeta == 0)
 	    {
-		*ydimsize = atol(utlstr);
+		*ydimsize = atoi(utlstr);
 	    }
 	    else
 	    {
@@ -1980,7 +1980,7 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
 		statmeta = EHgetmetavalue(metaptrs, "ZoneCode", utlstr);
 		if (statmeta == 0)
 		{
-		    *zonecode = atol(utlstr);
+		    *zonecode = atoi(utlstr);
 		}
 		else
 		{
@@ -2062,7 +2062,7 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
 		EHgetmetavalue(metaptrs, "SphereCode", utlstr);
 		if (statmeta == 0)
 		{
-		    *spherecode = atol(utlstr);
+		    *spherecode = atoi(utlstr);
 		}
 	    }
 	}
@@ -4491,7 +4491,7 @@ GDinqdims(int32 gridID, char *dimnames, int32 dims[])
 		    if (dims != NULL)
 		    {
 			EHgetmetavalue(metaptrs, "Size", utlstr);
-			size = atol(utlstr);
+			size = atoi(utlstr);
 			dims[nDim] = size;
 		    }
 		    nDim++;
@@ -8799,7 +8799,7 @@ GDdupregion(int32 oldregionID)
             {
                 if(GDXRegion[oldregionID]->DimNamePtr[j] != NULL)
                 {
-                    slendupregion = strlen(GDXRegion[oldregionID]->DimNamePtr[j]);
+                    slendupregion = (int)strlen(GDXRegion[oldregionID]->DimNamePtr[j]);
                     GDXRegion[i]->DimNamePtr[j] = (char *) malloc(slendupregion + 1);
                     strcpy(GDXRegion[i]->DimNamePtr[j],GDXRegion[oldregionID]->DimNamePtr[j]);
 		}
@@ -8937,7 +8937,7 @@ GDdefvrtregion(int32 gridID, int32 regionID, char *vertObj, float64 range[])
 
 	if (strcmp(dimlist, "DIM:") == 0)
 	{
-	    slen = strlen(vertObj) - 4;
+	    slen = (int)strlen(vertObj) - 4;
 	    if (regionID == -1)
 	    {
 		SETGRIDREG;
@@ -8982,7 +8982,7 @@ GDdefvrtregion(int32 gridID, int32 regionID, char *vertObj, float64 range[])
 		}
 		else
 		{
-		    slen = strlen(dimlist);
+		    slen = (int)strlen(dimlist);
 		    size = DFKNTsize(nt);
 		    vertArr = (char *) calloc(dims[0], size);
 		    if(vertArr == NULL)

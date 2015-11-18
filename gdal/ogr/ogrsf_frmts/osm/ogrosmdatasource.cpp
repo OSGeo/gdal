@@ -1431,7 +1431,7 @@ int OGROSMDataSource::CompressWay ( unsigned int nTags, IndexedKVP* pasTags,
             const char* pszV = (const char*)pabyNonRedundantValues +
                 pasTags[iTag].u.nOffsetInpabyNonRedundantValues;
 
-            int nLenV = strlen(pszV) + 1;
+            int nLenV = static_cast<int>(strlen(pszV)) + 1;
             if ((int)(pabyPtr - pabyCompressedWay) + 2 + nLenV >= MAX_SIZE_FOR_TAGS_IN_WAY)
             {
                 break;
@@ -2029,7 +2029,7 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
             }
             else
             {
-                int nLenV = strlen(pszV) + 1;
+                int nLenV = static_cast<int>(strlen(pszV)) + 1;
 
                 if( psKD->asValues.size() == 1024 )
                 {
@@ -3090,7 +3090,7 @@ int OGROSMDataSource::CreatePreparedStatements()
 
     char szTmp[LIMIT_IDS_PER_REQUEST*2 + 128];
     strcpy(szTmp, "SELECT id, coords FROM nodes WHERE id IN (");
-    int nLen = strlen(szTmp);
+    int nLen = static_cast<int>(strlen(szTmp));
     for(int i=0;i<LIMIT_IDS_PER_REQUEST;i++)
     {
         if(i == 0)
@@ -3124,7 +3124,7 @@ int OGROSMDataSource::CreatePreparedStatements()
     pahSelectWayStmt = (sqlite3_stmt**) CPLCalloc(sizeof(sqlite3_stmt*), LIMIT_IDS_PER_REQUEST);
 
     strcpy(szTmp, "SELECT id, data FROM ways WHERE id IN (");
-    nLen = strlen(szTmp);
+    nLen = static_cast<int>(strlen(szTmp));
     for(int i=0;i<LIMIT_IDS_PER_REQUEST;i++)
     {
         if(i == 0)

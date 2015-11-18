@@ -1084,7 +1084,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
         = reinterpret_cast<char *>( CPLMalloc( strlen( pszFilenameIn ) + 5 ) );
     strcpy( pszBaseFilename, pszFilenameIn );
 
-    for( int i = strlen(pszBaseFilename)-1; i > 0; i-- )
+    for( int i = static_cast<int>(strlen(pszBaseFilename))-1; i > 0; i-- )
     {
         if( pszBaseFilename[i] == '.' )
         {
@@ -1307,7 +1307,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
         CPLMalloc(strlen(pszFilename)+5) );
     strcpy( pszBaseFilename, pszFilename );
 
-    for( int i = strlen(pszBaseFilename)-1; i > 0; i-- )
+    for( int i = static_cast<int>(strlen(pszBaseFilename))-1; i > 0; i-- )
     {
         if( pszBaseFilename[i] == '.' )
         {

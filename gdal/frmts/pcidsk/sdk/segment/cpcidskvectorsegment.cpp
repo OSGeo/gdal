@@ -310,11 +310,11 @@ uint32 CPCIDSKVectorSegment::WriteField( uint32 offset,
         break;
 
       case FieldTypeString:
-        item_size = field.GetValueString().size() + 1;
+        item_size = static_cast<uint32>(field.GetValueString().size()) + 1;
         break;
 
       case FieldTypeCountedInt:
-        item_size = field.GetValueCountedInt().size() * 4 + 4;
+        item_size = static_cast<uint32>(field.GetValueCountedInt().size()) * 4 + 4;
         break;
 
       default:
@@ -372,7 +372,7 @@ uint32 CPCIDSKVectorSegment::WriteField( uint32 offset,
       case FieldTypeCountedInt:
       {
           std::vector<int32> value = field.GetValueCountedInt();
-          uint32 count = value.size();
+          uint32 count = static_cast<uint32>(value.size());
           memcpy( buffer.buffer+offset, &count, 4 );
           if( count > 0 )
           {
@@ -611,7 +611,7 @@ void CPCIDSKVectorSegment::WriteSecToFile( int section, char *buffer,
     if( block_count + block_offset > (int) block_map->size() )
     {
         vh.GrowBlockIndex( section, 
-                           block_count + block_offset - block_map->size() );
+                           static_cast<int>(block_count + block_offset - block_map->size()) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -994,7 +994,7 @@ int CPCIDSKVectorSegment::GetFieldCount()
 {
     LoadHeader();
 
-    return vh.field_names.size();
+    return static_cast<int>(vh.field_names.size());
 }
 
 /************************************************************************/
@@ -1305,7 +1305,7 @@ void CPCIDSKVectorSegment::SetVertices( ShapeId id,
         ThrowPCIDSKException( "Attempt to call SetVertices() on non-existing shape '%d'.",
                               (int) id );
 
-    PCIDSKBuffer vbuf( list.size() * 24 + 8 );
+    PCIDSKBuffer vbuf( static_cast<int>(list.size()) * 24 + 8 );
 
     AccessShapeByIndex( shape_index );
 
@@ -1339,7 +1339,7 @@ void CPCIDSKVectorSegment::SetVertices( ShapeId id,
 /* -------------------------------------------------------------------- */
 /*      Format the vertices in a buffer.                                */
 /* -------------------------------------------------------------------- */
-    uint32 vert_count = list.size();
+    uint32 vert_count = static_cast<uint32>(list.size());
     unsigned int i;
 
     memcpy( vbuf.buffer, &chunk_size, 4 );
@@ -1402,7 +1402,7 @@ void CPCIDSKVectorSegment::SetFields( ShapeId id,
         full_list = list_in;
 
         // fill out missing fields in list with defaults.
-        for( i = list_in.size(); i < vh.field_names.size(); i++ )
+        for( i = static_cast<uint32>(list_in.size()); i < static_cast<uint32>(vh.field_names.size()); i++ )
             full_list[i] = vh.field_defaults[i];
         
         listp = &full_list;
@@ -1507,7 +1507,7 @@ void CPCIDSKVectorSegment::FlushLoadedShapeIndex()
     }
 
     if( needs_swap )
-        SwapData( write_buffer.buffer, 4, shape_index_ids.size() * 3 );
+        SwapData( write_buffer.buffer, 4, static_cast<int>(shape_index_ids.size()) * 3 );
 
     WriteToFile( write_buffer.buffer, 
                  offset + 4 + shape_index_start * 12, 

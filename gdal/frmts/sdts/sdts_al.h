@@ -176,7 +176,7 @@ class SDTSModId
 
     /** The record within the module referred to.  This is -1 for unused
         SDTSModIds. */
-    long        nRecord;
+    int         nRecord;
 
     /** The "role" of this record within the module.  This is normally empty
         for references, but set in the oModId member of a feature.  */

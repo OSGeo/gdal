@@ -251,7 +251,7 @@ static char *ExtractTopic(const char * pszLayerName)
 {
   const char *table = strchr(pszLayerName, '_');
   while (table && table[1] !=  '_') table = strchr(table+1, '_');
-  return (table) ? CPLScanString(pszLayerName, table-pszLayerName, FALSE, FALSE) : NULL;
+  return (table) ? CPLScanString(pszLayerName, static_cast<int>(table-pszLayerName), FALSE, FALSE) : NULL;
 }
 
 /************************************************************************/

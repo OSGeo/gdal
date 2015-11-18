@@ -967,7 +967,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 
     sqlite3_stmt *hSQLStmt = NULL;
     int rc = sqlite3_prepare( hDB,
-                              pszStatement, strlen(pszStatement),
+                              pszStatement, -1,
                               &hSQLStmt, NULL );
 
     if( rc != SQLITE_OK )

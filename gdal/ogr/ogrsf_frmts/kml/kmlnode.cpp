@@ -708,7 +708,7 @@ Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
         }
     }
 
-    nLastAsked = nNum;
+    nLastAsked = static_cast<int>(nNum);
     nLastCount = nCount;
 
     if(poFeat == NULL)

@@ -877,15 +877,15 @@ CPLErr RMFDataset::WriteHeader()
 
             oSRS.exportToPanorama( &iProjection, &iDatum, &iEllips, &iZone,
                                    adfPrjParams );
-            sHeader.iProjection = iProjection;
+            sHeader.iProjection = static_cast<int>(iProjection);
             sHeader.dfStdP1 = adfPrjParams[0];
             sHeader.dfStdP2 = adfPrjParams[1];
             sHeader.dfCenterLat = adfPrjParams[2];
             sHeader.dfCenterLong = adfPrjParams[3];
 
-            sExtHeader.nEllipsoid = iEllips;
-            sExtHeader.nDatum = iDatum;
-            sExtHeader.nZone = iZone;
+            sExtHeader.nEllipsoid = static_cast<int>(iEllips);
+            sExtHeader.nDatum = static_cast<int>(iDatum);
+            sExtHeader.nZone = static_cast<int>(iZone);
         }
     }
 
