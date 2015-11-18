@@ -165,7 +165,7 @@ CPL_UNUSED
     m_bStopParsing = false;
 
     /* A bit experimental. Not publicly advertized. See commented doc in drv_gml.html */
-    m_bFetchAllGeometries = CSLTestBoolean(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO")) != FALSE;
+    m_bFetchAllGeometries = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO")));
 
     m_bInvertAxisOrderIfLatLong = bInvertAxisOrderIfLatLong;
     m_bConsiderEPSGAsURN = bConsiderEPSGAsURN;
@@ -180,7 +180,7 @@ CPL_UNUSED
     m_nHasSequentialLayers = -1;
 	
     /* Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer() and GMLReader::GMLReader() */
-    m_bFaceHoleNegative = CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")) != FALSE;
+    m_bFaceHoleNegative = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")));
 
     m_bSetWidthFlag = true;
 

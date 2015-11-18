@@ -472,7 +472,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             const char *pszName = CPLGetXMLValue( psThis, "Name", "" );
             const char *pszElementPath = CPLGetXMLValue( psThis, "ElementPath", "" );
             const char *pszType = CPLGetXMLValue( psThis, "Type", NULL );
-            bool bNullable = CSLTestBoolean(CPLGetXMLValue( psThis, "Nullable", "true") ) != FALSE;
+            bool bNullable = CPL_TO_BOOL(CSLTestBoolean(CPLGetXMLValue( psThis, "Nullable", "true") ));
             nGeomType = wkbUnknown;
             if( pszType != NULL && !EQUAL(pszType, "0") )
             {
@@ -618,7 +618,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             const char *pszType = CPLGetXMLValue( psThis, "Type", "Untyped" );
             const char *pszSubType = CPLGetXMLValue( psThis, "Subtype", "" );
             const char *pszCondition = CPLGetXMLValue( psThis, "Condition", NULL );
-            bool bNullable = CSLTestBoolean(CPLGetXMLValue( psThis, "Nullable", "true") ) != FALSE;
+            bool bNullable = CPL_TO_BOOL(CSLTestBoolean(CPLGetXMLValue( psThis, "Nullable", "true") ));
             GMLPropertyDefn *poPDefn;
 
             if( pszName == NULL )

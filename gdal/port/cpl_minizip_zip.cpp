@@ -1180,7 +1180,7 @@ typedef struct
 void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 
 {
-    bool bAppend = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND", "FALSE"));
+    bool bAppend = CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND", "FALSE")));
     char** papszFilenames = NULL;
 
     if( bAppend )

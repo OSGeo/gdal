@@ -79,10 +79,10 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
 
     /* Compatibility option. Not advertized, because hopefully won't be needed */
     /* Just put here in provision... */
-    bUseOldFIDFormat = CSLTestBoolean(CPLGetConfigOption("GML_USE_OLD_FID_FORMAT", "FALSE")) != FALSE;
+    bUseOldFIDFormat = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GML_USE_OLD_FID_FORMAT", "FALSE")));
 
     /* Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer() and GMLReader::GMLReader() */
-    bFaceHoleNegative = CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")) != FALSE;
+    bFaceHoleNegative = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")));
 
 }
 
