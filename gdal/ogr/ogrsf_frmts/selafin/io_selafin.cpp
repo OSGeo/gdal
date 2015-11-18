@@ -344,12 +344,12 @@ namespace Selafin {
 
     int write_string(VSILFILE *fp,char *pszData,size_t nLength) {
         if (nLength==0) nLength=strlen(pszData);
-        if (write_integer(fp,nLength)==0) return 0;
+        if (write_integer(fp,static_cast<long>(nLength))==0) return 0;
         if (VSIFWriteL(pszData,1,nLength,fp)<nLength) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return 0;
         }
-        if (write_integer(fp,nLength)==0) return 0;
+        if (write_integer(fp,static_cast<long>(nLength))==0) return 0;
         return 1;
     }
 
@@ -386,14 +386,14 @@ namespace Selafin {
     }
 
     int write_intarray(VSILFILE *fp,long *panData,size_t nLength) {
-        if (write_integer(fp,nLength*4)==0) return 0;
+        if (write_integer(fp,static_cast<long>(nLength*4))==0) return 0;
         for (size_t i=0;i<nLength;++i) {
             if (write_integer(fp,panData[i])==0) {
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 return 0;
             }
         }
-        if (write_integer(fp,nLength*4)==0) return 0;
+        if (write_integer(fp,static_cast<long>(nLength*4))==0) return 0;
         return 1;
     }
 
@@ -453,14 +453,14 @@ namespace Selafin {
     }
 
     int write_floatarray(VSILFILE *fp,double *papadfData,size_t nLength) {
-        if (write_integer(fp,nLength*4)==0) return 0;
+        if (write_integer(fp,static_cast<long>(nLength*4))==0) return 0;
         for (size_t i=0;i<nLength;++i) {
             if (write_float(fp,papadfData[i])==0) {
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 return 0;
             }
         }
-        if (write_integer(fp,nLength*4)==0) return 0;
+        if (write_integer(fp,static_cast<long>(nLength*4))==0) return 0;
         return 1;
     }
 

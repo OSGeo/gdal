@@ -50,7 +50,7 @@ static int FileGDBOGRDateToDoubleDate( const OGRField* psField, double *pdfVal )
     brokendowntime.tm_mday = psField->Date.Day;
     brokendowntime.tm_hour = psField->Date.Hour;
     brokendowntime.tm_min = psField->Date.Minute;
-    brokendowntime.tm_sec = psField->Date.Second;
+    brokendowntime.tm_sec = static_cast<int>(psField->Date.Second);
 
     GIntBig nTime = CPLYMDHMSToUnixTime(&brokendowntime);
 

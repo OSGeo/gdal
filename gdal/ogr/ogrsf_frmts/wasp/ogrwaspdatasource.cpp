@@ -243,7 +243,7 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
     const char *pszGeomField = CSLFetchNameValue( papszOptions, "WASP_GEOM_FIELD" );
     sGeomField = CPLString( pszGeomField ? pszGeomField : "" );
 
-    const bool bMerge = CSLTestBoolean(CSLFetchNameValueDef( papszOptions, "WASP_MERGE", "YES" ));
+    const bool bMerge = CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef( papszOptions, "WASP_MERGE", "YES" )));
 
     UNIQUEPTR<double> pdfTolerance;
     {

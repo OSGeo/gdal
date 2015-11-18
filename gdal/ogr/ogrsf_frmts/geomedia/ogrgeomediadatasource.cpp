@@ -179,7 +179,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 
         while( oStmt.Fetch() )
         {
-            int i, iNew = apapszGeomColumns.size();
+            int i, iNew = static_cast<int>(apapszGeomColumns.size());
             char **papszRecord = NULL;
             for( i = 0; i < 2; i++ )
                 papszRecord = CSLAddString( papszRecord,

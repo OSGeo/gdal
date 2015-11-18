@@ -392,7 +392,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                     if( !ReadVarUInt32Silent(pabyIter, pabyBuffer + nRowBlobLength, nLength) ||
                         pabyIter - (pabyBuffer + nRequiredLength) > 5 )
                         return FALSE;
-                    nRequiredLength = pabyIter - pabyBuffer;
+                    nRequiredLength = static_cast<GUInt32>(pabyIter - pabyBuffer);
                     if( nLength > nRowBlobLength - nRequiredLength )
                         return FALSE;
                     for( GUInt32 j=0;j<nLength;j++ )
@@ -414,7 +414,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                     if( !ReadVarUInt32Silent(pabyIter, pabyBuffer + nRowBlobLength, nLength) ||
                         pabyIter - (pabyBuffer + nRequiredLength) > 5 )
                         return FALSE;
-                    nRequiredLength = pabyIter - pabyBuffer;
+                    nRequiredLength = static_cast<GUInt32>(pabyIter - pabyBuffer);
                     if( nLength > nRowBlobLength - nRequiredLength )
                         return FALSE;
                     nRequiredLength += nLength;
@@ -787,7 +787,7 @@ int FileGDBTable::Open(const char* pszFilename,
                     nRemaining -= 5;
                     GByte* pabyIterBefore = pabyIter;
                     returnErrorIf(!ReadVarUInt32(pabyIter, pabyIter + nRemaining, defaultValueLength));
-                    nRemaining -= (pabyIter - pabyIterBefore);
+                    nRemaining -= static_cast<GUInt32>(pabyIter - pabyIterBefore);
                     break;
                 }
 
