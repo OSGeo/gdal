@@ -352,8 +352,8 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     memset( szDataPointer, 0, sizeof(szDataPointer) );
     sprintf( szDataPointer, "DATAPOINTER=" );
     CPLPrintPointer( szDataPointer+strlen(szDataPointer), 
-                    pabyPolyMask, 
-                     sizeof(szDataPointer) - strlen(szDataPointer) );
+                     pabyPolyMask, 
+                     static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );
 
     hMemDS = GDALCreate( hMemDriver, "warp_temp", 
                          nXSize, nYSize, 0, GDT_Byte, NULL );

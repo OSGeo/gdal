@@ -257,7 +257,7 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
         return NULL;
     }
 
-    *pnGCPCount = oMatchPairs.size() / 2;
+    *pnGCPCount = static_cast<int>(oMatchPairs.size()) / 2;
 
 /* -------------------------------------------------------------------- */
 /*      Translate these into GCPs - but with the output coordinate      */

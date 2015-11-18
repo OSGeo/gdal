@@ -198,4 +198,4 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     return CE_None;
 }
 
-#endif
+#endif /* HAVE_AVX_AT_COMPILE_TIME */

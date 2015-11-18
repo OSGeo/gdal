@@ -126,13 +126,13 @@ void RPolygon::Coalesce()
                 if( anBase[anBase.size()-2] == anString[0]
                     && anBase[anBase.size()-1] == anString[1] )
                 {
-                    Merge( iBaseString, iString, 1 );
+                    Merge( iBaseString, static_cast<int>(iString), 1 );
                     bMergeHappened = TRUE;
                 }
                 else if( anBase[anBase.size()-2] == anString[anString.size()-2]
                          && anBase[anBase.size()-1] == anString[anString.size()-1] )
                 {
-                    Merge( iBaseString, iString, -1 );
+                    Merge( iBaseString, static_cast<int>(iString), -1 );
                     bMergeHappened = TRUE;
                 }
             }
@@ -160,11 +160,11 @@ void RPolygon::Merge( int iBaseString, int iSrcString, int iDirection )
     if( iDirection == 1 )
     {
         iStart = 1;
-        iEnd = anString.size() / 2; 
+        iEnd = static_cast<int>(anString.size()) / 2; 
     }
     else
     {
-        iStart = anString.size() / 2 - 2;
+        iStart = static_cast<int>(anString.size()) / 2 - 2;
         iEnd = -1; 
     }
     
@@ -358,7 +358,7 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
 
         // we go last to first to ensure the linestring is allocated to 
         // the proper size on the first try.
-        for( iVert = anString.size()/2 - 1; iVert >= 0; iVert-- )
+        for( iVert = static_cast<int>(anString.size())/2 - 1; iVert >= 0; iVert-- )
         {
             double dfX, dfY;
             int    nPixelX, nPixelY;

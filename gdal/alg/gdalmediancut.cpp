@@ -500,9 +500,9 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
             {
                 if( nColorShift == 0 && nColorCounter < nColors )
                 {
-                    anRed[nColorCounter] = nRed;
-                    anGreen[nColorCounter] = nGreen;
-                    anBlue[nColorCounter] = nBlue;
+                    anRed[nColorCounter] = static_cast<GByte>(nRed);
+                    anGreen[nColorCounter] = static_cast<GByte>(nGreen);
+                    anBlue[nColorCounter] = static_cast<GByte>(nBlue);
                 }
                 nColorCounter++;
             }
@@ -959,7 +959,7 @@ splitbox(Colorbox* ptr, const T* histogram,
       }
     }
     /* find median point */
-    sum2 = ptr->total / 2;
+    sum2 = static_cast<T>(ptr->total / 2);
     histp = &hist2[first];
     sum = 0;
     for (i = first; i <= last && (sum += *histp++) < sum2; ++i)

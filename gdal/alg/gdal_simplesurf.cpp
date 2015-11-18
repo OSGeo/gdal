@@ -386,8 +386,8 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
     // Affects to false matching pruning
     const double ratioThreshold = 0.8;
 
-    int len_1 = poFirstCollect->size();
-    int len_2 = poSecondCollect->size();
+    int len_1 = static_cast<int>(poFirstCollect->size());
+    int len_2 = static_cast<int>(poSecondCollect->size());
 
     int minLength = (len_1 < len_2) ? len_1 : len_2;
 
