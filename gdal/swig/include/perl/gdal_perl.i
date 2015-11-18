@@ -1853,6 +1853,7 @@ package Geo::GDAL::GeoTransform;
 use strict;
 use warnings;
 use Carp;
+use Scalar::Util 'blessed';
 
 sub new {
     my $class = shift;
@@ -1870,18 +1871,22 @@ sub new {
 }
 
 sub FromGCPs {
-    my @GCPs;
-    my $ApproxOK = 1;
-    if (ref($_[0]) eq 'ARRAY') {
-        @GCPs = @{$_[0]};
-        $ApproxOK = $_[1] if defined $_[1];
+    my $gcps;
+    my $p = shift;
+    if (ref $p eq 'ARRAY') {
+        $gcps = $p;
     } else {
-        @GCPs = @_;
-        $ApproxOK = pop @GCPs if !ref($GCPs[$#GCPs]);
+        $gcps = [];
+        while ($p && blessed $p) {
+            push @$gcps, $p;
+            $p = shift;
+        }
     }
-    my $self = Geo::GDAL::GCPsToGeoTransform(\@GCPs, $ApproxOK);
+    my $approx_ok = shift // 1;
+    Geo::GDAL::error('Usage: Geo::GDAL::GeoTransform::FromGCPs(\@gcps, $approx_ok)') unless @$gcps;
+    my $self = Geo::GDAL::GCPsToGeoTransform($gcps, $approx_ok);
     bless $self, 'Geo::GDAL::GetTransform';
-    return $self;
+    return $self;    
 }
 
 sub Apply {

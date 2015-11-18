@@ -715,9 +715,11 @@ typedef unsigned long      GUIntBig;
     if ($2) {
         for (int i = 0; i < $1; i++ ) {
             SV **sv = av_fetch(av, i, 0);
-            int ret = SWIG_ConvertPtr(*sv, (void**)&($2[i]), SWIGTYPE_p_GDAL_GCP, 0);
+            GDAL_GCP *gcp;
+            int ret = SWIG_ConvertPtr(*sv, (void**)&gcp, SWIGTYPE_p_GDAL_GCP, 0);
             if (!SWIG_IsOK(ret))
                 do_confess(WRONG_ITEM_IN_ARRAY, 1);
+            $2[i] = *gcp;
         }
     } else
         do_confess(OUT_OF_MEMORY, 1);
