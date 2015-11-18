@@ -1273,7 +1273,7 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         int  iLastLine, nNewLen;
 
         iLastLine = CSLCount(psInfo->cur.papszPrj) - 1;
-        nNewLen = strlen(psInfo->cur.papszPrj[iLastLine])+strlen(pszLine)-1+1;
+        nNewLen = (int)strlen(psInfo->cur.papszPrj[iLastLine])+strlen(pszLine)-1+1;
         if (iLastLine >= 0)
         {
             psInfo->cur.papszPrj[iLastLine] = 
