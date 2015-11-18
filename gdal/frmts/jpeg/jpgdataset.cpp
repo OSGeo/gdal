@@ -2184,8 +2184,8 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
             if (CSLCount(papszTokens) >= 3)
             {
                 nQLevel = atoi(papszTokens[0]);
-                subfile_offset = CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
-                subfile_size = CPLScanUIntBig(papszTokens[2], strlen(papszTokens[2]));
+                subfile_offset = CPLScanUIntBig(papszTokens[1], static_cast<int>(strlen(papszTokens[1])));
+                subfile_size = CPLScanUIntBig(papszTokens[2], static_cast<int>(strlen(papszTokens[2])));
                 bScan = true;
             }
             CSLDestroy(papszTokens);
@@ -2195,8 +2195,8 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
             char** papszTokens = CSLTokenizeString2(pszFilename + 13, ",", 0);
             if (CSLCount(papszTokens) >= 2)
             {
-                subfile_offset = CPLScanUIntBig(papszTokens[0], strlen(papszTokens[0]));
-                subfile_size = CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
+                subfile_offset = CPLScanUIntBig(papszTokens[0], static_cast<int>(strlen(papszTokens[0])));
+                subfile_size = CPLScanUIntBig(papszTokens[1], static_cast<int>(strlen(papszTokens[1])));
                 bScan = true;
             }
             CSLDestroy(papszTokens);
@@ -2494,10 +2494,10 @@ void JPGDatasetCommon::LoadWorldFileOrTab()
     if( !bGeoTransformValid )
     {
         bool bTabFileOK =
-            GDALReadTabFile2( GetDescription(), adfGeoTransform,
+            CPL_TO_BOOL(GDALReadTabFile2( GetDescription(), adfGeoTransform,
                               &pszProjection,
                               &nGCPCount, &pasGCPList,
-                              oOvManager.GetSiblingFiles(), &pszWldFilename );
+                              oOvManager.GetSiblingFiles(), &pszWldFilename ));
 
         if( bTabFileOK && nGCPCount == 0 )
             bGeoTransformValid = TRUE;
@@ -3053,7 +3053,7 @@ void   JPGAddEXIFOverview( GDALDataType eWorkDT,
             pabyOvr = VSIGetMemFileBuffer( osTmpFile, &nJPEGIfByteCount, TRUE );
         VSIUnlink(osTmpFile);
 
-        unsigned int nMarkerSize = 6 + 16 + 5 * 12 + 4 + nJPEGIfByteCount;
+        unsigned int nMarkerSize = 6 + 16 + 5 * 12 + 4 + static_cast<unsigned int>(nJPEGIfByteCount);
         if( pabyOvr == NULL )
         {
             CPLError(CE_Warning, CPLE_AppDefined, "Could not generate EXIF overview");
@@ -3166,7 +3166,7 @@ void   JPGAddEXIFOverview( GDALDataType eWorkDT,
             p_jpeg_write_m_byte( cinfo, 0 );
 
             p_jpeg_write_m_byte( cinfo, nJPEGIfByteCount & 0xff );
-            p_jpeg_write_m_byte( cinfo, nJPEGIfByteCount >> 8 );
+            p_jpeg_write_m_byte( cinfo, static_cast<GByte>(nJPEGIfByteCount >> 8) );
             p_jpeg_write_m_byte( cinfo, 0 );
             p_jpeg_write_m_byte( cinfo, 0 );
 
@@ -3357,7 +3357,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     const char* pszVal = CSLFetchNameValue(papszOptions, "ARITHMETIC");
     if( pszVal )
-        sCInfo.arith_code = CSLTestBoolean(pszVal);
+        sCInfo.arith_code = static_cast<boolean>(CSLTestBoolean(pszVal));
 
     /* Optimized Huffman coding. Supposedly slower according to libjpeg doc */
     /* but no longer significant with today computer standards */
@@ -3398,7 +3398,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jpeg_set_quality( &sCInfo, nQuality, TRUE );
 
     const bool bProgressive
-        = CSLFetchBoolean( papszOptions, "PROGRESSIVE", FALSE );
+        = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "PROGRESSIVE", FALSE ));
     if( bProgressive )
         jpeg_simple_progression( &sCInfo );
 
