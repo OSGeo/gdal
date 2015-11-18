@@ -878,7 +878,7 @@ void OGRSXFDataSource::FillLayers()
             return;
         }
 
-        bool bHasSemantic = CPL_TO_BOOL(CHECK_BIT(buff[5], 9));
+        bool bHasSemantic = CHECK_BIT(buff[5], 9);
         if (bHasSemantic) //check has attributes
         {
             //we have already 24 byte readed
