@@ -336,7 +336,7 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
                 nSkip += 2;
         }
 
-        int nGeomLength = strlen(papszGeoms[iGeom] + nSkip);
+        size_t nGeomLength = strlen(papszGeoms[iGeom] + nSkip);
         memcpy( *ppszDstText + nCumulativeLength, papszGeoms[iGeom] + nSkip, nGeomLength );
         nCumulativeLength += nGeomLength;
         VSIFree( papszGeoms[iGeom] );
