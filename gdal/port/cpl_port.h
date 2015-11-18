@@ -787,7 +787,8 @@ int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WAR
   static_cast<size_t>(!(sizeof(array) % sizeof(*(array)))))
 
 extern "C++" {
-template<class T> static void CPL_IGNORE_RET_VAL(T) {} 
+template<class T> static void CPL_IGNORE_RET_VAL(T) {}
+inline static bool CPL_TO_BOOL(int x) { return x != FALSE; }
 } /* extern "C++" */
 
 #endif  /* __cplusplus */

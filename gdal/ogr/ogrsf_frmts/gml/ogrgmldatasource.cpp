@@ -493,12 +493,12 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     const char* pszExposeGMLId = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
         "EXPOSE_GML_ID", CPLGetConfigOption("GML_EXPOSE_GML_ID", NULL));
     if (pszExposeGMLId)
-        bExposeGMLId = CSLTestBoolean(pszExposeGMLId) != FALSE;
+        bExposeGMLId = CPL_TO_BOOL(CSLTestBoolean(pszExposeGMLId));
 
     const char* pszExposeFid = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
         "EXPOSE_FID", CPLGetConfigOption("GML_EXPOSE_FID", NULL));
     if (pszExposeFid)
-        bExposeFid = CSLTestBoolean(pszExposeFid) != FALSE;
+        bExposeFid = CPL_TO_BOOL(CSLTestBoolean(pszExposeFid));
 
     bHintConsiderEPSGAsURN = strstr(szPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != NULL;
 
@@ -548,16 +548,16 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     }
 
     m_bInvertAxisOrderIfLatLong = 
-        CSLTestBoolean(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+        CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
             "INVERT_AXIS_ORDER_IF_LAT_LONG",
-            CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"))) != FALSE;
+            CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"))));
 
     const char* pszConsiderEPSGAsURN =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
             "CONSIDER_EPSG_AS_URN",
             CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "AUTO"));
     if( !EQUAL(pszConsiderEPSGAsURN, "AUTO") )
-        m_bConsiderEPSGAsURN = CSLTestBoolean(pszConsiderEPSGAsURN) != FALSE;
+        m_bConsiderEPSGAsURN = CPL_TO_BOOL(CSLTestBoolean(pszConsiderEPSGAsURN));
     else if (bHintConsiderEPSGAsURN)
     {
         /* GML produced by FME (at least CanVec GML) seem to honour EPSG axis ordering */
@@ -567,7 +567,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     else
         m_bConsiderEPSGAsURN = false;
 
-    m_bGetSecondaryGeometryOption = CSLTestBoolean(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO")) != FALSE;
+    m_bGetSecondaryGeometryOption = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO")));
 
     /* EXPAT is faster than Xerces, so when it is safe to use it, use it ! */
     /* The only interest of Xerces is for rare encodings that Expat doesn't handle */
@@ -601,11 +601,11 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 
     poReader->SetSourceFile( pszFilename );
     ((GMLReader*)poReader)->SetIsWFSJointLayer(bIsWFSJointLayer);
-    bEmptyAsNull = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "EMPTY_AS_NULL", TRUE) != FALSE;
+    bEmptyAsNull = CPL_TO_BOOL(CSLFetchBoolean(poOpenInfo->papszOpenOptions, "EMPTY_AS_NULL", TRUE));
     ((GMLReader*)poReader)->SetEmptyAsNull(bEmptyAsNull);
     ((GMLReader*)poReader)->SetReportAllAttributes(
-        CSLFetchBoolean(poOpenInfo->papszOpenOptions, "GML_ATTRIBUTES_TO_OGR_FIELDS",
-            CSLTestBoolean(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"))) != FALSE);
+        CPL_TO_BOOL(CSLFetchBoolean(poOpenInfo->papszOpenOptions, "GML_ATTRIBUTES_TO_OGR_FIELDS",
+            CSLTestBoolean(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO")))));
 
 /* -------------------------------------------------------------------- */
 /*      Find <gml:description>, <gml:name> and <gml:boundedBy>          */
@@ -696,7 +696,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         {
             bSchemaDone = true;
             bool bSqliteIsTempFile =
-                CSLTestBoolean(CPLGetConfigOption( "GML_HUGE_TEMPFILE", "YES")) != FALSE;
+                CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption( "GML_HUGE_TEMPFILE", "YES")));
             int iSqliteCacheMB = atoi(CPLGetConfigOption( "OGR_SQLITE_CACHE", "0"));
             if( poReader->HugeFileResolver( pszXlinkResolvedFilename,
                                             bSqliteIsTempFile, 
@@ -1573,10 +1573,10 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
         bIsOutputGML3 = true;
 
     bIsLongSRSRequired =
-        CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "GML3_LONGSRS", "YES")) != FALSE;
+        CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "GML3_LONGSRS", "YES")));
 
     bWriteSpaceIndentation =
-        CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "SPACE_INDENTATION", "YES")) != FALSE;
+        CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "SPACE_INDENTATION", "YES")));
 
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
@@ -2545,7 +2545,7 @@ OGRLayer * OGRGMLDataSource::ExecuteSQL( const char *pszSQLCommand,
         if (osXSDFilename.size())
         {
             CPLErrorReset();
-            bIsValid = CPLValidateXML(osFilename, osXSDFilename, NULL) != FALSE;
+            bIsValid = CPL_TO_BOOL(CPLValidateXML(osFilename, osXSDFilename, NULL));
         }
         return new OGRGMLSingleFeatureLayer(bIsValid);
     }
@@ -2796,8 +2796,8 @@ bool OGRGMLDataSource::RemoveAppPrefix()
 
 bool OGRGMLDataSource::WriteFeatureBoundedBy()
 {
-    return CSLTestBoolean(CSLFetchNameValueDef(
-                    papszCreateOptions, "WRITE_FEATURE_BOUNDED_BY", "TRUE")) != FALSE;
+    return CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(
+                    papszCreateOptions, "WRITE_FEATURE_BOUNDED_BY", "TRUE")));
 }
 
 /************************************************************************/
