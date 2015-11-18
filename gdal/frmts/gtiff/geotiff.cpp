@@ -6462,7 +6462,7 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
 int  GTiffDataset::WriteEncodedStrip(uint32 strip, GByte* pabyData,
                                      int bPreserveDataBuffer)
 {
-    int cc = TIFFStripSize( hTIFF );
+    int cc = static_cast<int>(TIFFStripSize( hTIFF ));
 
 /* -------------------------------------------------------------------- */
 /*      If this is the last strip in the image, and is partial, then    */

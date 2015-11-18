@@ -2673,7 +2673,7 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Write the data out.                                             */
 /* -------------------------------------------------------------------- */
-        int      nOffset = HFAAllocateSpace( hHFA, strlen(pszValue)+1);
+        int      nOffset = HFAAllocateSpace( hHFA, static_cast<GUInt32>(strlen(pszValue)+1));
 
         poEdsc_Column->SetIntField( "columnDataPtr", nOffset );
 

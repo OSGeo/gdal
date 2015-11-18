@@ -380,7 +380,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
       case wkbPoint:
       case wkbMultiPoint:
         GDALdllImagePoint( sInfo.nXSize, nYSize, 
-                           aPartSize.size(), &(aPartSize[0]), 
+                           static_cast<int>(aPartSize.size()), &(aPartSize[0]), 
                            &(aPointX[0]), &(aPointY[0]), 
                            (eBurnValueSrc == GBV_UserBurnValue)?
                            NULL : &(aPointVariant[0]),
