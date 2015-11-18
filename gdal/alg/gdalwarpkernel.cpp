@@ -3273,7 +3273,7 @@ static int GWKResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
-#if defined(__x86_64) || defined(_M_X64)
+#if 1 // defined(__x86_64) || defined(_M_X64)
 
 #include <gdalsse_priv.h>
 
@@ -5123,7 +5123,7 @@ static void GWKAverageOrModeThread( void* pData)
                     if ( nCount > 0 )
                     {
                         std::sort(dfValuesTmp.begin(), dfValuesTmp.end());
-                        int quantIdx = std::ceil(quant * dfValuesTmp.size() - 1);
+                        int quantIdx = static_cast<int>(std::ceil(quant * dfValuesTmp.size() - 1));
                         dfValueReal = dfValuesTmp[quantIdx];
 
                         dfBandDensity = 1;

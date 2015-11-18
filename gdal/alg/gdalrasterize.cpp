@@ -193,7 +193,7 @@ static void GDALCollectRingsFromGeometry(
     if ( eFlatType == wkbPoint )
     {
         OGRPoint    *poPoint = (OGRPoint *) poShape;
-        int nNewCount = aPointX.size() + 1;
+        size_t nNewCount = aPointX.size() + 1;
 
         aPointX.reserve( nNewCount );
         aPointY.reserve( nNewCount );
@@ -218,7 +218,7 @@ static void GDALCollectRingsFromGeometry(
     {
         OGRLineString   *poLine = (OGRLineString *) poShape;
         int nCount = poLine->getNumPoints();
-        int nNewCount = aPointX.size() + nCount;
+        size_t nNewCount = aPointX.size() + static_cast<size_t>(nCount);
 
         aPointX.reserve( nNewCount );
         aPointY.reserve( nNewCount );
@@ -246,7 +246,7 @@ static void GDALCollectRingsFromGeometry(
     {
         OGRLinearRing *poRing = (OGRLinearRing *) poShape;
         int nCount = poRing->getNumPoints();
-        int nNewCount = aPointX.size() + nCount;
+        size_t nNewCount = aPointX.size() + static_cast<size_t>(nCount);
 
         aPointX.reserve( nNewCount );
         aPointY.reserve( nNewCount );
@@ -350,7 +350,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
         int *panSuccess = (int *) CPLCalloc(sizeof(int),aPointX.size());
 
         // TODO: we need to add all appropriate error checking at some point.
-        pfnTransformer( pTransformArg, FALSE, aPointX.size(), 
+        pfnTransformer( pTransformArg, FALSE, static_cast<int>(aPointX.size()), 
                         &(aPointX[0]), &(aPointY[0]), NULL, panSuccess );
         CPLFree( panSuccess );
     }
@@ -391,14 +391,14 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
       {
           if( bAllTouched )
               GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
-                                          aPartSize.size(), &(aPartSize[0]), 
+                                          static_cast<int>(aPartSize.size()), &(aPartSize[0]), 
                                           &(aPointX[0]), &(aPointY[0]), 
                                           (eBurnValueSrc == GBV_UserBurnValue)?
                                           NULL : &(aPointVariant[0]),
                                           gvBurnPoint, &sInfo );
           else
               GDALdllImageLine( sInfo.nXSize, nYSize, 
-                                aPartSize.size(), &(aPartSize[0]), 
+                                static_cast<int>(aPartSize.size()), &(aPartSize[0]), 
                                 &(aPointX[0]), &(aPointY[0]), 
                                 (eBurnValueSrc == GBV_UserBurnValue)?
                                 NULL : &(aPointVariant[0]),
@@ -409,7 +409,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
       default:
       {
           GDALdllImageFilledPolygon( sInfo.nXSize, nYSize, 
-                                     aPartSize.size(), &(aPartSize[0]), 
+                                     static_cast<int>(aPartSize.size()), &(aPartSize[0]), 
                                      &(aPointX[0]), &(aPointY[0]), 
                                      (eBurnValueSrc == GBV_UserBurnValue)?
                                      NULL : &(aPointVariant[0]),
@@ -423,7 +423,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
               if(eBurnValueSrc == GBV_UserBurnValue)
               {
                   GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
-                                              aPartSize.size(), &(aPartSize[0]), 
+                                              static_cast<int>(aPartSize.size()), &(aPartSize[0]), 
                                               &(aPointX[0]), &(aPointY[0]), 
                                               NULL,
                                               gvBurnPoint, &sInfo );
@@ -431,7 +431,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
               else
               {
                   unsigned int n;
-                  for ( i = 0, n = 0; i < aPartSize.size(); i++ )
+                  for ( i = 0, n = 0; i < static_cast<unsigned int>(aPartSize.size()); i++ )
                   {
                       int j;
                       for ( j = 0; j < aPartSize[i]; j++ )
@@ -439,7 +439,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
                   }
 
                   GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
-                                              aPartSize.size(), &(aPartSize[0]), 
+                                              static_cast<int>(aPartSize.size()), &(aPartSize[0]), 
                                               &(aPointX[0]), &(aPointY[0]), 
                                               &(aPointVariant[0]),
                                               gvBurnPoint, &sInfo );

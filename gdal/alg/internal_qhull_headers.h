@@ -966,6 +966,12 @@ static void qh_printstats();
 #define qh_stddev gdal_qh_stddev
 static gdal_realT qh_stddev();
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4324 )
+#pragma warning( disable : 4032 )
+#endif
+
 #include "libqhull.h"
 #include "libqhull.c"
 #include "poly.c"
@@ -982,6 +988,10 @@ static gdal_realT qh_stddev();
 #include "geom2.c"
 #include "stat.c"
 #include "merge.c"
+
+#ifdef _MSC_VER
+#pragma warning( pop ) 
+#endif
 
 /* Replaces userprintf.c implementation */
 static void qh_fprintf(CPL_UNUSED FILE *fp, CPL_UNUSED int msgcode, const char *fmt, ... )

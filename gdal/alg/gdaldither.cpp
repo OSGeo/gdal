@@ -221,9 +221,9 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
         GDALColorEntry	sEntry;
 
         GDALGetColorEntryAsRGB( hColorTable, iColor, &sEntry );
-        CAST_PCT(anPCT)[4*iColor+0] = sEntry.c1;
-        CAST_PCT(anPCT)[4*iColor+1] = sEntry.c2;
-        CAST_PCT(anPCT)[4*iColor+2] = sEntry.c3;
+        CAST_PCT(anPCT)[4*iColor+0] = static_cast<GByte>(sEntry.c1);
+        CAST_PCT(anPCT)[4*iColor+1] = static_cast<GByte>(sEntry.c2);
+        CAST_PCT(anPCT)[4*iColor+2] = static_cast<GByte>(sEntry.c3);
         CAST_PCT(anPCT)[4*iColor+3] = 0;
     }
 #ifdef USE_SSE2
@@ -448,10 +448,10 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
                 GUInt32 nColorCode = MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);
                 GInt16* psIndex = &pasDynamicColorMap[nColorCode];
                 if( *psIndex < 0 )
-                    iIndex = *psIndex = FindNearestColor( nColors, anPCT,
+                    iIndex = *psIndex = static_cast<GInt16>(FindNearestColor( nColors, anPCT,
                                                           nRedValue,
                                                           nGreenValue,
-                                                          nBlueValue );
+                                                          nBlueValue ));
                 else
                     iIndex = *psIndex;
             }
