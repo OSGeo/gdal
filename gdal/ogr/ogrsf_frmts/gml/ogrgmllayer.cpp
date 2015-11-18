@@ -226,7 +226,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         else if( iNextGMLId == 0 )
         {
             int j = 0;
-            i = strlen( pszGML_FID )-1;
+            i = static_cast<int>(strlen( pszGML_FID ))-1;
             while( i >= 0 && pszGML_FID[i] >= '0'
                           && pszGML_FID[i] <= '9' && j<20)
                 i--, j++;
@@ -253,7 +253,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         {
             const char* pszFIDPrefix_notnull = pszFIDPrefix;
             if (pszFIDPrefix_notnull == NULL) pszFIDPrefix_notnull = "";
-            int nLenPrefix = strlen(pszFIDPrefix_notnull);
+            int nLenPrefix = static_cast<int>(strlen(pszFIDPrefix_notnull));
 
             if(  strncmp(pszGML_FID, pszFIDPrefix_notnull, nLenPrefix) == 0 &&
                  strlen(pszGML_FID+nLenPrefix) < 20 &&

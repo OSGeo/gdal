@@ -275,7 +275,7 @@ static void CorrectURLs( CPLXMLNode * psRoot, const char *pszURL )
                 strncmp( pszURL, psChild->psChild->pszValue, nPathLen ) != 0 )
             {
             //different path
-                int nURLLen = pszDash - psChild->psChild->pszValue;
+                int nURLLen = static_cast<int>(pszDash - psChild->psChild->pszValue);
                 char *pszURLWithoutID = (char *)CPLMalloc( (nURLLen+1) * sizeof(char));
                 strncpy( pszURLWithoutID, psChild->psChild->pszValue, nURLLen );
                 pszURLWithoutID[nURLLen] = '\0';
