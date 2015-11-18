@@ -145,6 +145,16 @@ OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /FC /DDEBUG
 # Set flags controlling warnings level, and suppression of some warnings.
 # 
 !IFNDEF WARNFLAGS
+# 4127: conditional expression is constant
+# 4251: 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
+# 4275: non – DLL-interface classkey 'identifier' used as base for DLL-interface classkey 'identifier'
+# 4786: ??????????
+# 4100: 'identifier' : unreferenced formal parameter
+# 4245: 'conversion' : conversion from 'type1' to 'type2', signed/unsigned mismatch
+# 4206: nonstandard extension used : translation unit is empty (only applies to C source code)
+# 4018: 'expression' : signed/unsigned mismatch
+# 4389: 'operator' : signed/unsigned mismatch
+# 
 WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4018 /wd4389
 !ENDIF
 

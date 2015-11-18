@@ -41,9 +41,12 @@ OBJ	= \
 
 GDAL_ROOT	=	..\..\..
 
+# /wd4324 silents warning C4324: '<unnamed-tag>' : structure was padded due to __declspec(align())
+# in tif_jpeg.c:147 and tif_ojpeg.c:248
+
 EXTRAFLAGS = 	-I..\..\zlib -DZIP_SUPPORT -DPIXARLOG_SUPPORT \
 		$(JPEG_FLAGS) $(JPEG12_FLAGS) $(LZMA_FLAGS) \
-		$(SOFTWARNFLAGS)
+		$(SOFTWARNFLAGS) /wd4324
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
