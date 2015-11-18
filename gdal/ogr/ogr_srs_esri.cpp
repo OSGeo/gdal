@@ -2492,7 +2492,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, dou
     {
         if( fabs(centralMeridian - tableWISCRS[i]) <= 0.0000000001 && fabs(latOfOrigin - tableWISCRS[i+1]) <= 0.0000000001) 
         {
-            k = tableWISCRS[i+2];
+            k = (int)tableWISCRS[i+2]; // double to int ? 
             break;
         }
     }
