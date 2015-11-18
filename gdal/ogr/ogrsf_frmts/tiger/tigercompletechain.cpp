@@ -516,8 +516,8 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
             return FALSE;
         }
 
-        nBytesRead = VSIFReadL( achShapeRec, 1, psRT2Info->nRecordLength, 
-                                fpShape );
+        nBytesRead = static_cast<int>(VSIFReadL( achShapeRec, 1, psRT2Info->nRecordLength, 
+                                fpShape ));
 
         /* 
         ** Handle case where the last record in the file is full.  We will
