@@ -1146,7 +1146,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 
             OGRErr eErr = OGRCreateFromShapeBin(pabyUncompressedBuffer,
                                                 ppoGeom,
-                                                nRealUncompressedSize);
+                                                static_cast<int>(nRealUncompressedSize));
 
             VSIFree(pabyUncompressedBuffer);
 

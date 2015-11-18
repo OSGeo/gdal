@@ -47,7 +47,7 @@ void osr_cs_wkt_error( osr_cs_wkt_parse_context *context, const char *msg )
     char* szPtr;
     sprintf(context->szErrorMsg,
             "Parsing error : %s. Error occured around:\n", msg );
-    n = context->pszLastSuccess - context->pszInput;
+    n = (int)(context->pszLastSuccess - context->pszInput);
 
     szPtr = context->szErrorMsg + strlen(context->szErrorMsg);
     for( i = MAX(0,n-40); i < n + 40 && context->pszInput[i]; i ++ )

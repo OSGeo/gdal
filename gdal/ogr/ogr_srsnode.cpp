@@ -421,7 +421,7 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
 
 {
     char        **papszChildrenWkt = NULL;
-    int         nLength = strlen(pszValue)+4;
+    size_t      nLength = strlen(pszValue)+4;
     int         i;
 
 /* -------------------------------------------------------------------- */
@@ -483,7 +483,7 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
 
 {
     char        **papszChildrenWkt = NULL;
-    int         nLength = strlen(pszValue)+4;
+    size_t      nLength = strlen(pszValue)+4;
     int         i;
 
 /* -------------------------------------------------------------------- */

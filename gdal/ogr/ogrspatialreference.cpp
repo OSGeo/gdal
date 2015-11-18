@@ -54,7 +54,7 @@ void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue )
 {
     CPLsnprintf( pszStrBuf, size, "%.16g", dfValue );
 
-    int nLen = strlen(pszStrBuf);
+    size_t nLen = strlen(pszStrBuf);
 
     // The following hack is intended to truncate some "precision" in cases
     // that appear to be roundoff error.
@@ -2065,9 +2065,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /*      Try to open it as a file.                                       */
 /* -------------------------------------------------------------------- */
     FILE        *fp;
-    int         nBufMax = 100000;
+    const size_t nBufMax = 100000;
     char        *pszBufPtr, *pszBuffer;
-    int         nBytes;
+    size_t      nBytes;
 
     fp = VSIFOpen( pszDefinition, "rt" );
     if( fp == NULL )

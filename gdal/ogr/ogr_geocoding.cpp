@@ -579,7 +579,7 @@ static bool OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
     OGRFeature* poFeature = new OGRFeature(poLayer->GetLayerDefn());
     poFeature->SetField(FIELD_URL, pszURL);
     poFeature->SetField(FIELD_BLOB, pszContent);
-    int bRet = poLayer->CreateFeature(poFeature) == OGRERR_NONE;
+    bool bRet = poLayer->CreateFeature(poFeature) == OGRERR_NONE;
     delete poFeature;
 
     return bRet;

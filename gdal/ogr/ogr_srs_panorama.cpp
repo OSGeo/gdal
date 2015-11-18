@@ -795,7 +795,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
     {
         double      dfSemiMajor = GetSemiMajor();
         double      dfInvFlattening = GetInvFlattening();
-        size_t      i;
+        int         i;
 
 #ifdef DEBUG
         CPLDebug( "OSR_Panorama",

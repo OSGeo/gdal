@@ -271,7 +271,8 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
 
 {
     char        **papszGeoms;
-    int         iGeom, nCumulativeLength = 0;
+    int         iGeom;
+    size_t      nCumulativeLength = 0;
     OGRErr      eErr;
 
     if( nCurveCount == 0 )

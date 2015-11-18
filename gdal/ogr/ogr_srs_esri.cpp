@@ -1860,7 +1860,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
 
                             poSRSTemp2 = oSRSTemp.CloneGeogCS();
                             poSRSTemp2->StripCTParms();
-                            bIsSame = this->IsSameGeogCS( poSRSTemp2 );
+                            bIsSame = CPL_TO_BOOL(IsSameGeogCS( poSRSTemp2 ));
                             exportToWkt ( &pszOtherValue );
                             CPLDebug( "OGR_ESRI", 
                                       "morphFromESRI() got SRS %s, matching: %d", 
@@ -2120,7 +2120,8 @@ int RemapNamesBasedOnTwo( OGRSpatialReference* pOgr, const char* name1, const ch
                           char **mappingTable, long nTableStepSize, 
                           char** pszkeyNames, long nKeys )
 {
-    long i, n, n1;
+    long i;
+    size_t n, n1;
     long iIndex = -1;
     for( i = 0; mappingTable[i] != NULL; i += nTableStepSize )
     {
