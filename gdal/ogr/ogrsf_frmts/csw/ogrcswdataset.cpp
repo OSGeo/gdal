@@ -594,9 +594,9 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
                     CPLString osSRS = CPLGetXMLValue(psBBox, "crs", "");
                     OGRGeometry* poGeom = GML2OGRGeometry_XMLNode( psBBox,
                                                           FALSE,
-                                                          0, 0, FALSE, TRUE,
-                                                          FALSE );
-                    int bLatLongOrder = TRUE;
+                                                          0, 0, false, true,
+                                                          false );
+                    bool bLatLongOrder = true;
                     if( osSRS.size() )
                         bLatLongOrder = GML_IsSRSLatLongOrder(osSRS);
                     if( bLatLongOrder && CSLTestBoolean(

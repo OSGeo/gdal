@@ -830,7 +830,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
     const char *pszBaseGeometry = BareGMLElement( psNode->pszValue );
     if (nPseudoBoolGetSecondaryGeometryOption < 0)
         nPseudoBoolGetSecondaryGeometryOption = CSLTestBoolean(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO"));
-    bool bGetSecondaryGeometry = bIgnoreGSG ? false : (bool)nPseudoBoolGetSecondaryGeometryOption;
+    bool bGetSecondaryGeometry = bIgnoreGSG ? false : (nPseudoBoolGetSecondaryGeometryOption != FALSE);
 
     /* Arbitrary value, but certainly large enough for reasonable usages ! */
     if( nRecLevel == 32 )
