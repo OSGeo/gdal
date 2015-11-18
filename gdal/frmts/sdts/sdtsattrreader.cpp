@@ -116,7 +116,7 @@ void SDTSAttrReader::Close()
 int SDTSAttrReader::Open( const char *pszFilename )
 
 {
-    bool bSuccess = oDDFModule.Open( pszFilename );
+    bool bSuccess = CPL_TO_BOOL(oDDFModule.Open( pszFilename ));
 
     if( bSuccess )
         bIsSecondary = (oDDFModule.FindFieldDefn("ATTS") != NULL);
