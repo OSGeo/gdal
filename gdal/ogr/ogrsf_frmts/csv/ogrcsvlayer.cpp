@@ -172,7 +172,7 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
     pszWorkLine = CPLStrdup( pszLine );
 
     int i = 0, nCount = 0;
-    int nWorkLineLength = strlen(pszWorkLine);
+    size_t nWorkLineLength = strlen(pszWorkLine);
 
     while( true )
     {
@@ -189,7 +189,7 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
         if( pszLine == NULL )
             break;
 
-        int nLineLen = strlen(pszLine);
+        size_t nLineLen = strlen(pszLine);
 
         char* pszWorkLineTmp = (char *)
             VSI_REALLOC_VERBOSE(pszWorkLine,
@@ -952,7 +952,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
     if( pszData != NULL && (vsi_l_offset)nBytes > VSIFTellL(fpCSV) )
     {
         int nRequested = nBytes - 1 - (int)VSIFTellL(fpCSV);
-        int nRead = VSIFReadL(pszData, 1, nRequested, fpCSV);
+        int nRead = static_cast<int>(VSIFReadL(pszData, 1, nRequested, fpCSV));
         pszData[nRead] = 0;
 
         CPLString osTmpMemFile(CPLSPrintf("/vsimem/tmp%p", this));
@@ -1007,7 +1007,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
 
                 if( bAutodetectWidth )
                 {
-                    nFieldWidth = strlen(papszTokens[iField]);
+                    nFieldWidth = static_cast<int>(strlen(papszTokens[iField]));
                     if( papszTokens[iField][0] == '"' && 
                         papszTokens[iField][nFieldWidth-1] == '"' )
                     {
@@ -1017,7 +1017,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                     {
                         const char* pszDot = strchr(papszTokens[iField], '.');
                         if( pszDot != NULL )
-                            nFieldPrecision = strlen(pszDot + 1);
+                            nFieldPrecision = static_cast<int>(strlen(pszDot + 1));
                     }
                 }
 
@@ -1444,7 +1444,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                         const char* pszDot = strchr(papszTokens[iAttr], '.');
                         int nPrecision = 0;
                         if( pszDot != NULL )
-                            nPrecision = strlen(pszDot + 1);
+                            nPrecision = static_cast<int>(strlen(pszDot + 1));
                         if( nPrecision > poFieldDefn->GetPrecision() )
                         {
                              bWarningBadTypeOrWidth = TRUE;
@@ -2244,7 +2244,7 @@ GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
         int bLastWasNewLine = FALSE;
         while( true )
         {
-            int nRead = VSIFReadL(szBuffer, 1, 4096, fpCSV);
+            int nRead = static_cast<int>(VSIFReadL(szBuffer, 1, 4096, fpCSV));
             szBuffer[nRead] = 0;
             if( nTotalFeatures == 0 && szBuffer[0] != 13 && szBuffer[0] != 10 )
                 nTotalFeatures = 1;
