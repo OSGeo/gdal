@@ -1405,7 +1405,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               int nFieldWidth = poFieldDefn->GetWidth();
               sprintf(szFormat, "%%%d" CPL_FRMT_GB_WITHOUT_PREFIX "d", MIN(nFieldWidth, (int)sizeof(szValue)-1));
               sprintf(szValue, szFormat, poFeature->GetFieldAsInteger64(iField) );
-              int nStrLen = strlen(szValue);
+              int nStrLen = static_cast<int>(strlen(szValue));
               if( nStrLen > nFieldWidth )
               {
                   if (GrowField(hDBF, iField, poFieldDefn, nStrLen) != OGRERR_NONE)

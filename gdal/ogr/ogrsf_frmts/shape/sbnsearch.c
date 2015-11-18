@@ -350,7 +350,7 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
     }
 
     pasNodeDescriptor[nCurNode].nBinOffset =
-        hSBN->sHooks.FTell(hSBN->fpSBN);
+        (int) hSBN->sHooks.FTell(hSBN->fpSBN);
 
     /* Compute the index of the next non empty node. */
     nNextNonEmptyNode = nCurNode + 1;
@@ -398,7 +398,7 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
         {
             nCurNode = nNextNonEmptyNode;
             pasNodeDescriptor[nCurNode].nBinOffset =
-                hSBN->sHooks.FTell(hSBN->fpSBN) - 8;
+                (int) hSBN->sHooks.FTell(hSBN->fpSBN) - 8;
 
             /* Compute the index of the next non empty node. */
             nNextNonEmptyNode = nCurNode + 1;

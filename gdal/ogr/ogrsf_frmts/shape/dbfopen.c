@@ -432,7 +432,7 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
     pszBasename = (char *) malloc(strlen(pszFilename)+5);
     strcpy( pszBasename, pszFilename );
-    for( i = strlen(pszBasename)-1; 
+    for( i = (int)strlen(pszBasename)-1; 
 	 i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
 	       && pszBasename[i] != '\\';
 	 i-- ) {}
@@ -695,7 +695,7 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
 /* -------------------------------------------------------------------- */
     pszBasename = (char *) malloc(strlen(pszFilename)+5);
     strcpy( pszBasename, pszFilename );
-    for( i = strlen(pszBasename)-1; 
+    for( i = (int)strlen(pszBasename)-1; 
 	 i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
 	       && pszBasename[i] != '\\';
 	 i-- ) {}
@@ -1384,7 +1384,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
         {
             memset( pabyRec+psDBF->panFieldOffset[iField], ' ',
                     psDBF->panFieldSize[iField] );
-	    j = strlen((char *) pValue);
+	    j = (int)strlen((char *) pValue);
         }
 
 	strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
@@ -1453,7 +1453,7 @@ DBFWriteAttributeDirectly(DBFHandle psDBF, int hEntity, int iField,
     {
         memset( pabyRec+psDBF->panFieldOffset[iField], ' ',
                 psDBF->panFieldSize[iField] );
-        j = strlen((char *) pValue);
+        j = (int)strlen((char *) pValue);
     }
 
     strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
@@ -1679,9 +1679,9 @@ DBFGetNativeFieldType( DBFHandle psDBF, int iField )
 static void str_to_upper (char *string)
 {
     int len;
-    short i = -1;
+    int i = -1;
 
-    len = strlen (string);
+    len = (int)strlen (string);
 
     while (++i < len)
         if (isalpha(string[i]) && islower(string[i]))
