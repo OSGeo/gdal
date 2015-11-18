@@ -154,8 +154,9 @@ OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /FC /DDEBUG
 # 4206: nonstandard extension used : translation unit is empty (only applies to C source code)
 # 4018: 'expression' : signed/unsigned mismatch
 # 4389: 'operator' : signed/unsigned mismatch
+# 4611: interaction between '_setjmp' and C++ object destruction is non-portable
 # 
-WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4018 /wd4389
+WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4018 /wd4389 /wd4611
 !ENDIF
 
 # 

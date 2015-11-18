@@ -704,13 +704,13 @@ static CPLErr GTIFF_CopyBlockFromJPEG(TIFF* hTIFF,
     if ( bIsTiled )
     {
         if ((vsi_l_offset)TIFFWriteRawTile(hTIFF, iX + iY * nXBlocks,
-                                           pabyJPEGData, nSize) != nSize)
+                                           pabyJPEGData, static_cast<tmsize_t>(nSize)) != nSize)
             eErr = CE_Failure;
     }
     else
     {
         if ((vsi_l_offset)TIFFWriteRawStrip(hTIFF, iX + iY * nXBlocks,
-                                            pabyJPEGData, nSize) != nSize)
+                                            pabyJPEGData, static_cast<tmsize_t>(nSize)) != nSize)
             eErr = CE_Failure;
     }
 

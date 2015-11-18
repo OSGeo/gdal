@@ -108,7 +108,7 @@ _tiffWriteProc(thandle_t th, tdata_t buf, tsize_t size)
             {
                 memcpy( psGTH->abyWriteBuffer + psGTH->nWriteBufferSize,
                         pabyData, nRemainingBytes );
-                psGTH->nWriteBufferSize += nRemainingBytes;
+                psGTH->nWriteBufferSize += static_cast<int>(nRemainingBytes);
                 psGTH->nExpectedPos += size;
                 return size;
             }

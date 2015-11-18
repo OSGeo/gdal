@@ -236,7 +236,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
     char* pStr = psCitation;
     char name[512];
     int nameSet = FALSE;
-    int nameLen = strlen(psCitation);
+    int nameLen = static_cast<int>(strlen(psCitation));
     OGRBoolean nameFound = FALSE;
     while((pStr-psCitation+1)< nameLen)
     {
@@ -319,7 +319,7 @@ void SetLinearUnitCitation(GTIF* psGTIF, char* pszLinearUOMName)
     CPLString osCitation;
     int n = 0;
     if( GDALGTIFKeyGetASCII( psGTIF, PCSCitationGeoKey, szName, 0, sizeof(szName) ) )
-        n = strlen(szName);
+        n = static_cast<int>(strlen(szName));
     if(n>0)
     {
         osCitation = szName;
@@ -457,7 +457,7 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
         if(ctNames[CitLUnitsName])
         {
             double unitSize = 0.0;
-            int size = strlen(ctNames[CitLUnitsName]);
+            int size = static_cast<int>(strlen(ctNames[CitLUnitsName]));
             if(strchr(ctNames[CitLUnitsName], '\0'))
                 size -= 1;
             for( int i = 0; apszUnitMap[i] != NULL; i += 2 )
@@ -662,7 +662,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
     {
         /* For tif created by LEICA(ERDAS), ESRI state plane pe string was used and */
         /* the state plane zone is given in PCSCitation. Therefore try Esri pe string first. */
-        SetCitationToSRS(hGTIF, szCTString, strlen(szCTString), PCSCitationGeoKey, poSRS, pLinearUnitIsSet);
+        SetCitationToSRS(hGTIF, szCTString, static_cast<int>(strlen(szCTString)), PCSCitationGeoKey, poSRS, pLinearUnitIsSet);
         const char *pcsName = poSRS->GetAttrValue("PROJCS");
         const char *pStr = NULL;
         if( (pcsName && (pStr = strstr(pcsName, "State Plane Zone ")) != NULL)

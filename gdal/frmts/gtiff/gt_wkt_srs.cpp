@@ -2216,7 +2216,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         char *pszPEString = NULL;
         poSRS->morphToESRI();
         poSRS->exportToWkt( &pszPEString );
-        int peStrLen = strlen(pszPEString);
+        int peStrLen = static_cast<int>(strlen(pszPEString));
         if(peStrLen > 0)
         {
             char *outPeStr = (char *) CPLMalloc( peStrLen + strlen("ESRI PE String = ")+1 );
