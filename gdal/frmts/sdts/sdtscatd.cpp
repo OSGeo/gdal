@@ -121,7 +121,7 @@ int SDTS_CATD::Read( const char * pszFilename )
 /*      Strip off the filename, and keep the path prefix.               */
 /* -------------------------------------------------------------------- */
     pszPrefixPath = CPLStrdup( pszFilename );
-    int i = strlen(pszPrefixPath) - 1;
+    int i = static_cast<int>(strlen(pszPrefixPath)) - 1;
     for( ; i > 0; i-- )
     {
         if( pszPrefixPath[i] == '\\' || pszPrefixPath[i] == '/' )
