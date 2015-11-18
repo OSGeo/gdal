@@ -204,7 +204,7 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
          * OK, we have a valid directory name... make sure it is 
          * terminated with a '/' (or '\\')
          *------------------------------------------------------------*/
-        nLen = strlen(pszCoverPath);
+        nLen = (int)strlen(pszCoverPath);
 
         if (pszCoverPath[nLen-1] == '/' || pszCoverPath[nLen-1] == '\\')
             psInfo->pszCoverPath = CPLStrdup(pszCoverPath);
@@ -226,7 +226,7 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
          *------------------------------------------------------------*/
         psInfo->pszCoverPath = CPLStrdup(pszCoverPath);
 
-        for( i = strlen(psInfo->pszCoverPath)-1; 
+        for( i = (int)strlen(psInfo->pszCoverPath)-1; 
              i > 0 && psInfo->pszCoverPath[i] != '/' &&
                  psInfo->pszCoverPath[i] != '\\';
              i-- ) {}
@@ -243,7 +243,7 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
      * but for now we'll just produce an error if this happens.
      *----------------------------------------------------------------*/
     nLen = 0;
-    for( i = strlen(psInfo->pszCoverPath)-1; 
+    for( i = (int)strlen(psInfo->pszCoverPath)-1; 
 	 i > 0 && psInfo->pszCoverPath[i-1] != '/' &&
 	          psInfo->pszCoverPath[i-1] != '\\'&&
 	          psInfo->pszCoverPath[i-1] != ':';
@@ -651,7 +651,7 @@ static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir)
      *----------------------------------------------------------------*/
     for(i=0; papszCoverDir && papszCoverDir[i]; i++)
     {
-        nLen = strlen(papszCoverDir[i]);
+        nLen = (int)strlen(papszCoverDir[i]);
         if (nLen > 4 && EQUAL(papszCoverDir[i]+nLen-4, ".adf") )
         {
             bFoundAdfFile = TRUE;
@@ -749,7 +749,7 @@ static int _AVCE00ReadAddJabberwockySection(AVCE00ReadPtr psInfo,
     GBool       bFoundFiles = FALSE;
     AVCBinFile *psFile=NULL;
 
-    nExtLen = strlen(pszFileExtension);
+    nExtLen = (int)strlen(pszFileExtension);
 
     /*-----------------------------------------------------------------
      * Scan the directory for files with a ".txt" extension.
@@ -757,7 +757,7 @@ static int _AVCE00ReadAddJabberwockySection(AVCE00ReadPtr psInfo,
 
     for (iDirEntry=0; papszCoverDir && papszCoverDir[iDirEntry]; iDirEntry++)
     {
-        nLen = strlen(papszCoverDir[iDirEntry]);
+        nLen = (int)strlen(papszCoverDir[iDirEntry]);
 
         if (nLen > nExtLen && EQUAL(papszCoverDir[iDirEntry] + nLen-nExtLen, 
                                     pszFileExtension) &&
@@ -999,7 +999,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
         if (getcwd(szCWD, 74) == NULL)
             szCWD[0] = '\0';    /* Failed: buffer may be too small */
 
-        nLen = strlen(szCWD);
+        nLen = (int)strlen(szCWD);
 
 #ifdef WIN32
         if (nLen > 0 && szCWD[nLen -1] != '\\')
@@ -1015,7 +1015,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
                                       psInfo->pszCoverPath));
     pcTmp = pszEXPPath;
     for( ; *pcTmp != '\0'; pcTmp++)
-        *pcTmp = toupper(*pcTmp);
+        *pcTmp = (char) toupper(*pcTmp);
 
     /*-----------------------------------------------------------------
      * EXP Header
@@ -1289,7 +1289,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
          *------------------------------------------------------------*/
         for(iFile=0; papszCoverDir && papszCoverDir[iFile]; iFile++)
         {
-            if ((nLen = strlen(papszCoverDir[iFile])) == 7 &&
+            if ((nLen = (int)strlen(papszCoverDir[iFile])) == 7 &&
                 EQUAL(papszCoverDir[iFile] + nLen -4, ".dbf"))
             {
                 papszCoverDir[iFile][nLen - 4] = '\0';
@@ -1297,7 +1297,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
                                               papszCoverDir[iFile]);
                 pcTmp = (char*)szFname;
                 for( ; *pcTmp != '\0'; pcTmp++)
-                    *pcTmp = toupper(*pcTmp);
+                    *pcTmp = (char)toupper(*pcTmp);
                 papszCoverDir[iFile][nLen - 4] = '.';
 
                 papszTables = CSLAddString(papszTables, szFname);
@@ -1374,7 +1374,7 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
              * compressed, the first line of data should be 79 or 80 chars
              * long and contain several '~' characters.
              */
-            int nLen = strlen(pszLine);
+            int nLen = (int)strlen(pszLine);
             if (nLen == 0 || STARTS_WITH_CI(pszLine, "EXP "))
                 continue;  /* Skip empty and EXP header lines */
             else if ( (nLen == 79 || nLen == 80) &&
