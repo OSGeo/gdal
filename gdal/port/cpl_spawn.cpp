@@ -78,7 +78,8 @@ static void FillPipeFromFile(VSILFILE* fin, CPL_FILE_HANDLE pipe_fd)
     char buf[PIPE_BUFFER_SIZE];
     while(true)
     {
-        int nRead = (int)VSIFReadL(buf, 1, PIPE_BUFFER_SIZE, fin);
+        const int nRead
+            = static_cast<int>( VSIFReadL(buf, 1, PIPE_BUFFER_SIZE, fin) );
         if( nRead <= 0 )
             break;
         if (!CPLPipeWrite(pipe_fd, buf, nRead))
@@ -143,7 +144,9 @@ int CPLSpawn(const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
     GByte* pData = VSIGetMemFileBuffer(osName.c_str(), &nDataLength, TRUE);
     if( nDataLength > 0 )
         pData[nDataLength-1] = '\0';
-    if( pData && strstr((const char*)pData, "An error occured while forking process") != NULL )
+    if( pData && strstr(
+            const_cast<const char *>( reinterpret_cast<char *>( pData ) ),
+            "An error occured while forking process") != NULL )
         bDisplayErr = TRUE;
     if( pData && bDisplayErr )
         CPLError(CE_Failure, CPLE_AppDefined, "[%s error] %s", papszArgv[0], pData);
@@ -741,7 +744,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
         if( posix_spawnp(&pid, papszArgvDup[0],
                          bHasActions ? &actions : NULL,
                          NULL,
-                         (char* const*) papszArgvDup,
+                         reinterpret_cast<char* const*>( papszArgvDup ),
                          environ) != 0 )
         {
             if( bHasActions )
@@ -764,7 +767,8 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
     #ifdef SIGPIPE
         std::signal( SIGPIPE, SIG_IGN );
     #endif
-        CPLSpawnedProcess* p = (CPLSpawnedProcess*)CPLMalloc(sizeof(CPLSpawnedProcess));
+        CPLSpawnedProcess *p = static_cast<CPLSpawnedProcess *>(
+            CPLMalloc( sizeof(CPLSpawnedProcess) ) );
         if( bHasActions )
             memcpy(&p->actions, &actions, sizeof(actions));
         p->bFreeActions = bHasActions;
@@ -836,7 +840,8 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
 #ifdef SIGPIPE
         std::signal( SIGPIPE, SIG_IGN );
 #endif
-        CPLSpawnedProcess* p = (CPLSpawnedProcess*)CPLMalloc(sizeof(CPLSpawnedProcess));
+        CPLSpawnedProcess* p = static_cast<CPLSpawnedProcess *>(
+            CPLMalloc( sizeof(CPLSpawnedProcess) ) );
 #ifdef HAVE_POSIX_SPAWNP
         p->bFreeActions = FALSE;
 #endif
