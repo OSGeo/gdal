@@ -18064,44 +18064,25 @@ if test "x$enable_debug" = "xyes" ; then
   CFLAGS_NOFTRAPV="$CFLAGS"
   CXXFLAGS_NOFTRAPV="$CXXFLAGS"
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -ftrapv" >&5
-$as_echo_n "checking whether C compiler accepts -Werror -ftrapv... " >&6; }
-if ${ax_cv_check_cflags___Werror__ftrapv+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS  -Werror -ftrapv"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags___Werror__ftrapv=yes
-else
-  ax_cv_check_cflags___Werror__ftrapv=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__ftrapv" >&5
-$as_echo "$ax_cv_check_cflags___Werror__ftrapv" >&6; }
-if test "x$ax_cv_check_cflags___Werror__ftrapv" = xyes; then :
-  CFLAGS="$CFLAGS -ftrapv" CXXFLAGS="$CXXFLAGS -ftrapv"
-else
-  :
-fi
-
-
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, modified CFLAGS=\"$CFLAGS\"" >&5
 $as_echo "yes, modified CFLAGS=\"$CFLAGS\"" >&6; }
+
+  # Some clang version on 32 bits have linking error with 64bit operations (undefined reference to `__mulodi4')
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether -ftrapv can be used" >&5
+$as_echo_n "checking whether -ftrapv can be used... " >&6; }
+  rm -f testftrapv.c
+  echo 'int main(int argc, char** argv) { return (long long)argc * argc; } ' > testftrapv.c
+  if test -z "`${CC} ${CFLAGS} -ftrapv testftrapv.c -o testftrapv 2>&1`" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    CFLAGS="$CFLAGS -ftrapv"
+    CXXFLAGS="$CXXFLAGS -ftrapv"
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  fi
+  rm -f testftrapv.* testftrapv
+
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, CFLAGS=\"$CFLAGS\"" >&5
 $as_echo "no, CFLAGS=\"$CFLAGS\"" >&6; }
@@ -18117,8 +18098,8 @@ CXXFLAGS_NOFTRAPV=$CXXFLAGS_NOFTRAPV
 $as_echo_n "checking whether GCC 4.1 atomic builtins are available... " >&6; }
 
 rm -f atomicbuiltins.c
-echo 'int main(int argc, char* argv) { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); __sync_bool_compare_and_swap(&i, 0, 1); return 0; } ' > atomicbuiltins.c
-if test -z "`${CC} atomicbuiltins.c -o atomicbuiltins 2>&1`" ; then
+echo 'int main(int argc, char** argv) { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); __sync_bool_compare_and_swap(&i, 0, 1); return 0; } ' > atomicbuiltins.c
+if test -z "`${CC} ${CFLAGS} atomicbuiltins.c -o atomicbuiltins 2>&1`" ; then
     HAVE_GCC_ATOMIC_BUILTINS=yes
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
