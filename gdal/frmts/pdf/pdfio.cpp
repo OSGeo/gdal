@@ -80,7 +80,7 @@ VSIPDFFileStream::VSIPDFFileStream(VSIPDFFileStream* poParent,
                                    vsi_l_offset startA, GBool limitedA,
                                    vsi_l_offset lengthA, Object *dictA):
 #ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
-                                                        BaseStream(dictA, lengthA)
+                                                        BaseStream(dictA, (makeSubStream_offset_type)lengthA)
 #else
                                                         BaseStream(dictA)
 #endif
