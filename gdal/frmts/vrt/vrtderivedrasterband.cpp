@@ -280,7 +280,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     if ( nPixelSpace == typesize &&
          (!bNoDataValueSet || dfNoDataValue == 0) ) {
-        memset( pData, 0, nBufXSize * nBufYSize * nPixelSpace );
+        memset( pData, 0, static_cast<size_t>(nBufXSize * nBufYSize * nPixelSpace) );
     }
     else if ( !bEqualAreas || bNoDataValueSet )
     {
