@@ -3186,7 +3186,7 @@ GTiff driver:
  * Overviews: Improve error reporting for >16bit images to JPEG compression
  * Use CPLAtof() for geotiff and epsg .csv file handling (#3886, #3979)
  * Lots of Imagine and ESRI PE string citation handling changes from 1.8-esri. Some citation related changes only compiled in if ESRI_SPECIFIC defined.
- * Give PAM information precidence over metadata from GeoTIFF itself.   Avoid unnecessary (default) writes of scale/offset.  Treat (0,1,0,0,0,-1) as a default geotransform as well as (0,1,0,0,0,1).
+ * Give PAM information precedence over metadata from GeoTIFF itself.   Avoid unnecessary (default) writes of scale/offset.  Treat (0,1,0,0,0,-1) as a default geotransform as well as (0,1,0,0,0,1).
  * Migrate in some ESRI only logic for 1bit color tables, AdjustLinearUnits and default for 1bit data
  * Add a GTIFF_IGNORE_READ_ERRORS configuration option (#3994)
  * Lazy loading of RPC/RPB/IMD files (#3996)
@@ -4974,7 +4974,7 @@ EPSILON driver:
  
 ERS driver:
  * Added PIXELTYPE support to report/create SIGNEDBYTE (#2902)
- * Give precidence to PAM SRS, and even check for .aux file.  (ESRI Merge)
+ * Give precedence to PAM SRS, and even check for .aux file.  (ESRI Merge)
 
 FAST driver:
  * Support 7 bands (#3307)
