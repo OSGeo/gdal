@@ -786,7 +786,9 @@ def ogr_pgdump_11():
 
     gdal.Unlink('/vsimem/ogr_pgdump_11.sql')
     
-    if sql.find('0101000000000000000000F87F000000000000F87F') < 0:
+    # clang -m32 generates F8FF..., instead of F87F... for all other systems
+    if sql.find('0101000000000000000000F87F000000000000F87F') < 0 and \
+       sql.find('0101000000000000000000F8FF000000000000F8FF') < 0:
         print(sql)
         return 'fail'
     
