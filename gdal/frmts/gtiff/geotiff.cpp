@@ -11215,7 +11215,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
 /* -------------------------------------------------------------------- */
 /*      Did we find a tab file?  If so we will use it's coordinate      */
-/*      system and give it precidence.                                  */
+/*      system and give it precedence.                                  */
 /* -------------------------------------------------------------------- */
         if( pszTabWKT != NULL 
             && (pszProjection == NULL || pszProjection[0] == '\0') )
