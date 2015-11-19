@@ -3418,6 +3418,10 @@ def ogr_shape_71():
     if sys.platform.find('linux') != 0:
         return 'skip'
 
+    if os.getuid() == 0:
+        print('running as root... skipping')
+        return 'skip'
+
     import stat
     shutil.copy('data/poly.shp', 'tmp/ogr_shape_71.shp')
     shutil.copy('data/poly.shx', 'tmp/ogr_shape_71.shx')
