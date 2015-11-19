@@ -105,7 +105,7 @@ void ILI2Handler::startElement(
       DOMElement *elem = (DOMElement*)dom_doc->createElement(qname);
       
       // add all attributes
-      unsigned int len = attrs.getLength();
+      unsigned int len = (unsigned int)(attrs.getLength());
       for (unsigned int index = 0; index < len; index++)
         elem->setAttribute(attrs.getQName(index), attrs.getValue(index));
       dom_elem->appendChild(elem);
