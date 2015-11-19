@@ -360,7 +360,7 @@ GTARasterBand::GTARasterBand( GTADataset *poDS, int nBand )
     nBlockYSize = 1;
 
     // Component information
-    sComponentSize = poDS->oHeader.component_size( nBand-1 );
+    sComponentSize = static_cast<size_t>(poDS->oHeader.component_size( nBand-1 ));
     sComponentOffset = 0;
     for( int i = 0; i < nBand-1; i++ )
     {
@@ -813,7 +813,7 @@ CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
         if( pBlock == NULL )
         {
             if( oHeader.data_size() > (size_t)(-1)
-                    || ( pBlock = VSI_MALLOC_VERBOSE( oHeader.data_size() ) ) == NULL )
+                    || ( pBlock = VSI_MALLOC_VERBOSE( static_cast<size_t>(oHeader.data_size()) ) ) == NULL )
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory,
                         "Cannot allocate buffer for the complete data set.\n"
@@ -844,7 +844,7 @@ CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
 
         if( pBlock == NULL )
         {
-            pBlock = VSI_MALLOC2_VERBOSE( oHeader.element_size(), nBlockXSize );
+            pBlock = VSI_MALLOC2_VERBOSE( static_cast<size_t>(oHeader.element_size()), nBlockXSize );
             if( pBlock == NULL )
             {
                 return CE_Failure;
@@ -1604,7 +1604,7 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    void *pLine = VSI_MALLOC2_VERBOSE( oHeader.element_size(), oHeader.dimension_size(0) );
+    void *pLine = VSI_MALLOC2_VERBOSE( static_cast<size_t>(oHeader.element_size()), static_cast<size_t>(oHeader.dimension_size(0)) );
     if( pLine == NULL )
     {
         VSIFree( pLine );

@@ -256,7 +256,7 @@ const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
         default:
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Unknown type %d\n", iNumType );
+                      "Unknown type %d\n", static_cast<int>(iNumType) );
 
             return "unknown type";
         }
@@ -290,7 +290,7 @@ int HDF4Dataset::GetDataTypeSize( int32 iNumType )
         default:
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Unknown type %d\n", iNumType );
+                      "Unknown type %d\n", static_cast<int>(iNumType) );
             return 0;
         }
     }
@@ -338,7 +338,7 @@ double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData )
         default:
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Unknown type %d\n", iNumType );
+                      "Unknown type %d\n", static_cast<int>(iNumType) );
             return 0.0;
         }
     }

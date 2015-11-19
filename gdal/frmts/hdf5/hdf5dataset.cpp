@@ -1084,7 +1084,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
 
     if( poRootGroup->nbObjs > 0 ) {
         poRootGroup->poHchild = ( HDF5GroupObjects * )
-            CPLCalloc( poRootGroup->nbObjs,
+            CPLCalloc( static_cast<size_t>(poRootGroup->nbObjs),
             sizeof( HDF5GroupObjects ) );
         H5Giterate( hGroupID, "/", NULL,
                HDF5CreateGroupObjs, (void *)poRootGroup );
