@@ -47,7 +47,7 @@ children of the Dataset it may not be necessary to name the grid or array
 variable. <p>
 
 In cases where there are a number of 2D arrays or grids at the dataset
-level, they may be each automatically treated as seperate bands.<p>
+level, they may be each automatically treated as separate bands.<p>
 
 <h2>Specialized AIS/DAS Metadata</h2>
 
@@ -97,7 +97,7 @@ It will have the following subitems:<p>
 
 <li> <b>GeoTransform</b>: The six parameters defining the affine transformation
 between pixel/line space and georeferenced space if applicable.  Stored
-as a single string with values seperated by sapces.  Note this 
+as a single string with values separated by spaces.  Note this 
 allows for rotated or sheared images. (optional) <p>
 
 <li> <b>SpatialRef</b>: The OpenGIS WKT description of the coordinate system.
@@ -114,10 +114,10 @@ as the attribute name.  Metadata values will always be strings. (optional)
 
 Note that the edge northing and easting values can be computed based
 on the grid size and the geotransform. They are included primarily as
-extra documentation that is easier to interprete by a user than the
+extra documentation that is easier to interpret by a user than the
 GeoTransform.  They will also be used to compute a GeoTransform internally
 if one is note provided, but if both are provided the GeoTransform will
-take precidence.<p>
+take precedence.<p>
 
 <h3>Band</h3>
 
