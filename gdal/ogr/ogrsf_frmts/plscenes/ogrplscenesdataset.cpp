@@ -214,11 +214,12 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
     {
         CPLDebug("PLSCENES", "Fetching %s", pszURL);
         psResult = (CPLHTTPResult*) CPLCalloc(1, sizeof(CPLHTTPResult));
-        vsi_l_offset nDataLength = 0;
+        vsi_l_offset nDataLengthLarge = 0;
         CPLString osURL(pszURL);
         if( osURL[osURL.size()-1 ] == '/' )
             osURL.resize(osURL.size()-1);
-        GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLength, FALSE); 
+        GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLengthLarge, FALSE); 
+        size_t nDataLength = static_cast<size_t>(nDataLengthLarge);
         if( pabyBuf )
         {
             psResult->pabyData = (GByte*) VSI_MALLOC_VERBOSE(1 + nDataLength);

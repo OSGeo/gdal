@@ -295,10 +295,11 @@ CPLErr WEBPDataset::Uncompress()
         return CE_Failure;
 
     VSIFSeekL(fpImage, 0, SEEK_END);
-    vsi_l_offset nSize = VSIFTellL(fpImage);
-    if( nSize != static_cast<vsi_l_offset>( static_cast<uint32_t>( nSize ) ) )
+    vsi_l_offset nSizeLarge = VSIFTellL(fpImage);
+    if( nSizeLarge != static_cast<vsi_l_offset>( static_cast<uint32_t>( nSizeLarge ) ) )
         return CE_Failure;
     VSIFSeekL(fpImage, 0, SEEK_SET);
+    uint32_t nSize = static_cast<uint32_t>( nSizeLarge );
     uint8_t* pabyCompressed = reinterpret_cast<uint8_t*>( VSIMalloc(nSize) );
     if (pabyCompressed == NULL)
         return CE_Failure;

@@ -748,7 +748,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 /*      one and cache it for later use.                                 */
 /* -------------------------------------------------------------------- */
 #if 1
-    static vsi_l_offset nEmptyDBSize = 0;
+    static size_t nEmptyDBSize = 0;
     static GByte* pabyEmptyDB = NULL;
     {
         static CPLMutex* hMutex = NULL;
@@ -767,9 +767,13 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
             papszOptions = NULL;
             delete poCachedDS;
             if( nRet )
+            {
                 /* Note: the reference file keeps the ownership of the data, so that */
                 /* it gets released with VSICleanupFileManager() */
-                pabyEmptyDB = VSIGetMemFileBuffer( pszCachedFilename, &nEmptyDBSize, FALSE );
+                vsi_l_offset nEmptyDBSizeLarge = 0;
+                pabyEmptyDB = VSIGetMemFileBuffer( pszCachedFilename, &nEmptyDBSizeLarge, FALSE );
+                nEmptyDBSize = static_cast<size_t>(nEmptyDBSizeLarge);
+            }
             CPLFree( pszCachedFilename );
         }
     }

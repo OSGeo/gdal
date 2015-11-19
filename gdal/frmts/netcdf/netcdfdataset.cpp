@@ -442,7 +442,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         if( ( status == NC_NOERR ) && ( nTmpFormat == NC_CHUNKED ) ) {
             CPLDebug( "GDAL_netCDF", 
                       "setting block size to chunk size : %ld x %ld\n",
-                      chunksize[nZDim-1], chunksize[nZDim-2]);
+                      static_cast<long>(chunksize[nZDim-1]), static_cast<long>(chunksize[nZDim-2]));
             nBlockXSize = (int) chunksize[nZDim-1];
             nBlockYSize = (int) chunksize[nZDim-2];
         }

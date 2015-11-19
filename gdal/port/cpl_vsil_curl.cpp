@@ -2262,7 +2262,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                     CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
                     cachedFileProp->eExists = EXIST_YES;
                     cachedFileProp->bIsDirectory = bIsDirectory;
-                    cachedFileProp->mTime = mTime;
+                    cachedFileProp->mTime = static_cast<time_t>(mTime);
                     cachedFileProp->bHasComputedFileSize = nFileSize > 0;
                     cachedFileProp->fileSize = nFileSize;
 
@@ -2335,7 +2335,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList( const CPLString& osBaseURL,
                         brokendowntime.tm_hour = nHour;
                         brokendowntime.tm_min = nMin;
                         brokendowntime.tm_sec = nSec;
-                        cachedFileProp->mTime = CPLYMDHMSToUnixTime(&brokendowntime);
+                        cachedFileProp->mTime = static_cast<time_t>(CPLYMDHMSToUnixTime(&brokendowntime));
                     }
 
                     osFileList.AddString(pszKey + osPrefix.size());
@@ -2621,7 +2621,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGot
                         cachedFileProp->bHasComputedFileSize = bSizeValid;
                         cachedFileProp->fileSize = nFileSize;
                         cachedFileProp->bIsDirectory = bIsDirectory;
-                        cachedFileProp->mTime = mUnixTime;
+                        cachedFileProp->mTime = static_cast<time_t>(mUnixTime);
 
                         oFileList.AddString(pszFilename);
                         if (ENABLE_DEBUG)
