@@ -3831,7 +3831,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
 
         vsi_l_offset nJPEGDataSize = 0;
         GByte* pabyJPEGData = VSIGetMemFileBuffer(szTmp, &nJPEGDataSize, TRUE);
-        VSIFWriteL(pabyJPEGData, nJPEGDataSize, 1, fp);
+        VSIFWriteL(pabyJPEGData, static_cast<size_t>(nJPEGDataSize), 1, fp);
         CPLFree(pabyJPEGData);
     }
     else

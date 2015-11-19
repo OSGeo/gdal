@@ -48,13 +48,11 @@ CPL_C_END
 
 class COSARDataset : public GDALDataset
 {
-	long nSize;
 public:
-        COSARDataset() : nSize(0), fp(NULL) { }
+        COSARDataset() : fp(NULL) { }
 	VSILFILE *fp;
 
 	static GDALDataset *Open( GDALOpenInfo * );
-	long GetSizeInBytes() { return nSize; }
 };
 
 class COSARRasterBand : public GDALRasterBand
@@ -170,10 +168,6 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     /* steal fp */
     pDS->fp = pOpenInfo->fpL;
     pOpenInfo->fpL = NULL;
-
-    /* Calculate the file size */
-    VSIFSeekL(pDS->fp,0,SEEK_END);
-    pDS->nSize = VSIFTellL(pDS->fp);
 
     VSIFSeekL(pDS->fp, RS_OFFSET, SEEK_SET);
     VSIFReadL(&pDS->nRasterXSize, 1, 4, pDS->fp);  

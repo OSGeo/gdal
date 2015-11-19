@@ -199,7 +199,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         if (nLineSpace == nBufXSize * nPixelSpace)
         {
-             memset( pData, 0, (GIntBig)nBufYSize * nLineSpace );
+             memset( pData, 0, static_cast<size_t>(nBufYSize * nLineSpace) );
         }
         else
         {
@@ -208,7 +208,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 memset( reinterpret_cast<GByte *>( pData )
                         + static_cast<GIntBig>(iLine) * nLineSpace,
                         0,
-                        nBufXSize * nPixelSpace );
+                        static_cast<size_t>(nBufXSize * nPixelSpace) );
             }
         }
     }

@@ -135,7 +135,7 @@ CPLErr MEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     {
         memcpy( pImage, 
                 pabyData + nLineOffset*(size_t)nBlockYOff, 
-                nPixelOffset * nBlockXSize );
+                static_cast<size_t>(nPixelOffset) * nBlockXSize );
     }
     else
     {
@@ -167,7 +167,7 @@ CPLErr MEMRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     {
         memcpy( pabyData+nLineOffset*(size_t)nBlockYOff, 
                 pImage, 
-                nPixelOffset * nBlockXSize );
+                static_cast<size_t>(nPixelOffset) * nBlockXSize );
     }
     else
     {

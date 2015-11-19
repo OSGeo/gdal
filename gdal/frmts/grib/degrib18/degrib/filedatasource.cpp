@@ -56,5 +56,5 @@ int FileDataSource::DataSourceFeof()
 
 long FileDataSource::DataSourceFtell()
 {
-    return VSIFTellL( fp );
+    return static_cast<long>(VSIFTellL( fp ));
 }

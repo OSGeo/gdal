@@ -32,6 +32,11 @@
 #define _GNU_SOURCE
 #endif
 
+// to have off_t on 64bit possibly
+#ifndef _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 64
+#endif
+
 #include "cpl_virtualmem.h"
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
@@ -1878,6 +1883,13 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
                  nLength);
         return NULL;
     }
+    if( nOffset + CPLGetPageSize() != static_cast<vsi_l_offset>(static_cast<off_t>(nOffset + CPLGetPageSize())) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "nOffset = " CPL_FRMT_GUIB " incompatible with 32 bit architecture",
+                 nOffset);
+        return NULL;
+    }
 #endif
 
     int fd = (int) (size_t) VSIFGetNativeFileDescriptorL(fp);
@@ -1887,9 +1899,9 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
         return NULL;
     }
 
-    off_t nAlignedOffset = (nOffset / CPLGetPageSize()) * CPLGetPageSize();
-    size_t nAligment = nOffset - nAlignedOffset;
-    size_t nMappingSize = nLength + nAligment;
+    off_t nAlignedOffset = static_cast<off_t>((nOffset / CPLGetPageSize()) * CPLGetPageSize());
+    size_t nAligment = static_cast<size_t>(nOffset - nAlignedOffset);
+    size_t nMappingSize = static_cast<size_t>(nLength + nAligment);
 
     /* We need to ensure that the requested extent fits into the file size */
     /* otherwise SIGBUS errors will occur when using the mapping */
@@ -1941,7 +1953,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
     ctxt->eAccessMode = eAccessMode;
     ctxt->pData = (GByte*) addr + nAligment;
     ctxt->pDataToFree = addr;
-    ctxt->nSize = nLength;
+    ctxt->nSize = static_cast<size_t>(nLength);
     ctxt->nPageSize = CPLGetPageSize();
     ctxt->bSingleThreadUsage = FALSE;
     ctxt->pfnFreeUserData = pfnFreeUserData;
