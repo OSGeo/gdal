@@ -1639,6 +1639,41 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
     }
 }
 
+/************************************************************************/
+/*                           GDALSwapWordsEx()                          */
+/************************************************************************/
+
+/**
+ * Byte swap words in-place.
+ *
+ * This function will byte swap a set of 2, 4 or 8 byte words "in place" in
+ * a memory array.  No assumption is made that the words being swapped are
+ * word aligned in memory.  Use the CPL_LSB and CPL_MSB macros from cpl_port.h
+ * to determine if the current platform is big endian or little endian.  Use
+ * The macros like CPL_SWAP32() to byte swap single values without the overhead
+ * of a function call. 
+ *
+ * @param pData pointer to start of data buffer.
+ * @param nWordSize size of words being swapped in bytes. Normally 2, 4 or 8.
+ * @param nWordCount the number of words to be swapped in this call. 
+ * @param nWordSkip the byte offset from the start of one word to the start of
+ * the next. For packed buffers this is the same as nWordSize. 
+ * @since GDAL 2.1
+ */
+void CPL_STDCALL GDALSwapWordsEx( void *pData, int nWordSize, size_t nWordCount,
+                                  int nWordSkip )
+{
+    GByte* pabyData = reinterpret_cast<GByte*>(pData);
+    while( nWordCount )
+    {
+        /* Pick-up a multiple of 8 as max chunk size */
+        int nWordCountSmall = (nWordCount > (1 << 30)) ? (1 << 30) : static_cast<int>(nWordCount);
+        GDALSwapWords(pabyData, nWordSize, nWordCountSmall, nWordSkip);
+        pabyData += static_cast<size_t>(nWordSkip) * nWordCountSmall;
+        nWordCount -= nWordCountSmall;
+    }
+}
+
 // Place the new GDALCopyWords helpers in an anonymous namespace
 namespace {
 
