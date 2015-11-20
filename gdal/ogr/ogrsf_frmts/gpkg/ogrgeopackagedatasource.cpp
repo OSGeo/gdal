@@ -256,12 +256,12 @@ const char * GDALGeoPackageDataset::GetSrsName(const OGRSpatialReference * poSRS
     const OGR_SRSNode *node;
     
     /* Projected coordinate system? */
-    if ( (node = poSRS->GetAttrNode("PROJCS")) )
+    if ( (node = poSRS->GetAttrNode("PROJCS")) != NULL )
     {
         return node->GetChild(0)->GetValue();
     }
     /* Geographic coordinate system? */
-    else if ( (node = poSRS->GetAttrNode("GEOGCS")) )
+    else if ( (node = poSRS->GetAttrNode("GEOGCS")) != NULL )
     {
         return node->GetChild(0)->GetValue();
     }
