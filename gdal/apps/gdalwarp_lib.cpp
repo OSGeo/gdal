@@ -2128,19 +2128,24 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     char **papszTO = CSLDuplicate( papszTO_In );
 
 /* -------------------------------------------------------------------- */
-/*      Checkout that SRS are the same.                                 */
+/*      Checkout that if there's a cutline SRS, there's also a raster   */
+/*      one.                                                            */
 /* -------------------------------------------------------------------- */
     OGRSpatialReferenceH  hRasterSRS = NULL;
-    const char *pszProjection = NULL;
-
-    if( GDALGetProjectionRef( hSrcDS ) != NULL 
-        && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
-        pszProjection = GDALGetProjectionRef( hSrcDS );
-    else if( GDALGetGCPProjection( hSrcDS ) != NULL )
-        pszProjection = GDALGetGCPProjection( hSrcDS );
-
-    if( pszProjection == NULL || EQUAL( pszProjection, "" ) )
-        pszProjection = CSLFetchNameValue( papszTO, "SRC_SRS" );
+    const char *pszProjection = CSLFetchNameValue( papszTO, "SRC_SRS" );
+    if( pszProjection == NULL )
+    {
+        char** papszMD;
+        if( GDALGetProjectionRef( hSrcDS ) != NULL 
+            && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
+            pszProjection = GDALGetProjectionRef( hSrcDS );
+        else if( GDALGetGCPProjection( hSrcDS ) != NULL )
+            pszProjection = GDALGetGCPProjection( hSrcDS );
+        else if( GDALGetMetadata( hSrcDS, "RPC" ) != NULL )
+            pszProjection = SRS_WKT_WGS84;
+        else if( (papszMD = GDALGetMetadata( hSrcDS, "GEOLOCATION" )) != NULL )
+            pszProjection = CSLFetchNameValue( papszMD, "SRS" );
+    }
 
     if( pszProjection != NULL )
     {
