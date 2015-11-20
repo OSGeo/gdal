@@ -679,11 +679,11 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput, int nRec
         }
 
 /* -------------------------------------------------------------------- */
-/*      Read the delimeter following the ring.                          */
+/*      Read the delimiter following the ring.                          */
 /* -------------------------------------------------------------------- */
-        
+
         pszInput = OGRWktReadToken( pszInput, szToken );
-        
+
     } while( szToken[0] == ',' );
 
 /* -------------------------------------------------------------------- */

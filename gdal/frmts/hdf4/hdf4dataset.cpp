@@ -364,11 +364,11 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
 
         int nTokenLen = 0;
 
-        // Try to find the next delimeter, marking end of token
+        // Try to find the next delimiter, marking end of token.
         for( ; *pszString != '\0'; pszString++ )
         {
 
-            // End if this is a delimeter skip it and break.
+            // End if this is a delimiter skip it and break.
             if ( !bInBracket && !bInString
                  && strchr(pszDelimiters, *pszString) != NULL )
             {

@@ -179,7 +179,7 @@ void OGRFMELayerDB::ResetReading()
 /*                              SetMacro()                              */
 /*                                                                      */
 /*      Set the value of one macro within a set of macros stored in     */
-/*      comma delimeted name value pairs (as per RUNTIME_MACROS in      */
+/*      comma delimited name value pairs (as per RUNTIME_MACROS in      */
 /*      user directives).                                               */
 /************************************************************************/
 

@@ -259,7 +259,7 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 /************************************************************************/
 /*                          OGRWktReadToken()                           */
 /*                                                                      */
-/*      Read one token or delimeter and put into token buffer.  Pre     */
+/*      Read one token or delimiter and put into token buffer.  Pre     */
 /*      and post white space is swallowed.                              */
 /************************************************************************/
 
@@ -268,7 +268,7 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
 {
     if( pszInput == NULL )
         return NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Swallow pre-white space.                                        */
 /* -------------------------------------------------------------------- */
@@ -276,13 +276,13 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
         pszInput++;
 
 /* -------------------------------------------------------------------- */
-/*      If this is a delimeter, read just one character.                */
+/*      If this is a delimiter, read just one character.                */
 /* -------------------------------------------------------------------- */
     if( *pszInput == '(' || *pszInput == ')' || *pszInput == ',' )
     {
         pszToken[0] = *pszInput;
         pszToken[1] = '\0';
-        
+
         pszInput++;
     }
 
@@ -428,9 +428,9 @@ const char * OGRWktReadPoints( const char * pszInput,
         {
             pszInput = OGRWktReadToken( pszInput, szDelim );
         }
-        
+
 /* -------------------------------------------------------------------- */
-/*      Read next delimeter ... it should be a comma if there are       */
+/*      Read next delimiter ... it should be a comma if there are       */
 /*      more points.                                                    */
 /* -------------------------------------------------------------------- */
         if( szDelim[0] != ')' && szDelim[0] != ',' )
@@ -441,7 +441,7 @@ const char * OGRWktReadPoints( const char * pszInput,
                       szDelim, pszInput, pszOrigInput );
             return NULL;
         }
-        
+
     } while( szDelim[0] == ',' );
 
     return pszInput;

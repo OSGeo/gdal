@@ -42,13 +42,13 @@ DDFSubfieldDefn::DDFSubfieldDefn()
 
 {
     pszName = NULL;
-    
+
     bIsVariable = TRUE;
     nFormatWidth = 0;
-    chFormatDelimeter = DDF_UNIT_TERMINATOR;
+    chFormatDelimeter = DDF_UNIT_TERMINATOR;  // TODO: Spelling delimeter.
     eBinaryFormat = NotBinary;
     eType = DDFString;
-    
+
     pszFormatString = CPLStrdup("");
 
     nMaxBufChars = 0;

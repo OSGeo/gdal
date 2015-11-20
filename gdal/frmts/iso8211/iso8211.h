@@ -356,7 +356,7 @@ private:
 /* -------------------------------------------------------------------- */
   int        bIsVariable;
   
-  char       chFormatDelimeter;
+  char       chFormatDelimeter;  // TODO: Spelling.
   int        nFormatWidth;
 
 /* -------------------------------------------------------------------- */
