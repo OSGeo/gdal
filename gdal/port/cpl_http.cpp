@@ -67,7 +67,8 @@ CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
 {
     CPLHTTPResult *psResult = (CPLHTTPResult *) reqInfo;
 
-    int  nNewSize = psResult->nDataLen + static_cast<int>(nmemb)*static_cast<int>(size) + 1;
+    int nBytesToWrite = static_cast<int>(nmemb)*static_cast<int>(size);
+    int nNewSize = psResult->nDataLen + nBytesToWrite + 1;
     if( nNewSize > psResult->nDataAlloc )
     {
         psResult->nDataAlloc = (int) (nNewSize * 1.25 + 100);
@@ -85,10 +86,9 @@ CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
         psResult->pabyData = pabyNewData;
     }
 
-    memcpy( psResult->pabyData + psResult->nDataLen, buffer,
-            nmemb * size );
+    memcpy( psResult->pabyData + psResult->nDataLen, buffer, nBytesToWrite );
 
-    psResult->nDataLen += nmemb * size;
+    psResult->nDataLen += nBytesToWrite;
     psResult->pabyData[psResult->nDataLen] = 0;
 
     return nmemb;
