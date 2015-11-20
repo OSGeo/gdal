@@ -8577,7 +8577,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /* -------------------------------------------------------------------- */
 /*	Write out projection definition.				*/
 /* -------------------------------------------------------------------- */
-    if( pszProjection != NULL && !EQUAL( pszProjection, "" )
+    const bool bHasProjection = (pszProjection != NULL && strlen(pszProjection) > 0);
+    if( (bHasProjection || bPixelIsPoint)
         && !EQUAL(osProfile,"BASELINE") )
     {
         GTIF	*psGTIF;
@@ -8591,7 +8592,10 @@ void GTiffDataset::WriteGeoTIFFInfo()
         psGTIF = GTIFNew( hTIFF );  
 
         // set according to coordinate system.
-        GTIFSetFromOGISDefnEx( psGTIF, pszProjection, eGeoTIFFKeysFlavor );
+        if( bHasProjection )
+        {
+            GTIFSetFromOGISDefnEx( psGTIF, pszProjection, eGeoTIFFKeysFlavor );
+        }
 
         if( bPixelIsPoint )
         {
@@ -13475,16 +13479,19 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Write the projection information, if possible.                  */
 /* -------------------------------------------------------------------- */
-    if( pszProjection != NULL && strlen(pszProjection) > 0 && bGeoTIFF )
+    const bool bHasProjection = (pszProjection != NULL && strlen(pszProjection) > 0);
+    if( (bHasProjection || bPixelIsPoint) && bGeoTIFF )
     {
         GTIF	*psGTIF;
 
         psGTIF = GTIFNew( hTIFF );
-        GTIFSetFromOGISDefnEx( psGTIF, pszProjection, GetGTIFFKeysFlavor(papszOptions) );
 
-        if( poSrcDS->GetMetadataItem( GDALMD_AREA_OR_POINT ) 
-            && EQUAL(poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT),
-                     GDALMD_AOP_POINT) )
+        if( bHasProjection )
+        {
+            GTIFSetFromOGISDefnEx( psGTIF, pszProjection, GetGTIFFKeysFlavor(papszOptions) );
+        }
+
+        if( bPixelIsPoint )
         {
             GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
                        RasterPixelIsPoint);
