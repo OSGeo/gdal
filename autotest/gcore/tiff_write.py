@@ -6215,6 +6215,40 @@ def tiff_write_141():
 
 
 ###############################################################################
+# Test PixelIsPoint without SRS (#6225)
+
+def tiff_write_142():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_142.tif', 1, 1)
+    ds.SetMetadataItem( 'AREA_OR_POINT', 'Point' )
+    ds.SetGeoTransform( [10, 1, 0, 100, 0, -1] )
+    ds = None
+
+    src_ds = gdal.Open('/vsimem/tiff_write_142.tif')
+    gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_142_2.tif', src_ds)
+    src_ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_142_2.tif')
+    gt = ds.GetGeoTransform()
+    md = ds.GetMetadataItem( 'AREA_OR_POINT' )
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_142.tif')
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_142_2.tif')
+
+    gt_expected = (10, 1, 0, 100, 0, -1)
+    if gt != gt_expected:
+        print(gt)
+        gdaltest.post_reason( 'did not get expected geotransform' )
+        return 'fail'
+
+    if md != 'Point':
+        gdaltest.post_reason( 'did not get expected AREA_OR_POINT value' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6388,6 +6422,7 @@ gdaltest_list = [
     tiff_write_139,
     tiff_write_140,
     tiff_write_141,
+    tiff_write_142,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
