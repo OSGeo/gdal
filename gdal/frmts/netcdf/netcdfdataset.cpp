@@ -3400,7 +3400,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "creating geographic file without lon/lat values!");
             if ( bSetGeoTransform ) {
-                bWriteGDALTags = true; // Not desireable if no geotransform.
+                bWriteGDALTags = true; // Not desirable if no geotransform.
                 bWriteGeoTransform = true;
             }
         }
