@@ -149,6 +149,76 @@ enum OGRSpatialiteGeomType
 };
 
 /************************************************************************/
+/*      Sqlite3 Database Container Types supported                                    */
+/*      - OGRSQLiteDataSource::Open:                                                                */
+/*      - should determin which type (and possible version)                                  */
+/*      - store this value in  OGRSpatialiteLayer                                          */
+/*      - with switch on this value,  OGRSpatialiteLayer should deal with   */
+/*         Layer-Type and verson specific tasks                                                     */
+/*  Note: Rasterlite2_Tables and SpatialTopology_Tables:                        */
+/* - are treated as SpatialTable_4                                            */
+/* -- but their Administration TABLES/VIEWS will not be listed              */
+/* -- as Geometry-Tables in  OGRSQLiteDataSource::Open             */
+/************************************************************************/
+enum OGRSQLiteDatabaseType
+{
+    OSDBT_Unknown = 0,
+    OSDBT_OGRSpatialTable = 1,
+    OSDBT_SpatialTable_2 = 11,
+    OSDBT_SpatialTable_3 = 12,
+    OSDBT_SpatialTable_4 = 13,
+    OSDBT_Rasterlite1_Tables = 91,
+     /* admin tables for RasterLite2-Rasters, otherwise OSVLT_SpatialTable_4 */
+    OSDBT_Rasterlite2_Tables = 101,
+    OSDBT_SpatialTopology_Tables = 201,
+    OSDBT_SpatialTopology_Networks = 203,
+    OSDBT_GeoPackage_Tables = 301,
+    /* if one day directly supported, View/Table logic is different*/
+    OSDBT_MBTiles_Views = 400,
+    OSDBT_MBTiles_Tables = 401,
+};
+/************************************************************************/
+/*      OGR and SpatiaLite Layer Types supported                                    */
+/*      - OGRSQLiteDataSource::Open:                                                                */
+/*      - should determin which type (and possible version)                                  */
+/*      - store this value in  OGRSpatialiteLayer                                          */
+/*      - with switch on this value,  OGRSpatialiteLayer should deal with   */
+/*         Layer-Type and verson specific tasks                                                     */
+/*  Note: Rasterlite2_Tables and SpatialTopology_Tables/Views:                */
+/* - will be delt with in extra Administration classes                        */
+/************************************************************************/
+enum OGRSpatialiteLayerType
+{
+    OSLLT_Unknown = 0,
+    OSLLT_OGRSpatialTable = 1,
+    OSLLT_OGRSpatialView = 2,
+    OSLLT_OGRVirtualTable = 3,    
+    OSLLT_SpatialTable_2 = 11,
+    OSLLT_SpatialTable_3 = 12,
+    OSLLT_SpatialTable_4 = 13,
+    OSLLT_SpatialView_2 = 14,
+    OSLLT_SpatialView_3 = 15,
+    OSLLT_SpatialView_4 =16,
+    OSLLT_SpatialVirtualShape_2=20,
+    OSLLT_SpatialVirtualShape_3=21,
+    OSLLT_SpatialVirtualShape_4=22,
+    OSLLT_SpatialVirtualXL_3=30,
+    OSLLT_SpatialVirtualXL_4=31,
+    OSLLT_Rasterlite1_Raster = 90,
+    /* admin tables for RasterLite1-Rasters, otherwise treated as OSLLT_SpatialTable_3 */
+    OSLLT_Rasterlite1_Table = 91,
+    OSLLT_Rasterlite2_Raster = 100,
+    /* admin tables for RasterLite2-Rasters, otherwise  treated as OSLLT_SpatialTable_4 */
+    OSLLT_Rasterlite2_Table = 101,
+    /* admin tables for Spatialite-Topologies, otherwise  treated as OSLLT_SpatialTable_4 */
+    OSLLT_SpatialTopology_Table= 201,
+    /* admin tables for Spatialite-Topologies, otherwise  treated as OSLLT_SpatialView_4 */
+    OSLLT_SpatialTopology_View = 202,
+    /* admin tables for Spatialite-Topologies, otherwise  treated as OSLLT_SpatialTable_4 */
+    OSLLT_SpatialTopology_Network = 203,
+};
+
+/************************************************************************/
 /*                        OGRSQLiteGeomFieldDefn                        */
 /************************************************************************/
 
@@ -281,7 +351,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
   public:
                         OGRSQLiteLayer();
     virtual             ~OGRSQLiteLayer();
-
+    static OGRSQLiteDatabaseType GetSQLiteDatabaseType(OGRSQLiteDataSource *poDS);
     virtual void        Finalize();
 
     virtual void        ResetReading();
@@ -322,11 +392,12 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 };
 
 /************************************************************************/
-/*                         OGRSQLiteTableLayer                          */
+/*                         OGRSpatialiteLayer                          */
 /************************************************************************/
-
-class OGRSQLiteTableLayer : public OGRSQLiteLayer
+class OGRSpatialiteLayer : public OGRSQLiteLayer
 {
+  protected:
+    OGRSpatialiteLayerType eSpatialiteLayerType;
     int                 bLaunderColumnNames;
     int                 bSpatialite2D;
 
@@ -336,11 +407,24 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     char               *pszTableName;
     char               *pszEscapedTableName;
+    char               *pszEscapedUnderlyingTableName;
+    virtual const char     *GetGeometryTable(){return pszEscapedTableName;};
+    // for normal tables '_rowid_' can be used
+    // - for SpatialViews: the primary key of the view - as defined in  views_geometry_columns must be used
+    virtual const char     *GetEscapedRowId() {return "_rowid_";};
+    CPLString           osUnderlyingTableName;
+    CPLString           osUnderlyingGeometryColumn;
+    int                 bHasCheckedSpatialIndexTable;
+
+    OGRSQLiteGeomFormat eGeomFormat;
+    CPLString           osGeomColumn;
+    int                 bHasSpatialIndex;
 
     int                 bLayerDefnError;
 
     sqlite3_stmt       *hInsertStmt;
     CPLString           osLastInsertStmt;
+    int                 bHasDefaultValue;
 
     int                 bHasCheckedTriggers;
 
@@ -349,11 +433,15 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     void                BuildWhere(void);
 
     virtual OGRErr      ResetStatement();
+    // added for SpatialView - writable
+    int                 bTriggerInsert;
+    int                 bTriggerUpdate;
+    int                 bTriggerDelete;
 
     OGRErr              RecomputeOrdinals();
 
     OGRErr              AddColumnAncientMethod( OGRFieldDefn& oField);
-    void                AddColumnDef(char* pszNewFieldList,
+     void                AddColumnDef(char* pszNewFieldList,
                                      OGRFieldDefn* poFldDefn);
 
     void                InitFieldListForRecrerate(char* & pszNewFieldList,
@@ -382,16 +470,20 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     OGRErr              RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeomField,
                                               int bAddColumnsForNonSpatialite );
 
-    char               *pszCreationGeomFormat;
-    int                 iFIDAsRegularColumnIndex;
+    char               *pszCreationGeomFormat;    
+    int                 iFIDAsRegularColumnIndex; 
+    int                 IsViewLayer();
 
   public:
-                        OGRSQLiteTableLayer( OGRSQLiteDataSource * );
-                        ~OGRSQLiteTableLayer();
+                        OGRSpatialiteLayer();
+                        ~OGRSpatialiteLayer();
 
     CPLErr              Initialize( const char *pszTableName, 
-                                    int bIsVirtualShapeIn,
-                                    int bDeferredCreation);
+                                    OGRSpatialiteLayerType eSpatialiteLayerType,
+                                    int bDeferredCreation = FALSE );
+    static OGRSpatialiteLayerType GetSpatialiteLayerType(OGRSQLiteDataSource *poDS,
+                                        const char *pszTableName=NULL, 
+                                        OGRSQLiteDatabaseType eDatabaseType=OSDBT_Unknown);
     void                SetCreationParameters( const char *pszFIDColumnName,
                                                OGRwkbGeometryType eGeomType,
                                                const char *pszGeomFormat,
@@ -452,8 +544,6 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     virtual void        InvalidateCachedFeatureCountAndExtent();
 
-    virtual int          IsTableLayer() { return TRUE; }
-
     virtual int          HasSpatialIndex(int iGeomField);
     virtual int          HasFastSpatialFilter(int iGeomCol);
     virtual CPLString    GetSpatialWhere(int iGeomCol,
@@ -463,68 +553,35 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 };
 
 /************************************************************************/
-/*                         OGRSQLiteViewLayer                           */
+/*                         OGRSpatialiteTableLayer                          */
 /************************************************************************/
 
-class OGRSQLiteViewLayer : public OGRSQLiteLayer
+class OGRSpatialiteTableLayer : public OGRSpatialiteLayer
 {
-    CPLString           osWHERE;
-    CPLString           osQuery;
-    int                 bHasCheckedSpatialIndexTable;
-
-    OGRSQLiteGeomFormat eGeomFormat;
-    CPLString           osGeomColumn;
-    int                 bHasSpatialIndex;
-
-    char               *pszViewName;
-    char               *pszEscapedTableName;
-    char               *pszEscapedUnderlyingTableName;
-
-    int                 bLayerDefnError;
-
-    CPLString           osUnderlyingTableName;
-    CPLString           osUnderlyingGeometryColumn;
-
-    OGRSQLiteLayer     *poUnderlyingLayer;
-    OGRSQLiteLayer     *GetUnderlyingLayer();
-
-    void                BuildWhere(void);
-
-    virtual OGRErr      ResetStatement();
-
-    CPLErr              EstablishFeatureDefn();
-
   public:
-                        OGRSQLiteViewLayer( OGRSQLiteDataSource * );
-                        ~OGRSQLiteViewLayer();
+                        OGRSpatialiteTableLayer( OGRSQLiteDataSource * );
+                        ~OGRSpatialiteTableLayer();
+                        
+    CPLErr              Initialize( const char *pszTableName, 
+                                    OGRSpatialiteLayerType eSpatialiteLayerType,
+                                    int bDeferredCreation = FALSE );      
+    virtual int          IsTableLayer() { return TRUE; }                              
+};
 
-    virtual const char* GetName() { return pszViewName; }
-    virtual OGRwkbGeometryType GetGeomType();
-
-    CPLErr              Initialize( const char *pszViewName,
-                                    const char *pszViewGeometry,
-                                    const char *pszViewRowid,
-                                    const char *pszTableName,
-                                    const char *pszGeometryColumn);
-
-    virtual OGRFeatureDefn *GetLayerDefn();
-    int                 HasLayerDefnError() { GetLayerDefn(); return bLayerDefnError; }
-
-    virtual OGRFeature *GetNextFeature();
-    virtual GIntBig     GetFeatureCount( int );
-
-    virtual void        SetSpatialFilter( OGRGeometry * );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
-                { OGRSQLiteLayer::SetSpatialFilter(iGeomField, poGeom); }
-    virtual OGRErr      SetAttributeFilter( const char * );
-
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-
-    virtual int         TestCapability( const char * );
-
-    virtual int          HasSpatialIndex(CPL_UNUSED int iGeomField) { return bHasSpatialIndex; }
-    virtual CPLString    GetSpatialWhere(int iGeomCol,
-                                         OGRGeometry* poFilterGeom);
+/************************************************************************/
+/*                         OGRSpatialViewLayer                           */
+/************************************************************************/
+class OGRSpatialiteViewLayer : public OGRSpatialiteLayer
+{
+    virtual const char     *GetGeometryTable();
+    virtual const char     *GetEscapedRowId();
+  public:
+                        OGRSpatialiteViewLayer( OGRSQLiteDataSource * );
+                        ~OGRSpatialiteViewLayer();
+  
+    CPLErr              Initialize( const char *pszViewName, 
+                                    OGRSpatialiteLayerType eSpatialiteLayerType,
+                                    int bDeferredCreation = FALSE );
 };
 
 /************************************************************************/
@@ -761,7 +818,7 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
 
     int                 InitWithEPSG();
 
-    int                 OpenVirtualTable(const char* pszName, const char* pszSQL);
+    int                 OpenVirtualTable(const char* pszName,OGRSpatialiteLayerType eSpatialiteLayerTypeTable, const char* pszSQL);
 
     GIntBig             nFileTimestamp;
     int                 bLastSQLCommandIsUpdateLayerStatistics;
@@ -769,6 +826,7 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     std::map< CPLString, std::set<CPLString> > aoMapTableToSetOfGeomCols;
 
     void                SaveStatistics();
+    OGRSQLiteDatabaseType eDatabaseType;
 
   public:
                         OGRSQLiteDataSource();
@@ -776,14 +834,13 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
 
     int                 Open( const char *, int bUpdateIn, char** papszOpenOptions );
     int                 Create( const char *, char **papszOptions );
-
+    
     int                 OpenTable( const char *pszTableName, 
-                                   int bIsVirtualShapeIn = FALSE );
-    int                  OpenView( const char *pszViewName,
-                                   const char *pszViewGeometry,
-                                   const char *pszViewRowid,
-                                   const char *pszTableName,
-                                   const char *pszGeometryColumn);
+                                   OGRSpatialiteLayerType eSpatialiteLayerTypeTable = OSLLT_OGRSpatialTable);
+    int                 OpenView( const char *pszViewName, 
+                                   OGRSpatialiteLayerType eSpatialiteLayerTypeView = OSLLT_OGRSpatialView);    
+                                  
+   OGRSQLiteDatabaseType  GetDatabaseType() const { return eDatabaseType; }
 
     virtual int         GetLayerCount() { return nLayers; }
     virtual OGRLayer   *GetLayer( int );

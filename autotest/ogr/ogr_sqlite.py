@@ -2030,6 +2030,256 @@ def ogr_spatialite_6():
     return 'success'
 
 ###############################################################################
+# Test spatialite spatial views - writable -  #5582: SpatialView - writable
+
+def ogr_spatialite_views_writable():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    if gdaltest.spatialite_version.find('2.3') == 0:
+        return 'skip'
+
+    try:
+        os.remove('tmp/spatialite_views_writable.sqlite')
+    except:
+        pass
+    print('\n-I-> CREATEing db(%s)' % ('tmp/spatialite_views_writable.sqlite'))
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/spatialite_views_writable.sqlite', options = ['SPATIALITE=YES'])
+    # What is the difference between 'layername' and 'layername_single' [i.e why the single]?
+    if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) >= 4:
+        layername = 'positions'
+        layername_single = 'positions'
+        viewname_1925 = 'positions_1925'
+        viewname_1925_single = 'positions_1925'
+        viewname_1950 = 'positions_1950'
+        viewname_1950_single = 'positions_1950'
+        thegeom_single = 'wsg84_center'
+        pkid_single = 'id_admin'
+        name = 'name'
+        notes = 'notes'
+        valid_since = 'valid_since'
+        valid_until = 'valid_until'
+    else:
+        layername = 'positions'
+        layername_single = 'positions'
+        viewname_1925 = 'positions_"''1900'
+        viewname_1925_single = 'positions_"''1900'
+        viewname_1950 = 'positions_"''1950'
+        viewname_1950_single = 'positions_"''1950'
+        thegeom_single = 'wsg84_"''center'
+        pkid_single = 'id_"''admin'
+        name = 'name'
+        notes = 'notes'
+        valid_since = 'valid_"''since'
+        valid_until = 'valid_"''until'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4326 )  
+    # Create regular layer
+    print('-I-> CREATEing TABLE(%s)' % (layername))
+    ds.ExecuteSQL( "CREATE TABLE positions (id_admin INTEGER  PRIMARY KEY AUTOINCREMENT,name TEXT, notes TEXT,valid_since DATE DEFAULT '0001-01-01',valid_until DATE DEFAULT '3000-01-01');")
+    lyr_positions = ds.GetLayerByName(layername)
+    # lyr_positions = ds.CreateLayer(layername, geom_type = ogr.wkbNone)
+    # how to get 'id_admin' to be PK with autoincrecement?
+    # lyr_positions.CreateField(ogr.FieldDefn("id_admin", ogr.OFTInteger))
+    # lyr_positions.CreateField(ogr.FieldDefn("name", ogr.OFTString))
+    # lyr_positions.CreateField(ogr.FieldDefn("notes", ogr.OFTString))
+    # lyr_positions.CreateField(ogr.FieldDefn("valid_since", ogr.OFTDate))
+    # lyr_positions.CreateField(ogr.FieldDefn("valid_until", ogr.OFTDate))
+    fld = ogr.GeomFieldDefn(thegeom_single, ogr.wkbPoint)
+    fld.SetSpatialRef(srs)
+    lyr_positions.CreateGeomField(fld)  
+    # INSERT INTO positions (name,notes,valid_since,valid_until, wsg84_center) VALUES ('Brandenburger Tor','Pariser Platz','1791-08-06','3000-01-01',GeomFromText('POINT(13.3777045509583 52.51627039900002)',4326));
+    feat = ogr.Feature(lyr_positions.GetLayerDefn())
+    feat.SetField('name', 'Brandenburger Tor (Quadriga)')
+    feat.SetField('notes', 'Pariser Platz')
+    feat.SetField('valid_since', '1791-08-06')
+    feat.SetField('valid_until', '3000-01-01')
+    wsg84_center = ogr.CreateGeometryFromWkt('POINT(13.3777045509583 52.51627039900002)')
+    feat.SetGeometryDirectly(wsg84_center)
+    print('-I-> INSERTing POINT into TABLE(%s)' % (layername))
+    lyr_positions.CreateFeature(feat)
+    # Create spatial view
+    # CREATE VIEW IF NOT EXISTS positions_1925 AS
+    #  SELECT * FROM positions WHERE ('1925-01-01' BETWEEN valid_since AND valid_until);
+    print('-I-> CREATEing VIEW(%s) - writable [only INSERT]' % (viewname_1925))
+    ds.ExecuteSQL("CREATE VIEW \"%s\" AS SELECT * FROM  \"%s\"  WHERE ('1925-01-01' BETWEEN %s AND %s)" % (viewname_1925, layername, valid_since, valid_until))
+    print('-I-> INSERTing VIEW(%s) into ''views_geometry_columns''' % (viewname_1925))
+    if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) >= 4:
+        ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column, read_only) VALUES " + \
+                    "('%s', '%s', '%s', '%s', Lower('%s'), 0)" % (viewname_1925_single, thegeom_single, pkid_single, layername_single, thegeom_single))
+    else:
+        ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
+                    "('%s', '%s', '%s', '%s', '%s')" % (viewname_1925_single, thegeom_single, pkid_single, layername_single, thegeom_single))
+    # create INSERT TRIGGER for view 'positions_1925' - no UPDATE or DELETE TRIGGERs for this VIEW will be created
+    print('-I-> CREATEing TRIGGER(vw_ins_%s) - [INSERT]' % (viewname_1925))
+    create_trigger_insert="CREATE TRIGGER vw_ins_positions_1925"
+    create_trigger_insert+=" INSTEAD OF INSERT ON positions_1925 "
+    create_trigger_insert+="BEGIN"
+    create_trigger_insert+=" INSERT OR REPLACE INTO positions"
+    create_trigger_insert+="  (id_admin,name,notes,valid_since,valid_until,wsg84_center)"
+    create_trigger_insert+="  VALUES(NEW.id_admin,NEW.name,NEW.notes,NEW.valid_since,NEW.valid_until,NEW.wsg84_center);"
+    create_trigger_insert+="END;"
+    ds.ExecuteSQL(create_trigger_insert)
+    print('-I-> CREATEing VIEW(%s) - writable [INSERT, UPDATE and DELETE]' % (viewname_1950))
+    ds.ExecuteSQL("CREATE VIEW \"%s\" AS SELECT * FROM  \"%s\"  WHERE ('1950-01-01' BETWEEN %s AND %s)" % (viewname_1950, layername, valid_since, valid_until))
+    print('-I-> INSERTing VIEW(%s) into ''views_geometry_columns''' % (viewname_1950))
+    if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) >= 4:
+        ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column, read_only) VALUES " + \
+                    "('%s', '%s', '%s', '%s', Lower('%s'), 0)" % (viewname_1950_single, thegeom_single, pkid_single, layername_single, thegeom_single))
+    else:
+        ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
+                    "('%s', '%s', '%s', '%s', '%s')" % (viewname_1950_single, thegeom_single, pkid_single, layername_single, thegeom_single))
+    # create INSERT,UPDATE and DELETE TRIGGERs for view 'positions_1950'
+    print('-I-> CREATEing TRIGGER(vw_ins_%s) - [INSERT]' % (viewname_1950))
+    ds.ExecuteSQL(create_trigger_insert.replace(viewname_1925,viewname_1950))
+    create_trigger_update="CREATE TRIGGER vw_upd_positions_1950"
+    create_trigger_update+=" INSTEAD OF UPDATE OF"
+    create_trigger_update+=" name,notes,valid_since,valid_until,wsg84_center"
+    create_trigger_update+=" ON positions_1950 "
+    create_trigger_update+="BEGIN"
+    create_trigger_update+=" UPDATE positions"
+    create_trigger_update+=" SET"
+    create_trigger_update+="  name = NEW.name,"
+    create_trigger_update+="  notes = NEW.notes,"
+    create_trigger_update+="  valid_since = NEW.valid_since, "
+    create_trigger_update+="  valid_until = NEW.valid_until, "
+    create_trigger_update+="  wsg84_center = NEW.wsg84_center"
+    # -- the primary key known to the view ḿust be used !
+    create_trigger_update+=" WHERE id_admin = OLD.id_admin; "
+    create_trigger_update+="END;"
+    print('-I-> CREATEing TRIGGER(vw_upd_%s) - [UPDATE]' % (viewname_1950))
+    ds.ExecuteSQL(create_trigger_update)
+    create_trigger_delete="CREATE TRIGGER vw_del_positions_1950"
+    create_trigger_delete+=" INSTEAD OF DELETE ON positions_1950 "
+    create_trigger_delete+="BEGIN"
+    create_trigger_delete+=" DELETE FROM positions WHERE id_admin = OLD.id_admin; "
+    create_trigger_delete+="END;"
+    print('-I-> CREATEing TRIGGER(vw_del_%s) - [DELETE]' % (viewname_1950))
+    ds.ExecuteSQL(create_trigger_delete)
+    ds = None    
+    # Test spatial view
+    # ERROR 6: CreateFeature : unsupported operation on a read-only datasource. [OGRSQLiteVectorLayer::ICreateFeature - if (!poDS->GetUpdate())]
+    # - caused by missing ' update = 1'
+    ds = ogr.Open('tmp/spatialite_views_writable.sqlite', update = 1 )
+    print('-I-> TestCapability(%s) - [INSERT=True, UPDATE=False and DELETE=False]' % (viewname_1925))
+    lyr_positions = ds.GetLayerByName(layername)
+    lyr_positions_1925 = ds.GetLayerByName(viewname_1925)
+    if lyr_positions_1925.TestCapability(ogr.OLCFastFeatureCount) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed VIEW[%s]' % (viewname_1925))
+        return 'fail'
+     # mj10777: HasSpatialIndex() : will be looking if the View has a SpatialIndex - must be adapted to look at the Underlining Table
+    if lyr_positions_1925.TestCapability(ogr.OLCFastSpatialFilter) != False:
+        gdaltest.post_reason('OLCFastSpatialFilter failed VIEW[%s]' % (viewname_1925))
+        return 'fail'
+    if lyr_positions_1925.TestCapability(ogr.OLCSequentialWrite) != True:
+        gdaltest.post_reason('OLCSequentialWrite [INSERT] failed VIEW[%s]  - should be possible' % (viewname_1925))
+        return 'fail'
+    if lyr_positions_1925.TestCapability(ogr.OLCRandomWrite) != False:
+        gdaltest.post_reason('OLCRandomWrite [UPDATE] failed VIEW[%s] - should not be possible' % (viewname_1925))
+        return 'fail'
+    if lyr_positions_1925.TestCapability(ogr.OLCDeleteFeature) != False:
+        gdaltest.post_reason('OLCRandomWrite [DELETE] failed VIEW[%s]  - should not be possible' % (viewname_1925))
+        return 'fail'
+    print('-I-> TestCapability(%s) - [INSERT=True, UPDATE=True and DELETE=True]' % (viewname_1950))
+    lyr_positions_1950 = ds.GetLayerByName(viewname_1950)
+    if lyr_positions_1950.TestCapability(ogr.OLCFastFeatureCount) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed VIEW[%s]' % (viewname_1950))
+        return 'fail'
+    # mj10777: HasSpatialIndex() : will be looking if the View has a SpatialIndex - must be adapted to look at the Underlining Table
+    if lyr_positions_1950.TestCapability(ogr.OLCFastSpatialFilter) != False:
+        gdaltest.post_reason('OLCFastSpatialFilter failed VIEW[%s]' % (viewname_1950))
+        return 'fail'
+    if lyr_positions_1950.TestCapability(ogr.OLCSequentialWrite) != True:
+        gdaltest.post_reason('OLCSequentialWrite [INSERT] failed VIEW[%s]  - should be possible' % (viewname_1950))
+        return 'fail'
+    if lyr_positions_1950.TestCapability(ogr.OLCRandomWrite) != True:
+        gdaltest.post_reason('OLCRandomWrite [UPDATE] failed VIEW[%s]  - should be possible' % (viewname_1950))
+        return 'fail'
+    if lyr_positions_1950.TestCapability(ogr.OLCDeleteFeature) != True:
+        gdaltest.post_reason('OLCRandomWrite [DELETE] failed VIEW[%s]  - should be possible' % (viewname_1950))
+        return 'fail'
+    print('-I-> INSERTing into VIEWs with INSERT TRIGGER [%s,%s]' % (viewname_1925,viewname_1950))
+    feat = ogr.Feature(lyr_positions_1925.GetLayerDefn())
+    # INSERT INTO positions_1925 (name,notes,valid_since,valid_until, wsg84_center) VALUES ('Siegessäule','Königs Platz','1873-09-02','1938-12-31',GeomFromText('POINT(13.37217053204385 52.51855407940274)',4326));
+    feat.SetField('name', 'Siegessäule')
+    feat.SetField('notes', 'Königs Platz')
+    feat.SetField('valid_since', '1873-09-02')
+    feat.SetField('valid_until', '1938-12-31')
+    wsg84_center = ogr.CreateGeometryFromWkt('POINT(13.37217053204385 52.51855407940274)')
+    feat.SetGeometryDirectly(wsg84_center)
+    print('-I-> INSERTing POINT into VIEW(%s) - valid_until=1938' % (viewname_1925))
+    lyr_positions_1925.CreateFeature(feat)
+    # INSERT INTO positions_1950 (name,notes,valid_since,valid_until, wsg84_center) VALUES ('Siegessäule','Große Stern','1939-01-01','3000-01-01',GeomFromText('POINT(13.350082397827691 52.514520477567764)',4326));
+    feat = ogr.Feature(lyr_positions_1950.GetLayerDefn())
+    feat.SetField('name', 'Siegessäule')
+    feat.SetField('notes', 'Große Stern')
+    feat.SetField('valid_since', '1939-01-01')
+    feat.SetField('valid_until', '3000-01-01')
+    wsg84_center = ogr.CreateGeometryFromWkt('POINT(13.350082397827691 52.514520477567764)')
+    feat.SetGeometryDirectly(wsg84_center)
+    print('-I-> INSERTing POINT into VIEW(%s) - valid_since=1939' % (viewname_1950))
+    lyr_positions_1950.CreateFeature(feat)
+    if lyr_positions.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 3 for TABLE[%s]' % (lyr_positions.GetFeatureCount(), layername))
+        return 'fail'
+    if lyr_positions_1925.GetFeatureCount() != 2:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 2 for VIEW[%s]' % (lyr_positions_1925.GetFeatureCount(), viewname_1925))
+        return 'fail'
+    if lyr_positions_1950.GetFeatureCount() != 2:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 2 for VIEW[%s]' % (lyr_positions_1950.GetFeatureCount(), viewname_1950))
+        return 'fail'  
+    print('-I-> Testing EXTENT of TABLE and VIEWs [%s,%s,%s]' % (layername, viewname_1925,viewname_1950))
+    extent_positions = lyr_positions.GetExtent()
+    if extent_positions != (13.350082397827691, 13.3777045509583, 52.514520477567764, 52.51855407940274):
+        gdaltest.post_reason('got bad extent [%s]'  % (layername))
+        print(extent_positions)
+        return 'fail'     
+    extent_positions_1925 = lyr_positions_1925.GetExtent()
+    if extent_positions_1925 != (13.37217053204385, 13.3777045509583, 52.51627039900002, 52.51855407940274):
+        gdaltest.post_reason('got bad extent [%s]'  % (viewname_1925))
+        print(extent_positions_1925)
+        return 'fail' 
+    extent_positions_1950 = lyr_positions_1950.GetExtent()
+    if extent_positions_1950 != (13.350082397827691, 13.3777045509583, 52.514520477567764, 52.51627039900002):
+        gdaltest.post_reason('got bad extent [%s]'  % (viewname_1950))
+        print(extent_positions_1950)
+        return 'fail' 
+    # SELECT DateTime('now'),'DISTINCT name and notes('||count(DISTINCT name||notes)||') positions('||count(DISTINCT wsg84_center)||') from positions'  AS distinct_results  FROM positions;
+    sql_lyr_positions = ds.ExecuteSQL( 'SELECT DISTINCT wsg84_center FROM  positions' )
+    if sql_lyr_positions.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 3 DISTINT POINTS from [%s]' % sql_lyr_positions.GetFeatureCount(), layername)
+        return 'fail'
+    print('-I-> UPDATEing in a VIEW with UPDATE TRIGGER [%s]' % (viewname_1950))
+    lyr_positions_1950.StartTransaction()
+    sql_positions_1950="UPDATE positions_1950 SET wsg84_center=("
+    sql_positions_1950+="SELECT wsg84_center FROM positions_1925 WHERE (name = 'Siegessäule')),notes=("
+    sql_positions_1950+="SELECT notes FROM positions_1925 WHERE (name = 'Siegessäule')) WHERE (name = 'Siegessäule');"
+    ds.ExecuteSQL(sql_positions_1950)
+    sql_lyr_positions_update = ds.ExecuteSQL( 'SELECT DISTINCT wsg84_center FROM  positions' )
+    # if the amount of DISTINCT geometries are now 2, instead of 3 - then the UPDATE was succesfull
+    if sql_lyr_positions_update.GetFeatureCount() != 2:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 2 DISTINT POINTS from [%s] after UPDATE of [%s]' % sql_lyr_positions.GetFeatureCount(), layername,viewname_1950)
+        return 'fail'
+    print('-I-> DELETEing in a VIEW with DELETE TRIGGER [%s]' % (viewname_1950))
+    sql_positions_1950="DELETE FROM positions_1950  WHERE (name = 'Siegessäule');"
+    ds.ExecuteSQL(sql_positions_1950)
+    if lyr_positions.GetFeatureCount() != 2:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 2 for TABLE[%s]' % (lyr_positions.GetFeatureCount(), layername))
+        return 'fail'
+    if lyr_positions_1925.GetFeatureCount() != 2:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 2 for VIEW[%s]' % (lyr_positions_1925.GetFeatureCount(), viewname_1925))
+        return 'fail'
+    if lyr_positions_1950.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1 for VIEW[%s]' % (lyr_positions_1950.GetFeatureCount(), viewname_1950))
+        return 'fail'
+    lyr_positions_1950.RollbackTransaction()
+    
+    ds = None
+    return 'success'
+    
+###############################################################################
 # Test VirtualShape:xxx.shp
 
 def ogr_spatialite_7():
@@ -3530,6 +3780,7 @@ gdaltest_list = [
     ogr_spatialite_5,
     ogr_spatialite_compressed_geom_5,
     ogr_spatialite_6,
+    ogr_spatialite_views_writable,
     ogr_spatialite_7,
     ogr_spatialite_8,
     ogr_sqlite_31,

@@ -1,6 +1,7 @@
 
 OBJ	=	ogrsqlitedriver.obj ogrsqlitedatasource.obj \
-		ogrsqlitelayer.obj ogrsqlitetablelayer.obj ogrsqliteviewlayer.obj  \
+		ogrsqlitelayer.obj ogrspatialitelayer.obj  \
+	 ogrspatialitetablelayer.obj ogrspatialiteviewlayer.obj  \
 		ogrsqliteselectlayer.obj ogrsqlitesinglefeaturelayer.obj \
 		ogrsqlitevfs.obj ogrsqlitevirtualogr.obj ogrsqliteexecutesql.obj
 

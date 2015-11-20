@@ -68,6 +68,189 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 Note: this is not true for Spatialite databases, since those geometry types
 are not supported by current Spatialite versions.</p>
 
+<a name="ogrspatialitelayer"></a>
+<h2>Writable SpatialViews with SpatiaLite library (Spatial extension for SQLite)</h2>
+<p>Starting with in GDAL OGR API 2.0, depending on the spatialite database-version being read, either the <b>views_geometry_columns</b> or <b>geometry_columns_auth</b> tables will be searched for writable views.<br>
+Should corresponding <b>TRIGGERS</b> be found, INSERT, UPDATE and DELETE functions can be performed on these views by applications using the OGR-API, such as QGIS.<br>
+</p>
+<hr>
+<ul>
+ <table border="1" style="width:95%">
+   <caption><b>Spatialite specific Version Information (versions 1.0a, 2.0, 2.1, 2,3.0 and 2.3.1 should not be supported)</b></caption>
+   <tr border="1">
+   <th border="1">Table-Name</th>
+   <th border="1">'TABLE', 'VIEW' or Column-Name</th>
+   <th border="1">from version</th>
+   <th border="1">to version</th>
+   <th border="1">comments</th>
+  </tr>
+  <tr>
+   <td>spatial_ref_sys</td>
+   <td>TABLE</td>
+   <td>2.0</td>
+   <td><center>present</center></td>
+   <td>until 2.3.0 had no srtext or srs_wkt</td>
+  </tr>
+  <tr>
+   <td>spatial_ref_sys</td>
+   <td><center><b>srs_wkt</b></center></td>
+   <td>2.4.0</td>
+   <td>3.0.1</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>spatial_ref_sys</td>
+   <td><center><b>srtext</b></center></td>
+   <td>4.0</td>
+   <td><center>present</center></td>
+   <td>and also version 2.3.1</td>
+  </tr>
+  <tr>
+   <td>geometry_columns</td>
+   <td>TABLE</td>
+   <td>2.0</td>
+   <td><center>present</center></td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>geometry_columns</td>
+   <td><center><b>type</b></center></td>
+   <td>2.0</td>
+   <td>3.0.1</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>geometry_columns</td>
+   <td><center><b>geometry_type</b></center></td>
+   <td>4.0</td>
+   <td><center>present</center></td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>geometry_columns_auth</td>
+   <td>TABLE</td>
+   <td>2.4</td>
+   <td><center>present</center></td>
+   <td>versions 1.0a-2.3.1 cannot be supported</td>
+  </tr>
+  <tr>
+   <td>geometry_columns_auth</td>
+   <td><center><b>read_only</b></center></td>
+   <td>2.4</td>
+   <td><center>present</center></td>
+   <td>status of the geometry of the TABLE [1=read-only, 0=writable]</td>
+  </tr>
+  <tr>
+  <td>layer_statistics</td>
+   <td>TABLE</td>
+   <td>3.0.0</td>
+   <td>3.0.1</td>
+   <td>SpatialTable, replaced with <b>geometry_columns_statistics</b></td>
+  </tr>
+  <tr>
+   <td>views_layer_statistics</td>
+   <td>TABLE</td>
+   <td>3.0.0</td>
+   <td>3.0.1</td>
+   <td>SpatialView, replaced with <b>views_geometry_columns_statistics</b></td>
+  </tr>
+  <tr>
+   <td>virts_layer_statistics</td>
+   <td>TABLE</td>
+   <td>3.0.0</td>
+   <td>3.0.1</td>
+   <td>VirtualShape, replaced with <b>virts_geometry_columns_statistics</b></td>
+  </tr>
+  <tr>
+   <td>geometry_columns_statistics</td>
+   <td>TABLE</td>
+   <td>4.0.0</td>
+   <td><center>present</center></td>
+   <td>read from VIEW <b>vector_layers_statistics</b> [layer_type='SpatialTable']</td>
+  </tr>
+  <tr>
+   <td>views_geometry_columns_statisticss</td>
+   <td>TABLE</td>
+   <td>4.0.0</td>
+   <td><center>present</center></td>
+   <td>read from VIEW <b>vector_layers_statistics</b> [layer_type='SpatialView']</td>
+  </tr>
+  <tr>
+   <td>virts_geometry_columns_statistics</td>
+   <td>TABLE</td>
+   <td>4.0.0</td>
+   <td><center>present</center></td>
+   <td>read from VIEW <b>vector_layers_statistics</b> [layer_type='VirtualShape']</td>
+  </tr>
+   <tr>
+   <td>vector_layers_statistics</td>
+   <td>VIEW</td>
+   <td>4.0.0</td>
+   <td><center>present</center></td>
+   <td>layer_type= <b>SpatialTable</b> | <b>SpatialTable</b>  | <b>VirtualShape</b></td>
+  </tr>
+  <tr>
+   <td>views_geometry_columns</td>
+   <td>TABLE</td>
+   <td>2.4</td>
+   <td><center>present</center></td>
+   <td>versions 1.0a-2.3.1 cannot be supported</td>
+  </tr>
+  <tr>
+   <td>views_geometry_columns</td>
+   <td><center><b>read_only</b></center></td>
+   <td>4.0</td>
+   <td><center>present</center></td>
+   <td>status of the geometry of the VIEW [1=read-only, 0=writable]</td>
+  </tr>
+  <tr>
+   <td>vector_layers</td>
+   <td>VIEW</td>
+   <td>4.0</td>
+   <td><center>present</center></td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>VirtualShape</td>
+   <td>VIRTUAL TABLE</td>
+   <td>1.0a</td>
+   <td><center>present</center></td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>VirtualXL</td>
+   <td>VIRTUAL TABLE</td>
+   <td>3.0</td>
+   <td><center>present</center></td>
+   <td>&nbsp;</td>
+  </tr>
+ </table>
+</ul>
+<b>Notes:</b>
+<ul>
+ <b>SpatialViews:</b>
+ <ul>
+  <b>versions &lt; 4.0:</b> 'geometry_columns_auth.read_only': will be used to determine if the view is writable or not<br>
+  <b>versions &ge; 4.0:</b> 'views_geometry_columns.read_only': will be used to determine if the view is writable or not<br>
+  <b>TRIGGER:</b> the existence of 'INSERT, UPDATE, DELETE' TRIGGERs will be checked<br>
+  <ul>Where no corresponding TRIGGER is found: 'writable' will be <b>ignored</b></ul>
+  <ul>The correctness of the TRIGGER functionality <b>CANNOT</b> be checked</ul>
+  <ul>Only a <b>properly</b> functioning TRIGGER, makes a view  <b>writable</b>!</ul>
+  <br>
+ </ul>
+ <b>Statistics:</b>
+ <ul>
+  <b>versions &lt; 3.0:</b> no statistics tables<br>
+  <ul>with 4.2.1-rc2 <b>UpdateLayerStatistics()</b> will CREATE the needed '*layer_statistics' tables TABLES and fill them</ul>
+  <b>versions &ge; 3.0 - &lt; 4.0:</b> '*layer_statistics' tables: for each layer type, where needed<br>
+ <ul>with 4.2.1-rc2 <b>UpdateLayerStatistics()</b> will UPDATE  the '*layer_statistics' tables</ul>
+  <b>>versions &ge; 4.0:</b>'*_geometry_columns_statistics' for each layer type with VIEW to collect for all layer types<br>
+  <ul>with 4.2.1-rc2 <b>UpdateLayerStatistics()</b> will UPDATE  '*_geometry_columns_statistics' tables</ul>
+  <br>
+ </ul>
+</ul>
+<hr>
+
 <h2>Tables with multiple geometry columns</h2>
 
 <p>

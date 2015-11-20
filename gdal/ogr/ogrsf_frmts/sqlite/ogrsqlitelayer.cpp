@@ -123,6 +123,155 @@ void OGRSQLiteLayer::Finalize()
     papszCompressedColumns = NULL;
 }
 
+/******************************************************************************/
+/*                          GetSQLiteDatabaseType                             */
+/*   the Goal of this function is to reliably determine :                     */
+/*   - which sqlite container is being read, possibly with sub-type            */
+/*   -- avoiding multiple functions spread around in other calles                       */
+/*   - to return a unique value if supported by gdal                                            */
+// --------------------------------------------------------------------------- 
+// 'geometry_columns': since spatialite-2.0 as TABLE                        
+// - [1.0a-2.3.1 should not be supported]                                               
+// 'geometry_columns.type' since 2.0 until 3.0.1                                  
+// 'geometry_columns.geometry_type' since 4.0.0                               
+// 'geometry_columns_auth': since spatialite-2.4 as TABLE             
+// - [1.0a-2.3.1 should not be supported]   until present                      
+// 'geometry_columns_auth.read_only': status of the geometry of the TABLE     
+// - [1=read-only, 0=writable]
+// 'spatial_ref_sys' 2.0 [up to 2.3.0 had no srtext]
+// 'spatial_ref_sys.srs_wkt': since 2.4.0 until 3.0.1
+// 'spatial_ref_sys.srtext': 2.3.1 AND since 4.0.0
+// 'views_geometry_columns' : since spatialite-2.4 as TABLE
+// 'views_geometry_columns.read_only' : 
+// - since spatialite-4.0, status of the geometry of the VIEW
+// -- [1=read-only, 0=writable]
+// 'vector_layers' : since spatialite-4.0 as VIEW
+// will be called by OGRSQLiteDataSource::Open once (pszTableName == NULL)
+// -  setting the basic DatabaseType
+//  also by OGRSQLiteDataSource::GetLayerByName 
+// and OGRSpatialiteLayer::GetSpatialiteLayerType
+// -- calls this for a Layer that has not been found. (pszTableName != NULL)
+/******************************************************************************/
+OGRSQLiteDatabaseType OGRSQLiteLayer::GetSQLiteDatabaseType(OGRSQLiteDataSource *poDS)
+{ // Will be called by OGRSQLiteDataSource::Open and set OGRSQLiteDataSource->eDatabaseType
+    OGRSQLiteDatabaseType eSQLiteDatabaseType=OSDBT_Unknown;
+    CPLString osSQL="";
+    char **papszResult;
+    int nRowCount,nColCount;
+    //--------------------------------------
+    // First check if OGR Specific
+    //--------------------------------------
+    osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' AND tbl_name='geometry_columns') AND (sql LIKE '%%geometry_format%%'))");
+    sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
+    sqlite3_free_table(papszResult);
+    papszResult = NULL;
+    if( nRowCount > 0 )
+    { // OGR style SQLite DB found !
+     eSQLiteDatabaseType=OSDBT_OGRSpatialTable;
+    }
+    else
+    { // check if  spatialite specific
+     osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' OR type = 'view') AND");
+     osSQL += CPLSPrintf( " (tbl_name = 'geometry_columns' OR  tbl_name = 'views_geometry_columns' OR tbl_name='vector_layers'))");
+     sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
+     sqlite3_free_table(papszResult);
+     papszResult = NULL;
+     if( nRowCount > 0 )
+     { // Spatialite Specific [version 1.0a will not be recognized, due to lack of any admin-tables]
+      // if only 'geometry_columns': Version 2.0 until 2.3.1
+      eSQLiteDatabaseType=OSDBT_SpatialTable_2;
+      if( nRowCount > 1 )
+      { // if 'views_geometry_columns'  exists 2.4 to 3.0.1
+       eSQLiteDatabaseType=OSDBT_SpatialTable_3;
+       if( nRowCount > 2 )
+       { // if 'vector_layers'  exists: 4.0 to present
+        eSQLiteDatabaseType=OSDBT_SpatialTable_4;
+       }
+      }
+      // there a known samples of pre-spatialite 4.* that has been changed by a spatialite 4.* software
+      // - have a 'layer_statistics' with valid values, and 'vector_layers_statistics' with NULL values
+      // https://github.com/geopaparazzi/Spatialite-Tasks-with-Sql-Scripts/wiki/Spatialite-test-databases-geopaparazzi-specific
+      osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' AND tbl_name='geometry_columns') AND (sql LIKE '%%geometry_type%%'))");
+      sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
+      sqlite3_free_table(papszResult);
+      papszResult = NULL;
+      if( nRowCount > 0 )
+      { // spatialite 4.0 until present
+       eSQLiteDatabaseType=OSDBT_SpatialTable_4;
+       osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='raster_coverages')");
+       sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
+       sqlite3_free_table(papszResult);
+       papszResult = NULL;
+       if( nRowCount > 0 )
+       { // if 'raster_coverages'  exists RasterLite2 tables
+        eSQLiteDatabaseType=OSDBT_Rasterlite2_Tables;
+       }
+      }
+      else
+      {
+       osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='topologies')");
+       sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
+       sqlite3_free_table(papszResult);
+       papszResult = NULL;
+       if( nRowCount > 0 )
+       { // if 'topologies'  exists Spatialite-Topology tables
+        eSQLiteDatabaseType=OSDBT_SpatialTopology_Tables;
+       }
+       else
+       {
+        osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='networks')");
+        sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
+        sqlite3_free_table(papszResult);
+        papszResult = NULL;
+        if( nRowCount > 0 )
+        { // if 'networks'  exists Spatialite-Topology-Network tables
+         eSQLiteDatabaseType=OSDBT_SpatialTopology_Networks;
+        }
+        else
+        {
+         osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='raster_pyramids')");
+         sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
+         sqlite3_free_table(papszResult);
+         papszResult = NULL;
+         if( nRowCount > 0 )
+         { // if 'raster_pyramids'  exists RasterLite1 tables
+          eSQLiteDatabaseType=OSDBT_Rasterlite1_Tables;
+         }
+        }
+       }
+      }
+     }
+     else
+     { // 
+      osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' OR type = 'view') AND");
+      osSQL += CPLSPrintf( " (tbl_name = 'metadata' OR  tbl_name = 'map' OR tbl_name='images' OR tbl_name='view'))");
+      sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
+      sqlite3_free_table(papszResult);
+      papszResult = NULL;
+      if( nRowCount > 2 )
+      { // there must always be 3 TABLES
+       eSQLiteDatabaseType=OSDBT_MBTiles_Tables;
+       if( nRowCount == 3 )
+       { // There can be (and often are) 1 View
+        eSQLiteDatabaseType=OSDBT_MBTiles_Views;
+       }
+      }
+      else
+      { // This is taken care of in an extra 'gpkd' ogr class
+       osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='gpkg_contents')");
+       sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
+       sqlite3_free_table(papszResult);
+       papszResult = NULL;
+       if( nRowCount > 0 )
+       { // if 'gpkg_contents'  exists GeoPackage Revision 10         
+        eSQLiteDatabaseType=OSDBT_GeoPackage_Tables;
+       }
+      }
+     }
+    }
+    return eSQLiteDatabaseType;
+}
+
 /************************************************************************/
 /*                          OGRIsBinaryGeomCol()                        */
 /************************************************************************/
