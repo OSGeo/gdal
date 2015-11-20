@@ -1309,7 +1309,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
 
     if (nMergedRanges == 1)
     {
-        int nAccSize = 0;
+        size_t nAccSize = 0;
         if ((vsi_l_offset)nSize < nTotalReqSize)
             goto end;
 

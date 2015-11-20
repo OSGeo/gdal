@@ -1289,10 +1289,10 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
         !StopReceivingBytesOnError() &&
         eExists == EXIST_NO && nRemaining < nBufferRequestSize )
     {
-        const int nErrorBufferMaxSize = 4096;
+        const size_t nErrorBufferMaxSize = 4096;
         GByte* pabyErrorBuffer = (GByte*)CPLMalloc(nErrorBufferMaxSize + 1);
-        int nRead = static_cast<int>(nBufferRequestSize - nRemaining);
-        int nErrorBufferSize = MIN(nErrorBufferMaxSize, nRead);
+        size_t nRead = nBufferRequestSize - nRemaining;
+        size_t nErrorBufferSize = MIN(nErrorBufferMaxSize, nRead);
         memcpy( pabyErrorBuffer, pBuffer, nErrorBufferSize );
         if( nRead < nErrorBufferMaxSize )
             nErrorBufferSize += Read( pabyErrorBuffer + nRead, 1, nErrorBufferMaxSize - nRead );
