@@ -61,6 +61,17 @@
 /* DEBUG_VSIMALLOC must also be defined */
 //#define DEBUG_VSIMALLOC_VERBOSE
 
+/* Number of bytes of the malloc/calloc/free that triggers a debug trace. Can be 0 for all allocs */
+#define THRESHOLD_PRINT 10000
+
+/* Uncomment to print GDAL block cache use. */
+/* Only used if DEBUG_VSIMALLOC_VERBOSE is enabled */
+//#define DEBUG_BLOCK_CACHE_USE
+
+#ifdef DEBUG_BLOCK_CACHE_USE
+extern "C" GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
+#endif
+
 CPL_CVSID("$Id$");
 
 /* for stat() */
@@ -345,6 +356,8 @@ static GUIntBig nVSIFrees = 0;
 /*                         VSIShowMemStats()                            */
 /************************************************************************/
 
+void VSIShowMemStats();
+
 void VSIShowMemStats()
 {
     char* pszShowMemStats = getenv("CPL_SHOW_MEM_STATS");
@@ -427,8 +440,11 @@ void *VSICalloc( size_t nCount, size_t nSize )
     {
         CPLMutexHolderD(&hMemStatMutex);
 #ifdef DEBUG_VSIMALLOC_VERBOSE
-        fprintf(stderr, "Thread[%p] VSICalloc(%d,%d) = %p\n",
-                (void*)CPLGetPID(), (int)nCount, (int)nSize, ptr + 2 * sizeof(void*));
+        if( nMul > THRESHOLD_PRINT )
+        {
+            fprintf(stderr, "Thread[%p] VSICalloc(%d,%d) = %p\n",
+                    (void*)CPLGetPID(), (int)nCount, (int)nSize, ptr + 2 * sizeof(void*));
+        }
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
         nVSICallocs ++;
@@ -498,8 +514,27 @@ void *VSIMalloc( size_t nSize )
     {
         CPLMutexHolderD(&hMemStatMutex);
 #ifdef DEBUG_VSIMALLOC_VERBOSE
-        fprintf(stderr, "Thread[%p] VSIMalloc(%d) = %p\n",
-                (void*)CPLGetPID(), (int)nSize, ptr + 2 * sizeof(void*));
+        if( nSize > THRESHOLD_PRINT )
+        {
+            fprintf(stderr, "Thread[%p] VSIMalloc(%d) = %p"
+#ifdef DEBUG_VSIMALLOC_STATS
+                         ", current_cumul = " CPL_FRMT_GUIB
+#ifdef DEBUG_BLOCK_CACHE_USE
+                         ", block_cache_used = " CPL_FRMT_GIB
+#endif
+                         ", mal+cal-free = %d"
+#endif
+                         "\n",
+                (void*)CPLGetPID(), (int)nSize, ptr + 2 * sizeof(void*)
+#ifdef DEBUG_VSIMALLOC_STATS
+                , (GUIntBig)(nCurrentTotalAllocs + nSize),
+#ifdef DEBUG_BLOCK_CACHE_USE
+                , GDALGetCacheUsed64()
+#endif
+                ,(int)(nVSIMallocs + nVSICallocs - nVSIFrees)
+#endif
+                );
+        }
 #endif  // DEBUG_VSIMALLOC_VERBOSE
 #ifdef DEBUG_VSIMALLOC_STATS
         nVSIMallocs ++;
@@ -514,7 +549,7 @@ void *VSIMalloc( size_t nSize )
     return ptr + 2 * sizeof(void*);
 }
 
-void VSICheckMarkerBegin(char* ptr)
+static void VSICheckMarkerBegin(char* ptr)
 {
     if (memcmp(ptr, "VSIM", 4) != 0)
     {
@@ -524,7 +559,7 @@ void VSICheckMarkerBegin(char* ptr)
     }
 }
 
-void VSICheckMarkerEnd(char* ptr, size_t nEnd)
+static void VSICheckMarkerEnd(char* ptr, size_t nEnd)
 {
     if (memcmp(ptr + nEnd, "EVSI", 4) != 0)
     {
@@ -613,8 +648,11 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     {
         CPLMutexHolderD(&hMemStatMutex);
 #ifdef DEBUG_VSIMALLOC_VERBOSE
-        fprintf(stderr, "Thread[%p] VSIRealloc(%p, %d) = %p\n",
-                (void*)CPLGetPID(), pData, (int)nNewSize, ptr + 2 * sizeof(void*));
+        if( nNewSize > THRESHOLD_PRINT )
+        {
+            fprintf(stderr, "Thread[%p] VSIRealloc(%p, %d) = %p\n",
+                    (void*)CPLGetPID(), pData, (int)nNewSize, ptr + 2 * sizeof(void*));
+        }
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
         nVSIReallocs ++;
@@ -659,8 +697,11 @@ void VSIFree( void * pData )
     {
         CPLMutexHolderD(&hMemStatMutex);
 #ifdef DEBUG_VSIMALLOC_VERBOSE
-        fprintf(stderr, "Thread[%p] VSIFree(%p, (%d bytes))\n",
-                (void*)CPLGetPID(), pData, (int)nOldSize);
+        if( nOldSize > THRESHOLD_PRINT )
+        {
+            fprintf(stderr, "Thread[%p] VSIFree(%p, (%d bytes))\n",
+                    (void*)CPLGetPID(), pData, (int)nOldSize);
+        }
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
         nVSIFrees ++;
