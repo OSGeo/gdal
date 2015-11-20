@@ -1656,7 +1656,8 @@ void OGRSQLiteTableLayer::InitFieldListForRecrerate(char* & pszNewFieldList,
                                                     char* & pszFieldListForSelect,
                                                     int nExtraSpace)
 {
-    int iField, nFieldListLen = 100 + 2 * nExtraSpace;
+    int iField;
+    size_t nFieldListLen = 100 + 2 * nExtraSpace;
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {

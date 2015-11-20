@@ -248,7 +248,7 @@ void OGR2SQLITE_ogr_deflate(sqlite3_context* pContext,
     }
     if( pOut != NULL )
     {
-        sqlite3_result_blob (pContext, pOut, nOutBytes, VSIFree);
+        sqlite3_result_blob (pContext, pOut, static_cast<int>(nOutBytes), VSIFree);
     }
     else
     {
@@ -282,7 +282,7 @@ void OGR2SQLITE_ogr_inflate(sqlite3_context* pContext,
 
     if( pOut != NULL )
     {
-        sqlite3_result_blob (pContext, pOut, nOutBytes, VSIFree);
+        sqlite3_result_blob (pContext, pOut, static_cast<int>(nOutBytes), VSIFree);
     }
     else
     {
