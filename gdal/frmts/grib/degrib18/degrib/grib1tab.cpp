@@ -8114,6 +8114,7 @@ GRIB1ParmTable parm_table_afwa_010[256] = {
    /* 147 */ {"MXABH", "Max Absolute Humidity", "g/m^3", UC_NONE},
    /* 148 */ {"MNABH", "Min Absolute Humidity", "g/m^3", UC_NONE},
    /* 149 */ {"MNPREC", "Min Precipitation", "mm", UC_NONE},
+   /* TODO: Spelling. */
    /* 150 */ {"NEWND", "NE Wind Direction Occurance", "%", UC_NONE},
    /* 151 */ {"EWND", "E Wind Direction Occurance", "%", UC_NONE},
    /* 152 */ {"SEWND", "SE Wind Direction Occurance", "%", UC_NONE},

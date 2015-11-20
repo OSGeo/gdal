@@ -48,7 +48,7 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
 //                listsec1[11]=Production status of data (Code Table 1.2)
 //                listsec1[12]=Type of processed data (Code Table 1.3)
 //     numfields- The number of gridded fields found in the GRIB message.
-//                That is, the number of occurences of Sections 4 - 7.
+//                That is, the number of occurrences of Sections 4 - 7.
 //     numlocal - The number of Local Use Sections ( Section 2 ) found in 
 //                the GRIB message.
 //

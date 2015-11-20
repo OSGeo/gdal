@@ -23,7 +23,7 @@ Quick Test Run
 1) VB6 needs to be launched in such a way that it can find the gdal12vb.dll.
    This could be accomplished by having VB6 run in the same directory as the
    DLL, or by copying the DLL into windows\system32 or by editing GDALCore.bas
-   and changing all occurances of "gdal12vb.dll" to a full path to the DLL. 
+   and changing all occurrences of "gdal12vb.dll" to a full path to the DLL. 
 
    But for the test app to run, you need to have the sample files in the
    current directory, so you might as well just make a shortcut copy of your

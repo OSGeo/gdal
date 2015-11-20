@@ -4504,7 +4504,7 @@ GML driver:
  * Recognize <gml:Solid> and <gml:CompositeSurface>, <gml:OrientableSurface> elements
    (dealt as an approximation as multipolygons, and not as volumes)
  * Add support for "complex structure flattening" of attributes, and OFTStringList,
-   OFTRealList and OFTIntegerList field types in case of multiple occurences of
+   OFTRealList and OFTIntegerList field types in case of multiple occurrences of
    a GML element (such as UK Ordnance Survey Mastermap) (#3680)
  * Add support for CityGML generic attributes <stringAttribute>, <intAttribute> and
    <doubleAttribute>

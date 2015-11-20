@@ -95,7 +95,7 @@ def vrtmisc_3():
     return 'success'
 
 ###############################################################################
-# Test multi-band linear scaling with a single -scale occurence
+# Test multi-band linear scaling with a single -scale occurrence.
 
 def vrtmisc_4():
 
@@ -161,7 +161,7 @@ def vrtmisc_6():
     return 'success'
 
 ###############################################################################
-# Test multi-band power scaling with a single -scale occurence and -exponent occurence
+# Test multi-band power scaling with a single -scale and -exponent occurrence.
 
 def vrtmisc_7():
 
