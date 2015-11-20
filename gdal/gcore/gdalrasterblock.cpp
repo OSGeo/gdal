@@ -857,7 +857,7 @@ CPLErr GDALRasterBlock::Internalize()
                     }
                     if( nBlocksToFree == 64 )
                     {
-                        CPLDebug("GDAL", "More than 64 blocks are flagged to be flushed. Not trying more");
+                        bLoopAgain = ( nCacheUsed > nCurCacheMax );
                         break;
                     }
 
@@ -894,7 +894,7 @@ CPLErr GDALRasterBlock::Internalize()
             /* Try to recycle the data of an existing block */
             void* pDataBlock = poBlock->pData;
             if( pNewData == NULL && pDataBlock != NULL &&
-                poBlock->GetBlockSize() >= nSizeInBytes )
+                poBlock->GetBlockSize() == nSizeInBytes )
             {
                 pNewData = pDataBlock;
             }
