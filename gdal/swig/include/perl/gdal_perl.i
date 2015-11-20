@@ -727,6 +727,7 @@ sub Open {
 package Geo::GDAL::Dataset;
 use strict;
 use warnings;
+use POSIX qw/floor ceil/;
 use Scalar::Util 'blessed';
 use Carp;
 use vars qw/@DOMAINS @CAPABILITIES %CAPABILITIES %BANDS %LAYERS %RESULT_SET/;
@@ -903,6 +904,30 @@ sub GeoTransform {
     } else {
         return Geo::GDAL::GeoTransform->new($t);
     }
+}
+
+sub Extent {
+    my $self = shift;
+    return $self->GeoTransform->Extent($self->Size);
+}
+
+sub Tile { # $xoff, $yoff, $xsize, $ysize, assuming strict north up
+    my ($self, $e) = @_;
+    my ($w, $h) = $self->Size;
+    #print "sz $w $h\n";
+    my $gt = $self->GeoTransform;
+    #print "gt @$gt\n";
+    confess "GeoTransform is not \"north up\"." unless $gt->NorthUp;
+    my $x = $gt->Extent($w, $h);
+    my $xoff = floor(($e->[0] - $gt->[0])/$gt->[1]);
+    $xoff = 0 if $xoff < 0;
+    my $yoff = floor(($gt->[3] - $e->[3])/(-$gt->[5]));
+    $yoff = 0 if $yoff < 0;
+    my $xsize = ceil(($e->[2] - $gt->[0])/$gt->[1]) - $xoff;
+    $xsize = $w - $xoff if $xsize > $w - $xoff;
+    my $ysize = ceil(($gt->[3] - $e->[1])/(-$gt->[5])) - $yoff;
+    $ysize = $h - $yoff if $ysize > $h - $yoff;
+    return ($xoff, $yoff, $xsize, $ysize);
 }
 
 sub GCPs {
@@ -1278,9 +1303,15 @@ sub WriteTile {
     $xoff //= 0;
     $yoff //= 0;
     my $xsize = @{$data->[0]};
-    $xsize = $self->{XSize} - $xoff if $xsize > $self->{XSize} - $xoff;
+    if ($xsize > $self->{XSize} - $xoff) {
+        warn "Buffer XSize too large ($xsize) for this raster band (width = $self->{XSize}).";
+        $xsize = $self->{XSize} - $xoff;
+    }
     my $ysize = @{$data};
-    $ysize = $self->{YSize} - $yoff if $ysize > $self->{YSize} - $yoff;
+    if ($ysize > $self->{YSize} - $yoff) {
+        $ysize = $self->{YSize} - $yoff;
+        warn "Buffer YSize too large ($ysize) for this raster band (height = $self->{YSize}).";
+    }
     my $pc = Geo::GDAL::PackCharacter($self->{DataType});
     for my $i (0..$ysize-1) {
         my $scanline = pack($pc."[$xsize]", @{$data->[$i]});
@@ -1413,6 +1444,7 @@ sub FillNodata {
     $p[1] //= 0;
     Geo::GDAL::FillNodata($self, $mask, @p);
 }
+*FillNoData = *FillNodata;
 *GetBandNumber = *GetBand;
 
 sub ReadRaster {
@@ -1870,6 +1902,11 @@ sub new {
     return $self;
 }
 
+sub NorthUp {
+    my $self = shift;
+    return $self->[2] == 0 && $self->[4] == 0;
+}
+
 sub FromGCPs {
     my $gcps;
     my $p = shift;
@@ -1904,6 +1941,70 @@ sub Inv {
     my @inv = Geo::GDAL::InvGeoTransform($self);
     return new(@inv) if defined wantarray;
     @$self = @inv;
+}
+
+sub Extent {
+    my ($self, $w, $h) = @_;
+    my $e = Geo::GDAL::Extent->new($self->[0], $self->[3], $self->[0], $self->[3]);
+    for my $x ($self->[0] + $self->[1]*$w, $self->[0] + $self->[2]*$h, $self->[0] + $self->[1]*$w + $self->[2]*$h) {
+        $e->[0] = $x if $x < $e->[0];
+        $e->[2] = $x if $x > $e->[2];
+    }
+    for my $y ($self->[3] + $self->[4]*$w, $self->[3] + $self->[5]*$h, $self->[3] + $self->[4]*$w + $self->[5]*$h) {
+        $e->[1] = $y if $y < $e->[1];
+        $e->[3] = $y if $y > $e->[3];
+    }
+    return $e;
+}
+
+package Geo::GDAL::Extent; # array 0=xmin|left, 1=ymin|bottom, 2=xmax|right, 3=ymax|top
+
+use strict;
+use warnings;
+use Carp;
+use Scalar::Util 'blessed';
+
+sub new {
+    my $class = shift;
+    my $self;
+    if (@_ == 0) {
+        $self = [0,0,0,0];
+    } elsif (ref $_[0]) {
+        @$self = @{$_[0]};
+    } else {
+        @$self = @_;
+    }
+    bless $self, $class;
+    return $self;
+}
+
+sub Size {
+    my $self = shift;
+    return ($self->[2] - $self->[0], $self->[3] - $self->[1]);
+}
+
+sub Overlaps {
+    my ($self, $e) = @_;
+    return $self->[0] < $e->[2] && $self->[2] > $e->[0] && $self->[1] < $e->[3] && $self->[3] > $e->[1];
+}
+
+sub Overlap {
+    my ($self, $e) = @_;
+    return undef unless $self->Overlaps($e);
+    my $ret = Geo::GDAL::Extent->new($self);
+    $ret->[0] = $e->[0] if $self->[0] < $e->[0];
+    $ret->[1] = $e->[1] if $self->[1] < $e->[1];
+    $ret->[2] = $e->[2] if $self->[2] > $e->[2];
+    $ret->[3] = $e->[3] if $self->[3] > $e->[3];
+    return $ret;
+}
+
+sub ExpandToInclude {
+    my ($self, $e) = @_;
+    $self->[0] = $e->[0] if $e->[0] < $self->[0];
+    $self->[1] = $e->[1] if $e->[1] < $self->[1];
+    $self->[2] = $e->[2] if $e->[2] > $self->[2];
+    $self->[3] = $e->[3] if $e->[3] > $self->[3];
 }
 
 %}

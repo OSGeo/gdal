@@ -202,7 +202,7 @@ for my $s (@CAPABILITIES) {
 
 sub DESTROY {
     my $self = shift;
-    unless ($_[0]->isa('SCALAR')) {
+    unless ($self->isa('SCALAR')) {
         return unless $self->isa('HASH');
         $self = tied(%{$self});
         return unless defined $self;
@@ -1531,6 +1531,11 @@ sub CoordinateDimension {
     my $self = shift;
     SetCoordinateDimension($self, $_[0]) if @_;
     GetCoordinateDimension($self) if defined wantarray;
+}
+
+sub Extent {
+    my $self = shift;
+    return Geo::GDAL::Extent->new($self->GetEnvelope);
 }
 
 sub AddPoint {
