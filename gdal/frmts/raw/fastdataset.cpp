@@ -845,7 +845,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         pszSecond = "GAIN%d";
     }
 
-    // Now search for the first number occurance after that string
+    // Now search for the first number occurrence after that string.
     for ( int i = 1; i <= poDS->nBands; i++ )
     {
         char    *pszValue = NULL;
@@ -926,7 +926,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     // Coordinates should follow the word "PROJECTION", otherwise we can
-    // be confused by other occurences of the corner keywords.
+    // be confused by other occurrences of the corner keywords.
     char        *pszGeomRecord = strstr( pszHeader, "PROJECTION" );
     // Read corner coordinates
     pszTemp = strstr( pszGeomRecord, CORNER_UPPER_LEFT );

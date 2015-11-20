@@ -1922,7 +1922,7 @@ CPLErr IdrisiRasterBand::SetColorTable( GDALColorTable *poColorTable )
             aucRGB[2] = (GByte) oEntry.c3;
             VSIFWriteL( &aucRGB, 3, 1, fpSMP );
         }
-        /* smp files always have 256 occurences */
+        /* smp files always have 256 occurrences. */
         for( int i = poColorTable->GetColorEntryCount(); i <= 255; i++ )
         {
             poColorTable->GetColorEntryAsRGB( i, &oEntry );

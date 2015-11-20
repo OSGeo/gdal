@@ -497,7 +497,7 @@ typedef struct
 {
     int          iSrcIndex;
     OGRFieldType eType;
-    int          nMaxOccurences;
+    int          nMaxOccurences;  // TODO: Spelling.
     int          nWidth;
 } ListFieldDesc;
 
@@ -721,7 +721,7 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
             eType == OFTRealList ||
             eType == OFTStringList)
         {
-            int nMaxOccurences = pasListFields[iListField].nMaxOccurences;
+            int nMaxOccurences = pasListFields[iListField].nMaxOccurences;  // TODO: Spelling.
             int nWidth = pasListFields[iListField].nWidth;
             iListField ++;
             int j;

@@ -268,7 +268,7 @@ class CPL_ODLL DDFFieldDefn
 
 /**
  * Information from the DDR record describing one subfield of a DDFFieldDefn.
- * All subfields of a field will occur in each occurance of that field
+ * All subfields of a field will occur in each occurrence of that field
  * (as a DDFField) in a DDFRecord.  Subfield's actually contain formatted
  * data (as instances within a record).
  */

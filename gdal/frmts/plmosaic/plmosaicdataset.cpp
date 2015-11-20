@@ -680,7 +680,7 @@ static void ReplaceSubString(CPLString &osTarget,
                              CPLString osReplacement)
 
 {
-    // assumes only one occurance of osPattern
+    // Assumes only one occurrence of osPattern.
     size_t pos = osTarget.find(osPattern);
     if( pos == CPLString::npos )
         return;

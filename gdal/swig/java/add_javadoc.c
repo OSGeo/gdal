@@ -322,7 +322,7 @@ begin:
     for(j=0;j<nInstances;j++)
     {
         if (!instances[j].bUsed)
-            fprintf(stderr, "WARNING: did not find occurence of %s\n", instances[j].methodName);
+            fprintf(stderr, "WARNING: did not find occurrence of %s\n", instances[j].methodName);
     }
     
     return 0;

@@ -141,7 +141,7 @@ const char* OGRGeocodeGetParameter(char** papszOptions, const char* pszKey,
 /*                      OGRGeocodeHasStringValidFormat()                */
 /************************************************************************/
 
-/* Checks that pszQueryTemplate has one and only one occurence of %s in it. */
+/* Checks that pszQueryTemplate has one and only one occurrence of %s in it. */
 static
 int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
 {
@@ -212,11 +212,11 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
  * <li> "DELAY": minimum delay, in second, between 2 consecutive queries.
  *       Defaults to 1.0.
  * <li> "QUERY_TEMPLATE": URL template for GET requests. Must contain one
- *       and only one occurence of %%s in it. If not specified, for
+ *       and only one occurrence of %%s in it. If not specified, for
  *       SERVICE=OSM_NOMINATIM, MAPQUEST_NOMINATIM, YAHOO, GEONAMES or BING,
  *       the URL template is hard-coded.
  * <li> "REVERSE_QUERY_TEMPLATE": URL template for GET requests for reverse
- *       geocoding. Must contain one and only one occurence of {lon} and {lat} in it.
+ *       geocoding. Must contain one and only one occurrence of {lon} and {lat} in it.
  *       If not specified, for SERVICE=OSM_NOMINATIM, MAPQUEST_NOMINATIM, YAHOO,
  *       GEONAMES or BING, the URL template is hard-coded.
  * </ul>
