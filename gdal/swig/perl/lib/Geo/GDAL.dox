@@ -53,6 +53,8 @@
 ## @ignore VSIStdoutSetRedirection
 ## @ignore VSIStdoutUnsetRedirection
 ## @ignore callback_fwrite
+## @ignore WRONG_CLASS
+## @ignore WRONG_ITEM_IN_ARRAY
 
 ## @ignore FillNodata
 ## @ignore ContourGenerate

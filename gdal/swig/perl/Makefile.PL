@@ -230,6 +230,7 @@ for my $module (keys %object) {
                        'Scalar::Util' => 0,
                        'Test::More' => 0,
                        'Encode' => 0,
+                       POSIX => 0
                    }
         );
 }

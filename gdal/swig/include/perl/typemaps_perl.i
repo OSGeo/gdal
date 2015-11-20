@@ -469,8 +469,10 @@ typedef unsigned long      GUIntBig;
     $1 = argin;
     AV *av = (AV*)(SvRV($input));
     for (unsigned int i=0; i<$dim0; i++) {
-        SV **sv = av_fetch(av, i, 0);
-        $1[i] =  SvNV(*sv);
+        SV *sv = *av_fetch(av, i, 0);
+        if (!SvOK(sv))
+            do_confess(NEED_DEF, 1);
+        $1[i] =  SvNV(sv);
     }
 }
 
