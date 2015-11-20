@@ -538,7 +538,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
                 }
             }
         }
-        catch( std::bad_alloc& e )
+        catch( const std::bad_alloc& )
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory error");
             return -1;
@@ -2611,7 +2611,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     parameters.irreversible = bIsIrreversible;
     parameters.numresolution = nNumResolutions;
     parameters.prog_order = eProgOrder;
-    parameters.tcp_mct = bYCC;
+    parameters.tcp_mct = static_cast<char>(bYCC);
     parameters.cblockw_init = nCblockW;
     parameters.cblockh_init = nCblockH;
 
@@ -2845,7 +2845,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
         WriteBox(fp, &ftypBox);
 
-        int bIPR = poSrcDS->GetMetadata("xml:IPR") != NULL &&
+        const bool bIPR = poSrcDS->GetMetadata("xml:IPR") != NULL &&
                    CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE);
 
         /* Reader requirement box */
@@ -2858,7 +2858,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             rreqBox.AppendUInt8(0x80 | 0x40 | (bIPR ? 0x20 : 0)); /* FUAM */
             rreqBox.AppendUInt8(0x80); /* DCM */
 
-            rreqBox.AppendUInt16(2 + bIPR); /* NSF: Number of standard features */
+            rreqBox.AppendUInt16(2 + (bIPR ? 1 : 0)); /* NSF: Number of standard features */
 
             rreqBox.AppendUInt16((bProfile1) ? 4 : 5); /* SF0 : PROFILE 1 or PROFILE 2 */
             rreqBox.AppendUInt8(0x80); /* SM0 */
@@ -2879,24 +2879,24 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         ihdrBox.SetType("ihdr");
         ihdrBox.AppendUInt32(nYSize);
         ihdrBox.AppendUInt32(nXSize);
-        ihdrBox.AppendUInt16(nBands);
+        ihdrBox.AppendUInt16(static_cast<GUInt16>(nBands));
         GByte BPC;
         if( bSamePrecision )
-            BPC = (pasBandParams[0].prec-1) | (pasBandParams[0].sgnd << 7);
+            BPC = static_cast<GByte>((pasBandParams[0].prec-1) | (pasBandParams[0].sgnd << 7));
         else
             BPC = 255;
         ihdrBox.AppendUInt8(BPC);
         ihdrBox.AppendUInt8(7); /* C=Compression type: fixed value */
         ihdrBox.AppendUInt8(0); /* UnkC: 0= colourspace of the image is known */
                                 /*and correctly specified in the Colourspace Specification boxes within the file */
-        ihdrBox.AppendUInt8(bIPR); /* IPR: 0=no intellectual property, 1=IPR box */
+        ihdrBox.AppendUInt8(bIPR ? 1 : 0); /* IPR: 0=no intellectual property, 1=IPR box */
 
         GDALJP2Box bpccBox(fp);
         if( !bSamePrecision )
         {
             bpccBox.SetType("bpcc");
             for(int i=0;i<nBands;i++)
-                bpccBox.AppendUInt8((pasBandParams[i].prec-1) | (pasBandParams[i].sgnd << 7));
+                bpccBox.AppendUInt8(static_cast<GUInt16>((pasBandParams[i].prec-1) | (pasBandParams[i].sgnd << 7)));
         }
 
         GDALJP2Box colrBox(fp);
@@ -2949,8 +2949,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             nBlueBandIndex = 2;
             nAlphaBandIndex = (nCTComponentCount == 4) ? 3 : -1;
 
-            pclrBox.AppendUInt16(nEntries);
-            pclrBox.AppendUInt8(nCTComponentCount); /* NPC: Number of components */
+            pclrBox.AppendUInt16(static_cast<GUInt16>(nEntries));
+            pclrBox.AppendUInt8(static_cast<GByte>(nCTComponentCount)); /* NPC: Number of components */
             for(int i=0;i<nCTComponentCount;i++)
             {
                 pclrBox.AppendUInt8(7); /* Bi: unsigned 8 bits */
@@ -2970,7 +2970,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             {
                 cmapBox.AppendUInt16(0); /* CMPi: code stream component index */
                 cmapBox.AppendUInt8(1); /* MYTPi: 1=palette mapping */
-                cmapBox.AppendUInt8(i); /* PCOLi: index component from the map */
+                cmapBox.AppendUInt8(static_cast<GByte>(i)); /* PCOLi: index component from the map */
             }
         }
 
@@ -2982,10 +2982,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         {
             cdefBox.SetType("cdef");
             int nComponents = (nCTComponentCount == 4) ? 4 : nBands;
-            cdefBox.AppendUInt16(nComponents);
+            cdefBox.AppendUInt16(static_cast<GUInt16>(nComponents));
             for(int i=0;i<nComponents;i++)
             {
-                cdefBox.AppendUInt16(i);   /* Component number */
+                cdefBox.AppendUInt16(static_cast<GUInt16>(i));   /* Component number */
                 if( i != nAlphaBandIndex )
                 {
                     cdefBox.AppendUInt16(0);   /* Signification: This channel is the colour image data for the associated colour */
