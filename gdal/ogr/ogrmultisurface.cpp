@@ -225,7 +225,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
         }
 
 /* -------------------------------------------------------------------- */
-/*      Read the delimeter following the surface.                       */
+/*      Read the delimiter following the surface.                       */
 /* -------------------------------------------------------------------- */
         pszInput = OGRWktReadToken( pszInput, szToken );
 

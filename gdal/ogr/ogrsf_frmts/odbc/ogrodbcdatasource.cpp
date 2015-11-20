@@ -303,7 +303,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Strip off any comma delimeted set of tables names to access     */
+/*      Strip off any comma delimited set of tables names to access     */
 /*      from the end of the string first.  Also allow an optional       */
 /*      bracketed geometry column name after the table name.            */
 /* -------------------------------------------------------------------- */

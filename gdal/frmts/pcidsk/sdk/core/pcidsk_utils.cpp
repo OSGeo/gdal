@@ -466,7 +466,7 @@ std::string PCIDSK::ProjParmsToText( std::vector<double> dparms )
 /*                                                                      */
 /*      Extract the directory path portion of the passed filename.      */
 /*      It assumes the last component is a filename and should not      */
-/*      be passed a bare path.  The trailing directory delimeter is     */
+/*      be passed a bare path.  The trailing directory delimiter is     */
 /*      removed from the result.  The return result is an empty         */
 /*      string for a simple filename passed in with no directory        */
 /*      component.                                                      */

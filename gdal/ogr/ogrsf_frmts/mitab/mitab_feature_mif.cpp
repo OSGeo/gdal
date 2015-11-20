@@ -61,7 +61,7 @@
  * fixed Mills.mif reading, crash at file end
  *
  * Revision 1.30  2006/01/26 21:26:36  fwarmerdam
- * fixed bug with multi character delimeters in .mid file
+ * Fixed bug with multi-character delimiters in .mid file
  *
  * Revision 1.29  2005/10/04 19:36:10  dmorissette
  * Added support for reading collections from MIF files (bug 1126)
@@ -178,7 +178,7 @@
 /*                            MIDTokenize()                             */
 /*                                                                      */
 /*      We implement a special tokenize function so we can handle       */
-/*      multibyte delimeters (ie. MITAB bug 1266).                      */
+/*      multi-byte delimiters (i.e. MITAB bug 1266).                      */
 /*                                                                      */
 /*      http://bugzilla.maptools.org/show_bug.cgi?id=1266               */
 /************************************************************************/

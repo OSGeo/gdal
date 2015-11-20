@@ -73,7 +73,7 @@ char CPL_DLL **CSLTokenizeStringComplex(const char *pszString,
                                    const char *pszDelimiter,
                                    int bHonourStrings, int bAllowEmptyTokens ) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLTokenizeString2( const char *pszString, 
-                                   const char *pszDelimeter, 
+                                   const char *pszDelimiter, 
                                    int nCSLTFlags ) CPL_WARN_UNUSED_RESULT;
 
 #define CSLT_HONOURSTRINGS      0x0001

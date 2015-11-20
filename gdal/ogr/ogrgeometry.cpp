@@ -5156,7 +5156,7 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt( char ** ppszInput,
         }
 
 /* -------------------------------------------------------------------- */
-/*      Read the delimeter following the surface.                       */
+/*      Read the delimiter following the surface.                       */
 /* -------------------------------------------------------------------- */
         pszInput = OGRWktReadToken( pszInput, szToken );
 
