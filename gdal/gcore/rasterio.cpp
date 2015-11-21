@@ -912,13 +912,13 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         GByte * pabyChunkNoDataMask = NULL;
 
         GDALRasterBand* poMaskBand = NULL;
-        int nMaskFlags = 0;
+        int l_nMaskFlags = 0;
         bool bUseNoDataMask = false;
 
         poMaskBand = GetMaskBand();
-        nMaskFlags = GetMaskFlags();
+        l_nMaskFlags = GetMaskFlags();
 
-        bUseNoDataMask = ((nMaskFlags & GMF_ALL_VALID) == 0);
+        bUseNoDataMask = ((l_nMaskFlags & GMF_ALL_VALID) == 0);
         if (bUseNoDataMask)
         {
             pabyChunkNoDataMask = (GByte *) 

@@ -251,7 +251,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                             if( psNode == NULL )
                             {
                                 CPLDebug("GMLJP2", "GMLJP2 data contains nul characters inside content. Replacing them by \\n");
-                                for(int i=0;i<nXMLLength;i++)
+                                for(i=0;i<nXMLLength;i++)
                                 {
                                     if( pszXML[i] == '\0' )
                                         pszXML[i] = '\n';

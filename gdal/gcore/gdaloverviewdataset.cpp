@@ -156,15 +156,15 @@ GDALDataset* GDALCreateOverviewDataset(GDALDataset* poMainDS, int nOvrLevel,
 /*                        GDALOverviewDataset()                         */
 /************************************************************************/
 
-GDALOverviewDataset::GDALOverviewDataset(GDALDataset* poMainDS,
-                                         int nOvrLevel,
-                                         int bThisLevelOnly,
-                                         int bOwnDS)
+GDALOverviewDataset::GDALOverviewDataset(GDALDataset* poMainDSIn,
+                                         int nOvrLevelIn,
+                                         int bThisLevelOnlyIn,
+                                         int bOwnDSIn)
 {
-    this->poMainDS = poMainDS;
-    this->nOvrLevel = nOvrLevel;
-    this->bOwnDS = bOwnDS;
-    this->bThisLevelOnly = bThisLevelOnly;
+    poMainDS = poMainDSIn;
+    nOvrLevel = nOvrLevelIn;
+    bOwnDS = bOwnDSIn;
+    bThisLevelOnly = bThisLevelOnlyIn;
     eAccess = poMainDS->GetAccess();
     nRasterXSize = poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetXSize();
     nRasterYSize = poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetYSize();

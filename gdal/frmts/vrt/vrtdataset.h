@@ -157,7 +157,7 @@ class CPL_DLL VRTDataset : public GDALDataset
     void          SetNeedsFlush() { bNeedsFlush = TRUE; }
     virtual void  FlushCache();
 
-    void SetWritable(int bWritable) { this->bWritable = bWritable; }
+    void SetWritable(int bWritableIn) { this->bWritable = bWritableIn; }
 
     virtual CPLErr          CreateMaskBand( int nFlags );
     void SetMaskBand(VRTRasterBand* poMaskBand);

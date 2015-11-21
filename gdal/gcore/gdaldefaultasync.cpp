@@ -260,7 +260,7 @@ GDALDefaultAsyncReader( GDALDataset* poDS,
                           GDALDataType eBufType,
                           int nBandCount, int* panBandMap,
                           int nPixelSpace, int nLineSpace,
-                          int nBandSpace, char **papszOptions) 
+                          int nBandSpace, char **papszOptionsIn) 
 
 {
     this->poDS = poDS;
@@ -287,7 +287,7 @@ GDALDefaultAsyncReader( GDALDataset* poDS,
     this->nLineSpace = nLineSpace;
     this->nBandSpace = nBandSpace;
 
-    this->papszOptions = CSLDuplicate(papszOptions);
+    papszOptions = CSLDuplicate(papszOptionsIn);
 }
 
 /************************************************************************/

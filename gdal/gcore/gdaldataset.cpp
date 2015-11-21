@@ -2226,7 +2226,6 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 
     for( iBand = 0; iBand < nBandCount; iBand++ )
     {
-        CPLErr eErr;
         GDALRasterBand *poBand;
 
         if( panBandMap == NULL )
