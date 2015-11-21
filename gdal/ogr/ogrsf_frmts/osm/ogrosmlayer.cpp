@@ -590,7 +590,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                                 brokendown.tm_mday,
                                 brokendown.tm_hour,
                                 brokendown.tm_min,
-                                brokendown.tm_sec,
+                                static_cast<float>(brokendown.tm_sec),
                                 0);
         }
 
