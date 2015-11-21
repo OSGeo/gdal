@@ -379,9 +379,9 @@ void ImdReader::ReadModel(const char *pszFilename) {
                     if (psFormatNode != NULL)
                     {
                         psFormatNode = psFormatNode->psChild;
-                        codeBlank = atoi(CPLGetXMLValue(psFormatNode, "blankCode", "95"));
-                        codeUndefined = atoi(CPLGetXMLValue(psFormatNode, "undefinedCode", "64"));
-                        codeContinue = atoi(CPLGetXMLValue(psFormatNode, "continueCode", "92"));
+                        codeBlank = static_cast<char>(atoi(CPLGetXMLValue(psFormatNode, "blankCode", "95")));
+                        codeUndefined = static_cast<char>(atoi(CPLGetXMLValue(psFormatNode, "undefinedCode", "64")));
+                        codeContinue = static_cast<char>(atoi(CPLGetXMLValue(psFormatNode, "continueCode", "92")));
                     }
                 }
                 else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.SubModel"))

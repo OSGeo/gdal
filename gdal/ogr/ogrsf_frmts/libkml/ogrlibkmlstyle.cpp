@@ -126,7 +126,10 @@ StylePtr addstylestring2kml (
 
                 if ( !nullcheck
                      && poStylePen->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
-                    poKmlLineStyle->set_color ( Color32 ( nA, nB, nG, nR ) );
+                    poKmlLineStyle->set_color ( Color32 ( static_cast<GByte>(nA),
+                                                          static_cast<GByte>(nB),
+                                                          static_cast<GByte>(nG),
+                                                          static_cast<GByte>(nR) ) );
                 }
                 poStylePen->SetUnit(OGRSTUPixel);
                 double dfWidth = poStylePen->Width ( nullcheck );
@@ -156,7 +159,10 @@ StylePtr addstylestring2kml (
                 if ( !nullcheck
                      && poStyleBrush->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
                     poKmlPolyStyle = poKmlFactory->CreatePolyStyle (  );
-                    poKmlPolyStyle->set_color ( Color32 ( nA, nB, nG, nR ) );
+                    poKmlPolyStyle->set_color ( Color32 ( static_cast<GByte>(nA),
+                                                          static_cast<GByte>(nB),
+                                                          static_cast<GByte>(nG),
+                                                          static_cast<GByte>(nR) ) );
                 }
                 
 
@@ -234,7 +240,10 @@ StylePtr addstylestring2kml (
                 const char *pszcolor = poStyleSymbol->Color ( nullcheck );
 
                 if ( !nullcheck && poOgrST->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
-                    poKmlIconStyle->set_color ( Color32 ( nA, nB, nG, nR ) );
+                    poKmlIconStyle->set_color ( Color32 ( static_cast<GByte>(nA),
+                                                          static_cast<GByte>(nB),
+                                                          static_cast<GByte>(nG),
+                                                          static_cast<GByte>(nR) ) );
                 }
 
                 /***** hotspot *****/
@@ -276,7 +285,10 @@ StylePtr addstylestring2kml (
                      && poStyleLabel->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
                     if( poKmlLabelStyle == NULL )
                         poKmlLabelStyle = poKmlFactory->CreateLabelStyle (  );
-                    poKmlLabelStyle->set_color ( Color32 ( nA, nB, nG, nR ) );
+                    poKmlLabelStyle->set_color ( Color32 ( static_cast<GByte>(nA),
+                                                           static_cast<GByte>(nB),
+                                                           static_cast<GByte>(nG),
+                                                           static_cast<GByte>(nR) ) );
                 }
 
                 /***** scale *****/
@@ -1162,7 +1174,10 @@ void styletable2kml (
             BalloonStylePtr poKmlBalloonStyle = poKmlFactory->CreateBalloonStyle();
             if( pszBalloonStyleBgColor != NULL &&
                 oStyleTool.GetRGBFromString ( pszBalloonStyleBgColor, nR, nG, nB, nA ) )
-                poKmlBalloonStyle->set_bgcolor ( Color32 ( nA, nB, nG, nR ) );
+                poKmlBalloonStyle->set_bgcolor ( Color32 ( static_cast<GByte>(nA),
+                                                           static_cast<GByte>(nB),
+                                                           static_cast<GByte>(nG),
+                                                           static_cast<GByte>(nR) ) );
             if( pszBalloonStyleText != NULL )
                 poKmlBalloonStyle->set_text(pszBalloonStyleText);
             poKmlStyle->set_balloonstyle ( poKmlBalloonStyle );

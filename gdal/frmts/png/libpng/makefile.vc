@@ -23,7 +23,7 @@ OBJ = \
 
 GDAL_ROOT	=	..\..\..
 
-EXTRAFLAGS = 	-I..\..\zlib
+EXTRAFLAGS = 	-I..\..\zlib /wd4267 /wd4310 
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 

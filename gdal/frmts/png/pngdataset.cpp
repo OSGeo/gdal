@@ -92,6 +92,13 @@ static void png_gdal_warning( png_structp png_ptr, const char *error_message );
 
 class PNGRasterBand;
 
+
+
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4324 ) /* 'PNGDataset' : structure was padded due to __declspec(align()) at line where we use jmp_buf */
+#endif
+
 class PNGDataset : public GDALPamDataset
 {
     friend class PNGRasterBand;
@@ -188,6 +195,10 @@ class PNGDataset : public GDALPamDataset
 
 #endif
 };
+
+#ifdef _MSC_VER
+#pragma warning( pop ) 
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1936,7 +1947,7 @@ png_vsi_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
 static void
 png_vsi_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
 {
-    const png_uint_32 check
+    const size_t check
         = VSIFWriteL(data, 1, length, reinterpret_cast<VSILFILE *>(
             png_get_io_ptr(png_ptr) ) );
 

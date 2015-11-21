@@ -978,7 +978,7 @@ int OGRLIBKMLDataSource::OpenKml (
         {
             oKmlKml.append(szBuffer, nRead);
         }
-        catch(std::bad_alloc& e)
+        catch(const std::bad_alloc& )
         {
             VSIFCloseL(fp);
             return FALSE;
@@ -1076,7 +1076,7 @@ int OGRLIBKMLDataSource::OpenKmz (
         {
             oKmlKmz.append(szBuffer, nRead);
         }
-        catch(std::bad_alloc& e)
+        catch(const std::bad_alloc&)
         {
             VSIFCloseL(fp);
             return FALSE;
@@ -1332,7 +1332,7 @@ int OGRLIBKMLDataSource::OpenDir (
             {
                 oKmlKml.append(szBuffer, nRead);
             }
-            catch(std::bad_alloc& e)
+            catch(const std::bad_alloc&)
             {
                 VSIFCloseL(fp);
                 CSLDestroy ( papszDirList );

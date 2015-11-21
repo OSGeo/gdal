@@ -679,7 +679,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
                 //convert to UTM/WGS84
                 OGRPoint pt;
                 pPart->Value(dfLen / 2, &pt);
-                int nZoneEnv = 30 + (pt.getX() + 3.0) / 6.0 + 0.5;
+                int nZoneEnv = static_cast<int>(30 + (pt.getX() + 3.0) / 6.0 + 0.5);
                 int nEPSG;
                 if (pt.getY() > 0)
                 {
@@ -788,7 +788,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
                 //convert to UTM/WGS84
                 OGRPoint pt;
                 pPart->Value(dfLen / 2, &pt);
-                int nZoneEnv = 30 + (pt.getX() + 3.0) / 6.0 + 0.5;
+                int nZoneEnv = static_cast<int>(30 + (pt.getX() + 3.0) / 6.0 + 0.5);
                 int nEPSG;
                 if (pt.getY() > 0)
                 {
@@ -834,14 +834,12 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
         fprintf(stdout, "\nCreate pickets\n");
     }
 
-    long nBegin = 0;
+    double dfRoundBeg;
     
     if (pPtBeg != NULL)
-        nBegin = ceil(dfPtBegPosition / dfStep) * dfStep;
+        dfRoundBeg = ceil(dfPtBegPosition / dfStep) * dfStep;
     else
-        nBegin = ceil(dfBeginPosition / dfStep) * dfStep;
-
-    double dfRoundBeg = nBegin;
+        dfRoundBeg = ceil(dfBeginPosition / dfStep) * dfStep;
 
     if (pPtEnd != NULL)
         dfEndPosition = dfPtEndPosition;

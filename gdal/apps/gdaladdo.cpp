@@ -145,8 +145,6 @@ int main( int nArgc, char ** papszArgv )
             {
                 printf( "Unrecognizable band number (%s).\n", papszArgv[iArg+1] );
                 Usage();
-                GDALDestroyDriverManager();
-                exit( 2 );
             }
             iArg++;
 

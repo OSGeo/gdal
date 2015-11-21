@@ -2896,7 +2896,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         {
             bpccBox.SetType("bpcc");
             for(int i=0;i<nBands;i++)
-                bpccBox.AppendUInt8(static_cast<GUInt16>((pasBandParams[i].prec-1) | (pasBandParams[i].sgnd << 7)));
+                bpccBox.AppendUInt8(static_cast<GByte>((pasBandParams[i].prec-1) | (pasBandParams[i].sgnd << 7)));
         }
 
         GDALJP2Box colrBox(fp);

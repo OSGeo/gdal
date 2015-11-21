@@ -38,7 +38,7 @@
 
 #include <cmath>
 
-static const double SRTMHG_NODATA_VALUE = -32768.0;
+static const GInt16 SRTMHG_NODATA_VALUE = -32768;
 
 CPL_CVSID("$Id$");
 

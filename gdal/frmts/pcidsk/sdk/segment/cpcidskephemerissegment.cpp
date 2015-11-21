@@ -320,16 +320,16 @@ CPCIDSKEphemerisSegment::ReadAvhrrScanlineRecord(int nPos,
     sr->nStartScanTimeGMTMsec = ReadAvhrrInt32((unsigned char*)seg_data.Get(nPos+4,4));
 
     for(i = 0; i < 10; ++i)
-        sr->abyScanLineQuality[i] = seg_data.GetInt(nPos+8+i,1);
+        sr->abyScanLineQuality[i] = static_cast<unsigned char>(seg_data.GetInt(nPos+8+i,1));
 
     for(i = 0; i < 5; ++i)
     {
-        sr->aabyBadBandIndicators[i][0] = seg_data.GetInt(nPos+18+2*i,1);
-        sr->aabyBadBandIndicators[i][1] = seg_data.GetInt(nPos+18+2*i+1,1);
+        sr->aabyBadBandIndicators[i][0] = static_cast<unsigned char>(seg_data.GetInt(nPos+18+2*i,1));
+        sr->aabyBadBandIndicators[i][1] = static_cast<unsigned char>(seg_data.GetInt(nPos+18+2*i+1,1));
     }
 
     for(i = 0; i < 8; ++i)
-        sr->abySatelliteTimeCode[i] = seg_data.GetInt(nPos+28+i,1);
+        sr->abySatelliteTimeCode[i] = static_cast<unsigned char>(seg_data.GetInt(nPos+28+i,1));
 
     for(i = 0; i < 3; ++i)
         sr->anTargetTempData[i] = ReadAvhrrInt32((unsigned char*)seg_data.Get(nPos+36+i*4,4));
@@ -535,10 +535,10 @@ CPCIDSKEphemerisSegment::WriteAvhrrScanlineRecord(
 void CPCIDSKEphemerisSegment::WriteAvhrrInt32(int nValue, 
                                               unsigned char* pbyBuf)
 {
-    pbyBuf[0] = ((nValue & 0xff000000) >> 24);
-    pbyBuf[1] = ((nValue & 0x00ff0000) >> 16);
-    pbyBuf[2] = ((nValue & 0x0000ff00) >> 8);
-    pbyBuf[3] =  (nValue & 0x000000ff);
+    pbyBuf[0] = static_cast<unsigned char>((nValue & 0xff000000) >> 24);
+    pbyBuf[1] = static_cast<unsigned char>((nValue & 0x00ff0000) >> 16);
+    pbyBuf[2] = static_cast<unsigned char>((nValue & 0x0000ff00) >> 8);
+    pbyBuf[3] = static_cast<unsigned char>(nValue & 0x000000ff);
 }
 
 

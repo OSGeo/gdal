@@ -1998,13 +1998,13 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         if( poEntry != NULL )
                         {
                             if( nBand == 1 )
-                                ((GByte*) pImage)[j * nBlockXSize + i] = poEntry->c1;
+                                ((GByte*) pImage)[j * nBlockXSize + i] = static_cast<GByte>(poEntry->c1);
                             else if( nBand == 2 )
-                                ((GByte*) pImage)[j * nBlockXSize + i] = poEntry->c2;
+                                ((GByte*) pImage)[j * nBlockXSize + i] = static_cast<GByte>(poEntry->c2);
                             else if( nBand == 3 )
-                                ((GByte*) pImage)[j * nBlockXSize + i] = poEntry->c3;
+                                ((GByte*) pImage)[j * nBlockXSize + i] = static_cast<GByte>(poEntry->c3);
                             else
-                                ((GByte*) pImage)[j * nBlockXSize + i] = poEntry->c4;
+                                ((GByte*) pImage)[j * nBlockXSize + i] = static_cast<GByte>(poEntry->c4);
                         }
                     }
                 }

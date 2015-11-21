@@ -2200,7 +2200,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                         dfPowVal = 0.0;
                     else if( dfPowVal > 1.0 )
                         dfPowVal = 1.0;
-                    fResult = (float) (dfDstMax - dfDstMin) * pow( dfPowVal, dfExponent ) + dfDstMin;
+                    fResult = static_cast<float>((dfDstMax - dfDstMin) * pow( dfPowVal, dfExponent ) + dfDstMin);
                 }
 
                 if (nLUTItemCount)

@@ -1276,32 +1276,32 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
         if( nBand == 1 )
         {
-            const float fReSHH = Byte[3] * dfScale / 127.0;
-            const float fImSHH = Byte[4] * dfScale / 127.0;
+            const float fReSHH = static_cast<float>(Byte[3] * dfScale / 127.0);
+            const float fImSHH = static_cast<float>(Byte[4] * dfScale / 127.0);
 
             pafImage[iX*2  ] = fReSHH;
             pafImage[iX*2+1] = fImSHH;
         }
         else if( nBand == 2 )
         {
-            const float fReSHV = Byte[5] * dfScale / 127.0;
-            const float fImSHV = Byte[6] * dfScale / 127.0;
+            const float fReSHV = static_cast<float>(Byte[5] * dfScale / 127.0);
+            const float fImSHV = static_cast<float>(Byte[6] * dfScale / 127.0);
 
             pafImage[iX*2  ] = fReSHV;
             pafImage[iX*2+1] = fImSHV;
         }
         else if( nBand == 3 )
         {
-            const float fReSVH = Byte[7] * dfScale / 127.0;
-            const float fImSVH = Byte[8] * dfScale / 127.0;
+            const float fReSVH = static_cast<float>(Byte[7] * dfScale / 127.0);
+            const float fImSVH = static_cast<float>(Byte[8] * dfScale / 127.0);
 
             pafImage[iX*2  ] = fReSVH;
             pafImage[iX*2+1] = fImSVH;
         }
         else if( nBand == 4 )
         {
-            const float fReSVV = Byte[9] * dfScale / 127.0;
-            const float fImSVV = Byte[10]* dfScale / 127.0;
+            const float fReSVV = static_cast<float>(Byte[9] * dfScale / 127.0);
+            const float fImSVV = static_cast<float>(Byte[10]* dfScale / 127.0);
 
             pafImage[iX*2  ] = fReSVV;
             pafImage[iX*2+1] = fImSVV;
