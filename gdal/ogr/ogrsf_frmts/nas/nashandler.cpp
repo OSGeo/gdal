@@ -214,7 +214,7 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
         }
 
         strcat( m_pszGeometry+m_nGeomLen, ">" );
-        m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
+        m_nGeomLen += static_cast<int>(strlen(m_pszGeometry+m_nGeomLen));
     }
 
 /* -------------------------------------------------------------------- */
@@ -543,7 +543,7 @@ void NASHandler::endElement(CPL_UNUSED const XMLCh* const uri,
         strcat( m_pszGeometry+m_nGeomLen, "</" );
         tr_strcpy( m_pszGeometry+m_nGeomLen+2, localname );
         strcat( m_pszGeometry+m_nGeomLen+nLNLen+2, ">" );
-        m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
+        m_nGeomLen += static_cast<int>(strlen(m_pszGeometry+m_nGeomLen));
 
         if( poState->m_nPathLength == m_nGeometryDepth+1 )
         {
@@ -704,7 +704,7 @@ void NASHandler::characters( const XMLCh* const chars_in,
         }
 
         tr_strcpy( m_pszGeometry+m_nGeomLen, chars );
-        m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
+        m_nGeomLen += static_cast<int>(strlen(m_pszGeometry+m_nGeomLen));
     }
 }
 
