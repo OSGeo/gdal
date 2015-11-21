@@ -2238,8 +2238,8 @@ GDALCopyWords( const void * CPL_RESTRICT pSrcData, GDALDataType eSrcType, int nS
 
 {
     // On platforms where alignment matters, be careful
+    const int nSrcDataTypeSize = GDALGetDataTypeSize(eSrcType) / 8;
 #ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-    int nSrcDataTypeSize = GDALGetDataTypeSize(eSrcType) / 8;
     int nDstDataTypeSize = GDALGetDataTypeSize(eDstType) / 8;
     if( !(eSrcType == eDstType && nSrcPixelStride == nDstPixelStride) &&
         ( (((GPtrDiff_t)pSrcData) % nSrcDataTypeSize) != 0 ||
@@ -2316,7 +2316,6 @@ GDALCopyWords( const void * CPL_RESTRICT pSrcData, GDALDataType eSrcType, int nS
         // of pixels.
         if( nSrcPixelStride == nDstPixelStride )
         {
-            int nSrcDataTypeSize = GDALGetDataTypeSize(eSrcType) / 8;
             if( nSrcPixelStride == nSrcDataTypeSize)
             {
                 memcpy(pDstData, pSrcData, nWordCount * nSrcDataTypeSize);
