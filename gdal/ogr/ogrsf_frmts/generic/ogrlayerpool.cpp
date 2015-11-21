@@ -159,7 +159,7 @@ OGRProxiedLayer::OGRProxiedLayer(OGRLayerPool* poPoolIn,
                                  FreeUserDataFunc pfnFreeUserDataIn,
                                  void* pUserDataIn) : OGRAbstractProxiedLayer(poPoolIn)
 {
-    CPLAssert(pfnOpenLayer != NULL);
+    CPLAssert(pfnOpenLayerIn != NULL);
 
     pfnOpenLayer = pfnOpenLayerIn;
     pfnFreeUserData = pfnFreeUserDataIn;
