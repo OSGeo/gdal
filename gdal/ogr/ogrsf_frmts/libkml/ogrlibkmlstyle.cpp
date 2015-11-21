@@ -868,10 +868,10 @@ static StyleSelectorPtr StyleFromStyleURL(
             /***** Lets go out and fetch the style from the external URL *****/
 
             char *pszUrlTmp = CPLStrdup(pszUrl);
-            char *pszPound;
+            char *pszPound = strchr(pszUrlTmp, '#');
             char *pszRemoteStyleName = NULL;
             // Chop off the stuff (style id) after the URL
-            if ((pszPound = strchr(pszUrlTmp, '#'))) {
+            if (pszPound != NULL) {
                 *pszPound = '\0';
                 pszRemoteStyleName = pszPound + 1;
             }
@@ -881,8 +881,8 @@ static StyleSelectorPtr StyleFromStyleURL(
             VSILFILE *fp = NULL;
             if ( (fp = VSIFOpenL( CPLFormFilename( "/vsicurl/",
                                                    pszUrlTmp,
-                                                  NULL), "r" ))
-                 ||  (fp = VSIFOpenL( pszUrlTmp, "r" )) )
+                                                  NULL), "r" )) != NULL
+                 ||  (fp = VSIFOpenL( pszUrlTmp, "r" )) != NULL )
             {
                 char szbuf[1025];
                 std::string oStyle = "";
@@ -1131,7 +1131,7 @@ void styletable2kml (
 
     poOgrStyleTable->ResetStyleStringReading (  );
     
-    while ( ( pszStyleString = poOgrStyleTable->GetNextStyle (  ) ) ) {
+    while ( ( pszStyleString = poOgrStyleTable->GetNextStyle (  ) ) != NULL ) {
         const char *pszStyleName = poOgrStyleTable->GetLastStyleName (  );
 
         if( aoSetNormalStyles.find(pszStyleName) != aoSetNormalStyles.end() &&

@@ -138,7 +138,7 @@ int ILI1Reader::ReadFeatures() {
     char *topic = NULL;
     int ret = TRUE;
 
-    while (ret && (tokens = ReadParseLine()))
+    while (ret && (tokens = ReadParseLine()) != NULL)
     {
       firsttok = tokens[0];
       if (EQUAL(firsttok, "SCNT"))
@@ -232,7 +232,7 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
     OGRFeatureDefn *featureDef = curLayer->GetLayerDefn();
     OGRFeature *feature = NULL;
 
-    while (ret && (tokens = ReadParseLine()))
+    while (ret && (tokens = ReadParseLine()) != NULL)
     {
       firsttok = CSLGetField(tokens, 0);
       if (EQUAL(firsttok, "OBJE"))
@@ -391,7 +391,7 @@ void ILI1Reader::ReadGeom(char **stgeom, int geomIdx, OGRwkbGeometryType eType, 
     ogrLine->addPoint(&ogrPoint);
 
     //Parse geometry
-    while (!end && (tokens = ReadParseLine()))
+    while (!end && (tokens = ReadParseLine()) != NULL)
     {
       firsttok = CSLGetField(tokens, 0);
       if (EQUAL(firsttok, "LIPT"))

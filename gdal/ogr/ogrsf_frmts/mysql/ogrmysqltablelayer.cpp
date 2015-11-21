@@ -1248,7 +1248,7 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
 
 		MYSQL_ROW row; 
 		unsigned long *panLengths = NULL;
-		while ((row = mysql_fetch_row(result)))
+		while ((row = mysql_fetch_row(result)) != NULL)
 		{
 			if (panLengths == NULL)
 			{
