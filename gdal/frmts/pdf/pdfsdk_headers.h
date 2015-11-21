@@ -45,6 +45,11 @@
 #define ENABLE_ZLIB
 #endif /* HAVE_PDFIUM */
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4244 ) /* conversion from 'const int' to 'Guchar', possible loss of data */
+#endif
+
 /* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
 /* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
 #define CPL_GBOOL_DEFINED
@@ -78,6 +83,10 @@
 #include <poppler/ErrorCodes.h>
 
 /* end of poppler xpdf includes */
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 #endif /* HAVE_POPPLER */
 
