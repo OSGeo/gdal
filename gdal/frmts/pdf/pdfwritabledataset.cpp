@@ -253,12 +253,12 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     if (dfRatio < 1)
     {
         nWidth = 1024;
-        nHeight = nWidth * dfRatio;
+        nHeight = static_cast<int>(nWidth * dfRatio);
     }
     else
     {
         nHeight = 1024;
-        nWidth = nHeight / dfRatio;
+        nWidth = static_cast<int>(nHeight / dfRatio);
     }
 
     GDALDataset* poSrcDS = MEMDataset::Create( "MEM:::", nWidth, nHeight, 0, GDT_Byte, NULL );
