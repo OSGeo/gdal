@@ -77,6 +77,7 @@ CXXFLAGS_NOFTRAPV        = @CXXFLAGS_NOFTRAPV@ @CXX_WFLAGS@ $(USER_DEFS)
 NO_UNUSED_PARAMETER_FLAG = @NO_UNUSED_PARAMETER_FLAG@
 NO_SIGN_COMPARE = @NO_SIGN_COMPARE@
 NO_NON_VIRTUAL_DTOR_FLAG = @NO_NON_VIRTUAL_DTOR_FLAG@
+SHADOW_WFLAGS = @SHADOW_WFLAGS@
 
 # Also available -DAFL_FRIENDLY for strcmp(), etc.. variants that will
 # work better with American Fuzzy Lop branch examination logic
