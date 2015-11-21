@@ -620,12 +620,12 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
             if (pszNoData != NULL )
                 poBand->SetNoDataValue( CPLAtofM(pszNoData) );
         } else if (EQUAL( poDS->GetKeyword( "BLTYPE"), "M94_HRSC" )) {
-            float scale=CPLAtof(poDS->GetKeyword("DLRTO8.REFLECTANCE_SCALING_FACTOR","-1."));
+            double scale=CPLAtof(poDS->GetKeyword("DLRTO8.REFLECTANCE_SCALING_FACTOR","-1."));
             if (scale < 0.) {
                 scale = CPLAtof(poDS->GetKeyword( "HRCAL.REFLECTANCE_SCALING_FACTOR","1."));
             }
             poBand->SetScale( scale );
-            float offset=CPLAtof(poDS->GetKeyword("DLRTO8.REFLECTANCE_OFFSET","-1."));
+            double offset=CPLAtof(poDS->GetKeyword("DLRTO8.REFLECTANCE_OFFSET","-1."));
             if (offset < 0.) {
                 offset = CPLAtof(poDS->GetKeyword( "HRCAL.REFLECTANCE_OFFSET","0."));
             }
