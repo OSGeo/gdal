@@ -261,8 +261,8 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 	
         while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
             // read values
-            id    = sqlite3_column_double(hStmt, 0);
-            ipcb  = sqlite3_column_double(hStmt, 1);
+            id    = sqlite3_column_int64(hStmt, 0);
+            ipcb  = sqlite3_column_int64(hStmt, 1);
             szFType = (char *) sqlite3_column_text(hStmt, 2);
             rowId = sqlite3_column_int(hStmt, 3);
 
@@ -376,8 +376,8 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
 
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
         /* read values */
-        vrValue[0] = sqlite3_column_double(hStmt, 0);
-        iFID       = sqlite3_column_double(hStmt, 1);
+        vrValue[0] = sqlite3_column_int64(hStmt, 0);
+        iFID       = static_cast<long>(sqlite3_column_int64(hStmt, 1));
         rowId      = sqlite3_column_int(hStmt, 2);
 
         poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
@@ -491,8 +491,8 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         nBridges = 0;
         
         /* read values */
-        id        = sqlite3_column_double(hStmt, 0);
-        iFID      = sqlite3_column_double(hStmt, 1);
+        id        = sqlite3_column_int64(hStmt, 0);
+        iFID      = static_cast<long>(sqlite3_column_int64(hStmt, 1));
         rowId     = sqlite3_column_int(hStmt, 2);
         
         poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
@@ -518,7 +518,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
             hStmtOb = poReader->PrepareStatement(osSQL.c_str());
             
             while(poReader->ExecuteSQL(hStmtOb) == OGRERR_NONE) {
-                idOb = sqlite3_column_double(hStmtOb, 0); 
+                idOb = sqlite3_column_int64(hStmtOb, 0); 
                 vrValue[0] = idOb;
                 poLineSbp = poDataBlockLines2->GetFeature(vrColumn, vrValue, 2);
                 if (poLineSbp)

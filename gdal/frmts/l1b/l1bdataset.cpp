@@ -877,7 +877,7 @@ void L1BDataset::ProcessRecordHeaders()
             {
                 dfLineStep = nRasterYSize / nGCPsPerLine;
             }
-            nTargetLines = nRasterYSize / dfLineStep;
+            nTargetLines = static_cast<int>(nRasterYSize / dfLineStep);
         }
     }
     else
@@ -2670,7 +2670,7 @@ CPLErr L1BSolarZenithAnglesRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
     for(i=0;i<nValidValues;i++)
     {
-        pafData[i] = pabyRecordHeader[poL1BDS->iGCPCodeOffset + 1 + i] / 2.0;
+        pafData[i] = pabyRecordHeader[poL1BDS->iGCPCodeOffset + 1 + i] / 2.0f;
 
         if( bHasFractional )
         {
@@ -2701,18 +2701,18 @@ CPLErr L1BSolarZenithAnglesRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                          nBlockYOff, i, nFractional);
             }
 
-            pafData[i] += nFractional / 10.0;
+            pafData[i] += nFractional / 10.0f;
         }
     }
 
     for(;i<nRasterXSize;i++)
-        pafData[i] = GetNoDataValue(NULL);
+        pafData[i] = static_cast<float>(GetNoDataValue(NULL));
 
     if( poL1BDS->eLocationIndicator == ASCEND )
     {
         for(i=0;i<nRasterXSize/2;i++)
         {
-            double fTmp = pafData[i];
+            float fTmp = pafData[i];
             pafData[i] = pafData[nRasterXSize-1-i];
             pafData[nRasterXSize-1-i] = fTmp;
         }
@@ -2845,14 +2845,14 @@ CPLErr L1BNOAA15AnglesRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     for(i=0;i<nRasterXSize;i++)
     {
         GInt16 i16 = poL1BDS->GetInt16(pabyRecordHeader + 328 + 6 * i + 2 * (nBand - 1));
-        pafData[i] = i16 / 100.0;
+        pafData[i] = i16 / 100.0f;
     }
 
     if( poL1BDS->eLocationIndicator == ASCEND )
     {
         for(i=0;i<nRasterXSize/2;i++)
         {
-            double fTmp = pafData[i];
+            float fTmp = pafData[i];
             pafData[i] = pafData[nRasterXSize-1-i];
             pafData[nRasterXSize-1-i] = fTmp;
         }

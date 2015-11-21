@@ -488,7 +488,8 @@ static void SetField(OGRFeature* poFeature,
         {
             double fFracSec = fmod(fmod(dfNumberOfDaysSince1900,1) * 3600 * 24, 1);
             poFeature->SetField(i, sTm.tm_year + 1900, sTm.tm_mon + 1, sTm.tm_mday,
-                                sTm.tm_hour, sTm.tm_min, sTm.tm_sec + fFracSec, 0 );
+                                sTm.tm_hour, sTm.tm_min,
+                                static_cast<float>(sTm.tm_sec + fFracSec), 0 );
         }
         else if (strcmp(pszCellType, "time") == 0)
         {
@@ -505,7 +506,8 @@ static void SetField(OGRFeature* poFeature,
             double fFracSec = fmod(fmod(dfNumberOfDaysSince1900,1) * 3600 * 24, 1);
             poFeature->SetField(i,
                                 sTm.tm_year + 1900, sTm.tm_mon + 1, sTm.tm_mday,
-                                sTm.tm_hour, sTm.tm_min, sTm.tm_sec + fFracSec, 0);
+                                sTm.tm_hour, sTm.tm_min,
+                                static_cast<float>(sTm.tm_sec + fFracSec), 0);
         }
     }
     else

@@ -144,7 +144,7 @@ struct CastToBooleanRange<UINT4>
 struct CastToDirection
 {
   void operator()(REAL4& value) {
-    REAL4 factor = M_PI / 180.0;
+    REAL4 factor = static_cast<REAL4>(M_PI / 180.0);
     if(!pcr::isMV(value)) {
       value = REAL4(value * factor);
     }

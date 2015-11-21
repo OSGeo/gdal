@@ -388,12 +388,12 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
     *  The metadata will be set to 2.0 for DIMAP2 */
     int nProductVersion = 1;
 
-    float nMetadataFormatVersion
+    double dfMetadataFormatVersion
         = CPLAtof( CPLGetXMLValue(
             CPLGetXMLNode(psDoc, "Metadata_Identification.METADATA_FORMAT"),
             "version", "1") );
 
-    if( nMetadataFormatVersion >= 2.0 )
+    if( dfMetadataFormatVersion >= 2.0 )
     {
         nProductVersion = 2;
     }

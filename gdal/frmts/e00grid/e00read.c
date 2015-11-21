@@ -558,7 +558,7 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                     if (n == 92 && (c=_GetNextSourceChar(psInfo)) != '\0')
                         n += c - '!';
 
-                    psInfo->szOutBuf[iOutBufPtr++] = '0' + n/10;
+                    psInfo->szOutBuf[iOutBufPtr++] = (char)('0' + n/10);
 
                     if (++iCurDigit == iDecimalPoint)
                         psInfo->szOutBuf[iOutBufPtr++] = '.';

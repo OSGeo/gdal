@@ -159,7 +159,7 @@ static CPL_SOCKET CreateSocketAndBindAndListen(const char* pszService,
         if (nListenSocket == INVALID_SOCKET)
             continue;
 
-        if (bind(nListenSocket, psResultsIter->ai_addr,
+        if ((int)bind(nListenSocket, psResultsIter->ai_addr,
                  psResultsIter->ai_addrlen) != SOCKET_ERROR)
         {
             if( pnFamily )   *pnFamily =   psResultsIter->ai_family;

@@ -546,7 +546,7 @@ int SysBlockMap::GetNextBlockMapEntry( int bm_index,
     block_in_segment = atoi(bm_entry+4);
 
     bm_entry[4] = '\0';
-    segment = atoi(bm_entry);
+    segment = static_cast<PCIDSK::uint16>(atoi(bm_entry));
     
     return next_block;
 }

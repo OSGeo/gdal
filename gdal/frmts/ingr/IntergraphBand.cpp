@@ -1136,7 +1136,7 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
                     pOutput[nRLECount++] = CPL_LSBWORD16(0);
                     nLastCount -= 32767;
                 }
-                pOutput[nRLECount++] = CPL_LSBWORD16(nLastCount);
+                pOutput[nRLECount++] = static_cast<GInt16>(CPL_LSBWORD16(nLastCount));
                 nLastCount = 1;
                 nValue ^= 1;
             }
@@ -1152,7 +1152,7 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
 
         if (nLastCount != 0)
         {
-            pOutput[nRLECount++] = CPL_LSBWORD16(nLastCount);
+            pOutput[nRLECount++] = static_cast<GInt16>(CPL_LSBWORD16(nLastCount));
             nLastCount = 0;
             nValue ^= 1;
         }

@@ -302,8 +302,8 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
                 continue;
             }
 
-            const int x = CPLAtofM(papszTok[2]);
-            const int y = CPLAtofM(papszTok[3]);
+            const int x = atoi(papszTok[2]);
+            const int y = atoi(papszTok[3]);
             if (( x != 0 && x != poDS->nRasterXSize) || (y != 0 && y != poDS->nRasterYSize) )
             {
                 bNeatLine = true;

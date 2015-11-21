@@ -553,7 +553,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr1.TransformationMatrix[15]      = 1.0;
     hHdr1.PixelsPerLine         = nXSize;
     hHdr1.NumberOfLines         = nYSize;
-    hHdr1.DeviceResolution      = nDeviceResolution;
+    hHdr1.DeviceResolution      = static_cast<int16>(nDeviceResolution);
     hHdr1.ScanlineOrientation   = UpperLeftHorizontal;
     hHdr1.ScannableFlag         = NoLineHeader;
     hHdr1.RotationAngle         = 0.0;

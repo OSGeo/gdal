@@ -993,8 +993,8 @@ static void decode_geohash_bbox(const char *geohash, double lat[2], double lon[2
     lon[0] = -180.0; lon[1] = 180.0;
     hashlen = static_cast<int>(strlen(geohash));
     for (i=0; i<hashlen; i++) {
-        c = tolower(geohash[i]);
-        cd = strchr(BASE32, c)-BASE32;
+        c = static_cast<char>(tolower(geohash[i]));
+        cd = static_cast<int>(strchr(BASE32, c)-BASE32);
         for (j=0; j<5; j++) {
             mask = bits[j];
             if (is_even) {

@@ -232,9 +232,9 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     if(poGDS->nDataTypeCode == 2 || poGDS->nDataTypeCode == 1){
         float fVal;
         for (i=0;i<nBlockXSize;i++){
-            fVal = (((float) *(pszRecord+i*nDataLength)) -64)/2.0;
-            if (fVal == 95.5)
-                fVal = -9999;
+            fVal = (((float) *(pszRecord+i*nDataLength)) -64)/2.0f;
+            if (fVal == 95.5f)
+                fVal = -9999.0f;
             ((float *) pImage)[i] = fVal;
         }
     //If datatype is dbZ2 or dBT2:
@@ -242,9 +242,9 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     } else if(poGDS->nDataTypeCode == 8 || poGDS->nDataTypeCode == 9){
         float fVal;
         for (i=0;i<nBlockXSize;i++){
-            fVal = (((float) CPL_LSBUINT16PTR(pszRecord+i*nDataLength)) - 32768)/100.0;
-            if (fVal == 327.67)
-                fVal = -9999;
+            fVal = (((float) CPL_LSBUINT16PTR(pszRecord+i*nDataLength)) - 32768)/100.0f;
+            if (fVal == 327.67f)
+                fVal = -9999.0f;
             ((float *) pImage)[i] = fVal;
         }
     //Fliquid2 (Rain1 & Rainn products)
@@ -257,11 +257,11 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             nExp = nVal>>12;
             nMantissa = nVal - (nExp<<12);
             if (nVal == 65535)
-                fVal2 = -9999;
+                fVal2 = -9999.0f;
             else if (nExp == 0)
-                fVal2 = (float) nMantissa / 1000.0;
+                fVal2 = (float) nMantissa / 1000.0f;
             else
-                fVal2 = (float)((nMantissa+4096)<<(nExp-1))/1000.0;
+                fVal2 = (float)((nMantissa+4096)<<(nExp-1))/1000.0f;
             ((float *) pImage)[i] = fVal2;
         }
     //VIL2 (VIL products)
@@ -270,12 +270,12 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         float fVal;
         for (i=0;i<nBlockXSize;i++){
             fVal = (float) CPL_LSBUINT16PTR(pszRecord+i*nDataLength);
-            if (fVal == 65535)
-                ((float *) pImage)[i] = -9999;
+            if (fVal == 65535.0f)
+                ((float *) pImage)[i] = -9999.0f;
             else if (fVal == 0)
-                ((float *) pImage)[i] = -1;
+                ((float *) pImage)[i] = -1.0f;
             else
-                ((float *) pImage)[i] = (fVal-1)/1000;
+                ((float *) pImage)[i] = (fVal-1)/1000.0f;
         }
     //HEIGTH (TOPS products)
     //See point 3.3.14 at page 3.46 of the manual
@@ -284,11 +284,11 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         for (i=0;i<nBlockXSize;i++){
             nVal =  *(pszRecord+i*nDataLength) ;
             if (nVal == 255)
-                ((float *) pImage)[i] = -9999;
+                ((float *) pImage)[i] = -9999.0f;
             else if (nVal == 0)
-                ((float *) pImage)[i] = -1;
+                ((float *) pImage)[i] = -1.0f;
             else
-                ((float *) pImage)[i] = ((float) nVal - 1) / 10;
+                ((float *) pImage)[i] = ((float) nVal - 1) / 10.0f;
         }		
     //VEL (Velocity 1-Byte in PPI & others)
     //See point 3.3.37 at page 3.53 of the manual
@@ -296,14 +296,14 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
           float fVal;
         for (i=0;i<nBlockXSize;i++){
             fVal = (float) *(pszRecord+i*nDataLength);
-            if (fVal == 0)
-                fVal = -9997; 
-            else if(fVal == 1)
-                fVal = -9998; 
-            else if(fVal == 255)
-                fVal = -9999; 
+            if (fVal == 0.0f)
+                fVal = -9997.0f; 
+            else if(fVal == 1.0f)
+                fVal = -9998.0f; 
+            else if(fVal == 255.0f)
+                fVal = -9999.0f; 
             else
-                fVal = poGDS->fNyquistVelocity * (fVal - 128)/127;
+                fVal = poGDS->fNyquistVelocity * (fVal - 128.0f)/127.0f;
             ((float *) pImage)[i] = fVal;     
         }       
     //SHEAR (1-Byte Shear)
@@ -312,12 +312,12 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         float fVal;
         for (i=0;i<nBlockXSize;i++){
             fVal = (float) *(pszRecord+i*nDataLength);
-            if (fVal == 0.0)
-                fVal = -9998;
-            else if (fVal == 255.0)
-                fVal = -9999;
+            if (fVal == 0.0f)
+                fVal = -9998.0f;
+            else if (fVal == 255.0f)
+                fVal = -9999.0f;
             else
-                fVal = (fVal - 128) * 0.2;
+                fVal = (fVal - 128.0f) * 0.2f;
             ((float *) pImage)[i] = fVal;
         }
 
