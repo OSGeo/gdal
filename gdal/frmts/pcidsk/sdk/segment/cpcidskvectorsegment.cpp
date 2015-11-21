@@ -1313,7 +1313,7 @@ void CPCIDSKVectorSegment::SetVertices( ShapeId id,
 /*      Is the current space big enough to hold the new vertex set?     */
 /* -------------------------------------------------------------------- */
     uint32 vert_off = shape_index_vertex_off[shape_index - shape_index_start];
-    uint32 chunk_size;
+    uint32 chunk_size = 0;
 
     if( vert_off != 0xffffffff )
     {

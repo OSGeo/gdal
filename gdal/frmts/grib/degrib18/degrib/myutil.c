@@ -188,7 +188,7 @@ void mySplit (const char *data, char symbol, size_t *Argc, char ***Argv,
 
 int myAtoI (const char *ptr, sInt4 *value)
 {
-   char *extra;         /* The data after the end of the double. */
+   char *extra = NULL;         /* The data after the end of the double. */
 
    myAssert (ptr != NULL);
    *value = 0;
@@ -256,7 +256,7 @@ int myAtoI (const char *ptr, sInt4 *value)
  */
 int myAtoF (const char *ptr, double *value)
 {
-   char *extra;         /* The data after the end of the double. */
+   char *extra = NULL;         /* The data after the end of the double. */
 
    myAssert (ptr != NULL);
    *value = 0;

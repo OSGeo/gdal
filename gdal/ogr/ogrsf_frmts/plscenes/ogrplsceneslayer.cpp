@@ -73,7 +73,7 @@ static bool OGRPLScenesLayerFieldNameComparator(const CPLString& osFirst,
 {
     const char* pszUnderscore1 = strrchr(osFirst.c_str(), '_');
     const char* pszUnderscore2 = strrchr(osSecond.c_str(), '_');
-    int val1, val2;
+    int val1 = 0, val2 = 0;
     if( pszUnderscore1 && pszUnderscore2 &&
         (CPLString(osFirst).substr(0, pszUnderscore1-osFirst.c_str()) ==
          CPLString(osSecond).substr(0, pszUnderscore2-osSecond.c_str())) &&
