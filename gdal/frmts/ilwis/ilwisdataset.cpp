@@ -1911,7 +1911,6 @@ void ValueRange::init()
 
 void ValueRange::init(double rRaw0)
 {
-    try {
         _iDec = 0;
         if (_rStep < 0)
             _rStep = 0;
@@ -1969,15 +1968,6 @@ void ValueRange::init(double rRaw0)
             iRawUndef = shUNDEF;
         else
             iRawUndef = 0;
-    }
-    catch (std::exception*) {
-        st = stReal;
-        _r0 = 0;
-        _rStep = 0.0001;
-        _rHi = 1e300;
-        _rLo = -1e300;
-        iRawUndef = iUNDEF;
-    }
 }
 
 string ValueRange::ToString()
