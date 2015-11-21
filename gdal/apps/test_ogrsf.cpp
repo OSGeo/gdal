@@ -35,6 +35,8 @@
 #include "ogr_p.h"
 #include "commonutils.h"
 
+#include <limits>
+
 CPL_CVSID("$Id$");
 
 int     bReadOnly = FALSE;
@@ -1687,15 +1689,6 @@ end:
     return bRet;
 }
 
-#ifndef INFINITY
-    static CPL_INLINE double CPLInfinity(void)
-    {
-        static double ZERO = 0;
-        return 1.0 / ZERO; /* MSVC doesn't like 1.0 / 0.0 */
-    }
-    #define INFINITY CPLInfinity()
-#endif
-
 /************************************************************************/
 /*                         TestSpatialFilter()                          */
 /*                                                                      */
@@ -1889,8 +1882,8 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 /*     Test infinity envelope                                           */
 /* -------------------------------------------------------------------- */
 
-#define NEG_INF -INFINITY
-#define POS_INF INFINITY
+#define NEG_INF -std::numeric_limits<double>::infinity()
+#define POS_INF std::numeric_limits<double>::infinity()
 
     oRing.setPoint( 0, NEG_INF, NEG_INF );
     oRing.setPoint( 1, NEG_INF, POS_INF );

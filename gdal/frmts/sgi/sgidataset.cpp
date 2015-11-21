@@ -175,7 +175,7 @@ static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
             }
             else
             {
-                return CE_None;
+                break;
             }
         }
 
