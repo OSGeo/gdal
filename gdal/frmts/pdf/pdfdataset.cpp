@@ -4062,8 +4062,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         if (globalParams == NULL)
             globalParams = new GlobalParams();
 
-        globalParams->setPrintCommands(CSLTestBoolean(
-            CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE")));
+        globalParams->setPrintCommands(CPL_TO_BOOL(CSLTestBoolean(
+            CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE"))));
     }
 
     while( true )

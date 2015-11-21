@@ -666,7 +666,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const char* pszPSNR = CSLFetchNameValue(papszOptions, "PSNR");
     if (pszPSNR)
     {
-        sConfig.target_PSNR = CPLAtof(pszPSNR);
+        sConfig.target_PSNR = static_cast<float>(CPLAtof(pszPSNR));
         if (sConfig.target_PSNR < 0)
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
