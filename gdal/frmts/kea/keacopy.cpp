@@ -31,9 +31,21 @@
 #include <cmath>
 #include "gdal_priv.h"
 #include "gdal_rat.h"
+
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4290 )  /* C++ exception specification ignored except to indicate a function is not __declspec(nothrow)*/
+#endif
+
 #include "libkea/KEAImageIO.h"
 #include "libkea/KEAAttributeTable.h"
 #include "libkea/KEAAttributeTableInMem.h"
+
+#ifdef _MSC_VER
+#pragma warning( pop ) 
+#endif
+
+
 #include "keacopy.h"
 
 // Support functions for CreateCopy()
@@ -64,7 +76,7 @@ bool KEACopyRasterData( GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int
         return false;
     }
     // for progress
-    int nTotalBlocks = std::ceil( (double)nXSize / (double)nBlockSize ) * std::ceil( (double)nYSize / (double)nBlockSize );
+    int nTotalBlocks = static_cast<int>(std::ceil( (double)nXSize / (double)nBlockSize ) * std::ceil( (double)nYSize / (double)nBlockSize ));
     int nBlocksComplete = 0;
     double dLastFraction = -1;
     // go through the image
@@ -450,7 +462,7 @@ static void KEACopyGCPs(GDALDataset *pDataset, kealib::KEAImageIO *pImageIO)
         {
             pImageIO->setGCPs(&KEAGCPs, pszGCPProj);
         }
-        catch(kealib::KEAException &e)
+        catch(const kealib::KEAException &)
         {
         }
 

@@ -516,7 +516,7 @@ void OGROCISession::CleanName( char * pszName )
 
     for( i = 0; pszName[i] != '\0'; i++ )
     {
-        pszName[i] = toupper(pszName[i]);
+        pszName[i] = static_cast<char>(toupper(pszName[i]));
         
         if( (pszName[i] < '0' || pszName[i] > '9')
             && (pszName[i] < 'A' || pszName[i] > 'Z')

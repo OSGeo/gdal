@@ -117,7 +117,7 @@ void OGROCIStringBuf::Appendf( int nMax, const char *pszFormat, ... )
 void OGROCIStringBuf::UpdateEnd()
 
 {
-    nLen += strlen(pszString+nLen);
+    nLen += static_cast<int>(strlen(pszString+nLen));
 }
 
 /************************************************************************/

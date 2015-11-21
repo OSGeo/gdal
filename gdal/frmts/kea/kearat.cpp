@@ -39,7 +39,7 @@ KEARasterAttributeTable::KEARasterAttributeTable(kealib::KEAAttributeTable *poKE
         {
             sKEAField = poKEATable->getField(nColumnIndex);
         }
-        catch(kealib::KEAATTException &e)
+        catch(const kealib::KEAATTException &)
         {
             // pKEATable->getField raised exception because we have a missing column
             continue;
@@ -395,7 +395,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy the application supplied doubles to ints
                 for( int i = 0; i < iLength; i++ )
-                    panColData[i] = pdfData[i];
+                    panColData[i] = static_cast<int>(pdfData[i]);
             }
 
             // do the ValuesIO as ints
@@ -619,7 +619,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy them back to ints
                 for( int i = 0; i < iLength; i++ )
-                    pnData[i] = padfColData[i];
+                    pnData[i] = static_cast<int>(padfColData[i]);
             }
 
             CPLFree(padfColData);

@@ -34,7 +34,17 @@
 
 #define MAX_METADATA_LEN 32768
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4005 ) /* warning C4005: '_HDF5USEDLL_' : macro redefinition */
+#endif
+
 #include "hdf5.h"
+
+#ifdef _MSC_VER
+#pragma warning( pop ) 
+#endif
+
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
@@ -1194,7 +1204,7 @@ CPLErr HDF5Dataset::HDF5ReadDoubleAttr(const char* pszAttrFullPath,
                 for( i=0; i < nAttrDims; i++ )
                 {
                     //For multidimensional attributes
-                     nAttrElmts *= nSize[i];
+                     nAttrElmts *= static_cast<unsigned int>(nSize[i]);
                 }
 
                 if(nLen != NULL)

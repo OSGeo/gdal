@@ -692,8 +692,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         }
     }
 
-    poGRD->poGeoRaster->bCreateObjectTable = (bool)
-        CSLFetchBoolean( papszOptions, "OBJECTTABLE", FALSE );
+    poGRD->poGeoRaster->bCreateObjectTable = CPL_TO_BOOL(
+        CSLFetchBoolean( papszOptions, "OBJECTTABLE", FALSE ));
 
     //  -------------------------------------------------------------------
     //  Create a SDO_GEORASTER object on the server
@@ -751,8 +751,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRD->poGeoRaster->SetGeoReference( atoi( pszFetched ) );
     }
 
-    poGRD->poGeoRaster->bGenSpatialIndex = (bool)
-        CSLFetchBoolean( papszOptions, "SPATIALEXTENT", TRUE );
+    poGRD->poGeoRaster->bGenSpatialIndex = CPL_TO_BOOL(
+        CSLFetchBoolean( papszOptions, "SPATIALEXTENT", TRUE ));
 
     pszFetched = CSLFetchNameValue( papszOptions, "EXTENTSRID" );
 
@@ -1593,12 +1593,12 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
             return CE_Failure;
         }
         
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_AZIMUTH) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_AZIMUTH) ) != NULL )
         {
             strncpy( pszStart, "Azimuth", strlen(SRS_PP_AZIMUTH) );
         }
 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_CENTRAL_MERIDIAN) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_CENTRAL_MERIDIAN) ) != NULL )
         {
             strncpy( pszStart, "Central_Meridian", 
                                         strlen(SRS_PP_CENTRAL_MERIDIAN) );
@@ -1609,54 +1609,54 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
             strncpy( pszStart, "False_Easting", strlen(SRS_PP_FALSE_EASTING) );
         }
 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_FALSE_NORTHING) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_FALSE_NORTHING) ) != NULL )
         {
             strncpy( pszStart, "False_Northing", 
                                         strlen(SRS_PP_FALSE_NORTHING) );
         }
 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LATITUDE_OF_CENTER) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LATITUDE_OF_CENTER) ) != NULL )
         {
             strncpy( pszStart, "Latitude_Of_Center", 
                                         strlen(SRS_PP_LATITUDE_OF_CENTER) );
         }
                 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LATITUDE_OF_ORIGIN) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LATITUDE_OF_ORIGIN) ) != NULL )
         {
             strncpy( pszStart, "Latitude_Of_Origin", 
                                         strlen(SRS_PP_LATITUDE_OF_ORIGIN) );
         }
                 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LONGITUDE_OF_CENTER) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LONGITUDE_OF_CENTER) ) != NULL )
         {
             strncpy( pszStart, "Longitude_Of_Center", 
                                         strlen(SRS_PP_LONGITUDE_OF_CENTER) );
         }
                 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_PSEUDO_STD_PARALLEL_1) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_PSEUDO_STD_PARALLEL_1) ) != NULL )
         {
             strncpy( pszStart, "Pseudo_Standard_Parallel_1", 
                                         strlen(SRS_PP_PSEUDO_STD_PARALLEL_1) );
         }
                 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_SCALE_FACTOR) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_SCALE_FACTOR) ) != NULL )
         {
             strncpy( pszStart, "Scale_Factor", strlen(SRS_PP_SCALE_FACTOR) );
         }
                 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_1) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_1) ) != NULL )
         {
             strncpy( pszStart, "Standard_Parallel_1", 
                                         strlen(SRS_PP_STANDARD_PARALLEL_1) );
         }
                 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_2) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_2) ) != NULL )
         {
             strncpy( pszStart, "Standard_Parallel_2", 
                                         strlen(SRS_PP_STANDARD_PARALLEL_2) );
         }                
                 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_2) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_2) ) != NULL )
         {
             strncpy( pszStart, "Standard_Parallel_2", 
                                         strlen(SRS_PP_STANDARD_PARALLEL_2) );
@@ -1666,7 +1666,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         // Fix Unit name
         // ----------------------------------------------------------------
         
-        if( ( pszStart = strstr(pszCloneWKT, "metre") ) )
+        if( ( pszStart = strstr(pszCloneWKT, "metre") ) != NULL )
         {
             strncpy( pszStart, SRS_UL_METER, strlen(SRS_UL_METER) );
         }

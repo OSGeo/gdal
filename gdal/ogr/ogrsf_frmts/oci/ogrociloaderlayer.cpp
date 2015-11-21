@@ -344,7 +344,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
             nLineLen = 0;
         }
 
-        nLineLen += strlen(pszStrValue);
+        nLineLen += static_cast<int>(strlen(pszStrValue));
 
         if( poFldDefn->GetType() == OFTInteger 
             || poFldDefn->GetType() == OFTInteger64

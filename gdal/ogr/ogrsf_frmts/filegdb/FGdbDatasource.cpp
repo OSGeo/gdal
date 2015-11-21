@@ -158,7 +158,7 @@ int FGdbDataSource::Open(const char * pszNewName, int bUpdate,
     m_osFSName = pszNewName;
     m_osPublicName = (pszPublicName) ? pszPublicName : pszNewName;
     m_pGeodatabase = m_pConnection->GetGDB();
-    m_bUpdate = bUpdate;
+    m_bUpdate = CPL_TO_BOOL(bUpdate);
     m_poOpenFileGDBDrv = (GDALDriver*) GDALGetDriverByName("OpenFileGDB");
 
     std::vector<std::wstring> typesRequested;

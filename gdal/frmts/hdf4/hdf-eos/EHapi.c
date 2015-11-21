@@ -97,12 +97,12 @@ EHopen(char *filename, intn access)
     intn            curr_max = 0;	/* maximum # of HDF files to open */
     intn            sys_limit = 0;	/* OS limit for maximum # of opened files */
 
-    int32           HDFfid;	/* HDF file ID */
+    int32           HDFfid = 0;	/* HDF file ID */
     int32           fid = -1;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
+    int32           sdInterfaceID = 0;	/* HDF SDS interface ID */
     int32           attrIndex;	/* Structural Metadata attribute index */
 
-    uint8           acs;	/* Read (0) / Write (1) access code */
+    uint8           acs = 0;	/* Read (0) / Write (1) access code */
 
     char           *testname;	/* Test filename */
     char            errbuf[256];/* Error report buffer */
@@ -777,8 +777,8 @@ EHconvAng(float64 inAngle, intn code)
 	/* Convert packed degrees to degrees */
 	/* --------------------------------- */
     case HDFE_DMS_DEG:
-	deg = inAngle / 1000000;
-	min = (inAngle - deg * 1000000) / 1000;
+	deg = (int32)(inAngle / 1000000);
+	min = (int32)((inAngle - deg * 1000000) / 1000);
 	sec = (inAngle - deg * 1000000 - min * 1000);
 	outAngle = deg + min / 60.0 + sec / 3600.0;
 	break;
@@ -787,8 +787,8 @@ EHconvAng(float64 inAngle, intn code)
 	/* Convert degrees to packed degrees */
 	/* --------------------------------- */
     case HDFE_DEG_DMS:
-	deg = inAngle;
-	min = (inAngle - deg) * 60;
+	deg = (int32)(inAngle);
+	min = (int32)((inAngle - deg) * 60);
 	sec = (inAngle - deg - min / 60.0) * 3600;
 
 	if ((intn) sec == 60)
@@ -809,8 +809,8 @@ EHconvAng(float64 inAngle, intn code)
 	/* --------------------------------- */
     case HDFE_RAD_DMS:
 	inAngle = inAngle * RADIANS_TO_DEGREES;
-	deg = inAngle;
-	min = (inAngle - deg) * 60;
+	deg = (int32)(inAngle);
+	min = (int32)((inAngle - deg) * 60);
 	sec = (inAngle - deg - min / 60.0) * 3600;
 
 	if ((intn) sec == 60)
@@ -830,8 +830,8 @@ EHconvAng(float64 inAngle, intn code)
 	/* Convert packed degrees to radians */
 	/* --------------------------------- */
     case HDFE_DMS_RAD:
-	deg = inAngle / 1000000;
-	min = (inAngle - deg * 1000000) / 1000;
+	deg = (int32)(inAngle / 1000000);
+	min = (int32)((inAngle - deg * 1000000) / 1000);
 	sec = (inAngle - deg * 1000000 - min * 1000);
 	outAngle = deg + min / 60.0 + sec / 3600.0;
 	outAngle = outAngle * DEGREES_TO_RADIANS;
