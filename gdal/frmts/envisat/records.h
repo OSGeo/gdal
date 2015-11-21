@@ -62,9 +62,9 @@ typedef enum {
 
 typedef struct {
     const char* szName;
-    const int nOffset;
-    const EnvisatDataType eType;
-    const int nCount;
+    int nOffset;
+    EnvisatDataType eType;
+    int nCount;
 } EnvisatFieldDescr;
 
 typedef struct {

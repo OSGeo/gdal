@@ -315,6 +315,8 @@ public:
         return poLayerInfo;
     }
 
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(IliClass);
 };
 
 

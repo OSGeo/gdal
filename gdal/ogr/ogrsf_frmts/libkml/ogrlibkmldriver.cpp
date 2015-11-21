@@ -31,8 +31,6 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
-#include <kml/dom.h>
-
 using kmldom::KmlFactory;
 
 static CPLMutex *hMutex = NULL;
