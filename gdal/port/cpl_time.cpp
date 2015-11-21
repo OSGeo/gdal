@@ -8,10 +8,13 @@
  *
  **********************************************************************
  *
- * CPLUnixTimeToYMDHMS() is derived from timesub() in localtime.c from openbsd/freebsd/netbsd.
- * CPLYMDHMSToUnixTime() has been implemented by Even Rouault and is in the public domain
+ * CPLUnixTimeToYMDHMS() is derived from timesub() in localtime.c from
+ * openbsd/freebsd/netbsd.
  *
- * Cf http://svn.freebsd.org/viewvc/base/stable/7/lib/libc/stdtime/localtime.c?revision=178142&view=markup
+ * CPLYMDHMSToUnixTime() has been implemented by Even Rouault and is in the
+ * public domain.
+ *
+ * c.f. http://svn.freebsd.org/viewvc/base/stable/7/lib/libc/stdtime/localtime.c?revision=178142&view=markup
  * localtime.c comes with the following header :
  *
  * This file is in the public domain, so clarified as of
@@ -87,12 +90,12 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
     if (pRet->tm_wday < 0)
         pRet->tm_wday += DAYSPERWEEK;
 
-    GIntBig y = EPOCH_YEAR;
+    int y = EPOCH_YEAR;
     int yleap = 0;
     while ( days < 0
             || days >= static_cast<GIntBig>( year_lengths[yleap = isleap(y)] ) )
     {
-        GIntBig newy = y + days / DAYSPERNYEAR;
+        int newy = y + days / DAYSPERNYEAR;
         if (days < 0)
             --newy;
         days -= (newy - y) * DAYSPERNYEAR +
