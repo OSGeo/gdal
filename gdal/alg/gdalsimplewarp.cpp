@@ -198,7 +198,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     panBandInit = (int *) CPLCalloc(sizeof(int),nBandCount);
     if( CSLFetchNameValue( papszWarpOptions, "INIT" ) )
     {
-        int  iBand, nTokenCount;
+        int  nTokenCount;
         char **papszTokens = 
             CSLTokenizeStringComplex( CSLFetchNameValue( papszWarpOptions, 
                                                          "INIT" ),

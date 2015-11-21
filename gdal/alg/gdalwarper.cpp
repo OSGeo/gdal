@@ -1340,7 +1340,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
             && EQUAL(psItem->pszValue,"Option") )
         {
             const char *pszName = CPLGetXMLValue(psItem, "Name", NULL );
-            const char *pszValue = CPLGetXMLValue(psItem, "", NULL );
+            pszValue = CPLGetXMLValue(psItem, "", NULL );
 
             if( pszName != NULL && pszValue != NULL )
             {

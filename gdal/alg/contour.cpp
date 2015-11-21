@@ -149,10 +149,10 @@ public:
     bool                Init();
 
     void                SetNoData( double dfNoDataValue );
-    void                SetContourLevels( double dfContourInterval, 
-                                          double dfContourOffset = 0.0 )
-        { this->dfContourInterval = dfContourInterval;
-          this->dfContourOffset = dfContourOffset; }
+    void                SetContourLevels( double dfContourIntervalIn, 
+                                          double dfContourOffsetIn = 0.0 )
+        { dfContourInterval = dfContourIntervalIn;
+          dfContourOffset = dfContourOffsetIn; }
 
     void                SetFixedLevels( int, double * );
     CPLErr              FeedLine( double *padfScanline );

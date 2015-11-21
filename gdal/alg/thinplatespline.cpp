@@ -651,13 +651,13 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py, double *vars
         
         for ( r = 0; r < (_nof_points & (~3)); r+=4 )
         {
-            double tmp[4];
-            VizGeorefSpline2DBase_func4( tmp, Pxy, &x[r], &y[r] );
+            double dfTmp[4];
+            VizGeorefSpline2DBase_func4( dfTmp, Pxy, &x[r], &y[r] );
             for ( v= 0; v < _nof_vars; v++ )
-                vars[v] += coef[v][r+3] * tmp[0] +
-                        coef[v][r+3+1] * tmp[1] +
-                        coef[v][r+3+2] * tmp[2] +
-                        coef[v][r+3+3] * tmp[3];
+                vars[v] += coef[v][r+3] * dfTmp[0] +
+                        coef[v][r+3+1] * dfTmp[1] +
+                        coef[v][r+3+2] * dfTmp[2] +
+                        coef[v][r+3+3] * dfTmp[3];
         }
         for ( ; r < _nof_points; r++ )
         {

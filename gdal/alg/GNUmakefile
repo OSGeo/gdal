@@ -35,7 +35,7 @@ ifeq ($(QHULL_SETTING),internal)
 CPPFLAGS 	:=	-DINTERNAL_QHULL -Ilibqhull $(CPPFLAGS)
 endif
 
-CPPFLAGS	:=	$(CPPFLAGS) $(OPENCL_FLAGS)
+CPPFLAGS	:=	$(CPPFLAGS) $(OPENCL_FLAGS) $(SHADOW_WFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) gdalgridavx.$(OBJ_EXT) gdalgridsse.$(OBJ_EXT)
 
