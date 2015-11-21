@@ -827,7 +827,7 @@ sub traverse {
 # - \a YOff y offset (pixel coordinates) (default is 0)
 # - \a XSize width of the area to write (default is the width of the dataset)
 # - \a YSize height of the area to write (default is the height of the dataset)
-# - \a Buf a buffer containing the data. Create the buffer with \a pack function of Perl. See Geo::GDAL::Band::PackCharacter.
+# - \a Buf a buffer (or a reference to a buffer) containing the data. Create the buffer with \a pack function of Perl. See Geo::GDAL::Band::PackCharacter.
 # - \a BufXSize (default is undef, i.e., the same as XSize)
 # - \a BufYSize (default is undef, i.e., the same as YSize)
 # - \a BufType data type of the buffer (default is the data type of the first band)
@@ -1177,7 +1177,7 @@ sub traverse {
 # - \a YOff y offset (pixel coordinates) (default is 0)
 # - \a XSize width of the area to write (default is the width of the band)
 # - \a YSize height of the area to write (default is the height of the band)
-# - \a Buf a buffer containing the data. Create the buffer with \a pack function of Perl. See Geo::GDAL::Band::PackCharacter.
+# - \a Buf a buffer (or a reference to a buffer) containing the data. Create the buffer with \a pack function of Perl. See Geo::GDAL::Band::PackCharacter.
 # - \a BufXSize (default is undef, i.e., the same as XSize)
 # - \a BufYSize (default is undef, i.e., the same as YSize)
 # - \a BufType data type of the buffer (default is the data type of the band)
