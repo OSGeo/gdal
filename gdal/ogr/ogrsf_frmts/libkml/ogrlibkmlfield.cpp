@@ -133,7 +133,7 @@ static void ogr2altitudemode_rec (
 }
 
 static void ogr2extrude_rec (
-    int nExtrude,
+    bool bExtrude,
     GeometryPtr poKmlGeometry )
 {
 
@@ -148,12 +148,12 @@ static void ogr2extrude_rec (
     switch ( poKmlGeometry->Type (  ) ) {
     case kmldom::Type_Point:
         poKmlPoint = AsPoint ( poKmlGeometry );
-        poKmlPoint->set_extrude ( nExtrude );
+        poKmlPoint->set_extrude ( bExtrude );
         break;
 
     case kmldom::Type_LineString:
         poKmlLineString = AsLineString ( poKmlGeometry );
-        poKmlLineString->set_extrude ( nExtrude );
+        poKmlLineString->set_extrude ( bExtrude );
         break;
 
     case kmldom::Type_LinearRing:
@@ -161,7 +161,7 @@ static void ogr2extrude_rec (
 
     case kmldom::Type_Polygon:
         poKmlPolygon = AsPolygon ( poKmlGeometry );
-        poKmlPolygon->set_extrude ( nExtrude );
+        poKmlPolygon->set_extrude ( bExtrude );
         break;
 
     case kmldom::Type_MultiGeometry:
@@ -169,7 +169,7 @@ static void ogr2extrude_rec (
 
         nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
         for ( i = 0; i < nGeom; i++ ) {
-            ogr2extrude_rec ( nExtrude,
+            ogr2extrude_rec ( bExtrude,
                               poKmlMultiGeometry->
                               get_geometry_array_at ( i ) );
         }
@@ -182,7 +182,7 @@ static void ogr2extrude_rec (
 }
 
 static void ogr2tessellate_rec (
-    int nTessellate,
+    bool bTessellate,
     GeometryPtr poKmlGeometry )
 {
 
@@ -200,7 +200,7 @@ static void ogr2tessellate_rec (
 
     case kmldom::Type_LineString:
         poKmlLineString = AsLineString ( poKmlGeometry );
-        poKmlLineString->set_tessellate ( nTessellate );
+        poKmlLineString->set_tessellate ( bTessellate );
         break;
 
     case kmldom::Type_LinearRing:
@@ -209,7 +209,7 @@ static void ogr2tessellate_rec (
     case kmldom::Type_Polygon:
         poKmlPolygon = AsPolygon ( poKmlGeometry );
 
-        poKmlPolygon->set_tessellate ( nTessellate );
+        poKmlPolygon->set_tessellate ( bTessellate );
         break;
 
     case kmldom::Type_MultiGeometry:
@@ -217,7 +217,7 @@ static void ogr2tessellate_rec (
 
         nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
         for ( i = 0; i < nGeom; i++ ) {
-            ogr2tessellate_rec ( nTessellate,
+            ogr2tessellate_rec ( bTessellate,
                                  poKmlMultiGeometry->
                                  get_geometry_array_at ( i ) );
         }
@@ -706,7 +706,7 @@ void field2kml (
                         {
                             GeometryPtr poKmlGeometry =
                                 poKmlPlacemark->get_geometry (  );
-                            ogr2tessellate_rec ( iTesselate,
+                            ogr2tessellate_rec ( CPL_TO_BOOL(iTesselate),
                                                 poKmlGeometry );
                             if( isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND )
                                 ogr2altitudemode_rec ( poKmlGeometry, iAltitudeMode,
@@ -723,8 +723,8 @@ void field2kml (
 
             if ( EQUAL ( name, oFC.visibilityfield ) ) {
                 if ( -1 < poOgrFeat->GetFieldAsInteger ( i ) )
-                    poKmlFeature->set_visibility ( poOgrFeat->
-                                                     GetFieldAsInteger ( i ) );
+                    poKmlFeature->set_visibility ( CPL_TO_BOOL(poOgrFeat->
+                                                     GetFieldAsInteger ( i )) );
 
                 continue;
             }
@@ -952,7 +952,7 @@ static int kml2altitudemode_rec (
 
 static int kml2extrude_rec (
     GeometryPtr poKmlGeometry,
-    int *pnExtrude )
+    bool *pbExtrude )
 {
 
     PointPtr poKmlPoint;
@@ -969,7 +969,7 @@ static int kml2extrude_rec (
         poKmlPoint = AsPoint ( poKmlGeometry );
 
         if ( poKmlPoint->has_extrude (  ) ) {
-            *pnExtrude = poKmlPoint->get_extrude (  );
+            *pbExtrude = poKmlPoint->get_extrude (  );
             return TRUE;
         }
 
@@ -979,7 +979,7 @@ static int kml2extrude_rec (
         poKmlLineString = AsLineString ( poKmlGeometry );
 
         if ( poKmlLineString->has_extrude (  ) ) {
-            *pnExtrude = poKmlLineString->get_extrude (  );
+            *pbExtrude = poKmlLineString->get_extrude (  );
             return TRUE;
         }
 
@@ -992,7 +992,7 @@ static int kml2extrude_rec (
         poKmlPolygon = AsPolygon ( poKmlGeometry );
 
         if ( poKmlPolygon->has_extrude (  ) ) {
-            *pnExtrude = poKmlPolygon->get_extrude (  );
+            *pbExtrude = poKmlPolygon->get_extrude (  );
             return TRUE;
         }
 
@@ -1004,7 +1004,7 @@ static int kml2extrude_rec (
         nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
         for ( i = 0; i < nGeom; i++ ) {
             if ( kml2extrude_rec ( poKmlMultiGeometry->
-                                   get_geometry_array_at ( i ), pnExtrude ) )
+                                   get_geometry_array_at ( i ), pbExtrude ) )
                 return TRUE;
         }
 
@@ -1269,13 +1269,13 @@ void kml2field (
 
         /***** extrude *****/
 
-        int nExtrude = -1;
+        bool bExtrude = false;
 
-        kml2extrude_rec ( poKmlGeometry, &nExtrude );
+        kml2extrude_rec ( poKmlGeometry, &bExtrude );
 
         iField = poOgrFeat->GetFieldIndex ( oFC.extrudefield );
         if ( iField > -1 )
-            poOgrFeat->SetField ( iField, nExtrude );
+            poOgrFeat->SetField ( iField, bExtrude ? 1 : 0 );
 
         /***** special case for gx:Track ******/
         /* we set the first timestamp as begin and the last one as end */

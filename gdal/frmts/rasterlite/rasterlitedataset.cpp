@@ -648,7 +648,7 @@ RasterliteDataset::~RasterliteDataset()
 
 int RasterliteDataset::CloseDependentDatasets()
 {
-    bool bRet = GDALPamDataset::CloseDependentDatasets();
+    int bRet = GDALPamDataset::CloseDependentDatasets();
 
     if (poMainDS == NULL && !bMustFree)
     {
@@ -675,7 +675,7 @@ int RasterliteDataset::CloseDependentDatasets()
             CPLFree(papoOverviews);
             papoOverviews = NULL;
             nResolutions = 0;
-            bRet = true;
+            bRet = TRUE;
         }
 
         if (hDS != NULL)
@@ -694,7 +694,7 @@ int RasterliteDataset::CloseDependentDatasets()
         poMainDS->papoOverviews[nLevel-1] = NULL;
         delete poMainDS;
         poMainDS = NULL;
-        bRet = true;
+        bRet = TRUE;
     }
 
     return bRet;

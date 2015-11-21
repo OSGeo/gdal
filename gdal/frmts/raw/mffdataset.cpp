@@ -577,7 +577,7 @@ void MFFDataset::ScanForProjectionInfo()
 
     if (EQUAL(pszProjName,"LL"))
     {
-        transform_ok = GDALGCPsToGeoTransform(nGCPCount,pasGCPList,adfGeoTransform,0);
+        transform_ok = CPL_TO_BOOL(GDALGCPsToGeoTransform(nGCPCount,pasGCPList,adfGeoTransform,0));
     }
     else
     {
@@ -610,7 +610,7 @@ void MFFDataset::ScanForProjectionInfo()
                 pasGCPList[gcp_index].dfGCPY = dfPrjY[gcp_index];
 
             }
-            transform_ok = GDALGCPsToGeoTransform(nGCPCount,pasGCPList,adfGeoTransform,0);
+            transform_ok = CPL_TO_BOOL(GDALGCPsToGeoTransform(nGCPCount,pasGCPList,adfGeoTransform,0));
 
         }
 

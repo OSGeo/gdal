@@ -927,7 +927,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
         }
 
         const bool bRelativeToVRT =
-            CSLFetchBoolean( papszOptions, "relativeToVRT", FALSE );
+            CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "relativeToVRT", FALSE ));
 
 /* -------------------------------------------------------------------- */
 /*      Create and initialize the band.                                 */
@@ -1386,7 +1386,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
         bCompatibleForDatasetIO = CheckCompatibleForDatasetIO();
     }
 
-    bool bLocalCompatibleForDatasetIO = bCompatibleForDatasetIO;
+    bool bLocalCompatibleForDatasetIO = CPL_TO_BOOL(bCompatibleForDatasetIO);
     if (bLocalCompatibleForDatasetIO && eRWFlag == GF_Read &&
         (nBufXSize < nXSize || nBufYSize < nYSize))
     {

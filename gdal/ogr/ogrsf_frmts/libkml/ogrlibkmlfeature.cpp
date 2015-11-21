@@ -399,10 +399,10 @@ FeaturePtr feat2kml (
         int iFlyToView = poOgrFeat->GetFieldIndex(oFC.networklink_flytoview_field);
 
         if( iRefreshVisibility >= 0 && poOgrFeat->IsFieldSet(iRefreshVisibility) )
-            poKmlNetworkLink->set_refreshvisibility(poOgrFeat->GetFieldAsInteger(iRefreshVisibility));
+            poKmlNetworkLink->set_refreshvisibility(CPL_TO_BOOL(poOgrFeat->GetFieldAsInteger(iRefreshVisibility)));
 
         if( iFlyToView >= 0 && poOgrFeat->IsFieldSet(iFlyToView) )
-            poKmlNetworkLink->set_flytoview(poOgrFeat->GetFieldAsInteger(iFlyToView));
+            poKmlNetworkLink->set_flytoview(CPL_TO_BOOL(poOgrFeat->GetFieldAsInteger(iFlyToView)));
 
         LinkPtr poKmlLink = poKmlFactory->CreateLink (  );
         poKmlLink->set_href( poOgrFeat->GetFieldAsString( iNetworkLink ) );

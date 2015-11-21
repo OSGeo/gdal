@@ -77,7 +77,7 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     }
     
     m_osPrecision = CSLFetchNameValueDef(papszOptions, "GEOM_PRECISION", "");
-    m_bStoreFields = CSLFetchBoolean(papszOptions, "STORE_FIELDS", false);
+    m_bStoreFields = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "STORE_FIELDS", false));
     
     const char* pszStoredFields = CSLFetchNameValue(papszOptions, "STORED_FIELDS");
     if( pszStoredFields )

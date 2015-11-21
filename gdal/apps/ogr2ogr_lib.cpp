@@ -939,7 +939,7 @@ public:
     {
         int *pabSuccess = (int *) CPLMalloc(sizeof(int) * nCount );
 
-        bool bOverallSuccess = TransformEx( nCount, x, y, z, pabSuccess );
+        bool bOverallSuccess = CPL_TO_BOOL(TransformEx( nCount, x, y, z, pabSuccess ));
 
         for( int i = 0; i < nCount; ++i )
         {
