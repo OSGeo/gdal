@@ -970,6 +970,7 @@ static gdal_realT qh_stddev();
 #pragma warning( push )
 #pragma warning( disable : 4324 )
 #pragma warning( disable : 4032 )
+#pragma warning( disable : 4306 )  /* e.g 'type cast' : conversion from 'long' to 'facetT *' of greater size */
 #endif
 
 #include "libqhull.h"
