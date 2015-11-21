@@ -176,14 +176,14 @@ static GIntBig ReadVarInt64(GByte** ppabyData)
 #define READ_VARSINT64(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = ReadVarInt64(&pabyData); \
-        nVal = ((nVal & 1) == 0) ? (((GUIntBig)nVal) >> 1) : -(((GUIntBig)nVal) >> 1)-1; \
+        nVal = ((nVal & 1) == 0) ? (GIntBig)(((GUIntBig)nVal) >> 1) : -(GIntBig)(((GUIntBig)nVal) >> 1)-1; \
         if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
     }
 
 #define READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = ReadVarInt64(&pabyData); \
-        nVal = ((nVal & 1) == 0) ? (((GUIntBig)nVal) >> 1) : -(((GUIntBig)nVal) >> 1)-1; \
+        nVal = ((nVal & 1) == 0) ? (GIntBig)(((GUIntBig)nVal) >> 1) : -(GIntBig)(((GUIntBig)nVal) >> 1)-1; \
     }
 
 /************************************************************************/

@@ -1025,7 +1025,7 @@ void OGROSMDataSource::LookupNodesSQLite( )
 static GIntBig ReadVarSInt64(GByte** ppabyPtr)
 {
     GIntBig nSVal64 = ReadVarInt64(ppabyPtr);
-    GIntBig nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
+    GIntBig nDiff64 = ((nSVal64 & 1) == 0) ? (GIntBig)(((GUIntBig)nSVal64) >> 1) : -(GIntBig)(((GUIntBig)nSVal64) >> 1)-1;
     return nDiff64;
 }
 
