@@ -1975,9 +1975,9 @@ char *CPLEscapeString( const char *pszInput, int nLength,
             }
             /* Python 2 does not display the UTF-8 character corresponding */
             /* to the byte-order mark (BOM), so escape it */
-            else if( static_cast<unsigned char>( pszInput[iIn] ) == 0xEF &&
-                     static_cast<unsigned char>( pszInput[iIn+1] ) == 0xBB &&
-                     static_cast<unsigned char>( pszInput[iIn+2] ) == 0xBF )
+            else if( (reinterpret_cast<const unsigned char*>(pszInput))[iIn] == 0xEF &&
+                     (reinterpret_cast<const unsigned char*>(pszInput))[iIn+1] == 0xBB &&
+                     (reinterpret_cast<const unsigned char*>(pszInput))[iIn+2] == 0xBF )
             {
                 pszOutput[iOut++] = '&';
                 pszOutput[iOut++] = '#';
@@ -1989,7 +1989,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 pszOutput[iOut++] = ';';
                 iIn += 2;
             }
-            else if( pszInput[iIn] < 0x20
+            else if( (reinterpret_cast<const unsigned char*>(pszInput))[iIn] < 0x20
                      && pszInput[iIn] != 0x9
                      && pszInput[iIn] != 0xA
                      && pszInput[iIn] != 0xD )
