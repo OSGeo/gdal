@@ -604,10 +604,13 @@ typedef unsigned long      GUIntBig;
 {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     if (SvOK($input)) {
-        if (!SvPOK($input))
+        SV *sv = $input;
+        if (SvROK(sv) && SvTYPE(SvRV(sv)) < SVt_PVAV)
+            sv = SvRV(sv);
+        if (!SvPOK(sv))
             do_confess(NEED_BINARY_DATA, 1);
-        STRLEN len = SvCUR($input);
-        $2 = SvPV_nolen($input);
+        STRLEN len = SvCUR(sv);
+        $2 = SvPV_nolen(sv);
         $1 = len;
     } else {
         $2 = NULL;
@@ -618,10 +621,13 @@ typedef unsigned long      GUIntBig;
 {
     /* %typemap(in,numinputs=1) (int nLen, unsigned char *pBuf ) */
     if (SvOK($input)) {
-        if (!SvPOK($input))
+        SV *sv = $input;
+        if (SvROK(sv) && SvTYPE(SvRV(sv)) < SVt_PVAV)
+            sv = SvRV(sv);
+        if (!SvPOK(sv))
             do_confess(NEED_BINARY_DATA, 1);
-        STRLEN len = SvCUR($input);
-        $2 = (unsigned char *)SvPV_nolen($input);
+        STRLEN len = SvCUR(sv);
+        $2 = (unsigned char *)SvPV_nolen(sv);
         $1 = len;
     } else {
         $2 = NULL;
@@ -632,10 +638,13 @@ typedef unsigned long      GUIntBig;
 {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
     if (SvOK($input)) {
-        if (!SvPOK($input))
+        SV *sv = $input;
+        if (SvROK(sv) && SvTYPE(SvRV(sv)) < SVt_PVAV)
+            sv = SvRV(sv);
+        if (!SvPOK(sv))
             do_confess(NEED_BINARY_DATA, 1);
-        STRLEN len = SvCUR($input);
-        $2 = SvPV_nolen($input);
+        STRLEN len = SvCUR(sv);
+        $2 = SvPV_nolen(sv);
         $1 = len;
     } else {
         $2 = NULL;
