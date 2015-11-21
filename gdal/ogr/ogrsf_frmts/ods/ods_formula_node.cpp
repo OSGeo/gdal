@@ -1095,7 +1095,7 @@ int ods_formula_node::EvaluateBinaryArithmetic(IODSCellEvaluator* poEvaluator)
 
         if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_FLOAT)
         {
-            float dfVal;
+            double dfVal;
             switch (eOp)
             {
                 case ODS_ADD      : dfVal = (papoSubExpr[0]->float_value + papoSubExpr[1]->float_value); break;
