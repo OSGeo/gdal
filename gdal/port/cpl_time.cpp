@@ -1,3 +1,4 @@
+
 /**********************************************************************
  * $Id$
  *
@@ -95,7 +96,7 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
     while ( days < 0
             || days >= static_cast<GIntBig>( year_lengths[yleap = isleap(y)] ) )
     {
-        int newy = y + days / DAYSPERNYEAR;
+        int newy = y + static_cast<int>( days / DAYSPERNYEAR );
         if (days < 0)
             --newy;
         days -= (newy - y) * DAYSPERNYEAR +
@@ -155,9 +156,9 @@ GIntBig CPLYMDHMSToUnixTime(const struct tm *brokendowntime)
       ( TM_YEAR_BASE
         + static_cast<GIntBig>( brokendowntime->tm_year )
         - EPOCH_YEAR ) * DAYSPERNYEAR
-      + LEAPS_THRU_END_OF( TM_YEAR_BASE
-                           + static_cast<GIntBig>( brokendowntime->tm_year )
-                           - 1)
+      + LEAPS_THRU_END_OF( static_cast<int> (TM_YEAR_BASE )
+                           + static_cast<int>( brokendowntime->tm_year )
+                           - static_cast<int>( 1 ) )
       - LEAPS_THRU_END_OF( EPOCH_YEAR - 1 );
 
   /* Now add the secondes, minutes and hours to the number of days since EPOCH */
