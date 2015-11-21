@@ -115,7 +115,7 @@ VRTPansharpenedDataset::VRTPansharpenedDataset( int nXSize, int nYSize ) :
     nBlockXSize(std::min(nXSize, 512)),
     nBlockYSize(std::min(nYSize, 512)),
     poPansharpener(NULL),
-    poMainDataset(this),
+    poMainDataset(NULL),
     bLoadingOtherBands(FALSE),
     pabyLastBufferBandRasterIO(NULL),
     nLastBandRasterIOXOff(0),
@@ -127,6 +127,7 @@ VRTPansharpenedDataset::VRTPansharpenedDataset( int nXSize, int nYSize ) :
     bNoDataDisabled(FALSE)
 {
     eAccess = GA_Update;
+    poMainDataset = this;
 }
 
 /************************************************************************/

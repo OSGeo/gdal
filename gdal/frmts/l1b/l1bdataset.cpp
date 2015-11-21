@@ -1635,8 +1635,8 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
 
         /* Some products from NOAA-18 and NOAA-19 coming from 'ess' processing station */
         /* have little-endian ordering. Try to detect it with some consistency checks */
-        for(int i=0;i<=2;i++)
-        {
+        int i=0;
+        do {
             nFormatVersionYear = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_FORMAT_VERSION_YEAR_OFF);
             nFormatVersionDayOfYear = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_FORMAT_VERSION_DAY_OFF);
             nHeaderRecCount = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_HDR_REC_COUNT_OFF);
@@ -1654,7 +1654,8 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
             }
             else
                 break;
-        }
+            i ++;
+        } while( i <= 2 );
         nRecordSizeFromHeader = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_LOGICAL_REC_LENGTH_OFF);
         int nFormatVersion = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_FORMAT_VERSION_OFF);
         CPLDebug("L1B", "NOAA Level 1b Format Version Number = %d", nFormatVersion);
