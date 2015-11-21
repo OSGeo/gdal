@@ -100,12 +100,12 @@ class VSIMemHandle : public VSIVirtualHandle
 { 
   public:
     VSIMemFile    *poFile;
-    vsi_l_offset  nOffset;
+    vsi_l_offset  m_nOffset;
     int           bUpdate;
     int           bEOF;
     int           bExtendFileAtNextWrite;
 
-                      VSIMemHandle() : poFile(NULL), nOffset(0), bUpdate(0),
+                      VSIMemHandle() : poFile(NULL), m_nOffset(0), bUpdate(0),
                                        bEOF(0), bExtendFileAtNextWrite(0) {}
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
@@ -264,11 +264,11 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
     bExtendFileAtNextWrite = FALSE;
     if( nWhence == SEEK_CUR )
-        this->nOffset += nOffset;
+        m_nOffset += nOffset;
     else if( nWhence == SEEK_SET )
-        this->nOffset = nOffset;
+        m_nOffset = nOffset;
     else if( nWhence == SEEK_END )
-        this->nOffset = poFile->nLength + nOffset;
+        m_nOffset = poFile->nLength + nOffset;
     else
     {
         errno = EINVAL;
@@ -277,16 +277,16 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
     bEOF = FALSE;
 
-    if( this->nOffset > poFile->nLength )
+    if( m_nOffset > poFile->nLength )
     {
         if( !bUpdate ) // Read-only files cannot be extended by seek.
         {
             CPLDebug( "VSIMemHandle", 
                       "Attempt to extend read-only file '%s' to length " CPL_FRMT_GUIB " from " CPL_FRMT_GUIB ".",
                       poFile->osFilename.c_str(), 
-                      this->nOffset, poFile->nLength );
+                      m_nOffset, poFile->nLength );
 
-            this->nOffset = poFile->nLength;
+            m_nOffset = poFile->nLength;
             errno = EACCES;
             return -1;
         }
@@ -306,7 +306,7 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
 vsi_l_offset VSIMemHandle::Tell()
 
 {
-    return nOffset;
+    return m_nOffset;
 }
 
 /************************************************************************/
@@ -319,22 +319,22 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     // FIXME: Integer overflow check should be placed here:
     size_t nBytesToRead = nSize * nCount;
 
-    if( nBytesToRead + nOffset > poFile->nLength )
+    if( nBytesToRead + m_nOffset > poFile->nLength )
     {
-        if (poFile->nLength < nOffset)
+        if (poFile->nLength < m_nOffset)
         {
             bEOF = TRUE;
             return 0;
         }
 
-        nBytesToRead = (size_t)(poFile->nLength - nOffset);
+        nBytesToRead = (size_t)(poFile->nLength - m_nOffset);
         nCount = nBytesToRead / nSize;
         bEOF = TRUE;
     }
 
     if( nBytesToRead )
-        memcpy( pBuffer, poFile->pabyData + nOffset, (size_t)nBytesToRead );
-    nOffset += nBytesToRead;
+        memcpy( pBuffer, poFile->pabyData + m_nOffset, (size_t)nBytesToRead );
+    m_nOffset += nBytesToRead;
 
     return nCount;
 }
@@ -354,22 +354,22 @@ size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
     if( bExtendFileAtNextWrite )
     {
         bExtendFileAtNextWrite = FALSE;
-        if( !poFile->SetLength( nOffset ) )
+        if( !poFile->SetLength( m_nOffset ) )
             return 0;
     }
 
     // FIXME: Integer overflow check should be placed here:
     const size_t nBytesToWrite = nSize * nCount;
 
-    if( nBytesToWrite + nOffset > poFile->nLength )
+    if( nBytesToWrite + m_nOffset > poFile->nLength )
     {
-        if( !poFile->SetLength( nBytesToWrite + nOffset ) )
+        if( !poFile->SetLength( nBytesToWrite + m_nOffset ) )
             return 0;
     }
 
     if( nBytesToWrite )
-        memcpy( poFile->pabyData + nOffset, pBuffer, nBytesToWrite );
-    nOffset += nBytesToWrite;
+        memcpy( poFile->pabyData + m_nOffset, pBuffer, nBytesToWrite );
+    m_nOffset += nBytesToWrite;
 
     time(&poFile->mTime);
 
@@ -493,7 +493,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
     VSIMemHandle *poHandle = new VSIMemHandle;
 
     poHandle->poFile = poFile;
-    poHandle->nOffset = 0;
+    poHandle->m_nOffset = 0;
     poHandle->bEOF = FALSE;
     if( strstr(pszAccess,"w") || strstr(pszAccess,"+") 
         || strstr(pszAccess,"a") )
@@ -504,7 +504,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
     poFile->nRefCount++;
 
     if( strstr(pszAccess,"a") )
-        poHandle->nOffset = poFile->nLength;
+        poHandle->m_nOffset = poFile->nLength;
 
     return poHandle;
 }

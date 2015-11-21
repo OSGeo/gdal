@@ -141,7 +141,7 @@ public:
 class VSIUnixStdioHandle : public VSIVirtualHandle
 {
     FILE          *fp;
-    vsi_l_offset  nOffset;
+    vsi_l_offset  m_nOffset;
     int           bReadOnly;
     int           bLastOpWrite;
     int           bLastOpRead;
@@ -154,7 +154,7 @@ class VSIUnixStdioHandle : public VSIVirtualHandle
                       VSIUnixStdioHandle(VSIUnixStdioFilesystemHandler *poFSIn,
                                          FILE* fpIn, int bReadOnlyIn);
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
+    virtual int       Seek( vsi_l_offset nOffsetIn, int nWhence );
     virtual vsi_l_offset Tell();
     virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
     virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
@@ -176,7 +176,7 @@ CPL_UNUSED
 #endif
                                        VSIUnixStdioFilesystemHandler *poFSIn,
                                        FILE* fpIn, int bReadOnlyIn) :
-    fp(fpIn), nOffset(0), bReadOnly(bReadOnlyIn), bLastOpWrite(FALSE), bLastOpRead(FALSE), bAtEOF(FALSE)
+    fp(fpIn), m_nOffset(0), bReadOnly(bReadOnlyIn), bLastOpWrite(FALSE), bLastOpRead(FALSE), bAtEOF(FALSE)
 #ifdef VSI_COUNT_BYTES_READ
     , nTotalBytesRead(0), poFS(poFSIn)
 #endif
@@ -203,27 +203,27 @@ int VSIUnixStdioHandle::Close()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
+int VSIUnixStdioHandle::Seek( vsi_l_offset nOffsetIn, int nWhence )
 {
     bAtEOF = FALSE;
 
     // seeks that do nothing are still surprisingly expensive with MSVCRT.
     // try and short circuit if possible.
-    if( nWhence == SEEK_SET && nOffset == this->nOffset )
+    if( nWhence == SEEK_SET && nOffsetIn == m_nOffset )
         return 0;
 
     // on a read-only file, we can avoid a lseek() system call to be issued
     // if the next position to seek to is within the buffered page
     if( bReadOnly && nWhence == SEEK_SET )
     {
-        const GIntBig nDiff = (GIntBig)nOffset - (GIntBig)this->nOffset;
+        const GIntBig nDiff = (GIntBig)nOffsetIn - (GIntBig)m_nOffset;
         if( nDiff > 0 && nDiff < 4096 )
         {
             GByte abyTemp[4096];
             int nRead = (int)fread(abyTemp, 1, (int)nDiff, fp);
             if( nRead == (int)nDiff )
             {
-                this->nOffset = nOffset;
+                m_nOffset = nOffsetIn;
                 bLastOpWrite = FALSE;
                 bLastOpRead = FALSE;
                 return 0;
@@ -231,7 +231,7 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
         }
     }
 
-    const int nResult = VSI_FSEEK64( fp, nOffset, nWhence );
+    const int nResult = VSI_FSEEK64( fp, nOffsetIn, nWhence );
     int nError = errno;
 
 #ifdef VSI_DEBUG
@@ -239,22 +239,22 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
     if( nWhence == SEEK_SET )
     {
         VSIDebug3( "VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB ",SEEK_SET) = %d",
-                   fp, nOffset, nResult );
+                   fp, nOffsetIn, nResult );
     }
     else if( nWhence == SEEK_END )
     {
         VSIDebug3( "VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB ",SEEK_END) = %d",
-                   fp, nOffset, nResult );
+                   fp, nOffsetIn, nResult );
     }
     else if( nWhence == SEEK_CUR )
     {
         VSIDebug3( "VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB ",SEEK_CUR) = %d",
-                   fp, nOffset, nResult );
+                   fp, nOffsetIn, nResult );
     }
     else
     {
         VSIDebug4( "VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB ",%d-Unknown) = %d",
-                   fp, nOffset, nWhence, nResult );
+                   fp, nOffsetIn, nWhence, nResult );
     }
 
 #endif
@@ -263,15 +263,15 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
     {
         if( nWhence == SEEK_SET )
         {
-            this->nOffset = nOffset;
+            m_nOffset = nOffsetIn;
         }
         else if( nWhence == SEEK_END )
         {
-            this->nOffset = VSI_FTELL64( fp );
+            m_nOffset = VSI_FTELL64( fp );
         }
         else if( nWhence == SEEK_CUR )
         {
-            this->nOffset += nOffset;
+            m_nOffset += nOffsetIn;
         }
     }
 
@@ -298,7 +298,7 @@ vsi_l_offset VSIUnixStdioHandle::Tell()
     errno = nError;
 #endif
 
-    return nOffset;
+    return m_nOffset;
 }
 
 /************************************************************************/
@@ -329,9 +329,9 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /* -------------------------------------------------------------------- */
     if( bLastOpWrite )
     {
-        if( VSI_FSEEK64( fp, nOffset, SEEK_SET ) != 0 )
+        if( VSI_FSEEK64( fp, m_nOffset, SEEK_SET ) != 0 )
         {
-            VSIDebug1("Write calling seek failed. %d", nOffset);
+            VSIDebug1("Write calling seek failed. %d", m_nOffset);
         }
     }
 
@@ -355,7 +355,7 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     nTotalBytesRead += nSize * nResult;
 #endif
 
-    nOffset += nSize * nResult;
+    m_nOffset += nSize * nResult;
     bLastOpWrite = FALSE;
     bLastOpRead = TRUE;
 
@@ -364,7 +364,7 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
         errno = 0;
         vsi_l_offset nNewOffset = VSI_FTELL64( fp );
         if( errno == 0 ) /* ftell() can fail if we are end of file with a pipe */
-            nOffset = nNewOffset;
+            m_nOffset = nNewOffset;
         else
             CPLDebug("VSI", "%s", VSIStrerror(errno));
         bAtEOF = feof(fp);
@@ -390,9 +390,9 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
 /* -------------------------------------------------------------------- */
     if( bLastOpRead )
     {
-        if( VSI_FSEEK64( fp, nOffset, SEEK_SET ) != 0 )
+        if( VSI_FSEEK64( fp, m_nOffset, SEEK_SET ) != 0 )
         {
-            VSIDebug1("Write calling seek failed. %d", nOffset);
+            VSIDebug1("Write calling seek failed. %d", m_nOffset);
         }
     }
 
@@ -413,7 +413,7 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
 /* -------------------------------------------------------------------- */
 /*      Update current offset.                                          */
 /* -------------------------------------------------------------------- */
-    nOffset += nSize * nResult;
+    m_nOffset += nSize * nResult;
     bLastOpWrite = TRUE;
     bLastOpRead = FALSE;
 

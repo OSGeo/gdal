@@ -41,11 +41,11 @@ CPL_CVSID("$Id$");
 class VSITarEntryFileOffset : public VSIArchiveEntryFileOffset
 {
 public:
-        GUIntBig nOffset;
+        GUIntBig m_nOffset;
 
         VSITarEntryFileOffset(GUIntBig nOffset)
         {
-            this->nOffset = nOffset;
+            m_nOffset = nOffset;
         }
 };
 
@@ -177,7 +177,7 @@ int VSITarReader::GotoFirstFile()
 int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 {
     VSITarEntryFileOffset* pTarEntryOffset = (VSITarEntryFileOffset*)pOffset;
-    VSIFSeekL(fp, pTarEntryOffset->nOffset - 512, SEEK_SET);
+    VSIFSeekL(fp, pTarEntryOffset->m_nOffset - 512, SEEK_SET);
     return GotoNextFile();
 }
 
@@ -276,7 +276,7 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
 
     CPLString osSubFileName("/vsisubfile/");
     VSITarEntryFileOffset* pOffset = (VSITarEntryFileOffset*) poReader->GetFileOffset();
-    osSubFileName += CPLString().Printf(CPL_FRMT_GUIB, pOffset->nOffset);
+    osSubFileName += CPLString().Printf(CPL_FRMT_GUIB, pOffset->m_nOffset);
     osSubFileName += "_";
     osSubFileName += CPLString().Printf(CPL_FRMT_GUIB, poReader->GetFileSize());
     osSubFileName += ",";

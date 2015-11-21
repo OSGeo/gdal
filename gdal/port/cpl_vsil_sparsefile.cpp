@@ -60,10 +60,10 @@ class VSISparseFileFilesystemHandler;
 
 class VSISparseFileHandle : public VSIVirtualHandle
 { 
-    VSISparseFileFilesystemHandler* poFS;
+    VSISparseFileFilesystemHandler* m_poFS;
 
   public:
-    VSISparseFileHandle(VSISparseFileFilesystemHandler* poFS) : poFS(poFS), nOverallLength(0), nCurOffset(0) {}
+    VSISparseFileHandle(VSISparseFileFilesystemHandler* poFS) : m_poFS(poFS), nOverallLength(0), nCurOffset(0) {}
 
     GUIntBig           nOverallLength;
     GUIntBig           nCurOffset;
@@ -267,10 +267,10 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
                        SEEK_SET ) != 0 )
             return 0;
 
-        poFS->IncRecCounter();
+        m_poFS->IncRecCounter();
         size_t nBytesRead = VSIFReadL( pBuffer, 1, (size_t) nBytesRequested, 
                                        aoRegions[iRegion].fp );
-        poFS->DecRecCounter();
+        m_poFS->DecRecCounter();
 
         if( nBytesAvailable < nBytesRequested )
             nReturnCount = nBytesRead / nSize;

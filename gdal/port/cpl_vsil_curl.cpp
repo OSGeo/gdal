@@ -1387,7 +1387,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
 
         while( *pszNext != '\n' && *pszNext != '\r' && *pszNext != '\0' )
         {
-            char *pszEOL = strstr(pszNext,"\n");
+            pszEOL = strstr(pszNext,"\n");
 
             if( pszEOL == NULL )
             {
@@ -3031,7 +3031,7 @@ public:
 
 class VSIS3Handle: public VSICurlHandle
 {
-    VSIS3HandleHelper* poS3HandleHelper;
+    VSIS3HandleHelper* m_poS3HandleHelper;
 
   protected:
         virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
@@ -3921,9 +3921,9 @@ void VSIS3FSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper)
         oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if( oIter != oMapBucketsToS3Params.end() )
     {
-        poS3HandleHelper->SetAWSRegion( oIter->second.osAWSRegion );
-        poS3HandleHelper->SetAWSS3Endpoint( oIter->second.osAWSS3Endpoint );
-        poS3HandleHelper->SetVirtualHosting( oIter->second.bUseVirtualHosting );
+        poS3HandleHelper->SetAWSRegion( oIter->second.m_osAWSRegion );
+        poS3HandleHelper->SetAWSS3Endpoint( oIter->second.m_osAWSS3Endpoint );
+        poS3HandleHelper->SetVirtualHosting( oIter->second.m_bUseVirtualHosting );
     }
 }
 
@@ -3933,7 +3933,7 @@ void VSIS3FSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper)
 
 VSIS3Handle::VSIS3Handle(VSIS3FSHandler* poFS, VSIS3HandleHelper* poS3HandleHelper) :
         VSICurlHandle(poFS, poS3HandleHelper->GetURL()),
-        poS3HandleHelper(poS3HandleHelper)
+        m_poS3HandleHelper(poS3HandleHelper)
 {
 }
 
@@ -3943,7 +3943,7 @@ VSIS3Handle::VSIS3Handle(VSIS3FSHandler* poFS, VSIS3HandleHelper* poS3HandleHelp
 
 VSIS3Handle::~VSIS3Handle()
 {
-    delete poS3HandleHelper;
+    delete m_poS3HandleHelper;
 }
 
 /************************************************************************/
@@ -3952,7 +3952,7 @@ VSIS3Handle::~VSIS3Handle()
 
 struct curl_slist* VSIS3Handle::GetCurlHeaders(const CPLString& osVerb)
 {
-    return poS3HandleHelper->GetCurlHeaders(osVerb);
+    return m_poS3HandleHelper->GetCurlHeaders(osVerb);
 }
 
 /************************************************************************/
@@ -3961,11 +3961,11 @@ struct curl_slist* VSIS3Handle::GetCurlHeaders(const CPLString& osVerb)
 
 bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg)
 {
-    if( poS3HandleHelper->CanRestartOnError(pszErrorMsg) )
+    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg) )
     {
-        ((VSIS3FSHandler*) poFS)->UpdateMapFromHandle(poS3HandleHelper);
+        ((VSIS3FSHandler*) poFS)->UpdateMapFromHandle(m_poS3HandleHelper);
 
-        SetURL(poS3HandleHelper->GetURL());
+        SetURL(m_poS3HandleHelper->GetURL());
         return true;
     }
     return false;

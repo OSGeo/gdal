@@ -247,7 +247,7 @@ public:
 
 class VSIStdoutRedirectHandle : public VSIVirtualHandle
 {
-    VSIVirtualHandle* poHandle;
+    VSIVirtualHandle* m_poHandle;
   public:
                       VSIStdoutRedirectHandle(VSIVirtualHandle* poHandle);
                      ~VSIStdoutRedirectHandle();
@@ -267,7 +267,7 @@ class VSIStdoutRedirectHandle : public VSIVirtualHandle
 
 VSIStdoutRedirectHandle::VSIStdoutRedirectHandle(VSIVirtualHandle* poHandle)
 {
-    this->poHandle = poHandle;
+    m_poHandle = poHandle;
 }
 
 /************************************************************************/
@@ -276,7 +276,7 @@ VSIStdoutRedirectHandle::VSIStdoutRedirectHandle(VSIVirtualHandle* poHandle)
 
 VSIStdoutRedirectHandle::~VSIStdoutRedirectHandle()
 {
-    delete poHandle;
+    delete m_poHandle;
 }
 
 /************************************************************************/
@@ -296,7 +296,7 @@ int VSIStdoutRedirectHandle::Seek( CPL_UNUSED vsi_l_offset nOffset,
 
 vsi_l_offset VSIStdoutRedirectHandle::Tell()
 {
-    return poHandle->Tell();
+    return m_poHandle->Tell();
 }
 
 /************************************************************************/
@@ -306,7 +306,7 @@ vsi_l_offset VSIStdoutRedirectHandle::Tell()
 int VSIStdoutRedirectHandle::Flush()
 
 {
-    return poHandle->Flush();
+    return m_poHandle->Flush();
 }
 
 /************************************************************************/
@@ -329,7 +329,7 @@ size_t VSIStdoutRedirectHandle::Write( const void * pBuffer, size_t nSize,
                                   size_t nCount )
 
 {
-    return poHandle->Write(pBuffer, nSize, nCount);
+    return m_poHandle->Write(pBuffer, nSize, nCount);
 }
 
 /************************************************************************/
@@ -339,7 +339,7 @@ size_t VSIStdoutRedirectHandle::Write( const void * pBuffer, size_t nSize,
 int VSIStdoutRedirectHandle::Eof()
 
 {
-    return poHandle->Eof();
+    return m_poHandle->Eof();
 }
 
 /************************************************************************/
@@ -349,7 +349,7 @@ int VSIStdoutRedirectHandle::Eof()
 int VSIStdoutRedirectHandle::Close()
 
 {
-    return poHandle->Close();
+    return m_poHandle->Close();
 }
 
 /************************************************************************/

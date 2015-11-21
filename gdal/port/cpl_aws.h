@@ -58,16 +58,16 @@ CPLString CPLAWSURLEncode(const CPLString& osURL, bool bEncodeSlash = true);
 
 class VSIS3HandleHelper
 {
-        CPLString osURL;
-        CPLString osSecretAccessKey;
-        CPLString osAccessKeyId;
-        CPLString osAWSS3Endpoint;
-        CPLString osAWSRegion;
-        CPLString osBucket;
-        CPLString osObjectKey;
-        bool bUseHTTPS;
-        bool bUseVirtualHosting;
-        std::map<CPLString, CPLString> oMapQueryParameters;
+        CPLString m_osURL;
+        CPLString m_osSecretAccessKey;
+        CPLString m_osAccessKeyId;
+        CPLString m_osAWSS3Endpoint;
+        CPLString m_osAWSRegion;
+        CPLString m_osBucket;
+        CPLString m_osObjectKey;
+        bool m_bUseHTTPS;
+        bool m_bUseVirtualHosting;
+        std::map<CPLString, CPLString> m_oMapQueryParameters;
 
         static bool GetBucketAndObjectKey(const char* pszURI, const char* pszFSPrefix,
                                           bool bAllowNoObject,
@@ -100,12 +100,12 @@ class VSIS3HandleHelper
                                           size_t nBytesContent = 0);
         bool CanRestartOnError(const char*);
 
-        const CPLString& GetURL() const { return osURL; }
-        const CPLString& GetBucket() const { return osBucket; }
-        const CPLString& GetObjectKey() const { return osObjectKey; }
-        const CPLString& GetAWSS3Endpoint()const  { return osAWSS3Endpoint; }
-        const CPLString& GetAWSRegion() const { return osAWSRegion; }
-        bool GetVirtualHosting() const { return bUseVirtualHosting; }
+        const CPLString& GetURL() const { return m_osURL; }
+        const CPLString& GetBucket() const { return m_osBucket; }
+        const CPLString& GetObjectKey() const { return m_osObjectKey; }
+        const CPLString& GetAWSS3Endpoint()const  { return m_osAWSS3Endpoint; }
+        const CPLString& GetAWSRegion() const { return m_osAWSRegion; }
+        bool GetVirtualHosting() const { return m_bUseVirtualHosting; }
         void SetAWSS3Endpoint(const CPLString &osStr);
         void SetAWSRegion(const CPLString &osStr);
         void SetVirtualHosting(bool b);
@@ -115,16 +115,16 @@ class VSIS3HandleHelper
 class VSIS3UpdateParams
 {
     public:
-        CPLString osAWSRegion;
-        CPLString osAWSS3Endpoint;
-        bool bUseVirtualHosting;
+        CPLString m_osAWSRegion;
+        CPLString m_osAWSS3Endpoint;
+        bool m_bUseVirtualHosting;
 
         VSIS3UpdateParams(const CPLString& osAWSRegion = "",
                           const CPLString& osAWSS3Endpoint = "",
                           bool bUseVirtualHosting = false) :
-            osAWSRegion(osAWSRegion),
-            osAWSS3Endpoint(osAWSS3Endpoint),
-            bUseVirtualHosting(bUseVirtualHosting) {}
+            m_osAWSRegion(osAWSRegion),
+            m_osAWSS3Endpoint(osAWSS3Endpoint),
+            m_bUseVirtualHosting(bUseVirtualHosting) {}
 };
 
 #endif /* HAVE_CURL */
