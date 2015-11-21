@@ -32,7 +32,7 @@ ifeq ($(JPEG_SETTING),internal)
 JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I../jpeg/libjpeg
 endif
 
-CPPFLAGS	:=	 -I.. $(JPEG_FLAGS)  $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
+CPPFLAGS	:=	 -I.. $(JPEG_FLAGS)  $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS) $(SHADOW_WFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
