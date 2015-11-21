@@ -103,13 +103,15 @@ static int ReadVarInt32(GByte** ppabyData)
 #define READ_VARSINT32(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = ReadVarInt32(&pabyData); \
-        nVal = ((nVal & 1) == 0) ? (((unsigned int)nVal) >> 1) : -(((unsigned int)nVal) >> 1)-1; \
+        nVal = ((nVal & 1) == 0) ? (int)(((unsigned int)nVal) >> 1) : -(int)(((unsigned int)nVal) >> 1)-1; \
         if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
     }
 
 /************************************************************************/
 /*                          ReadVarUInt32()                             */
 /************************************************************************/
+
+#ifndef DO_NOT_DEFINE_READ_VARUINT32
 
 static unsigned int ReadVarUInt32(GByte** ppabyData)
 {
@@ -142,6 +144,8 @@ static unsigned int ReadVarUInt32(GByte** ppabyData)
         READ_VARUINT32(pabyData, pabyDataLimit, nSize); \
         if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) GOTO_END_ERROR; \
     }
+
+#endif /* DO_NOT_DEFINE_READ_VARUINT32 */
 
 /************************************************************************/
 /*                           ReadVarInt64()                             */
@@ -190,6 +194,8 @@ static GIntBig ReadVarInt64(GByte** ppabyData)
 /*                            SkipVarInt()                              */
 /************************************************************************/
 
+#ifndef DO_NOT_DEFINE_SKIP_VARINT
+
 static void SkipVarInt(GByte** ppabyData)
 {
     GByte* pabyData = *ppabyData;
@@ -210,6 +216,8 @@ static void SkipVarInt(GByte** ppabyData)
         SkipVarInt(&pabyData); \
         if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
     }
+
+#endif /* DO_NOT_DEFINE_SKIP_VARINT */
 
 #define READ_FIELD_KEY(nKey) READ_VARINT32(pabyData, pabyDataLimit, nKey)
 
@@ -263,10 +271,7 @@ static void SkipVarInt(GByte** ppabyData)
                 GOTO_END_ERROR; \
         }
 
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4505 ) /* 'SkipUnknownField' : unreferenced local function has been removed */
-#endif
+#ifndef DO_NOT_DEFINE_SKIP_UNKNOWN_FIELD
 
 static
 int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose) CPL_NO_INLINE;
@@ -283,10 +288,6 @@ end_error:
     return -1;
 }
 
-#ifdef _MSC_VER
-#pragma warning( pop )
-#endif
-
 #define SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, verbose) \
     { \
         int _nOffset = SkipUnknownField(nKey, pabyData, pabyDataLimit, verbose); \
@@ -294,5 +295,7 @@ end_error:
             GOTO_END_ERROR; \
         pabyData += _nOffset; \
     }
+
+#endif /* DO_NOT_DEFINE_SKIP_UNKNOWN_FIELD */
 
 #endif /* _GPB_H_INCLUDED */
