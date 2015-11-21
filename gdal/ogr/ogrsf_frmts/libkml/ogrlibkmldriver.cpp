@@ -138,9 +138,9 @@ static CPLErr OGRLIBKMLDriverDelete( const char *pszName )
     VSIStatBufL sStatBuf;
     if ( !VSIStatL ( pszName, &sStatBuf ) && VSI_ISDIR ( sStatBuf.st_mode ) ) {
 
-        char **papszDirList = NULL;
+        char **papszDirList = VSIReadDir ( pszName );
 
-        if ( !( papszDirList = VSIReadDir ( pszName ) ) ) {
+        if ( papszDirList == NULL ) {
             if ( VSIRmdir ( pszName ) < 0 )
                 return CE_Failure;
         }

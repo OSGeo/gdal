@@ -662,7 +662,7 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema (
     }
 
 
-    else if ( ( pszPound = strchr ( (char *)pszSchemaUrl, '#' ) ) ) {
+    else if ( ( pszPound = strchr ( (char *)pszSchemaUrl, '#' ) ) != NULL ) {
         pszFile = CPLStrdup ( pszSchemaUrl );
         pszID = CPLStrdup ( pszPound + 1 );
         pszPound = strchr ( pszFile, '#' );
@@ -1290,9 +1290,9 @@ int OGRLIBKMLDataSource::OpenDir (
     int bUpdate )
 {
 
-    char **papszDirList = NULL;
+    char **papszDirList = VSIReadDir ( pszFilename );
 
-    if ( !( papszDirList = VSIReadDir ( pszFilename ) ) )
+    if ( papszDirList == NULL )
         return FALSE;
 
     /***** create a SRS *****/
