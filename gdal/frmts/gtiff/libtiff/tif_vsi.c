@@ -107,12 +107,12 @@ TIFFOpen(const char* name, const char* mode)
 {
 	static const char module[] = "TIFFOpen";
 	int           i, a_out;
-        char          access[32];
+        char          szAccess[32];
         VSILFILE          *fp;
         TIFF          *tif;
 
         a_out = 0;
-        access[0] = '\0';
+        szAccess[0] = '\0';
         for( i = 0; mode[i] != '\0'; i++ )
         {
             if( mode[i] == 'r'
@@ -120,14 +120,14 @@ TIFFOpen(const char* name, const char* mode)
                 || mode[i] == '+'
                 || mode[i] == 'a' )
             {
-                access[a_out++] = mode[i];
-                access[a_out] = '\0';
+                szAccess[a_out++] = mode[i];
+                szAccess[a_out] = '\0';
             }
         }
 
-        strcat( access, "b" );
+        strcat( szAccess, "b" );
 
-        fp = VSIFOpenL( name, access );
+        fp = VSIFOpenL( name, szAccess );
 	if (fp == NULL) {
             if( errno >= 0 )
                 TIFFError(module,"%s: %s", name, VSIStrerror( errno ) );
