@@ -23,9 +23,10 @@ $(O_OBJ):	ogr_ods.h ods_formula.h ods_formula_parser.hpp ../mem/ogr_mem.h
 # (default compiler...)
 # The memset isn't necessary at all with a non-buggy compiler, but I've found
 # that it helps gcc 4.1 generating correct code here...
+# The sed with yyerrorlab shut up MSVC warnings about unreachable code
 parser:
 	bison -p ods_formula -d -oods_formula_parser.cpp ods_formula_parser.y
-	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < ods_formula_parser.cpp > ods_formula_parser.cpp.tmp
+	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < ods_formula_parser.cpp | sed "s/yyerrorlab:/#if 0\nyyerrorlab:/" | sed "s/yyerrlab1:/#endif\nyyerrlab1:/" > ods_formula_parser.cpp.tmp
 	mv ods_formula_parser.cpp.tmp ods_formula_parser.cpp
 
 testparser$(EXE):	testparser.$(OBJ_EXT)

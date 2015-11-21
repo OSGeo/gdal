@@ -220,21 +220,25 @@ char** VRTPansharpenedDataset::GetFileList()
         if( psOptions != NULL )
         {
             std::set<CPLString> oSetNames;
-            GDALDatasetH hDS;
-            if( psOptions->hPanchroBand != NULL &&
-                (hDS = GDALGetBandDataset(psOptions->hPanchroBand)) != NULL )
+            if( psOptions->hPanchroBand != NULL )
             {
-                papszFileList = CSLAddString(papszFileList, GDALGetDescription(hDS));
-                oSetNames.insert(GDALGetDescription(hDS));
-            }
-            for(int i=0;i<psOptions->nInputSpectralBands;i++)
-            {
-                if( psOptions->pahInputSpectralBands[i] != NULL &&
-                    (hDS = GDALGetBandDataset(psOptions->pahInputSpectralBands[i])) != NULL &&
-                    oSetNames.find(GDALGetDescription(hDS)) == oSetNames.end() )
+                GDALDatasetH hDS = GDALGetBandDataset(psOptions->hPanchroBand);
+                if( hDS != NULL )
                 {
                     papszFileList = CSLAddString(papszFileList, GDALGetDescription(hDS));
                     oSetNames.insert(GDALGetDescription(hDS));
+                }
+            }
+            for(int i=0;i<psOptions->nInputSpectralBands;i++)
+            {
+                if( psOptions->pahInputSpectralBands[i] != NULL )
+                {
+                    GDALDatasetH hDS = GDALGetBandDataset(psOptions->pahInputSpectralBands[i]);
+                    if( hDS != NULL && oSetNames.find(GDALGetDescription(hDS)) == oSetNames.end() )
+                    {
+                        papszFileList = CSLAddString(papszFileList, GDALGetDescription(hDS));
+                        oSetNames.insert(GDALGetDescription(hDS));
+                    }
                 }
             }
         }
