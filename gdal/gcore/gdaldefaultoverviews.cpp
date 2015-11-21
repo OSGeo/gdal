@@ -810,9 +810,9 @@ GDALDefaultOverviews::BuildOverviews(
             /* will become invalid after poMaskDS closing */
             for( int iBand = 1; iBand <= poDS->GetRasterCount(); iBand ++ )
             {
-                GDALRasterBand *poBand = poDS->GetRasterBand(iBand);
-                if( poBand != NULL )
-                    poBand->InvalidateMaskBand();
+                GDALRasterBand *poOtherBand = poDS->GetRasterBand(iBand);
+                if( poOtherBand != NULL )
+                    poOtherBand->InvalidateMaskBand();
             }
 
             GDALClose( poMaskDS );
@@ -836,11 +836,11 @@ GDALDefaultOverviews::BuildOverviews(
 
         for( iOver = 0; iOver < nOverviewCount; iOver++ )
         {
-            GDALRasterBand *poBand = GetOverview( 1, iOver );
+            GDALRasterBand *poOtherBand = GetOverview( 1, iOver );
             GDALDataset    *poOverDS = NULL;
 
-            if( poBand != NULL )
-                poOverDS = poBand->GetDataset();
+            if( poOtherBand != NULL )
+                poOverDS = poOtherBand->GetDataset();
 
             if (poOverDS != NULL)
             {

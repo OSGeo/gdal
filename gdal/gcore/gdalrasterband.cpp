@@ -4584,8 +4584,6 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
 /* -------------------------------------------------------------------- */
 /*      Check for a mask in a .msk file.                                */
 /* -------------------------------------------------------------------- */
-    GDALDataset *poDS = GetDataset();
-
     if( poDS != NULL && poDS->oOvManager.HaveMaskFile() )
     {
         poMask = poDS->oOvManager.GetMaskBand( nBand );

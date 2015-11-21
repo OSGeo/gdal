@@ -36,9 +36,10 @@ CPL_CVSID("$Id$");
 /*                        GDALRescaledAlphaBand()                       */
 /************************************************************************/
 
-GDALRescaledAlphaBand::GDALRescaledAlphaBand( GDALRasterBand *poParent )
+GDALRescaledAlphaBand::GDALRescaledAlphaBand( GDALRasterBand *poParentIn )
 
 {
+    poParent = poParentIn;
     CPLAssert(poParent->GetRasterDataType() == GDT_UInt16);
 
     poDS = NULL;
@@ -49,8 +50,6 @@ GDALRescaledAlphaBand::GDALRescaledAlphaBand( GDALRasterBand *poParent )
 
     eDataType = GDT_Byte;
     poParent->GetBlockSize( &nBlockXSize, &nBlockYSize );
-
-    this->poParent = poParent;
 
     pTemp = NULL;
 }

@@ -41,14 +41,14 @@ static int nAllBandsKeptAlivedBlocks = 0;
 /*                       GDALArrayBandBlockCache()                      */
 /************************************************************************/
 
-GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(GDALRasterBand* poBand) :
+GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(GDALRasterBand* poBandIn) :
     hSpinLock(CPLCreateLock(LOCK_SPIN)),
     psListBlocksToFree(NULL),
     hCond(CPLCreateCond()),
     hCondMutex(CPLCreateMutex()),
     nKeepAliveCounter(0)
 {
-    this->poBand = poBand;
+    poBand = poBandIn;
     if( hCondMutex )
         CPLReleaseMutex(hCondMutex);
 }

@@ -475,7 +475,7 @@ class GDALClientDataset: public GDALPamDataset
         int                 Init(const char* pszFilename, GDALAccess eAccess,
                                  char** papszOpenOptions);
 
-        void                AttachAsyncProgress(GDALServerAsyncProgress* async) { this->async = async; }
+        void                AttachAsyncProgress(GDALServerAsyncProgress* asyncIn) { async = asyncIn; }
         int                 ProcessAsyncProgress();
         int                 SupportsInstr(InstrEnum instr) const { return abyCaps[instr / 8] & (1 << (instr % 8)); }
 
@@ -1833,10 +1833,10 @@ static CPLErr CPLErrOnlyRet(GDALPipe* p)
 class GDALServerErrorDesc
 {
     public:
-        GDALServerErrorDesc(CPLErr eErr = CE_None,
-                            CPLErrorNum nErrNo = CPLE_None,
-                            const CPLString& osMsg = "") :
-                eErr(eErr), nErrNo(nErrNo), osErrorMsg(osMsg) {}
+        GDALServerErrorDesc(CPLErr eErrIn = CE_None,
+                            CPLErrorNum nErrNoIn = CPLE_None,
+                            const CPLString& osMsgIn = "") :
+                eErr(eErrIn), nErrNo(nErrNoIn), osErrorMsg(osMsgIn) {}
 
         CPLErr    eErr;
         CPLErrorNum       nErrNo;
@@ -1914,8 +1914,8 @@ public:
        ~GDALServerInstance();
 };
 
-GDALServerInstance::GDALServerInstance(GDALPipe* p) :
-        p(p), poDS(NULL), pBuffer(NULL), nBufferSize(0)
+GDALServerInstance::GDALServerInstance(GDALPipe* pIn) :
+        p(pIn), poDS(NULL), pBuffer(NULL), nBufferSize(0)
 {
 }
 
@@ -2138,7 +2138,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             if( !GDALPipeRead(p, &dfProgress) ||
                 !GDALPipeRead(p, &pszProgressMsg) )
                 break;
-            int nRet = pfnProgress(dfProgress, pszProgressMsg, pProgressData);
+            nRet = pfnProgress(dfProgress, pszProgressMsg, pProgressData);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, nRet);
             CPLFree(pszProgressMsg);
@@ -2258,24 +2258,24 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 /* Check if all bands are identical */
                 for(i=0;i<nBands;i++)
                 {
-                    GDALRasterBand* poBand = poDS->GetRasterBand(i+1);
-                    if( strlen(poBand->GetDescription()) > 0 )
+                    GDALRasterBand* poOtherBand = poDS->GetRasterBand(i+1);
+                    if( strlen(poOtherBand->GetDescription()) > 0 )
                     {
                         bAllSame = FALSE;
                         break;
                     }
                     if( i == 0 )
                     {
-                        poFirstBand = poBand;
-                        poBand->GetBlockSize(&nFBBlockXSize, &nFBBlockYSize);
+                        poFirstBand = poOtherBand;
+                        poOtherBand->GetBlockSize(&nFBBlockXSize, &nFBBlockYSize);
                     }
                     else
                     {
                         int nBlockXSize, nBlockYSize;
-                        poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-                        if( poBand->GetXSize() != poFirstBand->GetXSize() ||
-                            poBand->GetYSize() != poFirstBand->GetYSize() ||
-                            poBand->GetRasterDataType() != poFirstBand->GetRasterDataType() ||
+                        poOtherBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+                        if( poOtherBand->GetXSize() != poFirstBand->GetXSize() ||
+                            poOtherBand->GetYSize() != poFirstBand->GetYSize() ||
+                            poOtherBand->GetRasterDataType() != poFirstBand->GetRasterDataType() ||
                             nBlockXSize != nFBBlockXSize ||
                             nBlockYSize != nFBBlockYSize )
                         {
@@ -2289,11 +2289,11 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 GDALPipeWrite(p, bAllSame);
                 for(i=0;i<nBands;i++)
                 {
-                    GDALRasterBand* poBand = poDS->GetRasterBand(i+1);
+                    GDALRasterBand* poOtherBand = poDS->GetRasterBand(i+1);
                     if( i > 0 && bAllSame )
-                        poSrvInstance->aBands.push_back(poBand);
+                        poSrvInstance->aBands.push_back(poOtherBand);
                     else
-                        GDALPipeWrite(p, poSrvInstance->aBands, poBand);
+                        GDALPipeWrite(p, poSrvInstance->aBands, poOtherBand);
                 }
             }
         }
@@ -2444,23 +2444,23 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             GDALPipeWrite(p, poDriver != NULL);
             if( poDriver != NULL )
             {
-                GDALClientDataset* poSrcDS = new GDALClientDataset(p);
-                if( !poSrcDS->Init(NULL, GA_ReadOnly, NULL) )
+                GDALClientDataset* l_poSrcDS = new GDALClientDataset(p);
+                if( !l_poSrcDS->Init(NULL, GA_ReadOnly, NULL) )
                 {
-                    delete poSrcDS;
+                    delete l_poSrcDS;
                     CPLFree(pszFilename);
                     CSLDestroy(papszCreateOptions);
                     break;
                 }
-                poSrcDS->AttachAsyncProgress(&asyncp);
+                l_poSrcDS->AttachAsyncProgress(&asyncp);
 
-                poDS = poDriver->CreateCopy(pszFilename, poSrcDS,
+                poDS = poDriver->CreateCopy(pszFilename, l_poSrcDS,
                                             bStrict, papszCreateOptions,
                                             RunAsyncProgress, &asyncp);
                 //fprintf(stderr, "INSTR_CreateCopy: poDS = %p\n", poDS);
 
-                int bProgressRet = poSrcDS->ProcessAsyncProgress();
-                GDALClose((GDALDatasetH)poSrcDS);
+                int bProgressRet = l_poSrcDS->ProcessAsyncProgress();
+                GDALClose((GDALDatasetH)l_poSrcDS);
 
                 if( !bProgressRet && poDS != NULL )
                 {
@@ -3601,10 +3601,10 @@ int GDALServerLoopSocket(CPL_SOCKET nSocket)
 /*                        GDALClientDataset()                           */
 /************************************************************************/
 
-GDALClientDataset::GDALClientDataset(GDALServerSpawnedProcess* ssp)
+GDALClientDataset::GDALClientDataset(GDALServerSpawnedProcess* sspIn)
 {
-    this->ssp = ssp;
-    this->p = ssp->p;
+    ssp = sspIn;
+    p = ssp->p;
     bFreeDriver = FALSE;
     nGCPCount = 0;
     pasGCPs = NULL;
@@ -3616,10 +3616,10 @@ GDALClientDataset::GDALClientDataset(GDALServerSpawnedProcess* ssp)
 /*                        GDALClientDataset()                           */
 /************************************************************************/
 
-GDALClientDataset::GDALClientDataset(GDALPipe* p)
+GDALClientDataset::GDALClientDataset(GDALPipe* pIn)
 {
-    this->ssp = NULL;
-    this->p = p;
+    ssp = NULL;
+    p = pIn;
     bFreeDriver = FALSE;
     nGCPCount = 0;
     pasGCPs = NULL;
@@ -4002,11 +4002,11 @@ int GDALClientDataset::GetGCPCount()
     if( !GDALSkipUntilEndOfJunkMarker(p) )
         return 0;
 
-    int nGCPCount;
-    if( !GDALPipeRead(p, &nGCPCount) )
+    int l_nGCPCount;
+    if( !GDALPipeRead(p, &l_nGCPCount) )
         return 0;
     GDALConsumeErrors(p);
-    return nGCPCount;
+    return l_nGCPCount;
 }
 
 /************************************************************************/
@@ -4069,15 +4069,15 @@ const GDAL_GCP * GDALClientDataset::GetGCPs()
 /*                               SetGCPs()                              */
 /************************************************************************/
 
-CPLErr GDALClientDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+CPLErr GDALClientDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPList,
                                    const char *pszGCPProjection ) 
 {
     if( !SupportsInstr(INSTR_SetGCPs) )
-        return GDALPamDataset::SetGCPs(nGCPCount, pasGCPList, pszGCPProjection);
+        return GDALPamDataset::SetGCPs(nGCPCountIn, pasGCPList, pszGCPProjection);
 
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_SetGCPs) ||
-        !GDALPipeWrite(p, nGCPCount, pasGCPList) ||
+        !GDALPipeWrite(p, nGCPCountIn, pasGCPList) ||
         !GDALPipeWrite(p, pszGCPProjection) )
         return CE_Failure;
     return CPLErrOnlyRet(p);
@@ -4353,7 +4353,7 @@ CPLErr GDALClientDataset::CreateMaskBand( int nFlags )
 /*                       GDALClientRasterBand()                         */
 /************************************************************************/
 
-GDALClientRasterBand::GDALClientRasterBand(GDALPipe* p, int iSrvBand, 
+GDALClientRasterBand::GDALClientRasterBand(GDALPipe* pIn, int iSrvBandIn, 
                                            GDALClientDataset* poDS,
                                            int nBand, GDALAccess eAccess,
                                            int nRasterXSize, int nRasterYSize,
@@ -4361,8 +4361,8 @@ GDALClientRasterBand::GDALClientRasterBand(GDALPipe* p, int iSrvBand,
                                            int nBlockXSize, int nBlockYSize,
                                            GByte abyCapsIn[16])
 {
-    this->p = p;
-    this->iSrvBand = iSrvBand;
+    p = pIn;
+    iSrvBand = iSrvBandIn;
     this->poDS = poDS;
     this->nBand = nBand;
     this->eAccess = eAccess;
@@ -4487,14 +4487,14 @@ char ** GDALClientRasterBand::GetCategoryNames()
 /*                          SetCategoryNames()                          */
 /************************************************************************/
 
-CPLErr GDALClientRasterBand::SetCategoryNames( char ** papszCategoryNames )
+CPLErr GDALClientRasterBand::SetCategoryNames( char ** papszCategoryNamesIn )
 {
     if( !SupportsInstr(INSTR_Band_SetCategoryNames) )
-        return GDALPamRasterBand::SetCategoryNames(papszCategoryNames);
+        return GDALPamRasterBand::SetCategoryNames(papszCategoryNamesIn);
 
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetCategoryNames) ||
-        !GDALPipeWrite(p, papszCategoryNames) )
+        !GDALPipeWrite(p, papszCategoryNamesIn) )
         return CE_Failure;
     return CPLErrOnlyRet(p);
 }
@@ -5458,15 +5458,15 @@ CPLErr GDALClientRasterBand::SetUnitType( const char * pszUnit )
 /*                           SetColorTable()                            */
 /************************************************************************/
 
-CPLErr GDALClientRasterBand::SetColorTable(GDALColorTable* poColorTable)
+CPLErr GDALClientRasterBand::SetColorTable(GDALColorTable* poColorTableIn)
 {
     if( !SupportsInstr(INSTR_Band_SetColorTable) )
-        return GDALPamRasterBand::SetColorTable(poColorTable);
+        return GDALPamRasterBand::SetColorTable(poColorTableIn);
 
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetColorTable) )
         return CE_Failure;
-    if( !GDALPipeWrite(p, poColorTable) )
+    if( !GDALPipeWrite(p, poColorTableIn) )
         return CE_Failure;
     return CPLErrOnlyRet(p);
 }
@@ -5731,14 +5731,14 @@ GDALRasterAttributeTable *GDALClientRasterBand::GetDefaultRAT()
 /*                           SetDefaultRAT()                            */
 /************************************************************************/
 
-CPLErr GDALClientRasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
+CPLErr GDALClientRasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRATIn )
 {
     if( !SupportsInstr(INSTR_Band_SetDefaultRAT) )
-        return GDALPamRasterBand::SetDefaultRAT(poRAT);
+        return GDALPamRasterBand::SetDefaultRAT(poRATIn);
 
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetDefaultRAT) ||
-        !GDALPipeWrite(p, poRAT) )
+        !GDALPipeWrite(p, poRATIn) )
         return CE_Failure;
     return CPLErrOnlyRet(p);
 }

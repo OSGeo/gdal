@@ -1125,7 +1125,6 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         }
         else if( abyMarker[1] == 0x55 ) /* TLM */
         {
-            CPLXMLNode* psMarker = CreateMarker( psCSBox, "TLM", nOffset, nMarkerSize );
             READ_MARKER_FIELD_UINT8("Ztlm");
             int ST = 0, SP = 0;
             READ_MARKER_FIELD_UINT8_COMMENT("Stlm",

@@ -37,11 +37,12 @@ CPL_CVSID("$Id$");
 /*                        GDALNoDataMaskBand()                          */
 /************************************************************************/
 
-GDALNoDataMaskBand::GDALNoDataMaskBand( GDALRasterBand *poParent )
+GDALNoDataMaskBand::GDALNoDataMaskBand( GDALRasterBand *poParentIn )
 
 {
     poDS = NULL;
     nBand = 0;
+    poParent = poParentIn;
 
     nRasterXSize = poParent->GetXSize();
     nRasterYSize = poParent->GetYSize();
@@ -49,7 +50,6 @@ GDALNoDataMaskBand::GDALNoDataMaskBand( GDALRasterBand *poParent )
     eDataType = GDT_Byte;
     poParent->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
-    this->poParent = poParent;
     dfNoDataValue = poParent->GetNoDataValue();
 }
 

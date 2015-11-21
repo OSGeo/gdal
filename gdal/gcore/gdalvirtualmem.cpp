@@ -107,21 +107,21 @@ public:
 /*                             GDALVirtualMem()                         */
 /************************************************************************/
 
-GDALVirtualMem::GDALVirtualMem( GDALDatasetH hDS,
-                                GDALRasterBandH hBand,
-                                coord_type nXOff, coord_type nYOff,
+GDALVirtualMem::GDALVirtualMem( GDALDatasetH hDSIn,
+                                GDALRasterBandH hBandIn,
+                                coord_type nXOffIn, coord_type nYOffIn,
                                 CPL_UNUSED coord_type nXSize,
                                 CPL_UNUSED coord_type nYSize,
-                                coord_type nBufXSize, coord_type nBufYSize,
-                                GDALDataType eBufType,
-                                int nBandCount, const int* panBandMapIn,
-                                int nPixelSpace,
-                                GIntBig nLineSpace,
-                                GIntBig nBandSpace ) :
-    hDS(hDS), hBand(hBand), nXOff(nXOff), nYOff(nYOff), /*nXSize(nXSize), nYSize(nYSize),*/
-    nBufXSize(nBufXSize), nBufYSize(nBufYSize), eBufType(eBufType),
-    nBandCount(nBandCount), nPixelSpace(nPixelSpace), nLineSpace(nLineSpace),
-    nBandSpace(nBandSpace)
+                                coord_type nBufXSizeIn, coord_type nBufYSizeIn,
+                                GDALDataType eBufTypeIn,
+                                int nBandCountIn, const int* panBandMapIn,
+                                int nPixelSpaceIn,
+                                GIntBig nLineSpaceIn,
+                                GIntBig nBandSpaceIn ) :
+    hDS(hDSIn), hBand(hBandIn), nXOff(nXOffIn), nYOff(nYOffIn), /*nXSize(nXSize), nYSize(nYSize),*/
+    nBufXSize(nBufXSizeIn), nBufYSize(nBufYSizeIn), eBufType(eBufTypeIn),
+    nBandCount(nBandCountIn), nPixelSpace(nPixelSpaceIn), nLineSpace(nLineSpaceIn),
+    nBandSpace(nBandSpaceIn)
 {
     if( hDS != NULL )
     {
@@ -1067,17 +1067,17 @@ public:
 /*                        GDALTiledVirtualMem()                         */
 /************************************************************************/
 
-GDALTiledVirtualMem::GDALTiledVirtualMem( GDALDatasetH hDS,
-                                          GDALRasterBandH hBand,
-                                  int nXOff, int nYOff,
-                                  int nXSize, int nYSize,
-                                  int nTileXSize, int nTileYSize,
-                                  GDALDataType eBufType,
-                                  int nBandCount, const int* panBandMapIn,
-                                  GDALTileOrganization eTileOrganization ):
-    hDS(hDS), hBand(hBand), nXOff(nXOff), nYOff(nYOff), nXSize(nXSize), nYSize(nYSize),
-    nTileXSize(nTileXSize), nTileYSize(nTileYSize), eBufType(eBufType),
-    nBandCount(nBandCount), eTileOrganization(eTileOrganization)
+GDALTiledVirtualMem::GDALTiledVirtualMem( GDALDatasetH hDSIn,
+                                          GDALRasterBandH hBandIn,
+                                  int nXOffIn, int nYOffIn,
+                                  int nXSizeIn, int nYSizeIn,
+                                  int nTileXSizeIn, int nTileYSizeIn,
+                                  GDALDataType eBufTypeIn,
+                                  int nBandCountIn, const int* panBandMapIn,
+                                  GDALTileOrganization eTileOrganizationIn ):
+    hDS(hDSIn), hBand(hBandIn), nXOff(nXOffIn), nYOff(nYOffIn), nXSize(nXSizeIn), nYSize(nYSizeIn),
+    nTileXSize(nTileXSizeIn), nTileYSize(nTileYSizeIn), eBufType(eBufTypeIn),
+    nBandCount(nBandCountIn), eTileOrganization(eTileOrganizationIn)
 {
     if( hDS != NULL )
     {
