@@ -73,6 +73,8 @@ class DataSet
         #undef INT32 
     } 
 
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(DataSet);
 } ; 
 
 /* -------------------------------------------------------------------- */

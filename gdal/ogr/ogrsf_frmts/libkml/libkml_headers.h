@@ -35,9 +35,18 @@
 #pragma GCC system_header
 #endif
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4512 ) /* assignment operator could not be generated */
+#endif
+
 #include <kml/engine.h>
 #include <kml/dom.h>
 #include <kml/base/color32.h>
 #include <kml/base/file.h>
+
+#ifdef _MSC_VER
+#pragma warning( pop ) 
+#endif
 
 #endif

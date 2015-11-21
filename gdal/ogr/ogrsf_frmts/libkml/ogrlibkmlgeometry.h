@@ -26,7 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <kml/dom.h>
+#ifndef OGR_LIBKML_GEOMETRY_H
+#define OGR_LIBKML_GEOMETRY_H
+
+#include "libkml_headers.h"
 
 using kmldom::ElementPtr;
 using kmldom::KmlFactory;
@@ -76,3 +79,5 @@ OGRGeometry *kml2geom_latlonbox (
 OGRGeometry *kml2geom_latlonquad (
     GxLatLonQuadPtr poKmlLatLonQuad,
     OGRSpatialReference *poOgrSRS);
+
+#endif /* OGR_LIBKML_GEOMETRY_H */

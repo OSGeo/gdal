@@ -34,8 +34,8 @@
 
 CPL_C_START
 #include "EnvisatFile.h"
-#include "records.h"
 CPL_C_END
+#include "records.h"
 
 #include "timedelta.hpp"
 

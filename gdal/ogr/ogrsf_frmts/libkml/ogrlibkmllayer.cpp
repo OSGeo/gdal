@@ -32,8 +32,6 @@
 //#include "cpl_string.h"
 #include "cpl_error.h"
 
-#include <kml/dom.h>
-
 using kmldom::KmlFactory;
 using kmldom::PlacemarkPtr;
 using kmldom::Placemark;
