@@ -53,13 +53,13 @@ CPL_C_END
 class MerisL2FlagBand : public GDALPamRasterBand
 {
   public:
-    MerisL2FlagBand( GDALDataset *, int, VSILFILE*, vsi_l_offset, vsi_l_offset );
+    MerisL2FlagBand( GDALDataset *, int, VSILFILE*, vsi_l_offset, int );
     virtual ~MerisL2FlagBand();
     virtual CPLErr IReadBlock( int, int, void * );
 
   private:
     vsi_l_offset nImgOffset;
-    vsi_l_offset nPrefixBytes;
+    int nPrefixBytes;
     size_t nBytePerPixel;
     size_t nRecordSize;
     size_t nDataSize;
@@ -72,7 +72,7 @@ class MerisL2FlagBand : public GDALPamRasterBand
 /************************************************************************/
 MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDS, int nBand,
                                   VSILFILE* fpImage, vsi_l_offset nImgOffset,
-                                  vsi_l_offset nPrefixBytes ) :
+                                  int nPrefixBytes ) :
     nBytePerPixel(3)
 {
     this->poDS = (GDALDataset *) poDS;
