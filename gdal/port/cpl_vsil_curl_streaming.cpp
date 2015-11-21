@@ -191,11 +191,11 @@ public:
 class VSICurlStreamingHandle : public VSIVirtualHandle
 {
   protected:
-    VSICurlStreamingFSHandler* poFS;
+    VSICurlStreamingFSHandler* m_poFS;
 
   private:
 
-    char*           pszURL;
+    char*           m_pszURL;
 
 #ifdef notdef
     unsigned int    nRecomputedChecksumOfFirst1024Bytes;
@@ -279,8 +279,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 
 VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, const char* pszURL)
 {
-    this->poFS = poFS;
-    this->pszURL = CPLStrdup(pszURL);
+    m_poFS = poFS;
+    m_pszURL = CPLStrdup(pszURL);
 
 #ifdef notdef
     nRecomputedChecksumOfFirst1024Bytes = 0;
@@ -331,7 +331,7 @@ VSICurlStreamingHandle::~VSICurlStreamingHandle()
 {
     StopDownload();
 
-    CPLFree(pszURL);
+    CPLFree(m_pszURL);
     if (hCurlHandle != NULL)
         curl_easy_cleanup(hCurlHandle);
 
@@ -350,8 +350,8 @@ VSICurlStreamingHandle::~VSICurlStreamingHandle()
 
 void VSICurlStreamingHandle::SetURL(const char* pszURLIn)
 {
-    CPLFree(pszURL);
-    pszURL = CPLStrdup(pszURLIn);
+    CPLFree(m_pszURL);
+    m_pszURL = CPLStrdup(pszURLIn);
 }
 
 /************************************************************************/
@@ -508,7 +508,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
     CURL* hLocalHandle = curl_easy_init();
 
-    VSICurlSetOptions(hLocalHandle, pszURL);
+    VSICurlSetOptions(hLocalHandle, m_pszURL);
 
     VSICURLStreamingInitWriteFuncStruct(&sWriteFuncHeaderData);
 
@@ -516,12 +516,12 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     /* http://a.tiles.mapbox.com/v3/ doesn't accept HEAD, so let's start a GET */
     /* and interrupt is as soon as the header is found */
     CPLString osVerb;
-    if (strstr(pszURL, ".tiles.mapbox.com/") != NULL)
+    if (strstr(m_pszURL, ".tiles.mapbox.com/") != NULL)
     {
         curl_easy_setopt(hLocalHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hLocalHandle, CURLOPT_HEADERFUNCTION, VSICurlStreamingHandleWriteFuncForHeader);
 
-        sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(pszURL, "http");
+        sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(m_pszURL, "http");
         sWriteFuncHeaderData.bDownloadHeaderOnly = TRUE;
         osVerb = "GET";
     }
@@ -560,7 +560,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     eExists = EXIST_UNKNOWN;
     bHasComputedFileSize = TRUE;
 
-    if (STARTS_WITH(pszURL, "ftp"))
+    if (STARTS_WITH(m_pszURL, "ftp"))
     {
         if (sWriteFuncData.pBuffer != NULL &&
             STARTS_WITH(sWriteFuncData.pBuffer, "Content-Length: "))
@@ -570,7 +570,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
             fileSize = CPLScanUIntBig(pszBuffer, static_cast<int>(sWriteFuncData.nSize - strlen("Content-Length: ")));
             if (ENABLE_DEBUG)
                 CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB,
-                        pszURL, fileSize);
+                        m_pszURL, fileSize);
         }
     }
 
@@ -606,8 +606,8 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
         char *pszEffectiveURL = NULL;
         curl_easy_getinfo(hLocalHandle, CURLINFO_EFFECTIVE_URL, &pszEffectiveURL);
         if (pszEffectiveURL != NULL &&
-            strncmp(pszURL, pszEffectiveURL, strlen(pszURL)) == 0 &&
-            pszEffectiveURL[strlen(pszURL)] == '/')
+            strncmp(m_pszURL, pszEffectiveURL, strlen(m_pszURL)) == 0 &&
+            pszEffectiveURL[strlen(m_pszURL)] == '/')
         {
             eExists = EXIST_YES;
             fileSize = 0;
@@ -616,14 +616,14 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
-                    pszURL, fileSize, (int)response_code);
+                    m_pszURL, fileSize, (int)response_code);
     }
 
     CPLFree(sWriteFuncData.pBuffer);
     CPLFree(sWriteFuncHeaderData.pBuffer);
 
-    poFS->AcquireMutex();
-    CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+    m_poFS->AcquireMutex();
+    CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
     cachedFileProp->bHasComputedFileSize = TRUE;
 #ifdef notdef
     cachedFileProp->nChecksumOfFirst1024Bytes = nRecomputedChecksumOfFirst1024Bytes;
@@ -631,7 +631,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     cachedFileProp->fileSize = fileSize;
     cachedFileProp->eExists = eExists;
     cachedFileProp->bIsDirectory = bIsDirectory;
-    poFS->ReleaseMutex();
+    m_poFS->ReleaseMutex();
 
     vsi_l_offset nRet = fileSize;
     ReleaseMutex();
@@ -663,13 +663,13 @@ int VSICurlStreamingHandle::Exists()
         if (pszAllowedExtensions)
         {
             char** papszExtensions = CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
-            size_t nURLLen = strlen(pszURL);
+            size_t nURLLen = strlen(m_pszURL);
             bool bFound = false;
             for(int i=0;papszExtensions[i] != NULL;i++)
             {
                 size_t nExtensionLen = strlen(papszExtensions[i]);
                 if (nURLLen > nExtensionLen &&
-                    EQUAL(pszURL + nURLLen - nExtensionLen, papszExtensions[i]))
+                    EQUAL(m_pszURL + nURLLen - nExtensionLen, papszExtensions[i]))
                 {
                     bFound = true;
                     break;
@@ -681,12 +681,12 @@ int VSICurlStreamingHandle::Exists()
                 eExists = EXIST_NO;
                 fileSize = 0;
 
-                poFS->AcquireMutex();
-                CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+                m_poFS->AcquireMutex();
+                CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
                 cachedFileProp->bHasComputedFileSize = TRUE;
                 cachedFileProp->fileSize = fileSize;
                 cachedFileProp->eExists = eExists;
-                poFS->ReleaseMutex();
+                m_poFS->ReleaseMutex();
 
                 CSLDestroy(papszExtensions);
 
@@ -700,10 +700,10 @@ int VSICurlStreamingHandle::Exists()
         int bExists = (Read(&chFirstByte, 1, 1) == 1);
 
         AcquireMutex();
-        poFS->AcquireMutex();
-        CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+        m_poFS->AcquireMutex();
+        CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
         cachedFileProp->eExists = eExists = bExists ? EXIST_YES : EXIST_NO;
-        poFS->ReleaseMutex();
+        m_poFS->ReleaseMutex();
         ReleaseMutex();
 
         Seek(0, SEEK_SET);
@@ -735,22 +735,22 @@ size_t VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t
 
     if( bHasCandidateFileSize && bCanTrustCandidateFileSize && !bHasComputedFileSize )
     {
-        poFS->AcquireMutex();
-        CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+        m_poFS->AcquireMutex();
+        CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
         cachedFileProp->fileSize = fileSize = nCandidateFileSize;
         cachedFileProp->bHasComputedFileSize = bHasComputedFileSize = TRUE;
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
-        poFS->ReleaseMutex();
+        m_poFS->ReleaseMutex();
     }
 
     AcquireMutex();
     if (eExists == EXIST_UNKNOWN)
     {
-        poFS->AcquireMutex();
-        CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+        m_poFS->AcquireMutex();
+        CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
         cachedFileProp->eExists = eExists = EXIST_YES;
-        poFS->ReleaseMutex();
+        m_poFS->ReleaseMutex();
     }
     else if (eExists == EXIST_NO && StopReceivingBytesOnError() )
     {
@@ -865,10 +865,10 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, 
             /* If moved permanently/temporarily, go on */
             if( !(InterpretRedirect() && (nHTTPCode == 301 || nHTTPCode == 302)) )
             {
-                poFS->AcquireMutex();
-                CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+                m_poFS->AcquireMutex();
+                CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
                 cachedFileProp->eExists = eExists = (nHTTPCode == 200) ? EXIST_YES : EXIST_NO;
-                poFS->ReleaseMutex();
+                m_poFS->ReleaseMutex();
             }
         }
 
@@ -923,7 +923,7 @@ static size_t VSICurlStreamingHandleReceivedBytesHeader(void *buffer, size_t cou
 
 void VSICurlStreamingHandle::DownloadInThread()
 {
-    VSICurlSetOptions(hCurlHandle, pszURL);
+    VSICurlSetOptions(hCurlHandle, m_pszURL);
     struct curl_slist* headers = GetCurlHeaders("GET");
     if( headers != NULL )
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -968,13 +968,13 @@ void VSICurlStreamingHandle::DownloadInThread()
     AcquireMutex();
     if (!bAskDownloadEnd && eRet == 0 && !bHasComputedFileSize)
     {
-        poFS->AcquireMutex();
-        CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+        m_poFS->AcquireMutex();
+        CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
         cachedFileProp->fileSize = fileSize = nBodySize;
         cachedFileProp->bHasComputedFileSize = bHasComputedFileSize = TRUE;
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
-        poFS->ReleaseMutex();
+        m_poFS->ReleaseMutex();
     }
 
     bDownloadInProgress = FALSE;
@@ -1000,7 +1000,7 @@ void VSICurlStreamingHandle::StartDownload()
         return;
 
     //if (ENABLE_DEBUG)
-        CPLDebug("VSICURL", "Start download for %s", pszURL);
+        CPLDebug("VSICURL", "Start download for %s", m_pszURL);
 
     if (hCurlHandle == NULL)
         hCurlHandle = curl_easy_init();
@@ -1019,7 +1019,7 @@ void VSICurlStreamingHandle::StopDownload()
     if (hThread)
     {
         //if (ENABLE_DEBUG)
-            CPLDebug("VSICURL", "Stop download for %s", pszURL);
+            CPLDebug("VSICURL", "Stop download for %s", m_pszURL);
 
         AcquireMutex();
         /* Signal to the producer that we ask for download interruption */
@@ -1108,7 +1108,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
 
     if (ENABLE_DEBUG)
         CPLDebug("VSICURL", "Read [" CPL_FRMT_GUIB ", " CPL_FRMT_GUIB "[ in %s",
-                 curOffset, curOffset + nBufferRequestSize, pszURL);
+                 curOffset, curOffset + nBufferRequestSize, m_pszURL);
 
 #ifdef notdef
     if( pCachedData != NULL && nCachedSize >= 1024 &&
@@ -1149,7 +1149,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
         size_t nSz = MIN(nRemaining, (size_t)(nCachedSize - curOffset));
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
-                     (int)curOffset, (int)(curOffset + nSz), pszURL);
+                     (int)curOffset, (int)(curOffset + nSz), m_pszURL);
         memcpy(pabyBuffer, pCachedData + curOffset, nSz);
         pabyBuffer += nSz;
         curOffset += nSz;
@@ -1165,7 +1165,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
         size_t nSz = (size_t) (nCachedSize - curOffset);
         if (ENABLE_DEBUG && nSz != 0)
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
-                    (int)curOffset, (int)(curOffset + nSz), pszURL);
+                    (int)curOffset, (int)(curOffset + nSz), m_pszURL);
         memcpy(pabyBuffer, pCachedData + curOffset, nSz);
         pabyBuffer += nSz;
         curOffset += nSz;
@@ -1309,12 +1309,12 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
             fileSize = 0;
             ReleaseMutex();
             nCachedSize = 0;
-            poFS->AcquireMutex();
-            CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+            m_poFS->AcquireMutex();
+            CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
             cachedFileProp->bHasComputedFileSize = FALSE;
             cachedFileProp->fileSize = 0;
             cachedFileProp->eExists = EXIST_UNKNOWN;
-            poFS->ReleaseMutex();
+            m_poFS->ReleaseMutex();
             nRet = Read(pBuffer, nSize, nMemb);
         }
         else
@@ -1349,7 +1349,7 @@ void  VSICurlStreamingHandle::AddRegion( vsi_l_offset    nFileOffsetStart,
         size_t nSz = MIN(nSize, (size_t) (BKGND_BUFFER_SIZE - nFileOffsetStart));
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Writing [%d, %d[ in cache for %s",
-                     (int)nFileOffsetStart, (int)(nFileOffsetStart + nSz), pszURL);
+                     (int)nFileOffsetStart, (int)(nFileOffsetStart + nSz), m_pszURL);
         memcpy(pCachedData + nFileOffsetStart, pData, nSz);
         nCachedSize = (size_t) (nFileOffsetStart + nSz);
     }
@@ -1617,9 +1617,9 @@ void VSIS3StreamingFSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3Handle
         oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if( oIter != oMapBucketsToS3Params.end() )
     {
-        poS3HandleHelper->SetAWSRegion( oIter->second.osAWSRegion );
-        poS3HandleHelper->SetAWSS3Endpoint( oIter->second.osAWSS3Endpoint );
-        poS3HandleHelper->SetVirtualHosting( oIter->second.bUseVirtualHosting );
+        poS3HandleHelper->SetAWSRegion( oIter->second.m_osAWSRegion );
+        poS3HandleHelper->SetAWSS3Endpoint( oIter->second.m_osAWSS3Endpoint );
+        poS3HandleHelper->SetVirtualHosting( oIter->second.m_bUseVirtualHosting );
     }
 }
 
@@ -1629,7 +1629,7 @@ void VSIS3StreamingFSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3Handle
 
 class VSIS3StreamingHandle: public VSICurlStreamingHandle
 {
-    VSIS3HandleHelper* poS3HandleHelper;
+    VSIS3HandleHelper* m_poS3HandleHelper;
 
   protected:
         virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
@@ -1666,7 +1666,7 @@ VSICurlStreamingHandle* VSIS3StreamingFSHandler::CreateFileHandle(const char* ps
 VSIS3StreamingHandle::VSIS3StreamingHandle(VSIS3StreamingFSHandler* poFS,
                                            VSIS3HandleHelper* poS3HandleHelper) :
         VSICurlStreamingHandle(poFS, poS3HandleHelper->GetURL()),
-        poS3HandleHelper(poS3HandleHelper)
+        m_poS3HandleHelper(poS3HandleHelper)
 {
 }
 
@@ -1676,7 +1676,7 @@ VSIS3StreamingHandle::VSIS3StreamingHandle(VSIS3StreamingFSHandler* poFS,
 
 VSIS3StreamingHandle::~VSIS3StreamingHandle()
 {
-    delete poS3HandleHelper;
+    delete m_poS3HandleHelper;
 }
 
 /************************************************************************/
@@ -1685,7 +1685,7 @@ VSIS3StreamingHandle::~VSIS3StreamingHandle()
 
 struct curl_slist* VSIS3StreamingHandle::GetCurlHeaders(const CPLString& osVerb)
 {
-    return poS3HandleHelper->GetCurlHeaders(osVerb);
+    return m_poS3HandleHelper->GetCurlHeaders(osVerb);
 }
 
 /************************************************************************/
@@ -1694,11 +1694,11 @@ struct curl_slist* VSIS3StreamingHandle::GetCurlHeaders(const CPLString& osVerb)
 
 bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg)
 {
-    if( poS3HandleHelper->CanRestartOnError(pszErrorMsg) )
+    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg) )
     {
-        ((VSIS3StreamingFSHandler*) poFS)->UpdateMapFromHandle(poS3HandleHelper);
+        ((VSIS3StreamingFSHandler*) m_poFS)->UpdateMapFromHandle(m_poS3HandleHelper);
 
-        SetURL(poS3HandleHelper->GetURL());
+        SetURL(m_poS3HandleHelper->GetURL());
         return true;
     }
     return false;
