@@ -1044,7 +1044,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
          memBitRead (&(grp[i].num), sizeof (sInt4), bds, kbit, &bufLoc,
                      &numUsed);
          bds += numUsed;
-         t_numBytes += numUsed;
+         t_numBytes += static_cast<uInt4>(numUsed);
       }
       t_numPack += grp[i].num;
       t_numBits += grp[i].num * grp[i].bit;

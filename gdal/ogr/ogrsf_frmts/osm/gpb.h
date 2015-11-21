@@ -263,6 +263,11 @@ static void SkipVarInt(GByte** ppabyData)
                 GOTO_END_ERROR; \
         }
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4505 ) /* 'SkipUnknownField' : unreferenced local function has been removed */
+#endif
+
 static
 int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose) CPL_NO_INLINE;
 
@@ -277,6 +282,10 @@ int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbos
 end_error:
     return -1;
 }
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 #define SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, verbose) \
     { \
