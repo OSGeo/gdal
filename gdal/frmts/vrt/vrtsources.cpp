@@ -2204,10 +2204,10 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                 }
 
                 if (nLUTItemCount)
-                    fResult = (float) LookupValue( fResult );
+                    fResult = static_cast<float>(LookupValue( fResult ));
 
                 if( nMaxValue != 0 && fResult > nMaxValue )
-                    fResult = nMaxValue;
+                    fResult = static_cast<float>(nMaxValue);
 
                 if( eBufType == GDT_Byte )
                     *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
@@ -2239,13 +2239,13 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
             }
             else
             {
-                float fResult = (float) dfScaleOff;
+                float fResult = static_cast<float>(dfScaleOff);
 
                 if (nLUTItemCount)
-                    fResult = (float) LookupValue( fResult );
+                    fResult = static_cast<float>(LookupValue( fResult ));
 
                 if( nMaxValue != 0 && fResult > nMaxValue )
-                    fResult = nMaxValue;
+                    fResult = static_cast<float>(nMaxValue);
 
                 if( eBufType == GDT_Byte )
                     *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
