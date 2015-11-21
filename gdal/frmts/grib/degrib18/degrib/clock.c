@@ -970,7 +970,7 @@ void Clock_Print (char *buffer, int n, double clock, const char *format,
                                day, format[i]);
             buffer[j] = '\0';
             strncat (buffer, locBuff, n - j);
-            j += strlen (locBuff);
+            j += (int)strlen (locBuff);
             f_perc = 0;
          }
       }
@@ -1056,7 +1056,7 @@ void Clock_Print2 (char *buffer, int n, double clock, char *format,
                                day, format[i]);
             buffer[j] = '\0';
             strncat (buffer, locBuff, n - j);
-            j += strlen (locBuff);
+            j += (int)strlen (locBuff);
             f_perc = 0;
          }
       }

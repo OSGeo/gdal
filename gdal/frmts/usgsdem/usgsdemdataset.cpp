@@ -123,9 +123,9 @@ static void USGSDEMRefillBuffer( Buffer* psBuffer )
             psBuffer->buffer_size - psBuffer->cur_index);
 
     psBuffer->buffer_size -= psBuffer->cur_index;
-    psBuffer->buffer_size += VSIFReadL(psBuffer->buffer + psBuffer->buffer_size,
+    psBuffer->buffer_size += static_cast<int>(VSIFReadL(psBuffer->buffer + psBuffer->buffer_size,
                                        1, psBuffer->max_size - psBuffer->buffer_size,
-                                       psBuffer->fp);
+                                       psBuffer->fp));
     psBuffer->cur_index = 0;
 }
 

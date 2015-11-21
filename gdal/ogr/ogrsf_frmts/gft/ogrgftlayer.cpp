@@ -106,12 +106,12 @@ OGRFeature *OGRGFTLayer::GetNextFeature()
     while( true )
     {
         if (nNextInSeq < nOffset ||
-            nNextInSeq >= nOffset + (int)aosRows.size())
+            nNextInSeq >= nOffset + static_cast<int>(aosRows.size()))
         {
             if (bEOF)
                 return NULL;
 
-            nOffset += aosRows.size();
+            nOffset += static_cast<int>(aosRows.size());
             if (!FetchNextRows())
                 return NULL;
         }

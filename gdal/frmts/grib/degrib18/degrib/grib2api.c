@@ -185,7 +185,7 @@ static int mdl_LocalUnpack (unsigned char *local, sInt4 locallen,
             memBitRead (&uli_temp, sizeof (sInt4), local, numBits,
                         &bufLoc, &numUsed);
             local += numUsed;
-            BytesUsed += numUsed;
+            BytesUsed += (int) numUsed;
             rdat[curIndex] = (refVal + uli_temp) * recScale10;
             curIndex++;
          }
@@ -206,7 +206,7 @@ static int mdl_LocalUnpack (unsigned char *local, sInt4 locallen,
             memBitRead (&uli_temp, sizeof (sInt4), local, numBits,
                         &bufLoc, &numUsed);
             local += numUsed;
-            BytesUsed += numUsed;
+            BytesUsed += (int) numUsed;
             idat[curIndex] = (refVal + uli_temp) * recScale10;
             curIndex++;
          }

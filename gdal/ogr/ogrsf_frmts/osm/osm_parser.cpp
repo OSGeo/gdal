@@ -2188,7 +2188,7 @@ OSMContext* OSM_Open( const char* pszFilename,
     }
     else
     {
-        int nLimitI = nRead - strlen("OSMHeader");
+        int nLimitI = nRead - static_cast<int>(strlen("OSMHeader"));
         for(i = 0; i < nLimitI; i++)
         {
             if( memcmp(abyHeader + i, "OSMHeader", strlen("OSMHeader") ) == 0 )

@@ -347,10 +347,10 @@ int PCIDSK::pci_strcasecmp( const char *string1, const char *string2 )
 /*                          pci_strncasecmp()                           */
 /************************************************************************/
 
-int PCIDSK::pci_strncasecmp( const char *string1, const char *string2, int len )
+int PCIDSK::pci_strncasecmp( const char *string1, const char *string2, size_t len )
 
 {
-    for( int i = 0; i < len; i++ )
+    for( size_t i = 0; i < len; i++ )
     {
         if( string1[i] == '\0' && string2[i] == '\0' )
             return 0;

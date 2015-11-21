@@ -107,12 +107,12 @@ OGRFeature *OGRCouchDBLayer::GetNextFeature()
     while( true )
     {
         if (nNextInSeq < nOffset ||
-            nNextInSeq >= nOffset + (int)aoFeatures.size())
+            nNextInSeq >= nOffset + static_cast<int>(aoFeatures.size()))
         {
             if (bEOF)
                 return NULL;
 
-            nOffset += aoFeatures.size();
+            nOffset += static_cast<int>(aoFeatures.size());
             if (!FetchNextRows())
                 return NULL;
         }

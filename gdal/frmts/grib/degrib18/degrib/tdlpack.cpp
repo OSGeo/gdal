@@ -971,7 +971,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
       memBitRead (&uli_temp, sizeof (sInt4), bds, 31, &bufLoc, &numUsed);
       myAssert (numUsed == 4);
       bds += numUsed;
-      t_numBytes += numUsed;
+      t_numBytes += static_cast<uInt4>(numUsed);
       origVal = (f_negative) ? -1 * (sInt4)uli_temp : uli_temp;
       memBitRead (&mbit, sizeof (mbit), bds, 5, &bufLoc, &numUsed);
       memBitRead (&f_negative, sizeof (f_negative), bds, 1, &bufLoc,
@@ -980,36 +980,36 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
       myAssert ((mbit > 0) && (mbit < 32));
       memBitRead (&uli_temp, sizeof (sInt4), bds, mbit, &bufLoc, &numUsed);
       bds += numUsed;
-      t_numBytes += numUsed;
+      t_numBytes += static_cast<uInt4>(numUsed);
       fstDiff = (f_negative) ? -1 * (sInt4)uli_temp : uli_temp;
    }
    memBitRead (&nbit, sizeof (nbit), bds, 5, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    memBitRead (&f_negative, sizeof (f_negative), bds, 1, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    myAssert ((nbit > 0) && (nbit < 32));
    memBitRead (&uli_temp, sizeof (sInt4), bds, nbit, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    minVal = (f_negative) ? -1 * (sInt4)uli_temp : uli_temp;
    memBitRead (&LX, sizeof (LX), bds, 16, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    grp = (TDLGroupType *) malloc (LX * sizeof (TDLGroupType));
    memBitRead (&ibit, sizeof (ibit), bds, 5, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    memBitRead (&jbit, sizeof (jbit), bds, 5, &bufLoc, &numUsed);
    /* Following assert is because it is the # of bits of # of bits.  Which
     * means that # of bits of value that has a max of 64. */
    myAssert (jbit < 6);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    memBitRead (&kbit, sizeof (kbit), bds, 5, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    myAssert (ibit < 33);
    for (i = 0; i < LX; i++) {
       if (ibit == 0) {
@@ -1018,7 +1018,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
          memBitRead (&(grp[i].min), sizeof (sInt4), bds, ibit, &bufLoc,
                      &numUsed);
          bds += numUsed;
-         t_numBytes += numUsed;
+         t_numBytes += static_cast<uInt4>(numUsed);
       }
    }
    myAssert (jbit < 8);
@@ -1030,7 +1030,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
          memBitRead (&(grp[i].bit), sizeof (uChar), bds, jbit, &bufLoc,
                      &numUsed);
          bds += numUsed;
-         t_numBytes += numUsed;
+         t_numBytes += static_cast<uInt4>(numUsed);
       }
       myAssert (grp[i].bit < 32);
    }
@@ -3130,7 +3130,7 @@ static sInt4 ComputeGroupSize (TDLGroupType * group, int numGroup,
    }
    /* Allow 0 bits for min.  Assumes that decoder allows 0 bits */
    *kbit = i;
-   ans += ((*ibit) + (*jbit) + (*kbit)) * numGroup;
+   ans += (sInt4) (((*ibit) + (*jbit) + (*kbit)) * numGroup);
    return ans;
 }
 
@@ -3224,7 +3224,7 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
             scoreA = static_cast<sInt4>(group[i].bit * group[i].num + xFactor);
             scoreB = 0;
             for (sub = 0; sub < numSubGroup; sub++) {
-               scoreB += subGroup[sub].bit * subGroup[sub].num + xFactor;
+               scoreB += (sInt4) (subGroup[sub].bit * subGroup[sub].num + xFactor);
             }
             if (scoreB < scoreA) {
                f_keep = 1;
@@ -3254,7 +3254,7 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
                subGroup[1].f_tryShift = 1;
                numSubGroup = 2;
                scoreB = static_cast<sInt4>(subGroup[0].bit * subGroup[0].num + xFactor);
-               scoreB += subGroup[1].bit * subGroup[1].num + xFactor;
+               scoreB += static_cast<sInt4>(subGroup[1].bit * subGroup[1].num + xFactor);
                if (scoreB < scoreA) {
                   f_keep = 1;
                }
@@ -3272,7 +3272,7 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
                           li_secMiss);
             scoreA = static_cast<sInt4>(group[i].bit * group[i].num + xFactor);
             scoreB = static_cast<sInt4>(subGroup[0].bit * subGroup[0].num + xFactor);
-            scoreB += subGroup[1].bit * subGroup[1].num + xFactor;
+            scoreB += static_cast<sInt4>(subGroup[1].bit * subGroup[1].num + xFactor);
             if (scoreB < scoreA) {
                f_keep = 1;
             }
@@ -3457,7 +3457,7 @@ static void shiftGroup (sInt4 *Data,
                G2 = group[i];
                G2.min = A_min;
                G2.max = A_max;
-               G1.num -= (group[i].start - begin);
+               G1.num -= static_cast<uInt4>(group[i].start - begin);
                if (f_secMiss) {
                   findMaxMin2 (Data, G1.start, G1.start + G1.num,
                                li_primMiss, li_secMiss, &A_min, &A_max);
@@ -3476,7 +3476,7 @@ static void shiftGroup (sInt4 *Data,
                   G1.f_trySplit = 1;
                   G1.f_tryShift = 1;
                }
-               G2.num += (group[i].start - begin);
+               G2.num += static_cast<uInt4>(group[i].start - begin);
                G2.start = static_cast<uInt4>(begin);
                G2.f_trySplit = 1;
                G2.f_tryShift = 1;
