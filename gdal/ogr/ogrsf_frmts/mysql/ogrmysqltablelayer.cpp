@@ -537,7 +537,8 @@ void OGRMySQLTableLayer::ResetReading()
 char *OGRMySQLTableLayer::BuildFields()
 
 {
-    int         i, nSize;
+    int         i;
+    size_t      nSize;
     char        *pszFieldList;
 
     nSize = 25;
@@ -583,7 +584,7 @@ char *OGRMySQLTableLayer::BuildFields()
         strcat( pszFieldList, "`");
     }
 
-    CPLAssert( (int) strlen(pszFieldList) < nSize );
+    CPLAssert( strlen(pszFieldList) < nSize );
 
     return pszFieldList;
 }

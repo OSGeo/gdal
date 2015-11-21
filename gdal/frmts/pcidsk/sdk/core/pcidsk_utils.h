@@ -44,7 +44,7 @@ namespace PCIDSK
     uint64 atouint64( const char *);
     int64  atoint64( const char *);
     int    pci_strcasecmp( const char *, const char * );
-    int    pci_strncasecmp( const char *, const char *, int );
+    int    pci_strncasecmp( const char *, const char *, size_t );
 
 #define EQUAL(x,y) (pci_strcasecmp(x,y) == 0)
 #define EQUALN(x,y,n) (pci_strncasecmp(x,y,n) == 0)

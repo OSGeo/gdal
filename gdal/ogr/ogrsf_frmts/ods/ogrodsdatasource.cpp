@@ -1567,7 +1567,7 @@ void OGRODSDataSource::FlushCache()
     }
     CSLDestroy(papszOptions);
     if( CPLWriteFileInZip(hZIP, "application/vnd.oasis.opendocument.spreadsheet",
-                      strlen("application/vnd.oasis.opendocument.spreadsheet")) != CE_None )
+                          static_cast<int>(strlen("application/vnd.oasis.opendocument.spreadsheet"))) != CE_None )
     {
         CPLCloseZip(hZIP);
         return;

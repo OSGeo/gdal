@@ -498,16 +498,16 @@ static int WriteFieldDecl(VSILFILE* fd, char _data_struct_code , char _data_type
     }
     int len = 6;
     VSIFWriteL(_fieldName, 1, strlen(_fieldName), fd);
-    len += strlen(_fieldName);
+    len += static_cast<int>(strlen(_fieldName));
     if (_arrayDescr[0])
     {
         len += WriteUnitTerminator(fd);
         VSIFWriteL(_arrayDescr, 1, strlen(_arrayDescr), fd);
-        len += strlen(_arrayDescr);
+        len += static_cast<int>(strlen(_arrayDescr));
 
         len += WriteUnitTerminator(fd);
         VSIFWriteL(_formatControls, 1, strlen(_formatControls), fd);
-        len += strlen(_formatControls);
+        len += static_cast<int>(strlen(_formatControls));
     }
     len += WriteFieldTerminator(fd);
     return len;
