@@ -298,7 +298,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
     {
         OGRLinearRing* poLR = new OGRLinearRing();
         oCC.papoCurves[iRing] = poLR;
-        OGRErr eErr = poLR->_importFromWkb( eByteOrder, b3D,
+        eErr = poLR->_importFromWkb( eByteOrder, b3D,
                                                  pabyData + nDataOffset,
                                                  nSize );
         if( eErr != OGRERR_NONE )

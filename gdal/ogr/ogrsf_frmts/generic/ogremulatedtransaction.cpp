@@ -204,10 +204,10 @@ OGRLayer* OGRDataSourceWithTransaction::WrapLayer(OGRLayer* poLayer)
             poLayer = poWrappedLayer;
         else
         {
-            OGRLayerWithTransaction* poWrappedLayer = new OGRLayerWithTransaction(this,poLayer);
-            m_oMapLayers[poLayer->GetName()] = poWrappedLayer;
-            m_oSetLayers.insert(poWrappedLayer);
-            poLayer = poWrappedLayer;
+            OGRLayerWithTransaction* poMutexedLayer = new OGRLayerWithTransaction(this,poLayer);
+            m_oMapLayers[poLayer->GetName()] = poMutexedLayer;
+            m_oSetLayers.insert(poMutexedLayer);
+            poLayer = poMutexedLayer;
         }
     }
     return poLayer;
@@ -541,10 +541,10 @@ OGRErr      OGRLayerWithTransaction::ReorderFields( int* panMap )
 
 OGRErr      OGRLayerWithTransaction::AlterFieldDefn( int iField,
                                                      OGRFieldDefn* poNewFieldDefn,
-                                                     int nFlags )
+                                                     int nFlagsIn )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-    OGRErr eErr = m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlags);
+    OGRErr eErr = m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
     if( m_poFeatureDefn && eErr == OGRERR_NONE )
     {
         OGRFieldDefn* poSrcFieldDefn = m_poDecoratedLayer->GetLayerDefn()->GetFieldDefn(iField);

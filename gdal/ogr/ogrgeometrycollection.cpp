@@ -475,7 +475,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
 
         OGRwkbGeometryType eSubGeomType;
         OGRBoolean bIs3D;
-        OGRErr eErr = OGRReadWKBGeometryType( pabySubData, eWkbVariant, &eSubGeomType, &bIs3D );
+        eErr = OGRReadWKBGeometryType( pabySubData, eWkbVariant, &eSubGeomType, &bIs3D );
         if( eErr != OGRERR_NONE )
             return eErr;
 
@@ -650,7 +650,6 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput, int nRec
     do
     {
         OGRGeometry *poGeom = NULL;
-        OGRErr      eErr;
 
     /* -------------------------------------------------------------------- */
     /*      Get the first token, which should be the geometry type.         */

@@ -456,7 +456,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Extract the prime meridian, if there is one set.                */
 /* -------------------------------------------------------------------- */
     const char *pszPM = CSLFetchNameValue( papszNV, "pm" );
-    double dfFromGreenwich = 0.0;
+    double l_dfFromGreenwich = 0.0;
     /* int    nPMCode = -1; */
 
     if( pszPM != NULL )
@@ -464,13 +464,13 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         const OGRProj4PM* psProj4PM = OGRGetProj4PMFromProj4Name(pszPM);
         if (psProj4PM)
         {
-            dfFromGreenwich = CPLDMSToDec(psProj4PM->pszFromGreenwich);
+            l_dfFromGreenwich = CPLDMSToDec(psProj4PM->pszFromGreenwich);
             pszPM = psProj4PM->pszWKTPMName;
             /* nPMCode = psProj4PM->nPMCode; */
         }
         else
         {
-            dfFromGreenwich = CPLDMSToDec( pszPM );
+            l_dfFromGreenwich = CPLDMSToDec( pszPM );
             pszPM = "unnamed";
         }
     }
@@ -963,7 +963,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
     else if( (EQUAL(pszValue,"NAD27") || EQUAL(pszValue,"NAD83")
               || EQUAL(pszValue,"WGS84") || EQUAL(pszValue,"WGS72"))
-             && dfFromGreenwich == 0.0 )
+             && l_dfFromGreenwich == 0.0 )
     {
         SetWellKnownGeogCS( pszValue );
         bFullyDefined = true;
@@ -1012,7 +1012,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
             SetGeogCS( ogr_pj_ellps[i+3], "unknown", ogr_pj_ellps[i],
                        dfSemiMajor, dfInvFlattening,
-                       pszPM, dfFromGreenwich );
+                       pszPM, l_dfFromGreenwich );
 
             bFullyDefined = true;
             break;
@@ -1069,7 +1069,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
         SetGeogCS( "unnamed ellipse", "unknown", "unnamed",
                    dfSemiMajor, dfInvFlattening,
-                   pszPM, dfFromGreenwich );
+                   pszPM, l_dfFromGreenwich );
 
         bFullyDefined = true;
     }
@@ -1511,12 +1511,12 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /*      Get the prime meridian info.                                    */
 /* -------------------------------------------------------------------- */
     const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
-    double dfFromGreenwich = 0.0;
+    double l_dfFromGreenwich = 0.0;
 
     if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2
         && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
-        dfFromGreenwich = CPLAtof(poPRIMEM->GetChild(1)->GetValue());
+        l_dfFromGreenwich = CPLAtof(poPRIMEM->GetChild(1)->GetValue());
     }
 
 /* ==================================================================== */
@@ -2540,7 +2540,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2
         && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
-        const char *pszAuthority = GetAuthorityName( "PRIMEM" );
+        pszAuthority = GetAuthorityName( "PRIMEM" );
         int  nCode = -1;
 
         if( pszAuthority != NULL && EQUAL(pszAuthority,"EPSG") )
@@ -2550,7 +2550,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         if (nCode > 0)
             psProj4PM = OGRGetProj4PMFromCode(nCode);
         if (psProj4PM == NULL)
-            psProj4PM = OGRGetProj4PMFromVal(dfFromGreenwich);
+            psProj4PM = OGRGetProj4PMFromVal(l_dfFromGreenwich);
 
         char szPMValue[128];
         if (psProj4PM != NULL)
@@ -2559,7 +2559,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         }
         else
         {
-            CPLsnprintf( szPMValue, sizeof(szPMValue), "%.16g", dfFromGreenwich );
+            CPLsnprintf( szPMValue, sizeof(szPMValue), "%.16g", l_dfFromGreenwich );
         }
 
         SAFE_PROJ4_STRCAT( "+pm=" );

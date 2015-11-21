@@ -1131,8 +1131,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         if( pszAuthority && EQUAL(pszAuthority,"EPSG") )
         {
             int nGCS_EPSG = atoi(GetAuthorityCode("GEOGCS"));
-            int i;
-            
+
             for( i = 0; asDatums[i].nEPSGCode != 0; i++ )
             {
                 if( asDatums[i].nEPSGCode == nGCS_EPSG )

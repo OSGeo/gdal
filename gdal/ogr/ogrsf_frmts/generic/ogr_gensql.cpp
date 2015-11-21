@@ -84,20 +84,20 @@ int OGRGenSQLResultsLayerHasSpecialField(swq_expr_node* expr,
 /*                       OGRGenSQLResultsLayer()                        */
 /************************************************************************/
 
-OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
-                                              void *pSelectInfo,
+OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
+                                              void *pSelectInfoIn,
                                               OGRGeometry *poSpatFilter,
-                                              const char *pszWHERE,
+                                              const char *pszWHEREIn,
                                               const char *pszDialect ) :
     poSrcLayer(NULL), pszWHERE(NULL), papoTableLayers(NULL), poDefn(NULL),
     panGeomFieldToSrcGeomField(NULL), nIndexSize(0),
     panFIDIndex(NULL), bOrderByValid(FALSE), nNextIndexFID(0),
     poSummaryFeature(NULL), iFIDFieldIndex(), nExtraDSCount(0), papoExtraDS(NULL)
 {
-    swq_select *psSelectInfo = (swq_select *) pSelectInfo;
+    swq_select *psSelectInfo = (swq_select *) pSelectInfoIn;
 
-    this->poSrcDS = poSrcDS;
-    this->pSelectInfo = pSelectInfo;
+    poSrcDS = poSrcDSIn;
+    pSelectInfo = pSelectInfoIn;
 
 /* -------------------------------------------------------------------- */
 /*      Identify all the layers involved in the SELECT.                 */
@@ -148,7 +148,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
 /*      when there is a risk it cannot understand it (#4022)            */
 /* -------------------------------------------------------------------- */
     int bForwardWhereToSourceLayer = TRUE;
-    if( pszWHERE )
+    if( pszWHEREIn )
     {
         if( psSelectInfo->where_expr && pszDialect != NULL &&
             EQUAL(pszDialect, "OGRSQL") )
@@ -158,12 +158,12 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
                             (psSelectInfo->where_expr, nMinIndexForSpecialField);
         }
         if (bForwardWhereToSourceLayer)
-            this->pszWHERE = CPLStrdup(pszWHERE);
+            pszWHERE = CPLStrdup(pszWHEREIn);
         else
-            this->pszWHERE = NULL;
+            pszWHERE = NULL;
     }
     else
-        this->pszWHERE = NULL;
+        pszWHERE = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare a feature definition based on the query.                */
@@ -471,7 +471,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
     FindAndSetIgnoredFields();
 
     if( !bForwardWhereToSourceLayer )
-        SetAttributeFilter( pszWHERE );
+        SetAttributeFilter( pszWHEREIn );
 }
 
 /************************************************************************/
