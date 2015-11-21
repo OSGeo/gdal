@@ -46,15 +46,15 @@ int GDALIntegralImage::GetHeight() { return nHeight; }
 
 int GDALIntegralImage::GetWidth() { return nWidth; }
 
-void GDALIntegralImage::Initialize(const double **padfImg, int nHeight, int nWidth)
+void GDALIntegralImage::Initialize(const double **padfImg, int nHeightIn, int nWidthIn)
 {
     //Memory allocation
-    pMatrix = new double*[nHeight];
-    for (int i = 0; i < nHeight; i++)
-        pMatrix[i] = new double[nWidth];
+    pMatrix = new double*[nHeightIn];
+    for (int i = 0; i < nHeightIn; i++)
+        pMatrix[i] = new double[nWidthIn];
 
-    this->nHeight = nHeight;
-    this->nWidth = nWidth;
+    nHeight = nHeightIn;
+    nWidth = nWidthIn;
 
     //Integral image calculation
     for (int i = 0; i < nHeight; i++)
@@ -86,23 +86,23 @@ double GDALIntegralImage::GetValue(int nRow, int nCol)
         return 0;
 }
 
-double GDALIntegralImage::GetRectangleSum(int nRow, int nCol, int nWidth, int nHeight)
+double GDALIntegralImage::GetRectangleSum(int nRow, int nCol, int nWidthIn, int nHeightIn)
 {
     double a = 0, b = 0, c = 0, d = 0;
 
     //Left top point of rectangle is first
-    int w = nWidth - 1;
-    int h = nHeight - 1;
+    int w = nWidthIn - 1;
+    int h = nHeightIn - 1;
 
     int row = nRow;
     int col = nCol;
 
     //Left top point
-    int lt_row = (row <= this->nHeight) ? (row - 1) : -1;
-    int lt_col = (col <= this->nWidth) ? (col - 1) : -1;
+    int lt_row = (row <= nHeight) ? (row - 1) : -1;
+    int lt_col = (col <= nWidth) ? (col - 1) : -1;
     //Right bottom point of the rectangle
-    int rb_row = (row + h < this->nHeight) ? (row + h) : (this->nHeight - 1);
-    int rb_col = (col + w < this->nWidth) ? (col + w) : (this->nWidth - 1);
+    int rb_row = (row + h < nHeight) ? (row + h) : (nHeight - 1);
+    int rb_col = (col + w < nWidth) ? (col + w) : (nWidth - 1);
 
     if (lt_row >= 0 && lt_col >= 0)
         a = this->GetValue(lt_row, lt_col);

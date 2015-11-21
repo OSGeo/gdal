@@ -870,9 +870,9 @@ ORDER\TERM   1    2    3    4    5    6    7    8    9   10
 */
 /***************************************************************************/
 
-static double term (int term, double e, double n)
+static double term (int nTerm, double e, double n)
 {
-    switch(term)
+    switch(nTerm)
     {
       case  1: return((double)1.0);
       case  2: return((double)e);

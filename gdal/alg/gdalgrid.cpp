@@ -693,15 +693,15 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
                     dfNearestR = dfRadius1;
                 for(int k=0; k<nFeatureCount; k++)
                 {
-                    int i = papsPoints[k]->i;
-                    double  dfRX = padfX[i] - dfXPoint;
-                    double  dfRY = padfY[i] - dfYPoint;
+                    int idx = papsPoints[k]->i;
+                    double  dfRX = padfX[idx] - dfXPoint;
+                    double  dfRY = padfY[idx] - dfYPoint;
 
                     const double    dfR2 = dfRX * dfRX + dfRY * dfRY;
                     if( dfR2 <= dfNearestR )
                     {
                         dfNearestR = dfR2;
-                        dfNearestValue = padfZ[i];
+                        dfNearestValue = padfZ[idx];
                     }
                 }
 

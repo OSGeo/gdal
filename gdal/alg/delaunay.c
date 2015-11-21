@@ -300,20 +300,20 @@ int  GDALTriangulationComputeBarycentricCoefficients(GDALTriangulation* psDT,
     {
         GDALTriFacet* psFacet = &(psDT->pasFacets[i]);
         GDALTriBarycentricCoefficients* psCoeffs = &(psDT->pasFacetCoefficients[i]);
-        double x1 = padfX[psFacet->anVertexIdx[0]];
-        double y1 = padfY[psFacet->anVertexIdx[0]];
-        double x2 = padfX[psFacet->anVertexIdx[1]];
-        double y2 = padfY[psFacet->anVertexIdx[1]];
-        double x3 = padfX[psFacet->anVertexIdx[2]];
-        double y3 = padfY[psFacet->anVertexIdx[2]];
+        double dfX1 = padfX[psFacet->anVertexIdx[0]];
+        double dfY1 = padfY[psFacet->anVertexIdx[0]];
+        double dfX2 = padfX[psFacet->anVertexIdx[1]];
+        double dfY2 = padfY[psFacet->anVertexIdx[1]];
+        double dfX3 = padfX[psFacet->anVertexIdx[2]];
+        double dfY3 = padfY[psFacet->anVertexIdx[2]];
         /* See https://en.wikipedia.org/wiki/Barycentric_coordinate_system */
-        double dfDenom = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
-        psCoeffs->dfMul1X = (y2  - y3) / dfDenom;
-        psCoeffs->dfMul1Y = (x3  - x2) / dfDenom;
-        psCoeffs->dfMul2X = (y3  - y1) / dfDenom;
-        psCoeffs->dfMul2Y = (x1  - x3) / dfDenom;
-        psCoeffs->dfCstX = x3;
-        psCoeffs->dfCstY = y3;
+        double dfDenom = (dfY2 - dfY3) * (dfX1 - dfX3) + (dfX3 - dfX2) * (dfY1 - dfY3);
+        psCoeffs->dfMul1X = (dfY2  - dfY3) / dfDenom;
+        psCoeffs->dfMul1Y = (dfX3  - dfX2) / dfDenom;
+        psCoeffs->dfMul2X = (dfY3  - dfY1) / dfDenom;
+        psCoeffs->dfMul2Y = (dfX1  - dfX3) / dfDenom;
+        psCoeffs->dfCstX = dfX3;
+        psCoeffs->dfCstY = dfY3;
     }
     return TRUE;
 }

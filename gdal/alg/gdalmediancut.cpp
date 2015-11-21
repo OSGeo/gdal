@@ -799,11 +799,11 @@ splitbox(Colorbox* ptr, const T* histogram,
                                 gmax = ptr->gmax,
                                 bmin = ptr->bmin,
                                 bmax = ptr->bmax;
-            for(T i=0;i<nPixels;i++)
+            for(T iPixel=0;iPixel<nPixels;iPixel++)
             {
-                int iR = pabyRedBand[i];
-                int iG = pabyGreenBand[i];
-                int iB = pabyBlueBand[i];
+                int iR = pabyRedBand[iPixel];
+                int iG = pabyGreenBand[iPixel];
+                int iB = pabyBlueBand[iPixel];
                 if( iR >= rmin && iR <= rmax &&
                     iG >= gmin && iG <= gmax &&
                     iB >= bmin && iB <= bmax )
@@ -855,11 +855,11 @@ splitbox(Colorbox* ptr, const T* histogram,
                                 gmax = ptr->gmax,
                                 bmin = ptr->bmin,
                                 bmax = ptr->bmax;
-            for(T i=0;i<nPixels;i++)
+            for(T iPixel=0;iPixel<nPixels;iPixel++)
             {
-                int iR = pabyRedBand[i];
-                int iG = pabyGreenBand[i];
-                int iB = pabyBlueBand[i];
+                int iR = pabyRedBand[iPixel];
+                int iG = pabyGreenBand[iPixel];
+                int iB = pabyBlueBand[iPixel];
                 if( iR >= rmin && iR <= rmax &&
                     iG >= gmin && iG <= gmax &&
                     iB >= bmin && iB <= bmax )
@@ -911,11 +911,11 @@ splitbox(Colorbox* ptr, const T* histogram,
                                 gmax = ptr->gmax,
                                 bmin = ptr->bmin,
                                 bmax = ptr->bmax;
-            for(T i=0;i<nPixels;i++)
+            for(T iPixel=0;iPixel<nPixels;iPixel++)
             {
-                int iR = pabyRedBand[i];
-                int iG = pabyGreenBand[i];
-                int iB = pabyBlueBand[i];
+                int iR = pabyRedBand[iPixel];
+                int iG = pabyGreenBand[iPixel];
+                int iB = pabyBlueBand[iPixel];
                 if( iR >= rmin && iR <= rmax &&
                     iG >= gmin && iG <= gmax &&
                     iB >= bmin && iB <= bmax )
