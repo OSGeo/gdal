@@ -3931,8 +3931,8 @@ void VSIS3FSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper)
 /*                             VSIS3Handle()                            */
 /************************************************************************/
 
-VSIS3Handle::VSIS3Handle(VSIS3FSHandler* poFS, VSIS3HandleHelper* poS3HandleHelper) :
-        VSICurlHandle(poFS, poS3HandleHelper->GetURL()),
+VSIS3Handle::VSIS3Handle(VSIS3FSHandler* poFSIn, VSIS3HandleHelper* poS3HandleHelper) :
+        VSICurlHandle(poFSIn, poS3HandleHelper->GetURL()),
         m_poS3HandleHelper(poS3HandleHelper)
 {
 }

@@ -79,8 +79,8 @@ GDALAbstractBandBlockCache* GDALArrayBandBlockCacheCreate(GDALRasterBand* poBand
 /*                       GDALArrayBandBlockCache()                      */
 /************************************************************************/
 
-GDALArrayBandBlockCache::GDALArrayBandBlockCache(GDALRasterBand* poBand) :
-    GDALAbstractBandBlockCache(poBand),
+GDALArrayBandBlockCache::GDALArrayBandBlockCache(GDALRasterBand* poBandIn) :
+    GDALAbstractBandBlockCache(poBandIn),
     bSubBlockingActive(FALSE),
     nSubBlocksPerRow(0),
     nSubBlocksPerColumn(0)

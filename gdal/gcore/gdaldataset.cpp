@@ -2417,12 +2417,12 @@ char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
  * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
  *
  */
-CPLErr GDALDataset::CreateMaskBand( int nFlags )
+CPLErr GDALDataset::CreateMaskBand( int nFlagsIn )
 
 {
     if( oOvManager.IsInitialized() )
     {
-        CPLErr eErr = oOvManager.CreateMaskBand( nFlags, -1 );
+        CPLErr eErr = oOvManager.CreateMaskBand( nFlagsIn, -1 );
         if (eErr != CE_None)
             return eErr;
 
@@ -5146,19 +5146,19 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
     oNewFieldDefn.SetWidth(nWidth);
     oNewFieldDefn.SetPrecision(nPrecision);
 
-    int nFlags = 0;
+    int l_nFlags = 0;
     if (poOldFieldDefn->GetType() != oNewFieldDefn.GetType())
-        nFlags |= ALTER_TYPE_FLAG;
+        l_nFlags |= ALTER_TYPE_FLAG;
     if (poOldFieldDefn->GetWidth() != oNewFieldDefn.GetWidth() ||
         poOldFieldDefn->GetPrecision() != oNewFieldDefn.GetPrecision())
-        nFlags |= ALTER_WIDTH_PRECISION_FLAG;
+        l_nFlags |= ALTER_WIDTH_PRECISION_FLAG;
 
     CSLDestroy( papszTokens );
 
-    if (nFlags == 0)
+    if (l_nFlags == 0)
         return OGRERR_NONE;
     else
-        return poLayer->AlterFieldDefn( nFieldIndex, &oNewFieldDefn, nFlags );
+        return poLayer->AlterFieldDefn( nFieldIndex, &oNewFieldDefn, l_nFlags );
 }
 
 /************************************************************************/

@@ -4335,16 +4335,16 @@ CPLErr GDALClientDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSi
 /*                           CreateMaskBand()                           */
 /************************************************************************/
 
-CPLErr GDALClientDataset::CreateMaskBand( int nFlags )
+CPLErr GDALClientDataset::CreateMaskBand( int nFlagsIn )
 {
     if( !SupportsInstr(INSTR_CreateMaskBand) )
-        return GDALPamDataset::CreateMaskBand(nFlags);
+        return GDALPamDataset::CreateMaskBand(nFlagsIn);
 
     CLIENT_ENTER();
     GDALPipeWriteConfigOption(p, "GDAL_TIFF_INTERNAL_MASK_TO_8BIT", bRecycleChild);
     GDALPipeWriteConfigOption(p, "GDAL_TIFF_INTERNAL_MASK", bRecycleChild);
     if( !GDALPipeWrite(p, INSTR_CreateMaskBand) ||
-        !GDALPipeWrite(p, nFlags) )
+        !GDALPipeWrite(p, nFlagsIn) )
         return CE_Failure;
     return CPLErrOnlyRet(p);
 }
@@ -4354,23 +4354,23 @@ CPLErr GDALClientDataset::CreateMaskBand( int nFlags )
 /************************************************************************/
 
 GDALClientRasterBand::GDALClientRasterBand(GDALPipe* pIn, int iSrvBandIn, 
-                                           GDALClientDataset* poDS,
-                                           int nBand, GDALAccess eAccess,
-                                           int nRasterXSize, int nRasterYSize,
-                                           GDALDataType eDataType,
-                                           int nBlockXSize, int nBlockYSize,
+                                           GDALClientDataset* poDSIn,
+                                           int nBandIn, GDALAccess eAccessIn,
+                                           int nRasterXSizeIn, int nRasterYSizeIn,
+                                           GDALDataType eDataTypeIn,
+                                           int nBlockXSizeIn, int nBlockYSizeIn,
                                            GByte abyCapsIn[16])
 {
     p = pIn;
     iSrvBand = iSrvBandIn;
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eAccess = eAccess;
-    this->nRasterXSize = nRasterXSize;
-    this->nRasterYSize = nRasterYSize;
-    this->eDataType = eDataType;
-    this->nBlockXSize = nBlockXSize;
-    this->nBlockYSize = nBlockYSize;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eAccess = eAccessIn;
+    nRasterXSize = nRasterXSizeIn;
+    nRasterYSize = nRasterYSizeIn;
+    eDataType = eDataTypeIn;
+    nBlockXSize = nBlockXSizeIn;
+    nBlockYSize = nBlockYSizeIn;
     papszCategoryNames = NULL;
     poColorTable = NULL;
     pszUnitType = NULL;
@@ -5614,27 +5614,27 @@ int GDALClientRasterBand::GetMaskFlags()
         return 0;
     if( !GDALSkipUntilEndOfJunkMarker(p) )
         return 0;
-    int nFlags;
-    if( !GDALPipeRead(p, &nFlags) )
+    int l_nFlags;
+    if( !GDALPipeRead(p, &l_nFlags) )
         return 0;
     GDALConsumeErrors(p);
-    return nFlags;
+    return l_nFlags;
 }
 
 /************************************************************************/
 /*                           CreateMaskBand()                           */
 /************************************************************************/
 
-CPLErr GDALClientRasterBand::CreateMaskBand( int nFlags )
+CPLErr GDALClientRasterBand::CreateMaskBand( int nFlagsIn )
 {
     if( !SupportsInstr(INSTR_Band_CreateMaskBand) )
-        return GDALPamRasterBand::CreateMaskBand(nFlags);
+        return GDALPamRasterBand::CreateMaskBand(nFlagsIn);
 
     CLIENT_ENTER();
     GDALPipeWriteConfigOption(p, "GDAL_TIFF_INTERNAL_MASK_TO_8BIT", bRecycleChild);
     GDALPipeWriteConfigOption(p, "GDAL_TIFF_INTERNAL_MASK", bRecycleChild);
     if( !WriteInstr(INSTR_Band_CreateMaskBand) ||
-        !GDALPipeWrite(p, nFlags) )
+        !GDALPipeWrite(p, nFlagsIn) )
         return CE_Failure;
     CPLErr eErr = CPLErrOnlyRet(p);
     if( eErr == CE_None && poMaskBand != NULL )
@@ -5786,8 +5786,8 @@ GDALClientDataset* GDALClientDataset::CreateAndConnect()
 /*                                Init()                                */
 /************************************************************************/
 
-int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess,
-                            char** papszOpenOptions)
+int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccessIn,
+                            char** papszOpenOptionsIn)
 {
     // FIXME find a way of transmitting the relevant config options to the forked Open() ?
     GDALPipeWriteConfigOption(p, "GTIFF_POINT_GEO_IGNORE", bRecycleChild);
@@ -5808,10 +5808,10 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess,
     char* pszCWD = CPLGetCurrentDir();
 
     if( !GDALPipeWrite(p, INSTR_Open) ||
-        !GDALPipeWrite(p, eAccess) ||
+        !GDALPipeWrite(p, eAccessIn) ||
         !GDALPipeWrite(p, pszFilename) ||
         !GDALPipeWrite(p, pszCWD) ||
-        !GDALPipeWrite(p, papszOpenOptions))
+        !GDALPipeWrite(p, papszOpenOptionsIn))
     {
         CPLFree(pszCWD);
         return FALSE;
@@ -5832,7 +5832,7 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess,
     if( !GDALPipeRead(p, sizeof(abyCaps), abyCaps) )
         return FALSE;
 
-    this->eAccess = eAccess;
+    eAccess = eAccessIn;
 
     char* pszDescription = NULL;
     if( !GDALPipeRead(p, &pszDescription) )
@@ -6204,7 +6204,7 @@ GDALDataset *GDALClientDataset::CreateCopy( const char * pszFilename,
 /************************************************************************/
 
 int GDALClientDataset::mCreate( const char * pszFilename,
-                            int nXSize, int nYSize, int nBands,
+                            int nXSize, int nYSize, int nBandsIn,
                             GDALDataType eType,
                             char ** papszOptions )
 {
@@ -6241,7 +6241,7 @@ int GDALClientDataset::mCreate( const char * pszFilename,
         !GDALPipeWrite(p, pszCWD) ||
         !GDALPipeWrite(p, nXSize) ||
         !GDALPipeWrite(p, nYSize) ||
-        !GDALPipeWrite(p, nBands) ||
+        !GDALPipeWrite(p, nBandsIn) ||
         !GDALPipeWrite(p, eType) ||
         !GDALPipeWrite(p, papszOptions) )
     {
