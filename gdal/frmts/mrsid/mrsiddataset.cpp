@@ -367,7 +367,8 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 //#endif
 
     nBlockSize = nBlockXSize * nBlockYSize;
-    poPixel = new LTIDLLPixel<LTIPixel>( poDS->eColorSpace, poDS->nBands,
+    poPixel = new LTIDLLPixel<LTIPixel>( poDS->eColorSpace,
+                                         static_cast<lt_uint16>(poDS->nBands),
                                          poDS->eSampleType );
 
 
@@ -556,7 +557,7 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         poGDS->nPrevBlockYOff = nBlockYOff;
     }
 
-    memcpy( pImage, poGDS->poBuffer->myGetTotalBandData(nBand - 1), 
+    memcpy( pImage, poGDS->poBuffer->myGetTotalBandData(static_cast<lt_uint16>(nBand - 1)), 
             nBlockSize * (GDALGetDataTypeSize(poGDS->eDataType) / 8) );
 
     return CE_None;
@@ -897,7 +898,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*      higher resolution than the buffer of data requested.            */
 /* -------------------------------------------------------------------- */
     int  nTmpPixelSize;
-    LTIPixel       oPixel( eColorSpace, nBands, eSampleType );
+    LTIPixel       oPixel( eColorSpace, static_cast<lt_uint16>(nBands), eSampleType );
     
     LT_STATUS eLTStatus;
     unsigned int maxWidth;
@@ -979,7 +980,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
         for( int iBand = 0; iBand < nBandCount; iBand++ )
         {
             GByte *pabySrcBand = (GByte *) 
-                oLTIBuffer.myGetTotalBandData( panBandMap[iBand] - 1 );
+                oLTIBuffer.myGetTotalBandData( static_cast<lt_uint16>(panBandMap[iBand] - 1) );
 	  
             for( int iLine = 0; iLine < nBufYSize; iLine++ )
 	    {
@@ -1017,7 +1018,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                         + nBandSpace * iBand;
 
                     pabySrc = (GByte *) oLTIBuffer.myGetTotalBandData( 
-                        panBandMap[iBand] - 1 );
+                        static_cast<lt_uint16>(panBandMap[iBand] - 1) );
                     pabySrc += (iTmpLine * sceneWidth + iTmpPixel) * nTmpPixelSize;
 
                     if( eDataType == eBufType )

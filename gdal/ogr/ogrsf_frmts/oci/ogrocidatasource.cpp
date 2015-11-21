@@ -995,7 +995,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszName )
 
 {
-    OGROCILayer *poLayer;
+    OGROCILayer *poLayer = NULL;
     int  i, count;
 
     if ( !pszName )

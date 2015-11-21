@@ -34,7 +34,20 @@
 #include "kearat.h"
 
 #include "gdal_rat.h"
+
+
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4290 )  /* C++ exception specification ignored except to indicate a function is not __declspec(nothrow)*/
+#endif
+
 #include "libkea/KEAAttributeTable.h"
+
+#ifdef _MSC_VER
+#pragma warning( pop ) 
+#endif
+
+
 
 #include <map>
 #include <vector>
@@ -117,7 +130,7 @@ KEARasterBand::~KEARasterBand()
         {
             m_pImageIO->close();
         }
-        catch (kealib::KEAIOException &e)
+        catch (const kealib::KEAIOException &)
         {
         }
         delete m_pImageIO;
@@ -209,7 +222,7 @@ CPLErr KEARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
                                             this->m_eKEADataType );
         return CE_None;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                 "Failed to read file: %s", e.what() );
@@ -243,7 +256,7 @@ CPLErr KEARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff, void * pImage
                                             this->m_eKEADataType );
         return CE_None;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                 "Failed to write file: %s", e.what() );
@@ -258,7 +271,7 @@ void KEARasterBand::SetDescription(const char *pszDescription)
         this->m_pImageIO->setImageBandDescription(this->nBand, pszDescription);
         GDALPamRasterBand::SetDescription(pszDescription);
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         // ignore?
     }
@@ -293,7 +306,7 @@ CPLErr KEARasterBand::SetMetadataItem(const char *pszName, const char *pszValue,
         m_papszMetadataList = CSLSetNameValue( m_papszMetadataList, pszName, pszValue );
         return CE_None;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         return CE_Failure;
     }
@@ -361,7 +374,7 @@ CPLErr KEARasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
             nIndex++;
         }
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         return CE_Failure;
     }
@@ -384,7 +397,7 @@ double KEARasterBand::GetNoDataValue(int *pbSuccess)
 
         return dVal;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         if( pbSuccess != NULL )
             *pbSuccess = 0;
@@ -432,7 +445,7 @@ CPLErr KEARasterBand::SetNoDataValue(double dfNoData)
         }
         return CE_None;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         return CE_Failure;
     }
@@ -445,7 +458,7 @@ CPLErr KEARasterBand::DeleteNoDataValue()
         m_pImageIO->undefineNoDataValue(this->nBand);
         return CE_None;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         return CE_Failure;
     }
@@ -606,10 +619,10 @@ GDALColorTable *KEARasterBand::GetColorTable()
                 {
                     // maybe could be more efficient using ValuesIO
                     GDALColorEntry colorEntry;
-                    colorEntry.c1 = pKEATable->GetValueAsInt(nRowIndex, nRedIdx);
-                    colorEntry.c2 = pKEATable->GetValueAsInt(nRowIndex, nGreenIdx);
-                    colorEntry.c3 = pKEATable->GetValueAsInt(nRowIndex, nBlueIdx);
-                    colorEntry.c4 = pKEATable->GetValueAsInt(nRowIndex, nAlphaIdx);
+                    colorEntry.c1 = static_cast<short>(pKEATable->GetValueAsInt(nRowIndex, nRedIdx));
+                    colorEntry.c2 = static_cast<short>(pKEATable->GetValueAsInt(nRowIndex, nGreenIdx));
+                    colorEntry.c3 = static_cast<short>(pKEATable->GetValueAsInt(nRowIndex, nBlueIdx));
+                    colorEntry.c4 = static_cast<short>(pKEATable->GetValueAsInt(nRowIndex, nAlphaIdx));
                     this->m_pColorTable->SetColorEntry(nRowIndex, &colorEntry);
                 }
             }

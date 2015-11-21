@@ -141,6 +141,7 @@ OGROCIStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
         ceil(fabs(dfEndAngle - dfStartAngle)/dfMaxAngleStepSizeDegrees) + 1;
     nVertexCount = MAX(2,nVertexCount);
     dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
+    iAppendLocation = poLine->getNumPoints();
 
     for( iPoint=0; iPoint < nVertexCount; iPoint++ )
     {
@@ -153,8 +154,6 @@ OGROCIStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 
         if( iPoint == 0 )
         {
-            iAppendLocation = poLine->getNumPoints();
-
             if( poLine->getNumPoints() > 0 
                 && fabs(poLine->getX(poLine->getNumPoints()-1)-dfArcX) < dfEps
                 && fabs(poLine->getY(poLine->getNumPoints()-1)-dfArcY) < dfEps)

@@ -2423,7 +2423,7 @@ GDcompinfo(int32 gridID, char *fieldname, int32 * compcode, intn compparm[])
 		/* Initialize to zero */
 		for (i = 0; i < 4; i++)
 		{
-		    compparm[i] = 0.0;
+		    compparm[i] = 0;
 		}
 
 		/*
@@ -2536,7 +2536,7 @@ GDfieldinfo(int32 gridID, char *fieldname, int32 * rank, int32 dims[],
     int32           fid;	    /* HDF-EOS file ID */
     int32           sdInterfaceID;  /* HDF SDS interface ID */
     int32           idOffset = GDIDOFFSET;  /* Grid ID offset */
-    int32           ndims;	    /* Number of dimensions */
+    int32           ndims = 0;	    /* Number of dimensions */
     int32           slen[8];	    /* Length of each entry in parsed string */
     int32           dum;	    /* Dummy variable */
     int32           xdim;	    /* X dim size */
@@ -2789,6 +2789,8 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 
     HDF_CHUNK_DEF   chunkDef;	/* Tiling structure */
 
+    memset(&c_info, 0, sizeof(c_info));
+    memset(&chunkDef, 0, sizeof(chunkDef));
 
 
     /* Setup error message strings */
@@ -4846,7 +4848,7 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
 		     * Get all string values Don't count quotes
 		     */
 		    EHgetmetavalue(metaptrs, &valName[i][0], utlstr);
-		    *strbufsize += strlen(utlstr) - 2;
+		    *strbufsize += (int32)strlen(utlstr) - 2;
 		}
 		/* Increment number of entries */
 		nEntries++;
@@ -6325,7 +6327,7 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
     float64         scaleX;	/* X scale factor */
     float64         scaleY;	/* Y scale factor */
     float64         EHconvAng();/* Angle conversion routine */
-    float64         xMtr0, xMtr1, yMtr0, yMtr1;
+    float64         xMtr0 = 0, xMtr1, yMtr0 = 0, yMtr1;
     float64         lonrad1;	/* Longitude in radians of lowright point */
 
     /* If projection not GEO call GCTP initialization routine */
@@ -8492,7 +8494,7 @@ GDextractregion(int32 gridID, int32 regionID, char *fieldname,
     int32           start[8];	/* Start array for data read */
     int32           edge[8];	/* Edge array for data read */
     int32           dims[8];	/* Dimensions */
-    int32           rank;	/* Field rank */
+    int32           rank = 0;	/* Field rank */
     int32           ntype;	/* Field number type */
     int32           origincode;	/* Pixel origin code */
 
@@ -8898,7 +8900,7 @@ for (j=0; j<8; j++) \
 int32
 GDdefvrtregion(int32 gridID, int32 regionID, char *vertObj, float64 range[])
 {
-    intn            i, j, k, status;
+    intn            i, j = 0, k, status;
     uint8           found = 0;
 
     int16           vertINT16;
@@ -9471,8 +9473,8 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
     int32           edge[8];	/* GDreadfield edge array */
     int32           dims[8];	/* Field dimensions */
     int32           rank;	/* Field rank */
-    int32           xdum;	/* Location of "XDim" within field list */
-    int32           ydum;	/* Location of "YDim" within field list */
+    int32           xdum = 0;	/* Location of "XDim" within field list */
+    int32           ydum = 0;	/* Location of "YDim" within field list */
     int32           ntype;	/* Field number type */
     int32           origincode;	/* Origin code */
     int32           bufOffset;	/* Data buffer offset */
@@ -9751,8 +9753,8 @@ GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
     int32           dims[8];	/* Field dimensions */
     int32           numsize;	/* Size in bytes of number type */
     int32           rank;	/* Field rank */
-    int32           xdum;	/* Location of "XDim" within field list */
-    int32           ydum;	/* Location of "YDim" within field list */
+    int32           xdum = 0;	/* Location of "XDim" within field list */
+    int32           ydum = 0;	/* Location of "YDim" within field list */
     int32           ntype;	/* Number type */
     int32           dum;	/* Dummy variable */
     int32           size;	/* Size of returned data buffer for each
@@ -9761,7 +9763,7 @@ GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
     int32           pixRow[4];	/* Pixel rows for 4 nearest neighbors */
     int32           tDen;	/* Interpolation denominator value 1 */
     int32           uDen;	/* Interpolation denominator value 2 */
-    int32           nRetn;	/* Number of data values returned */
+    int32           nRetn = 0;	/* Number of data values returned */
 
     float64         upleftpt[2];/* Upper left pt coordinates */
     float64         lowrightpt[2];	/* Lower right pt coordinates */

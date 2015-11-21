@@ -116,8 +116,8 @@ class netCDFRasterBand : public GDALPamRasterBand
 
     CPLErr	    CreateBandMetadata( int *paDimIds ); 
     template <class T> void CheckData ( void * pImage, 
-                                        long nTmpBlockXSize, long nTmpBlockYSize,
-                                        int bCheckIsNan=FALSE ) ;
+                                        size_t nTmpBlockXSize, size_t nTmpBlockYSize,
+                                        bool bCheckIsNan=false ) ;
 
   protected:
     CPLXMLNode *SerializeToXML( const char *pszVRTPath );
@@ -1101,21 +1101,21 @@ CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
 /************************************************************************/
 template <class T>
 void  netCDFRasterBand::CheckData ( void * pImage, 
-                                    long nTmpBlockXSize, long nTmpBlockYSize,
-                                    int bCheckIsNan ) 
+                                    size_t nTmpBlockXSize, size_t nTmpBlockYSize,
+                                    bool bCheckIsNan ) 
 {
   CPLAssert( pImage != NULL );
 
   /* if this block is not a full block (in the x axis), we need to re-arrange the data 
      this is because partial blocks are not arranged the same way in netcdf and gdal */
-  if ( nTmpBlockXSize != nBlockXSize ) {
+  if ( nTmpBlockXSize != static_cast<size_t>(nBlockXSize) ) {
     T* ptr = (T *) CPLCalloc( nTmpBlockXSize*nTmpBlockYSize, sizeof( T ) );
     memcpy( ptr, pImage, nTmpBlockXSize*nTmpBlockYSize*sizeof( T ) );
-    for( long j=0; j<nTmpBlockYSize; j++) {
-      long k = j*nBlockXSize;
-      for( long i=0; i<nTmpBlockXSize; i++,k++)
+    for( size_t j=0; j<nTmpBlockYSize; j++) {
+      size_t k = j*nBlockXSize;
+      for( size_t i=0; i<nTmpBlockXSize; i++,k++)
         ((T *) pImage)[k] = ptr[j*nTmpBlockXSize+i];
-      for( long i=nTmpBlockXSize; i<nBlockXSize; i++,k++)
+      for( size_t i=nTmpBlockXSize; i<static_cast<size_t>(nBlockXSize); i++,k++)
         ((T *) pImage)[k] = (T)dfNoDataValue;
     }
     CPLFree( ptr );
@@ -1125,10 +1125,10 @@ void  netCDFRasterBand::CheckData ( void * pImage,
   if ( (adfValidRange[0] != dfNoDataValue) || 
        (adfValidRange[1] != dfNoDataValue) ||
        bCheckIsNan ) {
-    for( long j=0; j<nTmpBlockYSize; j++) {
+    for( size_t j=0; j<nTmpBlockYSize; j++) {
       // k moves along the gdal block, skipping the out-of-range pixels
-      long k = j*nBlockXSize;
-      for( long i=0; i<nTmpBlockXSize; i++,k++) {
+      size_t k = j*nBlockXSize;
+      for( size_t i=0; i<nTmpBlockXSize; i++,k++) {
         /* check for nodata and nan */
         if ( CPLIsEqual( (double) ((T *)pImage)[k], dfNoDataValue ) )
           continue;
@@ -1153,11 +1153,11 @@ void  netCDFRasterBand::CheckData ( void * pImage,
      only check first and last block elements since lon must be monotonic */
   if ( bCheckLongitude && 
        MIN( ((T *)pImage)[0], ((T *)pImage)[nTmpBlockXSize-1] ) > 180.0 ) {
-    for( int j=0; j<nTmpBlockYSize; j++) {
-      int k = j*nBlockXSize;
-      for( int i=0; i<nTmpBlockXSize; i++,k++) {
+    for( size_t j=0; j<nTmpBlockYSize; j++) {
+      size_t k = j*nBlockXSize;
+      for( size_t i=0; i<nTmpBlockXSize; i++,k++) {
         if ( ! CPLIsEqual( (double) ((T *)pImage)[k], dfNoDataValue ) )
-          ((T *)pImage )[k] -= 360.0;
+          ((T *)pImage )[k] -= 360;
       }
     }
   }
@@ -1264,7 +1264,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 start[panBandZPos[i]] = (int) ( ( nLevel-Taken) % Sum );
                 edge[panBandZPos[i]] = 1;
             }
-            Taken += start[panBandZPos[i]] * Sum;
+            Taken += static_cast<int>(start[panBandZPos[i]]) * Sum;
         }
     }
 
@@ -1280,14 +1280,14 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                         (signed char *) pImage );
             if ( status == NC_NOERR ) 
                 CheckData<signed char>( pImage, edge[nBandXPos], edge[nBandYPos], 
-                                        FALSE );
+                                        false );
         }
         else {
             status = nc_get_vara_uchar( cdfid, nZId, start, edge, 
                                         (unsigned char *) pImage );
             if ( status == NC_NOERR ) 
                 CheckData<unsigned char>( pImage, edge[nBandXPos], edge[nBandYPos], 
-                                          FALSE ); 
+                                          false ); 
         }
     }
 
@@ -1297,7 +1297,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     (short int *) pImage );
         if ( status == NC_NOERR ) 
             CheckData<short int>( pImage, edge[nBandXPos], edge[nBandYPos], 
-                                  FALSE ); 
+                                  false ); 
     }
     else if( eDataType == GDT_Int32 )
     {
@@ -1307,7 +1307,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                        (long int *) pImage );
             if ( status == NC_NOERR ) 
                 CheckData<long int>( pImage, edge[nBandXPos], edge[nBandYPos], 
-                                     FALSE ); 
+                                     false ); 
         }
         else
         {
@@ -1315,7 +1315,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       (int *) pImage );
             if ( status == NC_NOERR ) 
                 CheckData<int>( pImage, edge[nBandXPos], edge[nBandYPos], 
-                                FALSE ); 
+                                false ); 
         }
     }
     else if( eDataType == GDT_Float32 )
@@ -1324,7 +1324,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     (float *) pImage );
         if ( status == NC_NOERR ) 
             CheckData<float>( pImage, edge[nBandXPos], edge[nBandYPos], 
-                              TRUE ); 
+                              true ); 
     }
     else if( eDataType == GDT_Float64 )
     {
@@ -1332,7 +1332,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                      (double *) pImage ); 
         if ( status == NC_NOERR ) 
             CheckData<double>( pImage, edge[nBandXPos], edge[nBandYPos], 
-                               TRUE ); 
+                               true ); 
     }
     else
         status = NC_EBADTYPE;
@@ -1420,7 +1420,7 @@ CPLErr netCDFRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
                 start[panBandZPos[i]] = (int) ( ( nLevel-Taken) % Sum );
                 edge[panBandZPos[i]] = 1;
             }
-            Taken += start[panBandZPos[i]] * Sum;
+            Taken += static_cast<int>(start[panBandZPos[i]]) * Sum;
         }
     }
 
@@ -3350,7 +3350,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     {
         int bIsCfProjection = NCDFIsCfProjection( oSRS.GetAttrValue( "PROJECTION" ) );
         bWriteGridMapping = true;
-        bWriteGDALTags = CSLFetchBoolean( papszCreationOptions, "WRITE_GDAL_TAGS", TRUE );
+        bWriteGDALTags = CPL_TO_BOOL(CSLFetchBoolean( papszCreationOptions, "WRITE_GDAL_TAGS", TRUE ));
         /* force WRITE_GDAL_TAGS if is not a CF projection */
         if ( ! bWriteGDALTags && ! bIsCfProjection )
             bWriteGDALTags = true;
@@ -3364,7 +3364,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             if ( EQUAL( pszValue, "IF_NEEDED" ) ) {
                 bWriteLonLat = ( bHasGeoloc || ! bIsCfProjection );
             }
-            else bWriteLonLat = CSLTestBoolean( pszValue );
+            else bWriteLonLat = CPL_TO_BOOL(CSLTestBoolean( pszValue ));
         }
         else
             bWriteLonLat = bHasGeoloc;
@@ -3382,16 +3382,17 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     else
     {
         /* files without a Datum will not have a grid_mapping variable and geographic information */
-        bWriteGridMapping = bIsGeographic;
+        bWriteGridMapping = CPL_TO_BOOL(bIsGeographic);
 
-        bWriteGDALTags = CSLFetchBoolean( papszCreationOptions, "WRITE_GDAL_TAGS", bWriteGridMapping );
+        bWriteGDALTags = CPL_TO_BOOL(CSLFetchBoolean( papszCreationOptions, "WRITE_GDAL_TAGS", bWriteGridMapping ));
         if ( bWriteGDALTags )
             bWriteGeoTransform = true;
 
         pszValue =  CSLFetchNameValueDef(papszCreationOptions,"WRITE_LONLAT", "YES");
         if ( EQUAL( pszValue, "IF_NEEDED" ) )  
             bWriteLonLat = true;
-        else bWriteLonLat = CSLTestBoolean( pszValue );
+        else
+            bWriteLonLat = CPL_TO_BOOL(CSLTestBoolean( pszValue ));
         /*  Don't write lon/lat if no source geotransform */
         if ( ! bSetGeoTransform )
             bWriteLonLat = false;
@@ -3418,7 +3419,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
     /* bottom-up value: new driver is bottom-up by default */
     /* override with WRITE_BOTTOMUP */
-    bBottomUp = CSLFetchBoolean( papszCreationOptions, "WRITE_BOTTOMUP", TRUE );
+    bBottomUp = CPL_TO_BOOL(CSLFetchBoolean( papszCreationOptions, "WRITE_BOTTOMUP", TRUE ));
 
     CPLDebug( "GDAL_netCDF", 
               "bIsProjected=%d bIsGeographic=%d bWriteGridMapping=%d "
@@ -3816,8 +3817,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                     }
 
                     /* do the transform */
-                    bOK = poTransform->Transform( nRasterXSize, 
-                                                  padLonVal, padLatVal, NULL );
+                    bOK = CPL_TO_BOOL(poTransform->Transform( nRasterXSize, 
+                                                  padLonVal, padLatVal, NULL ));
                     if ( ! bOK ) {
                         CPLError( CE_Failure, CPLE_AppDefined, 
                                   "Unable to Transform (X,Y) to (lon,lat).\n" );

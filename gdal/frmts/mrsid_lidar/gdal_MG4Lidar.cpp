@@ -782,7 +782,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    FileIO* io = FileIO::create();
 
 #if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
-   bool bIsUTF8 = CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) );
+   bool bIsUTF8 = CPL_TO_BOOL(CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ));
    wchar_t *pwszFilename = NULL;
    if (bIsUTF8)
    {

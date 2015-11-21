@@ -65,7 +65,7 @@ KEAMaskBand::~KEAMaskBand()
         {
             m_pImageIO->close();
         }
-        catch (kealib::KEAIOException &e)
+        catch (const kealib::KEAIOException &)
         {
         }
         delete m_pImageIO;

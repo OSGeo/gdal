@@ -922,7 +922,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
     OGROCISession      *poSession = poDS->GetSession();
     char                *pszCommand;
     int                 i, bNeedComma = FALSE;
-    unsigned int        nCommandBufSize;;
+    size_t              nCommandBufSize;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare SQL statement buffer.                                   */
@@ -1016,7 +1016,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
             > nCommandBufSize - 50 )
         {
             nCommandBufSize = 
-                static_cast<int>(strlen(pszCommand) + strlen(szSDO_GEOMETRY) + 10000);
+               strlen(pszCommand) + strlen(szSDO_GEOMETRY) + 10000;
             pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
         }
 
@@ -1026,7 +1026,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Set the FID.                                                    */
 /* -------------------------------------------------------------------- */
-    int nOffset = static_cast<int>(strlen(pszCommand));
+    size_t nOffset = strlen(pszCommand);
 
     if( pszFIDName != NULL )
     {
@@ -1070,7 +1070,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         if( strlen(pszStrValue) + strlen(pszCommand+nOffset) + nOffset 
             > nCommandBufSize-50 )
         {
-            nCommandBufSize = static_cast<int>(strlen(pszCommand) + strlen(pszStrValue) + 10000);
+            nCommandBufSize = strlen(pszCommand) + strlen(pszStrValue) + 10000;
             pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
         }
         

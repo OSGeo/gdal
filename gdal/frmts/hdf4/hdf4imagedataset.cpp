@@ -2216,7 +2216,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     int     nGeolocationsCount = CSLCount( papszGeolocations );
     int32   aiDimSizes[H4_MAX_VAR_DIMS];
 
-    int32 iWrkNumType;
+    int32 iWrkNumType = 0;
     void *pLat = NULL;
     void *pLong = NULL;
 
@@ -3550,7 +3550,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               poDS->pszProjection = CPLStrdup( pszValue );
           }
           if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                             "TransformationMatrix")) )
+                                             "TransformationMatrix")) != NULL )
           {
               int i = 0;
               char *pszString = const_cast<char *>( pszValue );
@@ -3565,14 +3565,14 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
           {
               if ( (pszValue =
                     CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                      CPLSPrintf("BandDesc%d", i))) )
+                                      CPLSPrintf("BandDesc%d", i))) != NULL )
                   poDS->GetRasterBand( i )->SetDescription( pszValue );
           }
           for( int i = 1; i <= poDS->nBands; i++ )
           {
               if ( (pszValue =
                     CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                      CPLSPrintf("NoDataValue%d", i))) )
+                                      CPLSPrintf("NoDataValue%d", i))) != NULL )
                   poDS->GetRasterBand(i)->SetNoDataValue( CPLAtof(pszValue) );
           }
       }

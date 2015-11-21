@@ -30,7 +30,16 @@
 
 #define H5_USE_16_API
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4005 ) /* warning C4005: '_HDF5USEDLL_' : macro redefinition */
+#endif
+
 #include "hdf5.h"
+
+#ifdef _MSC_VER
+#pragma warning( pop ) 
+#endif
 
 #include "gdal_pam.h"
 #include "gdal_priv.h"
@@ -300,7 +309,8 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
         if(H5Pget_layout(listid) == H5D_CHUNKED)
         {
             hsize_t panChunkDims[3];
-            CPL_UNUSED int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
+            int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
+            CPL_IGNORE_RET_VAL(nDimSize);
             CPLAssert(nDimSize == poDS->ndims);
             nBlockXSize   = (int) panChunkDims[poDS->GetXIndex()];
             nBlockYSize   = (int) panChunkDims[poDS->GetYIndex()];

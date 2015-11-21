@@ -1412,7 +1412,7 @@ SWcompinfo(int32 swathID, char *fieldname, int32 * compcode, intn compparm[])
 		/* Initialize to zero */
 		for (i = 0; i < 4; i++)
 		{
-		    compparm[i] = 0.0;
+		    compparm[i] = 0;
 		}
 
 		/*
@@ -2159,7 +2159,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
     int32           cnt = 0;
 
     int32           fid;	/* HDF-EOS file ID */
-    int32           vdataID;	/* Vdata ID */
+    int32           vdataID = 0;	/* Vdata ID */
     int32           vgid;	/* Geo/Data field Vgroup ID */
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           sdid;	/* SDS object ID */
@@ -4139,7 +4139,7 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
     int32           nEntries = 0;   /* Number of entries */
     int32           metaflag;	    /* Old (0), New (1) metadata flag) */
-    int32           nVal;	    /* Number of strings to search for */
+    int32           nVal = 0;	    /* Number of strings to search for */
 
     char           *metabuf = NULL; /* Pointer to structural metadata (SM) */
     char           *metaptrs[2];    /* Pointers to begin and end of SM section */
@@ -4285,7 +4285,7 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
                          * Get all string values Don't count quotes
                          */
                         EHgetmetavalue(metaptrs, &valName[i][0], utlstr);
-                        *strbufsize += strlen(utlstr) - 2;
+                        *strbufsize += (int32)strlen(utlstr) - 2;
                     }
                     /* Increment number of entries */
                     nEntries++;
@@ -5286,7 +5286,7 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 	       int32 mode)
 {
     intn            i;		/* Loop index */
-    intn            j;		/* Loop index */
+    intn            j = 0;		/* Loop index */
     intn            k;		/* Loop index */
     
     intn            status;	/* routine return status variable */
@@ -6863,12 +6863,12 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 
     int32	    numtype = 0; /* Used for L7 float scene sub. */
     int32	    count = 0;   /* Used for L7 float scene sub. */
-    int32           index;	/* Geo Dim Index */
+    int32           index = 0;	/* Geo Dim Index */
     int32           nDim;	/* Number of dimensions */
     int32           slen[64];	/* String length array */
     int32           dum;	/* Dummy variable */
-    int32           offset;	/* Mapping offset */
-    int32           incr;	/* Mapping increment */
+    int32           offset = 0;	/* Mapping offset */
+    int32           incr = 0;	/* Mapping increment */
     int32           nXtrk;	/* Number of cross tracks */
     int32           scan_shift = 0; /* Used to take out partial scans */
     int32           dumdims[8];	/* Dimensions from SWfieldinfo */
@@ -6878,7 +6878,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
     int32           rank = 0;	/* Field rank */
     int32           rk = 0;	/* Field rank */
     int32           ntype = 0;	/* Field number type */
-    int32           bufOffset;	/* Output buffer offset */
+    int32           bufOffset = 0;	/* Output buffer offset */
     int32           size;	/* Size of data buffer */
     int32           idxMapElem = -1;	/* Number of index map elements  */
     int32          *idxmap = NULL;	/* Pointer to index mapping array */
@@ -7661,7 +7661,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
                                         /*  L7 float scene sub.              */
    float32	*buffer2;
    float32	*bufferc;
-   float32	deg2rad = M_PI/180.00;
+   float32	deg2rad = (float32)(M_PI/180.00);
 
    float32	p1_long = 0.0;	/* point 1, longitude */
    float32	p2_long = 0.0;	/* point 2, longitude */
@@ -7811,13 +7811,13 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
    {
       if (p2_long >= 90.0)
       {
-         p1_long = p1_long + 180.0;
-         p2_long = p2_long - 180.0;
+         p1_long = p1_long + 180.0f;
+         p2_long = p2_long - 180.0f;
          p1_long_l90_flag = 2;
       }
       else
       {
-         p1_long = p1_long + 180.0;
+         p1_long = p1_long + 180.0f;
          p1_long_l90_flag = 1;
       }
    }
@@ -7825,8 +7825,8 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
    {
       if(p2_long <= -90.0)
       {
-         p1_long = p1_long - 180.0;
-         p2_long = p2_long + 180.0;
+         p1_long = p1_long - 180.0f;
+         p2_long = p2_long + 180.0f;
          p1_long_g90_flag = 2;
       }
       else
@@ -7839,31 +7839,31 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
    {
       if (p1_long < 0.0)
       {
-         p2_long = p2_long + 90.0;
-         p1_long = p1_long + 90.0;
+         p2_long = p2_long + 90.0f;
+         p1_long = p1_long + 90.0f;
          p2_long_l90_flag = 2;
       }
       else
       {
-         p2_long = p2_long + 180.0;
+         p2_long = p2_long + 180.0f;
          p2_long_l90_flag = 1;
       }
    }
    if (p2_long >= 90.0 && p1_long_l90_flag != 2)
    {
-      p2_long = p2_long - 90.0;
+      p2_long = p2_long - 90.0f;
       p2_long_g90_flag = 1;
    }
 
 
-   x_p1 = RADOE * cos((p1_long*deg2rad)) * sin((p1_lat*deg2rad));
-   y_p1 = RADOE * sin((p1_long*deg2rad)) * sin((p1_lat*deg2rad));
-   z_p1 = RADOE * cos((p1_lat*deg2rad));
+   x_p1 = (float)(RADOE * cos((p1_long*deg2rad)) * sin((p1_lat*deg2rad)));
+   y_p1 = (float)(RADOE * sin((p1_long*deg2rad)) * sin((p1_lat*deg2rad)));
+   z_p1 = (float)(RADOE * cos((p1_lat*deg2rad)));
 
    
-   x_p2 = RADOE * cos((p2_long*deg2rad)) * sin((p2_lat*deg2rad));
-   y_p2 = RADOE * sin((p2_long*deg2rad)) * sin((p2_lat*deg2rad));
-   z_p2 = RADOE * cos((p2_lat*deg2rad));
+   x_p2 = (float)(RADOE * cos((p2_long*deg2rad)) * sin((p2_lat*deg2rad)));
+   y_p2 = (float)(RADOE * sin((p2_long*deg2rad)) * sin((p2_lat*deg2rad)));
+   z_p2 = (float)(RADOE * cos((p2_lat*deg2rad)));
 
    x_pi = x_p1 + (x_p2 - x_p1)*(scanline_pi-scanline_p1)/(scanline_p2-scanline_p1);
    y_pi = y_p1 + (y_p2 - y_p1)*(scanline_pi-scanline_p1)/(scanline_p2-scanline_p1);
@@ -7871,38 +7871,38 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
 
    if (fieldflag == 1)
    {
-      pi_long = atan(y_pi/x_pi)*180.0/M_PI;
+      pi_long = (float)(atan(y_pi/x_pi)*180.0/M_PI);
       if (p1_long_l90_flag == 1 || p2_long_l90_flag == 1)
       {
-         pi_long = pi_long - 180.0;
+         pi_long = pi_long - 180.0f;
          p1_long_l90_flag = 0;
 	 p2_long_l90_flag = 0;
       }
       if (p1_long_g90_flag == 1 || p2_long_g90_flag == 1)
       {
-         pi_long = pi_long + 90.0;
+         pi_long = pi_long + 90.0f;
          p1_long_g90_flag = 0;
          p2_long_g90_flag = 0;
       }
       if (p1_long_l90_flag == 2)
       {
          if (pi_long > 0.0)
-            pi_long = pi_long - 180.0;
+            pi_long = pi_long - 180.0f;
          else if (pi_long < 0.0)
-            pi_long = pi_long + 180.0;
+            pi_long = pi_long + 180.0f;
          p1_long_l90_flag = 0;
       }
       if (p1_long_g90_flag == 2)
       {
          if (pi_long > 0.0)
-            pi_long = pi_long - 180.0;
+            pi_long = pi_long - 180.0f;
          else if (pi_long < 0.0)
-            pi_long = pi_long + 180.0;
+            pi_long = pi_long + 180.0f;
          p1_long_g90_flag = 0;
       }
       if (p2_long_l90_flag == 2)
       {
-         pi_long = pi_long - 90.0;
+         pi_long = pi_long - 90.0f;
          p2_long_l90_flag = 0;
       }
 
@@ -7934,7 +7934,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
     }
     if (fieldflag == 2)
     {
-      pi_lat = atan((sqrt(x_pi*x_pi + y_pi*y_pi)/z_pi))*180.0/M_PI;
+      pi_lat = (float)(atan((sqrt(x_pi*x_pi + y_pi*y_pi)/z_pi))*180.0/M_PI);
       switch(pos2)
       {
       case UL:
@@ -8152,11 +8152,11 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           swVgrpID;	/* Swath Vgroup ID */
 
-    int32           index;	/* Geo Dim Index */
+    int32           index = 0;	/* Geo Dim Index */
     int32           nDim;	/* Number of dimensions */
     int32           slen[64];	/* String length array */
     int32           dum;	/* Dummy variable */
-    int32           incr;	/* Mapping increment */
+    int32           incr = 0;	/* Mapping increment */
     int32           nXtrk = 0;	/* Number of cross tracks */
     int32	    scan_shift = 0; /* Used to take out partial scans */
     int32	    startscandim = -1;    /* Used for floating scene region size */
@@ -8904,7 +8904,7 @@ int32
 SWdefvrtregion(int32 swathID, int32 regionID, char *vertObj, float64 range[])
 {
     intn            i;		/* Loop index */
-    intn            j;		/* Loop index */
+    intn            j = 0;		/* Loop index */
     intn            k;		/* Loop index */
     intn            status;	/* routine return status variable */
 
@@ -9584,7 +9584,7 @@ SWdefscanregion(int32 swathID, char *fieldname, float64 range[], CPL_UNUSED int3
           {
              idxmap = (int32 *)calloc(dimsize, sizeof(int32));
              (void) SWidxmapinfo(swathID, "GeoTrack", "ScanLineTrack", idxmap);
-             tmprange0 = range[0];
+             tmprange0 = (int32)range[0];
              if(band82flag != 1 && band83flag != 1)
              {
                 if (range[1] > idxmap[scene_cnt*2 - 1])
@@ -9595,7 +9595,7 @@ SWdefscanregion(int32 swathID, char *fieldname, float64 range[], CPL_UNUSED int3
              }
              if(band82flag == 1 || band83flag == 1)
              {
-                tmprange0 = range[0] - (buffer[0] * detect_cnt - detect_cnt);
+                tmprange0 = (int32)(range[0] - (buffer[0] * detect_cnt - detect_cnt));
              }
              if(tmprange0 >= idxmap[scene_cnt * 2 - 1])
              {
