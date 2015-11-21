@@ -193,11 +193,11 @@ BIGGIFDataset::~BIGGIFDataset()
 
 int BIGGIFDataset::CloseDependentDatasets()
 {
-    bool bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
     if( poWorkDS != NULL )
     {
-        bHasDroppedRef = true;
+        bHasDroppedRef = TRUE;
 
         CPLString osTempFilename = poWorkDS->GetDescription();
         GDALDriver* poDrv = poWorkDS->GetDriver();

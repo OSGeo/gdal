@@ -376,7 +376,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    const bool bTiled = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "TILED", "YES"));
+    const bool bTiled = CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "TILED", "YES")));
     int nBlockXSize, nBlockYSize;
     if (bTiled)
     {
@@ -532,7 +532,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   RasterliteGetSpatialFilterCond(minx, miny, maxx, maxy).c_str(),
                   RasterliteGetPixelSizeCond(adfGeoTransform[1], -adfGeoTransform[5]).c_str());
 
-    bool nOverlappingGeoms = 0;
+    int nOverlappingGeoms = 0;
     OGRLayerH hCountLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
     if (hCountLyr)
     {

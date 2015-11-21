@@ -285,7 +285,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
         return CE_Failure;
 
     const bool bTiled
-        = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "TILED", "YES"));
+        = CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "TILED", "YES")));
     int nBlockXSize, nBlockYSize;
     if (bTiled)
     {

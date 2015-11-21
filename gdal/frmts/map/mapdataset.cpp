@@ -147,12 +147,12 @@ MAPDataset::~MAPDataset()
 
 int MAPDataset::CloseDependentDatasets()
 {
-    bool bRet = GDALDataset::CloseDependentDatasets();
+    int bRet = GDALDataset::CloseDependentDatasets();
     if (poImageDS != NULL)
     {
         GDALClose( poImageDS );
         poImageDS = NULL;
-        bRet = true;
+        bRet = TRUE;
     }
     return bRet;
 }
@@ -206,10 +206,10 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     bool bOziFileOK =
-         GDALLoadOziMapFile( poOpenInfo->pszFilename,
+         CPL_TO_BOOL(GDALLoadOziMapFile( poOpenInfo->pszFilename,
                              poDS->adfGeoTransform,
                              &poDS->pszWKT,
-                             &poDS->nGCPCount, &poDS->pasGCPList );
+                             &poDS->nGCPCount, &poDS->pasGCPList ));
 
     if ( bOziFileOK && poDS->nGCPCount == 0 )
          poDS->bGeoTransformValid = TRUE;

@@ -162,11 +162,11 @@ PDSDataset::~PDSDataset()
 
 int PDSDataset::CloseDependentDatasets()
 {
-    bool bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
     if( poCompressedDS )
     {
-        bHasDroppedRef = true;
+        bHasDroppedRef = FALSE;
         delete poCompressedDS;
         poCompressedDS = NULL;
     }

@@ -1779,8 +1779,8 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const char* apszKeywords[] = { "Title", "Author", "Description", "Copyright",
                                    "Creation Time", "Software", "Disclaimer",
                                    "Warning", "Source", "Comment", NULL };
-    const bool bWriteMetadataAsText = CSLTestBoolean(
-        CSLFetchNameValueDef(papszOptions, "WRITE_METADATA_AS_TEXT", "FALSE"));
+    const bool bWriteMetadataAsText = CPL_TO_BOOL(CSLTestBoolean(
+        CSLFetchNameValueDef(papszOptions, "WRITE_METADATA_AS_TEXT", "FALSE")));
     for(int i=0;apszKeywords[i]!=NULL;i++)
     {
         const char* pszKey = apszKeywords[i];

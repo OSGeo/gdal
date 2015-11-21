@@ -307,10 +307,10 @@ SAFEDataset::~SAFEDataset()
 
 int SAFEDataset::CloseDependentDatasets()
 {
-    bool bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
     if (nBands != 0)
-        bHasDroppedRef = true;
+        bHasDroppedRef = TRUE;
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {

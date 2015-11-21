@@ -242,9 +242,9 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
    // crown fuels = canopy height, canopy base height, canopy bulk density
    // 21 = have them, 20 = don't have them
-   const bool bHaveCrownFuels = ( CPL_LSBINT32PTR (poDS->pachHeader + 0) - 20 );
+   const bool bHaveCrownFuels = CPL_TO_BOOL( CPL_LSBINT32PTR (poDS->pachHeader + 0) - 20 );
    // ground fuels = duff loading, coarse woody
-   const bool bHaveGroundFuels = ( CPL_LSBINT32PTR (poDS->pachHeader + 4) - 20 );
+   const bool bHaveGroundFuels = CPL_TO_BOOL( CPL_LSBINT32PTR (poDS->pachHeader + 4) - 20 );
 
    int nBands;
    if( bHaveCrownFuels )
@@ -1135,10 +1135,10 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     ** Calculate the stats for each band.  The binary file carries along
     ** these metadata for display purposes(?).
     */
-    bool bCalculateStats = CSLFetchBoolean( papszOptions, "CALCULATE_STATS",
-                                            TRUE );
-    const bool bClassifyData = CSLFetchBoolean( papszOptions, "CLASSIFY_DATA",
-                                                TRUE );
+    bool bCalculateStats = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "CALCULATE_STATS",
+                                            TRUE ));
+    const bool bClassifyData = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "CLASSIFY_DATA",
+                                                TRUE ));
     /*
     ** We should have stats if we classify, we'll get them anyway.
     */

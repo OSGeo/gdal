@@ -1055,7 +1055,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
         // Calculate transformation matrix, if accurate
         const bool transform_ok
-            = GDALGCPsToGeoTransform(4,pasGCPList,poDS->adfGeoTransform,0);
+            = CPL_TO_BOOL(GDALGCPsToGeoTransform(4,pasGCPList,poDS->adfGeoTransform,0));
         if( !transform_ok )
         {
             poDS->adfGeoTransform[0] = 0.0;

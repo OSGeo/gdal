@@ -316,7 +316,7 @@ int VRTWarpedDataset::CloseDependentDatasets()
 {
     FlushCache();
 
-    bool bHasDroppedRef = VRTDataset::CloseDependentDatasets();
+    int bHasDroppedRef = VRTDataset::CloseDependentDatasets();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup overviews.                                              */
@@ -330,7 +330,7 @@ int VRTWarpedDataset::CloseDependentDatasets()
         {
             GDALReferenceDataset( hDS );
             GDALClose( hDS );
-            bHasDroppedRef = true;
+            bHasDroppedRef = TRUE;
         }
     }
 
@@ -813,7 +813,7 @@ int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
         }
     }
 
-    bool bSuccess = psInfo->pfnBaseTransformer( psInfo->pBaseTransformerArg,
+    int bSuccess = psInfo->pfnBaseTransformer( psInfo->pBaseTransformerArg,
                                            bDstToSrc,
                                            nPointCount, padfX, padfY, padfZ,
                                            panSuccess );
@@ -1063,8 +1063,8 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 /*      account that it is relative to the VRT if appropriate.          */
 /* -------------------------------------------------------------------- */
     const bool bRelativeToVRT =
-        atoi(CPLGetXMLValue(psOptionsTree,
-                            "SourceDataset.relativeToVRT", "0" ));
+        CPL_TO_BOOL(atoi(CPLGetXMLValue(psOptionsTree,
+                            "SourceDataset.relativeToVRT", "0" )));
 
     const char *pszRelativePath = CPLGetXMLValue(psOptionsTree,
                                                  "SourceDataset", "" );

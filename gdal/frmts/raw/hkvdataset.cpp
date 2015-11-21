@@ -1187,7 +1187,7 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
         }
 
         const bool transform_ok
-            = GDALGCPsToGeoTransform(5,pasGCPList,adfGeoTransform,0);
+            = CPL_TO_BOOL(GDALGCPsToGeoTransform(5,pasGCPList,adfGeoTransform,0));
 
         CPLFree( pszProjection );
         pszProjection = NULL;

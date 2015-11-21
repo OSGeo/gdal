@@ -721,7 +721,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     const char* pszCompressed = CSLFetchNameValue(papszOptions, "COMPRESS");
     bool bCompress = false;
     if (pszCompressed)
-        bCompress = CSLTestBoolean(pszCompressed);
+        bCompress = CPL_TO_BOOL(CSLTestBoolean(pszCompressed));
 
     const char* pszVerticalPrecision = CSLFetchNameValue(papszOptions, "VERTICAL_PRECISION");
     if (pszVerticalPrecision)

@@ -85,56 +85,56 @@ double PCRasterRasterBand::GetMinimum(
     // CSF version 2. ----------------------------------------------------------
     case CR_UINT1: {
       UINT1 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_INT4: {
       INT4 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_REAL4: {
       REAL4 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_REAL8: {
       REAL8 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     // CSF version 1. ----------------------------------------------------------
     case CR_INT1: {
       INT1 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_INT2: {
       INT2 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_UINT2: {
       UINT2 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_UINT4: {
       UINT4 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     default: {
       result = 0.0;
-      isValid = 0;
+      isValid = false;
       break;
     }
   }
@@ -157,50 +157,50 @@ double PCRasterRasterBand::GetMaximum(
   switch(d_dataset->cellRepresentation()) {
     case CR_UINT1: {
       UINT1 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     case CR_INT4: {
       INT4 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     case CR_REAL4: {
       REAL4 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     // CSF version 1. ----------------------------------------------------------
     case CR_INT1: {
       INT1 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     case CR_INT2: {
       INT2 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     case CR_UINT2: {
       UINT2 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     case CR_UINT4: {
       UINT4 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     default: {
       result = 0.0;
-      isValid = 0;
+      isValid = false;
       break;
     }
   }
