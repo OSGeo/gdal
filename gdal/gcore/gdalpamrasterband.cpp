@@ -51,7 +51,7 @@ GDALPamRasterBand::GDALPamRasterBand()
 /*                         GDALPamRasterBand()                          */
 /************************************************************************/
 
-GDALPamRasterBand::GDALPamRasterBand(int bForceCachedIO) : GDALRasterBand(bForceCachedIO)
+GDALPamRasterBand::GDALPamRasterBand(int bForceCachedIOIn) : GDALRasterBand(bForceCachedIOIn)
 
 {
     psPam = NULL;

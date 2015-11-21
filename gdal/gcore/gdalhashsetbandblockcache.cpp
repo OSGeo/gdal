@@ -99,8 +99,8 @@ static int GDALRasterBlockEqualFunc(const void* elt1, const void* elt2)
 /*                       GDALHashSetBandBlockCache()                    */
 /************************************************************************/
 
-GDALHashSetBandBlockCache::GDALHashSetBandBlockCache(GDALRasterBand* poBand) :
-                                            GDALAbstractBandBlockCache(poBand)
+GDALHashSetBandBlockCache::GDALHashSetBandBlockCache(GDALRasterBand* poBandIn) :
+                                            GDALAbstractBandBlockCache(poBandIn)
 {
     hSet = CPLHashSetNew(GDALRasterBlockHashFunc, GDALRasterBlockEqualFunc, NULL); 
     hLock = CPLCreateLock(LOCK_ADAPTIVE_MUTEX);

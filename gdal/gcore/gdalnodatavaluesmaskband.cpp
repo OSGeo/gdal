@@ -38,22 +38,22 @@ CPL_CVSID("$Id$");
 /*                   GDALNoDataValuesMaskBand()                         */
 /************************************************************************/
 
-GDALNoDataValuesMaskBand::GDALNoDataValuesMaskBand( GDALDataset* poDS )
+GDALNoDataValuesMaskBand::GDALNoDataValuesMaskBand( GDALDataset* poDSIn )
 
 {
-    const char* pszNoDataValues = poDS->GetMetadataItem("NODATA_VALUES");
+    const char* pszNoDataValues = poDSIn->GetMetadataItem("NODATA_VALUES");
     char** papszNoDataValues = CSLTokenizeStringComplex(pszNoDataValues, " ", FALSE, FALSE);
 
     int i;
-    padfNodataValues = (double*)CPLMalloc(sizeof(double) * poDS->GetRasterCount());
-    for(i=0;i<poDS->GetRasterCount();i++)
+    padfNodataValues = (double*)CPLMalloc(sizeof(double) * poDSIn->GetRasterCount());
+    for(i=0;i<poDSIn->GetRasterCount();i++)
     {
         padfNodataValues[i] = CPLAtof(papszNoDataValues[i]);
     }
 
     CSLDestroy(papszNoDataValues);
 
-    this->poDS = poDS;
+    poDS = poDSIn;
     nBand = 0;
 
     nRasterXSize = poDS->GetRasterXSize();

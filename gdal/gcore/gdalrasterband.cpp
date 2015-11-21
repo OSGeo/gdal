@@ -4846,12 +4846,12 @@ void GDALRasterBand::InvalidateMaskBand()
  *
  */
 
-CPLErr GDALRasterBand::CreateMaskBand( int nFlags )
+CPLErr GDALRasterBand::CreateMaskBand( int nFlagsIn )
 
 {
     if( poDS != NULL && poDS->oOvManager.IsInitialized() )
     {
-        CPLErr eErr = poDS->oOvManager.CreateMaskBand( nFlags, nBand );
+        CPLErr eErr = poDS->oOvManager.CreateMaskBand( nFlagsIn, nBand );
         if (eErr != CE_None)
             return eErr;
 

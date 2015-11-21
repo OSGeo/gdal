@@ -721,12 +721,12 @@ class VSICryptFileHandle : public VSIVirtualHandle
 /*                          VSICryptFileHandle()                        */
 /************************************************************************/
 
-VSICryptFileHandle::VSICryptFileHandle(CPLString osBaseFilename,
-                                       VSIVirtualHandle* poBaseHandle,
-                                       VSICryptFileHeader* poHeader,
-                                       int nPerms) :
-        osBaseFilename(osBaseFilename), nPerms(nPerms),
-        poBaseHandle(poBaseHandle), poHeader(poHeader), bUpdateHeader(FALSE),
+VSICryptFileHandle::VSICryptFileHandle(CPLString osBaseFilenameIn,
+                                       VSIVirtualHandle* poBaseHandleIn,
+                                       VSICryptFileHeader* poHeaderIn,
+                                       int nPermsIn) :
+        osBaseFilename(osBaseFilenameIn), nPerms(nPermsIn),
+        poBaseHandle(poBaseHandleIn), poHeader(poHeaderIn), bUpdateHeader(FALSE),
         nCurPos(0), bEOF(FALSE), poEncCipher(NULL), poDecCipher(NULL), nBlockSize(0),
         nWBOffset(0), pabyWB(NULL), nWBSize(0), bWBDirty(FALSE), bLastSectorWasModified(FALSE)
 {
@@ -880,7 +880,7 @@ int VSICryptFileHandle::DecryptBlock(GByte* pabyData, vsi_l_offset nOffset)
             poMode = new CryptoPP::CTR_Mode_ExternalCipher::Decryption(*poEncCipher, (const byte*)osIV.c_str() );
         else
             poMode = new CryptoPP::CBC_CTS_Mode_ExternalCipher::Decryption(*poDecCipher, (const byte*)osIV.c_str() );
-        CryptoPP::StreamTransformationFilter* poDec = new CryptoPP::StreamTransformationFilter(*poMode, poSink, CryptoPP::StreamTransformationFilter::NO_PADDING);
+        poDec = new CryptoPP::StreamTransformationFilter(*poMode, poSink, CryptoPP::StreamTransformationFilter::NO_PADDING);
         poDec->Put((const byte*)pabyData, poHeader->nSectorSize);
         poDec->MessageEnd();
         delete poDec;

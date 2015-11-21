@@ -252,40 +252,40 @@ GDALGetDefaultAsyncReader( GDALDataset* poDS,
 /************************************************************************/
 
 GDALDefaultAsyncReader::
-GDALDefaultAsyncReader( GDALDataset* poDS,
-                          int nXOff, int nYOff,
-                          int nXSize, int nYSize,
-                          void *pBuf,
-                          int nBufXSize, int nBufYSize,
-                          GDALDataType eBufType,
-                          int nBandCount, int* panBandMap,
-                          int nPixelSpace, int nLineSpace,
-                          int nBandSpace, char **papszOptionsIn) 
+GDALDefaultAsyncReader( GDALDataset* poDSIn,
+                          int nXOffIn, int nYOffIn,
+                          int nXSizeIn, int nYSizeIn,
+                          void *pBufIn,
+                          int nBufXSizeIn, int nBufYSizeIn,
+                          GDALDataType eBufTypeIn,
+                          int nBandCountIn, int* panBandMapIn,
+                          int nPixelSpaceIn, int nLineSpaceIn,
+                          int nBandSpaceIn, char **papszOptionsIn) 
 
 {
-    this->poDS = poDS;
-    this->nXOff = nXOff;
-    this->nYOff = nYOff;
-    this->nXSize = nXSize;
-    this->nYSize = nYSize;
-    this->pBuf = pBuf;
-    this->nBufXSize = nBufXSize;
-    this->nBufYSize = nBufYSize;
-    this->eBufType = eBufType;
-    this->nBandCount = nBandCount;
-    this->panBandMap = (int *) CPLMalloc(sizeof(int)*nBandCount);
+    poDS = poDSIn;
+    nXOff = nXOffIn;
+    nYOff = nYOffIn;
+    nXSize = nXSizeIn;
+    nYSize = nYSizeIn;
+    pBuf = pBufIn;
+    nBufXSize = nBufXSizeIn;
+    nBufYSize = nBufYSizeIn;
+    eBufType = eBufTypeIn;
+    nBandCount = nBandCountIn;
+    panBandMap = (int *) CPLMalloc(sizeof(int)*nBandCountIn);
 
-    if( panBandMap != NULL )
-        memcpy( this->panBandMap, panBandMap, sizeof(int)*nBandCount );
+    if( panBandMapIn != NULL )
+        memcpy( panBandMap, panBandMapIn, sizeof(int)*nBandCount );
     else
     {
         for( int i = 0; i < nBandCount; i++ )
-            this->panBandMap[i] = i+1;
+            panBandMap[i] = i+1;
     }
     
-    this->nPixelSpace = nPixelSpace;
-    this->nLineSpace = nLineSpace;
-    this->nBandSpace = nBandSpace;
+    nPixelSpace = nPixelSpaceIn;
+    nLineSpace = nLineSpaceIn;
+    nBandSpace = nBandSpaceIn;
 
     papszOptions = CSLDuplicate(papszOptionsIn);
 }
