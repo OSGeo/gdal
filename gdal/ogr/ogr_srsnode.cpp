@@ -284,17 +284,17 @@ void OGR_SRSNode::DestroyChild( int iChild )
  * Note that the node value must match pszValue with the exception of
  * case.  The comparison is case insensitive.
  *
- * @param pszValue the node value being searched for.
+ * @param pszValueIn the node value being searched for.
  *
  * @return the child index, or -1 on failure. 
  */
 
-int OGR_SRSNode::FindChild( const char * pszValue ) const
+int OGR_SRSNode::FindChild( const char * pszValueIn ) const
 
 {
     for( int i = 0; i < nChildren; i++ )
     {
-        if( EQUAL(papoChildNodes[i]->pszValue,pszValue) )
+        if( EQUAL(papoChildNodes[i]->pszValue,pszValueIn) )
             return i;
     }
 

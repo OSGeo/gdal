@@ -74,10 +74,10 @@ OGRLayer* OGRMutexedDataSource::WrapLayerIfNecessary(OGRLayer* poLayer)
             poLayer = poWrappedLayer;
         else
         {
-            OGRMutexedLayer* poWrappedLayer = new OGRMutexedLayer(poLayer, FALSE, m_hGlobalMutex);
-            m_oMapLayers[poLayer] = poWrappedLayer;
-            m_oReverseMapLayers[poWrappedLayer] = poLayer;
-            poLayer = poWrappedLayer;
+            OGRMutexedLayer* poMutexedLayer = new OGRMutexedLayer(poLayer, FALSE, m_hGlobalMutex);
+            m_oMapLayers[poLayer] = poMutexedLayer;
+            m_oReverseMapLayers[poMutexedLayer] = poLayer;
+            poLayer = poMutexedLayer;
         }
     }
     return poLayer;

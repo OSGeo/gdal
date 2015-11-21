@@ -192,10 +192,10 @@ OGRErr      OGRMutexedLayer::ReorderFields( int* panMap )
     return OGRLayerDecorator::ReorderFields(panMap);
 }
 
-OGRErr      OGRMutexedLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+OGRErr      OGRMutexedLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
-    return OGRLayerDecorator::AlterFieldDefn(iField, poNewFieldDefn, nFlags);
+    return OGRLayerDecorator::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
 }
 
 OGRErr      OGRMutexedLayer::SyncToDisk()

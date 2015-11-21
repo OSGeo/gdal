@@ -4089,15 +4089,15 @@ GIntBig OGR_F_GetFID( OGRFeatureH hFeat )
  *
  * This method is the same as the C function OGR_F_SetFID().
  *
- * @param nFID the new feature identifier value to assign.
+ * @param nFIDIn the new feature identifier value to assign.
  *
  * @return On success OGRERR_NONE, or on failure some other value. 
  */
 
-OGRErr OGRFeature::SetFID( GIntBig nFID )
+OGRErr OGRFeature::SetFID( GIntBig nFIDIn )
 
 {
-    this->nFID = nFID;
+    nFID = nFIDIn;
     
     return OGRERR_NONE;
 }

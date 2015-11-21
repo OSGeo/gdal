@@ -1104,7 +1104,7 @@ OGRErr OGRSpatialReference::morphToESRI()
     if( poGeogCS != NULL )
     {
         const char *pszGeogCSName = poGeogCS->GetChild(0)->GetValue();
-        const char *pszAuthName = GetAuthorityName("GEOGCS");
+        pszAuthName = GetAuthorityName("GEOGCS");
         const char *pszUTMPrefix = NULL;
         int nGCSCode = -1;
         

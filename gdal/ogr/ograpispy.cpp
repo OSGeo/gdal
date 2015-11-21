@@ -55,7 +55,7 @@ class LayerDescription
         int iLayer;
 
         LayerDescription(): iLayer(-1) {}
-        LayerDescription(int iLayer): iLayer(iLayer) {}
+        LayerDescription(int iLayerIn): iLayer(iLayerIn) {}
 };
 
 class DatasetDescription
@@ -65,7 +65,7 @@ class DatasetDescription
         std::map<OGRLayerH, LayerDescription> oMapLayer;
 
         DatasetDescription() : iDS(-1) {}
-        DatasetDescription(int iDS) : iDS(iDS) {}
+        DatasetDescription(int iDSIn) : iDS(iDSIn) {}
         ~DatasetDescription();
 };
 
@@ -78,7 +78,7 @@ class FeatureDefnDescription
         std::map<OGRGeomFieldDefnH, int> oMapGeomFieldDefn;
 
         FeatureDefnDescription(): hFDefn(NULL), iUniqueNumber(-1) {}
-        FeatureDefnDescription(OGRFeatureDefnH hFDefn, int iUniqueNumber): hFDefn(hFDefn), iUniqueNumber(iUniqueNumber) {}
+        FeatureDefnDescription(OGRFeatureDefnH hFDefnIn, int iUniqueNumberIn): hFDefn(hFDefnIn), iUniqueNumber(iUniqueNumberIn) {}
         void Free();
 };
 

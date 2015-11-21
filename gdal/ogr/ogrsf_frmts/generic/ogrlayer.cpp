@@ -829,14 +829,11 @@ OGRErr OGR_L_ReorderField( OGRLayerH hLayer, int iOldFieldPos, int iNewFieldPos 
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-OGRErr OGRLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
-                                 int nFlags )
+OGRErr OGRLayer::AlterFieldDefn( int /* iField*/,
+                                 OGRFieldDefn* /*poNewFieldDefn*/,
+                                 int /* nFlags */ )
 
 {
-    (void) iField;
-    (void) poNewFieldDefn;
-    (void) nFlags;
-
     CPLError( CE_Failure, CPLE_NotSupported,
               "AlterFieldDefn() not supported by this layer.\n" );
 

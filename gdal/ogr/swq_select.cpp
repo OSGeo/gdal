@@ -919,10 +919,10 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list,
                 }
             }
 
-            int itable = field_list->table_ids[i];
+            int field_itable = field_list->table_ids[i];
             const char *field_name = field_list->names[i];
             const char *table_alias = 
-                field_list->table_defs[itable].table_alias;
+                field_list->table_defs[field_itable].table_alias;
 
             def->table_name = CPLStrdup(table_alias);
             def->field_name = CPLStrdup(field_name);

@@ -790,8 +790,10 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(CPLXMLNode* psReverseGeoco
         psChild = psChild->psNext;
     }
 
-    OGRFieldDefn oFieldDefn("display_name", OFTString);
-    poLayer->CreateField(&oFieldDefn);
+    {
+        OGRFieldDefn oFieldDefn("display_name", OFTString);
+        poLayer->CreateField(&oFieldDefn);
+    }
 
     psChild = psAddressParts->psChild;
     while( psChild != NULL )
@@ -838,7 +840,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(CPLXMLNode* psReverseGeoco
     {
         int nIdx;
         const char* pszName = psChild->pszValue;
-        const char* pszVal = CPLGetXMLValue(psChild, NULL, NULL);
+        pszVal = CPLGetXMLValue(psChild, NULL, NULL);
         if( (psChild->eType == CXT_Element || psChild->eType == CXT_Attribute) &&
             (nIdx = poFDefn->GetFieldIndex(pszName)) >= 0 )
         {

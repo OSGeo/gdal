@@ -9,7 +9,7 @@ OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 		ogrmutexedlayer.o ogrmutexeddatasource.o \
 		ogremulatedtransaction.o
 
-CXXFLAGS :=     $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\"
+CXXFLAGS :=     $(CXXFLAGS) $(SHADOW_WFLAGS) -DINST_DATA=\"$(INST_DATA)\"
 
 ifeq ($(OGR_ENABLED),yes)
 

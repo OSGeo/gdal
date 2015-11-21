@@ -6311,7 +6311,6 @@ int OSRIsVertical( OGRSpatialReferenceH hSRS )
 OGRSpatialReference *OGRSpatialReference::CloneGeogCS() const
 
 {
-    const OGR_SRSNode *poGeogCS;
     OGRSpatialReference * poNewSRS;
 
 /* -------------------------------------------------------------------- */
@@ -6343,7 +6342,7 @@ OGRSpatialReference *OGRSpatialReference::CloneGeogCS() const
 /* -------------------------------------------------------------------- */
 /*      For all others we just search the tree, and duplicate.          */
 /* -------------------------------------------------------------------- */
-    poGeogCS = GetAttrNode( "GEOGCS" );
+    const OGR_SRSNode *poGeogCS = GetAttrNode( "GEOGCS" );
     if( poGeogCS == NULL )
         return NULL;
 

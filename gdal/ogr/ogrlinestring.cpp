@@ -532,7 +532,7 @@ void OGRSimpleCurve::addPoint( double x, double y )
  */
 
 void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
-                               double * padfZ )
+                               double * padfZIn )
 
 {
     setNumPoints( nPointsIn, FALSE );
@@ -545,15 +545,15 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZ == NULL && getCoordinateDimension() > 2 )
+    if( padfZIn == NULL && getCoordinateDimension() > 2 )
     {
         Make2D();
     }
-    else if( padfZ )
+    else if( padfZIn )
     {
         Make3D();
         if( nPointsIn )
-            memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
+            memcpy( padfZ, padfZIn, sizeof(double) * nPointsIn );
     }
 }
 
@@ -577,13 +577,13 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
  */
 
 void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
-                                double * padfZ )
+                                double * padfZIn )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZ == NULL )
+    if( padfZIn == NULL )
         Make2D();
     else
         Make3D();
@@ -601,12 +601,12 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
         paoPoints[i].y = padfY[i];
     }
 
-    if( !padfZ || !nPointsIn )
+    if( !padfZIn || !nPointsIn )
     {
         return;
     }
 
-    memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
+    memcpy( padfZ, padfZIn, sizeof(double) * nPointsIn );
 }
 
 /************************************************************************/
@@ -623,10 +623,10 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
  * There is no SFCOM analog to this method.
  *
  * @param paoPointsOut a buffer into which the points is written.
- * @param padfZ the Z values that go with the points (optional, may be NULL).
+ * @param padfZOut the Z values that go with the points (optional, may be NULL).
  */
 
-void OGRSimpleCurve::getPoints( OGRRawPoint * paoPointsOut, double * padfZ ) const
+void OGRSimpleCurve::getPoints( OGRRawPoint * paoPointsOut, double * padfZOut ) const
 {
     if ( ! paoPointsOut || nPointCount == 0 )
         return;
@@ -636,12 +636,12 @@ void OGRSimpleCurve::getPoints( OGRRawPoint * paoPointsOut, double * padfZ ) con
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZ )
+    if( padfZOut )
     {
-        if ( this->padfZ )
-            memcpy( padfZ, this->padfZ, sizeof(double) * nPointCount );
+        if ( padfZ )
+            memcpy( padfZOut, padfZ, sizeof(double) * nPointCount );
         else
-            memset( padfZ, 0, sizeof(double) * nPointCount );
+            memset( padfZOut, 0, sizeof(double) * nPointCount );
     }
 }
 
@@ -1862,7 +1862,7 @@ class OGRSimpleCurvePointIterator: public OGRPointIterator
         int                   iCurPoint;
     
     public:
-        OGRSimpleCurvePointIterator(const OGRSimpleCurve* poSC) : poSC(poSC), iCurPoint(0) {}
+        OGRSimpleCurvePointIterator(const OGRSimpleCurve* poSCIn) : poSC(poSCIn), iCurPoint(0) {}
 
         virtual OGRBoolean getNextPoint(OGRPoint* p);
 };
