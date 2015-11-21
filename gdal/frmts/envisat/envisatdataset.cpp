@@ -133,7 +133,7 @@ CPLErr MerisL2FlagBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     for( unsigned iImg = 0, iBuf = 0;
          iImg < nBlockXSize * (unsigned)sizeof(GDT_UInt32);
-         iImg += (unsigned)sizeof(GDT_UInt32), iBuf += nBytePerPixel )
+         iImg += (unsigned)sizeof(GDT_UInt32), iBuf += (unsigned)nBytePerPixel )
     {
 #ifdef CPL_LSB
         ((GByte*) pImage)[iImg] = pReadBuf[iBuf + 2];
