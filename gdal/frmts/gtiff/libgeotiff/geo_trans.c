@@ -55,7 +55,7 @@ static int inv_geotransform( double *gt_in, double *gt_out )
 
     inv_det = 1.0 / det;
 
-    /* compute adjoint, and devide by determinate */
+    /* compute adjoint, and divide by determinate */
 
     gt_out[0] =  gt_in[4] * inv_det;
     gt_out[3] = -gt_in[3] * inv_det;

@@ -272,7 +272,7 @@ CPLErr JPIPKAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         xSize = poBaseDS->GetRasterXSize() - xOff;
         nBufXSize= MAX(xSize/nZoom,1);
     }
-    
+
     if( yOff + ySize > poBaseDS->GetRasterYSize() )
     {
         ySize = poBaseDS->GetRasterYSize() - yOff;
@@ -292,13 +292,13 @@ CPLErr JPIPKAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
 
     int nXBufOff; // absolute x image offset
-    int nYBufOff; // abolute y image offset
+    int nYBufOff; // absolute y image offset
     int nXBufSize;
     int nYBufSize;
 
     GDALAsyncStatusType status;
 
-    do 
+    do
     {
         status = ario->GetNextUpdatedRegion(-1.0, 
                                             &nXBufOff, &nYBufOff, 

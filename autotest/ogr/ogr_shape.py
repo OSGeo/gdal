@@ -638,7 +638,7 @@ def ogr_shape_18():
         gdaltest.post_reason( 'Missing projection definition.' )
         return 'fail'
 
-    # data/poly.shp has arbitraily assigned EPSG:27700
+    # data/poly.shp has arbitrarily assigned EPSG:27700
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 27700 )
     srs.StripCTParms()

@@ -707,7 +707,7 @@ int GTIFProjToMapSys( int ProjCode, int * pZone )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle State Plane.  I think there are some anomolies in        */
+/*      Handle State Plane.  I think there are some anomalies in        */
 /*      here, so this is a bit risky.                                   */
 /* -------------------------------------------------------------------- */
     else if( ProjCode >= 10101 && ProjCode <= 15299 )

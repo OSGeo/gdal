@@ -1058,8 +1058,8 @@ GDALDataset *MEMDataset::Create( CPL_UNUSED const char * pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      Do we want a pixel interleaved buffer?  I mostly care about     */
-/*      this to test pixel interleaved io in other contexts, but it     */
-/*      could be useful to create a directly accessable buffer for      */
+/*      this to test pixel interleaved IO in other contexts, but it     */
+/*      could be useful to create a directly accessible buffer for      */
 /*      some apps.                                                      */
 /* -------------------------------------------------------------------- */
     bool bPixelInterleaved = false;

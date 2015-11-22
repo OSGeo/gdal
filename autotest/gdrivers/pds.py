@@ -198,7 +198,7 @@ def pds_7():
     PARAMETER["standard_parallel_1",0],
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
-    
+
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
     ret = tst.testOpen( check_prj=prj_expected,
@@ -211,7 +211,7 @@ def pds_7():
     return 'success'
 
 ###############################################################################
-# Test applying adjument offsets via configuration variables for the
+# Test applying adjustment offsets via configuration variables for the
 # geotransform (#3940)
 
 def pds_8():
@@ -221,7 +221,7 @@ def pds_8():
     gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', '1.5' )
     gdal.SetConfigOption( 'PDS_SampleProjOffset_Mult', '1.0' )
     gdal.SetConfigOption( 'PDS_LineProjOffset_Mult', '-1.0' )
-    
+
     tst = gdaltest.GDALTest( 'PDS', 'mc02_truncated.img', 1, 47151 )
 
     expected_gt = (10670237.134337425, 926.11527442932129, 0.0, -3854028.7145376205, 0.0, -926.11527442932129)

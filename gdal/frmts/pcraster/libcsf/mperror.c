@@ -10,7 +10,7 @@ static const char *errolist[ERRORNO]={
 "Wrong byte order",
 "Not enough memory",
 "Illegal cell representation constant",
-"Acces denied",
+"Access denied",
 "Row number to big",
 "Collumn number to big",
 "Map is not a raster file",

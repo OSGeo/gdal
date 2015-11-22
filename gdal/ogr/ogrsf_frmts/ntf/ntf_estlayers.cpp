@@ -1685,7 +1685,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
     poLayer = poDS->GetNamedLayer(pszLayerName);
 
 /* ==================================================================== */
-/*      Create a new layer matching the request if we don't aleady      */
+/*      Create a new layer matching the request if we don't already      */
 /*      have one.                                                       */
 /* ==================================================================== */
     if( poLayer == NULL )
@@ -1707,14 +1707,14 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
             const char  *pszFieldName = va_arg(hVaArgs, const char *);
             OGRFieldType     eType;
             int          nWidth, nPrecision;
-            
+
             if( pszFieldName == NULL )
                 break;
-            
+
             eType = (OGRFieldType) va_arg(hVaArgs, int);
             nWidth = va_arg(hVaArgs, int);
             nPrecision = va_arg(hVaArgs, int);
-            
+
             OGRFieldDefn         oFieldDefn( pszFieldName, eType );
             oFieldDefn.SetWidth( nWidth );
             oFieldDefn.SetPrecision( nPrecision );

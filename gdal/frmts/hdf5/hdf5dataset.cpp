@@ -1199,7 +1199,7 @@ CPLErr HDF5Dataset::HDF5ReadDoubleAttr(const char* pszAttrFullPath,
             }
             else
             {
-                //Get the ammount of elements
+                // Get the amount of elements.
                 nAttrElmts = 1;
                 for( i=0; i < nAttrDims; i++ )
                 {

@@ -733,7 +733,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     }
 
     //  -------------------------------------------------------------------
-    //  Load aditional options
+    //  Load additional options
     //  -------------------------------------------------------------------
 
     pszFetched = CSLFetchNameValue( papszOptions, "VATNAME" );

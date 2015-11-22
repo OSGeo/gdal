@@ -693,7 +693,7 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
         }
         if (i == record->nCoords)
         {
-            /* Let's be a bit tolerant abount non closing polygons */
+            /* Let's be a bit tolerant about non-closing polygons. */
             if (isFirstPolygon)
             {
                 ring->addPoint(record->tabCoords[0][0], record->tabCoords[0][1] );
@@ -704,7 +704,7 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
                 nbPolygons++;
             }
         }
-        
+
         if (nbPolygons == 1)
         {
             /* Special optimization here : we directly put the polygon into the multipolygon. */

@@ -49,7 +49,7 @@
  * Implemented write support
  *
  * Revision 1.3  1999/09/20 18:43:01  daniel
- * Use binary acces to open file.
+ * Use binary access to open file.
  *
  * Revision 1.2  1999/09/16 02:39:16  daniel
  * Completed read support for most feature types

@@ -3600,8 +3600,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
          for (i = 0; i < numData; i++) {
             if ((Data[i] != li_secMiss) && (Data[i] != li_primMiss)) {
                Data[i] -= OverallMin;
-               /* Check if we accidently adjusted to prim or sec, if so add
-                * 1. */
+               // Check if we accidentally adjusted to prim or sec, if so add 1.
                if ((Data[i] == li_secMiss) || (Data[i] == li_primMiss)) {
                   myAssert (1 == 2);
                   Data[i]++;
@@ -3616,8 +3615,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
          for (i = 0; i < numData; i++) {
             if (Data[i] != li_primMiss) {
                Data[i] -= OverallMin;
-               /* Check if we accidently adjusted to prim or sec, if so add
-                * 1. */
+               // Check if we accidentally adjusted to prim or sec, if so add 1.
                if (Data[i] == li_primMiss) {
                   myAssert (1 == 2);
                   Data[i]++;

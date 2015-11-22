@@ -48,7 +48,7 @@ def aaigrid_1():
     return tst.testOpen()
 
 ###############################################################################
-# Verify some auxilary data. 
+# Verify some auxiliary data.
 
 def aaigrid_2():
 

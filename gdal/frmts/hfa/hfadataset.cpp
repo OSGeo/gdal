@@ -1421,7 +1421,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                 {
                     // OK we have a problem - the allocated space is not big enough
                     // we need to re-allocate the space and update the pointers
-                    // and copy accross the old data
+                    // and copy across the old data
                     const int nNewOffset = HFAAllocateSpace( this->hHFA->papoBand[this->nBand-1]->psInfo,
                                             this->nRows * nNewMaxChars);
                     char *pszBuffer = (char*)VSIMalloc2(aoFields[iField].nElementSize, sizeof(char));
@@ -5203,7 +5203,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Collect GDAL custom Metadata, and "auxilary" metadata from      */
+/*      Collect GDAL custom Metadata, and "auxiliary" metadata from     */
 /*      well known HFA structures for the bands.  We defer this till    */
 /*      now to ensure that the bands are properly setup before          */
 /*      interacting with PAM.                                           */

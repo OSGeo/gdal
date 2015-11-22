@@ -22,7 +22,7 @@
  *   To convert from the index of the GRIB2 message which is defined by the
  * scan parameter, to one that seemed reasonable.  The choice for internal
  * array orientation boiled down to either (scan = 0000) (start from upper
- * left and accross similar to a CRT screen) or (scan = 0100) (start at lower
+ * left and across similar to a CRT screen) or (scan = 0100) (start at lower
  * left and go up ).
  *   It was decided that (scan 0100) was what people expected.  The only catch
  * is that Spatial Analyst requires (scan = 0000), so when writing to that

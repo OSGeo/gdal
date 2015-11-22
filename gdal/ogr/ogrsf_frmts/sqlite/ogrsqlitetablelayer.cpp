@@ -1367,7 +1367,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
     if( !bDeferredCreation )
     {
-        /* ADD COLUMN only avaliable since sqlite 3.1.3 */
+        /* ADD COLUMN only available since SQLite 3.1.3 */
         if (CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_USE_ADD_COLUMN", "YES")) &&
             sqlite3_libversion_number() > 3 * 1000000 + 1 * 1000 + 3)
         {

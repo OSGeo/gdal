@@ -312,7 +312,7 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
                 //
                 // NOTE: we do not delete edges due to performance reasons,
                 // because the deletion of edge and all its GFIDs in vertex
-                // records is slower than the infinity cost assignement.
+                // records is slower than the infinity cost assignment.
 
                 // also check if node number exceed the number of the last node
                 // in root array.

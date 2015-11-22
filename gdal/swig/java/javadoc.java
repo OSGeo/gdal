@@ -10438,7 +10438,7 @@ public class SpatialReference:public int ExportToXML(String[] argout, String dia
  * WKT is valid. 
  * <p>
  * This method should be expected to evolve over time to as problems are
- * discovered.  The following are amoung the fixup actions this method will
+ * discovered.  The following are among the fixup actions this method will
  * take:
  * <ul>
  * <li>Fixup the ordering of nodes to match the BNF WKT ordering, using
@@ -10667,7 +10667,7 @@ public class SpatialReference:public int ImportFromEPSG(int nCode)
  * as the newer pseudo-OGC WKT .prj files.  Note that new style .prj files
  * are in OGC WKT format, but require some manipulation to correct datum
  * names, and units on some projection parameters.  This is addressed within
- * importFromESRI() by an automatical call to morphFromESRI(). 
+ * importFromESRI() by an automatic call to morphFromESRI(). 
  * <p>
  * Currently only GEOGRAPHIC, UTM, STATEPLANE, GREATBRITIAN_GRID, ALBERS, 
  * EQUIDISTANT_CONIC, and TRANSVERSE (mercator) projections are supported

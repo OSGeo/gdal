@@ -378,7 +378,7 @@ and will be define later.<p>
 
 <h2>Write User Attributes</h2>
 
-In a manner analygous to the definition of the fields from the prototype
+In a manner analogous to the definition of the fields from the prototype
 attribute record, the following code loops over the subfields, and fetches
 the data for each.  The data extraction via poSR->GetSubfieldData() is
 a bit involved, and more information can be found on the DDFField reference

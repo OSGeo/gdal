@@ -76,7 +76,8 @@ OGRPGDataSource::OGRPGDataSource() :
     papoSRS = NULL;
 
     poLayerInCopyMode = NULL;
-    nUndefinedSRID = -1; /* actual value will be autotected if PostGIS >= 2.0 detected */
+    // Actual value will be auto-detected if PostGIS >= 2.0 detected.
+    nUndefinedSRID = -1;
 
     pszForcedTables = NULL;
     papszSchemaList = NULL;

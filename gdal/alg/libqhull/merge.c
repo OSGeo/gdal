@@ -2986,7 +2986,7 @@ boolT qh_reducevertices(void) {
   design:
     intersect vertices of all facet neighbors of vertex
     determine ridges for these vertices
-    if find a new vertex for vertex amoung these ridges and vertices
+    if find a new vertex for vertex among these ridges and vertices
       rename vertex to the new vertex
 */
 vertexT *qh_redundant_vertex(vertexT *vertex) {

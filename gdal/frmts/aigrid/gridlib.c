@@ -706,7 +706,7 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
     nDataSize -= nMinSize;
     
 /* -------------------------------------------------------------------- */
-/*	Call an apppropriate handler depending on magic code.		*/
+/*	Call an appropriate handler depending on magic code.		*/
 /* -------------------------------------------------------------------- */
 
     if( nMagic == 0x08 )

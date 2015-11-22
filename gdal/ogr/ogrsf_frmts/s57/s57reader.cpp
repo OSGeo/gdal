@@ -812,7 +812,7 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
     OGRFeature *poFeature = new OGRFeature( poFDefn );
 
 /* -------------------------------------------------------------------- */
-/*      Assign a few standard feature attribues.                        */
+/*      Assign a few standard feature attributes.                        */
 /* -------------------------------------------------------------------- */
     int nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
     poFeature->SetField( "OBJL", nOBJL );

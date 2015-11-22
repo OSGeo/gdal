@@ -146,7 +146,7 @@ AVCRawBinFile *AVCRawBinOpen(const char *pszFname, const char *pszAccess,
     else
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "Acces mode \"%s\" not supported.", pszAccess);
+                 "Access mode \"%s\" not supported.", pszAccess);
         CPLFree(psFile);
         return NULL;
     }

@@ -53,7 +53,7 @@
  *
  * Normally application code just interacts with the OGRSpatialReference
  * object, which uses the OGR_SRSNode to implement it's data structure;
- * however, this class is user accessable for detailed access to components
+ * however, this class is user accessible for detailed access to components
  * of an SRS definition.
  */
 

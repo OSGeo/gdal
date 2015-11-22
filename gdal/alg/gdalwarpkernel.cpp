@@ -516,10 +516,10 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * <h3>Design Issues</h3>
  *
- * My intention is that PerformWarp() would analyse the setup in terms
+ * The intention is that PerformWarp() would analyze the setup in terms
  * of the datatype, resampling type, and validity/density mask usage and
  * pick one of many specific implementations of the warping algorithm over
- * a continuim of optimization vs. generality.  At one end there will be a
+ * a continuum of optimization vs. generality.  At one end there will be a
  * reference general purpose implementation of the algorithm that supports
  * any data type (working internally in double precision complex), all three
  * resampling types, and any or all of the validity/density masks.  At the
@@ -858,23 +858,23 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * Source/destination location transformer.
  *
- * The function to call to transform coordinates between source image 
- * pixel/line coordinates and destination image pixel/line coordinates.  
- * See GDALTransformerFunc() for details of the semantics of this function. 
+ * The function to call to transform coordinates between source image
+ * pixel/line coordinates and destination image pixel/line coordinates.
+ * See GDALTransformerFunc() for details of the semantics of this function.
  *
- * The GDALWarpKern algorithm will only ever use this transformer in 
- * "destination to source" mode (bDstToSrc=TRUE), and will always pass 
+ * The GDALWarpKern algorithm will only ever use this transformer in
+ * "destination to source" mode (bDstToSrc=TRUE), and will always pass
  * partial or complete scanlines of points in the destination image as
- * input.  This means, amoung other things, that it is safe to the the
- * approximating transform GDALApproxTransform() as the transformation 
- * function. 
+ * input.  This means, among other things, that it is safe to the the
+ * approximating transform GDALApproxTransform() as the transformation
+ * function.
  *
  * Source and destination images may be subsets of a larger overall image.
  * The transformation algorithms will expect and return pixel/line coordinates
  * in terms of this larger image, so coordinates need to be offset by
  * the offsets specified in nSrcXOff, nSrcYOff, nDstXOff, and nDstYOff before
  * passing to pfnTransformer, and after return from it. 
- * 
+ *
  * The GDALWarpKernel::pfnTransformerArg value will be passed as the callback
  * data to this function when it is called.
  *
@@ -3659,9 +3659,11 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
                   (int) poWK->eResample );
         return CE_Warning;
     }
-    
-    // Using a factor of 2 or 4 seems to have much less rounding error than 3 on the GPU.
-    // Then the rounding error can cause strange artifacting under the right conditions.
+
+    // Using a factor of 2 or 4 seems to have much less rounding error
+    // than 3 on the GPU.
+    // Then the rounding error can cause strange artifacts under the
+    // right conditions.
     warper = GDALWarpKernelOpenCL_createEnv(nSrcXSize, nSrcYSize,
                                             nDstXSize, nDstYSize,
                                             imageFormat, poWK->nBands, 4,

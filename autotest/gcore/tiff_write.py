@@ -886,6 +886,7 @@ def tiff_write_20():
                ('TIFFTAG_IMAGEDESCRIPTION', 'image_description'),
                ('TIFFTAG_SOFTWARE'        , 'software'),
                ('TIFFTAG_DATETIME'        , '2009/01/01 13:01:08'),
+               # TODO: artitst?
                ('TIFFTAG_ARTIST'          , 'artitst'),
                ('TIFFTAG_HOSTCOMPUTER'    , 'host_computer'),
                ('TIFFTAG_COPYRIGHT'       , 'copyright'),
@@ -904,7 +905,7 @@ def tiff_write_20():
     new_ds = None
 
     # hopefully it's closed now!
-    
+
     try:
         os.stat( 'tmp/tags.tif.aux.xml' )
         gdaltest.post_reason('did not expected .aux.xml file')

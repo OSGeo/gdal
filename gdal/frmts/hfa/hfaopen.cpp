@@ -994,7 +994,7 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
 static int HFAInvGeoTransform( double *gt_in, double *gt_out )
 
 {
-    double	det, inv_det;
+    double det, inv_det;
 
     /* we assume a 3rd row that is [1 0 0] */
 
@@ -1007,7 +1007,7 @@ static int HFAInvGeoTransform( double *gt_in, double *gt_out )
 
     inv_det = 1.0 / det;
 
-    /* compute adjoint, and devide by determinate */
+    /* compute adjoint, and divide by determinate */
 
     gt_out[1] =  gt_in[5] * inv_det;
     gt_out[4] = -gt_in[4] * inv_det;

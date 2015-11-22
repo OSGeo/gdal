@@ -1413,7 +1413,7 @@ GRIB1ParmTable parm_table_nceptab_131[256] = {
    /* 230 */ {"SMREF", "Transpiration stress-onset (soil moisture)", "fraction", UC_NONE},
    /* 231 */ {"SMDRY", "Direct evaporation cease (soil moisture)", "fraction", UC_NONE},
    /* 232 */ {"WVINC", "water vapor added by precip assimilation", "kg/m^2", UC_NONE},
-   /* 233 */ {"WCINC", "water condensate added by precip assimilaition", "kg/m^2", UC_NONE},
+   /* 233 */ {"WCINC", "water condensate added by precip assimilation", "kg/m^2", UC_NONE},
    /* 234 */ {"BGRUN", "Baseflow-groundwater runoff", "kg/m^2", UC_NONE},
    /* 235 */ {"SSRUN", "Storm surface runoff", "kg/m^2", UC_NONE},
    /* 236 */ {"var236", "undefined", "-", UC_NONE},

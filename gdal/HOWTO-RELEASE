@@ -183,7 +183,7 @@ c) Build the bindings:
     This will build and sign the artifacts with a single command. Read on for 
     more details.
 
-a)  Build the maven aritfacts:
+a)  Build the maven artifacts:
 
      ant maven
 

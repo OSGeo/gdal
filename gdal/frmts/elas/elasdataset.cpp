@@ -342,7 +342,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    const char	 	*pszAccess;
+    const char *pszAccess;
 
     if( poOpenInfo->eAccess == GA_Update )
         pszAccess = "r+b";
@@ -355,7 +355,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to open `%s' with acces `%s' failed.\n",
+                  "Attempt to open `%s' with access `%s' failed.\n",
                   poOpenInfo->pszFilename, pszAccess );
         delete poDS;
         return NULL;

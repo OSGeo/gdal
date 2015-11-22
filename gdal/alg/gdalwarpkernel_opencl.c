@@ -247,7 +247,7 @@ static const char* getCLDataTypeString( cl_channel_type dataType )
 }
 
 /*
- Finds an appropirate OpenCL device. If the user specifies a preference, the
+ Finds an appropriate OpenCL device. If the user specifies a preference, the
  code for it should be here (but not currently supported). For debugging, it's
  always easier to use CL_DEVICE_TYPE_CPU because then printf() can be called
  from the kernel. If debugging is on, we can print the name and stats about the

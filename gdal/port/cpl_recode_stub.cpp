@@ -641,7 +641,7 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   This function is for moving a pointer that was jumped to the
   middle of a string, such as when doing a binary search for
   a position. You should use either this or utf8back() depending
-  on which direction your algorithim can handle the pointer
+  on which direction your algorithm can handle the pointer
   moving. Do not use this to scan strings, use utf8decode()
   instead.
 */

@@ -106,7 +106,7 @@ JAVA_INCLUDE=-I$(JAVA_HOME)\include -I$(JAVA_HOME)\include\win32
 
 # Compilation flags
 
-# Enable code analyzis on request
+# Enable code analysis on request
 # http://msdn.microsoft.com/en-us/library/ms173498.aspx
 !IFDEF ANALYZE
 CXX_ANALYZE_FLAGS=/analyze

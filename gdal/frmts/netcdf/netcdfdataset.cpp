@@ -2656,7 +2656,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Is pixel spacing uniform accross the map?                       */
+/*      Is pixel spacing uniform across the map?                       */
 /* -------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------- */

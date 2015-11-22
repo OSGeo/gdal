@@ -565,11 +565,12 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
 #ifdef HAVE_SQLITE_VFS
     if( bRegisterOGR2SQLiteExtensions )
         OGR2SQLITE_Register();
- 
+
     int flags = flagsIn;
 #ifdef SQLITE_OPEN_URI
-    // this code enables support for named mememory databases in sqlite. 
-    // SQLITE_USE_URI is checked only to enable backward compatibility, in case we accidently hijacked some other format
+    // This code enables support for named memory databases in SQLite.
+    // SQLITE_USE_URI is checked only to enable backward compatibility, in
+    // case we accidentally hijacked some other format.
     if( STARTS_WITH(m_pszFilename, "file:") &&
         CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
     {

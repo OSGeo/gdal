@@ -91,12 +91,12 @@ CSF_ATTR_ID CsfPutAttribute(
 error:	return(0);	/* failure */
 }
 
-/* seek to space for attribute  (LIBRARY_INTERNAL)
+/* Seek to space for attribute  (LIBRARY_INTERNAL)
  * CsfSeekAttrSpace seeks to the a point in the file where
  * the attribute must be stored and update the attribute control
  * blocks accordingly.
  * Writing can still fail since there is no check if that space is really
- * avalaible on the device. After this call returns the file is already
+ * available on the device. After this call returns the file is already
  * seeked to the point the functions returns.
  * returns the file position or 0 in case of error.
  *
@@ -107,7 +107,7 @@ error:	return(0);	/* failure */
  */
 CSF_FADDR32 CsfSeekAttrSpace(
 	MAP *m,       		/* map handle */
-	CSF_ATTR_ID id,               /* attribute identification only for check if avalaible */
+	CSF_ATTR_ID id,         /* attribute identification only for check if available */
 	size_t size)            /* size to be seeked to */
 {
 	ATTR_CNTRL_BLOCK b;

@@ -229,13 +229,13 @@ void DDFSubfieldDefn::Dump( FILE * fp )
  * @param pachSourceData The pointer to the raw data for this field.  This
  * may have come from DDFRecord::GetData(), taking into account skip factors
  * over previous subfields data.
- * @param nMaxBytes The maximum number of bytes that are accessable after
+ * @param nMaxBytes The maximum number of bytes that are accessible after
  * pachSourceData.
  * @param pnConsumedBytes Pointer to an integer into which the number of
  * bytes consumed by this field should be written.  May be NULL to ignore.
  *
  * @return The number of bytes at pachSourceData which are actual data for
- * this record (not including unit, or field terminator).  
+ * this record (not including unit, or field terminator).
  */
 
 int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
@@ -335,7 +335,7 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
             else
                 *pnConsumedBytes = nLength + extraConsumedBytes + 1;
         }
-        
+
         return nLength;
     }
 }
@@ -360,7 +360,7 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
  * @param pachSourceData The pointer to the raw data for this field.  This
  * may have come from DDFRecord::GetData(), taking into account skip factors
  * over previous subfields data.
- * @param nMaxBytes The maximum number of bytes that are accessable after
+ * @param nMaxBytes The maximum number of bytes that are accessible after
  * pachSourceData.
  * @param pnConsumedBytes Pointer to an integer into which the number of
  * bytes consumed by this field should be written.  May be NULL to ignore.
@@ -389,7 +389,7 @@ DDFSubfieldDefn::ExtractStringData( const char * pachSourceData,
     if( nMaxBufChars < nLength+1 )
     {
         CPLFree( pachBuffer );
-        
+
         nMaxBufChars = nLength+1;
         pachBuffer = (char *) CPLMalloc(nMaxBufChars);
     }
@@ -419,7 +419,7 @@ DDFSubfieldDefn::ExtractStringData( const char * pachSourceData,
  * @param pachSourceData The pointer to the raw data for this field.  This
  * may have come from DDFRecord::GetData(), taking into account skip factors
  * over previous subfields data.
- * @param nMaxBytes The maximum number of bytes that are accessable after
+ * @param nMaxBytes The maximum number of bytes that are accessible after
  * pachSourceData.
  * @param pnConsumedBytes Pointer to an integer into which the number of
  * bytes consumed by this field should be written.  May be NULL to ignore.
@@ -555,7 +555,7 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
  * @param pachSourceData The pointer to the raw data for this field.  This
  * may have come from DDFRecord::GetData(), taking into account skip factors
  * over previous subfields data.
- * @param nMaxBytes The maximum number of bytes that are accessable after
+ * @param nMaxBytes The maximum number of bytes that are accessible after
  * pachSourceData.
  * @param pnConsumedBytes Pointer to an integer into which the number of
  * bytes consumed by this field should be written.  May be NULL to ignore.

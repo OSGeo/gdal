@@ -1256,10 +1256,10 @@ DDFField *DDFRecord::AddField( DDFFieldDefn *poDefn )
 /**
  * Set the raw contents of a field instance.
  *
- * @param poField the field to set data within. 
+ * @param poField the field to set data within.
  * @param iIndexWithinField The instance of this field to replace.  Must
  * be a value between 0 and GetRepeatCount().  If GetRepeatCount() is used, a
- * new instance of the field is appeneded.
+ * new instance of the field is appended.
  * @param pachRawData the raw data to replace this field instance with.
  * @param nRawDataSize the number of bytes pointed to by pachRawData.
  *

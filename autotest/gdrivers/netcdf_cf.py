@@ -238,7 +238,7 @@ netcdf_cfproj_tuples = [
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
          ['projection_x_coordinate','projection_y_coordinate']),
     ("LAZEA", "Lambert azimuthal equal area",
-        #Specify proj4 since no approp LAZEA for AU
+        # Specify proj4 since no appropriate LAZEA for AU.
         #"+proj=laea +lat_0=0 +lon_0=134 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
         "+proj=laea +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "lambert_azimuthal_equal_area",

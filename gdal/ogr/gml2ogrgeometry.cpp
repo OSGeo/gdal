@@ -489,7 +489,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
         int nDimension = 2;
 
         /* Try to detect the presence of an srsDimension attribute */
-        /* This attribute is only availabe for gml3.1.1 but not */
+        /* This attribute is only available for gml3.1.1 but not */
         /* available for gml3.1 SF*/
         const char* pszSRSDimension = CPLGetXMLValue( (CPLXMLNode*) psPosList, "srsDimension", NULL);
         /* If not found at the posList level, try on the enclosing element */

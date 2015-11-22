@@ -2764,7 +2764,7 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
     float64         projparm[13];	/* Projection Parameters */
 
     char           *dimbuf;	/* Dimension buffer */
-    char           *dimlist0;	/* Auxilliary dimension list */
+    char           *dimlist0;	/* Auxiliary dimension list */
     char           *comma;	/* Pointer to comma */
     char           *dimcheck;	/* Dimension check buffer */
     char            utlbuf[512];/* Utility buffer */
@@ -2821,8 +2821,8 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 
-	/* Allocate space for dimension buffer and auxilliary dimension list */
-	/* ----------------------------------------------------------------- */
+	/* Allocate space for dimension buffer and auxiliary dimension list */
+	/* ---------------------------------------------------------------- */
 	dimbuf = (char *) calloc(strlen(dimlist) + 64, 1);
 	if(dimbuf == NULL)
 	{ 
@@ -2874,8 +2874,8 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 	}
 
 	/*
-	 * Copy dimension buffer to auxilliary dimlist and Append comma to
-	 * end of dimension list
+	 * Copy dimension buffer to auxiliary dimlist and append a comma to
+	 * end of dimension list.
 	 */
 	strcpy(dimlist0, dimbuf);
 	strcat(dimbuf, ",");

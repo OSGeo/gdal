@@ -1165,7 +1165,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
     else
     {
         /* Some servers happen to support RESULTTYPE=hits in 1.0.0, but there */
-        /* is no way to advertisze this */
+        /* is no way to advertises this */
         if (atoi(osVersion) >= 2)
             bGetFeatureSupportHits = TRUE;  /* WFS >= 2.0.0 supports hits */
         else

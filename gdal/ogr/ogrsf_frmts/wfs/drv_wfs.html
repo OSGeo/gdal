@@ -166,7 +166,7 @@ The drawback for CreateFeature() is that the user cannot know which gml:id have 
 features. A special SQL statement has been introduced into the WFS driver to workaround this : by issuing
 the "SELECT _LAST_INSERTED_FIDS_ FROM layer_name" (where layer_name is to be replaced with the actual layer_name)
 command through the OGRDataSource::ExecuteSQL(), a layer will be returned with as many rows
-with a single attribue gml_id as the count of inserted features during the last commited transaction.<p>
+with a single attribute gml_id as the count of inserted features during the last committed transaction.<p>
 
 Note : currently, only CreateFeature() makes use of OGR transaction mechanism. SetFeature() and DeleteFeature()
 will still be issued immediately.

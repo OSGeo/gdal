@@ -1677,7 +1677,8 @@ def tiff_ovr_42():
     return 'success'
 
 ###############################################################################
-# Make sure that 16bit overviews with jpeg compression are handled using 12bit jpeg-in-tiff (#3539) 
+# Make sure that 16bit overviews with JPEG compression are handled using 12-bit
+# jpeg-in-tiff (#3539)
 
 def tiff_ovr_43():
 
@@ -1689,7 +1690,7 @@ def tiff_ovr_43():
     gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'ON' )
     gdal.ErrorReset()
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-        
+
     try:
         ds = gdal.Open('data/mandrilmini_12bitjpeg.tif')
         ds.GetRasterBand(1).ReadRaster(0,0,1,1)
@@ -1698,7 +1699,7 @@ def tiff_ovr_43():
 
     gdal.PopErrorHandler()
     gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', old_accum )
-    
+
     if gdal.GetLastErrorMsg().find(
                    'Unsupported JPEG data precision 12') != -1:
         sys.stdout.write('(12bit jpeg not available) ... ')

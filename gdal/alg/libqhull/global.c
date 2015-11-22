@@ -597,15 +597,15 @@ void qh_init_qhull_command(int argc, char *argv[]) {
     'prompt' in unix.c for documentation
 
   design:
-    for each space-deliminated option group
+    for each space-delimited option group
       if top-level option
         check syntax
-        append approriate option to option string
+        append appropriate option to option string
         set appropriate global variable or append printFormat to print options
       else
         for each sub-option
           check syntax
-          append approriate option to option string
+          append appropriate option to option string
           set appropriate global variable or append printFormat to print options
 */
 void qh_initflags(char *command) {

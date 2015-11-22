@@ -306,7 +306,7 @@ GDALHeuristicDatelineWrap( int nPointCount, double *padfX )
         return;
 
 /* -------------------------------------------------------------------- */
-/*      Do nothing if both appproach have a wide range - best not to    */
+/*      Do nothing if both approach have a wide range - best not to    */
 /*      fiddle if we aren't sure we are improving things.               */
 /* -------------------------------------------------------------------- */
     if( (dfX_PM_Max - dfX_PM_Min) > 270.0

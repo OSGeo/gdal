@@ -2410,15 +2410,15 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         else if( poSRS->GetAttrValue("DATUM") != NULL
                  && strstr(poSRS->GetAttrValue("DATUM"),"unknown") == NULL
                  && strstr(poSRS->GetAttrValue("DATUM"),"unnamed") == NULL )
-                 
+
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Couldn't translate `%s' to a GeoTIFF datum.\n",
                       poSRS->GetAttrValue("DATUM") );
         }
 
-        /* Always set InvFlattening if it is avaliable.  */
-        /* So that it doesn'tneed to calculate from SemiMinor */
+        /* Always set InvFlattening if it is available.  */
+        /* So that it doesn't need to calculate from SemiMinor */
         if( dfInvFlattening != 0.0 )
             GTIFKeySet( psGTIF, GeogInvFlatteningGeoKey, TYPE_DOUBLE, 1,
                         dfInvFlattening );

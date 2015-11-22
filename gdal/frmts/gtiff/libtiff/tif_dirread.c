@@ -4154,7 +4154,7 @@ TIFFReadDirectoryFindFieldInfo(TIFF* tif, uint16 tagid, uint32* fii)
 }
 
 /*
- * Read custom directory from the arbitarry offset.
+ * Read custom directory from the arbitrary offset.
  * The code is very similar to TIFFReadDirectory().
  */
 int
