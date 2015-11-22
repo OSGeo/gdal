@@ -6500,12 +6500,12 @@ on a real layer. Internally the FeatureDefn for the layer will be updated
 to reflect the new field.  Applications should never modify the FeatureDefn
 used by a layer directly.
 <p>
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 <p>
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCCreateField capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 @param field_def field definition to write to disk. 
@@ -6534,12 +6534,12 @@ on a real layer. Internally the FeatureDefn for the layer will be updated
 to reflect the deleted field.  Applications should never modify the FeatureDefn
 used by a layer directly.
 <p>
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 <p>
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCDeleteField capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 @param iField index of the field to delete.
@@ -6558,7 +6558,7 @@ on a real layer. Internally the FeatureDefn for the layer will be updated
 to reflect the reordering of the fields.  Applications should never modify the FeatureDefn
 used by a layer directly.
 <p>
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 <p>
 panMap is such that,for each field definition at position i after reordering,
@@ -6569,7 +6569,7 @@ ReorderFields(new Integer[]{0,2,3,1,4}) will reorder them as "0","2","3","1","4"
 <p>
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCReorderFields capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 @param panMap an array of GetLayerDefn().GetFieldCount() elements which
@@ -6584,7 +6584,7 @@ public class Layer:public int ReorderFields( int[] panMap )
 /**
 Reorder an existing field on a layer.
 <p>
-This method is a conveniency wrapper of ReorderFields() dedicated to move a single field.
+This method is a convenience wrapper of ReorderFields() dedicated to move a single field.
 It is a non-virtual method, so drivers should implement ReorderFields() instead.
 <p>
 You must use this to reorder existing fields
@@ -6592,7 +6592,7 @@ on a real layer. Internally the FeatureDefn for the layer will be updated
 to reflect the reordering of the fields.  Applications should never modify the FeatureDefn
 used by a layer directly.
 <p>
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 <p>
 The field definition that was at initial position iOldFieldPos will be moved at
@@ -6603,7 +6603,7 @@ ReorderField(1, 3) will reorder them as "0","2","3","1","4".
 <p>
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCReorderFields capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 @param iOldFieldPos previous position of the field to move. Must be in the range [0,GetFieldCount()-1].
@@ -6623,12 +6623,12 @@ Internally the FeatureDefn for the layer will be updated
 to reflect the altered field.  Applications should never modify the FeatureDefn
 used by a layer directly.
 <p>
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 <p>
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCAlterFieldDefn capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly. Some drivers might also not support
 all update flags.
 
@@ -9380,7 +9380,7 @@ public class FeatureDefn:public FeatureDefn(String name)
  * function directly, but use Layer.<a href="Layer.html#CreateField(org.gdal.ogr.FieldDefn)">CreateField()</a> instead.
  * <p>
  * This method should only be called while there are no Feature
- * objects in existance based on this FeatureDefn.  The FieldDefn
+ * objects in existence based on this FeatureDefn.  The FieldDefn
  * passed in is copied, and remains the responsibility of the caller.
  *
  * @param defn the definition of the new field.
@@ -11223,7 +11223,7 @@ public class SpatialReference:public int SetAngularUnits(String name, double to_
  * Set attribute value in spatial reference.
  * <p>
  * Missing intermediate nodes in the path will be created if not already
- * in existance.  If the attribute has no children one will be created and
+ * in existence.  If the attribute has no children one will be created and
  * assigned the value otherwise the zeroth child will be assigned the value.
  *
  * @param name full path to attribute to be set.  For instance

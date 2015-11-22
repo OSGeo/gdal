@@ -2009,12 +2009,12 @@ on a real layer. Internally the OGRFeatureDefn for the layer will be updated
 to reflect the new field.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCCreateField capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 Drivers may or may not support not-null constraints. If they support creating
@@ -2041,12 +2041,12 @@ on a real layer. Internally the OGRFeatureDefn for the layer will be updated
 to reflect the new field.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This function should not be called while there are feature objects in existance that
+This function should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 Not all drivers support this function. You can query a layer to check if it supports it
 with the OLCCreateField capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 Drivers may or may not support not-null constraints. If they support creating
@@ -2073,12 +2073,12 @@ on a real layer. Internally the OGRFeatureDefn for the layer will be updated
 to reflect the deleted field.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCDeleteField capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 This function is the same as the C function OGR_L_DeleteField().
@@ -2101,12 +2101,12 @@ on a real layer. Internally the OGRFeatureDefn for the layer will be updated
 to reflect the deleted field.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This function should not be called while there are feature objects in existance that
+This function should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 Not all drivers support this function. You can query a layer to check if it supports it
 with the OLCDeleteField capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 This function is the same as the C++ method OGRLayer::DeleteField().
@@ -2129,7 +2129,7 @@ on a real layer. Internally the OGRFeatureDefn for the layer will be updated
 to reflect the reordering of the fields.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 panMap is such that,for each field definition at position i after reordering,
@@ -2140,7 +2140,7 @@ ReorderFields([0,2,3,1,4]) will reorder them as "0","2","3","1","4".
 
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCReorderFields capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 This function is the same as the C function OGR_L_ReorderFields().
@@ -2164,7 +2164,7 @@ on a real layer. Internally the OGRFeatureDefn for the layer will be updated
 to reflect the reordering of the fields.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This function should not be called while there are feature objects in existance that
+This function should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 panMap is such that,for each field definition at position i after reordering,
@@ -2175,7 +2175,7 @@ ReorderFields([0,2,3,1,4]) will reorder them as "0","2","3","1","4".
 
 Not all drivers support this function. You can query a layer to check if it supports it
 with the OLCReorderFields capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 This function is the same as the C++ method OGRLayer::ReorderFields().
@@ -2194,7 +2194,7 @@ is a permutation of [0, GetLayerDefn()->OGRFeatureDefn::GetFieldCount()-1].
 
 \brief Reorder an existing field on a layer.
 
-This method is a conveniency wrapper of ReorderFields() dedicated to move a single field.
+This method is a convenience wrapper of ReorderFields() dedicated to move a single field.
 It is a non-virtual method, so drivers should implement ReorderFields() instead.
 
 You must use this to reorder existing fields
@@ -2202,7 +2202,7 @@ on a real layer. Internally the OGRFeatureDefn for the layer will be updated
 to reflect the reordering of the fields.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 The field definition that was at initial position iOldFieldPos will be moved at
@@ -2213,7 +2213,7 @@ ReorderField(1, 3) will reorder them as "0","2","3","1","4".
 
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCReorderFields capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 This function is the same as the C function OGR_L_ReorderField().
@@ -2232,14 +2232,14 @@ This function is the same as the C function OGR_L_ReorderField().
 
 \brief Reorder an existing field on a layer.
 
-This function is a conveniency wrapper of OGR_L_ReorderFields() dedicated to move a single field.
+This function is a convenience wrapper of OGR_L_ReorderFields() dedicated to move a single field.
 
 You must use this to reorder existing fields
 on a real layer. Internally the OGRFeatureDefn for the layer will be updated
 to reflect the reordering of the fields.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This function should not be called while there are feature objects in existance that
+This function should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 The field definition that was at initial position iOldFieldPos will be moved at
@@ -2250,7 +2250,7 @@ ReorderField(1, 3) will reorder them as "0","2","3","1","4".
 
 Not all drivers support this function. You can query a layer to check if it supports it
 with the OLCReorderFields capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 This function is the same as the C++ method OGRLayer::ReorderField().
@@ -2274,12 +2274,12 @@ Internally the OGRFeatureDefn for the layer will be updated
 to reflect the altered field.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCAlterFieldDefn capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly. Some drivers might also not support
 all update flags.
 
@@ -2307,12 +2307,12 @@ Internally the OGRFeatureDefn for the layer will be updated
 to reflect the altered field.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This function should not be called while there are feature objects in existance that
+This function should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 Not all drivers support this function. You can query a layer to check if it supports it
 with the OLCAlterFieldDefn capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly. Some drivers might also not support
 all update flags.
 
@@ -2343,12 +2343,12 @@ on a real layer. Internally the OGRFeatureDefn for the layer will be updated
 to reflect the new field.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This method should not be called while there are feature objects in existance that
+This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCCreateGeomField capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 Drivers may or may not support not-null constraints. If they support creating
@@ -2377,12 +2377,12 @@ on a real layer. Internally the OGRFeatureDefn for the layer will be updated
 to reflect the new field.  Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
-This function should not be called while there are feature objects in existance that
+This function should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
 Not all drivers support this function. You can query a layer to check if it supports it
 with the OLCCreateField capability. Some drivers may only support this method while
-there are still no features in the layer. When it is supported, the existings features of the
+there are still no features in the layer. When it is supported, the existing features of the
 backing file/database should be updated accordingly.
 
 Drivers may or may not support not-null constraints. If they support creating

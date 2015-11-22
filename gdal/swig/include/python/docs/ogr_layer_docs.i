@@ -261,13 +261,13 @@ Applications should never modify the OGRFeatureDefn used by a layer
 directly.
 
 This function should not be called while there are feature objects in
-existance that were obtained or created with the previous layer
+existence that were obtained or created with the previous layer
 definition.
 
 Not all drivers support this function. You can query a layer to check
 if it supports it with the OLCCreateField capability. Some drivers may
 only support this method while there are still no features in the
-layer. When it is supported, the existings features of the backing
+layer. When it is supported, the existing features of the backing
 file/database should be updated accordingly.
 
 This function is the same as the C++ method OGRLayer::CreateField().
@@ -295,13 +295,13 @@ the deleted field. Applications should never modify the OGRFeatureDefn
 used by a layer directly.
 
 This function should not be called while there are feature objects in
-existance that were obtained or created with the previous layer
+existence that were obtained or created with the previous layer
 definition.
 
 Not all drivers support this function. You can query a layer to check
 if it supports it with the OLCDeleteField capability. Some drivers may
 only support this method while there are still no features in the
-layer. When it is supported, the existings features of the backing
+layer. When it is supported, the existing features of the backing
 file/database should be updated accordingly.
 
 This function is the same as the C++ method OGRLayer::DeleteField().
@@ -328,7 +328,7 @@ the reordering of the fields. Applications should never modify the
 OGRFeatureDefn used by a layer directly.
 
 This function should not be called while there are feature objects in
-existance that were obtained or created with the previous layer
+existence that were obtained or created with the previous layer
 definition.
 
 panMap is such that,for each field definition at position i after
@@ -341,7 +341,7 @@ initially. ReorderFields([0,2,3,1,4]) will reorder them as
 Not all drivers support this function. You can query a layer to check
 if it supports it with the OLCReorderFields capability. Some drivers
 may only support this method while there are still no features in the
-layer. When it is supported, the existings features of the backing
+layer. When it is supported, the existing features of the backing
 file/database should be updated accordingly.
 
 This function is the same as the C++ method OGRLayer::ReorderFields().
@@ -364,7 +364,7 @@ iNewFieldPos)
 
 Reorder an existing field on a layer.
 
-This function is a conveniency wrapper of OGR_L_ReorderFields()
+This function is a convenience wrapper of OGR_L_ReorderFields()
 dedicated to move a single field.
 
 You must use this to reorder existing fields on a real layer.
@@ -373,7 +373,7 @@ the reordering of the fields. Applications should never modify the
 OGRFeatureDefn used by a layer directly.
 
 This function should not be called while there are feature objects in
-existance that were obtained or created with the previous layer
+existence that were obtained or created with the previous layer
 definition.
 
 The field definition that was at initial position iOldFieldPos will be
@@ -387,7 +387,7 @@ initially. ReorderField(1, 3) will reorder them as
 Not all drivers support this function. You can query a layer to check
 if it supports it with the OLCReorderFields capability. Some drivers
 may only support this method while there are still no features in the
-layer. When it is supported, the existings features of the backing
+layer. When it is supported, the existing features of the backing
 file/database should be updated accordingly.
 
 This function is the same as the C++ method OGRLayer::ReorderField().
@@ -419,13 +419,13 @@ updated to reflect the altered field. Applications should never modify
 the OGRFeatureDefn used by a layer directly.
 
 This function should not be called while there are feature objects in
-existance that were obtained or created with the previous layer
+existence that were obtained or created with the previous layer
 definition.
 
 Not all drivers support this function. You can query a layer to check
 if it supports it with the OLCAlterFieldDefn capability. Some drivers
 may only support this method while there are still no features in the
-layer. When it is supported, the existings features of the backing
+layer. When it is supported, the existing features of the backing
 file/database should be updated accordingly. Some drivers might also
 not support all update flags.
 

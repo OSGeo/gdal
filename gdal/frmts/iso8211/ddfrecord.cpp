@@ -723,7 +723,7 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
 /*      Get a pointer to the data.                                      */
 /* -------------------------------------------------------------------- */
     int         nBytesRemaining;
-    
+
     const char *pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
                                                     iSubfieldIndex);
@@ -731,7 +731,7 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
 /*      Return the extracted value.                                     */
 /*                                                                      */
-/*      Assume an error has occured if no bytes are consumed.           */
+/*      Assume an error has occurred if no bytes are consumed.           */
 /* -------------------------------------------------------------------- */
     int nConsumedBytes = 0;
     int nResult = poSFDefn->ExtractIntData( pachData, nBytesRemaining, 

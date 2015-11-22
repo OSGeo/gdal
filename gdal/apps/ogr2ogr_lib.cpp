@@ -406,7 +406,7 @@ public:
 static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
                                                  const char* pszNewLayerName,
                                                  int bOverwrite,
-                                                 int* pbErrorOccured);
+                                                 int* pbErrorOccurred);
 
 static void FreeTargetLayerInfo(TargetLayerInfo* psInfo);
 
@@ -2316,10 +2316,10 @@ static int ForceCoordDimension(int eGType, int nCoordDim)
 static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
                                                  const char* pszNewLayerName,
                                                  int bOverwrite,
-                                                 int* pbErrorOccured)
+                                                 int* pbErrorOccurred)
 {
-    if( pbErrorOccured )
-        *pbErrorOccured = FALSE;
+    if( pbErrorOccurred )
+        *pbErrorOccurred = FALSE;
 
     /* GetLayerByName() can instanciate layers that would have been */
     /* 'hidden' otherwise, for example, non-spatial tables in a */
@@ -2357,8 +2357,8 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                      "DeleteLayer() failed when overwrite requested." );
-            if( pbErrorOccured )
-                *pbErrorOccured = TRUE;
+            if( pbErrorOccurred )
+                *pbErrorOccurred = TRUE;
         }
         poDstLayer = NULL;
     }

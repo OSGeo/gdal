@@ -2397,7 +2397,8 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
     }
     catch(...)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception occured in ECW SDK");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unexpected exception occurred in ECW SDK");
         delete poFileView;
         return NULL;
     }

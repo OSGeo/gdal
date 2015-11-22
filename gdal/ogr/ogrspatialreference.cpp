@@ -776,14 +776,14 @@ OGRErr OSRImportFromWkt( OGRSpatialReferenceH hSRS, char **ppszInput )
  * \brief Set attribute value in spatial reference.
  *
  * Missing intermediate nodes in the path will be created if not already
- * in existance.  If the attribute has no children one will be created and
+ * in existence.  If the attribute has no children one will be created and
  * assigned the value otherwise the zeroth child will be assigned the value.
  *
  * This method does the same as the C function OSRSetAttrValue(). 
  *
  * @param pszNodePath full path to attribute to be set.  For instance
  * "PROJCS|GEOGCS|UNIT".
- * 
+ *
  * @param pszNewNodeValue value to be assigned to node, such as "meter". 
  * This may be NULL if you just want to force creation of the intermediate
  * path.

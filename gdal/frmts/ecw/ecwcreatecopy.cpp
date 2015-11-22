@@ -1555,17 +1555,17 @@ class ECWWriteDataset : public GDALDataset
     int       bIsJPEG2000;
     GDALDataType eDataType;
     char    **papszOptions;
-  
+
     char     *pszProjection;
     double    adfGeoTransform[6];
 
     GDALECWCompressor oCompressor;
     int       bCrystalized;
-    
+
     int       nLoadedLine;
     GByte     *pabyBILBuffer;
 
-    int       bOutOfOrderWriteOccured;
+    int       bOutOfOrderWriteOccured;  // Spelling.
 #ifdef OPTIMIZED_FOR_GDALWARP
     int       nPrevIRasterIOBand;
 #endif

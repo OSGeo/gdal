@@ -90,10 +90,10 @@ static void Usage(int bShort = TRUE)
 static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
                                                  const char* pszNewLayerName,
                                                  int bOverwrite,
-                                                 int* pbErrorOccured)
+                                                 int* pbErrorOccurred)
 {
-    if( pbErrorOccured )
-        *pbErrorOccured = FALSE;
+    if( pbErrorOccurred )
+        *pbErrorOccurred = FALSE;
 
     /* GetLayerByName() can instantiate layers that would have been */
     /* 'hidden' otherwise, for example, non-spatial tables in a */
@@ -131,8 +131,8 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
         {
             fprintf( stderr,
                      "DeleteLayer() failed when overwrite requested.\n" );
-            if( pbErrorOccured )
-                *pbErrorOccured = TRUE;
+            if( pbErrorOccurred )
+                *pbErrorOccurred = TRUE;
         }
         poDstLayer = NULL;
     }

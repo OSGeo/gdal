@@ -36,7 +36,7 @@
 
 
 %{
-/* Returned size is in bytes or 0 if an error occured */
+/* Returned size is in bytes or 0 if an error occurred. */
 static
 GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
                                  GIntBig nPixelSpace, GIntBig nLineSpace,

@@ -653,7 +653,7 @@ def test_ogr2ogr_20():
                       '15' ]
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp data/Fields.csv')
-    
+
     ds = ogr.Open('tmp/Fields.dbf')
 
     if ds is None:
@@ -665,20 +665,20 @@ def test_ogr2ogr_20():
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
         return 'fail'
 
-    error_occured = False
-    feat = ds.GetLayer(0).GetNextFeature()    
+    error_occurred = False
+    feat = ds.GetLayer(0).GetNextFeature()
     for i in range( layer_defn.GetFieldCount() ):
         if layer_defn.GetFieldDefn( i ).GetNameRef() != expected_fields[i]:
             print('Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn( i ).GetNameRef())
-            error_occured = True
+            error_occurred = True
         if feat.GetFieldAsString(i) != expected_data[i]:
             print('Expected the value ', expected_data[i],',but got',feat.GetFieldAsString(i))
-            error_occured = True
+            error_occurred = True
 
     ds.Destroy()
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
 
-    if error_occured:
+    if error_occurred:
         return 'fail'
 
     return 'success'
@@ -1810,24 +1810,24 @@ def test_ogr2ogr_48():
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
         return 'fail'
 
-    error_occured = False
+    error_occurred = False
     lyr = ds.GetLayer(0)
     lyr.GetNextFeature()
-    feat = lyr.GetNextFeature()    
+    feat = lyr.GetNextFeature()
     for i in range( layer_defn.GetFieldCount() ):
         if feat.GetFieldAsString(i) != str(i + 1):
             print('Expected the value ', str(i + 1),',but got',feat.GetFieldAsString(i))
-            error_occured = True
+            error_occurred = True
     feat = lyr.GetNextFeature()    
     for i in range( layer_defn.GetFieldCount() ):
         if feat.GetFieldAsString(i) != str(layer_defn.GetFieldCount() - i):
             print('Expected the value ', str(layer_defn.GetFieldCount() - i),',but got',feat.GetFieldAsString(i))
-            error_occured = True
+            error_occurred = True
 
     ds.Destroy()
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
 
-    if error_occured:
+    if error_occurred:
         return 'fail'
 
     return 'success'

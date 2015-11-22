@@ -365,7 +365,7 @@ OGRFieldDefnH OGR_FD_GetFieldDefn( OGRFeatureDefnH hDefn, int iField )
  * function directly, but use OGRLayer::CreateField() instead.
  *
  * This method should only be called while there are no OGRFeature
- * objects in existance based on this OGRFeatureDefn.  The OGRFieldDefn
+ * objects in existence based on this OGRFeatureDefn.  The OGRFieldDefn
  * passed in is copied, and remains the responsibility of the caller.
  *
  * This method is the same as the C function OGR_FD_AddFieldDefn().
@@ -395,7 +395,7 @@ void OGRFeatureDefn::AddFieldDefn( OGRFieldDefn * poNewDefn )
  * function directly, but use OGR_L_CreateField() instead.
  *
  * This function  should only be called while there are no OGRFeature
- * objects in existance based on this OGRFeatureDefn.  The OGRFieldDefn
+ * objects in existence based on this OGRFeatureDefn.  The OGRFieldDefn
  * passed in is copied, and remains the responsibility of the caller.
  *
  * This function is the same as the C++ method OGRFeatureDefn::AddFieldDefn().
@@ -418,15 +418,15 @@ void OGR_FD_AddFieldDefn( OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField )
 /**
  * \brief Delete an existing field definition.
  *
- * To delete an existing field definition from a layer definition, do not use this
- * function directly, but use OGRLayer::DeleteField() instead.
+ * To delete an existing field definition from a layer definition, do not use
+ * this function directly, but use OGRLayer::DeleteField() instead.
  *
  * This method should only be called while there are no OGRFeature
- * objects in existance based on this OGRFeatureDefn.
+ * objects in existence based on this OGRFeatureDefn.
  *
  * This method is the same as the C function OGR_FD_DeleteFieldDefn().
  *
- * @param iField the index of the field defintion.
+ * @param iField the index of the field definition.
  * @return OGRERR_NONE in case of success.
  * @since OGR 1.9.0
  */
@@ -463,12 +463,12 @@ OGRErr OGRFeatureDefn::DeleteFieldDefn( int iField )
  * function directly, but use OGR_L_DeleteField() instead.
  *
  * This method should only be called while there are no OGRFeature
- * objects in existance based on this OGRFeatureDefn.
+ * objects in existence based on this OGRFeatureDefn.
  *
  * This method is the same as the C++ method OGRFeatureDefn::DeleteFieldDefn().
  *
  * @param hDefn handle to the feature definition.
- * @param iField the index of the field defintion.
+ * @param iField the index of the field definition.
  * @return OGRERR_NONE in case of success.
  * @since OGR 1.9.0
  */
@@ -490,7 +490,7 @@ OGRErr OGR_FD_DeleteFieldDefn( OGRFeatureDefnH hDefn, int iField )
  * function directly, but use OGR_L_ReorderFields() instead.
  *
  * This method should only be called while there are no OGRFeature
- * objects in existance based on this OGRFeatureDefn.
+ * objects in existence based on this OGRFeatureDefn.
  *
  * This method is the same as the C function OGR_FD_ReorderFieldDefns().
  *
@@ -537,9 +537,10 @@ OGRErr OGRFeatureDefn::ReorderFieldDefns( int* panMap )
  * function directly, but use OGR_L_ReorderFields() instead.
  *
  * This method should only be called while there are no OGRFeature
- * objects in existance based on this OGRFeatureDefn.
+ * objects in existence based on this OGRFeatureDefn.
  *
- * This method is the same as the C++ method OGRFeatureDefn::ReorderFieldDefns().
+ * This method is the same as the C++ method
+ * OGRFeatureDefn::ReorderFieldDefns().
  *
  * @param hDefn handle to the feature definition.
  * @param panMap an array of GetFieldCount() elements which
@@ -674,13 +675,13 @@ OGRGeomFieldDefnH OGR_FD_GetGeomFieldDefn( OGRFeatureDefnH hDefn, int iGeomField
  *
  * To add a new geometry field definition to a layer definition, do not use this
  * function directly, but use OGRLayer::CreateGeomField() instead.
- * 
+ *
  * This method does an internal copy of the passed geometry field definition,
  * unless bCopy is set to FALSE (in which case it takes ownership of the
  * field definition.
  *
  * This method should only be called while there are no OGRFeature
- * objects in existance based on this OGRFeatureDefn.  The OGRGeomFieldDefn
+ * objects in existence based on this OGRFeatureDefn.  The OGRGeomFieldDefn
  * passed in is copied, and remains the responsibility of the caller.
  *
  * This method is the same as the C function OGR_FD_AddGeomFieldDefn().
@@ -714,19 +715,21 @@ void OGRFeatureDefn::AddGeomFieldDefn( OGRGeomFieldDefn * poNewDefn,
  * function directly, but use OGR_L_CreateGeomField() instead.
  *
  * This function  should only be called while there are no OGRFeature
- * objects in existance based on this OGRFeatureDefn.  The OGRGeomFieldDefn
+ * objects in existence based on this OGRFeatureDefn.  The OGRGeomFieldDefn
  * passed in is copied, and remains the responsibility of the caller.
  *
- * This function is the same as the C++ method OGRFeatureDefn::AddGeomFieldDefn().
+ * This function is the same as the C++ method
+ * OGRFeatureDefn::AddGeomFieldDefn().
  *
- * @param hDefn handle to the feature definition to add the geometry field definition
- * to.
+ * @param hDefn handle to the feature definition to add the geometry field
+ * definition to.
  * @param hNewGeomField handle to the new field definition.
  *
  * @since GDAL 1.11
  */
 
-void OGR_FD_AddGeomFieldDefn( OGRFeatureDefnH hDefn, OGRGeomFieldDefnH hNewGeomField )
+void OGR_FD_AddGeomFieldDefn( OGRFeatureDefnH hDefn,
+                              OGRGeomFieldDefnH hNewGeomField )
 
 {
     ((OGRFeatureDefn *) hDefn)->AddGeomFieldDefn( (OGRGeomFieldDefn *) hNewGeomField );
@@ -739,15 +742,15 @@ void OGR_FD_AddGeomFieldDefn( OGRFeatureDefnH hDefn, OGRGeomFieldDefnH hNewGeomF
 /**
  * \brief Delete an existing geometry field definition.
  *
- * To delete an existing field definition from a layer definition, do not use this
- * function directly, but use OGRLayer::DeleteGeomField() instead.
+ * To delete an existing field definition from a layer definition, do not use
+ * this function directly, but use OGRLayer::DeleteGeomField() instead.
  *
  * This method should only be called while there are no OGRFeature
- * objects in existance based on this OGRFeatureDefn.
+ * objects in existence based on this OGRFeatureDefn.
  *
  * This method is the same as the C function OGR_FD_DeleteGeomFieldDefn().
  *
- * @param iGeomField the index of the geometry field defintion.
+ * @param iGeomField the index of the geometry field definition.
  * @return OGRERR_NONE in case of success.
  *
  * @since GDAL 1.11
@@ -781,16 +784,18 @@ OGRErr OGRFeatureDefn::DeleteGeomFieldDefn( int iGeomField )
 /**
  * \brief Delete an existing geometry field definition.
  *
- * To delete an existing geometry field definition from a layer definition, do not use this
- * function directly, but use OGR_L_DeleteGeomField() instead (*not implemented yet*)
+ * To delete an existing geometry field definition from a layer definition, do
+ * not use this function directly, but use OGR_L_DeleteGeomField() instead
+ * (*not implemented yet*).
  *
  * This method should only be called while there are no OGRFeature
- * objects in existance based on this OGRFeatureDefn.
+ * objects in existence based on this OGRFeatureDefn.
  *
- * This method is the same as the C++ method OGRFeatureDefn::DeleteGeomFieldDefn().
+ * This method is the same as the C++ method
+ * OGRFeatureDefn::DeleteGeomFieldDefn().
  *
  * @param hDefn handle to the feature definition.
- * @param iGeomField the index of the geometry field defintion.
+ * @param iGeomField the index of the geometry field definition.
  * @return OGRERR_NONE in case of success.
  *
  * @since GDAL 1.11

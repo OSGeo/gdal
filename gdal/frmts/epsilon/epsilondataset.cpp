@@ -890,7 +890,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                               1,
                               nBlockXSize,
                               nBlockXSize * nBlockYSize, NULL);
-            
+
             int nOutBufSize = nTargetBlockSize;
             if (eErr == CE_None && nBands == 1)
             {
@@ -902,8 +902,8 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                            pabyOutBuf, &nOutBufSize,
                                            (char*) pszFilter, eMode))
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Error occured when encoding block (%d, %d)",
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "Error occurred when encoding block (%d, %d)",
                              nBlockXOff, nBlockYOff);
                     eErr = CE_Failure;
                 }
@@ -924,12 +924,12 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                            (char*) pszFilter, eMode))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Error occured when encoding block (%d, %d)",
+                             "Error occurred when encoding block (%d, %d)",
                              nBlockXOff, nBlockYOff);
                     eErr = CE_Failure;
                 }
             }
-            
+
             if (eErr == CE_None)
             {
                 if ((int)VSIFWriteL(pabyOutBuf, 1, nOutBufSize, fp) !=
@@ -938,7 +938,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
                 char chEPSMarker = EPS_MARKER;
                 VSIFWriteL(&chEPSMarker, 1, 1, fp);
-                
+
                 if (pfnProgress && !pfnProgress(
                       1.0 * (nBlockYOff * nXBlocks + nBlockXOff + 1) / nBlocks,
                       NULL, pProgressData))
@@ -948,7 +948,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
         }
     }
-    
+
     if (bRasterliteOutput)
     {
         const char* pszFooter = RASTERLITE_WAVELET_FOOTER;
