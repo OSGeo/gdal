@@ -352,7 +352,6 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
     short  *sptr;
     char name[1000];
     char type[20];
-    double data[100];
     double *dptr;
     char *vptr;
     int num;
@@ -429,6 +428,8 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
       break;
 
       case TYPE_DOUBLE: 
+      {
+        double data[100];
         outcount = count;
         for (dptr = data; count > 0; count-= vals_now)
         {
@@ -451,6 +452,7 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
         else
             GTIFKeySet(gt,key,ktype,outcount,data);
         break;
+      }
         
       case TYPE_SHORT: 
         if (count==1)
@@ -462,11 +464,9 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
         }
         else  /* multi-valued short - no such thing yet */
         {
-            char* cdata;
-            memcpy(&cdata, &data, sizeof(void*));
-            sptr = (short *)cdata;
+            short data[100];
             outcount = count;
-            for (; count > 0; count-= vals_now)
+            for (sptr = data; count > 0; count-= vals_now)
             {
                 vals_now = count > 3? 3: count;
                 for (i=0; i<vals_now; i++,sptr++)
