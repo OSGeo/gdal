@@ -33,6 +33,10 @@
 #include "cpl_port.h"
 
 #ifdef WIN32
+
+  /* To disable 'warning C4996: 'WSADuplicateSocketA': Use WSADuplicateSocketW()' and 'WSASocketA': Use WSASocketW() instead */
+  #define _WINSOCK_DEPRECATED_NO_WARNINGS
+
   #ifdef _WIN32_WINNT
     #undef _WIN32_WINNT
   #endif

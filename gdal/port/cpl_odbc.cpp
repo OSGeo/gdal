@@ -372,7 +372,14 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
         return FALSE;
     }
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4996 )  /*  warning C4996: 'SQLSetConnectOption': ODBC API: SQLSetConnectOption is deprecated. Please use SQLSetConnectAttr instead */
+#endif
     SQLSetConnectOption( m_hDBC,SQL_LOGIN_TIMEOUT,30 );
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
     if( pszUserid == NULL )
         pszUserid = "";
