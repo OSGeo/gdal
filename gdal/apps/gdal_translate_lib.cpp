@@ -489,7 +489,6 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     int			i;
     int			nRasterXSize, nRasterYSize;
     GDALDriverH		hDriver;    
-    double		adfGeoTransform[6];
     int			nOXSize = 0, nOYSize = 0;
     const char          *pszProjection;
     const char *pszSource = NULL;
@@ -786,7 +785,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         CPLError( CE_Failure, CPLE_IllegalArg, "The following format drivers are configured and support output:" );
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
-            GDALDriverH hDriver = GDALGetDriver(iDr);
+            hDriver = GDALGetDriver(iDr);
 
             if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
                 (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
@@ -839,6 +838,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Establish some parameters.                                      */
 /* -------------------------------------------------------------------- */
+    double              adfGeoTransform[6];
     if( psOptions->dfXRes != 0.0 )
     {
         if( !(GDALGetGeoTransform( hSrcDataset, adfGeoTransform ) == CE_None &&
@@ -1485,7 +1485,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
     if (psOptions->bStats)
     {
-        for( int i = 0; i < poVDS->GetRasterCount(); i++ )
+        for( i = 0; i < poVDS->GetRasterCount(); i++ )
         {
             double dfMin, dfMax, dfMean, dfStdDev;
             poVDS->GetRasterBand(i+1)->ComputeStatistics( psOptions->bApproxStats,

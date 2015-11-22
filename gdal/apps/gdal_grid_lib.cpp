@@ -307,7 +307,7 @@ static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,
             {
                 for (int ir = 0; ir < nRings; ++ir)
                 {
-                    OGRLinearRing* poRing = poPoly->getInteriorRing(ir);
+                    poRing = poPoly->getInteriorRing(ir);
                     ProcessCommonGeometry((OGRGeometry*)poRing, poClipSrc,
                         iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
                 }
@@ -711,7 +711,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
         "The following format drivers are configured and support output:\n" );
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
-            GDALDriverH hDriver = GDALGetDriver(iDr);
+            hDriver = GDALGetDriver(iDr);
 
             if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
                 ( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL

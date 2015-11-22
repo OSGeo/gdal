@@ -602,7 +602,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 
             for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
             {
-                GDALDriverH hDriver = GDALGetDriver(iDr);
+                hDriver = GDALGetDriver(iDr);
 
                 if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL) != NULL )
                 {

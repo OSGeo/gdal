@@ -1267,19 +1267,19 @@ class GDALColorReliefRasterBand : public GDALRasterBand
 };
 
 GDALColorReliefDataset::GDALColorReliefDataset(
-                                     GDALDatasetH hSrcDS,
-                                     GDALRasterBandH hSrcBand,
+                                     GDALDatasetH hSrcDSIn,
+                                     GDALRasterBandH hSrcBandIn,
                                      const char* pszColorFilename,
-                                     ColorSelectionMode eColorSelectionMode,
+                                     ColorSelectionMode eColorSelectionModeIn,
                                      int bAlpha)
 {
-    this->hSrcDS = hSrcDS;
-    this->hSrcBand = hSrcBand;
+    hSrcDS = hSrcDSIn;
+    hSrcBand = hSrcBandIn;
     nColorAssociation = 0;
     pasColorAssociation =
             GDALColorReliefParseColorFile(hSrcBand, pszColorFilename,
                                           &nColorAssociation);
-    this->eColorSelectionMode = eColorSelectionMode;
+    eColorSelectionMode = eColorSelectionModeIn;
     
     nRasterXSize = GDALGetRasterXSize(hSrcDS);
     nRasterYSize = GDALGetRasterYSize(hSrcDS);
@@ -1330,12 +1330,12 @@ const char *GDALColorReliefDataset::GetProjectionRef()
 }
 
 GDALColorReliefRasterBand::GDALColorReliefRasterBand(
-                                    GDALColorReliefDataset * poDS, int nBand)
+                                    GDALColorReliefDataset * poDSIn, int nBandIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = GDT_Byte;
-    GDALGetBlockSize( poDS->hSrcBand, &nBlockXSize, &nBlockYSize);
+    GDALGetBlockSize( poDSIn->hSrcBand, &nBlockXSize, &nBlockYSize);
 }
 
 CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
@@ -1868,22 +1868,22 @@ class GDALGeneric3x3RasterBand : public GDALRasterBand
 };
 
 GDALGeneric3x3Dataset::GDALGeneric3x3Dataset(
-                                     GDALDatasetH hSrcDS,
-                                     GDALRasterBandH hSrcBand,
+                                     GDALDatasetH hSrcDSIn,
+                                     GDALRasterBandH hSrcBandIn,
                                      GDALDataType eDstDataType,
-                                     int bDstHasNoData,
-                                     double dfDstNoDataValue,
-                                     GDALGeneric3x3ProcessingAlg pfnAlg,
-                                     void* pAlgData,
-                                     int bComputeAtEdges)
+                                     int bDstHasNoDataIn,
+                                     double dfDstNoDataValueIn,
+                                     GDALGeneric3x3ProcessingAlg pfnAlgIn,
+                                     void* pAlgDataIn,
+                                     int bComputeAtEdgesIn)
 {
-    this->hSrcDS = hSrcDS;
-    this->hSrcBand = hSrcBand;
-    this->pfnAlg = pfnAlg;
-    this->pAlgData = pAlgData;
-    this->bDstHasNoData = bDstHasNoData;
-    this->dfDstNoDataValue = dfDstNoDataValue;
-    this->bComputeAtEdges = bComputeAtEdges;
+    hSrcDS = hSrcDSIn;
+    hSrcBand = hSrcBandIn;
+    pfnAlg = pfnAlgIn;
+    pAlgData = pAlgDataIn;
+    bDstHasNoData = bDstHasNoDataIn;
+    dfDstNoDataValue = dfDstNoDataValueIn;
+    bComputeAtEdges = bComputeAtEdgesIn;
     
     CPLAssert(eDstDataType == GDT_Byte || eDstDataType == GDT_Float32);
 
@@ -1916,17 +1916,17 @@ const char *GDALGeneric3x3Dataset::GetProjectionRef()
     return GDALGetProjectionRef(hSrcDS);
 }
 
-GDALGeneric3x3RasterBand::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset *poDS,
+GDALGeneric3x3RasterBand::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset *poDSIn,
                                                    GDALDataType eDstDataType)
 {
-    this->poDS = poDS;
+    poDS = poDSIn;
     this->nBand = 1;
     eDataType = eDstDataType;
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
     bSrcHasNoData = FALSE;
-    fSrcNoDataValue = (float)GDALGetRasterNoDataValue(poDS->hSrcBand,
+    fSrcNoDataValue = (float)GDALGetRasterNoDataValue(poDSIn->hSrcBand,
                                                       &bSrcHasNoData);
     bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(fSrcNoDataValue);
 }
@@ -2406,7 +2406,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
 
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
-            GDALDriverH hDriver = GDALGetDriver(iDr);
+            hDriver = GDALGetDriver(iDr);
 
             if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
                 (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL ||

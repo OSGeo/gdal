@@ -348,7 +348,6 @@ int main( int argc, char ** argv )
 {
     GDALDatasetH *pahSrcDS = NULL;
     int nSrcCount = 0;
-    int i;
 
     /* Check that we are running against at least GDAL 1.6 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -423,7 +422,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Open Source files.                                              */
 /* -------------------------------------------------------------------- */
-    for(i = 0; psOptionsForBinary->papszSrcFiles[i] != NULL; i++)
+    for(int i = 0; psOptionsForBinary->papszSrcFiles[i] != NULL; i++)
     {
         nSrcCount++;
         pahSrcDS = (GDALDatasetH *) CPLRealloc(pahSrcDS, sizeof(GDALDatasetH) * nSrcCount);
@@ -525,7 +524,7 @@ int main( int argc, char ** argv )
     GDALWarpAppOptionsFree(psOptions);
     GDALWarpAppOptionsForBinaryFree(psOptionsForBinary);
 
-    for(i = 0; i < nSrcCount; i++)
+    for(int i = 0; i < nSrcCount; i++)
     {
         GDALClose(pahSrcDS[i]);
     }

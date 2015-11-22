@@ -467,7 +467,6 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     GDALTransformerFunc pfnTransformer = NULL;
     void *hTransformArg = NULL;
     int bHasGotErr = FALSE;
-    int i;
     int bVRT = FALSE;
     void *hCutline = NULL;
 
@@ -782,7 +781,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                         if ( CSLCount(papszMetadata) > 0 )
                         {
                             //GDALSetMetadata( hDstBand, papszMetadata, NULL );       
-                            char** papszMetadataNew = NULL;
+                            papszMetadataNew = NULL;
                             for( int i = 0; papszMetadata != NULL && papszMetadata[i] != NULL; i++ )
                             {
                                 if (!STARTS_WITH(papszMetadata[i], "STATISTICS_"))
@@ -1020,7 +1019,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         psWO->panSrcBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
         psWO->panDstBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
 
-        for( i = 0; i < psWO->nBandCount; i++ )
+        for( int i = 0; i < psWO->nBandCount; i++ )
         {
             psWO->panSrcBands[i] = i+1;
             psWO->panDstBands[i] = i+1;
@@ -1061,7 +1060,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             psWO->padfSrcNoDataImag = (double *) 
                 CPLMalloc(psWO->nBandCount*sizeof(double));
 
-            for( i = 0; i < psWO->nBandCount; i++ )
+            for( int i = 0; i < psWO->nBandCount; i++ )
             {
                 if( i < nTokenCount )
                 {
@@ -1091,7 +1090,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             int bHaveNodata = FALSE;
             double dfReal = 0.0;
 
-            for( i = 0; !bHaveNodata && i < psWO->nBandCount; i++ )
+            for( int i = 0; !bHaveNodata && i < psWO->nBandCount; i++ )
             {
                 GDALRasterBandH hBand = GDALGetRasterBand( hWrkSrcDS, i+1 );
                 dfReal = GDALGetRasterNoDataValue( hBand, &bHaveNodata );
@@ -1113,7 +1112,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 psWO->padfSrcNoDataImag = (double *) 
                     CPLMalloc(psWO->nBandCount*sizeof(double));
                 
-                for( i = 0; i < psWO->nBandCount; i++ )
+                for( int i = 0; i < psWO->nBandCount; i++ )
                 {
                     GDALRasterBandH hBand = GDALGetRasterBand( hWrkSrcDS, i+1 );
 
@@ -1148,7 +1147,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             psWO->padfDstNoDataImag = (double *) 
                 CPLMalloc(psWO->nBandCount*sizeof(double));
 
-            for( i = 0; i < psWO->nBandCount; i++ )
+            for( int i = 0; i < psWO->nBandCount; i++ )
             {
                 psWO->padfDstNoDataReal[i] = -1.1e20;
                 psWO->padfDstNoDataImag[i] = 0.0;
@@ -1226,7 +1225,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         if ( psOptions->pszDstNodata == NULL )
         {
             int bHaveNodataAll = TRUE;
-            for( i = 0; i < psWO->nBandCount; i++ )
+            for( int i = 0; i < psWO->nBandCount; i++ )
             {
                 GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, i+1 );
                 int bHaveNodata = FALSE;
@@ -1239,7 +1238,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                     CPLMalloc(psWO->nBandCount*sizeof(double));
                 psWO->padfDstNoDataImag = (double *) 
                     CPLCalloc(psWO->nBandCount, sizeof(double));
-                for( i = 0; i < psWO->nBandCount; i++ )
+                for( int i = 0; i < psWO->nBandCount; i++ )
                 {
                     GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, i+1 );
                     int bHaveNodata = FALSE;
@@ -1262,7 +1261,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 printf( "Copying nodata values from source %s to destination %s.\n",
                         GDALGetDescription(hSrcDS), pszDest );
 
-            for( i = 0; i < psWO->nBandCount; i++ )
+            for( int i = 0; i < psWO->nBandCount; i++ )
             {
                 int bHaveNodata = FALSE;
                 
@@ -1605,7 +1604,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
 
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
-            GDALDriverH hDriver = GDALGetDriver(iDr);
+            hDriver = GDALGetDriver(iDr);
 
             if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
                 GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL) != NULL )
