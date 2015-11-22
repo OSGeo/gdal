@@ -35,6 +35,7 @@
 #include "netcdfdataset.h"
 
 #include <map> //for NCDFWriteProjAttribs()
+#include <limits>
 
 CPL_CVSID("$Id$");
 
@@ -1151,13 +1152,13 @@ void  netCDFRasterBand::CheckData ( void * pImage,
   /* if mininum longitude is > 180, subtract 360 from all 
      if not, disable checking for further calls (check just once) 
      only check first and last block elements since lon must be monotonic */
-  if ( bCheckLongitude && 
+  if ( bCheckLongitude && std::numeric_limits<T>::is_signed &&
        MIN( ((T *)pImage)[0], ((T *)pImage)[nTmpBlockXSize-1] ) > 180.0 ) {
     for( size_t j=0; j<nTmpBlockYSize; j++) {
       size_t k = j*nBlockXSize;
       for( size_t i=0; i<nTmpBlockXSize; i++,k++) {
         if ( ! CPLIsEqual( (double) ((T *)pImage)[k], dfNoDataValue ) )
-          ((T *)pImage )[k] -= 360;
+          ((T *)pImage )[k] = static_cast<T>(((T *)pImage )[k] - 360);
       }
     }
   }

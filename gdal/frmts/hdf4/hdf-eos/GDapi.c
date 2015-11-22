@@ -9478,7 +9478,7 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
     int32           ntype;	/* Field number type */
     int32           origincode;	/* Origin code */
     int32           bufOffset;	/* Data buffer offset */
-    int32           size;	/* Size of returned data buffer for each
+    int32           size = 0;	/* Size of returned data buffer for each
 				 * value in bytes */
     int32           offset[8];	/* I/O offset (start) */
     int32           incr[8];	/* I/O increment (stride) */

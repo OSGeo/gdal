@@ -676,7 +676,7 @@ void field2kml (
                         {
                             GeometryPtr poKmlGeometry =
                                 poKmlPlacemark->get_geometry (  );
-                            ogr2extrude_rec ( iExtrude,
+                            ogr2extrude_rec ( CPL_TO_BOOL(iExtrude),
                                             poKmlGeometry );
                         }
                     }

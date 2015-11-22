@@ -32,7 +32,14 @@
 
 #define H5_USE_16_API
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4005 ) /* warning C4005: '_HDF5USEDLL_' : macro redefinition */
+#endif
 #include "hdf5.h"
+#ifdef _MSC_VER
+#pragma warning( pop ) 
+#endif
 
 #include "cpl_string.h"
 #include "gdal.h"

@@ -7831,7 +7831,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
       }
       else
       {
-         p1_long = p1_long - 90.0;
+         p1_long = p1_long - 90.0f;
          p1_long_g90_flag = 1;
       }
    }

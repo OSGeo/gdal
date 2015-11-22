@@ -1604,7 +1604,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
                                         strlen(SRS_PP_CENTRAL_MERIDIAN) );
         }
 
-        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_FALSE_EASTING) ) )
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_FALSE_EASTING) ) != NULL )
         {
             strncpy( pszStart, "False_Easting", strlen(SRS_PP_FALSE_EASTING) );
         }

@@ -474,7 +474,7 @@ GDALRasterAttributeTable *KEARasterBand::GetDefaultRAT()
             kealib::KEAAttributeTable *pKEATable = this->m_pImageIO->getAttributeTable(kealib::kea_att_file, this->nBand);
             this->m_pAttributeTable = new KEARasterAttributeTable(pKEATable);
         }
-        catch(kealib::KEAException &e)
+        catch(const kealib::KEAException &e)
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to read attributes: %s", e.what() );
         }
@@ -573,7 +573,7 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
             }
         }
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to write attributes: %s", e.what() );
         return CE_Failure;
@@ -627,7 +627,7 @@ GDALColorTable *KEARasterBand::GetColorTable()
                 }
             }
         }
-        catch(kealib::KEAException &e)
+        catch(const kealib::KEAException &e)
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to read color table: %s", e.what() );
             delete this->m_pColorTable;
@@ -725,7 +725,7 @@ CPLErr KEARasterBand::SetColorTable(GDALColorTable *poCT)
         delete this->m_pColorTable;
         this->m_pColorTable = NULL;
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to write color table: %s", e.what() );
         return CE_Failure;
@@ -740,7 +740,7 @@ GDALColorInterp KEARasterBand::GetColorInterpretation()
     {
         ekeainterp = this->m_pImageIO->getImageBandClrInterp(this->nBand);
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &)
     {
         return GCI_GrayIndex;
     }
@@ -867,7 +867,7 @@ CPLErr KEARasterBand::SetColorInterpretation(GDALColorInterp egdalinterp)
     {
         this->m_pImageIO->setImageBandClrInterp(this->nBand, ekeainterp);
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &)
     {
         // do nothing? The docs say CE_Failure only if unsupporte by format
     }
@@ -934,7 +934,7 @@ CPLErr KEARasterBand::CreateMaskBand(CPL_UNUSED int nFlags)
     {
         this->m_pImageIO->createMask(this->nBand);
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to create mask band: %s", e.what());
         return CE_Failure;
@@ -960,7 +960,7 @@ GDALRasterBand* KEARasterBand::GetMaskBand()
                 m_pMaskBand = GDALPamRasterBand::GetMaskBand();
             }
         }
-        catch(kealib::KEAException &e)
+        catch(const kealib::KEAException &)
         {
             // do nothing?
         }
@@ -980,7 +980,7 @@ int KEARasterBand::GetMaskFlags()
             return GDALPamRasterBand::GetMaskFlags();
         }
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &)
     {
         // do nothing?
     }
