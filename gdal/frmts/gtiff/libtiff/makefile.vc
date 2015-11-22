@@ -45,7 +45,7 @@ GDAL_ROOT	=	..\..\..
 # in tif_jpeg.c:147 and tif_ojpeg.c:248
 
 EXTRAFLAGS = 	-I..\..\zlib -DZIP_SUPPORT -DPIXARLOG_SUPPORT \
-		$(JPEG_FLAGS) $(JPEG12_FLAGS) $(LZMA_FLAGS)
+		$(JPEG_FLAGS) $(JPEG12_FLAGS) $(LZMA_FLAGS) /wd4324
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
