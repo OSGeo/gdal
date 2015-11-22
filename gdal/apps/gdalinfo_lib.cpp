@@ -164,7 +164,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
     double      adfGeoTransform[6];
     GDALDriverH     hDriver;
     char **papszFileList;
-    const char  *pszProjection = NULL;
     OGRCoordinateTransformationH hTransform = NULL, hTransformWGS84 = NULL;
     CPLString osStr;
     int bJson = FALSE;
@@ -470,6 +469,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 /* -------------------------------------------------------------------- */
 /*      Setup projected to lat/long transform if appropriate.           */
 /* -------------------------------------------------------------------- */
+    const char  *pszProjection = NULL;
     if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
         pszProjection = GDALGetProjectionRef(hDataset);
 

@@ -579,13 +579,13 @@ class OGRSplitListFieldLayer : public OGRLayer
 /*                    OGRSplitListFieldLayer()                          */
 /************************************************************************/
 
-OGRSplitListFieldLayer::OGRSplitListFieldLayer(OGRLayer* poSrcLayer,
-                                               int nMaxSplitListSubFields)
+OGRSplitListFieldLayer::OGRSplitListFieldLayer(OGRLayer* poSrcLayerIn,
+                                               int nMaxSplitListSubFieldsIn)
 {
-    this->poSrcLayer = poSrcLayer;
+    poSrcLayer = poSrcLayerIn;
+    nMaxSplitListSubFields = nMaxSplitListSubFieldsIn;
     if (nMaxSplitListSubFields < 0)
         nMaxSplitListSubFields = INT_MAX;
-    this->nMaxSplitListSubFields = nMaxSplitListSubFields;
     poFeatureDefn = NULL;
     pasListFields = NULL;
     nListFieldCount = 0;
@@ -897,7 +897,7 @@ public:
     GCPCoordTransformation( int nGCPCount,
                             const GDAL_GCP *pasGCPList,
                             int  nReqOrder,
-                            OGRSpatialReference* poSRS)
+                            OGRSpatialReference* poSRSIn)
     {
         if( nReqOrder < 0 )
         {
@@ -911,7 +911,7 @@ public:
             hTransformArg =
                 GDALCreateGCPTransformer( nGCPCount, pasGCPList, nReqOrder, FALSE );
         }
-        this->poSRS = poSRS;
+        poSRS = poSRSIn;
         if( poSRS) 
             poSRS->Reference();
     }
@@ -979,11 +979,11 @@ public:
     OGRCoordinateTransformation* poCT1;
     OGRCoordinateTransformation* poCT2;
 
-    CompositeCT( OGRCoordinateTransformation* poCT1, /* will not be deleted */
-                 OGRCoordinateTransformation* poCT2  /* deleted with OGRCoordinateTransformation::DestroyCT() */ )
+    CompositeCT( OGRCoordinateTransformation* poCT1In, /* will not be deleted */
+                 OGRCoordinateTransformation* poCT2In  /* deleted with OGRCoordinateTransformation::DestroyCT() */ )
     {
-        this->poCT1 = poCT1;
-        this->poCT2 = poCT2;
+        poCT1 = poCT1In;
+        poCT2 = poCT2In;
     }
 
     virtual ~CompositeCT()
@@ -2515,7 +2515,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     OGRFeatureDefn *poSrcFDefn;
     OGRFeatureDefn *poDstFDefn = NULL;
     int eGType = eGTypeIn;
-    int bPreserveFID = this->bPreserveFID;
+    int l_bPreserveFID = bPreserveFID;
 
     if( pszNewLayerName == NULL )
         pszNewLayerName = poSrcLayer->GetName();
@@ -2721,7 +2721,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID", poSrcLayer->GetFIDColumn());
             CPLDebug("GDALVectorTranslate", "Using FID=%s and -preserve_fid", poSrcLayer->GetFIDColumn());
-            bPreserveFID = TRUE;
+            l_bPreserveFID = TRUE;
         }
 
         if( bNativeData &&
@@ -3127,7 +3127,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         psInfo->iRequestedSrcGeomField = anRequestedGeomFields[0];
     else
         psInfo->iRequestedSrcGeomField = -1;
-    psInfo->bPreserveFID = bPreserveFID;
+    psInfo->bPreserveFID = l_bPreserveFID;
 
     return psInfo;
 }

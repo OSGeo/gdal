@@ -275,54 +275,54 @@ class VRTBuilder
 /*                          VRTBuilder()                                */
 /************************************************************************/
 
-VRTBuilder::VRTBuilder(const char* pszOutputFilename,
-                       int nInputFiles, const char* const * ppszInputFilenames,
-                       const int *panBandListIn, int nBandCount, int nMaxBandNo,
-                       ResolutionStrategy resolutionStrategy,
-                       double we_res, double ns_res,
-                       int bTargetAlignedPixels,
-                       double minX, double minY, double maxX, double maxY,
-                       int bSeparate, int bAllowProjectionDifference,
-                       int bAddAlpha, int bHideNoData, int nSubdataset,
-                       const char* pszSrcNoData, const char* pszVRTNoData,
-                       const char* pszOutputSRS,
-                       const char* pszResampling)
+VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
+                       int nInputFilesIn, const char* const * ppszInputFilenamesIn,
+                       const int *panBandListIn, int nBandCount, int nMaxBandNoIn,
+                       ResolutionStrategy resolutionStrategyIn,
+                       double we_resIn, double ns_resIn,
+                       int bTargetAlignedPixelsIn,
+                       double minXIn, double minYIn, double maxXIn, double maxYIn,
+                       int bSeparateIn, int bAllowProjectionDifferenceIn,
+                       int bAddAlphaIn, int bHideNoDataIn, int nSubdatasetIn,
+                       const char* pszSrcNoDataIn, const char* pszVRTNoDataIn,
+                       const char* pszOutputSRSIn,
+                       const char* pszResamplingIn)
 {
-    this->pszOutputFilename = CPLStrdup(pszOutputFilename);
-    this->nInputFiles = nInputFiles;
+    pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
+    nInputFiles = nInputFilesIn;
 
-    this->ppszInputFilenames = (char**) CPLMalloc(nInputFiles * sizeof(char*));
+    ppszInputFilenames = (char**) CPLMalloc(nInputFiles * sizeof(char*));
     for(int i=0;i<nInputFiles;i++)
     {
-        this->ppszInputFilenames[i] = CPLStrdup(ppszInputFilenames[i]);
+        ppszInputFilenames[i] = CPLStrdup(ppszInputFilenamesIn[i]);
     }
 
-    this->nBands = nBandCount;
+    nBands = nBandCount;
     panBandList = NULL;
     if( nBandCount )
     {
         panBandList = (int*) CPLMalloc(nBands * sizeof(int));
         memcpy(panBandList, panBandListIn, nBands * sizeof(int));
     }
-    this->nMaxBandNo = nMaxBandNo;    
+    nMaxBandNo = nMaxBandNoIn;
 
-    this->resolutionStrategy = resolutionStrategy;
-    this->we_res = we_res;
-    this->ns_res = ns_res;
-    this->bTargetAlignedPixels = bTargetAlignedPixels;
-    this->minX = minX;
-    this->minY = minY;
-    this->maxX = maxX;
-    this->maxY = maxY;
-    this->bSeparate = bSeparate;
-    this->bAllowProjectionDifference = bAllowProjectionDifference;
-    this->bAddAlpha = bAddAlpha;
-    this->bHideNoData = bHideNoData;
-    this->nSubdataset = nSubdataset;
-    this->pszSrcNoData = (pszSrcNoData) ? CPLStrdup(pszSrcNoData) : NULL;
-    this->pszVRTNoData = (pszVRTNoData) ? CPLStrdup(pszVRTNoData) : NULL;
-    this->pszOutputSRS = (pszOutputSRS) ? CPLStrdup(pszOutputSRS) : NULL;
-    this->pszResampling = (pszResampling) ? CPLStrdup(pszResampling) : NULL;
+    resolutionStrategy = resolutionStrategyIn;
+    we_res = we_resIn;
+    ns_res = ns_resIn;
+    bTargetAlignedPixels = bTargetAlignedPixelsIn;
+    minX = minXIn;
+    minY = minYIn;
+    maxX = maxXIn;
+    maxY = maxYIn;
+    bSeparate = bSeparateIn;
+    bAllowProjectionDifference = bAllowProjectionDifferenceIn;
+    bAddAlpha = bAddAlphaIn;
+    bHideNoData = bHideNoDataIn;
+    nSubdataset = nSubdatasetIn;
+    pszSrcNoData = (pszSrcNoDataIn) ? CPLStrdup(pszSrcNoDataIn) : NULL;
+    pszVRTNoData = (pszVRTNoDataIn) ? CPLStrdup(pszVRTNoDataIn) : NULL;
+    pszOutputSRS = (pszOutputSRSIn) ? CPLStrdup(pszOutputSRSIn) : NULL;
+    pszResampling = (pszResamplingIn) ? CPLStrdup(pszResamplingIn) : NULL;
 
     bUserExtent = FALSE;
     pszProjectionRef = NULL;
