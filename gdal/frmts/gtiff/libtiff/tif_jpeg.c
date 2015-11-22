@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.120 2015-11-18 20:35:10 erouault Exp $ */
+/* $Id: tif_jpeg.c,v 1.121 2015-11-22 15:31:03 erouault Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -937,7 +937,7 @@ JPEGFixupTagsSubsamplingSkip(struct JPEGFixupTagsSubsamplingData* data, uint16 s
 	else
 	{
 		uint16 m;
-		m=skiplength-data->bufferbytesleft;
+		m=(uint16)(skiplength-data->bufferbytesleft);
 		if (m<=data->filebytesleft)
 		{
 			data->bufferbytesleft=0;
@@ -1303,10 +1303,10 @@ JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
                                                        ((unsigned char *) buf) + iPair * 3;
                                                JSAMPLE *in_ptr = line_work_buf + iPair * 2;
 
-                                               out_ptr[0] = (in_ptr[0] & 0xff0) >> 4;
-                                               out_ptr[1] = ((in_ptr[0] & 0xf) << 4)
-                                                       | ((in_ptr[1] & 0xf00) >> 8);
-                                               out_ptr[2] = ((in_ptr[1] & 0xff) >> 0);
+                                               out_ptr[0] = (unsigned char)((in_ptr[0] & 0xff0) >> 4);
+                                               out_ptr[1] = (unsigned char)(((in_ptr[0] & 0xf) << 4)
+                                                       | ((in_ptr[1] & 0xf00) >> 8));
+                                               out_ptr[2] = (unsigned char)(((in_ptr[1] & 0xff) >> 0));
                                        }
                                }
                                else if( sp->cinfo.d.data_precision == 8 )
@@ -1367,7 +1367,7 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 	(void) s;
 
 	/* data is expected to be read in multiples of a scanline */
-	if ( (nrows = sp->cinfo.d.image_height) ) {
+	if ( (nrows = sp->cinfo.d.image_height) != 0 ) {
 
 		/* Cb,Cr both have sampling factors 1, so this is correct */
 		JDIMENSION clumps_per_line = sp->cinfo.d.comp_info[1].downsampled_width;            
@@ -1467,10 +1467,10 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 					{
 						unsigned char *out_ptr = ((unsigned char *) buf) + iPair * 3;
 						JSAMPLE *in_ptr = (JSAMPLE *) (tmpbuf + iPair * 2);
-						out_ptr[0] = (in_ptr[0] & 0xff0) >> 4;
-						out_ptr[1] = ((in_ptr[0] & 0xf) << 4)
-							| ((in_ptr[1] & 0xf00) >> 8);
-						out_ptr[2] = ((in_ptr[1] & 0xff) >> 0);
+						out_ptr[0] = (unsigned char)((in_ptr[0] & 0xff0) >> 4);
+						out_ptr[1] = (unsigned char)(((in_ptr[0] & 0xf) << 4)
+							| ((in_ptr[1] & 0xf00) >> 8));
+						out_ptr[2] = (unsigned char)(((in_ptr[1] & 0xff) >> 0));
 					}
 				}
 			}
@@ -2167,7 +2167,7 @@ JPEGVSetField(TIFF* tif, uint32 tag, va_list ap)
 		return (*sp->vsetparent)(tif, tag, ap);
 	}
 
-	if ((fip = TIFFFieldWithTag(tif, tag))) {
+	if ((fip = TIFFFieldWithTag(tif, tag)) != NULL) {
 		TIFFSetFieldBit(tif, fip->field_bit);
 	} else {
 		return (0);

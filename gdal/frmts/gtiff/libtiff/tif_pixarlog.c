@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.40 2015-11-18 20:35:10 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.41 2015-11-22 15:31:03 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -296,33 +296,35 @@ horizontalAccumulate16(uint16 *wp, int n, int stride, uint16 *op,
 static void
 horizontalAccumulate11(uint16 *wp, int n, int stride, uint16 *op)
 {
-    register unsigned int  cr, cg, cb, ca, mask;
+    register unsigned int cr, cg, cb, ca, mask;
 
     if (n >= stride) {
 	mask = CODE_MASK;
 	if (stride == 3) {
-	    op[0] = cr = wp[0];  op[1] = cg = wp[1];  op[2] = cb = wp[2];
+	    op[0] = wp[0];  op[1] = wp[1];  op[2] = wp[2];
+            cr = wp[0];  cg = wp[1];  cb = wp[2];
 	    n -= 3;
 	    while (n > 0) {
 		wp += 3;
 		op += 3;
 		n -= 3;
-		op[0] = (cr += wp[0]) & mask;
-		op[1] = (cg += wp[1]) & mask;
-		op[2] = (cb += wp[2]) & mask;
+		op[0] = (uint16)((cr += wp[0]) & mask);
+		op[1] = (uint16)((cg += wp[1]) & mask);
+		op[2] = (uint16)((cb += wp[2]) & mask);
 	    }
 	} else if (stride == 4) {
-	    op[0] = cr = wp[0];  op[1] = cg = wp[1];
-	    op[2] = cb = wp[2];  op[3] = ca = wp[3];
+	    op[0] = wp[0];  op[1] = wp[1];
+	    op[2] = wp[2];  op[3] = wp[3];
+            cr = wp[0]; cg = wp[1]; cb = wp[2]; ca = wp[3];
 	    n -= 4;
 	    while (n > 0) {
 		wp += 4;
 		op += 4;
 		n -= 4;
-		op[0] = (cr += wp[0]) & mask;
-		op[1] = (cg += wp[1]) & mask;
-		op[2] = (cb += wp[2]) & mask;
-		op[3] = (ca += wp[3]) & mask;
+		op[0] = (uint16)((cr += wp[0]) & mask);
+		op[1] = (uint16)((cg += wp[1]) & mask);
+		op[2] = (uint16)((cb += wp[2]) & mask);
+		op[3] = (uint16)((ca += wp[3]) & mask);
 	    } 
 	} else {
 	    REPEAT(stride, *op = *wp&mask; wp++; op++)
@@ -556,7 +558,7 @@ PixarLogMakeTables(PixarLogState *sp)
     for (i = 0; i < lt2size; i++)  {
 	if ((i*linstep)*(i*linstep) > ToLinearF[j]*ToLinearF[j+1])
 	    j++;
-	FromLT2[i] = j;
+	FromLT2[i] = (uint16)j;
     }
 
     /*
@@ -568,14 +570,14 @@ PixarLogMakeTables(PixarLogState *sp)
     for (i = 0; i < 16384; i++)  {
 	while ((i/16383.)*(i/16383.) > ToLinearF[j]*ToLinearF[j+1])
 	    j++;
-	From14[i] = j;
+	From14[i] = (uint16)j;
     }
 
     j = 0;
     for (i = 0; i < 256; i++)  {
 	while ((i/255.)*(i/255.) > ToLinearF[j]*ToLinearF[j+1])
 	    j++;
-	From8[i] = j;
+	From8[i] = (uint16)j;
     }
 
     Fltsize = (float)(lt2size/2);
@@ -953,9 +955,9 @@ horizontalDifferenceF(float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
 		n -= 3;
 		wp += 3;
 		ip += 3;
-		r1 = (int32) CLAMP(ip[0]); wp[0] = (r1-r2) & mask; r2 = r1;
-		g1 = (int32) CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
-		b1 = (int32) CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
+		r1 = (int32) CLAMP(ip[0]); wp[0] = (uint16)((r1-r2) & mask); r2 = r1;
+		g1 = (int32) CLAMP(ip[1]); wp[1] = (uint16)((g1-g2) & mask); g2 = g1;
+		b1 = (int32) CLAMP(ip[2]); wp[2] = (uint16)((b1-b2) & mask); b2 = b1;
 	    }
 	} else if (stride == 4) {
 	    r2 = wp[0] = (uint16) CLAMP(ip[0]);
@@ -967,10 +969,10 @@ horizontalDifferenceF(float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
 		n -= 4;
 		wp += 4;
 		ip += 4;
-		r1 = (int32) CLAMP(ip[0]); wp[0] = (r1-r2) & mask; r2 = r1;
-		g1 = (int32) CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
-		b1 = (int32) CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
-		a1 = (int32) CLAMP(ip[3]); wp[3] = (a1-a2) & mask; a2 = a1;
+		r1 = (int32) CLAMP(ip[0]); wp[0] = (uint16)((r1-r2) & mask); r2 = r1;
+		g1 = (int32) CLAMP(ip[1]); wp[1] = (uint16)((g1-g2) & mask); g2 = g1;
+		b1 = (int32) CLAMP(ip[2]); wp[2] = (uint16)((b1-b2) & mask); b2 = b1;
+		a1 = (int32) CLAMP(ip[3]); wp[3] = (uint16)((a1-a2) & mask); a2 = a1;
 	    }
 	} else {
 	    ip += n - 1;	/* point to last one */
@@ -1008,9 +1010,9 @@ horizontalDifference16(unsigned short *ip, int n, int stride,
 		n -= 3;
 		wp += 3;
 		ip += 3;
-		r1 = CLAMP(ip[0]); wp[0] = (r1-r2) & mask; r2 = r1;
-		g1 = CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
-		b1 = CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
+		r1 = CLAMP(ip[0]); wp[0] = (uint16)((r1-r2) & mask); r2 = r1;
+		g1 = CLAMP(ip[1]); wp[1] = (uint16)((g1-g2) & mask); g2 = g1;
+		b1 = CLAMP(ip[2]); wp[2] = (uint16)((b1-b2) & mask); b2 = b1;
 	    }
 	} else if (stride == 4) {
 	    r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
@@ -1020,10 +1022,10 @@ horizontalDifference16(unsigned short *ip, int n, int stride,
 		n -= 4;
 		wp += 4;
 		ip += 4;
-		r1 = CLAMP(ip[0]); wp[0] = (r1-r2) & mask; r2 = r1;
-		g1 = CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
-		b1 = CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
-		a1 = CLAMP(ip[3]); wp[3] = (a1-a2) & mask; a2 = a1;
+		r1 = CLAMP(ip[0]); wp[0] = (uint16)((r1-r2) & mask); r2 = r1;
+		g1 = CLAMP(ip[1]); wp[1] = (uint16)((g1-g2) & mask); g2 = g1;
+		b1 = CLAMP(ip[2]); wp[2] = (uint16)((b1-b2) & mask); b2 = b1;
+		a1 = CLAMP(ip[3]); wp[3] = (uint16)((a1-a2) & mask); a2 = a1;
 	    }
 	} else {
 	    ip += n - 1;	/* point to last one */
@@ -1059,9 +1061,9 @@ horizontalDifference8(unsigned char *ip, int n, int stride,
 	    n -= 3;
 	    while (n > 0) {
 		n -= 3;
-		r1 = CLAMP(ip[3]); wp[3] = (r1-r2) & mask; r2 = r1;
-		g1 = CLAMP(ip[4]); wp[4] = (g1-g2) & mask; g2 = g1;
-		b1 = CLAMP(ip[5]); wp[5] = (b1-b2) & mask; b2 = b1;
+		r1 = CLAMP(ip[3]); wp[3] = (uint16)((r1-r2) & mask); r2 = r1;
+		g1 = CLAMP(ip[4]); wp[4] = (uint16)((g1-g2) & mask); g2 = g1;
+		b1 = CLAMP(ip[5]); wp[5] = (uint16)((b1-b2) & mask); b2 = b1;
 		wp += 3;
 		ip += 3;
 	    }
@@ -1071,10 +1073,10 @@ horizontalDifference8(unsigned char *ip, int n, int stride,
 	    n -= 4;
 	    while (n > 0) {
 		n -= 4;
-		r1 = CLAMP(ip[4]); wp[4] = (r1-r2) & mask; r2 = r1;
-		g1 = CLAMP(ip[5]); wp[5] = (g1-g2) & mask; g2 = g1;
-		b1 = CLAMP(ip[6]); wp[6] = (b1-b2) & mask; b2 = b1;
-		a1 = CLAMP(ip[7]); wp[7] = (a1-a2) & mask; a2 = a1;
+		r1 = CLAMP(ip[4]); wp[4] = (uint16)((r1-r2) & mask); r2 = r1;
+		g1 = CLAMP(ip[5]); wp[5] = (uint16)((g1-g2) & mask); g2 = g1;
+		b1 = CLAMP(ip[6]); wp[6] = (uint16)((b1-b2) & mask); b2 = b1;
+		a1 = CLAMP(ip[7]); wp[7] = (uint16)((a1-a2) & mask); a2 = a1;
 		wp += 4;
 		ip += 4;
 	    }

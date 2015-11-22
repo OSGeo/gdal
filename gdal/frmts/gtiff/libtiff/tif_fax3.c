@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.75 2015-08-30 20:49:55 erouault Exp $ */
+/* $Id: tif_fax3.c,v 1.76 2015-11-22 15:31:03 erouault Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -815,7 +815,7 @@ find0span(unsigned char* bp, int32 bs, int32 be)
 	/*
 	 * Check partial byte on lhs.
 	 */
-	if (bits > 0 && (n = (bs & 7))) {
+	if (bits > 0 && (n = (bs & 7)) != 0) {
 		span = zeroruns[(*bp << n) & 0xff];
 		if (span > 8-n)		/* table value too generous */
 			span = 8-n;
@@ -874,7 +874,7 @@ find1span(unsigned char* bp, int32 bs, int32 be)
 	/*
 	 * Check partial byte on lhs.
 	 */
-	if (bits > 0 && (n = (bs & 7))) {
+	if (bits > 0 && (n = (bs & 7)) != 0) {
 		span = oneruns[(*bp << n) & 0xff];
 		if (span > 8-n)		/* table value too generous */
 			span = 8-n;
@@ -1182,7 +1182,7 @@ Fax3VSetField(TIFF* tif, uint32 tag, va_list ap)
 		return (*sp->vsetparent)(tif, tag, ap);
 	}
 	
-	if ((fip = TIFFFieldWithTag(tif, tag)))
+	if ((fip = TIFFFieldWithTag(tif, tag)) != NULL)
 		TIFFSetFieldBit(tif, fip->field_bit);
 	else
 		return 0;

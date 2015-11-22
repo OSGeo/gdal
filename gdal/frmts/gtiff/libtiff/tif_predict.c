@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.35 2015-08-31 15:05:57 erouault Exp $ */
+/* $Id: tif_predict.c,v 1.36 2015-11-22 15:31:03 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -700,7 +700,7 @@ PredictorVGetField(TIFF* tif, uint32 tag, va_list ap)
 
 	switch (tag) {
 	case TIFFTAG_PREDICTOR:
-		*va_arg(ap, uint16*) = sp->predictor;
+		*va_arg(ap, uint16*) = (uint16)sp->predictor;
 		break;
 	default:
 		return (*sp->vgetparent)(tif, tag, ap);
