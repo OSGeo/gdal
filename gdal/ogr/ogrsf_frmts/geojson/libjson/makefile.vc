@@ -18,7 +18,8 @@ GDAL_ROOT	=	..\..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS =	-I.. -I..\.. -I..\..\.. $(SOFTWARNFLAGS)
+# disable warning C4306: 'type cast' : conversion from 'int' to 'void *' of greater size
+EXTRAFLAGS =	-I.. -I..\.. -I..\..\.. $(SOFTWARNFLAGS) /wd4306
 
 default:	$(OBJ)
 
