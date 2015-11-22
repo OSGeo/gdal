@@ -1729,7 +1729,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 |                                                                             |
 |  FUNCTION: SWfieldinfo                                                      |
 |                                                                             |
-|  DESCRIPTION: Wrapper arount SWfinfo                                        |
+|  DESCRIPTION: Wrapper around SWfinfo                                        |
 |                                                                             |
 |                                                                             |
 |  Return Value    Type     Units     Description                             |

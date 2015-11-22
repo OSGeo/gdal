@@ -2328,9 +2328,9 @@ OGRErr CPL_STDCALL OSRImportFromEPSGA( OGRSpatialReferenceH hSRS, int nCode )
  *
  * @param dfOverrideUnit Linear unit conversion factor to apply overriding
  * the legal definition for this zone. 
- * 
+ *
  * @return OGRERR_NONE on success, or OGRERR_FAILURE on failure, mostly likely
- * due to the EPSG tables not being accessable. 
+ * due to the EPSG tables not being accessible.
  */
 
 OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,

@@ -108,7 +108,7 @@ typedef struct linkedlist_datablock_internal_s
   struct linkedlist_datablock_internal_s* next_datablock;
   uLong  avail_in_this_block;
   uLong  filled_in_this_block;
-  uLong  unused; /* for future use and alignement */
+  uLong  unused;  // For future use and alignment.
   unsigned char data[SIZEDATA_INDATABLOCK];
 } linkedlist_datablock_internal;
 

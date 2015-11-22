@@ -141,7 +141,7 @@ namespace Selafin {
             int nFields;   //!< Number of fields for each record (second index) in the TimeStep::papadfData array, which should correspond to the number of attributes in a Selafin layer
         public:
             double dfDate;  //!< Date of the time step (usually in seconds after the starting date)
-            double **papadfData;    //!< Double-indexed array with values of all atributes for all features. The first index is the number of the attribute, the second is the number of the feature.
+            double **papadfData;    //!< Double-indexed array with values of all attributes for all features. The first index is the number of the attribute, the second is the number of the feature.
 
             /**
              * \brief Constructor of the structure

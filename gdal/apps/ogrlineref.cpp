@@ -943,7 +943,7 @@ static OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, 
 
     poLnLayer->ResetReading();
     //get first geometry
-    //TODO: attruibute filter for path geometry 
+    // TODO: Attribute filter for path geometry.
     OGRFeature* pPathFeature = poLnLayer->GetNextFeature();
     if (NULL != pPathFeature)
     {

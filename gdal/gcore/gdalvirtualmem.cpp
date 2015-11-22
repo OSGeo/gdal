@@ -1334,7 +1334,7 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
  * "dirty" page) when the cache size limit has been reached.
  *
  * Contrary to GDALDatasetGetVirtualMem(), pixels will be organized by tiles
- * instead of scanlines. Different ways of organizing pixel within/accross tiles
+ * instead of scanlines. Different ways of organizing pixel within/across tiles
  * can be selected with the eTileOrganization parameter.
  *
  * If nXSize is not a multiple of nTileXSize or nYSize is not a multiple of

@@ -271,7 +271,7 @@ def netcdf_1():
 
 ###############################################################################
 # Verify a simple createcopy operation.  We can't do the trivial gdaltest
-# operation because the new file will only be accessable via subdatasets!
+# operation because the new file will only be accessible via subdatasets.
 
 def netcdf_2():
 
@@ -279,7 +279,7 @@ def netcdf_2():
         return 'skip'
 
     src_ds = gdal.Open( 'data/byte.tif' )
-    
+
     base_ds = gdaltest.netcdf_drv.CreateCopy( 'tmp/netcdf2.nc', src_ds)
     del base_ds
 

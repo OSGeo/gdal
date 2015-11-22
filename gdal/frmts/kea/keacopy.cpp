@@ -343,8 +343,8 @@ static void KEACopyMetadata( GDALMajorObject *pObject, kealib::KEAImageIO *pImag
                 }
                 else if( ( nBand != -1 ) && EQUAL( pszName, "STATISTICS_HISTOBINVALUES") )
                 {
-                    // this gets copied accross as part of the attributes
-                    // so ignore for now
+                    // This gets copied across as part of the attributes
+                    // so ignore for now.
                 }
                 else
                 {
@@ -475,11 +475,12 @@ static void KEACopyGCPs(GDALDataset *pDataset, kealib::KEAImageIO *pImageIO)
 
 
 
-bool KEACopyFile( GDALDataset *pDataset, kealib::KEAImageIO *pImageIO, GDALProgressFunc pfnProgress, void *pProgressData )
+bool KEACopyFile( GDALDataset *pDataset, kealib::KEAImageIO *pImageIO,
+                  GDALProgressFunc pfnProgress, void *pProgressData )
 {
     // Main function - copies pDataset to pImageIO
 
-    // copy accross the spatial info
+    // Copy across the spatial info.
     KEACopySpatialInfo( pDataset, pImageIO);
 
     // dataset metadata
@@ -487,13 +488,14 @@ bool KEACopyFile( GDALDataset *pDataset, kealib::KEAImageIO *pImageIO, GDALProgr
 
     // GCPs
     KEACopyGCPs(pDataset, pImageIO);
-    
+
     // now copy all the bands over
     int nBands = pDataset->GetRasterCount();
     for( int nBand = 0; nBand < nBands; nBand++ )
     {
         GDALRasterBand *pBand = pDataset->GetRasterBand(nBand + 1);
-        if( !KEACopyBand( pBand, pImageIO, nBand +1, nBands, pfnProgress, pProgressData ) )
+        if( !KEACopyBand( pBand, pImageIO, nBand +1, nBands, pfnProgress,
+                          pProgressData ) )
             return false;
     }
 

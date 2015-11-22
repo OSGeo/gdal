@@ -43,8 +43,8 @@ GDALWMSMiniDriver_AGS::~GDALWMSMiniDriver_AGS()
 
 CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
 {
-	CPLErr ret = CE_None;
-	int i;
+    CPLErr ret = CE_None;
+    int i;
 
     if (ret == CE_None) 
     {

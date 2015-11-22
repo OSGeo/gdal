@@ -178,8 +178,8 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/
+/*      First we check to see if the file has the expected header       */
+/*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 256 )
         return NULL;
@@ -208,7 +208,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to open `%s' with acces `%s' failed.\n",
+                  "Attempt to open `%s' with access `%s' failed.\n",
                   poOpenInfo->pszFilename, pszAccess );
         delete poDS;
         return NULL;

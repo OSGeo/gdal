@@ -3853,8 +3853,9 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
                             dfLastValidAlpha -= dfMaxDeltaAlpha;
                             j --;
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                            printf("--> corrected as fabs(dfLastValidAlpha - alpha0_1)=%f, j=%d\n",
-                                fabs(dfLastValidAlpha - alpha0_1), j);
+                            printf( "--> corrected as fabs(dfLastValidAlpha - "
+                                    "alpha0_1)=%f, j=%d\n",
+                                    fabs(dfLastValidAlpha - alpha0_1), j);
 #endif
                         }
                     }
@@ -3865,8 +3866,9 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
                             dfLastValidAlpha += dfMaxDeltaAlpha;
                             j --;
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                            printf("--> corrected as fabs(dfLastValidAlpha - alpha0_1)=%f, j=%d\n",
-                                fabs(dfLastValidAlpha - alpha0_1), j);
+                            printf( "--> corrected as fabs(dfLastValidAlpha - "
+                                    "alpha0_1)=%f, j=%d\n",
+                                    fabs(dfLastValidAlpha - alpha0_1), j);
 #endif
                         }
                     }
@@ -3875,7 +3877,8 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
                 }
 
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                printf("j=%d, nAlphaRatioReversed = %u --> inconsistent values accross arc. Don't use it\n",
+                printf( "j=%d, nAlphaRatioReversed = %u --> inconsistent "
+                        "values across arc. Don't use it\n",
                         j, nAlphaRatioReversed);
 #endif
                 bValidAlphaRatio = FALSE;

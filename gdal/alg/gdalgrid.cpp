@@ -1728,12 +1728,12 @@ static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
  * Creates a context to do regular gridding from the scattered data.
  *
  * This function takes the arrays of X and Y coordinates and corresponding Z
- * values as input to preprare computation of regular grid (or call it a raster) from these
- * scattered data.
+ * values as input to preprare computation of regular grid (or call it a raster)
+ * from these scattered data.
  *
  * On Intel/AMD i386/x86_64 architectures, some
  * gridding methods will be optimized with SSE instructions (provided GDAL
- * has been compiled with such support, and it is availabable at runtime).
+ * has been compiled with such support, and it is available at runtime).
  * Currently, only 'invdist' algorithm with default parameters has an optimized
  * implementation.
  * This can provide substantial speed-up, but sometimes at the expense of
@@ -2378,7 +2378,7 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
  *
  * Starting with GDAL 1.10, on Intel/AMD i386/x86_64 architectures, some
  * gridding methods will be optimized with SSE instructions (provided GDAL
- * has been compiled with such support, and it is availabable at runtime).
+ * has been compiled with such support, and it is available at runtime).
  * Currently, only 'invdist' algorithm with default parameters has an optimized
  * implementation.
  * This can provide substantial speed-up, but sometimes at the expense of

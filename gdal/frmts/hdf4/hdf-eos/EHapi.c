@@ -2907,8 +2907,8 @@ EHfillfld(int32 sdid, int32 rank, CPL_UNUSED int32 truerank, int32 size, int32 o
 |  func()         float64             Function to bisect                      |
 |  funcParms      float64             Function parameters (fixed)             |
 |  nParms         int32               Number of function parameters           |
-|  limLft         float64             Lower limit of function arguement       |
-|  limRgt         float64             Upper limit of function arguement       |
+|  limLft         float64             Lower limit of function argument       |
+|  limRgt         float64             Upper limit of function argument       |
 |  convCrit       float64             Convergence criterion                   |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -3088,8 +3088,8 @@ EHattr(int32 fid, int32 attrVgrpID, char *attrname, int32 numbertype,
      */
 
 
-    /* Get Attribute Vdata ID and "open" with approriate I/O code */
-    /* ---------------------------------------------------------- */
+    /* Get Attribute Vdata ID and "open" with appropriate I/O code */
+    /* ----------------------------------------------------------- */
     vdataID = EHgetid(fid, attrVgrpID, attrname, 1, wrcode);
 
     /* Write Attribute Section */

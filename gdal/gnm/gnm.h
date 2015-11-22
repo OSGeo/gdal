@@ -403,7 +403,7 @@ protected:
     virtual CPLErr CheckLayerDriver(const char* pszDefaultDriverName,
                                  char** papszOptions);
     /**
-     * @brief Check if provided OGR driver acceptad as storage for network data
+     * @brief Check if provided OGR driver accepted as storage for network data
      * @param pszDriverName The driver name
      * @return true if supported, else false
      */

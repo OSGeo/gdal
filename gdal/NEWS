@@ -1032,7 +1032,7 @@ GML driver:
  * add XSD=filename open option
  * add FORCE_SRS_DETECTION, INVERT_AXIS_ORDER_IF_LAT_LONG, CONSIDER_EPSG_AS_URN, READ_MODE, EXPOSE_GML_ID, EXPOSE_FID, DOWNLOAD_SCHEMA and REGISTRY open options
  * fix bug that prevented multiple instanciation of the reader with Xerces backend (#5571)
- * parse correctly GML geometries whose srsDimension attribue is on top-level geometry element and not on posList (#5606)
+ * parse correctly GML geometries whose srsDimension attribute is on top-level geometry element and not on posList (#5606)
  * add datasource option SRSDIMENSION_LOC=GEOMETRY to be able to write srsDimension attribute on top level geometry element, default on posList unchanged (#5066)
  * add support for reading layers resulting from a WFS 2.0 join query
  * read/write top <gml:description> and <gml:name> as DESCRIPTION and NAME metadata items. Also add GML_ID, DESCRIPTION and NAME creation options
@@ -1872,7 +1872,7 @@ GML driver:
  * autodiscover all XML attributes as OGR fields when creating .gfs file if GML_ATTRIBUTES_TO_OGR_FIELDS is set to YES (#5418)
  * allow the <ElementPath> in .gfs to have several components that give the full XML path
  * fix writing of .xsd file to avoid fid/gml_id being written as regular fields (#5142)
- * fix writing of global srsName attribue on the global boundedBy.Envelope when all layers have same SRS (#5143)
+ * fix writing of global srsName attribute on the global boundedBy.Envelope when all layers have same SRS (#5143)
  * support for writing .gml/.xsd with fields of type StringList, RealList, IntegerList and support for parsing such .xsd files
  * when writing .xsd for a datasource that has fields of type StringList, RealList or IntegerList, advertize SF-1 profile in the .XSD schema
  * recognize xsd:boolean in XSD parsing and map it to String (#5384)
@@ -2785,7 +2785,7 @@ Shapefile driver:
  * Make TestCapability(OLCFastFeatureCount) return TRUE when an attribute filter is set only if attribute indices can be used
  * Shapelib: Fix memory leaks in error code path of DBFCreateLL() (#4860)
  * Deal better with shapefile directories with foo.shp and FOO.DBF, particularly for REPACK support, and particularly for Windows OS (on Linux, foo.shp and FOO.DBF will be 2 different layers)
- * Delete temporary _packed.cpg file generated during REPACK of a layer whose .dbf has an accompaying .cpg file
+ * Delete temporary _packed.cpg file generated during REPACK of a layer whose .dbf has an accompanying .cpg file
  * In DeleteDataSource(), delete .cpg file if existing
 
 S57 driver:
@@ -3312,7 +3312,7 @@ NITF driver:
  * Add IREPBAND and ISUBCAT creation option (#4343)
  * Make sure scanline access is used only on single block image (#3926)
  * Add a NITF_DISABLE_RPF_LOCATION_TABLE_SANITY_TESTS configuration option that can be set to TRUE to blindly trust the RPF location table (#3930)
- * Correctly assign hemisphere for a ICORDS='U' NITF file with accompagnying .nfw and .hdr files (#3931)
+ * Correctly assign hemisphere for a ICORDS='U' NITF file with accompanying .nfw and .hdr files (#3931)
  * Make PAM available at band level for JPEG/JPEG2000 compressed datasets (#3985)
  * Read IMRFCA TRE for RPC info. Read CSEXRA TRE.
  * Read CSDIDA and PIAIMC TREs as metadata
@@ -6770,7 +6770,7 @@ PostGIS Driver:
  - Include proj4text in new spatial_ref_sys entries.
  - Fixed support for very large queries.
  - Fixed DeleteLayer() implementation.
- - Added COPY support for accerated loading.
+ - Added COPY support for accelerated loading.
 
 MySQL Driver:
  - Added read and write support for Spatial types. 

@@ -130,7 +130,7 @@ int OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset,
     if (mnClassificators.empty() || mnClassificators.find(nClassCode) != mnClassificators.end())
     {
         mnRecordDesc[nFID] = nOffset;
-        //add addtionals semantics (attribute fields)
+        // Add additional semantics (attribute fields).
         if (bHasSemantic)
         {
             size_t offset = 0;

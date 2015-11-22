@@ -286,7 +286,8 @@ if __name__ == '__main__':
         for fi in file_infos:
             band_n = band_n + 1
             if len(fi.band_types) != 2:
-                print ('File %s has %d bands. Only first band will be taken into accout' % (fi.filename, len(fi.band_types)-1))
+                print ( 'File %s has %d bands. Only first band will be taken '
+                        'into account' % (fi.filename, len(fi.band_types)-1))
             dataType = gdal.GetDataTypeName(fi.band_types[1])
 
             t_fh.write('\t<VRTRasterBand dataType="%s" band="%i">\n'

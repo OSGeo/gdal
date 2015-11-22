@@ -64,7 +64,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oAD the ancillary data to assign
          */
         AncillaryData_t& operator=(const AncillaryData_t& oAD)
@@ -124,7 +124,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oRS the radar segment to assign
          */
         RadarSeg_t& operator=(const RadarSeg_t& oRS)
@@ -203,7 +203,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oAL the attitude line to assign
          */
         AttitudeLine_t& operator=(const AttitudeLine_t& oAL)
@@ -226,7 +226,7 @@ namespace PCIDSK
             ChangeEarthSatelliteDist = oAL.ChangeEarthSatelliteDist;
         }
 
-        double ChangeInAttitude; /* Change in satellite attiutde (D22.16) */
+        double ChangeInAttitude; /* Change in satellite attitude (D22.16) */
         double ChangeEarthSatelliteDist; /* Change in earth-satellite distance
                                          (D22.16) */
     } ;
@@ -252,7 +252,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oAS the avhrr segment to assign
          */
         AttitudeSeg_t& operator=(const AttitudeSeg_t& oAS)
@@ -316,7 +316,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oAL the avhrr line to assign
          */
         AvhrrLine_t& operator=(const AvhrrLine_t& oAL)
@@ -389,7 +389,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oAS the avhrr segment to assign
          */
         AvhrrSeg_t& operator=(const AvhrrSeg_t& oAS)
@@ -543,7 +543,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oES the ephemeris segment to assign
          */
         EphemerisSeg_t& operator=(const EphemerisSeg_t& oES)

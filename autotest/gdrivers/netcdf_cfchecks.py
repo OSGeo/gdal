@@ -636,7 +636,7 @@ class CFChecker:
 ##                 self.err = self.err+1
 
         #------------------------
-        # Auxilliary Coord Checks
+        # Auxiliary Coord Checks
         #------------------------
         if self.f[var].attributes.has_key('coordinates'):
             # Check syntax of 'coordinates' attribute
@@ -650,7 +650,7 @@ class CFChecker:
 
                         auxCoordVars.append(dataVar)
 
-                        # Is the auxillary coordinate var actually a label?
+                        # Is the auxiliary coordinate var actually a label?
                         if self.f[dataVar].dtype.char == 'c':
                             # Label variable
                             num_dimensions = len(self.f[dataVar].getAxisIds())
@@ -720,10 +720,10 @@ class CFChecker:
                 else:
                     print("ERROR (7.1): bounds attribute referencing non-existent variable:",bounds)
                     self.err = self.err+1
-                    
-            # Check that points specified by a coordinate or auxilliary coordinate
-            # variable should lie within, or on the boundary, of the cells specified by
-            # the associated boundary variable.
+
+            # Check that points specified by a coordinate or auxiliary
+            # coordinate variable should lie within, or on the boundary, of the
+            # cells specified by the associated boundary variable.
             if bounds in variables:
                 # Is boundary variable 2 dimensional?  If so can check that points
                 # lie within, or on the boundary.
@@ -1807,7 +1807,7 @@ class CFChecker:
   #------------------------------------
       """Check validity of axis attribute"""
       var=self.f[varName]
-      
+
       if var.attributes.has_key('axis'):
           if not re.match('^(X|Y|Z|T)$',var.attributes['axis'],re.I):
               print("ERROR (4): Invalid value for axis attribute")
@@ -1815,10 +1815,11 @@ class CFChecker:
               return 0
 
           if self.version >= 1.1 and varName in self.auxCoordVars:
-              print("ERROR (4): Axis attribute is not allowed for auxillary coordinate variables.")
+              print("ERROR (4): Axis attribute is not allowed for auxiliary "
+                    "coordinate variables.")
               self.err = self.err+1
               return 0
-          
+
           # Check that axis attribute is consistent with the coordinate type
           # deduced from units and positive.
           if hasattr(var,'positive'): 

@@ -170,32 +170,32 @@ int OGRIngresDataSource::Open( const char *pszFullName,
                   "instance name must be specified with host." );
             return FALSE;
         }
-        
-        /* 
+
+        /*
         ** make sure the user name and password are passed too,
         ** note it could not be zero length.
-        */ 
+        */
         const char *pszUsername = CSLFetchNameValue(papszOptions,"username");
         const char *pszPassword = CSLFetchNameValue(papszOptions,"password");
-        
+
         if (pszUsername == NULL || strlen(pszUsername) == 0)
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                  "user name must be specified in dynamic vnode." );            
+                      "user name must be specified in dynamic vnode." );
             return FALSE;
         }
-        
+
         if (pszPassword == NULL || strlen(pszPassword) == 0)
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                  "password must be specified in dynamic vnode." );            
+                      "password must be specified in dynamic vnode." );
             return FALSE;
         }
-        
-        /* 
-        ** construct the vnode string, like : 
+
+        /*
+        ** construct the vnode string, like:
         ** @host,protocol,port[;attribute=value{;attribute=value}][[user,password]], 
-        ** visit for detail 
+        ** visit for detail
         ** http://docs.actian.com/ingres/10.0/command-reference-guide/1207-dynamic-vnode-specificationconnect-to-remote-node
         */
         sprintf(pszDBTarget, "@%s,%s,%s;%s[%s,%s]::%s ", 
@@ -207,7 +207,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
             pszPassword,    /* pwd */
             pszDBName       /* database name */
             );
-        
+
        CPLDebug("INGRES", pszDBTarget);
     }
     else
@@ -215,10 +215,10 @@ int OGRIngresDataSource::Open( const char *pszFullName,
         /* Remain the database name */
         strcpy(pszDBTarget, pszDBName);
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Initialize the Ingres API. Should we only do this once per      */
-/*      program run?  Really we should also try to terminate the api    */
+/*      program run?  Really we should also try to terminate the API    */
 /*      on program exit.                                                */
 /* -------------------------------------------------------------------- */
     IIAPI_INITPARM  initParm;

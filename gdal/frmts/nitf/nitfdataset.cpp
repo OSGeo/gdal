@@ -942,7 +942,8 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                 }
                 else
                 {
-                    isNorth = 1; /* arbitrarly suppose we are in northern hemisphere */
+                    // Arbitrarily suppose we are in northern hemisphere.
+                    isNorth = 1;
 
                     /* unless we have other information to determine the hemisphere */
                     char** papszUSE00A_MD = NITFReadSTDIDC( psImage );
@@ -4727,7 +4728,7 @@ static void NITFPatchImageLength( const char *pszFilename,
     /* The following line works around a "feature" of *BSD libc (at least PC-BSD 7.1) */
     /* that makes the position of the file offset unreliable when executing a */
     /* "seek, read and write" sequence. After the read(), the file offset seen by */
-    /* the write() is approximatively the size of a block further... */
+    /* the write() is approximately the size of a block further... */
     VSIFSeekL( fpVSIL, VSIFTellL( fpVSIL ), SEEK_SET );
 
     if( !EQUALN(szICBuf,pszIC,2) )

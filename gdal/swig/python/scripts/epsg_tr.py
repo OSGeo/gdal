@@ -54,7 +54,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
 
     if err != 0 and report_error:
         print('Unable to lookup %d, either not a valid EPSG' % code)
-        print('code, or it the EPSG csv files are not accessable.')
+        print('code, or it the EPSG CSV files are not accessible.')
         sys.exit(2)
     else:
         if output_format == '-pretty_wkt':

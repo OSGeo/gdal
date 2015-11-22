@@ -47,7 +47,7 @@ def dted_1():
     return tst.testOpen()
 
 ###############################################################################
-# Verify some auxilary data. 
+# Verify some auxiliary data.
 
 def dted_2():
 

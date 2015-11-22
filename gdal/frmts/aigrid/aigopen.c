@@ -250,7 +250,7 @@ CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
     AIGTileInfo *psTInfo;
 
 /* -------------------------------------------------------------------- */
-/*      Compute our tile, and ensure it is accessable (open).  Then     */
+/*      Compute our tile, and ensure it is accessible (open).  Then     */
 /*      reduce block x/y values to be the block within that tile.       */
 /* -------------------------------------------------------------------- */
     iTileX = nBlockXOff / psInfo->nBlocksPerRow;
@@ -340,7 +340,7 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
     AIGTileInfo *psTInfo;
 
 /* -------------------------------------------------------------------- */
-/*      Compute our tile, and ensure it is accessable (open).  Then     */
+/*      Compute our tile, and ensure it is accessible (open).  Then     */
 /*      reduce block x/y values to be the block within that tile.       */
 /* -------------------------------------------------------------------- */
     iTileX = nBlockXOff / psInfo->nBlocksPerRow;

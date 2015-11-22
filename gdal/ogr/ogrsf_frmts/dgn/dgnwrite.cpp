@@ -1536,7 +1536,7 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     sMax.z = 0.0;
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
-    
+
     return psCore;
 }
 
@@ -1547,11 +1547,11 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
 /**
  * Create color table element.
  *
- * Creates a color table element with the indicated color table. 
+ * Creates a color table element with the indicated color table.
  *
- * Note that color table elements are actally of type DGNT_GROUP_DATA(5)
+ * Note that color table elements are actually of type DGNT_GROUP_DATA(5)
  * and always on level 1.  Do not alter the level with DGNUpdateElemCore()
- * or the element will essentially be corrupt. 
+ * or the element will essentially be corrupt.
  *
  * The newly created element will still need to be written to file using
  * DGNWriteElement(). Also the level and other core values will be defaulted.

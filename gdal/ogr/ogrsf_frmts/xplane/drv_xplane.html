@@ -88,8 +88,9 @@ that can serve as a foreign key.<p>
 
 <h3><a name="APT">APT layer</a></h3>
 
-Main description for an aiport. The position reported will be the position of the tower view point if present, otherwise the
-position of the first runway threshold found.<p>
+Main description for an airport. The position reported will be the
+position of the tower view point if present, otherwise the position of
+the first runway threshold found.<p>
 
 Fields:
 <ul>
@@ -115,7 +116,7 @@ the non-displaced threshold position (is_displaced=0), and another one at the di
 Fields:
 <ul>
 <li>apt_icao: String (5.0). ICAO code for the airport of this runway threshold.
-<li>rwy_num: String (3.0). Code for the runway, such as 18, 02L, etc... Unique for each aiport.
+<li>rwy_num: String (3.0). Code for the runway, such as 18, 02L, etc... Unique for each airport.
 <li>width_m: Real (3.0). Width in meters.
 <li>surface: String (0.0). Type of the <a name="surface">surface</a> among :
     <ul>
@@ -214,7 +215,7 @@ Fields:
 Fields:
 <ul>
 <li>apt_icao: String (5.0)
-<li>rwy_num: String (3.0). Code for the runway, such as 18. Unique for each aiport.
+<li>rwy_num: String (3.0). Code for the runway, such as 18. Unique for each airport.
 <li>width_m: Real (3.0)
 <li>has_buoys: Integer (1.0). Set to 1 if the runway should be marked with buoys bobbing in the water
 <li>length_m: Real (5.0). (Computed field) Length between the two ends of the water runway.
@@ -261,7 +262,7 @@ This layer contains the center of a helipad.
 Fields:
 <ul>
 <li>apt_icao: String (5.0)
-<li>helipad_name: String (5.0). Name of the helipad in the format "Hxx". Unique for each aiport.
+<li>helipad_name: String (5.0). Name of the helipad in the format "Hxx". Unique for each airport.
 <li>true_heading_deg: Real (6.2)
 <li>length_m: Real (5.0)
 <li>width_m: Real (3.0)
@@ -315,7 +316,7 @@ Fields:
 
 <h3><a name="APTBoundary">APTBoundary</a> (Polygon)</h3>
 
-This layer contains the boundary of the aiport. There is at the maximum one such feature per aiport.
+This layer contains the boundary of the airport. There is at the maximum one such feature per airport.
 The polygon may include holes. Bezier curves are discretized into linear pieces.<p>
 
 Fields:

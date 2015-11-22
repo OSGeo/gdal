@@ -679,7 +679,7 @@ GRIB2ParmTable MeteoMass[] = {
    /* 6 */ {"DIST", "Geometric Height", "m", UC_NONE},
    /* 7 */ {"HSTDV", "Standard deviation of height", "m", UC_NONE},
    /* 8 */ {"PRESA", "Pressure anomaly", "Pa", UC_NONE},
-   /* 9 */ {"GPA", "Geopotential height anomally", "gpm", UC_NONE},
+   /* 9 */ {"GPA", "Geopotential height anomaly", "gpm", UC_NONE},
    /* 10 */ {"DEN", "Density", "kg/(m^3)", UC_NONE},
    /* 11 */ {"", "Altimeter setting", "Pa", UC_NONE},
    /* 12 */ {"", "Thickness", "m", UC_NONE},
@@ -1449,7 +1449,7 @@ static GRIB2LocalTable *Choose_LocalParmTable (unsigned short int center,
  *
  * PURPOSE
  *   Converts a prodType, template, category and subcategory quadruple to the
- * ASCII string abreviation of that variable.
+ * ASCII string abbreviation of that variable.
  *   For example: 0, 0, 0, 0, = "T" for temperature.
  *
  * ARGUMENTS
@@ -1901,7 +1901,7 @@ void ParseElemName (uShort2 center, uShort2 subcenter, int prodType,
  *
  * PURPOSE
  *   Converts a prodType, template, category and subcategory quadruple to the
- * ASCII string abreviation of that variable.
+ * ASCII string abbreviation of that variable.
  *   For example: 0, 0, 0, 0, = "T" for temperature.
  *
  * ARGUMENTS

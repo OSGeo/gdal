@@ -804,10 +804,10 @@ def wms_18():
 
     if gdaltest.wms_drv is None:
         return 'skip'
-    
+
     # We don't need to check if the remote service is online as we
-    # don't need a connection for this test
-    
+    # don't need a connection for this test.
+
     fn = '<GDAL_WMS><Service name="AGS"><ServerUrl>http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer</ServerUrl><BBoxOrder>xyXY</BBoxOrder><SRS>EPSG:3857</SRS></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>'
 
     ds = gdal.Open( fn )

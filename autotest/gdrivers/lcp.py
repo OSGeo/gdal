@@ -305,7 +305,7 @@ def lcp_7():
     lcp_drv = gdal.GetDriverByName('LCP')
     if lcp_drv == None:
         return 'fail'
-    # Make sure all avaible band counts work
+    # Make sure all available band counts work.
     retval = 'success'
     co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
     for i in [5, 7, 8, 10]:

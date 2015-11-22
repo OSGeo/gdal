@@ -141,23 +141,23 @@ class ADSRange
 
 /* -------------------------------------------------------------------- */
 /*
- * NOTE: There are two kinds of ADS records: 
+ * NOTE: There are two kinds of ADS records:
  *
- *  1) One ADS record appliable to all consequent MDS records until replaced 
- *     by another ADS record, i.e., last MDS records does no need to be 
+ *  1) One ADS record applicable to all consequent MDS records until replaced
+ *     by another ADS record, i.e., last MDS records does no need to be
  *     followed by an ADS record.
  *
- *  2) Two ADS records applicable to all MDS records between them 
- *     (e.g., tiepoints ADS), i.e., last MDS record should be followed 
- *     by an ADS rescord having the same or later time-stamp.  
+ *  2) Two ADS records applicable to all MDS records between them
+ *     (e.g., tiepoints ADS), i.e., last MDS record should be followed
+ *     by an ADS record having the same or later time-stamp.
  *
- *  The type of the ADS afects the way how the ADS records corresponding 
- *  to a set of MDS records should be selected. 
+ *  The type of the ADS affects the way how the ADS records corresponding
+ *  to a set of MDS records should be selected.
  */
 
 
 class ADSRangeLastAfter: public ADSRange
-{ 
+{
 
   public:
 

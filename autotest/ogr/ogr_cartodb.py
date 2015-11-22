@@ -301,7 +301,7 @@ Error""")
     if lyr_defn.GetFieldCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-        
+
     get_full_details_fields_url = """/vsimem/cartodb&POSTFIELDS=q=SELECT a.attname, t.typname, a.attlen, format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, i.indisprimary, pg_get_expr(def.adbin, c.oid) AS defaultexpr, postgis_typmod_dims(a.atttypmod) dim, postgis_typmod_srid(a.atttypmod) srid, postgis_typmod_type(a.atttypmod)::text geomtyp, srtext FROM pg_class c JOIN pg_attribute a ON a.attnum > 0 AND a.attrelid = c.oid AND c.relname = 'table1' JOIN pg_type t ON a.atttypid = t.oid JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname= 'public' LEFT JOIN pg_index i ON c.oid = i.indrelid AND i.indisprimary = 't' AND a.attnum = ANY(i.indkey) LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND def.adnum = a.attnum LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) ORDER BY a.attnum LIMIT 500 OFFSET 0&api_key=foo"""
     gdal.FileFromMemBuffer(get_full_details_fields_url, '')
     ds = ogr.Open('CARTODB:foo')

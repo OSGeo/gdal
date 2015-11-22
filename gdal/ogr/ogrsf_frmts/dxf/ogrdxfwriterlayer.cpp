@@ -912,7 +912,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 
     WriteValue( 2, "SOLID" ); // fill pattern
     WriteValue( 70, 1 ); // solid fill
-    WriteValue( 71, 0 ); // associativity 
+    WriteValue( 71, 0 ); // associativity
 
 /* -------------------------------------------------------------------- */
 /*      Do we have styling information?                                 */

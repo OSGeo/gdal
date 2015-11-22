@@ -114,7 +114,7 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
     GDALTriangulation* psDT = NULL;
     facetT *facet;
     GDALTriFacet* pasFacets;
-    int* panMapQHFacetIdToFacetIdx; /* map from QHull facet Id to the index of our GDALTriFacet* arrray */
+    int* panMapQHFacetIdToFacetIdx; /* map from QHull facet ID to the index of our GDALTriFacet* array */
     int curlong, totlong;     /* memory remaining after qh_memfreeshort */
 
     /* QHull is not thread safe, so we need to protect all operations with a mutex */

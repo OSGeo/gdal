@@ -935,7 +935,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         else if (bKMZ)
             osTmpFileName = osTmpDirName + "/file.kmz";
         /* GML is a special case. It needs the .xsd file that has been saved */
-        /* as file.xsd, so we cannot used the attachement filename */
+        /* as file.xsd, so we cannot used the attachment filename */
         else if (pszAttachementFilename &&
                  !EQUAL(CPLGetExtension(pszAttachementFilename), "GML"))
         {
@@ -1226,8 +1226,8 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
             continue;
         }
 
-        /* Client-side attribue filtering with underlying layer defn */
-        /* identical to exposed layer defn */
+        /* Client-side attribute filtering with underlying layer defn */
+        /* identical to exposed layer defn. */
         if( !bGotApproximateLayerDefn &&
             osWFSWhere.size() == 0 &&
             m_poAttrQuery != NULL &&
@@ -1242,7 +1242,7 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         {
             poNewFeature->SetFrom(poSrcFeature);
 
-            /* Client-side attribue filtering */
+            /* Client-side attribute filtering. */
             if( m_poAttrQuery != NULL &&
                 osWFSWhere.size() == 0 &&
                 !m_poAttrQuery->Evaluate( poNewFeature ) )

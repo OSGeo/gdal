@@ -914,8 +914,9 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         {
             /* XXX - mloskot:
              * Shapefile date has following 8-chars long format: 20060101.
-             * OGR splits it as YYYY/MM/DD, so 2 additional characters are required.
-             * Is this correct assumtion? What about time part of date?
+             * OGR splits it as YYYY/MM/DD, so 2 additional characters are
+             * required.
+             * Is this a correct assumption? What about time part of date?
              * Shouldn't this format look as datetime: YYYY/MM/DD HH:MM:SS
              * with 4 additional characters?
              */
@@ -937,7 +938,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
 
         poDefn->AddFieldDefn( &oField );
     }
-    
+
     /* Do an optional past if requested and needed to demote Integer64->Integer */
     /* or Real->Integer64/Integer */
     if( nAdjustableFields && bAdjustType )

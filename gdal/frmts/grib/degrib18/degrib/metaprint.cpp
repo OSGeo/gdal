@@ -83,7 +83,7 @@ static const char *Lookup(const char **table, size_t n, size_t index)
  * a fmt == NULL.  This last call will return the constructed message to the
  * caller, and reset the message to NULL.  It is caller's responsibility to
  * free the message, and to make sure that last call to Print has fmt = NULL,
- * so that the routine doesn't accidently keep memory.
+ * so that the routine doesn't accidentally keep memory.
  *
  * ARGUMENTS
  *   label = A label for this set of data. (Input)
@@ -512,7 +512,7 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
       "Standard deviation with respect to cluster mean",
       "Standard deviation with respect to cluster mean, normalized",
       "Spread of all members",
-      "Large anomally index of all memebers",
+      "Large anomaly index of all members",
       "Unweighted mean of the cluster members"
    };
 

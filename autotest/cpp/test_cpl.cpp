@@ -571,8 +571,8 @@ namespace tut
 
         oNVL.SetNameValue( "BOOL", "ON" );
         ensure_equals( "b8", oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
-        
-        // Test assignmenet operator.
+
+        // Test assignment operator.
         CPLStringList oCopy;
 
         {
@@ -581,15 +581,15 @@ namespace tut
             oCopy = oTemp;
         }
         ensure( "c1", EQUAL(oCopy[0],"test") );
-        
+
         oCopy = oCopy;
         ensure( "c2", EQUAL(oCopy[0],"test") );
-        
+
         // Test copy constructor.
         CPLStringList oCopy2(oCopy);
         oCopy.Clear();
         ensure( "c3", EQUAL(oCopy2[0],"test") );
-        
+
         // Test sorting
         CPLStringList oTestSort;
         oTestSort.AddNameValue("Z", "1");

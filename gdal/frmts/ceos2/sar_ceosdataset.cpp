@@ -769,7 +769,7 @@ char **SAR_CEOSDataset::GetMetadataDomainList()
 /*        :r - The zero based record number to fetch (optional)         */
 /*                                                                      */
 /*      Note that only records that are pre-loaded will be              */
-/*      accessable, and this normally means that most image records     */
+/*      accessible, and this normally means that most image records     */
 /*      are not available.                                              */
 /************************************************************************/
 
@@ -782,7 +782,7 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
 /* -------------------------------------------------------------------- */
 /*      Identify which file to fetch the file from.                     */
 /* -------------------------------------------------------------------- */
-    int	nFileId = -1;
+    int nFileId = -1;
 
     if( STARTS_WITH_CI(pszDomain, "ceos-vol") )
     {

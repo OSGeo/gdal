@@ -56,7 +56,7 @@ struct OW_CellDepth {
 bool CheckError( sword nStatus, OCIError* hError );
 
 /***************************************************************************/
-/*                            Auxiliar functions                           */
+/*                            Auxiliary functions                          */
 /***************************************************************************/
 
 GDALDataType        OWGetDataType( const char* pszCellDepth );
@@ -89,7 +89,7 @@ const char*         OWParseSDO_GEOR_INIT( const char* pszInsert, int nField );
 #define OW_XMLNS        "xmlns=\"http://xmlns.oracle.com/spatial/georaster\""
 
 /***************************************************************************/
-/*                   USER DEFINED (actualy Oracle's) types                 */
+/*                   USER DEFINED (actually Oracle's) types                 */
 /***************************************************************************/
 
 typedef OCIRef SDO_GEORASTER_ref;

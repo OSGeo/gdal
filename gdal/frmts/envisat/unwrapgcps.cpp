@@ -101,7 +101,7 @@ static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp )
                 if (( i1 - i0 )>=NEMPY) break ; 
             } 
         }
-    } 
+    }
 
     // if all full or all empty the returning default value 
     if ( i1 < 0 ) return XCNT ;
@@ -115,27 +115,27 @@ static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp )
 
 
 void EnvisatUnwrapGCPs( int cnt, GDAL_GCP *gcp ) 
-{ 
+{
     if ( cnt < 1 ) return ; 
 
     // suggest right flip-point 
     double x_flip = _suggest_flip_point( cnt, gcp ); 
 
-    // find the limits allong the longitude (x) for flipped and unflipped values
+    // Find the limits along the longitude (x) for flipped and unflipped values.
 
     int cnt_flip = 0 ; // flipped values' counter
     double x0_dif , x1_dif ; 
 
-    { 
+    {
         double x0_min, x0_max, x1_min, x1_max ;
 
-        { 
+        {
             double x0 = gcp[0].dfGCPX ;
             int  flip = (x0>x_flip) ;
             x0_min = x0_max = x0 ; 
             x1_min = x1_max = x0 - flip*XDIF ; 
             cnt_flip += flip ; // count the flipped values 
-        } 
+        }
 
         for ( int i = 1 ; i < cnt ; ++i ) 
         { 

@@ -32,7 +32,7 @@
 // #define BIB_OFFSET   0  /* Bytes in burst, valid only for ScanSAR */
 // #define RSRI_OFFSET  4  /* Range Sample Relative Index */
 const static int RS_OFFSET = 8;  /* Range Samples, the length of a range line */
-// #define AS_OFFSET    12 /* Azimuth Samples, the length of an azimth column */
+// #define AS_OFFSET    12 /* Azimuth Samples, the length of an azimuth column */
 // #define BI_OFFSET    16 /* Burst Index, the index number of the burst */
 const static int RTNB_OFFSET = 20;  /* Rangeline total number of bytes, incl. annot. */
 // #define TNL_OFFSET	24 /* Total Number of Lines */

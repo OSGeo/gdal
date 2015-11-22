@@ -98,7 +98,7 @@ struct GDALGridOptions
 /************************************************************************/
 /*                          GetAlgorithmName()                          */
 /*                                                                      */
-/*      Grids algortihm code into mnemonic name.                   */
+/*      Grids algorithm code into mnemonic name.                        */
 /************************************************************************/
 
 static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,

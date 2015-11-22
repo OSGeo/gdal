@@ -6938,7 +6938,7 @@ OGRErr OSRFixupOrdering( OGRSpatialReferenceH hSRS )
  * WKT is valid. 
  *
  * This method should be expected to evolve over time to as problems are
- * discovered.  The following are amoung the fixup actions this method will
+ * discovered.  The following are among the fixup actions this method will
  * take:
  *
  * - Fixup the ordering of nodes to match the BNF WKT ordering, using

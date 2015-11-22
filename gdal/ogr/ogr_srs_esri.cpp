@@ -638,7 +638,7 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
  * as the newer pseudo-OGC WKT .prj files.  Note that new style .prj files
  * are in OGC WKT format, but require some manipulation to correct datum
  * names, and units on some projection parameters.  This is addressed within
- * importFromESRI() by an automatical call to morphFromESRI(). 
+ * importFromESRI() by an automatic call to morphFromESRI().
  *
  * Currently only GEOGRAPHIC, UTM, STATEPLANE, GREATBRITIAN_GRID, ALBERS, 
  * EQUIDISTANT_CONIC, TRANSVERSE (mercator), POLAR, MERCATOR and POLYCONIC

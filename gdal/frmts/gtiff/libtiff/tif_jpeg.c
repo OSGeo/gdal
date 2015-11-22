@@ -1283,7 +1283,7 @@ JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
                        if( line_work_buf != NULL )
                        {
                                /*
-                                * In the MK1 case, we aways read into a 16bit
+                                * In the MK1 case, we always read into a 16bit
                                 * buffer, and then pack down to 12bit or 8bit.
                                 * In 6B case we only read into 16 bit buffer
                                 * for 12bit data, which we need to repack.
