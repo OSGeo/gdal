@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.62 2015-11-22 15:31:03 erouault Exp $ */
+/* $Id: tif_ojpeg.c,v 1.63 2015-11-22 16:40:43 erouault Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -2479,6 +2479,10 @@ OJPEGLibjpegJpegSourceMgrSkipInputData(jpeg_decompress_struct* cinfo, long num_b
 	jpeg_encap_unwind(tif);
 }
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4702 ) /* unreachable code */
+#endif
 static boolean
 OJPEGLibjpegJpegSourceMgrResyncToRestart(jpeg_decompress_struct* cinfo, int desired)
 {
@@ -2486,10 +2490,11 @@ OJPEGLibjpegJpegSourceMgrResyncToRestart(jpeg_decompress_struct* cinfo, int desi
 	(void)desired;
 	TIFFErrorExt(tif->tif_clientdata,"LibJpeg","Unexpected error");
 	jpeg_encap_unwind(tif);
-#if defined(LIBJPEG_ENCAP_EXTERNAL) || !defined(_MSC_VER)
 	return(0);
-#endif
 }
+#ifdef _MSC_VER
+#pragma warning( pop ) 
+#endif
 
 static void
 OJPEGLibjpegJpegSourceMgrTermSource(jpeg_decompress_struct* cinfo)
