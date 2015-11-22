@@ -233,10 +233,10 @@ void OGRShapeLayer::SetModificationDate(const char* pszStr)
 CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
 
 {
-    CPLString osEncoding;
+    CPLString l_osEncoding;
 
     if( pszCodePage == NULL )
-        return osEncoding;
+        return l_osEncoding;
 
     if( STARTS_WITH_CI(pszCodePage, "LDID/") )
     {
@@ -313,8 +313,8 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
 
         if( nCP != -1 )
         {
-            osEncoding.Printf( "CP%d", nCP );
-            return osEncoding;
+            l_osEncoding.Printf( "CP%d", nCP );
+            return l_osEncoding;
         }
     }
 
@@ -324,16 +324,16 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
     if( (atoi(pszCodePage) >= 437 && atoi(pszCodePage) <= 950)
         || (atoi(pszCodePage) >= 1250 && atoi(pszCodePage) <= 1258) )
     {
-        osEncoding.Printf( "CP%d", atoi(pszCodePage) );
-        return osEncoding;
+        l_osEncoding.Printf( "CP%d", atoi(pszCodePage) );
+        return l_osEncoding;
     }
     if( STARTS_WITH_CI(pszCodePage, "8859") )
     {
         if( pszCodePage[4] == '-' )
-            osEncoding.Printf( "ISO-8859-%s", pszCodePage + 5 );
+            l_osEncoding.Printf( "ISO-8859-%s", pszCodePage + 5 );
         else
-            osEncoding.Printf( "ISO-8859-%s", pszCodePage + 4 );
-        return osEncoding;
+            l_osEncoding.Printf( "ISO-8859-%s", pszCodePage + 4 );
+        return l_osEncoding;
     }
     if( STARTS_WITH_CI(pszCodePage, "UTF-8") )
         return CPL_ENC_UTF8;
@@ -1773,7 +1773,7 @@ OGRErr OGRShapeLayer::ReorderFields( int* panMap )
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
 {
     if (!TouchLayer())
         return OGRERR_FAILURE;
@@ -1805,7 +1805,7 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
     /* eDBFType = */ DBFGetFieldInfo( hDBF, iField, szFieldName,
                                       &nWidth, &nPrecision );
 
-    if ((nFlags & ALTER_TYPE_FLAG) &&
+    if ((nFlagsIn & ALTER_TYPE_FLAG) &&
         poNewFieldDefn->GetType() != poFieldDefn->GetType())
     {
         if (poNewFieldDefn->GetType() == OFTInteger64 && poFieldDefn->GetType() == OFTInteger )
@@ -1825,7 +1825,7 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
         }
     }
 
-    if (nFlags & ALTER_NAME_FLAG)
+    if (nFlagsIn & ALTER_NAME_FLAG)
     {
         CPLString osFieldName;
         if( osEncoding.size() )
@@ -1851,7 +1851,7 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
         strncpy(szFieldName, osFieldName, 10);
         szFieldName[10] = '\0';
     }
-    if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+    if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
     {
         nWidth = poNewFieldDefn->GetWidth();
         nPrecision = poNewFieldDefn->GetPrecision();
@@ -1860,11 +1860,11 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
     if ( DBFAlterFieldDefn( hDBF, iField, szFieldName,
                             chNativeType, nWidth, nPrecision) )
     {
-        if (nFlags & ALTER_TYPE_FLAG)
+        if (nFlagsIn & ALTER_TYPE_FLAG)
             poFieldDefn->SetType(eType);
-        if (nFlags & ALTER_NAME_FLAG)
+        if (nFlagsIn & ALTER_NAME_FLAG)
             poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
-        if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+        if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
         {
             poFieldDefn->SetWidth(nWidth);
             poFieldDefn->SetPrecision(nPrecision);
