@@ -277,7 +277,7 @@ static TIFFFieldArray
 exifFieldArray = { tfiatExif, 0, TIFFArrayCount(exifFields), exifFields };
 
 /*
- *  We have our own local lfind() equivalent to avoid subtle differences
+ *  We have our own local lfind() equivelent to avoid subtle differences
  *  in types passed to lfind() on different systems. 
  */
 

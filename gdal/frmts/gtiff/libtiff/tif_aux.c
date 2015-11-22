@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.26 2010-07-01 15:33:28 dron Exp $ */
+/* $Id: tif_aux.c,v 1.27 2015-11-22 15:31:03 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -100,7 +100,8 @@ TIFFDefaultTransferFunction(TIFFDirectory* td)
 
 	n = ((tmsize_t)1)<<td->td_bitspersample;
 	nbytes = n * sizeof (uint16);
-	if (!(tf[0] = (uint16 *)_TIFFmalloc(nbytes)))
+        tf[0] = (uint16 *)_TIFFmalloc(nbytes);
+	if (tf[0] == NULL)
 		return 0;
 	tf[0][0] = 0;
 	for (i = 1; i < n; i++) {
@@ -109,10 +110,12 @@ TIFFDefaultTransferFunction(TIFFDirectory* td)
 	}
 
 	if (td->td_samplesperpixel - td->td_extrasamples > 1) {
-		if (!(tf[1] = (uint16 *)_TIFFmalloc(nbytes)))
+                tf[1] = (uint16 *)_TIFFmalloc(nbytes);
+		if(tf[1] == NULL)
 			goto bad;
 		_TIFFmemcpy(tf[1], tf[0], nbytes);
-		if (!(tf[2] = (uint16 *)_TIFFmalloc(nbytes)))
+                tf[2] = (uint16 *)_TIFFmalloc(nbytes);
+		if (tf[2] == NULL)
 			goto bad;
 		_TIFFmemcpy(tf[2], tf[0], nbytes);
 	}
@@ -134,7 +137,8 @@ TIFFDefaultRefBlackWhite(TIFFDirectory* td)
 {
 	int i;
 
-	if (!(td->td_refblackwhite = (float *)_TIFFmalloc(6*sizeof (float))))
+        td->td_refblackwhite = (float *)_TIFFmalloc(6*sizeof (float));
+	if (td->td_refblackwhite == NULL)
 		return 0;
         if (td->td_photometric == PHOTOMETRIC_YCBCR) {
 		/*

@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.49 2015-08-30 21:07:44 erouault Exp $ */
+/* $Id: tif_lzw.c,v 1.50 2015-11-22 15:31:03 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -240,8 +240,8 @@ LZWSetupDecode(TIFF* tif)
 		 */
 		code = 255;
 		do {
-			sp->dec_codetab[code].value = code;
-			sp->dec_codetab[code].firstchar = code;
+			sp->dec_codetab[code].value = (unsigned char)code;
+			sp->dec_codetab[code].firstchar = (unsigned char)code;
 			sp->dec_codetab[code].length = 1;
 			sp->dec_codetab[code].next = NULL;
 		} while (code--);
@@ -418,7 +418,7 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 			--tp;
 			t = codep->value;
 			codep = codep->next;
-			*tp = t;
+			*tp = (char)t;
 		} while (--residue && codep);
 		sp->dec_restart = 0;
 	}
@@ -532,7 +532,7 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 				--tp;
 				t = codep->value;
 				codep = codep->next;
-				*tp = t;
+				*tp = (char)t;
 			} while (codep && tp > op);
 			if (codep) {
 			    codeLoop(tif, module);
@@ -675,7 +675,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 					     tif->tif_row);
 				return (0);
 			}
-			*op++ = code, occ--;
+			*op++ = (char)code, occ--;
 			oldcodep = sp->dec_codetab + code;
 			continue;
 		}
@@ -747,11 +747,11 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 				*--tp = codep->value;
 			} while( (codep = codep->next) != NULL );
 		} else
-			*op++ = code, occ--;
+			*op++ = (char)code, occ--;
 	}
 
 	tif->tif_rawcp = (uint8*) bp;
-	sp->lzw_nbits = nbits;
+	sp->lzw_nbits = (unsigned short)nbits;
 	sp->lzw_nextdata = nextdata;
 	sp->lzw_nextbits = nextbits;
 	sp->dec_nbitsmask = nbitsmask;
@@ -900,7 +900,7 @@ LZWEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	nbits = sp->lzw_nbits;
 	op = tif->tif_rawcp;
 	limit = sp->enc_rawlimit;
-	ent = sp->enc_oldcode;
+	ent = (hcode_t)sp->enc_oldcode;
 
 	if (ent == (hcode_t) -1 && cc > 0) {
 		/*
@@ -963,8 +963,8 @@ LZWEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 			op = tif->tif_rawdata;
 		}
 		PutNextCode(op, ent);
-		ent = c;
-		hp->code = free_ent++;
+		ent = (hcode_t)c;
+		hp->code = (hcode_t)(free_ent++);
 		hp->hash = fcode;
 		if (free_ent == CODE_MAX-1) {
 			/* table is full, emit clear code and reset */
@@ -1021,9 +1021,9 @@ LZWEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	sp->enc_oldcode = ent;
 	sp->lzw_nextdata = nextdata;
 	sp->lzw_nextbits = nextbits;
-	sp->lzw_free_ent = free_ent;
-	sp->lzw_maxcode = maxcode;
-	sp->lzw_nbits = nbits;
+	sp->lzw_free_ent = (unsigned short)free_ent;
+	sp->lzw_maxcode = (unsigned short)maxcode;
+	sp->lzw_nbits = (unsigned short)nbits;
 	tif->tif_rawcp = op;
 	return (1);
 }

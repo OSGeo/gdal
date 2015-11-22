@@ -1,4 +1,4 @@
-/* $Id: tif_compress.c,v 1.23 2015-10-28 19:10:20 erouault Exp $ */
+/* $Id: tif_compress.c,v 1.24 2015-11-22 15:31:03 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -227,7 +227,7 @@ TIFFUnRegisterCODEC(TIFFCodec* c)
 	codec_t* cd;
 	codec_t** pcd;
 
-	for (pcd = &registeredCODECS; (cd = *pcd); pcd = &cd->next)
+	for (pcd = &registeredCODECS; (cd = *pcd) != NULL; pcd = &cd->next)
 		if (cd->info == c) {
 			*pcd = cd->next;
 			_TIFFfree(cd);

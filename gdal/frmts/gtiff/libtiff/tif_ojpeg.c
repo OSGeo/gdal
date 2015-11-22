@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.61 2015-11-18 20:35:10 erouault Exp $ */
+/* $Id: tif_ojpeg.c,v 1.62 2015-11-22 15:31:03 erouault Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -1081,7 +1081,7 @@ OJPEGReadHeaderInfo(TIFF* tif)
 			TIFFErrorExt(tif->tif_clientdata,module,"Incompatible vertical subsampling and image strip/tile length");
 			return(0);
 		}
-		sp->restart_interval=((sp->strile_width+sp->subsampling_hor*8-1)/(sp->subsampling_hor*8))*(sp->strile_length/(sp->subsampling_ver*8));
+		sp->restart_interval=(uint16)(((sp->strile_width+sp->subsampling_hor*8-1)/(sp->subsampling_hor*8))*(sp->strile_length/(sp->subsampling_ver*8)));
 	}
 	if (OJPEGReadHeaderInfoSec(tif)==0)
 		return(0);
@@ -1103,7 +1103,7 @@ OJPEGReadSecondarySos(TIFF* tif, uint16 s)
 	assert(s<3);
 	assert(sp->sos_end[0].log!=0);
 	assert(sp->sos_end[s].log==0);
-	sp->plane_sample_offset=s-1;
+	sp->plane_sample_offset=(uint8)(s-1);
 	while(sp->sos_end[sp->plane_sample_offset].log==0)
 		sp->plane_sample_offset--;
 	sp->in_buffer_source=sp->sos_end[sp->plane_sample_offset].in_buffer_source;
@@ -1381,7 +1381,7 @@ OJPEGReadHeaderInfoSec(TIFF* tif)
 static int
 OJPEGReadHeaderInfoSecStreamDri(TIFF* tif)
 {
-	// This could easily cause trouble in some cases, but no such cases have occurred so far.
+	/* this could easilly cause trouble in some cases... but no such cases have occured sofar */
 	static const char module[]="OJPEGReadHeaderInfoSecStreamDri";
 	OJPEGState* sp=(OJPEGState*)tif->tif_data;
 	uint16 m;
@@ -1838,7 +1838,7 @@ OJPEGReadHeaderInfoSecTablesDcTable(TIFF* tif)
 			*(uint32*)rb=ra;
 			rb[sizeof(uint32)]=255;
 			rb[sizeof(uint32)+1]=JPEG_MARKER_DHT;
-			rb[sizeof(uint32)+2]=((19+q)>>8);
+			rb[sizeof(uint32)+2]=(uint8)((19+q)>>8);
 			rb[sizeof(uint32)+3]=((19+q)&255);
 			rb[sizeof(uint32)+4]=m;
 			for (n=0; n<16; n++)
@@ -1902,7 +1902,7 @@ OJPEGReadHeaderInfoSecTablesAcTable(TIFF* tif)
 			*(uint32*)rb=ra;
 			rb[sizeof(uint32)]=255;
 			rb[sizeof(uint32)+1]=JPEG_MARKER_DHT;
-			rb[sizeof(uint32)+2]=((19+q)>>8);
+			rb[sizeof(uint32)+2]=(uint8)((19+q)>>8);
 			rb[sizeof(uint32)+3]=((19+q)&255);
 			rb[sizeof(uint32)+4]=(16|m);
 			for (n=0; n<16; n++)
@@ -2269,10 +2269,10 @@ OJPEGWriteStreamSof(TIFF* tif, void** mem, uint32* len)
 	/* P */
 	sp->out_buffer[4]=8;
 	/* Y */
-	sp->out_buffer[5]=(sp->sof_y>>8);
+	sp->out_buffer[5]=(uint8)(sp->sof_y>>8);
 	sp->out_buffer[6]=(sp->sof_y&255);
 	/* X */
-	sp->out_buffer[7]=(sp->sof_x>>8);
+	sp->out_buffer[7]=(uint8)(sp->sof_x>>8);
 	sp->out_buffer[8]=(sp->sof_x&255);
 	/* Nf */
 	sp->out_buffer[9]=sp->samples_per_pixel_per_plane;
@@ -2486,7 +2486,9 @@ OJPEGLibjpegJpegSourceMgrResyncToRestart(jpeg_decompress_struct* cinfo, int desi
 	(void)desired;
 	TIFFErrorExt(tif->tif_clientdata,"LibJpeg","Unexpected error");
 	jpeg_encap_unwind(tif);
+#if defined(LIBJPEG_ENCAP_EXTERNAL) || !defined(_MSC_VER)
 	return(0);
+#endif
 }
 
 static void
