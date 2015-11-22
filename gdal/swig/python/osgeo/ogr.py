@@ -1768,13 +1768,13 @@ class Layer(MajorObject):
         directly.
 
         This function should not be called while there are feature objects in
-        existance that were obtained or created with the previous layer
+        existence that were obtained or created with the previous layer
         definition.
 
         Not all drivers support this function. You can query a layer to check
         if it supports it with the OLCCreateField capability. Some drivers may
         only support this method while there are still no features in the
-        layer. When it is supported, the existings features of the backing
+        layer. When it is supported, the existing features of the backing
         file/database should be updated accordingly.
 
         This function is the same as the C++ method OGRLayer::CreateField().
@@ -1808,13 +1808,13 @@ class Layer(MajorObject):
         used by a layer directly.
 
         This function should not be called while there are feature objects in
-        existance that were obtained or created with the previous layer
+        existence that were obtained or created with the previous layer
         definition.
 
         Not all drivers support this function. You can query a layer to check
         if it supports it with the OLCDeleteField capability. Some drivers may
         only support this method while there are still no features in the
-        layer. When it is supported, the existings features of the backing
+        layer. When it is supported, the existing features of the backing
         file/database should be updated accordingly.
 
         This function is the same as the C++ method OGRLayer::DeleteField().
@@ -1842,7 +1842,7 @@ class Layer(MajorObject):
 
         Reorder an existing field on a layer.
 
-        This function is a conveniency wrapper of OGR_L_ReorderFields()
+        This function is a convenience wrapper of OGR_L_ReorderFields()
         dedicated to move a single field.
 
         You must use this to reorder existing fields on a real layer.
@@ -1851,7 +1851,7 @@ class Layer(MajorObject):
         OGRFeatureDefn used by a layer directly.
 
         This function should not be called while there are feature objects in
-        existance that were obtained or created with the previous layer
+        existence that were obtained or created with the previous layer
         definition.
 
         The field definition that was at initial position iOldFieldPos will be
@@ -1865,7 +1865,7 @@ class Layer(MajorObject):
         Not all drivers support this function. You can query a layer to check
         if it supports it with the OLCReorderFields capability. Some drivers
         may only support this method while there are still no features in the
-        layer. When it is supported, the existings features of the backing
+        layer. When it is supported, the existing features of the backing
         file/database should be updated accordingly.
 
         This function is the same as the C++ method OGRLayer::ReorderField().
@@ -1883,7 +1883,7 @@ class Layer(MajorObject):
 
         OGRERR_NONE on success.
 
-        OGR 1.9.0 
+        OGR 1.9.0
         """
         return _ogr.Layer_ReorderField(self, *args)
 
@@ -1902,7 +1902,7 @@ class Layer(MajorObject):
         OGRFeatureDefn used by a layer directly.
 
         This function should not be called while there are feature objects in
-        existance that were obtained or created with the previous layer
+        existence that were obtained or created with the previous layer
         definition.
 
         panMap is such that,for each field definition at position i after
@@ -1915,7 +1915,7 @@ class Layer(MajorObject):
         Not all drivers support this function. You can query a layer to check
         if it supports it with the OLCReorderFields capability. Some drivers
         may only support this method while there are still no features in the
-        layer. When it is supported, the existings features of the backing
+        layer. When it is supported, the existing features of the backing
         file/database should be updated accordingly.
 
         This function is the same as the C++ method OGRLayer::ReorderFields().
@@ -1950,13 +1950,13 @@ class Layer(MajorObject):
         the OGRFeatureDefn used by a layer directly.
 
         This function should not be called while there are feature objects in
-        existance that were obtained or created with the previous layer
+        existence that were obtained or created with the previous layer
         definition.
 
         Not all drivers support this function. You can query a layer to check
         if it supports it with the OLCAlterFieldDefn capability. Some drivers
         may only support this method while there are still no features in the
-        layer. When it is supported, the existings features of the backing
+        layer. When it is supported, the existing features of the backing
         file/database should be updated accordingly. Some drivers might also
         not support all update flags.
 
@@ -3577,7 +3577,7 @@ class FeatureDefn(_object):
         function directly, but use OGR_L_CreateField() instead.
 
         This function should only be called while there are no OGRFeature
-        objects in existance based on this OGRFeatureDefn. The OGRFieldDefn
+        objects in existence based on this OGRFeatureDefn. The OGRFieldDefn
         passed in is copied, and remains the responsibility of the caller.
 
         This function is the same as the C++ method
@@ -3589,7 +3589,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition to add the field definition
         to.
 
-        hNewField:  handle to the new field definition. 
+        hNewField:  handle to the new field definition.
         """
         return _ogr.FeatureDefn_AddFieldDefn(self, *args)
 

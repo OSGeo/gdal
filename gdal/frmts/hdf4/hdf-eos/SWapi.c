@@ -10266,7 +10266,7 @@ SWdetach(int32 swathID)
 
 		if (abs(match[0]) == 1)
 		{
-		    /* Two Dimensional Array (no merging has occured) */
+		    /* Two Dimensional Array (no merging has occurred) */
 		    /* ---------------------------------------------- */
 		    dims[0] = abs(match[1]);
 		    dims[1] = abs(match[2]);

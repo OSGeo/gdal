@@ -1955,8 +1955,8 @@ void qh_printfacet(FILE *fp, facetT *facet) {
 
     notes:
       assume precise calculations in io.c with roundoff covered by qh_GEOMepsilon
-      mindist is calculated within io.c.  maxoutside is calculated elsewhere
-      so a DISTround error may have occured.
+      mindist is calculated within io.c.  maxoutside is calculated elsewhere,
+      so a DISTround error may have occurred.
 */
 void qh_printfacet2geom(FILE *fp, facetT *facet, realT color[3]) {
   pointT *point0, *point1;
@@ -2144,7 +2144,7 @@ void qh_printfacet3geom_points(FILE *fp, setT *points, facetT *facet, realT offs
 
     assume precise calculations in io.c with roundoff covered by qh_GEOMepsilon
     innerplane may be off by qh DISTround.  Maxoutside is calculated elsewhere
-    so a DISTround error may have occured.
+    so a DISTround error may have occurred.
 */
 void qh_printfacet3geom_simplicial(FILE *fp, facetT *facet, realT color[3]) {
   setT *points, *vertices;

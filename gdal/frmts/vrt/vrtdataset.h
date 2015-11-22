@@ -349,7 +349,7 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     int            bIsMaskBand;
 
     int            bNoDataValueSet;
-    int            bHideNoDataValue; // If set to true, will not report the existance of nodata
+    int            bHideNoDataValue; // If set to true, will not report the existence of nodata
     double         dfNoDataValue;
 
     GDALColorTable *poColorTable;

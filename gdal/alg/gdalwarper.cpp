@@ -1519,7 +1519,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If any error has occured, cleanup else return success.          */
+/*      If any error has occurred, cleanup else return success.          */
 /* -------------------------------------------------------------------- */
     if( CPLGetLastErrorType() != CE_None )
     {

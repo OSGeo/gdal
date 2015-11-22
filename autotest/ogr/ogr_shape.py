@@ -1371,13 +1371,13 @@ def ogr_shape_31():
     gdal.PopErrorHandler()
 
     layer_defn = gdaltest.shape_lyr.GetLayerDefn()
-    error_occured = False
+    error_occurred = False
     for i in range( layer_defn.GetFieldCount() ):
         if layer_defn.GetFieldDefn( i ).GetNameRef() != expected_fields[i]:
             print('Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn( i ).GetNameRef())
-            error_occured = True
+            error_occurred = True
 
-    if error_occured:
+    if error_occurred:
         return 'fail'
     return 'success'
 

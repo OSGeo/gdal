@@ -1131,7 +1131,7 @@ def ecw_31():
         elif result[0] != gdal.GARIO_ERROR:
             continue
         else:
-            gdaltest.post_reason('error occured')
+            gdaltest.post_reason('error occurred')
             ds.EndAsyncReader(asyncreader)
             return 'fail'
 

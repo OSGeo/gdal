@@ -838,7 +838,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /*      For reasons that are unclear, some scanlines are exactly one    */
 /*      pixel short (such as in the BSB 3.0 354704.KAP product from     */
 /*      NDI/CHS) but are otherwise OK.  Just add a zero if this         */
-/*      appear to have occured.                                         */
+/*      appear to have occurred.                                         */
 /* -------------------------------------------------------------------- */
         if( iPixel == psInfo->nXSize - 1 )
             pabyScanlineBuf[iPixel++] = 0;

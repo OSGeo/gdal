@@ -109,7 +109,7 @@ To add a new field definition to a layer definition, do not use this
 function directly, but use OGR_L_CreateField() instead.
 
 This function should only be called while there are no OGRFeature
-objects in existance based on this OGRFeatureDefn. The OGRFieldDefn
+objects in existence based on this OGRFeatureDefn. The OGRFieldDefn
 passed in is copied, and remains the responsibility of the caller.
 
 This function is the same as the C++ method
@@ -132,7 +132,7 @@ To delete an existing field definition from a layer definition, do not
 use this function directly, but use OGR_L_DeleteField() instead.
 
 This method should only be called while there are no OGRFeature
-objects in existance based on this OGRFeatureDefn.
+objects in existence based on this OGRFeatureDefn.
 
 This method is the same as the C++ method
 OGRFeatureDefn::DeleteFieldDefn().
@@ -157,7 +157,7 @@ To reorder the field definitions in a layer definition, do not use
 this function directly, but use OGR_L_ReorderFields() instead.
 
 This method should only be called while there are no OGRFeature
-objects in existance based on this OGRFeatureDefn.
+objects in existence based on this OGRFeatureDefn.
 
 This method is the same as the C++ method
 OGRFeatureDefn::ReorderFieldDefns().
