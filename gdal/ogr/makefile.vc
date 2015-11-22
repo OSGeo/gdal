@@ -66,9 +66,3 @@ allclean:	clean
 	cd ogrsf_frmts
 	$(MAKE) /f makefile.vc clean
 	cd ..
-
-# special override to avoid some warnings with this generated code.
-
-swq_parser.obj:	swq_parser.cpp
-	$(CC) $(CFLAGS) $(SOFTWARNFLAGS) /c $*.cpp
-
