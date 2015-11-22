@@ -7028,8 +7028,8 @@ char **NCDFTokenizeArray( const char *pszValue )
     char **papszValues = NULL;
     const int nLen = static_cast<int>(strlen(pszValue));
 
-    if ( ( pszValue[0] == '{' ) && ( pszValue[nLen-1] == '}' ) ) {
-        char *pszTemp = reinterpret_cast<char *> (CPLMalloc( nLen-2 ) );
+    if ( pszValue[0] == '{' && nLen > 2 && pszValue[nLen-1] == '}' ) {
+        char *pszTemp = reinterpret_cast<char *> (CPLMalloc( (nLen-2) + 1 ) );
         strncpy( pszTemp, pszValue+1, nLen-2);
         pszTemp[nLen-2] = '\0';
         papszValues = CSLTokenizeString2( pszTemp, ",", CSLT_ALLOWEMPTYTOKENS );
