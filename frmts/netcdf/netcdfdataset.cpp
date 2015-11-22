@@ -7017,7 +7017,6 @@ int NCDFIsVarTimeCoord( int nCdfId, int nVarId,
 char **NCDFTokenizeArray( const char *pszValue )
 {
     char **papszValues = NULL;
-    char *pszTemp = NULL;
     int nLen = 0;
 
     if ( pszValue==NULL || EQUAL( pszValue, "" ) ) 
@@ -7025,8 +7024,8 @@ char **NCDFTokenizeArray( const char *pszValue )
 
     nLen = strlen(pszValue);
 
-    if ( ( pszValue[0] == '{' ) && ( pszValue[nLen-1] == '}' ) ) {
-        pszTemp = (char *) CPLCalloc(nLen-2,sizeof(char*));
+    if ( pszValue[0] == '{' && nLen > 2 && pszValue[nLen-1] == '}' ) {
+        char *pszTemp = reinterpret_cast<char *> (CPLMalloc( (nLen-2) + 1 ) );
         strncpy( pszTemp, pszValue+1, nLen-2);
         pszTemp[nLen-2] = '\0';
         papszValues = CSLTokenizeString2( pszTemp, ",", CSLT_ALLOWEMPTYTOKENS );
