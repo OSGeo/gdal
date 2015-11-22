@@ -1294,7 +1294,6 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
         || psObject->nSHPType == SHPT_MULTIPATCH )
     {
         int32		nPoints, nParts;
-        int    		i;
 
         nPoints = psObject->nVertices;
         nParts = psObject->nParts;
@@ -1411,7 +1410,6 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
              || psObject->nSHPType == SHPT_MULTIPOINTM )
     {
         int32		nPoints;
-        int    		i;
 
         nPoints = psObject->nVertices;
 

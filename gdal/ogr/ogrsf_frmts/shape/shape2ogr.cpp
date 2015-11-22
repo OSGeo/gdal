@@ -697,17 +697,15 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
              || hSHP->nShapeType == SHPT_POLYGONM
              || hSHP->nShapeType == SHPT_POLYGONZ )
     {
-        OGRPolygon      *poPoly;
         OGRLinearRing   *poRing, **papoRings=NULL;
         double          *padfX=NULL, *padfY=NULL, *padfZ=NULL;
         int             iPoint, iRing, nRings, nVertex=0, *panRingStart;
-        SHPObject       *psShape;
 
         /* Collect list of rings */
 
         if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
         {
-            poPoly =  (OGRPolygon *) poGeom;
+            OGRPolygon* poPoly =  (OGRPolygon *) poGeom;
 
             if( poPoly->getExteriorRing() == NULL ||
                 poPoly->getExteriorRing()->IsEmpty() )
@@ -845,7 +843,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
             }
         }
 
-        psShape = SHPCreateObject( hSHP->nShapeType, iShape, nRings,
+        SHPObject* psShape = SHPCreateObject( hSHP->nShapeType, iShape, nRings,
                                    panRingStart, NULL,
                                    nVertex, padfX, padfY, padfZ, NULL );
         if( bRewind )
