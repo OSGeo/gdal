@@ -10,7 +10,7 @@ use vars qw/%test_driver $loaded $verbose @types %pack_types @fails @tested_driv
 # a good set of tests focusing on the Perl bindings is really needed
 
 {
-    my $l = Geo::GDAL::Driver('Memory')->Create()->CreateLayer();
+    my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer();
     $l->CreateField(Name => 'value', Type => 'Integer');
     my $s1 = $l->Schema;
     $l->CreateField(Name => 'v', Type => 'Integer');
@@ -20,7 +20,7 @@ use vars qw/%test_driver $loaded $verbose @types %pack_types @fails @tested_driv
 }
 
 {
-    my $l = Geo::GDAL::Driver('Memory')->Create()->CreateLayer({GeometryType=>'Polygon'});
+    my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer({GeometryType=>'Polygon'});
     eval {
 	# this is an error because the layer is polygon and this is a point
 	$l->InsertFeature([0,12.2,{wkt=>'POINT(1 1)'}]);
@@ -31,7 +31,7 @@ use vars qw/%test_driver $loaded $verbose @types %pack_types @fails @tested_driv
 {
     our $warning;
     BEGIN { $SIG{'__WARN__'} = sub { $warning = $_[0] } }
-    my $l = Geo::GDAL::Driver('Memory')->Create()->CreateLayer(GeometryType => 'None');
+    my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer(GeometryType => 'None');
     $l->CreateField(Name => 'value', Type => 'Integer');
     $l->CreateField(Name => 'geom', GeometryType => 'Point');
     $l->InsertFeature([0,12.2,{wkt=>'POINT(1 1)'}]);
@@ -188,7 +188,7 @@ use vars qw/%test_driver $loaded $verbose @types %pack_types @fails @tested_driv
     ok($s->{Type} eq 'String', 'fieldefn schema 2');
 }
 {
-    my $driver = Geo::GDAL::Driver('Memory');
+    my $driver = Geo::OGR::Driver('Memory');
     my %cap = map {$_=>1} $driver->Capabilities;
     ok($cap{CREATE}, "driver capabilities");
     my $datasource = $driver->Create('test');

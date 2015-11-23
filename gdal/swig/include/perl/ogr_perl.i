@@ -122,7 +122,7 @@ package Geo::OGR;
 our $VERSION = '2.0100'; # this needs to be the same as that in gdal_perl.i
 
 sub Driver {
-    Geo::GDAL::Driver(@_);
+    bless Geo::GDAL::Driver(@_), 'Geo::OGR::Driver';
 }
 *GetDriver = *Driver;
 
@@ -160,17 +160,18 @@ sub OpenShared {
 }
 
 package Geo::OGR::Driver;
+our @ISA = qw/Geo::GDAL::Driver/;
 
 sub Create {
     my ($self, @p) = @_; # name, options
-    Geo::GDAL::Create($self, $p[0], 0, 0, 0, 0, $p[1]); # path, w, h, bands, type, options
+    $self->SUPER::Create($p[0], 0, 0, 0, 'Byte', $p[1]); # path, w, h, bands, type, options
 }
 
 sub Copy {
     my ($self, @p) = @_; # src, name, options
     my $strict = 1; # the default in bindings
     $strict = 0 if $p[2] && $p[2]->{STRICT} eq 'NO';
-    Geo::GDAL::Copy($self, $p[1], $p[0], $strict, $p[2], $p[3], $p[4]); # path, src, strict, options, cb, cb_data
+    $self->SUPER::Copy($p[1], $p[0], $strict, @{$p[2..4]}); # path, src, strict, options, cb, cb_data
 }
 
 sub Open {

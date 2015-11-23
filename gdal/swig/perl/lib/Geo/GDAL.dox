@@ -970,7 +970,8 @@ sub traverse {
 
 ## @sub ColorInterpretations
 # @return a list of types of color interpretation for raster
-# bands.
+# bands. These are currently:
+# +list Geo::GDAL::Const GCI_
 
 ## @attr XSize
 # Object attribute.
@@ -1022,9 +1023,9 @@ sub traverse {
 # @note $band->NoDataValue(undef) sets the "no data" value to the Posix
 # floating point maximum.
 # @return the "no data" value in scalar context. In list context
-# returns the no data value or an out of range value and a boolean
-# value, which indicates which is the case (true is first, false is
-# second).
+# returns a numeric value and a boolean value, which indicates whether
+# a no data value is actually associated with this band. If the
+# boolean is true, then the first value is the no data value.
 
 ## @ignore GetUnitType
 ## @ignore SetUnitType
