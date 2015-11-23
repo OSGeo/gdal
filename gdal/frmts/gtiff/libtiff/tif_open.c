@@ -168,7 +168,7 @@ TIFFClientOpen(
 	 * The following flags may be used to control intrinsic library
 	 * behaviour that may or may not be desirable (usually for
 	 * compatibility with some application that claims to support
-	 * TIFF but only supports some braindead idea of what the
+	 * TIFF but only supports some brain dead idea of what the
 	 * vendor thinks TIFF is):
 	 *
 	 * 'l' use little-endian byte order for creating a file

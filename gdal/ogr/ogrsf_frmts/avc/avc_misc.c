@@ -239,7 +239,7 @@ GBool AVCFileExists(const char *pszPath, const char *pszName)
  * that list rather than all this stating that can be very expensive
  * in some circumstances.  However, at least with Carl's fix this is
  * somewhat faster.
- * see: http://buzilla.remotesensing.org/show_bug.cgi?id=314
+ * see: http://bugzilla.remotesensing.org/show_bug.cgi?id=314
  **********************************************************************/
 char *AVCAdjustCaseSensitiveFilename(char *pszFname)
 {

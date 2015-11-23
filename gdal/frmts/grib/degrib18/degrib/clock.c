@@ -409,13 +409,13 @@ int Clock_MonthNum (int day, sInt4 year)
  *
  * PURPOSE
  *   Returns either the number of days in the month or the number of days
- * since the begining of the year.
+ * since the beginning of the year.
  *
  * ARGUMENTS
  * month = Month in question. (Input)
  *   day = Day of month in question (Input)
  *  year = years since the epoch (Input)
- * f_tot = 1 if we want total days from begining of year,
+ * f_tot = 1 if we want total days from beginning of year,
  *         0 if we want total days in the month. (Input)
  *
  * RETURNS: int

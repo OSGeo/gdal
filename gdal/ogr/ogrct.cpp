@@ -92,7 +92,7 @@ static bool      bProjLocaleSafe = false;
 // (it is CURRENT-AGE number). If DLL came somewhere else (e.g. from MSVC
 // build) it can be named either way, so use PROJSO environment variable to
 // specify the right library name. By default assume that in Cygwin/MinGW all
-// components were buit in the same way.
+// components were built in the same way.
 #  define LIBNAME      "libproj-0.dll"
 #elif defined(__CYGWIN__)
 #  define LIBNAME      "cygproj-0.dll"

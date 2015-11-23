@@ -425,7 +425,7 @@ static int GRIB2Inventory2to7 (sChar sectNum, DataSource &fp, sInt4 gribLen,
    double sndSurfValue; /* Value of second fixed surface. */
    sChar f_sndValue;    /* flag if SndValue is valid. */
    uChar timeRangeUnit;
-   sInt4 lenTime;       /* Used by parseTime to tell difference betweeen 8hr
+   sInt4 lenTime;       /* Used by parseTime to tell difference between 8hr
                          * average and 1hr average ozone. */
    uChar genID;         /* The Generating process ID (used for GFS MOS) */
    uChar probType;      /* The probability type */

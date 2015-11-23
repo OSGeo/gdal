@@ -9661,7 +9661,7 @@ public class ogr
 /**
  * Use exceptions instead of error return codes.
  * <p>
- * This is the default behavious : methods that in C/C++ return an OGRErr return code
+ * This is the default behaviour : methods that in C/C++ return an OGRErr return code
  * would throw a RuntimeException() in case the code it is different
  * from ogr.OGRERR_NONE. By calling this method, you can get
  * back to that original state if DontUseExceptions() was called in-between.
@@ -11874,7 +11874,7 @@ public class osr
 /**
  * Use exceptions instead of error return codes.
  * <p>
- * This is the default behavious : methods that in C/C++ return an OGRErr return code
+ * This is the default behaviour : methods that in C/C++ return an OGRErr return code
  * would throw a RuntimeException() in case the code it is different
  * from ogr.OGRERR_NONE. By calling this method, you can get
  * back to that original state if DontUseExceptions() was called in-between.

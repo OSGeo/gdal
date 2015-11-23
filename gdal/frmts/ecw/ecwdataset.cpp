@@ -2001,10 +2001,12 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     else if( nBufYSize == 1 )
     {
-        //JTO: this is tricky, because it expects the rest of the image with this bufer width to be 
-        //read. The prefered way to achieve this behaviour would be to call AdviseRead before call IRasterIO.
-        //ERO; indeed, the logic could be improved to detect successive pattern of single line reading
-        //before doing an AdviseRead.
+        // This is tricky, because it expects the rest of the image
+        // with this buffer width to be read. The preferred way to
+        // achieve this behaviour would be to call AdviseRead before
+        // call IRasterIO.  The logic could be improved to detect
+        // successive pattern of single line reading before doing an
+        // AdviseRead.
         CPLErr eErr;
 
         eErr = AdviseRead( nXOff, nYOff, nXSize, GetRasterYSize() - nYOff,

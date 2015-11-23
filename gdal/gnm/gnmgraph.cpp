@@ -500,7 +500,7 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
                 continue;
 
             // We go in any edge from source to target so we take only
-            // direct cost (even if an edge is biderected).
+            // direct cost (even if an edge is bi-directed).
             dfCurrentEdgeCost = ite->second.dfDirCost;
 
             // While we see outcome edges of current vertex id we definitly know
@@ -519,7 +519,8 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
                 mMarks[nTargetVertId] = dfNewVertexMark;
                 mnPathTree[nTargetVertId] = nCurrentEdgeId;
 
-                // The vertex with minimal cost will be inserted to the begining.
+                // The vertex with minimal cost will be inserted to the
+                // beginning.
                 to_see.insert(std::pair<double,GNMGFID>(dfNewVertexMark,
                                                         nTargetVertId));
             }

@@ -3394,7 +3394,7 @@ EHinquire(char *filename, char *type, char *objectlist, int32 * strbufsize)
     {
 	*strbufsize = 0;
     }
-    /* Search for objects from begining of HDF file */
+    /* Search for objects from beginning of HDF file */
     /* -------------------------------------------- */
     vgRef = -1;
 

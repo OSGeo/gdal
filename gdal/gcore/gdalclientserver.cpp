@@ -4103,7 +4103,7 @@ char** GDALClientDataset::GetFileList()
         return NULL;
     GDALConsumeErrors(p);
 
-    /* If server is Windows and client is Unix, then replace backslahes */
+    /* If server is Windows and client is Unix, then replace backslashes */
     /* by slashes */
 #ifndef WIN32
     char** papszIter = papszFileList;

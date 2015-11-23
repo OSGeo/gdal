@@ -184,7 +184,7 @@ static GDALColorInterp BandInterp(int nbands, int band) {
  *
  * @param in, the string to search into
  *
- * @return The position from the begining of the string or -1 if not found
+ * @return The position from the beginning of the string or -1 if not found
  */
 
 static int FindBbox(CPLString in) {

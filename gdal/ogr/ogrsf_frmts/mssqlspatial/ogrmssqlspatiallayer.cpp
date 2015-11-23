@@ -235,7 +235,8 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 int nLen = static_cast<int>(strlen(pszDefault));
                 if (nLen >= 1 && pszDefault[0] == '(' && pszDefault[nLen-1] == ')')
                 {
-                    /* all default values are encapsulated in backets by MSSQL server */
+                    // All default values are encapsulated in brackets
+                    // by MSSQL server.
                     if (nLen >= 4 && pszDefault[1] == '(' && pszDefault[nLen-2] == ')')
                     {
                         /* for numeric values double brackets are used */

@@ -196,7 +196,7 @@ typedef enum
     /*! Average */                          GRIORA_Average = 5,
     /*! Mode (selects the value which appears most often of all the sampled points) */
                                             GRIORA_Mode = 6,
-    /*! Gauss bluring */                    GRIORA_Gauss = 7
+    /*! Gauss blurring */                   GRIORA_Gauss = 7
 } GDALRIOResampleAlg;
 
 /*! Warp Resampling Algorithm */

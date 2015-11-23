@@ -2397,13 +2397,13 @@ GDALCopyWords( const void * CPL_RESTRICT pSrcData, GDALDataType eSrcType, int nS
  * Bitwise word copying.
  *
  * A function for moving sets of partial bytes around.  Loosely
- * speaking this is a bitswise analog to GDALCopyWords().
+ * speaking this is a bitwise analog to GDALCopyWords().
  *
- * It copies nStepCount "words" where each word is nBitCount bits long. 
+ * It copies nStepCount "words" where each word is nBitCount bits long.
  * The nSrcStep and nDstStep are the number of bits from the start of one
  * word to the next (same as nBitCount if they are packed).  The nSrcOffset
  * and nDstOffset are the offset into the source and destination buffers
- * to start at, also measured in bits. 
+ * to start at, also measured in bits.
  *
  * All bit offsets are assumed to start from the high order bit in a byte
  * (i.e. most significant bit first).  Currently this function is not very
