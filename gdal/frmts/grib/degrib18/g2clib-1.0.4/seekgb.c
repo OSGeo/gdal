@@ -25,7 +25,7 @@ void seekgb(FILE *lugb,g2int iseek,g2int mseek,g2int *lskip,g2int *lgrib)
 //     iseek      - number of bytes in the file to skip before search
 //     mseek      - number of bytes to search at a time
 //   OUTPUT ARGUMENTS:
-//     lskip      - number of bytes to skip from the beggining of the file
+//     lskip      - number of bytes to skip from the beginning of the file
 //                  to where the GRIB message starts
 //     lgrib      - number of bytes in message (set to 0, if no message found)
 //

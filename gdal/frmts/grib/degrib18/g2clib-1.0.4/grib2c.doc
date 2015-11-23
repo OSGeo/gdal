@@ -328,7 +328,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //     iseek      - number of bytes in the file to skip before search
 //     mseek      - number of bytes to search at a time
 //   OUTPUT ARGUMENTS:
-//     lskip      - number of bytes to skip from the beggining of the file
+//     lskip      - number of bytes to skip from the beginning of the file
 //                  to where the GRIB message starts
 //     lgrib      - number of bytes in message (set to 0, if no message found)
 //

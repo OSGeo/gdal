@@ -529,7 +529,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if ( !pabyTile )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't allocate space for the tile blocak of size %lu.\n%s",
+                  "Can't allocate space for the tile block of size %lu.\n%s",
                   static_cast<unsigned long>( nTileBytes ),
                   VSIStrerror( errno ) );
         return CE_Failure;
