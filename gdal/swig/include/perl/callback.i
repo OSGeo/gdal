@@ -1,4 +1,4 @@
-%inline %{
+%header %{
     #ifndef SWIG
     typedef struct
     {

@@ -1,7 +1,6 @@
 ## @class Geo::GNM
 # @brief Base class for geographical networks in GDAL.
 
-## @ignore do_confess
 
 ## @class Geo::GNM::MajorObject
 # @isa (Geo::GNM)

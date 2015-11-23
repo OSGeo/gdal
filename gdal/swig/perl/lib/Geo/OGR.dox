@@ -4,8 +4,6 @@
 # A wrapper for many OGR utility functions and a root class for all
 # OGR classes.
 
-## @ignore do_confess
-
 ## @ignore TermProgress
 ## @ignore TermProgress_nocb
 
@@ -55,8 +53,6 @@
 # Needed only on IBM DB2.
 
 ## @ignore NullFID
-## @ignore callback_fwrite
-
 
 ## @ignore GetDriver
 ## @ignore GetDriverCount

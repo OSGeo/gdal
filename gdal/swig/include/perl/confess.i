@@ -1,4 +1,4 @@
-%inline %{
+%header %{
     void do_confess(const char *error, int push_to_error_stack) {
         SV *sv = newSVpv(error, 0);
         if (push_to_error_stack) {
