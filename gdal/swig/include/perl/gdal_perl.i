@@ -400,8 +400,9 @@ sub GetDriver {
     my $driver;
     $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
     $driver //= GetDriverByName("$name");
-    return $driver if $driver;
-    Geo::GDAL::error(2, $name, 'Driver');
+    Geo::GDAL::error(2, $name, 'Driver') unless $driver;
+    return $driver;
+    
 }
 *Driver = *GetDriver;
 
@@ -664,6 +665,7 @@ sub stdout_redirection_wrapper {
         }
     }
     confess(Geo::GDAL->last_error) if $@;
+    confess("Failed. Use Geo::OGR::Driver for vector drivers.") unless $ds;
     return $ds;
 }
 
@@ -679,7 +681,7 @@ sub Create {
     if (@_ == 0) {
     } elsif (ref($_[0]) eq 'HASH') {
         %params = %{$_[0]};
-    } elsif (exists $defaults{$_[0]} and @_ % 2 == 0) {
+    } elsif (defined $_[0] and exists $defaults{$_[0]} and @_ % 2 == 0) {
         %params = @_;
     } elsif (@_ == 2) { # old vector create
         ($params{Name}, $params{Options}) = @_;
@@ -689,7 +691,6 @@ sub Create {
     for my $k (keys %params) {
         carp "Unknown parameter '$k'." unless exists $defaults{$k};
     }
-    $defaults{Bands} = 0 unless defined $params{Width}; # avoid bands > 0 for vector ds
     for my $k (keys %defaults) {
         $params{$k} //= $defaults{$k};
     }
@@ -763,6 +764,7 @@ sub GetRasterBand {
     my($self, $index) = @_;
     $index //= 1;
     my $band = _GetRasterBand($self, $index);
+    Geo::GDAL::error(2, $index, 'Band') unless $band;
     $BANDS{tied(%{$band})} = $self;
     return $band;
 }
@@ -941,6 +943,24 @@ sub GCPs {
     my $proj = Geo::OSR::SpatialReference->new(GetGCPProjection($self));
     my $GCPs = GetGCPs($self);
     return (@$GCPs, $proj);
+}
+
+sub ReadTile {
+    my ($self, $xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $alg) = @_;
+    my @data;
+    for my $i (0..$self->Bands-1) {
+        $data[$i] = $self->Band($i+1)->ReadTile($xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $alg);
+    }
+    return \@data;
+}
+
+sub WriteTile {
+    my ($self, $data, $xoff, $yoff) = @_;
+    $xoff //= 0;
+    $yoff //= 0;
+    for my $i (0..$self->Bands-1) {
+        $self->Band($i+1)->WriteTile($data->[$i], $xoff, $yoff);
+    }
 }
 
 sub ReadRaster {
@@ -1279,19 +1299,25 @@ sub ScaleAndOffset {
 }
 
 sub ReadTile {
-    my($self, $xoff, $yoff, $xsize, $ysize) = @_;
+    my($self, $xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $alg) = @_;
     $xoff //= 0;
     $yoff //= 0;
     $xsize //= $self->{XSize} - $xoff;
     $ysize //= $self->{YSize} - $yoff;
-    my $buf = $self->ReadRaster($xoff, $yoff, $xsize, $ysize);
-    my $pc = Geo::GDAL::PackCharacter($self->{DataType});
-    my $w = $xsize * Geo::GDAL::GetDataTypeSize($self->{DataType})/8;
+    $w_tile //= $xsize;
+    $h_tile //= $ysize;
+    $alg //= 'NearestNeighbour';
+    my $t = $self->{DataType};
+    Geo::GDAL::error(1, $alg, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT) 
+        unless exists $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$alg};
+    $alg = $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$alg};
+    my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $t, 0, 0, $alg);
+    my $pc = Geo::GDAL::PackCharacter($t);
+    my $w = $w_tile * Geo::GDAL::GetDataTypeSize($t)/8;
     my $offset = 0;
     my @data;
-    for my $i (0..$ysize-1) {
-        my $sub = substr($buf, $offset, $w);
-        my @d = unpack($pc."[$xsize]", $sub);
+    for my $y (0..$h_tile-1) {
+        my @d = unpack($pc."[$w_tile]", substr($buf, $offset, $w));
         push @data, \@d;
         $offset += $w;
     }
@@ -1535,6 +1561,7 @@ sub WriteRaster {
         carp "Unknown parameter '$k'." unless exists $d{$u};
         $p{$u} = $p{$k};
     }
+    confess "Usage: \$band->WriteRaster( Buf => \$data, ... )" unless defined $p{BUF};
     for my $k (keys %d) {
         $p{$k} //= $d{$k};
     }
@@ -1568,6 +1595,35 @@ sub CreateMaskBand {
         }
     }
     $self->_CreateMaskBand($f);
+}
+
+sub Piddle {
+    my $self = shift; # should use named parameters for read raster and band
+    # add Piddle sub to dataset too to make N x M x n piddles
+    my ($w, $h) = $self->Size;
+    my $data = $self->ReadRaster;
+    my $pdl = PDL->new;
+    my %map = ( 
+        Byte => 0,
+        UInt16 => 2,
+        Int16 => 1,
+        UInt32 => -1,
+        Int32 => 3,
+        Float32 => 5,
+        Float64 => 6,
+        CInt16 => -1,
+        CInt32 => -1,
+        CFloat32 => -1,
+        CFloat64 => -1
+        );
+    my $datatype = $map{$self->DataType};
+    croak "there is no direct mapping between the band datatype and PDL" if $datatype < 0;
+    $pdl->set_datatype($datatype);
+    $pdl->setdims([1,$w,$h]);
+    my $dref = $pdl->get_dataref();
+    $$dref = $data;
+    $pdl->upd_data;
+    return $pdl;
 }
 
 # GetMaskBand should be redefined and the result should be put into 

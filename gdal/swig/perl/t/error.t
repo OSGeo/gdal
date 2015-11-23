@@ -8,7 +8,7 @@ BEGIN { use_ok('Geo::GDAL') };
 my $e;
 
 eval {
-    my $ds = Geo::GDAL::Driver('GTiff')->Create('/dev/null');
+    my $ds = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/tmp', Bands => 0);
 };
 ok(($@ =~ /called at t\/error.t/), "Error in GDAL is confessed (by a call in cpl_exceptions.i).");
 
