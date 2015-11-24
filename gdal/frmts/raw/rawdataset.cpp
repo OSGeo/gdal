@@ -627,6 +627,12 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 {
     const int nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
+#ifdef DEBUG
+    /* Otherwise Coverity thinks that a divide by zero is possible in AccessBlock() */
+    /* in the complex data type wapping case */
+    if( nBandDataSize == 0 )
+        return CE_Failure;
+#endif
     const int nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
 
     if( !CanUseDirectIO(nXOff, nYOff, nXSize, nYSize, eBufType ) )
