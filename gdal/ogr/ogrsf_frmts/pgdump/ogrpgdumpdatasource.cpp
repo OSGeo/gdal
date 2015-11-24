@@ -171,22 +171,21 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     const char* pszFIDColumnNameIn = CSLFetchNameValue(papszOptions, "FID");
     CPLString osFIDColumnName, osFIDColumnNameEscaped;
     if (pszFIDColumnNameIn == NULL)
-        osFIDColumnNameEscaped = osFIDColumnName = "OGC_FID";
+        osFIDColumnName = "ogc_fid";
     else
     {
         if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
         {
             char* pszLaunderedFid = OGRPGCommonLaunderName(pszFIDColumnNameIn, "PGDump");
             osFIDColumnName = pszLaunderedFid;
-            osFIDColumnNameEscaped = OGRPGDumpEscapeColumnName(osFIDColumnName);
             CPLFree(pszLaunderedFid);
         }
         else
         {
             osFIDColumnName = pszFIDColumnNameIn;
-            osFIDColumnNameEscaped = OGRPGDumpEscapeColumnName(osFIDColumnName);
         }
     }
+    osFIDColumnNameEscaped = OGRPGDumpEscapeColumnName(osFIDColumnName);
 
     if (strncmp(pszLayerName, "pg", 2) == 0)
     {
