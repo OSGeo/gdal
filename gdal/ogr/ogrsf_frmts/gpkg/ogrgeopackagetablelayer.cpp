@@ -161,6 +161,12 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
     if( bAddFID )
     {
         err = sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFID());
+        if ( err != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "failed to bind FID to statement");
+            return OGRERR_FAILURE;
+        }
     }
 
     /* Bind data values to the statement, here bind the blob for geometry */
