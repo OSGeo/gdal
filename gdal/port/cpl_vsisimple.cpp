@@ -141,6 +141,12 @@ int VSIFClose( FILE * fp )
 int VSIFSeek( FILE * fp, long nOffset, int nWhence )
 
 {
+#ifdef DEBUG
+    /* To workaround Coverity strange warning about potential negative seek */
+    /* CID 1340084 when called from dgnwrite.cpp */
+    if( nWhence == SEEK_SET && nOffset < 0 )
+        return -1;
+#endif
     int nResult = fseek( fp, nOffset, nWhence );
 
 #ifdef VSI_DEBUG
