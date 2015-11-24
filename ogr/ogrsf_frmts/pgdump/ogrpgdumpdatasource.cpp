@@ -171,22 +171,24 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
     if( nLayers == 0 )
          Log("SET standard_conforming_strings = OFF");
 
-    const char* pszFIDColumnName = CSLFetchNameValue(papszOptions, "FID");
-    CPLString osFIDColumnName;
-    if (pszFIDColumnName == NULL)
-        osFIDColumnName = "OGC_FID";
+    const char* pszFIDColumnNameIn = CSLFetchNameValue(papszOptions, "FID");
+    CPLString osFIDColumnName, osFIDColumnNameEscaped;
+    if (pszFIDColumnNameIn == NULL)
+        osFIDColumnName = "ogc_fid";
     else
     {
         if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
         {
-            char* pszLaunderedFid = LaunderName(pszFIDColumnName);
-            osFIDColumnName += OGRPGDumpEscapeColumnName(pszLaunderedFid);
+            char* pszLaunderedFid = LaunderName(pszFIDColumnNameIn);
+            osFIDColumnName = pszLaunderedFid;
             CPLFree(pszLaunderedFid);
         }
         else
-            osFIDColumnName += OGRPGDumpEscapeColumnName(pszFIDColumnName);
+        {
+            osFIDColumnName = pszFIDColumnNameIn;
+        }
     }
-    pszFIDColumnName = osFIDColumnName.c_str();
+    osFIDColumnNameEscaped = OGRPGDumpEscapeColumnName(osFIDColumnName);
 
     if (strncmp(pszLayerName, "pg", 2) == 0)
     {
@@ -407,14 +409,14 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
                     "%s ( "
                     "   %s SERIAL, "
                     "   CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                    osCreateTable.c_str(), pszFIDColumnName, pszTableName, pszFIDColumnName );
+                    osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(), pszTableName, osFIDColumnNameEscaped.c_str() );
         else
             osCommand.Printf(
                     "%s ( "
                     "   %s SERIAL, "
                     "   WKB_GEOMETRY %s, "
                     "   CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                    osCreateTable.c_str(), pszFIDColumnName, pszGeomType, pszTableName, pszFIDColumnName );
+                    osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(), pszGeomType, pszTableName, osFIDColumnNameEscaped.c_str() );
     }
     else if ( EQUAL(pszGeomType, "geography") )
     {
@@ -426,17 +428,17 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
         if (nSRSId)
             osCommand.Printf(
                      "%s ( %s SERIAL, \"%s\" geography(%s%s,%d), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                     osCreateTable.c_str(), pszFIDColumnName, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", nSRSId, pszTableName, pszFIDColumnName );
+                     osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(), pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", nSRSId, pszTableName, osFIDColumnNameEscaped.c_str() );
         else
             osCommand.Printf(
                      "%s ( %s SERIAL, \"%s\" geography(%s%s), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                     osCreateTable.c_str(), pszFIDColumnName, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", pszTableName, pszFIDColumnName );
+                     osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(), pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", pszTableName, osFIDColumnNameEscaped.c_str() );
     }
     else
     {
         osCommand.Printf(
                  "%s ( %s SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                 osCreateTable.c_str(), pszFIDColumnName, pszTableName, pszFIDColumnName );
+                 osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(), pszTableName, osFIDColumnNameEscaped.c_str() );
     }
 
     if (bCreateTable)
@@ -482,7 +484,7 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
     int bWriteAsHex = !CSLFetchBoolean(papszOptions,"WRITE_EWKT_GEOM",FALSE);
 
     poLayer = new OGRPGDumpLayer( this, pszSchemaName, pszTableName,
-                                  pszFIDColumnName, bWriteAsHex, bCreateTable );
+                                  osFIDColumnName, bWriteAsHex, bCreateTable );
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
