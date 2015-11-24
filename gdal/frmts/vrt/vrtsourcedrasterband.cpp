@@ -498,7 +498,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
             = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
 
         if ( poBand != this )
-            return poBand->ComputeRasterMinMax( FALSE, adfMinMax );
+            return poBand->ComputeRasterMinMax( TRUE, adfMinMax );
     }
 
 /* -------------------------------------------------------------------- */
@@ -567,7 +567,7 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
             = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
 
         if( poBand != this )
-            return poBand->ComputeStatistics( FALSE,  
+            return poBand->ComputeStatistics( TRUE,  
                                               pdfMin, pdfMax, 
                                               pdfMean, pdfStdDev,
                                               pfnProgress, pProgressData );
