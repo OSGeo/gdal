@@ -923,7 +923,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     CPLError( CE_Failure, CPLE_FileIO,
                               "Failed to seek to " CPL_FRMT_GUIB " to read.\n",
                               nBlockOff );
-
+                    CPLFree( pabyData );
                     return CE_Failure;
                 }
 
@@ -937,7 +937,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               "Failed to write " CPL_FRMT_GUIB " bytes to file. " CPL_FRMT_GUIB " bytes written",
                               static_cast<GUIntBig>(nBytesToRW),
                               static_cast<GUIntBig>(nBytesActuallyWritten) );
-
+                    CPLFree( pabyData );
                     return CE_Failure;
                 }
 
