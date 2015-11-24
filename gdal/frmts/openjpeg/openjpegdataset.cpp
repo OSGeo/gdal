@@ -1660,7 +1660,19 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
          (poDS->nRasterXSize > 1024 ||
           poDS->nRasterYSize > 1024));
 
-    if (poDS->bUseSetDecodeArea)
+    /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
+    /* are tiled with tile dimensions 2048x2048. It would be a waste of */
+    /* memory to allocate such big blocks */
+    if( poDS->nRasterXSize < (int)nTileW &&
+        poDS->nRasterYSize < (int)nTileH )
+    {
+        poDS->bUseSetDecodeArea = TRUE;
+        nTileW = poDS->nRasterXSize;
+        nTileH = poDS->nRasterYSize;
+        if (nTileW > 2048) nTileW = 2048;
+        if (nTileH > 2048) nTileH = 2048;
+    }
+    else if (poDS->bUseSetDecodeArea)
     {
         if (nTileW > 1024) nTileW = 1024;
         if (nTileH > 1024) nTileH = 1024;
@@ -2178,10 +2190,23 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
 
-    if (nXSize < nBlockXSize)
-        nBlockXSize = nXSize;
-    if (nYSize < nBlockYSize)
-        nBlockYSize = nYSize;
+    // By default do not generate tile sizes larger than the dataset
+    // dimensions
+    if( !CSLFetchBoolean(papszOptions, "BLOCKSIZE_STRICT", FALSE) )
+    {
+        if (nXSize < nBlockXSize)
+        {
+            CPLDebug("OPENJPEG", "Adjusting block width from %d to %d",
+                     nBlockXSize, nXSize);
+            nBlockXSize = nXSize;
+        }
+        if (nYSize < nBlockYSize)
+        {
+            CPLDebug("OPENJPEG", "Adjusting block width from %d to %d",
+                     nBlockYSize, nYSize);
+            nBlockYSize = nYSize;
+        }
+    }
 
     OPJ_PROG_ORDER eProgOrder = OPJ_LRCP;
     const char* pszPROGORDER =
