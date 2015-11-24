@@ -594,14 +594,7 @@ void OGRPGTableLayer::SetTableDefinition(const char* pszFIDColumnName,
 {
     bTableDefinitionValid = TRUE;
     bGeometryInformationSet = TRUE;
-    if( pszFIDColumnName[0] == '"' &&
-             pszFIDColumnName[strlen(pszFIDColumnName)-1] == '"')
-    {
-        pszFIDColumn = CPLStrdup(pszFIDColumnName + 1);
-        pszFIDColumn[strlen(pszFIDColumn)-1] = '\0';
-    }
-    else
-        pszFIDColumn = CPLStrdup(pszFIDColumnName);
+    pszFIDColumn = CPLStrdup(pszFIDColumnName);
     poFeatureDefn->SetGeomType(wkbNone);
     if( eType != wkbNone )
     {
