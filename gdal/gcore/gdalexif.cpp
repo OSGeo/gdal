@@ -210,7 +210,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
     GUInt16        nEntryCount;
     int space;
     unsigned int           n,i;
-    char          szTemp[MAXSTRINGLENGTH];
+    char          szTemp[MAXSTRINGLENGTH+1];
     char          szName[128];
 
     VSILFILE* fp = (VSILFILE* )fpInL;
