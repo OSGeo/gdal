@@ -1467,7 +1467,10 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
 
                     // lastly seek to the right place in the new space ready to write
                     if( VSIFSeekL( hHFA->fp, nNewOffset + (iStartRow*nNewMaxChars), SEEK_SET ) != 0 )
+                    {
+                        VSIFree(pachColData);
                         return CE_Failure;
+                    }
                 }
 
                 // copy from application buffer
