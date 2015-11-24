@@ -1420,22 +1420,22 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
     EndCopy();
 
-    const char* pszFIDColumnName = CSLFetchNameValue(papszOptions, "FID");
+    const char* pszFIDColumnNameIn = CSLFetchNameValue(papszOptions, "FID");
     CPLString osFIDColumnName;
-    if (pszFIDColumnName == NULL)
+    if (pszFIDColumnNameIn == NULL)
         osFIDColumnName = "ogc_fid";
     else
     {
         if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
         {
-            char* pszLaunderedFid = OGRPGCommonLaunderName(pszFIDColumnName, "PG");
-            osFIDColumnName += OGRPGEscapeColumnName(pszLaunderedFid);
+            char* pszLaunderedFid = OGRPGCommonLaunderName(pszFIDColumnNameIn, "PG");
+            osFIDColumnName += pszLaunderedFid;
             CPLFree(pszLaunderedFid);
         }
         else
-            osFIDColumnName += OGRPGEscapeColumnName(pszFIDColumnName);
+            osFIDColumnName += pszFIDColumnNameIn;
     }
-    pszFIDColumnName = osFIDColumnName.c_str();
+    CPLString osFIDColumnNameEscaped = OGRPGEscapeColumnName(osFIDColumnName);
 
     if (STARTS_WITH(pszLayerName, "pg"))
     {
@@ -1659,23 +1659,23 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
                  "   %s %s, "
                  "   PRIMARY KEY (%s)",
                  osCreateTable.c_str(),
-                 pszFIDColumnName,
+                 osFIDColumnNameEscaped.c_str(),
                  pszSerialType,
                  pszGFldName,
                  pszGeomType,
-                 pszFIDColumnName);
+                 osFIDColumnNameEscaped.c_str());
     }
     else if ( !bDifferedCreation && eType != wkbNone && EQUAL(pszGeomType, "geography") )
     {
         osCommand.Printf(
                     "%s ( %s %s, %s geography(%s%s%s), PRIMARY KEY (%s)",
                     osCreateTable.c_str(),
-                    pszFIDColumnName,
+                    osFIDColumnNameEscaped.c_str(),
                     pszSerialType,
                     OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
                     nDimension == 2 ? "" : "Z",
                     nSRSId ? CPLSPrintf(",%d", nSRSId) : "", 
-                    pszFIDColumnName);
+                    osFIDColumnNameEscaped.c_str());
     }
     else if ( !bDifferedCreation && eType != wkbNone && !EQUAL(pszGeomType, "geography") &&
               sPostGISVersion.nMajor >= 2 )
@@ -1683,21 +1683,21 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         osCommand.Printf(
                     "%s ( %s %s, %s geometry(%s%s%s), PRIMARY KEY (%s)",
                     osCreateTable.c_str(),
-                    pszFIDColumnName,
+                    osFIDColumnNameEscaped.c_str(),
                     pszSerialType,
                     OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
                     nDimension == 2 ? "" : "Z",
                     nSRSId ? CPLSPrintf(",%d", nSRSId) : "", 
-                    pszFIDColumnName);
+                    osFIDColumnNameEscaped.c_str());
     }
     else
     {
         osCommand.Printf(
                  "%s ( %s %s, PRIMARY KEY (%s)",
                  osCreateTable.c_str(),
-                 pszFIDColumnName,
+                 osFIDColumnNameEscaped.c_str(),
                  pszSerialType,
-                 pszFIDColumnName );
+                 osFIDColumnNameEscaped.c_str() );
     }
     osCreateTable = osCommand;
 
@@ -1843,7 +1843,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
     poLayer = new OGRPGTableLayer( this, osCurrentSchema, pszTableName,
                                    pszSchemaName, NULL, TRUE );
-    poLayer->SetTableDefinition(pszFIDColumnName, pszGFldName, eType,
+    poLayer->SetTableDefinition(osFIDColumnName, pszGFldName, eType,
                                 pszGeomType, nSRSId, nDimension);
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
