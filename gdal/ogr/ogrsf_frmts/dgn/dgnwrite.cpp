@@ -116,15 +116,14 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
         abyLeader[1] |= 0x80;
 
         if( VSIFSeek( psDGN->fp, psElement->offset, SEEK_SET ) != 0
-            || VSIFWrite( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1 )
+            || VSIFWrite( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1
+            || VSIFSeek( psDGN->fp, nOldFLoc, SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Failed seek or write when trying to mark existing\n"
                       "element as deleted in DGNResizeElement()\n" );
             return FALSE;
         }
-
-        VSIFSeek( psDGN->fp, nOldFLoc, SEEK_SET );
 
         if( psElement->element_id != -1 && psDGN->index_built )
             psDGN->element_index[psElement->element_id].flags 
