@@ -97,10 +97,11 @@ class VSIWin32Handle : public VSIVirtualHandle
 /* complement it with missing codes.                                    */ 
 /************************************************************************/
 
-static int ErrnoFromGetLastError()
+static int ErrnoFromGetLastError(DWORD dwError = 0)
 {
     int err = 0;
-    DWORD dwError = GetLastError();
+    if( dwError == 0 )
+        dwError = GetLastError();
     
     switch( dwError )
     {
@@ -375,6 +376,68 @@ static const char* CPLGetWineVersion()
 }
 
 /************************************************************************/
+/*                           VSIWin32StrlenW()                          */
+/************************************************************************/
+
+static size_t VSIWin32StrlenW(const wchar_t* pwszString)
+{
+    size_t nLen = 0;
+    while( pwszString[nLen] != 0 )
+        nLen ++;
+    return nLen;
+}
+
+/************************************************************************/
+/*                        VSIWin32TryLongFilename()                     */
+/************************************************************************/
+
+static void VSIWin32TryLongFilename(wchar_t*& pwszFilename)
+{
+    size_t nLen = VSIWin32StrlenW(pwszFilename);
+    if( pwszFilename[0] != 0 &&
+        pwszFilename[1] == ':' &&
+        (pwszFilename[2] == '\\' || pwszFilename[2] == '/' ) )
+    {
+        pwszFilename = (wchar_t*) CPLRealloc( pwszFilename,
+                    (4 + nLen + 1) * sizeof(wchar_t));
+        memmove( pwszFilename + 4, pwszFilename, (nLen+1) * sizeof(wchar_t));
+    }
+    else
+    {
+        wchar_t* pwszCurDir = (wchar_t*) CPLMalloc(32768 * sizeof(wchar_t));
+        DWORD nCurDirLen = GetCurrentDirectoryW( 32768, pwszCurDir );
+        CPLAssert(nCurDirLen < 32768);
+        pwszFilename = (wchar_t*) CPLRealloc( pwszFilename,
+                    (4 + nCurDirLen + 1 + nLen + 1) * sizeof(wchar_t));
+        int nOffset = 0;
+        if( pwszFilename[0] == '.' &&
+            (pwszFilename[1] == '/' || pwszFilename[1] == '\\') )
+            nOffset = 2;
+        memmove( pwszFilename + 4 + nCurDirLen + 1,
+                 pwszFilename + nOffset, (nLen-nOffset+1) * sizeof(wchar_t) );
+        memmove( pwszFilename + 4, pwszCurDir, nCurDirLen * sizeof(wchar_t) );
+        pwszFilename[ 4 + nCurDirLen ] = '/';
+        CPLFree(pwszCurDir);
+    }
+    pwszFilename[0] = '\\';
+    pwszFilename[1] = '\\';
+    pwszFilename[2] = '?';
+    pwszFilename[3] = '\\';
+    
+    for(size_t nLen = 4; pwszFilename[nLen] != 0; nLen++)
+    {
+        if( pwszFilename[nLen] == '/' )
+            pwszFilename[nLen] = '\\';
+    }
+#ifdef notdef
+    CPLString osFilename;
+    for(size_t nLen = 0; pwszFilename[nLen] != 0; nLen++)
+        osFilename += (char)pwszFilename[nLen];
+    CPLDebug("VSI", "Trying %s", osFilename.c_str());
+#endif
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -439,6 +502,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 /*      On Win32 consider treating the filename as utf-8 and            */
 /*      converting to wide characters to open.                          */
 /* -------------------------------------------------------------------- */
+    DWORD nLastError = 0;
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
@@ -449,6 +513,36 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                             FILE_SHARE_READ | FILE_SHARE_WRITE, 
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
+        if ( hFile == INVALID_HANDLE_VALUE )
+        {
+            nLastError = GetLastError();
+#ifdef notdef
+            switch( nLastError )
+            {
+                    case ERROR_FILE_NOT_FOUND:      CPLDebug("VSI", "ERROR_FILE_NOT_FOUND"); break;
+                    case ERROR_PATH_NOT_FOUND:      CPLDebug("VSI", "ERROR_PATH_NOT_FOUND"); break;
+                    case ERROR_INVALID_DRIVE:       CPLDebug("VSI", "ERROR_INVALID_DRIVE"); break;
+                    case ERROR_NO_MORE_FILES:       CPLDebug("VSI", "ERROR_NO_MORE_FILES"); break;
+                    case ERROR_BAD_PATHNAME:        CPLDebug("VSI", "ERROR_BAD_PATHNAME"); break;
+                    case ERROR_BAD_NETPATH:         CPLDebug("VSI", "ERROR_BAD_NETPATH"); break;
+                    case ERROR_FILENAME_EXCED_RANGE: CPLDebug("VSI", "ERROR_FILENAME_EXCED_RANGE"); break;
+                    default:  CPLDebug("VSI", "other error %d", nLastError); break;
+            }
+#endif
+        }
+        if( nLastError == ERROR_PATH_NOT_FOUND ||
+            nLastError == ERROR_FILENAME_EXCED_RANGE )
+        {
+            VSIWin32TryLongFilename(pwszFilename);
+            if( VSIWin32StrlenW(pwszFilename) >= 255 )
+            {
+                nLastError = 0;
+                hFile = CreateFileW( pwszFilename, dwDesiredAccess, 
+                                FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                                NULL, dwCreationDisposition,  dwFlagsAndAttributes,
+                                NULL );
+            }
+        }
         CPLFree( pwszFilename );
     }
     else
@@ -461,7 +555,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 
     if( hFile == INVALID_HANDLE_VALUE )
     {
-        errno = ErrnoFromGetLastError();
+        errno = ErrnoFromGetLastError(nLastError);
         return NULL;
     }
 
@@ -511,6 +605,33 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         nResult = _wstat64( pwszFilename, pStatBuf );
+        if( nResult < 0 )
+        {
+            DWORD nLastError = GetLastError();
+            if( nLastError == ERROR_PATH_NOT_FOUND ||
+                nLastError == ERROR_FILENAME_EXCED_RANGE )
+            {
+                VSIWin32TryLongFilename(pwszFilename);
+                if( VSIWin32StrlenW(pwszFilename) >= 255 )
+                {
+                    // _wstat64 doesn't like \\?\ paths, so do our poor-man
+                    // stat like.
+                    //nResult = _wstat64( pwszFilename, pStatBuf );
+                    
+                    VSIVirtualHandle* poHandle = Open( pszFilename, "rb");
+                    if( poHandle != NULL )
+                    {
+                        nResult = 0;
+                        memset( pStatBuf, 0, sizeof(VSIStatBufL) );
+                        CPL_IGNORE_RET_VAL(poHandle->Seek(0, SEEK_END));
+                        pStatBuf->st_mode = S_IFREG;
+                        pStatBuf->st_size = poHandle->Tell();
+                        poHandle->Close();
+                        delete poHandle;
+                    }
+                }
+            }
+        }
         CPLFree( pwszFilename );
 
         return nResult;
