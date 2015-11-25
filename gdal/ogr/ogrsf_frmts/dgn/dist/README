@@ -119,7 +119,7 @@ Release 1.8
 Release 1.7
 -----------
 
- o Improved calcuation of bounding box in DGLCreateTextElem() based on code
+ o Improved calculation of bounding box in DGLCreateTextElem() based on code
    from Matt Kelder. 
 
  o Added preliminary 3D write support. 

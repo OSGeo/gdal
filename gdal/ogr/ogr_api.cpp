@@ -249,7 +249,7 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
  * \brief Returns all points of line string.
  *
  * This method copies all points into user arrays. The user provides the
- * stride between 2 consecutives elements of the array.
+ * stride between 2 consecutive elements of the array.
  *
  * On some CPU architectures, care must be taken so that the arrays are properly aligned.
  *

@@ -2357,9 +2357,9 @@ void GeoRasterWrapper::LoadNoDataValues( void )
 //                                                                     GetRPC()
 //  ---------------------------------------------------------------------------
 
-/* This is the order for storing 20 coeffients in GeoRaster Metadata */
+/* This is the order for storing 20 coefficients in GeoRaster Metadata */
 
-static const int anOrder[] = { 
+static const int anOrder[] = {
     1, 2, 8, 12, 3, 5, 15, 9, 13, 16, 4, 6, 18, 7, 11, 19, 10, 14, 17, 20
 };
 

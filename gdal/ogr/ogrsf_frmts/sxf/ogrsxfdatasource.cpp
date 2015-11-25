@@ -224,7 +224,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     if (oSXFPassport.informationFlags.bProjectionDataCompliance == false)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "SXF. Data are not corresponde to the projection." );
+                  "SXF. Data does not correspond to the projection." );
         CloseFile();
         return FALSE;
     }

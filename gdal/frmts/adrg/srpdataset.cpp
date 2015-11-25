@@ -1082,9 +1082,9 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
 
                     CPLString osName = CPLString(pszNAM);
 
-                    /* Define a subdirectory from Dataset but with only 6 caracatere */
+                    /* Define a subdirectory from Dataset but with only 6 characters */
                     CPLString osDirDataset = pszNAM;
-                    osDirDataset.resize(6); 
+                    osDirDataset.resize(6);
                     CPLString osDatasetDir = CPLFormFilename(osDirName.c_str(), osDirDataset.c_str(), NULL);
 
                     CPLString osGENFileName="";

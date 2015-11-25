@@ -20,7 +20,14 @@ GeoRSS simple, GeoRSS GML and W3C Geo (the later being deprecated).<p>
 
 The driver can read and write documents without location information as well.<p>
 
-The default datum for GeoRSS document is the WGS84 datum (EPSG:4326). Although that GeoRSS locations are encoded in latitude-longitude order in the XML file, all coordinates reported or expected by the driver are in longitude-latitude order. The longitude/latitude order used by OGR is meant for compatibily with most of the rest of OGR drivers and utilities. For locations encoded in GML, the driver will support the srsName attribute for describing other SRS.<p>
+The default datum for GeoRSS document is the WGS84 datum
+(EPSG:4326). Although that GeoRSS locations are encoded in
+latitude-longitude order in the XML file, all coordinates reported or
+expected by the driver are in longitude-latitude order. The
+longitude/latitude order used by OGR is meant for compatibility with
+most of the rest of OGR drivers and utilities. For locations encoded
+in GML, the driver will support the srsName attribute for describing
+other SRS.<p>
 
 Simple and GML encoding support the notion of a <i>box</i> as a geometry. This will be decoded as a rectangle (Polygon geometry) in OGR Simple Feature model.<p>
 

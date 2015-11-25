@@ -95,8 +95,8 @@ typedef struct {
     /** The length of the semi minor ellipse axis in meters. */
     double	SemiMinor;
 
-  /* this #if is primary intended to maintain binary compatability with older
-     versions of libgeotiff for MrSID binaries (for example) */
+  /* This #if is primary intended to maintain binary compatibility with older
+     versions of libgeotiff for MrSID binaries (for example). */
 #if !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
     /** TOWGS84 transformation values (0/3/7) */
     short       TOWGS84Count;

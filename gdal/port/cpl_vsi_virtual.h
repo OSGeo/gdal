@@ -164,7 +164,7 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
 {
 protected:
     CPLMutex* hMutex;
-    /* We use a cache that contains the list of files containes in a VSIArchive file as */
+    /* We use a cache that contains the list of files contained in a VSIArchive file as */
     /* unarchive.c is quite inefficient in listing them. This speeds up access to VSIArchive files */
     /* containing ~1000 files like a CADRG product */
     std::map<CPLString,VSIArchiveContent*>   oFileList;

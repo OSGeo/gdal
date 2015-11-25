@@ -657,7 +657,7 @@ import java.awt.Color;
       return Clone();
   }
 
-/* convienance method */
+  // Convenience method.
   public IndexColorModel getIndexColorModel(int bits) {
     int size = GetCount();
     byte[] reds = new byte[size];

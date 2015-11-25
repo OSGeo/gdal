@@ -233,7 +233,7 @@
   for( int i = 0; i<$1; i++ ) {
     /* Get the Ruby Object */
     VALUE item = rb_ary_entry($input,i);
-    /* Conver to an integer */
+    /* Convert to an integer */
     $2[i] = NUM2INT(item);
   }
 }

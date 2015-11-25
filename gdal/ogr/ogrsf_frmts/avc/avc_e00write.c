@@ -75,7 +75,7 @@
  * Added Japanese DBCS support
  *
  * Revision 1.7  2000/02/14 17:19:53  daniel
- * Accept '-' cahracter in new coverage name
+ * Accept '-' character in new coverage name
  *
  * Revision 1.6  2000/01/10 02:57:44  daniel
  * Little changes to accommodate read support for "weird" coverages

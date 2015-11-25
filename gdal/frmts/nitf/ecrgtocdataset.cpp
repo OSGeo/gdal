@@ -282,7 +282,7 @@ static GIntBig GetFromBase34(const char* pszVal, int nMaxSize)
 /************************************************************************/
 
 /* MIL-PRF-32283 - Table II. ECRG zone limits. */
-/* starting with a fake zone 0 for conveniency */
+/* starting with a fake zone 0 for convenience. */
 static const int anZoneUpperLat[] = { 0, 32, 48, 56, 64, 68, 72, 76, 80 };
 
 /* APPENDIX 70, TABLE III of MIL-A-89007 */

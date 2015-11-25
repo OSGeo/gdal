@@ -1123,7 +1123,7 @@ int OGRLIBKMLDataSource::OpenKmz (
         return FALSE;
     }
 
-    /***** get the child contianer from root *****/
+    /***** Get the child container from root. *****/
 
     ContainerPtr poKmlContainer;
 
@@ -1356,7 +1356,7 @@ int OGRLIBKMLDataSource::OpenDir (
             continue;
         }
 
-        /***** get the cintainer from the root *****/
+        /***** Get the container from the root *****/
 
         ContainerPtr poKmlContainer;
 
@@ -2017,9 +2017,9 @@ OGRErr OGRLIBKMLDataSource::DeleteLayerKmz (
 
 /******************************************************************************
  method to delete a layer in a datasource
- 
+
  Args:          iLayer  index of the layer to delete
- 
+
  Returns:       OGRERR_NONE on success, OGRERR_FAILURE on failure
 
 ******************************************************************************/
@@ -2043,7 +2043,7 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer (
     else if ( IsDir (  ) ) {
         DeleteLayerKmz ( iLayer );
 
-        /***** delete the file the layer corisponds to *****/
+        /***** delete the file the layer corresponds to *****/
 
         const char *pszFilePath =
             CPLFormFilename ( pszName, papoLayers[iLayer]->GetFileName (  ),
@@ -2462,28 +2462,24 @@ void OGRLIBKMLDataSource::SetStyleTableDirectly (
 
     bUpdated = TRUE;
 
-
-
-
     return;
 }
 
 /******************************************************************************
  method to write a style table to a datasource
- 
+
  Args:          poStyleTable    pointer to the style table to add
- 
+
  Returns:       nothing
 
- note:  this method copys the style table, and the user will still be
-        responsible for its destruction
+ note:  This method copies the style table, and the user will still be
+        responsible for its destruction.
 
 ******************************************************************************/
 
 void OGRLIBKMLDataSource::SetStyleTable (
     OGRStyleTable * poStyleTable )
 {
-
     if ( !bUpdate )
         return;
 
@@ -2499,12 +2495,12 @@ void OGRLIBKMLDataSource::SetStyleTable (
  Test if capability is available.
 
  Args:          pszCap  datasource capability name to test
- 
+
  Returns:       nothing
 
  ODsCCreateLayer: True if this datasource can create new layers.
  ODsCDeleteLayer: True if this datasource can delete existing layers.
- 
+
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::TestCapability (

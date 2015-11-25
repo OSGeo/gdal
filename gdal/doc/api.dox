@@ -20,7 +20,7 @@ the progress semantics.
 		          void *pProgressArg);
 \endcode
 
-@param dfComplete The ratio of completness of the process from 0.0 for just
+@param dfComplete The ratio of completeness of the process from 0.0 for just
 started to 1.0 for completed.
 
 @param pszMessage An optional message string to display.  This is usually NULL.

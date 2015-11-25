@@ -422,8 +422,8 @@ int OGRGTMDataSource::Create( const char* pszFilename,
     pCurrentPos = ((char*)pCurrentPos) + 2;
     strcpy((char*)pCurrentPos, pszBaseFileName);
 
-    // write ndatum. We are implementing just WGS84, so write the
-    // correspondig value for WGS84
+    // Write ndatum. We are implementing just WGS84, so write the
+    // corresponding value for WGS84.
     pCurrentPos = ((char*) pBuffer) + 151 + strlen(pszBaseFileName);
     appendInt(pCurrentPos, 217);
 

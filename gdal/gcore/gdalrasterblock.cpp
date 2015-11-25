@@ -167,12 +167,12 @@ void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
  * caching system for caching GDAL read/write imagery.
  *
  * The first type this function is called, it will read the GDAL_CACHEMAX
- * configuation option to initialize the maximum cache memory.
+ * configuration option to initialize the maximum cache memory.
  *
  * This function cannot return a value higher than 2 GB. Use
  * GDALGetCacheMax64() to get a non-truncated value.
  *
- * @return maximum in bytes. 
+ * @return maximum in bytes.
  */
 
 int CPL_STDCALL GDALGetCacheMax()
@@ -204,7 +204,7 @@ int CPL_STDCALL GDALGetCacheMax()
  * caching system for caching GDAL read/write imagery.
  *
  * The first type this function is called, it will read the GDAL_CACHEMAX
- * configuation option to initialize the maximum cache memory.
+ * configuration option to initialize the maximum cache memory.
  *
  * @return maximum in bytes.
  *

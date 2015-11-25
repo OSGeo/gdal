@@ -1961,7 +1961,7 @@ Default is 0.0.</dd>
 
 (Since GDAL 2.1) Linear interpolation algorithm.
 
-The Linear method performs linear interpolation by compution a Delaunay
+The Linear method performs linear interpolation by computing a Delaunay
 triangulation of the point cloud, finding in which triangle of the triangulation
 the point is, and by doing linear interpolation from its barycentric coordinates
 within the triangle.

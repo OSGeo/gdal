@@ -75,7 +75,7 @@
    OJPEGSubsamplingCorrect, making no note of any other data, reporting no warnings
    or errors, up to the point where either these values are read, or it's clear they
    aren't there. This means that some of the data is read twice, but we feel speed
-   in correcting these values is important enough to warrant this sacrifice. Allthough
+   in correcting these values is important enough to warrant this sacrifice. Although
    there is currently no define or other configuration mechanism to disable this behaviour,
    the actual header scanning is build to robustly respond with error report if it
    should encounter an uncorrected mismatch of subsampling values. See
@@ -84,7 +84,7 @@
    The restart interval and restart markers are the most tricky part... The restart
    interval can be specified in a tag. It can also be set inside the input JPEG stream.
    It can be used inside the input JPEG stream. If reading from strile data, we've
-   consistenly discovered the need to insert restart markers in between the different
+   consistently discovered the need to insert restart markers in between the different
    striles, as is also probably the most likely interpretation of the original TIFF 6.0
    specification. With all this setting of interval, and actual use of markers that is not
    predictable at the time of valid JPEG header assembly, the restart thing may turn
@@ -135,7 +135,7 @@
  * 	The default mode, without JPEG_ENCAP_EXTERNAL, implements the call encapsulators
  * 	here, internally, with normal longjump.
  * SETJMP, LONGJMP, JMP_BUF: On some machines/environments a longjump equivalent is
- * 	conviniently available, but still it may be worthwhile to use _setjmp or sigsetjmp
+ * 	conveniently available, but still it may be worthwhile to use _setjmp or sigsetjmp
  * 	in place of plain setjmp. These macros will make it easier. It is useless
  * 	to fiddle with these if you define JPEG_ENCAP_EXTERNAL.
  * OJPEG_BUFFER: Define the size of the desired buffer here. Should be small enough so as to guarantee
@@ -200,7 +200,7 @@ static const TIFFField ojpegFields[] = {
   Libjpeg's jmorecfg.h defines INT16 and INT32, but only if XMD_H is
   not defined.  Unfortunately, the MinGW and Borland compilers include
   a typedef for INT32, which causes a conflict.  MSVC does not include
-  a conficting typedef given the headers which are included.
+  a conflicting typedef given the headers which are included.
 */
 #if defined(__BORLANDC__) || defined(__MINGW32__)
 # define XMD_H 1

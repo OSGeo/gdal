@@ -2520,7 +2520,7 @@ SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
 
                 /* Rule #1:
                  * Test whether the edge 'straddles' the horizontal ray from the test point (dfTestY,dfTestY)
-                 * The rule #1 also excludes edges collinear with the ray.
+                 * The rule #1 also excludes edges colinear with the ray.
                  */
                 if ( ( psObject->padfY[iEdge+nVertStart] < dfTestY
                        && dfTestY <= psObject->padfY[iNext+nVertStart] )

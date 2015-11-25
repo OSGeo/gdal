@@ -515,10 +515,10 @@ int     TABMAPIndexBlock::InsertEntry(GInt32 nXMin, GInt32 nYMin,
 /**********************************************************************
  *                   TABMAPIndexBlock::ChooseSubEntryForInsert()
  *
- * Select the entry in this index block in which the new entry should 
+ * Select the entry in this index block in which the new entry should
  * be inserted. The criteria used is to select the node whose MBR needs
  * the least enlargement to include the new entry. We resolve ties by
- * chosing the entry with the rectangle of smallest area.
+ * choosing the entry with the rectangle of smallest area.
  * (This is the ChooseSubtree part of Guttman's "ChooseLeaf" algorithm.)
  *
  * Returns the index of the best candidate or -1 of node is empty.

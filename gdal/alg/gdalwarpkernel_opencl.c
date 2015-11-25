@@ -2076,7 +2076,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     }
     handleErrGoto(err, error_label);
     
-    //Find a good & compable image channel order for the Lat/Long arr
+    // Find a good & compatible image channel order for the Lat/Long array.
     err = set_supported_formats(warper, 2,
                                 &(warper->xyChOrder), &(warper->xyChSize),
                                 CL_FLOAT);

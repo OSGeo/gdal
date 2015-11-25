@@ -281,7 +281,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     // FH14 - interleaving.
     fh.Put( interleaving, 360, 8);
 
-    // FH15 - reserved - MIXED is for some ancient backwards compatability.
+    // FH15 - reserved - MIXED is for some ancient backwards compatibility.
     fh.Put( "MIXED", 368, 8);
 
     // FH16 - number of image bands.
@@ -295,7 +295,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
     // FH19 - pixel ground size interpretation.
     fh.Put( "METRE", 400, 8 );
-    
+
     // TODO:
     //PrintDouble( fh->XPixelSize, "%16.9f", 1.0 );
     //PrintDouble( fh->YPixelSize, "%16.9f", 1.0 );

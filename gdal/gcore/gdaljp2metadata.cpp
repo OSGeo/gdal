@@ -1369,7 +1369,8 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
             oSRS.exportToWkt(&pszWKT);
             char* pszXMLEscapedWKT = CPLEscapeString(pszWKT, -1, CPLES_XML);
             CPLFree(pszWKT);
-            osDictBox.Printf(  
+            // TODO: Spelling: Dictionnary for cursom
+            osDictBox.Printf(
 "<gml:Dictionary gml:id=\"CRSU1\" \n"
 "        xmlns:gml=\"http://www.opengis.net/gml\"\n"
 "        xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"

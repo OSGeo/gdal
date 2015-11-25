@@ -427,7 +427,7 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
     if( poDriver->pfnCreateCopy != NULL )
         poDriver->SetMetadataItem( GDAL_DCAP_CREATECOPY, "YES" );
 
-    /* Backward compability for GDAL raster out-of-tree drivers: */
+    /* Backward compatibility for GDAL raster out-of-tree drivers: */
     /* if a driver hasn't explicitly set a vector capability, assume it is */
     /* a raster driver (legacy OGR drivers will have DCAP_VECTOR set before */
     /* calling RegisterDriver() ) */

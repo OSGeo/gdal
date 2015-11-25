@@ -84,7 +84,7 @@ void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
 #define ENABLE_DEBUG 1
 
 static const int N_MAX_REGIONS = 1000;
-static const int DOWNLOAD_CHUNCK_SIZE = 16384;
+static const int DOWNLOAD_CHUNK_SIZE = 16384;
 
 typedef enum
 {
@@ -882,7 +882,7 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
     sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(pszURL, "http");
     sWriteFuncHeaderData.nStartOffset = startOffset;
-    sWriteFuncHeaderData.nEndOffset = startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE - 1;
+    sWriteFuncHeaderData.nEndOffset = startOffset + nBlocks * DOWNLOAD_CHUNK_SIZE - 1;
     /* Some servers don't like we try to read after end-of-file (#5786) */
     if( cachedFileProp->bHasComputedFileSize && 
         sWriteFuncHeaderData.nEndOffset >= cachedFileProp->fileSize )
@@ -1023,23 +1023,23 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
         }
     }
 
-    lastDownloadedOffset = startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE;
+    lastDownloadedOffset = startOffset + nBlocks * DOWNLOAD_CHUNK_SIZE;
 
     char* pBuffer = sWriteFuncData.pBuffer;
     size_t nSize = sWriteFuncData.nSize;
 
-    if (nSize > static_cast<size_t>(nBlocks) * DOWNLOAD_CHUNCK_SIZE)
+    if (nSize > static_cast<size_t>(nBlocks) * DOWNLOAD_CHUNK_SIZE)
     {
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Got more data than expected : %u instead of %d",
-                     static_cast<unsigned int>(nSize), nBlocks * DOWNLOAD_CHUNCK_SIZE);
+                     static_cast<unsigned int>(nSize), nBlocks * DOWNLOAD_CHUNK_SIZE);
     }
     
     while(nSize > 0)
     {
         //if (ENABLE_DEBUG)
-        //    CPLDebug("VSICURL", "Add region %d - %d", startOffset, MIN(DOWNLOAD_CHUNCK_SIZE, nSize));
-        size_t nChunkSize = MIN((size_t)DOWNLOAD_CHUNCK_SIZE, nSize);
+        //    CPLDebug("VSICURL", "Add region %d - %d", startOffset, MIN(DOWNLOAD_CHUNK_SIZE, nSize));
+        size_t nChunkSize = MIN((size_t)DOWNLOAD_CHUNK_SIZE, nSize);
         poFS->AddRegion(pszURL, startOffset, nChunkSize, pBuffer);
         startOffset += nChunkSize;
         pBuffer += nChunkSize;
@@ -1072,7 +1072,7 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
         if (psRegion == NULL)
         {
             vsi_l_offset nOffsetToDownload =
-                (iterOffset / DOWNLOAD_CHUNCK_SIZE) * DOWNLOAD_CHUNCK_SIZE;
+                (iterOffset / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
             
             if (nOffsetToDownload == lastDownloadedOffset)
             {
@@ -1092,9 +1092,9 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
             /* Ensure that we will request at least the number of blocks */
             /* to satisfy the remaining buffer size to read */
             vsi_l_offset nEndOffsetToDownload =
-                ((iterOffset + nBufferRequestSize) / DOWNLOAD_CHUNCK_SIZE) * DOWNLOAD_CHUNCK_SIZE;
+                ((iterOffset + nBufferRequestSize) / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
             int nMinBlocksToDownload = 1 + (int)
-                ((nEndOffsetToDownload - nOffsetToDownload) / DOWNLOAD_CHUNCK_SIZE);
+                ((nEndOffsetToDownload - nOffsetToDownload) / DOWNLOAD_CHUNK_SIZE);
             if (nBlocksToDownload < nMinBlocksToDownload)
                 nBlocksToDownload = nMinBlocksToDownload;
                 
@@ -1102,7 +1102,7 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
             /* Avoid reading already cached data */
             for(i=1;i<nBlocksToDownload;i++)
             {
-                if (poFS->GetRegion(pszURL, nOffsetToDownload + i * DOWNLOAD_CHUNCK_SIZE) != NULL)
+                if (poFS->GetRegion(pszURL, nOffsetToDownload + i * DOWNLOAD_CHUNK_SIZE) != NULL)
                 {
                     nBlocksToDownload = i;
                     break;
@@ -1131,7 +1131,7 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
         pBuffer = (char*) pBuffer + nToCopy;
         iterOffset += nToCopy;
         nBufferRequestSize -= nToCopy;
-        if (psRegion->nSize != (size_t)DOWNLOAD_CHUNCK_SIZE && nBufferRequestSize != 0)
+        if (psRegion->nSize != (size_t)DOWNLOAD_CHUNK_SIZE && nBufferRequestSize != 0)
         {
             break;
         }
@@ -1655,7 +1655,7 @@ const CachedRegion*
 VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
                                                  vsi_l_offset nFileOffsetStart)
 {
-    nFileOffsetStart = (nFileOffsetStart / DOWNLOAD_CHUNCK_SIZE) * DOWNLOAD_CHUNCK_SIZE;
+    nFileOffsetStart = (nFileOffsetStart / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
     VSILFILE* fp = VSIFOpenL(VSICurlGetCacheFileName(), "rb");
     if (fp)
     {
@@ -1771,7 +1771,7 @@ const CachedRegion* VSICurlFilesystemHandler::GetRegion(const char* pszURL,
 
     unsigned long   pszURLHash = CPLHashSetHashStr(pszURL);
 
-    nFileOffsetStart = (nFileOffsetStart / DOWNLOAD_CHUNCK_SIZE) * DOWNLOAD_CHUNCK_SIZE;
+    nFileOffsetStart = (nFileOffsetStart / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
     int i;
     for(i=0;i<nRegions;i++)
     {

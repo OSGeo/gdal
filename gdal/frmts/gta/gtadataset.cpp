@@ -48,7 +48,7 @@
  * - GDAL metadata is assumed to be in UTF-8 encoding, so that no conversion is
  *   necessary to store it in GTA tags. I'm not sure that this is correct, but
  *   since some metadata might not be representable in the local encoding (e.g.
- *   a chinese description in latin1), using UTF-8 seems reasonable.
+ *   a Chinese description in latin1), using UTF-8 seems reasonable.
  *
  * The following could be implemented, but currently is not:
  * - Allow metadata updates by using a special GDAL/METADATA_BUFFER tag that
@@ -747,7 +747,7 @@ CPLErr GTARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         memcpy( (void *) pDst, (void *) pSrc, sComponentSize );
     }
 
-    // Write the block that conatins all bands at once
+    // Write the block that contains all bands at once
     if( poGDS->WriteBlock( ) != CE_None )
     {
         return CE_Failure;

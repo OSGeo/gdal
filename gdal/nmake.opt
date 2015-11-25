@@ -583,7 +583,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
 #
 # Pdfium can be built from the win_gdal_build branch at https://github.com/rouault/pdfium that
-# has the following patch to ensure /MD (MultiThreadedDLL) linking consistant with GDAL one.
+# has the following patch to ensure /MD (MultiThreadedDLL) linking consistent with GDAL one.
 # Build script from PDFium is available at https://github.com/rouault/pdfium/tree/build
 #
 #diff --git a/build/standalone.gypi b/build/standalone.gypi

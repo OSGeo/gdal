@@ -93,7 +93,7 @@ typedef struct
     char szFileName[256];
     VSILFILE *fp;
     float fVersion;
-    unsigned char cFormat;        //0x00 16 bit, 0x01 32 bit, 0x80 8 bit classifed, 0x81 16 bit classified
+    unsigned char cFormat;  // 0x00 16 bit, 0x01 32 bit, 0x80 8 bit classified, 0x81 16 bit classified
     unsigned int nBitsPerPixel;
     unsigned int nXSide;
     unsigned int nYSide;

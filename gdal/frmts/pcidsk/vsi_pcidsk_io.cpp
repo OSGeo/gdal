@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  PCIDSK Database File
- * Purpose:  PCIDSK SDK compatiable io interface built on VSI.
+ * Purpose:  PCIDSK SDK compatible IO interface built on VSI.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************

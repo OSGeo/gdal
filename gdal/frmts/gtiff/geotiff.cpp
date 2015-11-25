@@ -255,7 +255,7 @@ class GTiffDataset : public GDALPamDataset
     int         bTreatAsRGBA;
     int         bCrystalized;
 
-    void	Crystalize();
+    void        Crystalize();  // TODO: Spelling.
 
     GDALColorTable *poColorTable;
 
@@ -4346,17 +4346,18 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
                   "SetColorTable() not supported for multi-sample TIFF files." );
         return CE_Failure;
     }
-        
+
     if( eDataType != GDT_Byte && eDataType != GDT_UInt16 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "SetColorTable() only supported for Byte or UInt16 bands in TIFF format." );
+                  "SetColorTable() only supported for Byte or UInt16 bands "
+                  "in TIFF format." );
         return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
 /*      We are careful about calling SetDirectory() to avoid            */
-/*      prematurely crystalizing the directory.  (#2820)                */
+/*      prematurely crystallizing the directory.  (#2820)               */
 /* -------------------------------------------------------------------- */
     if( poGDS->bCrystalized )
     {
@@ -10510,7 +10511,7 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *hTIFF, char **papszPa
 
         TIFFSetField(hTIFF, TIFFTAG_ICCPROFILE, nEmbedLen, pEmbedBuffer);
 
-        CPLFree(pEmbedBuffer);        
+        CPLFree(pEmbedBuffer);
     }
     else
     {

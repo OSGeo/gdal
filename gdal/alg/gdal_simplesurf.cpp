@@ -368,8 +368,8 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
 /* -------------------------------------------------------------------- */
     if (poMatchPairs == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Matched points colection isn't specified");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Matched points collection isn't specified" );
         return CE_Failure;
     }
 

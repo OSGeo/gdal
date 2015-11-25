@@ -135,7 +135,7 @@ void* GDALCreateSimilarTransformer( void* psTransformerArg, double dfSrcRatioX, 
 
 
 /* High level transformer for going from image coordinates on one file
-   to image coordiantes on another, potentially doing reprojection, 
+   to image coordinates on another, potentially doing reprojection, 
    utilizing GCPs or using the geotransform. */
 
 void CPL_DLL *

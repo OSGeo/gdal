@@ -4602,14 +4602,16 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
         const char* pszNoDataValues = poDS->GetMetadataItem("NODATA_VALUES");
         if (pszNoDataValues != NULL)
         {
-            char** papszNoDataValues = CSLTokenizeStringComplex(pszNoDataValues, " ", FALSE, FALSE);
+            char** papszNoDataValues
+                = CSLTokenizeStringComplex(pszNoDataValues, " ", FALSE, FALSE);
 
             /* Make sure we have as many values as bands */
-            if (CSLCount(papszNoDataValues) == poDS->GetRasterCount() && poDS->GetRasterCount() != 0)
+            if (CSLCount(papszNoDataValues) == poDS->GetRasterCount()
+                && poDS->GetRasterCount() != 0)
             {
-                /* Make sure that all bands have the same data type */
-                /* This is cleraly not a fundamental condition, just a condition to make implementation */
-                /* easier. */
+                // Make sure that all bands have the same data type
+                // This is clearly not a fundamental condition, just a
+                // condition to make implementation easier.
                 int i;
                 GDALDataType eDT = GDT_Unknown;
                 for(i=0;i<poDS->GetRasterCount();i++)
@@ -4632,7 +4634,9 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
                 else
                 {
                     ReportError(CE_Warning, CPLE_AppDefined,
-                            "All bands should have the same type in order the NODATA_VALUES metadata item to be used as a mask.");
+                                "All bands should have the same type in "
+                                "order the NODATA_VALUES metadata item "
+                                "to be used as a mask.");
                 }
             }
             else

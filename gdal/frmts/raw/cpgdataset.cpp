@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Polarimetric Workstation
- * Purpose:  Convair PolGASP data (.img/.hdr format). 
+ * Purpose:  Convair PolGASP data (.img/.hdr format).
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_CPG(void);
+void GDALRegister_CPG(void);
 CPL_C_END
 
 

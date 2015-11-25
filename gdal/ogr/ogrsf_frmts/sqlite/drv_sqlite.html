@@ -147,7 +147,7 @@ CREATE VIRTUAL TABLE table_name USING VirtualOGR(datasource_name, update_mode, l
 
 where :
 <ul>
-<li><i>datasource_name</i> is the connexion string to any OGR datasource.</li>
+<li><i>datasource_name</i> is the connetion string to any OGR datasource.</li>
 <li><i>update_mode</i> = 0 for read-only mode (default value) or 1 for update mode.</li>
 <li><i>layer_name</i> = the name of a layer of the opened datasource.</li>
 <li><i>expose_ogr_style</i> = 0 to prevent the OGR_STYLE special from being displayed (default value) or 1 to expose it.</li>
@@ -266,7 +266,7 @@ geometry column named GEOMETRY (or WKT_GEOMETRY if FORMAT=WKT). If you wish to u
 it can be supplied with the GEOMETRY_NAME layer creation option.</p></li>
 
 <li><p><b>LAUNDER=YES/NO</b>: Controls whether layer and field names will be 
-laundered for easier use in SQLite.  Laundered names will be convered to lower 
+laundered for easier use in SQLite.  Laundered names will be converted to lower 
 case and some special characters(' - #) will be changed to underscores. Default
 to YES.</p></li>
 

@@ -212,10 +212,10 @@ void Conversions::convert_geo_to_pixel(double longitude, double latitude,unsigne
     double r2 = -r_l*cos(c_lat)*sin(longitude);
     double r3 = r_l*sin(c_lat);
     double rn = sqrt(r1*r1 + r2*r2 + r3*r3);
-    
+
     double x = atan(-r2/r1) * (CFAC >> 16) + COFF;
     double y = asin(-r3/rn) * (LFAC >> 16) + LOFF;
-    
+
     line = (unsigned int)floor(x + 0.5);
     column = (unsigned int)floor(y + 0.5);
 }

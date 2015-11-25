@@ -1555,7 +1555,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
 
     if (fpCURLOGR)
     {
-        /* Install a spy on the file connexion that will intercept */
+        /* Install a spy on the file connection that will intercept */
         /* PNG or JPEG headers, to interrupt their downloading */
         /* once the header is found. Speeds up dataset opening. */
         CPLErrorReset();

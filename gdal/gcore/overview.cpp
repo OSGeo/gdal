@@ -2818,8 +2818,8 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         double dfXRatioDstToSrc = (double)nSrcWidth / nDstWidth;
         double dfYRatioDstToSrc = (double)nSrcHeight / nDstHeight;
 
-        /* Compute the maximum chunck size of the source such as it will match the size of */
-        /* a block of the overview */
+        // Compute the maximum chunk size of the source such as it will match
+        // the size of a block of the overview.
         int nFullResXChunk = 1 + (int)(nDstBlockXSize * dfXRatioDstToSrc);
         int nFullResYChunk = 1 + (int)(nDstBlockYSize * dfYRatioDstToSrc);
 

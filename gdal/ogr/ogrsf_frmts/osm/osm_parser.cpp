@@ -1427,7 +1427,7 @@ int ReadPrimitiveBlock(GByte* pabyData, GByte* pabyDataLimit,
 
             /* Dirty little trick */
             /* ReadStringTable() will over-write the byte after the */
-            /* StringTable message with a NUL charachter, so we backup */
+            /* StringTable message with a NUL character, so we backup */
             /* it to be able to restore it just before issuing the next */
             /* READ_FIELD_KEY. Then we will re-NUL it to have valid */
             /* NUL terminated strings */

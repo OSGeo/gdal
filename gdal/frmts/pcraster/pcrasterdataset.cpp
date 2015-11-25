@@ -212,8 +212,9 @@ GDALDataset* PCRasterDataset::createCopy(
     missingValue = ::missingValue(fileCellRepresentation);
   }
 
-  // TODO conversie van INT2 naar INT4 ondersteunen. zie ruseas.c regel 503.
-  // conversie op r 159.
+  // TODO: Proper translation of TODO.
+  // TODO: Support conversion to INT2 (?) INT4. ruseas.c see line 503.
+  // Conversion r 159.
 
   // Create buffer for one row of values.
   void* buffer = Rmalloc(map, nrCols);

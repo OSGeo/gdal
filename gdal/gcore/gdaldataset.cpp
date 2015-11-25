@@ -5829,38 +5829,39 @@ int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
 /************************************************************************/
 
 /**
- \brief For datasources which support transactions, StartTransaction creates a transaction.
+ \brief For datasources which support transactions, StartTransaction creates a
+`transaction.
 
- If starting the transaction fails, will return 
- OGRERR_FAILURE. Datasources which do not support transactions will 
+ If starting the transaction fails, will return
+ OGRERR_FAILURE. Datasources which do not support transactions will
  always return OGRERR_UNSUPPORTED_OPERATION.
 
  Nested transactions are not supported.
- 
+
  All changes done after the start of the transaction are definitely applied in the
- datasource if CommitTransaction() is called. They may be cancelled by calling
+ datasource if CommitTransaction() is called. They may be canceled by calling
  RollbackTransaction() instead.
- 
+
  At the time of writing, transactions only apply on vector layers.
- 
- Datasets that support transactions will advertize the ODsCTransactions capability.
- Use of transactions at dataset level is generally prefered to transactions at
+
+ Datasets that support transactions will advertise the ODsCTransactions capability.
+ Use of transactions at dataset level is generally preferred to transactions at
  layer level, whose scope is rarely limited to the layer from which it was started.
- 
+
  In case StartTransaction() fails, neither CommitTransaction() or RollbackTransaction()
  should be called.
- 
+
  If an error occurs after a successful StartTransaction(), the whole
- transaction may or may not be implicitely cancelled, depending on drivers. (e.g.
+ transaction may or may not be implicitly canceled, depending on drivers. (e.g.
  the PG driver will cancel it, SQLite/GPKG not). In any case, in the event of an
  error, an explicit call to RollbackTransaction() should be done to keep things balanced.
- 
+
  By default, when bForce is set to FALSE, only "efficient" transactions will be
  attempted. Some drivers may offer an emulation of transactions, but sometimes
  with significant overhead, in which case the user must explicitly allow for such
  an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
- should advertize the ODsCEmulatedTransactions capability (and not ODsCTransactions).
- 
+ should advertise the ODsCEmulatedTransactions capability (and not ODsCTransactions).
+
  This function is the same as the C function GDALDatasetStartTransaction().
 
  @param bForce can be set to TRUE if an emulation, possibly slow, of a transaction
@@ -5879,29 +5880,30 @@ OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
 /************************************************************************/
 
 /**
- \brief For datasources which support transactions, StartTransaction creates a transaction.
+ \brief For datasources which support transactions, StartTransaction creates a
+ transaction.
 
- If starting the transaction fails, will return 
- OGRERR_FAILURE. Datasources which do not support transactions will 
+ If starting the transaction fails, will return
+ OGRERR_FAILURE. Datasources which do not support transactions will
  always return OGRERR_UNSUPPORTED_OPERATION.
 
  Nested transactions are not supported.
- 
+
  All changes done after the start of the transaction are definitely applied in the
- datasource if CommitTransaction() is called. They may be cancelled by calling
+ datasource if CommitTransaction() is called. They may be canceled by calling
  RollbackTransaction() instead.
- 
+
  At the time of writing, transactions only apply on vector layers.
- 
- Datasets that support transactions will advertize the ODsCTransactions capability.
- Use of transactions at dataset level is generally prefered to transactions at
+
+ Datasets that support transactions will advertise the ODsCTransactions capability.
+ Use of transactions at dataset level is generally preferred to transactions at
  layer level, whose scope is rarely limited to the layer from which it was started.
- 
+
  In case StartTransaction() fails, neither CommitTransaction() or RollbackTransaction()
  should be called.
 
  If an error occurs after a successful StartTransaction(), the whole
- transaction may or may not be implicitely cancelled, depending on drivers. (e.g.
+ transaction may or may not be implicitly canceled, depending on drivers. (e.g.
  the PG driver will cancel it, SQLite/GPKG not). In any case, in the event of an
  error, an explicit call to RollbackTransaction() should be done to keep things balanced.
 
@@ -5909,7 +5911,7 @@ OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
  attempted. Some drivers may offer an emulation of transactions, but sometimes
  with significant overhead, in which case the user must explicitly allow for such
  an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
- should advertize the ODsCEmulatedTransactions capability (and not ODsCTransactions).
+ should advertise the ODsCEmulatedTransactions capability (and not ODsCTransactions).
 
  This function is the same as the C++ method GDALDataset::StartTransaction()
 

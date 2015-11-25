@@ -405,12 +405,12 @@ and source2.shp.<p>
 
 The following example will return four different layers which are generated in a fly
 from the same polygon shapefile. The first one is the shapefile layer as it stands.
-The second layer gives simplified polygons by applying Spatialite function "Simplify"
+The second layer gives simplified polygons by applying SpatiaLite function "Simplify"
 with parameter tolerance=10. In the third layer the original geometries are replaced by
-their convace hulls. In the fourth layer Spatialite function PointOnSurface is used for
+their convex hulls. In the fourth layer SpatiaLite function PointOnSurface is used for
 replacing the original geometries by points which are inside the corresponding source
 polygons. Note that for using the last three layers of this VRT file GDAL must be
-compiled with SQLite and Spatialite.<p>
+compiled with SQLite and SpatiaLite.<p>
 
 <pre>
 &lt;OGRVRTDataSource&gt;

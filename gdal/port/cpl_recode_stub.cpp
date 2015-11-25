@@ -1215,7 +1215,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
     to a string containing the letters "utf" or "UTF" in it, or by
     deleting all $LC* and $LANG environment variables. In the future
     it is likely that all non-Asian Unix systems will return true,
-    due to the compatability of UTF-8 with ISO-8859-1.
+    due to the compatibility of UTF-8 with ISO-8859-1.
 */
 int utf8locale(void) {
   static int ret = 2;

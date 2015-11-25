@@ -561,9 +561,9 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                 int iX = (int) floor(dfX);
                 int iY = (int) floor(dfY);
 
-                // burn in the current point.
-                // We should be able to drop the Y check because we cliped in Y,
-                // but there may be some error with all the small steps.
+                // Burn in the current point.
+                // We should be able to drop the Y check because we clipped
+                // in Y, but there may be some error with all the small steps.
                 if( iY >= 0 && iY < nRasterYSize )
                     pfnPointFunc( pCBData, iY, iX, dfVariant );
 

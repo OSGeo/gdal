@@ -520,7 +520,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Extract the reader name and password compontents.  The          */
+/*      Extract the reader name and password components.  The          */
 /*      reader name will be followed by a single colon and then the     */
 /*      FME DATASET name.                                               */
 /* -------------------------------------------------------------------- */

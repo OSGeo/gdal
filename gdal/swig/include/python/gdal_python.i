@@ -856,7 +856,7 @@ def TranslateOptions(options = [], format = 'GTiff',
           GCPs --- list of GCPs
           noData --- nodata value (or "none" to unset it)
           rgbExpand --- Color palette expansion mode: "gray", "rgb", "rgba"
-          stats --- whether to calcule statistics
+          stats --- whether to calculate statistics
           rat --- whether to write source RAT
           resampleAlg --- resampling mode
           callback --- callback method

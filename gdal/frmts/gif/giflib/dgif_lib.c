@@ -754,7 +754,7 @@ DGifDecompressLine(GifFileType * GifFile,
     }
 
     if (StackPtr != 0) {
-        /* Let pop the stack off before continueing to read the gif file: */
+        /* Let pop the stack off before continuing to read the GIF file: */
         while (StackPtr != 0 && i < LineLen)
             Line[i++] = Stack[--StackPtr];
     }

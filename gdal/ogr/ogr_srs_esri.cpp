@@ -612,14 +612,14 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
     {
         CPLString osResult;
         char    **papszTokens;
-        
+
         papszTokens = CSLTokenizeString(papszNV[iLine]);
 
         if( CSLCount(papszTokens) > 1 )
             osResult = papszTokens[1];
         else
             osResult = pszDefaultValue;
-        
+
         CSLDestroy( papszTokens );
         return osResult;
     }

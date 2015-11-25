@@ -111,7 +111,7 @@ struct hNoDataItem {
 };
 
 //  ---------------------------------------------------------------------------
-//  GeoRaster wrapper classe definitions
+//  GeoRaster wrapper class definitions
 //  ---------------------------------------------------------------------------
 
 #include "oci_wrapper.h"
