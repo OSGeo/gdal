@@ -74,7 +74,7 @@ class VizGeorefSpline2D
         unused(NULL),
         index(NULL)
     {
-        for( int i = 0; i < nof_vars; i++ )
+        for( int i = 0; i < VIZGEOREF_MAX_VARS; i++ )
         {
             rhs[i] = NULL;
             coef[i] = NULL;
