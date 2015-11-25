@@ -348,8 +348,7 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
         osMTD[14] = 'A';
         osMTD[15] = 'F';
         CPLString osSAFE(CPLString(osBasename) + ".SAFE");
-        osFilename = CPLFormFilename(
-            CPLFormFilename(osFilename, osSAFE, NULL), osMTD, ".xml");
+        osFilename = osFilename + "/" + osSAFE +"/" + osMTD + ".xml";
         if( strncmp(osFilename, "/vsizip/", strlen("/vsizip/")) != 0 )
             osFilename = "/vsizip/" + osFilename;
         CPLDebug("SENTINEL2", "Trying %s", osFilename.c_str());
