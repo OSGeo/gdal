@@ -111,6 +111,10 @@ GDALMDReaderBase* GDALMDReaderManager::GetReader(const char *pszPath,
                                                  char **papszSiblingFiles,
                                                  GUInt32 nType)
 {
+    /* Do no attempt reading side-car files on /vsisubfile/ (#6241) */
+    if( strncmp(pszPath, "/vsisubfile/", strlen("/vsisubfile/")) == 0 )
+        return NULL;
+
     if(nType & MDR_DG)
     {
         INIT_READER(GDALMDReaderDigitalGlobe);
