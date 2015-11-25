@@ -540,6 +540,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_WMTS();
 #endif
 
+#ifdef FRMT_sentinel2
+    GDALRegister_SENTINEL2();
+#endif
+
 #ifdef GNM_ENABLED
     GNMRegisterAllInternal();
 #endif
