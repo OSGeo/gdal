@@ -424,15 +424,15 @@ static void VSIWin32TryLongFilename(wchar_t*& pwszFilename)
     pwszFilename[2] = '?';
     pwszFilename[3] = '\\';
     
-    for(size_t nLen = 4; pwszFilename[nLen] != 0; nLen++)
+    for(size_t i = 4; pwszFilename[i] != 0; i++)
     {
-        if( pwszFilename[nLen] == '/' )
-            pwszFilename[nLen] = '\\';
+        if( pwszFilename[i] == '/' )
+            pwszFilename[i] = '\\';
     }
 #ifdef notdef
     CPLString osFilename;
-    for(size_t nLen = 0; pwszFilename[nLen] != 0; nLen++)
-        osFilename += (char)pwszFilename[nLen];
+    for(size_t i = 0; pwszFilename[i] != 0; i++)
+        osFilename += (char)pwszFilename[i];
     CPLDebug("VSI", "Trying %s", osFilename.c_str());
 #endif
 }
