@@ -57,7 +57,7 @@ def vicar_1():
         return 'fail'
 
     ds = gdal.Open('data/test_vicar_truncated.bin')
-    expected_gt = (-53960.0, 25.0, 0.0, -200830.0, 0.0, -25.0)
+    expected_gt = (-53985.0, 25.0, 0.0, -200805.0, 0.0, -25.0)
     got_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
