@@ -339,10 +339,10 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     double   dfLineOffset_Mult;
     
     dfSampleOffset_Shift = 
-        CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "-0.5" ));
+        CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "0.5" ));
     
     dfLineOffset_Shift = 
-        CPLAtof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "-0.5" ));
+        CPLAtof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "0.5" ));
 
     dfSampleOffset_Mult =
         CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Mult", "-1.0") );
