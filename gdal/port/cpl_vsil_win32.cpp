@@ -438,6 +438,16 @@ static void VSIWin32TryLongFilename(wchar_t*& pwszFilename)
 }
 
 /************************************************************************/
+/*                         VSIWin32IsLongFilename()                     */
+/************************************************************************/
+
+static bool VSIWin32IsLongFilename( const wchar_t* pwszFilename )
+{
+    return (pwszFilename[0] == '\\' && pwszFilename[1] == '\\' &&
+            pwszFilename[2] == '?' && pwszFilename[3] == '\\');
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -513,7 +523,8 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                             FILE_SHARE_READ | FILE_SHARE_WRITE, 
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
-        if ( hFile == INVALID_HANDLE_VALUE )
+        if ( hFile == INVALID_HANDLE_VALUE &&
+            !VSIWin32IsLongFilename(pwszFilename) )
         {
             nLastError = GetLastError();
 #ifdef notdef
@@ -605,7 +616,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         nResult = _wstat64( pwszFilename, pStatBuf );
-        if( nResult < 0 )
+        if( nResult < 0 && !VSIWin32IsLongFilename(pwszFilename) )
         {
             DWORD nLastError = GetLastError();
             if( nLastError == ERROR_PATH_NOT_FOUND ||
