@@ -904,7 +904,9 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             if (poFeature && pszSubElementValue && nSubElementValueLen)
             {
                 pszSubElementValue[nSubElementValueLen] = 0;
-                if (strcmp(pszSubElementName, "time") == 0)
+                if (strcmp(pszSubElementName, "time") == 0 &&
+                    iCurrentField >= 0 &&
+                    poFeature->GetFieldDefnRef(iCurrentField)->GetType() == OFTDateTime )
                 {
                     OGRField sField;
                     if (OGRParseXMLDateTime(pszSubElementValue, &sField))
