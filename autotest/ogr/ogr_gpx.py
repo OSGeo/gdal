@@ -512,6 +512,23 @@ def ogr_gpx_8():
     return 'success'
 
 ###############################################################################
+# Parse file with a <time> extension at track level (#6237)
+
+def ogr_gpx_9():
+    if not gdaltest.have_gpx:
+        return 'skip'
+
+    ds = ogr.Open('data/track_with_time_extension.gpx')
+    lyr = ds.GetLayerByName('tracks')
+    f = lyr.GetNextFeature()
+    if f['time'] != '2015-10-11T15:06:33Z':
+        gdaltest.post_reason('did not get expected result')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_gpx_cleanup():
@@ -537,6 +554,7 @@ gdaltest_list = [
     ogr_gpx_4,
     ogr_gpx_7,
     ogr_gpx_8,
+    ogr_gpx_9,
     ogr_gpx_cleanup ]
 
 if __name__ == '__main__':
