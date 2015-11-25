@@ -50,7 +50,18 @@ static const char VSICRYPT_PREFIX_WITHOUT_SLASH[] = "/vsicrypt";
 static const unsigned int VSICRYPT_READ = 0x1;
 static const unsigned int VSICRYPT_WRITE = 0x2;
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4505 )
+#endif
+
 /* Begin of crypto++ headers */
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4189 )
+#pragma warning( disable : 4512 )
+#pragma warning( disable : 4244 )
+#endif
 
 #ifdef USE_ONLY_CRYPTODLL_ALG
 #include "cryptopp/dll.h"
@@ -74,6 +85,10 @@ static const unsigned int VSICRYPT_WRITE = 0x2;
 #include "cryptopp/filters.h"
 #include "cryptopp/modes.h"
 #include "cryptopp/osrng.h"
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 /* End of crypto++ headers */
 
 // I don't really understand why this is necessary, especially
@@ -534,7 +549,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
             return FALSE;
         }
 
-        int nMaxKeySize = poEncCipher->MaxKeyLength();
+        int nMaxKeySize = static_cast<int>(poEncCipher->MaxKeyLength());
 
         try
         {
@@ -606,7 +621,7 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle* fp, CryptoPP::BlockCipher*
         osKeyCheckRes = CryptKeyCheck(poEncCipher);
     }
 
-    GUInt16 nHeaderSizeNew = 8 + /* signature */
+    GUInt16 nHeaderSizeNew = static_cast<GUInt16>(8 + /* signature */
                             2 + /* header size */
                             1 + /* major version */
                             1 + /* minor version */
@@ -617,7 +632,7 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle* fp, CryptoPP::BlockCipher*
                             2 + osFreeText.size() + /* free text */
                             1 + osKeyCheckRes.size() + /* key check */
                             8 + /* payload size */
-                            2 + osExtraContent.size(); /* extra content */
+                            2 + osExtraContent.size()); /* extra content */
     if( nHeaderSize != 0 )
         CPLAssert( nHeaderSizeNew == nHeaderSize );
     else
@@ -770,7 +785,7 @@ int VSICryptFileHandle::Init(const CPLString& osKey, int bWriteHeader)
 
     poDecCipher = GetDecBlockCipher(poHeader->eAlg);
     nBlockSize = poEncCipher->BlockSize();
-    int nMaxKeySize = poEncCipher->MaxKeyLength();
+    int nMaxKeySize = static_cast<int>(poEncCipher->MaxKeyLength());
 
     try
     {
@@ -986,11 +1001,12 @@ size_t VSICryptFileHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     {
         if( nCurPos >= nWBOffset && nCurPos < nWBOffset + nWBSize )
         {
-            int nToCopy = MIN(nToRead, nWBSize - (nCurPos - nWBOffset));
+            int nToCopy = MIN(static_cast<int>(nToRead),
+                              static_cast<int>(nWBSize - (nCurPos - nWBOffset)));
             if( nCurPos + nToCopy > poHeader->nPayloadFileSize )
             {
                 bEOF = TRUE;
-                nToCopy = poHeader->nPayloadFileSize - nCurPos;
+                nToCopy = static_cast<int>(poHeader->nPayloadFileSize - nCurPos);
             }
             memcpy(pabyBuffer, pabyWB + nCurPos - nWBOffset, nToCopy);
             pabyBuffer += nToCopy;
@@ -1024,7 +1040,7 @@ size_t VSICryptFileHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         nWBSize = poHeader->nSectorSize;
     }
 
-    int nRet = ( (nSize * nMemb - nToRead) / nSize );
+    int nRet = static_cast<int>( (nSize * nMemb - nToRead) / nSize );
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Read ret = %d (nMemb = %d)", nRet, (int)nMemb);
 #endif
@@ -1076,7 +1092,8 @@ size_t VSICryptFileHandle::Write( const void *pBuffer, size_t nSize, size_t nMem
         if( nCurPos >= nWBOffset && nCurPos < nWBOffset + nWBSize )
         {
             bWBDirty = TRUE;
-            int nToCopy = MIN(nToWrite, nWBSize - (nCurPos - nWBOffset));
+            int nToCopy = MIN(static_cast<int>(nToWrite),
+                              static_cast<int>(nWBSize - (nCurPos - nWBOffset)));
             memcpy(pabyWB + nCurPos - nWBOffset, pabyBuffer, nToCopy);
             pabyBuffer += nToCopy;
             nToWrite -= nToCopy;
@@ -1157,7 +1174,7 @@ size_t VSICryptFileHandle::Write( const void *pBuffer, size_t nSize, size_t nMem
         }
     }
 
-    int nRet = ( (nSize * nMemb - nToWrite) / nSize );
+    int nRet = static_cast<int>( (nSize * nMemb - nToWrite) / nSize );
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Write ret = %d (nMemb = %d)", nRet, (int)nMemb);
 #endif
@@ -1441,6 +1458,11 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
 
         int nSectorSize = atoi(GetArgument(pszFilename, "sector_size",
                                            CPLGetConfigOption("VSICRYPT_SECTOR_SIZE", "512")));
+        if( nSectorSize <= 0 || nSectorSize >= 65535 )
+        {
+            CPLError(CE_Warning, CPLE_NotSupported, "Invalid value for sector_size. Defaulting to 512.");
+            nSectorSize = 512;
+        }
 
         int bAddKeyCheck = CSLTestBoolean(GetArgument(pszFilename, "add_key_check",
                                            CPLGetConfigOption("VSICRYPT_ADD_KEY_CHECK", "NO")));
@@ -1455,9 +1477,9 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
             memset((void*)osKey.c_str(), 0, osKey.size());
             return NULL;
         }
-        int nMinKeySize = poBlock->MinKeyLength();
-        int nMaxKeySize = poBlock->MaxKeyLength();
-        int nBlockSize = poBlock->BlockSize();
+        int nMinKeySize = static_cast<int>(poBlock->MinKeyLength());
+        int nMaxKeySize = static_cast<int>(poBlock->MaxKeyLength());
+        int nBlockSize = static_cast<int>(poBlock->BlockSize());
         delete poBlock;
 
         if( osIV.size() != 0 )
@@ -1483,10 +1505,10 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
             CPLDebug("VSICRYPT", "Generating key. This might take some time...");
             CryptoPP::OS_GenerateRandomBlock(
                 /* we need cryptographic randomness (config option for speeding tests) */
-                CSLTestBoolean(CPLGetConfigOption("VSICRYPT_CRYPTO_RANDOM", "TRUE")),
+                CSLTestBoolean(CPLGetConfigOption("VSICRYPT_CRYPTO_RANDOM", "TRUE")) != FALSE,
                 (byte*)osKey.c_str(), osKey.size());
 
-            char* pszB64 = CPLBase64Encode(osKey.size(), (const GByte*)osKey.c_str());
+            char* pszB64 = CPLBase64Encode(static_cast<int>(osKey.size()), (const GByte*)osKey.c_str());
             if( CSLTestBoolean(CPLGetConfigOption("VSICRYPT_DISPLAY_GENERATED_KEY", "TRUE")) )
             {
                 fprintf(stderr, "BASE64 key '%s' has been generated, and installed in "
@@ -1517,7 +1539,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
         poHeader->osIV = osIV;
         poHeader->eAlg = eAlg;
         poHeader->eMode = eMode;
-        poHeader->nSectorSize = nSectorSize;
+        poHeader->nSectorSize = static_cast<GUInt16>(nSectorSize);
         poHeader->osFreeText = osFreeText;
         poHeader->bAddKeyCheck = bAddKeyCheck;
 
@@ -1867,6 +1889,9 @@ void VSISetCryptKey(CPL_UNUSED const GByte* pabyKey, CPL_UNUSED int nKeySize)
     /* not supported */
 }
 
+#ifdef _MSC_VER
+#pragma warning( pop ) /* 5105 */
+#endif
 
 #endif /* HAVE_CRYPTOPP */
 
