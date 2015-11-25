@@ -1369,15 +1369,15 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
             oSRS.exportToWkt(&pszWKT);
             char* pszXMLEscapedWKT = CPLEscapeString(pszWKT, -1, CPLES_XML);
             CPLFree(pszWKT);
-            // TODO: Spelling: Dictionnary for cursom
             osDictBox.Printf(
 "<gml:Dictionary gml:id=\"CRSU1\" \n"
 "        xmlns:gml=\"http://www.opengis.net/gml\"\n"
 "        xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
 "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-"        xsi:schemaLocation=\"http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/base/gml.xsd\">\n"
-"  <gml:description>Dictionnary for cursom SRS %s</gml:description>\n"
-"  <gml:name>Dictionnary for custom SRS</gml:name>\n"
+"        xsi:schemaLocation=\"http://www.opengis.net/gml "
+"http://schemas.opengis.net/gml/3.1.1/base/gml.xsd\">\n"
+"  <gml:description>Dictionary for custom SRS %s</gml:description>\n"
+"  <gml:name>Dictionary for custom SRS</gml:name>\n"
 "  <gml:dictionaryEntry>\n"
 "%s\n"
 "  </gml:dictionaryEntry>\n"
@@ -1563,7 +1563,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
         apoGMLBoxes[nGMLBoxes++] = 
             GDALJP2Box::CreateLabelledXMLAssoc( "CRSDictionary.gml",
                                                 osDictBox );
-        
+
 /* -------------------------------------------------------------------- */
 /*      Bundle gml.data boxes into an association.                      */
 /* -------------------------------------------------------------------- */

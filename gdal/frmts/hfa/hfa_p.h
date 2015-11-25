@@ -257,7 +257,7 @@ class HFAEntry
                 HFAEntry();
                 HFAEntry( HFAEntry *poContainer,
                           const char *pszMIFObjectPath,
-                          const char * pszDictionnary, 
+                          const char * pszDictionary,
                           const char * pszTypeName,
                           int nDataSizeIn,
                           GByte* pabyDataIn );

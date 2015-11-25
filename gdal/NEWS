@@ -5266,7 +5266,7 @@ OGRSpatialReference :
  * Added support for urn:ogc:def:crs:OGC::CRS:84 (and CRS:83, CRS:27) per WMS spec.
  * Wide variety of improvements to preserve PE strings through a morphFromESRI()
    and morphToESRI() process (#2755)
- * Fix inversion of dictionnary filename and GEOGCS/PROJCS name in OGRSpatialReference::exportToERM() (#2819)
+ * Fix inversion of dictionary filename and GEOGCS/PROJCS name in OGRSpatialReference::exportToERM() (#2819)
  * Fix SpatialReference::IsSame() for LOCAL_CS case (#2849)
  * Fix bug in ImportFromXML that prevented from retrieving projection method
  * Accept both href and xlink:href in OGC XML
