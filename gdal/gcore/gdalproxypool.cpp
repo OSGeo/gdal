@@ -490,6 +490,7 @@ void free_func_get_metadata(void* _elt)
     GetMetadataElt* elt = (GetMetadataElt*) _elt;
     CPLFree(elt->pszDomain);
     CSLDestroy(elt->papszMetadata);
+    CPLFree(elt);
 }
 
 
@@ -523,6 +524,7 @@ void free_func_get_metadata_item(void* _elt)
     CPLFree(elt->pszName);
     CPLFree(elt->pszDomain);
     CPLFree(elt->pszMetadataItem);
+    CPLFree(elt);
 }
 
 CPL_C_END
