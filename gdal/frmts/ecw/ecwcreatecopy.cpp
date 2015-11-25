@@ -1560,17 +1560,17 @@ class ECWWriteDataset : public GDALDataset
     double    adfGeoTransform[6];
 
     GDALECWCompressor oCompressor;
-    int       bCrystalized;
+    int       bCrystalized;  // TODO: Spelling.
 
     int       nLoadedLine;
     GByte     *pabyBILBuffer;
 
-    int       bOutOfOrderWriteOccured;  // Spelling.
+    int       bOutOfOrderWriteOccured;  // TODO: Spelling.
 #ifdef OPTIMIZED_FOR_GDALWARP
     int       nPrevIRasterIOBand;
 #endif
 
-    CPLErr    Crystalize();
+  CPLErr    Crystalize();  // TODO: Spelling.
     CPLErr    FlushLine();
 
   public:
@@ -1784,7 +1784,7 @@ CPLErr ECWWriteDataset::Crystalize()
 
     if( bCrystalized )
         return CE_None;
-    
+
     const char **paszBandDescriptions = (const char **) CPLMalloc(nBands * sizeof(char *));
     for (int i = 0; i < nBands; i++ ){
         paszBandDescriptions[i] = GetRasterBand(i+1)->GetDescription();
@@ -1804,9 +1804,9 @@ CPLErr ECWWriteDataset::Crystalize()
 
     nLoadedLine = -1;
     pabyBILBuffer = (GByte *) CPLMalloc( nWordSize * nBands * nRasterXSize );
-    
+
     CPLFree(paszBandDescriptions);
-    
+
     return eErr;
 }
 
@@ -1821,7 +1821,7 @@ CPLErr ECWWriteDataset::FlushLine()
     CPLErr eErr;
 
 /* -------------------------------------------------------------------- */
-/*      Crystalize if not already done.                                 */
+/*      Crystallize if not already done.                                */
 /* -------------------------------------------------------------------- */
     if( !bCrystalized )
     {
@@ -1836,14 +1836,14 @@ CPLErr ECWWriteDataset::FlushLine()
 /* -------------------------------------------------------------------- */
     if( nLoadedLine != -1 )
     {
-        
+
         void **papOutputLine;
 
         papOutputLine = (void **) CPLMalloc(sizeof(void*) * nBands);
         for( int i = 0; i < nBands; i++ )
             papOutputLine[i] = 
                 (void *) (pabyBILBuffer + i * nWordSize * nRasterXSize);
-        
+
 
         eErr =  oCompressor.ourWriteLineBIL( (UINT16) nBands, papOutputLine );
         CPLFree( papOutputLine );

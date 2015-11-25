@@ -1035,7 +1035,7 @@ defined(PNG_READ_BACKGROUND_SUPPORTED)
    /* The sCAL chunk describes the actual physical dimensions of the
     * subject matter of the graphic.  The chunk contains a unit specification
     * a byte value, and two ASCII strings representing floating-point
-    * values.  The values are width and height corresponsing to one pixel
+    * values.  The values are width and height corresponding to one pixel
     * in the image.  This external representation is converted to double
     * here.  Data values are valid if (valid & PNG_INFO_sCAL) is non-zero.
     */
@@ -2026,7 +2026,7 @@ extern PNG_EXPORT(void,png_set_filter_heuristics) PNGARG((png_structp png_ptr,
  * 0 - 9, corresponding directly to the zlib compression levels 0 - 9
  * (0 - no compression, 9 - "maximal" compression).  Note that tests have
  * shown that zlib compression levels 3-6 usually perform as well as level 9
- * for PNG images, and do considerably fewer caclulations.  In the future,
+ * for PNG images, and do considerably fewer calculations.  In the future,
  * these values may not correspond directly to the zlib compression levels.
  */
 extern PNG_EXPORT(void,png_set_compression_level) PNGARG((png_structp png_ptr,

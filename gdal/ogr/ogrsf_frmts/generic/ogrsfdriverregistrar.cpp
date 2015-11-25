@@ -41,15 +41,12 @@ CPL_CVSID("$Id$");
 /**
  * \brief Constructor
  *
- * Normally the driver registrar is constucted by the 
+ * Normally the driver registrar is constructed by the
  * OGRSFDriverRegistrar::GetRegistrar() accessor which ensures singleton
- * status.  
+ * status.
  */
 
-OGRSFDriverRegistrar::OGRSFDriverRegistrar()
-
-{
-}
+OGRSFDriverRegistrar::OGRSFDriverRegistrar() {}
 
 /************************************************************************/
 /*                       ~OGRSFDriverRegistrar()                        */

@@ -450,10 +450,10 @@ const char *CPLStringList::operator[]( int i ) const
 /**
  * Seize ownership of underlying string array.
  *
- * This method is simmilar to List(), except that the returned list is
- * now owned by the caller and the CPLStringList is emptied.  
+ * This method is similar to List(), except that the returned list is
+ * now owned by the caller and the CPLStringList is emptied.
  *
- * @return the C style string list. 
+ * @return the C style string list.
  */
 char **CPLStringList::StealList()
 
@@ -464,7 +464,7 @@ char **CPLStringList::StealList()
     papszList = NULL;
     nCount = 0;
     nAllocation = 0;
-    
+
     return papszRetList;
 }
 

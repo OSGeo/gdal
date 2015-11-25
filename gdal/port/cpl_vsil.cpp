@@ -231,7 +231,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 /************************************************************************/
 /*                             CPLReadDir()                             */
 /*                                                                      */
-/*      This is present only to provide ABI compatability with older    */
+/*      This is present only to provide ABI compatibility with older    */
 /*      versions.                                                       */
 /************************************************************************/
 #undef CPLReadDir
@@ -251,7 +251,7 @@ char **CPLReadDir( const char *pszPath )
 
 /**
  * \brief Create a directory. 
- * 
+ *
  * Create a new directory with the indicated mode.  The mode is ignored
  * on some platforms.  A reasonable default mode value would be 0666.
  * This method goes through the VSIFileHandler virtualization and may

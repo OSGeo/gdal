@@ -76,10 +76,12 @@ effect of this option will be less efficient. This option consumes addionnal 60 
 
 <h3>Interleaved reading</h3>
 
-Due to the nature of OSM files and how the driver works internally, the default reading mode might not work
-correctly, because too many features will accumulate in the layers before being consummed by the user application.
-For large files, applications should set the OGR_INTERLEAVED_READING=YES configuration option to turn on a
-special reading mode where the following reading pattern must be used :
+Due to the nature of OSM files and how the driver works internally,
+the default reading mode might not work correctly, because too many
+features will accumulate in the layers before being consumed by the
+user application.  For large files, applications should set the
+OGR_INTERLEAVED_READING=YES configuration option to turn on a special
+reading mode where the following reading pattern must be used:
 
 <pre>
     int bHasLayersNonEmpty;

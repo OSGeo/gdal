@@ -916,11 +916,11 @@ OGRErr OGRAmigoCloudTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent
             }
 
             // Take X,Y coords
-            // For PostGis ver >= 1.0.0 -> Tokens: X1 Y1 X2 Y2 (nTokenCnt = 4)
+            // For PostGIS ver >= 1.0.0 -> Tokens: X1 Y1 X2 Y2 (nTokenCnt = 4)
             // For PostGIS ver < 1.0.0 -> Tokens: X1 Y1 Z1 X2 Y2 Z2 (nTokenCnt = 6)
             // =>   X2 index calculated as nTokenCnt/2
-            //      Y2 index caluclated as nTokenCnt/2+1
-            
+            //      Y2 index calculated as nTokenCnt/2+1
+
             psExtent->MinX = CPLAtof( papszTokens[0] );
             psExtent->MinY = CPLAtof( papszTokens[1] );
             psExtent->MaxX = CPLAtof( papszTokens[nTokenCnt/2] );

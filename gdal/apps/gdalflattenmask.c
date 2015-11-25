@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
 /* -------------------------------------------------------------------- */
 /*      Write geotransform, projection, color interpretations, no data  */
 /*      values, color tables, metadata, etc. before the file is         */
-/*       crystalized                                                    */
+/*      crystallized.                                                   */
 /* -------------------------------------------------------------------- */
     if( GDALGetGeoTransform( hSrcDS, adfGeoTransform ) == CE_None )
     {

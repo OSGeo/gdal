@@ -375,18 +375,18 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
 {
     CPLString osCommand;
     PGresult* poResult = NULL;
-    
+
     // If exists, return it
     if (bHasTriedFetchingPrimaryKeyName) {
         return pszPrimaryKeyName;
     }
-    
+
     bHasTriedFetchingPrimaryKeyName = true;
 
     /* For debugging purposes only */
     if( CSLTestBoolean(CPLGetConfigOption("PR_DISABLE_PK", "FALSE") ) )
         return NULL;
-    
+
     /* Determine the primary key/unique column on the table */
     osCommand.Printf("select d.attname from pg_catalog.pg_constraint "
         "as a join pg_catalog.pg_indexes as b on a.conname = "
@@ -403,11 +403,11 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
 #endif
 
     poResult = PQexec(poConn, osCommand.c_str());
-    
+
     if (poResult == NULL || 
         PQresultStatus(poResult) != PGRES_TUPLES_OK ||
         PQntuples(poResult) <= 0 ) {
-            
+
         PQclear(poResult);
 
         /**

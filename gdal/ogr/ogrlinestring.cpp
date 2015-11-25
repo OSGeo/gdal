@@ -654,7 +654,7 @@ void OGRSimpleCurve::getPoints( OGRRawPoint * paoPointsOut, double * padfZOut ) 
  * \brief Returns all points of line string.
  *
  * This method copies all points into user arrays. The user provides the
- * stride between 2 consecutives elements of the array.
+ * stride between 2 consecutive elements of the array.
  *
  * On some CPU architectures, care must be taken so that the arrays are properly aligned.
  *
@@ -1249,7 +1249,7 @@ void OGRSimpleCurve::Value( double dfDistance, OGRPoint * poPoint ) const
             dfLength += dfSegLength;
         }
     }
-    
+
     EndPoint( poPoint );
 }
 
@@ -1262,11 +1262,11 @@ void OGRSimpleCurve::Value( double dfDistance, OGRPoint * poPoint ) const
 /**
 * \brief Project point on linestring.
 *
-* The input point projeted on linestring. This is the shortest distance 
+* The input point projected on linestring. This is the shortest distance
 * from point to the linestring. The distance from begin of linestring to
 * the point projection returned.
 *
-* This method is built on the GEOS library (GEOS >= 3.2.0), check it for the 
+* This method is built on the GEOS library (GEOS >= 3.2.0), check it for the
 * definition of the geometry operation.
 * If OGR is built without the GEOS library, this method will always return -1,
 * issuing a CPLE_NotSupported error.
@@ -1276,7 +1276,7 @@ void OGRSimpleCurve::Value( double dfDistance, OGRPoint * poPoint ) const
 * @since OGR 1.11.0
 */
 
-/* GEOS >= 3.2.0 for project capabilty */
+/* GEOS >= 3.2.0 for project capability */
 #if defined(HAVE_GEOS)
 #if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 2)
 #define HAVE_GEOS_PROJECT

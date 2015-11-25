@@ -1835,7 +1835,7 @@ CPLErr IdrisiRasterBand::SetCategoryNames( char **papszCategoryNames )
     int nCount = atoi_nz( CSLFetchNameValue( poGDS->papszRDC, rdcLEGEND_CATS ) );
 
     // ------------------------------------------------------
-    //        Delte old instance of the categoty names
+    //        Delete old instance of the category names
     // ------------------------------------------------------
 
     if( nCount > 0 )

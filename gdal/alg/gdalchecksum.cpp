@@ -143,7 +143,8 @@ GDALChecksumImage( GDALRasterBandH hBand,
                             panLineData, nXSize, 1, eDstDataType, 0, 0 ) != CE_None)
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                        "Checksum value couldn't be computed due to I/O read error.\n");
+                          "Checksum value could not be computed due to I/O "
+                          "read error.\n");
                 break;
             }
             nCount = (bComplex) ? nXSize * 2 : nXSize;
@@ -163,4 +164,3 @@ GDALChecksumImage( GDALRasterBandH hBand,
 
     return nChecksum;
 }
-                       

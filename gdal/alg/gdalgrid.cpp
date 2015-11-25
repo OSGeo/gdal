@@ -1728,7 +1728,7 @@ static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
  * Creates a context to do regular gridding from the scattered data.
  *
  * This function takes the arrays of X and Y coordinates and corresponding Z
- * values as input to preprare computation of regular grid (or call it a raster)
+ * values as input to prepare computation of regular grid (or call it a raster)
  * from these scattered data.
  *
  * On Intel/AMD i386/x86_64 architectures, some
@@ -1748,12 +1748,12 @@ static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
  * the number of worker threads, or ALL_CPUS to use all the cores/CPUs of the
  * computer (default value).
  *
- * @param eAlgorithm Gridding method. 
- * @param poOptions Options to control choosen gridding method.
+ * @param eAlgorithm Gridding method.
+ * @param poOptions Options to control chosen gridding method.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param bCallerWillKeepPointArraysAlive Whether the provided padfX, padfY, padfZ
  *        arrays will still be "alive" during the calls to GDALGridContextProcess().
  *        Setting to TRUE prevent them from being duplicated in the context.
@@ -2393,19 +2393,19 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
  * gridding operations with the same algorithm, parameters and points, and
  * moving the window in the output grid.
  *
- * @param eAlgorithm Gridding method. 
- * @param poOptions Options to control choosen gridding method.
+ * @param eAlgorithm Gridding method.
+ * @param poOptions Options to control chosen gridding method.
  * @param nPoints Number of elements in input arrays.
- * @param padfX Input array of X coordinates. 
- * @param padfY Input array of Y coordinates. 
- * @param padfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
  * @param dfXMin Lowest X border of output grid.
  * @param dfXMax Highest X border of output grid.
  * @param dfYMin Lowest Y border of output grid.
  * @param dfYMax Highest Y border of output grid.
  * @param nXSize Number of columns in output grid.
  * @param nYSize Number of rows in output grid.
- * @param eType Data type of output array.  
+ * @param eType Data type of output array.
  * @param pData Pointer to array where the computed grid will be stored.
  * @param pfnProgress a GDALProgressFunc() compatible callback function for
  * reporting progress or NULL.

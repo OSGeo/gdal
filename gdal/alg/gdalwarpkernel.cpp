@@ -4901,39 +4901,39 @@ static void GWKAverageOrModeThread( void* pData)
                             }
                         }
                     }
-                    
+
                     if ( nCount > 0 )
-                    {                
+                    {
                         dfValueReal = dfTotal / nCount;
-                        dfBandDensity = 1;                
+                        dfBandDensity = 1;
                         bHasFoundDensity = TRUE;
                     }
-                                       
+
                 } // GRA_Average
-                
+
                 else if ( nAlgo == GWKAOM_Imode || nAlgo == GWKAOM_Fmode ) // poWK->eResample == GRA_Mode
                 {
                     // this code adapted from GDALDownsampleChunk32R_Mode() in gcore/overview.cpp
 
                     if ( nAlgo == GWKAOM_Fmode ) // int32 or float
                     {
-                        /* I'm not sure how much sense it makes to run a majority
-                           filter on floating point data, but here it is for the sake
-                           of compatability. It won't look right on RGB images by the
-                           nature of the filter. */
-                        int     iMaxInd = 0, iMaxVal = -1, i = 0;
+                        /* I'm not sure how much sense it makes to run a
+                           majority filter on floating point data, but here it
+                           is for the sake of compatibility. It won't look
+                           right on RGB images by the nature of the filter. */
+                        int iMaxInd = 0, iMaxVal = -1, i = 0;
 
                         for( iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                         {
                             for( iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
                             {
                                 iSrcOffset = iSrcX + iSrcY * nSrcXSize;
-                                
+
                                 if( poWK->panUnifiedSrcValid != NULL
                                     && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
                                          & (0x01 << (iSrcOffset & 0x1f))) )
                                     continue;
-                                
+
                                 nCount2++;
                                 if ( GWKGetPixelValue( poWK, iBand, iSrcOffset,
                                                        &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) && dfBandDensity > 0.0000000001 ) 
@@ -4941,7 +4941,7 @@ static void GWKAverageOrModeThread( void* pData)
                                     nCount++;
 
                                     float fVal = (float)dfValueRealTmp;
-                                    
+
                                     //Check array for existing entry
                                     for( i = 0; i < iMaxInd; ++i )
                                         if( pafVals[i] == fVal

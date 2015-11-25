@@ -1195,12 +1195,12 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
 /************************************************************************/
 /*                           HFAGetPEString()                           */
 /*                                                                      */
-/*      Some files have a ProjectionX node contining the ESRI style     */
+/*      Some files have a ProjectionX node containing the ESRI style    */
 /*      PE_STRING.  This function allows fetching from it.              */
 /************************************************************************/
 
 char *HFAGetPEString( HFAHandle hHFA )
- 
+
 {
     if( hHFA->nBands == 0 )
         return NULL;

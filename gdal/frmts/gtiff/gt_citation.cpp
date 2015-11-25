@@ -555,7 +555,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
 
 /* -------------------------------------------------------------------- */
 /*      For ESRI builds we are interested in maximizing PE              */
-/*      compatability, but generally we prefer to use EPSG              */
+/*      compatibility, but generally we prefer to use EPSG              */
 /*      definitions of the coordinate system if PCS is defined.         */
 /* -------------------------------------------------------------------- */
 #if !defined(ESRI_BUILD)

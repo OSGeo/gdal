@@ -113,7 +113,7 @@ which to interpret the coordinates given with -te. The <i>srs_def</i> may
 be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file
 containing the WKT.
 This must not be confused with -t_srs which is the target SRS of the output
-dataset. -te_srs is a conveniency e.g. when knowing the output coordinates in a
+dataset. -te_srs is a convenience e.g. when knowing the output coordinates in a
 geodetic long/lat SRS, but still wanting a result in a projected coordinate system.
 </dd>
 <dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in

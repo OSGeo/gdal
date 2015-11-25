@@ -2231,7 +2231,7 @@ static int UglyLookUp (UglyStringType * ugly, char *data, uChar word,
  *   5/2003 Arthur Taylor (MDL/RSIS): Created.
  *
  * NOTES
- * 1) buffer size is choosen so each of the 8 parts has 50 bytes for the
+ * 1) buffer size is chosen so each of the 8 parts has 50 bytes for the
  *    table entry and the ' ' and ', ' and ' with '.  If NUM_UGLY_ATTRIB
  *    increases (from 5), we may need more.
  * 2) Instead of static buffer, we could use myerror.c :: AllocSprintf.

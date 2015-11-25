@@ -4963,10 +4963,10 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
  * \brief Add intermediate vertices to a geometry.
  *
  * This method modifies the geometry to add intermediate vertices if necessary
- * so that the maximum length between 2 consecutives vertices is lower than
+ * so that the maximum length between 2 consecutive vertices is lower than
  * dfMaxLength.
  *
- * @param dfMaxLength maximum length between 2 consecutives vertices.
+ * @param dfMaxLength maximum length between 2 consecutive vertices.
  */
 
 

@@ -91,7 +91,7 @@ existing database.<P>
 Upon closing the OGRDataSource newly created layers will have a spatial
 index automatically built.  At this point the USER_SDO_GEOM_METADATA table
 will also be updated with bounds for the table based on the features that
-have actually been written.  One concequence of this is that once a layer
+have actually been written.  One consequence of this is that once a layer
 has been loaded it is generally not possible to load additional features
 outside the original extents without manually modifying the DIMINFO information
 in USER_SDO_GEOM_METADATA and rebuilding the spatial index.<p>

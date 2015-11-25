@@ -158,8 +158,8 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints,
         poLine->addPoint(dX, dY);
     }
 
-    // Complete the arc with the last EndAngle, to make sure that 
-    // the arc is correcly close.
+    // Complete the arc with the last EndAngle, to make sure that
+    // the arc is correctly closed.
 
     dX = dCenterX + dXRadius*cos(dAngle);
     dY = dCenterY + dYRadius*sin(dAngle);

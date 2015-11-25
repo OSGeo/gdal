@@ -864,8 +864,8 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    RELEASE(r);
    RELEASE(io);
 
-   // Calculate the number of levels to expose.  The highest level correpsonds to a
-   // raster size of 256 on the longest side.
+   // Calculate the number of levels to expose.  The highest level corresponds
+   // to a raster size of 256 on the longest side.
    double blocksizefactor = MaxRasterSize/256.0;
    poDS->nOverviewCount = MAX(0, (int)(log(blocksizefactor)/log(RESOLUTION_RATIO) + 0.5));
    if ( poDS->nOverviewCount > 0 )
@@ -882,7 +882,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
          poDS->papoOverviewDS[i]->SetMetadata(poDS->GetMetadata("MG4Lidar"), "MG4Lidar");
          poDS->papoOverviewDS[i]->poXMLPCView = pxmlPCView;
          poDS->papoOverviewDS[i]->OpenZoomLevel( i+1 );
-      }       
+      }
    }
 
    /* -------------------------------------------------------------------- */

@@ -939,9 +939,9 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
         }
         return NULL;
     }
-    
+
 /* ==================================================================== */
-/*      Handle all comands except spatial index creation generically.   */
+/*      Handle all commands except spatial index creation generically.  */
 /* ==================================================================== */
     if( !STARTS_WITH_CI(pszStatement, "CREATE SPATIAL INDEX ON ") )
     {

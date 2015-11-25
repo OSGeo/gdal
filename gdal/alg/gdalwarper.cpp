@@ -916,8 +916,8 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * outputing typically to a streamed file. The gdalwarp utility automatically
  * sets this option when outputing to /vsistdout/ or a named pipe (on Unix).
  * This option has performance impacts for some reprojections.
- * Note: band interleaved output is not currently supported by the warping algorithm in
- * a streamable compabible way.
+ * Note: band interleaved output is not currently supported by the warping
+ * algorithm in a streamable compatible way.
  *
  * - SRC_COORD_PRECISION: (GDAL >= 2.0). Advanced setting. This defaults to 0, to indicate that
  * no rounding of computing source image coordinates corresponding to the target

@@ -2330,7 +2330,7 @@ png_do_gray_to_rgb(png_row_infop row_info, png_bytep row)
  *
  *  The calculation is to be done in a linear colorspace.
  *
- *  Other integer coefficents can be used via png_set_rgb_to_gray().
+ *  Other integer coefficients can be used via png_set_rgb_to_gray().
  */
 int /* PRIVATE */
 png_do_rgb_to_gray(png_structp png_ptr, png_row_infop row_info, png_bytep row)

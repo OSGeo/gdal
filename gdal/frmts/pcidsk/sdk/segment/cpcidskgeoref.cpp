@@ -780,7 +780,7 @@ C       The standard packed DMS format is the required format for any
 C       Latitude or Longitude value in the projection parameter array
 C       (TPARIN and/or TPARIO) in calling the U.S.G.S. GCTP package,
 C       but is not required for the actual coordinates to be converted.
-C	This routine has been coverted from the PAKPCI fortran routine.
+C       This routine has been converted from the PAKPCI FORTRAN routine.
 C
 C       When function is 1, the value returned is made up as follows:
 C
@@ -805,7 +805,7 @@ C
 C       double = PACK2PCI (degrees, function)
 C
 C       degrees  - (double) Latitude or Longitude value in decimal 
-C	                    degrees.
+C                           degrees.
 C
 C       function - (Int)    Function to perform                            
 C                           1, convert decimal degrees to DDDMMMSSS.SSS

@@ -364,7 +364,7 @@ static CSF_CONV_FUNC ConvFunc(CSF_CR destType, CSF_CR srcType)
 	PRECOND(convTableIndex[CSF_UNIQ_CR_MASK(destType)] != -1);
 	/* don't complain on illegal, it can be attached
 	 * to a app2file while there's no WRITE_MODE
-	 * if it's an error then it's catched in RputSomeCells
+	 * if it's an error then it's cached in RputSomeCells
 	 */
 	return 
          ConvTable[(int)convTableIndex[CSF_UNIQ_CR_MASK(srcType)]]

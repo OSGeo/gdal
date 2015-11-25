@@ -133,7 +133,7 @@ for dirname, dirnames, filenames in os.walk('.'):
                         maxyear = year
             i = i + 1
 
-        # only clame copyright if we have authored more than 10 lines
+        # Only claim copyright if we have authored more than 10 lines.
         if count_matching_lines < 10:
             continue
 

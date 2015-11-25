@@ -1102,7 +1102,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
 
             if( eArgType != eThisArgType )
             {
-                // Conveniency for join. We allow comparing numeric columns
+                // Convenience for join. We allow comparing numeric columns
                 // and string columns, by casting string columns to numeric
                 if( bAllowMismatchTypeOnFieldComparison &&
                     poNode->nSubExprCount == 2 &&

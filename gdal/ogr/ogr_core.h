@@ -382,7 +382,7 @@ typedef enum
  * Output variants of WKB we support. 
  *
  * 99-402 was a short-lived extension to SFSQL 1.1 that used a high-bit flag
- * to indicate the presence of Z coordiantes in a WKB geometry.
+ * to indicate the presence of Z coordinates in a WKB geometry.
  *
  * SQL/MM Part 3 and SFSQL 1.2 use offsets of 1000 (Z), 2000 (M) and 3000 (ZM)
  * to indicate the present of higher dimensional coordinates in a WKB geometry.

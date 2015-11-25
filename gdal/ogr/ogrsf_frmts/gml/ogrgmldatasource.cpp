@@ -312,7 +312,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     bool bCheckAuxFile = true;
 
 /* -------------------------------------------------------------------- */
-/*      Extract xsd filename from connexion string if present.          */
+/*      Extract XSD filename from connection string if present.          */
 /* -------------------------------------------------------------------- */
     osFilename = poOpenInfo->pszFilename;
     const char *pszXSDFilenameTmp = strstr(poOpenInfo->pszFilename, ",xsd=");

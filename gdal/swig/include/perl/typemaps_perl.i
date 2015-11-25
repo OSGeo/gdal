@@ -1041,7 +1041,7 @@ typedef unsigned long      GUIntBig;
         CPLXMLNode *psThisNode;
         char       *pszText = NULL;
     
-        nChildCount = av_len(av) - 1; /* there are two non-childs in the array */
+        nChildCount = av_len(av) - 1; /* There are two non-children in the array */
         if (nChildCount < 0) {
             /* the input XML is empty */
             *err = 1;

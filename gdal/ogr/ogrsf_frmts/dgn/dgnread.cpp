@@ -1051,16 +1051,16 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 /*      filter is in effect, loop until we get something within our     */
 /*      spatial constraints.                                            */
 /* -------------------------------------------------------------------- */
-    do { 
+    do {
         bInsideFilter = TRUE;
 
         if( !DGNLoadRawElement( psDGN, &nType, &nLevel ) )
             return NULL;
-        
+
         if( psDGN->has_spatial_filter )
         {
             GUInt32     nXMin, nXMax, nYMin, nYMax;
-            
+
             if( !psDGN->sf_converted_to_uor )
                 DGNSpatialFilterToUOR( psDGN );
 
@@ -1068,7 +1068,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
                                    &nXMin, &nYMin, NULL,
                                    &nXMax, &nYMax, NULL ) )
             {
-                /* If we don't have spatial characterists for the element
+                /* If we don't have spatial characteristics for the element
                    we will pass it through. */
                 bInsideFilter = TRUE;
             }

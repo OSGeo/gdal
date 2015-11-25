@@ -78,8 +78,9 @@ static int epsg2sosi (int nEPSG) {
             break;
         }
         default: {
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "(Yet) unsupported coodinate system writing to SOSI file: %i. Defaulting to EPSG:4326/SOSI 84.", nEPSG);
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "(Yet) unsupported coordinate system writing to SOSI "
+                      "file: %i. Defaulting to EPSG:4326/SOSI 84.", nEPSG);
             }
     }
     return nSOSI;
@@ -122,8 +123,9 @@ static int sosi2epsg (int nSOSI) {
             break;
         }
         default: {
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "(Yet) unsupported coodinate system in SOSI-file: %i. Defaulting to EPSG:4326.", nSOSI);
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "(Yet) unsupported coordinate system in SOSI-file: %i. "
+                      "Defaulting to EPSG:4326.", nSOSI);
         }
     }
     return nEPSG;
@@ -135,19 +137,19 @@ static int sosi2epsg (int nSOSI) {
 
 OGRSOSIDataSource::OGRSOSIDataSource() {
     nLayers = 0;
-    
+
     poFileadm = NULL;
     poBaseadm = NULL;
     papoBuiltGeometries = NULL;
     papoLayers = NULL;
     pszName = NULL;
     poSRS = NULL;
-    
+
     poPolyHeaders = NULL;
     poTextHeaders = NULL;
     poPointHeaders = NULL;
     poCurveHeaders = NULL;
-    
+
     pszEncoding = CPL_ENC_UTF8;
     nMode = MODE_READING;
 }

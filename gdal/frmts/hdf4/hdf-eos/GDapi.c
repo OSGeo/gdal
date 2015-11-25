@@ -3023,7 +3023,7 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 	/* ------------ */
 	if (status == 0)
 	{
-	    /* Get Field Vgroup id, compresion code, & tiling code */
+	    /* Get Field Vgroup id, compression code, & tiling code */
 	    /* -------------------------------------------------- */
 	    vgid = GDXGrid[gID].VIDTable[0];
 	    compcode = GDXGrid[gID].compcode;
@@ -3075,7 +3075,7 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 		GDXSDcomb[5 * i + 4] = numbertype;
 
 
-		/* Concatanate fieldname with combined name string */
+		/* Concatenate fieldname with combined name string */
 		/* ----------------------------------------------- */
 		if ((intn) strlen(GDXSDname) +
 		    (intn) strlen(fieldname) + 2 < HDFE_NAMBUFSIZE)
@@ -3122,7 +3122,7 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 
 		/*
 		 * Concatanate field dimlist to merged dimlist and separate
-		 * fields with semi-colon
+		 * fields with semi-colon.
 		 */
 		if ((intn) strlen(GDXSDdims) +
 		    (intn) strlen(dimlist0) + 2 < HDFE_DIMBUFSIZE)
@@ -5440,7 +5440,7 @@ GDdetach(int32 gridID)
 			/* Add to combined dimension size */
 			match[0] += GDXSDcomb[5 * j];
 
-			/* Concatanate name */
+			/* Concatenate name */
 			strcat(nambuf, ",");
 			memcpy(nambuf + strlen(nambuf),
 			       nameptr[j], namelen[j]);

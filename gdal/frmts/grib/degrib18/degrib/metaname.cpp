@@ -2338,7 +2338,7 @@ typedef struct {
 /* based on http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table4-5.shtml
  * updated last on 3/14/2006 */
 GRIB2LocalSurface NCEP_Surface[] = {
-   {200, {"EATM", "Entire atmosphere (considerd as a single layer)", "-"}},
+   {200, {"EATM", "Entire atmosphere (considered as a single layer)", "-"}},
    {201, {"EOCN", "Entire ocean (considered as a single layer)", "-"}},
    {204, {"HTFL", "Highest tropospheric freezing level", "-"}},
    {206, {"GCBL", "Grid scale cloud bottom level", "-"}},

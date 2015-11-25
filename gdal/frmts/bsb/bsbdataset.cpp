@@ -382,7 +382,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Apply heuristics to re-wrap GCPs to maintain continguity        */
+/*      Apply heuristics to re-wrap GCPs to maintain continuity        */
 /*      over the international dateline.                                */
 /* -------------------------------------------------------------------- */
     if( nGCPCount > 1 )

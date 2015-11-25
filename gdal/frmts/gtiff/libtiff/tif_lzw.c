@@ -936,7 +936,7 @@ LZWEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 				disp = 1;
 			do {
 				/*
-				 * Avoid pointer arithmetic 'cuz of
+				 * Avoid pointer arithmetic because of
 				 * wraparound problems with segments.
 				 */
 				if ((h -= disp) < 0)

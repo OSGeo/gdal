@@ -136,8 +136,10 @@ will still be issued immediately.<p>
 SQL commands provided to the OGRDataSource::ExecuteSQL() call are executed on the server side, unless the OGRSQL
 dialect is specified. The subset of SQL supported by the GFT service is described in the links at the end of this page.<p>
 
-The SQL supported by the server understands only natively table id, and not the table names returned by OGR.
-For conveniency, OGR will "patch" your SQL command to replace the table name by the table id however.<p>
+The SQL supported by the server understands only native table id, and
+not the table names returned by OGR.  For convenience, OGR will
+"patch" your SQL command to replace the table name by the table id
+however.<p>
 
 <h2>Examples</h2>
 

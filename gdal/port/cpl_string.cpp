@@ -1022,8 +1022,8 @@ char **CSLAppendPrintf(char **papszStrList, const char *fmt, ...)
 /************************************************************************/
 /*                            CPLVASPrintf()                            */
 /*                                                                      */
-/*      This is intended to serve as an easy to use C callabable        */
-/*      vasprintf() alternative.  Used in the geojson library for       */
+/*      This is intended to serve as an easy to use C callable          */
+/*      vasprintf() alternative.  Used in the GeoJSON library for       */
 /*      instance.                                                       */
 /************************************************************************/
 

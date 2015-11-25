@@ -452,7 +452,7 @@ Version 1.2.4 (2003-07-23)
    to tab, and wasn't being written properly to .mif. NFW
 
  - mitab_feature.cpp: fixed C++ style true/false where TRUE/FALSE required.
-   As per GDAL bugzilla 311.  NFW
+   As per GDAL Bugzilla 311.  NFW
 
  - Fixed problem scanning node in TABINDNode::FindNext() - bug 2176, FW
 

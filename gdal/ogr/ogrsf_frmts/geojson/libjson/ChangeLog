@@ -95,7 +95,7 @@
     to not return TRUE for zero length string. Remove redundant includes.
     Erik Hovland, erik at hovland dot org
   * Fixed warning reported by adding -Wstrict-prototypes
-    -Wold-style-definition to the compilatin flags.
+    -Wold-style-definition to the compilation flags.
     Dotan Barak, dotanba at gmail dot com
   * Add const correctness to public interfaces
     Gerard Krol, g dot c dot krol at student dot tudelft dot nl

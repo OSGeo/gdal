@@ -228,7 +228,7 @@ GRIB1SurfTable GRIB1Surface[256] = {
    /* 197 */ {"var197", "reserved", "-", 0},
    /* 198 */ {"var198", "reserved", "-", 0},
    /* 199 */ {"var199", "reserved", "-", 0},
-   /* 200 */ {"EATM", "entire atmosphere (considerd as a single layer)", "-",
+   /* 200 */ {"EATM", "entire atmosphere (considered as a single layer)", "-",
               0},
    /* 201 */ {"EOCN", "entire ocean (considered as a single layer)", "-", 0},
    /* 202 */ {"var202", "reserved", "-", 0},

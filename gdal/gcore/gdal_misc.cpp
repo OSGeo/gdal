@@ -1993,11 +1993,11 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
         padfGeoTransform[4] = 0.0;
         padfGeoTransform[5] = (pasGCPs[1].dfGCPY - pasGCPs[0].dfGCPY)
             / (pasGCPs[1].dfGCPLine - pasGCPs[0].dfGCPLine);
-        
+
         padfGeoTransform[0] = pasGCPs[0].dfGCPX 
             - pasGCPs[0].dfGCPPixel * padfGeoTransform[1]
             - pasGCPs[0].dfGCPLine * padfGeoTransform[2];
-        
+
         padfGeoTransform[3] = pasGCPs[0].dfGCPY 
             - pasGCPs[0].dfGCPPixel * padfGeoTransform[4]
             - pasGCPs[0].dfGCPLine * padfGeoTransform[5];
@@ -2009,7 +2009,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 /*      Special case of 4 corner coordinates of a non-rotated           */
 /*      image.  The points must be in TL-TR-BR-BL order for now.        */
 /*      This case helps avoid some imprecision in the general           */
-/*      calcuations.                                                    */
+/*      calculations.                                                   */
 /* -------------------------------------------------------------------- */
     if( nGCPCount == 4 
         && pasGCPs[0].dfGCPLine == pasGCPs[1].dfGCPLine

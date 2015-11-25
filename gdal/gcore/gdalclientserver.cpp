@@ -90,7 +90,7 @@ The option can also be set to a list of file extensions that must be the only on
 this mechanism (e.g. GDAL_API_PROXY=ecw,sid).
 
 When enabled, datasets can be handled with GDALOpen(), GDALCreate() or GDALCreateCopy() with
-their nominal filename (or connexion string).
+their nominal filename (or connection string).
 
 Alternatively, the API_PROXY mechanism can be used selectively on a datasource by prefixing its
 name with API_PROXY:, for example GDALOpen("API_PROXY:foo.tif", GA_ReadOnly).
@@ -362,7 +362,7 @@ static const char* apszInstr[] =
 
 static const GByte abyEndOfJunkMarker[] = { 0xDE, 0xAD, 0xBE, 0xEF };
 
-/* Recycling of connexions to child processes */
+/* Recycling of connections to child processes */
 #define MAX_RECYCLED        128
 #define DEFAULT_RECYCLED    4
 static int bRecycleChild = FALSE;
@@ -2839,8 +2839,9 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 break;
             }
             /* Note: only combinations of nPixelSpace, nLineSpace and
-               nBandSpace that lead to compate band-interleaved or pixel-
-               interleaved buffers are valid. Other combinations will lead to segfault */
+               nBandSpace that lead to compatible band-interleaved or pixel-
+               interleaved buffers are valid. Other combinations will lead
+               to segfaults. */
             eBufType = (GDALDataType)nBufType;
             int nSize = nBufXSize * nBufYSize * nBandCount *
                 (GDALGetDataTypeSize(eBufType) / 8);
@@ -2891,8 +2892,9 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 break;
             }
             /* Note: only combinations of nPixelSpace, nLineSpace and
-               nBandSpace that lead to compate band-interleaved or pixel-
-               interleaved buffers are valid. Other combinations will lead to segfault */
+               nBandSpace that lead to compatible band-interleaved or pixel-
+               interleaved buffers are valid. Other combinations will lead
+               to segfaults. */
             eBufType = (GDALDataType)nBufType;
             int nExpectedSize = nBufXSize * nBufYSize * nBandCount *
                 (GDALGetDataTypeSize(eBufType) / 8);

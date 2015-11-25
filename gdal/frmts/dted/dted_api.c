@@ -282,10 +282,10 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
     }
 
     /* NOTE : The first version of MIL-D-89020 was buggy.
-       The latitude and longitude of the LL cornder of the UHF record was inverted.
-       This was fixed in MIL-D-89020 Amendement 1, but some products may be affected.
+       The latitude and longitude of the LL corner of the UHF record was inverted.
+       This was fixed in MIL-D-89020 Amendment 1, but some products may be affected.
        We detect this situation by looking at N/S in the longitude field and
-       E/W in the latitude one
+       E/W in the latitude one.
     */
 
     dfLLOriginX = deg + min / 60.0 + sec / 3600.0;

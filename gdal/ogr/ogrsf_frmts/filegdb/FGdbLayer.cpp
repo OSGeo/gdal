@@ -107,7 +107,7 @@ OGRFeature* FGdbBaseLayer::GetNextFeature()
 
         if (hr != S_OK)
         {
-        // It's OK, we are done fetching - failure is catched by FAILED macro
+        // It's OK, we are done fetching - failure is caught by FAILED macro
             return NULL;
         }
 

@@ -1227,7 +1227,8 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                             if( poSubImageDS )
                                 poSubImageDS->MarkAsShared();
                             else
-                                CPLDebug("KMLSuperOverlay", "Cannt open %s", osSubFilename.c_str());
+                                CPLDebug( "KMLSuperOverlay", "Cannot open %s",
+                                          osSubFilename.c_str() );
                             psLink->osSubFilename = osSubFilename;
                             psLink->poDS = poSubImageDS;
                             psLink->psPrev = NULL;

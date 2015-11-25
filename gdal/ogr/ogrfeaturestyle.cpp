@@ -352,8 +352,8 @@ int OGR_SM_InitStyleString(OGRStyleMgrH hSM, const char *pszStyleString)
 const char *OGRStyleMgr::GetStyleName(const char *pszStyleString)
 {
 
-    // SECURITY:  the unit and the value for all parameter should be the same,
-    // a text comparaison is executed .
+    // SECURITY: The unit and the value for all parameter should be the same,
+    // a text comparison is executed.
 
     const char *pszStyle;
 

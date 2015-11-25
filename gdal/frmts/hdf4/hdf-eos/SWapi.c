@@ -1627,7 +1627,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 
 	/*
 	 * Copy each entry in DimList and remove leading and trailing quotes,
-	 * Get dimension sizes and concatanate dimension names to dimension
+	 * Get dimension sizes and concatenate dimension names to dimension
 	 * list
 	 */
 	for (i = 0; i < ndims; i++)
@@ -2443,8 +2443,8 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 		    else
 		    {
 			/*
-			 * If match then concatanate current fieldname to
-			 * previous matching fieldnames
+			 * If match then concatenate current fieldname to
+			 * previous matching fieldnames.
 			 */
 			strcat(utlbuf, ",");
 			strcat(utlbuf, fieldname);
@@ -2555,7 +2555,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 		    SWXSDcomb[5 * i + 4] = numbertype;
 
 
-		    /* Concatanate fieldname with combined name string */
+		    /* Concatenate fieldname with combined name string */
 		    /* ----------------------------------------------- */
 		    if ((intn) strlen(SWXSDname) +
 			(intn) strlen(fieldname) + 2 < HDFE_NAMBUFSIZE)
@@ -2600,8 +2600,8 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 		    }
 
 		    /*
-		     * Concatanate field dimlist to merged dimlist and
-		     * separate fields with semi-colon
+		     * Concatenate field dimlist to merged dimlist and
+		     * separate fields with semi-colon.
 		     */
 		    if ((intn) strlen(SWXSDdims) +
 			(intn) strlen(dimlist) + 2 < HDFE_DIMBUFSIZE)
@@ -2749,7 +2749,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 		    break;
 		}
 
-		/* Concatanate compression parameters with compression code */
+		/* Concatenate compression parameters with compression code */
 		strcat(utlbuf, utlbuf2);
 	    }
 
@@ -10234,7 +10234,7 @@ SWdetach(int32 swathID)
 			    /* ------------------------------ */
 			    match[0] += SWXSDcomb[5 * j];
 
-			    /* Concatanate name */
+			    /* Concatenate name */
 			    /* ---------------- */
 			    strcat(nambuf, ",");
 			    memcpy(nambuf + strlen(nambuf),
@@ -10366,7 +10366,7 @@ SWdetach(int32 swathID)
 		    }
 		    else
 		    {
-			/* Otherwise concatanate swathname to dim name */
+			/* Otherwise concatenate swathname to dim name */
 			/* ------------------------------------------- */
 			strcat(dimbuf2, ":");
 			strcat(dimbuf2, swathname);

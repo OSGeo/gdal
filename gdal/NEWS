@@ -686,7 +686,7 @@ New capabilities:
  * add GTIFF_VIRTUAL_MEM_IO=YES/NO/IF_ENOUGH_RAM configuration option so that RasterIO() can rely on memory-mapped file I/O (when possible and supported by the OS)
  * support reading and created streamable files
  * for JPEG-compressed TIFF, avoid quantization tables to be emitted in each strip/tile and use optimized Huffman coding by default
- * avoid SetNoDataValue() to immediately 'cryztalize' the IFD
+ * avoid SetNoDataValue() to immediately 'crystallize' the IFD
  * allow unsetting TIFFTAG_SOFTWARE, TIFFTAG_DOCUMENTNAME, etc... by removing them from metadata list or passing None as a value of SetMetadataItem() (#5619)
  * allow lossless copying of CMYK JPEG into JPEG-in-TIFF
  * set alpha on target by default when translating from Grey+Alpha
@@ -1242,7 +1242,7 @@ S57 driver:
  * make it possible to set LNAM_REFS=OFF as advertized in the doc
 
 SQLite/Spatialite driver:
- * SQLite/Spatialte: add support for multiple geometry colunn tables, accordingly with RFC 41 (#5494)
+ * SQLite/Spatialite: add support for multiple geometry column tables, accordingly with RFC 41 (#5494)
  * SQLite SQL dialect: Add hstore_get_value(hstore, key) function
  * remove 'T' suffix when formatting the content of a Date field (#5672)
  * optimize CreateFeature() when fields can be null or not null from one feature to another one
@@ -2303,7 +2303,7 @@ GTiff driver:
  * Fix writing of RGBA pixel-interleaved JPEG-compressed TIFF (#4732)
  * Set color interpretation to GCI_PaletteIndex after calling SetColorTable() (#4547)
  * Conversion for 8-bit unpacked CMYK (PHOTOMETRIC_SEPARATED) to RGBA.
- * Maximize EPSG compatability where PCS is defined (#4607)
+ * Maximize EPSG compatibility where PCS is defined (#4607)
  * Ensure that unusual units with an authority node are saved nicely (like EPSG:2066)
  * Add CT_HotineObliqueMercatorAzimuthCenter support
  * Fix PolarStereographic / 9829 support
@@ -2336,7 +2336,7 @@ GTX driver:
 GXF driver:
  * Avoid having big buffer on stack (#4852)
  * Avoid locale floating point parsing problems (similar to r24367).
- * Implement continuued lines mechanism (#4873)
+ * Implement continued lines mechanism (#4873)
  * Fix various vulnerabilities / DoS
 
 HDF4 driver:
@@ -2710,7 +2710,7 @@ MSSQLSpatial driver:
  * Fix the parser to swap coordinates with geography data type (#4642)
  * Fix to read multipoint geometries correctly (#4781)
  * Fix to read 3D geometries correctly (#4806, #4626)
- * Use MSSQL catalog if geometry_colums doesn't exist (#4967)
+ * Use MSSQL catalog if geometry_columns doesn't exist (#4967)
  * Utilize OGRFieldDefn::IsIgnored() (#4534)
  * Remove requirement for identity fid column in MSSQL tables (#4438)
 
@@ -3467,7 +3467,7 @@ Core:
  * OGR SQL: Correctly parse big SQL statements (#4262)
  * OGR SQL: fix joining a float column with a string column (#4321)
  * OGR SQL: with DISTINCT, consider null values are such, and not as empty string (#4353)
- * OGR SQL: fix offset convertion for SUBSTR() (#4348)
+ * OGR SQL: fix offset conversion for SUBSTR() (#4348)
  * Add OGR_G_GetPoints()
  * Fix parsing of WKT geometries mixing 2D and 3D parts
  * OGR_Dr_CopyDataSource() and OGRSFDriver::CopyDataSource() : make sure that the driver is attached to the created datasource (#4350)
@@ -3695,7 +3695,7 @@ PGDump driver:
  * fix handling of Nan with fields with non-zero width (#2112)
  * Add CREATE_SCHEMA and DROP_TABLE layer creation option (#4033)
  * Fix crash when inserting a feature with a geometry in a layer with a geom type of wkbNone;
- * PG and PGDump: fix insertion of features with first field being a 0-charachter string in a non-spatial table and without FID in COPY mode (#4040)
+ * PG and PGDump: fix insertion of features with first field being a 0-character string in a non-spatial table and without FID in COPY mode (#4040)
  * Add NONE_AS_UNKNOWN, FID, EXTRACT_SCHEMA_FROM_LAYER_NAME layer creation options
  * Better escaping of column and table names
  * Create field of type OFTString and width > 0, as VARCHAR(width) (#4202)
@@ -3941,7 +3941,7 @@ Core:
  * Add GDALSetCacheMax64(), GDALGetCacheMax64() and GDALGetCacheUsed64() (#3689)
  * Improve formatting of seconds in DecToDMS()
  * Support negative nPixelOffset values for RawRasterBands
- * GDALDatasetCopyWholeRaster(): improve performance in certains cases by better
+ * GDALDatasetCopyWholeRaster(): improve performance in certain cases by better
    fitting to input/output block sizes
  * Add GDALRasterBandCopyWholeRaster()
  * Make sure band descriptions are properly captured and cloned (#3780)
@@ -4610,12 +4610,12 @@ PGDump driver:
 PostgreSQL driver:
  * Add support for PostgreSQL >= 9.0 new binary data format
  * Use canonical (HEXEWKB) form to get geometry to speed-up feature retrieval.
-   WKT-based retrieval can still be used if PG_USE_TEXT configuratino option
+   WKT-based retrieval can still be used if PG_USE_TEXT configuration option
    is set to YES
  * If the PG_USE_BASE64 configuration option is set to YES, geometries will be
    requested as BASE64 encoded EWKB instead of canonical HEX encoded EWKB.
    (useful when bandwidth is the limiting factor)
- * Don't instanciate layer defn at layer creation. This can speed up
+ * Don't instantiate layer defn at layer creation. This can speed up
    significantly database opening when they are many tables and the user just
    needs to fetch one with GetLayerByName().
  * Implement efficient OGRLayer::GetName() and OGRLayer::GetGeomType()
@@ -5060,7 +5060,7 @@ HDF5 driver :
 HFA driver:
  * Support reading and evaluating 3rd order xforms (#2716)
  * Various improvements to SRS support, particularly to preserve PE
-   compatability.  (#2755) 
+   compatibility.  (#2755) 
  * Added HFAEntry::RemoveAndDestroy() method to remove nodes from tree (#2421)
  * Added support for deleting color tables (#2421)
  * Add a scaled progress monitor for HFADataset::IBuildOverviews()
@@ -5757,14 +5757,14 @@ GTiff driver:
  * Fix writing of blocks on TIFF files in non-native endianness (#2398)
  * Push extra bands of pixel interleaved data into block cache (#2435)
  * Improve integration with PAM metadata loading and saving (#2448)
- * Fix potential buffer overflow in GTIFAngleStringToDD (commited in upstream libgeotiff) - #2228
+ * Fix potential buffer overflow in GTIFAngleStringToDD (committed in upstream libgeotiff) - #2228
  * Fix GTiffOddBitsBand::IWriteBlock with GDT_UInt16/32; Error properly with GDT_Float32; Support creating files with NBITS>8; Handle NBITS=1 IReadBlock/IWriteBlock in GTiffOddBitsBand; Prevent subtle IReadBlock/IWriteBlock round-tripping bug for NBITS<8 (#2360)
  * Set the TIFFTAG_COMPRESSION compression before asking the default strip size, so that in the case of JPEG compression, the correct strip height is selected (either 8 or 16). Tested with libtiff-3.8.2 and internal libtiff
  * Prevent crash on tiff_ovr_9 when JPEG-In-TIFF support is not built
  * In GTiffDataset::Create(), set TIFFTAG_JPEGCOLORMODE=JPEGCOLORMODE_RGB when creating a TIFF with COMPRESS=JPEG and PHOTOMETRIC=YCBCR; In Crystalize(), backup the value of TIFFTAG_JPEGCOLORMODE and set it again after writing the directory (#2645)
  * Handle more gracefully the case where we open or create a TIFF file with a compression method not built in libtiff (use of TIFFIsCODECConfigured)
  * Don't fail when TIFFTAG_JPEGCOLORMODE tag cannot be read 
- * IPP libjpeg compatability changes (#2606)
+ * IPP libjpeg compatibility changes (#2606)
  * ensure zip/jpeg quality is preserved in crystalize. (#2642)
  * support handling nodata via pam/aux mechanisms (#2505)
  * ensure TIFFFlush() is called in FlushCache() (#2512)
@@ -6454,7 +6454,7 @@ Leveller Driver:
 == OGR 1.5.0 - Overview of Changes ==
 
 General:
- * Plugin drivers test for ABI compatability at load time.
+ * Plugin drivers test for ABI compatibility at load time.
  * SFCOM/OLEDB stuff all removed (moved to /spike in subversion).
  * Various thread safety improvements made.
  * Added PointOnSurface implementation for OGRPolygon.
@@ -7570,7 +7570,7 @@ NTF Driver:
 GDAL 1.1.9 - Overview of Changes
 --------------------------------
 
- o MrSID Driver: New for 1.1.9, read-only, includes good coordiante system
+ o MrSID Driver: New for 1.1.9, read-only, includes good coordinate system
    support, and should be high performance. 
 
  o ECW Driver: Now reads coordinate system information (but doesn't write). 

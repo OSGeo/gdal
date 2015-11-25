@@ -5675,7 +5675,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Sometimes we can improve ArcGIS compatability by forcing        */
+/*      Sometimes we can improve ArcGIS compatibility by forcing        */
 /*      generation of a PEString instead of traditional Imagine         */
 /*      coordinate system descriptions.                                 */
 /* -------------------------------------------------------------------- */

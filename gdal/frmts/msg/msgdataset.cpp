@@ -512,10 +512,10 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if (xhp.isValid())
         {
           std::vector <short> QualityInfo;
-          unsigned short chunck_height = xhp.nrRows();
-          unsigned short chunck_bpp = xhp.nrBitsPerPixel();
-          unsigned short chunck_width = xhp.nrColumns();
-          unsigned __int8 NR = (unsigned __int8)chunck_bpp;
+          unsigned short chunk_height = xhp.nrRows();
+          unsigned short chunk_bpp = xhp.nrBitsPerPixel();
+          unsigned short chunk_width = xhp.nrColumns();
+          unsigned __int8 NR = (unsigned __int8)chunk_bpp;
           unsigned int nb_ibytes = xhp.dataSize();
           int iShift = 0;
           bool fSplitStrip = false; // in the split strip the "shift" only happens before the split "row"
@@ -549,9 +549,9 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           
           Util::CDataFieldCompressedImage  img_compressed(ibuf.release(),
                                   nb_ibytes*8,
-                                  (unsigned char)chunck_bpp,
-                                  chunck_width,
-                                  chunck_height      );
+                                  (unsigned char)chunk_bpp,
+                                  chunk_width,
+                                  chunk_height      );
           
           Util::CDataFieldUncompressedImage img_uncompressed;
 
@@ -565,20 +565,20 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           // 8 bits -> 8 bits
           // 10 bits -> 16 bits (img_uncompressed contains the 10 bits data in packed form)
           // Geometry:
-          // chunck_width x chunck_height to nBlockXSize x nBlockYSize
+          // chunk_width x chunk_height to nBlockXSize x nBlockYSize
 
           // cases:
           // combination of the following:
           // - scan direction can be north or south
           // - eDataType can be GDT_Byte, GDT_UInt16 or GDT_Float32
-          // - nBlockXSize == chunck_width or nBlockXSize > chunck_width
-          // - when nBlockXSize > chunck_width, fSplitStrip can be true or false
+          // - nBlockXSize == chunk_width or nBlockXSize > chunk_width
+          // - when nBlockXSize > chunk_width, fSplitStrip can be true or false
           // we won't distinguish the following cases:
           // - NR can be == 8 or != 8
-          // - when nBlockXSize > chunck_width, iShift iMinCOff-iMaxCOff <= iShift <= 0
+          // - when nBlockXSize > chunk_width, iShift iMinCOff-iMaxCOff <= iShift <= 0
 
           int nBlockSize = nBlockXSize * nBlockYSize;
-          int y = chunck_width * chunck_height;
+          int y = chunk_width * chunk_height;
           int iStep = -1;
           if (fScanNorth) // image is the other way around
           {
@@ -589,7 +589,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           COMP::CImage cimg (img_uncompressed); // unpack
           if (eDataType == GDT_Byte)
           {
-            if (nBlockXSize == chunck_width) // optimized version
+            if (nBlockXSize == chunk_width) // optimized version
             {
               if (poGDS->command.cDataConversion == 'B')
               {
@@ -608,25 +608,25 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               memset(pImage, 0, nBlockXSize * nBlockYSize * iBytesPerPixel);
               if (poGDS->command.cDataConversion == 'B')
               {
-                for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
+                for( int j = 0; j < chunk_height; ++j ) // assumption: nBlockYSize == chunk_height
                 { 
                   int iXOffset = j * nBlockXSize + iShift;
                   iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                   if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                     iXOffset -= iShift;
-                  for (int i = 0; i < chunck_width; ++i)
+                  for (int i = 0; i < chunk_width; ++i)
                     ((GByte *)pImage)[++iXOffset] = cimg.Get()[y+=iStep] / 4;
                 }
               }
               else
               {
-                for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
+                for( int j = 0; j < chunk_height; ++j ) // assumption: nBlockYSize == chunk_height
                 { 
                   int iXOffset = j * nBlockXSize + iShift;
                   iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                   if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                     iXOffset -= iShift;
-                  for (int i = 0; i < chunck_width; ++i)
+                  for (int i = 0; i < chunk_width; ++i)
                     ((GByte *)pImage)[++iXOffset] = cimg.Get()[y+=iStep];
                 }
               }
@@ -634,7 +634,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           }
           else if (eDataType == GDT_UInt16) // this is our "normal case" if scan direction is South: 10 bit MSG data became 2 bytes per pixel
           {
-            if (nBlockXSize == chunck_width) // optimized version
+            if (nBlockXSize == chunk_width) // optimized version
             {
               for( int i = 0; i < nBlockSize; ++i )
                   ((GUInt16 *)pImage)[i] = cimg.Get()[y+=iStep];
@@ -643,20 +643,20 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
               // initialize to 0's (so that it does not have to be done in an 'else' statement <performance>)
               memset(pImage, 0, nBlockXSize * nBlockYSize * iBytesPerPixel);
-              for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
+              for( int j = 0; j < chunk_height; ++j ) // assumption: nBlockYSize == chunk_height
               {
                 int iXOffset = j * nBlockXSize + iShift;
                 iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                 if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                   iXOffset -= iShift;
-                for (int i = 0; i < chunck_width; ++i)
+                for (int i = 0; i < chunk_width; ++i)
                   ((GUInt16 *)pImage)[++iXOffset] = cimg.Get()[y+=iStep];
               }
             }
           }
           else if (eDataType == GDT_Float32) // radiometric calibration is requested
           {
-            if (nBlockXSize == chunck_width) // optimized version
+            if (nBlockXSize == chunk_width) // optimized version
             {
               for( int i = 0; i < nBlockSize; ++i )
                 ((float *)pImage)[i] = (float)rRadiometricCorrection(cimg.Get()[y+=iStep], iChannel, nBlockYOff * nBlockYSize + i / nBlockXSize, i % nBlockXSize, poGDS);
@@ -665,15 +665,15 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
               // initialize to 0's (so that it does not have to be done in an 'else' statement <performance>)
               memset(pImage, 0, nBlockXSize * nBlockYSize * iBytesPerPixel);
-              for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
+              for( int j = 0; j < chunk_height; ++j ) // assumption: nBlockYSize == chunk_height
               {
                 int iXOffset = j * nBlockXSize + iShift;
                 iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                 if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                   iXOffset -= iShift;
                 int iXFrom = nBlockXSize - iLowerWestColumnPlanned + iShift; // i is used as the iCol parameter in rRadiometricCorrection
-                int iXTo = nBlockXSize - iLowerWestColumnPlanned + chunck_width + iShift;
-                for (int i = iXFrom; i < iXTo; ++i) // range always equal to chunck_width .. this is to utilize i to get iCol
+                int iXTo = nBlockXSize - iLowerWestColumnPlanned + chunk_width + iShift;
+                for (int i = iXFrom; i < iXTo; ++i) // range always equal to chunk_width .. this is to utilize i to get iCol
                   ((float *)pImage)[++iXOffset] = (float)rRadiometricCorrection(cimg.Get()[y+=iStep], iChannel, nBlockYOff * nBlockYSize + j, (fSplitStrip && (j >= iSplitRow))?(i - iShift):i, poGDS);
               }
             }

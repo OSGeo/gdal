@@ -192,7 +192,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     GIntBig             GetFeaturesRead();
 
-    /* non virtual : conveniency wrapper for ReorderFields() */
+    /* non virtual : convenience wrapper for ReorderFields() */
     OGRErr              ReorderField( int iOldFieldPos, int iNewFieldPos );
 
     int                 AttributeFilterEvaluationNeedsGeometry();

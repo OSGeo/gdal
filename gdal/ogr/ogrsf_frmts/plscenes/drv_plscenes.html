@@ -145,7 +145,7 @@ ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value -spat -100,40,-99,39
 <p>
 
 <li>
-Listing all scenes available matching critera :
+Listing all scenes available matching criteria :
 <pre>
 ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value -where "acquired >= '2015/03/26 00:00:00' AND \"cloud_cover.estimated\" &lt; 10"
 </pre>
@@ -159,7 +159,7 @@ The product type (visual, analytic or thumb) can be specified with the
 'product_type' parameter / PRODUCT_TYPE open option. The scene id is the
 content of the value of the 'id' field of the features of the 'ortho' vector layer </p>
 
-<p>This functionality is a conveniency wrapper of the
+<p>This functionality is a convenience wrapper of the
 <a href="https://www.planet.com/docs/v0/scenes/#get-scene-full">API for fetching the scene GeoTIFF</a>
 </p>
 

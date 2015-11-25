@@ -1473,7 +1473,7 @@ void qh_initqhull_buffers(void) {
   design:
     initialize points array from input arguments
     test for qh.ZEROcentrum
-      (i.e., use opposite vertex instead of cetrum for convexity testing)
+      (i.e., use opposite vertex instead of centrum for convexity testing)
     initialize qh.CENTERtype, qh.normal_size,
       qh.center_size, qh.TRACEpoint/level,
     initialize and test random numbers

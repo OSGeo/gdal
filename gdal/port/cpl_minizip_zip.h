@@ -150,9 +150,9 @@ extern zipFile ZEXPORT cpl_zipOpen (const char *pathname, int append);
        of this zip package.
 */
 
-/* Note : there is no delete function into a zipfile.
-   If you want delete file into a zipfile, you must open a zipfile, and create another
-   Of couse, you can use RAW reading and writing to copy the file you did not want delte
+/* Note : there is no delete function for a zipfile.
+   If you want delete file in a zipfile, you must open a zipfile, and create another.
+   Of course, you can use RAW reading and writing to copy the file you did not want delete.
 */
 
 extern zipFile ZEXPORT cpl_zipOpen2 (const char *pathname,

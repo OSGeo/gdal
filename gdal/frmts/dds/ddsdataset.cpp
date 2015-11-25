@@ -189,10 +189,10 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     int nYSize = poSrcDS->GetRasterYSize();
 
     if ((nXSize%4!=0) || (nYSize%4!=0)) {
-      CPLError(CE_Warning, CPLE_AppDefined,
-               "Raster size is not a multiple of 4: %dx%d. "
-               "Extra rows/colums will be ignored during the compression.",
-               nXSize, nYSize);
+      CPLError( CE_Warning, CPLE_AppDefined,
+                "Raster size is not a multiple of 4: %dx%d. "
+                "Extra rows/columns will be ignored during the compression.",
+                nXSize, nYSize );
     }
 
     crn_comp_params comp_params;

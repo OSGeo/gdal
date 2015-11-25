@@ -2804,7 +2804,7 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
 
 /* -------------------------------------------------------------------- */
 /*      Be sure that the attribute subsection is large enough to        */
-/*      hold the offset table (otherwise NITFFetchAttribute coud        */
+/*      hold the offset table (otherwise NITFFetchAttribute could       */
 /*      read out of the buffer)                                         */
 /* -------------------------------------------------------------------- */
     if (nASSSize < (size_t)(8 * nAttrCount))

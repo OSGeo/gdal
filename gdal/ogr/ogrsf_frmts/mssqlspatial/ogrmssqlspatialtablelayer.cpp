@@ -284,7 +284,7 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 /* -------------------------------------------------------------------- */
     CPLFree( pszGeomColumn );
     if( pszGeomCol == NULL )
-        GetLayerDefn(); /* fetch geom colum if not specified */
+        GetLayerDefn(); /* fetch geom column if not specified */
     else
         pszGeomColumn = CPLStrdup( pszGeomCol );
 

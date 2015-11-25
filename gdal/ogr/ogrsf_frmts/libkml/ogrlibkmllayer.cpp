@@ -891,12 +891,12 @@ void OGRLIBKMLLayer::SetStyleTableDirectly (
 
 /******************************************************************************
  method to write a style table to a layer
- 
+
  Args:          poStyleTable    pointer to the style table to add
- 
+
  Returns:       nothing
 
- note:  this method copys the style table, and the user will still be
+ note:  This method copies the style table, and the user will still be
         responsible for its destruction
 ******************************************************************************/
 
@@ -918,7 +918,7 @@ void OGRLIBKMLLayer::SetStyleTable (
  Test if capability is available.
 
  Args:          pszCap  layer capability name to test
- 
+
  Returns:       True if the layer supports the capability, otherwise false
 
 ******************************************************************************/

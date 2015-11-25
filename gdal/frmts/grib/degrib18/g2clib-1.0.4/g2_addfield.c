@@ -56,8 +56,8 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
 //     ipdstmpl - Contains the data values for the specified Product Definition
 //                Template ( N=ipdsnum ).  Each element of this integer 
 //                array contains an entry (in the order specified) of Product
-//                Defintion Template 4.N
-//     coordlist- Array containg floating point values intended to document
+//                Definition Template 4.N
+//     coordlist- Array containing floating point values intended to document
 //                the vertical discretisation associated to model data
 //                on hybrid coordinate vertical levels.
 //     numcoord - number of values in array coordlist.

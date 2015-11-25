@@ -62,7 +62,7 @@ struct GDALWarpAppOptions
         GDALWarpAppOptions::dfMinY, GDALWarpAppOptions::dfMaxX and GDALWarpAppOptions::dfMaxY.
         The SRS may be any of the usual GDAL/OGR forms,
         complete WKT, PROJ.4, EPSG:n or a file containing the WKT. It is a
-        conveniency e.g. when knowing the output coordinates in a
+        convenience e.g. when knowing the output coordinates in a
         geodetic long/lat SRS, but still wanting a result in a projected
         coordinate system. */
     char *pszTE_SRS;

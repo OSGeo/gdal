@@ -137,16 +137,16 @@ GBool PostGISRasterRasterBand::GetBandMetadata(
     if (eDataType != GDT_Unknown) {
         if (peDataType)
             *peDataType = eDataType;
-            
+
         if (pbHasNoData)
             *pbHasNoData = bNoDataValueSet;
-            
+
         if (pdfNoData)
             *pdfNoData = dfNoDataValue;
-            
+
         return true;
     }
-    
+
     /**
      * Queries are expensive. So, we only raise them if all parameters 
      * are not null
@@ -154,37 +154,37 @@ GBool PostGISRasterRasterBand::GetBandMetadata(
     if (!peDataType || !pbHasNoData || !pdfNoData) {
         return false;
     }
-    
+
     /**
      * It is safe to assume all the tiles will have the same values for
      * metadata properties. That was checked during band's construction
-     * (or we simply trusted the user, to avoid expensive checkings). 
+     * (or we simply trusted the user, to avoid expensive checks).
      * So, we can limit the results to just one.
      **/
     int nTuples = 0;
     CPLString osCommand = NULL;
     PGresult * poResult = NULL;
     PostGISRasterDataset * poRDS = (PostGISRasterDataset *)poDS;
-    
+
     osCommand.Printf("st_bandpixeltype(%s, %d), "
         "st_bandnodatavalue(%s, %d) is not null, "
         "st_bandnodatavalue(%s, %d) FROM %s.%s limit 1", pszColumn, 
         nBand, pszColumn, nBand, pszColumn, nBand, pszSchema, pszTable);
-        
+
 #ifdef DEBUG_QUERY
     CPLDebug("PostGIS_Raster", 
         "PostGISRasterRasterBand::GetBandMetadata(): Query: %s", 
         osCommand.c_str());
 #endif
-    
+
     poResult = PQexec(poRDS->poConn, osCommand.c_str());
     nTuples = PQntuples(poResult);
-    
+
     /* Error getting info FROM database */
     if (poResult == NULL || 
         PQresultStatus(poResult) != PGRES_TUPLES_OK ||
         nTuples <= 0) {
-        
+
         ReportError(CE_Failure, CPLE_AppDefined, 
             "Error getting band metadata while creating raster "
             "bands");
