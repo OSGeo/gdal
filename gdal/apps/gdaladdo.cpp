@@ -194,7 +194,7 @@ int main( int nArgc, char ** papszArgv )
     }
 
     if( hDataset == NULL )
-        hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER, NULL, papszOpenOptions, NULL );
+        hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL, papszOpenOptions, NULL );
 
     CSLDestroy(papszOpenOptions);
     papszOpenOptions = NULL;
