@@ -3479,6 +3479,13 @@ static int TestVirtualIO( GDALDataset * poDS )
     if( !(VSIStatL( poDS->GetDescription(), &sStat) == 0) )
         return TRUE;
 
+    // Don't try with ODBC (will avoid a useless error message in ogr_odbc.py)
+    if( poDS->GetDriver() != NULL &&
+        EQUAL(poDS->GetDriver()->GetDescription(), "ODBC") )
+    {
+        return TRUE;
+    }
+
     char** papszFileList = LOG_ACTION(poDS->GetFileList());
     char** papszIter = papszFileList;
     CPLString osPath;
