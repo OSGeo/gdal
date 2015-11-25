@@ -537,7 +537,7 @@
 
 %pythoncode %{
 
-# Backup original dictionnary before doing anything else
+# Backup original dictionary before doing anything else
 _initial_dict = globals().copy()
 
 @property

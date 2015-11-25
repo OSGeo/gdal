@@ -181,7 +181,7 @@ def UseExceptions(*args):
 def DontUseExceptions(*args):
   """DontUseExceptions()"""
   return _ogr.DontUseExceptions(*args)
-# Backup original dictionnary before doing anything else
+# Backup original dictionary before doing anything else
 _initial_dict = globals().copy()
 
 @property

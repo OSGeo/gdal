@@ -186,7 +186,8 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn,
 /*      Create a pseudo-HFAEntry wrapping a MIFObject.                  */
 /************************************************************************/
 
-HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer, const char *pszMIFObjectPath )
+HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
+                                             const char *pszMIFObjectPath )
 {
     CPLString osFieldName;
 
@@ -198,7 +199,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer, const char *
                  osFieldName.c_str());
         return NULL;
     }
-    CPLString osDictionnary = pszField;
+    CPLString osDictionary = pszField;
 
     osFieldName.Printf("%s.%s", pszMIFObjectPath, "type.string" );
     pszField = poContainer->GetStringField( osFieldName.c_str() );
@@ -247,7 +248,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer, const char *
     memcpy( pabyData, pszField, nMIFObjectSize );
 
     return new HFAEntry(poContainer, pszMIFObjectPath,
-                        osDictionnary, osType,
+                        osDictionary, osType,
                         nMIFObjectSize, pabyData);
 
 }
@@ -260,7 +261,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer, const char *
 
 HFAEntry::HFAEntry( CPL_UNUSED HFAEntry * poContainer,
                     CPL_UNUSED const char *pszMIFObjectPath,
-                    const char * pszDictionnary,
+                    const char * pszDictionary,
                     const char * pszTypeName,
                     int nDataSizeIn,
                     GByte* pabyDataIn ) :
@@ -290,7 +291,7 @@ HFAEntry::HFAEntry( CPL_UNUSED HFAEntry * poContainer,
     psHFA->bTreeDirty = FALSE;
     psHFA->poRoot = this;
 
-    psHFA->poDictionary = new HFADictionary( pszDictionnary );
+    psHFA->poDictionary = new HFADictionary( pszDictionary );
 
 /* -------------------------------------------------------------------- */
 /*      Work out the type for this MIFObject.                           */
