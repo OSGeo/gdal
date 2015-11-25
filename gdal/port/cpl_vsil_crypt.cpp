@@ -1855,6 +1855,10 @@ void VSIInstallCryptFileHandler(void)
 #endif
 }
 
+//#ifdef _MSC_VER
+//#pragma warning( pop ) /* 5105 */
+//#endif
+
 #else /* HAVE_CRYPTOPP */
 
 class VSIDummyCryptFilesystemHandler : public VSIFilesystemHandler 
@@ -1888,10 +1892,6 @@ void VSISetCryptKey(CPL_UNUSED const GByte* pabyKey, CPL_UNUSED int nKeySize)
 {
     /* not supported */
 }
-
-#ifdef _MSC_VER
-#pragma warning( pop ) /* 5105 */
-#endif
 
 #endif /* HAVE_CRYPTOPP */
 
