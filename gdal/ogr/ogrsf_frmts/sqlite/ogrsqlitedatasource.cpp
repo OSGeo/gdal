@@ -43,14 +43,7 @@
 #include "ogrsqlitevirtualogr.h"
 
 #ifdef HAVE_SPATIALITE
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
 #include "spatialite.h"
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
 #endif
 
 #ifndef SPATIALITE_412_OR_LATER

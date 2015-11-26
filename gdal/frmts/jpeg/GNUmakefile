@@ -48,7 +48,7 @@ clean:
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 ../o/%.$(OBJ_EXT):	libjpeg12/%.c
-	$(CC) -c $(XTRA_OPT_12) $(CPPFLAGS) $(CFLAGS) $(NO_SHIFT_NEGATIVE_VALUE_FLAG) $< -o $@
+	$(CC) -c $(XTRA_OPT_12) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 all:	$(OBJ:.o=.$(OBJ_EXT))
 

@@ -32,16 +32,9 @@
 #include "cpl_port.h"
 #include "cpl_string.h"
 
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
 #include "geovalues.h"
 #include "gt_citation.h"
 #include "gt_wkt_srs_priv.h"
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
 
 CPL_CVSID("$Id$");
 

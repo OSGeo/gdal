@@ -1,5 +1,5 @@
-#ifndef CSF_ATTR_H
-#define CSF_ATTR_H
+#ifndef CSF__ATTR_H
+#define CSF__ATTR_H
 
 #ifdef __cplusplus
  extern "C" {
@@ -26,4 +26,4 @@ typedef struct CSF_LEGEND {
  }
 #endif
 
-#endif /*  CSF_ATTR_H */
+#endif /*  CSF__ATTR_H */

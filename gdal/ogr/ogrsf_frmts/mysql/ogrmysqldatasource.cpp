@@ -33,10 +33,6 @@
 #include <string>
 #include "ogr_mysql.h"
 
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4201 ) /* nonstandard extension used : nameless struct/union */
@@ -44,10 +40,6 @@
 #include <my_sys.h>
 #ifdef _MSC_VER
 #pragma warning( pop ) 
-#endif
-
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
 #endif
 
 #include "cpl_conv.h"

@@ -1,5 +1,5 @@
-#ifndef CSF_IMPL_H
-#define CSF_IMPL_H
+#ifndef CSF__IMPL_H
+#define CSF__IMPL_H
 
 /******************************************************************/
 /******************************************************************/
@@ -235,4 +235,4 @@ int CsfValidSize(size_t size);
 				M_ERROR(ILLHANDLE);	\
 			}
 
-#endif /* CSF_IMPL_H */
+#endif /* CSF__IMPL_H */

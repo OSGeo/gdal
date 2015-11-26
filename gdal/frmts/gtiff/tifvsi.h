@@ -33,16 +33,7 @@
 #ifndef TIFVSI_H_INCLUDED
 #define TIFVSI_H_INCLUDED
 
-#include "cpl_port.h"
-
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
 #include "tiffio.h"
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode, VSILFILE* fp);
 VSILFILE* VSI_TIFFGetVSILFile(thandle_t th);

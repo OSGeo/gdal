@@ -1,14 +1,4 @@
 /* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */
-
-#if !defined(HAVE_GCC_DIAGNOSTIC_PUSH) && (((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) || (defined(__clang__) && __clang_major__ >= 3)) && !defined(_MSC_VER))
-#define HAVE_GCC_DIAGNOSTIC_PUSH
-#endif
-
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
-
 #define call_gmon_start gdal_call_gmon_start
 #define DefaultPrint gdal_DefaultPrint
 #define DefaultRead gdal_DefaultRead
@@ -124,7 +114,3 @@
 #define xtiffFieldInfo gdal_xtiffFieldInfo
 #define _gtiff_size gdal__gtiff_size
 #define _ParentExtender gdal__ParentExtender
-
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif

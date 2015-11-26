@@ -853,8 +853,6 @@ LIBTOOL
 OBJDUMP
 DLLTOOL
 AS
-NO_SHIFT_NEGATIVE_VALUE_FLAG
-NO_RESERVED_ID_MACRO_FLAG
 SHADOW_WFLAGS
 NO_NON_VIRTUAL_DTOR_FLAG
 NO_SIGN_COMPARE
@@ -4580,76 +4578,6 @@ else
   :
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wreserved-id-macro" >&5
-$as_echo_n "checking whether C compiler accepts -Werror -Wreserved-id-macro... " >&6; }
-if ${ax_cv_check_cflags___Werror__Wreserved_id_macro+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS  -Werror -Wreserved-id-macro"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags___Werror__Wreserved_id_macro=yes
-else
-  ax_cv_check_cflags___Werror__Wreserved_id_macro=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wreserved_id_macro" >&5
-$as_echo "$ax_cv_check_cflags___Werror__Wreserved_id_macro" >&6; }
-if test "x$ax_cv_check_cflags___Werror__Wreserved_id_macro" = xyes; then :
-  C_WFLAGS="$C_WFLAGS -Wreserved-id-macro" CXX_WFLAGS="$CXX_WFLAGS -Wreserved-id-macro" NO_RESERVED_ID_MACRO_FLAG="-Wno-reserved-id-macro"
-else
-  :
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wshift-negative-value" >&5
-$as_echo_n "checking whether C compiler accepts -Werror -Wshift-negative-value... " >&6; }
-if ${ax_cv_check_cflags___Werror__Wshift_negative_value+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS  -Werror -Wshift-negative-value"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags___Werror__Wshift_negative_value=yes
-else
-  ax_cv_check_cflags___Werror__Wshift_negative_value=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wshift_negative_value" >&5
-$as_echo "$ax_cv_check_cflags___Werror__Wshift_negative_value" >&6; }
-if test "x$ax_cv_check_cflags___Werror__Wshift_negative_value" = xyes; then :
-  NO_SHIFT_NEGATIVE_VALUE_FLAG="-Wno-shift-negative-value"
-else
-  :
-fi
-
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Werror=vla" >&5
 $as_echo_n "checking whether C compiler accepts -Werror -Werror=vla... " >&6; }
@@ -4957,10 +4885,6 @@ NO_SIGN_COMPARE=$NO_SIGN_COMPARE
 NO_NON_VIRTUAL_DTOR_FLAG=$NO_NON_VIRTUAL_DTOR_FLAG
 
 SHADOW_WFLAGS=$SHADOW_WFLAGS
-
-NO_RESERVED_ID_MACRO_FLAG=$NO_RESERVED_ID_MACRO_FLAG
-
-NO_SHIFT_NEGATIVE_VALUE_FLAG=$NO_SHIFT_NEGATIVE_VALUE_FLAG
 
 
 ac_ext=c
