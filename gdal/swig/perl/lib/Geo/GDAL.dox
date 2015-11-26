@@ -593,13 +593,18 @@ sub traverse {
 
 ## @ignore CreateCopy
 
-## @method Geo::GDAL::Dataset Copy($name, $src, $strict = 1, hashref options = undef)
+## @method Geo::GDAL::Dataset Copy(%params)
 # Create a new raster Geo::GDAL::Dataset as a copy of an existing dataset.
 # @note a.k.a. CreateCopy 
-# @param name A name for the new raster dataset.
-# @param src A Geo::GDAL::Dataset object.
-# @param strict 1 (default) if the copy must be strictly equivalent, or 0 if the copy may adapt.
-# @param options An anonymous hash of driver specific options.
+#
+# @param params named parameters:
+# - \a Name name for the new raster dataset.
+# - \a Src the source Geo::GDAL::Dataset object.
+# - \a Strict 1 (default) if the copy must be strictly equivalent, or 0 if the copy may adapt.
+# - \a Options an anonymous hash of driver specific options.
+# - \a Progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data).
+# - \a ProgressData [optional]
 # @return a new Geo::GDAL::Dataset object.
 
 ## @method Delete($name)

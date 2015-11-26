@@ -66,3 +66,9 @@ for my $method (qw/Create Copy/) {
     ok($ds, "Memory Create works.");
 }
 
+{
+    my $ds = Geo::GDAL::Driver('MEM')->Create();
+    my $progress;
+    Geo::GDAL::Driver('MEM')->Copy( Name => '', src => $ds, progress => sub {$progress = "Me progress!";1});
+    ok($progress eq "Me progress!", "MEM Copy works.");
+}
