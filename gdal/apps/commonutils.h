@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _COMMONUTILS_H_
-#define _COMMONUTILS_H_
+#ifndef COMMONUTILS_H_INCLUDED
+#define COMMONUTILS_H_INCLUDED
 
 #include "cpl_port.h"
 
@@ -41,4 +41,4 @@ void CPL_DLL EarlySetConfigOptions( int argc, char ** argv );
 
 CPL_C_END
 
-#endif
+#endif /* COMMONUTILS_H_INCLUDED */

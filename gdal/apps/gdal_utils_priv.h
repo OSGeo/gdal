@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GDAL_UTILS_PRIV_H_INCLUDED
-#define _GDAL_UTILS_PRIV_H_INCLUDED
+#ifndef GDAL_UTILS_PRIV_H_INCLUDED
+#define GDAL_UTILS_PRIV_H_INCLUDED
 
 #include "cpl_port.h"
 #include "gdal_utils.h"
@@ -137,4 +137,4 @@ struct GDALRasterizeOptionsForBinary
 
 CPL_C_END
 
-#endif /* _GDAL_UTILS_PRIV_H_INCLUDED */
+#endif /* GDAL_UTILS_PRIV_H_INCLUDED */
