@@ -27,8 +27,8 @@
  *
  ****************************************************************************/
 
-#ifndef __geo_simpletags_h_
-#define __geo_simpletags_h_
+#ifndef LIBGEOTIFF_GEO_SIMPLETAGS_H_
+#define LIBGEOTIFF_GEO_SIMPLETAGS_H_
 
 #include "geotiff.h"
 
@@ -70,4 +70,4 @@ int CPL_DLL ST_TagType( int tag );
 } 
 #endif
 
-#endif /* __geo_simpletags_h_ */
+#endif /* LIBGEOTIFF_GEO_SIMPLETAGS_H_ */

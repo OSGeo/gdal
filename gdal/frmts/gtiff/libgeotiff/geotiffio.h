@@ -11,11 +11,11 @@
  */
 
 
-#ifndef __geotiffio_h
-#define __geotiffio_h
+#ifndef LIBGEOTIFF_GEOTIFFIO_H_
+#define LIBGEOTIFF_GEOTIFFIO_H_
 
 #include "geotiff.h"  /* public key interface */
 #include "geovalues.h" /* key code definitions */
 
-#endif /* __geotiffio_h */
+#endif /* LIBGEOTIFF_GEOTIFFIO_H_ */
 

@@ -10,8 +10,8 @@
  *  notice accompanies any products derived therefrom.
  **********************************************************************/
 
-#ifndef __geotiff_h_
-#define __geotiff_h_
+#ifndef LIBGEOTIFF_GEOTIFF_H_
+#define LIBGEOTIFF_GEOTIFF_H_
 
 /**
  * \file geotiff.h
@@ -120,4 +120,4 @@ int CPL_DLL    GTIFPCSToImage( GTIF *gtif, double *x, double *y );
 }
 #endif
 
-#endif /* __geotiff_h_ */
+#endif /* LIBGEOTIFF_GEOTIFF_H_ */

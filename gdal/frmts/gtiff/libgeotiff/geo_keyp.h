@@ -10,8 +10,8 @@
  *  notice accompanies any products derived therefrom.
  **********************************************************************/
 
-#ifndef __geo_keyp_h_
-#define __geo_keyp_h_
+#ifndef LIBGEOTIFF_GEO_KEYP_H_
+#define LIBGEOTIFF_GEO_KEYP_H_
 
 #include <stdlib.h> /* for size_t */
 
@@ -98,5 +98,5 @@ typedef enum {
 #define MAX_KEYS 100         /* maximum keys in a file  */
 #define MAX_VALUES 1000      /* maximum values in a tag */
 
-#endif /* __geo_keyp_h_ */
+#endif /* LIBGEOTIFF_GEO_KEYP_H_ */
 
