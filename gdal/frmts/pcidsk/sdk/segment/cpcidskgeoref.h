@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_SEGMENT_PCIDSKGEOREF_H
-#define __INCLUDE_SEGMENT_PCIDSKGEOREF_H
+#ifndef INCLUDE_SEGMENT_PCIDSKGEOREF_H
+#define INCLUDE_SEGMENT_PCIDSKGEOREF_H
 
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
@@ -85,4 +85,4 @@ namespace PCIDSK
     };
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_SEGMENT_PCIDSKGEOREF_H
+#endif // INCLUDE_SEGMENT_PCIDSKGEOREF_H

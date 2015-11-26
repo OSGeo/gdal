@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_MDB_H_INCLUDED
-#define _OGR_MDB_H_INCLUDED
+#ifndef OGR_MDB_H_INCLUDED
+#define OGR_MDB_H_INCLUDED
 
 #include <jni.h>
 #include <vector>
@@ -341,4 +341,4 @@ class OGRMDBDriver : public OGRSFDriver
     int          TestCapability( const char * );
 };
 
-#endif /* ndef _OGR_MDB_H_INCLUDED */
+#endif /* ndef OGR_MDB_H_INCLUDED */

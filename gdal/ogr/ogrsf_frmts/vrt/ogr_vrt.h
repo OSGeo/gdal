@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_VRT_H_INCLUDED
-#define _OGR_VRT_H_INCLUDED
+#ifndef OGR_VRT_H_INCLUDED
+#define OGR_VRT_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
@@ -281,6 +281,6 @@ class OGRVRTDataSource : public OGRDataSource
 
 OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError);
 
-#endif /* ndef _OGR_VRT_H_INCLUDED */
+#endif /* ndef OGR_VRT_H_INCLUDED */
 
 

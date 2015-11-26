@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _FME2OGR_H_INCLUDED
-#define _FME2OGR_H_INCLUDED
+#ifndef FME2OGR_H_INCLUDED
+#define FME2OGR_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_minixml.h"
@@ -291,4 +291,4 @@ CPL_C_START
 void RegisterOGRFME();
 CPL_C_END
 
-#endif /* ndef _FME2OGR_H_INCLUDED */
+#endif /* ndef FME2OGR_H_INCLUDED */

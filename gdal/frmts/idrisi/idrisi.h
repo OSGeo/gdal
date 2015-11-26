@@ -28,8 +28,8 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
-#ifndef _IDRISI_H_INCLUDED
-#define _IDRISI_H_INCLUDED
+#ifndef IDRISI_H_INCLUDED
+#define IDRISI_H_INCLUDED
 
 #include "cpl_error.h"
 
@@ -38,4 +38,4 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
                                const char *pszRefUnits,
                                char **ppszProjString );
 
-#endif /*  _IDRISI_H_INCLUDED */
+#endif /*  IDRISI_H_INCLUDED */

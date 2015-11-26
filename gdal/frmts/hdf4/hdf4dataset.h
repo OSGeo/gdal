@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _HDF4DATASET_H_INCLUDED_
-#define _HDF4DATASET_H_INCLUDED_
+#ifndef HDF4DATASET_H_INCLUDED_
+#define HDF4DATASET_H_INCLUDED_
 
 #include "cpl_list.h"
 #include "gdal_pam.h"
@@ -106,5 +106,5 @@ char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
                    int nValues, const char *pszDelimiter );
 
 
-#endif /* _HDF4DATASET_H_INCLUDED_ */
+#endif /* HDF4DATASET_H_INCLUDED_ */
 

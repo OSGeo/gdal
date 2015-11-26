@@ -26,8 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-#ifndef _RASDAMAN_DATASET_H_
-#define _RASDAMAN_DATASET_H_
+#ifndef RASDAMAN_DATASET_H_
+#define RASDAMAN_DATASET_H_
 #include "gdal.h"
 
 void CPL_DLL CPL_STDCALL GDALRegister_RASDAMAN();

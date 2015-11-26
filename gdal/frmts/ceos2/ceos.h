@@ -28,8 +28,8 @@
  ****************************************************************************/
 
 
-#ifndef __CEOS_H
-#define __CEOS_H
+#ifndef CEOS_H
+#define CEOS_H
 
 #include "cpl_conv.h"
 
@@ -56,91 +56,91 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 
 /* Basic CEOS header defs */
 
-#define __SEQUENCE_OFF 0
-#define __TYPE_OFF 4
-#define __LENGTH_OFF 8
-#define __CEOS_HEADER_LENGTH 12
+#define SEQUENCE_OFF 0
+#define TYPE_OFF 4
+#define LENGTH_OFF 8
+#define CEOS_HEADER_LENGTH 12
 
 /* Defines for CEOS banding type */
 
-#define __CEOS_IL_PIXEL 1
-#define __CEOS_IL_LINE  2
-#define __CEOS_IL_BAND  3
+#define CEOS_IL_PIXEL 1
+#define CEOS_IL_LINE  2
+#define CEOS_IL_BAND  3
 
 /* Defines for CEOS data types */
 
-#define __CEOS_TYP_CHAR 1
-#define __CEOS_TYP_UCHAR 2
-#define __CEOS_TYP_SHORT 3
-#define __CEOS_TYP_USHORT 4
-#define __CEOS_TYP_LONG 5
-#define __CEOS_TYP_ULONG 6
-#define __CEOS_TYP_FLOAT 7
-#define __CEOS_TYP_DOUBLE 8
-#define __CEOS_TYP_COMPLEX_CHAR 9
-#define __CEOS_TYP_COMPLEX_UCHAR 10
-#define __CEOS_TYP_COMPLEX_SHORT 11
-#define __CEOS_TYP_COMPLEX_USHORT 12
-#define __CEOS_TYP_COMPLEX_LONG 13
-#define __CEOS_TYP_COMPLEX_ULONG 14
-#define __CEOS_TYP_COMPLEX_FLOAT 15
-#define __CEOS_TYP_CCP_COMPLEX_FLOAT 16 /* COMPRESSED CROSS PRODUCT */
-#define __CEOS_TYP_PALSAR_COMPLEX_SHORT 17 /* PALSAR - treat as COMPLEX SHORT*/
+#define CEOS_TYP_CHAR 1
+#define CEOS_TYP_UCHAR 2
+#define CEOS_TYP_SHORT 3
+#define CEOS_TYP_USHORT 4
+#define CEOS_TYP_LONG 5
+#define CEOS_TYP_ULONG 6
+#define CEOS_TYP_FLOAT 7
+#define CEOS_TYP_DOUBLE 8
+#define CEOS_TYP_COMPLEX_CHAR 9
+#define CEOS_TYP_COMPLEX_UCHAR 10
+#define CEOS_TYP_COMPLEX_SHORT 11
+#define CEOS_TYP_COMPLEX_USHORT 12
+#define CEOS_TYP_COMPLEX_LONG 13
+#define CEOS_TYP_COMPLEX_ULONG 14
+#define CEOS_TYP_COMPLEX_FLOAT 15
+#define CEOS_TYP_CCP_COMPLEX_FLOAT 16 /* COMPRESSED CROSS PRODUCT */
+#define CEOS_TYP_PALSAR_COMPLEX_SHORT 17 /* PALSAR - treat as COMPLEX SHORT*/
 
 /* Defines for CEOS file names */
 
-#define __CEOS_VOLUME_DIR_FILE 0
-#define __CEOS_LEADER_FILE    1
-#define __CEOS_IMAGRY_OPT_FILE 2
-#define __CEOS_TRAILER_FILE    3
-#define __CEOS_NULL_VOL_FILE   4
-#define __CEOS_ANY_FILE -1
+#define CEOS_VOLUME_DIR_FILE 0
+#define CEOS_LEADER_FILE    1
+#define CEOS_IMAGRY_OPT_FILE 2
+#define CEOS_TRAILER_FILE    3
+#define CEOS_NULL_VOL_FILE   4
+#define CEOS_ANY_FILE -1
 
 /* Defines for Recipe values */
 
-#define __CEOS_REC_NUMCHANS 1
-#define __CEOS_REC_INTERLEAVE 2
-#define __CEOS_REC_DATATYPE 3
-#define __CEOS_REC_BPR 4
-#define __CEOS_REC_LINES 5
-#define __CEOS_REC_TBP 6
-#define __CEOS_REC_BBP 7
-#define __CEOS_REC_PPL 8
-#define __CEOS_REC_LBP 9
-#define __CEOS_REC_RBP 10
-#define __CEOS_REC_BPP 11
-#define __CEOS_REC_RPL 12
-#define __CEOS_REC_PPR 13
-#define __CEOS_REC_IDS 14
-#define __CEOS_REC_FDL 15
-#define __CEOS_REC_PIXORD 16
-#define __CEOS_REC_LINORD 17
-#define __CEOS_REC_PRODTYPE 18
-#define __CEOS_REC_RECORDSIZE 19
-#define __CEOS_REC_SUFFIX_SIZE 20
-#define __CEOS_REC_PDBPR 21
+#define CEOS_REC_NUMCHANS 1
+#define CEOS_REC_INTERLEAVE 2
+#define CEOS_REC_DATATYPE 3
+#define CEOS_REC_BPR 4
+#define CEOS_REC_LINES 5
+#define CEOS_REC_TBP 6
+#define CEOS_REC_BBP 7
+#define CEOS_REC_PPL 8
+#define CEOS_REC_LBP 9
+#define CEOS_REC_RBP 10
+#define CEOS_REC_BPP 11
+#define CEOS_REC_RPL 12
+#define CEOS_REC_PPR 13
+#define CEOS_REC_IDS 14
+#define CEOS_REC_FDL 15
+#define CEOS_REC_PIXORD 16
+#define CEOS_REC_LINORD 17
+#define CEOS_REC_PRODTYPE 18
+#define CEOS_REC_RECORDSIZE 19
+#define CEOS_REC_SUFFIX_SIZE 20
+#define CEOS_REC_PDBPR 21
 
 /* Defines for Recipe Types */
 
-#define __CEOS_REC_TYP_A  1
-#define __CEOS_REC_TYP_B  2
-#define __CEOS_REC_TYP_I  3
+#define CEOS_REC_TYP_A  1
+#define CEOS_REC_TYP_B  2
+#define CEOS_REC_TYP_I  3
 
 /* Defines for SAR Embedded info */
 
-#define __CEOS_SAR_ACQ_YEAR 1
-#define __CEOS_SAR_ACQ_DAY  2
-#define __CEOS_SAR_ACQ_MSEC 4
-#define __CEOS_SAR_TRANS_POL 8
-#define __CEOS_SAR_PULSE_REP 16
-#define __CEOS_SAR_SLANT_FIRST 32
-#define __CEOS_SAR_SLANT_MID 64
-#define __CEOS_SAR_SLANT_LAST 128
+#define CEOS_SAR_ACQ_YEAR 1
+#define CEOS_SAR_ACQ_DAY  2
+#define CEOS_SAR_ACQ_MSEC 4
+#define CEOS_SAR_TRANS_POL 8
+#define CEOS_SAR_PULSE_REP 16
+#define CEOS_SAR_SLANT_FIRST 32
+#define CEOS_SAR_SLANT_MID 64
+#define CEOS_SAR_SLANT_LAST 128
 
 /* Maximum size of LUT for Calibration records */
-#define __CEOS_RADAR_MAX_LUT 512
-#define __CEOS_RADAR_FLIP_DATE 19980101
-#define __CEOS_RADAR_FACILITY "CDPF-RSAT"
+#define CEOS_RADAR_MAX_LUT 512
+#define CEOS_RADAR_FLIP_DATE 19980101
+#define CEOS_RADAR_FACILITY "CDPF-RSAT"
 
 
 typedef union

@@ -1,6 +1,6 @@
 
-#ifndef _json_inttypes_h_
-#define _json_inttypes_h_
+#ifndef json_inttypes_h_
+#define json_inttypes_h_
 
 #include "json_config.h"
 

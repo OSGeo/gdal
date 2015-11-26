@@ -45,8 +45,8 @@
  *
  **********************************************************************/
 
-#ifndef _AVC_MBYTE_H_INCLUDED_
-#define _AVC_MBYTE_H_INCLUDED_
+#ifndef AVC_MBYTE_H_INCLUDED_
+#define AVC_MBYTE_H_INCLUDED_
 
 CPL_C_START
 
@@ -93,6 +93,6 @@ const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
 
 CPL_C_END
 
-#endif /* _AVC_MBYTE_H_INCLUDED_ */
+#endif /* AVC_MBYTE_H_INCLUDED_ */
 
 

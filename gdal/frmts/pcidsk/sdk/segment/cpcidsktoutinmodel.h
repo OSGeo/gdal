@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H
-#define __INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H
+#ifndef INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H
+#define INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H
  
 #include "pcidsk_toutin.h"
 #include "segment/cpcidsksegment.h"
@@ -65,4 +65,4 @@ namespace PCIDSK {
     };
 }
 
-#endif // __INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H
+#endif // INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H

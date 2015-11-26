@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GEOMEDIA_H_INCLUDED
-#define _OGR_GEOMEDIA_H_INCLUDED
+#ifndef OGR_GEOMEDIA_H_INCLUDED
+#define OGR_GEOMEDIA_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"

@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GXFOPEN_H_INCLUDED
-#define _GXFOPEN_H_INCLUDED
+#ifndef GXFOPEN_H_INCLUDED
+#define GXFOPEN_H_INCLUDED
 
 /**
  * \file gxfopen.h
@@ -123,4 +123,4 @@ typedef struct {
     
 } GXFInfo_t;
 
-#endif /* ndef _GXFOPEN_H_INCLUDED */
+#endif /* ndef GXFOPEN_H_INCLUDED */

@@ -1,5 +1,5 @@
-#ifndef _gridtemplates_H
-#define _gridtemplates_H
+#ifndef gridtemplates_H
+#define gridtemplates_H
 #include "grib2.h"
 
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2001-10-26
@@ -46,4 +46,4 @@
 const struct gridtemplate *get_templatesgrid(void);
 g2int getgridindex(g2int number);
 
-#endif  /*  _gridtemplates_H  */
+#endif  /*  gridtemplates_H  */

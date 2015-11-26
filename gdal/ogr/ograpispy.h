@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRAPISPY_H_INCLUDED
-#define _OGRAPISPY_H_INCLUDED
+#ifndef OGRAPISPY_H_INCLUDED
+#define OGRAPISPY_H_INCLUDED
 
 #include "gdal.h"
 
@@ -170,4 +170,4 @@ CPL_C_END
 
 #endif /* OGRAPISPY_ENABLED */
 
-#endif /*  _OGRAPISPY_H_INCLUDED */
+#endif /*  OGRAPISPY_H_INCLUDED */

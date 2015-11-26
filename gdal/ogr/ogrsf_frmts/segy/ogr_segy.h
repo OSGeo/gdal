@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SEGY_H_INCLUDED
-#define _OGR_SEGY_H_INCLUDED
+#ifndef OGR_SEGY_H_INCLUDED
+#define OGR_SEGY_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -155,4 +155,4 @@ class OGRSEGYDataSource : public OGRDataSource
     virtual int                 TestCapability( const char * );
 };
 
-#endif /* ndef _OGR_SEGY_H_INCLUDED */
+#endif /* ndef OGR_SEGY_H_INCLUDED */

@@ -24,8 +24,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef _BLX_H_INCLUDED
-#define _BLX_H_INCLUDED
+#ifndef BLX_H_INCLUDED
+#define BLX_H_INCLUDED
 
 #include <stdio.h>
 

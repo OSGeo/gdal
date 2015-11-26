@@ -30,8 +30,8 @@
 
 #include "ogrsf_frmts.h"
 
-#ifndef _GEOCONCEPT_OGR_DRIVER_H_INCLUDED_
-#define _GEOCONCEPT_OGR_DRIVER_H_INCLUDED_
+#ifndef GEOCONCEPT_OGR_DRIVER_H_INCLUDED_
+#define GEOCONCEPT_OGR_DRIVER_H_INCLUDED_
 
 /************************************************************************/
 /*                             OGRGeoconceptDriver                      */
@@ -49,4 +49,4 @@ public:
     OGRErr         DeleteDataSource( const char* pszName );
 };
 
-#endif /* _GEOCONCEPT_OGR_DRIVER_H_INCLUDED_ */
+#endif /* GEOCONCEPT_OGR_DRIVER_H_INCLUDED_ */

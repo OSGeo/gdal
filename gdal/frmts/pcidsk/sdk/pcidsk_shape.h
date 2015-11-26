@@ -25,8 +25,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __INCLUDE_PCIDSK_SHAPE_H
-#define __INCLUDE_PCIDSK_SHAPE_H
+#ifndef INCLUDE_PCIDSK_SHAPE_H
+#define INCLUDE_PCIDSK_SHAPE_H
 
 #include <string>
 #include <vector>
@@ -269,4 +269,4 @@ namespace PCIDSK
 
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_PCIDSK_SHAPE_H
+#endif // INCLUDE_PCIDSK_SHAPE_H

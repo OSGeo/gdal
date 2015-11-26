@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRSF_FRMTS_H_INCLUDED
-#define _OGRSF_FRMTS_H_INCLUDED
+#ifndef OGRSF_FRMTS_H_INCLUDED
+#define OGRSF_FRMTS_H_INCLUDED
 
 #include "cpl_progress.h"
 #include "ogr_feature.h"
@@ -425,4 +425,4 @@ void CPL_DLL RegisterOGRIDF();
 CPL_C_END
 
 
-#endif /* ndef _OGRSF_FRMTS_H_INCLUDED */
+#endif /* ndef OGRSF_FRMTS_H_INCLUDED */

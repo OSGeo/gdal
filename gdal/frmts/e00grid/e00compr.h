@@ -57,8 +57,8 @@
  * 
  **********************************************************************/
 
-#ifndef _E00COMPR_H_INCLUDED_
-#define _E00COMPR_H_INCLUDED_
+#ifndef E00COMPR_H_INCLUDED_
+#define E00COMPR_H_INCLUDED_
 
 
 #include <stdio.h>
@@ -178,4 +178,4 @@ int         E00WriteNextLine(E00WritePtr psInfo, const char *pszLine);
 }
 #endif
 
-#endif /* _E00COMPR_H_INCLUDED_ */
+#endif /* E00COMPR_H_INCLUDED_ */

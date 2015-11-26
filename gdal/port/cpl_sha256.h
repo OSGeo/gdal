@@ -26,8 +26,8 @@
    SOFTWARE.
 */
 
-#ifndef _CPL_SHA256_INCLUDED_H
-#define _CPL_SHA256_INCLUDED_H
+#ifndef CPL_SHA256_INCLUDED_H
+#define CPL_SHA256_INCLUDED_H
 
 #include "cpl_port.h"
 
@@ -65,4 +65,4 @@ void CPL_DLL CPL_HMAC_SHA256(const void *pKey, size_t nKeyLen,
 
 CPL_C_END
 
-#endif  /* _CPL_SHA256_INCLUDED_H */
+#endif  /* CPL_SHA256_INCLUDED_H */

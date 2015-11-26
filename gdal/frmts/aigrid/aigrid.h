@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _AIGRID_H_INCLUDED
-#define _AIGRID_H_INCLUDED
+#ifndef AIGRID_H_INCLUDED
+#define AIGRID_H_INCLUDED
 
 #include "cpl_conv.h"
 
@@ -132,4 +132,4 @@ VSILFILE           *AIGLLOpen( const char *, const char * );
 
 CPL_C_END
 
-#endif /* ndef _AIGRID_H_INCLUDED */
+#endif /* ndef AIGRID_H_INCLUDED */

@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __FIT_H__
-#define __FIT_H__
+#ifndef FIT_H_
+#define FIT_H_
 
 #include "gdal.h"
 
@@ -112,4 +112,4 @@ int fitGetColorModel(GDALColorInterp colorInterp, int nBands);
 }
 #endif
 
-#endif // __FIT_H__
+#endif // FIT_H_

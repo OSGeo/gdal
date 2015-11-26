@@ -664,7 +664,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
             pNode->nSubExprCount == 2 &&
             pNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
             pNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
-            pNode->papoSubExpr[0]->field_index == _ID_FIELD &&
+            pNode->papoSubExpr[0]->field_index == COUCHDB_ID_FIELD &&
             pNode->papoSubExpr[1]->field_type == SWQ_STRING)
         {
             poTableLayer->DeleteFeature(pNode->papoSubExpr[1]->string_value);

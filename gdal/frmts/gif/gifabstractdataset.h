@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GIFABSTRACTDATASET_H_INCLUDED
-#define _GIFABSTRACTDATASET_H_INCLUDED
+#ifndef GIFABSTRACTDATASET_H_INCLUDED
+#define GIFABSTRACTDATASET_H_INCLUDED
 
 #include "gdal_pam.h"
 

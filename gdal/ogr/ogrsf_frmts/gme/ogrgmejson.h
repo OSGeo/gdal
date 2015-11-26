@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GME_JSON_H_INCLUDED
-#define _OGR_GME_JSON_H_INCLUDED
+#ifndef OGR_GME_JSON_H_INCLUDED
+#define OGR_GME_JSON_H_INCLUDED
 
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
@@ -56,4 +56,4 @@ const char*  OGRGMEGetJSONString(json_object *parent,
                                  const char *field_name,
                                  const char *default_value = NULL);
 
-#endif /* ndef _OGR_GME_JSON_H_INCLUDED */
+#endif /* ndef OGR_GME_JSON_H_INCLUDED */

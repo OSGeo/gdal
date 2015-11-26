@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_FEATURE_H_INCLUDED
-#define _OGR_FEATURE_H_INCLUDED
+#ifndef OGR_FEATURE_H_INCLUDED
+#define OGR_FEATURE_H_INCLUDED
 
 #include "ogr_geometry.h"
 #include "ogr_featurestyle.h"
@@ -485,4 +485,4 @@ class CPL_DLL OGRFeatureQuery
     void       *GetSWQExpr() { return pSWQExpr; }
 };
 
-#endif /* ndef _OGR_FEATURE_H_INCLUDED */
+#endif /* ndef OGR_FEATURE_H_INCLUDED */

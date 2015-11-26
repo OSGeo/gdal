@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_VIRTUAL_MEM_INCLUDED
-#define _CPL_VIRTUAL_MEM_INCLUDED
+#ifndef CPL_VIRTUAL_MEM_INCLUDED
+#define CPL_VIRTUAL_MEM_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_vsi.h"
@@ -387,4 +387,4 @@ void CPL_DLL CPLVirtualMemManagerTerminate(void);
 
 CPL_C_END
 
-#endif /* _CPL_VIRTUAL_MEM_INCLUDED */
+#endif /* CPL_VIRTUAL_MEM_INCLUDED */

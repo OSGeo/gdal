@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SEGUKOOA_H_INCLUDED
-#define _OGR_SEGUKOOA_H_INCLUDED
+#ifndef OGR_SEGUKOOA_H_INCLUDED
+#define OGR_SEGUKOOA_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -154,4 +154,4 @@ class OGRSEGUKOOADataSource : public OGRDataSource
     virtual int                 TestCapability( const char * );
 };
 
-#endif /* ndef _OGR_SEGUKOOA_H_INCLUDED */
+#endif /* ndef OGR_SEGUKOOA_H_INCLUDED */

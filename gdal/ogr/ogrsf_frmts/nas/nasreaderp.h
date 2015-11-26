@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_NASREADERP_H_INCLUDED
-#define _CPL_NASREADERP_H_INCLUDED
+#ifndef CPL_NASREADERP_H_INCLUDED
+#define CPL_NASREADERP_H_INCLUDED
 
 #include "gmlreader.h"
 #include "gmlreaderp.h"
@@ -239,4 +239,4 @@ public:
     static      OGRGeometry* ConvertGeometry(OGRGeometry*);
 };
 
-#endif /* _CPL_NASREADERP_H_INCLUDED */
+#endif /* CPL_NASREADERP_H_INCLUDED */

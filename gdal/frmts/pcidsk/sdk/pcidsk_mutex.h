@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_MUTEX_H
-#define __INCLUDE_PCIDSK_MUTEX_H
+#ifndef INCLUDE_PCIDSK_MUTEX_H
+#define INCLUDE_PCIDSK_MUTEX_H
 
 #include "pcidsk_config.h"
 
@@ -47,4 +47,4 @@ namespace PCIDSK
     Mutex PCIDSK_DLL *DefaultCreateMutex(void);    
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_PCIDSK_MUTEX_H
+#endif // INCLUDE_PCIDSK_MUTEX_H

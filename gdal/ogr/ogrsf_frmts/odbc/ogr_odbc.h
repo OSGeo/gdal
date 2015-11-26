@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_ODBC_H_INCLUDED
-#define _OGR_ODBC_H_INCLUDED
+#ifndef OGR_ODBC_H_INCLUDED
+#define OGR_ODBC_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"
@@ -232,6 +232,6 @@ class OGRODBCDriver : public OGRSFDriver
 };
 
 
-#endif /* ndef _OGR_ODBC_H_INCLUDED */
+#endif /* ndef OGR_ODBC_H_INCLUDED */
 
 

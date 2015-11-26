@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_OSM_H_INCLUDED
-#define _OGR_OSM_H_INCLUDED
+#ifndef OGR_OSM_H_INCLUDED
+#define OGR_OSM_H_INCLUDED
 
 // replace O(log2(N)) complexity of FindNode() by O(1)
 #define ENABLE_NODE_LOOKUP_BY_HASHING 1
@@ -488,5 +488,5 @@ class OGROSMDataSource : public OGRDataSource
     int                 DoesAttributeNameLaundering() const { return bAttributeNameLaundering; }
 };
 
-#endif /* ndef _OGR_OSM_H_INCLUDED */
+#endif /* ndef OGR_OSM_H_INCLUDED */
 

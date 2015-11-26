@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_HASH_SET_H_INCLUDED
-#define _CPL_HASH_SET_H_INCLUDED
+#ifndef CPL_HASH_SET_H_INCLUDED
+#define CPL_HASH_SET_H_INCLUDED
 
 #include "cpl_port.h"
 
@@ -91,5 +91,5 @@ int          CPL_DLL CPLHashSetEqualStr(const void* pszStr1, const void* pszStr2
 
 CPL_C_END
 
-#endif /* _CPL_HASH_SET_H_INCLUDED */
+#endif /* CPL_HASH_SET_H_INCLUDED */
 

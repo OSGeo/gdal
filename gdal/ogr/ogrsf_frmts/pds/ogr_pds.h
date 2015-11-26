@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_PDS_H_INCLUDED
-#define _OGR_PDS_H_INCLUDED
+#ifndef OGR_PDS_H_INCLUDED
+#define OGR_PDS_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "nasakeywordhandler.h"
@@ -138,4 +138,4 @@ class OGRPDSDataSource : public OGRDataSource
     static void         CleanString( CPLString &osInput );
 };
 
-#endif /* ndef _OGR_PDS_H_INCLUDED */
+#endif /* ndef OGR_PDS_H_INCLUDED */

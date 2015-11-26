@@ -27,12 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SQLITE_REGEXP_INCLUDED
-#define _OGR_SQLITE_REGEXP_INCLUDED
+#ifndef OGR_SQLITE_REGEXP_INCLUDED
+#define OGR_SQLITE_REGEXP_INCLUDED
 
 #include "ogr_sqlite.h"
 
 static void* OGRSQLiteRegisterRegExpFunction(sqlite3* hDB);
 static void OGRSQLiteFreeRegExpCache(void* hRegExpCache);
 
-#endif // _OGR_SQLITE_REGEXP_INCLUDED
+#endif // OGR_SQLITE_REGEXP_INCLUDED

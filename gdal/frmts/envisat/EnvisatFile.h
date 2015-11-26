@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __ENVISAT_FILE_H__
-#define __ENVISAT_FILE_H__
+#ifndef ENVISAT_FILE_H_
+#define ENVISAT_FILE_H_
 
 typedef struct EnvisatFile_tag EnvisatFile;
 
@@ -128,7 +128,7 @@ int EnvisatFile_ReadDatasetChunk( EnvisatFile *self,
 #  define SUCCESS 0
 #endif
 
-#endif /* __ENVISAT_FILE_H__ */
+#endif /* ENVISAT_FILE_H_ */
 
 /* EOF */
 

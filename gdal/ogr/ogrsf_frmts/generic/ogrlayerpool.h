@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRLAYERPOOL_H_INCLUDED
-#define _OGRLAYERPOOL_H_INCLUDED
+#ifndef OGRLAYERPOOL_H_INCLUDED
+#define OGRLAYERPOOL_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -159,4 +159,4 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
 };
 
-#endif // _OGRLAYERPOOL_H_INCLUDED
+#endif // OGRLAYERPOOL_H_INCLUDED

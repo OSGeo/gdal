@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRMEM_H_INCLUDED
-#define _OGRMEM_H_INCLUDED
+#ifndef OGRMEM_H_INCLUDED
+#define OGRMEM_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -136,4 +136,4 @@ class OGRMemDriver : public OGRSFDriver
 };
 
 
-#endif /* ndef _OGRMEM_H_INCLUDED */
+#endif /* ndef OGRMEM_H_INCLUDED */

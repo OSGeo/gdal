@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_AVC_H_INCLUDED
-#define _OGR_AVC_H_INCLUDED
+#ifndef OGR_AVC_H_INCLUDED
+#define OGR_AVC_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "avc.h"
@@ -231,4 +231,4 @@ class OGRAVCE00DataSource : public OGRAVCDataSource
 };
 
 
-#endif /* _OGR_AVC_H_INCLUDED */
+#endif /* OGR_AVC_H_INCLUDED */

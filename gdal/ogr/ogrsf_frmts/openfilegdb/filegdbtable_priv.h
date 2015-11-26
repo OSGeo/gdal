@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _FILEGDBTABLE_PRIV_H_INCLUDED
-#define _FILEGDBTABLE_PRIV_H_INCLUDED
+#ifndef FILEGDBTABLE_PRIV_H_INCLUDED
+#define FILEGDBTABLE_PRIV_H_INCLUDED
 
 #include "filegdbtable.h"
 #include "cpl_error.h"
@@ -135,4 +135,4 @@ void FileGDBTablePrintError(const char* pszFile, int nLineNumber);
 
 }; /* namespace OpenFileGDB */
 
-#endif /* _FILEGDBTABLE_PRIV_H_INCLUDED */
+#endif /* FILEGDBTABLE_PRIV_H_INCLUDED */

@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GML_H_INCLUDED
-#define _OGR_GML_H_INCLUDED
+#ifndef OGR_GML_H_INCLUDED
+#define OGR_GML_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "gmlreader.h"
@@ -221,4 +221,4 @@ class OGRGMLDataSource : public OGRDataSource
     static bool          CheckHeader(const char* pszStr);
 };
 
-#endif /* _OGR_GML_H_INCLUDED */
+#endif /* OGR_GML_H_INCLUDED */

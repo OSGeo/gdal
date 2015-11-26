@@ -28,8 +28,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
-#ifndef _GEOCONCEPT_H_INCLUDED
-#define _GEOCONCEPT_H_INCLUDED
+#ifndef GEOCONCEPT_H_INCLUDED
+#define GEOCONCEPT_H_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_list.h"
@@ -497,4 +497,4 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO ( GCSubType* theSubType );
 #endif
 
 
-#endif /* ndef _GEOCONCEPT_H_INCLUDED */
+#endif /* ndef GEOCONCEPT_H_INCLUDED */

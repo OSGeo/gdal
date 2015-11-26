@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GEOPACKAGE_H_INCLUDED
-#define _OGR_GEOPACKAGE_H_INCLUDED
+#ifndef OGR_GEOPACKAGE_H_INCLUDED
+#define OGR_GEOPACKAGE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "ogr_sqlite.h"
@@ -522,4 +522,4 @@ class OGRGeoPackageSelectLayer : public OGRGeoPackageLayer, public IOGRSQLiteSel
 };
 
 
-#endif /* _OGR_GEOPACKAGE_H_INCLUDED */
+#endif /* OGR_GEOPACKAGE_H_INCLUDED */

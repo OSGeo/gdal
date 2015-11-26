@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CEOSOPEN_H_INCLUDED
-#define _CEOSOPEN_H_INCLUDED
+#ifndef CEOSOPEN_H_INCLUDED
+#define CEOSOPEN_H_INCLUDED
 
 /* -------------------------------------------------------------------- */
 /*      Include standard portability stuff.                             */
@@ -102,7 +102,7 @@ void CPL_ODLL	     CEOSDestroyRecord( CEOSRecord * );
 
 CPL_C_END
 
-#endif /* ndef _CEOSOPEN_H_INCLUDED */
+#endif /* ndef CEOSOPEN_H_INCLUDED */
 
 
 

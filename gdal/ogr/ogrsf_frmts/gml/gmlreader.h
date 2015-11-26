@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GMLREADER_H_INCLUDED
-#define _GMLREADER_H_INCLUDED
+#ifndef GMLREADER_H_INCLUDED
+#define GMLREADER_H_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_vsi.h"
@@ -325,4 +325,4 @@ IGMLReader *CreateGMLReader(bool bUseExpatParserPreferably,
                             bool bGetSecondaryGeometryOption);
 
 
-#endif /* _GMLREADER_H_INCLUDED */
+#endif /* GMLREADER_H_INCLUDED */

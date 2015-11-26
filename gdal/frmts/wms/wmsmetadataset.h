@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _WMS_METADATASET_H_INCLUDED
-#define _WMS_METADATASET_H_INCLUDED
+#ifndef WMS_METADATASET_H_INCLUDED
+#define WMS_METADATASET_H_INCLUDED
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
@@ -119,4 +119,4 @@ class GDALWMSMetaDataset : public GDALPamDataset
     static GDALDataset* DownloadGetTileService(GDALOpenInfo *poOpenInfo);
 };
 
-#endif // _WMS_METADATASET_H_INCLUDED
+#endif // WMS_METADATASET_H_INCLUDED

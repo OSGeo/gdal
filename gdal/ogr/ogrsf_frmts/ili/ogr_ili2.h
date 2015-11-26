@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_ILI2_H_INCLUDED
-#define _OGR_ILI2_H_INCLUDED
+#ifndef OGR_ILI2_H_INCLUDED
+#define OGR_ILI2_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "imdreader.h"
@@ -115,4 +115,4 @@ class OGRILI2DataSource : public OGRDataSource
     int         TestCapability( const char * );
 };
 
-#endif /* _OGR_ILI2_H_INCLUDED */
+#endif /* OGR_ILI2_H_INCLUDED */

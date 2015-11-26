@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_TOUTIN_INFORMATION_H
-#define __INCLUDE_PCIDSK_TOUTIN_INFORMATION_H
+#ifndef INCLUDE_PCIDSK_TOUTIN_INFORMATION_H
+#define INCLUDE_PCIDSK_TOUTIN_INFORMATION_H
 
 #include "segment/orbitstructures.h"
 
@@ -203,4 +203,4 @@ namespace PCIDSK
     } ;
 }
 
-#endif // __INCLUDE_PCIDSK_TOUTIN_INFORMATION_H
+#endif // INCLUDE_PCIDSK_TOUTIN_INFORMATION_H

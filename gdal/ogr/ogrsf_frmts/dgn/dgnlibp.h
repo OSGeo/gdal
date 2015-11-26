@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _DGNLIBP_H_INCLUDED
-#define _DGNLIBP_H_INCLUDED
+#ifndef DGNLIBP_H_INCLUDED
+#define DGNLIBP_H_INCLUDED
 
 #include "dgnlib.h"
 
@@ -106,4 +106,4 @@ void DGNAsciiToRad50( const char *str, unsigned short *rad50 );
 void DGNSpatialFilterToUOR( DGNInfo *);
 int  DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel );
 
-#endif /* ndef _DGNLIBP_H_INCLUDED */
+#endif /* ndef DGNLIBP_H_INCLUDED */

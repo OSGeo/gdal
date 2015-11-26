@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_MYSQL_H_INCLUDED
-#define _OGR_MYSQL_H_INCLUDED
+#ifndef OGR_MYSQL_H_INCLUDED
+#define OGR_MYSQL_H_INCLUDED
 
 
 #ifdef _MSC_VER
@@ -270,6 +270,6 @@ class OGRMySQLDataSource : public OGRDataSource
     void                InterruptLongResult();
 };
 
-#endif /* ndef _OGR_MYSQL_H_INCLUDED */
+#endif /* ndef OGR_MYSQL_H_INCLUDED */
 
 

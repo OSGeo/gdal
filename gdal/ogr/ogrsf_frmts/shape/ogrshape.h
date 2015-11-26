@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRSHAPE_H_INCLUDED
-#define _OGRSHAPE_H_INCLUDED
+#ifndef OGRSHAPE_H_INCLUDED
+#define OGRSHAPE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "shapefil.h"
@@ -284,4 +284,4 @@ class OGRShapeDataSource : public OGRDataSource
     char               **GetOpenOptions() { return papszOpenOptions; }
 };
 
-#endif /* ndef _OGRSHAPE_H_INCLUDED */
+#endif /* ndef OGRSHAPE_H_INCLUDED */

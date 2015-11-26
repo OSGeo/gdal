@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRGMT_H_INCLUDED
-#define _OGRGMT_H_INCLUDED
+#ifndef OGRGMT_H_INCLUDED
+#define OGRGMT_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "ogr_api.h"
@@ -141,5 +141,5 @@ class OGRGmtDriver : public OGRSFDriver
 };
 
 
-#endif /* ndef _OGRGMT_H_INCLUDED */
+#endif /* ndef OGRGMT_H_INCLUDED */
 

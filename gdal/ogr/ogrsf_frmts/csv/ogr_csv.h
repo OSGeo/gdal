@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_CSV_H_INCLUDED
-#define _OGR_CSV_H_INCLUDED
+#ifndef OGR_CSV_H_INCLUDED
+#define OGR_CSV_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -194,4 +194,4 @@ class OGRCSVDataSource : public OGRDataSource
     static CPLString    GetRealExtension(CPLString osFilename);
 };
 
-#endif /* ndef _OGR_CSV_H_INCLUDED */
+#endif /* ndef OGR_CSV_H_INCLUDED */

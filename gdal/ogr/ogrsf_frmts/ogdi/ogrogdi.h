@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGDOGDI_H_INCLUDED
-#define _OGDOGDI_H_INCLUDED
+#ifndef OGDOGDI_H_INCLUDED
+#define OGDOGDI_H_INCLUDED
 
 #include <math.h>
 extern "C" {
@@ -147,4 +147,4 @@ class OGROGDIDriver : public OGRSFDriver
 };
 
 
-#endif /* _OGDOGDI_H_INCLUDED */
+#endif /* OGDOGDI_H_INCLUDED */

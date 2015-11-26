@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_CARTODB_H_INCLUDED
-#define _OGR_CARTODB_H_INCLUDED
+#ifndef OGR_CARTODB_H_INCLUDED
+#define OGR_CARTODB_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_http.h"
@@ -274,4 +274,4 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                         GetPostGISMinor() const { return nPostGISMinor; }
 };
 
-#endif /* ndef _OGR_CARTODB_H_INCLUDED */
+#endif /* ndef OGR_CARTODB_H_INCLUDED */

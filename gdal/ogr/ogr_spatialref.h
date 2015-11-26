@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SPATIALREF_H_INCLUDED
-#define _OGR_SPATIALREF_H_INCLUDED
+#ifndef OGR_SPATIALREF_H_INCLUDED
+#define OGR_SPATIALREF_H_INCLUDED
 
 #include "ogr_srs_api.h"
 
@@ -630,4 +630,4 @@ OGRCoordinateTransformation CPL_DLL *
 OGRCreateCoordinateTransformation( OGRSpatialReference *poSource, 
                                    OGRSpatialReference *poTarget );
 
-#endif /* ndef _OGR_SPATIALREF_H_INCLUDED */
+#endif /* ndef OGR_SPATIALREF_H_INCLUDED */

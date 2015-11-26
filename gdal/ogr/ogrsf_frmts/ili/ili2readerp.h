@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_ILI2READERP_H_INCLUDED
-#define _CPL_ILI2READERP_H_INCLUDED
+#ifndef CPL_ILI2READERP_H_INCLUDED
+#define CPL_ILI2READERP_H_INCLUDED
 
 // This works around problems with math.h on some platforms #defining INFINITY
 #ifdef INFINITY

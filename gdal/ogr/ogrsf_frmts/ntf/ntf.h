@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _NTF_H_INCLUDED
-#define _NTF_H_INCLUDED
+#ifndef NTF_H_INCLUDED
+#define NTF_H_INCLUDED
 
 #include "cpl_conv.h"
 #include "ogrsf_frmts.h"
@@ -580,4 +580,4 @@ NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
                                   double dfStartAngle, double dfEndAngle,
                                   int nVertexCount );
 
-#endif /* ndef _NTF_H_INCLUDED */
+#endif /* ndef NTF_H_INCLUDED */

@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRLAYERDECORATOR_H_INCLUDED
-#define _OGRLAYERDECORATOR_H_INCLUDED
+#ifndef OGRLAYERDECORATOR_H_INCLUDED
+#define OGRLAYERDECORATOR_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -108,4 +108,4 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
     OGRLayer* GetBaseLayer()    { return m_poDecoratedLayer; }
 };
 
-#endif // _OGRLAYERDECORATOR_H_INCLUDED
+#endif // OGRLAYERDECORATOR_H_INCLUDED

@@ -69,16 +69,16 @@ void CalcCeosSARImageFilePosition(CeosSARVolume_t *volume, int channel, int line
 
 	    switch( ImageDesc->ChannelInterleaving )
 	    {
-	    case __CEOS_IL_PIXEL:
+	    case CEOS_IL_PIXEL:
 		TotalRecords = (line - 1) * ImageDesc->RecordsPerLine;
 		TotalBytes = (TotalRecords) * ( ImageDesc->BytesPerRecord );
 		break;
-	    case __CEOS_IL_LINE:
+	    case CEOS_IL_LINE:
 		TotalRecords = (ImageDesc->NumChannels * (line - 1) + 
 				(channel - 1)) * ImageDesc->RecordsPerLine;
 		TotalBytes = (TotalRecords) * ( ImageDesc->BytesPerRecord ) ;
 		break;
-	    case __CEOS_IL_BAND:
+	    case CEOS_IL_BAND:
 		TotalRecords = (((channel - 1) * ImageDesc->Lines) * 
 				ImageDesc->RecordsPerLine) +
 				(line - 1) * ImageDesc->RecordsPerLine;

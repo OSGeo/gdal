@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_WORKER_THREAD_POOL_H_INCLUDED_
-#define _CPL_WORKER_THREAD_POOL_H_INCLUDED_
+#ifndef CPL_WORKER_THREAD_POOL_H_INCLUDED_
+#define CPL_WORKER_THREAD_POOL_H_INCLUDED_
 
 #include "cpl_multiproc.h"
 #include "cpl_list.h"
@@ -100,4 +100,4 @@ class CPL_DLL CPLWorkerThreadPool
         int GetThreadCount() const { return (int)aWT.size(); }
 };
 
-#endif // _CPL_WORKER_THREAD_POOL_H_INCLUDED_
+#endif // CPL_WORKER_THREAD_POOL_H_INCLUDED_

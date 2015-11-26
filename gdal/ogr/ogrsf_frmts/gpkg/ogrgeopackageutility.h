@@ -30,8 +30,8 @@
 #include "ogrsf_frmts.h"
 #include "sqlite3.h"
 
-#ifndef _OGR_GEOPACKAGEUTILITY_H_INCLUDED
-#define _OGR_GEOPACKAGEUTILITY_H_INCLUDED
+#ifndef OGR_GEOPACKAGEUTILITY_H_INCLUDED
+#define OGR_GEOPACKAGEUTILITY_H_INCLUDED
 
 typedef struct 
 {

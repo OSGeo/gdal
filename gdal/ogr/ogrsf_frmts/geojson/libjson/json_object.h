@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _json_object_h_
-#define _json_object_h_
+#ifndef json_object_h_
+#define json_object_h_
 
 #include "symbol_renames.h"
 #include "cpl_port.h"

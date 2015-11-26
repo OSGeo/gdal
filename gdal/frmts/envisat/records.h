@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __RECORDS_H__
-#define __RECORDS_H__
+#ifndef RECORDS_H_
+#define RECORDS_H_
 
 #include "gdal.h"
 
@@ -82,4 +82,4 @@ CPLErr EnvisatFile_GetFieldAsString(const void*, int, const EnvisatFieldDescr*, 
 } /* extern "C" */
 #endif
 
-#endif /* __RECORDS_H__ */
+#endif /* RECORDS_H_ */

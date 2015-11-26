@@ -31,8 +31,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GME_H_INCLUDED
-#define _OGR_GME_H_INCLUDED
+#ifndef OGR_GME_H_INCLUDED
+#define OGR_GME_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "ogrgeojsonreader.h"
@@ -213,4 +213,4 @@ class OGRGMEDriver : public OGRSFDriver
     virtual int                 TestCapability( const char * );
 };
 
-#endif /* ndef _OGR_GME_H_INCLUDED */
+#endif /* ndef OGR_GME_H_INCLUDED */

@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#ifndef _GEORASTER_PRIV_H_INCLUDED
-#define _GEORASTER_PRIV_H_INCLUDED
+#ifndef GEORASTER_PRIV_H_INCLUDED
+#define GEORASTER_PRIV_H_INCLUDED
 
 #include "gdal.h"
 #include "gdal_priv.h"
@@ -473,4 +473,4 @@ public:
     GDALRPCInfo*        phRPC;
 };
 
-#endif /* ifndef _GEORASTER_PRIV_H_INCLUDED */
+#endif /* ifndef GEORASTER_PRIV_H_INCLUDED */

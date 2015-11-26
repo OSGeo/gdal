@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _NETCDFDATASET_H_INCLUDED_
-#define _NETCDFDATASET_H_INCLUDED_
+#ifndef NETCDFDATASET_H_INCLUDED_
+#define NETCDFDATASET_H_INCLUDED_
 
 #include <cfloat>
 

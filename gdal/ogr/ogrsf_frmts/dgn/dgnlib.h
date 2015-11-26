@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _DGNLIB_H_INCLUDED
-#define _DGNLIB_H_INCLUDED
+#ifndef DGNLIB_H_INCLUDED
+#define DGNLIB_H_INCLUDED
 
 #undef STRICT_CPLERRORNUM_TYPE
 
@@ -883,4 +883,4 @@ int CPL_DLL DGNElemTypeHasDispHdr( int nElemType );
 
 CPL_C_END
 
-#endif /* ndef _DGNLIB_H_INCLUDED */
+#endif /* ndef DGNLIB_H_INCLUDED */

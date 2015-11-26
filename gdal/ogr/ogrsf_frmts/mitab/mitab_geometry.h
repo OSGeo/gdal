@@ -39,8 +39,8 @@
  *
  **********************************************************************/
 
-#ifndef _MITAB_GEOMETRY_H_INCLUDED
-#define _MITAB_GEOMETRY_H_INCLUDED
+#ifndef MITAB_GEOMETRY_H_INCLUDED
+#define MITAB_GEOMETRY_H_INCLUDED
 
 #include "ogr_geometry.h"
 
@@ -50,4 +50,4 @@ int   OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint);
 int   OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint);
 int   OGRPolylineLabelPoint(OGRLineString *poLine, OGRPoint *poLabelPoint);
 
-#endif /* ndef _MITAB_GEOMETRY_H_INCLUDED */
+#endif /* ndef MITAB_GEOMETRY_H_INCLUDED */

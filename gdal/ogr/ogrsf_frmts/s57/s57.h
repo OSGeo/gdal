@@ -30,8 +30,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _S57_H_INCLUDED
-#define _S57_H_INCLUDED
+#ifndef S57_H_INCLUDED
+#define S57_H_INCLUDED
 
 #include <vector>
 #include "ogr_feature.h"
@@ -414,4 +414,4 @@ OGRFeatureDefn CPL_DLL *S57GenerateObjectClassDefn( S57ClassRegistrar *,
 OGRFeatureDefn CPL_DLL  *S57GenerateVectorPrimitiveFeatureDefn( int, int );
 OGRFeatureDefn CPL_DLL  *S57GenerateDSIDFeatureDefn( void );
 
-#endif /* ndef _S57_H_INCLUDED */
+#endif /* ndef S57_H_INCLUDED */

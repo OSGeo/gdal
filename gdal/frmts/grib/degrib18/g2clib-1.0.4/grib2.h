@@ -1,5 +1,5 @@
-#ifndef _grib2_H
-#define _grib2_H
+#ifndef grib2_H
+#define grib2_H
 #include<stdio.h>
 
 #define G2_VERSION "g2clib-1.0.4"
@@ -273,5 +273,5 @@ int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
                  g2int ltype, g2int ratio, g2int retry, char *outjpc, 
                  g2int jpclen);
 
-#endif  /*  _grib2_H  */
+#endif  /*  grib2_H  */
 

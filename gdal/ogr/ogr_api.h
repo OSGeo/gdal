@@ -55,8 +55,8 @@ typedef struct OGRGeometryHS *OGRGeometryH;
 typedef void *OGRGeometryH;
 #endif
 
-#ifndef _DEFINED_OGRSpatialReferenceH
-#define _DEFINED_OGRSpatialReferenceH
+#ifndef DEFINED_OGRSpatialReferenceH
+#define DEFINED_OGRSpatialReferenceH
 
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;

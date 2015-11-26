@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_PG_H_INCLUDED
-#define _OGR_PG_H_INCLUDED
+#ifndef OGR_PG_H_INCLUDED
+#define OGR_PG_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "libpq-fe.h"
@@ -546,5 +546,5 @@ class OGRPGDataSource : public OGRDataSource
     OGRErr              EndCopy( );
 };
 
-#endif /* ndef _OGR_PG_H_INCLUDED */
+#endif /* ndef OGR_PG_H_INCLUDED */
 

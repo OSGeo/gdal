@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_OCI_H_INCLUDED
-#define _OGR_OCI_H_INCLUDED
+#ifndef OGR_OCI_H_INCLUDED
+#define OGR_OCI_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "oci.h"
@@ -565,4 +565,4 @@ OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                      OGRLineString *poLine );
 
 
-#endif /* ndef _OGR_OCI_H_INCLUDED */
+#endif /* ndef OGR_OCI_H_INCLUDED */

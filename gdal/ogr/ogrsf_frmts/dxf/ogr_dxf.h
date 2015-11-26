@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_DXF_H_INCLUDED
-#define _OGR_DXF_H_INCLUDED
+#ifndef OGR_DXF_H_INCLUDED
+#define OGR_DXF_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "ogr_autocad_services.h"
@@ -399,4 +399,4 @@ class OGRDXFWriterDS : public OGRDataSource
     void                UpdateExtent( OGREnvelope* psEnvelope );
 };
 
-#endif /* ndef _OGR_DXF_H_INCLUDED */
+#endif /* ndef OGR_DXF_H_INCLUDED */

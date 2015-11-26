@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SVG_H_INCLUDED
-#define _OGR_SVG_H_INCLUDED
+#ifndef OGR_SVG_H_INCLUDED
+#define OGR_SVG_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -165,4 +165,4 @@ class OGRSVGDataSource : public OGRDataSource
 #endif
 };
 
-#endif /* ndef _OGR_SVG_H_INCLUDED */
+#endif /* ndef OGR_SVG_H_INCLUDED */

@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GEOMETRY_H_INCLUDED
-#define _OGR_GEOMETRY_H_INCLUDED
+#ifndef OGR_GEOMETRY_H_INCLUDED
+#define OGR_GEOMETRY_H_INCLUDED
 
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
@@ -1344,4 +1344,4 @@ void OGRDestroyPreparedGeometry( OGRPreparedGeometry* poPreparedGeom );
 int OGRPreparedGeometryIntersects( const OGRPreparedGeometry* poPreparedGeom,
                                    const OGRGeometry* poOtherGeom );
 
-#endif /* ndef _OGR_GEOMETRY_H_INCLUDED */
+#endif /* ndef OGR_GEOMETRY_H_INCLUDED */

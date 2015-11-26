@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GENSQL_H_INCLUDED
-#define _OGR_GENSQL_H_INCLUDED
+#ifndef OGR_GENSQL_H_INCLUDED
+#define OGR_GENSQL_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "swq.h"
@@ -125,4 +125,4 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     virtual OGRErr      SetAttributeFilter( const char * );
 };
 
-#endif /* ndef _OGR_GENSQL_H_INCLUDED */
+#endif /* ndef OGR_GENSQL_H_INCLUDED */

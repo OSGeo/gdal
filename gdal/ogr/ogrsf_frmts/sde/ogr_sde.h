@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SDE_H_INCLUDED
-#define _OGR_SDE_H_INCLUDED
+#ifndef OGR_SDE_H_INCLUDED
+#define OGR_SDE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 

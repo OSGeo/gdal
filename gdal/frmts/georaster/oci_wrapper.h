@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OCI_WRAPPER_H_INCLUDED
-#define _OCI_WRAPPER_H_INCLUDED
+#ifndef OCI_WRAPPER_H_INCLUDED
+#define OCI_WRAPPER_H_INCLUDED
 
 // GDAL supporting types
 

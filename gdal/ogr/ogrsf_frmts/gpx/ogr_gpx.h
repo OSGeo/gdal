@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GPX_H_INCLUDED
-#define _OGR_GPX_H_INCLUDED
+#ifndef OGR_GPX_H_INCLUDED
+#define OGR_GPX_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -246,4 +246,4 @@ class OGRGPXDataSource : public OGRDataSource
     void                PrintLine(const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
 };
 
-#endif /* ndef _OGR_GPX_H_INCLUDED */
+#endif /* ndef OGR_GPX_H_INCLUDED */

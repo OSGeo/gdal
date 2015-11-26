@@ -113,8 +113,8 @@
  *
  **********************************************************************/
 
-#ifndef _MITAB_H_INCLUDED_
-#define _MITAB_H_INCLUDED_
+#ifndef MITAB_H_INCLUDED_
+#define MITAB_H_INCLUDED_
 
 #include "mitab_priv.h"
 #include "ogr_feature.h"
@@ -1913,4 +1913,4 @@ int     MITABLoadCoordSysTable(const char *pszFname);
 void    MITABFreeCoordSysTable();
 GBool   MITABCoordSysTableLoaded();
 
-#endif /* _MITAB_H_INCLUDED_ */
+#endif /* MITAB_H_INCLUDED_ */

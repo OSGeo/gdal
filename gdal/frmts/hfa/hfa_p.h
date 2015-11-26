@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _HFA_P_H_INCLUDED
-#define _HFA_P_H_INCLUDED
+#ifndef HFA_P_H_INCLUDED
+#define HFA_P_H_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_error.h"
@@ -488,4 +488,4 @@ private:
 
 };
 
-#endif /* ndef _HFA_P_H_INCLUDED */
+#endif /* ndef HFA_P_H_INCLUDED */

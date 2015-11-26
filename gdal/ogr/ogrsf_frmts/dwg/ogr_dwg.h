@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_DWG_H_INCLUDED
-#define _OGR_DWG_H_INCLUDED
+#ifndef OGR_DWG_H_INCLUDED
+#define OGR_DWG_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
@@ -276,4 +276,4 @@ class OGRDWGDriver : public OGRSFDriver
 };
 
 
-#endif /* ndef _OGR_DWG_H_INCLUDED */
+#endif /* ndef OGR_DWG_H_INCLUDED */

@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_ATOMIC_OPS_INCLUDED
-#define _CPL_ATOMIC_OPS_INCLUDED
+#ifndef CPL_ATOMIC_OPS_INCLUDED
+#define CPL_ATOMIC_OPS_INCLUDED
 
 #include "cpl_port.h"
 
@@ -103,4 +103,4 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval);
 
 CPL_C_END
 
-#endif /* _CPL_ATOMIC_OPS_INCLUDED */
+#endif /* CPL_ATOMIC_OPS_INCLUDED */
