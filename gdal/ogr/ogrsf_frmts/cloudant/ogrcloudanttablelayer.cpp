@@ -339,7 +339,7 @@ void OGRCloudantTableLayer::WriteMetadata()
     json_object* poFields = json_object_new_array();
     json_object_object_add(poDDocObj, "fields", poFields);
 
-    for(int i=FIRST_FIELD;i<poFeatureDefn->GetFieldCount();i++)
+    for(int i=COUCHDB_FIRST_FIELD;i<poFeatureDefn->GetFieldCount();i++)
     {
         json_object* poField = json_object_new_object();
         json_object_array_add(poFields, poField);
