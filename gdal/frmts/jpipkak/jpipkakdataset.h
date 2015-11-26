@@ -36,9 +36,7 @@
 #include "cpl_vsi.h"
 #include "cpl_multiproc.h"
 
-#include "kdu_cache.h"
-#include "kdu_region_decompressor.h"
-#include "kdu_file_io.h"
+#include "jpipkak_headers.h"
 
 #include <time.h>
 
