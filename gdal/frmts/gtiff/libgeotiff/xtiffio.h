@@ -4,8 +4,8 @@
  *    written by: Niles D. Ritter
  */
 
-#ifndef __xtiffio_h
-#define __xtiffio_h
+#ifndef LIBGEOTIFF_XTIFFIO_H_
+#define LIBGEOTIFF_XTIFFIO_H_
 
 #include "tiffio.h"
 #include "geo_config.h"
@@ -80,5 +80,5 @@ extern TIFF CPL_DLL * XTIFFClientOpen(const char* name, const char* mode,
 }
 #endif
 
-#endif /* __xtiffio_h */
+#endif /* LIBGEOTIFF_XTIFFIO_H_ */
 
