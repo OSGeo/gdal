@@ -288,6 +288,48 @@ sub errstr {
     return join("\n", @stack);
 }
 
+# usage: named_parameters(\@_, key value list of default parameters); 
+# returns parameters in a hash with low-case-without-_ keys
+sub named_parameters {
+    my $parameters = shift;
+    my %defaults = @_;
+    my %c;
+    for my $k (keys %defaults) {
+        my $c = lc($k); $c =~ s/_//g;
+        $c{$c} = $k;
+    }
+    my %named;
+    my @p = ref($parameters->[0]) eq 'HASH' ? %{$parameters->[0]} : @$parameters;
+    if (@p) {
+        my $c = lc($p[0] // ''); $c =~ s/_//g;
+        if (@p % 2 == 0 && defined $c && exists $c{$c}) {
+            for (my $i = 0; $i < @p; $i+=2) {
+                my $c = lc($p[$i]); $c =~ s/_//g;
+                error(1, $p[$i], \%defaults) unless exists $defaults{$c{$c}};
+                $named{$c} = $p[$i+1];
+                }
+        } else {
+            for (my $i = 0; $i < @p; $i++) {
+                my $c = lc($_[$i*2]); $c =~ s/_//g;
+                $named{$c} = $p[$i];
+            }
+        }
+    }
+    for my $k (keys %defaults) {
+        my $c = lc($k); $c =~ s/_//g;
+        $named{$c} //= $defaults{$k};
+    }
+    return \%named;
+}
+
+sub string2int {
+    my ($string, $string2int_hash, $int2string_hash) = @_;
+    return unless defined $string;
+    return $string if $int2string_hash && exists $int2string_hash->{$string};
+    error(1, $string, $string2int_hash) unless exists $string2int_hash->{$string};
+    $string2int_hash->{$string};
+}
+
 sub RELEASE_PARENTS {
 }
 
@@ -333,12 +375,7 @@ sub Child {
 }
 
 sub GetDataTypeSize {
-    my $t = shift;
-    unless (exists $TYPE_INT2STRING{$t}) {
-        Geo::GDAL::error(1, $t, \%TYPE_STRING2INT) unless exists $TYPE_STRING2INT{$t};
-        $t = $TYPE_STRING2INT{$t};
-    }
-    return _GetDataTypeSize($t);
+    return _GetDataTypeSize(string2int(shift, \%TYPE_STRING2INT, \%TYPE_INT2STRING));
 }
 
 sub DataTypeValueRange {
@@ -355,10 +392,7 @@ sub DataTypeValueRange {
 }
 
 sub DataTypeIsComplex {
-    my $t = shift;
-    Geo::GDAL::error(1, $t, \%TYPE_STRING2INT) unless exists $TYPE_STRING2INT{$t};
-    $t = $TYPE_STRING2INT{$t};
-    return _DataTypeIsComplex($t);
+    return _DataTypeIsComplex(string2int(shift, \%TYPE_STRING2INT));
 }
 
 sub PackCharacter {
@@ -497,10 +531,7 @@ sub RegenerateOverview {
 sub ReprojectImage {
     my @p = @_;
     $p[8] = 1 if $p[7] and not defined $p[8];
-    if (defined $p[4]) {
-        Geo::GDAL::error(1, $p[4], \%RESAMPLING_STRING2INT) unless exists $RESAMPLING_STRING2INT{$p[4]};
-        $p[4] = $Geo::GDAL::RESAMPLING_STRING2INT{$p[4]};
-    }
+    $p[4] = string2int($p[4], \%RESAMPLING_STRING2INT);
     return _ReprojectImage(@p);
 }
 
@@ -511,10 +542,7 @@ sub AutoCreateWarpedVRT {
             $p[$i] = $p[$i]->ExportToWkt;
         }
     }
-    if (defined $p[3]) {
-        Geo::GDAL::error(1, $p[3], \%RESAMPLING_STRING2INT) unless exists $RESAMPLING_STRING2INT{$p[3]};
-        $p[3] = $Geo::GDAL::RESAMPLING_STRING2INT{$p[3]};
-    }
+    $p[3] = string2int($p[3], \%RESAMPLING_STRING2INT);
     return _AutoCreateWarpedVRT(@p);
 }
 
@@ -566,6 +594,7 @@ use strict;
 use warnings;
 use Carp;
 use Scalar::Util 'blessed';
+
 use vars qw/@CAPABILITIES @DOMAINS/;
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
@@ -671,45 +700,26 @@ sub stdout_redirection_wrapper {
 
 sub Create {
     my $self = shift;
-    my %defaults = ( Name => 'unnamed',
-                     Width => 256,
-                     Height => 256,
-                     Bands => 1,
-                     Type => 'Byte',
-                     Options => {} );
-    my %params;
-    if (@_ == 0) {
-    } elsif (ref($_[0]) eq 'HASH') {
-        %params = %{$_[0]};
-    } elsif (defined $_[0] and exists $defaults{$_[0]} and @_ % 2 == 0) {
-        %params = @_;
-    } elsif (@_ == 2) { # old vector create
-        ($params{Name}, $params{Options}) = @_;
-    } else {
-        ($params{Name}, $params{Width}, $params{Height}, $params{Bands}, $params{Type}, $params{Options}) = @_;
+    my $p = Geo::GDAL::named_parameters(\@_, Name => 'unnamed', Width => 256, Height => 256, Bands => 1, Type => 'Byte', Options => {});
+    if (@_ == 2) { # old vector create
+        ($p->{name}, $p->{options}) = @_;
     }
-    for my $k (keys %params) {
-        carp "Unknown parameter '$k'." unless exists $defaults{$k};
-    }
-    for my $k (keys %defaults) {
-        $params{$k} //= $defaults{$k};
-    }
-    my $type;
-    Geo::GDAL::error(1, $params{Type}, \%Geo::GDAL::TYPE_STRING2INT) unless exists $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
-    $type = $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
-
+    my $type = Geo::GDAL::string2int($p->{type}, \%Geo::GDAL::TYPE_STRING2INT);
     return $self->stdout_redirection_wrapper(
-        $params{Name}, 
+        $p->{name}, 
         $self->can('_Create'), 
-        $params{Width}, $params{Height}, $params{Bands}, $type, $params{Options}
+        $p->{width}, $p->{height}, $p->{bands}, $type, $p->{options}
     );
 }
 *CreateDataset = *Create;
 
 sub Copy {
     my $self = shift;
-    my $name = shift; # $name, $src, $strict, $options, $callback, $data
-    return $self->stdout_redirection_wrapper($name, $self->can('_CreateCopy'), @_);
+    my $p = Geo::GDAL::named_parameters(\@_, Name => 'unnamed', Src => undef, Strict => 1, Options => {}, Progress => undef, ProgressData => undef);
+    return $self->stdout_redirection_wrapper(
+        $p->{name}, 
+        $self->can('_CreateCopy'), 
+        $p->{src}, $p->{strict}, $p->{options}, $p->{progress}, $p->{progressdata});
 }
 *CreateCopy = *Copy;
 
@@ -731,6 +741,7 @@ use warnings;
 use POSIX qw/floor ceil/;
 use Scalar::Util 'blessed';
 use Carp;
+
 use vars qw/@DOMAINS @CAPABILITIES %CAPABILITIES %BANDS %LAYERS %RESULT_SET/;
 @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
 
@@ -772,10 +783,7 @@ sub GetRasterBand {
 
 sub AddBand {
     my @p = @_;
-    if (defined $p[1]) {
-        Geo::GDAL::error(1, $p[1], \%Geo::GDAL::TYPE_STRING2INT) unless exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
-        $p[1] = $Geo::GDAL::TYPE_STRING2INT{$p[1]};
-    }
+    $p[1] = Geo::GDAL::string2int($p[1], \%Geo::GDAL::TYPE_STRING2INT);
     return _AddBand(@p);
 }
 
@@ -818,44 +826,27 @@ sub GetLayerNames {
 
 sub CreateLayer {
     my $self = shift;
-    my %defaults = ( Name => 'unnamed',
-                     SRS => undef,
-                     Options => {},
-                     GeometryType => 'Unknown',
-                     Schema => undef,
-                     Fields => undef,
-                     ApproxOK => 1);
-    my %params;
-    if (@_ == 0) {
-    } elsif (ref($_[0]) eq 'HASH') {
-        %params = %{$_[0]};
-    } elsif (@_ % 2 == 0 and (defined $_[0] and exists $defaults{$_[0]})) {
-        %params = @_;
-    } else {
-        ($params{Name}, $params{SRS}, $params{GeometryType}, $params{Options}, $params{Schema}) = @_;
+    my $p = Geo::GDAL::named_parameters(\@_,
+                                        Name => 'unnamed', 
+                                        SRS => undef, 
+                                        GeometryType => 'Unknown', 
+                                        Options => {}, 
+                                        Schema => undef,
+                                        Fields => undef,
+                                        ApproxOK => 1);
+    Geo::GDAL::error("The 'Fields' argument must be an array reference.") if $p->{fields} && ref($p->{fields}) ne 'ARRAY';
+    if (defined $p->{schema}) {
+        my $s = $p->{schema};
+        $p->{geometrytype} = $s->{GeometryType} if exists $s->{GeometryType};
+        $p->{fields} = $s->{Fields} if exists $s->{Fields};
+        $p->{name} = $s->{Name} if exists $s->{Name};
     }
-    for my $k (keys %params) {
-        carp "Unknown parameter '$k'." unless exists $defaults{$k};
-    }
-    if (exists $params{Schema}) {
-        my $s = $params{Schema};
-        $params{GeometryType} = $s->{GeometryType} if exists $s->{GeometryType};
-        $params{Fields} = $s->{Fields} if exists $s->{Fields};
-        $params{Name} = $s->{Name} if exists $s->{Name};
-    }
-    $defaults{GeometryType} = 'None' if $params{Fields};
-    for my $k (keys %defaults) {
-        $params{$k} //= $defaults{$k};
-    }
-    Geo::GDAL::error(1, $params{GeometryType}, \%Geo::OGR::Geometry::TYPE_STRING2INT)
-        unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
-    my $gt = $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
-    my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $gt, $params{Options});
+    $p->{geometrytype} //= 'None' if $p->{fields};
+    my $gt = Geo::GDAL::string2int($p->{geometrytype}, \%Geo::OGR::Geometry::TYPE_STRING2INT);
+    my $layer = _CreateLayer($self, $p->{name}, $p->{srs}, $gt, $p->{options});
     $LAYERS{tied(%$layer)} = $self;
-    my $f = $params{Fields};
-    if ($f) {
-        Geo::GDAL::error("The 'Fields' argument must be an array reference.") unless ref($f) eq 'ARRAY';
-        for my $field (@$f) {
+    if ($p->{fields}) {
+        for my $field (@{$p->{fields}}) {
             $layer->CreateField($field);
         }
     }
@@ -967,103 +958,47 @@ sub ReadRaster {
     my $self = shift;
     my ($width, $height) = $self->Size;
     my ($type) = $self->Band->DataType;
-    my %d = (
-        XOFF => 0,
-        YOFF => 0,
-        XSIZE => $width,
-        YSIZE => $height,
-        BUFXSIZE => undef,
-        BUFYSIZE => undef,
-        BUFTYPE => $type,
-        BANDLIST => [1],
-        BUFPIXELSPACE => 0,
-        BUFLINESPACE => 0,
-        BUFBANDSPACE => 0,
-        RESAMPLEALG => 'NearestNeighbour',
-        PROGRESS => undef,
-        PROGRESSDATA => undef
+    my $p = Geo::GDAL::named_parameters(\@_,
+                                        XOff => 0,
+                                        YOff => 0,
+                                        XSize => $width,
+                                        YSize => $height,
+                                        BufXSize => undef,
+                                        BufYSize => undef,
+                                        BufType => $type,
+                                        BandList => [1],
+                                        BufPixelSpace => 0,
+                                        BufLineSpace => 0,
+                                        BufBandSpace => 0,
+                                        ResampleAlg => 'NearestNeighbour',
+                                        Progress => undef,
+                                        ProgressData => undef
         );
-    my %p;
-    my $t;
-    if (defined $_[0]) {
-        $t = uc($_[0]); 
-        $t =~ s/_//g;
-    }
-    if (@_ == 0) {
-    } elsif (ref($_[0]) eq 'HASH') {
-        %p = %{$_[0]};
-    } elsif (@_ % 2 == 0 and (defined $t and exists $d{$t})) {
-        %p = @_;
-    } else {
-        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{band_list},$p{buf_pixel_space},$p{buf_line_space},$p{buf_band_space},$p{resample_alg},$p{progress},$p{progress_data}) = @_;
-    }
-    for my $k (keys %p) {
-        my $u = uc($k);
-        $u =~ s/_//g;
-        carp "Unknown parameter '$k'." unless exists $d{$u};
-        $p{$u} = $p{$k};
-    }
-    for my $k (keys %d) {
-        $p{$k} //= $d{$k};
-    }
-    Geo::GDAL::error(1, $p{RESAMPLEALG}, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT) 
-        unless exists $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
-    $p{RESAMPLEALG} = $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
-    unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
-        Geo::GDAL::error(1, $p{BUFTYPE}, \%Geo::GDAL::TYPE_STRING2INT) 
-            unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
-        $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
-    }
-    $self->_ReadRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BANDLIST},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{BUFBANDSPACE},$p{RESAMPLEALG},$p{PROGRESS},$p{PROGRESSDATA});
+    $p->{resamplealg} = Geo::GDAL::string2int($p->{resamplealg}, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT);
+    $p->{buftype} = Geo::GDAL::string2int($p->{buftype}, \%Geo::GDAL::TYPE_STRING2INT, \%Geo::GDAL::TYPE_INT2STRING);
+    $self->_ReadRaster($p->{xoff},$p->{yoff},$p->{xsize},$p->{ysize},$p->{bufxsize},$p->{bufysize},$p->{buftype},$p->{bandlist},$p->{bufpixelspace},$p->{buflinespace},$p->{bufbandspace},$p->{resamplealg},$p->{progress},$p->{progressdata});
 }
 
 sub WriteRaster {
     my $self = shift;
     my ($width, $height) = $self->Size;
     my ($type) = $self->Band->DataType;
-    my %d = (
-        XOFF => 0,
-        YOFF => 0,
-        XSIZE => $width,
-        YSIZE => $height,
-        BUF => undef,
-        BUFXSIZE => undef,
-        BUFYSIZE => undef,
-        BUFTYPE => $type,
-        BANDLIST => [1],
-        BUFPIXELSPACE => 0,
-        BUFLINESPACE => 0,
-        BUFBANDSPACE => 0
+    my $p = Geo::GDAL::named_parameters(\@_,
+                                        XOff => 0,
+                                        YOff => 0,
+                                        XSize => $width,
+                                        YSize => $height,
+                                        Buf => undef,
+                                        BufXSize => undef,
+                                        BufYSize => undef,
+                                        BufType => $type,
+                                        BandList => [1],
+                                        BufPixelSpace => 0,
+                                        BufLineSpace => 0,
+                                        BufBandSpace => 0
         );
-    my %p;
-    my $t;
-    if (defined $_[0]) {
-        $t = uc($_[0]); 
-        $t =~ s/_//g;
-    }
-    if (@_ == 0) {
-    } elsif (ref($_[0]) eq 'HASH') {
-        %p = %{$_[0]};
-    } elsif (@_ % 2 == 0 and (defined $t and exists $d{$t})) {
-        %p = @_;
-    } else {
-        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{band_list},$p{buf_pixel_space},$p{buf_line_space},$p{buf_band_space}) = @_;
-    }
-    for my $k (keys %p) {
-        my $u = uc($k);
-        $u =~ s/_//g;
-        carp "Unknown parameter '$k'." unless exists $d{$u};
-        $p{$u} = $p{$k};
-    }
-    for my $k (keys %d) {
-        $p{$k} //= $d{$k};
-    }
-    unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
-        Geo::GDAL::error(1, $p{BUFTYPE}, \%Geo::GDAL::TYPE_STRING2INT) 
-            unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
-        $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
-    }
-    $self->_WriteRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUF},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BANDLIST},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{BUFBANDSPACE});
+    $p->{buftype} = Geo::GDAL::string2int($p->{buftype}, \%Geo::GDAL::TYPE_STRING2INT, \%Geo::GDAL::TYPE_INT2STRING);
+    $self->_WriteRaster($p->{xoff},$p->{yoff},$p->{xsize},$p->{ysize},$p->{buf},$p->{bufxsize},$p->{bufysize},$p->{buftype},$p->{bandlist},$p->{bufpixelspace},$p->{buflinespace},$p->{bufbandspace});
 }
 
 sub BuildOverviews {
@@ -1087,7 +1022,7 @@ sub stdout_redirection_wrapper {
     }
     my $ds;
     eval {
-        $ds = $sub->($name, $self, @params); # self and name opposite to what is in Geo::GDAL!
+        $ds = $sub->($name, $self, @params); # self and name opposite to what is in Geo::GDAL::Driver!
     };
     if ($object) {
         if ($ds) {
@@ -1201,6 +1136,7 @@ use warnings;
 use POSIX;
 use Carp;
 use Scalar::Util 'blessed';
+
 use vars qw/
     @COLOR_INTERPRETATIONS
     %COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
@@ -1247,7 +1183,7 @@ sub DESTROY {
 
 sub RELEASE_PARENTS {
     my $self = shift;
-    delete $Geo::GDAL::Dataset::BANDS{$self};
+    delete $Geo::GDAL::Dataset::BandS{$self};
 }
 
 sub Size {
@@ -1308,9 +1244,7 @@ sub ReadTile {
     $h_tile //= $ysize;
     $alg //= 'NearestNeighbour';
     my $t = $self->{DataType};
-    Geo::GDAL::error(1, $alg, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT) 
-        unless exists $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$alg};
-    $alg = $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$alg};
+    $alg = Geo::GDAL::string2int($alg, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT);
     my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $t, 0, 0, $alg);
     my $pc = Geo::GDAL::PackCharacter($t);
     my $w = $w_tile * Geo::GDAL::GetDataTypeSize($t)/8;
@@ -1348,8 +1282,7 @@ sub WriteTile {
 sub ColorInterpretation {
     my($self, $ci) = @_;
     if (defined $ci) {
-        Geo::GDAL::error(1, $ci, \%COLOR_INTERPRETATION_STRING2INT) unless exists $COLOR_INTERPRETATION_STRING2INT{$ci};
-        $ci = $COLOR_INTERPRETATION_STRING2INT{$ci};
+        $ci = Geo::GDAL::string2int($ci, \%COLOR_INTERPRETATION_STRING2INT);
         SetRasterColorInterpretation($self, $ci);
     }
     return unless defined wantarray;
@@ -1376,88 +1309,59 @@ sub AttributeTable {
     SetDefaultRAT($self, $_[0]) if @_ and defined $_[0];
     return unless defined wantarray;
     my $r = GetDefaultRAT($self);
-    $Geo::GDAL::RasterAttributeTable::BANDS{$r} = $self if $r;
+    $Geo::GDAL::RasterAttributeTable::BandS{$r} = $self if $r;
     return $r;
 }
 
 sub GetHistogram {
     my $self = shift;
-    my %defaults = (Min => -0.5,
-                    Max => 255.5,
-                    Buckets => 256,
-                    IncludeOutOfRange => 0,
-                    ApproxOK => 0,
-                    Progress => undef,
-                    ProgressData => undef);
-    my %params = @_;
-    for my $k (keys %params) {
-        carp "Unknown parameter '$k'." unless exists $defaults{$k};
-    }
-    for my $k (keys %defaults) {
-        $params{$k} //= $defaults{$k};
-    }
-    $params{ProgressData} = 1 if $params{Progress} and not defined $params{ProgressData};
-    _GetHistogram($self, $params{Min}, $params{Max}, $params{Buckets},
-                  $params{IncludeOutOfRange}, $params{ApproxOK},
-                  $params{Progress}, $params{ProgressData});
+    my $p = Geo::GDAL::named_parameters(\@_,
+                                        Min => -0.5,
+                                        Max => 255.5,
+                                        Buckets => 256,
+                                        IncludeOutOfRange => 0,
+                                        ApproxOK => 0,
+                                        Progress => undef,
+                                        ProgressData => undef);
+    $p->{progressdata} = 1 if $p->{progress} and not defined $p->{progressdata};
+    _GetHistogram($self, $p->{min}, $p->{max}, $p->{buckets},
+                  $p->{includeoutofrange}, $p->{approxok},
+                  $p->{progress}, $p->{progressdata});
 }
 
 sub Contours {
     my $self = shift;
-    my %defaults = (DataSource => undef,
-                    LayerConstructor => {Name => 'contours'},
-                    ContourInterval => 100,
-                    ContourBase => 0,
-                    FixedLevels => [],
-                    NoDataValue => undef,
-                    IDField => -1,
-                    ElevField => -1,
-                    Progress => undef,
-                    ProgressData => undef);
-    my %params;
-    if (!defined($_[0]) or (blessed($_[0]) and $_[0]->isa('Geo::OGR::DataSource'))) {
-        ($params{DataSource}, $params{LayerConstructor},
-         $params{ContourInterval}, $params{ContourBase},
-         $params{FixedLevels}, $params{NoDataValue},
-         $params{IDField}, $params{ElevField},
-         $params{Progress}, $params{ProgressData}) = @_;
-    } else {
-        %params = @_;
-        if (exists $params{progress}) {
-            $params{Progress} = $params{progress};
-            delete $params{progress};
-        }
-        if (exists $params{progress_data}) {
-            $params{ProgressData} = $params{progress_data};
-            delete $params{progress_data};
-        }
-    }
-    for my $k (keys %params) {
-        carp "Unknown parameter '$k'." unless exists $defaults{$k};
-    }
-    for my $k (keys %defaults) {
-        $params{$k} //= $defaults{$k};
-    }
-    $params{DataSource} //= Geo::OGR::GetDriver('Memory')->CreateDataSource('ds');
-    $params{LayerConstructor}->{Schema} //= {};
-    $params{LayerConstructor}->{Schema}{Fields} //= [];
+    my $p = Geo::GDAL::named_parameters(\@_,
+                                        DataSource => undef,
+                                        LayerConstructor => {Name => 'contours'},
+                                        ContourInterval => 100,
+                                        ContourBase => 0,
+                                        FixedLevels => [],
+                                        NoDataValue => undef,
+                                        IDField => -1,
+                                        ElevField => -1,
+                                        Progress => undef,
+                                        ProgressData => undef);
+    $p->{datasource} //= Geo::OGR::GetDriver('Memory')->CreateDataSource('ds');
+    $p->{layerconstructor}->{Schema} //= {};
+    $p->{layerconstructor}->{Schema}{Fields} //= [];
     my %fields;
-    unless ($params{IDField} =~ /^[+-]?\d+$/ or $fields{$params{IDField}}) {
-        push @{$params{LayerConstructor}->{Schema}{Fields}}, {Name => $params{IDField}, Type => 'Integer'};
+    unless ($p->{idfield} =~ /^[+-]?\d+$/ or $fields{$p->{idfield}}) {
+        push @{$p->{layerconstructor}->{Schema}{Fields}}, {Name => $p->{idfield}, Type => 'Integer'};
     }
-    unless ($params{ElevField} =~ /^[+-]?\d+$/ or $fields{$params{ElevField}}) {
+    unless ($p->{elevfield} =~ /^[+-]?\d+$/ or $fields{$p->{elevfield}}) {
         my $type = $self->DataType() =~ /Float/ ? 'Real' : 'Integer';
-        push @{$params{LayerConstructor}->{Schema}{Fields}}, {Name => $params{ElevField}, Type => $type};
+        push @{$p->{layerconstructor}->{Schema}{Fields}}, {Name => $p->{elevfield}, Type => $type};
     }
-    my $layer = $params{DataSource}->CreateLayer($params{LayerConstructor});
+    my $layer = $p->{datasource}->CreateLayer($p->{layerconstructor});
     my $schema = $layer->GetLayerDefn;
-    for ('IDField', 'ElevField') {
-        $params{$_} = $schema->GetFieldIndex($params{$_}) unless $params{$_} =~ /^[+-]?\d+$/;
+    for ('idfield', 'elevfield') {
+        $p->{$_} = $schema->GetFieldIndex($p->{$_}) unless $p->{$_} =~ /^[+-]?\d+$/;
     }
-    $params{ProgressData} = 1 if $params{Progress} and not defined $params{ProgressData};
-    ContourGenerate($self, $params{ContourInterval}, $params{ContourBase}, $params{FixedLevels},
-                    $params{NoDataValue}, $layer, $params{IDField}, $params{ElevField},
-                    $params{Progress}, $params{ProgressData});
+    $p->{progressdata} = 1 if $p->{progress} and not defined $p->{progressdata};
+    ContourGenerate($self, $p->{contourinterval}, $p->{contourbase}, $p->{fixedlevels},
+                    $p->{nodatavalue}, $layer, $p->{idfield}, $p->{elevfield},
+                    $p->{progress}, $p->{progressdata});
     return $layer;
 }
 
@@ -1477,100 +1381,44 @@ sub ReadRaster {
     my $self = shift;
     my ($width, $height) = $self->Size;
     my ($type) = $self->DataType;
-    my %d = (
-        XOFF => 0,
-        YOFF => 0,
-        XSIZE => $width,
-        YSIZE => $height,
-        BUFXSIZE => undef,
-        BUFYSIZE => undef,
-        BUFTYPE => $type,
-        BUFPIXELSPACE => 0,
-        BUFLINESPACE => 0,
-        RESAMPLEALG => 'NearestNeighbour',
-        PROGRESS => undef,
-        PROGRESSDATA => undef
+    my $p = Geo::GDAL::named_parameters(\@_,
+                                        XOff => 0,
+                                        YOff => 0,
+                                        XSize => $width,
+                                        YSize => $height,
+                                        BufXSize => undef,
+                                        BufYSize => undef,
+                                        BufType => $type,
+                                        BufPixelSpace => 0,
+                                        BufLineSpace => 0,
+                                        ResampleAlg => 'NearestNeighbour',
+                                        Progress => undef,
+                                        ProgressData => undef
         );
-    my %p;
-    my $t;
-    if (defined $_[0]) {
-        $t = uc($_[0]); 
-        $t =~ s/_//g;
-    }
-    if (@_ == 0) {
-    } elsif (ref($_[0]) eq 'HASH') {
-        %p = %{$_[0]};
-    } elsif (@_ % 2 == 0 and (defined $t and exists $d{$t})) {
-        %p = @_;
-    } else {
-        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{buf_pixel_space},$p{buf_line_space},$p{resample_alg},$p{progress},$p{progress_data}) = @_;
-    }
-    for my $k (keys %p) {
-        my $u = uc($k);
-        $u =~ s/_//g;
-        carp "Unknown named parameter '$k'." unless exists $d{$u};
-        $p{$u} = $p{$k};
-    }
-    for my $k (keys %d) {
-        $p{$k} //= $d{$k};
-    }
-    Geo::GDAL::error(1, $p{RESAMPLEALG}, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT) 
-        unless exists $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
-    $p{RESAMPLEALG} = $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
-    unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
-        Geo::GDAL::error(1, $p{BUFTYPE}, \%Geo::GDAL::TYPE_STRING2INT)
-            unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
-        $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
-    }
-    $self->_ReadRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{RESAMPLEALG},$p{PROGRESS},$p{PROGRESSDATA});
+    $p->{resamplealg} = Geo::GDAL::string2int($p->{resamplealg}, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT);
+    $p->{buftype} = Geo::GDAL::string2int($p->{buftype}, \%Geo::GDAL::TYPE_STRING2INT, \%Geo::GDAL::TYPE_INT2STRING);
+    $self->_ReadRaster($p->{xoff},$p->{yoff},$p->{xsize},$p->{ysize},$p->{bufxsize},$p->{bufysize},$p->{buftype},$p->{bufpixelspace},$p->{buflinespace},$p->{resamplealg},$p->{progress},$p->{progressdata});
 }
 
 sub WriteRaster {
     my $self = shift;
     my ($width, $height) = $self->Size;
     my ($type) = $self->DataType;
-    my %d = (
-        XOFF => 0,
-        YOFF => 0,
-        XSIZE => $width,
-        YSIZE => $height,
-        BUF => undef,
-        BUFXSIZE => undef,
-        BUFYSIZE => undef,
-        BUFTYPE => $type,
-        BUFPIXELSPACE => 0,
-        BUFLINESPACE => 0
+    my $p = Geo::GDAL::named_parameters(\@_,
+                                        XOff => 0,
+                                        YOff => 0,
+                                        XSize => $width,
+                                        YSize => $height,
+                                        Buf => undef,
+                                        BufXSize => undef,
+                                        BufYSize => undef,
+                                        BufType => $type,
+                                        BufPixelSpace => 0,
+                                        BufLineSpace => 0
         );
-    my %p;
-    my $t;
-    if (defined $_[0]) {
-        $t = uc($_[0]); 
-        $t =~ s/_//g;
-    }
-    if (@_ == 0) {
-    } elsif (ref($_[0]) eq 'HASH') {
-        %p = %{$_[0]};
-    } elsif (@_ % 2 == 0 and (defined $t and exists $d{$t})) {
-        %p = @_;
-    } else {
-        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{buf_pixel_space},$p{buf_line_space}) = @_;
-    }
-    for my $k (keys %p) {
-        my $u = uc($k);
-        $u =~ s/_//g;
-        carp "Unknown parameter '$k'." unless exists $d{$u};
-        $p{$u} = $p{$k};
-    }
-    confess "Usage: \$band->WriteRaster( Buf => \$data, ... )" unless defined $p{BUF};
-    for my $k (keys %d) {
-        $p{$k} //= $d{$k};
-    }
-    unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
-        Geo::GDAL::error(1, $p{BUFTYPE}, \%Geo::GDAL::TYPE_STRING2INT) 
-            unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
-        $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
-    }
-    $self->_WriteRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUF},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BUFPIXELSPACE},$p{BUFLINESPACE});
+    confess "Usage: \$band->WriteRaster( Buf => \$data, ... )" unless defined $p->{buf};
+    $p->{buftype} = Geo::GDAL::string2int($p->{buftype}, \%Geo::GDAL::TYPE_STRING2INT, \%Geo::GDAL::TYPE_INT2STRING);
+    $self->_WriteRaster($p->{xoff},$p->{yoff},$p->{xsize},$p->{ysize},$p->{buf},$p->{bufxsize},$p->{bufysize},$p->{buftype},$p->{bufpixelspace},$p->{buflinespace});
 }
 
 sub GetMaskFlags {
@@ -1653,6 +1501,7 @@ package Geo::GDAL::ColorTable;
 use strict;
 use warnings;
 use Carp;
+
 use vars qw/%PALETTE_INTERPRETATION_STRING2INT %PALETTE_INTERPRETATION_INT2STRING/;
 for (keys %Geo::GDAL::Const::) {
     if (/^GPI_(\w+)/) {
@@ -1669,8 +1518,7 @@ use Carp;
 sub new {
     my($pkg, $pi) = @_;
     $pi //= 'RGB';
-    Geo::GDAL::error(1, $pi, \%PALETTE_INTERPRETATION_STRING2INT) unless exists $PALETTE_INTERPRETATION_STRING2INT{$pi};
-    $pi = $PALETTE_INTERPRETATION_STRING2INT{$pi};
+    $pi = Geo::GDAL::string2int($pi, \%PALETTE_INTERPRETATION_STRING2INT);
     my $self = Geo::GDALc::new_ColorTable($pi);
     bless $self, $pkg if defined($self);
 }
@@ -1729,6 +1577,7 @@ package Geo::GDAL::RasterAttributeTable;
 use strict;
 use warnings;
 use Carp;
+
 use vars qw/ %BANDS
     @FIELD_TYPES @FIELD_USAGES
     %FIELD_TYPE_STRING2INT %FIELD_TYPE_INT2STRING
@@ -1798,13 +1647,11 @@ sub Columns {
 
 sub CreateColumn {
     my($self, $name, $type, $usage) = @_;
-    Geo::GDAL::error(1, $type, \%FIELD_TYPE_STRING2INT) unless exists $FIELD_TYPE_STRING2INT{$type};
-    Geo::GDAL::error(1, $usage, \%FIELD_USAGE_STRING2INT) unless exists $FIELD_USAGE_STRING2INT{$usage};
     for my $color (qw/Red Green Blue Alpha/) {
         carp "RAT column type will be 'Integer' for usage '$color'." if $usage eq $color and $type ne 'Integer';
     }
-    $type = $FIELD_TYPE_STRING2INT{$type};
-    $usage = $FIELD_USAGE_STRING2INT{$usage};
+    $type = Geo::GDAL::string2int($type, \%FIELD_TYPE_STRING2INT);
+    $usage = Geo::GDAL::string2int($usage, \%FIELD_USAGE_STRING2INT);
     _CreateColumn($self, $name, $type, $usage);
 }
 

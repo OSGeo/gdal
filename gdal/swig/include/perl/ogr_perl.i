@@ -625,8 +625,7 @@ sub GeomType {
     my ($self, $type) = @_;
     Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{$self} or $Geo::OGR::Layer::DEFNS{$self};
     if (defined $type) {
-        Geo::GDAL::error(1, $type, \%Geo::OGR::Geometry::TYPE_STRING2INT) unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
-        $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        $type = Geo::GDAL::string2int($type, \%Geo::OGR::Geometry::TYPE_STRING2INT);
         SetGeomType($self, $type);
     }
     return $Geo::OGR::Geometry::TYPE_INT2STRING{GetGeomType($self)} if defined wantarray;
@@ -1098,9 +1097,7 @@ sub new {
             }
         }
     }
-    Geo::GDAL::error(1, $params->{Type}, \%Geo::OGR::FieldDefn::TYPE_STRING2INT) 
-        unless exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params->{Type}};
-    $params->{Type} = $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params->{Type}};
+    $params->{Type} = Geo::GDAL::string2int($params->{Type}, \%Geo::OGR::FieldDefn::TYPE_STRING2INT);
     my $self = Geo::OGRc::new_FieldDefn($params->{Name}, $params->{Type});
     bless $self, $pkg;
     delete $params->{Name};
@@ -1232,9 +1229,7 @@ sub new {
         }
         $params->{Type} //= $tmp->{GeometryType};
     }
-    Geo::GDAL::error(1, $params->{Type}, \%Geo::OGR::Geometry::TYPE_STRING2INT) 
-        unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params->{Type}};
-    $params->{Type} = $Geo::OGR::Geometry::TYPE_STRING2INT{$params->{Type}};
+    $params->{Type} = Geo::GDAL::string2int($params->{Type}, \%Geo::OGR::Geometry::TYPE_STRING2INT);
     my $self = Geo::OGRc::new_GeomFieldDefn($params->{Name}, $params->{Type});
     bless $self, $pkg;
     delete $params->{Name};
@@ -1274,8 +1269,7 @@ sub Name {
 sub Type {
     my($self, $type) = @_;
     if (defined $type) {
-        Geo::GDAL::error(1, $type, \%Geo::OGR::Geometry::TYPE_STRING2INT) unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
-        $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        $type = Geo::GDAL::string2int($type, \%Geo::OGR::Geometry::TYPE_STRING2INT);
         SetType($self, $type);
     }
     $Geo::OGR::Geometry::TYPE_INT2STRING{GetType($self)} if defined wantarray;
@@ -1393,8 +1387,7 @@ sub new {
     } elsif (defined $json) {
         $self = Geo::OGRc::CreateGeometryFromJson($json);
     } elsif (defined $type) {
-        Geo::GDAL::error(1, $type, \%Geo::OGR::Geometry::TYPE_STRING2INT) unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
-        $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        $type = Geo::GDAL::string2int($type, \%Geo::OGR::Geometry::TYPE_STRING2INT);
         $self = Geo::OGRc::new_Geometry($type); # flattens the type
         SetCoordinateDimension($self, 3) if Geo::OGR::GT_HasZ($type);
     } elsif (defined $arc) {
@@ -1666,18 +1659,14 @@ sub _GetPoints {
 
 sub ExportToWkb {
     my($self, $bo) = @_;
-    if (defined $bo) {
-        Geo::GDAL::error(1, $bo, \%BYTE_ORDER_STRING2INT) unless exists $BYTE_ORDER_STRING2INT{$bo};
-        $bo = $BYTE_ORDER_STRING2INT{$bo};
-    }
+    $bo = Geo::GDAL::string2int($bo, \%BYTE_ORDER_STRING2INT);
     return _ExportToWkb($self, $bo);
 }
 
 sub ForceTo {
     my $self = shift;
     my $type = shift;
-    Geo::GDAL::error(1, $type, \%TYPE_STRING2INT) unless exists $TYPE_STRING2INT{$type};
-    $type = $TYPE_STRING2INT{$type};
+    $type = Geo::GDAL::string2int($type, \%TYPE_STRING2INT);
     eval {
         $self = Geo::OGR::ForceTo($self, $type, @_);
     };
@@ -1756,11 +1745,7 @@ use Carp;
 sub GeometryType {
     my($type) = @_;
     if (defined $type) {
-        return $Geo::OGR::Geometry::TYPE_STRING2INT{$type} if
-            exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
-        return $Geo::OGR::Geometry::TYPE_INT2STRING{$type} if
-            exists $Geo::OGR::Geometry::TYPE_INT2STRING{$type};
-        Geo::GDAL::error(1, $type, \%Geo::OGR::Geometry::TYPE_STRING2INT);
+        return Geo::GDAL::string2int($type, \%Geo::OGR::Geometry::TYPE_STRING2INT, \%Geo::OGR::Geometry::TYPE_INT2STRING);
     } else {
         return @Geo::OGR::Geometry::GEOMETRY_TYPES;
     }
