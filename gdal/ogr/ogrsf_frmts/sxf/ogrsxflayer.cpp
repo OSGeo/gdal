@@ -30,7 +30,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#define  _USE_MATH_DEFINES
 
 #include "ogr_sxf.h"
 #include "cpl_conv.h"

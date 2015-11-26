@@ -19,7 +19,7 @@ OBJ	= \
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
-ALL_C_FLAGS	=	$(CPPFLAGS) $(CFLAGS) 
+ALL_C_FLAGS	=	$(CPPFLAGS) $(CFLAGS) $(NO_RESERVED_ID_MACRO_FLAG) 
 
 ifeq ($(TIFF_SETTING),internal)
 ALL_C_FLAGS	:=	-I../libtiff $(ALL_C_FLAGS)

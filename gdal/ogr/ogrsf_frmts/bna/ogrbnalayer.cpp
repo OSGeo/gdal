@@ -33,9 +33,6 @@
 #include "cpl_csv.h"
 #include "ogr_p.h"
 
-#define _USE_MATH_DEFINES  // For MSVC to get M_PI.
-#include <cmath>
-
 /************************************************************************/
 /*                            OGRBNALayer()                             */
 /*                                                                      */

@@ -32,7 +32,16 @@
 #define OGR_SOSI_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 #include "fyba.h"
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
+
 #include <map>
 
 typedef std::map<CPLString, CPLString> S2S;

@@ -33,6 +33,18 @@
 #include "cpl_list.h"
 #include "gdal_pam.h"
 
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
+#include "hdf.h"
+#include "mfhdf.h"
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
+
+#include "hdf4compat.h"
+
 typedef enum			// Types of dataset:
 {
     HDF4_SDS,			// Scientific Dataset

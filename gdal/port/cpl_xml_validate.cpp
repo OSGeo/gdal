@@ -31,6 +31,11 @@
 
 CPL_CVSID("$Id$");
 
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifdef HAVE_LIBXML2
 #include <libxml/xmlversion.h>
 #if defined(LIBXML_VERSION) && LIBXML_VERSION >= 20622
@@ -57,6 +62,10 @@ CPL_CVSID("$Id$");
 #include <libxml/xmlschemas.h>
 #include <libxml/parserInternals.h>
 #include <libxml/catalog.h>
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
 
 #include "cpl_string.h"
 #include "cpl_hash_set.h"

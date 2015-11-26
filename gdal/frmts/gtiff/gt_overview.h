@@ -33,7 +33,15 @@
 #define GT_OVERVIEW_H_INCLUDED
 
 #include "gdal_priv.h"
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 #include "tiffio.h"
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
 
 toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize,
                            int nBitsPerPixel, int nPlanarConfig, int nSamples, 

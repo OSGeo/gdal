@@ -39,7 +39,14 @@
 #include "cpl_conv.h"
 
 #ifdef HAVE_SPATIALITE
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 #include "spatialite.h"
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
 #endif
 
 CPL_CVSID("$Id$");

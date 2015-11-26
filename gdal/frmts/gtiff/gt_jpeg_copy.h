@@ -47,7 +47,15 @@ CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 
 #include "gdal_priv.h"
 #include "cpl_error.h"
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 #include "tiffio.h"
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
 
 int GTIFF_CanCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions);
 
