@@ -92,8 +92,19 @@
 #  undef WIN32
 #endif
 
+#if !defined(HAVE_GCC_DIAGNOSTIC_PUSH) && (((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) || (defined(__clang__) && __clang_major__ >= 3)) && !defined(_MSC_VER))
+#define HAVE_GCC_DIAGNOSTIC_PUSH
+#endif
+
 #if defined(VSI_NEED_LARGEFILE64_SOURCE) && !defined(_LARGEFILE64_SOURCE)
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 #  define _LARGEFILE64_SOURCE 1
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
 #endif
 
 /* ==================================================================== */
@@ -792,10 +803,6 @@ inline static bool CPL_TO_BOOL(int x) { return x != FALSE; }
 } /* extern "C++" */
 
 #endif  /* __cplusplus */
-
-#if (((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) || (defined(__clang__) && __clang_major__ >= 3)) && !defined(_MSC_VER))
-#define HAVE_GCC_DIAGNOSTIC_PUSH
-#endif
 
 #if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER)) 
 #define HAVE_GCC_SYSTEM_HEADER

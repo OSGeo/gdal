@@ -30,7 +30,17 @@
  ****************************************************************************/
 
 #include <math.h>
+
+#include "cpl_conv.h"
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 #include "ecs.h"
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
+
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"

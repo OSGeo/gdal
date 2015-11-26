@@ -1,4 +1,14 @@
 /* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */
+
+#if !defined(HAVE_GCC_DIAGNOSTIC_PUSH) && (((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) || (defined(__clang__) && __clang_major__ >= 3)) && !defined(_MSC_VER))
+#define HAVE_GCC_DIAGNOSTIC_PUSH
+#endif
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #define add_ms gdal_add_ms
 #define buildMap gdal_buildMap
 #define BuildMapBitdepth16To8 gdal_BuildMapBitdepth16To8
@@ -745,4 +755,8 @@
 #endif
 #ifdef LZMA_SUPPORT
 #define TIFFInitLZMA gdal_TIFFInitLZMA
+#endif
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
 #endif

@@ -28,11 +28,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#if !defined(HAVE_GCC_DIAGNOSTIC_PUSH) && (((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) || (defined(__clang__) && __clang_major__ >= 3)) && !defined(_MSC_VER))
+#define HAVE_GCC_DIAGNOSTIC_PUSH
+#endif
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 // For uselocale
 #define _XOPEN_SOURCE 700
 
 // For atoll (at least for NetBSD)
 #define _ISOC99_SOURCE
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
 
 #ifdef MSVC_USE_VLD
 #include <vld.h>

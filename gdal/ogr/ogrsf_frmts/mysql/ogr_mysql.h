@@ -32,6 +32,14 @@
 #ifndef OGR_MYSQL_H_INCLUDED
 #define OGR_MYSQL_H_INCLUDED
 
+#if !defined(HAVE_GCC_DIAGNOSTIC_PUSH) && (((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) || (defined(__clang__) && __clang_major__ >= 3)) && !defined(_MSC_VER))
+#define HAVE_GCC_DIAGNOSTIC_PUSH
+#endif
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 
 #ifdef _MSC_VER
 #pragma warning( push )
@@ -45,6 +53,10 @@
 
 #ifdef _MSC_VER
 #pragma warning( pop ) 
+#endif
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
 #endif
 
 /* my_global.h from mysql 5.1 declares the min and max macros. */

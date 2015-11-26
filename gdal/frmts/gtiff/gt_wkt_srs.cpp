@@ -34,6 +34,11 @@
 #include "cpl_csv.h"
 #include "gdal_csv.h"
 
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #include "geovalues.h"
 #include "ogr_spatialref.h"
 #include "gdal.h"
@@ -45,6 +50,10 @@
 #include "gt_citation.h"
 #include "gt_wkt_srs_priv.h"
 #include "gtiff.h"
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
 
 CPL_CVSID("$Id$")
 

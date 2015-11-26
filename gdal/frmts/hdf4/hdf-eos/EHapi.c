@@ -18,7 +18,16 @@ this permission notice appear in supporting documentation.
 
 #include "cpl_port.h"
 #include <errno.h>
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 #include "mfhdf.h"
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
+
 #include "HdfEosDef.h"
 
 /* Set maximum number of HDF-EOS files to HDF limit (MAX_FILE) */

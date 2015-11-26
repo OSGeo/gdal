@@ -75,7 +75,16 @@ June 05, 2003 Abe Taaheri / Bruce Beaumont
 ******************************************************************************/
 
 #include "cpl_port.h" /* for M_PI */
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 #include "mfhdf.h"
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
+
 #include "hcomp.h"
 #include "HdfEosDef.h"
 #include <math.h>

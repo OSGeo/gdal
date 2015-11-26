@@ -31,8 +31,19 @@
 #ifndef MRSIDSTREAM_H_INCLUDED
 #define MRSIDSTREAM_H_INCLUDED
 
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #include "lt_base.h"
 #include "lt_ioStreamInf.h"
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
+
 #include "cpl_vsi_virtual.h"
 
 LT_USE_NAMESPACE(LizardTech)

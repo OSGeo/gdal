@@ -28,6 +28,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#if !defined(HAVE_GCC_DIAGNOSTIC_PUSH) && (((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) || (defined(__clang__) && __clang_major__ >= 3)) && !defined(_MSC_VER))
+#define HAVE_GCC_DIAGNOSTIC_PUSH
+#endif
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -35,6 +44,10 @@
 // to have off_t on 64bit possibly
 #ifndef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64
+#endif
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
 #endif
 
 #include "cpl_virtualmem.h"

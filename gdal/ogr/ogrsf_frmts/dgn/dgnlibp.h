@@ -33,9 +33,6 @@
 
 #include "dgnlib.h"
 
-#define _USE_MATH_DEFINES  // For MSVC to get M_PI.
-#include <cmath>
-
 typedef struct {
     FILE        *fp;
     int         next_element_id;
