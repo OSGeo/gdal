@@ -615,34 +615,51 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
         wchar_t *pwszFilename = 
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
-        nResult = _wstat64( pwszFilename, pStatBuf );
-        if( nResult < 0 && !VSIWin32IsLongFilename(pwszFilename) )
+        bool bTryOtherStatImpl = false;
+        if( VSIWin32IsLongFilename(pwszFilename) )
         {
-            DWORD nLastError = GetLastError();
-            if( nLastError == ERROR_PATH_NOT_FOUND ||
-                nLastError == ERROR_FILENAME_EXCED_RANGE )
+            bTryOtherStatImpl = true;
+            nResult = -1;
+        }
+        else
+        {
+            nResult = _wstat64( pwszFilename, pStatBuf );
+            if( nResult < 0 )
             {
-                VSIWin32TryLongFilename(pwszFilename);
-                if( VSIWin32StrlenW(pwszFilename) >= 255 )
+                DWORD nLastError = GetLastError();
+                if( nLastError == ERROR_PATH_NOT_FOUND ||
+                    nLastError == ERROR_FILENAME_EXCED_RANGE )
                 {
-                    // _wstat64 doesn't like \\?\ paths, so do our poor-man
-                    // stat like.
-                    //nResult = _wstat64( pwszFilename, pStatBuf );
-                    
-                    VSIVirtualHandle* poHandle = Open( pszFilename, "rb");
-                    if( poHandle != NULL )
+                    VSIWin32TryLongFilename(pwszFilename);
+                    if( VSIWin32StrlenW(pwszFilename) >= 255 )
                     {
-                        nResult = 0;
-                        memset( pStatBuf, 0, sizeof(VSIStatBufL) );
-                        CPL_IGNORE_RET_VAL(poHandle->Seek(0, SEEK_END));
-                        pStatBuf->st_mode = S_IFREG;
-                        pStatBuf->st_size = poHandle->Tell();
-                        poHandle->Close();
-                        delete poHandle;
+                        bTryOtherStatImpl = true;
                     }
                 }
             }
         }
+        
+        if( bTryOtherStatImpl )
+        {
+            // _wstat64 doesn't like \\?\ paths, so do our poor-man
+            // stat like.
+            //nResult = _wstat64( pwszFilename, pStatBuf );
+            
+            VSIVirtualHandle* poHandle = Open( pszFilename, "rb");
+            if( poHandle != NULL )
+            {
+                nResult = 0;
+                memset( pStatBuf, 0, sizeof(VSIStatBufL) );
+                CPL_IGNORE_RET_VAL(poHandle->Seek(0, SEEK_END));
+                pStatBuf->st_mode = S_IFREG;
+                pStatBuf->st_size = poHandle->Tell();
+                poHandle->Close();
+                delete poHandle;
+            }
+            else
+                nResult = -1;
+        }
+
         CPLFree( pwszFilename );
 
         return nResult;
