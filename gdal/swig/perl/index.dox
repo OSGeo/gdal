@@ -199,6 +199,16 @@ Produces:
 Warning: Driver GTiff does not support my_unknown_option creation option at site/lib/Geo/GDAL.pm line 771.
 \endcode
 
+\section index_named_params Named parameters
+
+Quite many methods and subroutines in Geo::GDAL accept named
+parameters. In all cases the named parameters are handled with the
+same filter, which accepts either a list of parameters (the order is
+the order in which the named parameters are described in this
+documentation), single hash reference, or a list of key value pairs.
+The keys are given in the documentation but the filter ignores case
+and underscores. Thus, although the name of the parameter is
+ProgressData, the method will happily recognize also progress_data.
 
 \section index_progress Progress callback
 
