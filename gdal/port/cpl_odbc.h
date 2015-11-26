@@ -144,11 +144,11 @@ class CPLODBCStatement;
 
 #if !defined(MISSING_SQLULEN)
 /* ODBC types to support 64 bit compilation */
-#  define _SQLULEN SQLULEN
-#  define _SQLLEN  SQLLEN
+#  define CPL_SQLULEN SQLULEN
+#  define CPL_SQLLEN  SQLLEN
 #else
-#  define _SQLULEN SQLUINTEGER
-#  define _SQLLEN  SQLINTEGER
+#  define CPL_SQLULEN SQLUINTEGER
+#  define CPL_SQLLEN  SQLINTEGER
 #endif	/* ifdef SQLULEN */
 
 
@@ -209,13 +209,13 @@ class CPL_DLL CPLODBCStatement {
     char         **m_papszColNames;
     SQLSMALLINT   *m_panColType;
     char         **m_papszColTypeNames;
-    _SQLULEN      *m_panColSize;
+    CPL_SQLULEN      *m_panColSize;
     SQLSMALLINT   *m_panColPrecision;
     SQLSMALLINT   *m_panColNullable;
     char         **m_papszColColumnDef;
 
     char         **m_papszColValues;
-    _SQLLEN       *m_panColValueLengths;
+    CPL_SQLLEN       *m_panColValueLengths;
     
     int            Failed( int );
 

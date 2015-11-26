@@ -560,11 +560,11 @@ int CPLODBCStatement::CollectResultsInfo()
 /* -------------------------------------------------------------------- */
     m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_panColValueLengths = (_SQLLEN *) CPLCalloc(sizeof(_SQLLEN),(m_nColCount+1));
+    m_panColValueLengths = (CPL_SQLLEN *) CPLCalloc(sizeof(CPL_SQLLEN),(m_nColCount+1));
 
     m_panColType = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_papszColTypeNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
+    m_panColSize = (CPL_SQLULEN *) CPLCalloc(sizeof(CPL_SQLULEN),m_nColCount);
     m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_papszColColumnDef = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
@@ -870,7 +870,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
         char szWrkData[513];
-        _SQLLEN cbDataLen;
+        CPL_SQLLEN cbDataLen;
         SQLSMALLINT nFetchType = GetTypeMapping( m_panColType[iCol] );
 
         // Handle values other than WCHAR and BINARY as CHAR.
@@ -909,9 +909,9 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         // assume big result: should check for state=SQLSATE 01004.
         else if( nRetCode == SQL_SUCCESS_WITH_INFO  ) 
         {
-            if( cbDataLen >= (_SQLLEN)(sizeof(szWrkData)-1) )
+            if( cbDataLen >= (CPL_SQLLEN)(sizeof(szWrkData)-1) )
             {
-                cbDataLen = (_SQLLEN)(sizeof(szWrkData)-1);
+                cbDataLen = (CPL_SQLLEN)(sizeof(szWrkData)-1);
                 if (nFetchType == SQL_C_CHAR) 
                     while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)) 
                         --cbDataLen; // trimming the extra terminators: bug 990
@@ -930,7 +930,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
             while( true )
             {
-                _SQLLEN nChunkLen;
+                CPL_SQLLEN nChunkLen;
 
                 nRetCode = SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, 
                                        nFetchType,
@@ -1444,7 +1444,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 
     m_panColType = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_papszColTypeNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
+    m_panColSize = (CPL_SQLULEN *) CPLCalloc(sizeof(CPL_SQLULEN),m_nColCount);
     m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_papszColColumnDef = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
@@ -1457,7 +1457,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
         char szWrkData[8193];
-        _SQLLEN cbDataLen;
+        CPL_SQLLEN cbDataLen;
 
         if( Failed( SQLFetch( m_hStmt ) ) )
         {
