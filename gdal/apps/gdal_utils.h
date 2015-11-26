@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GDAL_UTILS_H_INCLUDED
-#define _GDAL_UTILS_H_INCLUDED
+#ifndef GDAL_UTILS_H_INCLUDED
+#define GDAL_UTILS_H_INCLUDED
 
 /**
  * \file gdal_utils.h
@@ -193,4 +193,4 @@ GDALDatasetH CPL_DLL GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 
 CPL_C_END
 
-#endif /* _GDAL_UTILS_H_INCLUDED */
+#endif /* GDAL_UTILS_H_INCLUDED */
