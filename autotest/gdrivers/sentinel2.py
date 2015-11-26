@@ -518,13 +518,40 @@ def sentinel2_5():
 
     return 'success'
 
+###############################################################################
+# Windows specific test to test support for long filenames
+
+def sentinel2_6():
+
+    if sys.platform != 'win32':
+        return 'skip'
+
+    filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C_PDMC_YYYMMDDTHHMMSS_RXYZ_VYYYYMMDDTYYMMSS_YYYYMMDDTHHMMSS.SAFE/S2A_OPER_MTD_SAFL1C_PDMC_YYYMMDDTHHMMSS_RXYZ_VYYYYMMDDTYYMMSS_YYYYMMDDTHHMMSS.xml'
+    filename_xml = filename_xml.replace('/', '\\')
+    filename_xml = '\\\\?\\' + os.getcwd() + '\\' + filename_xml
+    gdal.ErrorReset()
+    ds = gdal.Open(filename_xml)
+    if ds is None or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    subds_name = ds.GetMetadata('SUBDATASET_1_NAME', 'SUBDATASETS')
+    gdal.ErrorReset()
+    ds = gdal.Open(subds_name)
+    if ds is None or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 
 gdaltest_list = [
     sentinel2_1,
     sentinel2_2,
     sentinel2_3,
     sentinel2_4,
-    sentinel2_5
+    sentinel2_5,
+    sentinel2_6
     ]
 
 

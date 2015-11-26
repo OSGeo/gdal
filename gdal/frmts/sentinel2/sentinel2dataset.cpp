@@ -538,6 +538,20 @@ static bool SENTINEL2_L1C_GetGranuleInfo(const CPLString& osGranuleMTDPath,
 }
 
 /************************************************************************/
+/*                      SENTINEL2GetPathSeparator()                     */
+/************************************************************************/
+
+// For the sake of simplifying our unit tests, we limit the use of \\ to when
+// it is strictly necessary. Otherwise we could use CPLFormFilename()...
+static char SENTINEL2GetPathSeparator(const char* pszBasename)
+{
+    if( STARTS_WITH_CI(pszBasename, "\\\\?\\") )
+        return '\\';
+    else
+        return '/';
+}
+
+/************************************************************************/
 /*                      SENTINEL2_L1C_GetGranuleList()                  */
 /************************************************************************/
 
@@ -619,8 +633,14 @@ static bool SENTINEL2_L1C_GetGranuleList(CPLXMLNode* psRoot,
             }
             osGranuleMTD += ".xml";
 
-            CPLString osGranuleMTDPath = osDirname + "/GRANULE/" +
-                                CPLString(pszGranuleId) + "/" + osGranuleMTD;
+            const char chSeparator = SENTINEL2GetPathSeparator(osDirname);
+            CPLString osGranuleMTDPath = osDirname;
+            osGranuleMTDPath += chSeparator;
+            osGranuleMTDPath += "GRANULE";
+            osGranuleMTDPath += chSeparator;
+            osGranuleMTDPath += pszGranuleId;
+            osGranuleMTDPath += chSeparator;
+            osGranuleMTDPath += osGranuleMTD;
             osList.push_back(osGranuleMTDPath);
         }
     }
@@ -1343,9 +1363,12 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
             }
 
             CPLString osTile(oGranuleInfo.osPath);
+            const char chSeparator = SENTINEL2GetPathSeparator(osTile);
+            osTile += chSeparator;
             if( bIsPreview )
             {
-                osTile += "/QI_DATA/";
+                osTile += "QI_DATA";
+                osTile += chSeparator;
                 if( osJPEG2000Name.size() > 12 &&
                     osJPEG2000Name[8] == '_' && osJPEG2000Name[12] == '_' )
                 {
@@ -1362,7 +1385,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
             }
             else
             {
-                osTile += "/IMG_DATA/";
+                osTile += "IMG_DATA";
+                osTile += chSeparator;
                 osTile += osJPEG2000Name;
                 osTile += "_B";
                 if( osBandName.size() == 3 && osBandName[0] == '0' )
