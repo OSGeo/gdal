@@ -173,7 +173,7 @@ class OGRMongoDBDataSource: public GDALDataset
             CPLString     m_osDatabase;
             std::vector<OGRMongoDBLayer*> m_apoLayers;
             int           m_nBatchSize;
-            int           m_bFlattenNestedAttributes;
+            bool          m_bFlattenNestedAttributes;
             int           m_nFeatureCountToEstablishFeatureDefn;
             int           m_bJSonField;
             CPLString     m_osFID;
@@ -206,7 +206,7 @@ public:
             const CPLString& GetDatabase() const { return m_osDatabase; }
             DBClientBase    *GetConn() const { return m_poConn; }
             int              GetBatchSize() const { return m_nBatchSize; }
-            int              GetFlattenNestedAttributes() const { return m_bFlattenNestedAttributes; }
+            bool             GetFlattenNestedAttributes() const { return m_bFlattenNestedAttributes; }
             int              GetFeatureCountToEstablishFeatureDefn() const { return m_nFeatureCountToEstablishFeatureDefn; }
             int              JSonField() const { return m_bJSonField; }
             int              UseOGRMetadata() const { return m_bUseOGRMetadata; }
@@ -473,33 +473,35 @@ void OGRMongoDBLayer::AddOrUpdateField(const char* pszAttrName,
     {
         BSONObj obj(poElt->Obj());
         BSONElement eltType = obj.getField("type");
-        OGRwkbGeometryType eGeomType;
-        if( !eltType.eoo() && eltType.type() == String &&
-            (eGeomType = OGRFromOGCGeomType(eltType.String().c_str())) != wkbUnknown )
+        if( !eltType.eoo() && eltType.type() == String )
         {
-            int nIndex = m_poFeatureDefn->GetGeomFieldIndex(pszAttrName);
-            if( nIndex < 0 )
+            OGRwkbGeometryType eGeomType = OGRFromOGCGeomType(eltType.String().c_str());
+            if( eGeomType != wkbUnknown )
             {
-                OGRGeomFieldDefn fldDefn( pszAttrName, eGeomType );
-                OGRSpatialReference* poSRS = new OGRSpatialReference();
-                poSRS->SetFromUserInput(SRS_WKT_WGS84);
-                fldDefn.SetSpatialRef(poSRS);
-                poSRS->Release();
-                m_poFeatureDefn->AddGeomFieldDefn( &fldDefn );
+                int nIndex = m_poFeatureDefn->GetGeomFieldIndex(pszAttrName);
+                if( nIndex < 0 )
+                {
+                    OGRGeomFieldDefn fldDefn( pszAttrName, eGeomType );
+                    OGRSpatialReference* poSRS = new OGRSpatialReference();
+                    poSRS->SetFromUserInput(SRS_WKT_WGS84);
+                    fldDefn.SetSpatialRef(poSRS);
+                    poSRS->Release();
+                    m_poFeatureDefn->AddGeomFieldDefn( &fldDefn );
 
-                aosPaths.push_back(poElt->fieldName());
-                m_aaosGeomFieldPaths.push_back(aosPaths);
-                if( oMapIndices.find(pszAttrName) == oMapIndices.end() )
-                    m_aosGeomIndexes.push_back(oMapIndices[pszAttrName]);
+                    aosPaths.push_back(poElt->fieldName());
+                    m_aaosGeomFieldPaths.push_back(aosPaths);
+                    if( oMapIndices.find(pszAttrName) == oMapIndices.end() )
+                        m_aosGeomIndexes.push_back(oMapIndices[pszAttrName]);
+                    else
+                        m_aosGeomIndexes.push_back("none");
+                    m_apoCT.push_back(NULL);
+                }
                 else
-                    m_aosGeomIndexes.push_back("none");
-                m_apoCT.push_back(NULL);
-            }
-            else
-            {
-                OGRGeomFieldDefn* poFDefn = m_poFeatureDefn->GetGeomFieldDefn(nIndex);
-                if( poFDefn->GetType() != eGeomType )
-                    poFDefn->SetType(wkbUnknown);
+                {
+                    OGRGeomFieldDefn* poFDefn = m_poFeatureDefn->GetGeomFieldDefn(nIndex);
+                    if( poFDefn->GetType() != eGeomType )
+                        poFDefn->SetType(wkbUnknown);
+                }
             }
         }
         else if( m_poDS->GetFlattenNestedAttributes() )
@@ -1443,7 +1445,7 @@ void OGRMongoDBLayer::SerializeField(BSONObjBuilder& b,
     if( eType == OFTInteger )
     {
         if( m_poFeatureDefn->GetFieldDefn(i)->GetSubType() == OFSTBoolean )
-            b.append( pszJSonField, (bool)poFeature->GetFieldAsInteger(i) );
+            b.append( pszJSonField, CPL_TO_BOOL(poFeature->GetFieldAsInteger(i)) );
         else
             b.append( pszJSonField, poFeature->GetFieldAsInteger(i) );
     }
@@ -2352,8 +2354,8 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
     m_nFeatureCountToEstablishFeatureDefn = atoi(CSLFetchNameValueDef(
         papszOpenOptions, "FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN", "100"));
     m_bJSonField = CSLFetchBoolean(papszOpenOptions, "JSON_FIELD", FALSE);
-    m_bFlattenNestedAttributes = CSLFetchBoolean(
-            papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", TRUE);
+    m_bFlattenNestedAttributes = CPL_TO_BOOL(CSLFetchBoolean(
+            papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", TRUE));
     m_osFID = CSLFetchNameValueDef(papszOpenOptions, "FID", "ogc_fid");
     m_bUseOGRMetadata = CSLFetchBoolean(
             papszOpenOptions, "USE_OGR_METADATA", TRUE);

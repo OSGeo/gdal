@@ -35,11 +35,24 @@
 #pragma GCC system_header
 #endif
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4351 )
+#pragma warning( disable : 4512 )
+#pragma warning( disable : 4267 )
+#pragma warning( disable : 4005 )
+#pragma warning( disable : 4244 )
+#endif
+
 #ifdef WIN32
 #include <winsock2.h>
 #undef min
 #undef max
 #endif
 #include "mongo/client/dbclient.h" // for the driver
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 #endif
