@@ -544,6 +544,73 @@ def sentinel2_6():
 
     return 'success'
 
+###############################################################################
+# Test with a real JP2 tile
+
+def sentinel2_7():
+
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
+    <n1:General_Info>
+        <Product_Info>
+            <Query_Options>
+            <Band_List>
+                <BAND_NAME>B1</BAND_NAME>
+            </Band_List>
+            </Query_Options>
+            <Product_Organisation>
+                <Granule_List>
+                    <Granules datastripIdentifier="S2A_OPER_MSI_L1C_bla_N01.03" granuleIdentifier="S2A_OPER_MSI_L1C_bla_N01.03" imageFormat="JPEG2000">
+                        <IMAGE_ID>S2A_OPER_MSI_L1C_bla_T32TQR_B01</IMAGE_ID>
+                    </Granules>
+                </Granule_List>
+            </Product_Organisation>
+        </Product_Info>
+    </n1:General_Info>
+</n1:Level-1C_User_Product>""")
+
+    gdal.FileFromMemBuffer('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml',
+"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<n1:Level-1C_Tile_ID xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_TILE_L1C/02.09.07/scripts/../../../schemas/02.11.06/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd">
+<n1:General_Info>
+<TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L1C_bla_N01.03</TILE_ID>
+</n1:General_Info>
+<n1:Geometric_Info>
+<Tile_Geocoding metadataLevel="Brief">
+<HORIZONTAL_CS_NAME>WGS84 / UTM zone 53S</HORIZONTAL_CS_NAME>
+<HORIZONTAL_CS_CODE>EPSG:32753</HORIZONTAL_CS_CODE>
+<Size resolution="60">
+<NROWS>1830</NROWS>
+<NCOLS>1830</NCOLS>
+</Size>
+<Geoposition resolution="60">
+<ULX>499980</ULX>
+<ULY>7200040</ULY>
+<XDIM>60</XDIM>
+<YDIM>-60</YDIM>
+</Geoposition>
+</Tile_Geocoding>
+</n1:Geometric_Info>
+</n1:Level-1C_Tile_ID>
+""")
+
+    f = open('data/gtsmall_10_uint16.jp2', 'rb')
+    f2 = gdal.VSIFOpenL('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/IMG_DATA/S2A_OPER_MSI_L1C_bla_B01.jp2', 'wb')
+    data = f.read()
+    gdal.VSIFWriteL(data, 1, len(data), f2)
+    gdal.VSIFCloseL(f2)
+    f.close()
+
+    ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:60m:EPSG_32753')
+    nbits = ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
+    if nbits != '10':
+        gdaltest.post_reason('fail')
+        print(nbits)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/test.xml')
+
+    return 'success'
 
 gdaltest_list = [
     sentinel2_1,
@@ -551,7 +618,8 @@ gdaltest_list = [
     sentinel2_3,
     sentinel2_4,
     sentinel2_5,
-    sentinel2_6
+    sentinel2_6,
+    sentinel2_7
     ]
 
 

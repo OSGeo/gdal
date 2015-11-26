@@ -33,6 +33,7 @@
 #include "gdal_pam.h"
 #include "gdal_proxy.h"
 #include "ogr_spatialref.h"
+#include "gdaljp2metadata.h"
 #include "../vrt/vrtdataset.h"
 #include <set>
 #include <map>
@@ -1056,6 +1057,91 @@ static CPLString LaunderUnit(const char* pszUnit)
 }
 
 /************************************************************************/
+/*                       SENTINEL2GetTileBitDepth()                     */
+/************************************************************************/
+
+static int SENTINEL2GetTileBitDepth(const char* pszFilename)
+{
+    static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
+    if( fp == NULL )
+        return 0;
+    GByte abyHeader[8];
+    if( VSIFReadL(abyHeader, 8, 1, fp) != 1 )
+    {
+        VSIFCloseL(fp);
+        return 0;
+    }
+    if( memcmp(abyHeader + 4, jp2_box_jp, 4) == 0 )
+    {
+        /* Just parse the ihdr box instead of doing a full dataset opening */
+        int nBits = 0;
+        GDALJP2Box oBox( fp );
+        if( oBox.ReadFirst() )
+        {
+            while( strlen(oBox.GetType()) > 0 )
+            {
+                if( EQUAL(oBox.GetType(),"jp2h") )
+                {
+                    GDALJP2Box oChildBox( fp );
+                    if( !oChildBox.ReadFirstChild( &oBox ) )
+                        break;
+
+                    while( strlen(oChildBox.GetType()) > 0 )
+                    {
+                        if( EQUAL(oChildBox.GetType(),"ihdr") )
+                        {
+                            GByte* pabyData = oChildBox.ReadBoxData();
+                            GIntBig nLength = oChildBox.GetDataLength();
+                            if( pabyData != NULL && nLength >= 4 + 4 + 2 + 1 )
+                            {
+                                GByte byPBC = pabyData[4+4+2];
+                                if( byPBC != 255 )
+                                {
+                                    nBits = 1 + (byPBC & 0x7f);
+                                }
+                            }
+                            CPLFree(pabyData);
+                            break;
+                        }
+                        if( !oChildBox.ReadNextChild( &oBox ) )
+                            break;
+                    }
+                    break;
+                }
+
+                if (!oBox.ReadNext())
+                    break;
+            }
+        }
+        VSIFCloseL(fp);
+        return nBits;
+    }
+    else /* for unit tests, we use TIFF */
+    {
+        VSIFCloseL(fp);
+        GDALDataset* poDS = (GDALDataset*)GDALOpen(pszFilename, GA_ReadOnly);
+        int nBits = 0;
+        if( poDS != NULL )
+        {
+            if( poDS->GetRasterCount() != 0 )
+            {
+                const char* pszNBits = poDS->GetRasterBand(1)->GetMetadataItem(
+                                                        "NBITS", "IMAGE_STRUCTURE");
+                if( pszNBits == NULL )
+                {
+                    GDALDataType eDT = poDS->GetRasterBand(1)->GetRasterDataType();
+                    pszNBits = CPLSPrintf( "%d", GDALGetDataTypeSize(eDT) );
+                }
+                nBits = atoi(pszNBits);
+            }
+            GDALClose(poDS);
+        }
+        return nBits;
+    }
+}
+
+/************************************************************************/
 /*                         OpenL1CSubdataset()                          */
 /************************************************************************/
 
@@ -1275,8 +1361,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
 
     poDS->aosNonJP2Files = aosNonJP2Files;
 
-    const int nBits = (bIsPreview) ? 8 : atoi(CPLGetConfigOption("NBITS", "12"));
-    const int nValMax = (1 << nBits) - 1;
+    int nBits = (bIsPreview) ? 8 : 0 /* 0 = unknown yet*/;
+    int nValMax = (bIsPreview) ? 255 : 0 /* 0 = unknown yet*/;
     const bool bAlpha =
         CSLTestBoolean(SENTINEL2GetOption(poOpenInfo, "ALPHA", "FALSE")) != FALSE;
     const int nBands = (bIsPreview) ? 3 : ((bAlpha) ? 1 : 0) + static_cast<int>(aosBands.size());
@@ -1305,14 +1391,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
         }
 
         poDS->SetBand(nBand, poBand);
-
-        if( !bIsPreview )
-        {
-            if( nBand == nAlphaBand )
-                poBand->SetColorInterpretation(GCI_AlphaBand);
-            poBand->SetMetadataItem("NBITS",
-                                CPLSPrintf("%d", nBits), "IMAGE_STRUCTURE");
-        }
+        if( nBand == nAlphaBand )
+            poBand->SetColorInterpretation(GCI_AlphaBand);
 
         CPLString osBandName;
         if( nBand != nAlphaBand )
@@ -1395,12 +1475,34 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
             }
             osTile += ".jp2";
 
-            VSIStatBufL sStat;
-            if( VSIStatExL(osTile, &sStat, VSI_STAT_EXISTS_FLAG) != 0 )
+            bool bTileFound = false;
+            if( nValMax == 0 )
+            {
+                /* It is supposed to be 12 bits, but some products have 15 bits */
+                nBits = SENTINEL2GetTileBitDepth(osTile);
+                if( nBits )
+                {
+                    bTileFound = true;
+                    if( nBits <= 16 )
+                        nValMax = (1 << nBits) - 1;
+                    else
+                    {
+                        CPLDebug("SENTINEL2", "Unexpected bit depth %d", nBits);
+                        nValMax = 65535;
+                    }
+                }
+            }
+            else
+            {
+                VSIStatBufL sStat;
+                if( VSIStatExL(osTile, &sStat, VSI_STAT_EXISTS_FLAG) == 0 )
+                    bTileFound = true;
+            }
+            if( !bTileFound )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Tile %s not found on filesystem. Skipping it",
-                         CPLGetFilename(osTile));
+                        "Tile %s not found on filesystem. Skipping it",
+                        CPLGetFilename(osTile));
                 continue;
             }
 
@@ -1463,6 +1565,12 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
             }
 
             proxyDS->Dereference();
+        }
+
+        if( nBits != 8 && nBits != 16 )
+        {
+            poBand->SetMetadataItem("NBITS",
+                                CPLSPrintf("%d", nBits), "IMAGE_STRUCTURE");
         }
     }
 
