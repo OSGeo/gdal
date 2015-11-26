@@ -30,13 +30,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "hdf.h"
+#include "mfhdf.h"
+
+#include "HdfEosDef.h"
+
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 
 #include "hdf4dataset.h"
-
-#include "HdfEosDef.h"
 
 CPL_CVSID("$Id$");
 

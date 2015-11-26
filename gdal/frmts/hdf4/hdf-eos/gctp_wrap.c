@@ -31,14 +31,7 @@
 #include "ogr_srs_api.h"
 #include <stdlib.h>
 
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
 #include "mfhdf.h"
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
 
 #include <math.h>
 

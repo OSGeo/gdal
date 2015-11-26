@@ -30,17 +30,7 @@
 #ifndef OGR_MDB_H_INCLUDED
 #define OGR_MDB_H_INCLUDED
 
-#include "cpl_conv.h"
-
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
 #include <jni.h>
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
-
 #include <vector>
 
 #include "ogrsf_frmts.h"

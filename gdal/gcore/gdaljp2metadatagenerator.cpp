@@ -36,17 +36,10 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_LIBXML2
 
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
 
 /************************************************************************/
 /*                            GDALGMLJP2Expr                            */

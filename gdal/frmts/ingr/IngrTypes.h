@@ -38,14 +38,7 @@
 #include <cmath>
 
 CPL_C_START
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
 #include "tiffio.h"
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
 CPL_C_END
 
 //  ----------------------------------------------------------------------------

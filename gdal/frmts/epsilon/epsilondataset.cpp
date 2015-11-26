@@ -29,14 +29,7 @@
 
 #include "gdal_pam.h"
 
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
 #include "epsilon.h"
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
 
 CPL_CVSID("$Id$");
 

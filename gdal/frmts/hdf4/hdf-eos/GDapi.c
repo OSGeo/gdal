@@ -87,16 +87,7 @@ Jun  05, 2003 Bruce Beaumont / Abe Taaheri
 ******************************************************************************/
 #include "cpl_string.h"
 #include "stdio.h"
-
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
 #include "mfhdf.h"
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
-
 #include "hcomp.h"
 #include <math.h>
 #include "HdfEosDef.h"

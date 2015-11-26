@@ -50,12 +50,6 @@ CPL_C_END
 //   MRSID_ESDK: Means we have the encoding SDK (version 5 or newer required)
 //   MRSID_J2K: Means we are enabling MrSID SDK JPEG2000 support. 
 
-
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#endif
-
 #include "lt_types.h"
 #include "lt_base.h"
 #include "lt_fileSpec.h"
@@ -106,11 +100,6 @@ CPL_C_END
 #   endif
 # endif
 #endif /* MRSID_ESDK */
-
-
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
 
 #ifdef MRSID_POST5
 #  define MRSID_HAVE_GETWKT
