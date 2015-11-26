@@ -535,7 +535,7 @@ def sentinel2_6():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    subds_name = ds.GetMetadata('SUBDATASET_1_NAME', 'SUBDATASETS')
+    subds_name = ds.GetMetadataItem('SUBDATASET_1_NAME', 'SUBDATASETS')
     gdal.ErrorReset()
     ds = gdal.Open(subds_name)
     if ds is None or gdal.GetLastErrorMsg() != '':
