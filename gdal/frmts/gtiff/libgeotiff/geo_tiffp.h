@@ -17,8 +17,8 @@
  *  notice accompanies any products derived therefrom.
  **********************************************************************/
 
-#ifndef __geo_tiffp_h_
-#define __geo_tiffp_h_
+#ifndef LIBGEOTIFF_GEO_TIFFP_H_
+#define LIBGEOTIFF_GEO_TIFFP_H_
 
 /**********************************************************************
  *
@@ -110,4 +110,4 @@ extern void CPL_DLL _GTIFmemcpy(gdata_t out,gdata_t in,gsize_t size);
 #endif
 
 
-#endif /* __geo_tiffp_h_ */
+#endif /* LIBGEOTIFF_GEO_TIFFP_H_ */

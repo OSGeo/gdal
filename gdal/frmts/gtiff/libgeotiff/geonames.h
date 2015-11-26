@@ -12,8 +12,8 @@
  *  notice accompanies any products derived therefrom.
  */
 
-#ifndef __geonames_h
-#define __geonames_h
+#ifndef LIBGEOTIFF_GEONAMES_H_
+#define LIBGEOTIFF_GEONAMES_H_
 
 struct _KeyInfo {
 	int ki_key;
@@ -140,5 +140,5 @@ static KeyInfo _vdatumValue[] = {
    END_LIST  
 };
 
-#endif /* __geonames_h */
+#endif /* LIBGEOTIFF_GEONAMES_H_ */
 

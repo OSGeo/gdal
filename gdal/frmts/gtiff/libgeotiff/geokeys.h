@@ -10,8 +10,8 @@
  *  notice accompanies any products derived therefrom.
  **********************************************************************/
 
-#ifndef __geokeys_h_
-#define __geokeys_h_
+#ifndef LIBGEOTIFF_GEOKEYS_H_
+#define LIBGEOTIFF_GEOKEYS_H_
 
 /* The GvCurrentRevision number should be incremented whenever a 
  * new set of Keys are defined or modified in "geokeys.inc", and comments 
@@ -48,4 +48,4 @@ typedef enum {
 } geokey_t;
 
 
-#endif /* __geokeys_h_ */
+#endif /* LIBGEOTIFF_GEOKEYS_H_ */
