@@ -25,8 +25,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_CORE_MUTEXHOLDER_H
-#define __INCLUDE_CORE_MUTEXHOLDER_H
+#ifndef INCLUDE_CORE_MUTEXHOLDER_H
+#define INCLUDE_CORE_MUTEXHOLDER_H
 
 #include "pcidsk_mutex.h"
 
@@ -57,4 +57,4 @@ namespace PCIDSK
 
 } //end namespace PCIDSK
 
-#endif // __INCLUDE_CORE_MUTEXHOLDER_H
+#endif // INCLUDE_CORE_MUTEXHOLDER_H

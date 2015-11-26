@@ -30,8 +30,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_QUAD_TREE_H_INCLUDED
-#define _CPL_QUAD_TREE_H_INCLUDED
+#ifndef CPL_QUAD_TREE_H_INCLUDED
+#define CPL_QUAD_TREE_H_INCLUDED
 
 #include "cpl_port.h"
 

@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _ISO8211_H_INCLUDED
-#define _ISO8211_H_INCLUDED
+#ifndef ISO8211_H_INCLUDED
+#define ISO8211_H_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_vsi.h"
@@ -523,4 +523,4 @@ class CPL_ODLL DDFField
 };
 
 
-#endif /* ndef _ISO8211_H_INCLUDED */
+#endif /* ndef ISO8211_H_INCLUDED */

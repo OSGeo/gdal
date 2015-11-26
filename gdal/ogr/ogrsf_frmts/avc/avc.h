@@ -112,8 +112,8 @@
  *
  **********************************************************************/
 
-#ifndef _AVC_H_INCLUDED_
-#define _AVC_H_INCLUDED_
+#ifndef AVC_H_INCLUDED_
+#define AVC_H_INCLUDED_
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -870,6 +870,6 @@ int             AVCE00DeleteCoverage(const char *pszCoverPath);
 
 CPL_C_END
 
-#endif /* _AVC_H_INCLUDED_ */
+#endif /* AVC_H_INCLUDED_ */
 
 

@@ -34,8 +34,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GDAL_PDF_H_INCLUDED
-#define _GDAL_PDF_H_INCLUDED
+#ifndef GDAL_PDF_H_INCLUDED
+#define GDAL_PDF_H_INCLUDED
 
 #include "pdfsdk_headers.h"
 
@@ -473,4 +473,4 @@ class PDFWritableVectorDataset : public GDALDataset
 GDALDataset* GDALPDFOpen(const char* pszFilename, GDALAccess eAccess);
 CPLString PDFSanitizeLayerName(const char* pszName);
 
-#endif /* ndef _GDAL_PDF_H_INCLUDED */
+#endif /* ndef GDAL_PDF_H_INCLUDED */

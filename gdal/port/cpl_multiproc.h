@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_MULTIPROC_H_INCLUDED_
-#define _CPL_MULTIPROC_H_INCLUDED_
+#ifndef CPL_MULTIPROC_H_INCLUDED_
+#define CPL_MULTIPROC_H_INCLUDED_
 
 #include "cpl_port.h"
 
@@ -228,4 +228,4 @@ void CPL_DLL CPLSetTLSWithFreeFuncEx( int nIndex, void *pData, CPLTLSFreeFunc pf
 void CPL_DLL CPLCleanupTLS( void );
 CPL_C_END
 
-#endif /* _CPL_MULTIPROC_H_INCLUDED_ */
+#endif /* CPL_MULTIPROC_H_INCLUDED_ */

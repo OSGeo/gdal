@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRGRASS_H_INCLUDED
-#define _OGRGRASS_H_INCLUDED
+#ifndef OGRGRASS_H_INCLUDED
+#define OGRGRASS_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -187,4 +187,4 @@ class OGRGRASSDriver : public OGRSFDriver
     OGRErr              DeleteDataSource( const char *pszDataSource );
 };
 
-#endif /* ndef _OGRGRASS_H_INCLUDED */
+#endif /* ndef OGRGRASS_H_INCLUDED */

@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _arraylist_h_
-#define _arraylist_h_
+#ifndef arraylist_h_
+#define arraylist_h_
 
 #ifdef __cplusplus
 extern "C" {

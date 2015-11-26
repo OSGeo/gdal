@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_TIME_H_INCLUDED
-#define _CPL_TIME_H_INCLUDED
+#ifndef CPL_TIME_H_INCLUDED
+#define CPL_TIME_H_INCLUDED
 
 #include <time.h>
 
@@ -38,4 +38,4 @@
 struct tm CPL_DLL * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet);
 GIntBig CPL_DLL CPLYMDHMSToUnixTime(const struct tm *brokendowntime);
 
-#endif // _CPL_TIME_H_INCLUDED
+#endif // CPL_TIME_H_INCLUDED

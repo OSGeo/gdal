@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __INCLUDE_CHANNEL_CEXTERNALCHANNEL_H
-#define __INCLUDE_CHANNEL_CEXTERNALCHANNEL_H
+#ifndef INCLUDE_CHANNEL_CEXTERNALCHANNEL_H
+#define INCLUDE_CHANNEL_CEXTERNALCHANNEL_H
 
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
@@ -91,4 +91,4 @@ namespace PCIDSK
     };
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_CHANNEL_CEXTERNALCHANNEL_H
+#endif // INCLUDE_CHANNEL_CEXTERNALCHANNEL_H

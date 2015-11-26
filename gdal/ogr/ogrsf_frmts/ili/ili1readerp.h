@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_ILI1READERP_H_INCLUDED
-#define _CPL_ILI1READERP_H_INCLUDED
+#ifndef CPL_ILI1READERP_H_INCLUDED
+#define CPL_ILI1READERP_H_INCLUDED
 
 #include "ili1reader.h"
 #include "ogr_ili1.h"

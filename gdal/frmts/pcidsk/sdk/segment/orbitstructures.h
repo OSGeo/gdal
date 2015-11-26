@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_ORBIT_INFORMATION_H
-#define __INCLUDE_PCIDSK_ORBIT_INFORMATION_H
+#ifndef INCLUDE_PCIDSK_ORBIT_INFORMATION_H
+#define INCLUDE_PCIDSK_ORBIT_INFORMATION_H
 
 #include <string>
 #include <vector>
@@ -842,4 +842,4 @@ namespace PCIDSK
 		HJ_CCD_1A, HJ_CCD_1B, NEW, AVHRR} TypeDeCapteur;
 }
 
-#endif // __INCLUDE_PCIDSK_ORBIT_INFORMATION_H
+#endif // INCLUDE_PCIDSK_ORBIT_INFORMATION_H

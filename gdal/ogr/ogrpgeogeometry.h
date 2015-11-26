@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_PGEOGEOMETRY_H_INCLUDED
-#define _OGR_PGEOGEOMETRY_H_INCLUDED
+#ifndef OGR_PGEOGEOMETRY_H_INCLUDED
+#define OGR_PGEOGEOMETRY_H_INCLUDED
 
 #include "ogr_geometry.h"
 

@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_LIST_H_INCLUDED
-#define _CPL_LIST_H_INCLUDED
+#ifndef CPL_LIST_H_INCLUDED
+#define CPL_LIST_H_INCLUDED
 
 #include "cpl_port.h"
 
@@ -69,4 +69,4 @@ void CPL_DLL *CPLListGetData( CPLList *psElement );
 
 CPL_C_END
 
-#endif /* _CPL_LIST_H_INCLUDED */
+#endif /* CPL_LIST_H_INCLUDED */

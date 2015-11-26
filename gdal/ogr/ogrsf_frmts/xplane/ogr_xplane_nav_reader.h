@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_XPLANE_NAV_READER_H_INCLUDED
-#define _OGR_XPLANE_NAV_READER_H_INCLUDED
+#ifndef OGR_XPLANE_NAV_READER_H_INCLUDED
+#define OGR_XPLANE_NAV_READER_H_INCLUDED
 
 #include "ogr_xplane.h"
 #include "ogr_xplane_reader.h"

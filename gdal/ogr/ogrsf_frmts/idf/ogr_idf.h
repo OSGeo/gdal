@@ -28,8 +28,8 @@
  ****************************************************************************/
 
 
-#ifndef _OGR_IDF_H_INCLUDED
-#define _OGR_IDF_H_INCLUDED
+#ifndef OGR_IDF_H_INCLUDED
+#define OGR_IDF_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -54,4 +54,4 @@ class OGRIDFDataSource : public GDALDataset
 };
 
 
-#endif /* ndef _OGR_IDF_H_INCLUDED */
+#endif /* ndef OGR_IDF_H_INCLUDED */

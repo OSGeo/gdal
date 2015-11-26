@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_AWS_INCLUDED_H
-#define _CPL_AWS_INCLUDED_H
+#ifndef CPL_AWS_INCLUDED_H
+#define CPL_AWS_INCLUDED_H
 
 #include "cpl_string.h"
 
@@ -129,4 +129,4 @@ class VSIS3UpdateParams
 
 #endif /* HAVE_CURL */
 
-#endif /* _CPL_AWS_INCLUDED_H */
+#endif /* CPL_AWS_INCLUDED_H */

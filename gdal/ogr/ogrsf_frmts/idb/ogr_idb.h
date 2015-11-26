@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_IDB_H_INCLUDED_
-#define _OGR_IDB_H_INCLUDED_
+#ifndef OGR_IDB_H_INCLUDED_
+#define OGR_IDB_H_INCLUDED_
 
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"

@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _json_tokener_h_
-#define _json_tokener_h_
+#ifndef json_tokener_h_
+#define json_tokener_h_
 
 #include <stddef.h>
 #include "json_object.h"

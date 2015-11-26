@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GH5_CONVENIENCE_H_INCLUDED_
-#define _GH5_CONVENIENCE_H_INCLUDED_
+#ifndef GH5_CONVENIENCE_H_INCLUDED_
+#define GH5_CONVENIENCE_H_INCLUDED_
 
 #define H5_USE_16_API
 
@@ -59,4 +59,4 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszName,
                          double &dfResult, bool bReportError = false );
 GDALDataType GH5_GetDataType(hid_t TypeID);
 
-#endif /* ndef _GH5_CONVENIENCE_H_INCLUDED_ */
+#endif /* ndef GH5_CONVENIENCE_H_INCLUDED_ */

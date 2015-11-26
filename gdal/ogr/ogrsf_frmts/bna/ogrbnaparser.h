@@ -28,8 +28,8 @@
  ****************************************************************************/
 
 
-#ifndef _OGR_BNA_PARSER_INCLUDED
-#define _OGR_BNA_PARSER_INCLUDED
+#ifndef OGR_BNA_PARSER_INCLUDED
+#define OGR_BNA_PARSER_INCLUDED
 
 #include "cpl_vsi.h"
 

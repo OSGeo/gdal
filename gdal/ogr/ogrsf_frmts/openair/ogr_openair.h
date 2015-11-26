@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_OPENAIR_H_INCLUDED
-#define _OGR_OPENAIR_H_INCLUDED
+#ifndef OGR_OPENAIR_H_INCLUDED
+#define OGR_OPENAIR_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include <map>
@@ -132,4 +132,4 @@ class OGROpenAirDataSource : public OGRDataSource
 
 int OGROpenAirGetLatLon(const char* pszStr, double& dfLat, double& dfLon);
 
-#endif /* ndef _OGR_OPENAIR_H_INCLUDED */
+#endif /* ndef OGR_OPENAIR_H_INCLUDED */

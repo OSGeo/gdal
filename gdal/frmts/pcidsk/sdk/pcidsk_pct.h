@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_PCT_H
-#define __INCLUDE_PCIDSK_PCT_H
+#ifndef INCLUDE_PCIDSK_PCT_H
+#define INCLUDE_PCIDSK_PCT_H
 
 #include <string>
 #include <vector>
@@ -67,4 +67,4 @@ and ends with the blue gun output values (pct[512-767]).
     };
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_PCIDSK_PCT_H
+#endif // INCLUDE_PCIDSK_PCT_H

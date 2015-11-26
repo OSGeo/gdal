@@ -242,8 +242,8 @@ typedef struct sqlite3_backup ogr_sqlite3_backup;
 ** as extensions by SQLite should #include this file instead of 
 ** sqlite3.h.
 */
-#ifndef _SQLITE3EXT_H_
-#define _SQLITE3EXT_H_
+#ifndef SQLITE3EXT_H_
+#define SQLITE3EXT_H_
 
 // Commented out to avoid reimporting the #define sqlite3_xxx macros
 //#include "sqlite3.h"
@@ -673,4 +673,4 @@ struct sqlite3_api_routines {
 #define SQLITE_EXTENSION_INIT1     const sqlite3_api_routines *sqlite3_api = 0;
 #define SQLITE_EXTENSION_INIT2(v)  sqlite3_api = v;
 
-#endif /* _SQLITE3EXT_H_ */
+#endif /* SQLITE3EXT_H_ */

@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRMUTEXEDDATASOURCELAYER_H_INCLUDED
-#define _OGRMUTEXEDDATASOURCELAYER_H_INCLUDED
+#ifndef OGRMUTEXEDDATASOURCELAYER_H_INCLUDED
+#define OGRMUTEXEDDATASOURCELAYER_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_multiproc.h"
@@ -110,4 +110,4 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
                                          const char * pszDomain = "" );
 };
 
-#endif // _OGRMUTEXEDDATASOURCELAYER_H_INCLUDED
+#endif // OGRMUTEXEDDATASOURCELAYER_H_INCLUDED

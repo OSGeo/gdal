@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_SEGMENT_CPCIDSKAPMODEL_H
-#define __INCLUDE_SEGMENT_CPCIDSKAPMODEL_H
+#ifndef INCLUDE_SEGMENT_CPCIDSKAPMODEL_H
+#define INCLUDE_SEGMENT_CPCIDSKAPMODEL_H
 
 #include "pcidsk_airphoto.h"
 #include "segment/cpcidsksegment.h"
@@ -76,5 +76,5 @@ namespace PCIDSK {
 
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_SEGMENT_CPCIDSKAPMODEL_H
+#endif // INCLUDE_SEGMENT_CPCIDSKAPMODEL_H
 

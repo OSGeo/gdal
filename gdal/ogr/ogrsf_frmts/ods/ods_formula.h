@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _ODS_FORMULA_H_INCLUDED_
-#define _ODS_FORMULA_H_INCLUDED_
+#ifndef ODS_FORMULA_H_INCLUDED_
+#define ODS_FORMULA_H_INCLUDED_
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -213,4 +213,4 @@ typedef struct
 const SingleOpStruct* ODSGetSingleOpEntry(const char* pszName);
 const SingleOpStruct* ODSGetSingleOpEntry(ods_formula_op eOp);
 
-#endif /* def _ODS_FORMULA_H_INCLUDED_ */
+#endif /* def ODS_FORMULA_H_INCLUDED_ */

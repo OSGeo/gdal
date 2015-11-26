@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_MINIXML_H_INCLUDED
-#define _CPL_MINIXML_H_INCLUDED
+#ifndef CPL_MINIXML_H_INCLUDED
+#define CPL_MINIXML_H_INCLUDED
 
 #include "cpl_port.h"
 
@@ -178,4 +178,4 @@ class CPLXMLTreeCloser {
 };
 #endif /* __cplusplus */
 
-#endif /* _CPL_MINIXML_H_INCLUDED */
+#endif /* CPL_MINIXML_H_INCLUDED */

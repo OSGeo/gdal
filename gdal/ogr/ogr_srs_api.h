@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SRS_API_H_INCLUDED
-#define _OGR_SRS_API_H_INCLUDED
+#ifndef OGR_SRS_API_H_INCLUDED
+#define OGR_SRS_API_H_INCLUDED
 
 #ifndef SWIG
 #include "ogr_core.h"
@@ -297,8 +297,8 @@ typedef enum {
 /* -------------------------------------------------------------------- */
 /*      C Wrappers for C++ objects and methods.                         */
 /* -------------------------------------------------------------------- */
-#ifndef _DEFINED_OGRSpatialReferenceH
-#define _DEFINED_OGRSpatialReferenceH
+#ifndef DEFINED_OGRSpatialReferenceH
+#define DEFINED_OGRSpatialReferenceH
 
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
@@ -778,4 +778,4 @@ CPL_C_END
 
 #endif /* ndef SWIG */
 
-#endif /* ndef _OGR_SRS_API_H_INCLUDED */
+#endif /* ndef OGR_SRS_API_H_INCLUDED */

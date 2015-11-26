@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _FILEGDBTABLE_H_INCLUDED
-#define _FILEGDBTABLE_H_INCLUDED
+#ifndef FILEGDBTABLE_H_INCLUDED
+#define FILEGDBTABLE_H_INCLUDED
 
 #include "ogr_core.h"
 #include "cpl_vsi.h"
@@ -391,4 +391,4 @@ int FileGDBDoubleDateToOGRDate(double dfVal, OGRField* psField);
 
 }; /* namespace OpenFileGDB */
 
-#endif /* ndef _FILEGDBTABLE_H_INCLUDED */
+#endif /* ndef FILEGDBTABLE_H_INCLUDED */

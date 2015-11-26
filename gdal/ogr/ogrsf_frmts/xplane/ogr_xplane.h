@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_XPLANE_H_INCLUDED
-#define _OGR_XPLANE_H_INCLUDED
+#ifndef OGR_XPLANE_H_INCLUDED
+#define OGR_XPLANE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -128,4 +128,4 @@ class OGRXPlaneDriver : public OGRSFDriver
 };
 
 
-#endif /* ndef _OGR_XPLANE_H_INCLUDED */
+#endif /* ndef OGR_XPLANE_H_INCLUDED */

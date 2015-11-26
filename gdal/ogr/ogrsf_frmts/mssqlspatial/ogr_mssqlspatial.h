@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_MSSQLSPATIAL_H_INCLUDED
-#define _OGR_MSSQLSPATIAL_H_INCLUDED
+#ifndef OGR_MSSQLSPATIAL_H_INCLUDED
+#define OGR_MSSQLSPATIAL_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"
@@ -400,4 +400,4 @@ class OGRMSSQLSpatialDriver : public OGRSFDriver
     int                 TestCapability( const char * );
 };
 
-#endif /* ndef _OGR_MSSQLSPATIAL_H_INCLUDED */
+#endif /* ndef OGR_MSSQLSPATIAL_H_INCLUDED */

@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_GMLREADERP_H_INCLUDED
-#define _CPL_GMLREADERP_H_INCLUDED
+#ifndef CPL_GMLREADERP_H_INCLUDED
+#define CPL_GMLREADERP_H_INCLUDED
 
 #include "gmlreader.h"
 #include "ogr_api.h"
@@ -564,4 +564,4 @@ public:
     static CPLMutex* hMutex;
 };
 
-#endif /* _CPL_GMLREADERP_H_INCLUDED */
+#endif /* CPL_GMLREADERP_H_INCLUDED */

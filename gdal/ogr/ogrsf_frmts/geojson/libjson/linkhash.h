@@ -10,8 +10,8 @@
  *
  */
  
-#ifndef _linkhash_h_
-#define _linkhash_h_
+#ifndef linkhash_h_
+#define linkhash_h_
 
 #include "json_object.h"
 

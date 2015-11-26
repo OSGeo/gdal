@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _HDF5DATASET_H_INCLUDED_
-#define _HDF5DATASET_H_INCLUDED_
+#ifndef HDF5DATASET_H_INCLUDED_
+#define HDF5DATASET_H_INCLUDED_
 
 #include "gdal_pam.h"
 #include "cpl_list.h"
@@ -115,4 +115,4 @@ public:
   static int Identify(GDALOpenInfo *);
 };
 
-#endif /* _HDF5DATASET_H_INCLUDED_ */
+#endif /* HDF5DATASET_H_INCLUDED_ */

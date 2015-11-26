@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_STRING_H_INCLUDED
-#define _CPL_STRING_H_INCLUDED
+#ifndef CPL_STRING_H_INCLUDED
+#define CPL_STRING_H_INCLUDED
 
 #include "cpl_vsi.h"
 #include "cpl_error.h"
@@ -370,4 +370,4 @@ class CPL_DLL CPLStringList
 
 #endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
 
-#endif /* _CPL_STRING_H_INCLUDED */
+#endif /* CPL_STRING_H_INCLUDED */

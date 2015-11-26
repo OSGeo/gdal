@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SQLITE_H_INCLUDED
-#define _OGR_SQLITE_H_INCLUDED
+#ifndef OGR_SQLITE_H_INCLUDED
+#define OGR_SQLITE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "gdal_pam.h"
@@ -854,4 +854,4 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData);
 
 void OGRSQLiteRegisterInflateDeflate(sqlite3* hDB);
 
-#endif /* ndef _OGR_SQLITE_H_INCLUDED */
+#endif /* ndef OGR_SQLITE_H_INCLUDED */

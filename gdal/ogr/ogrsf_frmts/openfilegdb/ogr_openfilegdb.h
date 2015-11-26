@@ -27,8 +27,8 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
-#ifndef _OGR_OPENFILEGDB_H_INCLUDED
-#define _OGR_OPENFILEGDB_H_INCLUDED
+#ifndef OGR_OPENFILEGDB_H_INCLUDED
+#define OGR_OPENFILEGDB_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "filegdbtable.h"
@@ -201,4 +201,4 @@ public:
 
 int OGROpenFileGDBIsComparisonOp(int op);
 
-#endif /* ndef _OGR_OPENFILEGDB_H_INCLUDED */
+#endif /* ndef OGR_OPENFILEGDB_H_INCLUDED */

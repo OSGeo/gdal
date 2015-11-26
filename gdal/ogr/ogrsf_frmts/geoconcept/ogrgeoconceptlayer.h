@@ -31,8 +31,8 @@
 #include "ogrsf_frmts.h"
 #include "geoconcept.h"
 
-#ifndef _GEOCONCEPT_OGR_LAYER_H_INCLUDED_
-#define _GEOCONCEPT_OGR_LAYER_H_INCLUDED_
+#ifndef GEOCONCEPT_OGR_LAYER_H_INCLUDED_
+#define GEOCONCEPT_OGR_LAYER_H_INCLUDED_
 
 /**********************************************************************/
 /*            OGCGeoconceptLayer Class                           */
@@ -81,4 +81,4 @@ class OGRGeoconceptLayer : public OGRLayer
     void                   SetSpatialRef( OGRSpatialReference *poSpatialRef );
 };
 
-#endif /* _GEOCONCEPT_OGR_LAYER_H_INCLUDED_ */
+#endif /* GEOCONCEPT_OGR_LAYER_H_INCLUDED_ */

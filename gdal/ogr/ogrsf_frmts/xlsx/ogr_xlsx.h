@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_XLSX_H_INCLUDED
-#define _OGR_XLSX_H_INCLUDED
+#ifndef OGR_XLSX_H_INCLUDED
+#define OGR_XLSX_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -273,4 +273,4 @@ class OGRXLSXDriver : public OGRSFDriver
 };
 
 
-#endif /* ndef _OGR_XLSX_H_INCLUDED */
+#endif /* ndef OGR_XLSX_H_INCLUDED */

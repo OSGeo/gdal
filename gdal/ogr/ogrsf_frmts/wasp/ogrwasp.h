@@ -26,8 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_WASP_H_INCLUDED
-#define _OGR_WASP_H_INCLUDED
+#ifndef OGR_WASP_H_INCLUDED
+#define OGR_WASP_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -226,4 +226,4 @@ class OGRWAsPDriver : public OGRSFDriver
 };
 
 
-#endif /* ndef _OGR_WASP_H_INCLUDED */
+#endif /* ndef OGR_WASP_H_INCLUDED */

@@ -62,8 +62,8 @@
  *
  **********************************************************************/
 
-#ifndef _MITAB_UTILS_H_INCLUDED_
-#define _MITAB_UTILS_H_INCLUDED_
+#ifndef MITAB_UTILS_H_INCLUDED_
+#define MITAB_UTILS_H_INCLUDED_
 
 #include "ogr_geometry.h"
 
@@ -94,6 +94,6 @@ char *TABCleanFieldName(const char *pszSrcName);
 const char *TABUnitIdToString(int nId);
 int   TABUnitIdFromString(const char *pszName);
 
-#endif /* _MITAB_UTILS_H_INCLUDED_ */
+#endif /* MITAB_UTILS_H_INCLUDED_ */
 
 

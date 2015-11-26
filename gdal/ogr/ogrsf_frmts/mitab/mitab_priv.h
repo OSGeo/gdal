@@ -177,8 +177,8 @@
  *
  **********************************************************************/
 
-#ifndef _MITAB_PRIV_H_INCLUDED_
-#define _MITAB_PRIV_H_INCLUDED_
+#ifndef MITAB_PRIV_H_INCLUDED_
+#define MITAB_PRIV_H_INCLUDED_
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -1947,5 +1947,5 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
                                           TABAccess eAccessMode = TABRead);
 
 
-#endif /* _MITAB_PRIV_H_INCLUDED_ */
+#endif /* MITAB_PRIV_H_INCLUDED_ */
 

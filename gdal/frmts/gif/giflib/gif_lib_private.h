@@ -1,5 +1,5 @@
-#ifndef _GIF_LIB_PRIVATE_H
-#define _GIF_LIB_PRIVATE_H
+#ifndef GIF_LIB_PRIVATE_H
+#define GIF_LIB_PRIVATE_H
 
 #include "gif_lib.h"
 #include "gif_hash.h"
@@ -56,4 +56,4 @@ typedef struct GifFilePrivateType {
 
 extern int _GifError;
 
-#endif /* _GIF_LIB_PRIVATE_H */
+#endif /* GIF_LIB_PRIVATE_H */

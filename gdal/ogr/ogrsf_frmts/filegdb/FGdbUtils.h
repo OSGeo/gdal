@@ -28,8 +28,8 @@
  ****************************************************************************/
 
 
-#ifndef _FGDB_UTILS_H_INCLUDED
-#define _FGDB_UTILS_H_INCLUDED
+#ifndef FGDB_UTILS_H_INCLUDED
+#define FGDB_UTILS_H_INCLUDED
 
 #include "ogr_fgdb.h"
 #include <iostream>

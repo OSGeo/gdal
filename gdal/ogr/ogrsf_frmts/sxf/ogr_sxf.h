@@ -30,8 +30,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SXF_H_INCLUDED
-#define _OGR_SXF_H_INCLUDED
+#ifndef OGR_SXF_H_INCLUDED
+#define OGR_SXF_H_INCLUDED
 
 #include <set>
 #include <vector>

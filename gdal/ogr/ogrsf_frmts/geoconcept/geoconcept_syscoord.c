@@ -358,7 +358,7 @@ static int GCSRSAPI_CALL _areCompatibleDatums_GCSRS ( int id1, int id2 )
   return FALSE;
 }/* _areCompatibleDatums_GCSRS */
 
-#define _CPLDebugSpheroid_GCSRS(e) \
+#define CPLDebugSpheroid_GCSRS(e) \
 CPLDebug( "GEOCONCEPT", "SemiMajor:%.4f;Excentricity:%.10f;",\
           GetInfoSpheroidSemiMajor_GCSRS(e),\
           GetInfoSpheroidExcentricity_GCSRS(e)\
@@ -392,7 +392,7 @@ ell_relax:
   return ell;
 }/* _findSpheroid_GCSRS */
 
-#define _CPLDebugDatum_GCSRS(d) \
+#define CPLDebugDatum_GCSRS(d) \
 CPLDebug( "GEOCONCEPT", "ID:%d;ShiftX:%.4f;ShiftY:%.4f;ShiftZ:%.4f;DiffA:%.4f;DiffFlattening:%.7f;",\
   GetInfoDatumID_GCSRS((d)),\
   GetInfoDatumShiftX_GCSRS((d)),\
@@ -507,7 +507,7 @@ static GCProjectionInfo GCSRSAPI_CALL1(*) _findProjection_GCSRS ( const char* p,
   return proj;
 }/* _findProjection_GCSRS */
 
-#define _CPLDebugSysCoord_GCSRS(m,s) \
+#define CPLDebugSysCoord_GCSRS(m,s) \
 CPLDebug( "GEOCONCEPT", "[%s]ID=%d;Zone=%d;DatumID=%d;ProjID=%d;PrimeMeridian=%.10f;CentralMeridian=%.10f;LatitudeOfOrigin=%.10f;StandardParallel1=%.10f;StandardParallel2=%.10f;ScaleFactor=%.10f;FalseEasting=%.10f;FalseNorthing=%.10f;",\
           (m)? (m):"",\
           GetSysCoordSystemID_GCSRS((s)),\
@@ -534,7 +534,7 @@ static GCSysCoord GCSRSAPI_CALL1(*) _findSysCoord_GCSRS ( GCSysCoord* theSysCoor
 
   SetSysCoordSystemID_GCSRS(theSysCoord, -1);
   SetSysCoordTimeZone_GCSRS(theSysCoord, -1);
-  _CPLDebugSysCoord_GCSRS(NULL,theSysCoord);
+  CPLDebugSysCoord_GCSRS(NULL,theSysCoord);
   for( iSysCoord= 0, gcsc= &(gk_asSysCoordList[0]);
        GetSysCoordSystemID_GCSRS(gcsc)!=-1;
        iSysCoord++, gcsc= &(gk_asSysCoordList[iSysCoord]) )

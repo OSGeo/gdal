@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _HFAOPEN_H_INCLUDED
-#define _HFAOPEN_H_INCLUDED
+#ifndef HFAOPEN_H_INCLUDED
+#define HFAOPEN_H_INCLUDED
 
 /* -------------------------------------------------------------------- */
 /*      Include standard portability stuff.                             */
@@ -313,4 +313,4 @@ char CPL_DLL **HFAReadCameraModel( HFAHandle psInfo );
 
 CPL_C_END
 
-#endif /* ndef _HFAOPEN_H_INCLUDED */
+#endif /* ndef HFAOPEN_H_INCLUDED */

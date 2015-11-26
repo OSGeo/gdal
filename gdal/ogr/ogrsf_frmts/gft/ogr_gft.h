@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GFT_H_INCLUDED
-#define _OGR_GFT_H_INCLUDED
+#ifndef OGR_GFT_H_INCLUDED
+#define OGR_GFT_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_http.h"
@@ -263,4 +263,4 @@ class OGRGFTDriver : public OGRSFDriver
 char **OGRGFTCSVSplitLine( const char *pszString, char chDelimiter );
 char* OGRGFTGotoNextLine(char* pszData);
 
-#endif /* ndef _OGR_GFT_H_INCLUDED */
+#endif /* ndef OGR_GFT_H_INCLUDED */

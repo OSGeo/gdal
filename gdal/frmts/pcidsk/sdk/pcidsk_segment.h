@@ -25,8 +25,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
  
-#ifndef __INCLUDE_SEGMENT_PCIDSKSEGMENT_H
-#define __INCLUDE_SEGMENT_PCIDSKSEGMENT_H
+#ifndef INCLUDE_PCIDSKSEGMENT_H
+#define INCLUDE_PCIDSKSEGMENT_H
 
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
@@ -76,4 +76,4 @@ namespace PCIDSK
 
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_SEGMENT_PCIDSKSEGMENT_H
+#endif // INCLUDE_PCIDSKSEGMENT_H

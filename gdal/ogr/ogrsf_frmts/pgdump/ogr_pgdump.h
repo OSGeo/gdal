@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_PGDUMP_H_INCLUDED
-#define _OGR_PGDUMP_H_INCLUDED
+#ifndef OGR_PGDUMP_H_INCLUDED
+#define OGR_PGDUMP_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
@@ -204,5 +204,5 @@ class OGRPGDumpDataSource : public OGRDataSource
     OGRErr              EndCopy( );
 };
 
-#endif /* ndef _OGR_PGDUMP_H_INCLUDED */
+#endif /* ndef OGR_PGDUMP_H_INCLUDED */
 

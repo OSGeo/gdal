@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _gstTypes_h_
-#define _gstTypes_h_
+#ifndef gstTypes_h_
+#define gstTypes_h_
 
 #include <stdarg.h>
 #include "cpl_conv.h"
@@ -44,4 +44,4 @@ typedef GIntBig				int64;
 
 typedef unsigned char                   uchar;
 
-#endif // !_gstTypes_h_
+#endif // !gstTypes_h_

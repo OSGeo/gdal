@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_WFS_H_INCLUDED
-#define _OGR_WFS_H_INCLUDED
+#ifndef OGR_WFS_H_INCLUDED
+#define OGR_WFS_H_INCLUDED
 
 #include <vector>
 #include <set>
@@ -407,4 +407,4 @@ class OGRWFSDataSource : public OGRDataSource
     virtual char**              GetMetadata( const char * pszDomain = "" );
 };
 
-#endif /* ndef _OGR_WFS_H_INCLUDED */
+#endif /* ndef OGR_WFS_H_INCLUDED */

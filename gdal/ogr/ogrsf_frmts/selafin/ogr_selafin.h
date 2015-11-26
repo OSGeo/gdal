@@ -25,8 +25,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SELAFIN_H_INCLUDED
-#define _OGR_SELAFIN_H_INCLUDED
+#ifndef OGR_SELAFIN_H_INCLUDED
+#define OGR_SELAFIN_H_INCLUDED
 
 #include "io_selafin.h"
 #include "ogrsf_frmts.h"
@@ -129,4 +129,4 @@ class OGRSelafinDataSource : public OGRDataSource {
         void SetDefaultSelafinName( const char *pszName ) { osDefaultSelafinName = pszName; }
 };
 
-#endif /* ndef _OGR_SELAFIN_H_INCLUDED */
+#endif /* ndef OGR_SELAFIN_H_INCLUDED */

@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_CLOUDANT_H_INCLUDED
-#define _OGR_CLOUDANT_H_INCLUDED
+#ifndef OGR_CLOUDANT_H_INCLUDED
+#define OGR_CLOUDANT_H_INCLUDED
 
 #include "ogr_couchdb.h"
 
@@ -101,4 +101,4 @@ class OGRCloudantDriver : public OGRCouchDBDriver
 
 };
 
-#endif /* ndef _OGR_CLOUDANT_H_INCLUDED */
+#endif /* ndef OGR_CLOUDANT_H_INCLUDED */

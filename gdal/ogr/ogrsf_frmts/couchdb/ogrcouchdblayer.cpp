@@ -192,7 +192,7 @@ OGRFeature* OGRCouchDBLayer::TranslateFeature( json_object* poObj )
     const char* pszId = json_object_get_string(poId);
     if (pszId)
     {
-        poFeature->SetField(_ID_FIELD, pszId);
+        poFeature->SetField(COUCHDB_ID_FIELD, pszId);
 
         int nFID = atoi(pszId);
         const char* pszFID = CPLSPrintf("%09d", nFID);
@@ -203,7 +203,7 @@ OGRFeature* OGRCouchDBLayer::TranslateFeature( json_object* poObj )
     json_object* poRev = json_object_object_get(poObj, "_rev");
     const char* pszRev = json_object_get_string(poRev);
     if (pszRev)
-        poFeature->SetField(_REV_FIELD, pszRev);
+        poFeature->SetField(COUCHDB_REV_FIELD, pszRev);
 
 /* -------------------------------------------------------------------- */
 /*      Translate GeoJSON "properties" object to feature attributes.    */

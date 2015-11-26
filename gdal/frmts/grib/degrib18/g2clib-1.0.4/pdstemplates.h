@@ -1,5 +1,5 @@
-#ifndef _pdstemplates_H
-#define _pdstemplates_H
+#ifndef pdstemplates_H
+#define pdstemplates_H
 #include "grib2.h"
 
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-26
@@ -47,4 +47,4 @@
 const struct pdstemplate *get_templatespds(void);
 g2int getpdsindex(g2int number);
 
-#endif  /*  _pdstemplates_H  */
+#endif  /*  pdstemplates_H  */

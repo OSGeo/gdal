@@ -25,8 +25,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __INCLUDE_PCIDSK_INTERFACES_H
-#define __INCLUDE_PCIDSK_INTERFACES_H
+#ifndef INCLUDE_PCIDSK_INTERFACES_H
+#define INCLUDE_PCIDSK_INTERFACES_H
 
 #include "pcidsk_io.h"
 #include "pcidsk_mutex.h"
@@ -62,4 +62,4 @@ namespace PCIDSK
     };
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_PCIDSK_INTERFACES_H
+#endif // INCLUDE_PCIDSK_INTERFACES_H

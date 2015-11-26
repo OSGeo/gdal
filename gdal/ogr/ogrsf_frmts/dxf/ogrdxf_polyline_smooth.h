@@ -29,8 +29,8 @@
  ****************************************************************************/
 
 
-#ifndef __OGRDXF_SMOOTH_POLYLINE_H__
-#define __OGRDXF_SMOOTH_POLYLINE_H__
+#ifndef OGRDXF_SMOOTH_POLYLINE_H_INCLUDED
+#define OGRDXF_SMOOTH_POLYLINE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
@@ -144,4 +144,4 @@ private:
                   OGRLineString*, bool bConstantZ, double dfZ) const;
 };
 
-#endif  /* __OGRDXF_SMOOTH_POLYLINE_H__ */
+#endif  /* OGRDXF_SMOOTH_POLYLINE_H_INCLUDED */

@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_BNA_H_INCLUDED
-#define _OGR_BNA_H_INCLUDED
+#ifndef OGR_BNA_H_INCLUDED
+#define OGR_BNA_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -153,4 +153,4 @@ class OGRBNADataSource : public OGRDataSource
     int                 TestCapability( const char * );
 };
 
-#endif /* ndef _OGR_BNA_H_INCLUDED */
+#endif /* ndef OGR_BNA_H_INCLUDED */

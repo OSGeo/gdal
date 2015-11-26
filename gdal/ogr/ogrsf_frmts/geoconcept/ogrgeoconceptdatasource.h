@@ -31,8 +31,8 @@
 #include "ogrsf_frmts.h"
 #include "ogrgeoconceptlayer.h"
 
-#ifndef _GEOCONCEPT_OGR_DATASOURCE_H_INCLUDED_
-#define _GEOCONCEPT_OGR_DATASOURCE_H_INCLUDED_
+#ifndef GEOCONCEPT_OGR_DATASOURCE_H_INCLUDED_
+#define GEOCONCEPT_OGR_DATASOURCE_H_INCLUDED_
 
 /**********************************************************************/
 /*            OGCGeoconceptDataSource Class                           */
@@ -73,4 +73,4 @@ class OGRGeoconceptDataSource : public OGRDataSource
     int            LoadFile( const char * );
 };
 
-#endif /* _GEOCONCEPT_OGR_DATASOURCE_H_INCLUDED_ */
+#endif /* GEOCONCEPT_OGR_DATASOURCE_H_INCLUDED_ */

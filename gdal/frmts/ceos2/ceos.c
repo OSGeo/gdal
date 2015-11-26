@@ -55,9 +55,9 @@ void InitEmptyCeosRecord(CeosRecord_t *record, int32 sequence, CeosTypeCode_t ty
 	record->Length = length;
 
 	/* Now we fill in the buffer portion as well */
-	NativeToCeos( record->Buffer+__SEQUENCE_OFF, &(record->Sequence), sizeof(record->Sequence), sizeof( record->Sequence ) );
-	memcpy(record->Buffer+__TYPE_OFF, &( record->TypeCode.Int32Code ), sizeof( record->TypeCode.Int32Code ) );
-	NativeToCeos( record->Buffer+__LENGTH_OFF, &length,  sizeof( length ), sizeof( length ) );
+	NativeToCeos( record->Buffer+SEQUENCE_OFF, &(record->Sequence), sizeof(record->Sequence), sizeof( record->Sequence ) );
+	memcpy(record->Buffer+TYPE_OFF, &( record->TypeCode.Int32Code ), sizeof( record->TypeCode.Int32Code ) );
+	NativeToCeos( record->Buffer+LENGTH_OFF, &length,  sizeof( length ), sizeof( length ) );
     }
 }
 
@@ -65,7 +65,7 @@ void InitCeosRecord(CeosRecord_t *record, uchar *buffer)
 {
     if(record && buffer)
     {
-	InitCeosRecordWithHeader(record, buffer, buffer+__CEOS_HEADER_LENGTH);
+	InitCeosRecordWithHeader(record, buffer, buffer+CEOS_HEADER_LENGTH);
     }
 }
 
@@ -83,13 +83,13 @@ void InitCeosRecordWithHeader(CeosRecord_t *record, uchar *header, uchar *buffer
 	}
 
 	/* First copy the header then the buffer */
-	memcpy(record->Buffer,header,__CEOS_HEADER_LENGTH);
+	memcpy(record->Buffer,header,CEOS_HEADER_LENGTH);
 	/* Now we copy the rest */
-	memcpy(record->Buffer+__CEOS_HEADER_LENGTH,buffer,record->Length-__CEOS_HEADER_LENGTH);
+	memcpy(record->Buffer+CEOS_HEADER_LENGTH,buffer,record->Length-CEOS_HEADER_LENGTH);
 
 	/* Now we fill in the rest of the structure! */
-	memcpy(&(record->TypeCode.Int32Code),header+__TYPE_OFF,sizeof(record->TypeCode.Int32Code));
-	CeosToNative(&(record->Sequence),header+__SEQUENCE_OFF,sizeof(record->Sequence), sizeof( record->Sequence ) );
+	memcpy(&(record->TypeCode.Int32Code),header+TYPE_OFF,sizeof(record->TypeCode.Int32Code));
+	CeosToNative(&(record->Sequence),header+SEQUENCE_OFF,sizeof(record->Sequence), sizeof( record->Sequence ) );
     }
 }
 
@@ -99,7 +99,7 @@ int DetermineCeosRecordBodyLength(const uchar *header)
     
     if(header)
     {
-	CeosToNative(&i,header+__LENGTH_OFF,sizeof( i ), sizeof( i ) );
+	CeosToNative(&i,header+LENGTH_OFF,sizeof( i ), sizeof( i ) );
 
 	return i;
     }
@@ -362,9 +362,9 @@ void CeosUpdateHeaderFromBuffer(CeosRecord_t *record)
 {
     if(record && record->Buffer)
     {
-	CeosToNative( &( record->Length ), record->Buffer+__LENGTH_OFF, sizeof(record->Length ), sizeof( record->Length ) );
-	memcpy(&(record->TypeCode.Int32Code),record->Buffer+__TYPE_OFF,sizeof(record->TypeCode.Int32Code));
-	CeosToNative(&(record->Sequence),record->Buffer+__SEQUENCE_OFF,sizeof(record->Sequence ), sizeof( record->Sequence ) );
+	CeosToNative( &( record->Length ), record->Buffer+LENGTH_OFF, sizeof(record->Length ), sizeof( record->Length ) );
+	memcpy(&(record->TypeCode.Int32Code),record->Buffer+TYPE_OFF,sizeof(record->TypeCode.Int32Code));
+	CeosToNative(&(record->Sequence),record->Buffer+SEQUENCE_OFF,sizeof(record->Sequence ), sizeof( record->Sequence ) );
     }
     if(record)
         record->Subsequence = 0;

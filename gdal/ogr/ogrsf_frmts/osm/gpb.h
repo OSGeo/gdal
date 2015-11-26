@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GPB_H_INCLUDED
-#define _GPB_H_INCLUDED
+#ifndef GPB_H_INCLUDED
+#define GPB_H_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_error.h"
@@ -298,4 +298,4 @@ end_error:
 
 #endif /* DO_NOT_DEFINE_SKIP_UNKNOWN_FIELD */
 
-#endif /* _GPB_H_INCLUDED */
+#endif /* GPB_H_INCLUDED */

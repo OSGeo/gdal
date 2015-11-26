@@ -1,5 +1,5 @@
-#ifndef _drstemplates_H
-#define _drstemplates_H
+#ifndef drstemplates_H
+#define drstemplates_H
 #include "grib2.h"
 
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-26
@@ -45,4 +45,4 @@
 const struct drstemplate *get_templatesdrs(void);
 g2int getdrsindex(g2int number);
 
-#endif  /*  _drstemplates_H  */
+#endif  /*  drstemplates_H  */

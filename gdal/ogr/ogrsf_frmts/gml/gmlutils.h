@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_GMLUTILS_H_INCLUDED
-#define _CPL_GMLUTILS_H_INCLUDED
+#ifndef CPL_GMLUTILS_H_INCLUDED
+#define CPL_GMLUTILS_H_INCLUDED
 
 #include <vector>
 #include <string>
