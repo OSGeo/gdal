@@ -1211,9 +1211,23 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
     CPLStripXMLNamespace(psRoot, NULL, TRUE);
 
     // Look for product MTD file
-    CPLString osTopDir = CPLFormFilename(
+    CPLString osTopDir(CPLFormFilename(
         CPLFormFilename( CPLGetDirname(pszFilename), "..", NULL ),
-        "..", NULL );
+        "..", NULL ));
+
+    // Workaround to avoid long filenames on Windows
+    if( CPLIsFilenameRelative(pszFilename) )
+    {
+        // GRANULE/bla/bla.xml
+        const char* pszPath = CPLGetPath(pszFilename);
+        if( strchr(pszPath, '/') || strchr(pszPath, '\\') )
+        {
+            osTopDir = CPLGetPath(CPLGetPath(pszPath));
+            if( osTopDir == "" )
+                osTopDir = ".";
+        }
+    }
+
     char** papszContents = VSIReadDir(osTopDir);
     CPLString osMainMTD;
     for(char** papszIter = papszContents; papszIter && *papszIter; ++papszIter)
