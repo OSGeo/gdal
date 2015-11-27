@@ -7,7 +7,7 @@
 
 <h1>SENTINEL2 -- Sentinel-2 Products</h1>
 
-<p>Driver for Sentinel-2 Level-1C products. (GDAL &gt;= 2.1)</p>
+<p>Driver for Sentinel-2 Level-1B and Level-1C products. (GDAL &gt;= 2.1)</p>
 
 <p>The SENTINEL2 driver will be used if the main metadata .xml file at the
 root of a SENTINEL2 data product is opened (whose name is typically
@@ -25,25 +25,50 @@ as show in the below table:
 
 <p>
 <table border=1">
-<tr><th>Band name</th><th>Resolution (m)</th><th>Central wavelength (nm)</th><th>Band width (nm)</th><th>Other info</th></tr>
-<tr><td>B01</td>      <td>60</td>            <td>443</td>                    <td>20</td>             <td>-</td></tr>
+<tr><th>Band name</th><th>Resolution (m)</th><th>Central wavelength (nm)</th><th>Band width (nm)</th><th>Purpose</th></tr>
+<tr><td>B01</td>      <td>60</td>            <td>443</td>                    <td>20</td>             <td>Aerosol detection</td></tr>
 <tr><td>B02</td>      <td>10</td>            <td>490</td>                    <td>65</td>             <td>Blue</td></tr>
 <tr><td>B03</td>      <td>10</td>            <td>560</td>                    <td>35</td>             <td>Green</td></tr>
 <tr><td>B04</td>      <td>10</td>            <td>665</td>                    <td>30</td>             <td>Red</td></tr>
-<tr><td>B05</td>      <td>20</td>            <td>705</td>                    <td>15</td>             <td>-</td></tr>
-<tr><td>B06</td>      <td>20</td>            <td>740</td>                    <td>15</td>             <td>-</td></tr>
-<tr><td>B07</td>      <td>20</td>            <td>783</td>                    <td>20</td>             <td>-</td></tr>
-<tr><td>B08</td>      <td>10</td>            <td>842</td>                    <td>115</td>            <td>-</td></tr>
-<tr><td>B08A</td>     <td>20</td>            <td>865</td>                    <td>20</td>             <td>-</td></tr>
-<tr><td>B09</td>      <td>60</td>            <td>945</td>                    <td>20</td>             <td>-</td></tr>
-<tr><td>B10</td>      <td>60</td>            <td>1375</td>                   <td>30</td>             <td>-</td></tr>
-<tr><td>B11</td>      <td>20</td>            <td>1610</td>                   <td>90</td>             <td>-</td></tr>
-<tr><td>B12</td>      <td>20</td>            <td>2190</td>                   <td>180</td>            <td>-</td></tr>
+<tr><td>B05</td>      <td>20</td>            <td>705</td>                    <td>15</td>             <td>Vegetation classification</td></tr>
+<tr><td>B06</td>      <td>20</td>            <td>740</td>                    <td>15</td>             <td>Vegetation classification</td></tr>
+<tr><td>B07</td>      <td>20</td>            <td>783</td>                    <td>20</td>             <td>Vegetation classification</td></tr>
+<tr><td>B08</td>      <td>10</td>            <td>842</td>                    <td>115</td>            <td>Near infrared</td></tr>
+<tr><td>B08A</td>     <td>20</td>            <td>865</td>                    <td>20</td>             <td>Vegetation classification</td></tr>
+<tr><td>B09</td>      <td>60</td>            <td>945</td>                    <td>20</td>             <td>Water vapour</td></tr>
+<tr><td>B10</td>      <td>60</td>            <td>1375</td>                   <td>30</td>             <td>Cirrus</td></tr>
+<tr><td>B11</td>      <td>20</td>            <td>1610</td>                   <td>90</td>             <td>Snow / ice / cloud discrimination</td></tr>
+<tr><td>B12</td>      <td>20</td>            <td>2190</td>                   <td>180</td>            <td>Snow / ice / cloud discrimination</td></tr>
 </table>
 </p>
 
-<p>Level-1C products are organized in tiles of 100 km x 100 km in UTM WGS84 projections.
-The imagery of each band is put in a separate JPEG2000 file.
+<h2>Level-1B</h2>
+
+<p>Level-1B products are composed of several "granules" of ~ 25 km across-track x
+~ 23km along-track, in sensor geometry (i.e. non ortho-rectified).
+Each granule correspond to the imagery captured
+by one of the 12 detectors accros-track (for a total 290 km swath width).
+The imagery of each band is put in a separate JPEG2000 file.</p>
+
+<p>Level-1B products are aimed at advanced users.</p>
+
+<p>When opening the main
+metadata .xml file, the driver will typically expose N * 3 sub-datasets, where N
+is the number of granules composing the user product, and 3 corresponds to the
+number of spatial resolutions. There's one for the 4
+10m bands, one for the 6 20m bands and one for the 3 60m bands. Caution: the
+number of such subdatasets can be typically of several hundreds or more.</p>
+
+<p>It is also possible to open the metadata .xml of a given granule, in which
+case 3 subdatasets will be reported for each of the 3 spatial resolutions.</p>
+
+<p>When opening a subdataset, the georeferencing is made of 5 ground control points
+for the 4 corner of the images and the center of image.</p>
+
+<h2>Level-1C</h2>
+
+<p>Level-1C products are organized in ortho-rectified tiles of 100 km x 100 km
+in UTM WGS84 projections. The imagery of each band is put in a separate JPEG2000 file.
 </p>
 
 <p>When opening the main
@@ -53,6 +78,8 @@ of the R,G,B bands at a 320m resolution, by mosaicing all tiles of same resoluti
 and projection. If a product spans over several UTM zones,
 they will be exposed as separate subdatasets.</p>
 
+<h2>Metadata</h2>
+
 <p>Metadata of the main metadata .xml file is available in the general metadata
 domain. The whole XML file is also accessible through the xml:SENTINEL2 metadata
 domain.</p>
@@ -60,7 +87,7 @@ domain.</p>
 <p>Subdatasets are based on the VRT format, so the definition of this VRT can
 be obtained by querying the xml:VRT metadata domain.</p>
 
-<h2>Performance issues</h2>
+<h2>Performance issues for L1C</h2>
 
 <p>Due to the way Sentinel-2 products are structured, in particular because of
 the number of JPEG2000 files involved, zoom-out operations can be very slow for
@@ -173,7 +200,7 @@ Center      (  256.0,  256.0)
 $ gdalinfo S2A_OPER_PRD_MSIL1C_PDMC_20150818T101440_R022_V20150813T102406_20150813T102406.zip
 </pre>
 
-<li>Opening the 10 meters resolution bands:
+<li>Opening the 10 meters resolution bands of a L1C subdataset:
 
 <pre>
 $ gdalinfo SENTINEL2_L1C:S2A_OPER_MTD_SAFL1C_PDMC_20150818T101440_R022_V20150813T102406_20150813T102406.xml:10m:EPSG_32632
@@ -248,14 +275,14 @@ Band 4 Block=128x128 Type=UInt16, ColorInterp=Undefined
 </pre>
 </li>
 
-<li>Conversion to tiled GeoTIFF
+<li>Conversion of a L1C subdataset to tiled GeoTIFF
 <pre>
 $ gdal_translate SENTINEL2_L1C:S2A_OPER_MTD_SAFL1C_PDMC_20150818T101440_R022_V20150813T102406_20150813T102406.xml:10m:EPSG_32632 \
                  10m.tif \
                  -co TILED=YES --config GDAL_CACHEMAX 1000 --config GDAL_NUM_THREADS 2
 </pre>
 
-<li>Generating blank overviews:
+<li>Generating blank overviews for a L1C subdataset:
 <pre>
 $ gdaladdo -r NONE SENTINEL2_L1C:S2A_OPER_MTD_SAFL1C_PDMC_20150818T101440_R022_V20150813T102406_20150813T102406.xml:10m:EPSG_32632 4
 </pre>
@@ -265,6 +292,102 @@ $ gdaladdo -r NONE SENTINEL2_L1C:S2A_OPER_MTD_SAFL1C_PDMC_20150818T101440_R022_V
 $ python -c "import sys; from osgeo import gdal; ds = gdal.Open(sys.argv[1]); open(sys.argv[2], 'wb').write(ds.GetMetadata('xml:VRT')[0].encode('utf-8'))" \
          SENTINEL2_L1C:S2A_OPER_MTD_SAFL1C_PDMC_20150818T101440_R022_V20150813T102406_20150813T102406.xml:10m:EPSG_32632 10m.vrt
 </pre>
+
+<li>Opening the 10 meters resolution bands of a L1B subdataset:
+<pre>
+$ gdalinfo SENTINEL2_L1B:S2A_OPER_MTD_L1B_GR_SGS__20151024T023555_S20151024T011315_D02.xml:10m
+</pre>
+
+<pre>
+Driver: SENTINEL2/Sentinel 2
+Files: S2A_OPER_MTD_L1B_GR_SGS__20151024T023555_S20151024T011315_D02.xml
+       IMG_DATA/S2A_OPER_MSI_L1B_GR_SGS__20151024T023555_S20151024T011315_D02_B04.jp2
+       IMG_DATA/S2A_OPER_MSI_L1B_GR_SGS__20151024T023555_S20151024T011315_D02_B03.jp2
+       IMG_DATA/S2A_OPER_MSI_L1B_GR_SGS__20151024T023555_S20151024T011315_D02_B02.jp2
+       IMG_DATA/S2A_OPER_MSI_L1B_GR_SGS__20151024T023555_S20151024T011315_D02_B08.jp2
+Size is 2552, 2304
+Coordinate System is `'
+GCP Projection = 
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4326"]]
+GCP[  0]: Id=, Info=
+          (0,0) -> (134.635194391036,-21.4282083310724,0)
+GCP[  1]: Id=, Info=
+          (0,2304) -> (134.581480136827,-21.6408640426055,0)
+GCP[  2]: Id=, Info=
+          (2552,2304) -> (134.833308274251,-21.686125031254,0)
+GCP[  3]: Id=, Info=
+          (2552,0) -> (134.886750925145,-21.4734274382519,0)
+GCP[  4]: Id=, Info=
+          (1276,1152) -> (134.734115530986,-21.5571457404287,0)
+Metadata:
+  CLOUDY_PIXEL_PERCENTAGE=0
+  DATASTRIP_ID=S2A_OPER_MSI_L1B_DS_SGS__20151024T023555_S20151024T011312_N01.04
+  DATATAKE_1_DATATAKE_SENSING_START=2015-10-24T01:13:12.027Z
+  DATATAKE_1_DATATAKE_TYPE=INS-NOBS
+  DATATAKE_1_ID=GS2A_20151024T011312_001758_N01.04
+  DATATAKE_1_SENSING_ORBIT_DIRECTION=DESCENDING
+  DATATAKE_1_SENSING_ORBIT_NUMBER=45
+  DATATAKE_1_SPACECRAFT_NAME=Sentinel-2A
+  DEGRADED_ANC_DATA_PERCENTAGE=0
+  DEGRADED_MSI_DATA_PERCENTAGE=0
+  DETECTOR_ID=02
+  DOWNLINK_PRIORITY=NOMINAL
+  FOOTPRINT=POLYGON((134.635194391036 -21.4282083310724, 134.581480136827 -21.6408640426055, 134.833308274251 -21.686125031254, 134.886750925145 -21.4734274382519, 134.635194391036 -21.4282083310724))
+  FORMAT_CORRECTNESS_FLAG=PASSED
+  GENERAL_QUALITY_FLAG=PASSED
+  GENERATION_TIME=2015-11-12T10:55:12.000947Z
+  GEOMETRIC_QUALITY_FLAG=PASSED
+  GRANULE_ID=S2A_OPER_MSI_L1B_GR_SGS__20151024T023555_S20151024T011315_D02_N01.04
+  PREVIEW_GEO_INFO=BrowseImageFootprint
+  PREVIEW_IMAGE_URL=https://pdmcdam2.sentinel2.eo.esa.int/s2pdgs_geoserver/geo_service.php?service=WMS&version=1.1.0&request=GetMap&layers=S2A_A000045_N0104:S2A_A000045_N0104&styles=&bbox=133.512786023161,-25.3930035889714,137.184847290108,-21.385906922696&width=1579&height=330&srs=EPSG:4326&format=image/png&time=2015-10-24T01:13:15.0Z/2015-10-24T01:14:13.0Z
+  PROCESSING_BASELINE=01.04
+  PROCESSING_LEVEL=Level-1B
+  PRODUCT_START_TIME=2015-10-24T01:13:15.497656Z
+  PRODUCT_STOP_TIME=2015-10-24T01:14:13.70431Z
+  PRODUCT_TYPE=S2MSI1B
+  RADIOMETRIC_QUALITY_FLAG=PASSED
+  SENSING_TIME=2015-10-24T01:13:15.497656Z
+  SENSOR_QUALITY_FLAG=PASSED
+  SPECIAL_VALUE_NODATA=1
+  SPECIAL_VALUE_SATURATED=0
+Corner Coordinates:
+Upper Left  (    0.0,    0.0)
+Lower Left  (    0.0, 2304.0)
+Upper Right ( 2552.0,    0.0)
+Lower Right ( 2552.0, 2304.0)
+Center      ( 1276.0, 1152.0)
+Band 1 Block=128x128 Type=UInt16, ColorInterp=Red
+  Description = B4, central wavelength 665 nm
+  Overviews: 1276x1152, 638x576, 319x288, 160x144
+  Metadata:
+    BANDNAME=B4
+    BANDWIDTH=30
+    BANDWIDTH_UNIT=nm
+    WAVELENGTH=665
+    WAVELENGTH_UNIT=nm
+  Image Structure Metadata:
+    NBITS=12
+Band 2 Block=128x128 Type=UInt16, ColorInterp=Green
+  Description = B3, central wavelength 560 nm
+[...]
+Band 3 Block=128x128 Type=UInt16, ColorInterp=Blue
+  Description = B2, central wavelength 490 nm
+[...]
+Band 4 Block=128x128 Type=UInt16, ColorInterp=Undefined
+  Description = B8, central wavelength 842 nm
+[...]
+</pre>
+
+</li>
 
 </ul>
 
