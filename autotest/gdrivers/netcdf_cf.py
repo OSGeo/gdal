@@ -126,7 +126,8 @@ def netcdf_cf_setup():
             print('script not responding')
     if success:
         gdaltest.netcdf_cf_method = 'http'
-        print('NOTICE: netcdf CF compliance ckecks: using remote http checker script, consider installing cdms2 locally')
+        print('NOTICE: netcdf CF compliance checks: using remote HTTP '
+              'checker script, consider installing cdms2 locally')
         return 'success'
 
     if gdaltest.netcdf_cf_method is None:

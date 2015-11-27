@@ -53,7 +53,7 @@ def ogr_wfs_init():
         gdaltest.wfs_drv = ogr.GetDriverByName('WFS')
     except:
         pass
-        
+
     if gdaltest.wfs_drv is None:
         return 'skip'
 

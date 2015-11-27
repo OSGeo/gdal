@@ -1813,7 +1813,7 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
         if( poSRS != NULL )
         {
             /* Clone it since mapogroutput assumes that it can destroys */
-            /* the SRS it has passed to use, instead of deferencing it */
+            /* the SRS it has passed to use, instead of dereferencing it. */
             poSRS = poSRS->Clone();
             poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
             poSRS->Dereference();
@@ -1827,7 +1827,7 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     papoLayers = (OGRGMLLayer **)
         CPLRealloc( papoLayers,  sizeof(OGRGMLLayer *) * (nLayers+1) );
-    
+
     papoLayers[nLayers++] = poLayer;
 
     return poLayer;

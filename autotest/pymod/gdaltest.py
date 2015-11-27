@@ -1659,7 +1659,7 @@ def find_lib(mylib):
         return find_lib_windows(mylib)
     else:
         # sorry mac users or other BSDs
-        # should be doable, but not in a blindless way
+        # should be doable
         return None
 
 ###############################################################################

@@ -86,7 +86,7 @@ typedef struct client_info {
 
 /*
  * Typedefs for ``method pointers'' used internally.
- * these are depriciated and provided only for backwards compatibility
+ * these are deprecated and provided only for backwards compatibility.
  */
 typedef unsigned char tidataval_t;    /* internal image data value type */
 typedef tidataval_t* tidata_t;        /* reference to internal image data */

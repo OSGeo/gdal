@@ -1718,7 +1718,7 @@ The name of the csv file containing the tile(s) georeferencing information.
 The file contains 5 columns: tilename,minx,maxx,miny,maxy
 </dd>
 <dt> <b>-csvDelim</b> <i>column delimiter</i>:</dt><dd>
-The column delimter used in the csv file, default value is a semicolon ";"
+The column delimiter used in the CSV file, default value is a semicolon ";"
 </dd>
 <dt> <b>-useDirForEachRow</b>:</dt><dd>
 Normally the tiles of the base image are stored as described in <b>-targetDir</b>.

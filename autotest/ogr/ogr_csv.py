@@ -303,7 +303,8 @@ def ogr_csv_10():
         return 'fail'
 
     if lyr.TestCapability( 'RandomRead' ):
-        gdaltest.post_reason( 'CSV files dont efficiently support random reading.')
+        gdaltest.post_reason( 'CSV files do not efficiently support '
+                              'random reading.')
         return 'fail'
 
     if lyr.TestCapability( 'FastGetExtent' ):

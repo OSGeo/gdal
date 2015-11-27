@@ -379,7 +379,7 @@ def ogr_pg_6():
         return 'fail'
 
     if sql_lyr.GetNextFeature() != None:
-        gdaltest.post_reason( 'GetNextFeature() didn not return None' )
+        gdaltest.post_reason( 'GetNextFeature() did not return None' )
         return 'fail'
 
     gdaltest.pg_ds.ReleaseResultSet( sql_lyr )
@@ -2819,7 +2819,7 @@ def ogr_pg_55():
     feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2 3)'))
     layer.CreateFeature(feat)
     feat = None
-    
+
     layer.ResetReading() # force above feature to be committed
 
     old_val = gdal.GetConfigOption('PG_USE_BASE64')
@@ -2835,7 +2835,7 @@ def ogr_pg_55():
     return 'success'
 
 ###############################################################################
-# Test insertion of features with first field being a 0-charachter string in a
+# Test insertion of features with first field being a 0-character string in a
 # non-spatial table and without FID in COPY mode (#4040)
 
 def ogr_pg_56():
@@ -3562,7 +3562,7 @@ def ogr_pg_69():
     return 'success'
 
 ###############################################################################
-# Test historical non-differet creation of tables (#5547)
+# Test historical non-differed creation of tables (#5547)
 
 def ogr_pg_70():
 

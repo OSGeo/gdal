@@ -217,7 +217,8 @@ namespace tut
         char* unitsName = NULL;
         val = OSRGetLinearUnits(srs_, &unitsName);
         ensure("Units name is NULL", NULL != unitsName);
-        ensure("Didn\'t get Foot linear units", std::string("Foot") == unitsName);
+        ensure( "Did not get Foot linear units",
+                std::string("Foot") == unitsName);
     }
 
     // Translate a coordinate system with NAD shift into to PROJ.4 and back.

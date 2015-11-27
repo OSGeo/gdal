@@ -726,7 +726,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     }
     else
     {
-        /* no driver has been specified, defautls to SQL Server */
+        /* No driver has been specified, defaults to SQL Server. */
         CPLDebug( "OGR_MSSQLSpatial", "EstablishSession(Connection:\"%s\")", pszConnectionName);
         nResult = oSession.EstablishSession( CPLSPrintf("DRIVER=SQL Server;%s", pszConnectionName), "", "" );
     }
@@ -738,7 +738,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unable to initialize connection to the server for %s,\n"
                   "%s", pszNewName, oSession.GetLastError() );
-        
+
         CSLDestroy( papszTableNames );
         CSLDestroy( papszSchemaNames );
         CSLDestroy( papszGeomColumnNames );
@@ -758,9 +758,9 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
         for( int iTable = 0; 
             papszTableNames != NULL && papszTableNames[iTable] != NULL; 
             iTable++ )
-        {        
+        {
             CPLODBCStatement oStmt( &oSession );
-            
+
             /* Use join to make sure the existence of the referred column/table */
             oStmt.Appendf( "SELECT f_geometry_column, coord_dimension, g.srid, srtext, geometry_type FROM dbo.geometry_columns g JOIN INFORMATION_SCHEMA.COLUMNS ON f_table_schema = TABLE_SCHEMA and f_table_name = TABLE_NAME and f_geometry_column = COLUMN_NAME left outer join dbo.spatial_ref_sys s on g.srid = s.srid WHERE f_table_schema = '%s' AND f_table_name = '%s'", papszSchemaNames[iTable], papszTableNames[iTable]);
 

@@ -55,9 +55,9 @@ def gdal_api_proxy_1():
     return 'success'
 
 ###############################################################################
-# Test connexion to TCP server
+# Test connection to TCP server
 def gdal_api_proxy_2():
-    
+
     if sys.version_info < (2,6,0):
         return 'skip'
 
@@ -70,12 +70,12 @@ def gdal_api_proxy_2():
     return 'success'
 
 ###############################################################################
-# Test connexion to Unix socket server
+# Test connection to Unix socket server
 def gdal_api_proxy_3():
-    
+
     if sys.version_info < (2,6,0):
         return 'skip'
-        
+
     if sys.platform == 'win32':
         return 'skip'
 

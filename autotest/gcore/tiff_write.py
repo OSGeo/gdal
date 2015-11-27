@@ -2498,7 +2498,7 @@ def tiff_write_70():
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_70.tif', 32, 32, 1, gdal.GDT_Int16, options = ['SPARSE_OK=YES'] )
     ds.GetRasterBand(1).SetNoDataValue(0)
     if os.stat('tmp/tiff_write_70.tif').st_size > 8:
-        gdaltest.post_reason('directory should not be cryztalized')
+        gdaltest.post_reason('directory should not be crystallized')
         print(os.stat('tmp/tiff_write_70.tif').st_size)
         return 'fail'
     ds = None
@@ -3614,7 +3614,7 @@ def tiff_write_88():
     return 'success'
 
 ###############################################################################
-# Test JPEG_QUALITY propagation while creating a (defalte compressed) mask band
+# Test JPEG_QUALITY propagation while creating a (default compressed) mask band
 
 def tiff_write_89():
     md = gdaltest.tiff_drv.GetMetadata()

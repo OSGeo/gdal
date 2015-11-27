@@ -258,8 +258,8 @@ void CPCIDSKGeoref::WriteSimple( std::string const& geosys,
     else if( STARTS_WITH_CI(geosys_clean.c_str(), "SPIF") )
         units_code = "INTL FOOT";
     else if( STARTS_WITH_CI(geosys_clean.c_str(), "LONG") )
-        units_code = "DEEGREE";
-        
+        units_code = "DEGREE";
+
 /* -------------------------------------------------------------------- */
 /*      Write a fairly simple PROJECTION segment.                       */
 /* -------------------------------------------------------------------- */

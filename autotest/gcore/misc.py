@@ -60,8 +60,8 @@ def misc_1():
 
 ###############################################################################
 # Test that OpenShared() works as expected by opening a big number of times
-# the same dataset with it. If it didn't work, that would exhaust the system limit
-# of maximum file descriptors opened at the same time
+# the same dataset with it. If it did not work, that would exhaust the system
+# limit of maximum file descriptors opened at the same time
 
 def misc_2():
 

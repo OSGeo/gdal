@@ -1559,7 +1559,7 @@ static int gmlHugeResolveEdges( CPL_UNUSED struct huge_helper *helper,
             {
                 CPLRemoveXMLChild( pParent->psParent, pChild->psChild );
 
-                /* destroyng any Child Node to be rewritten */
+                /* Destroying any Child Node to be rewritten */
                 if( pChild->pItem != NULL )
                     CPLDestroyXMLNode( pChild->psChild );
                 pChild = pChild->pNext;

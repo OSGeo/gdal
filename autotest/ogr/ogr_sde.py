@@ -59,17 +59,17 @@ def ogr_sde_1():
 
     if gdaltest.sde_dr is None:
         return 'skip'
-        
+
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base)
     if ds is None:
-        print("Couldn't open %s" % base)
+        print("Could not open %s" % base)
         gdaltest.sde_dr = None
         return 'skip'
     ds.Destroy()
 
     ds = ogr.Open(base, update=1)
-    ds.Destroy()    
+    ds.Destroy()
 
     return 'success'
 
@@ -82,7 +82,7 @@ def ogr_sde_2():
     shp_ds = ogr.Open( 'data/poly.shp' )
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
-    
+
     ds = ogr.Open(base, update=1)
     lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=shp_lyr.GetSpatialRef(),options = [ 'OVERWRITE=YES' ] )
 #    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon)

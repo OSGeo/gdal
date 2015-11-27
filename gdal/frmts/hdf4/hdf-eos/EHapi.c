@@ -858,7 +858,7 @@ EHconvAng(float64 inAngle, intn code)
 |                                                                             |
 |  INPUTS:                                                                    |
 |  instring       const char          Input string                            |
-|  delim          const char          string delimitor                        |
+|  delim          const char          string delimiter                        |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  pntr           char *              Pointer array to beginning of each      |
@@ -879,14 +879,14 @@ int32
 EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
 {
     int32           i;		/* Loop index */
-    int32           prevDelimPos = 0;	/* Previous delimitor position */
+    int32           prevDelimPos = 0;	/* Previous delimiter position */
     int32           count;	/* Number of elements in string list */
     int32           slen;	/* String length */
 
-    char           *delimitor;	/* Pointer to delimitor */
+    char           *delimitor;	/* Pointer to delimiter */
 
 
-    /* Get length of input string list & Point to first delimitor */
+    /* Get length of input string list & Point to first delimiter */
     /* ---------------------------------------------------------- */
     slen = (int)strlen(instring);
     delimitor = strchr(instring, delim);
@@ -902,8 +902,8 @@ EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
     {
 	pntr[0] = (char *)instring;
     }
-    /* If delimitor not found ... */
-    /* -------------------------- */
+    /* If delimiter not found ... */
+    /* ---------------------------- */
     if (delimitor == NULL)
     {
 	/* if string length requested then set to input string length */
@@ -913,14 +913,14 @@ EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
 	    len[0] = slen;
 	}
     } else
-	/* Delimitors Found */
+	/* Delimiters Found */
 	/* ---------------- */
     {
 	/* Loop through all characters in string */
 	/* ------------------------------------- */
 	for (i = 1; i < slen; i++)
 	{
-	    /* If character is a delimitor ... */
+	    /* If character is a delimiter ... */
 	    /* ------------------------------- */
 	    if (instring[i] == delim)
 	    {
@@ -939,7 +939,7 @@ EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
 		    /* ---------------------------------- */
 		    pntr[count] = (char *)instring + i + 1;
 		}
-		/* Reset previous delimitor position and increment counter */
+		/* Reset previous delimiter position and increment counter */
 		/* ------------------------------------------------------- */
 		prevDelimPos = i + 1;
 		count++;
@@ -975,7 +975,7 @@ EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
 |  INPUTS:                                                                    |
 |  target         const char          Target string                           |
 |  search         const char          Search string                           |
-|  delim          const char          Delimitor                               |
+|  delim          const char          Delimiter                               |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -1080,7 +1080,7 @@ EHstrwithin(const char *target, const char *search, const char delim)
 |  INPUTS:                                                                    |
 |  ptr            char                String pointer array                    |
 |  nentries       int32               Number of string array elements         |
-|  delim          char                Delimitor                               |
+|  delim          char                Delimiter                               |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  liststr        char                Output list string                      |
@@ -1122,7 +1122,7 @@ EHloadliststr(char *ptr[], int32 nentries, char *liststr, char delim)
 	memcpy(liststr + off, ptr[i], slen + 1);
 
 
-	/* Concatenate with delimitor */
+	/* Concatenate with delimiter */
 	/* -------------------------- */
 	if (i != nentries - 1)
 	{
@@ -1378,7 +1378,7 @@ EHrevflds(char *dimlist, char *revdimlist)
     }
 
 
-    /* Replace comma delimitors by nulls */
+    /* Replace comma delimiters by nulls */
     /* --------------------------------- */
     for (indx = 0; indx < nentries - 1; indx++)
     {
@@ -1613,7 +1613,7 @@ EHmetalist(char *instring, char *outstring)
 	outstring[listlen] = 0;
 
 
-	/* Add comma delimitor to output string */
+	/* Add comma delimiter to output string */
 	/* ------------------------------------ */
 	if (i != (nentries - 1))
 	{

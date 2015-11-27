@@ -175,25 +175,25 @@ PostGISRasterDataset::PostGISRasterDataset():VRTDataset(0, 0) {
     pszPrimaryKeyName = NULL;
     bIsFastPK = false;
     bHasTriedFetchingPrimaryKeyName = false;
-    
+
     papoSourcesHolders = NULL;
     hQuadTree = NULL;
-    
+
     bHasBuiltOverviews = false;
     nOverviewCount = 0;
     papoOverviewDS = NULL;
     poParentDS = NULL;
-    
+
     bAssumeMultiBandReadPattern = true;
     nNextExpectedBand = 1;
     nXOffPrev = 0;
     nYOffPrev = 0;
     nXSizePrev = 0;
     nYSizePrev = 0;
-    
+
     bHasTriedHasSpatialIndex = false;
     bHasSpatialIndex = false;
-    
+
     bBuildQuadTreeDynamically = false;
 
     bTilesSameDimension = false;
@@ -205,9 +205,9 @@ PostGISRasterDataset::PostGISRasterDataset():VRTDataset(0, 0) {
 
     /**
      * TODO: Parametrize bAllTilesSnapToSameGrid. It controls if all the
-     * raster rows, in ONE_RASTER_PER_TABLE mode, must be checked to 
-     * test if they snap to the same grid and have the same srid. It can 
-     * be the user decission, if he/she's sure all the rows pass the 
+     * raster rows, in ONE_RASTER_PER_TABLE mode, must be checked to
+     * test if they snap to the same grid and have the same SRID. It can
+     * be the user decision, if he/she's sure all the rows pass the
      * test and want more speed.
      **/
 
@@ -222,22 +222,22 @@ PostGISRasterDataset::~PostGISRasterDataset() {
         CPLFree(pszSchema);
         pszSchema = NULL;
     }
-    
+
     if (pszTable) {
         CPLFree(pszTable);
         pszTable = NULL;
     }
-    
+
     if (pszColumn) {
         CPLFree(pszColumn);
         pszColumn = NULL;
     }
-    
+
     if (pszWhere) {
         CPLFree(pszWhere);
         pszWhere = NULL;
     }
-    
+
     if (pszProjection) {
         CPLFree(pszProjection);
         pszProjection = NULL;

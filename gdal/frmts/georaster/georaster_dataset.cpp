@@ -1578,21 +1578,21 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         {
             poSRS2->SetProjection( "Interrupted Goode Homolosine" );
         }
-        
+
         // ----------------------------------------------------------------
         // Translate projection's parameters to Oracle's standards
         // ----------------------------------------------------------------
 
         char* pszStart = NULL;
-        
-        CPLFree( pszCloneWKT );       
+
+        CPLFree( pszCloneWKT );
 
         if( poSRS2->exportToWkt( &pszCloneWKT ) != OGRERR_NONE )
         {
             delete poSRS2;
             return CE_Failure;
         }
-        
+
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_AZIMUTH) ) != NULL )
         {
             strncpy( pszStart, "Azimuth", strlen(SRS_PP_AZIMUTH) );

@@ -86,7 +86,7 @@ const double ReflectanceCalculator::rDeclination() const
   double rJulianDay = m_iDay - 1;
   double yearFraction = (rJulianDay + m_rHours / 24) / iDaysInYear(m_iYear);
   double T = 2 * M_PI * yearFraction;
-  
+
   double declin = 0.006918 - 0.399912 * cos(T) + 0.070257 * sin(T)
           - 0.006758 * cos(2 * T) + 0.000907 * sin(2 * T)
           - 0.002697 * cos(3 * T) + 0.00148 * sin(3 * T);
@@ -95,8 +95,8 @@ const double ReflectanceCalculator::rDeclination() const
 
 double ReflectanceCalculator::rHourAngle(double rLon) const
 {
-	// In: rLon (in degrees)
-	// Out: hourAngle (in radians)
+  // In: rLon (in degrees)
+  // Out: hourAngle (in radians)
   double rJulianDay = m_iDay - 1;
   double yearFraction = (rJulianDay + m_rHours / 24) / iDaysInYear(m_iYear);
   double T = 2 * M_PI * yearFraction;

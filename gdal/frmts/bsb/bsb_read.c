@@ -503,7 +503,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
         /* the index table can have one row less than nYSize */
         /* If we look into the file closely, there is no data for */
         /* that last row (the end of line psInfo->nYSize - 1 is the start */
-        /* of the index table), so we can decrement psInfo->nYSize */
+        /* of the index table), so we can decrement psInfo->nYSize. */
         if (nOffsetIndexTable + 4 * (psInfo->nYSize - 1) == nFileLen - 4)
         {
             CPLDebug("BSB", "Index size is one row shorter than declared image height. Correct this");

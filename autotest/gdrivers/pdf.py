@@ -559,6 +559,7 @@ def pdf_tiled():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
+    # TODO: COMPRESS or COMPRES?
     tst = gdaltest.GDALTest( 'PDF', 'utm.tif', 1, None, options = ['COMPRES=DEFLATE', 'TILED=YES'] )
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 

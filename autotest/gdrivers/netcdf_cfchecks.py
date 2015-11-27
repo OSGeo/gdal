@@ -5,7 +5,7 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test NetCDF driver CF compliance.
 # Author:   Etienne Tourigny <etourigny.dev at gmail dot com>
-# 
+#
 ###############################################################################
 # No copyright in original script...  apparently under BSD licence
 # original can be found at http://pypi.python.org/pypi/cfchecker
@@ -23,7 +23,7 @@
 #
 # Date: September 2011
 #
-# File Revision: 
+# File Revision:
 #
 # CF Checker Version: 2.0.4-gdal
 #
@@ -32,14 +32,14 @@
 
 Description:
  The cfchecker checks NetCDF files for compliance to the CF standard.
- 
+
 Options:
  -a or --area_types:
        the location of the CF area types table (xml)
-       
+
  -s or --cf_standard_names:
        the location of the CF standard name table (xml)
-       
+
  -u or --udunits:
        the location of the udunits.dat file
 
@@ -236,7 +236,8 @@ def chkDerivedName(name):
 # Checking class
 #======================
 class CFChecker:
-    
+
+  # TODO: coards -> coords
   def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, cfAreaTypesXML=None, udunitsDat=None, version=Versions[-1]):
       self.uploader = uploader
       self.useFileName = useFileName
@@ -267,7 +268,7 @@ class CFChecker:
     else:
         print("CHECKING NetCDF FILE:",file)
     print("=====================")
-    
+
     # Check for valid filename
     if not fileSuffix.match(file):
         print("ERROR (2.1): Filename must have .nc suffix")
@@ -275,7 +276,7 @@ class CFChecker:
 
     # Initialize udunits-2 package
     # (Temporarily ignore messages to std error stream to prevent "Definition override" warnings
-    # being dislayed see Trac #50)
+    # being displayed see Trac #50)
     # Use ctypes callback functions to declare ut_error_message_handler (uemh)
     # Don't fully understand why this works!  Solution supplied by ctypes-mailing-list. 19.01.10
     uemh = ctypes.CFUNCTYPE(ctypes.c_int,ctypes.c_char_p)

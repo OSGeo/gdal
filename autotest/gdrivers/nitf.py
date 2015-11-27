@@ -437,7 +437,7 @@ def nitf_19():
 
 
 ###############################################################################
-# Test NITF file consiting only of an header
+# Test NITF file consisting only of an header
 
 def nitf_20():
 
@@ -753,7 +753,7 @@ def nitf_32():
 
 
 ###############################################################################
-# Test Create() with ICORDS=D and a consistant BLOCKA
+# Test Create() with ICORDS=D and a consistent BLOCKA
 
 def nitf_33():
 

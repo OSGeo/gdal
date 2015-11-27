@@ -1671,7 +1671,7 @@ def ogr_gml_42():
 # Test automated downloading of WFS schema
 
 def ogr_gml_43():
-    
+
     # The service times out
     return 'skip'
 

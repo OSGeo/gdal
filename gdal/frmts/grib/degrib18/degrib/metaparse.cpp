@@ -1957,8 +1957,8 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
  *    WxType = table to look up values in. (Input)
  *    startX = The start of the X values. (Input)
  *    startY = The start of the Y values. (Input)
- *     subNx = The Nx dimmension of the subgrid (Input)
- *     subNy = The Ny dimmension of the subgrid (Input)
+ *     subNx = The Nx dimension of the subgrid (Input)
+ *     subNy = The Ny dimension of the subgrid (Input)
  *
  * FILES/DATABASES: None
  *
@@ -2078,8 +2078,8 @@ static void ParseGridNoMiss (gridAttribType *attrib, double *grib_Data,
  *    WxType = table to look up values in. (Input)
  *    startX = The start of the X values. (Input)
  *    startY = The start of the Y values. (Input)
- *     subNx = The Nx dimmension of the subgrid (Input)
- *     subNy = The Ny dimmension of the subgrid (Input)
+ *     subNx = The Nx dimension of the subgrid (Input)
+ *     subNy = The Ny dimension of the subgrid (Input)
  *
  * FILES/DATABASES: None
  *
@@ -2206,8 +2206,8 @@ static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
  *    WxType = table to look up values in. (Input)
  *    startX = The start of the X values. (Input)
  *    startY = The start of the Y values. (Input)
- *     subNx = The Nx dimmension of the subgrid (Input)
- *     subNy = The Ny dimmension of the subgrid (Input)
+ *     subNx = The Nx dimension of the subgrid (Input)
+ *     subNy = The Ny dimension of the subgrid (Input)
  *
  * FILES/DATABASES: None
  *
@@ -2386,8 +2386,8 @@ void ParseGrid (gridAttribType *attrib, double **Grib_Data,
    sInt4 missCnt = 0;   /* Number of detected missing values. */
    uInt4 index;         /* Current index into Wx table. */
    float *ain = (float *) iain;
-   uInt4 subNx;         /* The Nx dimmension of the subgrid. */
-   uInt4 subNy;         /* The Ny dimmension of the subgrid. */
+   uInt4 subNx;         /* The Nx dimension of the subgrid. */
+   uInt4 subNy;         /* The Ny dimension of the subgrid. */
 
    subNx = stopX - startX + 1;
    subNy = stopY - startY + 1;

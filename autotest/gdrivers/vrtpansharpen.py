@@ -239,7 +239,7 @@ def vrtpansharpen_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # VRTRasterBand of unrecognised subclass 'blabla'
+    # VRTRasterBand of unrecognized subclass 'blabla'
     gdal.PushErrorHandler()
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
     <VRTRasterBand dataType="Byte" band="1" subClass="blabla">

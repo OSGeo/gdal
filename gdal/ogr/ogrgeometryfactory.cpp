@@ -1921,7 +1921,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
 /* -------------------------------------------------------------------- */
-/*      Decode the dimentionality if appropriate.                       */
+/*      Decode the dimensionality if appropriate.                       */
 /* -------------------------------------------------------------------- */
     OGRGeometry *poGeom = NULL;
     int          nTupleSize = 0;

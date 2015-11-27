@@ -500,7 +500,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
             for( iLUTEntry = 0; iLUTEntry < 255; ++iLUTEntry )
             {
-                /* E. Rouault: I don't understand why the following logic is endianness dependant */
+                /* E. Rouault: I don't understand why the following logic is endianness dependent. */
                 pLUTVal[iLUTEntry] = ((pMSB[iLUTEntry] << 8) | pLSB[iLUTEntry]);
 #ifdef CPL_LSB
                 pLUTVal[iLUTEntry] = ((pLUTVal[iLUTEntry] >> 8) | (pLUTVal[iLUTEntry] << 8));

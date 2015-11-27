@@ -2264,7 +2264,7 @@ def test_ogr2ogr_55():
     return 'success'
 
 ###############################################################################
-# Test behaviour when creatin a field with same name as FID column
+# Test behaviour when creating a field with same name as FID column.
 
 def test_ogr2ogr_56():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2274,7 +2274,7 @@ def test_ogr2ogr_56():
     f.write('str,myid,WKT\n')
     f.write('aaa,10,"POINT(0 0)"\n')
     f.close()
-    
+
     f = open('tmp/test_ogr2ogr_56.csvt', 'wt')
     f.write('String,Integer,String\n')
     f.close()

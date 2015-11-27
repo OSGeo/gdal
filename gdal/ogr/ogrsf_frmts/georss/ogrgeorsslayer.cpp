@@ -1423,10 +1423,13 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeature )
                     pszAuthorityCode != NULL)
                 {
                     if (!EQUAL(pszAuthorityCode, "4326"))
-                        pszURN = CPLStrdup(CPLSPrintf("urn:ogc:def:crs:EPSG::%s", pszAuthorityCode));
+                        pszURN = CPLStrdup(
+                            CPLSPrintf( "urn:ogc:def:crs:EPSG::%s",
+                                        pszAuthorityCode ) );
 
-                    /* In case the SRS is a geographic SRS and that we have no axis */
-                    /* defintion, we assume that the order is lon/lat */
+                    /* In case the SRS is a geographic SRS and that we have */
+                    /* no axis definition, we assume that the order is */
+                    /* lon/lat. */
                     const char* pszAxisName = poSRS->GetAxis(NULL, 0, NULL);
                     if (poSRS->IsGeographic() &&
                         (pszAxisName == NULL || STARTS_WITH_CI(pszAxisName, "Lon")))

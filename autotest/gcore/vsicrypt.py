@@ -243,7 +243,7 @@ def vsicrypt_2():
     fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,add_key_check=yes,file=/vsimem/file.bin', 'wb')
     gdal.VSIFWriteL('hello', 1, 5, fp)
     gdal.VSIFCloseL(fp)
-    
+
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=dont_use_in_prod,file=/vsimem/file.bin', 'rb')
     if fp is not None:

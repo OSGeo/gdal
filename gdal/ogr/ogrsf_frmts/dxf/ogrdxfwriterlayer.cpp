@@ -950,7 +950,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 
         if( poPen->Color(bDefault) != NULL && !bDefault )
             WriteValue( 62, ColorStringToDXFColor( poPen->Color(bDefault) ) );
-        
+
         double dfWidthInMM = poPen->Width(bDefault);
 
         if( !bDefault )

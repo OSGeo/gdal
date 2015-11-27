@@ -552,7 +552,8 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
         if( poLayer == NULL )
         {
-            *pzErr = sqlite3_mprintf( "Cannot find layer '%s' in '%s'", osLayerName.c_str(), osDSName.c_str() );
+            *pzErr = sqlite3_mprintf( "Cannot find layer '%s' in '%s'",
+                                      osLayerName.c_str(), osDSName.c_str() );
             poDS->Release();
             return SQLITE_ERROR;
         }
@@ -565,13 +566,13 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         {
             bExposeOGRNativeData = atoi(OGRSQLiteParamsUnquote(argv[7]));
         }
-        
+
         bCloseDS = TRUE;
     }
 #endif // VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
     OGR2SQLITE_vtab* vtab =
                 (OGR2SQLITE_vtab*) CPLCalloc(1, sizeof(OGR2SQLITE_vtab));
-    /* We dont need to fill the non-extended fields */
+    /* We do not need to fill the non-extended fields */
     vtab->pszVTableName = CPLStrdup(OGRSQLiteEscapeName(argv[2]));
     vtab->poModule = poModule;
     vtab->poDS = poDS;
@@ -858,7 +859,7 @@ int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
 
     OGR2SQLITE_vtab_cursor* pCursor = (OGR2SQLITE_vtab_cursor*)
                                 CPLCalloc(1, sizeof(OGR2SQLITE_vtab_cursor));
-    /* We dont need to fill the non-extended fields */
+    // We do not need to fill the non-extended fields.
     *ppCursor = (sqlite3_vtab_cursor *)pCursor;
 
     pCursor->poDupDataSource = poDupDataSource;
@@ -1904,7 +1905,7 @@ int OGR2SQLITESpatialIndex_ConnectCreate(sqlite3* hDB, void *pAux,
 
     OGR2SQLITESpatialIndex_vtab* vtab =
                 (OGR2SQLITESpatialIndex_vtab*) CPLCalloc(1, sizeof(OGR2SQLITESpatialIndex_vtab));
-    /* We dont need to fill the non-extended fields */
+    // We do not need to fill the non-extended fields.
     vtab->pszVTableName = CPLStrdup(OGRSQLiteEscapeName(argv[2]));
     vtab->poModule = poModule;
     vtab->poDS = poDS;
@@ -2114,7 +2115,7 @@ int OGR2SQLITESpatialIndex_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCur
 
     OGR2SQLITESpatialIndex_vtab_cursor* pCursor = (OGR2SQLITESpatialIndex_vtab_cursor*)
                                 CPLCalloc(1, sizeof(OGR2SQLITESpatialIndex_vtab_cursor));
-    /* We dont need to fill the non-extended fields */
+    // We do not need to fill the non-extended fields.
     *ppCursor = (sqlite3_vtab_cursor *)pCursor;
 
     pCursor->poDupDataSource = poDupDataSource;
@@ -2495,8 +2496,8 @@ int OGR2SQLITE_static_register (sqlite3 * hDB, char **pzErrMsg, void * _pApi)
     /* to create a custom module */
     if( CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "YES")) )
     {
-        /* Can happen if sqlite is compiled with SQLITE_OMIT_LOAD_EXTENSION (with sqlite 3.6.10 for example) */
-        /* We return here OK since it is not vital for regular SQLite dababases */
+        /* Can happen if SQLite is compiled with SQLITE_OMIT_LOAD_EXTENSION (with SQLite 3.6.10 for example) */
+        /* We return here OK since it is not vital for regular SQLite databases */
         /* to load the OGR SQL functions */
         if( pApi->create_module == NULL )
             return SQLITE_OK;
@@ -2506,7 +2507,7 @@ int OGR2SQLITE_static_register (sqlite3 * hDB, char **pzErrMsg, void * _pApi)
     }
     else
     {
-        /* Can happen if sqlite is compiled with SQLITE_OMIT_LOAD_EXTENSION (with sqlite 3.6.10 for example) */
+        /* Can happen if SQLite is compiled with SQLITE_OMIT_LOAD_EXTENSION (with SQLite 3.6.10 for example) */
         /* We return fail since Setup() will later be called, and crash */
         /* if create_module isn't available */
         if( pApi->create_module == NULL )

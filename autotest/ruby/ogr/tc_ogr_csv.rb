@@ -168,7 +168,7 @@ class TestOgrCsv < Test::Unit::TestCase
                  'should not have write access to readonly layer')
 
     assert_equal(false, lyr.test_capability( 'RandomRead'),
-                 'CSV files dont efficiently support random reading.')
+                 'CSV files do not efficiently support random reading.')
 
     assert_equal(false, lyr.test_capability( 'FastGetExtent'),
                  'CSV files do not support getextent' )

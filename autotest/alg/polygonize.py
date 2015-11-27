@@ -171,7 +171,6 @@ def polygonize_3():
     else:
         tr = 1
     feat_read.Destroy()
-        
 
     if tr:
         return 'success'

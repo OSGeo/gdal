@@ -673,7 +673,7 @@ Version 1.1.1 - (2001-05-01)
 ----------------------------
 
 - Added implementation for OGRLayer::GetExtent() that returns extents 
-  of the data, which is differents from the bounds of the projection.
+  of the data, which is different from the bounds of the projection.
 
 - Added code to set TOWGS84 values for mitab_coordsys.cpp and 
   mitab_spatialref.cpp.  

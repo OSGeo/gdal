@@ -186,9 +186,9 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     this->nZDim = nZDim;
     this->nLevel = nLevel;
 
-/* -------------------------------------------------------------------- */
-/*      Take care of all other dimmensions                              */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------- */
+/*      Take care of all other dimensions                              */
+/* ------------------------------------------------------------------- */
     if( nZDim > 2 ) {
         this->panBandZPos = 
             (int *) CPLCalloc( nZDim-1, sizeof( int ) );
@@ -506,8 +506,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         return;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Take care of all other dimmensions                              */
+/* ------------------------------------------------------------------ */
+/*      Take care of all other dimensions                             */
 /* ------------------------------------------------------------------ */
     if ( nZDim > 2 && paDimIds != NULL ) {
         nBandXPos = panBandZPos[0];
@@ -2949,12 +2949,12 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
                         bGotGdalGT = true;
 
                         adfTempGeoTransform[0] = dfWE;
-                        adfTempGeoTransform[1] = (dfEE - dfWE) / 
+                        adfTempGeoTransform[1] = (dfEE - dfWE) /
                             ( poDS->GetRasterXSize() - 1 );
                         adfTempGeoTransform[2] = 0.0;
                         adfTempGeoTransform[3] = dfNN;
                         adfTempGeoTransform[4] = 0.0;
-                        adfTempGeoTransform[5] = (dfSN - dfNN) / 
+                        adfTempGeoTransform[5] = (dfSN - dfNN) /
                             ( poDS->GetRasterYSize() - 1 );
                         /* compute the center of the pixel */
                         adfTempGeoTransform[0] = dfWE
@@ -2966,25 +2966,28 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
                 CSLDestroy( papszGeoTransform );
 
                 if ( bGotGdalSRS && ! bGotGdalGT )
-                    CPLDebug( "GDAL_netCDF", "got SRS but not geotransform from GDAL!");
+                    CPLDebug( "GDAL_netCDF",
+                              "Got SRS but no geotransform from GDAL!");
 
             } // if ( !bGotCfGT )
 
         }
     }
 
-    /* Set GeoTransform if we got a complete one - after projection has been set */
+    // Set GeoTransform if we got a complete one - after projection has been set
     if ( bGotCfGT || bGotGdalGT ) {
         SetGeoTransform( adfTempGeoTransform );
     }
 
-    /* Process geolocation arrays from CF "coordinates" attribute */
-    /* perhaps we should only add if is not a (supported) CF projection (bIsCfProjection */
-    ProcessCFGeolocation( nVarId ); 
+    // Process geolocation arrays from CF "coordinates" attribute.
+    // Perhaps we should only add if is not a (supported) CF projection
+    // (bIsCfProjection).
+    ProcessCFGeolocation( nVarId );
 
-    /* debuging reports */
-    CPLDebug( "GDAL_netCDF", 
-              "bGotGeogCS=%d bGotCfSRS=%d bGotCfGT=%d bGotGdalSRS=%d bGotGdalGT=%d",
+    // Debugging reports.
+    CPLDebug( "GDAL_netCDF",
+              "bGotGeogCS=%d bGotCfSRS=%d bGotCfGT=%d bGotGdalSRS=%d "
+              "bGotGdalGT=%d",
               bGotGeogCS, bGotCfSRS, bGotCfGT, bGotGdalSRS, bGotGdalGT );
 
     if ( !bGotCfGT && !bGotGdalGT )

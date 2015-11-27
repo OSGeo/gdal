@@ -1201,7 +1201,7 @@ Name:
     EnvisatFile_GetDatasetIndex()
 
 Purpose:
-    Fetch the datasat index give a dataset name.
+    Fetch the dataset index given a dataset name.
 
 Description:
     The provided name is extended with spaces, so it isn't necessary for the

@@ -18,7 +18,7 @@
  *
  * Primary libgeotiff include file.
  *
- * This is the defacto registry for valid GEOTIFF GeoKeys
+ * This is the de facto registry for valid GeoTIFF GeoKeys
  * and their associated symbolic values. This is also the only file
  * of the GeoTIFF library which needs to be included in client source
  * code.

@@ -134,12 +134,14 @@ namespace tut
             ensure("SRS reference count not incremented by assignment operator", 4 == poSRS->GetReferenceCount());
             
             value3 = value;
-            ensure("SRS reference count incremented by assignment operator", 4 == poSRS->GetReferenceCount());
+            ensure( "SRS reference count incremented by assignment operator",
+                    4 == poSRS->GetReferenceCount() );
             
         }
-        ensure("GetReferenceCount expected to be decremented by destructions", 1 == poSRS->GetReferenceCount());
+        ensure( "GetReferenceCount expected to be decremented by destructors",
+                1 == poSRS->GetReferenceCount() );
     }
-    
+
     // Test if copy does not leak or double delete the spatial reference
     template<>
     template<>
@@ -147,7 +149,7 @@ namespace tut
     {
         OGRSpatialReference* poSRS = new OGRSpatialReference();
         ensure(NULL != poSRS);
-        
+
         testSpatialReferenceLeakOnCopy<OGRPoint>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRLineString>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRLinearRing>(poSRS);
@@ -160,10 +162,10 @@ namespace tut
         testSpatialReferenceLeakOnCopy<OGRMultiPoint>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRMultiCurve>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRMultiLineString>(poSRS);
-        
+
         delete poSRS;
     }
-    
+
     template<class T> 
     T* make();
     

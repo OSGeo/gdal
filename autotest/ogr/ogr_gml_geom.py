@@ -180,7 +180,7 @@ def gml_posList_line3d_2():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test GML 3.x "polygon" element for a point.
 
@@ -196,7 +196,7 @@ def gml_polygon():
     return 'success'
 
 ###############################################################################
-# Private utility function to conver WKT to GML with assigned WGS 84 as SRS
+# Private utility function to convert WKT to GML with assigned WGS 84 as SRS.
 
 def _CreateGMLWithSRSFromWkt(wkt, epsg):
 

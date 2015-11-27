@@ -522,19 +522,19 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             }
         }
     }
-    
+
     if (ret == CE_None) {
     	const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
     	if (v == -1) {
 	    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of UnsafeSSL: true or false expected.");
 	    ret = CE_Failure;
-	} else {
+        } else {
 	    m_unsafeSsl = v;
-	}
+        }
     }
 
     if (ret == CE_None) {
-        /* If we dont have projection already set ask mini-driver. */
+        /* If we do not have projection already set ask mini-driver. */
         if (!m_projection.size()) {
             const char *proj = m_mini_driver->GetProjectionInWKT();
             if (proj != NULL) {

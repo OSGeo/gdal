@@ -46,13 +46,14 @@ int main()
     OGROCIStatement oStatement( &oSession );
 
     oStatement.Execute( "DROP TABLE fasttest" );
-    oStatement.Execute( "CREATE TABLE fasttest (ifld INTEGER, cfld VARCHAR(4000), shape mdsys.sdo_geometry)" );
+    oStatement.Execute( "CREATE TABLE fasttest (ifld INTEGER, "
+                        "cfld VARCHAR(4000), shape mdsys.sdo_geometry)" );
 //    oStatement.Execute( "CREATE TABLE fasttest (ifld INTEGER, cfld VARCHAR(4000))" );
 
 /* -------------------------------------------------------------------- */
 /*      Prepare insert statement.                                       */
 /* -------------------------------------------------------------------- */
-    
+
     oStatement.Prepare( "INSERT INTO fasttest VALUES "
                         "(:field_1, :field_2, :field_3)" );
 //    oStatement.Prepare( "INSERT INTO fasttest VALUES "

@@ -172,15 +172,15 @@ def ReadAndCheckValues(fname, numrows):
 
     data = rat.ReadAsArray(0, 0, 10)
     if not (data == INT_DATA).all():
-        raise HFATestError("Int colunm does not match")
+        raise HFATestError("Int column does not match")
 
     data = rat.ReadAsArray(1, 0, 10)
     if not (data == DOUBLE_DATA).all():
-        raise HFATestError("double colunm does not match")
+        raise HFATestError("double column does not match")
 
     data = rat.ReadAsArray(2, 0, 10)
     if not (data == STRING_DATA.astype(numpy.character)).all():
-        raise HFATestError("string colunm does not match")
+        raise HFATestError("string column does not match")
 
     data = rat.ReadAsArray(3, 0, 10)
     if not (data == DOUBLE_DATA.astype(int)).all():
@@ -189,7 +189,7 @@ def ReadAndCheckValues(fname, numrows):
     data = rat.ReadAsArray(4, 0, 10)
     if not (data == STRING_DATA_INTS.astype(numpy.int)).all():
         raise HFATestError("int as string column does not match")
-                
+
     data = rat.ReadAsArray(5, 0, 10)
     if not (data == INT_DATA).all():
         raise HFATestError("double as int column does not match")
@@ -197,7 +197,7 @@ def ReadAndCheckValues(fname, numrows):
     data = rat.ReadAsArray(6, 0, 10)
     if not (data == STRING_DATA_DOUBLES.astype(numpy.double)).all():
         raise HFATestError("double as string column does not match")
-                
+
     data = rat.ReadAsArray(7, 0, 10)
     if not (data.astype(numpy.int) == INT_DATA).all():
         raise HFATestError("string as int column does not match")

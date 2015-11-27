@@ -11,7 +11,7 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //   PRGMMR: Gilbert          ORG: W/NP11    DATE: 2002-11-07
 //
 // ABSTRACT: This subroutine packs up a data field using a complex
-//   packing algorithm as defined in the GRIB2 documention.  It
+//   packing algorithm as defined in the GRIB2 documentation.  It
 //   supports GRIB2 complex packing templates with or without
 //   spatial differences (i.e. DRTs 5.2 and 5.3).
 //   It also fills in GRIB2 Data Representation Template 5.2 or 5.3 
@@ -121,7 +121,7 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
              ifld[j]=(g2int)RINT(((fld[j]*dscale)-rmin)*bscale);
         }
         //
-        //  Calculate Spatial differences, if using DRS Template 5.3
+        //  Calculate spatial differences, if using DRS Template 5.3.
         //
         if (idrsnum == 3) {        // spatial differences
            if (idrstmpl[16]!=1 && idrstmpl[16]!=2) idrstmpl[16]=1;

@@ -995,11 +995,11 @@ ECWDataset::~ECWDataset()
 /* -------------------------------------------------------------------- */
 /*      Release / dereference iostream.                                 */
 /* -------------------------------------------------------------------- */
-    // The underlying iostream of the CNCSJP2FileView (poFileView) object may 
-    // also be the underlying iostream of other CNCSJP2FileView (poFileView) 
-    // objects.  Consequently, when we delete the CNCSJP2FileView (poFileView) 
+    // The underlying iostream of the CNCSJP2FileView (poFileView) object may
+    // also be the underlying iostream of other CNCSJP2FileView (poFileView)
+    // objects.  Consequently, when we delete the CNCSJP2FileView (poFileView)
     // object, we must decrement the nFileViewCount attribute of the underlying
-    // VSIIOStream object, and only delete the VSIIOStream object when 
+    // VSIIOStream object, and only delete the VSIIOStream object when
     // nFileViewCount is equal to zero.
 
     CPLMutexHolder oHolder( &hECWDatasetMutex );

@@ -1487,7 +1487,7 @@ Utilities:
  * gdalwarp: do not return a non-zero exit status for warnings
  * gdalwarp: prevent from copying statistics metadata (#5319)
  * gdal_rasterize: set the progress bar to 100% even when there's nothing to do
- * gdal_grid: add support for diffferent types of geometries (#5341)
+ * gdal_grid: add support for different types of geometries (#5341)
  * gdal_grid: add  -z_increase and -z_multiply options
  * gdaldem: check that value of -z, -s, -az and -alt is numeric
  * gdalbuildvrt: validate values of -srcnodata and -vrtnodata arguments
@@ -1560,7 +1560,7 @@ GTiff driver:
  * make SetColorInterpretation() round-trip with GetColorInterpreation();
    read color interpretation from PAM if it exists (overrides internal tiff color interpretation);
    set TIFFTAG_PHOTOMETRIC=PHOTOMETRIC_RGB if calling SetColorInterpretation() with R,G,B and no explicit PHOTOMETRIC creation option defined
- * gt_wkt_srs.cpp: fix compilation with external libgeotiff. The file is dependant of quite a few CPL stuff, don't try to pretend otherwise
+ * gt_wkt_srs.cpp: fix compilation with external libgeotiff. The file is dependent of quite a few CPL stuff, don't try to pretend otherwise
  * implement GetVirtualMemAuto() for some formulations of TIFF files (RFC 45)
  * fix reading a single-strip TIFF file where the single strip is bigger than 2GB (32bit builds only) (#5403)
  * look for .tab file before .wld/.tfw
@@ -2771,9 +2771,9 @@ SDE driver:
 
 Shapefile driver:
  * Add support for reading ESRI .sbn spatial index (#4719)
- * Add defered layer loading
+ * Add deferred layer loading
  * Implement auto-growing of string and integer columns
- * Add a special SQL command 'RESIZE table_name' to resize (shrink) fields to their optimium size, also available as a RESIZE=YES layer creation option for conveniency
+ * Add a special SQL command 'RESIZE table_name' to resize (shrink) fields to their optimum size, also available as a RESIZE=YES layer creation option for convenience
  * Recode field name from UTF-8 to DBF encoding in CreateField()
  * In creation, limit fields of type OFTString to a width of 254 characters (#5052)
  * Spatial index optimization (#4472)
@@ -2795,21 +2795,21 @@ S57 driver:
 
 SQLite/Spatialite driver:
  * Add support for tables with multiple geometry columns (#4768)
- * Add (preliminary) support for Spatialite 4.0 database changes (#4784)
+ * Add (preliminary) support for SpatiaLite 4.0 database changes (#4784)
  * Make GDAL loadable as a SQLite3 extension (named VirtualOGR) (#4782)
  * Add support for OFTDateTime/OFTDate/OFTTime field types
  * Add a SRID layer creation option
  * Make REGEXP function available by using libpcre (#4823)
  * Add a COMPRESS_COLUMNS layer creation option to make string columns ZLib compressed
- * Implement minimalistic set of spatial functions if Spatialite isn't available
- * Spatialite: make use of spatial filter on result layers when the SQL expression is simple enough (no join, etc...) (#4508)
- * Spatialite: spatial index can be used even when linking against regular SQLite (#4632)
- * Spatialite: to improve performance, defer spatial index creation at layer closing or when a spatial request is done
- * Spatialite: use Spatialite 'layer_statistics' and 'spatialite_history' to cache the row count and extent of (spatial) layers
+ * Implement minimal set of spatial functions if SpatiaLite isn't available
+ * SpatiaLite: make use of spatial filter on result layers when the SQL expression is simple enough (no join, etc...) (#4508)
+ * SpatiaLite: spatial index can be used even when linking against regular SQLite (#4632)
+ * SpatiaLite: to improve performance, defer spatial index creation at layer closing or when a spatial request is done
+ * SpatiaLite: use SpatiaLite 'layer_statistics' and 'spatialite_history' to cache the row count and extent of (spatial) layers
  * Spatialite: add support for reading Spatialite 4.0 statistics (filling them on the fly still not implemented)
- * Spatialite: for Spatialite 4.0, translate INIT_WITH_EPSG=NO into InitSpatialMetaData('NONE') to avoid filling the spatial_ref_sys table
+ * SpatiaLite: for SpatiaLite 4.0, translate INIT_WITH_EPSG=NO into InitSpatialMetaData('NONE') to avoid filling the spatial_ref_sys table
  * On SQL result layers, report the SRS of the geometry of the first feature as the layer SRS
- * Defered layer definition building for table and view layers
+ * Deferred layer definition building for table and view layers
  * Speed-up opening of a result layer that has an ORDER BY
  * Cache GetExtent() result
  * Allow inserting empty feature
@@ -3134,7 +3134,7 @@ ENVISAT driver:
  * Report metadata from the ASAR ADS and GADS in the RECORDS metadata domain (#4105)
  * Read MERIS metadata (#4105)
  * Read data from ERS products in ENVISAT format (#4105)
- * Improved MERIS Level 2 bands datection (#4141 and #4142)
+ * Improved MERIS Level 2 bands detection (#4141 and #4142)
 
 EPSILON driver:
  * Now require libepsilon 0.9.1 to build (now dual LGPL/GPL) (#4084)
@@ -3148,7 +3148,7 @@ ERS driver:
 GeoRaster driver:
  * Set nodata causes invalid XML metadata (#3893)
  * Fix SetStatistics() failure (#4072)
- * Fix defaut interleaving (#4071)
+ * Fix default interleaving (#4071)
  * modelCoordinateLocation=CENTER default (#3266)
  * Cache block/level error in update (#4089)
  * Fix sequence.nextval not supported (Oracle 10g) (#4132)
@@ -5004,7 +5004,7 @@ GeoTIFF driver :
  * Add logic for encoding and reading ESRI PE string from citation.
  * Add support for reading and writing vertical datum info from geotiff
  * Changes to units handling.  (#2755)
- * Optimize opening speed by defering fetching the coordinate system till GetProjectionRef (#2957)
+ * Optimize opening speed by deferring fetching the coordinate system till GetProjectionRef (#2957)
  * Optimize GTiffRasterBand::IReadBlock() for multi-band interleaved case.
  * Avoid uncesserary re-writing the TIFF directory (#3021)
  * Use official value for inverse flattening of the WGS84 ellipsoid (#2787)
@@ -6979,7 +6979,7 @@ Shape Driver:
 PostgreSQL/PostGIS Driver:
  - Implemented fast GetExtent() method (Oleg Semykin).
  - Implemented layer type from geometry_columns (Oleg Semykin).
- - Handle PostGIS 1.0 requirements for coordinate dimemsion exactness.
+ - Handle PostGIS 1.0 requirements for coordinate dimension exactness.
  - Handle EWKT type in PostGIS 1.0.
  - Generally PostGIS 0.x and 1.0 should now be supported fairly gracefully.
  - Added PostGIS "binary cursor" mode for faster geometry access.

@@ -166,7 +166,7 @@ def png_copy_options_icc():
     driver.Delete('tmp/icc_test.png')
 
     return 'success'
-    
+
 ###############################################################################
 # Test writing and reading of ICC colorimetric data from options
 
@@ -174,7 +174,7 @@ def png_copy_options_colorimetric_data():
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
-    
+
     options = [ 'SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
         'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
         'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
@@ -184,7 +184,7 @@ def png_copy_options_colorimetric_data():
     driver = gdal.GetDriverByName('PNG')
     driver_tiff = gdal.GetDriverByName('GTiff')
     ds = driver_tiff.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte)
-    
+
     # Check with dataset from CreateCopy()	
     ds2 = driver.CreateCopy('tmp/icc_test.png', ds, options = options)
     md = ds2.GetMetadata("COLOR_PROFILE")
@@ -192,7 +192,7 @@ def png_copy_options_colorimetric_data():
     ds2 = None
 
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
-    
+
     for i in range(0, 3):
         if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
             gdaltest.post_reason('fail')
@@ -253,12 +253,12 @@ def png_copy_colorimetric_data():
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
-    
+
     options = [ 'SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
         'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
         'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
         'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint) ]
-    
+
     options2 = [ 'PNG_GAMMA=1.5' ]
 
     driver = gdal.GetDriverByName('PNG')
@@ -266,7 +266,7 @@ def png_copy_colorimetric_data():
     ds = driver_tiff.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte, options)
     ds = None
     ds = gdal.Open('tmp/icc_test.tiff')
-    
+
     # Check with dataset from CreateCopy()	
     ds2 = driver.CreateCopy('tmp/icc_test.png', ds, options = options2)
     md = ds2.GetMetadata("COLOR_PROFILE")
@@ -364,7 +364,7 @@ def png_sRGB():
 
     return 'success'
 
-###############################################################################################
+############################################################################
 
 gdaltest_list.append( (png_copy_icc) )
 gdaltest_list.append( (png_copy_options_icc) )

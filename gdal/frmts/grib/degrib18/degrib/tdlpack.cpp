@@ -493,7 +493,7 @@ static void TDLP_ElemSurfUnit (pdsTDLPType * pds, char **element,
  *
  * NOTES
  *   Speed improvements...
- * 1) pds doen't need to be allocated each time.
+ * 1) pds does not need to be allocated each time.
  * 2) Not all data is needed, do something like TDLP_RefTime
  * 3) TDLP_ElemSurfUnit may be slow?
  *****************************************************************************
@@ -1886,8 +1886,8 @@ static int TDL_GetSecDiff (sInt4 *Data, int numData, sInt4 *SecDiff,
  *
  * PURPOSE
  *   Checks if the average range of 2nd order differences < average range of
- * 0 order differnces, to determine if we should use second order differences
- *   This deals with the case when we have primary missing values.
+ *   0 order differences, to determine if we should use second order
+ *   differences. This deals with the case when we have primary missing values.
  *
  * ARGUMENTS
  *        Data = The data. (Input)
@@ -2001,7 +2001,8 @@ static int TDL_UseSecDiff_Prim (sInt4 *Data, sInt4 numData,
  *
  * PURPOSE
  *   Checks if the average range of 2nd order differences < average range of
- * 0 order differnces, to determine if we should use second order differences
+ *   0 order differences, to determine if we should use second order
+ *   differences.
  *
  * ARGUMENTS
  *        Data = The data. (Input)
@@ -3830,7 +3831,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
  *     f_grid = Flag if this is grid data (or vector) (Input)
  *         NX = The number of X values. (Input)
  *         NY = The number of Y values. (Input)
- * f_sndOrder = Flag if we should do second order diffencing (Output)
+ * f_sndOrder = Flag if we should do second order differencing (Output)
  *      group = Resulting groups. (Output)
  *   numGroup = Number of groups. (Output)
  *        Min = Overall minimum. (Output)

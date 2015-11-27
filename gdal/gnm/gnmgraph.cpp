@@ -503,8 +503,8 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
             // direct cost (even if an edge is bi-directed).
             dfCurrentEdgeCost = ite->second.dfDirCost;
 
-            // While we see outcome edges of current vertex id we definitly know
-            // that target vertex id will be target for current edge id.
+            // While we see outcome edges of current vertex id we definitely
+            // know that target vertex id will be target for current edge id.
             nTargetVertId = GetOppositVertex(nCurrentEdgeId, nCurrenVertId);
 
             // Calculate a new mark assuming the full path cost (mark of the

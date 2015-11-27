@@ -1422,11 +1422,12 @@ def netcdf_39():
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
-# check support of reading of chuncked bottom-up files
+# Check support of reading of chunked bottom-up files.
+
 def netcdf_40():
 
     if gdaltest.netcdf_drv is None or not gdaltest.netcdf_drv_has_nc4:

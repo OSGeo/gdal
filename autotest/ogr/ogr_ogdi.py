@@ -118,7 +118,7 @@ def ogr_ogdi_2():
         return 'skip'
 
     url_name ='gltp:/vrf/' + os.getcwd()+ '/tmp/cache/ogdits-3.1/data/vpf/vm2alv2/texash'
-    
+
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_OGDI_LAUNDER_LAYER_NAMES YES -ro "' + url_name + '" markersp_bnd contourl_elev polbnda_bnd extractp_ind')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:

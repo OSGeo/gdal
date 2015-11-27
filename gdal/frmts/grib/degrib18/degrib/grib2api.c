@@ -335,7 +335,7 @@ static int fillOutSectLen (unsigned char *c_ipack, int lenCpack,
  *         bmap = bitmap from NCEPs routines. (Input)
  * f_ignoreScan = Flag to ignore the attempt at changing the scan (Input)
  *         scan = The scan orientation of fld/bmap/iain/ib (Input/Output)
- *       nx, ny = The dimmensions of the grid. (Input)
+ *       nx, ny = The dimensions of the grid. (Input)
  *       iclean = 1 means the user wants the unpacked data returned without
  *                missing values in it. 0 means embed the missing values. (In)
  *       xmissp = The primary missing value to use if iclean = 0. (Input).
@@ -440,7 +440,7 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
  *         bmap = bitmap from NCEPs routines. (Input)
  *         scan = The scan orientation of fld/bmap/iain/ib (Input/Output)
  * f_ignoreScan = Flag to ignore the attempt at changing the scan (Input)
- *       nx, ny = The dimmensions of the grid. (Input)
+ *       nx, ny = The dimensions of the grid. (Input)
  *       iclean = 1 means the user wants the unpacked data returned without
  *                missing values in it. 0 means embed the missing values. (In)
  *       xmissp = The primary missing value to use if iclean = 0. (Input).
@@ -696,7 +696,7 @@ is required for each GRIB2 message.
  *                                 Request for an invalid subgrid
  *                                 Problems unpacking the data.
  *                                 problems expanding the data.
- *                                 Calling dimmensions were too small.
+ *                                 Calling dimensions were too small.
  * ker=2 jer[1,0]=100  jer[1,1]=2: Error unpacking section 1.
  * ker=3 jer[2,0]=200  jer[2,1]=2: Error unpacking section 2.
  * ker=4 jer[3,0]=300  jer[3,1]=2: Error unpacking section 3.

@@ -4,7 +4,7 @@
 #
 # These tests are dedicated to Windows CE platform and cover features
 # supported by Windows CE port of GDAL.
-# Also, compilable and runnable on Windows 2000/XP.
+# Also, compatible and runnable on Windows 2000/XP.
 #
 #############################################################################
 # CONFIGURATION

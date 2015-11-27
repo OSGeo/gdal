@@ -72,7 +72,7 @@ GDALColorTableH CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp eInterp )
 /**
  * \brief Destructor.
  *
- * This descructor is the same as the C GDALDestroyColorTable() function.
+ * This destructor is the same as the C GDALDestroyColorTable() function.
  */
 
 GDALColorTable::~GDALColorTable() {}

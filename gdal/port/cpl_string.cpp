@@ -800,7 +800,7 @@ char ** CSLTokenizeStringComplex( const char * pszString,
 \endcode
 
  * @param pszString the string to be split into tokens.
- * @param pszDelimiters one or more characters to be used as token delimeters.
+ * @param pszDelimiters one or more characters to be used as token delimiters.
  * @param nCSLTFlags an ORing of one or more of the CSLT_ flag values.
  *
  * @return a string list of tokens owned by the caller.

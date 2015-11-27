@@ -209,8 +209,8 @@ def vsicurl_8():
     return 'success'
 
 ###############################################################################
-# Test reading a file with chinese characters, but the http file listing
-# returns escaped sequences instead of the chinese characters
+# Test reading a file with Chinese characters, but the HTTP file listing
+# returns escaped sequences instead of the Chinese characters.
 
 def vsicurl_9():
     if not gdaltest.run_slow_tests():
@@ -237,7 +237,7 @@ def vsicurl_9():
     return 'success'
 
 ###############################################################################
-# Test reading a file with escaped chinese characters
+# Test reading a file with escaped Chinese characters.
 
 def vsicurl_10():
     if not gdaltest.run_slow_tests():

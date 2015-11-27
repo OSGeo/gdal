@@ -427,7 +427,7 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open and start processing GeoJSON datasoruce to OGR objects.    */
+/*      Open and start processing GeoJSON datasource to OGR objects.    */
 /* -------------------------------------------------------------------- */
     if( !poDS->Open( poOpenInfo, nSrcType ) )
     {
@@ -447,7 +447,8 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
                                                "FEATURE_SERVER_PAGING");
-        int bHasResultOffset = CPLURLGetValue(poOpenInfo->pszFilename, "resultOffset").size() > 0;
+        int bHasResultOffset = CPLURLGetValue( poOpenInfo->pszFilename,
+                                               "resultOffset").size() > 0;
         if( (!bHasResultOffset && (pszFSP == NULL || CSLTestBoolean(pszFSP))) ||
             (bHasResultOffset && pszFSP != NULL && CSLTestBoolean(pszFSP)) )
         {

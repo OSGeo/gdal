@@ -1080,7 +1080,8 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                             if count_fields != Csiz:
                                 error_report.EmitError('INSPIRE_TG', 'count(OrthoImageryCoverage.rangeType.field)(=%d) != Csiz(=%d) ' % (count_fields, Csiz), conformance_class = 'A.8.6')
                             else:
-                                # Check consistency of each channel bit-deph with the corresponding rangeType.field
+                                # Check consistency of each channel bit-depth
+                                # with the corresponding rangeType.field.
                                 for i in range(Csiz):
                                     if tab_Ssiz[i] >= 128:
                                         tab_Ssiz[i] -= 128
@@ -1133,7 +1134,10 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
             for i in range(SPcod_NumDecompositions+1):
                 SPcod_Precincts = get_field_val(cod, 'SPcod_Precincts%d' % i)
                 if SPcod_Precincts is not None and (Scod & 1) == 0:
-                    error_report.EmitWarning('GENERAL', 'User-defined precincts %d found but SPcod_transformation dit not advertize it' % i)
+                    error_report.EmitWarning(
+                        'GENERAL',
+                        'User-defined precincts %d found but '
+                        'SPcod_transformation did not advertize it' % i)
                 elif SPcod_Precincts is None and (Scod & 1) != 0:
                     error_report.EmitWarning('GENERAL', 'No user-defined precincts %d defined but SPcod_transformation advertized it' % i)
                 elif SPcod_Precincts is None and inspire_tg:

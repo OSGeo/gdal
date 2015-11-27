@@ -1576,10 +1576,10 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
             OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
             hSQLLyr = NULL;
 
-            /* Re-open OGR SQLite DB, because with our spy we have simulated an I/O error */
-            /* that SQLite will have difficulies to recover within the existing connection */
-            /* No worry ! This will be fast because the /vsicurl/ cache has cached the already */
-            /* read blocks */
+            // Re-open OGR SQLite DB, because with our spy we have simulated an
+            // I/O error that SQLite will have difficulties to recover within
+            // the existing connection.  This will be fast because
+            // the /vsicurl/ cache has cached the already read blocks.
             OGRReleaseDataSource(hDS);
             hDS = MBTILESOpenSQLiteDB(osDSName.c_str(), GA_ReadOnly);
             if (hDS == NULL)

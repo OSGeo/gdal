@@ -506,12 +506,13 @@ void CPCIDSKVectorSegment::ReadSecFromFile( int section, char *buffer,
 /* -------------------------------------------------------------------- */
     if( section == sec_raw )
     {
-        ReadFromFile( buffer, block_offset*block_page_size, block_count*block_page_size );
+        ReadFromFile( buffer, block_offset*block_page_size,
+                      block_count*block_page_size );
         return;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Process one 8K block at a time in case they are discontigous    */
+/*      Process one 8K block at a time in case they are discontiguous   */
 /*      which they often are.                                           */
 /* -------------------------------------------------------------------- */
     int i;
@@ -610,12 +611,14 @@ void CPCIDSKVectorSegment::WriteSecToFile( int section, char *buffer,
 
     if( block_count + block_offset > (int) block_map->size() )
     {
-        vh.GrowBlockIndex( section, 
-                           static_cast<int>(block_count + block_offset - block_map->size()) );
+        vh.GrowBlockIndex( section,
+                           static_cast<int>(block_count
+                                            + block_offset
+                                            - block_map->size() ) );
     }
 
 /* -------------------------------------------------------------------- */
-/*      Process one 8K block at a time in case they are discontigous    */
+/*      Process one 8K block at a time in case they are discontiguous   */
 /*      which they often are.                                           */
 /* -------------------------------------------------------------------- */
     int i;

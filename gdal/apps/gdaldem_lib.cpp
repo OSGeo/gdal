@@ -58,13 +58,15 @@
  * Color table of named colors and lookup code derived from src/libes/gis/named_colr.c
  * of GRASS 4.1
  *
- * TRI - Terrain Ruggedness Index is as descibed in Wilson et al (2007)
- * this is based on the method of Valentine et al. (2004)  
- * 
- * TPI - Topographic Position Index follows the description in Wilson et al (2007), following Weiss (2001)
- * The radius is fixed at 1 cell width/height
- * 
- * Roughness - follows the definition in Wilson et al. (2007), which follows Dartnell (2000)
+ * TRI - Terrain Ruggedness Index is as described in Wilson et al. (2007)
+ * this is based on the method of Valentine et al. (2004)
+ *
+ * TPI - Topographic Position Index follows the description in
+ * Wilson et al. (2007), following Weiss (2001).  The radius is fixed
+ * at 1 cell width/height
+ *
+ * Roughness - follows the definition in Wilson et al. (2007), which follows
+ * Dartnell (2000).
  *
  * References for TRI/TPI/Roughness:
  * Dartnell, P. 2000. Applying Remote Sensing Techniques to map Seafloor 
