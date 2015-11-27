@@ -1640,7 +1640,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
             {
                 GDAL_GCP    asGCPList[5];
                 memset( asGCPList, 0, sizeof(asGCPList) );
-                for(size_t i=0;i<4;i++)
+                for(int i=0;i<4;i++)
                 {
                     asGCPList[i].dfGCPX = poRing->getX(i);
                     asGCPList[i].dfGCPY = poRing->getY(i);
