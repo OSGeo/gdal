@@ -413,10 +413,25 @@ static void VSIWin32TryLongFilename(wchar_t*& pwszFilename)
         if( pwszFilename[0] == '.' &&
             (pwszFilename[1] == '/' || pwszFilename[1] == '\\') )
             nOffset = 2;
+        /* \\$\c:\a\b ..\c --> \\$\c:\a\c */
+        while( pwszFilename[nOffset + 0] == '.' && pwszFilename[nOffset + 1] == '.' &&
+              (pwszFilename[nOffset + 2] == '/' || pwszFilename[nOffset + 2] == '\\') )
+        {
+            size_t nCurDirLenBefore = nCurDirLen;
+            while( nCurDirLen > 0 && pwszCurDir[nCurDirLen-1] != '\\' )
+                nCurDirLen --;
+            if( nCurDirLen <= 2 )
+            {
+                nCurDirLen = nCurDirLenBefore;
+                break;
+            }
+            nCurDirLen --;
+            nOffset += 3;
+        }
         memmove( pwszFilename + 4 + nCurDirLen + 1,
                  pwszFilename + nOffset, (nLen-nOffset+1) * sizeof(wchar_t) );
         memmove( pwszFilename + 4, pwszCurDir, nCurDirLen * sizeof(wchar_t) );
-        pwszFilename[ 4 + nCurDirLen ] = '/';
+        pwszFilename[ 4 + nCurDirLen ] = '\\';
         CPLFree(pwszCurDir);
     }
     pwszFilename[0] = '\\';
