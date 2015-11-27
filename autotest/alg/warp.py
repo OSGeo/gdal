@@ -930,8 +930,8 @@ def warp_25():
 def warp_26():
 
     gdal.Translate( 'tmp/warp_25_gcp.vrt', '../gcore/data/byte.tif',
-                    options = '-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 "
-                    "-gcp 20 0 20 20 -gcp 20 20 20 0' )
+                    options = '-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 ' + \
+                    '-gcp 20 0 20 20 -gcp 20 20 20 0' )
     gdal.Warp( 'tmp/warp_25_warp.vrt', 'tmp/warp_25_gcp.vrt',
                options = '-of VRT -tps' )
 
