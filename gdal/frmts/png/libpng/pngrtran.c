@@ -1,8 +1,8 @@
 
 /* pngrtran.c - transforms the data in a row for PNG readers
  *
- * Last changed in libpng 1.2.51 [February 6, 2014]
- * Copyright (c) 1998-2014 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.53 [February 26, 2015]
+ * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -2410,10 +2410,14 @@ png_do_rgb_to_gray(png_structp png_ptr, png_row_infop row_info, png_bytep row)
                for (i = 0; i < row_width; i++)
                {
                   png_uint_16 red, green, blue, w;
+                  png_byte hi,lo;
 
-                  red   = (png_uint_16)(((*(sp))<<8) | *(sp+1)); sp+=2;
-                  green = (png_uint_16)(((*(sp))<<8) | *(sp+1)); sp+=2;
-                  blue  = (png_uint_16)(((*(sp))<<8) | *(sp+1)); sp+=2;
+                  hi=*(sp)++; lo=*(sp)++;
+                  red   = (png_uint_16)((hi << 8) | (lo));
+                  hi=*(sp)++; lo=*(sp)++;
+                  green = (png_uint_16)((hi << 8) | (lo));
+                  hi=*(sp)++; lo=*(sp)++;
+                  blue  = (png_uint_16)((hi << 8) | (lo));
 
                   if (red == green && red == blue)
                      w = red;
@@ -2445,10 +2449,14 @@ png_do_rgb_to_gray(png_structp png_ptr, png_row_infop row_info, png_bytep row)
                for (i = 0; i < row_width; i++)
                {
                   png_uint_16 red, green, blue, gray16;
+                  png_byte hi,lo;
 
-                  red   = (png_uint_16)(((*(sp))<<8) | *(sp+1)); sp+=2;
-                  green = (png_uint_16)(((*(sp))<<8) | *(sp+1)); sp+=2;
-                  blue  = (png_uint_16)(((*(sp))<<8) | *(sp+1)); sp+=2;
+                  hi=*(sp)++; lo=*(sp)++;
+                  red   = (png_uint_16)((hi << 8) | (lo));
+                  hi=*(sp)++; lo=*(sp)++;
+                  green = (png_uint_16)((hi << 8) | (lo));
+                  hi=*(sp)++; lo=*(sp)++;
+                  blue  = (png_uint_16)((hi << 8) | (lo));
 
                   if (red != green || red != blue)
                      rgb_error |= 1;
@@ -2508,10 +2516,14 @@ png_do_rgb_to_gray(png_structp png_ptr, png_row_infop row_info, png_bytep row)
                for (i = 0; i < row_width; i++)
                {
                   png_uint_16 red, green, blue, w;
+                  png_byte hi,lo;
 
-                  red   = (png_uint_16)(((*(sp))<<8) | *(sp+1)); sp+=2;
-                  green = (png_uint_16)(((*(sp))<<8) | *(sp+1)); sp+=2;
-                  blue  = (png_uint_16)(((*(sp))<<8) | *(sp+1)); sp+=2;
+                  hi=*(sp)++; lo=*(sp)++;
+                  red   = (png_uint_16)((hi << 8) | (lo));
+                  hi=*(sp)++; lo=*(sp)++;
+                  green = (png_uint_16)((hi << 8) | (lo));
+                  hi=*(sp)++; lo=*(sp)++;
+                  blue  = (png_uint_16)((hi << 8) | (lo));
 
                   if (red == green && red == blue)
                      w = red;

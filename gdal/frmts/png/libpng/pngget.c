@@ -1,8 +1,8 @@
 
 /* pngget.c - retrieval of values from info struct
  *
- * Last changed in libpng 1.2.51 [February 6, 2014]
- * Copyright (c) 1998-2014 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.53 [February 26, 2015]
+ * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -885,7 +885,8 @@ png_uint_32 PNGAPI
 png_get_asm_flags (png_structp png_ptr)
 {
     /* Obsolete, to be removed from libpng-1.4.0 */
-    return (png_ptr? 0L: 0L);
+    PNG_UNUSED(png_ptr)
+    return 0L;
 }
 
 /* This function was added to libpng 1.2.0 and should exist by default */
@@ -913,7 +914,8 @@ png_byte PNGAPI
 png_get_mmx_bitdepth_threshold (png_structp png_ptr)
 {
     /* Obsolete, to be removed from libpng-1.4.0 */
-    return (png_ptr? 0: 0);
+    PNG_UNUSED(png_ptr)
+    return 0L;
 }
 
 /* This function was added to libpng 1.2.0 */
@@ -921,7 +923,8 @@ png_uint_32 PNGAPI
 png_get_mmx_rowbytes_threshold (png_structp png_ptr)
 {
     /* Obsolete, to be removed from libpng-1.4.0 */
-    return (png_ptr? 0L: 0L);
+    PNG_UNUSED(png_ptr)
+    return 0L;
 }
 #endif /* ?PNG_1_0_X */
 #endif /* ?PNG_ASSEMBLER_CODE_SUPPORTED */
