@@ -8,11 +8,11 @@
 #           resamplers as possible (we have optimized resamplers for some
 #           data types, test them too).
 # Author:   Andrey Kiselev, dron16@ak4719.spb.edu
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Andrey Kiselev <dron16@ak4719.spb.edu>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -22,7 +22,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -53,13 +53,13 @@ def warp_1():
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         return 'skip'
-    
+
     ds = gdal.Open( 'data/utmsmall_near.vrt' )
     ref_ds = gdal.Open( 'data/utmsmall_near.tiff' )
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
     ref_ds = None
- 
+
     if maxdiff > 1:
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
@@ -71,13 +71,13 @@ def warp_1_short():
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         return 'skip'
-    
+
     ds = gdal.Open( 'data/utmsmall_near_short.vrt' )
     ref_ds = gdal.Open( 'data/utmsmall_near.tiff' )
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
     ref_ds = None
- 
+
     if maxdiff > 1:
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
@@ -89,13 +89,13 @@ def warp_1_ushort():
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         return 'skip'
-    
+
     ds = gdal.Open( 'data/utmsmall_near_ushort.vrt' )
     ref_ds = gdal.Open( 'data/utmsmall_near.tiff' )
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
     ref_ds = None
- 
+
     if maxdiff > 1:
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
@@ -827,49 +827,49 @@ def warp_23():
     gcp1.GCPLine = 2225
     gcp1.GCPX = -88.834495
     gcp1.GCPY = 29.979959
-    
+
     gcp2 = gdal.GCP()
     gcp2.GCPPixel = 2804
     gcp2.GCPLine = 2236
     gcp2.GCPX = -88.836706
     gcp2.GCPY = 29.979516
-    
+
     gcp3 = gdal.GCP()
     gcp3.GCPPixel = 3157
     gcp3.GCPLine = 4344
     gcp3.GCPX = -88.833389
     gcp3.GCPY = 29.969519
-    
+
     gcp4 = gdal.GCP()
     gcp4.GCPPixel = 3768
     gcp4.GCPLine = 5247
     gcp4.GCPX = -88.830168
     gcp4.GCPY = 29.964958
-    
+
     gcp5 = gdal.GCP()
     gcp5.GCPPixel = 2697
     gcp5.GCPLine = 9225
     gcp5.GCPX = -88.83516
     gcp5.GCPY = 29.945386
-    
+
     gcp6 = gdal.GCP()
     gcp6.GCPPixel = 4087
     gcp6.GCPLine = 12360
     gcp6.GCPX = -88.827899
     gcp6.GCPY = 29.929807
-    
+
     gcp7 = gdal.GCP()
     gcp7.GCPPixel = 4629
     gcp7.GCPLine = 11258
     gcp7.GCPX = -88.825102
     gcp7.GCPY = 29.93527
-    
+
     gcp8 = gdal.GCP()
     gcp8.GCPPixel = 4480
     gcp8.GCPLine = 7602
     gcp8.GCPX = -88.826733
     gcp8.GCPY = 29.95304
-    
+
     gcps = [gcp1,gcp2,gcp3,gcp4,gcp5,gcp6,gcp7,gcp8]
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -880,14 +880,14 @@ def warp_23():
         gcps[i].GCPLine = gcps[i].GCPLine / 10
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
-    
+
     ds = gdal.Warp('', 'tmp/test3582.tif', format = 'MEM')
     ret = 'success'
     if ds is None:
         gdaltest.post_reason('could not open output dataset')
         ret = 'fail'
     ds = None
-    
+
     os.remove('tmp/test3582.tif')
 
     return ret
@@ -930,8 +930,8 @@ def warp_25():
 def warp_26():
 
     gdal.Translate( 'tmp/warp_25_gcp.vrt', '../gcore/data/byte.tif',
-                    options = '-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 ' + \
-                    '-gcp 20 0 20 20 -gcp 20 20 20 0' )
+                    options = '-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 '
+                              '-gcp 20 0 20 20 -gcp 20 20 20 0' )
     gdal.Warp( 'tmp/warp_25_warp.vrt', 'tmp/warp_25_gcp.vrt',
                options = '-of VRT -tps' )
 
