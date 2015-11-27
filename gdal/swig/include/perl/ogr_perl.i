@@ -108,6 +108,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %rename (_CreateField) CreateField;
 %rename (_DeleteField) DeleteField;
 %rename (_Validate) Validate;
+%rename (_GetFeature) GetFeature;
 
 /* wrapped feature methods: */
 %rename (_AlterFieldDefn) AlterFieldDefn;
@@ -182,17 +183,19 @@ sub Open {
     Geo::GDAL::OpenEx($p[0], \@flags, [$self->Name()]);
 }
 
+
 package Geo::OGR::DataSource;
 
 *Open = *Geo::OGR::Open;
 *OpenShared = *Geo::OGR::OpenShared;
+
 
 package Geo::OGR::Layer;
 use strict;
 use warnings;
 use Carp;
 use Scalar::Util 'blessed';
-use vars qw /@CAPABILITIES %CAPABILITIES  %DEFNS/;
+use vars qw /@CAPABILITIES %CAPABILITIES %DEFNS %FEATURES/;
 for (keys %Geo::OGR::) {
     push(@CAPABILITIES, $1), next if /^OLC(\w+)/;
 }
@@ -224,6 +227,11 @@ sub RELEASE_PARENTS {
     delete $Geo::GDAL::Dataset::LAYERS{$self};
 }
 
+sub Dataset {
+    my $self = shift;
+    return $Geo::GDAL::Dataset::LAYERS{tied(%$self)};
+}
+
 sub Capabilities {
     return @CAPABILITIES if @_ == 0;
     my $self = shift;
@@ -241,14 +249,14 @@ sub TestCapability {
 
 sub GetDataSource {
     my $self = shift;
-    return $Geo::GDAL::Dataset::LAYERS{$self};
+    return $Geo::GDAL::Dataset::LAYERS{tied(%$self)};
 }
 *DataSource = *GetDataSource;
 
 sub GetDefn {
     my $self = shift;
     my $defn = $self->GetLayerDefn;
-    $DEFNS{$defn} = $self;
+    $DEFNS{tied(%$defn)} = $self;
     return $defn;
 }
 
@@ -394,6 +402,17 @@ sub InsertFeature {
         $new->Row($feature->Row);
     }
     $self->CreateFeature($new);
+    return unless defined wantarray;
+    $FEATURES{tied(%$new)} = $self;
+    return $new;
+}
+
+sub GetFeature {
+    my ($self, $fid) = @_;
+    $fid //= 0;
+    my $f = $self->_GetFeature($fid);
+    $FEATURES{tied(%$f)} = $self;
+    return $f;
 }
 
 sub ForFeatures {
@@ -402,6 +421,7 @@ sub ForFeatures {
     my $in_place = shift;
     $self->ResetReading;
     while (my $f = $self->GetNextFeature) {
+        $FEATURES{tied(%$f)} = $self;
         $code->($f);
         $self->SetFeature($f) if $in_place;
     };
@@ -485,6 +505,11 @@ sub RELEASE_PARENTS {
     delete $Geo::OGR::Feature::DEFNS{$self};
     delete $Geo::OGR::Layer::DEFNS{$self};
 }
+
+sub Feature {
+    my $self = shift;
+    return $Geo::OGR::Feature::DEFNS{tied(%$self)};
+}
 %}
 
 %feature("shadow") OGRFeatureDefnShadow(const char* name_null_ok=NULL)
@@ -566,7 +591,7 @@ sub GetSchema {
 
 sub AddField {
     my $self = shift;
-    Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{$self} or $Geo::OGR::Layer::DEFNS{$self};
+    Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{tied(%$self)} || $Geo::OGR::Layer::DEFNS{tied(%$self)};
     my %params;
     if (@_ == 0) {
     } elsif (ref($_[0]) eq 'HASH') {
@@ -586,7 +611,7 @@ sub AddField {
 
 sub DeleteField {
     my ($self, $name) = @_;
-    Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{$self} or $Geo::OGR::Layer::DEFNS{$self};
+    Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{tied(%$self)} || $Geo::OGR::Layer::DEFNS{tied(%$self)};
     for my $i (0..$self->GetFieldCount-1) {
         Geo::GDAL::error("Non-geometry fields cannot be deleted.") if $self->GetFieldDefn($i)->Name eq $name;
     }
@@ -623,7 +648,7 @@ sub GetFieldDefn {
 
 sub GeomType {
     my ($self, $type) = @_;
-    Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{$self} or $Geo::OGR::Layer::DEFNS{$self};
+    Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{tied(%$self)} || $Geo::OGR::Layer::DEFNS{tied(%$self)};
     if (defined $type) {
         $type = Geo::GDAL::string2int($type, \%Geo::OGR::Geometry::TYPE_STRING2INT);
         SetGeomType($self, $type);
@@ -674,13 +699,23 @@ sub new {
 %}
 
 %perlcode %{
+
+sub RELEASE_PARENTS {
+    my $self = shift;
+    delete $Geo::OGR::Layer::FEATURES{$self};
+}
+
+sub Layer {
+    my $self = shift;
+    return $Geo::OGR::Layer::FEATURES{tied(%$self)};
+}
+
 sub FETCH {
     my($self, $index) = @_;
     my $i;
     eval {$i = $self->_GetFieldIndex($index)};
-    $self->GetField($i) unless $@;
-    $i = $self->_GetGeomFieldIndex($index);
-    $self->GetGeometry($i);
+    return $self->GetField($i) unless $@;
+    Geo::GDAL::error("It is not safe to retrieve geometries from a feature this way.");
 }
 
 sub STORE {
@@ -818,9 +853,11 @@ sub Tuple {
 sub GetDefn {
     my $self = shift;
     my $defn = $self->GetDefnRef;
-    $DEFNS{$defn} = $self;
+    $DEFNS{tied(%$defn)} = $self;
     return $defn;
 }
+
+*GetGeomFieldDefn = *GetGeomFieldDefnRef;
 
 *GetFieldNames = *Geo::OGR::Layer::GetFieldNames;
 *GetFieldDefn = *Geo::OGR::Layer::GetFieldDefn;
@@ -986,7 +1023,7 @@ sub Geometry {
                 $self->SetGeomFieldDirectly($field, $geometry);
             };
             confess Geo::GDAL->last_error if $@;
-            $GEOMETRIES{tied(%{$geometry})} = $self;
+            $GEOMETRIES{tied(%$geometry)} = $self;
         } elsif (ref($geometry) eq 'HASH') {
             $geometry->{GeometryType} //= $type;
             eval {
@@ -1006,7 +1043,7 @@ sub Geometry {
     return unless defined wantarray;
     my $geometry = $self->GetGeomFieldRef($field);
     return unless $geometry;
-    $GEOMETRIES{tied(%{$geometry})} = $self;
+    $GEOMETRIES{tied(%$geometry)} = $self;
     return $geometry;
 }
 *GetGeometry = *Geometry;
@@ -1338,6 +1375,11 @@ sub GeometryTypes {
 sub RELEASE_PARENTS {
     my $self = shift;
     delete $Geo::OGR::Feature::GEOMETRIES{$self};
+}
+
+sub Feature {
+    my $self = shift;
+    return $Geo::OGR::Feature::GEOMETRIES{tied(%$self)};
 }
 %}
 

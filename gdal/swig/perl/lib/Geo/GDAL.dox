@@ -328,15 +328,8 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper</a>
 
-## @sub Geo::GDAL::Dataset AutoCreateWarpedVRT(Geo::GDAL::Dataset src, Geo::OSR::SpatialReference src_srs=undef, Geo::OSR::SpatialReference dst_srs=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
-# @param src
-# @param src_srs source projection.
-# @param dst_srs destination projection.
-# @param ResampleAlg one of Geo::GDAL::ResamplingTypes().
-# @param maxerror
-# @return a new Geo::GDAL::Dataset object
-#
-# <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper</a>
+## @sub Geo::GDAL::Dataset AutoCreateWarpedVRT()
+# See Geo::GDAL::Dataset::Warped
 
 ## @sub ComputeProximity(Geo::GDAL::Band src, Geo::GDAL::Band proximity, hashref options, subref progress, $progress_data)
 # @param src The raster from which the proximities are computed from.
@@ -911,6 +904,19 @@ sub traverse {
 # @return New dataset object if destination dataset definition
 # string was given, otherwise a boolean for success/fail but the
 # method croaks if there was an error.
+
+## @method Geo::GDAL::Dataset Warped(%params)
+# Create a virtual warped dataset from this dataset.
+#
+# @param params This method accepts the following named parameters:
+# - \a SrcSRS Override the spatial reference system of this dataset if there is one (default is undef).
+# - \a DstSRS The target spatial reference system of the result (default is undef).
+# - \a ResampleAlg The resampling algorithm (default is 'NearestNeighbour').
+# - \a MaxError Maximum error measured in input pixels that is allowed in approximating the transformation (default is 0 for exact calculations).
+#
+# # <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper.</a>
+#
+# @return a new Geo::GDAL::Dataset object
 
 ## @method Geo::GDAL::Dataset Warp($Dest, $Options, subref progress, $progress_data)
 # Reproject this dataset.

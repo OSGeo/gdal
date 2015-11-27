@@ -244,6 +244,58 @@ Note that the return value of the \c write method does not have any
 effect. Internally the return value is set to the length of the byte
 string.
 
+\section index_refcount Reference counting
+
+In GDAL many objects may depend on other objects to exist, for example
+a geometry, which is an attribute of a feature depends on the feature
+to exist when the geometry is accessed. If a feature is destroyed,
+then using a geometry object, which points for its data into the
+feature, will lead to memory error.
+
+GDAL maintains its own reference counting but this is largely lost in
+the bindings.
+
+The Perl bindings attempt to maintain these dependencies by keeping
+the parent objects alive under the hood, independent of their existence 
+in the user space. Thus it is perfectly legal to do something like
+
+\code
+my $layer = Geo::OGR::Driver('Memory')->
+    Create()->
+        CreateLayer(Name => 'layer', 
+                    Fields => [{Name => 'test', Type => 'Integer'}, 
+                               {Name => 'geom', Type => 'Point'}]);
+\endcode
+
+or
+
+\code
+my $geometry;
+{
+    my $feature = $lauer->InsertFeature({test => 13, geom => {WKT => 'POINT (10 20)'}});
+    $geometry = $feature->Geometry('geom');
+}
+say $geometry->AsText;
+\endcode
+
+There is at least one caveat. Swig sets the bindings up in such a way
+that the objects are tied hashes. For example a feature can used as a
+hash.
+
+\code
+my $feature = $lauer->InsertFeature({test => 13, geom => {WKT => 'POINT (10 20)'}});
+my $test = $feature->{test};
+\endcode
+
+Due to the mechanism of tied hashes in Perl it is not possible to
+maintain the parent referencing when using this syntax. Thus do not
+use this for subobjects. (In fact it will create an error.)
+
+\code
+my $feature = $lauer->InsertFeature({test => 13, geom => {WKT => 'POINT (10 20)'}});
+my $geom = $feature->{geom}; # will lead to memory error!
+\endcode
+
 \section index_footer Note
 
 This documentation is generated from files within the GDAL

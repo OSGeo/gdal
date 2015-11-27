@@ -73,37 +73,37 @@ sub new {
     my $pkg = shift;
     my %param = @_;
     my $self = Geo::OSRc::new_SpatialReference();
-    if ($param{WKT}) {
+    if (exists $param{WKT}) {
         ImportFromWkt($self, $param{WKT});
-    } elsif ($param{Text}) {
+    } elsif (exists $param{Text}) {
         ImportFromWkt($self, $param{Text});
-    } elsif ($param{Proj4}) {
+    } elsif (exists $param{Proj4}) {
         ImportFromProj4($self, $param{Proj4});
-    } elsif ($param{ESRI}) {
+    } elsif (exists $param{ESRI}) {
         ImportFromESRI($self, @{$param{ESRI}});
-    } elsif ($param{EPSG}) {
+    } elsif (exists $param{EPSG}) {
         ImportFromEPSG($self, $param{EPSG});
-    } elsif ($param{EPSGA}) {
+    } elsif (exists $param{EPSGA}) {
         ImportFromEPSGA($self, $param{EPSGA});
-    } elsif ($param{PCI}) {
+    } elsif (exists $param{PCI}) {
         ImportFromPCI($self, @{$param{PCI}});
-    } elsif ($param{USGS}) {
+    } elsif (exists $param{USGS}) {
         ImportFromUSGS($self, @{$param{USGS}});
-    } elsif ($param{XML}) {
+    } elsif (exists $param{XML}) {
         ImportFromXML($self, $param{XML});
-    } elsif ($param{GML}) {
+    } elsif (exists $param{GML}) {
         ImportFromGML($self, $param{GML});
-    } elsif ($param{URL}) {
+    } elsif (exists $param{URL}) {
         ImportFromUrl($self, $param{URL});
-    } elsif ($param{ERMapper}) {
+    } elsif (exists $param{ERMapper}) {
         ImportFromERM($self, @{$param{ERMapper}});
-    } elsif ($param{ERM}) {
+    } elsif (exists $param{ERM}) {
         ImportFromERM($self, @{$param{ERM}});
-    } elsif ($param{MICoordSys}) {
+    } elsif (exists $param{MICoordSys}) {
         ImportFromMICoordSys($self, $param{MICoordSys});
-    } elsif ($param{MapInfoCS}) {
+    } elsif (exists $param{MapInfoCS}) {
         ImportFromMICoordSys($self, $param{MapInfoCS});
-    } elsif ($param{WGS}) {
+    } elsif (exists $param{WGS}) {
         eval {
             SetWellKnownGeogCS($self, 'WGS'.$param{WGS});
         };
@@ -159,18 +159,18 @@ sub Set {
         $params{Normalized} ?
             SetNormProjParm($self, $params{Parameter}, $params{Value}) :
             SetProjParm($self, $params{Parameter}, $params{Value});
-    } elsif ($params{Name}) {
+    } elsif (exists $params{Name}) {
         SetWellKnownGeogCS($self, $params{Name});
-    } elsif ($params{GuessFrom}) {
+    } elsif (exists $params{GuessFrom}) {
         SetFromUserInput($self, $params{GuessFrom});
-    } elsif ($params{LOCAL_CS}) {
+    } elsif (exists $params{LOCAL_CS}) {
         SetLocalCS($self, $params{LOCAL_CS});
-    } elsif ($params{GeocentricCS}) {
+    } elsif (exists $params{GeocentricCS}) {
         SetGeocCS($self, $params{GeocentricCS});
-    } elsif ($params{VerticalCS} and $params{Datum}) {
+    } elsif (exists $params{VerticalCS} and $params{Datum}) {
         my $type = $params{VertDatumType} || 2005;
         SetVertCS($self, $params{VerticalCS}, $params{Datum}, $type);
-    } elsif ($params{CoordinateSystem}) {
+    } elsif (exists $params{CoordinateSystem}) {
         my @parameters = ();
         @parameters = @{$params{Parameters}} if ref($params{Parameters});
         if ($params{CoordinateSystem} eq 'State Plane' and exists $params{Zone}) {
@@ -190,7 +190,7 @@ sub Set {
         } else {
             SetProjCS($self, $params{CoordinateSystem});
         }
-    } elsif ($params{Projection}) {
+    } elsif (exists $params{Projection}) {
         Geo::GDAL::error(1, $params{Projection}, \%Geo::OSR::PROJECTIONS) unless exists $Geo::OSR::PROJECTIONS{$params{Projection}};
         my @parameters = ();
         @parameters = @{$params{Parameters}} if ref($params{Parameters});
