@@ -2318,7 +2318,7 @@ OGRErr CPL_STDCALL OSRImportFromEPSGA( OGRSpatialReferenceH hSRS, int nCode )
  * This method is the same as the C function OSRSetStatePlaneWithUnits().
  *
  * @param nZone State plane zone number, in the USGS numbering scheme (as
- * dinstinct from the Arc/Info and Erdas numbering scheme. 
+ * distinct from the Arc/Info and Erdas numbering scheme.
  *
  * @param bNAD83 TRUE if the NAD83 zone definition should be used or FALSE
  * if the NAD27 zone definition should be used.  

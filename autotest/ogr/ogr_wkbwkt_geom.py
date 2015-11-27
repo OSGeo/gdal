@@ -115,9 +115,9 @@ class wkb_wkt_unit:
         geom_wkt.Destroy()
 
         return 'success'
-        
+
 ###############################################################################
-# Test geometry with very large exponents of coordiantes values
+# Test geometry with very large exponents of coordinate values.
 
 def ogr_wkbwkt_geom_bigexponents():
 
@@ -139,7 +139,7 @@ def ogr_wkbwkt_geom_bigexponents():
 
 
 ###############################################################################
-# Test importing broken/unhandled wkt
+# Test importing broken/unhandled WKT.
 
 def ogr_wkbwkt_test_broken_geom():
 

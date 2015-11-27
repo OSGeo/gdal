@@ -3299,10 +3299,11 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug("L1B", "iCLAVRStart = %d", poDS->iCLAVRStart);
     CPLDebug("L1B", "nRecordSize = %d", poDS->nRecordSize);
 
-    // Compute number of lines dinamycally, so we can read partially
-    // downloaded files
+    // Compute number of lines dynamically, so we can read partially
+    // downloaded files.
     poDS->nRasterYSize =
-        static_cast<int>((sStat.st_size - poDS->nDataStartOffset) / poDS->nRecordSize);
+        static_cast<int>( (sStat.st_size - poDS->nDataStartOffset)
+                          / poDS->nRecordSize);
 
 /* -------------------------------------------------------------------- */
 /*      Deal with GCPs                                                  */

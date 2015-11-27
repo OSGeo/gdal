@@ -277,7 +277,7 @@ def kea_6():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     ds = gdal.Open('tmp/out.kea')
     if ds.GetMetadata('other_domain') != {}:
         gdaltest.post_reason('fail')
@@ -371,7 +371,7 @@ def kea_7():
         gdaltest.post_reason('fail')
         return 'failure'
     ds = None
-    
+
     ds = gdal.Open('tmp/out.kea')
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
     ds = None

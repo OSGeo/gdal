@@ -1004,7 +1004,7 @@ int* SHPSearchDiskTreeEx( SHPTreeDiskHandle hDiskTree,
         bNeedSwap = TRUE;
 
 /* -------------------------------------------------------------------- */
-/*      Search through root node and it's decendents.                   */
+/*      Search through root node and it's descendants.                  */
 /* -------------------------------------------------------------------- */
     if( !SHPSearchDiskTreeNode( hDiskTree, padfBoundsMin, padfBoundsMax, 
                                 &panResultBuffer, &nBufferMax, 

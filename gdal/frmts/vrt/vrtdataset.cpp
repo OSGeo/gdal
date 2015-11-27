@@ -1125,8 +1125,8 @@ char** VRTDataset::GetFileList()
     int nSize = CSLCount(papszFileList);
     int nMaxSize = nSize;
 
-    /* Don't need an element desallocator as each string points to an */
-    /* element of the papszFileList */
+    // Do not need an element deallocator as each string points to an
+    // element of the papszFileList.
     CPLHashSet* hSetFiles = CPLHashSetNew(CPLHashSetHashStr,
                                           CPLHashSetEqualStr,
                                           NULL);

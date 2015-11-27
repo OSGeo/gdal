@@ -1020,7 +1020,7 @@ int GDALRasterBlock::TakeLock()
  * Should only be used by GDALArrayBandBlockCache::FlushBlock()
  * and GDALHashSetBandBlockCache::FlushBlock()
  *
- * @return TRUE if the lock has been successfully droped.
+ * @return TRUE if the lock has been successfully dropped.
  */
 
 int GDALRasterBlock::DropLockForRemovalFromStorage()

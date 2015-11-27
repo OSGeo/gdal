@@ -4520,7 +4520,7 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 /************************************************************************/
 /*                        ProcessSQLDropIndex()                         */
 /*                                                                      */
-/*      The correct syntax for droping one or more indexes in           */
+/*      The correct syntax for dropping one or more indexes in          */
 /*      the OGR SQL dialect is:                                         */
 /*                                                                      */
 /*          DROP INDEX ON <layername> [USING <columnname>]              */
@@ -4860,7 +4860,7 @@ OGRErr GDALDataset::ProcessSQLAlterTableAddColumn( const char *pszSQLCommand )
 /************************************************************************/
 /*                    ProcessSQLAlterTableDropColumn()                  */
 /*                                                                      */
-/*      The correct syntax for droping a column in the OGR SQL          */
+/*      The correct syntax for dropping a column in the OGR SQL         */
 /*      dialect is:                                                     */
 /*                                                                      */
 /*          ALTER TABLE <layername> DROP [COLUMN] <columnname>          */

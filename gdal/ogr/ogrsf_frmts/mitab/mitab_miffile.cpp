@@ -100,7 +100,7 @@
  * Added support for reading collections from MIF files (bug 1126)
  *
  * Revision 1.38  2004/02/27 21:04:14  fwarmerdam
- * dont write MIF header if file is readonly - gdal bugzilla 509
+ * Do not write MIF header if file is readonly - gdal bugzilla 509
  *
  * Revision 1.37  2003/12/19 07:54:50  fwarmerdam
  * write mif header on close if not already written out

@@ -883,7 +883,7 @@ SWchkswid(int32 swathID, char *routname,
 |  INPUTS:                                                                    |
 |  swathID        int32               swath structure ID                      |
 |  dimname        char                Dimension name to define                |
-|  dim            int32               Dimemsion value                         |
+|  dim            int32               Dimension value                         |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -2380,7 +2380,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 		vgid = SWXSwath[sID].VIDTable[1];
 	    }
 	    /*
-	     * Note: "fac" is used to destinguish geo fields from data fields
+	     * Note: "fac" is used to distinguish geo fields from data fields
 	     * so that they are not merged together
 	     */
 
@@ -3412,7 +3412,7 @@ SWinqdims(int32 swathID, char *dimnames, int32 dims[])
 			/* ----------------------- */
 			REMQUOTE
 
-			/* If not first name then add comma delimitor */
+			/* If not first name then add comma delimiter */
 			    if (nDim > 0)
 			{
 			    strcat(dimnames, ",");
@@ -3561,7 +3561,7 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
 			REMQUOTE
 			    strcat(utlstr, "/");
 
-			/* if not first map then add comma delimitor */
+			/* If not first map then add comma delimiter. */
 			if (nMap > 0)
 			{
 			    strcat(dimmaps, ",");
@@ -3727,7 +3727,7 @@ SWinqidxmaps(int32 swathID, char *idxmaps, int32 idxsizes[])
 			REMQUOTE
 			    strcat(utlstr, "/");
 
-			/* if not first map then add comma delimitor */
+			/* If not first map then add comma delimiter. */
 			if (nMap > 0)
 			{
 			    strcat(idxmaps, ",");
@@ -10483,7 +10483,7 @@ SWdetach(int32 swathID)
 	}
 
 
-	/* Replace trailing delimitors on SWXSDname & SWXSDdims */
+	/* Replace trailing delimiters on SWXSDname & SWXSDdims */
 	/* ---------------------------------------------------- */
 	if (nflds != 0)
 	{

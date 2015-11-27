@@ -23,7 +23,7 @@
 namespace tut
 {
   /**
-   * Exception to be throwed when attempted to execute 
+   * Exception to throw when attempted to execute 
    * missed test by number.
    */
   struct no_such_test : public std::logic_error
@@ -51,7 +51,7 @@ namespace tut
   };
 
   /**
-   * Internal exception to be throwed when 
+   * Internal exception to throw when 
    * no more tests left in group or journal.
    */
   struct no_more_tests
@@ -60,7 +60,7 @@ namespace tut
   };
 
   /**
-   * Internal exception to be throwed when 
+   * Internal exception to throw when 
    * test constructor has failed.
    */
   struct bad_ctor : public std::logic_error
@@ -70,7 +70,7 @@ namespace tut
   };
 
   /**
-   * Exception to be throwed when ensure() fails or fail() called.
+   * Exception to be thrown when ensure() fails or fail() called.
    */
   class failure : public std::logic_error
   {
@@ -79,7 +79,7 @@ namespace tut
   };
 
   /**
-   * Exception to be throwed when test desctructor throwed an exception.
+   * Exception to be thrown when test desctructor throws an exception.
    */
   class warning : public std::logic_error
   {
@@ -88,7 +88,7 @@ namespace tut
   };
 
   /**
-   * Exception to be throwed when test issued SEH (Win32)
+   * Exception to be thrown when test issues SEH (Win32)
    */
   class seh : public std::logic_error
   {
@@ -122,8 +122,8 @@ namespace tut
     /**
      * ok - test finished successfully
      * fail - test failed with ensure() or fail() methods
-     * ex - test throwed an exceptions
-     * warn - test finished successfully, but test destructor throwed
+     * ex - test throws an exceptions
+     * warn - test finished successfully, but test destructor threw
      * term - test forced test application to terminate abnormally
      */
     typedef enum { ok, fail, ex, warn, term, ex_ctor } result_type;
@@ -650,7 +650,7 @@ namespace tut
        * Specially treats exceptions in test object destructor; 
        * if test itself failed, exceptions in destructor
        * are ignored; if test was successful and destructor failed,
-       * warning exception throwed.
+       * warning exception thrown.
        */
       void release()
       {

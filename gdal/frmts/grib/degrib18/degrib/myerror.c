@@ -560,7 +560,7 @@ static void _myWarn (uChar f_errCode, const char *fmt, va_list ap)
  *   This does the transformation of the "..." parameters, and calls _myWarn.
  * This was broken out when we started to implement myWarnRet, so we had two
  * ways to call _myWarn.  A complicated way (myWarnRet), and a simpler way
- * (myWarn).  After creating the myWarnW# #defines, thought to depricate use
+ * (myWarn).  After creating the myWarnW# #defines, thought to deprecate use
  * of myWarn by making it static.  Still need it, because myWarnRet uses it.
  *
  * ARGUMENTS

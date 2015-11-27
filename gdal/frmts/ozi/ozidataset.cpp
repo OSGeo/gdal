@@ -496,7 +496,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 else
                 {
-                    CPLDebug("OZI", "Cannot decypher 2nd header. Sorry...");
+                  CPLDebug( "OZI", "Cannot decipher 2nd header. Sorry..." );
                     delete poDS;
                     return NULL;
                 }

@@ -199,7 +199,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /*      Allocate the SRITModel.                                         */
 /* -------------------------------------------------------------------- */
     SRITModel = new SRITInfo_t();
-    
+
     SRITModel->GCPMeanHtFlag = 0;
     SRITModel->nDownSample = 1;
     if(STARTS_WITH(seg_data.Get(22,2) , "DS"))
@@ -210,7 +210,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /* -------------------------------------------------------------------- */
 /*      Read the Block 1                                                */
 /* -------------------------------------------------------------------- */
-    
+
     SRITModel->N0x2        = seg_data.GetDouble(512,22);
     SRITModel->aa          = seg_data.GetDouble(512+22,22);
     SRITModel->SmALPHA     = seg_data.GetDouble(512+44,22);
@@ -244,9 +244,9 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
         SRITModel->delL   = 0.0;
         SRITModel->delTau = 0.0;
     }
-                                                                  
+
 /* -------------------------------------------------------------------- */
-/*	Read the GCP information in Block 2     			*/
+/*      Read the GCP information in Block 2                             */
 /* -------------------------------------------------------------------- */
 
     SRITModel->nGCPCount       = seg_data.GetInt(2*512,10); 
@@ -384,7 +384,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
 
     //clean the buffer
     memset( seg_data.buffer , ' ', 512 * 21 );
-    
+
 /* -------------------------------------------------------------------- */
 /*	Initialize the header.						*/
 /* -------------------------------------------------------------------- */
@@ -398,7 +398,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
 /*      Write the model results to second segment                       */
 /* -------------------------------------------------------------------- */
     nPos = 512*1;
-    
+
     seg_data.Put(SRITModel->N0x2,nPos,22,"%22.14f");
     seg_data.Put(SRITModel->aa,nPos+22,22,"%22.14f");
     seg_data.Put(SRITModel->SmALPHA,nPos+22*2,22,"%22.14f");
@@ -424,7 +424,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
     seg_data.Put(SRITModel->delTau,nPos+22*22,22,"%22.14f");
 
 /* -------------------------------------------------------------------- */
-/*      Find the min and max height					*/
+/*      Find the min and max height                                     */
 /* -------------------------------------------------------------------- */
     nPos = 2*512;
 

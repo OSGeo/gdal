@@ -1973,7 +1973,7 @@ int TABINDNode::SplitRootNode()
  * (private method)
  *
  * Set the key/value part of the nodes buffer and the pointers to the
- * current child direclty.  This is used when copying info to a new node
+ * current child directly.  This is used when copying info to a new node
  * in SplitNode() and SplitRootNode()
  *
  * Returns 0 on success, -1 on error

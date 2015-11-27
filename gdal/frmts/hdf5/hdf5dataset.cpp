@@ -596,7 +596,7 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
 
             if( n_dims > 0 ) {
                 poHchild->nRank     = n_dims;   // rank of the array
-                poHchild->paDims    = dims;      // dimmension of the array.
+                poHchild->paDims    = dims;      // dimension of the array.
                 poHchild->HDatatype = datatype;  // HDF5 datatype
             }
             else  {

@@ -613,7 +613,7 @@ static int FindSectLen (char *c_ipack, sInt4 gribLen, sInt4 ns[8],
  *  12/2002 (TK,AC,TB,&MS): Code Review.
  *
  * NOTES
- * 1) Numbers not found in document were discused with Bob Glahn on 8/29/2002
+ * 1) Numbers not found in document were discussed with Bob Glahn on 8/29/2002
  * 2) Possible exceptions:
  *    template 3.120 could need ns[3] = 1600
  *    template 4.30 could need a different ns4.

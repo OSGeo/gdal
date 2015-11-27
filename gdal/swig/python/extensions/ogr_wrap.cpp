@@ -5430,14 +5430,15 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
         PyObject *item_list = PyMapping_Items( obj1 );
         for( int i=0; i<(int)size; i++ ) {
           PyObject *it = PySequence_GetItem( item_list, i );
-          
+
           PyObject *k, *v;
           if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
             Py_DECREF(it);
-            PyErr_SetString(PyExc_TypeError,"dictionnaire must contain tuples of strings");
+            PyErr_SetString( PyExc_TypeError,
+                             "Dictionary must contain tuples of strings" );
             SWIG_fail;
           }
-          
+
           int bFreeK, bFreeV;
           char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
           char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
@@ -5446,11 +5447,12 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
             GDALPythonFreeCStr(pszK, bFreeK);
             GDALPythonFreeCStr(pszV, bFreeV);
             Py_DECREF(it);
-            PyErr_SetString(PyExc_TypeError,"dictionnaire must contain tuples of strings");
+            PyErr_SetString( PyExc_TypeError,
+                             "Dictionary must contain tuples of strings" );
             SWIG_fail;
           }
           arg2 = CSLAddNameValue( arg2, pszK, pszV );
-          
+
           GDALPythonFreeCStr(pszK, bFreeK);
           GDALPythonFreeCStr(pszV, bFreeV);
           Py_DECREF(it);
@@ -5459,7 +5461,8 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
       }
     }
     else {
-      PyErr_SetString(PyExc_TypeError,"Argument must be dictionary or sequence of strings");
+      PyErr_SetString( PyExc_TypeError,
+                       "Argument must be dictionary or sequence of strings" );
       SWIG_fail;
     }
   }

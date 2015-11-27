@@ -831,7 +831,7 @@ void field2kml (
 
             break;
         }
-        
+
         if( poKmlSimpleData )
         {
             poKmlSchemaData->add_simpledata ( poKmlSimpleData );
@@ -844,7 +844,7 @@ void field2kml (
         }
     }
 
-    /***** dont add it to the placemark unless there is data *****/
+    // Do not add it to the placemark unless there is data.
 
     if ( bUseSimpleField && poKmlSchemaData->get_simpledata_array_size (  ) > 0 ) {
         poKmlExtendedData = poKmlFactory->CreateExtendedData (  );

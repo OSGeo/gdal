@@ -288,7 +288,7 @@ public:
     virtual ~GDALOctaveLayer();
 
     /**
-     * Perform calculation of Hessian determinats and their signs
+     * Perform calculation of Hessian determinants and their signs
      * for specified integral image. Result is stored internally.
      *
      * @param poImg Integral image object, which provides all necessary

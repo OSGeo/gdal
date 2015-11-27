@@ -60,11 +60,11 @@ def ogr_join_1():
 def ogr_join_2():
 
     expect = ['_166_', '_158_', '_165_' ]
-    
-    sql_lyr = gdaltest.ds.ExecuteSQL( 	\
-        'SELECT * FROM poly ' \
-        + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' \
-        + 'WHERE eas_id < 168' )
+
+    sql_lyr = gdaltest.ds.ExecuteSQL(
+        'SELECT * FROM poly '
+        'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id '
+        'WHERE eas_id < 168' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'NAME', expect )
 
@@ -76,16 +76,16 @@ def ogr_join_2():
         return 'fail'
 
 ###############################################################################
-# Try various naming convesions for the selected fields. 
+# Try various naming conversions for the selected fields.
 
 def ogr_join_3():
 
     expect = ['_166_', '_158_', '_165_' ]
-    
-    sql_lyr = gdaltest.ds.ExecuteSQL( 	\
-        'SELECT poly.area, idlink.* FROM poly ' \
-        + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' \
-        + 'WHERE eas_id < 168' )
+
+    sql_lyr = gdaltest.ds.ExecuteSQL(
+        'SELECT poly.area, idlink.* FROM poly '
+        'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id '
+        'WHERE eas_id < 168' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'idlink.NAME', expect )
 

@@ -1529,10 +1529,10 @@ OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
  * translation of EPSG to WKT for the CT specification.
  *
  * Starting with GDAL 1.9.0, missing parameters in TOWGS84, DATUM or GEOGCS
- * nodes can be added to the WKT, comparing existing WKT parameters to GDAL's 
+ * nodes can be added to the WKT, comparing existing WKT parameters to GDAL's
  * databases.  Note that this optional procedure is very conservative and should
- * not introduce false information into the WKT defintion (altough caution
- * should be advised when activating it). Needs the Configuration Option 
+ * not introduce false information into the WKT definition (although caution
+ * should be advised when activating it). Needs the Configuration Option
  * GDAL_FIX_ESRI_WKT be set to one of the following values (TOWGS84 is
  * recommended for proper datum shift calculations):
  *

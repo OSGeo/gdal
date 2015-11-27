@@ -316,7 +316,7 @@ def ogr_mitab_9():
         return 'fail'
 
 ###############################################################################
-# Read mif file with 2 character .mid delimeter and verify operation.
+# Read mif file with 2 character .mid delimiter and verify operation.
 
 def ogr_mitab_10():
     if gdaltest.mapinfo_drv is None:

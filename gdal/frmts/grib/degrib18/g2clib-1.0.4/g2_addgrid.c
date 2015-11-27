@@ -39,7 +39,7 @@ g2int g2_addgrid(unsigned char *cgrib,g2int *igds,g2int *igdstmpl,g2int *ideflis
 //     igdstmpl - Contains the data values for the specified Grid Definition
 //                Template ( NN=igds[4] ).  Each element of this integer 
 //                array contains an entry (in the order specified) of Grid
-//                Defintion Template 3.NN
+//                Definition Template 3.NN
 //     ideflist - (Used if igds[2] != 0)  This array contains the
 //                number of grid points contained in each row ( or column )
 //      idefnum - (Used if igds[2] != 0)  The number of entries

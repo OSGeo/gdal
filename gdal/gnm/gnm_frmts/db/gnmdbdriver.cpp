@@ -112,18 +112,20 @@ void RegisterGNMDatabase()
         poDriver->SetDescription( "GNMDatabase" );
         poDriver->SetMetadataItem( GDAL_DCAP_GNM, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Geographic Network generic DB based model" );
+                                   "Geographic Network generic DB based "
+                                   "model" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, CPLSPrintf(
 "<CreationOptionList>"
 "  <Option name='%s' type='string' description='The network name. Also it will be a folder name, so the limits for folder name distribute on network name'/>"
-"  <Option name='%s' type='string' description='The network description. Any text descibes the network'/>"
+"  <Option name='%s' type='string' description='The network description. Any text describes the network'/>"
 "  <Option name='%s' type='string' description='The network Spatial reference. All network features will reproject to this spatial reference. May be a WKT text or EPSG code'/>"
 "  <Option name='FORMAT' type='string' description='The OGR format to store network data.'/>"
 "  <Option name='OVERWRITE' type='boolean' description='Overwrite exist network or not' default='NO'/>"
 "</CreationOptionList>", GNM_MD_NAME, GNM_MD_DESCR, GNM_MD_SRS) );
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                                   "<LayerCreationOptionList/>" );
         poDriver->pfnOpen = GNMDBDriverOpen;
         poDriver->pfnIdentify = GNMDBDriverIdentify;
         poDriver->pfnCreate = GNMDBDriverCreate;

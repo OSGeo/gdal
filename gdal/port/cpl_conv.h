@@ -276,7 +276,7 @@ private:
 };
 
 // Does the same as CPLLocaleC except that, when available, it tries to
-// only affect the current thread. But code that would be dependant of
+// only affect the current thread. But code that would be dependent of
 // setlocale(LC_NUMERIC, NULL) returning "C", such as current proj.4 versions,
 // will not work depending on the actual implementation
 class CPL_DLL CPLThreadLocaleC

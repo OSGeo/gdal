@@ -288,7 +288,8 @@ def ers_10():
         return 'fail'
 
     if md_ers["PROJ"] != proj or md_ers["DATUM"] != datum or md_ers["UNITS"] != units:
-        gdaltest.post_reason('GetMetadata() not consistant with GetMetadataItem()')
+        gdaltest.post_reason('GetMetadata() not consistent with '
+                             'GetMetadataItem()')
         print(md_ers)
         return 'fail'
 
@@ -300,7 +301,7 @@ def ers_10():
 
     ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options = ['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=FEET'])
     ds = None
-    
+
     # Check that we can update those values with SetProjection()
     ds = gdal.Open('/vsimem/ers_10.ers', gdal.GA_Update)
     sr = osr.SpatialReference()

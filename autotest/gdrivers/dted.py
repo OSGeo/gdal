@@ -243,9 +243,10 @@ def dted_10():
 
 
 ###############################################################################
-# Test a DTED file that strictly the original edition of MIL-D-89020 that was buggy.
-# The latitude and longitude of the LL cornder of the UHF record was inverted.
-# This was fixed in MIL-D-89020 Amendement 1, but some products may be affected.
+# Test a DTED file that strictly the original edition of MIL-D-89020 that was
+# buggy.  The latitude and longitude of the LL corner of the UHF record was
+# inverted.  This was fixed in MIL-D-89020 Amendment 1, but some products may
+# be affected.
 
 def dted_11():
 

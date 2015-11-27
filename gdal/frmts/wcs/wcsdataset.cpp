@@ -273,7 +273,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return eErr;
 
 /* -------------------------------------------------------------------- */
-/*      Try and open result as a dataseat.                               */
+/*      Try and open result as a dataset.                               */
 /* -------------------------------------------------------------------- */
     GDALDataset *poTileDS = poODS->GDALOpenResult( psResult );
 
@@ -590,7 +590,7 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         return eErr;
 
 /* -------------------------------------------------------------------- */
-/*      Try and open result as a dataseat.                               */
+/*      Try and open result as a dataset.                               */
 /* -------------------------------------------------------------------- */
     GDALDataset *poTileDS = GDALOpenResult( psResult );
 
@@ -1822,13 +1822,13 @@ int WCSDataset::EstablishRasterDetails()
 /* -------------------------------------------------------------------- */
     CPLHTTPResult *psResult = NULL;
     CPLErr eErr;
-    
+
     eErr = GetCoverage( 0, 0, 2, 2, 2, 2, 0, NULL, &psResult );
     if( eErr != CE_None )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Try and open result as a dataseat.                               */
+/*      Try and open result as a dataset.                               */
 /* -------------------------------------------------------------------- */
     GDALDataset *poDS = GDALOpenResult( psResult );
 
@@ -1852,23 +1852,23 @@ int WCSDataset::EstablishRasterDetails()
         delete poDS;
         return FALSE;
     }
-    
+
     if( CPLGetXMLValue(psService,"BandCount",NULL) == NULL )
         CPLCreateXMLElementAndValue( 
             psService, "BandCount", 
             CPLString().Printf("%d",poDS->GetRasterCount()));
-    
+
     CPLCreateXMLElementAndValue( 
         psService, "BandType", 
         GDALGetDataTypeName(poDS->GetRasterBand(1)->GetRasterDataType()) );
 
     bServiceDirty = TRUE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
     delete poDS;
-    
+
     FlushMemoryResult();
 
     return TRUE;

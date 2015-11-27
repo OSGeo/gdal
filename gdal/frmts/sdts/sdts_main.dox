@@ -18,7 +18,7 @@ of open source, easy to compile and integrate C++ code.<p>
 
 The USGS SDTS Page at 
 <a href="http://mcmcweb.er.usgs.gov/sdts/">http://mcmcweb.er.usgs.gov/sdts</a>
-is the definative source of information on the SDTS format.  The SDTS
+is the definitive source of information on the SDTS format.  The SDTS
 format is based on the 
 <a href="http://starship.skyport.net/crew/tibs/iso8211/faq.html">ISO 8211</a>
 encoding scheme for the underlying files, and the SDTS Abstraction Library

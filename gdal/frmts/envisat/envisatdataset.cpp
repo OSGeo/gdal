@@ -865,7 +865,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Find a Mesurement type dataset to use as our reference          */
 /*      raster band.                                                    */
 /* -------------------------------------------------------------------- */
-    int		dsr_size, num_dsr, ds_offset;
+    int         dsr_size, num_dsr, ds_offset;
     char        *pszDSType;
 
     int ds_index = 0;
@@ -877,7 +877,8 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
                                         &num_dsr, &dsr_size ) == FAILURE )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to find \"MDS1\" measurement datatset in Envisat file." );
+                      "Unable to find \"MDS1\" measurement dataset in "
+                      "Envisat file." );
             EnvisatFile_Close( hEnvisatFile );
             return NULL;
         }

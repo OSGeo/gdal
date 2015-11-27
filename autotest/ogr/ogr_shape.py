@@ -1437,7 +1437,7 @@ def ogr_shape_32():
     for i in [0, 1, read_lyr.GetFeatureCount()-1]:
       feat_read = read_lyr.GetFeature(i)
       if feat_read is None:
-        print('Couldn\' retrieve geometry at FID',i)
+        print( 'Could not retrieve geometry at FID', i )
         return 'fail'
       if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))'),
                                 max_error = 0.000000001 ) != 0:

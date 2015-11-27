@@ -123,7 +123,7 @@ public class gdal:public static java.util.Vector GeneralCmdLineProcessor(java.ut
  * are emitted (use Error(gdalconst.CE_Warning,...) to ensure messages are displayed).
  * If CPL_DEBUG is set, but is an empty string or the word "ON" then all
  * debug messages are shown.  Otherwise only messages whose category appears
- * somewhere within the CPL_DEBUG value are displayed (as determinted by
+ * somewhere within the CPL_DEBUG value are displayed (as determined by
  * strstr()).
  * <p>
  * Categories are usually an identifier for the subsystem producing the
@@ -11557,7 +11557,7 @@ public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, S
  * and return OGRERR_FAILURE.
  *
  * @param zone State plane zone number, in the USGS numbering scheme (as
- * dinstinct from the Arc/Info and Erdas numbering scheme. 
+ * distinct from the Arc/Info and Erdas numbering scheme. 
  *
  * @param is_nad83 1 if the NAD83 zone definition should be used or 0
  * if the NAD27 zone definition should be used.  

@@ -44,31 +44,31 @@ struct CPCIDSKRPCModelSegment::PCIDSKRPCInfo
     bool userrpc; // whether or not the RPC was generated from GCPs
     bool adjusted; // Whether or not the RPC has been adjusted
     int downsample; // Epipolar Downsample factor
-    
+
     unsigned int pixels; // pixels in the image
     unsigned int lines; // lines in the image
-    
+
     unsigned int num_coeffs; // number of coefficientsg
-    
+
     std::vector<double> pixel_num; // numerator, pixel direction
     std::vector<double> pixel_denom; // denominator, pixel direction
     std::vector<double> line_num; // numerator, line direction
     std::vector<double> line_denom; // denominator, line direction
-    
+
     // Scale/offset coefficients in the ground domain
     double x_off;
     double x_scale;
-    
+
     double y_off;
     double y_scale;
-    
+
     double z_off;
     double z_scale;
-    
+
     // Scale/offset coefficients in the raster domain
     double pix_off;
     double pix_scale;
-    
+
     double line_off;
     double line_scale;
     

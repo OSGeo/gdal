@@ -922,7 +922,7 @@ GDchkgdid(int32 gridID, char *routname,
 |  INPUTS:                                                                    |
 |  gridID         int32               grid structure ID                       |
 |  dimname        char                Dimension name to define                |
-|  dim            int32               Dimemsion value                         |
+|  dim            int32               Dimension value                         |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |

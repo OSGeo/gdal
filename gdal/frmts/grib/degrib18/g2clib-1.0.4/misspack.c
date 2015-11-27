@@ -10,7 +10,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //   PRGMMR: Gilbert          ORG: W/NP11    DATE: 2000-06-21
 //
 // ABSTRACT: This subroutine packs up a data field using a complex
-//   packing algorithm as defined in the GRIB2 documention.  It
+//   packing algorithm as defined in the GRIB2 documentation.  It
 //   supports GRIB2 complex packing templates with or without
 //   spatial differences (i.e. DRTs 5.2 and 5.3).
 //   It also fills in GRIB2 Data Representation Template 5.2 or 5.3 

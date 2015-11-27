@@ -175,8 +175,8 @@ static void RemoveIDs( CPLXMLNode * psRoot )
 /************************************************************************/
 /*                          TrimTree()                                  */
 /*                                                                      */
-/*      Remove all nodes without a gml:id node in the descendents.      */
-/*      Returns TRUE if there is a gml:id node in the descendents.      */
+/*      Remove all nodes without a gml:id node in the descendants.      */
+/*      Returns TRUE if there is a gml:id node in the descendants.      */
 /************************************************************************/
 
 static bool TrimTree( CPLXMLNode * psRoot )

@@ -543,7 +543,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
     CPLDebug( kPROVIDERNAME, "%s:parsed out dataset", pszDataset );
 
 /* -------------------------------------------------------------------- */
-/*      If we prompted for a defintion that includes a file to save     */
+/*      If we prompted for a definition that includes a file to save    */
 /*      it to, do the save now.                                         */
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszCompositeName, "PROMPT:") 

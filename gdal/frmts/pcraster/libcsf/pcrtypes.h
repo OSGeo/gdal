@@ -67,6 +67,7 @@ namespace pcr {
 
     the generic isMV(const T& v) is not implemented, only the specializations
 
+  
   \todo      Zet alle dingen met een bepaald type,isMV, setMv, isType in
              een zgn. struct trait
              zie cast drama als isMV mist voor INT2 in BandMapTest::Open2

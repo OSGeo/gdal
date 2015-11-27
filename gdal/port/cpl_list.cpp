@@ -224,7 +224,7 @@ int CPLListCount( CPLList *psList )
  * object contained in removed element must be freed by the caller first.
  *
  * @param psList pointer to list head.
- * @param nPosition position number to delet an element.
+ * @param nPosition position number to delete an element.
  *
  * @return pointer to the head of modified list.
  */

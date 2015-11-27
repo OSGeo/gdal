@@ -45,7 +45,7 @@ enum operation
     op_create,      /** create a new network */
     op_import,      /** add a OGR layer to the network */
     op_connect,     /** connect features from layers added to the network */
-    op_disconnect,  /** dicsonnect features from layers added to the network */
+    op_disconnect,  /** disconnect features from layers added to the network */
     op_rule,        /** add connect rule */
     op_autoconnect, /** try to connect features base on their tollerance */
     op_delete,      /** delete network */

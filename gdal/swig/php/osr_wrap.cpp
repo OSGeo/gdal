@@ -848,7 +848,7 @@ SWIG_ZTS_SetPointerZval(zval *z, void *ptr, swig_type_info *type, int newobject 
       /*
        * Wrap the resource in an object, the resource will be accessible
        * via the "_cPtr" member. This is currently only used by
-       * directorin typemaps.
+       * directory typemaps.
        */
       value->newobject = 0;
       zval *resource;

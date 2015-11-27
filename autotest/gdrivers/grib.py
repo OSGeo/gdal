@@ -167,8 +167,9 @@ def grib_6():
     return 'success'
 
 ###############################################################################
-# This is more a /vsizip/ file test than a GRIB one, but couldn't easily
-# come up with a pure /vsizip/ test case, so here's a real world use case (#5530)
+# This is more a /vsizip/ file test than a GRIB one, but could not easily
+# come up with a pure /vsizip/ test case, so here's a real world use
+# case (#5530).
 
 def grib_7():
 

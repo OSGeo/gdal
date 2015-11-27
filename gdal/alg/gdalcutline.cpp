@@ -90,21 +90,20 @@ BlendMaskGenerator(
                           nYOff + nYSize + (dfBlendDist+1), 
                           nXOff - (dfBlendDist+1), 
                           nYOff - (dfBlendDist+1) );
-    
+
     OGRPolygon *poClipRect = NULL;
     char *pszWKT = (char *) osClipRectWKT.c_str();
-    
+
     OGRGeometryFactory::createFromWkt( &pszWKT, NULL, 
                                        (OGRGeometry**) (&poClipRect) );
 
     if( poClipRect )
     {
 
-        /***** if it doesnt intersect the polym zero the mask and return *****/
+        // If it does not intersect the polym zero the mask and return.
 
         if ( ! ((OGRGeometry *) hPolygon)->Intersects( poClipRect ) )
         {
-            
             memset( pafValidityMask, 0, sizeof(float) * nXSize * nYSize );
 
             delete poLines;
@@ -113,8 +112,8 @@ BlendMaskGenerator(
             return CE_None;
         }
 
-        /***** if it doesnt intersect the line at all just return *****/
-         
+        // If it does not intersect the line at all just return.
+
         else if ( ! ((OGRGeometry *) poLines)->Intersects( poClipRect ) )
         {
             delete poLines;

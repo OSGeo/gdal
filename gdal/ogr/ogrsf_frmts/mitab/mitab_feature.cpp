@@ -4991,9 +4991,9 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
      *  -> Quadrant 2 and 4, angles order = end, start
      * + Always adjust angles for x and y axis based on quadrant.
      *
-     * This was confirmed using some more files in which the quadrant was 
-     * manually changed, but whether these are valid results is 
-     * discutable.
+     * This was confirmed using some more files in which the quadrant was
+     * manually changed, but whether these are valid results is
+     * disputable.
      *
      * The ReflectXAxis flag seems to have no effect here...
      *------------------------------------------------------------*/

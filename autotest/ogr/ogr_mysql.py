@@ -292,7 +292,7 @@ def ogr_mysql_6():
         return 'fail'
 
     if sql_lyr.GetNextFeature() != None:
-        gdaltest.post_reason( 'GetNextFeature() didn not return None' )
+        gdaltest.post_reason( 'GetNextFeature() did not return None' )
         return 'fail'
 
     gdaltest.mysql_ds.ReleaseResultSet( sql_lyr )
@@ -301,7 +301,7 @@ def ogr_mysql_6():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test spatial filtering. 
 
@@ -311,7 +311,7 @@ def ogr_mysql_7():
         return 'skip'
 
     gdaltest.mysql_lyr.SetAttributeFilter( None )
-    
+
     geom = ogr.CreateGeometryFromWkt( \
         'LINESTRING(479505 4763195,480526 4762819)' )
     gdaltest.mysql_lyr.SetSpatialFilter( geom )

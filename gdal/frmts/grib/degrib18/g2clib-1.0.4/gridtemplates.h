@@ -6,7 +6,7 @@
 //
 // ABSTRACT: This Fortran Module contains info on all the available 
 //   GRIB2 Grid Definition Templates used in Section 3 (GDS).
-//   The information decribing each template is stored in the
+//   The information describing each template is stored in the
 //   gridtemplate structure defined below.
 //
 //   Each Template has three parts: The number of entries in the template

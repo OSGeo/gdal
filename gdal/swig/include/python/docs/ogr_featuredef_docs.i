@@ -142,7 +142,7 @@ Parameters:
 
 hDefn:  handle to the feature definition.
 
-iField:  the index of the field defintion.
+iField:  the index of the field definition.
 
 OGRERR_NONE in case of success.
 

@@ -106,7 +106,7 @@ and package subroutines are invoked as subroutines in namespaces
 Geo::GDAL::Class::subroutine();
 \endcode
 
-The disctinction between class methods and package subroutines is
+The distinction between class methods and package subroutines is
 subtle but often important. The method invocation passes the class
 name as the first argument while the subroutine invocation does
 not. Especially constructor (new) must be called as a class method.

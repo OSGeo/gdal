@@ -171,9 +171,11 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     m_dfRegionMaxY = -200;
 
 
-    m_bReadGroundOverlay = CSLTestBoolean(CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"));
-    m_bUseSimpleField = CSLTestBoolean(CPLGetConfigOption("LIBKML_USE_SIMPLEFIELD", "YES"));
-    
+    m_bReadGroundOverlay = CSLTestBoolean(
+        CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"));
+    m_bUseSimpleField = CSLTestBoolean(
+        CPLGetConfigOption("LIBKML_USE_SIMPLEFIELD", "YES"));
+
     m_bUpdateIsFolder = FALSE;
 
     /***** was the layer created from a DS::Open *****/
@@ -185,17 +187,17 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
         nFeatures = static_cast<int>(m_poKmlLayer->get_feature_array_size (  ));
 
         /***** get the field config *****/
-        
+
         struct fieldconfig oFC;
         get_fieldconfig( &oFC );
 
         /***** name field *****/
-        
+
         OGRFieldDefn oOgrFieldName ( oFC.namefield,OFTString );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
 
-        /***** descripton field *****/
-        
+        /***** description field *****/
+
         OGRFieldDefn oOgrFieldDesc ( oFC.descfield, OFTString );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldDesc );
 

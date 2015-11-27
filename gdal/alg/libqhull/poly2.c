@@ -3109,7 +3109,7 @@ void qh_vertexneighbors(void /*qh facet_list*/) {
 
   if (qh VERTEXneighbors)
     return;
-  trace1((qh ferr, 1035, "qh_vertexneighbors: determing neighboring facets for each vertex\n"));
+  trace1((qh ferr, 1035, "qh_vertexneighbors: determine neighboring facets for each vertex\n"));
   qh vertex_visit++;
   FORALLfacets {
     if (facet->visible)

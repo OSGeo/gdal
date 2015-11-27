@@ -261,7 +261,7 @@ def vrtrawlink_6():
     return 'success'
 
 ###############################################################################
-# Add a new band with relativeToVRT=1, change direcotry and re-open the dataset.
+# Add a new band with relativeToVRT=1, change directory and re-open the dataset.
 
 def vrtrawlink_7():
 

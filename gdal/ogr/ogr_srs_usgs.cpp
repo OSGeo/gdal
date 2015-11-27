@@ -75,7 +75,7 @@ CPL_CVSID("$Id$");
 #define CEA     97L     // Cylindrical Equal Area (Grid corners set
                         // in meters for EASE grid) 
 #define BCEA    98L     // Cylindrical Equal Area (Grid corners set
-                        // in DMS degs for EASE grid) 
+                        // in DMS degs for EASE grid)
 #define ISINUS  99L     // Integerized Sinusoidal Grid
                         // (added by Raj Gejjagaraguppe ARC for MODIS) 
 
@@ -646,7 +646,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
         // FIXME: OBEQA --- Oblated Equal Area skipped
 
         // FIXME: ISINUS1 --- Integerized Sinusoidal Grid (the same as 99) skipped
-        
+
         // FIXME: CEA --- Cylindrical Equal Area skipped (Grid corners set in meters for EASE grid)
 
         // FIXME: BCEA --- Cylindrical Equal Area skipped (Grid corners set in DMS degs for EASE grid)
@@ -657,7 +657,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             CPLDebug( "OSR_USGS", "Unsupported projection: %ld", iProjSys );
             SetLocalCS( CPLString().Printf("GCTP projection number %ld", iProjSys) );
             break;
-            
+
     }
 
 /* -------------------------------------------------------------------- */

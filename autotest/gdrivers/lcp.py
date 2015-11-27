@@ -792,7 +792,7 @@ def lcp_20():
         return 'fail'
 
     retval = 'success'
-    desc = 'test descpiption'
+    desc = 'test description'
     co = ['LATITUDE=0', 'LINEAR_UNIT=METER', 'DESCRIPTION=%s' % desc]
     lcp_ds = drv.CreateCopy('tmp/lcp_20.lcp', src_ds, False, co)
     if lcp_ds == None:

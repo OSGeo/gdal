@@ -759,7 +759,7 @@ def osr_esri_20():
 # Test round-trip WKT ESRI->OGC->ESRI
 #
 # data from bug #4345 and ESRI pages below
-# ifile must be in csv format (; seperator) with the following header:
+# ifile must be in CSV format (; separator) with the following header:
 # COORD_REF_SYS_CODE;ESRI_DATUM_NAME;WKT
 # http://help.arcgis.com/en/arcims/10.0/mainhelp/mergedProjects/ArcXMLGuide/elements/gcs.htm
 # http://help.arcgis.com/en/arcims/10.0/mainhelp/mergedProjects/ArcXMLGuide/elements/pcs.htm

@@ -320,7 +320,7 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
      * For Unix coverages, check that the info directory exists and 
      * contains the "arc.dir".  In AVCCoverWeird, the arc.dir is 
      * called "../INFO/ARCDR9".
-     * PC Coverages have their info tables in the same direcotry as 
+     * PC Coverages have their info tables in the same directory as 
      * the coverage files.
      *----------------------------------------------------------------*/
     if (((psInfo->eCoverType == AVCCoverV7 || 

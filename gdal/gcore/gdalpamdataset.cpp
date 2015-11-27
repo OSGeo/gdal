@@ -41,17 +41,17 @@ CPL_CVSID("$Id$");
 
 /**
  * \class GDALPamDataset "gdal_pam.h"
- * 
+ *
  * A subclass of GDALDataset which introduces the ability to save and
  * restore auxiliary information (coordinate system, gcps, metadata, 
  * etc) not supported by a file format via an "auxiliary metadata" file
  * with the .aux.xml extension.  
- * 
+ *
  * <h3>Enabling PAM</h3>
- * 
+ *
  * PAM support can be enabled (resp. disabled) in GDAL by setting the GDAL_PAM_ENABLED
- * configuration option (via CPLSetConfigOption(), or the environment) to 
- * the value of YES (resp. NO). Note: The default value is build dependant and defaults
+ * configuration option (via CPLSetConfigOption(), or the environment) to
+ * the value of YES (resp. NO). Note: The default value is build dependent and defaults
  * to YES in Windows and Unix builds.
  *
  * <h3>PAM Proxy Files</h3>

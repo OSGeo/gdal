@@ -228,7 +228,7 @@ int GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 /************************************************************************/
 /*                           GTIFAngleToDD()                            */
 /*                                                                      */
-/*      Convert a numeric angle to decimal degress.                     */
+/*      Convert a numeric angle to decimal degrees.                     */
 /************************************************************************/
 
 double GTIFAngleToDD( double dfAngle, int nUOMAngle )

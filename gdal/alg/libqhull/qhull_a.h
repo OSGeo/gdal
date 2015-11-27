@@ -8,7 +8,7 @@
 
    see libqhull.h for user-level definitions
 
-   see user.h for user-defineable constants
+   see user.h for user-definable constants
 
    defines internal functions for libqhull.c global.c
 

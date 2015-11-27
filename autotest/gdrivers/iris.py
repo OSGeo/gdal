@@ -45,7 +45,7 @@ def iris_1():
     return tst.testOpen()
 
 ###############################################################################
-# Test reading a real world IRIS dataset
+# Test reading a real world IRIS dataset.
 
 def iris_2():
 
@@ -55,13 +55,14 @@ def iris_2():
         return 'fail'
 
     ds.GetProjectionRef()
-    #expected_wkt = """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371000.5,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
-    #got_srs = osr.SpatialReference(got_wkt)
-    #expected_srs = osr.SpatialReference(expected_wkt)
+    # expected_wkt = """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371000.5,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
+    # got_srs = osr.SpatialReference(got_wkt)
+    # expected_srs = osr.SpatialReference(expected_wkt)
 
-    # There are some differences in the values of the parameters between Linux and Windows
-    # not sure if it is only due to rounding differences, different proj versions, etc...
-    #if got_srs.IsSame(expected_srs) != 1:
+    # There are some differences in the values of the parameters between Linux
+    # and Windows not sure if it is only due to rounding differences,
+    # different proj versions, etc...
+    # if got_srs.IsSame(expected_srs) != 1:
     #    gdaltest.post_reason('fail')
     #    print('')
     #    print(expected_wkt)

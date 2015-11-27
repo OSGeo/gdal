@@ -502,7 +502,7 @@ def tiff_update_colorimetric():
             if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
                 gdaltest.post_reason('fail')
                 return 'fail'
-                
+
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
@@ -513,10 +513,10 @@ def tiff_update_colorimetric():
         return 'fail'
 
     driver.Delete('tmp/icc_test.tiff')
-        
+
     return 'success'
-    
-###############################################################################################
+
+############################################################################
 
 gdaltest_list.append( (tiff_write_icc) )
 gdaltest_list.append( (tiff_copy_icc) )

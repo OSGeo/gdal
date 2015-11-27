@@ -38,7 +38,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
-# Try opening a file with a chinese name using the Python utf-8 string.
+# Try opening a file with a Chinese name using the Python UTF-8 string.
 
 def rfc30_1():
 

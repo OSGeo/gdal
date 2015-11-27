@@ -180,19 +180,19 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
 		    CPLError( CE_Failure, CPLE_AppDefined, "Cannot find key field" );
 		    db_close_database_shutdown_driver ( poDriver );
 		    poDriver = NULL;
-		}
-	    }
+                }
+            }
 	    else
-	    {
+            {
 		CPLError( CE_Failure, CPLE_AppDefined, "Cannot describe table %s", 
 			  poLink->table );
 
-	    }
+            }
 	    db_close_database_shutdown_driver ( poDriver );
 	    poDriver = NULL;
-	}
-    } 
-	
+        }
+    }
+
     if ( !bHaveAttributes && iLayer > 0 ) // Because features in layer 0 have no cats  
     {
 	OGRFieldDefn oField("cat", OFTInteger);
@@ -203,19 +203,19 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
     {
         struct Key_Value *projinfo, *projunits;
 
-	// Note: we dont have to reset GISDBASE and LOCATION_NAME because 
-	// OGRGRASSLayer constructor is called from OGRGRASSDataSource::Open
-	// where those variables are set
+        // Note: we do not have to reset GISDBASE and LOCATION_NAME because
+        // OGRGRASSLayer constructor is called from OGRGRASSDataSource::Open
+        // where those variables are set
 
         projinfo = G_get_projinfo();
 	projunits = G_get_projunits();
 
 	char *srsWkt = GPJ_grass_to_wkt ( projinfo, projunits, 0, 0);
-	if ( srsWkt ) 
-	{
+        if ( srsWkt )
+        {
 	    poSRS = new OGRSpatialReference ( srsWkt );
 	    G_free ( srsWkt );
-	}
+        }
 
         G_free_key_value(projinfo);
         G_free_key_value(projunits);

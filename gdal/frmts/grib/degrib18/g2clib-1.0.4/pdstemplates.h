@@ -4,9 +4,9 @@
 
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-26
 //
-// ABSTRACT: This inculde file contains info on all the available 
+// ABSTRACT: This include file contains info on all the available 
 //   GRIB2 Product Definition Templates used in Section 4 (PDS).
-//   The information decribing each template is stored in the
+//   The information describing each template is stored in the
 //   pdstemplate structure defined below.
 //
 //   Each Template has three parts: The number of entries in the template

@@ -819,7 +819,7 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
 /**
  * Strip child nodes matching name.
  *
- * Removes any decendent nodes of this node that match the given name. 
+ * Removes any descendant nodes of this node that match the given name.
  * Of course children of removed nodes are also discarded.
  *
  * @param pszName the name for nodes that should be removed.

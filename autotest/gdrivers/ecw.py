@@ -346,7 +346,7 @@ def ecw_9():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
-    # This always crashe on Frank's machine - some bug in old sdk.
+    # This always crashes on Frank's machine - some bug in old sdk.
     try:
         if os.environ['USER'] == 'warmerda' and gdaltest.ecw_drv.major_version == 3:
             return 'skip'
@@ -375,7 +375,7 @@ def ecw_10():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
-    # This always crashe on Frank's machine - some bug in old sdk.
+    # This always crashes on Frank's machine - some bug in old sdk.
     try:
         if os.environ['USER'] == 'warmerda' and gdaltest.ecw_drv.major_version == 3:
             return 'skip'
@@ -1280,7 +1280,7 @@ def ecw_33_bis():
 
     # Note: we must compare with the dataset RasterIO() buffer since
     # with SDK 3.3, the results of band RasterIO() and dataset RasterIO() are
-    # not consistant. (which seems to be no longer the case with more recent
+    # not consistent. (which seems to be no longer the case with more recent
     # SDK such as 5.0)
     for i in range(50*50):
         if data1[i*4] != data_ref[i]: 
@@ -1301,7 +1301,7 @@ def ecw_33_bis():
 # Verify that an write the imagery out to a new ecw file. Source file is 16 bit.
 
 def ecw_34():
-    
+
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0 :
         return 'skip'
     if gdaltest.ecw_drv.major_version <5:

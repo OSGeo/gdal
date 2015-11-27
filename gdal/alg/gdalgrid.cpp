@@ -2178,7 +2178,7 @@ void GDALGridContextFree(GDALGridContext* psContext)
  * @param dfYMax Highest Y border of output grid.
  * @param nXSize Number of columns in output grid.
  * @param nYSize Number of rows in output grid.
- * @param eType Data type of output array.  
+ * @param eType Data type of output array.
  * @param pData Pointer to array where the computed grid will be stored.
  * @param pfnProgress a GDALProgressFunc() compatible callback function for
  * reporting progress or NULL.
@@ -2200,13 +2200,13 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
     if ( nXSize == 0 || nYSize == 0 )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
-                  "Output raster dimesions should have non-zero size." );
+                  "Output raster dimensions should have non-zero size." );
         return CE_Failure;
     }
 
     const double    dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
     const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
-    
+
     // For linear, check if we will need to fallback to nearest neighbour
     // by sampling along the edges (if all points on edges are within triangles,
     // then interior points will also be!)

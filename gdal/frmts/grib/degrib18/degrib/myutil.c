@@ -505,7 +505,7 @@ return 0; // TODO: reimplement for Win32
  *
  * ARGUMENTS
  *  fileIn = source file to read from. (Input)
- * fileOut = destation file to write to. (Input)
+ *  fileOut = destination file to write to. (Input)
  *
  * RETURNS: int
  *   0 = success.

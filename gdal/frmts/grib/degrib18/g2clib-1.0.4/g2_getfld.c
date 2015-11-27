@@ -123,11 +123,11 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
 //        gfld->igdtmpl  = Contains the data values for the specified Grid
 //                         Definition Template ( NN=gfld->igdtnum ).  Each
 //                         element of this integer array contains an entry (in
-//                         the order specified) of Grid Defintion Template 3.NN
+//                         the order specified) of Grid Definition Template 3.NN
 //                         This element is a pointer to an array
 //                         that holds the data.
 //        gfld->igdtlen = Number of elements in gfld->igdtmpl[].  i.e. number of
-//                       entries in Grid Defintion Template 3.NN
+//                       entries in Grid Definition Template 3.NN
 //                       ( NN=gfld->igdtnum ).
 //        gfld->list_opt  = (Used if gfld->numoct_opt .ne. 0)  This array
 //                          contains the number of grid points contained in
@@ -144,11 +144,11 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
 //        gfld->ipdtmpl  = Contains the data values for the specified Product
 //                         Definition Template ( N=gfdl->ipdtnum ). Each element
 //                         of this integer array contains an entry (in the
-//                         order specified) of Product Defintion Template 4.N.
+//                         order specified) of Product Definition Template 4.N.
 //                         This element is a pointer to an array
 //                         that holds the data.
 //        gfld->ipdtlen = Number of elements in gfld->ipdtmpl[].  i.e. number of
-//                       entries in Product Defintion Template 4.N
+//                       entries in Product Definition Template 4.N
 //                       ( N=gfdl->ipdtnum ).
 //        gfld->coord_list  = Real array containing floating point values
 //                            intended to document the vertical discretisation

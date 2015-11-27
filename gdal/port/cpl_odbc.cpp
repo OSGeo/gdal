@@ -1277,8 +1277,8 @@ void CPLODBCStatement::Append( double dfValue )
  * properly, and should be appended with the direct Append() methods.
  *
  * @param pszFormat printf() style format string.
- * 
- * @return FALSE if formatting fails dueto result being too large.
+ *
+ * @return FALSE if formatting fails due to result being too large.
  */
 
 int CPLODBCStatement::Appendf( const char *pszFormat, ... )
@@ -1303,7 +1303,7 @@ int CPLODBCStatement::Appendf( const char *pszFormat, ... )
 
     return bSuccess;
 }
-                                
+
 /************************************************************************/
 /*                               Clear()                                */
 /************************************************************************/

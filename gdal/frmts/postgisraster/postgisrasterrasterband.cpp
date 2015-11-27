@@ -708,7 +708,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
             CPLFree(papsMatchingTiles);
             return CE_None; 
         }
-    
+
         /**
          * Ok, we loop over the results
          **/
@@ -729,7 +729,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
 /* -------------------------------------------------------------------- */
 
     CPLErr eErr = CE_None;
-    /* Sort tiles by ascending PKID, so that the draw order is determinist */
+    /* Sort tiles by ascending PKID, so that the draw order is deterministic. */
     if( poRDS->GetPrimaryKeyRef() != NULL )
     {
         qsort(papsMatchingTiles, nFeatureCount, sizeof(PostGISRasterTileDataset*),
@@ -746,7 +746,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
                                             pData, nBufXSize, nBufYSize, 
                                             eBufType, nPixelSpace, nLineSpace, NULL);
     }
-    
+
     // Free the object that holds pointers to matching tiles
     CPLFree(papsMatchingTiles);
 

@@ -13,7 +13,7 @@ g2int specunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2int JJ,
 //
 // ABSTRACT: This subroutine unpacks a spectral data field that was packed 
 //   using the complex packing algorithm for spherical harmonic data as 
-//   defined in the GRIB2 documention,
+//   defined in the GRIB2 documentation,
 //   using info from the GRIB2 Data Representation Template 5.51.
 //
 // PROGRAM HISTORY LOG:

@@ -195,7 +195,7 @@ class CPL_ODLL DDFFieldDefn
      */
     const char  *GetName() { return pszTag; }
 
-    /** Fetch a longer descriptio of this field.
+    /** Fetch a longer description of this field.
      * @return this is an internal copy and shouldn't be freed.
      */
     const char  *GetDescription() { return _fieldName; }

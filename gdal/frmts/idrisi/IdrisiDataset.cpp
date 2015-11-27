@@ -416,7 +416,7 @@ static const ConvertionTab aoLinearUnitsConv[] = {
 //----- Get the index of a given linear unit
 int GetUnitIndex( const char *pszUnitName );
 
-//----- Get the defaut name
+//----- Get the default name
 char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter = NULL );
 
 //----- Get the "to meter"
@@ -448,9 +448,9 @@ private:
     char *pszProjection;
     char **papszCategories;
     char *pszUnitType;
-	//move GeoReference2Wkt() into header file
+    // Move GeoReference2Wkt() into header file.
     CPLErr Wkt2GeoReference( const char *pszProjString,
-        char **pszRefSystem, 
+        char **pszRefSystem,
         char **pszRefUnit );
 
 protected:

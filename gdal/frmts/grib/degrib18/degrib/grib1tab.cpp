@@ -5873,7 +5873,7 @@ GRIB1ParmTable parm_table_dwd_202[256] = {
    /* 2 */ {"Seeg_alpha", "jonswap parameter alpha", "1", UC_NONE},
    /* 3 */ {"Seeg_gamma", "jonswap parameter gamma", "1", UC_NONE},
    /* 4 */ {"Seeg_dir", "Seegang direction", "degree true", UC_NONE},
-   /* 5 */ {"Seeg_energ", "Seegang energy densitiy", "(m^2)(s^2)", UC_NONE},
+   /* 5 */ {"Seeg_energ", "Seegang energy density", "(m^2)(s^2)", UC_NONE},
    /* 6 */ {"Seeg_icemk", "Seegang ice mask", "1", UC_NONE},
    /* 7 */ {"peak_p_sw", "peak period of swell", "s", UC_NONE},
    /* 8 */ {"peak_p_ww", "peak period of wind waves", "s", UC_NONE},

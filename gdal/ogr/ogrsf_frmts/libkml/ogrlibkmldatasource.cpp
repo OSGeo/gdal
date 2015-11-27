@@ -323,9 +323,9 @@ void OGRLIBKMLDataSource::WriteKmz (
 
     if ( CSLTestBoolean ( pszUseDocKml ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
 
-        /***** if we dont have the doc.kml root *****/
-        /***** make it and add the container    *****/
-        
+        // If we do not have the doc.kmlroot
+        // make it and add the container.
+
         if ( !m_poKmlDocKmlRoot ) {
             m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, m_papszOptions);
 
@@ -369,8 +369,8 @@ void OGRLIBKMLDataSource::WriteKmz (
             papoLayers[iLayer]->Finalize(poKmlDocument);
         }
 
-        /***** if we dont have the layers root *****/
-        /***** make it and add the container    *****/
+        // If we do not have the layers root
+        // make it and add the container.
 
         KmlPtr poKmlKml = NULL;
 
@@ -386,7 +386,7 @@ void OGRLIBKMLDataSource::WriteKmz (
 
         if( iLayer == 0 && CSLTestBoolean ( pszUseDocKml ) )
             CPLCreateFileInZip( hZIP, "layers/", NULL );
-        
+
         const char* pszLayerFileName;
         if( CSLTestBoolean ( pszUseDocKml ) )
             pszLayerFileName = CPLSPrintf("layers/%s", papoLayers[iLayer]->GetFileName (  ));
@@ -428,9 +428,9 @@ void OGRLIBKMLDataSource::WriteKmz (
  method to write a dir ds at ds destroy
 
  Args:          none
- 
+
  Returns:       nothing
-                
+
 ******************************************************************************/
 
 void OGRLIBKMLDataSource::WriteDir (
@@ -444,9 +444,9 @@ void OGRLIBKMLDataSource::WriteDir (
 
     if ( CSLTestBoolean ( pszUseDocKml ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
 
-        /***** if we dont have the doc.kml root *****/
-        /***** make it and add the container    *****/
-        
+        // If we dont have the doc.kml root
+        // make it and add the container.
+
         if ( !m_poKmlDocKmlRoot ) {
             m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, m_papszOptions);
             if( m_poKmlDocKml != NULL )
@@ -454,7 +454,7 @@ void OGRLIBKMLDataSource::WriteDir (
 
             ParseDocumentOptions(AsKml( m_poKmlDocKmlRoot ), AsDocument(m_poKmlDocKml));
         }
-        
+
         std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
@@ -493,8 +493,8 @@ void OGRLIBKMLDataSource::WriteDir (
             papoLayers[iLayer]->Finalize(poKmlDocument);
         }
 
-        /***** if we dont have the layers root *****/
-        /***** make it and add the container    *****/
+        // If we do not have the layers root
+        // make it and add the container.
 
         KmlPtr poKmlKml = NULL;
 

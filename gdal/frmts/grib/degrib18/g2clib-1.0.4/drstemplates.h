@@ -6,7 +6,7 @@
 //
 // ABSTRACT: This Fortran Module contains info on all the available 
 //   GRIB2 Data Representation Templates used in Section 5 (DRS).
-//   The information decribing each template is stored in the
+//   The information describing each template is stored in the
 //   drstemplate structure defined below.
 //
 //   Each Template has three parts: The number of entries in the template

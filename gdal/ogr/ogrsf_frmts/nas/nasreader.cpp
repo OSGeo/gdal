@@ -613,7 +613,7 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
 
 /* -------------------------------------------------------------------- */
 /*      We want to handle <lage> specially to ensure it is zero         */
-/*      filled, and treated as a string depspite the numeric            */
+/*      filled, and treated as a string despite the numeric             */
 /*      content. https://trac.wheregroup.com/PostNAS/ticket/9           */
 /* -------------------------------------------------------------------- */
     if( strcmp(poClass->GetProperty(iProperty)->GetName(),"lage") == 0 )

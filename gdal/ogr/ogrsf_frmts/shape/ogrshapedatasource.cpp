@@ -311,7 +311,7 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 
 /* -------------------------------------------------------------------- */
 /*      SHPOpen() should include better (CPL based) error reporting,    */
-/*      and we should be trying to distinquish at this point whether    */
+/*      and we should be trying to distinguish at this point whether    */
 /*      failure is a result of trying to open a non-shapefile, or       */
 /*      whether it was a shapefile and we want to report the error      */
 /*      up.                                                             */
@@ -337,7 +337,7 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
         return FALSE;
     }
     CPLErrorReset();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the .dbf file, if it exists.  To open a dbf file, the      */
 /*      filename has to either refer to a successfully opened shp       */
