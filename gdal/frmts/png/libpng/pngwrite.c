@@ -1,8 +1,8 @@
 
 /* pngwrite.c - general routines to write a PNG file
  *
- * Last changed in libpng 1.2.52 [November 20, 2014]
- * Copyright (c) 1998-2014 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.54 [November 12, 2015]
+ * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -584,11 +584,6 @@ png_create_write_struct_2(png_const_charp user_png_ver, png_voidp error_ptr,
    png_set_write_fn(png_ptr, png_voidp_NULL, png_rw_ptr_NULL,
       png_flush_ptr_NULL);
 
-#ifdef PNG_WRITE_WEIGHTED_FILTER_SUPPORTED
-   png_set_filter_heuristics(png_ptr, PNG_FILTER_HEURISTIC_DEFAULT,
-      1, png_doublep_NULL, png_doublep_NULL);
-#endif
-
 #ifdef PNG_SETJMP_SUPPORTED
    /* Applications that neglect to set up their own setjmp() and then
     * encounter a png_error() will longjmp here.  Since the jmpbuf is
@@ -731,10 +726,6 @@ png_write_init_3(png_structpp ptr_ptr, png_const_charp user_png_ver,
    png_ptr->zbuf_size = PNG_ZBUF_SIZE;
    png_ptr->zbuf = (png_bytep)png_malloc(png_ptr,
      (png_uint_32)png_ptr->zbuf_size);
-#ifdef PNG_WRITE_WEIGHTED_FILTER_SUPPORTED
-   png_set_filter_heuristics(png_ptr, PNG_FILTER_HEURISTIC_DEFAULT,
-      1, png_doublep_NULL, png_doublep_NULL);
-#endif
 }
 
 /* Write a few rows of image data.  If the image is interlaced,
@@ -1150,14 +1141,6 @@ png_write_destroy(png_structp png_ptr)
    png_free(png_ptr, png_ptr->time_buffer);
 #endif
 
-#ifdef PNG_WRITE_WEIGHTED_FILTER_SUPPORTED
-   png_free(png_ptr, png_ptr->prev_filters);
-   png_free(png_ptr, png_ptr->filter_weights);
-   png_free(png_ptr, png_ptr->inv_filter_weights);
-   png_free(png_ptr, png_ptr->filter_costs);
-   png_free(png_ptr, png_ptr->inv_filter_costs);
-#endif
-
 #ifdef PNG_SETJMP_SUPPORTED
    /* Reset structure */
    png_memcpy(tmp_jmp, png_ptr->jmpbuf, png_sizeof(jmp_buf));
@@ -1201,14 +1184,13 @@ png_set_filter(png_structp png_ptr, int method, int filters)
    {
       switch (filters & (PNG_ALL_FILTERS | 0x07))
       {
+         case PNG_FILTER_VALUE_NONE:
+              png_ptr->do_filter = PNG_FILTER_NONE; break;
 #ifdef PNG_WRITE_FILTER_SUPPORTED
          case 5:
          case 6:
          case 7: png_warning(png_ptr, "Unknown row filter for method 0");
-#endif /* PNG_WRITE_FILTER_SUPPORTED */
-         case PNG_FILTER_VALUE_NONE:
-              png_ptr->do_filter = PNG_FILTER_NONE; break;
-#ifdef PNG_WRITE_FILTER_SUPPORTED
+                 break;
          case PNG_FILTER_VALUE_SUB:
               png_ptr->do_filter = PNG_FILTER_SUB; break;
          case PNG_FILTER_VALUE_UP:
@@ -1220,6 +1202,7 @@ png_set_filter(png_structp png_ptr, int method, int filters)
          default: png_ptr->do_filter = (png_byte)filters; break;
 #else
          default: png_warning(png_ptr, "Unknown row filter for method 0");
+                 break;
 #endif /* PNG_WRITE_FILTER_SUPPORTED */
       }
 
@@ -1310,117 +1293,11 @@ png_set_filter_heuristics(png_structp png_ptr, int heuristic_method,
    int num_weights, png_doublep filter_weights,
    png_doublep filter_costs)
 {
-   int i;
-
-   png_debug(1, "in png_set_filter_heuristics");
-
-   if (png_ptr == NULL)
-      return;
-   if (heuristic_method >= PNG_FILTER_HEURISTIC_LAST)
-   {
-      png_warning(png_ptr, "Unknown filter heuristic method");
-      return;
-   }
-
-   if (heuristic_method == PNG_FILTER_HEURISTIC_DEFAULT)
-   {
-      heuristic_method = PNG_FILTER_HEURISTIC_UNWEIGHTED;
-   }
-
-   if (num_weights < 0 || filter_weights == NULL ||
-      heuristic_method == PNG_FILTER_HEURISTIC_UNWEIGHTED)
-   {
-      num_weights = 0;
-   }
-
-   png_ptr->num_prev_filters = (png_byte)num_weights;
-   png_ptr->heuristic_method = (png_byte)heuristic_method;
-
-   if (num_weights > 0)
-   {
-      if (png_ptr->prev_filters == NULL)
-      {
-         png_ptr->prev_filters = (png_bytep)png_malloc(png_ptr,
-            (png_uint_32)(png_sizeof(png_byte) * num_weights));
-
-         /* To make sure that the weighting starts out fairly */
-         for (i = 0; i < num_weights; i++)
-         {
-            png_ptr->prev_filters[i] = 255;
-         }
-      }
-
-      if (png_ptr->filter_weights == NULL)
-      {
-         png_ptr->filter_weights = (png_uint_16p)png_malloc(png_ptr,
-            (png_uint_32)(png_sizeof(png_uint_16) * num_weights));
-
-         png_ptr->inv_filter_weights = (png_uint_16p)png_malloc(png_ptr,
-            (png_uint_32)(png_sizeof(png_uint_16) * num_weights));
-         for (i = 0; i < num_weights; i++)
-         {
-            png_ptr->inv_filter_weights[i] =
-            png_ptr->filter_weights[i] = PNG_WEIGHT_FACTOR;
-         }
-      }
-
-      for (i = 0; i < num_weights; i++)
-      {
-         if (filter_weights[i] < 0.0)
-         {
-            png_ptr->inv_filter_weights[i] =
-            png_ptr->filter_weights[i] = PNG_WEIGHT_FACTOR;
-         }
-         else
-         {
-            png_ptr->inv_filter_weights[i] =
-               (png_uint_16)((double)PNG_WEIGHT_FACTOR*filter_weights[i]+0.5);
-            png_ptr->filter_weights[i] =
-               (png_uint_16)((double)PNG_WEIGHT_FACTOR/filter_weights[i]+0.5);
-         }
-      }
-   }
-
-   /* If, in the future, there are other filter methods, this would
-    * need to be based on png_ptr->filter.
-    */
-   if (png_ptr->filter_costs == NULL)
-   {
-      png_ptr->filter_costs = (png_uint_16p)png_malloc(png_ptr,
-         (png_uint_32)(png_sizeof(png_uint_16) * PNG_FILTER_VALUE_LAST));
-
-      png_ptr->inv_filter_costs = (png_uint_16p)png_malloc(png_ptr,
-         (png_uint_32)(png_sizeof(png_uint_16) * PNG_FILTER_VALUE_LAST));
-
-      for (i = 0; i < PNG_FILTER_VALUE_LAST; i++)
-      {
-         png_ptr->inv_filter_costs[i] =
-         png_ptr->filter_costs[i] = PNG_COST_FACTOR;
-      }
-   }
-
-   /* Here is where we set the relative costs of the different filters.  We
-    * should take the desired compression level into account when setting
-    * the costs, so that Paeth, for instance, has a high relative cost at low
-    * compression levels, while it has a lower relative cost at higher
-    * compression settings.  The filter types are in order of increasing
-    * relative cost, so it would be possible to do this with an algorithm.
-    */
-   for (i = 0; i < PNG_FILTER_VALUE_LAST; i++)
-   {
-      if (filter_costs == NULL || filter_costs[i] < 0.0)
-      {
-         png_ptr->inv_filter_costs[i] =
-         png_ptr->filter_costs[i] = PNG_COST_FACTOR;
-      }
-      else if (filter_costs[i] >= 1.0)
-      {
-         png_ptr->inv_filter_costs[i] =
-            (png_uint_16)((double)PNG_COST_FACTOR / filter_costs[i] + 0.5);
-         png_ptr->filter_costs[i] =
-            (png_uint_16)((double)PNG_COST_FACTOR * filter_costs[i] + 0.5);
-      }
-   }
+   PNG_UNUSED(png_ptr)
+   PNG_UNUSED(heuristic_method)
+   PNG_UNUSED(num_weights)
+   PNG_UNUSED(filter_weights)
+   PNG_UNUSED(filter_costs)
 }
 #endif /* PNG_WRITE_WEIGHTED_FILTER_SUPPORTED */
 

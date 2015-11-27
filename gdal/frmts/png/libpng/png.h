@@ -1,7 +1,9 @@
+
 /* png.h - header file for PNG reference library
  *
- * libpng version 1.2.52 - November 20, 2014
- * Copyright (c) 1998-2014 Glenn Randers-Pehrson
+ * libpng version 1.2.54, November 12, 2015
+ *
+ * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -9,11 +11,128 @@
  *
  * Authors and maintainers:
  *  libpng versions 0.71, May 1995, through 0.88, January 1996: Guy Schalnat
- *  libpng versions 0.89c, June 1996, through 0.96, May 1997: Andreas Dilger
- *  libpng versions 0.97, January 1998, through 1.2.52 - November 20, 2014: Glenn
+ *  libpng versions 0.89, June 1996, through 0.96, May 1997: Andreas Dilger
+ *  libpng versions 0.97, January 1998, through 1.2.54, November 12, 2015: Glenn
  *  See also "Contributing Authors", below.
+ */
+
+/*
+ * COPYRIGHT NOTICE, DISCLAIMER, and LICENSE:
  *
- * Note about libpng version numbers:
+ * If you modify libpng you may insert additional notices immediately following
+ * this sentence.
+ *
+ * This code is released under the libpng license.
+ *
+ * libpng versions 1.0.7, July 1, 2000, through 1.2.54, November 12, 2015, are
+ * Copyright (c) 2000-2002, 2004, 2006-2015 Glenn Randers-Pehrson, are
+ * derived from libpng-1.0.6, and are distributed according to the same
+ * disclaimer and license as libpng-1.0.6 with the following individuals
+ * added to the list of Contributing Authors:
+ *
+ *    Simon-Pierre Cadieux
+ *    Eric S. Raymond
+ *    Cosmin Truta
+ *    Gilles Vollant
+ *
+ * and with the following additions to the disclaimer:
+ *
+ *    There is no warranty against interference with your enjoyment of the
+ *    library or against infringement.  There is no warranty that our
+ *    efforts or the library will fulfill any of your particular purposes
+ *    or needs.  This library is provided with all faults, and the entire
+ *    risk of satisfactory quality, performance, accuracy, and effort is with
+ *    the user.
+ *
+ * libpng versions 0.97, January 1998, through 1.0.6, March 20, 2000, are
+ * Copyright (c) 1998-2000 Glenn Randers-Pehrson, are derived from
+ * libpng-0.96, and are distributed according to the same disclaimer and
+ * license as libpng-0.96, with the following individuals added to the list
+ * of Contributing Authors:
+ *
+ *    Tom Lane
+ *    Glenn Randers-Pehrson
+ *    Willem van Schaik
+ *
+ * libpng versions 0.89, June 1996, through 0.96, May 1997, are
+ * Copyright (c) 1996-1997 Andreas Dilger, are derived from libpng-0.88,
+ * and are distributed according to the same disclaimer and license as
+ * libpng-0.88, with the following individuals added to the list of
+ * Contributing Authors:
+ *
+ *    John Bowler
+ *    Kevin Bracey
+ *    Sam Bushell
+ *    Magnus Holmgren
+ *    Greg Roelofs
+ *    Tom Tanner
+ *
+ * libpng versions 0.5, May 1995, through 0.88, January 1996, are
+ * Copyright (c) 1995-1996 Guy Eric Schalnat, Group 42, Inc.
+ *
+ * For the purposes of this copyright and license, "Contributing Authors"
+ * is defined as the following set of individuals:
+ *
+ *    Andreas Dilger
+ *    Dave Martindale
+ *    Guy Eric Schalnat
+ *    Paul Schmidt
+ *    Tim Wegner
+ *
+ * The PNG Reference Library is supplied "AS IS".  The Contributing Authors
+ * and Group 42, Inc. disclaim all warranties, expressed or implied,
+ * including, without limitation, the warranties of merchantability and of
+ * fitness for any purpose.  The Contributing Authors and Group 42, Inc.
+ * assume no liability for direct, indirect, incidental, special, exemplary,
+ * or consequential damages, which may result from the use of the PNG
+ * Reference Library, even if advised of the possibility of such damage.
+ *
+ * Permission is hereby granted to use, copy, modify, and distribute this
+ * source code, or portions hereof, for any purpose, without fee, subject
+ * to the following restrictions:
+ *
+ *   1. The origin of this source code must not be misrepresented.
+ *
+ *   2. Altered versions must be plainly marked as such and must not
+ *      be misrepresented as being the original source.
+ *
+ *   3. This Copyright notice may not be removed or altered from any
+ *      source or altered source distribution.
+ *
+ * The Contributing Authors and Group 42, Inc. specifically permit, without
+ * fee, and encourage the use of this source code as a component to
+ * supporting the PNG file format in commercial products.  If you use this
+ * source code in a product, acknowledgment is not required but would be
+ * appreciated.
+ *
+ * END OF COPYRIGHT NOTICE, DISCLAIMER, and LICENSE.
+ */
+
+/*
+ * A "png_get_copyright" function is available, for convenient use in "about"
+ * boxes and the like:
+ *
+ *    printf("%s", png_get_copyright(NULL));
+ *
+ * Also, the PNG logo (in PNG format, of course) is supplied in the
+ * files "pngbar.png" and "pngbar.jpg (88x31) and "pngnow.png" (98x31).
+ */
+
+/*
+ * Libpng is OSI Certified Open Source Software.  OSI Certified Open Source is
+ * a certification mark of the Open Source Initiative. OSI has not addressed
+ * the additional disclaimers inserted at version 1.0.7.
+ */
+
+/*
+ * The contributing authors would like to thank all those who helped
+ * with testing, bug fixes, and patience.  This wouldn't have been
+ * possible without all of you.
+ *
+ * Thanks to Frank J. T. Wojcik for helping with the documentation.
+ */
+
+/* Note about libpng version numbers:
  *
  *    Due to various miscommunications, unforeseen code incompatibilities
  *    and occasional factors outside the authors' control, version numbering
@@ -57,241 +176,11 @@
  *    1.0.7beta15-18           1    10007  2.1.0.7beta15-18 (binary compatible)
  *    1.0.7rc1-2               1    10007  2.1.0.7rc1-2 (binary compatible)
  *    1.0.7                    1    10007  (still compatible)
- *    1.0.8beta1-4             1    10008  2.1.0.8beta1-4
- *    1.0.8rc1                 1    10008  2.1.0.8rc1
- *    1.0.8                    1    10008  2.1.0.8
- *    1.0.9beta1-6             1    10009  2.1.0.9beta1-6
- *    1.0.9rc1                 1    10009  2.1.0.9rc1
- *    1.0.9beta7-10            1    10009  2.1.0.9beta7-10
- *    1.0.9rc2                 1    10009  2.1.0.9rc2
- *    1.0.9                    1    10009  2.1.0.9
- *    1.0.10beta1              1    10010  2.1.0.10beta1
- *    1.0.10rc1                1    10010  2.1.0.10rc1
- *    1.0.10                   1    10010  2.1.0.10
- *    1.0.11beta1-3            1    10011  2.1.0.11beta1-3
- *    1.0.11rc1                1    10011  2.1.0.11rc1
- *    1.0.11                   1    10011  2.1.0.11
- *    1.0.12beta1-2            2    10012  2.1.0.12beta1-2
- *    1.0.12rc1                2    10012  2.1.0.12rc1
- *    1.0.12                   2    10012  2.1.0.12
- *    1.1.0a-f                 -    10100  2.1.1.0a-f (branch abandoned)
- *    1.2.0beta1-2             2    10200  2.1.2.0beta1-2
- *    1.2.0beta3-5             3    10200  3.1.2.0beta3-5
- *    1.2.0rc1                 3    10200  3.1.2.0rc1
- *    1.2.0                    3    10200  3.1.2.0
- *    1.2.1beta1-4             3    10201  3.1.2.1beta1-4
- *    1.2.1rc1-2               3    10201  3.1.2.1rc1-2
- *    1.2.1                    3    10201  3.1.2.1
- *    1.2.2beta1-6            12    10202  12.so.0.1.2.2beta1-6
- *    1.0.13beta1             10    10013  10.so.0.1.0.13beta1
- *    1.0.13rc1               10    10013  10.so.0.1.0.13rc1
- *    1.2.2rc1                12    10202  12.so.0.1.2.2rc1
- *    1.0.13                  10    10013  10.so.0.1.0.13
- *    1.2.2                   12    10202  12.so.0.1.2.2
- *    1.2.3rc1-6              12    10203  12.so.0.1.2.3rc1-6
- *    1.2.3                   12    10203  12.so.0.1.2.3
- *    1.2.4beta1-3            13    10204  12.so.0.1.2.4beta1-3
- *    1.0.14rc1               13    10014  10.so.0.1.0.14rc1
- *    1.2.4rc1                13    10204  12.so.0.1.2.4rc1
- *    1.0.14                  10    10014  10.so.0.1.0.14
- *    1.2.4                   13    10204  12.so.0.1.2.4
- *    1.2.5beta1-2            13    10205  12.so.0.1.2.5beta1-2
- *    1.0.15rc1-3             10    10015  10.so.0.1.0.15rc1-3
- *    1.2.5rc1-3              13    10205  12.so.0.1.2.5rc1-3
- *    1.0.15                  10    10015  10.so.0.1.0.15
- *    1.2.5                   13    10205  12.so.0.1.2.5
- *    1.2.6beta1-4            13    10206  12.so.0.1.2.6beta1-4
- *    1.0.16                  10    10016  10.so.0.1.0.16
- *    1.2.6                   13    10206  12.so.0.1.2.6
- *    1.2.7beta1-2            13    10207  12.so.0.1.2.7beta1-2
- *    1.0.17rc1               10    10017  10.so.0.1.0.17rc1
- *    1.2.7rc1                13    10207  12.so.0.1.2.7rc1
- *    1.0.17                  10    10017  10.so.0.1.0.17
- *    1.2.7                   13    10207  12.so.0.1.2.7
- *    1.2.8beta1-5            13    10208  12.so.0.1.2.8beta1-5
- *    1.0.18rc1-5             10    10018  10.so.0.1.0.18rc1-5
- *    1.2.8rc1-5              13    10208  12.so.0.1.2.8rc1-5
- *    1.0.18                  10    10018  10.so.0.1.0.18
- *    1.2.8                   13    10208  12.so.0.1.2.8
- *    1.2.9beta1-3            13    10209  12.so.0.1.2.9beta1-3
- *    1.2.9beta4-11           13    10209  12.so.0.9[.0]
- *    1.2.9rc1                13    10209  12.so.0.9[.0]
- *    1.2.9                   13    10209  12.so.0.9[.0]
- *    1.2.10beta1-8           13    10210  12.so.0.10[.0]
- *    1.2.10rc1-3             13    10210  12.so.0.10[.0]
- *    1.2.10                  13    10210  12.so.0.10[.0]
- *    1.2.11beta1-4           13    10211  12.so.0.11[.0]
- *    1.0.19rc1-5             10    10019  10.so.0.19[.0]
- *    1.2.11rc1-5             13    10211  12.so.0.11[.0]
+ *    ...
  *    1.0.19                  10    10019  10.so.0.19[.0]
- *    1.2.11                  13    10211  12.so.0.11[.0]
- *    1.0.20                  10    10020  10.so.0.20[.0]
- *    1.2.12                  13    10212  12.so.0.12[.0]
- *    1.2.13beta1             13    10213  12.so.0.13[.0]
- *    1.0.21                  10    10021  10.so.0.21[.0]
- *    1.2.13                  13    10213  12.so.0.13[.0]
- *    1.2.14beta1-2           13    10214  12.so.0.14[.0]
- *    1.0.22rc1               10    10022  10.so.0.22[.0]
- *    1.2.14rc1               13    10214  12.so.0.14[.0]
- *    1.0.22                  10    10022  10.so.0.22[.0]
- *    1.2.14                  13    10214  12.so.0.14[.0]
- *    1.2.15beta1-6           13    10215  12.so.0.15[.0]
- *    1.0.23rc1-5             10    10023  10.so.0.23[.0]
- *    1.2.15rc1-5             13    10215  12.so.0.15[.0]
- *    1.0.23                  10    10023  10.so.0.23[.0]
- *    1.2.15                  13    10215  12.so.0.15[.0]
- *    1.2.16beta1-2           13    10216  12.so.0.16[.0]
- *    1.2.16rc1               13    10216  12.so.0.16[.0]
- *    1.0.24                  10    10024  10.so.0.24[.0]
- *    1.2.16                  13    10216  12.so.0.16[.0]
- *    1.2.17beta1-2           13    10217  12.so.0.17[.0]
- *    1.0.25rc1               10    10025  10.so.0.25[.0]
- *    1.2.17rc1-3             13    10217  12.so.0.17[.0]
- *    1.0.25                  10    10025  10.so.0.25[.0]
- *    1.2.17                  13    10217  12.so.0.17[.0]
- *    1.0.26                  10    10026  10.so.0.26[.0]
- *    1.2.18                  13    10218  12.so.0.18[.0]
- *    1.2.19beta1-31          13    10219  12.so.0.19[.0]
- *    1.0.27rc1-6             10    10027  10.so.0.27[.0]
- *    1.2.19rc1-6             13    10219  12.so.0.19[.0]
- *    1.0.27                  10    10027  10.so.0.27[.0]
- *    1.2.19                  13    10219  12.so.0.19[.0]
- *    1.2.20beta01-04         13    10220  12.so.0.20[.0]
- *    1.0.28rc1-6             10    10028  10.so.0.28[.0]
- *    1.2.20rc1-6             13    10220  12.so.0.20[.0]
- *    1.0.28                  10    10028  10.so.0.28[.0]
- *    1.2.20                  13    10220  12.so.0.20[.0]
- *    1.2.21beta1-2           13    10221  12.so.0.21[.0]
- *    1.2.21rc1-3             13    10221  12.so.0.21[.0]
- *    1.0.29                  10    10029  10.so.0.29[.0]
- *    1.2.21                  13    10221  12.so.0.21[.0]
- *    1.2.22beta1-4           13    10222  12.so.0.22[.0]
- *    1.0.30rc1               10    10030  10.so.0.30[.0]
- *    1.2.22rc1               13    10222  12.so.0.22[.0]
- *    1.0.30                  10    10030  10.so.0.30[.0]
- *    1.2.22                  13    10222  12.so.0.22[.0]
- *    1.2.23beta01-05         13    10223  12.so.0.23[.0]
- *    1.2.23rc01              13    10223  12.so.0.23[.0]
- *    1.2.23                  13    10223  12.so.0.23[.0]
- *    1.2.24beta01-02         13    10224  12.so.0.24[.0]
- *    1.2.24rc01              13    10224  12.so.0.24[.0]
- *    1.2.24                  13    10224  12.so.0.24[.0]
- *    1.2.25beta01-06         13    10225  12.so.0.25[.0]
- *    1.2.25rc01-02           13    10225  12.so.0.25[.0]
- *    1.0.31                  10    10031  10.so.0.31[.0]
- *    1.2.25                  13    10225  12.so.0.25[.0]
- *    1.2.26beta01-06         13    10226  12.so.0.26[.0]
- *    1.2.26rc01              13    10226  12.so.0.26[.0]
- *    1.2.26                  13    10226  12.so.0.26[.0]
- *    1.0.32                  10    10032  10.so.0.32[.0]
- *    1.2.27beta01-06         13    10227  12.so.0.27[.0]
- *    1.2.27rc01              13    10227  12.so.0.27[.0]
- *    1.0.33                  10    10033  10.so.0.33[.0]
- *    1.2.27                  13    10227  12.so.0.27[.0]
- *    1.0.34                  10    10034  10.so.0.34[.0]
- *    1.2.28                  13    10228  12.so.0.28[.0]
- *    1.2.29beta01-03         13    10229  12.so.0.29[.0]
- *    1.2.29rc01              13    10229  12.so.0.29[.0]
- *    1.0.35                  10    10035  10.so.0.35[.0]
- *    1.2.29                  13    10229  12.so.0.29[.0]
- *    1.0.37                  10    10037  10.so.0.37[.0]
- *    1.2.30beta01-04         13    10230  12.so.0.30[.0]
- *    1.0.38rc01-08           10    10038  10.so.0.38[.0]
- *    1.2.30rc01-08           13    10230  12.so.0.30[.0]
- *    1.0.38                  10    10038  10.so.0.38[.0]
- *    1.2.30                  13    10230  12.so.0.30[.0]
- *    1.0.39rc01-03           10    10039  10.so.0.39[.0]
- *    1.2.31rc01-03           13    10231  12.so.0.31[.0]
- *    1.0.39                  10    10039  10.so.0.39[.0]
- *    1.2.31                  13    10231  12.so.0.31[.0]
- *    1.2.32beta01-02         13    10232  12.so.0.32[.0]
- *    1.0.40rc01              10    10040  10.so.0.40[.0]
- *    1.2.32rc01              13    10232  12.so.0.32[.0]
- *    1.0.40                  10    10040  10.so.0.40[.0]
- *    1.2.32                  13    10232  12.so.0.32[.0]
- *    1.2.33beta01-02         13    10233  12.so.0.33[.0]
- *    1.2.33rc01-02           13    10233  12.so.0.33[.0]
- *    1.0.41rc01              10    10041  10.so.0.41[.0]
- *    1.2.33                  13    10233  12.so.0.33[.0]
- *    1.0.41                  10    10041  10.so.0.41[.0]
- *    1.2.34beta01-07         13    10234  12.so.0.34[.0]
- *    1.0.42rc01              10    10042  10.so.0.42[.0]
- *    1.2.34rc01              13    10234  12.so.0.34[.0]
- *    1.0.42                  10    10042  10.so.0.42[.0]
- *    1.2.34                  13    10234  12.so.0.34[.0]
- *    1.2.35beta01-03         13    10235  12.so.0.35[.0]
- *    1.0.43rc01-02           10    10043  10.so.0.43[.0]
- *    1.2.35rc01-02           13    10235  12.so.0.35[.0]
- *    1.0.43                  10    10043  10.so.0.43[.0]
- *    1.2.35                  13    10235  12.so.0.35[.0]
- *    1.2.36beta01-05         13    10236  12.so.0.36[.0]
- *    1.2.36rc01              13    10236  12.so.0.36[.0]
- *    1.0.44                  10    10044  10.so.0.44[.0]
- *    1.2.36                  13    10236  12.so.0.36[.0]
- *    1.2.37beta01-03         13    10237  12.so.0.37[.0]
- *    1.2.37rc01              13    10237  12.so.0.37[.0]
- *    1.2.37                  13    10237  12.so.0.37[.0]
- *    1.0.45                  10    10045  12.so.0.45[.0]
- *    1.0.46                  10    10046  10.so.0.46[.0]
- *    1.2.38beta01            13    10238  12.so.0.38[.0]
- *    1.2.38rc01-03           13    10238  12.so.0.38[.0]
- *    1.0.47                  10    10047  10.so.0.47[.0]
- *    1.2.38                  13    10238  12.so.0.38[.0]
- *    1.2.39beta01-05         13    10239  12.so.0.39[.0]
- *    1.2.39rc01              13    10239  12.so.0.39[.0]
- *    1.0.48                  10    10048  10.so.0.48[.0]
- *    1.2.39                  13    10239  12.so.0.39[.0]
- *    1.2.40beta01            13    10240  12.so.0.40[.0]
- *    1.2.40rc01              13    10240  12.so.0.40[.0]
- *    1.0.49                  10    10049  10.so.0.49[.0]
- *    1.2.40                  13    10240  12.so.0.40[.0]
- *    1.2.41beta01-18         13    10241  12.so.0.41[.0]
- *    1.0.51rc01              10    10051  10.so.0.51[.0]
- *    1.2.41rc01-03           13    10241  12.so.0.41[.0]
- *    1.0.51                  10    10051  10.so.0.51[.0]
- *    1.2.41                  13    10241  12.so.0.41[.0]
- *    1.2.42beta01-02         13    10242  12.so.0.42[.0]
- *    1.2.42rc01-05           13    10242  12.so.0.42[.0]
- *    1.0.52                  10    10052  10.so.0.52[.0]
- *    1.2.42                  13    10242  12.so.0.42[.0]
- *    1.2.43beta01-05         13    10243  12.so.0.43[.0]
- *    1.0.53rc01-02           10    10053  10.so.0.53[.0]
- *    1.2.43rc01-02           13    10243  12.so.0.43[.0]
- *    1.0.53                  10    10053  10.so.0.53[.0]
- *    1.2.43                  13    10243  12.so.0.43[.0]
- *    1.2.44beta01-03         13    10244  12.so.0.44[.0]
- *    1.2.44rc01-03           13    10244  12.so.0.44[.0]
- *    1.2.44                  13    10244  12.so.0.44[.0]
- *    1.2.45beta01-03         13    10245  12.so.0.45[.0]
- *    1.0.55rc01              10    10055  10.so.0.55[.0]
- *    1.2.45rc01              13    10245  12.so.0.45[.0]
- *    1.0.55                  10    10055  10.so.0.55[.0]
- *    1.2.45                  13    10245  12.so.0.45[.0]
- *    1.2.46rc01-02           13    10246  12.so.0.46[.0]
- *    1.0.56                  10    10056  10.so.0.56[.0]
- *    1.2.46                  13    10246  12.so.0.46[.0]
- *    1.2.47beta01            13    10247  12.so.0.47[.0]
- *    1.2.47rc01              13    10247  12.so.0.47[.0]
- *    1.0.57rc01              10    10057  10.so.0.57[.0]
- *    1.2.47                  13    10247  12.so.0.47[.0]
- *    1.0.57                  10    10057  10.so.0.57[.0]
- *    1.2.48beta01            13    10248  12.so.0.48[.0]
- *    1.2.48rc01-02           13    10248  12.so.0.48[.0]
- *    1.0.58                  10    10058  10.so.0.58[.0]
- *    1.2.48                  13    10248  12.so.0.48[.0]
- *    1.2.49rc01              13    10249  12.so.0.49[.0]
- *    1.0.59                  10    10059  10.so.0.59[.0]
- *    1.2.49                  13    10249  12.so.0.49[.0]
- *    1.0.60                  10    10060  10.so.0.60[.0]
- *    1.2.50                  13    10250  12.so.0.50[.0]
- *    1.2.51beta01-05         13    10251  12.so.0.51[.0]
- *    1.2.51rc01-04           13    10251  12.so.0.51[.0]
- *    1.0.61                  10    10061  10.so.0.61[.0]
- *    1.2.51                  13    10251  12.so.0.51[.0]
- *    1.2.52beta01            13    10252  12.so.0.52[.0]
- *    1.2.52rc01-02           13    10252  12.so.0.52[.0]
- *    1.0.62                  10    10062  10.so.0.62[.0]
- *    1.2.52                  13    10252  12.so.0.52[.0]
+ *    ...
+ *    1.0.64                  10    10064  10.so.0.64[.0]
+ *    1.2.54                  13    10254  12.so.0.54[.0]
  *
  *    Henceforth the source version will match the shared-library major
  *    and minor numbers; the shared-library major version number will be
@@ -316,132 +205,16 @@
  */
 
 /*
- * COPYRIGHT NOTICE, DISCLAIMER, and LICENSE:
- *
- * If you modify libpng you may insert additional notices immediately following
- * this sentence.
- *
- * This code is released under the libpng license.
- *
- * libpng versions 1.2.6, August 15, 2004, through 1.2.52, November 20, 2014, are
- * Copyright (c) 2004, 2006-2013 Glenn Randers-Pehrson, and are
- * distributed according to the same disclaimer and license as libpng-1.2.5
- * with the following individual added to the list of Contributing Authors:
- *
- *    Cosmin Truta
- *
- * libpng versions 1.0.7, July 1, 2000, through 1.2.5, October 3, 2002, are
- * Copyright (c) 2000-2002 Glenn Randers-Pehrson, and are
- * distributed according to the same disclaimer and license as libpng-1.0.6
- * with the following individuals added to the list of Contributing Authors:
- *
- *    Simon-Pierre Cadieux
- *    Eric S. Raymond
- *    Gilles Vollant
- *
- * and with the following additions to the disclaimer:
- *
- *    There is no warranty against interference with your enjoyment of the
- *    library or against infringement.  There is no warranty that our
- *    efforts or the library will fulfill any of your particular purposes
- *    or needs.  This library is provided with all faults, and the entire
- *    risk of satisfactory quality, performance, accuracy, and effort is with
- *    the user.
- *
- * libpng versions 0.97, January 1998, through 1.0.6, March 20, 2000, are
- * Copyright (c) 1998, 1999, 2000 Glenn Randers-Pehrson, and are
- * distributed according to the same disclaimer and license as libpng-0.96,
- * with the following individuals added to the list of Contributing Authors:
- *
- *    Tom Lane
- *    Glenn Randers-Pehrson
- *    Willem van Schaik
- *
- * libpng versions 0.89, June 1996, through 0.96, May 1997, are
- * Copyright (c) 1996, 1997 Andreas Dilger
- * Distributed according to the same disclaimer and license as libpng-0.88,
- * with the following individuals added to the list of Contributing Authors:
- *
- *    John Bowler
- *    Kevin Bracey
- *    Sam Bushell
- *    Magnus Holmgren
- *    Greg Roelofs
- *    Tom Tanner
- *
- * libpng versions 0.5, May 1995, through 0.88, January 1996, are
- * Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.
- *
- * For the purposes of this copyright and license, "Contributing Authors"
- * is defined as the following set of individuals:
- *
- *    Andreas Dilger
- *    Dave Martindale
- *    Guy Eric Schalnat
- *    Paul Schmidt
- *    Tim Wegner
- *
- * The PNG Reference Library is supplied "AS IS".  The Contributing Authors
- * and Group 42, Inc. disclaim all warranties, expressed or implied,
- * including, without limitation, the warranties of merchantability and of
- * fitness for any purpose.  The Contributing Authors and Group 42, Inc.
- * assume no liability for direct, indirect, incidental, special, exemplary,
- * or consequential damages, which may result from the use of the PNG
- * Reference Library, even if advised of the possibility of such damage.
- *
- * Permission is hereby granted to use, copy, modify, and distribute this
- * source code, or portions hereof, for any purpose, without fee, subject
- * to the following restrictions:
- *
- * 1. The origin of this source code must not be misrepresented.
- *
- * 2. Altered versions must be plainly marked as such and
- * must not be misrepresented as being the original source.
- *
- * 3. This Copyright notice may not be removed or altered from
- *    any source or altered source distribution.
- *
- * The Contributing Authors and Group 42, Inc. specifically permit, without
- * fee, and encourage the use of this source code as a component to
- * supporting the PNG file format in commercial products.  If you use this
- * source code in a product, acknowledgment is not required but would be
- * appreciated.
- */
-
-/*
- * A "png_get_copyright" function is available, for convenient use in "about"
- * boxes and the like:
- *
- * printf("%s",png_get_copyright(NULL));
- *
- * Also, the PNG logo (in PNG format, of course) is supplied in the
- * files "pngbar.png" and "pngbar.jpg (88x31) and "pngnow.png" (98x31).
- */
-
-/*
- * Libpng is OSI Certified Open Source Software.  OSI Certified is a
- * certification mark of the Open Source Initiative.
- */
-
-/*
- * The contributing authors would like to thank all those who helped
- * with testing, bug fixes, and patience.  This wouldn't have been
- * possible without all of you.
- *
- * Thanks to Frank J. T. Wojcik for helping with the documentation.
- */
-
-/*
  * Y2K compliance in libpng:
  * =========================
  *
- *    November 20, 2014
+ *    November 12, 2015
  *
  *    Since the PNG Development group is an ad-hoc body, we can't make
  *    an official declaration.
  *
  *    This is your unofficial assurance that libpng from version 0.71 and
- *    upward through 1.2.52 are Y2K compliant.  It is my belief that earlier
+ *    upward through 1.2.54 are Y2K compliant.  It is my belief that earlier
  *    versions were also Y2K compliant.
  *
  *    Libpng only has three year fields.  One is a 2-byte unsigned integer
@@ -497,9 +270,9 @@
  */
 
 /* Version information for png.h - this should match the version in png.c */
-#define PNG_LIBPNG_VER_STRING "1.2.52"
+#define PNG_LIBPNG_VER_STRING "1.2.54"
 #define PNG_HEADER_VERSION_STRING \
-   " libpng version 1.2.52 - November 20, 2014\n"
+   " libpng version 1.2.54 - November 12, 2015\n"
 
 #define PNG_LIBPNG_VER_SONUM   0
 #define PNG_LIBPNG_VER_DLLNUM  13
@@ -507,7 +280,7 @@
 /* These should match the first 3 components of PNG_LIBPNG_VER_STRING: */
 #define PNG_LIBPNG_VER_MAJOR   1
 #define PNG_LIBPNG_VER_MINOR   2
-#define PNG_LIBPNG_VER_RELEASE 52
+#define PNG_LIBPNG_VER_RELEASE 54
 /* This should match the numeric part of the final component of
  * PNG_LIBPNG_VER_STRING, omitting any leading zero:
  */
@@ -537,7 +310,7 @@
  * version 1.0.0 was mis-numbered 100 instead of 10000).  From
  * version 1.0.1 it's    xxyyzz, where x=major, y=minor, z=release
  */
-#define PNG_LIBPNG_VER 10252 /* 1.2.52 */
+#define PNG_LIBPNG_VER 10254 /* 1.2.54 */
 
 #ifndef PNG_VERSION_INFO_ONLY
 /* Include the compression library's header */
@@ -1035,7 +808,7 @@ defined(PNG_READ_BACKGROUND_SUPPORTED)
    /* The sCAL chunk describes the actual physical dimensions of the
     * subject matter of the graphic.  The chunk contains a unit specification
     * a byte value, and two ASCII strings representing floating-point
-    * values.  The values are width and height corresponding to one pixel
+    * values.  The values are width and height corresponsing to one pixel
     * in the image.  This external representation is converted to double
     * here.  Data values are valid if (valid & PNG_INFO_sCAL) is non-zero.
     */
@@ -1453,16 +1226,6 @@ struct png_struct_def
    png_uint_16p hist PNG_DEPSTRUCT;                /* histogram */
 #endif
 
-#ifdef PNG_WRITE_WEIGHTED_FILTER_SUPPORTED
-   png_byte heuristic_method PNG_DEPSTRUCT;        /* heuristic for row filter selection */
-   png_byte num_prev_filters PNG_DEPSTRUCT;        /* number of weights for previous rows */
-   png_bytep prev_filters PNG_DEPSTRUCT;           /* filter type(s) of previous row(s) */
-   png_uint_16p filter_weights PNG_DEPSTRUCT;      /* weight(s) for previous line(s) */
-   png_uint_16p inv_filter_weights PNG_DEPSTRUCT;  /* 1/weight(s) for previous line(s) */
-   png_uint_16p filter_costs PNG_DEPSTRUCT;        /* relative filter calculation cost */
-   png_uint_16p inv_filter_costs PNG_DEPSTRUCT;    /* 1/relative filter calculation cost */
-#endif
-
 #ifdef PNG_TIME_RFC1123_SUPPORTED
    png_charp time_buffer PNG_DEPSTRUCT;            /* String to hold RFC 1123 time text */
 #endif
@@ -1577,7 +1340,7 @@ struct png_struct_def
 /* This triggers a compiler error in png.c, if png.c and png.h
  * do not agree upon the version number.
  */
-typedef png_structp version_1_2_52;
+typedef png_structp version_1_2_54;
 
 typedef png_struct FAR * FAR * png_structpp;
 
@@ -1978,35 +1741,7 @@ extern PNG_EXPORT(void,png_set_filter) PNGARG((png_structp png_ptr, int method,
 #define PNG_FILTER_VALUE_PAETH 4
 #define PNG_FILTER_VALUE_LAST  5
 
-#if defined(PNG_WRITE_WEIGHTED_FILTER_SUPPORTED) /* EXPERIMENTAL */
-/* The "heuristic_method" is given by one of the PNG_FILTER_HEURISTIC_
- * defines, either the default (minimum-sum-of-absolute-differences), or
- * the experimental method (weighted-minimum-sum-of-absolute-differences).
- *
- * Weights are factors >= 1.0, indicating how important it is to keep the
- * filter type consistent between rows.  Larger numbers mean the current
- * filter is that many times as likely to be the same as the "num_weights"
- * previous filters.  This is cumulative for each previous row with a weight.
- * There needs to be "num_weights" values in "filter_weights", or it can be
- * NULL if the weights aren't being specified.  Weights have no influence on
- * the selection of the first row filter.  Well chosen weights can (in theory)
- * improve the compression for a given image.
- *
- * Costs are factors >= 1.0 indicating the relative decoding costs of a
- * filter type.  Higher costs indicate more decoding expense, and are
- * therefore less likely to be selected over a filter with lower computational
- * costs.  There needs to be a value in "filter_costs" for each valid filter
- * type (given by PNG_FILTER_VALUE_LAST), or it can be NULL if you aren't
- * setting the costs.  Costs try to improve the speed of decompression without
- * unduly increasing the compressed image size.
- *
- * A negative weight or cost indicates the default value is to be used, and
- * values in the range [0.0, 1.0) indicate the value is to remain unchanged.
- * The default values for both weights and costs are currently 1.0, but may
- * change if good general weighting/cost heuristics can be found.  If both
- * the weights and costs are set to 1.0, this degenerates the WEIGHTED method
- * to the UNWEIGHTED method, but with added encoding time/computation.
- */
+#if defined(PNG_WRITE_WEIGHTED_FILTER_SUPPORTED) /* DEPRECATED */
 #ifdef PNG_FLOATING_POINT_SUPPORTED
 extern PNG_EXPORT(void,png_set_filter_heuristics) PNGARG((png_structp png_ptr,
    int heuristic_method, int num_weights, png_doublep filter_weights,
@@ -2014,9 +1749,7 @@ extern PNG_EXPORT(void,png_set_filter_heuristics) PNGARG((png_structp png_ptr,
 #endif
 #endif /*  PNG_WRITE_WEIGHTED_FILTER_SUPPORTED */
 
-/* Heuristic used for row filter selection.  These defines should NOT be
- * changed.
- */
+/* The following are no longer used and will be removed from libpng-1.7: */
 #define PNG_FILTER_HEURISTIC_DEFAULT    0  /* Currently "UNWEIGHTED" */
 #define PNG_FILTER_HEURISTIC_UNWEIGHTED 1  /* Used by libpng < 0.95 */
 #define PNG_FILTER_HEURISTIC_WEIGHTED   2  /* Experimental feature */

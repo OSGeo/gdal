@@ -685,9 +685,12 @@ png_push_save_buffer(png_structp png_ptr)
         png_free(png_ptr, old_buffer);
         png_error(png_ptr, "Insufficient memory for save_buffer");
       }
-      png_memcpy(png_ptr->save_buffer, old_buffer, png_ptr->save_buffer_size);
-      png_free(png_ptr, old_buffer);
-      png_ptr->save_buffer_max = new_max;
+      else
+      {
+        png_memcpy(png_ptr->save_buffer, old_buffer, png_ptr->save_buffer_size);
+        png_free(png_ptr, old_buffer);
+        png_ptr->save_buffer_max = new_max;
+      }
    }
    if (png_ptr->current_buffer_size)
    {

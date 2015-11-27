@@ -1,8 +1,8 @@
 
 /* pngset.c - storage of image information into info struct
  *
- * Last changed in libpng 1.2.51 [February 6, 2014]
- * Copyright (c) 1998-2014 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.54 [November 12, 2015]
+ * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -263,7 +263,10 @@ png_set_IHDR(png_structp png_ptr, png_infop info_ptr,
                  - 1        /* filter byte */
                  - 7*8      /* rounding of width to multiple of 8 pixels */
                  - 8)       /* extra max_pixel_depth pad */
+   {
       info_ptr->rowbytes = (png_size_t)0;
+      png_error(png_ptr, "Image width is too large for this architecture");
+   }
    else
       info_ptr->rowbytes = PNG_ROWBYTES(info_ptr->pixel_depth, width);
 }
@@ -446,12 +449,17 @@ png_set_PLTE(png_structp png_ptr, png_infop info_ptr,
    png_colorp palette, int num_palette)
 {
 
+   png_uint_32 max_palette_length;
+
    png_debug1(1, "in %s storage function", "PLTE");
 
    if (png_ptr == NULL || info_ptr == NULL)
       return;
 
-   if (num_palette < 0 || num_palette > PNG_MAX_PALETTE_LENGTH)
+   max_palette_length = (png_ptr->color_type == PNG_COLOR_TYPE_PALETTE) ?
+      (1 << png_ptr->bit_depth) : PNG_MAX_PALETTE_LENGTH;
+
+   if (num_palette < 0 || num_palette > (int) max_palette_length)
    {
       if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
          png_error(png_ptr, "Invalid palette length");
@@ -471,8 +479,8 @@ png_set_PLTE(png_structp png_ptr, png_infop info_ptr,
 #endif
 
    /* Changed in libpng-1.2.1 to allocate PNG_MAX_PALETTE_LENGTH instead
-    * of num_palette entries, in case of an invalid PNG file that has
-    * too-large sample values.
+    * of num_palette entries, in case of an invalid PNG file or incorrect
+    * call to png_set_PLTE() with too-large sample values.
     */
    png_ptr->palette = (png_colorp)png_calloc(png_ptr,
       PNG_MAX_PALETTE_LENGTH * png_sizeof(png_color));
@@ -770,10 +778,10 @@ png_set_text_2(png_structp png_ptr, png_infop info_ptr, png_textp text_ptr,
          (key_len + text_length + lang_len + lang_key_len + 4));
       if (textp->key == NULL)
          return(1);
-      png_debug2(2, "Allocated %lu bytes at %x in png_set_text",
+      png_debug2(2, "Allocated %lu bytes at %p in png_set_text",
                  (png_uint_32)
                  (key_len + lang_len + lang_key_len + text_length + 4),
-                 (int)textp->key);
+                 textp->key);
 
       png_memcpy(textp->key, text_ptr[i].key,(png_size_t)(key_len));
       *(textp->key + key_len) = '\0';
@@ -833,6 +841,15 @@ png_set_tIME(png_structp png_ptr, png_infop info_ptr, png_timep mod_time)
    if (png_ptr == NULL || info_ptr == NULL ||
        (png_ptr->mode & PNG_WROTE_tIME))
       return;
+
+   if (mod_time->month == 0   || mod_time->month > 12  ||
+       mod_time->day   == 0   || mod_time->day   > 31  ||
+       mod_time->hour  > 23   || mod_time->minute > 59 ||
+       mod_time->second > 60)
+   {
+      png_warning(png_ptr, "Ignoring invalid time value");
+      return;
+   }
 
    png_memcpy(&(info_ptr->mod_time), mod_time, png_sizeof(png_time));
    info_ptr->valid |= PNG_INFO_tIME;

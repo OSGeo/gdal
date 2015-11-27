@@ -1,8 +1,8 @@
 
 /* pngread.c - read a PNG file
  *
- * Last changed in libpng 1.2.52 [November 20, 2014]
- * Copyright (c) 1998-2014 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.53 [February 26, 2015]
+ * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -274,7 +274,7 @@ png_read_init_3(png_structpp ptr_ptr, png_const_charp user_png_ver,
 
    do
    {
-      if (user_png_ver[i] != png_libpng_ver[i])
+      if (user_png_ver == NULL || user_png_ver[i] != png_libpng_ver[i])
       {
 #ifdef PNG_LEGACY_SUPPORTED
         png_ptr->flags |= PNG_FLAG_LIBRARY_MISMATCH;
@@ -597,10 +597,12 @@ png_start_read_image(png_structp png_ptr)
 void PNGAPI
 png_read_row(png_structp png_ptr, png_bytep row, png_bytep dsp_row)
 {
+#ifndef PNG_USE_GLOBAL_ARRAYS
    PNG_CONST PNG_IDAT;
    PNG_CONST int png_pass_dsp_mask[7] = {0xff, 0x0f, 0xff, 0x33, 0xff, 0x55,
       0xff};
    PNG_CONST int png_pass_mask[7] = {0x80, 0x08, 0x88, 0x22, 0xaa, 0x55, 0xff};
+#endif
    int ret;
  
    if (png_ptr == NULL)
