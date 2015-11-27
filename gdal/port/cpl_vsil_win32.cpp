@@ -417,7 +417,7 @@ static void VSIWin32TryLongFilename(wchar_t*& pwszFilename)
         while( pwszFilename[nOffset + 0] == '.' && pwszFilename[nOffset + 1] == '.' &&
               (pwszFilename[nOffset + 2] == '/' || pwszFilename[nOffset + 2] == '\\') )
         {
-            size_t nCurDirLenBefore = nCurDirLen;
+            DWORD nCurDirLenBefore = nCurDirLen;
             while( nCurDirLen > 0 && pwszCurDir[nCurDirLen-1] != '\\' )
                 nCurDirLen --;
             if( nCurDirLen <= 2 )
