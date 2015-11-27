@@ -747,13 +747,30 @@ def sentinel2_l1b_2():
         pprint.pprint(got_md)
         return 'fail'
 
-    expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
+    subdatasets_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
  'SUBDATASET_1_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B_PDMC_20151231T235959_R123_V20151231T235959_20151231T235959.SAFE/GRANULE/S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml:10m',
  'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution',
  'SUBDATASET_2_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B_PDMC_20151231T235959_R123_V20151231T235959_20151231T235959.SAFE/GRANULE/S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml:20m',
  'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution',
  'SUBDATASET_3_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B_PDMC_20151231T235959_R123_V20151231T235959_20151231T235959.SAFE/GRANULE/S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml:60m'}
     got_md = ds.GetMetadata('SUBDATASETS')
+    if got_md != subdatasets_md:
+        gdaltest.post_reason('fail')
+        import pprint
+        pprint.pprint(got_md)
+        return 'fail'
+
+    cwd = os.getcwd()
+    gdal.ErrorReset()
+    try:
+        os.chdir('data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B_PDMC_20151231T235959_R123_V20151231T235959_20151231T235959.SAFE/GRANULE/S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03')
+        ds = gdal.Open('S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml')
+    finally:
+        os.chdir(cwd)
+    if ds is None or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         import pprint
