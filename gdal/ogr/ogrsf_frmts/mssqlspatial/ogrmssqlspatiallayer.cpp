@@ -141,16 +141,41 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
 
         if( pszFIDColumn != NULL)
         {
-		    if (EQUAL(poStmt->GetColName(iCol), pszFIDColumn) )
+            if (EQUAL(poStmt->GetColName(iCol), pszFIDColumn) )
             {
-                if (STARTS_WITH_CI(poStmt->GetColTypeName( iCol ), "bigint"))
-                    SetMetadataItem(OLMD_FID64, "YES");
-            
-                if ( EQUAL(poStmt->GetColTypeName( iCol ), "int identity") ||
-                     EQUAL(poStmt->GetColTypeName( iCol ), "bigint identity"))
-                    bIsIdentityFid = TRUE;
-                /* skip FID */
-                continue;
+                bool bIntegerFID = false;
+                switch( CPLODBCStatement::GetTypeMapping(poStmt->GetColType(iCol)) )
+                {
+                    case SQL_C_SSHORT:
+                    case SQL_C_USHORT:
+                    case SQL_C_SLONG:
+                    case SQL_C_ULONG:
+                    case SQL_C_SBIGINT:
+                    case SQL_C_UBIGINT:
+                        bIntegerFID = true;
+                        break;
+                    default:
+                        break;
+                }
+                if( !bIntegerFID )
+                {
+                    CPLDebug("MSSQL", "Ignoring FID column %s as it is of non integer type",
+                             pszFIDColumn);
+                    CPLFree(pszFIDColumn);
+                    pszFIDColumn = NULL;
+                }
+                else
+                {
+                    if (STARTS_WITH_CI(poStmt->GetColTypeName( iCol ), "bigint"))
+                        SetMetadataItem(OLMD_FID64, "YES");
+
+                    if ( EQUAL(poStmt->GetColTypeName( iCol ), "int identity") ||
+                        EQUAL(poStmt->GetColTypeName( iCol ), "bigint identity"))
+                        bIsIdentityFid = TRUE;
+
+                    /* skip FID */
+                    continue;
+                }
             }
         }
         else
