@@ -1338,9 +1338,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to compute a transformation between pixel/line\n"
-                  "and georeferenced coordinates for %s.\n"
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "The transformation is already \"north up\" or\n"
+                  "a transformation between pixel/line and georeferenced\n"
+                  "coordinates cannot be computed for %s.\n"
                   "There is no affine transformation and no GCPs.\n"
                   "Specify transformation option SRC_METHOD=NO_GEOTRANSFORM to bypass this check.", 
                   GDALGetDescription( hSrcDS ) );
