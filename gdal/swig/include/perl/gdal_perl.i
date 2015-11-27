@@ -323,7 +323,8 @@ sub named_parameters {
 }
 
 sub string2int {
-    my ($string, $string2int_hash, $int2string_hash) = @_;
+    my ($string, $string2int_hash, $int2string_hash, $default) = @_;
+    $string = $default if defined $default && !defined $string;
     return unless defined $string;
     return $string if $int2string_hash && exists $int2string_hash->{$string};
     error(1, $string, $string2int_hash) unless exists $string2int_hash->{$string};
@@ -542,7 +543,7 @@ sub AutoCreateWarpedVRT {
             $p[$i] = $p[$i]->ExportToWkt;
         }
     }
-    $p[3] = string2int($p[3], \%RESAMPLING_STRING2INT);
+    $p[3] = string2int($p[3], \%RESAMPLING_STRING2INT, undef, 'NearestNeighbour');
     return _AutoCreateWarpedVRT(@p);
 }
 
@@ -701,9 +702,6 @@ sub stdout_redirection_wrapper {
 sub Create {
     my $self = shift;
     my $p = Geo::GDAL::named_parameters(\@_, Name => 'unnamed', Width => 256, Height => 256, Bands => 1, Type => 'Byte', Options => {});
-    if (@_ == 2) { # old vector create
-        ($p->{name}, $p->{options}) = @_;
-    }
     my $type = Geo::GDAL::string2int($p->{type}, \%Geo::GDAL::TYPE_STRING2INT);
     return $self->stdout_redirection_wrapper(
         $p->{name}, 
@@ -744,6 +742,16 @@ use Carp;
 
 use vars qw/@DOMAINS @CAPABILITIES %CAPABILITIES %BANDS %LAYERS %RESULT_SET/;
 @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
+
+sub RELEASE_PARENTS {
+    my $self = shift;
+    delete $BANDS{$self};
+}
+
+sub Dataset {
+    my $self = shift;
+    return $BANDS{tied(%$self)};
+}
 
 sub Domains {
     return @DOMAINS;
@@ -875,7 +883,7 @@ sub SpatialReference {
     SetProjection($self, $sr->As('WKT')) if defined $sr;
     if (defined wantarray) {
         my $p = GetProjection($self);
-        Geo::GDAL::error('The dataset does not have a spatial reference.') unless $p;
+        return unless $p;
         return Geo::OSR::SpatialReference->new(WKT => $p);
     }
 }
@@ -1081,6 +1089,18 @@ sub Translate {
     );
 }
 
+sub Warped {
+    my $self = shift;
+    my $p = Geo::GDAL::named_parameters(\@_, SrcSRS => undef, DstSRS => undef, ResampleAlg => 'NearestNeighbour', MaxError => 0);
+    for my $srs (qw/srcsrs dstsrs/) {
+        $p->{$srs} = $p->{$srs}->ExportToWkt if $p->{$srs} && blessed $p->{$srs};
+    }
+    $p->{resamplealg} = Geo::GDAL::string2int($p->{resamplealg}, \%Geo::GDAL::RESAMPLING_STRING2INT);
+    my $warped = Geo::GDAL::_AutoCreateWarpedVRT($self, $p->{srcsrs}, $p->{dstsrs}, $p->{resamplealg}, $p->{maxerror});
+    $BANDS{tied(%{$warped})} = $self if $warped; # self must live as long as warped
+    return $warped;
+}
+
 sub Warp {
     my ($self, $dest, $options, $progress, $progress_data) = @_;
     $options = Geo::GDAL::GDALWarpAppOptions->new(Geo::GDAL::make_processing_options($options));
@@ -1137,7 +1157,7 @@ use POSIX;
 use Carp;
 use Scalar::Util 'blessed';
 
-use vars qw/
+use vars qw/ %RATS
     @COLOR_INTERPRETATIONS
     %COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
     %MASK_FLAGS
@@ -1183,7 +1203,12 @@ sub DESTROY {
 
 sub RELEASE_PARENTS {
     my $self = shift;
-    delete $Geo::GDAL::Dataset::BandS{$self};
+    delete $Geo::GDAL::Dataset::BANDS{$self};
+}
+
+sub Dataset {
+    my $self = shift;
+    return $Geo::GDAL::Dataset::BANDS{tied(%{$self})};
 }
 
 sub Size {
@@ -1309,9 +1334,10 @@ sub AttributeTable {
     SetDefaultRAT($self, $_[0]) if @_ and defined $_[0];
     return unless defined wantarray;
     my $r = GetDefaultRAT($self);
-    $Geo::GDAL::RasterAttributeTable::BandS{$r} = $self if $r;
+    $RATS{tied(%$r)} = $self if $r;
     return $r;
 }
+*RasterAttributeTable = *AttributeTable;
 
 sub GetHistogram {
     my $self = shift;
@@ -1578,7 +1604,7 @@ use strict;
 use warnings;
 use Carp;
 
-use vars qw/ %BANDS
+use vars qw/
     @FIELD_TYPES @FIELD_USAGES
     %FIELD_TYPE_STRING2INT %FIELD_TYPE_INT2STRING
     %FIELD_USAGE_STRING2INT %FIELD_USAGE_INT2STRING
@@ -1609,7 +1635,12 @@ sub FieldUsages {
 
 sub RELEASE_PARENTS {
     my $self = shift;
-    delete $BANDS{$self};
+    delete $Geo::GDAL::Band::RATS{$self};
+}
+
+sub Band {
+    my $self = shift;
+    return $Geo::GDAL::Band::RATS{tied(%$self)};
 }
 
 sub GetUsageOfCol {

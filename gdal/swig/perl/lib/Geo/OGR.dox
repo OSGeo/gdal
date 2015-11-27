@@ -442,6 +442,7 @@
 # @param feature a Geo::OGR::Feature object or reference to feature
 # data in a hash (as in Geo::OGR::Feature::Row) or in an array (as in
 # Geo::OGR::Feature::Tuple)
+# @return the new feature.
 
 ## @method DeleteFeature($fid)
 # @param fid feature id
@@ -550,9 +551,9 @@
 #
 # Get and/set the data of the feature. The expected data in the tuple
 # is ([feature_id,] non-spatial fields, spatial fields). The fields in
-# the order they are in the schema. Field values are set using the
-# Geo::OGR::Feature::Field method. Geometries are set and get using
-# the Geo::OGR::Feature::Geometry method.
+# the tuple are in the order they are in the schema. Field values are
+# set using the Geo::OGR::Feature::Field method. Geometries are set
+# and get using the Geo::OGR::Feature::Geometry method.
 # @param tuple [optional] feature data in an array
 # @return feature data in an array
 

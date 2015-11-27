@@ -43,6 +43,13 @@ my %string2int = (a => 1, b => 2, c => 3);
     ok(!defined $b, "string2int undef is returned");
 }
 
+# default is returned
+{
+    my $a = undef;
+    my $b = Geo::GDAL::string2int($a, \%string2int, \%int2string, 'b');
+    ok($b == 2, "string2int default is returned");
+}
+
 # return given if known int
 {
     my $a = 2;
