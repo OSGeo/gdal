@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<n1:Level-1C_Tile_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_TILE_L1C/02.09.05/scripts/../../../schemas/02.11.05/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd">
+
+  <n1:General_Info>
+    <TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03</TILE_ID>
+    <DATASTRIP_ID metadataLevel="Standard">S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03</DATASTRIP_ID>
+    <DOWNLINK_PRIORITY metadataLevel="Standard">NOMINAL</DOWNLINK_PRIORITY>
+    <SENSING_TIME metadataLevel="Standard">2015-12-31T23:59:59.999Z</SENSING_TIME>
+    <Archiving_Info metadataLevel="Expertise">
+      <ARCHIVING_CENTRE>MTI_</ARCHIVING_CENTRE>
+      <ARCHIVING_TIME>2015-12-31T23:59:59.999Z</ARCHIVING_TIME>
+    </Archiving_Info>
+  </n1:General_Info>
+
+  <n1:Geometric_Info>
+    <Tile_Geocoding metadataLevel="Brief">
+      <HORIZONTAL_CS_NAME>WGS84 / UTM zone 32N</HORIZONTAL_CS_NAME>
+      <HORIZONTAL_CS_CODE>EPSG:32632</HORIZONTAL_CS_CODE>
+      <Size resolution="10">
+        <NROWS>10980</NROWS>
+        <NCOLS>10980</NCOLS>
+      </Size>
+      <Size resolution="20">
+        <NROWS>5490</NROWS>
+        <NCOLS>5490</NCOLS>
+      </Size>
+      <Size resolution="60">
+        <NROWS>1830</NROWS>
+        <NCOLS>1830</NCOLS>
+      </Size>
+      <Geoposition resolution="10">
+        <ULX>699960</ULX>
+        <ULY>5100060</ULY>
+        <XDIM>10</XDIM>
+        <YDIM>-10</YDIM>
+      </Geoposition>
+      <Geoposition resolution="20">
+        <ULX>699960</ULX>
+        <ULY>5100060</ULY>
+        <XDIM>20</XDIM>
+        <YDIM>-20</YDIM>
+      </Geoposition>
+      <Geoposition resolution="60">
+        <ULX>699960</ULX>
+        <ULY>5100060</ULY>
+        <XDIM>60</XDIM>
+        <YDIM>-60</YDIM>
+      </Geoposition>
+    </Tile_Geocoding>
+    <Tile_Angles metadataLevel="Standard">
+      <Sun_Angles_Grid>
+        <Zenith>
+          <COL_STEP unit="m">5000</COL_STEP>
+          <ROW_STEP unit="m">5000</ROW_STEP>
+          <Values_List>
+            <VALUES/>
+          </Values_List>
+        </Zenith>
+        <Azimuth>
+          <COL_STEP unit="m">5000</COL_STEP>
+          <ROW_STEP unit="m">5000</ROW_STEP>
+          <Values_List>
+            <VALUES/>
+          </Values_List>
+        </Azimuth>
+      </Sun_Angles_Grid>
+      <Mean_Sun_Angle>
+        <ZENITH_ANGLE unit="deg">26</ZENITH_ANGLE>
+        <AZIMUTH_ANGLE unit="deg">135</AZIMUTH_ANGLE>
+      </Mean_Sun_Angle>
+      <Viewing_Incidence_Angles_Grids bandId="0" detectorId="1">
+        <Zenith>
+          <COL_STEP unit="m">5000</COL_STEP>
+          <ROW_STEP unit="m">5000</ROW_STEP>
+          <Values_List>
+            <VALUES/>
+          </Values_List>
+        </Zenith>
+        <Azimuth>
+          <COL_STEP unit="m">5000</COL_STEP>
+          <ROW_STEP unit="m">5000</ROW_STEP>
+          <Values_List>
+            <VALUES/>
+          </Values_List>
+        </Azimuth>
+      </Viewing_Incidence_Angles_Grids>
+<Mean_Viewing_Incidence_Angle_List>
+        <Mean_Viewing_Incidence_Angle bandId="0">
+          <ZENITH_ANGLE unit="deg">9</ZENITH_ANGLE>
+          <AZIMUTH_ANGLE unit="deg">104</AZIMUTH_ANGLE>
+        </Mean_Viewing_Incidence_Angle>
+      </Mean_Viewing_Incidence_Angle_List>
+    </Tile_Angles>
+
+  </n1:Geometric_Info>
+
+  <n1:Quality_Indicators_Info metadataLevel="Standard">
+    <Image_Content_QI>
+      <CLOUDY_PIXEL_PERCENTAGE>0</CLOUDY_PIXEL_PERCENTAGE>
+      <DEGRADED_MSI_DATA_PERCENTAGE>0</DEGRADED_MSI_DATA_PERCENTAGE>
+    </Image_Content_QI>
+    <Pixel_Level_QI geometry="FULL_RESOLUTION">
+      <MASK_FILENAME bandId="0" type="MSK_DEFECT">S2A_OPER_MSK_DEFECT_MTI__20151231T235959_A000123_T32TQR_B01_MSIL1C.gml</MASK_FILENAME>
+    </Pixel_Level_QI>
+    <PVI_FILENAME>S2A_OPER_PVI_L1C_TL_MTI__20151231T235959_A000123_T32TQR</PVI_FILENAME>
+  </n1:Quality_Indicators_Info>
+
+</n1:Level-1C_Tile_ID>
