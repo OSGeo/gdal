@@ -792,4 +792,32 @@ namespace tut
         ensure( "11.20", VSIMalloc3( 1, 1, 0 ) == NULL );
     }
 
+    template<>
+    template<>
+    void object::test<12>()
+    {
+        ensure( strcmp(CPLFormFilename("a", "b", NULL), "a/b") == 0 ||
+                strcmp(CPLFormFilename("a", "b", NULL), "a\\b") == 0 );
+        ensure( strcmp(CPLFormFilename("a/", "b", NULL), "a/b") == 0 ||
+                strcmp(CPLFormFilename("a/", "b", NULL), "a\\b") == 0 );
+        ensure( strcmp(CPLFormFilename("a\\", "b", NULL), "a/b") == 0 ||
+                strcmp(CPLFormFilename("a\\", "b", NULL), "a\\b") == 0 );
+        ensure_equals( CPLFormFilename(NULL, "a", "b"), "a.b");
+        ensure_equals( CPLFormFilename(NULL, "a", ".b"), "a.b");
+        ensure_equals( CPLFormFilename("/a", "..", NULL), "/");
+        ensure_equals( CPLFormFilename("/a/", "..", NULL), "/");
+        ensure_equals( CPLFormFilename("/a/b", "..", NULL), "/a");
+        ensure_equals( CPLFormFilename("/a/b/", "..", NULL), "/a");
+        ensure( EQUAL(CPLFormFilename("c:", "..", NULL), "c:/..") ||
+                EQUAL(CPLFormFilename("c:", "..", NULL), "c:\\..") );
+        ensure( EQUAL(CPLFormFilename("c:\\", "..", NULL), "c:/..") ||
+                EQUAL(CPLFormFilename("c:\\", "..", NULL), "c:\\..") );
+        ensure_equals( CPLFormFilename("c:\\a", "..", NULL), "c:");
+        ensure_equals( CPLFormFilename("c:\\a\\", "..", NULL), "c:");
+        ensure_equals( CPLFormFilename("c:\\a\\b", "..", NULL), "c:\\a");
+        ensure_equals( CPLFormFilename("\\\\$\\c:\\a", "..", NULL), "\\\\$\\c:");
+        ensure( EQUAL(CPLFormFilename("\\\\$\\c:", "..", NULL), "\\\\$\\c:/..") ||
+                EQUAL(CPLFormFilename("\\\\$\\c:", "..", NULL), "\\\\$\\c:\\..") );
+    }
+    
 } // namespace tut

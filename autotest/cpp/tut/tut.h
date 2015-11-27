@@ -527,6 +527,16 @@ namespace tut
       ensure_equals<>(0,actual,expected);
     }
 
+    void ensure_equals(const char* msg, const char* actual,const char* expected)
+    {
+      ensure_equals(msg, std::string(actual), std::string(expected));
+    }
+
+    void ensure_equals(const char* actual,const char* expected)
+    {
+      ensure_equals(0,actual,expected);
+    }
+
     /**
      * Tests two objects for being at most in given distance one from another.
      * Borders are excluded.
