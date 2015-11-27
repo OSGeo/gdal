@@ -295,6 +295,37 @@ def png_13():
     gdal.Unlink('/vsimem/tmp.png')
     return 'success'
 
+###############################################################################
+# Test support for nbits < 8
+
+def png_14():
+
+    src_ds = gdal.Open('../gcore/data/oddsize1bit.tif')
+    expected_cs = src_ds.GetRasterBand(1).Checksum()
+    gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds)
+    out_ds = gdal.Open('/vsimem/tmp.png')
+    cs = out_ds.GetRasterBand(1).Checksum()
+    nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
+    gdal.Unlink('/vsimem/tmp.png')
+
+    if cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
+
+    if nbits != '1':
+        gdaltest.post_reason('failure')
+        print(nbits)
+        return 'fail'
+
+
+    # check that no PAM file is created
+    if gdal.VSIStatL('/vsimem/tmp.png.aux.xml') == 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     png_1,
     png_2,
@@ -308,7 +339,8 @@ gdaltest_list = [
     png_10,
     png_11,
     png_12,
-    png_13
+    png_13,
+    png_14
     ]
 
 if __name__ == '__main__':
