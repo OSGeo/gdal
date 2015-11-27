@@ -36,12 +36,7 @@
  *  o Image reading is always strictly sequential.  Reading backwards will
  *    cause the file to be rewound, and access started again from the
  *    beginning. 
- *  o 1, 2 and 4 bit data promoted to 8 bit. 
- *  o Transparency values not currently read and applied to palette.
  *  o 16 bit alpha values are not scaled by to eight bit. 
- *  o I should install setjmp()/longjmp() based error trapping for PNG calls.
- *    Currently a failure in png libraries will result in a complete
- *    application termination. 
  *
  */
 
@@ -1461,6 +1456,17 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         eType = GDT_Byte;
         nBitDepth = 8;
+        if( nBands == 1 )
+        {
+            const char* pszNbits = poSrcDS->GetRasterBand(1)->GetMetadataItem(
+                                                    "NBITS", "IMAGE_STRUCTURE");
+            if( pszNbits != NULL )
+            {
+                nBitDepth = atoi(pszNbits);
+                if( !(nBitDepth == 1 || nBitDepth == 2 || nBitDepth == 4) )
+                    nBitDepth = 8;
+            }
+        }
     }
     else
     {
@@ -1734,13 +1740,18 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
 
         GDALColorTable *poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
+        
+        int nEntryCount = poCT->GetColorEntryCount();
+        int nMaxEntryCount = 1 << nBitDepth;
+        if( nEntryCount > nMaxEntryCount )
+            nEntryCount = nMaxEntryCount;
 
         png_color *pasPNGColors = reinterpret_cast<png_color *>(
-            CPLMalloc( sizeof(png_color) * poCT->GetColorEntryCount() ) );
+            CPLMalloc( sizeof(png_color) * nEntryCount ) );
 
         GDALColorEntry sEntry;
         bool bFoundTrans = false;
-        for( int iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
+        for( int iColor = 0; iColor < nEntryCount; iColor++ )
         {
             poCT->GetColorEntryAsRGB( iColor, &sEntry );
             if( sEntry.c4 != 255 )
@@ -1752,7 +1763,7 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
 
         png_set_PLTE( hPNG, psPNGInfo, pasPNGColors, 
-                      poCT->GetColorEntryCount() );
+                      nEntryCount );
 
         CPLFree( pasPNGColors );
 
@@ -1764,9 +1775,9 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             unsigned char *pabyAlpha
                 = reinterpret_cast<unsigned char *>(
-                    CPLMalloc(poCT->GetColorEntryCount() ) );
+                    CPLMalloc(nEntryCount) );
 
-            for( int iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
+            for( int iColor = 0; iColor < nEntryCount; iColor++ )
             {
                 poCT->GetColorEntryAsRGB( iColor, &sEntry );
                 pabyAlpha[iColor] = static_cast<unsigned char>( sEntry.c4 );
@@ -1776,7 +1787,7 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
 
             png_set_tRNS( hPNG, psPNGInfo, pabyAlpha, 
-                          poCT->GetColorEntryCount(), NULL );
+                          nEntryCount, NULL );
 
             CPLFree( pabyAlpha );
         }
@@ -1827,11 +1838,14 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     png_write_info( hPNG, psPNGInfo );
 
+    if( nBitDepth < 8 )
+        png_set_packing( hPNG );
+
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
     CPLErr      eErr = CE_None;
-    const int nWordSize = nBitDepth / 8;
+    const int nWordSize = GDALGetDataTypeSize(eType) / 8;
 
     GByte *pabyScanline = reinterpret_cast<GByte *>(
         CPLMalloc( nBands * nXSize * nWordSize ) );
