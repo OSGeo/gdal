@@ -444,7 +444,7 @@ static void VSIWin32TryLongFilename(wchar_t*& pwszFilename)
         if( pwszFilename[i] == '/' )
             pwszFilename[i] = '\\';
     }
-#ifdef notdef
+#if notdef
     CPLString osFilename;
     for(size_t i = 0; pwszFilename[i] != 0; i++)
         osFilename += (char)pwszFilename[i];
@@ -560,14 +560,11 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
             nLastError == ERROR_FILENAME_EXCED_RANGE )
         {
             VSIWin32TryLongFilename(pwszFilename);
-            if( VSIWin32StrlenW(pwszFilename) >= 255 )
-            {
-                nLastError = 0;
-                hFile = CreateFileW( pwszFilename, dwDesiredAccess, 
-                                FILE_SHARE_READ | FILE_SHARE_WRITE, 
-                                NULL, dwCreationDisposition,  dwFlagsAndAttributes,
-                                NULL );
-            }
+            nLastError = 0;
+            hFile = CreateFileW( pwszFilename, dwDesiredAccess, 
+                            FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                            NULL, dwCreationDisposition,  dwFlagsAndAttributes,
+                            NULL );
         }
         CPLFree( pwszFilename );
     }
@@ -646,10 +643,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
                     nLastError == ERROR_FILENAME_EXCED_RANGE )
                 {
                     VSIWin32TryLongFilename(pwszFilename);
-                    if( VSIWin32StrlenW(pwszFilename) >= 255 )
-                    {
-                        bTryOtherStatImpl = true;
-                    }
+                    bTryOtherStatImpl = true;
                 }
             }
         }
