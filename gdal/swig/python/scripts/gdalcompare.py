@@ -136,7 +136,7 @@ def compare_srs(golden_wkt, new_wkt):
   print('Difference in SRS!')
 
   golden_srs = osr.SpatialReference(golden_wkt)
-new_srs = osr.SpatialReference(new_wkt)
+  new_srs = osr.SpatialReference(new_wkt)
 
   if golden_srs.IsSame(new_srs):
     print('  * IsSame() reports them as equivalent.')
