@@ -346,6 +346,23 @@ def sentinel2_l1c_4():
 
 def sentinel2_l1c_5():
 
+    # Invalid XML
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
+""")
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('/vsimem/test.xml')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     # File is OK, but granule MTD are missing
     gdal.FileFromMemBuffer('/vsimem/test.xml',
 """<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
@@ -594,6 +611,11 @@ def sentinel2_l1c_7():
 </n1:Level-1C_Tile_ID>
 """)
 
+    # Open with missing tile
+    with gdaltest.error_handler():
+        ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:60m:EPSG_32753')
+    ds = None
+
     f = open('data/gtsmall_10_uint16.jp2', 'rb')
     f2 = gdal.VSIFOpenL('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/IMG_DATA/S2A_OPER_MSI_L1C_bla_B01.jp2', 'wb')
     data = f.read()
@@ -682,9 +704,9 @@ def sentinel2_l1b_1():
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L1B:',
                  'SENTINEL2_L1B:foo.xml:10m',
-                 'SENTINEL2_L1C:%s' % filename_xml,
-                 'SENTINEL2_L1C:%s:' % filename_xml,
-                 'SENTINEL2_L1C:%s:30m' % filename_xml] :
+                 'SENTINEL2_L1B:%s' % filename_xml,
+                 'SENTINEL2_L1B:%s:' % filename_xml,
+                 'SENTINEL2_L1B:%s:30m' % filename_xml] :
         with gdaltest.error_handler():
             ds = gdal.Open(name)
         if ds is not None:
@@ -936,9 +958,24 @@ def sentinel2_l1b_3():
     return 'success'
 
 ###############################################################################
-# Test opening a L1B granule (but without any ../../main_mtd.xml)
+# Test opening a L1B granule (with missing tile, without any ../../main_mtd.xml)
 
 def sentinel2_l1b_4():
+
+    gdal.FileFromMemBuffer('/vsimem/foo/S2B_PROD_MTD_foo.xml',
+"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+    <n1:General_Info>
+        <Product_Info>
+<Query_Options>
+<Band_List>
+<BAND_NAME>B1</BAND_NAME>
+</Band_List>
+</Query_Options>
+<Product_Organisation>
+</Product_Organisation>
+        </Product_Info>
+    </n1:General_Info>
+</n1:Level-1B_User_Product>""")
 
     gdal.FileFromMemBuffer('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml',
 """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -956,6 +993,14 @@ def sentinel2_l1b_4():
 </n1:Geometric_Info>
 </n1:Level-1B_Granule_ID>
 """)
+
+    # Open with missing tile
+    with gdaltest.error_handler():
+        ds = gdal.Open('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml:60m')
+    ds = None
+
+    # Now open with missing main MTD
+    gdal.Unlink('/vsimem/foo/S2B_PROD_MTD_foo.xml')
 
     f = open('data/gtsmall_10_uint16.jp2', 'rb')
     f2 = gdal.VSIFOpenL('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/IMG_DATA/S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_B01.jp2', 'wb')
@@ -975,14 +1020,214 @@ def sentinel2_l1b_4():
         return 'fail'
     ds = None
     
-    ds = gdal.Open('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml:60m')
+    ds = gdal.OpenEx('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml:60m', open_options = ['ALPHA=YES'])
     if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterCount != 2:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     gdal.Unlink('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml')
     gdal.Unlink('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/IMG_DATA/S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_B01.jp2')
+
+    return 'success'
+
+###############################################################################
+# Test opening invalid XML files
+
+def sentinel2_l1b_5():
+
+    # Invalid XML
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+""")
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('/vsimem/test.xml')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # No Product_Info
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+    <n1:General_Info>
+    </n1:General_Info>
+</n1:Level-1B_User_Product>""")
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('/vsimem/test.xml')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # No Product_Organisation
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+    <n1:General_Info>
+        <Product_Info/>
+    </n1:General_Info>
+</n1:Level-1B_User_Product>""")
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('/vsimem/test.xml')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # No Band_List
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+    <n1:General_Info>
+        <Product_Info>
+<Product_Organisation>
+</Product_Organisation>
+        </Product_Info>
+    </n1:General_Info>
+</n1:Level-1B_User_Product>""")
+
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('/vsimem/test.xml')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # No valid bands
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+    <n1:General_Info>
+        <Product_Info>
+<Query_Options>
+<Band_List>
+<BAND_NAME>Bxx</BAND_NAME>
+</Band_List>
+</Query_Options>
+<Product_Organisation>
+</Product_Organisation>
+        </Product_Info>
+    </n1:General_Info>
+</n1:Level-1B_User_Product>""")
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('/vsimem/test.xml')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
+    # Invalid XML
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+""")
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('/vsimem/test.xml')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # No Granule_Dimensions
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+  <n1:General_Info>
+  </n1:General_Info>
+  <n1:Geometric_Info>
+  </n1:Geometric_Info>
+</n1:Level-1B_Granule_ID>""")
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # No ROWS
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+  <n1:General_Info>
+  </n1:General_Info>
+  <n1:Geometric_Info>
+<Granule_Dimensions metadataLevel="Standard">
+<Size resolution="10">
+<xNROWS>2304</xNROWS>
+<NCOLS>2552</NCOLS>
+</Size>
+</Granule_Dimensions>
+  </n1:Geometric_Info>
+</n1:Level-1B_Granule_ID>""")
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # No NCOLS
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+  <n1:General_Info>
+  </n1:General_Info>
+  <n1:Geometric_Info>
+<Granule_Dimensions metadataLevel="Standard">
+<Size resolution="10">
+<NROWS>2304</NROWS>
+<xNCOLS>2552</xNCOLS>
+</Size>
+</Granule_Dimensions>
+  </n1:Geometric_Info>
+</n1:Level-1B_Granule_ID>""")
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Not the desired resolution
+    gdal.FileFromMemBuffer('/vsimem/test.xml',
+"""<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+  <n1:General_Info>
+  </n1:General_Info>
+  <n1:Geometric_Info>
+<Granule_Dimensions metadataLevel="Standard">
+</Granule_Dimensions>
+  </n1:Geometric_Info>
+</n1:Level-1B_Granule_ID>""")
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/test.xml')
+
+
+    gdal.Unlink('/vsimem/test.xml')
 
     return 'success'
 
@@ -997,7 +1242,8 @@ gdaltest_list = [
     sentinel2_l1b_1,
     sentinel2_l1b_2,
     sentinel2_l1b_3,
-    sentinel2_l1b_4
+    sentinel2_l1b_4,
+    sentinel2_l1b_5
     ]
 
 if __name__ == '__main__':
