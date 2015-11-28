@@ -23,6 +23,8 @@
 
 ## @ignore last_error
 ## @ignore error
+## @ignore named_parameters
+## @ignore string2int
 
 ## @sub $errstr
 # Clear the error stack and return all generated GDAL error messages in one (possibly multiline) string.
@@ -123,7 +125,6 @@
 
 ## @sub SetCacheMax($Bytes)
 # @param Bytes New maximum amount of memory for caching within GDAL.
-#
 
 ## @sub $GetCacheUsed()
 # @return the amount of memory currently used for caching within GDAL.
@@ -311,22 +312,8 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @sub ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $WarpMemoryLimit=0, $maxerror=0.0, subref progress, $progress_data)
-# @param src_ds Source dataset.
-# @param dst_ds Destination dataset.
-# @param src_wkt Source projection as a WKT.
-# @param dst_wkt Destination projection as a WKT.
-# @param ResampleAlg One of NearestNeighbour Bilinear Cubic or CubicSpline.
-# @param WarpMemoryLimit The amount of memory allowed for caching. Default is 0, i.e., no limit.
-# @param maxerror Maximum error measured in input pixels that is
-# allowed in approximating the transformation. Default is 0.0, i.e.,
-# exact calculations.
-# @param progress [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data).
-# Reprojection is terminated if the progress function returns 0.
-# @param progress_data [optional]
-#
-# <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper</a>
+## @sub ReprojectImage()
+# See Geo::GDAL::Dataset::Warp and Geo::GDAL::Dataset::Warped
 
 ## @sub Geo::GDAL::Dataset AutoCreateWarpedVRT()
 # See Geo::GDAL::Dataset::Warped
@@ -358,48 +345,14 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @sub RasterizeLayer(Geo::GDAL::Dataset ds, arrayref bands, Geo::OGR::Layer layer, $transformer, $arg, arrayref burn_values, hashref options, subref progress, $progress_data)
-# @param ds
-# @param bands A reference to a list of bands to be updated.
-# @param layer
-# @param transformer Not supported, must be undef.
-# @param arg Transformer argument, must be undef.
-# @param burn_values Values to be used for burning the geometries. One for each layer.
-# @param options Not used.
-# @param progress [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data)
-# @param progress_data [optional]
-#
-# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
+## @sub RasterizeLayer()
+# See Geo::GDAL::Dataset::Rasterize.
 
-## @sub Polygonize(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::OGR::Layer out, $PixValField, hashref options, subref progress, $progress_data)
-# @param src
-# @param mask All pixels in the mask band with a value other than zero
-# will be considered suitable for collection as polygons. Must be
-# undef if not used.
-# @param out
-# @param PixValField The index (or name) of the field in output layer
-# into which the pixel value of the polygon should be written.
-# @param options Not used.
-# @param progress [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data)
-# @param progress_data [optional]
-#
-# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
+## @sub Polygonize()
+# See Geo::GDAL::Band::Polygonize.
 
-## @sub SieveFilter(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::GDAL::Band dst, $threshold, $connectedness, hashref options, subref progress, $progress_data)
-# Removes small raster polygons.
-# @param src
-# @param mask
-# @param dst
-# @param threshold An integer.
-# @param connectedness 4 or 8
-# @param options Not used.
-# @param progress [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data)
-# @param progress_data [optional]
-#
-# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
+## @sub SieveFilter()
+# See Geo::GDAL::Band::Sieve.
 
 ## @sub \@GeneralCmdLineProcessor(arrayref argv, $options = 0)
 # @param argv
@@ -572,15 +525,13 @@ sub traverse {
 # Create a raster dataset using this driver.
 # @note a.k.a. CreateDataset
 #
-# @param params named parameters:
+# @param params Named parameters:
 # - \a Name the name of the dataset (default is 'unnamed') or an object, which implements write and close.
 # - \a Width the width of the raster dataset (default is 256).
 # - \a Height the height of the raster dataset (default is 256).
 # - \a Bands number of bands in the raster dataset (default is 1).
 # - \a Type the data type of the pixels the raster dataset (default is 'Byte'). One of Geo::OGR::Driver::CreationDataTypes.
 # - \a Options creation options as a reference to a hash (default is {}).
-#
-# @note As a list the parameters are: Name, Width, Height, NumberOfBands, PixelDataType, Options
 #
 # @return a new Geo::GDAL::Dataset object.
 
@@ -590,7 +541,7 @@ sub traverse {
 # Create a new raster Geo::GDAL::Dataset as a copy of an existing dataset.
 # @note a.k.a. CreateCopy 
 #
-# @param params named parameters:
+# @param params Named parameters:
 # - \a Name name for the new raster dataset.
 # - \a Src the source Geo::GDAL::Dataset object.
 # - \a Strict 1 (default) if the copy must be strictly equivalent, or 0 if the copy may adapt.
@@ -710,7 +661,7 @@ sub traverse {
 ## @method Geo::OGR::Layer CreateLayer(%params)
 # @brief Create a new layer into this data source.
 #
-# @param %params A list of named parameters:
+# @param %params Named parameters:
 # - \a Name (scalar) name for the new layer.
 # - \a Fields (array reference) a list of field definitions as in 
 # Geo::OGR::Layer::CreateField.
@@ -817,7 +768,7 @@ sub traverse {
 ## @method WriteRaster(%params)
 # Write data into the dataset. 
 #
-# @param params named parameters. These are
+# @param params Named parameters:
 # - \a XOff x offset (pixel coordinates) (default is 0)
 # - \a YOff y offset (pixel coordinates) (default is 0)
 # - \a XSize width of the area to write (default is the width of the dataset)
@@ -831,13 +782,12 @@ sub traverse {
 # - \a BufLineSpace (default is 0)
 # - \a BufBandSpace (default is 0)
 #
-# If the parameters are given as a list the order is as above.
 # <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
 
 ## @method $ReadRaster(%params)
 # Read data from the dataset.
 #
-# @param params named parameters. These are
+# @param params Named parameters:
 # - \a XOff x offset (pixel coordinates) (default is 0)
 # - \a YOff y offset (pixel coordinates) (default is 0)
 # - \a XSize width of the area to read (default is the width of the dataset)
@@ -853,7 +803,6 @@ sub traverse {
 # - \a Progress reference to a progress function (default is undef)
 # - \a ProgressData (default is undef)
 #
-# If the parameters are given as a list the order is as above.
 # <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
 # @return a buffer, open the buffer with \a unpack function of Perl. See Geo::GDAL::Band::PackCharacter.
 
@@ -908,7 +857,7 @@ sub traverse {
 ## @method Geo::GDAL::Dataset Warped(%params)
 # Create a virtual warped dataset from this dataset.
 #
-# @param params This method accepts the following named parameters:
+# @param params Named parameters:
 # - \a SrcSRS Override the spatial reference system of this dataset if there is one (default is undef).
 # - \a DstSRS The target spatial reference system of the result (default is undef).
 # - \a ResampleAlg The resampling algorithm (default is 'NearestNeighbour').
@@ -1181,7 +1130,7 @@ sub traverse {
 ## @method WriteRaster(%params)
 # Write data into the band.
 #
-# @param params named parameters. These are
+# @param params Named parameters:
 # - \a XOff x offset (pixel coordinates) (default is 0)
 # - \a YOff y offset (pixel coordinates) (default is 0)
 # - \a XSize width of the area to write (default is the width of the band)
@@ -1193,13 +1142,12 @@ sub traverse {
 # - \a BufPixelSpace (default is 0)
 # - \a BufLineSpace (default is 0)
 #
-# If the parameters are given as a list the order is as above.
 # <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
 
 ## @method $ReadRaster(%params)
 # Read data from the band.
 #
-# @param params named parameters. These are
+# @param params Named parameters:
 # - \a XOff x offset (pixel coordinates) (default is 0)
 # - \a YOff y offset (pixel coordinates) (default is 0)
 # - \a XSize width of the area to read (default is the width of the band)
@@ -1213,7 +1161,6 @@ sub traverse {
 # - \a Progress reference to a progress function (default is undef)
 # - \a ProgressData (default is undef)
 #
-# If the parameters are given as a list the order is as above.
 # <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
 # @return a buffer, open the buffer with \a unpack function of Perl. See Geo::GDAL::Band::PackCharacter.
 
@@ -1312,6 +1259,19 @@ sub traverse {
 # @return a new Geo::GDAL::RasterAttributeTable object, whose data is
 # contained within the band.
 
+## @method Geo::OGR::Layer Polygonize(%params)
+# Polygonize this raster band.
+#
+# @param params Named parameters:
+# - \a Mask A raster band, which is used as a mask to select polygonized areas. Default is undef.
+# - \a OutLayer A vector layer into which the polygons are written. If not given, an in-memory layer 'polygonized' is created and returned.
+# - \a PixValField The name of the field in the output layer into which the pixel value of the polygon area is stored. Default is 'val'.
+# - \a Options Hash or list of options. {Connectedness => 4} can be specified to use 4-connectedness, otherwise 8-connectedness is used.
+# - \a Progress Progress function.
+# - \a ProgressData Additional parameter for the progress function.
+#
+# @return Output vector layer.
+
 ## @ignore ContourGenerate
 
 ## @method Geo::OGR::Layer Contours($DataSource, hashref LayerConstructor, $ContourInterval, $ContourBase, arrayref FixedLevels, $NoDataValue, $IDField, $ElevField, subref Progress, $ProgressData)
@@ -1371,6 +1331,17 @@ sub traverse {
 # be called with parameters (number progress, string msg, progress_data)
 # @param progress_data [optional]
 
+## @method Geo::GDAL::Band Sieve(%params)
+# Remove small areas by merging them into the largest neighbour area.
+# @param params Named parameters:
+# - \a Mask A raster band, which is used as a mask to select sieved areas. Default is undef.
+# - \a Dest A raster band into which the result is written. If not given, an in-memory raster band is used and returned.
+# - \a Threshold The smallest area size (in pixels) which are not sieved away.
+# - \a Options Hash or list of options. {Connectedness => 4} can be specified to use 4-connectedness, otherwise 8-connectedness is used.
+# - \a Progress Progress function.
+# - \a ProgressData Additional parameter for the progress function.
+#
+# @return The filtered raster band.
 
 
 

@@ -305,9 +305,9 @@ sub named_parameters {
         if (@p % 2 == 0 && defined $c && exists $c{$c}) {
             for (my $i = 0; $i < @p; $i+=2) {
                 my $c = lc($p[$i]); $c =~ s/_//g;
-                error(1, $p[$i], \%defaults) unless exists $defaults{$c{$c}};
+                error(1, $p[$i], \%defaults) unless defined $c{$c} && exists $defaults{$c{$c}};
                 $named{$c} = $p[$i+1];
-                }
+            }
         } else {
             for (my $i = 0; $i < @p; $i++) {
                 my $c = lc($_[$i*2]); $c =~ s/_//g;
@@ -1518,6 +1518,37 @@ sub RegenerateOverviews {
     #arrayref overviews, scalar resampling, subref callback, scalar callback_data
     my @p = @_;
     Geo::GDAL::RegenerateOverviews($self, @p);
+}
+
+sub Polygonize {
+    my $self = shift;
+    my $p = Geo::GDAL::named_parameters(\@_, Mask => undef, OutLayer => undef, PixValField => 'val', Options => undef, Progress => undef, ProgressData => undef);
+    my $dt = $self->DataType;
+    $dt = $dt =~ /Float/ ? 'Real' : 'Integer';
+    $p->{outlayer} = Geo::OGR::Driver('Memory')->Create()->
+        CreateLayer(Name => 'polygonized', 
+                    Fields => [{Name => 'val', Type => $dt}, 
+                               {Name => 'geom', Type => 'Polygon'}]) unless $p->{outlayer};
+    $p->{pixvalfield} = $p->{outlayer}->GetLayerDefn->GetFieldIndex($p->{pixvalfield});
+    $p->{options}{'8CONNECTED'} = $p->{options}{Connectedness} if $p->{options}{Connectedness};
+    Geo::GDAL::_Polygonize($self, $p->{mask}, $p->{outlayer}, $p->{pixvalfield}, $p->{options}, $p->{progress}, $p->{progressdata});
+    return $p->{outlayer};
+}
+
+sub Sieve {
+    my $self = shift;
+    my $p = Geo::GDAL::named_parameters(\@_, Mask => undef, Dest => undef, Threshold => 10, Options => undef, Progress => undef, ProgressData => undef);
+    unless ($p->{dest}) {
+        my ($w, $h) = $self->Size;
+        $p->{dest} = Geo::GDAL::Driver('MEM')->Create(Name => 'sieved', Width => $w, Height => $h, Type => $self->DataType)->Band;
+    }
+    my $c = 8;
+    if ($p->{options}{Connectedness}) {
+        $c = $p->{options}{Connectedness};
+        delete $p->{options}{Connectedness};
+    }
+    Geo::GDAL::_SieveFilter($self, $p->{mask}, $p->{dest}, $p->{threshold}, $c, $p->{options}, $p->{progress}, $p->{progressdata});
+    return $p->{dest};
 }
 
 
