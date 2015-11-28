@@ -452,6 +452,7 @@ GDALWarpAppOptions* GDALWarpAppOptionsClone(const GDALWarpAppOptions *psOptionsI
 GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                        GDALDatasetH *pahSrcDS, const GDALWarpAppOptions *psOptionsIn, int *pbUsageError )
 {
+    CPLErrorReset();
     if( pszDest == NULL && hDstDS == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "pszDest == NULL && hDstDS == NULL");
@@ -1398,10 +1399,13 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
 /*      Final Cleanup.                                                  */
 /* -------------------------------------------------------------------- */
-    CPLErrorReset();
+    CPLErr eErrBefore = CPLGetLastErrorType();
     GDALFlushCache( hDstDS );
-    if( CPLGetLastErrorType() == CE_Failure )
+    if (eErrBefore == CE_None &&
+        CPLGetLastErrorType() != CE_None)
+    {
         bHasGotErr = TRUE;
+    }
 
 #ifdef OGR_ENABLED
     if( hCutline != NULL )
