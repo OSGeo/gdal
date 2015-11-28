@@ -117,6 +117,8 @@ CPLErr VRTRasterBand::CopyCommonInfoFrom( GDALRasterBand * poSrcBand )
 
 {
     SetMetadata( poSrcBand->GetMetadata() );
+    const char* pszNBits = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+    SetMetadataItem( "NBITS", pszNBits, "IMAGE_STRUCTURE" );
     SetColorTable( poSrcBand->GetColorTable() );
     SetColorInterpretation(poSrcBand->GetColorInterpretation());
     if( strlen(poSrcBand->GetDescription()) > 0 )

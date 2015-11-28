@@ -374,6 +374,19 @@ def vrtmisc_12():
     return "success"
 
 ###############################################################################
+# Test CreateCopy() preserve NBITS
+
+def vrtmisc_13():
+    
+    ds = gdal.Open('data/oddsize1bit.tif')
+    out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
+    if out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return "success"
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -392,6 +405,7 @@ gdaltest_list = [
     vrtmisc_10,
     vrtmisc_11,
     vrtmisc_12,
+    vrtmisc_13,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':
