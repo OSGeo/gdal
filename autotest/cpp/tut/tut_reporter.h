@@ -56,6 +56,9 @@ namespace tut
     not_passed_list not_passed;
     std::ostream& os;
 
+    reporter( const reporter & );
+    reporter &operator=( const reporter & );
+
   public:
     int ok_group_count;
     int ok_count;

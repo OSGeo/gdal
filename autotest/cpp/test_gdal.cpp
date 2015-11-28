@@ -97,6 +97,7 @@ namespace tut
 #ifdef FRMT_aaigrid
         ensure("AAIGrid driver is not registered", NULL != drv);
 #else
+        (void)drv;
         ensure(true); // Skip
 #endif
     }
@@ -111,6 +112,7 @@ namespace tut
 #ifdef FRMT_dted
         ensure("DTED driver is not registered", NULL != drv);
 #else
+        (void)drv;
         ensure(true); // Skip
 #endif
     }
@@ -125,6 +127,7 @@ namespace tut
 #ifdef FRMT_gtiff
         ensure("GTiff driver is not registered", NULL != drv);
 #else
+        (void)drv;
         ensure(true); // Skip
 #endif
     }

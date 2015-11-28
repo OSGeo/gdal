@@ -108,6 +108,7 @@ static void Check(GByte* pBuffer, int nXSize, int nYSize, int nBands,
                 unsigned long seed = iBand * nXSize * nYSize + (iY + nYOff) * nXSize + iX + nXOff;
                 GByte expected = (GByte)(myrand_r(&seed) & 0xff);
                 assert( pBuffer[iBand * nXWin * nYWin + iY * nXWin + iX] == expected );
+                (void)expected;
             }
         }
     }
