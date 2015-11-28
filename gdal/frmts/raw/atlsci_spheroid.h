@@ -45,7 +45,7 @@ public:
    ~SpheroidItem();
 
    char *spheroid_name;
-   double equitorial_radius;
+   double equitorial_radius;  // TODO: Spelling.
    double polar_radius;
    double inverse_flattening;
 

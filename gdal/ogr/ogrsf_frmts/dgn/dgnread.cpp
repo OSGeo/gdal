@@ -1633,23 +1633,23 @@ int DGNLoadTCB( DGNHandle hDGN )
  *
  * This function will return an array with brief information about every
  * element in a DGN file.  It requires one pass through the entire file to
- * generate (this is not repeated on subsequent calls). 
+ * generate (this is not repeated on subsequent calls).
  *
- * The returned array of DGNElementInfo structures contain the level, type, 
+ * The returned array of DGNElementInfo structures contain the level, type,
  * stype, and other flags for each element in the file.  This can facilitate
  * application level code representing the number of elements of various types
- * effeciently. 
+ * efficiently.
  *
  * Note that while building the index requires one pass through the whole file,
- * it does not generally request much processing for each element. 
+ * it does not generally request much processing for each element.
  *
  * @param hDGN the file to get an index for.
- * @param pnElementCount the integer to put the total element count into. 
+ * @param pnElementCount the integer to put the total element count into.
  *
- * @return a pointer to an internal array of DGNElementInfo structures (there 
+ * @return a pointer to an internal array of DGNElementInfo structures (there
  * will be *pnElementCount entries in the array), or NULL on failure.  The
  * returned array should not be modified or freed, and will last only as long
- * as the DGN file remains open. 
+ * as the DGN file remains open.
  */
 
 const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
@@ -1661,7 +1661,7 @@ const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
 
     if( pnElementCount != NULL )
         *pnElementCount = psDGN->element_count;
-    
+
     return psDGN->element_index;
 }
 

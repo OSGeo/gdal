@@ -131,7 +131,7 @@ struct tiff {
 	uint64               tif_diroff;       /* file offset of current directory */
 	uint64               tif_nextdiroff;   /* file offset of following directory */
 	uint64*              tif_dirlist;      /* list of offsets to already seen directories to prevent IFD looping */
-	uint16               tif_dirlistsize;  /* number of entires in offset list */
+	uint16               tif_dirlistsize;  /* number of entries in offset list */
 	uint16               tif_dirnumber;    /* number of already seen directories */
 	TIFFDirectory        tif_dir;          /* internal rep of current directory */
 	TIFFDirectory        tif_customdir;    /* custom IFDs are separated from the main ones */

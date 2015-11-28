@@ -501,7 +501,7 @@ def tiff_g4_split():
         print(cs)
         gdaltest.post_reason( 'Got wrong checksum' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -520,17 +520,17 @@ def tiff_multi_images():
         print(md)
         gdaltest.post_reason( 'did not get expected subdatasets metadata.' )
         return 'fail'
-    
+
     ds = None
 
-    # Explicitely get the content of the first image
+    # Explicitly get the content of the first image.
     ds = gdal.Open('GTIFF_DIR:1:data/twoimages.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
             print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds = None
 
-    # Explicitely get the content of the second image
+    # Explicitly get the content of the second image.
     ds = gdal.Open('GTIFF_DIR:2:data/twoimages.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
             print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))

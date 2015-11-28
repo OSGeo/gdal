@@ -381,7 +381,7 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
-    }     
+    }
 
     /*-----------------------------------------------------------------
      * None of the extensions worked!  
@@ -398,7 +398,7 @@ GBool TABAdjustFilenameExtension(char *pszFname)
  * Extract the basename part of a complete file path.
  *
  * Returns a newly allocated string without the leading path (dirs) and
- * the extenstion.  The returned string should be freed using CPLFree().
+ * the extension.  The returned string should be freed using CPLFree().
  **********************************************************************/
 char *TABGetBasename(const char *pszFname)
 {

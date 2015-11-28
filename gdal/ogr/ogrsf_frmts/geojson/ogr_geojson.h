@@ -197,13 +197,13 @@ private:
     // 
     GeometryTranslation flTransGeom_;
     AttributesTranslation flTransAttrs_;
-    int bOtherPages_; /* ERSI Feature Service specific */
+    int bOtherPages_;  // ESRI Feature Service specific.
 
     int bFpOutputIsSeekable_;
     int nBBOXInsertLocation_;
 
     //
-    // Priavte utility functions
+    // Private utility functions
     //
     void Clear();
     int ReadFromFile( GDALOpenInfo* poOpenInfo );

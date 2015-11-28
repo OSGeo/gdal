@@ -39,8 +39,8 @@
  *  with a mutex.
  *  If the passed mutex is NULL, then no locking will be done.
  *
- *  Note that the constructors and destructors are not explictely protected
- *  by the mutex*
+ *  Note that the constructors and destructors are not explicitly protected
+ *  by the mutex.
  */
 class CPL_DLL OGRMutexedDataSource : public OGRDataSource
 {

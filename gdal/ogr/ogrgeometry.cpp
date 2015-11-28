@@ -2065,8 +2065,8 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
  * geometry types with nothing in common but the base geometry
  * type.  wkbNone should be used to indicate that no geometries
  * have been encountered yet, and means the first geometry
- * encounted will establish the preliminary type.
- * 
+ * encountered will establish the preliminary type.
+ *
  * @param eMain the first input geometry type.
  * @param eExtra the second input geometry type.
  *
@@ -2093,13 +2093,13 @@ OGRMergeGeometryTypes( OGRwkbGeometryType eMain,
  * geometry types with nothing in common but the base geometry
  * type.  wkbNone should be used to indicate that no geometries
  * have been encountered yet, and means the first geometry
- * encounted will establish the preliminary type.
+ * encountered will establish the preliminary type.
  *
  * If bAllowPromotingToCurves is set to TRUE, mixing Polygon and CurvePolygon
  * will return CurvePolygon. Mixing LineString, CircularString, CompoundCurve
  * will return CompoundCurve. Mixing MultiPolygon and MultiSurface will return
  * MultiSurface. Mixing MultiCurve and MultiLineString will return MultiCurve.
- * 
+ *
  * @param eMain the first input geometry type.
  * @param eExtra the second input geometry type.
  * @param bAllowPromotingToCurves determine if promotion to curve type must be done.

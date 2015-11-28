@@ -190,7 +190,7 @@ void MetadataSegment::SetGroupMetadataValue( const char *group, int id,
 /*                                                                      */
 /*      When saving we first need to merge in any updates.  We put      */
 /*      this off since scanning and updating the metadata doc could     */
-/*      be epxensive if done for each item.                             */
+/*      be expensive if done for each item.                             */
 /************************************************************************/
 
 void MetadataSegment::Save()

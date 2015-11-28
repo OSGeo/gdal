@@ -272,7 +272,7 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
                     [ "The metadata file will be generated from a template and a source file.",
                       "The template is a valid GMLJP2 metadata XML tree with placeholders like",
                       "{{{XPATH(some_xpath_expression)}}}",
-                      "that are evalated from the source XML file. Typical use case",
+                      "that are evaluated from the source XML file. Typical use case",
                       "is to generate a gmljp2:eopMetadata from the XML metadata",
                       "provided by the image provider in their own particular format." ],
                 "dynamic_metadata" :
@@ -380,7 +380,7 @@ against the content of the source file. xpath_expr must be a XPath 1.0 compatibl
 expression, with the addition of the following functions :
 
 <ul>
-<li><b>if(cond_expr,expr_if_true,expr_if_false)</b>: if cond_expr evalutes to
+<li><b>if(cond_expr,expr_if_true,expr_if_false)</b>: if cond_expr evaluates to
 true, returns expr_if_true. Otherwise returns expr_if_false</li>
 <li><b>uuid()</b>: evaluates to a random UUID</b></li>
 </ul>

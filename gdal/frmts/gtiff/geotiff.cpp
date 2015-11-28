@@ -5339,13 +5339,14 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                             poGDS->pabyBlockBuf[iBitOffset>>3] |= (0x80 >>(iBitOffset & 7));
                         else
                         {
-                            /* We must explictly unset the bit as we may update an existing block */
+                            // We must explicitly unset the bit as we
+                            // may update an existing block.
                             poGDS->pabyBlockBuf[iBitOffset>>3] &= ~(0x80 >>(iBitOffset & 7));
                         }
 
                         iBitOffset++;
                     }
-                } 
+                }
 
                 iBitOffset= iBitOffset + iPixelBitSkip - poGDS->nBitsPerSample;
             }

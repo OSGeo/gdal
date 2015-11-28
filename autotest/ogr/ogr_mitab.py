@@ -355,7 +355,7 @@ def ogr_mitab_10():
 # Verify support for NTF datum with non-greenwich datum per
 #    http://trac.osgeo.org/gdal/ticket/1416
 #
-# This test also excercises srs reference counting as described in issue:
+# This test also exercises SRS reference counting as described in issue:
 #    http://trac.osgeo.org/gdal/ticket/1680
 
 def ogr_mitab_11():

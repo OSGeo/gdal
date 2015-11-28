@@ -1700,7 +1700,7 @@ Rasterlite driver:
 
 Raw drivers:
  * implement GetVirtualMemAuto() (RFC 45)
- * IRasterIO(): add special behaviour to avoid going to block based IO when the dataset has INTERLEAVE=PIXEL and is elligible to direct I/O access pattern
+ * IRasterIO(): add special behaviour to avoid going to block based IO when the dataset has INTERLEAVE=PIXEL and is eligible to direct I/O access pattern
  * allow direct I/O access even if a small proportion of scanlines are loaded (improve QGIS use case where the overview display will load sparse scanlines, which would prevent direct I/O at full resolution afterwards)
  * fix optimized RasterIO() when doing sub-sampling with non standard buffer pixel offset (#5438)
 
@@ -2617,7 +2617,7 @@ DXF driver:
  * Write layer geometry extent in file header (#4618)
  * Ignore Spline frame control points for VERTEX of POLYLINE (#4683)
  * Add color to POINT, INSERT and HATCH
- * Take into account extruction vector to transform from OCS to WCS for MTEXT, TEXT, POINT, LINE, CIRCLE, ELLIPSE, ARC, SPLINE and HATCH (#4842)
+ * Take into account extrusion vector to transform from OCS to WCS for MTEXT, TEXT, POINT, LINE, CIRCLE, ELLIPSE, ARC, SPLINE and HATCH (#4842)
 
 FileGDB driver:
  * Add the FGDB_BULK_LOAD configuration option (#4420)
@@ -6207,14 +6207,14 @@ SHAPE driver:
 
 S57 driver:
  * Ensure SOUNDG in multipoint form is MultiPoint25D not 2D.
- * Print out contents of OGR_S57_OPTIONS evvironment variable if set (for debug
+ * Print out contents of OGR_S57_OPTIONS environment variable if set (for debug
 purposes).
  * Correct control for applying updates, now done in Ingest method.
 
 VRT driver:
  * carry style string through VRT layer
  * Pass the envelope of the geometry as the spatial filter in the sub-query (#2214)
- * Add "shared" attribute on SrcDataSource to control sharing.  Default to OFF for SrcLayer layers, and ON for SrcSQL layers.  This endevours to avoid conflicts of layer state. (#2229)
+ * Add "shared" attribute on SrcDataSource to control sharing.  Default to OFF for SrcLayer layers, and ON for SrcSQL layers.  This endeavors to avoid conflicts of layer state. (#2229)
 
 XPlane/Flightgear driver:
  * New for 1.6.0 
@@ -7984,7 +7984,7 @@ o TIGER/Line Driver:
 o OLE DB Provider:
 - Added support for spatial queries via ICommand parameters.
 - Added support for attribute queries by parsing out WHERE clause.
-- In general substantial rework and extentions were made to make it
+- In general substantial rework and extensions were made to make it
 work with ESRI and AutoDesk clients.
 
 o Added gdal/data/stateplane.txt - a test file with one line per state plane

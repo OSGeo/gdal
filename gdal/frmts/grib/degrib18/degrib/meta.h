@@ -101,7 +101,7 @@ typedef struct {
                             * temporarily 3 (invalid and used). */
    sInt4 validIndex;    /* Which index this is, counting only used
                             * valid indexes.  If it is not used it is -1 */
-   char *english[NUM_UGLY_WORD]; /* The english translation of ugly string. */
+   char *english[NUM_UGLY_WORD]; /* The English translation of ugly string. */
    uChar wx_inten[NUM_UGLY_WORD]; /* A code to represent the wx and
                               intensity for an "ugly word". */
    sInt4 HazCode[NUM_UGLY_WORD]; /* A code to represent all the attributes. */
@@ -116,7 +116,7 @@ typedef struct {
    int maxLen;               /* Max Length of all of the "ugly strings"
                               * It includes 1 for the \0 character. */
    UglyStringType *ugly;     /* The parsed Ugly string. */
-   int maxEng[NUM_UGLY_WORD]; /* Max length of english phrases for all ugly
+   int maxEng[NUM_UGLY_WORD]; /* Max length of English phrases for all ugly
                                * word number X. */
 } sect2_WxType;
 

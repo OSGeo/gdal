@@ -62,7 +62,7 @@ typedef struct _tSysCoord_GCSRS GCSysCoord;
 struct _tSpheroidInfo_GCSRS {
   const char *pszSpheroidName;
   double      dfA; /* semi major axis in meters */
-  double      dfE; /* excentricity */
+  double      dfE; /* eccentricity */
   int         nEllipsoidID;
 };
 

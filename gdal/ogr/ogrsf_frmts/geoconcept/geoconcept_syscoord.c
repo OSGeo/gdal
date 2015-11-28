@@ -233,8 +233,8 @@ static GCSpheroidInfo gk_asSpheroidList[]=
 {
 {"Sphere",                     6378137.0000, 0.00000000000000,   1},
 {"Clarke 1866",                6378206.4000, 0.08227185423947,   2},/* Wrong, semi-major was 6378249.4000     */
-{"Clarke 1880",                6378249.2000, 0.08248325676300,   3},/* Wrong, excentricity was 0.082483256945 */
-{"GRS 80",                     6378137.0000, 0.08181919104300,   4},/* Wrong, excentricity was 0.081819191060 */
+{"Clarke 1880",                6378249.2000, 0.08248325676300,   3},/* Wrong, eccentricity was 0.082483256945 */
+{"GRS 80",                     6378137.0000, 0.08181919104300,   4},/* Wrong, eccentricity was 0.081819191060 */
 {"International 1909",         6378388.0000, 0.08199188997900,   5},
 {"WGS 72",                     6378135.0000, 0.08181881201777,   6},
 {"Australian National",        6378160.0000, 0.08182017998700,   7},
@@ -359,7 +359,7 @@ static int GCSRSAPI_CALL _areCompatibleDatums_GCSRS ( int id1, int id2 )
 }/* _areCompatibleDatums_GCSRS */
 
 #define CPLDebugSpheroid_GCSRS(e) \
-CPLDebug( "GEOCONCEPT", "SemiMajor:%.4f;Excentricity:%.10f;",\
+CPLDebug( "GEOCONCEPT", "SemiMajor:%.4f;Eccentricity:%.10f;",\
           GetInfoSpheroidSemiMajor_GCSRS(e),\
           GetInfoSpheroidExcentricity_GCSRS(e)\
 );

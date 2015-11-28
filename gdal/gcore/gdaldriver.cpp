@@ -1394,7 +1394,7 @@ const char * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH hDriver )
  * function will return TRUE. Otherwise it will check that the keys and values
  * in the list of creation options are compatible with the capabilities declared
  * by the GDAL_DMD_CREATIONOPTIONLIST metadata item. In case of incompatibility
- * a (non fatal) warning will be emited and FALSE will be returned.
+ * a (non fatal) warning will be emitted and FALSE will be returned.
  *
  * @param hDriver the handle of the driver with whom the lists of creation option
  *                must be validated

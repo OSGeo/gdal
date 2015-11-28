@@ -880,10 +880,10 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
 /**
  * \brief Fetch buffer underlying memory file. 
  *
- * This function returns a pointer to the memory buffer underlying a 
+ * This function returns a pointer to the memory buffer underlying a
  * virtual "in memory" file.  If bUnlinkAndSeize is TRUE the filesystem
- * object will be deleted, and ownership of the buffer will pass to the 
- * caller otherwise the underlying file will remain in existance. 
+ * object will be deleted, and ownership of the buffer will pass to the
+ * caller otherwise the underlying file will remain in existence.
  *
  * @param pszFilename the name of the file to grab the buffer of.
  * @param pnDataLength (file) length returned in this variable.

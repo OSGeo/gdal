@@ -298,7 +298,7 @@ class Densify(Translator):
                     for p in range(segcount):
                         if not xa:
                             xn, yn = self.calcpoint(x0,x1,y0,y1,remainder)
- 
+
                             d = self.distance(x0, xn, y0, yn)
                             xa = xn
                             ya = yn
@@ -313,7 +313,6 @@ class Densify(Translator):
             x0 = x1
             y0 = y1
 
-                
         return g
 
     def process(self):
@@ -324,7 +323,7 @@ class Densify(Translator):
 def GetLength(geometry):
 
     def get_distance(x1, y1, x2, y2):
-        """Return the euclidian distance between this point and another"""
+        """Return the euclidean distance between this point and another."""
         import math
         deltax = x1 - x2
         deltay = y1 - y2
@@ -347,7 +346,7 @@ def GetLength(geometry):
 
     cumulative = 0.0
     geom_count = geometry.GetGeometryCount()
-    
+
     if geom_count:
         for gi in range(geom_count):
             g = geometry.GetGeometryRef(gi)

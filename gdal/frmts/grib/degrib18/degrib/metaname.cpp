@@ -2069,7 +2069,7 @@ static void ParseElemName2 (int prodType, int templat, int cat, int subcat,
  * is m = 1, b = 0.
  *
  * Currently:
- *   For f_unit = 1 (english) we return Fahrenheit, knots, and inches for
+ *   For f_unit = 1 (English) we return Fahrenheit, knots, and inches for
  * temperature, wind speed, and amount of snow or rain.  The original units
  * are Kelvin, m/s, kg/m**2.
  *   For f_unit = 2 (metric) we return Celsius instead of Kelvin.
@@ -2185,7 +2185,7 @@ int ComputeUnit (int convert, char *origName, sChar f_unit, double *unitM,
  * is m = 1, b = 0.
  *
  * Currently:
- *   For f_unit = 1 (english) we return Fahrenheit, knots, and inches for
+ *   For f_unit = 1 (English) we return Fahrenheit, knots, and inches for
  * temperature, wind speed, and amount of snow or rain.  The original units
  * are Kelvin, m/s, kg/m**2.
  *   For f_unit = 2 (metric) we return Celsius instead of Kelvin.

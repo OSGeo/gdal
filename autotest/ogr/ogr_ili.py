@@ -299,7 +299,7 @@ ENDE"""
     return 'success'
 
 ###############################################################################
-# Ili1 character encding test.
+# Ili1 character encoding test.
 
 def ogr_interlis1_7():
 

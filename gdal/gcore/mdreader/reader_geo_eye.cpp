@@ -207,7 +207,7 @@ time_t GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
 {
     if(NULL == pszDateTime)
         return 0;
-        
+
     int iYear;
     int iMonth;
     int iDay;
@@ -215,14 +215,14 @@ time_t GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
     int iMin;
     int iSec = 0;
 
-// string exampe: Acquisition Date/Time: 2006-03-01 11:08 GMT
+    // string example: Acquisition Date/Time: 2006-03-01 11:08 GMT
 
     int r = sscanf ( pszDateTime, "%d-%d-%d %d:%d GMT", &iYear, &iMonth,
                      &iDay, &iHours, &iMin);
 
     if (r != 5)
         return 0;
-    
+
     struct tm tmDateTime;
     tmDateTime.tm_sec = iSec;
     tmDateTime.tm_min = iMin;

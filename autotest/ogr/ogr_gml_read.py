@@ -129,12 +129,12 @@ def ogr_gml_3():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    gml_ds = ogr.Open( 'data/rnf_eg.gml' )    
+    gml_ds = ogr.Open( 'data/rnf_eg.gml' )
 
     if gml_ds.GetLayerCount() != 1:
         gdaltest.post_reason( 'wrong number of layers' )
         return 'fail'
-    
+
     lyr = gml_ds.GetLayerByName('RoadSegment')
     feat = lyr.GetNextFeature()
 
@@ -2966,14 +2966,14 @@ def ogr_gml_63():
         nfeatures += lyr.GetFeatureCount()
     if nfeatures != 7:
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
 # Test multiple instanciation of parser (#5571)
 
 def ogr_gml_64():
-    
+
     if not gdaltest.have_gml_reader:
         return 'skip'
 

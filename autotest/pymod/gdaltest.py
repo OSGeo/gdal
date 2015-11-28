@@ -229,7 +229,7 @@ def run_all( dirlist, run_as_external = False ):
 
         old_path = sys.path
         # We prepend '.' rather than append it, so that "import rasterio"
-        # imports our rasterio.py and not another famous externel package...
+        # imports our rasterio.py and not another famous external package.
         sys.path = ['.'] + sys.path
 
         for file in files:
@@ -987,8 +987,7 @@ def approx_equal( a, b ):
         return 0
     else:
         return 1
-    
-    
+
 def user_srs_to_wkt( user_text ):
     srs = osr.SpatialReference()
     srs.SetFromUserInput( user_text )
@@ -1006,14 +1005,13 @@ def equal_srs_from_wkt( expected_wkt, got_wkt ):
     else:
         print('Expected:\n%s' % expected_wkt)
         print('Got:     \n%s' % got_wkt)
-        
+
         post_reason( 'SRS differs from expected.' )
         return 0
 
-    
 ###############################################################################
 # Compare two sets of RPC metadata, and establish if they are essentially
-# equivelent or not. 
+# equivalent or not.
 
 def rpcs_equal( md1, md2 ):
 

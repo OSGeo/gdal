@@ -790,7 +790,7 @@ def ogr_rfc28_33():
         return 'fail'
 
 ###############################################################################
-# Test wildchar expension of an unknown table
+# Test wildchar expansion of an unknown table.
 
 def ogr_rfc28_34():
 

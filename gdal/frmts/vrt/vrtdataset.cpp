@@ -1000,13 +1000,13 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
             /* we can assigned the base class pointer now. */
             poBand = poDerivedBand;
         }
-	else {
+        else {
 
-	    /* ---- Standard sourced band ---- */
+            /* ---- Standard sourced band ---- */
             poBand = new VRTSourcedRasterBand(
-		this, GetRasterCount() + 1, eType,
+                this, GetRasterCount() + 1, eType,
                 GetRasterXSize(), GetRasterYSize());
-	}
+        }
 
         SetBand( GetRasterCount() + 1, poBand );
 
@@ -1020,8 +1020,9 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
                 if( CSLCount(papszTokens) < 1 )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-                              "AddFuncSource() ... required argument missing." );
-                    // TODO: How should this errpr be handled?  Return CE_Failure?
+                              "AddFuncSource(): required argument missing." );
+                    // TODO: How should this error be handled?  Return
+                    // CE_Failure?
                 }
 
                 VRTImageReadFunc pfnReadFunc = NULL;

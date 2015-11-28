@@ -229,7 +229,7 @@ def test_ogrinfo_12():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --config
+# Test erroneous use of --config
 
 def test_ogrinfo_13():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -243,7 +243,7 @@ def test_ogrinfo_13():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --mempreload
+# Test erroneous use of --mempreload.
 
 def test_ogrinfo_14():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -271,7 +271,7 @@ def test_ogrinfo_15():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --debug
+# Test erroneous use of --debug.
 
 def test_ogrinfo_16():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -285,7 +285,7 @@ def test_ogrinfo_16():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --optfile
+# Test erroneous use of --optfile.
 
 def test_ogrinfo_17():
     if test_cli_utilities.get_ogrinfo_path() is None:

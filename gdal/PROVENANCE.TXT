@@ -300,7 +300,7 @@ Note: all the following are build options, not required.
 * SpatialReferenceIdl.idl, GeometryIdl.idl, CoverageIdl.idl: From OGC spec package I believe.  (removed)
 * ogr_capi_test.c: no copyright message, written by Daniel Morissette. Added copyright.
 * oledbgis.h: No copyright message, mostly OGC spec constants. 
-* swq.h, swq.c: Has alternate form of MIT/X license.  On review this license is functionally equililent to the general GDAL license.
+* swq.h, swq.c: Has alternate form of MIT/X license.  On review this license is functionally equivalent to the general GDAL license.
 * Copyright holders include Frank Warmerdam, Daniel Morissette, Softmap Inc., Stephane Villeneuve., Andrey Kiselev, Information Interoperability Institute
 
 

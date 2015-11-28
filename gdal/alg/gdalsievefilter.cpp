@@ -43,17 +43,16 @@ CPL_CVSID("$Id$");
  *    polygon map array.  Also accumulate polygon size information.
  *
  * 2) Identify the polygons that need to be merged.
- * 
+ *
  * 3) Make a pass with the polygon enumerator.  For each "to be merged" 
  *    polygon keep track of it's largest neighbour. 
- * 
+ *
  * 4) Fix up remappings that would go to polygons smaller than the seive
  *    size.  Ensure these in term map to the largest neighbour of the 
  *    "to be seieved" polygons. 
- * 
+ *
  * 5) Make another pass with the polygon enumerator. This time we remap
  *    the actual pixel values of all polygons to be merged.
- * 
  */
 
 /************************************************************************/

@@ -287,7 +287,7 @@ public class gdal:public static int Unlink(String fileName)
  * the usual C style. 
  *
  * <li>gdalconst.CPLES_XML(1): This scheme converts the '<', '<' and '&' characters into
- * their XML/HTML equivelent (&gt;, &lt; and &amp;) making a string safe
+ * their XML/HTML equivalent (&gt;, &lt; and &amp;) making a string safe
  * to embed as CDATA within an XML element.  The '\\0' is not escaped and 
  * should not be included in the input.
  *
@@ -4892,7 +4892,7 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  *
  * @param name the name for the new dataset. 
  * @param src_ds the dataset being duplicated. 
- * @param strict 1 if the copy must be strictly equivelent, or more
+ * @param strict 1 if the copy must be strictly equivalent, or more
  * normally 0 indicating that the copy may adapt as needed for the 
  * output format. 
  * @param options additional format dependent options controlling 
@@ -5101,7 +5101,7 @@ public class ProgressCallback:public int run(double dfComplete, String message)
   * Every 2.5% of progress another number or period is emitted.  Note that
   * GDALTermProgress() uses internal static data to keep track of the last
   * percentage reported and will get confused if two terminal based progress
-  * reportings are active at the same time eithin in a single thread or across multiple threads.
+  * reportings are active at the same time either in in a single thread or across multiple threads.
   * <p>
   * Example :
   * <pre>
@@ -5569,7 +5569,7 @@ public interface gdalconstConstants:public final static int CPLES_BackslashQuota
  * CPLES_XML(1).
  * <p>
  * This scheme converts the '<', '<' and '&' characters into
- * their XML/HTML equivelent (&gt;, &lt; and &amp;) making a string safe
+ * their XML/HTML equivalent (&gt;, &lt; and &amp;) making a string safe
  * to embed as CDATA within an XML element.  The '\\0' is not escaped and 
  * should not be included in the input.
  */
@@ -10673,7 +10673,7 @@ public class SpatialReference:public int ImportFromEPSG(int nCode)
  * EQUIDISTANT_CONIC, and TRANSVERSE (mercator) projections are supported
  * from old style files. 
  * <p>
- * At this time there is no equivelent exportToESRI() method.  Writing old
+ * At this time there is no equivalent exportToESRI() method.  Writing old
  * style .prj files is not supported by OGRSpatialReference. However the
  * morphToESRI() and exportToWkt() methods can be used to generate output
  * suitable to write to new style (Arc 8) .prj files. 
@@ -10764,16 +10764,16 @@ public class SpatialReference:public int ImportFromPCI(String proj, String units
  * <p>
  * The OGRSpatialReference is initialized from the passed PROJ.4 style
  * coordinate system string.  In addition to many +proj formulations which
- * have OGC equivelents, it is also possible to import "+init=epsg:n" style
+ * have OGC equivalents, it is also possible to import "+init=epsg:n" style
  * definitions.  These are passed to importFromEPSG().  Other init strings
  * (such as the state plane zones) are not currently supported.   
  * <p><pre>
  * Example:
  *   pszProj4 = "+proj=utm +zone=11 +datum=WGS84" 
  * </pre><p>
- * Some parameters, such as grids, recognised by PROJ.4 may not be well
+ * Some parameters, such as grids, recognized by PROJ.4 may not be well
  * understood and translated into the OGRSpatialReference model. It is possible
- * to add the +wktext parameter which is a special keyword that OGR recognises
+ * to add the +wktext parameter which is a special keyword that OGR recognizes
  * as meaning "embed the entire PROJ.4 string in the WKT and use it literally
  * when converting back to PROJ.4 format".
  * <p><pre>

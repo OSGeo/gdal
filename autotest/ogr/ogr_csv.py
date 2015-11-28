@@ -1124,7 +1124,7 @@ def ogr_csv_27():
     return 'success'
 
 ###############################################################################
-# Check that we don't rewrite errouneously a file that has no header (#5161)
+# Check that we don't rewrite erroneously a file that has no header (#5161).
 
 def ogr_csv_28():
 

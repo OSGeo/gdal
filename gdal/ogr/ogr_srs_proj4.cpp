@@ -39,8 +39,8 @@ extern int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransfo
 CPL_CVSID("$Id$");
 
 /* -------------------------------------------------------------------- */
-/*      The following list comes from osrs/proj/src/pj_ellps.c          */
-/*      ... please update from time to time.                            */
+/*      The following list comes from osrs/proj/src/pj_ellps.c.         */
+/*      Please update from time to time.                                */
 /* -------------------------------------------------------------------- */
 static const char *ogr_pj_ellps[] = {
 "MERIT",        "a=6378137.0", "rf=298.257", "MERIT 1983",

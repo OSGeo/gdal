@@ -136,7 +136,7 @@ was successful, then it returns a new object of the type corresponding
 to the type of file that was opened:
 
   class TABFile:  Class to handle .TAB datasets for read/write access.
-                  Note that you cannot use it to modify exsiting datasets
+                  Note that you cannot use it to modify existing datasets
                   (not yet!).
 
   class TABView:  Class to handle views on pairs of .TAB files linked 

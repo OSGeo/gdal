@@ -765,7 +765,7 @@ def ogr_dxf_16():
     # cleanup
     
     gdal.SetConfigOption( 'DXF_INLINE_BLOCKS', 'TRUE' )
-    
+
     return 'success'
 
 ###############################################################################
@@ -780,7 +780,8 @@ def ogr_dxf_17():
     lyr = ds.CreateLayer( 'entities' )
 
     dst_feat = ogr.Feature( feature_def = blyr.GetLayerDefn() )
-    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION( LINESTRING(0 0,1 1),LINESTRING(1 0,0 1))' ) )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt(
+        'GEOMETRYCOLLECTION( LINESTRING(0 0,1 1),LINESTRING(1 0,0 1))' ) )
     dst_feat.SetField( 'BlockName', 'XMark' )
     blyr.CreateFeature( dst_feat )
 
@@ -791,7 +792,7 @@ def ogr_dxf_17():
     dst_feat.SetField( 'BlockName', 'XMark' )
     lyr.CreateFeature( dst_feat )
 
-    # Write a block reference feature for a non-existant block.
+    # Write a block reference feature for a non-existent block.
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POINT(300 50)' ))
     dst_feat.SetField( 'Layer', 'abc' )

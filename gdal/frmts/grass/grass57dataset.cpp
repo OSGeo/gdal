@@ -367,30 +367,29 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
                 poCT->SetColorEntry( iColor, &sColor );
             }
         }
-	    
-	/* Create metadata enries for color table rules */
-	char key[200], value[200];
-	int rcount = G_colors_count ( &sGrassColors );
 
-	sprintf ( value, "%d", rcount );
-	this->SetMetadataItem( "COLOR_TABLE_RULES_COUNT", value );
+        /* Create metadata entries for color table rules */
+        char key[200], value[200];
+        int rcount = G_colors_count ( &sGrassColors );
 
-	/* Add the rules in reverse order */
-	for ( int i = rcount-1; i >= 0; i-- ) {
-	    DCELL val1, val2;
-	    unsigned char r1, g1, b1, r2, g2, b2;
+        sprintf ( value, "%d", rcount );
+        this->SetMetadataItem( "COLOR_TABLE_RULES_COUNT", value );
 
-	     G_get_f_color_rule ( &val1, &r1, &g1, &b1, &val2, &r2, &g2, &b2, &sGrassColors, i );
-		
+        /* Add the rules in reverse order */
+        for ( int i = rcount-1; i >= 0; i-- ) {
+            DCELL val1, val2;
+            unsigned char r1, g1, b1, r2, g2, b2;
 
-	     sprintf ( key, "COLOR_TABLE_RULE_RGB_%d", rcount-i-1 );
-	     sprintf ( value, "%e %e %d %d %d %d %d %d", val1, val2, r1, g1, b1, r2, g2, b2 );
-	     this->SetMetadataItem( key, value );
-	}
+            G_get_f_color_rule ( &val1, &r1, &g1, &b1, &val2, &r2, &g2, &b2, &sGrassColors, i );
+
+            sprintf ( key, "COLOR_TABLE_RULE_RGB_%d", rcount-i-1 );
+            sprintf ( value, "%e %e %d %d %d %d %d %d", val1, val2, r1, g1, b1, r2, g2, b2 );
+            this->SetMetadataItem( key, value );
+        }
     } else {
-	this->SetMetadataItem( "COLOR_TABLE_RULES_COUNT", "0" );
+        this->SetMetadataItem( "COLOR_TABLE_RULES_COUNT", "0" );
     }
-    
+
     this->valid = true;
 }
 

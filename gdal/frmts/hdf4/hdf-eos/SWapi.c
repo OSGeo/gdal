@@ -2079,7 +2079,7 @@ SWdefcomp(int32 swathID, int32 compcode, intn compparm[])
     {
 	sID = swathID % idOffset;
 
-	/* Set compression code in compression exteral array */
+	/* Set compression code in compression external array */
 	SWXSwath[sID].compcode = compcode;
 
 	switch (compcode)

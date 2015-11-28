@@ -871,7 +871,7 @@ void OGRDXFWriterDS::ScanForEntities( const char *pszFilename,
             CPLString osEntity( szLineBuf );
 
             if( CheckEntityID( osEntity ) )
-                CPLDebug( "DXF", "Encounted entity '%s' multiple times.",
+                CPLDebug( "DXF", "Encountered entity '%s' multiple times.",
                           osEntity.c_str() );
             else
                 aosUsedEntities.insert( osEntity );

@@ -2831,7 +2831,8 @@ def ogr_shape_58():
         feat = lyr.GetNextFeature()
         geom_read = feat.GetGeometryRef()
         if geom_read.ExportToWkt() != wkt:
-            gdaltest.post_reason('did not get expectet geom for field %s' % layer_name)
+            gdaltest.post_reason(
+                'did not get expected geom for field %s' % layer_name)
             print(geom_read.ExportToWkt())
             return 'fail'
 
@@ -3750,12 +3751,12 @@ def ogr_shape_79():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test reading a shape with invalid extent (nan values) (#5702)
 
 def ogr_shape_80():
-    
+
     ds = ogr.Open('data/extentnan.shp')
     lyr = ds.GetLayer(0)
     extent = lyr.GetExtent()
@@ -3765,7 +3766,7 @@ def ogr_shape_80():
         return 'fail'
     ds = None
     return 'success'
-    
+
 ###############################################################################
 # Test REPACK after SetFeature() and geometry change (#XXXX)
 

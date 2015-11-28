@@ -1084,7 +1084,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         /* JAS_CLRSPC_UNKNOWN causes crashes in Jasper jp2_enc.c at line 231 */
         /* iccprof = jas_iccprof_createfromcmprof(jas_image_cmprof(image)); */
-        /* but if we explictely set the cmprof, it does not work better */
+        /* but if we explicitly set the cmprof, it does not work better */
         /* since it would abort at line 281 later ... */
         /* So the best option is to switch to gray colorspace */
         /* And we need to switch at the band level too, otherwise Kakadu or */

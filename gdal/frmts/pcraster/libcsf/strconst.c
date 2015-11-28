@@ -21,7 +21,7 @@ static char errorBuf[64];
 /* IMPLEMENTATION */
 /******************/
 
-/* string with cell representation in plain english or acronym
+/* string with cell representation in plain English or acronym
  * The string is in lower case except for INT1,INT2,UINT2 and UINT4
  *, they return an acronym. If cr is not
  * a valid constant, for example 999,  then the string is  

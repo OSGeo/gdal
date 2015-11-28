@@ -78,7 +78,7 @@ CPL_CVSID("$Id$");
 #define PAN_DATUM_WGS84     2L  // WGS84
 
 /************************************************************************/
-/*  "Panorama" ellipsod codes.                                          */
+/*  "Panorama" ellipsoid codes.                                         */
 /************************************************************************/
 
 #define PAN_ELLIPSOID_NONE          -1L

@@ -1023,9 +1023,9 @@ CPLErr GDALWarpKernel::PerformWarp()
             dfYScale = 1.0 / nYReciprocalScale;
     }
     /*CPLDebug("WARP", "dfXScale = %f, dfYScale = %f", dfXScale, dfYScale);*/
-    
+
     int bUse4SamplesFormula = (dfXScale >= 0.95 && dfYScale >= 0.95);
-    
+
     // Safety check for callers that would use GDALWarpKernel without using
     // GDALWarpOperation.
     if( (eResample == GRA_CubicSpline || eResample == GRA_Lanczos ||

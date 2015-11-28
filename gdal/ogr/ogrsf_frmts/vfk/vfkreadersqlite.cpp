@@ -81,8 +81,8 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
             CPLDebug("OGR-VFK", "Internal DB (%s) already exists and will be overwritten",
                      m_pszDBname);
 	    VSIUnlink(pszDbName);
-	}
-	else {
+        }
+        else {
             if (VSIStatL(pszFilename, &sStatBufVfk) == 0 &&
                 sStatBufVfk.st_mtime > sStatBufDb.st_mtime) {
                 CPLDebug("OGR-VFK",
@@ -93,11 +93,11 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
                 VSIUnlink(pszDbName);
             }
             else {
-                m_bNewDb = FALSE;    /* re-use exising DB */
+                m_bNewDb = FALSE;    /* re-use existing DB */
             }
-	}
+        }
     }
-    
+
     /*
     if (m_bNewDb) {
       CPLError(CE_Warning, CPLE_AppDefined, 
@@ -117,7 +117,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
         sqlite3_exec(m_poDB, "PRAGMA synchronous = OFF", NULL, NULL, &pszErrMsg);
         sqlite3_free(pszErrMsg);
     }
-    
+
     if (m_bNewDb) {
         /* new DB, create support metadata tables */
         osCommand.Printf("CREATE TABLE %s (file_name text, table_name text, num_records integer, "

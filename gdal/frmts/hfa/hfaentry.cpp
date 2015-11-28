@@ -647,7 +647,7 @@ HFAEntry *HFAEntry::GetNamedChild( const char * pszName )
 {
 /* -------------------------------------------------------------------- */
 /*      Establish how much of this name path is for the next child.     */
-/*      Up to the '.' or end of estring.                                */
+/*      Up to the '.' or end of the string.                             */
 /* -------------------------------------------------------------------- */
     int nNameLen = 0;
     for( ;

@@ -882,7 +882,7 @@ public class ogr2ogr
     /* -------------------------------------------------------------------- */
     /*      Close down.                                                     */
     /* -------------------------------------------------------------------- */
-        /* We must explicetely destroy the output dataset in order the file */
+        /* We must explicitly destroy the output dataset in order the file */
         /* to be properly closed ! */
         poODS.delete();
         poDS.delete();

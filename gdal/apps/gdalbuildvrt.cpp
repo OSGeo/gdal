@@ -108,7 +108,7 @@ static void Usage(const char* pszErrorMsg = NULL)
             "                    [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
             "                    [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*\n"
             "\n"
-            "eg.\n"
+            "e.g.\n"
             "  % gdalbuildvrt doq_index.vrt doq/*.tif\n"
             "  % gdalbuildvrt -input_file_list my_liste.txt doq_index.vrt\n"
             "\n"

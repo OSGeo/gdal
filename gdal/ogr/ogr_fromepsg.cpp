@@ -101,7 +101,7 @@ void OGREPSGDatumNameMassage( char ** ppszDatum )
         pszDatum[j] = '\0';
     else
         pszDatum[j+1] = '\0';
-    
+
 /* -------------------------------------------------------------------- */
 /*      Search for datum equivelences.  Specific massaged names get     */
 /*      mapped to OpenGIS specified names.                              */
@@ -128,7 +128,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
 
 {
     double      dfAngle;
-    
+
     if( nUOMAngle == 9110 )             /* DDD.MMSSsss */
     {
         char    *pszDecimal;

@@ -823,9 +823,9 @@ def ogr_pg_17():
         layer = gdaltest.pg_ds.GetLayerByName( 'JunkTableName' )
     except:
         layer = None
-        
+
     if layer is not None:
-        gdaltest.post_reason( 'got layer for non-existant table!' )
+        gdaltest.post_reason( 'got layer for non-existent table!' )
         return 'fail'
 
     if count != gdaltest.pg_ds.GetLayerCount():
@@ -2696,7 +2696,7 @@ def ogr_pg_52():
     return 'success'
 
 ###############################################################################
-# Test creating a layer with explicitely wkbNone geometry type
+# Test creating a layer with explicitly wkbNone geometry type.
 
 def ogr_pg_53():
 

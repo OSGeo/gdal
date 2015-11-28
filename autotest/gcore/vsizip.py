@@ -326,7 +326,7 @@ def vsizip_6():
     return 'success'
 
 ###############################################################################
-# Test that we use the extented field for UTF-8 filenames (#5361)
+# Test that we use the extended field for UTF-8 filenames (#5361).
 
 def vsizip_7():
 

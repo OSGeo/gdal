@@ -5,7 +5,7 @@ require 'test/unit'
 
 class TestOgrGeom < Test::Unit::TestCase
   
-	# Test Area calculation for a MultiPolygon (which excersises lower level
+  # Test Area calculation for a MultiPolygon (which exercises lower level
   # get_Area() methods as well).
 
   def test_geom_area()
