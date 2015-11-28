@@ -1473,18 +1473,8 @@ sub ApproximateArcAngles {
 
 sub As {
     my $self = shift;
-    my %param;
-    if (@_ == 1 and ref($_[0]) eq 'HASH') {
-        %param = %{$_[0]};
-    } elsif (@_ % 2 == 0) {
-        %param = @_;
-    } else {
-        ($param{Format}, $param{x}) = @_;
-    }
-    $param{ByteOrder} //= 'XDR';
-    my $f = $param{Format};
-    my $x = $param{x};
-    $x //= $param{ByteOrder};
+    my $p = Geo::GDAL::named_parameters(\@_, Format => undef, ByteOrder => 'XDR', SRID => undef, Options => undef, AltitudeMode => undef);
+    my $f = $p->{format};
     if ($f =~ /text/i) {
         return $self->AsText;
     } elsif ($f =~ /wkt/i) {
@@ -1494,23 +1484,21 @@ sub As {
             return $self->AsText;
         }
     } elsif ($f =~ /binary/i) {
-        return $self->AsBinary($x);        
+        return $self->ExportToWkb($p->{byteorder});
     } elsif ($f =~ /wkb/i) {
         if ($f =~ /iso/i) {
-            return $self->ExportToIsoWkb;
+            return $self->ExportToIsoWkb($p->{byteorder});
         } elsif ($f =~ /ewkb/i) {
-            $param{srid} //= 'XDR';
-            $x //= $param{srid};
-            return $self->AsHEXEWKB($x);
+            return $self->AsHEXEWKB($p->{srid});
         } elsif ($f =~ /hex/i) {
             return $self->AsHEXWKB;
         } else {
-            return $self->AsBinary($x);
+            return $self->ExportToWkb($p->{byteorder});
         }
     } elsif ($f =~ /gml/i) {
-        return $self->AsGML;
+        return $self->ExportToGML($p->{options});
     } elsif ($f =~ /kml/i) {
-        return $self->AsKML;
+        return $self->ExportToKML($p->{altitudemode});
     } elsif ($f =~ /json/i) {
         return $self->AsJSON;
     } else {

@@ -18,7 +18,6 @@
 ## @ignore ForceToMultiPolygon
 ## @ignore ForceToPolygon
 
-## @ignore GeneralCmdLineProcessor
 ## @ignore GeometryTypeToName
 ## @ignore GetFieldTypeName
 
@@ -759,7 +758,7 @@
 ## @ignore AddGeomFieldDefn
 
 ## @method AddField(%params)
-# @param params named parameters to create a new Geo::OGR::FieldDefn
+# @param params Named parameters to create a new Geo::OGR::FieldDefn
 # or Geo::OGR::GeomFieldDefn object.
 
 ## @ignore DeleteGeomFieldDefn
@@ -833,20 +832,12 @@
 ## @cmethod Geo::OGR::FieldDefn new(%params)
 # @brief Create a new field definition.
 #
-# This method supports both an argument list and named arguments.
-#
-# @param name Field name (please do not try to name the field as Name or Type etc.).
-# @param type One of supported field types
-# (see Geo::OGR::FieldDefn::Types). Optional. Default is String.
-#
-# or
-#
-# @param params one or more of:
+# @param Named parameters:
 # - \a Name Field name (default is 'unnamed').
 # - \a Type Field type, one of Geo::OGR::FieldDefn::Types (default is 'String').
 # - \a SubType Field sub type, one of Geo::OGR::FieldDefn::SubTypes.
 # - \a Justify Justify value, one of Geo::OGR::FieldDefn::JustifyValues
-# - \a Width
+# - \a Width 
 # - \a Precision
 # - \a Nullable (default is true)
 # - \a Default 
@@ -1031,8 +1022,7 @@
 # Same as Geo::OGR::ByteOrders
 
 ## @cmethod Geo::OGR::Geometry new(%params)
-# @param %params A named parameter, one of: WKT, WKB, HEXWKB,
-# HEXEWKB, GML, GeoJSON, arc, or GeometryType and optionally Points.
+# @param %params A named parameter, one of:
 # - \a GeometryType one the supported geometry types, see Geo::OGR::GeometryTypes.
 # - \a WKT a well known text string, which defines a geometry.
 # - \a WKB a well known binary string, which defines a geometry.
@@ -1047,26 +1037,20 @@
 #      Geo::OGR::Geometry::Points; Note: requires also GeometryType
 #      parameter
 #
-# @note uses CreateGeometryFrom* functions from Geo::OGR
-#
 # @return a new Geo::OGR::Geometry object.
-# Usage:
-# \code
-# $g = Geo::OGR::Geometry->new(...arguments...);
-# \endcode
 
 ## @sub Geo::OGR::Geometry ApproximateArcAngles(%params)
 # Create a line string, which approximates an arc. 
 # @note All angles are in degrees.
 #
-# @param %params named parameters, these are:
+# @param %params Named parameters:
 # - \a Center center point (default is [0, 0, 0])
-# - \a PrimaryRadius default is 1,
-# - \a SecondaryAxis default is 1,
-# - \a Rotation default is 0,
-# - \a StartAngle default is 0,
-# - \a EndAngle default is 360,
-# - \a MaxAngleStepSizeDegrees default is 4 
+# - \a PrimaryRadius default is 1.
+# - \a SecondaryAxis default is 1.
+# - \a Rotation default is 0.
+# - \a StartAngle default is 0.
+# - \a EndAngle default is 360.
+# - \a MaxAngleStepSizeDegrees default is 4. 
 # @return a new Geo::OGR::Geometry object.
 
 ## @method FlattenTo2D()
@@ -1101,13 +1085,24 @@
 
 ## @method $As(%params)
 # Export the geometry into a known format.
-
-# @param params named parameters, either: Text (a.k.a WKT), WKB
-# (a.k.a. Binary) (ByteOrder can also be defined, default is 'XDR'),
-# ISO WKT and WKB, HEXWKB, HEXEWKB (srid can also be given), GML,
-# GeoJSON, Binary.
-
-# @note Uses As\<format\>/ExportTo\<format\> methods.
+#
+# @param params Named parameters:
+# - \a Format One of 
+#     - \a WKT Well Known Text.
+#     - <em>ISO WKT</em>
+#     - \a Text Same as WKT.
+#     - \a WKB Well Known Binary.
+#     - <em>ISO WKB</em>
+#     - \a Binary Same as WKB.
+#     - \a HEXWKB
+#     - \a HEXEWKB
+#     - \a GML
+#     - \a GeoJSON
+# - \a ByteOrder Byte order for binary formats. Default is 'XDR'.
+# - \a SRID Spatial reference id for HEXEWKB.
+# - \a Options GML generation options.
+# - \a AltitudeMode For KML.
+#
 # @return the geometry in a given format.
 
 ## @method AddPoint($x, $y, $z)
