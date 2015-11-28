@@ -321,7 +321,7 @@ namespace tut
         
         std::ostringstream strErrorCopy; 
         strErrorCopy << poOrigin->getGeometryName() << ": copy constructor changed a value";
-        ensure(strErrorCopy.str().c_str(), poOrigin->Equals(&value2));
+        ensure(strErrorCopy.str().c_str(), CPL_TO_BOOL(poOrigin->Equals(&value2)));
         
         T value3;
         value3 = *poOrigin;
@@ -329,7 +329,7 @@ namespace tut
         
         std::ostringstream strErrorAssign; 
         strErrorAssign << poOrigin->getGeometryName() << ": assignment operator changed a value";
-        ensure(strErrorAssign.str().c_str(), poOrigin->Equals(&value3));
+        ensure(strErrorAssign.str().c_str(), CPL_TO_BOOL(poOrigin->Equals(&value3)));
         
         OGRGeometryFactory::destroyGeometry(poOrigin);
     }

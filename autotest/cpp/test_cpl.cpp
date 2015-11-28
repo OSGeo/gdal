@@ -727,7 +727,7 @@ namespace tut
 
         CPLErrorReset();
         ensure( "11.3", VSIMalloc3( ~(size_t)0, 1, ~(size_t)0 ) == NULL );
-        ensure( "11.6bis", CPLGetLastErrorType() != CE_None );
+        ensure( "11.3bis", CPLGetLastErrorType() != CE_None );
 
         CPLErrorReset();
         ensure( "11.4", VSIMalloc3( ~(size_t)0, ~(size_t)0, 1 ) == NULL );
@@ -736,6 +736,7 @@ namespace tut
         if( !CSLTestBoolean(CPLGetConfigOption("SKIP_MEM_INTENSIVE_TEST", "NO")) )
         {
             // The following tests will fail because such allocations cannot succeed
+#if SIZEOF_VOIDP == 8
             CPLErrorReset();
             ensure( "11.6", VSIMalloc( ~(size_t)0 ) == NULL );
             ensure( "11.6bis", CPLGetLastErrorType() == CE_None ); /* no error reported */
@@ -775,6 +776,7 @@ namespace tut
             CPLErrorReset();
             ensure( "11.15", VSI_REALLOC_VERBOSE( NULL, ~(size_t)0 ) == NULL );
             ensure( "11.15bis", CPLGetLastErrorType() != CE_None );
+#endif
         }
 
         CPLPopErrorHandler();
