@@ -33,6 +33,7 @@
 #include <tut.h>
 #include <gdal.h>
 #include <gdal_priv.h>
+#include <gdal_utils.h>
 #include <string>
 #include <limits>
 
@@ -181,4 +182,93 @@ namespace tut
         ensure( GDALAdjustValueToDataType(GDT_Float32, 1e300,&bClamped,&bRounded) == std::numeric_limits<float>::max() && bClamped && !bRounded);
     }
 
+    class FakeBand: public GDALRasterBand
+    {
+        protected:
+            virtual CPLErr IReadBlock(int, int, void*) { return CE_None; }
+            virtual CPLErr IWriteBlock( int, int, void * ) { return CE_None; }
+
+        public:
+                    FakeBand(int nXSize, int nYSize) { nBlockXSize = nXSize;
+                                                       nBlockYSize = nYSize; }
+    };
+
+    class DatasetWithErrorInFlushCache: public GDALDataset
+    {
+            bool bHasFlushCache;
+        public:
+            DatasetWithErrorInFlushCache() : bHasFlushCache(false) { }
+           ~DatasetWithErrorInFlushCache() { FlushCache(); }
+            virtual void FlushCache(void)
+            {
+                if( !bHasFlushCache)
+                    CPLError(CE_Failure, CPLE_AppDefined, "some error");
+                GDALDataset::FlushCache();
+                bHasFlushCache = true;
+            }
+            virtual CPLErr SetProjection(const char*) { return CE_None; }
+            virtual CPLErr SetGeoTransform(double*) { return CE_None; }
+
+            static GDALDataset* CreateCopy(const char*, GDALDataset*,
+                                    int, char **,
+                                    GDALProgressFunc, 
+                                    void *)
+            {
+                return new DatasetWithErrorInFlushCache();
+            }
+
+            static GDALDataset* Create(const char*, int nXSize, int nYSize, int, GDALDataType, char ** )
+            {
+                DatasetWithErrorInFlushCache* poDS = new DatasetWithErrorInFlushCache();
+                poDS->eAccess = GA_Update;
+                poDS->nRasterXSize = nXSize;
+                poDS->nRasterYSize = nYSize;
+                poDS->SetBand(1, new FakeBand(nXSize, nYSize));
+                return poDS;
+            }
+    };
+
+    // Test that GDALTranslate() detects error in flush cache
+    template<> template<> void object::test<8>()
+    {
+        GDALDriver* poDriver = new GDALDriver();
+        poDriver->SetDescription("DatasetWithErrorInFlushCache");
+        poDriver->pfnCreateCopy = DatasetWithErrorInFlushCache::CreateCopy;
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+        const char* args[] = { "-of", "DatasetWithErrorInFlushCache", NULL };
+        GDALTranslateOptions* psOptions = GDALTranslateOptionsNew((char**)args, NULL);
+        GDALDatasetH hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        GDALDatasetH hOutDS = GDALTranslate("", hSrcDS, psOptions, NULL);
+        CPLPopErrorHandler();
+        GDALClose(hSrcDS);
+        GDALTranslateOptionsFree(psOptions);
+        ensure(hOutDS == NULL);
+        ensure(CPLGetLastErrorType() != CE_None);
+        GetGDALDriverManager()->DeregisterDriver( poDriver );
+        delete poDriver;
+    }
+
+    // Test that GDALWarp() detects error in flush cache
+    template<> template<> void object::test<9>()
+    {
+        GDALDriver* poDriver = new GDALDriver();
+        poDriver->SetDescription("DatasetWithErrorInFlushCache");
+        poDriver->pfnCreate = DatasetWithErrorInFlushCache::Create;
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+        const char* args[] = { "-of", "DatasetWithErrorInFlushCache", NULL };
+        GDALWarpAppOptions* psOptions = GDALWarpAppOptionsNew((char**)args, NULL);
+        GDALDatasetH hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        GDALDatasetH hOutDS = GDALWarp("/", NULL, 1, &hSrcDS, psOptions, NULL);
+        CPLPopErrorHandler();
+        GDALClose(hSrcDS);
+        GDALWarpAppOptionsFree(psOptions);
+        ensure(hOutDS == NULL);
+        ensure(CPLGetLastErrorType() != CE_None);
+        GetGDALDriverManager()->DeregisterDriver( poDriver );
+        delete poDriver;
+    }
 } // namespace tut
