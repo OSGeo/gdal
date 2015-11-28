@@ -536,13 +536,13 @@ operated on (if it is writeable), unless the -ro flag is specified.
 Most drivers also support an alternate overview format using Erdas Imagine 
 format.  To trigger this use the USE_RRD=YES configuration option.  This will 
 place the overviews in an associated .aux file suitable for direct use with 
-Imagine or ArcGIS as well as GDAL applications.  (eg --config USE_RRD YES)
+Imagine or ArcGIS as well as GDAL applications.  (e.g. --config USE_RRD YES)
 
 \section gdaladdo_externalgtiffoverviews External overviews in GeoTIFF format
 
 External overviews created in TIFF format may be compressed using the COMPRESS_OVERVIEW 
 configuration option.  All compression methods, supported by the GeoTIFF 
-driver, are available here. (eg --config COMPRESS_OVERVIEW DEFLATE).
+driver, are available here. (e.g. --config COMPRESS_OVERVIEW DEFLATE).
 The photometric interpretation can be set with --config PHOTOMETRIC_OVERVIEW {RGB,YCBCR,...},
 and the interleaving with --config INTERLEAVE_OVERVIEW {PIXEL|BAND}.
 
@@ -1345,7 +1345,7 @@ can be treated as transparent when mosaicking.
 created.  Newly created files are created with the HFA driver by default
 (Erdas Imagine - .img)</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL 1.8.0 or later) Select the output format.
-Use the short format name (GTiff for GeoTIFF for examle).</dd>
+Use the short format name (GTiff for GeoTIFF for example).</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL 1.8.0 or later) Passes a creation option to the
 output format driver.  Multiple <b>-co</b> options may be listed.  See format 
 specific documentation for legal creation options for each format. Only valid when creating a new file</dd>
@@ -2547,7 +2547,7 @@ The gdalmanage program can perform various operations on raster data files, depe
 <dt> <i>newdatasetname</i>:</dt><dd>For copy and rename modes, you provide a <i>source</i> filename and a <i>target</i> filename, just like copy and move commands in an operating system.</dd>
 </dl>
 
-\section gdalmanage_exampes EXAMPLES
+\section gdalmanage_examples EXAMPLES
 
 \subsection gdalmanage_example_identify Using identify mode
 

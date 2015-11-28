@@ -132,7 +132,7 @@ def ogr_mongodb_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # URI to non exhisting host
+    # URI to non existent host.
     gdal.PushErrorHandler()
     ds = ogr.Open("mongodb://non_existing")
     gdal.PopErrorHandler()
@@ -140,7 +140,7 @@ def ogr_mongodb_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Connect to non exhisting host
+    # Connect to non existent host.
     gdal.PushErrorHandler()
     ds = gdal.OpenEx('mongodb:', open_options = ['HOST=non_existing'] )
     gdal.PopErrorHandler()

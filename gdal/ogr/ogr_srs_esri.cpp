@@ -640,20 +640,20 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
  * names, and units on some projection parameters.  This is addressed within
  * importFromESRI() by an automatic call to morphFromESRI().
  *
- * Currently only GEOGRAPHIC, UTM, STATEPLANE, GREATBRITIAN_GRID, ALBERS, 
+ * Currently only GEOGRAPHIC, UTM, STATEPLANE, GREATBRITIAN_GRID, ALBERS,
  * EQUIDISTANT_CONIC, TRANSVERSE (mercator), POLAR, MERCATOR and POLYCONIC
  * projections are supported from old style files.
  *
  * At this time there is no equivalent exportToESRI() method.  Writing old
  * style .prj files is not supported by OGRSpatialReference. However the
  * morphToESRI() and exportToWkt() methods can be used to generate output
- * suitable to write to new style (Arc 8) .prj files. 
+ * suitable to write to new style (Arc 8) .prj files.
  *
- * This function is the equilvelent of the C function OSRImportFromESRI().
+ * This function is the equivalent of the C function OSRImportFromESRI().
  *
  * @param papszPrj NULL terminated list of strings containing the definition.
  *
- * @return OGRERR_NONE on success or an error code in case of failure. 
+ * @return OGRERR_NONE on success or an error code in case of failure.
  */
 
 OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )

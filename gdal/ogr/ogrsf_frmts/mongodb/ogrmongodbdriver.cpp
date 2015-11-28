@@ -463,7 +463,6 @@ void OGRMongoDBLayer::AddOrUpdateField(const char* pszAttrName,
                                        std::vector<CPLString>& aosPaths,
                                        std::map< CPLString, CPLString>& oMapIndices)
 {
-    
     BSONType eBSONType = poElt->type();
     if( eBSONType == jstNULL || eBSONType == Undefined ||
         eBSONType == MinKey || eBSONType == MaxKey )

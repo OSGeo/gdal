@@ -1252,7 +1252,7 @@ GDdefcomp(int32 gridID, int32 compcode, intn compparm[])
     {
 	gID = gridID % idOffset;
 
-	/* Set compression code in compression exteral array */
+	/* Set compression code in compression external array */
 	GDXGrid[gID].compcode = compcode;
 
 	switch (compcode)
@@ -5764,7 +5764,7 @@ GDclose(int32 fid)
 |  Aug 96   Joel Gales    Original Programmer                                 |
 |  Sep 96   Raj Gejjaga   Fixed  bugs in Polar Stereographic and Goode        | |                         Homolosine default calculations.                    |
 |  Sep 96   Raj Gejjaga   Added code to compute default boundary points       |
-|                         for Lambert Azimuthal Polar and Equitorial          |
+|                         for Lambert Azimuthal Polar and Equatorial          |
 |                         projections.                                        |
 |  Feb 97   Raj Gejjaga   Added code to compute default boundary points       |
 |                         for Integerized Sinusoidal Grid.  Added error       |
@@ -9656,7 +9656,7 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
 			/* Set I/O stride Section */
 			/* ---------------------- */
 			
-			/* In original code stride enetred as NULL. 
+			/* In original code stride entered as NULL.
 			   Abe Taaheri June 12, 1998 */
 			/*
 			 * If stride == NULL (default) set I/O stride to 1

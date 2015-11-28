@@ -190,7 +190,7 @@ public:
      * features, i.e. the blocked features are the barriers during the routing 
      * process.
      *  
-     * @param anEmittersIDs - array of emmiters identificators
+     * @param anEmittersIDs - array of emitters identificators
      * @return an array of connected identificators
      */
     virtual GNMPATH ConnectedComponents(const GNMVECTOR &anEmittersIDs);

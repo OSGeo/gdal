@@ -1092,7 +1092,7 @@ def ogr_oci_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_oci_1,
     ogr_oci_2,
     ogr_oci_3,
@@ -1119,7 +1119,7 @@ gdaltest_list = [
 if __name__ == '__main__':
 
     if 'OCI_DSNAME' not in os.environ:
-        print('Enter ORACLE DataSource (eg. OCI:scott/tiger):')
+        print('Enter ORACLE DataSource (e.g. OCI:scott/tiger):')
         oci_dsname = sys.stdin.readline().strip()
         os.environ['OCI_DSNAME'] = oci_dsname
 

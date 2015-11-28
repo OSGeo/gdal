@@ -492,8 +492,8 @@ OGRErr OGRPCIDSKLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 /* -------------------------------------------------------------------- */
 /*      Loop over all features, but just read the geometry.  This is    */
 /*      a fair amount quicker than actually processing all the          */
-/*      attributes, forming features and then exaimining the            */
-/*      geometries as the default implemntation would do.               */
+/*      attributes, forming features and then examining the             */
+/*      geometries as the default implementation would do.              */
 /* -------------------------------------------------------------------- */
     try
     {

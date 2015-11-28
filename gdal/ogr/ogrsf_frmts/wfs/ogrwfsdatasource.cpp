@@ -2050,18 +2050,20 @@ CPLHTTPResult* OGRWFSDataSource::HTTPFetch( const char* pszURL, char** papszOpti
         papszNewOptions = CSLMerge(papszNewOptions, papszHttpOptions);
     CPLHTTPResult* psResult = CPLHTTPFetch( pszURL, papszNewOptions );
     CSLDestroy(papszNewOptions);
-    
+
     if (psResult == NULL)
     {
         return NULL;
     }
     if (psResult->nStatus != 0 || psResult->pszErrBuf != NULL)
     {
-        /* A few buggy servers return chunked data with errouneous remaining bytes value */
-        /* curl doesn't like this. Retry with HTTP 1.0 protocol instead that doesn't support */
-        /* chunked data */
+        // A few buggy servers return chunked data with erroneous
+        // remaining bytes value curl does not like this. Retry with
+        // HTTP 1.0 protocol instead that does not support chunked
+        // data.
         if (psResult->pszErrBuf &&
-            strstr(psResult->pszErrBuf, "transfer closed with outstanding read data remaining") &&
+            strstr(psResult->pszErrBuf,
+                   "transfer closed with outstanding read data remaining") &&
             !bUseHttp10)
         {
             CPLDebug("WFS", "Probably buggy remote server. Retrying with HTTP 1.0 protocol");

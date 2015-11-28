@@ -707,9 +707,10 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
                 sBandName = string(CPLFormFilename(sPath.c_str(),
                                                    pszBandBaseName.c_str(),"mpr" ));
             }
-            //Verify the file exetension, it must be an ILWIS raw data file
-            //with extension .mp#, otherwise, unsupported 
-            //This drive only supports a map list which stores a set of ILWIS raster maps, 
+            // Verify the file extension, it must be an ILWIS raw data file
+            // with extension .mp#, otherwise, unsupported
+            // This drive only supports a map list which stores a set
+            // of ILWIS raster maps,
             string sMapStoreName = ReadElement("MapStore", "Data", sBandName);
             string sExt = CPLGetExtension( sMapStoreName.c_str() );
             if ( !STARTS_WITH_CI(sExt.c_str(), "mp#"))

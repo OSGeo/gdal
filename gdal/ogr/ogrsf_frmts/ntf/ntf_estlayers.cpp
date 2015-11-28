@@ -493,7 +493,7 @@ static OGRFeature *TranslateBoundarylineCollection( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_COLLECT
         || papoGroup[1]->GetType() != NRT_ATTREC )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // COLL_ID
@@ -501,14 +501,14 @@ static OGRFeature *TranslateBoundarylineCollection( NTFFileReader *poReader,
 
     // NUM_PARTS
     int         nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
-    
+
     if( nNumLinks > MAX_LINK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "MAX_LINK exceeded in ntf_estlayers.cpp." );
         return poFeature;
     }
-    
+
     poFeature->SetField( 1, nNumLinks );
 
     // POLY_ID
@@ -545,7 +545,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
         && papoGroup[2]->GetType() == NRT_CHAIN 
         && papoGroup[3]->GetType() == NRT_GEOMETRY )
     {
-        
+
         OGRFeature      *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
         // POLY_ID
@@ -553,14 +553,14 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 
         // NUM_PARTS
         int             nNumLinks = atoi(papoGroup[2]->GetField( 9, 12 ));
-    
+
         if( nNumLinks > MAX_LINK )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "MAX_LINK exceeded in ntf_estlayers.cpp." );
             return poFeature;
         }
-    
+
         poFeature->SetField( 4, nNumLinks );
 
         // DIR
@@ -604,7 +604,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 /*      First we do validation of the grouping.                         */
 /* -------------------------------------------------------------------- */
     int         iRec;
-    
+
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
              && papoGroup[iRec]->GetType() == NRT_POLYGON
@@ -622,7 +622,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 /* -------------------------------------------------------------------- */
 /*      Collect the chains for each of the rings, and just aggregate    */
 /*      these into the master list without any concept of where the     */
-/*      boundaries are.  The boundary information will be emmitted      */
+/*      boundaries are.  The boundary information will be emitted      */
 /*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
@@ -641,7 +641,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
         nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
 
         anRingStart[nRings++] = nNumLink;
-        
+
         for( i = 0; i < nLineCount && nNumLink < MAX_LINK*2; i++ )
         {
             anDirList[nNumLink] =
@@ -801,7 +801,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 /*      First we do validation of the grouping.                         */
 /* -------------------------------------------------------------------- */
     int         iRec;
-    
+
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
              && papoGroup[iRec]->GetType() == NRT_POLYGON
@@ -818,7 +818,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 /* -------------------------------------------------------------------- */
 /*      Collect the chains for each of the rings, and just aggregate    */
 /*      these into the master list without any concept of where the     */
-/*      boundaries are.  The boundary information will be emmitted      */
+/*      boundaries are.  The boundary information will be emitted      */
 /*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
@@ -837,7 +837,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
         nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
 
         anRingStart[nRings++] = nNumLink;
-        
+
         for( i = 0; i < nLineCount && nNumLink < MAX_LINK*2; i++ )
         {
             anDirList[nNumLink] =

@@ -167,7 +167,7 @@ TIFFDefaultRefBlackWhite(TIFFDirectory* td)
  * value if the tag is not present in the directory.
  *
  * NB:	We use the value in the directory, rather than
- *	explcit values so that defaults exist only one
+ *	explicit values so that defaults exist only one
  *	place in the library -- in TIFFDefaultDirectory.
  */
 int

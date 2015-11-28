@@ -129,11 +129,14 @@ SELECT * FROM my_table AS t1 JOIN another_table AS t2 ON ST_Intersects(t1.geom, 
 
 <h2>Write support / WFS-T</h2>
 
-The WFS-T protocol only eanbles the user to operate at feature level. No datasource, layer or field creations are possible.<p>
+The WFS-T protocol only enables the user to operate at feature
+level. No datasource, layer or field creations are possible.<p>
 
-Write support is only enabled when the datasource is opened in update mode.<p>
+Write support is only enabled when the datasource is opened in update
+mode.<p>
 
-The mapping between the operations of the WFS Transaction service and the OGR concepts is the following :
+The mapping between the operations of the WFS Transaction service and
+the OGR concepts is the following:
 <ul>
 <li>OGRFeature::CreateFeature() &lt;==&gt; WFS insert operation</li>
 <li>OGRFeature::SetFeature() &lt;==&gt; WFS update operation</li>

@@ -220,7 +220,7 @@ GDALSimpleSURF::ExtractFeaturePoints(GDALIntegralImage *poImg,
     //Calc Hessian values for layers
     poOctMap->ComputeMap(poImg);
 
-    //Search for exremum points
+    // Search for extremum points.
     for (int oct = octaveStart; oct <= octaveEnd; oct++)
     {
         for (int k = 0; k < GDALOctaveMap::INTERVALS - 2; k++)
@@ -244,7 +244,7 @@ GDALSimpleSURF::ExtractFeaturePoints(GDALIntegralImage *poImg,
             }
         }
     }
-    
+
     return poCollection;
 }
 

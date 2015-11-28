@@ -1068,7 +1068,8 @@ size_t VSICryptFileHandle::Write( const void *pBuffer, size_t nSize, size_t nMem
     if( nCurPos >= (poHeader->nPayloadFileSize / poHeader->nSectorSize) * poHeader->nSectorSize )
         bLastSectorWasModified = TRUE;
 
-    /* If seeking past end of file, we need to explicitely encrypt the padding zeroes */
+    // If seeking past end of file, we need to explicitly encrypt the
+    // padding zeroes.
     if( nCurPos > poHeader->nPayloadFileSize && nCurPos > nWBOffset + nWBSize )
     {
         if( !FlushDirty() )

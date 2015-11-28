@@ -2985,7 +2985,9 @@ OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bF
         if( RunGetExtentRequest(psExtent, bForce, osCommand, TRUE) == OGRERR_NONE )
             return OGRERR_NONE;
 
-        CPLDebug("PG","Unable to get extimated extent by PostGIS. Trying real extent.");
+        CPLDebug(
+            "PG",
+            "Unable to get estimated extent by PostGIS. Trying real extent." );
     }
 
     return OGRPGLayer::GetExtent( iGeomField, psExtent, bForce );

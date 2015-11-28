@@ -265,7 +265,7 @@ time_t GDALMDReaderEROS::GetAcquisitionTimeFromString(
     int iMin;
     int iSec;
 
-    // exampe: sweep_start_utc     2013-04-22,11:35:02.50724
+    // example: sweep_start_utc     2013-04-22,11:35:02.50724
 
     int r = sscanf ( pszDateTime, "%d-%d-%d,%d:%d:%d.%*d",
                      &iYear, &iMonth, &iDay, &iHours, &iMin, &iSec);

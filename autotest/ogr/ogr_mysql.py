@@ -534,9 +534,9 @@ def ogr_mysql_17():
         layer = gdaltest.mysql_ds.GetLayerByName( 'JunkTableName' )
     except:
         layer = None
-        
+
     if layer is not None:
-        gdaltest.post_reason( 'got layer for non-existant table!' )
+        gdaltest.post_reason( 'got layer for non-existent table!' )
         return 'fail'
 
     if count != gdaltest.mysql_ds.GetLayerCount():

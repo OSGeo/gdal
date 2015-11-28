@@ -1641,7 +1641,7 @@ void SAR_CEOSDataset::ScanForGCPs()
             }
         }
     }
-    /* If general GCP's weren't found, look for Map Projection (eg. JERS) */
+    /* If general GCP's weren't found, look for Map Projection (e.g. JERS) */
     if( nGCPCount == 0 )
     {
         ScanForMapProjection();

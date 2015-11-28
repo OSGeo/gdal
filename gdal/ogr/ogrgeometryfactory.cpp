@@ -1460,18 +1460,18 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     */
 
     /* Compute how each polygon relate to the other ones
-       To save a bit of computation we always begin the computation by a test 
-       on the enveloppe. We also take into account the areas to avoid some 
-       useless tests.  (A contains B implies envelop(A) contains envelop(B) 
-       and area(A) > area(B)) In practise, we can hope that few full geometry 
+       To save a bit of computation we always begin the computation by a test
+       on the envelope. We also take into account the areas to avoid some
+       useless tests.  (A contains B implies envelop(A) contains envelop(B)
+       and area(A) > area(B)) In practice, we can hope that few full geometry
        intersection of inclusion test is done:
-       * if the polygons are well separated geographically (a set of islands 
-       for example), no full geometry intersection or inclusion test is done. 
+       * if the polygons are well separated geographically (a set of islands
+       for example), no full geometry intersection or inclusion test is done.
        (the envelopes don't intersect each other)
 
-       * if the polygons are 'lake inside an island inside a lake inside an 
-       area' and that each polygon is much smaller than its enclosing one, 
-       their bounding boxes are stricly contained into each oter, and thus, 
+       * if the polygons are 'lake inside an island inside a lake inside an
+       area' and that each polygon is much smaller than its enclosing one,
+       their bounding boxes are strictly contained into each other, and thus,
        no full geometry intersection or inclusion test is done
     */
 

@@ -35,7 +35,7 @@
  * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
  *
  * Revision 1.17  2006/06/14 15:01:33  daniel
- * Remove any embeded '\0' from data line in AVCE00GenTableRec()
+ * Remove any embedded '\0' from data line in AVCE00GenTableRec()
  *
  * Revision 1.16  2005/06/03 03:49:58  daniel
  * Update email address, website url, and copyright dates

@@ -376,11 +376,11 @@ inline void GDALCopy4WordsSSE(const float* pValueIn, Tout* const &pValueOut)
     float fMaxVal, fMinVal;
     GDALGetDataLimits<float, Tout>(fMaxVal, fMinVal);
     __m128 xmm = _mm_loadu_ps(pValueIn);
-    
+
     __m128 xmm_min = _mm_set1_ps(fMinVal);
     __m128 xmm_max = _mm_set1_ps(fMaxVal);
     xmm = _mm_min_ps(_mm_max_ps(xmm, xmm_min), xmm_max);
-    
+
 #ifdef SSE_USE_SAME_ROUNDING_AS_NON_SSE
     __m128 p0d5 = _mm_set1_ps(0.5f);
      if (std::numeric_limits<Tout>::is_signed)

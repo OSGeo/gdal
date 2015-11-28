@@ -198,9 +198,9 @@ class CPL_DLL OGRStyleTool
 
     OGRSTUnitId GetUnit(){return m_eUnit;}
     
-    /* It's existe two way to set the parameters in the Style, with generic
-methodes (using a defined enumeration) or with the reel method specific
-for Each style tools.*/
+    // There are two way to set the parameters in the Style, with generic
+    // methods (using a defined enumeration) or with the reel method specific
+    // for Each style tools.
     
     virtual const char *GetStyleString() = 0;
     void SetStyleString(const char *pszStyleString);

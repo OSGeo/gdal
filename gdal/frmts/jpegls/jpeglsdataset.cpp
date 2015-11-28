@@ -540,7 +540,9 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     int nWordSize = GDALGetDataTypeSize(eDT) / 8;
     int nUncompressedSize = nXSize * nYSize * nBands * nWordSize;
-    int nCompressedSize = nUncompressedSize + 256; /* FIXME? bug in charls-1.0beta ?. I needed a "+ something" to avoid erros on byte.tif */
+    // FIXME? bug in charls-1.0beta ?. I needed a "+ something" to
+    // avoid errors on byte.tif.
+    int nCompressedSize = nUncompressedSize + 256;
     GByte* pabyDataCompressed = (GByte*)VSI_MALLOC_VERBOSE(nCompressedSize);
     GByte* pabyDataUncompressed = (GByte*)VSI_MALLOC_VERBOSE(nUncompressedSize);
     if (pabyDataCompressed == NULL || pabyDataUncompressed == NULL)

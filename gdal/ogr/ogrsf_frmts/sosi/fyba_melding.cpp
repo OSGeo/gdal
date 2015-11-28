@@ -40,6 +40,7 @@ void LC_Error(short feil_nr, const char *logtx, const char *vartx)
    char *pszFeilmelding;
 
 
+   // Translate all to English.
    // Egen enkel implementasjon av feilhandtering
    /* Hent feilmeldingstekst og strategi */
    strategi = LC_StrError(feil_nr,&pszFeilmelding);

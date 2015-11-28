@@ -305,7 +305,7 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
     /* These are expected to not have
        '\'' (delimiters),
        format effectors (should fit on a single line) or
-       control characters.  
+       control characters.
     */
     if( *pszHeaderNext == '\'' )
     {

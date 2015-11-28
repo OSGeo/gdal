@@ -461,7 +461,7 @@ def georaster_cleanup():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 gdaltest_list = [
     georaster_init,
@@ -484,7 +484,7 @@ gdaltest_list = [
 if __name__ == '__main__':
 
     if 'OCI_DSNAME' not in os.environ:
-        print('Enter ORACLE connection (eg. OCI:scott/tiger@orcl): ')
+        print('Enter ORACLE connection (e.g. OCI:scott/tiger@orcl): ')
         oci_dsname = string.strip(sys.stdin.readline())
         os.environ['OCI_DSNAME'] = oci_dsname
 

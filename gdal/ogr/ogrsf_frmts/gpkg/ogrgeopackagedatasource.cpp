@@ -3365,8 +3365,8 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         return NULL;
     }
 
-    /* Pre-emptively try and avoid sqlite3 syntax errors due to  */
-    /* illegal characters */
+    /* Preemptively try and avoid sqlite3 syntax errors due to  */
+    /* illegal characters. */
     if ( strspn(pszLayerName, "`~!@#$%^&*()+-={}|[]\\:\";'<>?,./") > 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,

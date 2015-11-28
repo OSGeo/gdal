@@ -1127,7 +1127,7 @@ Purpose:
 
 Description:
     Note that this function attempts to format the new value similarly to
-    the previous value.  In some cases (expecially exponential values) this 
+    the previous value.  In some cases (especially exponential values) this 
     may not work out well.  In case of problems the caller is encourage to
     format the value themselves, and use the EnvisatFile_SetKeyValueAsString
     function, but taking extreme care about the string length.

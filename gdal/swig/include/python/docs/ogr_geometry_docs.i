@@ -566,7 +566,7 @@ the most specific geometry type that can be reported for the layer.
 NOTE: wkbUnknown is the \"worst case\" indicating a mixture of
 geometry types with nothing in common but the base geometry type.
 wkbNone should be used to indicate that no geometries have been
-encountered yet, and means the first geometry encounted will establish
+encountered yet, and means the first geometry encountered will establish
 the preliminary type.
 
 Parameters:

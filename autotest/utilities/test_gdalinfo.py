@@ -285,7 +285,7 @@ def test_gdalinfo_13():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --config
+# Test erroneous use of --config.
 
 def test_gdalinfo_14():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -299,7 +299,7 @@ def test_gdalinfo_14():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --mempreload
+# Test erroneous use of --mempreload.
 
 def test_gdalinfo_15():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -327,7 +327,7 @@ def test_gdalinfo_16():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --debug
+# Test erroneous use of --debug.
 
 def test_gdalinfo_17():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -341,7 +341,7 @@ def test_gdalinfo_17():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --optfile
+# Test erroneous use of --optfile.
 
 def test_gdalinfo_18():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -395,7 +395,7 @@ def test_gdalinfo_20():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --format
+# Test erroneous use of --format.
 
 def test_gdalinfo_21():
     if test_cli_utilities.get_gdalinfo_path() is None:

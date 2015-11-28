@@ -297,10 +297,10 @@ void fillSect2 (enGribMeta *en, uChar *sec2, sInt4 lenSec2)
  * shapeEarth = [Code:3.2] shape of the Earth defined by GRIB2 (Output)
  *    factRad = Scale factor of radius of spherical Earth. (Output)
  *     valRad = Value of radius of spherical Earth (Output)
- *    factMaj = Scale factor of major axis of eliptical Earth. (Output)
- *     valMaj = Value of major axis of eliptical Earth (Output)
- *    factMin = Scale factor of minor axis of eliptical Earth. (Output)
- *     valMin = Value of minor axis of eliptical Earth (Output)
+ *    factMaj = Scale factor of major axis of elliptical Earth. (Output)
+ *     valMaj = Value of major axis of elliptical Earth (Output)
+ *    factMin = Scale factor of minor axis of elliptical Earth. (Output)
+ *     valMin = Value of minor axis of elliptical Earth (Output)
  *
  * RETURNS: void
  *
@@ -387,7 +387,7 @@ static void getShpEarth (double majEarth, double minEarth, sInt4 * shapeEarth,
  * [tmplNum=0]
  *      angle = rule 92.1.6 may not hold, in which case, angle != 0, and
  *              unit = angle/subdivision. Typically 0 (Input)
- *   subDivis = 0 or see angle explaination. (Input)
+ *   subDivis = 0 or see angle explanation. (Input)
  * [tmplNum=10,20,30]
  *    meshLat = Latitude where Dx and Dy are specified (Input)
  *  orientLon = Orientation of the grid (Input)

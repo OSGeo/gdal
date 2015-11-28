@@ -219,7 +219,7 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
 # Definitions to test projections that are supported by CF
 
 # Tuple structure:
-#  0: Short code (eg AEA) - (no GDAL significance, just for filenames etc)
+#  0: Short code (e.g. AEA) - (no GDAL significance, just for filenames etc.)
 #  1: official name from CF-1 conventions
 #  2: EPSG code, or WKT, to tell GDAL to do reprojection
 #  3: Actual attribute official name of grid mapping
@@ -315,13 +315,13 @@ netcdf_cfproj_tuples = [
          ['projection_x_coordinate','projection_y_coordinate'])
     ]
 
-#By default, we will use GeoTiff as the 'intermediate' raster format
+# By default, we will use GeoTIFF as the 'intermediate' raster format
 # for gdalwarp'ing into before gdal_translate to NetCDF.
-# But since GeoTiff can't act as a storage format for certain projections
-# (eg Mercator-2SP), we will choose other intermediate formats for certain
-#  projection.
-#  The following array maps projection short code, to driver format to use
- 
+# But since Gratify can't act as a storage format for certain projections
+# (e.g. Mercator-2SP), we will choose other intermediate formats for certain
+# projection.
+# The following array maps projection short code, to driver format to use
+
 netcdf_cfproj_def_int_format = "GTiff"
 
 netcdf_cfproj_int_fmt_maps = {
@@ -337,10 +337,10 @@ netcdf_cfproj_format_fnames = {"HFA":"img", "GTiff":"tif", "NITF":"nitf",
 
 def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         resFilename):
- 
+
     """Test a Geotiff file can be converted to NetCDF, and projection in 
     CF-1 conventions can be successfully maintained. Save results to file.
-    
+
     :arg: projTuples - list of tuples
     :arg: interFormats - dict of intermediate format overrides
     :arg: outPath - path to save output
@@ -495,7 +495,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 ###############################################################################
 # Test an NC file has valid conventions according to passed-in proj tuple
 # Note: current testing strategy is a fairly simple attribute search.
-# this could use gdal netcdf driver for getting attribs instead...
+# this could use GDAL NetCDF driver for getting attribs instead.
 
 def netcdf_cfproj_test_cf(proj, projNc):
 
@@ -506,30 +506,30 @@ def netcdf_cfproj_test_cf(proj, projNc):
     if err != '':
         print(err)
     dumpStr = ret
-    
+
     resDetails = {}
     resDetails['missingAttrs'] = []
     resDetails['missingCoordVarStdNames'] = []
     if (':grid_mapping_name = "%s"' % (proj[3])) not in dumpStr:
         transWorked = False
         resDetails['missingProjName'] = proj[3]
-    # Check attributes in the projection are included
+    # Check attributes in the projection are included.
     for attrib in proj[4]:
         # The ':' prefix and ' ' suffix is to help check for exact name,
-        # eg to catch the standard_parallel_1 and 2 issue.
+        # e.g. to catch the standard_parallel_1 and 2 issue.
         if (":"+attrib+" ") not in dumpStr:
             transWorked = False
             resDetails['missingAttrs'].append(attrib)
-#            print "**Error for proj '%s': CF-1 attrib '%s' not found.**" % \
-#                (proj[0], attrib)
-    # Now we check the required X and Y attributes are included (e.g. Rotated Pole
-    #  has special names required here.
+    #        print "**Error for proj '%s': CF-1 attrib '%s' not found.**" % \
+    #           (proj[0], attrib)
+    # Now we check the required X and Y attributes are included (e.g. Rotated
+    # Pole has special names required here.
     for coordVarStdName in proj[5]:
         if coordVarStdName not in dumpStr:
             transWorked = False
             resDetails['missingCoordVarStdNames'].append(coordVarStdName)
 
-    #Final check use the cf-checker
+    # Final check use the cf-checker.
     result_cf = netcdf_cf_check_file( projNc,'auto',True )
     if result_cf == 'fail':
         resDetails['cfcheck_error'] = gdaltest.netcdf_cf_check_error

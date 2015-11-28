@@ -263,7 +263,7 @@ OGRBoolean OGRCompoundCurve::IsEmpty() const
 /************************************************************************/
 /*                             get_Length()                             */
 /*                                                                      */
-/*      For now we return a simple euclidian 2D distance.               */
+/*      For now we return a simple euclidean 2D distance.               */
 /************************************************************************/
 
 double OGRCompoundCurve::get_Length() const

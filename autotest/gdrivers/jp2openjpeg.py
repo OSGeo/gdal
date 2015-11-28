@@ -2984,8 +2984,7 @@ def jp2openjpeg_45():
     ds = None
 
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
-    
-    
+
     # Test writing&reading a gmljp2:featureMember pointing to a remote resource
     conf = {"root_instance":{"gml_filelist": [ { "remote_resource":"http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/expected_gml_gml32.gml" } ]  }}
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
@@ -2997,8 +2996,8 @@ def jp2openjpeg_45():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
-    # We have to explicitely allow it
+
+    # We have to explicitly allow it.
     ds = gdal.OpenEx('/vsimem/jp2openjpeg_45.jp2', open_options = ['OPEN_REMOTE_GML=YES'])
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 

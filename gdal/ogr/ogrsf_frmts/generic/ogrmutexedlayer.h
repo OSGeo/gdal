@@ -37,7 +37,7 @@
  *
  *  If the passed mutex is NULL, then no locking will be done.
  *
- *  Note that the constructors and destructors are not explictely protected
+ *  Note that the constructors and destructors are not explicitly protected
  *  by the mutex.
  */
 class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator

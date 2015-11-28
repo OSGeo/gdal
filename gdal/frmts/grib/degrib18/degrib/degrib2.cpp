@@ -798,7 +798,7 @@ void IS_Free (IS_dataType *is)
  *    xmissp, and xmisss.  We don't embed because we don't know what to set
  *    xmissp or xmisss to.  Instead after we know the range, we choose a value
  *    and walk through the bitmap setting grib_Data appropriately.
- * 5a) iclean = 0;  This is because we do want the missing values embeded.
+ * 5a) iclean = 0;  This is because we do want the missing values embedded.
  *    that is we want the missing values to be place holders.
  * 6) f_endMsg is true if in the past we either completed reading a message,
  *    or we haven't read any messages.  In either case we need to read the
@@ -843,10 +843,10 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
                          * unless library is compiled a particular way. */
    sInt4 ibitmap;       /* 0 means no bitmap returned, otherwise 1. */
    float xmissp;        /* The primary missing value.  If iclean = 0, this
-                         * value is embeded in grid, otherwise it is the
+                         * value is embedded in grid, otherwise it is the
                          * value returned from the GRIB message. */
    float xmisss;        /* The secondary missing value.  If iclean = 0, this
-                         * value is embeded in grid, otherwise it is the
+                         * value is embedded in grid, otherwise it is the
                          * value returned from the GRIB message. */
    sInt4 jer[UNPK_NUM_ERRORS * 2]; /* Any Error codes along with their *
                                     * severity levels generated using the *

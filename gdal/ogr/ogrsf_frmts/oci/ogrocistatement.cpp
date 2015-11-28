@@ -2,8 +2,8 @@
  * $Id$
  *
  * Project:  Oracle Spatial Driver
- * Purpose:  Implementation of OGROCIStatement, which encapsulates the 
- *           preparation, executation and fetching from an SQL statement.
+ * Purpose:  Implementation of OGROCIStatement, which encapsulates the
+ *           preparation, execution and fetching from an SQL statement.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************

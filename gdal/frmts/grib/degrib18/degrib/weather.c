@@ -1948,7 +1948,7 @@ static int NDFD_WxTable4 (UglyStringType * ugly)
  */
 void FreeUglyString (UglyStringType * ugly)
 {
-   int j;               /* Used to free all the english words. */
+   int j;               /* Used to free all the English words. */
 
    for (j = 0; j < NUM_UGLY_ATTRIB; j++) {
       free (ugly->english[j]);

@@ -6,21 +6,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Misc. OGRGeometry operations.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -41,7 +41,7 @@ from osgeo import osr
 from osgeo import gdal
 
 ###############################################################################
-# Test Area calculation for a MultiPolygon (which excersises lower level
+# Test Area calculation for a MultiPolygon (which exercises lower level
 # get_Area() methods as well).
 
 def ogr_geom_area():
@@ -63,7 +63,7 @@ def ogr_geom_area():
     return 'success'
 
 ###############################################################################
-# Test Area calculation for a LinearRing (which excersises special case of
+# Test Area calculation for a LinearRing (which exercises special case of
 # getGeometryType value).
 
 def ogr_geom_area_linearring():

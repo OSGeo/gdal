@@ -1158,7 +1158,7 @@ OGRErr OGRSimpleCurve::exportToWkt( char ** ppszDstText,
 /************************************************************************/
 /*                             get_Length()                             */
 /*                                                                      */
-/*      For now we return a simple euclidian 2D distance.               */
+/*      For now we return a simple euclidean 2D distance.               */
 /************************************************************************/
 
 double OGRSimpleCurve::get_Length() const
@@ -1175,7 +1175,7 @@ double OGRSimpleCurve::get_Length() const
         dfDeltaY = paoPoints[i+1].y - paoPoints[i].y;
         dfLength += sqrt(dfDeltaX*dfDeltaX + dfDeltaY*dfDeltaY);
     }
-    
+
     return dfLength;
 }
 

@@ -763,7 +763,6 @@ void CTiledChannel::RLEDecompressBlock( PCIDSKBuffer &oCompressedData,
 void CTiledChannel::RLECompressBlock( PCIDSKBuffer &oUncompressedData,
                                       PCIDSKBuffer &oCompressedData )
 
-                               
 {
     int    src_bytes = oUncompressedData.buffer_size;
     int    pixel_size = DataTypeSize(GetType());
@@ -772,12 +771,12 @@ void CTiledChannel::RLECompressBlock( PCIDSKBuffer &oUncompressedData,
     uint8  *src = (uint8 *) oUncompressedData.buffer;
 
 /* -------------------------------------------------------------------- */
-/*      Loop till input exausted.                                       */
+/*      Loop till input exhausted.                                      */
 /* -------------------------------------------------------------------- */
     while( src_offset < src_bytes )
     {
         bool	bGotARun = false;
-        
+
 /* -------------------------------------------------------------------- */
 /*	Establish the run length, and emit if greater than 3. 		*/
 /* -------------------------------------------------------------------- */

@@ -31,8 +31,8 @@
   * Add an alternative iterator implementation, see json_object_iterator.h
   * Make json_object_iter public to enable external use of the
      json_object_object_foreachC macro.
-  * Add a printbuf_memset() function to provide an effecient way to set and
-     append things like whitespace indentation.
+  * Add a printbuf_memset() function to provide an efficient way to set and
+     append things like white-space indentation.
   * Adjust json_object_is_type and json_object_get_type so they return
       json_type_null for NULL objects and handle NULL passed to
       json_objct_object_get().

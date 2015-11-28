@@ -397,7 +397,7 @@ static int ParseSect2_Wx (float *rdat, sInt4 nrdat, sInt4 *idat,
    size_t j;            /* Counter over the length of the current group. */
    char *buffer;        /* Used to store the current "ugly" string. */
    int buffLen;         /* Length of current "ugly" string. */
-   int len;             /* length of current english phrases during creation
+   int len;             /* length of current English phrases during creation
                          * of the maxEng[] data. */
    int i;               /* assists in traversing the maxEng[] array. */
 
@@ -490,7 +490,7 @@ static int ParseSect2_Wx (float *rdat, sInt4 nrdat, sInt4 *idat,
    for (j = 0; j < Wx->dataLen; j++) {
       ParseUglyString (&(Wx->ugly[j]), Wx->data[j], simpVer);
    }
-   /* We want to know how many bytes we need for each english phrase column,
+   /* We want to know how many bytes we need for each English phrase column,
     * so we walk through each column calculating that value. */
    for (i = 0; i < NUM_UGLY_WORD; i++) {
       /* Assert: Already initialized Wx->maxEng[i]. */
@@ -659,7 +659,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
                          * lat/lon. See GRIB2 Regulation 92.1.6 */
    sInt4 angle;         /* For Lat/Lon, 92.1.6 may not hold, in which case,
                          * angle != 0, and unit = angle/subdivision. */
-   sInt4 subdivision;   /* see angle explaination. */
+   sInt4 subdivision;   /* see angle explanation. */
 
    if (ns3 < 14) {
       return -1;
@@ -682,8 +682,9 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
    }
    meta->gds.projType = (uChar) is3[12];
 
-	 // Don't refuse to convert the GRIB file if only the projection is unknown to us
-	 /*
+   // Do not refuse to convert the GRIB file if only the projection is unknown.
+
+   /*
    if ((is3[12] != GS3_LATLON) && (is3[12] != GS3_MERCATOR) &&
        (is3[12] != GS3_POLAR) && (is3[12] != GS3_LAMBERT)) {
       errSprintf ("Un-supported Map Projection %ld\n", is3[12]);
