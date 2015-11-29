@@ -4225,10 +4225,12 @@ NITFDataset::NITFCreateCopy(
                     /* Code a bit below will complain with other ICORDS value */
                 }
 
-                if (CSLPartialFindString(papszFullOptions, "TRE=GEOLOB=") != - 1)
+                if ( CSLPartialFindString(papszFullOptions, "TRE=GEOLOB=")
+                     != - 1 )
                 {
-                    CPLDebug("NITF", "GEOLOB TRE was explicitly defined before. "
-                             "Overriding it with current georefencing info.");
+                    CPLDebug( "NITF", "GEOLOB TRE was explicitly defined "
+                              "before.  Overriding it with current "
+                              "georeferencing info." );
                 }
 
                 /* Structure of SDE TRE documented here */

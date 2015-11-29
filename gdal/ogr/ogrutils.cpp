@@ -1123,23 +1123,23 @@ double OGRCallAtofOnShortString(const char* pszStr)
 /** Same contract as CPLAtof, except than it doesn't always call the
  *  system CPLAtof() that may be slow on some platforms. For simple but
  *  common strings, it'll use a faster implementation (up to 20x faster
- *  than CPLAtof() on MS runtime libraries) that has no garanty to return
+ *  than CPLAtof() on MS runtime libraries) that has no guaranty to return
  *  exactly the same floating point number.
  */
- 
+
 double OGRFastAtof(const char* pszStr)
 {
     double dfVal = 0;
     double dfSign = 1.0;
     const char* p = pszStr;
-    
+
     static const double adfTenPower[] =
     {
         1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10,
         1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20,
         1e21, 1e22, 1e23, 1e24, 1e25, 1e26, 1e27, 1e28, 1e29, 1e30, 1e31
     };
-        
+
     while(*p == ' ' || *p == '\t')
         p++;
 

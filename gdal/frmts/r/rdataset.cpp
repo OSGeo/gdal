@@ -333,7 +333,7 @@ int RDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 /* -------------------------------------------------------------------- */
 /*      If the extension is .rda and the file type is gzip              */
-/*      compressed we assume it is a gziped R binary file.              */
+/*      compressed we assume it is a gzipped R binary file.              */
 /* -------------------------------------------------------------------- */
     if( memcmp(poOpenInfo->pabyHeader,"\037\213\b",3) == 0 
         && EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"rda") )

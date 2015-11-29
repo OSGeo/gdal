@@ -911,7 +911,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
     fieldDefn = field->GetFieldDefn();
 
     // TODO: Support on GIN things.  And what is GIN?
-    // GIN might mean generial information and might be a typo of GEN.
+    // GIN might mean general information and might be a typo of GEN.
     // if (isGIN)
     {
         if (!(strcmp(fieldDefn->GetName(), "GEN") == 0 &&

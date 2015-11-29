@@ -186,7 +186,7 @@ void OGR_SM_Destroy( OGRStyleMgrH hSM )
 /*      GBool OGRStyleMgr::SetFeatureStyleString(OGRFeature *poFeature,     */
 /*                                       char *pszStyleString,              */
 /*                                       GBool bNoMatching)                 */
-/*      Set the gived representation to the feature,                        */
+/*      Set the given representation to the feature,                        */
 /*      if bNoMatching == TRUE, don't try to find it in the styletable      */
 /*      otherwize, we will use the name defined in the styletable           */
 /****************************************************************************/
@@ -201,7 +201,7 @@ void OGR_SM_Destroy( OGRStyleMgrH hSM )
  *
  * @return TRUE on success, FALSE on error.
  */
- 
+
 GBool OGRStyleMgr::SetFeatureStyleString(OGRFeature *poFeature, 
                                          const char *pszStyleString,
                                          GBool bNoMatching)
@@ -209,7 +209,7 @@ GBool OGRStyleMgr::SetFeatureStyleString(OGRFeature *poFeature,
     const char *pszName;
     if (poFeature == FALSE)
       return FALSE;
-    
+
     if (pszStyleString == NULL)
       poFeature->SetStyleString("");
     else if (bNoMatching == TRUE)
@@ -724,7 +724,7 @@ OGRStyleTool *OGRStyleMgr::GetPart(int nPartId,
  * If NULL then the current style string stored in the style manager is used.
  *
  * @return OGRStyleToolH of the requested part (style tools) or NULL on error.
- */ 
+ */
 
 OGRStyleToolH OGR_SM_GetPart(OGRStyleMgrH hSM, int nPartId, 
                              const char *pszStyleString)
@@ -739,8 +739,8 @@ OGRStyleToolH OGR_SM_GetPart(OGRStyleMgrH hSM, int nPartId,
 /****************************************************************************/
 /* OGRStyleTool *CreateStyleToolFromStyleString(const char *pszStyleString) */
 /*                                                                          */
-/* create a Style tool from the gived StyleString, it should contain only a */
-/* part of a StyleString                                                    */
+/* create a Style tool from the given StyleString, it should contain only a */
+/* part of a StyleString.                                                    */
 /****************************************************************************/
 OGRStyleTool *OGRStyleMgr::CreateStyleToolFromStyleString(const char *
                                                           pszStyleString)
@@ -750,7 +750,7 @@ OGRStyleTool *OGRStyleMgr::CreateStyleToolFromStyleString(const char *
                                            | CSLT_PRESERVEQUOTES
                                            | CSLT_PRESERVEESCAPES );
     OGRStyleTool   *poStyleTool;
-        
+
     if (CSLCount(papszToken) <2)
         poStyleTool = NULL;
     else if (EQUAL(papszToken[0],"PEN"))
@@ -848,7 +848,7 @@ void OGR_STBL_Destroy( OGRStyleTableH hSTBL )
 /****************************************************************************/
 /*    const char *OGRStyleTable::GetStyleName(const char *pszStyleString)   */
 /*                                                                          */
-/*    return the Name of a gived stylestring otherwise NULL                 */
+/*    return the Name of a given stylestring otherwise NULL.                */
 /****************************************************************************/
 
 /**
@@ -942,15 +942,15 @@ int OGR_STBL_AddStyle( OGRStyleTableH hStyleTable,
                        const char *pszName, const char *pszStyleString)
 {
     VALIDATE_POINTER1( hStyleTable, "OGR_STBL_AddStyle", FALSE );
-    
+
     return ((OGRStyleTable *) hStyleTable)->AddStyle( pszName, pszStyleString );
 }
 
 /****************************************************************************/
 /*            GBool OGRStyleTable::RemoveStyle(char *pszName)               */
 /*                                                                          */
-/*    Remove the gived style in the table based on the name, return TRUE    */
-/*    on success otherwise FALSE                                            */
+/*    Remove the given style in the table based on the name, return TRUE    */
+/*    on success otherwise FALSE.                                           */
 /****************************************************************************/
 
 /**
@@ -976,8 +976,8 @@ GBool OGRStyleTable::RemoveStyle(const char *pszName)
 /*            GBool OGRStyleTable::ModifyStyle(char *pszName,               */
 /*                                             char *pszStyleString)        */
 /*                                                                          */
-/*    Modify the gived style, if the style doesn't exist, it will be added  */
-/*    return TRUE on success otherwise return FALSE                         */
+/*    Modify the given style, if the style doesn't exist, it will be added  */
+/*    return TRUE on success otherwise return FALSE.                        */
 /****************************************************************************/
 
 /**
@@ -999,13 +999,13 @@ GBool OGRStyleTable::ModifyStyle(const char *pszName,
     RemoveStyle(pszName);
     return AddStyle(pszName, pszStyleString);
 
-}    
+}
 
 /****************************************************************************/
 /*            GBool OGRStyleTable::SaveStyleTable(char *)                   */
 /*                                                                          */
-/*    Save the StyleTable in the gived file, return TRUE on success         */
-/*    otherwise return FALSE                                                */
+/*    Save the StyleTable in the given file, return TRUE on success         */
+/*    otherwise return FALSE.                                               */
 /****************************************************************************/
 
 /**
@@ -1101,15 +1101,15 @@ int OGR_STBL_LoadStyleTable( OGRStyleTableH hStyleTable,
 {
     VALIDATE_POINTER1( hStyleTable, "OGR_STBL_LoadStyleTable", FALSE );
     VALIDATE_POINTER1( pszFilename, "OGR_STBL_LoadStyleTable", FALSE );
-    
+
     return ((OGRStyleTable *) hStyleTable)->LoadStyleTable( pszFilename );
 }
 
 /****************************************************************************/
 /*             const char *OGRStyleTable::Find(const char *pszName)         */
 /*                                                                          */
-/*             return the StyleString based on the gived name,              */
-/*             otherwise return NULL                                        */
+/*             return the StyleString based on the given name,              */
+/*             otherwise return NULL.                                       */
 /****************************************************************************/
 
 /**
@@ -1130,9 +1130,9 @@ const char *OGRStyleTable::Find(const char *pszName)
     {
 
         pszOutput = CSLGetField(m_papszStyleTable,nPos);
-         
+
         pszDash = strstr(pszOutput,":");
-        
+
         if (pszDash)
           return &pszDash[1];
     }

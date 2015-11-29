@@ -549,11 +549,11 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     const char *pszExpectedFIDName = 
         CPLGetConfigOption( "OCI_FID", "OGR_FID" );    
-   
+
     OGROCIStatement oStatement( poSession );
 
 /* -------------------------------------------------------------------- */
-/*      If geometry type is wkbNone, do not create a geoemtry column    */
+/*      If geometry type is wkbNone, do not create a geometry column.   */
 /* -------------------------------------------------------------------- */
 
     if ( CSLFetchNameValue( papszOptions, "TRUNCATE" ) == NULL  )
@@ -581,7 +581,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
             CPLFree( pszSafeLayerName );
             return NULL;
         }
-    }  
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */

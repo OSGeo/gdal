@@ -3640,7 +3640,7 @@ const char *GDALJPGDriver::GetMetadataItem( const char * pszName,
 "<CreationOptionList>\n"
 "   <Option name='PROGRESSIVE' type='boolean' description='whether to generate a progressive JPEG' default='NO'/>\n"
 "   <Option name='QUALITY' type='int' description='good=100, bad=0, default=75'/>\n"
-"   <Option name='WORLDFILE' type='boolean' description='whether to geneate a worldfile' default='NO'/>\n"
+"   <Option name='WORLDFILE' type='boolean' description='whether to generate a worldfile' default='NO'/>\n"
 "   <Option name='INTERNAL_MASK' type='boolean' description='whether to generate a validity mask' default='YES'/>\n";
         if( GDALJPEGIsArithmeticCodingAvailable() )
             osCreationOptions +=

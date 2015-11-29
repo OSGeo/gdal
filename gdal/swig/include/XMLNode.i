@@ -3,7 +3,7 @@
  *
  * Project:  GDAL SWIG Interface
  * Purpose:  GDAL XML SWIG Interface declarations.
- * Author:   Tamas Szekeres (szekerest@gmeil.com)
+ * Author:   Tamas Szekeres (szekerest@gmail.com)
  *
  ******************************************************************************
  * Copyright (c) 2005, Tamas Szekeres

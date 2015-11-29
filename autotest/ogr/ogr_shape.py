@@ -3874,7 +3874,7 @@ def ogr_shape_82():
     with gdaltest.error_handler():
       gdaltest.shape_lyr.CreateFeature(feat)
 
-    #insert feature with long string in English
+    #insert feature with long string in Russian?  TODO: What language?
     init_en = 'Remont kablukov i ih zamena; zamena naboek; profilaktika i remont podoshvy; remont i zamena supinatorov; zamena stelek; zamena obuvnoj furnitury; remont golenishha; rastjazhka obuvi; chistka i pokraska obuvi. Smolenskaja oblast, p. Monastyrshhina, ulica Sovetskaja, d. 38.	Rabotaet ponedelnik – chetverg s 9.00 do 18.00, pjatnica s 10.00 do 17.00, vyhodnoj: subbota'
     result_en = 'Remont kablukov i ih zamena; zamena naboek; profilaktika i remont podoshvy; remont i zamena supinatorov; zamena stelek; zamena obuvnoj furnitury; remont golenishha; rastjazhka obuvi; chistka i pokraska obuvi. Smolenskaja oblast, p. Monastyrshhina, ulica'
     feat = ogr.Feature(feature_def = gdaltest.shape_lyr.GetLayerDefn())

@@ -500,7 +500,7 @@ static CPLErr GDALRasterizeOptions(char **papszOptions,
             return CE_Failure;
         }
     }
-    
+
     return CE_None;
 }
 
@@ -512,9 +512,9 @@ static CPLErr GDALRasterizeOptions(char **papszOptions,
  * Burn geometries into raster.
  *
  * Rasterize a list of geometric objects into a raster dataset.  The
- * geometries are passed as an array of OGRGeometryH handlers.  
+ * geometries are passed as an array of OGRGeometryH handlers.
  *
- * If the geometries are in the georferenced coordinates of the raster
+ * If the geometries are in the georeferenced coordinates of the raster
  * dataset, then the pfnTransform may be passed in NULL and one will be
  * derived internally from the geotransform of the dataset.  The transform
  * needs to transform the geometry locations into pixel/line coordinates
@@ -706,12 +706,12 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
             eErr = CE_Failure;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
     VSIFree( pabyChunkBuf );
-    
+
     if( bNeedToFreeTransformer )
         GDALDestroyTransformer( pTransformArg );
 
@@ -728,7 +728,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * Rasterize all the geometric objects from a list of layers into a raster
  * dataset.  The layers are passed as an array of OGRLayerH handlers.
  *
- * If the geometries are in the georferenced coordinates of the raster
+ * If the geometries are in the georeferenced coordinates of the raster
  * dataset, then the pfnTransform may be passed in NULL and one will be
  * derived internally from the geotransform of the dataset.  The transform
  * needs to transform the geometry locations into pixel/line coordinates
@@ -1072,7 +1072,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
     VSIFree( pabyChunkBuf );
-    
+
     return eErr;
 #endif /* def OGR_ENABLED */
 }
@@ -1087,7 +1087,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  * Rasterize all the geometric objects from a list of layers into supplied
  * raster buffer.  The layers are passed as an array of OGRLayerH handlers.
  *
- * If the geometries are in the georferenced coordinates of the raster
+ * If the geometries are in the georeferenced coordinates of the raster
  * dataset, then the pfnTransform may be passed in NULL and one will be
  * derived internally from the geotransform of the dataset.  The transform
  * needs to transform the geometry locations into pixel/line coordinates
@@ -1095,7 +1095,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  *
  * The output raster may be of any GDAL supported datatype, though currently
  * internally the burning is done either as GDT_Byte or GDT_Float32.  This
- * may be improved in the future. 
+ * may be improved in the future.
  *
  * @param pData pointer to the output data array.
  *
