@@ -3668,8 +3668,6 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         CPLFree( panLonDims );
     }
 
-    pfnProgress( 0.50, NULL, pProgressData );
-
 /* -------------------------------------------------------------------- */
 /*      Get projection values                                           */
 /* -------------------------------------------------------------------- */
@@ -5431,7 +5429,7 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poDS->SetProjection( pszWKT );
         /* now we can call AddProjectionVars() directly */
         poDS->bSetGeoTransform = bGotGeoTransform;
-        pScaledProgress = GDALCreateScaledProgress( 0.20, 0.50, pfnProgress, 
+        pScaledProgress = GDALCreateScaledProgress( 0.1, 0.25, pfnProgress, 
                                                     pProgressData );
         poDS->AddProjectionVars( GDALScaledProgress, pScaledProgress );
         /* save X,Y dim positions */
