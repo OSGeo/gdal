@@ -203,23 +203,23 @@ __FILE__, __FUNCTION__, __LINE__ ); }
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
 /* -------------------------------------------------------------------- */
-static const char* papszCFLongitudeVarNames[] = { "lon", "longitude", NULL };
-static const char* papszCFLongitudeAttribNames[] = { "units", CF_STD_NAME, "axis", NULL };
-static const char* papszCFLongitudeAttribValues[] = { "degrees_east", "longitude", "X", NULL };
-static const char* papszCFLatitudeVarNames[] = { "lat", "latitude", NULL };
-static const char* papszCFLatitudeAttribNames[] = { "units", CF_STD_NAME, "axis", NULL };
-static const char* papszCFLatitudeAttribValues[] = { "degrees_north", "latitude", "Y", NULL };
+static const char* const papszCFLongitudeVarNames[] = { "lon", "longitude", NULL };
+static const char* const papszCFLongitudeAttribNames[] = { "units", CF_STD_NAME, "axis", NULL };
+static const char* const papszCFLongitudeAttribValues[] = { "degrees_east", "longitude", "X", NULL };
+static const char* const papszCFLatitudeVarNames[] = { "lat", "latitude", NULL };
+static const char* const papszCFLatitudeAttribNames[] = { "units", CF_STD_NAME, "axis", NULL };
+static const char* const papszCFLatitudeAttribValues[] = { "degrees_north", "latitude", "Y", NULL };
 
-static const char* papszCFProjectionXVarNames[] = { "x", "xc", NULL };
-static const char* papszCFProjectionXAttribNames[] = { CF_STD_NAME, NULL };
-static const char* papszCFProjectionXAttribValues[] = { CF_PROJ_X_COORD, NULL };
-static const char* papszCFProjectionYVarNames[] = { "y", "yc", NULL };
-static const char* papszCFProjectionYAttribNames[] = { CF_STD_NAME, NULL };
-static const char* papszCFProjectionYAttribValues[] = { CF_PROJ_Y_COORD, NULL };
+static const char* const papszCFProjectionXVarNames[] = { "x", "xc", NULL };
+static const char* const papszCFProjectionXAttribNames[] = { CF_STD_NAME, NULL };
+static const char* const papszCFProjectionXAttribValues[] = { CF_PROJ_X_COORD, NULL };
+static const char* const papszCFProjectionYVarNames[] = { "y", "yc", NULL };
+static const char* const papszCFProjectionYAttribNames[] = { CF_STD_NAME, NULL };
+static const char* const papszCFProjectionYAttribValues[] = { CF_PROJ_Y_COORD, NULL };
 
-static const char* papszCFVerticalAttribNames[] = { "axis", "positive", "positive", NULL };
-static const char* papszCFVerticalAttribValues[] = { "Z", "up", "down", NULL };
-static const char* papszCFVerticalUnitsValues[] = { 
+static const char* const papszCFVerticalAttribNames[] = { "axis", "positive", "positive", NULL };
+static const char* const papszCFVerticalAttribValues[] = { "Z", "up", "down", NULL };
+static const char* const papszCFVerticalUnitsValues[] = { 
     /* units of pressure */
     "bar", "bars", "millibar", "millibars", "decibar", "decibars", 
     "atmosphere", "atmospheres", "atm", "pascal", "pascals", "Pa", "hPa",
@@ -229,7 +229,7 @@ static const char* papszCFVerticalUnitsValues[] = {
     "level", "layer", "sigma_level",
     NULL };
 /* dimensionless vertical coordinates */
-static const char* papszCFVerticalStandardNameValues[] = { 
+static const char* const papszCFVerticalStandardNameValues[] = { 
     "atmosphere_ln_pressure_coordinate", "atmosphere_sigma_coordinate",
     "atmosphere_hybrid_sigma_pressure_coordinate", 
     "atmosphere_hybrid_height_coordinate",
@@ -243,9 +243,9 @@ static const char* papszCFVerticalStandardNameValues[] = {
     "ocean_s_coordinate", "ocean_sigma_z_coordinate",
     "ocean_double_sigma_coordinate", NULL };
 
-static const char* papszCFTimeAttribNames[] = { "axis", NULL };
-static const char* papszCFTimeAttribValues[] = { "T", NULL };
-static const char* papszCFTimeUnitsValues[] = { 
+static const char* const papszCFTimeAttribNames[] = { "axis", NULL };
+static const char* const papszCFTimeAttribValues[] = { "T", NULL };
+static const char* const papszCFTimeUnitsValues[] = { 
     "days since", "day since", "d since", 
     "hours since", "hour since", "h since", "hr since", 
     "minutes since", "minute since", "min since", 
