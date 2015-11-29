@@ -702,7 +702,7 @@ class netCDFDataset : public GDALPamDataset
     int          bChunking;
 #endif
     int          nCreateMode;
-    int          bSignedData;
+    bool         bSignedData;
 
     double       rint( double );
 
