@@ -4505,7 +4505,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nc_inq_ndims( cdfid, &dim_count ) != NC_NOERR || dim_count < 2 )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
-                  "%s is a netCDF file, but not in GMT configuration.",
+                  "%s is a netCDF file, but without any dimensions >= 2.",
                   poOpenInfo->pszFilename );
 
         nc_close( cdfid );
@@ -4886,23 +4886,31 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create bands                                                    */
 /* -------------------------------------------------------------------- */
-    int i = 0;  // TODO: Give i a better name.  Is it != nTotLevCount?
+
+    /* Arbitrary threshold */
+    int nMaxBandCount = atoi(CPLGetConfigOption("GDAL_MAX_BAND_COUNT", "32768"));
+    if( nMaxBandCount <= 0 )
+        nMaxBandCount = 32768;
+    if( nTotLevCount > static_cast<unsigned int>(nMaxBandCount) )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Limiting number of bands to %d instead of %u",
+                 nMaxBandCount,
+                 static_cast<unsigned int>(nTotLevCount));
+        nTotLevCount = static_cast<unsigned int>(nMaxBandCount);
+    }
     for ( unsigned int lev = 0; lev < nTotLevCount ; lev++ ) {
         netCDFRasterBand *poBand =
             new netCDFRasterBand(poDS, var, nDim, lev,
                                  panBandZLev, panBandDimPos, 
-                                 paDimIds, i+1 );
-        poDS->SetBand( i+1, poBand );
-        i++;
+                                 paDimIds, lev+1 );
+        poDS->SetBand( lev+1, poBand );
     }
 
     CPLFree( paDimIds );
     CPLFree( panBandDimPos );
     if ( panBandZLev )
         CPLFree( panBandZLev );
-
-    poDS->nBands = i;
-
     // Handle angular geographic coordinates here
 
 /* -------------------------------------------------------------------- */
