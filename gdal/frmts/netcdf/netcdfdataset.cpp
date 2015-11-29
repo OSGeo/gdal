@@ -3251,7 +3251,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         bIsGeographic = TRUE;
 
     CPLDebug( "GDAL_netCDF", "SetProjection, WKT now = [%s]\nprojected: %d geographic: %d", 
-              pszProjection,bIsProjected,bIsGeographic );
+              pszProjection ? pszProjection : "(null)",bIsProjected,bIsGeographic );
 
     if ( ! bSetGeoTransform )
         CPLDebug( "GDAL_netCDF", "netCDFDataset::AddProjectionVars() called, "
@@ -3280,7 +3280,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             hBand_Y = GDALGetRasterBand( hDS_Y, nBand );
 
             /* if geoloc bands are found do basic vaidation based on their dimensions */
-            if ( hDS_X != NULL && hDS_Y != NULL ) {
+            if ( hBand_X != NULL && hBand_Y != NULL ) {
 
                 int nXSize_XBand = GDALGetRasterXSize( hDS_X );
                 int nYSize_XBand = GDALGetRasterYSize( hDS_X );
@@ -3841,8 +3841,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         }
 
         /* Free the srs and transform objects */
-        if ( poLatLonSRS != NULL ) CPLFree( poLatLonSRS );
-        if ( poTransform != NULL ) CPLFree( poTransform );
+        if ( poLatLonSRS != NULL ) delete poLatLonSRS;
+        if ( poTransform != NULL ) delete poTransform;
 
         /* Free data */
         CPLFree( padXVal );
@@ -3937,8 +3937,10 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     }// not projected 
 
     /* close geoloc datasets */
-    if ( bHasGeoloc ) {
+    if( hDS_X != NULL ) {
         GDALClose( hDS_X ); 
+    }
+    if( hDS_Y != NULL ) {
         GDALClose( hDS_Y ); 
     }
 
