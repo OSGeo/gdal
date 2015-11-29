@@ -41,44 +41,44 @@ CPL_CVSID("$Id$");
 
 /* Internal function declarations */
 
-int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget);
+static int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget);
 
-void NCDFAddGDALHistory( int fpImage, 
+static void NCDFAddGDALHistory( int fpImage, 
                          const char * pszFilename, const char *pszOldHist,
                          const char * pszFunctionName );
 
-void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist);
+static void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist);
 
-int NCDFIsCfProjection( const char* pszProjection );
+static int NCDFIsCfProjection( const char* pszProjection );
 
-void NCDFWriteProjAttribs(const OGR_SRSNode *poPROJCS,
+static void NCDFWriteProjAttribs(const OGR_SRSNode *poPROJCS,
                             const char* pszProjection,
                             const int fpImage, const int NCDFVarID);
 
-CPLErr NCDFSafeStrcat(char** ppszDest, char* pszSrc, size_t* nDestSize);
+static CPLErr NCDFSafeStrcat(char** ppszDest, const char* pszSrc, size_t* nDestSize);
 
 /* var / attribute helper functions */
-CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
+static CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
                     double *pdfValue );
-CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
+static CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
                     char **pszValue );
-CPLErr NCDFPutAttr( int nCdfId, int nVarId, 
+static CPLErr NCDFPutAttr( int nCdfId, int nVarId, 
                     const char *pszAttrName, const char *pszValue );
-CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue );//replace this where used
-CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue );
+static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue );//replace this where used
+static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue );
 
-double NCDFGetDefaultNoDataValue( int nVarType );
+static double NCDFGetDefaultNoDataValue( int nVarType );
 
 /* dimension check functions */
-int NCDFIsVarLongitude(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
-int NCDFIsVarLatitude(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
-int NCDFIsVarProjectionX( int nCdfId, int nVarId=-1, const char * pszVarName=NULL );
-int NCDFIsVarProjectionY( int nCdfId, int nVarId=-1, const char * pszVarName=NULL );
-int NCDFIsVarVerticalCoord(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
-int NCDFIsVarTimeCoord(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
+static int NCDFIsVarLongitude(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
+static int NCDFIsVarLatitude(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
+static int NCDFIsVarProjectionX( int nCdfId, int nVarId=-1, const char * pszVarName=NULL );
+static int NCDFIsVarProjectionY( int nCdfId, int nVarId=-1, const char * pszVarName=NULL );
+static int NCDFIsVarVerticalCoord(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
+static int NCDFIsVarTimeCoord(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
 
-char **NCDFTokenizeArray( const char *pszValue ); //replace this where used
-void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
+static char **NCDFTokenizeArray( const char *pszValue ); //replace this where used
+static void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
                    const char *pszMatchPrefix=NULL, int bIsBand=TRUE );
 
 // uncomment this for more debug output
@@ -114,7 +114,7 @@ class netCDFRasterBand : public GDALPamRasterBand
     int         status;
     int         bCheckLongitude;
 
-    CPLErr	    CreateBandMetadata( int *paDimIds ); 
+    CPLErr	    CreateBandMetadata( const int *paDimIds ); 
     template <class T> void CheckData ( void * pImage, 
                                         size_t nTmpBlockXSize, size_t nTmpBlockYSize,
                                         bool bCheckIsNan=false ) ;
@@ -127,22 +127,22 @@ class netCDFRasterBand : public GDALPamRasterBand
                       int nZId, 
                       int nZDim,
                       int nLevel, 
-                      int *panBandZLen,
-                      int *panBandPos,
-                      int *paDimIds,
+                      const int *panBandZLen,
+                      const int *panBandPos,
+                      const int *paDimIds,
                       int nBand );
     netCDFRasterBand( netCDFDataset *poDS, 
                       GDALDataType eType,
                       int nBand,
                       int bSigned=TRUE,
-                      char *pszBandName=NULL,
-                      char *pszLongName=NULL, 
+                      const char *pszBandName=NULL,
+                      const char *pszLongName=NULL, 
                       int nZId=-1, 
                       int nZDim=2,
                       int nLevel=0, 
-                      int *panBandZLev=NULL, 
-                      int *panBandZPos=NULL, 
-                      int *paDimIds=NULL );
+                      const int *panBandZLev=NULL, 
+                      const int *panBandZPos=NULL, 
+                      const int *paDimIds=NULL );
     ~netCDFRasterBand( );
 
     virtual double GetNoDataValue( int * );
@@ -164,9 +164,9 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                                     int nZId, 
                                     int nZDim,
                                     int nLevel, 
-                                    int *panBandZLev, 
-                                    int *panBandZPos, 
-                                    int *paDimIds,
+                                    const int *panBandZLev, 
+                                    const int *panBandZPos, 
+                                    const int *paDimIds,
                                     int nBand ) :
     cdfid(poNCDFDS->GetCDFID()),
     nBandXPos(panBandZPos[0]),
@@ -466,14 +466,14 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                                     GDALDataType eType,
                                     int nBand,
                                     int bSigned,
-                                    char *pszBandName,
-                                    char *pszLongName,
+                                    const char *pszBandName,
+                                    const char *pszLongName,
                                     int nZId,
                                     int nZDim,
                                     int nLevel,
-                                    int *panBandZLev,
-                                    int *panBandZPos,
-                                    int *paDimIds ) :
+                                    const int *panBandZLev,
+                                    const int *panBandZPos,
+                                    const int *paDimIds ) :
     nc_datatype(NC_NAT),
     cdfid(poNCDFDS->GetCDFID()),
     nBandXPos(1),
@@ -569,7 +569,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         ( ( netCDFDataset * ) poDS )->SetDefineMode( TRUE );
 
         char szTempPrivate[256+1];
-        char* pszTemp;
+        const char* pszTemp;
         if ( !pszBandName || EQUAL(pszBandName,"")  )
         {
             snprintf( szTempPrivate, sizeof(szTempPrivate), "Band%d", nBand );
@@ -943,7 +943,7 @@ CPLXMLNode *netCDFRasterBand::SerializeToXML( CPL_UNUSED const char *pszUnused )
 /*                         CreateBandMetadata()                         */
 /************************************************************************/
 
-CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
+CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
 
 {
     netCDFDataset *poDS = reinterpret_cast<netCDFDataset *>( this->poDS );
@@ -4959,7 +4959,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a copy of metadata for NC_GLOBAL or a variable           */
 /************************************************************************/
 
-void CopyMetadata( void  *poDS, int fpImage, int CDFVarID, 
+static void CopyMetadata( void  *poDS, int fpImage, int CDFVarID, 
                    const char *pszPrefix, int bIsBand ) {
 
     char       **papszFieldData=NULL;
@@ -5906,7 +5906,7 @@ void GDALRegister_netCDF()
 /************************************************************************/
 
 /* Test for GDAL version string >= target */
-int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
+static int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
 {
 
     /* Valid strings are "GDAL 1.9dev, released 2011/01/18" and "GDAL 1.8.1 " */
@@ -5941,7 +5941,7 @@ int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
 }
 
 /* Add Conventions, GDAL version and history  */ 
-void NCDFAddGDALHistory( int fpImage, 
+static void NCDFAddGDALHistory( int fpImage, 
                          const char * pszFilename, const char *pszOldHist,
                          const char * pszFunctionName)
 {
@@ -5969,7 +5969,7 @@ void NCDFAddGDALHistory( int fpImage,
 
 /* code taken from cdo and libcdi, used for writing the history attribute */
 //void cdoDefHistory(int fileID, char *histstring)
-void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
+static void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
 {
     /* Check pszOldHist - as if there was no previous history, it will be
        a null pointer - if so set as empty. */
@@ -6015,7 +6015,7 @@ void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
     CPLFree(pszNewHist);
 }
 
-int NCDFIsCfProjection( const char* pszProjection ) 
+static int NCDFIsCfProjection( const char* pszProjection ) 
 {
     /* Find the appropriate mapping */
     for (int iMap = 0; poNetcdfSRS_PT[iMap].WKT_SRS != NULL; iMap++ ) {
@@ -6046,7 +6046,7 @@ int NCDFIsCfProjection( const char* pszProjection )
 
 /* NOTE modifications by ET to combine the specific and generic mappings */
 
-void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
+static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                            const char* pszProjection,
                            const int fpImage, const int NCDFVarID ) 
 {
@@ -6237,7 +6237,7 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
     }
 }
 
-CPLErr NCDFSafeStrcat(char** ppszDest, char* pszSrc, size_t* nDestSize)
+static CPLErr NCDFSafeStrcat(char** ppszDest, const char* pszSrc, size_t* nDestSize)
 {
     /* Reallocate the data string until the content fits */
     while(*nDestSize < (strlen(*ppszDest) + strlen(pszSrc) + 1)) {
@@ -6281,7 +6281,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     *pszAttrValue = '\0';
 
     if ( nAttrLen > 1 && nAttrType != NC_CHAR )
-        NCDFSafeStrcat(&pszAttrValue, (char *)"{", &nAttrValueSize);
+        NCDFSafeStrcat(&pszAttrValue, "{", &nAttrValueSize);
 
     double dfValue = 0.0;
     size_t m;
@@ -6399,7 +6399,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     }
 
     if ( nAttrLen > 1  && nAttrType!= NC_CHAR )    
-        NCDFSafeStrcat(&pszAttrValue, (char *)"}", &nAttrValueSize);
+        NCDFSafeStrcat(&pszAttrValue, "}", &nAttrValueSize);
 
     /* set return values */
     if ( bSetPszValue ) *pszValue = pszAttrValue;
@@ -6410,7 +6410,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
 }
 
 /* sets pdfValue to first value found */
-CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
+static CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
                     double *pdfValue )
 {
     return NCDFGetAttr1( nCdfId, nVarId, pszAttrName, pdfValue, NULL, FALSE );
@@ -6418,7 +6418,7 @@ CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
 
 
 /* pszValue is the responsibility of the caller and must be freed */
-CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
+static CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
                     char **pszValue )
 {
     return NCDFGetAttr1( nCdfId, nVarId, pszAttrName, FALSE, pszValue, TRUE );
@@ -6426,7 +6426,7 @@ CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
 
 
 /* By default write NC_CHAR, but detect for int/float/double */
-CPLErr NCDFPutAttr( int nCdfId, int nVarId, 
+static CPLErr NCDFPutAttr( int nCdfId, int nVarId, 
                  const char *pszAttrName, const char *pszValue )
 {
     int     status = 0;
@@ -6536,7 +6536,7 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
      return CE_None;
 }
 
-CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
+static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
 {
     /* get var information */
     int nVarDimId = -1;
@@ -6568,7 +6568,7 @@ CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     *pszVarValue = '\0';
 
     if ( nVarLen > 1 && nVarType != NC_CHAR )    
-        NCDFSafeStrcat(&pszVarValue, (char *)"{", &nVarValueSize);
+        NCDFSafeStrcat(&pszVarValue, "{", &nVarValueSize);
 
     switch (nVarType) {
         case NC_CHAR:
@@ -6665,7 +6665,7 @@ CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     }
 
     if ( nVarLen > 1  && nVarType!= NC_CHAR )
-        NCDFSafeStrcat(&pszVarValue, (char *)"}", &nVarValueSize);
+        NCDFSafeStrcat(&pszVarValue, "}", &nVarValueSize);
 
     /* set return values */
     *pszValue = pszVarValue;
@@ -6673,7 +6673,7 @@ CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     return CE_None;
 }
 
-CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
+static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
 {
     if ( EQUAL( pszValue, "" ) )
         return CE_Failure;
@@ -6893,7 +6893,7 @@ static int NCDFEqual( const char * papszName, const char ** papszValues )
 }
 
 /* test that a variable is longitude/latitude coordinate, following CF 4.1 and 4.2 */
-int NCDFIsVarLongitude( int nCdfId, int nVarId,
+static int NCDFIsVarLongitude( int nCdfId, int nVarId,
                         const char * pszVarName )
 {
     /* check for matching attributes */
@@ -6913,7 +6913,7 @@ int NCDFIsVarLongitude( int nCdfId, int nVarId,
     return bVal;
 }
 
-int NCDFIsVarLatitude( int nCdfId, int nVarId, const char * pszVarName )
+static int NCDFIsVarLatitude( int nCdfId, int nVarId, const char * pszVarName )
 {
     int bVal = NCDFDoesVarContainAttribVal( nCdfId,
                                             papszCFLatitudeAttribNames,
@@ -6929,7 +6929,7 @@ int NCDFIsVarLatitude( int nCdfId, int nVarId, const char * pszVarName )
     return bVal;
 }
 
-int NCDFIsVarProjectionX( int nCdfId, int nVarId, const char * pszVarName )
+static int NCDFIsVarProjectionX( int nCdfId, int nVarId, const char * pszVarName )
 {
     int bVal = NCDFDoesVarContainAttribVal( nCdfId,
                                             papszCFProjectionXAttribNames,
@@ -6946,7 +6946,7 @@ int NCDFIsVarProjectionX( int nCdfId, int nVarId, const char * pszVarName )
     return bVal;
 }
 
-int NCDFIsVarProjectionY( int nCdfId, int nVarId, const char * pszVarName )
+static int NCDFIsVarProjectionY( int nCdfId, int nVarId, const char * pszVarName )
 {
     int bVal = NCDFDoesVarContainAttribVal( nCdfId,
                                             papszCFProjectionYAttribNames,
@@ -6989,7 +6989,7 @@ int NCDFIsVarVerticalCoord( int nCdfId, int nVarId,
 }
 
 /* test that a variable is a time coordinate, following CF 4.4 */
-int NCDFIsVarTimeCoord( int nCdfId, int nVarId,
+static int NCDFIsVarTimeCoord( int nCdfId, int nVarId,
                         const char * pszVarName )
 {
     /* check for matching attributes */ 
@@ -7011,7 +7011,7 @@ int NCDFIsVarTimeCoord( int nCdfId, int nVarId,
 /* parse a string, and return as a string list */
 /* if it an array of the form {a,b} then tokenize it */
 /* else return a copy */
-char **NCDFTokenizeArray( const char *pszValue )
+static char **NCDFTokenizeArray( const char *pszValue )
 {
     if ( pszValue==NULL || EQUAL( pszValue, "" ) )
         return NULL;
