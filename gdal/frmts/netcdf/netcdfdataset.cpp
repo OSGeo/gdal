@@ -3274,9 +3274,9 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             hDS_Y = GDALOpenShared( pszDSName, GA_ReadOnly );
 
         if ( hDS_X != NULL && hDS_Y != NULL ) {
-            nBand = MAX(1,atoi(CSLFetchNameValue( papszGeolocationInfo, "X_BAND" )));
+            nBand = MAX(1,atoi(CSLFetchNameValueDef( papszGeolocationInfo, "X_BAND", "0" )));
             hBand_X = GDALGetRasterBand( hDS_X, nBand );
-            nBand = MAX(1,atoi(CSLFetchNameValue( papszGeolocationInfo, "Y_BAND" )));
+            nBand = MAX(1,atoi(CSLFetchNameValueDef( papszGeolocationInfo, "Y_BAND", "0" )));
             hBand_Y = GDALGetRasterBand( hDS_Y, nBand );
 
             /* if geoloc bands are found do basic vaidation based on their dimensions */
@@ -5179,9 +5179,7 @@ netCDFDataset::Create( const char * pszFilename,
     /* TODO should this only be done in Create() */
     poDS->bSignedData = true;
     const char *pszValue  =
-        CSLFetchNameValue( papszOptions, "PIXELTYPE" );
-    if( pszValue == NULL )
-        pszValue = "";
+        CSLFetchNameValueDef( papszOptions, "PIXELTYPE", "" );
     if( eType == GDT_Byte && ( ! EQUAL(pszValue,"SIGNEDBYTE") ) )
         poDS->bSignedData = false;
 
