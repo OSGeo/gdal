@@ -6004,7 +6004,7 @@ static void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszO
     strcat(pszNewHist, pszAddHist);
 
     // int disableHistory = FALSE;
-    if ( /* ! disableHistory && */ pszNewHist )
+    //if ( !disableHistory )
     {
         if ( ! EQUAL(pszOldHist,"") )
             strcat(pszNewHist, "\n");
