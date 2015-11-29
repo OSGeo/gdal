@@ -264,6 +264,14 @@ def ogr_libkml_point_read():
 
     wkt = 'POINT(-122.0822035425683 37.42228990140251)'
 
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason( 'expected feature not found.' )
+        return 'fail'
+
     wkt = 'POINT(-122.084075 37.4220033612141 50)'
 
     if ogrtest.check_feature_geometry( feat, wkt):
