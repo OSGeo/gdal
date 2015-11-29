@@ -1436,6 +1436,27 @@ def netcdf_40():
     return netcdf_test_copy( 'data/bug5291.nc', 0, None, 'tmp/netcdf_40.nc' )
 
 ###############################################################################
+# Test support for georeferenced file without CF convention
+
+def netcdf_41():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/byte_no_cf.nc')
+    if ds.GetGeoTransform() != (440720, 60, 0, 3751320, 0, -60):
+        gdaltest.post_reason('failure')
+        print(ds.GetGeoTransform())
+        return 'fail'
+    if ds.GetProjectionRef().find('26711') < 0:
+        gdaltest.post_reason('failure')
+        print(ds.GetGeoTransform())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -1480,7 +1501,8 @@ gdaltest_list = [
     netcdf_37,
     netcdf_38,
     netcdf_39,
-    netcdf_40
+    netcdf_40,
+    netcdf_41
  ]
 
 ###############################################################################
