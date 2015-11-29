@@ -6822,8 +6822,8 @@ double NCDFGetDefaultNoDataValue( int nVarType )
 
 
 static int NCDFDoesVarContainAttribVal( int nCdfId,
-                                 const char ** papszAttribNames, 
-                                 const char ** papszAttribValues,
+                                 const char * const* papszAttribNames, 
+                                 const char * const* papszAttribValues,
                                  int nVarId,
                                  const char * pszVarName,
                                  bool bStrict=true )
@@ -6854,7 +6854,7 @@ static int NCDFDoesVarContainAttribVal( int nCdfId,
 
 static int NCDFDoesVarContainAttribVal2( int nCdfId,
                                   const char * papszAttribName, 
-                                  const char ** papszAttribValues,
+                                  const char * const* papszAttribValues,
                                   int nVarId,
                                   const char * pszVarName,
                                   int bStrict=true )
@@ -6885,7 +6885,7 @@ static int NCDFDoesVarContainAttribVal2( int nCdfId,
     return bFound;
 }
 
-static bool NCDFEqual( const char * papszName, const char ** papszValues )
+static bool NCDFEqual( const char * papszName, const char * const* papszValues )
 {
     if ( papszName == NULL || EQUAL(papszName,"") )
         return false;
