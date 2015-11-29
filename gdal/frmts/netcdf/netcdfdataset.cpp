@@ -330,7 +330,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             bSignedData = true;
 
         /* For NC4 format NC_BYTE is signed, NC_UBYTE is unsigned */
-        if ( poNCDFDS->nFormat == NCDF_FORMAT_NC4 ) {
+        if ( poNCDFDS->eFormat == NCDF_FORMAT_NC4 ) {
             bSignedData = true;
         }
         else  {
@@ -433,8 +433,9 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     int nTmpFormat = 0;
     size_t chunksize[ MAX_NC_DIMS ];
     status = nc_inq_format( cdfid, &nTmpFormat);
-    if( ( status == NC_NOERR ) && ( ( nTmpFormat == NCDF_FORMAT_NC4 ) ||
-          ( nTmpFormat == NCDF_FORMAT_NC4C ) ) ) {
+    NetCDFFormatEnum eTmpFormat = static_cast<NetCDFFormatEnum>(nTmpFormat);
+    if( ( status == NC_NOERR ) && ( ( eTmpFormat == NCDF_FORMAT_NC4 ) ||
+          ( eTmpFormat == NCDF_FORMAT_NC4C ) ) ) {
         /* check for chunksize and set it as the blocksize (optimizes read) */
         status = nc_inq_var_chunking( cdfid, nZId, &nTmpFormat, chunksize );
         if( ( status == NC_NOERR ) && ( nTmpFormat == NC_CHUNKED ) ) {
@@ -529,7 +530,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             nc_datatype = NC_BYTE;
 #ifdef NETCDF_HAS_NC4
             /* NC_UBYTE (unsigned byte) is only available for NC4 */
-            if ( ! bSignedData && (poNCDFDS->nFormat == NCDF_FORMAT_NC4) )
+            if ( ! bSignedData && (poNCDFDS->eFormat == NCDF_FORMAT_NC4) )
                 nc_datatype = NC_UBYTE;
 #endif
             break;
@@ -612,7 +613,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
           /* For unsigned NC_BYTE (except NC4 format) */
           /* add valid_range and _Unsigned ( defined in CF-1 and NUG ) */
           int status = NC_NOERR;
-          if ( (nc_datatype == NC_BYTE) && (poNCDFDS->nFormat != NCDF_FORMAT_NC4) ) {
+          if ( (nc_datatype == NC_BYTE) && (poNCDFDS->eFormat != NCDF_FORMAT_NC4) ) {
             short int adfValidRange[2]; 
             if  ( bSignedData ) {
                 adfValidRange[0] = -128;
@@ -1496,7 +1497,7 @@ netCDFDataset::netCDFDataset() :
     papszSubDatasets(NULL),
     papszMetadata(NULL),
     bBottomUp(true),
-    nFormat(NCDF_FORMAT_NONE),
+    eFormat(NCDF_FORMAT_NONE),
     bIsGdalFile(false),
     bIsGdalCfFile(false),
 
@@ -1519,7 +1520,7 @@ netCDFDataset::netCDFDataset() :
 
     // Create vars.
     papszCreationOptions(NULL),
-    nCompress(NCDF_COMPRESS_NONE),
+    eCompress(NCDF_COMPRESS_NONE),
     nZLevel(NCDF_DEFLATE_LEVEL),
 #ifdef NETCDF_HAS_NC4
     bChunking(false),
@@ -4192,7 +4193,7 @@ void netCDFDataset::CreateSubDatasetList( )
 /*                              IdentifyFormat()                      */
 /************************************************************************/
 
-int netCDFDataset::IdentifyFormat( GDALOpenInfo * poOpenInfo, 
+NetCDFFormatEnum netCDFDataset::IdentifyFormat( GDALOpenInfo * poOpenInfo, 
 #ifndef HAVE_HDF5
 CPL_UNUSED
 #endif
@@ -4294,7 +4295,7 @@ int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") ) {
         return TRUE;
     }
-    const int nTmpFormat = IdentifyFormat( poOpenInfo );
+    const NetCDFFormatEnum nTmpFormat = IdentifyFormat( poOpenInfo );
     if( NCDF_FORMAT_NC == nTmpFormat ||
         NCDF_FORMAT_NC2 == nTmpFormat ||
         NCDF_FORMAT_NC4 == nTmpFormat ||
@@ -4318,18 +4319,18 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
 /* -------------------------------------------------------------------- */
-    int nTmpFormat = NCDF_FORMAT_NONE;
+    NetCDFFormatEnum eTmpFormat = NCDF_FORMAT_NONE;
     if( ! STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") ) {
-        nTmpFormat = IdentifyFormat( poOpenInfo );
+        eTmpFormat = IdentifyFormat( poOpenInfo );
 #ifdef NCDF_DEBUG
-    CPLDebug( "GDAL_netCDF", "identified format %d", nTmpFormat );
+    CPLDebug( "GDAL_netCDF", "identified format %d", eTmpFormat );
 #endif
         /* Note: not calling Identify() directly, because we want the file type */
         /* Only support NCDF_FORMAT* formats */
-        if( ! ( NCDF_FORMAT_NC  == nTmpFormat ||
-                NCDF_FORMAT_NC2  == nTmpFormat ||
-                NCDF_FORMAT_NC4  == nTmpFormat ||
-                NCDF_FORMAT_NC4C  == nTmpFormat ) )
+        if( ! ( NCDF_FORMAT_NC  == eTmpFormat ||
+                NCDF_FORMAT_NC2  == eTmpFormat ||
+                NCDF_FORMAT_NC4  == eTmpFormat ||
+                NCDF_FORMAT_NC4C  == eTmpFormat ) )
             return NULL;
     }
 
@@ -4393,10 +4394,10 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         /* Identify Format from real file, with bCheckExt=FALSE */ 
         GDALOpenInfo* poOpenInfo2 = new GDALOpenInfo(poDS->osFilename.c_str(), GA_ReadOnly );
-        poDS->nFormat = IdentifyFormat( poOpenInfo2, FALSE );
+        poDS->eFormat = IdentifyFormat( poOpenInfo2, FALSE );
         delete poOpenInfo2;
-        if( NCDF_FORMAT_NONE == poDS->nFormat ||
-            NCDF_FORMAT_UNKNOWN == poDS->nFormat ) {
+        if( NCDF_FORMAT_NONE == poDS->eFormat ||
+            NCDF_FORMAT_UNKNOWN == poDS->eFormat ) {
             CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
@@ -4407,7 +4408,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->osFilename = poOpenInfo->pszFilename;
         bTreatAsSubdataset = false;
-        poDS->nFormat = nTmpFormat;
+        poDS->eFormat = eTmpFormat;
     }
 
 /* -------------------------------------------------------------------- */
@@ -4448,6 +4449,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get file type from netcdf                                       */
 /* -------------------------------------------------------------------- */
+    int nTmpFormat = NCDF_FORMAT_NONE;
     status = nc_inq_format (cdfid, &nTmpFormat);
     if ( status != NC_NOERR ) {
         NCDF_ERR(status);
@@ -4455,18 +4457,18 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     else {
         CPLDebug( "GDAL_netCDF", 
                   "driver detected file type=%d, libnetcdf detected type=%d",
-                  poDS->nFormat, nTmpFormat );
-        if ( nTmpFormat != poDS->nFormat ) {
+                  poDS->eFormat, nTmpFormat );
+        if ( static_cast<NetCDFFormatEnum>(nTmpFormat) != poDS->eFormat ) {
             /* warn if file detection conflicts with that from libnetcdf */
             /* except for NC4C, which we have no way of detecting initially */
             if ( nTmpFormat != NCDF_FORMAT_NC4C ) {
                 CPLError( CE_Warning, CPLE_AppDefined, 
                           "NetCDF driver detected file type=%d, but libnetcdf detected type=%d",
-                          poDS->nFormat, nTmpFormat );
+                          poDS->eFormat, nTmpFormat );
             }
             CPLDebug( "GDAL_netCDF", "setting file type to %d, was %d", 
-                      nTmpFormat, poDS->nFormat );
-            poDS->nFormat = nTmpFormat;
+                      nTmpFormat, poDS->eFormat );
+            poDS->eFormat = static_cast<NetCDFFormatEnum>(nTmpFormat);
         }
     }
 
@@ -5648,23 +5650,23 @@ netCDFDataset::ProcessCreationOptions( )
 {
 
     /* File format */
-    nFormat = NCDF_FORMAT_NC;
+    eFormat = NCDF_FORMAT_NC;
     const char *pszValue = CSLFetchNameValue( papszCreationOptions, "FORMAT" );
     if ( pszValue != NULL ) {
         if ( EQUAL( pszValue, "NC" ) ) {
-            nFormat = NCDF_FORMAT_NC;
+            eFormat = NCDF_FORMAT_NC;
         }
 #ifdef NETCDF_HAS_NC2
         else if ( EQUAL( pszValue, "NC2" ) ) {
-            nFormat = NCDF_FORMAT_NC2;
+            eFormat = NCDF_FORMAT_NC2;
         }
 #endif
 #ifdef NETCDF_HAS_NC4
         else if ( EQUAL( pszValue, "NC4" ) ) {
-            nFormat = NCDF_FORMAT_NC4;
+            eFormat = NCDF_FORMAT_NC4;
         }
         else if ( EQUAL( pszValue, "NC4C" ) ) {
-            nFormat = NCDF_FORMAT_NC4C;
+            eFormat = NCDF_FORMAT_NC4C;
         }
 #endif
         else {
@@ -5680,14 +5682,14 @@ netCDFDataset::ProcessCreationOptions( )
     pszValue = CSLFetchNameValue( papszCreationOptions, "COMPRESS" );
     if ( pszValue != NULL ) {
         if ( EQUAL( pszValue, "NONE" ) ) {
-            nCompress = NCDF_COMPRESS_NONE;
+            eCompress = NCDF_COMPRESS_NONE;
         }
         else if ( EQUAL( pszValue, "DEFLATE" ) ) {
-            nCompress = NCDF_COMPRESS_DEFLATE;
-            if ( !((nFormat == NCDF_FORMAT_NC4) || (nFormat == NCDF_FORMAT_NC4C)) ) {
+            eCompress = NCDF_COMPRESS_DEFLATE;
+            if ( !((eFormat == NCDF_FORMAT_NC4) || (eFormat == NCDF_FORMAT_NC4C)) ) {
                 CPLError( CE_Warning, CPLE_IllegalArg,
                           "NOTICE: Format set to NC4C because compression is set to DEFLATE." );
-                nFormat = NCDF_FORMAT_NC4C;
+                eFormat = NCDF_FORMAT_NC4C;
             }
         }
         else {
@@ -5715,8 +5717,8 @@ netCDFDataset::ProcessCreationOptions( )
 
 #endif
 
-    /* set nCreateMode based on nFormat */
-    switch ( nFormat ) {
+    /* set nCreateMode based on eFormat */
+    switch ( eFormat ) {
 #ifdef NETCDF_HAS_NC2
         case NCDF_FORMAT_NC2:
             nCreateMode = NC_CLOBBER|NC_64BIT_OFFSET;
@@ -5738,7 +5740,7 @@ netCDFDataset::ProcessCreationOptions( )
 
     CPLDebug( "GDAL_netCDF", 
               "file options: format=%d compress=%d zlevel=%d",
-              nFormat, nCompress, nZLevel );
+              eFormat, eCompress, nZLevel );
 }
 
 int netCDFDataset::DefVarDeflate(
@@ -5750,7 +5752,7 @@ int netCDFDataset::DefVarDeflate(
             )
 {
 #ifdef NETCDF_HAS_NC4
-    if ( nCompress == NCDF_COMPRESS_DEFLATE ) {
+    if ( eCompress == NCDF_COMPRESS_DEFLATE ) {
         // must set chunk size to avoid huge performace hit (set bChunkingArg=TRUE)
         // perhaps another solution it to change the chunk cache?
         // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf.html#Chunk-Cache   

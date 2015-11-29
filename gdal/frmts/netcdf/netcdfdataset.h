@@ -84,25 +84,32 @@ static const size_t NCDF_MAX_STR_LEN = 8192;
 #define NCDF_LONLAT          "lon lat"
 
 /* netcdf file types, as in libcdi/cdo and compat w/netcdf.h */
-static const int NCDF_FORMAT_NONE    = 0;   /* Not a netCDF file */
-static const int NCDF_FORMAT_NC      = 1;   /* netCDF classic format */
-static const int NCDF_FORMAT_NC2     = 2;   /* netCDF version 2 (64-bit)  */
-static const int NCDF_FORMAT_NC4     = 3;   /* netCDF version 4 */
-static const int NCDF_FORMAT_NC4C    = 4;   /* netCDF version 4 (classic) */
-static const int NCDF_FORMAT_UNKNOWN = 10;  /* Format not determined (yet) */
+typedef enum
+{
+    NCDF_FORMAT_NONE    = 0,   /* Not a netCDF file */
+    NCDF_FORMAT_NC      = 1,   /* netCDF classic format */
+    NCDF_FORMAT_NC2     = 2,   /* netCDF version 2 (64-bit)  */
+    NCDF_FORMAT_NC4     = 3,   /* netCDF version 4 */
+    NCDF_FORMAT_NC4C    = 4,   /* netCDF version 4 (classic) */
 /* HDF files (HDF5 or HDF4) not supported because of lack of support */
 /* in libnetcdf installation or conflict with other drivers */
-static const int NCDF_FORMAT_HDF5    = 5;   /* HDF4 file, not supported */
-static const int NCDF_FORMAT_HDF4    = 6;   /* HDF4 file, not supported */
+    NCDF_FORMAT_HDF5    = 5,   /* HDF4 file, not supported */
+    NCDF_FORMAT_HDF4    = 6,   /* HDF4 file, not supported */
+    NCDF_FORMAT_UNKNOWN = 10  /* Format not determined (yet) */
+} NetCDFFormatEnum;
 
 /* compression parameters */
-static const int NCDF_COMPRESS_NONE    = 0;
+typedef enum
+{
+    NCDF_COMPRESS_NONE    = 0,
 /* TODO */
 /* http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html#Packed%20Data%20Values */
-static const int NCDF_COMPRESS_PACKED  = 1;
-static const int NCDF_COMPRESS_DEFLATE = 2;
+    NCDF_COMPRESS_PACKED  = 1,
+    NCDF_COMPRESS_DEFLATE = 2,
+    NCDF_COMPRESS_SZIP    = 3  /* no support for writing */
+} NetCDFCompressEnum;
+
 static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
-static const int NCDF_COMPRESS_SZIP    = 3;  /* no support for writing */
 
 /* helper for libnetcdf errors */
 #define NCDF_ERR(status) if ( status != NC_NOERR ){ \
@@ -672,7 +679,7 @@ class netCDFDataset : public GDALPamDataset
     char          **papszMetadata;
     CPLStringList papszDimName;
     bool          bBottomUp;
-    int           nFormat;
+    NetCDFFormatEnum eFormat;
     bool          bIsGdalFile; /* was this file created by GDAL? */
     bool          bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
     char         *pszCFProjection;
@@ -695,7 +702,7 @@ class netCDFDataset : public GDALPamDataset
 
     /* create vars */
     char         **papszCreationOptions;
-    int          nCompress;
+    NetCDFCompressEnum eCompress;
     int          nZLevel;
 #ifdef NETCDF_HAS_NC4
     bool         bChunking;
@@ -751,7 +758,7 @@ class netCDFDataset : public GDALPamDataset
 
     /* static functions */
     static int Identify( GDALOpenInfo * );
-    static int IdentifyFormat( GDALOpenInfo *, bool );
+    static NetCDFFormatEnum IdentifyFormat( GDALOpenInfo *, bool );
     static GDALDataset *Open( GDALOpenInfo * );
 
     static netCDFDataset *CreateLL( const char * pszFilename,
