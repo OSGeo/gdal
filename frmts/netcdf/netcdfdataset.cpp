@@ -5960,7 +5960,7 @@ int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
 
     papszTokens = CSLTokenizeString2( pszVersion+5, ".", 0 );
 
-    for ( int iToken = 0; papszTokens && papszTokens[iToken]; iToken++ )  {
+    for ( int iToken = 0; papszTokens && iToken < 4 && papszTokens[iToken]; iToken++ )  {
         nVersions[iToken] = atoi( papszTokens[iToken] );
     }
     if( nVersions[0] > 1 || nVersions[1] >= 10 )
