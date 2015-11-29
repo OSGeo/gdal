@@ -801,7 +801,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 pszErrorMsg = "Partition is bigger than 16M";
                 break;
             case VP8_ENC_ERROR_BAD_WRITE:
-                pszErrorMsg = "Error while flusing bytes"; break;
+                pszErrorMsg = "Error while flushing bytes"; break;
             case VP8_ENC_ERROR_FILE_TOO_BIG:
                 pszErrorMsg = "File is bigger than 4G"; break;
             case VP8_ENC_ERROR_USER_ABORT:

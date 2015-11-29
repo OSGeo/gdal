@@ -321,7 +321,7 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Forceably load the other bands associated with this scanline.   */
+/*      Forcibly load the other bands associated with this scanline.    */
 /* -------------------------------------------------------------------- */
     for(int iBand = 1; iBand < poGDS->GetRasterCount(); iBand++)
     {
@@ -807,7 +807,7 @@ CPLErr PNGDataset::LoadScanline( int nLine )
 /*                          CollectMetadata()                           */
 /*                                                                      */
 /*      We normally do this after reading up to the image, but be       */
-/*      forwarned ... we can missing text chunks this way.              */
+/*      forewarned ... we can missing text chunks this way.             */
 /*                                                                      */
 /*      We turn each PNG text chunk into one metadata item.  It         */
 /*      might be nice to preserve language information though we        */
@@ -834,7 +834,7 @@ void PNGDataset::CollectMetadata()
 
     for( int iText = 0; iText < nTextCount; iText++ )
     {
-        char	*pszTag = CPLStrdup(text_ptr[iText].key);
+        char *pszTag = CPLStrdup(text_ptr[iText].key);
 
         for( int i = 0; pszTag[i] != '\0'; i++ )
         {

@@ -979,7 +979,7 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Forceably load the other bands associated with this scanline.   */
+/*      Forcibly load the other bands associated with this scanline.    */
 /* -------------------------------------------------------------------- */
     if( nBand == 1 )
     {

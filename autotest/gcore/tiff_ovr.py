@@ -203,7 +203,7 @@ def tiff_ovr_4():
     else:
         for i in range(pix_count):
             sum = sum + ord(ovimage[i])
-            
+
     average = sum / pix_count
     exp_average = 154.8144
     if abs(average - exp_average) > 0.1:
@@ -211,7 +211,7 @@ def tiff_ovr_4():
         gdaltest.post_reason( 'got wrong average for overview image' )
         return 'fail'
 
-    # read base band as overview resolution and verify we aren't getting
+    # Read base band as overview resolution and verify we aren't getting
     # the grayscale image.
 
     frband = wrk_ds.GetRasterBand(1)
@@ -228,7 +228,7 @@ def tiff_ovr_4():
             sum = sum + ord(ovimage[i])
     average = sum / pix_count
     exp_average = 0.6096
-    
+
     if abs(average - exp_average) > 0.01:
         print(average)
         gdaltest.post_reason( 'got wrong average for downsampled image' )
@@ -237,7 +237,7 @@ def tiff_ovr_4():
     wrk_ds = None
 
     return 'success'
-    
+
 
 ###############################################################################
 # Test average overview generation with nodata.
@@ -1580,7 +1580,7 @@ def tiff_ovr_40():
     else:
         for i in range(pix_count):
             sum = sum + ord(ovimage[i])
-            
+
     average = sum / pix_count
     exp_average = 154.8144
     if abs(average - exp_average) > 0.1:
@@ -1588,7 +1588,7 @@ def tiff_ovr_40():
         gdaltest.post_reason( 'got wrong average for overview image' )
         return 'fail'
 
-    # read base band as overview resolution and verify we aren't getting
+    # Read base band as overview resolution and verify we aren't getting
     # the grayscale image.
 
     frband = wrk_ds.GetRasterBand(1)
@@ -1605,7 +1605,7 @@ def tiff_ovr_40():
             sum = sum + ord(ovimage[i])
     average = sum / pix_count
     exp_average = 0.6096
-    
+
     if abs(average - exp_average) > 0.01:
         print(average)
         gdaltest.post_reason( 'got wrong average for downsampled image' )

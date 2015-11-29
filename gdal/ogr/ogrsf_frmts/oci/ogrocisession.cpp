@@ -280,7 +280,7 @@ int OGROCISession::EstablishSession( const char *pszUserid,
     this->pszDatabase = CPLStrdup(pszDatabase);
 
 /* -------------------------------------------------------------------- */
-/*      Setting upt the OGR compatible time formating rules.            */
+/*      Setting up the OGR compatible time formatting rules.            */
 /* -------------------------------------------------------------------- */
     OGROCIStatement     oSetNLSTimeFormat( this );
     if( oSetNLSTimeFormat.Execute( "ALTER SESSION SET NLS_DATE_FORMAT='YYYY/MM/DD' \

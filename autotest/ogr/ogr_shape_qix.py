@@ -4,7 +4,7 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test shapefile spatial index mechanism (.qix files). This can serve
-#           as a test for the functionnality of shapelib's shptree.c
+#           as a test for the functionality of shapelib's shptree.c
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
 #
 ###############################################################################

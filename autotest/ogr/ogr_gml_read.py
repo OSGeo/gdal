@@ -228,14 +228,14 @@ def ogr_gml_5():
     return 'success'
 
 ###############################################################################
-# Test of various FIDs (various prefixes and lengths) (Ticket#1017) 
+# Test of various FIDs (various prefixes and lengths) (Ticket#1017)
 def ogr_gml_6():
 
     if not gdaltest.have_gml_reader: 
         return 'skip' 
 
     files = ['test_point1', 'test_point2', 'test_point3', 'test_point4'] 
-    fids = [] 
+    fids = []
 
     for filename in files: 
         fids[:] = [] 

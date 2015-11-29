@@ -241,7 +241,7 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw (zipFile file,
                                              uLong uncompressed_size,
                                              uLong crc32);
 /*
-  Close the current file in the zipfile, for fiel opened with
+  Close the current file in the zipfile, for file opened with
     parameter raw=1 in zipOpenNewFileInZip2
   uncompressed_size and crc32 are value for the uncompressed size
 */

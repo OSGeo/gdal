@@ -90,7 +90,8 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             if err == 0 and out_string.find('+proj=') > -1:
                 print('<%s> %s <>' % (str(code), out_string))
             else:
-                print('# Unable to translate coordinate system EPSG:%d into PROJ.4 format.' % code)
+                print('# Unable to translate coordinate system '
+                      'EPSG:%d into PROJ.4 format.' % code)
                 print('#')
 
         if output_format == '-postgis':

@@ -1347,7 +1347,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
      *   nScanSize = ((poDS->sInfoHeader.iWidth *
      *            poDS->sInfoHeader.iBitCount + 31) & ~31) / 8
      *
-     * formulae, but we should check for overflow conditions
+     * formula, but we should check for overflow conditions
      * during calculation.
      */
     GUInt32 nScanSize

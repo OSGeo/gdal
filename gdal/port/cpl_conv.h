@@ -80,7 +80,7 @@ const char CPL_DLL *CPLReadLineL( VSILFILE * );
 const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols, char** papszOptions);
 
 /* -------------------------------------------------------------------- */
-/*      Convert ASCII string to floationg point number                  */
+/*      Convert ASCII string to floating point number                  */
 /*      (THESE FUNCTIONS ARE NOT LOCALE AWARE!).                        */
 /* -------------------------------------------------------------------- */
 double CPL_DLL CPLAtof(const char *);

@@ -224,7 +224,7 @@ Note: all the following are build options, not required.
 === gdal/ogr/ogrsf_frmts/mitab ===
 
 * Copyright Daniel Morissette, Stepane Villeneuve, Frank Warmerdam (MIT/X). 
-* Some code derived from MapServer with credit in headers, no problem forseen.
+* Some code derived from MapServer with credit in headers, no problem foreseen.
 * All clean.
 
 === gdal/ogr/ogrsf_frmts/mysql ===

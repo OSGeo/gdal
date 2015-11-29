@@ -113,8 +113,8 @@
     Geoffrey Young, geoff at modperlcookbook dot org
 
 0.7
-  * Add escaping of backslash to json output
-  * Add escaping of foward slash on tokenizing and output
+  * Add escaping of backslash to JSON output
+  * Add escaping of forward slash on tokenizing and output
   * Changes to internal tokenizer from using recursion to
     using a depth state structure to allow incremental parsing
 

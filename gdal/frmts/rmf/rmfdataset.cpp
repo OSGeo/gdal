@@ -99,7 +99,7 @@ RMFRasterBand::~RMFRasterBand() {}
 /************************************************************************/
 /*                              ReadBuffer()                            */
 /*                                                                      */
-/* Helper fucntion to read specified amount of bytes from the input     */
+/* Helper function to read specified amount of bytes from the input     */
 /* file stream.                                                         */
 /************************************************************************/
 

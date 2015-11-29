@@ -1081,7 +1081,7 @@ int myParseTime3 (const char *is, time_t * AnsTime)
    memset (&time, 0, sizeof (struct tm));
    myAssert (strlen (is) == 14);
    if (strlen (is) != 14) {
-      printf ("%s is not formated correctly\n", is);
+      printf ("%s is not formatted correctly\n", is);
       return 1;
    }
    strncpy (buffer, is, 4);

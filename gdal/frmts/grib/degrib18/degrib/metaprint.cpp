@@ -502,7 +502,7 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
    /* Based on Grib2 Code Table 4.6 */
    static const char *tbl46[] = {
       "Unperturbed high-resolution control forecast",
-      "Unperturbed low-reosulution control foreacst",
+      "Unperturbed low-resolution control forecast",
       "Negatively perturbed forecast", "Positively perturbed forecast"
    };
 

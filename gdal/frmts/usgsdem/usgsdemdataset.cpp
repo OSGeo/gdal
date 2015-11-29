@@ -663,14 +663,14 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
 /*      the pixel size which what really gets used.                     */
 /* -------------------------------------------------------------------- */
     if (nCoordSystem == 1          // UTM
-        || nCoordSystem == 2 	   // State Plane
+        || nCoordSystem == 2       // State Plane
         || nCoordSystem == -9999 ) // unknown
     {
         // expand extents modulus the pixel size.
         extent_min.y = floor(extent_min.y/dydelta) * dydelta;
         extent_max.y = ceil(extent_max.y/dydelta) * dydelta;
 
-        // Forceably compute X extents based on first profile and pixelsize.
+        // Forcibly compute X extents based on first profile and pixelsize.
         VSIFSeekL(InDem, nDataStartOffset, 0);
         /* njunk = */ ReadInt(InDem);
         /* njunk = */ ReadInt(InDem);

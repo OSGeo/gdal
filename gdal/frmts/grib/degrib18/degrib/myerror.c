@@ -86,7 +86,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
    size_t lenBuff = *LenBuff; /* Local copy of LenBuff. */
    const char *p;       /* Points to % char in % option. */
    const char *p1;      /* Points to end of % option. */
-   char bufpart[330];   /* Used for formating the int / float options. */
+   char bufpart[330];   /* Used for formatting the int / float options. */
    char format[20];     /* Used to store the % option. */
    char *sval;          /* For pulling strings off va_list. */
    char **Sval;         /* For pulling lists of strings off va_list. */

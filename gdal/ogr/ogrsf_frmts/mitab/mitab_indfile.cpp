@@ -1035,7 +1035,7 @@ int TABINDNode::InitNode(VSILFILE *fp, int nBlockPtr,
  *
  * Move to the specified node ptr, and read the new node data from the file.
  *
- * This is just a cover funtion on top of InitNode()
+ * This is just a cover function on top of InitNode()
  **********************************************************************/
 int TABINDNode::GotoNodePtr(GInt32 nNewNodePtr)
 {

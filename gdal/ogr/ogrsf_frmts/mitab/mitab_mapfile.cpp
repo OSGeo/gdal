@@ -1343,7 +1343,7 @@ void  TABMAPFile::UpdateMapHeaderInfo(TABGeomType nObjType)
     }
 
     /*-----------------------------------------------------------------
-     * Check forminimum TAB file version number
+     * Check for minimum TAB file version number
      *----------------------------------------------------------------*/
     int nVersion = TAB_GEOM_GET_VERSION(nObjType);
 

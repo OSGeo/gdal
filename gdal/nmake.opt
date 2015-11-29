@@ -173,7 +173,7 @@ AVX_ARCH_FLAGS = /arch:AVX
 !ENDIF
 !ENDIF
 
-# The followin are extra disables that can be applied to external source
+# The following are extra disables that can be applied to external source
 # not under our control that we wish to use less stringent warnings with.
 !IFNDEF SOFTWARNFLAGS
 SOFTWARNFLAGS= /wd4244 /wd4702 /wd4701 /wd4013 /wd4706 /wd4057 /wd4210 /wd4305
@@ -244,12 +244,12 @@ JPEG_SUPPORTED = 1
 # This will enable 12bit libjpeg - use only with internal jpeg builds.
 JPEG12_SUPPORTED = 1
 
-#if using an external jpeg library uncomment the follwing lines
+#if using an external jpeg library uncomment the following lines
 #JPEG_EXTERNAL_LIB = 1
 #JPEGDIR = c:/projects/jpeg-6b
 #JPEG_LIB = $(JPEGDIR)/libjpeg.lib
 
-#if using an external png library uncomment the follwing lines
+#if using an external png library uncomment the following lines
 #PNG_EXTERNAL_LIB = 1
 #PNGDIR = c:/projects/libpng-1.0.8
 #PNG_LIB = $(PNGDIR)/libpng.lib

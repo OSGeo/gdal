@@ -29,7 +29,7 @@
 *******************************************************************************/
 
 /* NOTE : this is really a quick and very dirty hack to put the javadoc contained */
-/* in a special formated file, javadoc.java, into the SWIG generated java files */
+/* in a special formatted file, javadoc.java, into the SWIG generated java files */
 /* This program leaks memory and would crash easily on unexpected inputs */
 
 #include <stdio.h>

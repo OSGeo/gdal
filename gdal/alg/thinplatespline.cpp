@@ -263,7 +263,7 @@ typedef union
 static const V2DF
 v2_ln2_div_2pow20 = {6.93147180559945286e-01 / 1048576, 6.93147180559945286e-01 / 1048576},
 v2_Lg1 = {6.666666666666735130e-01, 6.666666666666735130e-01},
-v2_Lg2 = {3.999999999940941908e-01, 3.999999999940941908e-01}, 
+v2_Lg2 = {3.999999999940941908e-01, 3.999999999940941908e-01},
 v2_Lg3 = {2.857142874366239149e-01, 2.857142874366239149e-01},
 v2_Lg4 = {2.222219843214978396e-01, 2.222219843214978396e-01},
 v2_Lg5 = {1.818357216161805012e-01, 1.818357216161805012e-01},
@@ -282,7 +282,7 @@ static const long long cst_0x100000 = MAKE_WIDE_CST(0x00100000);
 static const long long cst_0x3ff00000 = MAKE_WIDE_CST(0x3ff00000);
 
 /* Modified version of __ieee754_log(), less precise than log() but a bit */
-/* faste, and computing 4 log() at a time. Assumes that the values are > 0 */
+/* faster, and computing 4 log() at a time. Assumes that the values are > 0 */
 static void FastApproxLog4Val(v2dfunion* x)
 {
     V2DF f[2],s[2],z[2],R[2],w[2],t1[2],t2[2];

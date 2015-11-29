@@ -1737,7 +1737,7 @@ def ogr_spatialite_4():
     lyr.CreateFeature(feat)
     feat.Destroy()
 
-    # Check that the trigger is functionnal (#3474)
+    # Check that the trigger is functional (#3474).
     lyr = ds.ExecuteSQL('SELECT * FROM idx_geomspatialite_GEOMETRY')
     nb_idx_after = lyr.GetFeatureCount()
     ds.ReleaseResultSet(lyr)

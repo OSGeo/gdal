@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
 
 // XXX: this macro computes zone number from the central meridian parameter.
 // Note, that "Panorama" parameters are set in radians.
-// In degrees it means formulae:
+// In degrees it means formula:
 //
 //              zone = (central_meridian + 3) / 6
 //

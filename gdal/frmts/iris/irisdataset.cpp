@@ -849,8 +849,10 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->fNyquistVelocity = fNyquist;
     poDS->SetMetadataItem( "NYQUIST_VELOCITY",CPLString().Printf("%.2f m/s",fNyquist)); 
 
-    ///Product dependent metadata (stored in 80 bytes fromm 162 bytes at the product header) See point 3.2.30 at page 3.19 of the manual
-    //See point 3.2.25 at page 3.12 of the manual
+    // Product dependent metadata (stored in 80 bytes from 162 bytes
+    // at the product header) See point 3.2.30 at page 3.19 of the
+    // manual.
+    //See point 3.2.25 at page 3.12 of the manual.
     if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"PPI")){
         //Degrees = 360 * (Binary Angle)*2^N
         //float fElevation = 360 * float((CPL_LSBUINT16PTR (poDS->abyHeader+164+12))) / 65536;

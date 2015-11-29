@@ -902,7 +902,7 @@ void Clock_PrintDate (double clock, sInt4 *year, int *month, int *day,
  * Arthur Taylor / MDL
  *
  * PURPOSE
- *   To create formated output from a time structure that is stored as a
+ *   To create formatted output from a time structure that is stored as a
  * double.
  *
  * ARGUMENTS
@@ -983,7 +983,7 @@ void Clock_Print (char *buffer, int n, double clock, const char *format,
  * Arthur Taylor / MDL
  *
  * PURPOSE
- *   To create formated output from a time structure that is stored as a
+ *   To create formatted output from a time structure that is stored as a
  * double.  This is similar to Clock_Print, except it bases the timezone
  * shift on what the user supplies rather than the system timezone, and
  * accepts a flag that indicates whether to inquire about daylight savings.

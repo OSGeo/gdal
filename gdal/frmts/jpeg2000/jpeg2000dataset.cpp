@@ -380,7 +380,7 @@ GDALColorInterp JPEG2000RasterBand::GetColorInterpretation()
     {
         return GCI_Undefined;
     }
-    
+
     if ( jas_clrspc_fam( jas_image_clrspc( poGDS->psImage ) ) ==
          JAS_CLRSPC_FAM_GRAY )
         return GCI_GrayIndex;
@@ -486,7 +486,7 @@ int JPEG2000Dataset::DecodeImage()
             psImage = NULL;
             return FALSE;
         }
-        
+
         int iBand;
         for ( iBand = 0; iBand < nBands; iBand++ )
         {
@@ -504,7 +504,7 @@ int JPEG2000Dataset::DecodeImage()
             }
         }
     }
-    
+
     /* Ask for YCbCr -> RGB translation */
     if ( jas_clrspc_fam( jas_image_clrspc( psImage ) ) == 
               JAS_CLRSPC_FAM_YCBCR )
@@ -525,7 +525,7 @@ int JPEG2000Dataset::DecodeImage()
         jas_cmprof_destroy(psRGBProf);
         psImage = psRGBImage;
     }
-    
+
     return TRUE;
 }
 

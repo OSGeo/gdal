@@ -79,7 +79,7 @@ class OGRWAsPLayer : public OGRLayer
     VSILFILE *            hFile;
 
     /* for roughness zone, two fields for linestrings (left/right), one for polygons */
-    /* for elevation, one fiels (height) */
+    /* for elevation, one field (height) */
     const CPLString       sFirstField;
     const CPLString       sSecondField;
     const CPLString       sGeomField;

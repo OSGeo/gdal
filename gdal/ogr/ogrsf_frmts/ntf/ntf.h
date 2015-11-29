@@ -51,7 +51,7 @@
 #define NRT_CHAIN    24                /* Chain */
 #define NRT_POLYGON  31                /* Polygon */
 #define NRT_CPOLY    33                /* Complex Polygon */
-#define NRT_COLLECT  34                /* Collection of featues */
+#define NRT_COLLECT  34                /* Collection of features */
 #define NRT_ADR      40                /* Attribute Description Record */
 #define NRT_CODELIST 42                /* Codelist Record (ie. BL2000) */
 #define NRT_TEXTREC  43                /* Text */

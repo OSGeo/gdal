@@ -828,7 +828,7 @@ Version 1.0.1 - (2000-04-21)
 - Added C API documentation (mitab_capi.cpp) + functions to read vertices
   and field information and included C API in public release.
 
-- Modified fltering of new table field name to accept extended chars with
+- Modified filtering of new table field name to accept extended chars with
   accents. 
 
 

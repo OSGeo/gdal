@@ -134,13 +134,13 @@ def gif_6():
     src_ds = None
 
     new_ds = gdal.Open( 'tmp/nodata_byte.gif' )
-    
+
     bnd = new_ds.GetRasterBand(1)
     if bnd.Checksum() != 4440:
         gdaltest.post_reason( 'Wrong checksum' )
         return 'false'
 
-    # NOTE - mloskot: condition may fauil as nodata is a float-point number
+    # NOTE - mloskot: condition may fail as nodata is a float-point number
     nodata = bnd.GetNoDataValue()
     if nodata != 0:
         gdaltest.post_reason( 'Got unexpected nodata value.' )

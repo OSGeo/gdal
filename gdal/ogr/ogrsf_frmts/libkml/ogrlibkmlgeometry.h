@@ -38,7 +38,7 @@ using kmldom::LatLonBoxPtr;
 using kmldom::GxLatLonQuadPtr;
 
 /*******************************************************************************
-	funtion to write out a ogr geometry to kml
+	function to write out a ogr geometry to km
 	
 args:
 						poOgrGeom		the ogr geometry

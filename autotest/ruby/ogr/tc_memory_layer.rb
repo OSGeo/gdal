@@ -32,7 +32,7 @@ class TestMemoryLayer < Test::Unit::TestCase
     ds = nil
     layer = nil
 
-    # Now access the fieldefn
+    # Now access the field defn
     field_defn = feature.get_defn_ref
     assert_equal("poly", field_defn.get_name, "Invalid field name")
   end

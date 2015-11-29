@@ -139,7 +139,7 @@ typedef enum
         and OFTIntegerList.*/                           OFSTBoolean = 1,
     /** Signed 16-bit integer. Only valid for OFTInteger and OFTIntegerList. */
                                                         OFSTInt16 = 2,
-    /** Single precision (32 bit) floatint point. Only valid for OFTReal and OFTRealList. */
+    /** Single precision (32 bit) floating point. Only valid for OFTReal and OFTRealList. */
                                                         OFSTFloat32 = 3
 } OGRFieldSubType;
 

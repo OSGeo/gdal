@@ -2155,7 +2155,7 @@ it to the underlying projection method, parameters, datum, ellipsoid,
 prime meridian and units.<p>
 
 The application should pass a pointer to an existing uninitialized 
-GTIFDefn structure, and GTIFGetDefn() will fill it in.  The fuction 
+GTIFDefn structure, and GTIFGetDefn() will fill it in.  The function 
 currently always returns TRUE but in the future will return FALSE if 
 CSV files are not found.  In any event, all geokeys actually found in the
 file will be copied into the GTIFDefn.  However, if the CSV files aren't
