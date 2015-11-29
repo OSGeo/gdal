@@ -6050,7 +6050,7 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                            const char* pszProjection,
                            const int fpImage, const int NCDFVarID ) 
 {
-    static const oNetcdfSRS_PP *poMap = NULL;
+    const oNetcdfSRS_PP *poMap = NULL;
     int nMapIndex = -1;
 
     /* Find the appropriate mapping */
