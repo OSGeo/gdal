@@ -1794,7 +1794,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
     /* These values from GDAL metadata */
     const char *pszWKT = NULL;
     const char *pszGeoTransform = NULL;
-    char **papszGeoTransform = NULL;
 
     netCDFDataset * poDS = this; /* perhaps this should be removed for clarity */
 
@@ -2890,17 +2889,16 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 
                 if( pszGeoTransform != NULL ) {
 
-                    bGotGdalGT = TRUE;
-                    
-                    papszGeoTransform = CSLTokenizeString2( pszGeoTransform,
+                    char** papszGeoTransform = CSLTokenizeString2( pszGeoTransform,
                                                             " ", 
                                                             CSLT_HONOURSTRINGS );
-                    adfTempGeoTransform[0] = atof( papszGeoTransform[0] );
-                    adfTempGeoTransform[1] = atof( papszGeoTransform[1] );
-                    adfTempGeoTransform[2] = atof( papszGeoTransform[2] );
-                    adfTempGeoTransform[3] = atof( papszGeoTransform[3] );
-                    adfTempGeoTransform[4] = atof( papszGeoTransform[4] );
-                    adfTempGeoTransform[5] = atof( papszGeoTransform[5] );
+                    if( CSLCount(papszGeoTransform) == 6 )
+                    {
+                        bGotGdalGT = TRUE;
+                        for(int i=0;i<6;i++)
+                            adfTempGeoTransform[i] = CPLAtof( papszGeoTransform[i] );
+                    }
+                    CSLDestroy( papszGeoTransform );
                     
 /* -------------------------------------------------------------------- */
 /*      Look for corner array values                                    */
@@ -2966,7 +2964,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
                             - (adfTempGeoTransform[5] / 2);
                     }
                 } // (pszGeoTransform != NULL)
-                CSLDestroy( papszGeoTransform );
 
                 if ( bGotGdalSRS && ! bGotGdalGT )
                     CPLDebug( "GDAL_netCDF", "got SRS but not geotransform from GDAL!");
