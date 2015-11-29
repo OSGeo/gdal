@@ -574,7 +574,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
 
                 if (-1==m_bsx) m_bsx=mbsx;
                 if (-1==m_bsy) m_bsy=mbsy;
-                if ((m_bsy!=mbsy)||(m_bsy!=mbsy)) {
+                if ((m_bsx!=mbsx)||(m_bsy!=mbsy)) {
                     CPLError(ret=CE_Failure,CPLE_AppDefined,"%s%s",SIG,
                         "Tileset uses different block sizes.");
                     overview_count=0;
