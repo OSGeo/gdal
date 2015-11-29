@@ -4799,6 +4799,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( k != 2 ) {
         CPLFree( paDimIds );
         CPLFree( panBandDimPos );
+        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        delete poDS;
+        CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
     }
 
