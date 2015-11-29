@@ -641,10 +641,10 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     }
 
     /* set default nodata */
+    double dfNoData = NCDFGetDefaultNoDataValue( nc_datatype );
 #ifdef NCDF_DEBUG
     CPLDebug( "GDAL_netCDF", "SetNoDataValue(%f) default", dfNoData );
 #endif
-    double dfNoData = NCDFGetDefaultNoDataValue( nc_datatype );
     SetNoDataValue( dfNoData );
 }
 
