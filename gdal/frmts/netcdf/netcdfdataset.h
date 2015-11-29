@@ -710,7 +710,7 @@ class netCDFDataset : public GDALPamDataset
     int          nCreateMode;
     bool         bSignedData;
 
-    double       rint( double );
+    static double       rint( double );
 
     double       FetchCopyParm( const char *pszGridMappingValue, 
                                 const char *pszParm, double dfDefault );
