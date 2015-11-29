@@ -4074,7 +4074,7 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
 {
     char    szAttrName[ NC_MAX_NAME+1 ];
     char    szVarName [ NC_MAX_NAME+1 ];
-    char    szMetaName[ NC_MAX_NAME * 2+1 ];
+    char    szMetaName[ NC_MAX_NAME * 2+1+1 ];
     char    *pszMetaTemp = NULL;
     int     nbAttr;
 
