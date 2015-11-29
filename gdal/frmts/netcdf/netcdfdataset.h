@@ -673,8 +673,8 @@ class netCDFDataset : public GDALPamDataset
     CPLStringList papszDimName;
     bool          bBottomUp;
     int           nFormat;
-    int           bIsGdalFile; /* was this file created by GDAL? */
-    int           bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
+    bool          bIsGdalFile; /* was this file created by GDAL? */
+    bool          bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
     char         *pszCFProjection;
     char         *pszCFCoordinates;
 
@@ -683,23 +683,22 @@ class netCDFDataset : public GDALPamDataset
     char         *pszProjection;
     int          nXDimID;
     int          nYDimID;
-    int          bIsProjected;
-    int          bIsGeographic;
+    bool         bIsProjected;
+    bool         bIsGeographic;
 
     /* state vars */
-    int          status;
-    int          bDefineMode;
-    int          bSetProjection; 
-    int          bSetGeoTransform;
-    int          bAddedProjectionVars;
-    int          bAddedGridMappingRef;
+    bool         bDefineMode;
+    bool         bSetProjection; 
+    bool         bSetGeoTransform;
+    bool         bAddedProjectionVars;
+    bool         bAddedGridMappingRef;
 
     /* create vars */
     char         **papszCreationOptions;
     int          nCompress;
     int          nZLevel;
 #ifdef NETCDF_HAS_NC4
-    int          bChunking;
+    bool         bChunking;
 #endif
     int          nCreateMode;
     bool         bSignedData;
@@ -712,13 +711,13 @@ class netCDFDataset : public GDALPamDataset
     char **      FetchStandardParallels( const char *pszGridMappingValue );
 
     void ProcessCreationOptions( );
-    int DefVarDeflate( int nVarId, int bChunkingArg=TRUE );
+    int DefVarDeflate( int nVarId, bool bChunkingArg=true );
     CPLErr AddProjectionVars( GDALProgressFunc pfnProgress=GDALDummyProgress, 
                               void * pProgressData=NULL );
     void AddGridMappingRef(); 
 
-    int GetDefineMode() { return bDefineMode; }
-    int SetDefineMode( int bNewDefineMode );
+    bool GetDefineMode() { return bDefineMode; }
+    int SetDefineMode( bool bNewDefineMode );
 
     CPLErr      ReadAttributes( int, int );
 
