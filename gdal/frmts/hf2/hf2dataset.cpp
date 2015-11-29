@@ -183,7 +183,7 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
                 GInt32 nVal;
                 VSIFReadL(&nVal, 4, 1, poGDS->fp);
                 CPL_LSBPTR32(&nVal);
-                VSIFReadL(pabyData, nWordSize * (nTileWidth - 1), 1, poGDS->fp);
+                VSIFReadL(pabyData, static_cast<size_t>(nWordSize * (nTileWidth - 1)), 1, poGDS->fp);
 #if defined(CPL_MSB)
                 if (nWordSize > 1)
                     GDALSwapWords(pabyData, nWordSize, nTileWidth - 1, nWordSize);
@@ -286,7 +286,7 @@ int HF2Dataset::LoadBlockMap()
                 VSIFReadL(&nWordSize, 1, 1, fp);
                 //printf("nWordSize=%d\n", nWordSize);
                 if (nWordSize == 1 || nWordSize == 2 || nWordSize == 4)
-                    VSIFSeekL(fp, 4 + nWordSize * (nCols - 1), SEEK_CUR);
+                    VSIFSeekL(fp, static_cast<vsi_l_offset>(4 + nWordSize * (nCols - 1)), SEEK_CUR);
                 else
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
