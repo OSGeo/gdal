@@ -2599,18 +2599,12 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
         /* check units for x and y */
         if( oSRS.IsProjected( ) ) {
             snprintf(szTemp,sizeof(szTemp), "%s#units", poDS->papszDimName[nXDimID]);
-            pszValue = CSLFetchNameValue( poDS->papszMetadata, 
+            const char *pszUnitsX = CSLFetchNameValue( poDS->papszMetadata, 
                                           szTemp );
-            const char *pszUnitsX = NULL;
-            if( pszValue != NULL ) 
-                pszUnitsX = pszValue;
 
             snprintf(szTemp,sizeof(szTemp), "%s#units", poDS->papszDimName[nYDimID]);
-            pszValue = CSLFetchNameValue( poDS->papszMetadata, 
+            const char *pszUnitsY = CSLFetchNameValue( poDS->papszMetadata, 
                                           szTemp );
-            const char *pszUnitsY = NULL;
-            if( pszValue != NULL )
-                pszUnitsY = pszValue;
 
             /* TODO: what to do if units are not equal in X and Y */
             if ( (pszUnitsX != NULL) && (pszUnitsY != NULL) && 
@@ -3362,7 +3356,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     else
     {
         /* files without a Datum will not have a grid_mapping variable and geographic information */
-        bWriteGridMapping = CPL_TO_BOOL(bIsGeographic);
+        bWriteGridMapping = bIsGeographic;
 
         bWriteGDALTags = CPL_TO_BOOL(CSLFetchBoolean( papszCreationOptions, "WRITE_GDAL_TAGS", bWriteGridMapping ));
         if ( bWriteGDALTags )
