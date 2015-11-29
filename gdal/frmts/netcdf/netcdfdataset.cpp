@@ -4757,7 +4757,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     size_t xdim;
     poDS->nXDimID = paDimIds[nd-1];
     nc_inq_dimlen ( cdfid, poDS->nXDimID, &xdim );
-    poDS->nRasterXSize = static_cast<int>(xdim);
 
 /* -------------------------------------------------------------------- */
 /*      Get Y dimension information                                     */
@@ -4765,6 +4764,22 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     size_t ydim;
     poDS->nYDimID = paDimIds[nd-2];
     nc_inq_dimlen ( cdfid, poDS->nYDimID, &ydim );
+    
+    if( xdim > INT_MAX || ydim > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid raster dimensions: " CPL_FRMT_GUIB "x" CPL_FRMT_GUIB,
+                 static_cast<GUIntBig>(xdim),
+                 static_cast<GUIntBig>(ydim));
+        CPLFree( paDimIds );
+        CPLFree( panBandDimPos );
+        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        delete poDS;
+        CPLAcquireMutex(hNCMutex, 1000.0);
+        return NULL;
+    }
+    
+    poDS->nRasterXSize = static_cast<int>(xdim);
     poDS->nRasterYSize = static_cast<int>(ydim);
 
     unsigned int k = 0;
