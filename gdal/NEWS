@@ -5732,9 +5732,9 @@ GSAG driver:
  * Major update to correct upside problems, removing Create (#2224, #1616, #2191)
 
 GS7BG driver:
- * Fixed geotransormation matrix calculation (#2132)
+ * Fixed geotransformation matrix calculation (#2132)
  * Properly read the header on big-endian system.
- * fix bigendian support (#2172)
+ * Fix bigendian support (#2172)
 
 GTiff driver:
  * Add support for reading and writing embedded nodata masks of a TIFF file (TIFFTAG_SUBFILETYPE=FILETYPE_MASK)

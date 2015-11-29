@@ -80,7 +80,7 @@ pixel.  For an ungeoreferenced image the values will be
 /**
 \brief Fetch georeferencing string.
 
-Returns the short, 16 character, georeferncing string.  This string is
+Returns the short, 16 character, georeferencing string.  This string is
 sufficient to document the coordinate system of simple coordinate
 systems (like "UTM    17 S D000"), while other coordinate systems are
 only fully defined with additional projection parameters.

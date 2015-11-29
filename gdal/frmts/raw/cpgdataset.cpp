@@ -658,8 +658,9 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
         double dfnorth_center;
         if (itransposed == 1)
         {
-            printf("Warning- did not have a convair SIRC-style test dataset\n"
-                 "with transposed=1 for testing.  Georefencing may be wrong.\n");
+            printf( "Warning: did not have a convair SIRC-style test dataset\n"
+                    "with transposed=1 for testing.  Georeferencing may be "
+                    "wrong.\n" );
             dfnorth_center = dfnorth - nSamples*dfsample_size/2.0;
             poDS->adfGeoTransform[0] = dfeast;
             poDS->adfGeoTransform[2] = dfsample_size_az;

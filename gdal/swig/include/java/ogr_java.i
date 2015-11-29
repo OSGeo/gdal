@@ -352,8 +352,9 @@ import org.gdal.osr.CoordinateTransformation;
 
 /* ------------------------------------------------------------------- */
 /* Below an advanced technique to avoid the use of a finalize() method */
-/* in the Feature object, that prevents efficient garbarge collection. */
+/* in the Feature object, that prevents efficient garbage collection.  */
 /* This is loosely based on ideas from an article at                   */
+ // TODO: Broken URL.
 /* http://java.sun.com/developer/technicalArticles/javase/finalization */
 /* ------------------------------------------------------------------- */
 
@@ -366,7 +367,7 @@ import org.gdal.osr.CoordinateTransformation;
   static private Thread cleanupThread = null;
 
   /* We start a cleanup thread in daemon mode */
-  /* If we can't, we'll cleanup garbaged features at creation time */
+  /* If we cannot, we will cleanup garbage features at creation time */
   static
   {
     cleanupThread = new Thread() {

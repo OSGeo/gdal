@@ -37,7 +37,7 @@ class TestMemoryLayer < Test::Unit::TestCase
     assert_equal("poly", field_defn.get_name, "Invalid field name")
   end
 
-  def test_feature_owns_geoemtry
+  def test_feature_owns_geometry
     ds = open_ds
     layer = ds.get_layer(0)
 

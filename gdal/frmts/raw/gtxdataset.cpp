@@ -279,7 +279,7 @@ CPLErr GTXDataset::SetGeoTransform( double * padfTransform )
         || VSIFWriteL( header, 32, 1, fpImage ) != 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to write geotrasform header to gtx failed." );
+                  "Attempt to write geotransform header to GTX failed." );
         return CE_Failure;
     }
 

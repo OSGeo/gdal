@@ -290,13 +290,13 @@ def mrsid_6():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]],
     AUTHORITY["EPSG","26711"]]
-"""  
+"""
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
-    
+
     tst = gdaltest.GDALTest( 'JP2MrSID', 'byte.jp2', 1, 50054 )
     return tst.testOpen( check_prj = srs, check_gt = gt )
 
-	
+
 ###############################################################################
 # Open int16.jp2
 
@@ -307,7 +307,7 @@ def mrsid_7():
 
     ds = gdal.Open( 'data/int16.jp2' )
     ds_ref = gdal.Open( 'data/int16.tif' )
-    
+
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
 
     if maxdiff > 5:
@@ -325,7 +325,7 @@ def mrsid_7():
     return 'success'
 
 ###############################################################################
-# Test PAM override for nodata, coordsys, and geotranform.
+# Test PAM override for nodata, coordsys, and geotransform.
 
 def mrsid_8():
 
@@ -338,7 +338,7 @@ def mrsid_8():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdal.GetDriverByName('MrSID').Delete( 'tmp/mercator.sid' )
     gdal.PopErrorHandler()
-    
+
     shutil.copyfile( 'data/mercator.sid', 'tmp/mercator.sid' )
 
     ds = gdal.Open( 'tmp/mercator.sid' )
@@ -362,7 +362,7 @@ def mrsid_8():
     if ds.GetRasterBand(1).GetNoDataValue() != 255:
         gdaltest.post_reason( 'Nodata override failed.' )
         return 'fail'
-        
+
     ds = None
 
     gdal.GetDriverByName('MrSID').Delete( 'tmp/mercator.sid' )

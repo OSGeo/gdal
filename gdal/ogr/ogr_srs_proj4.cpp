@@ -814,7 +814,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             || CSLFetchNameValue(papszNV,"no_off") != NULL )
         {
             /* From PJ_omerc, when alpha is defined but not gamma */
-            /* the default gama value is alpha */
+            /* the default gamma value is alpha */
             /*  if (alp || gam) {
                     if (alp) {
                         gamma0 = asin(sin(alpha_c) / D);

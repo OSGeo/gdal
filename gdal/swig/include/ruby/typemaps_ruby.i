@@ -684,7 +684,7 @@
 		If the parent goes out of scope it will free the child, invalidating
 		the scripting language object that represents the child.  To prevent
 		that create a reference from the child to the parent, thereby telling
-		the garabage collector not to GC the parent.*/
+		the garbage collector not to GC the parent. */
 
 	$result = SWIG_NewPointerObj((void *) $1, $1_descriptor,$owner);
 	rb_iv_set($result, "swig_parent_reference", self);

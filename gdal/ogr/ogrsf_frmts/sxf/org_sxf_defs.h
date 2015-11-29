@@ -38,7 +38,7 @@
  *    - Descriptor of data
  *    - Records 
  *         - Title of the record 
- *         - The certificate of the object (the geomety)
+ *         - The certificate of the object (the geometry)
  *             - sub-objects
  *             - The graphic description of object
  *             - The description of the vector of the tying of the 3d- model of object

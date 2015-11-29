@@ -570,13 +570,13 @@ char **OGDIDataset::GetMetadata( const char *pszDomain )
 GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    ecs_Result	*psResult;
-    int		nClientID;
+    ecs_Result *psResult;
+    int nClientID;
     char        **papszImages=NULL, **papszMatrices=NULL;
-    
+
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "gltp:") )
         return( NULL );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -587,7 +587,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Has the user hardcoded a layer and family in the URL?           */
 /*      Honour quoted strings for the layer name, since some layers     */

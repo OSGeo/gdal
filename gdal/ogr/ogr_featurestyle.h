@@ -73,8 +73,9 @@ typedef struct ogr_style_value
 } OGRStyleValue;
 
 
-//Everytime a pszStyleString gived in parameter is NULL, 
-//    the StyleString defined in the Mgr will be use.
+// Every time a pszStyleString given in parameter is NULL, 
+// the StyleString defined in the Mgr will be use.
+
 /**
  * This class represents a style table
  */
@@ -124,9 +125,9 @@ class CPL_DLL OGRStyleMgr
 
     GBool SetFeatureStyleString(OGRFeature *,const char *pszStyleString=NULL,
                                 GBool bNoMatching = FALSE);
-    /*it will set in the gived feature the pszStyleString with 
+    /* It will set in the given feature the pszStyleString with 
             the style or will set the style name found in 
-            dataset StyleTable (if bNoMatching == FALSE)*/
+            dataset StyleTable (if bNoMatching == FALSE). */
               
     const char *InitFromFeature(OGRFeature *);
     GBool InitStyleString(const char *pszStyleString = NULL);
@@ -144,8 +145,8 @@ class CPL_DLL OGRStyleMgr
     int GetPartCount(const char *pszStyleString = NULL);
     OGRStyleTool *GetPart(int hPartId, const char *pszStyleString = NULL);
     
-    /*It could have a reference counting processus for the OGRStyleTable, if
-      needed */
+    /* It could have a reference counting process us for the OGRStyleTable, if
+      needed. */
       
     OGRStyleTable *GetDataSetStyleTable(){return m_poDataSetStyleTable;}
     
