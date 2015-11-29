@@ -186,6 +186,7 @@ CPLErr GMTRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 GMTDataset::~GMTDataset()
 
 {
+    CPLMutexHolderD(&hNCMutex);
     FlushCache();
     nc_close (cdfid);
 }
@@ -263,6 +264,21 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Get dimensions.  If we can't find this, then this is a          */
+/*      GMT file, but not a normal grid product.                     */
+/* -------------------------------------------------------------------- */
+    int    nm[2];
+    size_t start[2] = {0, 0};
+    size_t edge[2] = {2, 0};
+
+    nc_get_vara_int(cdfid, nm_id, start, edge, nm);
+    if( !GDALCheckDatasetDimensions(nm[0], nm[1]) )
+    {
+        nc_close( cdfid );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with GDALDataset own mutex
@@ -272,16 +288,6 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->cdfid = cdfid;
     poDS->z_id = z_id;
-
-/* -------------------------------------------------------------------- */
-/*      Get dimensions.  If we can't find this, then this is a          */
-/*      GMT file, but not a normal grid product.                     */
-/* -------------------------------------------------------------------- */
-    int    nm[2];
-    size_t start[2] = {0, 0};
-    size_t edge[2] = {2, 0};
-
-    nc_get_vara_int(cdfid, nm_id, start, edge, nm);
 
     poDS->nRasterXSize = nm[0];
     poDS->nRasterYSize = nm[1];
