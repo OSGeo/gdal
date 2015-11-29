@@ -485,11 +485,11 @@ GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn,
  * @brief GDALRasterBlock Constructor (for GDALHashSetBandBlockAccess purpose)
  *
  * Normally only called from GDALHashSetBandBlockAccess class. Such a block
- * is completely non functionnal and only meant as being used to do a look-up
+ * is completely non functional and only meant as being used to do a look-up
  * in the hash set of GDALHashSetBandBlockAccess
  *
  * @param nXOffIn the horizontal block offset, with zero indicating
- * the left most block, 1 the next block and so forth. 
+ * the left most block, 1 the next block and so forth.
  *
  * @param nYOffIn the vertical block offset, with zero indicating
  * the top most block, 1 the next block and so forth.

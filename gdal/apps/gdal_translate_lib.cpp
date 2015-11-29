@@ -1420,7 +1420,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
 
 /* -------------------------------------------------------------------- */
-/*      Set a forcable nodata value?                                    */
+/*      Set a forcible nodata value?                                    */
 /* -------------------------------------------------------------------- */
         if( psOptions->bSetNoData )
         {

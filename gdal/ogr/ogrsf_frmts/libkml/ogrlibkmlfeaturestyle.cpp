@@ -380,7 +380,7 @@ void kml2featurestyle (
 
             /***** if were resolveing style the feature  *****/
             /***** might already have styling to add too *****/
-            
+
             const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );
             if (CSLTestBoolean(pszResolve)) {
                  poOgrSM->InitFromFeature ( poOgrFeat );
@@ -388,7 +388,7 @@ void kml2featurestyle (
             else {
 
                 /***** if featyurestyle gets a name tool this needs changed to the above *****/
-                
+
                 poOgrSM->InitStyleString ( NULL );
             }
 
@@ -397,7 +397,7 @@ void kml2featurestyle (
             kml2stylestring ( poKmlStyle, poOgrSM );
 
             /***** add the style to the feature *****/
-            
+
             poOgrFeat->SetStyleString(poOgrSM->GetStyleString(NULL));
 
             delete poOgrSM;

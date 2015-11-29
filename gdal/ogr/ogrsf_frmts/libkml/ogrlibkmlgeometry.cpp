@@ -53,7 +53,7 @@ using kmlbase::Vec3;
 #include "ogrlibkmlgeometry.h"
 
 /******************************************************************************
- funtion to write out a ogr geometry to kml
+ function to write out a ogr geometry to kml
 
 args:
           poOgrGeom     the ogr geometry
@@ -205,7 +205,7 @@ ElementPtr geom2kml (
             break;
         }
 
-      /***** fallthough *****/
+      /***** fallthrough *****/
 
     case wkbLinearRing:        //this case is for readability only
 
@@ -281,7 +281,7 @@ ElementPtr geom2kml (
 
             break;
         }
-            /***** fallthough *****/
+            /***** fallthrough *****/
 
         //case wkbLinearRing25D: // this case is for readability only
 

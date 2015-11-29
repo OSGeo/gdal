@@ -328,7 +328,7 @@ int OGRSDELayer::NeedLayerInfo()
 /*      Fetch coordinate reference system.                              */
 /* -------------------------------------------------------------------- */
     SE_coordref_create( &hCoordRef );
-    
+
     nSDEErr = SE_layerinfo_get_coordref( hLayerInfo, hCoordRef );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -349,10 +349,10 @@ int OGRSDELayer::NeedLayerInfo()
             poSRS->morphFromESRI();
         }
 
-	LFLOAT falsex, falsey, xyunits;
-	nSDEErr = SE_coordref_get_xy( hCoordRef, &falsex, &falsey, &xyunits );
-	CPLDebug( "SDE", "SE_coordref_get_xy(%s) = %g/%g/%g",
-		  pszDbTableName, falsex, falsey, xyunits );
+        LFLOAT falsex, falsey, xyunits;
+        nSDEErr = SE_coordref_get_xy( hCoordRef, &falsex, &falsey, &xyunits );
+        CPLDebug( "SDE", "SE_coordref_get_xy(%s) = %g/%g/%g",
+                  pszDbTableName, falsex, falsey, xyunits );
     }
 
     return TRUE;
@@ -369,7 +369,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
 
     int nSDEErr;
     LONG nShapeTypeMask = 0;
-  
+
 /* -------------------------------------------------------------------- */
 /*      Check layerinfo flags to establish what geometry types may      */
 /*      occur.                                                          */

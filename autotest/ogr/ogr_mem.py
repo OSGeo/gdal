@@ -270,9 +270,9 @@ def ogr_mem_8():
     if ret == 0:
         return 'fail'
     new_feat = None
-    
+
     ####################################################################
-    # Now featch two features and verify the new column works OK.
+    # Now fetch two features and verify the new column works OK.
 
     gdaltest.mem_lyr.SetAttributeFilter( "PRFEDEA IN ( '2', '1' )" )
 
@@ -280,12 +280,12 @@ def ogr_mem_8():
                                               [ 'test1', None ] )
 
     gdaltest.mem_lyr.SetAttributeFilter( None )
-    
+
     if tr:
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test deleting a feature.
 

@@ -7995,7 +7995,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
 |   Date     Programmer   Description                                         |
 |  ======   ============  =================================================   |
 |  Jun 96   Joel Gales    Original Programmer                                 |
-|  Jun 03   Abe Taaheri   added clearing timeflag if SWextractregion failes   |
+|  Jun 03   Abe Taaheri   added clearing timeflag if SWextractregion fails    |
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
@@ -8784,7 +8784,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 |   Date     Programmer   Description                                         |
 |  ======   ============  =================================================   |
 |  Jun 96   Joel Gales    Original Programmer                                 |
-|  Jun 03   Abe Taaheri   added clearing timeflag if SWregioninfo failes      |
+|  Jun 03   Abe Taaheri   added clearing timeflag if SWregioninfo fails       |
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/

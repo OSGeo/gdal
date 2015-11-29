@@ -44,7 +44,7 @@ CPL_CVSID("$Id$");
 
 class GFFRasterBand;
 
-class GFFDataset : public GDALPamDataset 
+class GFFDataset : public GDALPamDataset
 {
     friend class GFFRasterBand;
     VSILFILE *fp;
@@ -55,7 +55,8 @@ class GFFDataset : public GDALPamDataset
     unsigned short nVersionMinor;
     unsigned int nLength;
     //char *pszCreator;
-    /* I am taking this at face value (are they freakin' insane?) */
+    // TODO: Needs a better explanation.
+    /* I am taking this at face value (are they insane?) */
     //float fBPP;
     unsigned int nBPP;
 

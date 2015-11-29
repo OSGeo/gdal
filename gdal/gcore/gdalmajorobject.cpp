@@ -207,7 +207,7 @@ char **GDALMajorObject::BuildMetadataDomainList(char** papszList, int bCheckNonE
  * @see GDALMajorObject::GetMetadataDomainList()
  *
  * @since GDAL 1.11
- */ 
+ */
 
 char ** CPL_STDCALL 
 GDALGetMetadataDomainList( GDALMajorObjectH hObject)
@@ -226,18 +226,18 @@ GDALGetMetadataDomainList( GDALMajorObjectH hObject)
  * \brief Fetch metadata.
  *
  * The returned string list is owned by the object, and may change at
- * any time.  It is formated as a "Name=value" list with the last pointer
+ * any time.  It is formatted as a "Name=value" list with the last pointer
  * value being NULL.  Use the CPL StringList functions such as
  * CSLFetchNameValue() to manipulate it.
  *
- * Note that relatively few formats return any metadata at this time. 
+ * Note that relatively few formats return any metadata at this time.
  *
  * This method does the same thing as the C function GDALGetMetadata().
  *
  * @param pszDomain the domain of interest.  Use "" or NULL for the default
  * domain.
- * 
- * @return NULL or a string list. 
+ *
+ * @return NULL or a string list.
  */
 
 char **GDALMajorObject::GetMetadata( const char * pszDomain )

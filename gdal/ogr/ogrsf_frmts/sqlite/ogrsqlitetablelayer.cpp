@@ -1853,7 +1853,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 /* -------------------------------------------------------------------- */
 /*      Cleanup backup table.                                           */
 /* -------------------------------------------------------------------- */
-    
+
     if( rc == SQLITE_OK )
         rc = sqlite3_exec( hDB, 
                            CPLSPrintf( "DROP TABLE t1_back" ),
@@ -1877,7 +1877,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
     }
 
 /* -------------------------------------------------------------------- */
-/*      COMMIT on success or ROLLBACK on failuire.                      */
+/*      COMMIT on success or ROLLBACK on failure.                       */
 /* -------------------------------------------------------------------- */
 
     sqlite3_free_table( papszTriggerIndexResult );
@@ -1988,7 +1988,7 @@ OGRErr OGRSQLiteTableLayer::RecreateTable(const char* pszFieldListForSelect,
     }
 
 /* -------------------------------------------------------------------- */
-/*      COMMIT on success or ROLLBACK on failuire.                      */
+/*      COMMIT on success or ROLLBACK on failure.                       */
 /* -------------------------------------------------------------------- */
 
     sqlite3_free_table( papszTriggerIndexResult );

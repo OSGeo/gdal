@@ -2045,7 +2045,7 @@ public class Dataset:public java.util.Vector GetGCPs()
  * coordinate system and list of points, so the caller remains resposible for
  * deallocating these arguments if appropriate. 
  * <p>
- * Most formats do not support setting of GCPs, even foramts that can 
+ * Most formats do not support setting of GCPs, even formats that can 
  * handle GCPs.  These formats will return CE_Failure. 
  *
  * @param gcpArray array of GCP objects being assigned

@@ -36,7 +36,7 @@ CPL_CVSID("$Id$");
 
 namespace msg_native_format {
 
-#ifndef SQR 
+#ifndef SQR
 #define SQR(x) ((x)*(x))
 #endif
 

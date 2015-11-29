@@ -1810,7 +1810,7 @@ static bool gmlHugeFileWriteResolved ( struct huge_helper *helper,
     VSIFPrintfL ( fp, "</ResolvedTopoFeatureCollection>\n" ); 
 
     VSIFCloseL( fp );
-		
+
     gmlUpdateFeatureClasses( pCC, pReader, m_nHasSequentialLayers );
     if ( *m_nHasSequentialLayers )
         pReader->ReArrangeTemplateClasses( pCC );
@@ -1823,7 +1823,7 @@ static bool gmlHugeFileWriteResolved ( struct huge_helper *helper,
 /**************************************************************/
 /*                                                            */
 /* private member(s):                                         */
-/* any other funtion is implemented as "internal" static,     */
+/* any other function is implemented as "internal" static,    */
 /* so to make all the SQLite own stuff nicely "invisible"     */
 /*                                                            */
 /**************************************************************/

@@ -208,7 +208,7 @@ def hdf5_7():
         try:
             metadata.pop(key)
         except KeyError:
-            gdaltest.post_reason( 'unable to fing "%s" key' % key )
+            gdaltest.post_reason( 'unable to find "%s" key' % key )
             return 'fail'
     return 'success'
 

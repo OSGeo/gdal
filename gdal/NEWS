@@ -4657,7 +4657,7 @@ SQLite driver:
    robust to single quote characters in SRS strings
  * Fix to make CopyLayer() work when src layer is a SQL result layer (#3617)
  * Add OGR_SQLITE_SYNCHRONOUS configuration option that, when set to OFF,
-   can speed up considerably write operations (e.g. on EXT4 filesysstems),
+   can speed up considerably write operations (e.g. on EXT4 filesystems),
    at the expense of extra robustness w.r.t system crashes.
  * Spatialite: when creating a spatialiate DB, add a srs_wkt column in the
    spatial_ref_sys table, as introduced in libspatialite 2.4.0

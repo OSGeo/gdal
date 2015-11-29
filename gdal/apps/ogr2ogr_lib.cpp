@@ -71,7 +71,7 @@ typedef enum
  */
 struct GDALVectorTranslateOptions
 {
-    /*! continue after a failure, skipping the failured feature */
+    /*! continue after a failure, skipping the failed feature */
     int bSkipFailures;
 
     /*! use layer level transaction. If set to FALSE, then it is interpreted as dataset level transaction. */

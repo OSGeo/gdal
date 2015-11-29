@@ -1277,7 +1277,7 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
     CPLErr eErr = CPLGetLastErrorType();
     CPLString osLastErrorMsg = CPLGetLastErrorMsg();
 
-    // Determinte if we need to flix axis. Reimport from EPSG and make
+    // Determine if we need to flip axis. Reimport from EPSG and make
     // sure not to strip axis definitions to determine the axis order.
     if( nEPSGCode != 0 && oSRS.importFromEPSGA(nEPSGCode) == OGRERR_NONE )
     {
@@ -1300,10 +1300,10 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
         + adfGeoTransform[5] * 0.5;
     adfXVector[0] = adfGeoTransform[1];
     adfXVector[1] = adfGeoTransform[2];
-        
+
     adfYVector[0] = adfGeoTransform[4];
     adfYVector[1] = adfGeoTransform[5];
-    
+
     if( bNeedAxisFlip
         && CSLTestBoolean( CPLGetConfigOption( "GDAL_IGNORE_AXIS_ORIENTATION",
                                                "FALSE" ) ) )

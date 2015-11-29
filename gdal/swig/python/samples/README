@@ -41,7 +41,7 @@ load2odbc.py		Load ODBC table to an ODBC datastore.  Uses direct SQL
 			since the ODBC driver is read-only for OGR.
 
 rel.py			Script to produce a shaded relief image from the
-			elevation data. (similar functionnality in gdaldem now)
+			elevation data. (similar functionality in gdaldem now)
 
 tigerpoly.py		Script demonstrating how to assemble polygons from
 			arcs in TIGER/Line datasource, writing results to

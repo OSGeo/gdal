@@ -764,6 +764,7 @@ GRIB2ParmTable MeteoStability[] = {
    /* 7 */ {"CIN", "Convective inhibition", "J/kg", UC_NONE},
    /* 8 */ {"HLCY", "Storm relative helicity", "J/kg", UC_NONE},
    /* 9 */ {"", "Energy helicity index", "numeric", UC_NONE},
+// TODO: Spelling fifted.
 /* 10 */   {"LFTX", "Surface fifted index", "K", UC_NONE},
 /* 11 */   {"4LFTX", "Best (4-layer) lifted index", "K", UC_NONE},
 /* 12 */   {"RI", "Richardson number", "-", UC_NONE},
