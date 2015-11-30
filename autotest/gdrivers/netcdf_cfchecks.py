@@ -395,7 +395,7 @@ class CFChecker:
         if not self.chkCellMethods(var): rc=0
 
         if not self.chkCellMeasures(var): rc=0
-        
+
         if not self.chkFormulaTerms(var,allCoordVars): rc=0
 
         if not self.chkCompressAttr(var): rc=0
@@ -414,14 +414,16 @@ class CFChecker:
             if not self.chkGridMappingVar(var) : rc=0
 
         if var in axes:
-            # Check var is a FileAxis.  If not then there may be a problem with its declaration.
-            # I.e. Multi-dimensional coordinate var with a dimension of the same name
-            # or an axis that hasn't been identified through the coordinates attribute
-            # CRM035 (17.04.07)
-            if not (isinstance(self.f[var], FileAxis) or isinstance(self.f[var], FileAuxAxis1D)):
-                print("WARNING (5): Possible incorrect declaration of a coordinate variable.")
+            # Check var is a FileAxis.  If not then there may be a problem with
+            # its declaration. i.e. Multi-dimensional coordinate var with a
+            # dimension of the same name or an axis that hasn't been identified
+            # through the coordinates attribute CRM035 (17.04.07)
+            if not (isinstance(self.f[var], FileAxis)
+                    or isinstance(self.f[var], FileAuxAxis1D)):
+                print("WARNING (5): Possible incorrect declaration of a "
+                      "coordinate variable.")
                 self.warn = self.warn+1
-            else:    
+            else:
                 if self.f[var].isTime():
                     if not self.chkTimeVariableAttributes(var): rc=0
 

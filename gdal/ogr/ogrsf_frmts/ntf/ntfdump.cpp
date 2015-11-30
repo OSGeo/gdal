@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  NTF Translator
- * Purpose:  Simple test harnass.
+ * Purpose:  Simple test harness.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -45,10 +45,10 @@ int main( int argc, char ** argv )
 {
     const char  *pszMode = "-d";
     char        **papszOptions = NULL;
-    
+
     if( argc == 1 )
         printf( "Usage: ntfdump [-s n] [-g] [-d] [-c] [-codelist] files\n" );
-    
+
     for( int i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i],"-g") )

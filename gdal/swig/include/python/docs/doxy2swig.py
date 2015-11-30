@@ -83,7 +83,7 @@ class Doxy2SWIG:
 
         """
         self.parse(self.xmldoc)
-    
+
     def parse(self, node):
         """Parse a given node.  This function in turn calls the
         `parse_<nodeType>` functions which handle the respective
@@ -109,10 +109,9 @@ class Doxy2SWIG:
 
     def parse_Element(self, node):
         """Parse an `ELEMENT_NODE`.  This calls specific
-        `do_<tagName>` handers for different elements.  If no handler
+        `do_<tagName>` handlers for different elements.  If no handler
         is available the `generic_parse` method is called.  All
         tagNames specified in `self.ignores` are simply ignored.
-        
         """
         name = node.tagName
         ignores = self.ignores

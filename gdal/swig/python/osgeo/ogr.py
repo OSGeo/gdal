@@ -3678,7 +3678,7 @@ class FeatureDefn(_object):
         Parameters:
         -----------
 
-        hDefn:  hanlde to the feature definition on witch OGRFeature are based
+        hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
         the current reference count. 
@@ -3700,10 +3700,10 @@ class FeatureDefn(_object):
         Parameters:
         -----------
 
-        hDefn:  hanlde to the feature definition on witch OGRFeature are based
+        hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
-        ignore state 
+        ignore state
         """
         return _ogr.FeatureDefn_IsGeometryIgnored(self, *args)
 
@@ -3722,10 +3722,10 @@ class FeatureDefn(_object):
         Parameters:
         -----------
 
-        hDefn:  hanlde to the feature definition on witch OGRFeature are based
+        hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
-        bIgnore:  ignore state 
+        bIgnore:  ignore state
         """
         return _ogr.FeatureDefn_SetGeometryIgnored(self, *args)
 
@@ -3766,10 +3766,10 @@ class FeatureDefn(_object):
         Parameters:
         -----------
 
-        hDefn:  hanlde to the feature definition on witch OGRFeature are based
+        hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
-        bIgnore:  ignore state 
+        bIgnore:  ignore state
         """
         return _ogr.FeatureDefn_SetStyleIgnored(self, *args)
 

@@ -457,7 +457,7 @@ fi
 rm -f test_getaddrinfo*
 
 dnl ---------------------------------------------------------------------------
-dnl Check if user requests hidding internal symbols
+dnl Check if user requests hiding internal symbols
 dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(hide_internal_symbols,[  --with-hide-internal-symbols[=ARG] Try to hide internal symbols (ARG=yes/no)],,)

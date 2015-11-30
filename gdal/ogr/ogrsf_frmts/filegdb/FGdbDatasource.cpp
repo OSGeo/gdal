@@ -354,7 +354,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
 /* Old recursive LoadLayers. Removed in favor of simple one that only
    looks at FeatureClasses and Tables. */
 
-// Flattens out hierarchichal GDB structure
+// Flattens out hierarchical GDB structure.
 bool FGdbDataSource::LoadLayersOld(const std::vector<wstring> & datasetTypes,
                                 const wstring & parent)
 {

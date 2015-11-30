@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Google Maps Engine API Driver
- * Purpose:  GME GeoJSON helpper function Implementations.
+ * Purpose:  GME GeoJSON helper function Implementations.
  * Author:   Wolf Beregnheim <wolf+grass@bergenheim.net>
  *           (derived from Geo JSON driver by Mateusz)
  *

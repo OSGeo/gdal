@@ -2080,14 +2080,14 @@ public class Dataset:public int GetRasterXSize()
 /**
  * Fetch raster height in pixels.
  *
- * @return the heigt in pixels of raster bands in this Dataset.
+ * @return the height in pixels of raster bands in this Dataset.
  */
 public class Dataset:public int getRasterYSize()
 
 /**
  * Fetch raster height in pixels.
  *
- * @return the heigt in pixels of raster bands in this Dataset.
+ * @return the height in pixels of raster bands in this Dataset.
  *
  * @since Java bindings 1.7.0
  */

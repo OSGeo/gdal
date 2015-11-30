@@ -66,9 +66,9 @@ static CPLStringList ParseSimpleJson(const char *pszJson)
 {
 /* -------------------------------------------------------------------- */
 /*      We are expecting simple documents like the following with no    */
-/*      heirarchy or complex structure.                                 */
+/*      hierarchy or complex structure.                                 */
 /* -------------------------------------------------------------------- */
-/*    
+/*
     {
         "access_token":"1/fFBGRNJru1FQd44AzqT3Zg",
         "expires_in":3920,
@@ -84,7 +84,7 @@ static CPLStringList ParseSimpleJson(const char *pszJson)
     {
         oNameValue.SetNameValue( oWords[i], oWords[i+1] );
     }
-    
+
     return oNameValue;
 }
 

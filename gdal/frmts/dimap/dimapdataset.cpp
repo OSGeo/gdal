@@ -1059,8 +1059,8 @@ void DIMAPDataset::SetMetadataFromXML(CPLXMLNode *psProduct, const char *apszMet
         if( psParent == NULL )
             continue;
 
-        // hackey logic to support directly access a name/value entry
-        // or a parent element with many name/values. 
+        // Hackey logic to support directly access a name/value entry
+        // or a parent element with many name/values.
 
         CPLXMLNode *psTarget;
         if( psParent->psChild != NULL 

@@ -90,7 +90,7 @@ char CPL_DLL *CPLRecode( const char *pszSource,
 #ifdef CPL_RECODE_ICONV
 /* -------------------------------------------------------------------- */
 /*      CPL_ENC_ISO8859_1 -> CPL_ENC_UTF8                               */
-/*      and CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1 conversions are hadled    */
+/*      and CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1 conversions are handled   */
 /*      very well by the stub implementation which is faster than the   */
 /*      iconv() route. Use a stub for these two ones and iconv()        */
 /*      everything else.                                                */

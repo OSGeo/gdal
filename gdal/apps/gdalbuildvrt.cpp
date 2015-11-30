@@ -681,7 +681,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
             if (!bAllowProjectionDifference)
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
-                            "gdalbuildvrt does not support heterogenous projection. Skipping %s",
+                            "gdalbuildvrt does not support heterogeneous projection. Skipping %s",
                             dsFileName);
                 return FALSE;
             }
@@ -691,7 +691,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
             if (nMaxBandNo > _nBands)
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
-                            "gdalbuildvrt does not support heterogenous band numbers. Skipping %s",
+                            "gdalbuildvrt does not support heterogeneous band numbers. Skipping %s",
                         dsFileName);
                 return FALSE;
             }
@@ -702,7 +702,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
                     pasBandProperties[j].dataType != GDALGetRasterDataType(hRasterBand))
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
-                                "gdalbuildvrt does not support heterogenous band characteristics. Skipping %s",
+                                "gdalbuildvrt does not support heterogeneous band characteristics. Skipping %s",
                                 dsFileName);
                     return FALSE;
                 }

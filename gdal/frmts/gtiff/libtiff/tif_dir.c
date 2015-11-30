@@ -885,7 +885,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 				*va_arg(ap, double**) = td->td_sminsamplevalue;
 			else
 			{
-				/* libtiff historially treats this as a single value. */
+				/* libtiff historically treats this as a single value. */
 				uint16 i;
 				double v = td->td_sminsamplevalue[0];
 				for (i=1; i < td->td_samplesperpixel; ++i)
@@ -899,7 +899,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 				*va_arg(ap, double**) = td->td_smaxsamplevalue;
 			else
 			{
-				/* libtiff historially treats this as a single value. */
+				/* libtiff historically treats this as a single value. */
 				uint16 i;
 				double v = td->td_smaxsamplevalue[0];
 				for (i=1; i < td->td_samplesperpixel; ++i)

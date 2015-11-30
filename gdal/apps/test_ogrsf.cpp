@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Formal test harnass for OGRLayer implementations.
+ * Purpose:  Formal test harness for OGRLayer implementations.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
