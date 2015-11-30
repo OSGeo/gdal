@@ -87,7 +87,8 @@ static
 const char* SENTINEL2GetOption( GDALOpenInfo* poOpenInfo,
                                 const char* pszName,
                                 const char* pszDefaultVal = NULL );
-static int SENTINEL2GetTileBitDepth(const char* pszFilename);
+static bool SENTINEL2GetTileInfo(const char* pszFilename,
+                                 int* pnWidth, int* pnHeight, int *pnBits);
 
 /************************************************************************/
 /*                           SENTINEL2GranuleInfo                       */
@@ -1435,44 +1436,78 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
 
     SENTINEL2_CPLXMLNodeHolder oXMLHolder(psRoot);
 
+    std::vector<CPLString> aosBands;
+    for(std::set<CPLString>::const_iterator oIterBandnames = oSetBands.begin();
+                                            oIterBandnames != oSetBands.end();
+                                        ++oIterBandnames)
+    {
+        aosBands.push_back(*oIterBandnames);
+    }
+    /* Put 2=Blue, 3=Green, 4=Band bands in RGB order for conveniency */
+    if( aosBands.size() >= 3 &&
+        aosBands[0] == "02" &&
+        aosBands[1] == "03" &&
+        aosBands[2] == "04" )
+    {
+        aosBands[0] = "04";
+        aosBands[2] = "02";
+    }
+
+    int nBits = 0; /* 0 = unknown yet*/
+    int nValMax = 0; /* 0 = unknown yet*/
+    int nRows = 0, nCols = 0;
     CPLXMLNode* psGranuleDimensions =
         CPLGetXMLNode(psRoot, "=Level-1B_Granule_ID.Geometric_Info.Granule_Dimensions");
     if( psGranuleDimensions == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
-                        "=Level-1B_Granule_ID.Geometric_Info.Granule_Dimensions");
-        delete poTmpDS;
-        return NULL;
-    }
-
-    int nRows = 0, nCols = 0;
-    for(CPLXMLNode* psIter = psGranuleDimensions->psChild; psIter != NULL;
-                                                       psIter = psIter->psNext)
-    {
-        if( psIter->eType != CXT_Element )
-            continue;
-        if( EQUAL(psIter->pszValue, "Size") &&
-            atoi(CPLGetXMLValue(psIter, "resolution", "")) == nSubDSPrecision )
+        for( size_t i=0; i<aosBands.size(); i++ )
         {
-            const char* pszRows = CPLGetXMLValue(psIter, "NROWS", NULL);
-            if( pszRows == NULL )
+            CPLString osTile(SENTINEL2GetTilename(CPLGetPath(osFilename),
+                                                  CPLGetBasename(osFilename),
+                                                  aosBands[i]));
+            if( SENTINEL2GetTileInfo(osTile, &nCols, &nRows, &nBits) )
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
-                        "NROWS");
-                delete poTmpDS;
-                return NULL;
+                if( nBits <= 16 )
+                    nValMax = (1 << nBits) - 1;
+                else
+                {
+                    CPLDebug("SENTINEL2", "Unexpected bit depth %d", nBits);
+                    nValMax = 65535;
+                }
+                break;
             }
-            const char* pszCols = CPLGetXMLValue(psIter, "NCOLS", NULL);
-            if( pszCols == NULL )
+        }
+    }
+    else
+    {
+        for(CPLXMLNode* psIter = psGranuleDimensions->psChild; psIter != NULL;
+                                                        psIter = psIter->psNext)
+        {
+            if( psIter->eType != CXT_Element )
+                continue;
+            if( EQUAL(psIter->pszValue, "Size") &&
+                atoi(CPLGetXMLValue(psIter, "resolution", "")) == nSubDSPrecision )
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
-                        "NCOLS");
-                delete poTmpDS;
-                return NULL;
+                const char* pszRows = CPLGetXMLValue(psIter, "NROWS", NULL);
+                if( pszRows == NULL )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
+                            "NROWS");
+                    delete poTmpDS;
+                    return NULL;
+                }
+                const char* pszCols = CPLGetXMLValue(psIter, "NCOLS", NULL);
+                if( pszCols == NULL )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
+                            "NCOLS");
+                    delete poTmpDS;
+                    return NULL;
+                }
+                nRows = atoi(pszRows);
+                nCols = atoi(pszCols);
+                break;
             }
-            nRows = atoi(pszRows);
-            nCols = atoi(pszCols);
-            break;
         }
     }
     if( nRows <= 0 || nCols <= 0 )
@@ -1494,28 +1529,10 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize bands.                                               */
 /* -------------------------------------------------------------------- */
-    std::vector<CPLString> aosBands;
-    for(std::set<CPLString>::const_iterator oIterBandnames = oSetBands.begin();
-                                            oIterBandnames != oSetBands.end();
-                                        ++oIterBandnames)
-    {
-        aosBands.push_back(*oIterBandnames);
-    }
-    /* Put 2=Blue, 3=Green, 4=Band bands in RGB order for conveniency */
-    if( aosBands.size() >= 3 &&
-        aosBands[0] == "02" &&
-        aosBands[1] == "03" &&
-        aosBands[2] == "04" )
-    {
-        aosBands[0] = "04";
-        aosBands[2] = "02";
-    }
 
     int nSaturatedVal = atoi(CSLFetchNameValueDef(poDS->GetMetadata(), "SPECIAL_VALUE_SATURATED", "-1"));
     int nNodataVal = atoi(CSLFetchNameValueDef(poDS->GetMetadata(), "SPECIAL_VALUE_NODATA", "-1"));
 
-    int nBits = 0; /* 0 = unknown yet*/
-    int nValMax = 0; /* 0 = unknown yet*/
     const bool bAlpha =
         CSLTestBoolean(SENTINEL2GetOption(poOpenInfo, "ALPHA", "FALSE")) != FALSE;
     const int nBands = ((bAlpha) ? 1 : 0) + static_cast<int>(aosBands.size());
@@ -1562,8 +1579,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
         if( nValMax == 0 )
         {
             /* It is supposed to be 12 bits, but some products have 15 bits */
-            nBits = SENTINEL2GetTileBitDepth(osTile);
-            if( nBits )
+            if( SENTINEL2GetTileInfo(osTile, NULL, NULL, &nBits) )
             {
                 bTileFound = true;
                 if( nBits <= 16 )
@@ -1956,25 +1972,26 @@ static CPLString LaunderUnit(const char* pszUnit)
 }
 
 /************************************************************************/
-/*                       SENTINEL2GetTileBitDepth()                     */
+/*                       SENTINEL2GetTileInfo()                         */
 /************************************************************************/
 
-static int SENTINEL2GetTileBitDepth(const char* pszFilename)
+static bool SENTINEL2GetTileInfo(const char* pszFilename,
+                                int* pnWidth, int* pnHeight, int *pnBits)
 {
     static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if( fp == NULL )
-        return 0;
+        return false;
     GByte abyHeader[8];
     if( VSIFReadL(abyHeader, 8, 1, fp) != 1 )
     {
         VSIFCloseL(fp);
-        return 0;
+        return false;
     }
     if( memcmp(abyHeader + 4, jp2_box_jp, 4) == 0 )
     {
+        bool bRet = false;
         /* Just parse the ihdr box instead of doing a full dataset opening */
-        int nBits = 0;
         GDALJP2Box oBox( fp );
         if( oBox.ReadFirst() )
         {
@@ -1994,10 +2011,26 @@ static int SENTINEL2GetTileBitDepth(const char* pszFilename)
                             GIntBig nLength = oChildBox.GetDataLength();
                             if( pabyData != NULL && nLength >= 4 + 4 + 2 + 1 )
                             {
-                                GByte byPBC = pabyData[4+4+2];
-                                if( byPBC != 255 )
+                                bRet = true;
+                                if( pnHeight )
                                 {
-                                    nBits = 1 + (byPBC & 0x7f);
+                                    memcpy(pnHeight, pabyData, 4);
+                                    CPL_MSBPTR32(pnHeight);
+                                }
+                                if( pnWidth )
+                                {
+                                    memcpy(pnWidth, pabyData+4, 4);
+                                    CPL_MSBPTR32(pnWidth);
+                                }
+                                if( pnBits )
+                                {
+                                    GByte byPBC = pabyData[4+4+2];
+                                    if( byPBC != 255 )
+                                    {
+                                        *pnBits = 1 + (byPBC & 0x7f);
+                                    }
+                                    else
+                                        *pnBits = 0;
                                 }
                             }
                             CPLFree(pabyData);
@@ -2014,29 +2047,37 @@ static int SENTINEL2GetTileBitDepth(const char* pszFilename)
             }
         }
         VSIFCloseL(fp);
-        return nBits;
+        return bRet;
     }
     else /* for unit tests, we use TIFF */
     {
         VSIFCloseL(fp);
         GDALDataset* poDS = (GDALDataset*)GDALOpen(pszFilename, GA_ReadOnly);
-        int nBits = 0;
+        bool bRet = false;
         if( poDS != NULL )
         {
             if( poDS->GetRasterCount() != 0 )
             {
-                const char* pszNBits = poDS->GetRasterBand(1)->GetMetadataItem(
-                                                        "NBITS", "IMAGE_STRUCTURE");
-                if( pszNBits == NULL )
+                bRet = true;
+                if( pnWidth )
+                    *pnWidth = poDS->GetRasterXSize();
+                if( pnHeight )
+                    *pnHeight = poDS->GetRasterYSize();
+                if( pnBits )
                 {
-                    GDALDataType eDT = poDS->GetRasterBand(1)->GetRasterDataType();
-                    pszNBits = CPLSPrintf( "%d", GDALGetDataTypeSize(eDT) );
+                    const char* pszNBits = poDS->GetRasterBand(1)->GetMetadataItem(
+                                                            "NBITS", "IMAGE_STRUCTURE");
+                    if( pszNBits == NULL )
+                    {
+                        GDALDataType eDT = poDS->GetRasterBand(1)->GetRasterDataType();
+                        pszNBits = CPLSPrintf( "%d", GDALGetDataTypeSize(eDT) );
+                    }
+                    *pnBits = atoi(pszNBits);
                 }
-                nBits = atoi(pszNBits);
             }
             GDALClose(poDS);
         }
-        return nBits;
+        return bRet;
     }
 }
 
@@ -2317,8 +2358,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
             if( nValMax == 0 )
             {
                 /* It is supposed to be 12 bits, but some products have 15 bits */
-                nBits = SENTINEL2GetTileBitDepth(osTile);
-                if( nBits )
+                if( SENTINEL2GetTileInfo(osTile, NULL, NULL, &nBits) )
                 {
                     bTileFound = true;
                     if( nBits <= 16 )
