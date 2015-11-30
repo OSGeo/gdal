@@ -31,6 +31,7 @@
 # @return the chomped error stack joined with newlines.
 
 ## @ignore GeneralCmdLineProcessor
+## @ignore ParseCommandLine
 
 ## @ignore GetDataTypeName
 ## @ignore GetDataTypeByName
@@ -286,37 +287,10 @@ sub traverse {
 ## @ignore_class Geo::GDAL::GDALInfoOptions
 ## @ignore GDALInfo
 
-## @sub ComputeMedianCutPCT(Geo::GDAL::Band red, Geo::GDAL::Band green, Geo::GDAL::Band blue, $num_colors, $colors, subref progress, $progress_data)
-# Compute an "optimal" color table for a three band image.
-# @param red A Geo::GDAL::Band object.
-# @param green A Geo::GDAL::Band object.
-# @param blue A Geo::GDAL::Band object.
-# @param num_colors The desired number of colors.
-# @param colors An empty Geo::GDAL::ColorTable object.
-# @param progress [optional] A reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data).
-# @param progress_data [optional]
-#
-# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
-
-## @sub DitherRGB2PCT($red, $green, $blue, $target, $colors, subref progress, $progress_data)
-# Dither a three band image into one band using a color table.
-# @param red a Geo::GDAL::Band object
-# @param green a Geo::GDAL::Band object
-# @param blue a Geo::GDAL::Band object
-# @param target a Geo::GDAL::Band object
-# @param colors a Geo::GDAL::ColorTable object
-# @param progress [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data)
-# @param progress_data [optional]
-#
-# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
-
-## @sub ReprojectImage()
-# See Geo::GDAL::Dataset::Warp and Geo::GDAL::Dataset::Warped
-
-## @sub Geo::GDAL::Dataset AutoCreateWarpedVRT()
-# See Geo::GDAL::Dataset::Warped
+## @ignore ComputeMedianCutPCT
+## @ignore DitherRGB2PCT
+## @ignore ReprojectImage
+## @ignore AutoCreateWarpedVRT
 
 ## @sub ComputeProximity(Geo::GDAL::Band src, Geo::GDAL::Band proximity, hashref options, subref progress, $progress_data)
 # @param src The raster from which the proximities are computed from.
@@ -345,19 +319,9 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @sub RasterizeLayer()
-# See Geo::GDAL::Dataset::Rasterize.
-
-## @sub Polygonize()
-# See Geo::GDAL::Band::Polygonize.
-
-## @sub SieveFilter()
-# See Geo::GDAL::Band::Sieve.
-
-## @sub \@GeneralCmdLineProcessor(arrayref argv, $options = 0)
-# @param argv
-# @param options integer
-# @return arrayref
+## @ignore RasterizeLayer
+## @ignore Polygonize
+## @ignore SieveFilter
 
 ## @sub $PackCharacter($DataType)
 # Get the character that is needed for Perl's pack and unpack when
@@ -918,6 +882,37 @@ sub traverse {
 # href="http://www.gdal.org/gdalinfo.html">gdalinfo</a> for all
 # options.
 
+## @method Geo::GDAL::ColorTable ComputeColorTable(%params)
+# Compute a color table from an RGB image
+# @param params Named parameters:
+# - \a Red The red band, the default is to use the red band of this dataset.
+# - \a Green The green band, the default is to use the green band of this dataset.
+# - \a Blue The blue band, the default is to use the blue band of this dataset.
+# - \a NumColors The number of colors in the computed color table. Default is 256.
+# - \a Progress reference to a progress function (default is undef)
+# - \a ProgressData (default is undef)
+# - \a Method The computation method. The default and currently only option is the median cut algorithm.
+#
+# @return a new color table object.
+
+## @method Geo::GDAL::Band Dither(%params)
+# Compute one band with color table image from an RGB image
+# @params params Named parameters:
+# - \a Red The red band, the default is to use the red band of this dataset.
+# - \a Green The green band, the default is to use the green band of this dataset.
+# - \a Blue The blue band, the default is to use the blue band of this dataset.
+# - \a Dest The destination band. If this is not defined, a new in-memory band (and a dataset) will be created.
+# - \a ColorTable The color table for the result. If this is not defined, and the destination band does not contain one, it will be computed with the ComputeColorTable method.
+# - \a Progress Reference to a progress function (default is undef). Note that if ColorTable is computed using ComputeColorTable method, the progress will run twice from 0 to 1.
+# - \a ProgressData (default is undef)
+#
+# @return the destination band.
+#
+# Usage example. This code converts an RGB JPEG image to a one band PNG image with a color table.
+\code
+my $d = Geo::GDAL::Open('pic.jpg');
+Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
+\endcode
 
 
 

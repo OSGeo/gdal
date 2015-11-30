@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use v5.10;
 use Scalar::Util 'blessed';
-use Test::More tests => 5;
+use Test::More tests => 6;
 BEGIN { use_ok('Geo::GDAL') };
 
 {
@@ -48,4 +48,25 @@ BEGIN { use_ok('Geo::GDAL') };
     my $r = $b->Sieve(Threshold => 2, Options => {Connectedness => 4});
     $d = $r->ReadTile;
     ok($d->[15][4] == 5, "Sieved area with size 1 away.");
+}
+
+{
+    my $d = Geo::GDAL::Driver('MEM')->Create(Width => 20, Height => 20, Bands => 3);
+    $d->Band(1)->ColorInterpretation('RedBand');
+    $d->Band(2)->ColorInterpretation('GreenBand');
+    $d->Band(3)->ColorInterpretation('BlueBand');
+    for my $b ($d->Bands) {
+        my $d = $b->ReadTile;
+        for my $y (0..19) {
+            for my $x (0..19) {
+                $d->[$y][$x] = int(rand(256));
+            }
+        }
+        $b->WriteTile($d);
+    }
+    my $b = $d->Dither;
+    my $ct = $b->ColorTable;
+    my @n = $ct->ColorEntries;
+    #say STDERR "@n";
+    ok(@n == 256, "Dither using computed ct");
 }
