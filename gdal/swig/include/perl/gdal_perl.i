@@ -85,15 +85,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_GetMaskFlags) GetMaskFlags;
 %rename (_CreateMaskBand) CreateMaskBand;
 
-/* those that need callback_data check: */
-
-%rename (_ComputeMedianCutPCT) ComputeMedianCutPCT;
-%rename (_DitherRGB2PCT) DitherRGB2PCT;
 %rename (_ReprojectImage) ReprojectImage;
-%rename (_ComputeProximity) ComputeProximity;
-%rename (_RasterizeLayer) RasterizeLayer;
 %rename (_Polygonize) Polygonize;
-%rename (_SieveFilter) SieveFilter;
 %rename (_RegenerateOverviews) RegenerateOverviews;
 %rename (_RegenerateOverview) RegenerateOverview;
 
@@ -478,60 +471,26 @@ sub OpenEx {
     return _OpenEx(@p);
 }
 
-sub ComputeMedianCutPCT {
-    my @p = @_;
-    $p[6] = 1 if $p[5] and not defined $p[6];
-    _ComputeMedianCutPCT(@p);
-}
-
-sub DitherRGB2PCT {
-    my @p = @_;
-    $p[6] = 1 if $p[5] and not defined $p[6];
-    _DitherRGB2PCT(@p);
-}
-
-sub ComputeProximity {
-    my @p = @_;
-    $p[4] = 1 if $p[3] and not defined $p[4];
-    _ComputeProximity(@p);
-}
-
-sub RasterizeLayer {
-    my @p = @_;
-    $p[8] = 1 if $p[7] and not defined $p[8];
-    _RasterizeLayer(@p);
-}
-
 sub Polygonize {
     my @params = @_;
-    $params[6] = 1 if $params[5] and not defined $params[6];
     $params[3] = $params[2]->GetLayerDefn->GetFieldIndex($params[3]) unless $params[3] =~ /^\d/;
     _Polygonize(@params);
-}
-
-sub SieveFilter {
-    my @p = @_;
-    $p[7] = 1 if $p[6] and not defined $p[7];
-    _SieveFilter(@p);
 }
 
 sub RegenerateOverviews {
     my @p = @_;
     $p[2] = uc($p[2]) if $p[2]; # see overview.cpp:2030
-    $p[4] = 1 if $p[3] and not defined $p[4];
     _RegenerateOverviews(@p);
 }
 
 sub RegenerateOverview {
     my @p = @_;
     $p[2] = uc($p[2]) if $p[2]; # see overview.cpp:2030
-    $p[4] = 1 if $p[3] and not defined $p[4];
     _RegenerateOverview(@p);
 }
 
 sub ReprojectImage {
     my @p = @_;
-    $p[8] = 1 if $p[7] and not defined $p[8];
     $p[4] = string2int($p[4], \%RESAMPLING_STRING2INT);
     return _ReprojectImage(@p);
 }
@@ -1147,6 +1106,69 @@ sub Rasterize {
     }
 }
 
+sub ComputeColorTable {
+    my $self = shift;
+    my $p = Geo::GDAL::named_parameters(\@_,
+                                        Red => undef,
+                                        Green => undef,
+                                        Blue => undef,
+                                        NumColors => 256,
+                                        Progress => undef,
+                                        ProgressData => undef,
+                                        Method => 'MedianCut');
+    for my $b ($self->Bands) {
+        $p->{red} = $b if !$p->{red} && $b->ColorInterpretation eq 'RedBand';
+        $p->{green} = $b if !$p->{green} && $b->ColorInterpretation eq 'GreenBand';
+        $p->{blue} = $b if !$p->{blue} && $b->ColorInterpretation eq 'BlueBand';
+    }
+    my $ct = Geo::GDAL::ColorTable->new;
+    Geo::GDAL::ComputeMedianCutPCT($p->{red}, 
+                                   $p->{green}, 
+                                   $p->{blue}, 
+                                   $p->{numcolors}, 
+                                   $ct, $p->{progress}, 
+                                   $p->{progressdata});
+    return $ct;
+}
+
+sub Dither {
+    my $self = shift;
+    my $p = Geo::GDAL::named_parameters(\@_,
+                                        Red => undef,
+                                        Green => undef,
+                                        Blue => undef,
+                                        Dest => undef,
+                                        ColorTable => undef,
+                                        Progress => undef,
+                                        ProgressData => undef);
+    for my $b ($self->Bands) {
+        $p->{red} = $b if !$p->{red} && $b->ColorInterpretation eq 'RedBand';
+        $p->{green} = $b if !$p->{green} && $b->ColorInterpretation eq 'GreenBand';
+        $p->{blue} = $b if !$p->{blue} && $b->ColorInterpretation eq 'BlueBand';
+    }
+    my ($w, $h) = $self->Size;
+    $p->{dest} = Geo::GDAL::Driver('MEM')->Create(Name => 'dithered', 
+                                                  Width => $w, 
+                                                  Height => $h, 
+                                                  Type => 'Byte')->Band unless $p->{dest};
+    $p->{colortable} = $p->{dest}->ColorTable unless $p->{colortable};
+    $p->{colortable} = $self->ComputeColorTable(
+        Red => $p->{red},
+        Green => $p->{green},
+        Blue => $p->{blue},
+        Progress => $p->{progress}, 
+        ProgressData => $p->{progressdata} ) unless $p->{colortable};
+    Geo::GDAL::DitherRGB2PCT($p->{red}, 
+                             $p->{green}, 
+                             $p->{blue}, 
+                             $p->{dest}, 
+                             $p->{colortable}, 
+                             $p->{progress}, 
+                             $p->{progressdata});
+    $p->{dest}->ColorTable($p->{colortable});
+    return $p->{dest};
+}
+
 
 
 
@@ -1547,7 +1569,7 @@ sub Sieve {
         $c = $p->{options}{Connectedness};
         delete $p->{options}{Connectedness};
     }
-    Geo::GDAL::_SieveFilter($self, $p->{mask}, $p->{dest}, $p->{threshold}, $c, $p->{options}, $p->{progress}, $p->{progressdata});
+    Geo::GDAL::SieveFilter($self, $p->{mask}, $p->{dest}, $p->{threshold}, $c, $p->{options}, $p->{progress}, $p->{progressdata});
     return $p->{dest};
 }
 

@@ -128,45 +128,7 @@ if (0) {
 	@histogram = $b->GetHistogram(Min=>0, Max=>100, Buckets=>20);
     };
     ok($#histogram == 19, "Histogram with parameters");
-
-    my @o;
-    for (0..5) {
-	my $x = 0.1*$_;
-        my $t = sprintf("%.1f", $x);
-	push @o, "$t Generating Histogram 1";
-    }
-    my @out;
-    my $callback = sub {
-        my ($x, $s, $data) = @_;
-        my $t = sprintf("%.1f", $x);
-        push @out, "$t $s $data";
-        return $_[0] < 0.5 ? 1 : 0;
-    };
-    eval {
-	Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,
-				       Geo::GDAL::ColorTable->new,
-				       $callback
-				       );
-    };
-    print "\n@out vs @o\n";
-    ok(is_deeply(\@out, \@o), "callback without callback_data");
-    @o = ();
-    for (0..5) {
-	my $x = 0.1*$_;
-        my $t = sprintf("%.1f", $x);
-	push @o, "$t Generating Histogram 6";
-    }
-    @out = ();
-    eval {
-	Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,
-				       Geo::GDAL::ColorTable->new,
-				       $callback,6);
-    };
-    ok(is_deeply(\@out, \@o), "callback with callback_data");
-
-    # without callback only implicit test:
-    Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,Geo::GDAL::ColorTable->new);
-
+ 
     Geo::GDAL::RegenerateOverview($r, $b, 'GAUSS');
     
     my $band = $r;

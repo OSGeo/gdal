@@ -263,8 +263,11 @@ for my $package (sort keys %package) {
         if ($at eq '@cmethod') {
             print "# Class method.\n";
         }
-        if ($at eq '@sub') {
+        elsif ($at eq '@sub') {
             print "# Package subroutine.\n";
+        }
+        elsif ($at eq '@method') {
+            print "# Object method.\n";
         }
         for my $c (@{$package{$package}{dox}{$sub}{c}}) {
             if ($c =~ /^\+list/) {
