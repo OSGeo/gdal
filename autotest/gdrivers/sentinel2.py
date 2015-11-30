@@ -1009,6 +1009,40 @@ def sentinel2_l1b_4():
     gdal.VSIFCloseL(f2)
     f.close()
 
+    # With brief granule metadata (no Granule_Dimensions)
+    gdal.FileFromMemBuffer('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml',
+"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+<n1:General_Info>
+<TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L1C_bla_N01.03</TILE_ID>
+</n1:General_Info>
+<n1:Geometric_Info>
+</n1:Geometric_Info>
+</n1:Level-1B_Granule_ID>
+""")
+    ds = gdal.Open('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml:60m')
+    if ds.RasterXSize != 500:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # With standard granule metadata (with Granule_Dimensions)
+    gdal.FileFromMemBuffer('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml',
+"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+<n1:General_Info>
+<TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L1C_bla_N01.03</TILE_ID>
+</n1:General_Info>
+<n1:Geometric_Info>
+<Granule_Dimensions metadataLevel="Brief">
+<Size resolution="60">
+<NROWS>1830</NROWS>
+<NCOLS>1830</NCOLS>
+</Size>
+</Granule_Dimensions>
+</n1:Geometric_Info>
+</n1:Level-1B_Granule_ID>
+""")
+
     ds = gdal.Open('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml')
     expected_md = {'SUBDATASET_1_DESC': 'Bands B1 with 60m resolution',
  'SUBDATASET_1_NAME': 'SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03/S2B_OPER_MTD_L1B_GR_MTI__20151231T235959_S20151231T235959_D02.xml:60m'}
