@@ -283,7 +283,7 @@ def osr_proj4_7():
         return 'fail'
 
     srs.ImportFromProj4( proj4 )
-    
+
     expected = """PROJCS["unnamed",
     GEOGCS["GRS 67(IUGG 1967)",
         DATUM["unknown",
@@ -300,21 +300,20 @@ def osr_proj4_7():
     PARAMETER["false_easting",650000],
     PARAMETER["false_northing",200000],
     UNIT["Meter",1]]"""
-    
+
     srs_expected = osr.SpatialReference( wkt = expected )
     if not srs.IsSame(srs_expected):
         gdaltest.post_reason( 'did not get expected wkt.' )
         print( 'Got: %s' % srs.ExportToPrettyWkt() )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
-# Check EPSG:3857, confirm google mercator hackery.
-#
+# Check EPSG:3857, confirm Google Mercator hackery.
 
 def osr_proj4_8():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 3857 )
 
@@ -341,7 +340,7 @@ def osr_proj4_8():
 #
 
 def osr_proj4_9():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 4267 )
 
@@ -364,11 +363,11 @@ def osr_proj4_9():
     return 'success'
 
 ###############################################################################
-# Does geocentric work ok?
+# Does geocentric work okay?
 #
 
 def osr_proj4_10():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromProj4( '+proj=geocent +ellps=WGS84 +towgs84=0,0,0 ' )
 

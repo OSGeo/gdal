@@ -1756,7 +1756,7 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
                 return CE_Failure;
         }
 
-        // Fetch hinstrument status. Helps to determine whether we have
+        // Fetch instrument status. Helps to determine whether we have
         // 3A or 3B channel in the dataset.
         iInstrumentStatus = GetUInt32(abyRecHeader + L1B_NOAA15_HDR_REC_STAT_OFF);
 

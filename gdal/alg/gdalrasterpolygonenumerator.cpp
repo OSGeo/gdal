@@ -104,7 +104,7 @@ void GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::MergePolygon( int nSrc
         nDstIdCur = nNextDstId;
     }
 
-    // And map hwole the source chain to it too (can be done in one pass)
+    // And map the whole source chain to it too (can be done in one pass)
     while( panPolyIdMap[nSrcId] != nSrcId )
     {
         int nNextSrcId = panPolyIdMap[nSrcId];

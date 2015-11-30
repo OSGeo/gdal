@@ -256,18 +256,18 @@ void GDALOctaveMap::ComputeMap(GDALIntegralImage *poImg)
 bool GDALOctaveMap::PointIsExtremum(int row, int col, GDALOctaveLayer *bot,
                                     GDALOctaveLayer *mid, GDALOctaveLayer *top, double threshold)
 {
-    //Check that point in middle layer has all neighbours
+    // Check that point in middle layer has all neighbors.
     if (row <= top->radius || col <= top->radius ||
         row + top->radius >= top->height || col + top->radius >= top->width)
         return false;
 
     double curPoint = mid->detHessians[row][col];
 
-    //Hessian should be higher than threshold
+    // Hessian should be higher than threshold.
     if (curPoint < threshold)
         return false;
 
-    //Hessian should be higher than hessians of all neighbours
+    // Hessian should be higher than Hessians of all neighbors
     for (int i = -1; i <= 1; i++)
         for (int j = -1; j <= 1; j++)
         {

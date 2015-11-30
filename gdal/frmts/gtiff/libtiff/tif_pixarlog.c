@@ -45,15 +45,15 @@
  * input is assumed to be unsigned linear color values that represent
  * the range 0-1.  In the case of IEEE values, the 0-1 range is assumed to
  * be the normal linear color range, in addition over 1 values are
- * accepted up to a value of about 25.0 to encode "hot" hightlights and such.
+ * accepted up to a value of about 25.0 to encode "hot" highlights and such.
  * The encoding is lossless for 8-bit values, slightly lossy for the
  * other bit depths.  The actual color precision should be better
  * than the human eye can perceive with extra room to allow for
  * error introduced by further image computation.  As with any quantized
  * color format, it is possible to perform image calculations which
  * expose the quantization error. This format should certainly be less 
- * susceptable to such errors than standard 8-bit encodings, but more
- * susceptable than straight 16-bit or 32-bit encodings.
+ * susceptible to such errors than standard 8-bit encodings, but more
+ * susceptible than straight 16-bit or 32-bit encodings.
  *
  * On reading the internal format is converted to the desired output format.
  * The program can request which format it desires by setting the internal

@@ -89,7 +89,7 @@ typedef struct {
    uChar intens[NUM_UGLY_WORD]; /* (see WxIntens) */
    uChar vis[NUM_UGLY_WORD]; /* 255 no vis, otherwise in units of 1/32 SM
                             * so 6SM -> 192. P6SM -> 224 */
-   uChar f_or[NUM_UGLY_WORD]; /* true if OR, or MX was a hazzard. */
+   uChar f_or[NUM_UGLY_WORD]; /* true if OR, or MX was a hazard. */
    uChar f_priority[NUM_UGLY_WORD]; /* 0 if normal,
                             * 1 if 'include unconditional'
                             * 2 if 'high priority' */

@@ -1,27 +1,27 @@
 #!/usr/bin/env python
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Project:  GDAL Python Interface
 #  Purpose:  Script to merge greyscale as intensity into an RGB(A) image, for
 #            instance to apply hillshading to a dem colour relief.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
 #            Trent Hare (USGS)
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2009, Frank Warmerdam
 #  Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -72,7 +72,7 @@ def rgb_to_hsv( r,g,b ):
     h = numpy.mod(h/6.0,1.0)
 
     hsv = numpy.asarray([h,s,v])
-    
+
     return hsv
 
 # =============================================================================
@@ -99,7 +99,7 @@ def hsv_to_rgb( hsv ):
     b = i.choose( p, p, t, v, v, q )
 
     rgb = numpy.asarray([r,g,b]).astype(numpy.uint8)
-    
+
     return rgb
 
 # =============================================================================
@@ -114,7 +114,7 @@ where src_color is a RGB or RGBA dataset,
       intensity for the color dataset.
 """)
     sys.exit(1)
-    
+
 # =============================================================================
 # 	Mainline
 # =============================================================================
@@ -188,7 +188,7 @@ hillbandnodatavalue = hillband.GetNoDataValue()
 
 #check for same file size
 if ((rBand.YSize != hillband.YSize) or (rBand.XSize != hillband.XSize)):
-    print('Color and hilshade must be the same size in pixels.')
+    print('Color and hillshade must be the same size in pixels.')
     sys.exit(1)
 
 #loop over lines to apply hillshade
@@ -201,7 +201,7 @@ for i in range(hillband.YSize):
 
     #convert to HSV
     hsv = rgb_to_hsv( rScanline, gScanline, bScanline )
-    
+
     # if there's nodata on the hillband, use the v value from the color
     # dataset instead of the hillshade value.
     if hillbandnodatavalue is not None:
@@ -212,7 +212,7 @@ for i in range(hillband.YSize):
 
     #replace v with hillshade
     hsv_adjusted = numpy.asarray( [hsv[0], hsv[1], v] )
-    
+
     #convert back to RGB
     dst_color = hsv_to_rgb( hsv_adjusted )
 
@@ -227,7 +227,7 @@ for i in range(hillband.YSize):
         aScanline = aBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
         outband = outdataset.GetRasterBand(4)
         outband.WriteArray(aScanline, 0, i)
-    
+
     #update progress line
     if not quiet:
         gdal.TermProgress_nocb( (float(i+1) / hillband.YSize) )

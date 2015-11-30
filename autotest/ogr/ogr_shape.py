@@ -3412,7 +3412,7 @@ def ogr_shape_70():
     return 'success'
 
 ###############################################################################
-# Test heterogenous file permissions on .shp and .dbf
+# Test heterogeneous file permissions on .shp and .dbf.
 
 def ogr_shape_71():
 
