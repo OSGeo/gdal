@@ -2017,7 +2017,15 @@ def ogr_gml_49():
     if feat.GetGeometryRef().GetGeometryType() != ogr.wkbPolygon:
         gdaltest.post_reason('failure')
         return 'fail'
+    ds = None
 
+    # Now with .gfs file present (#6247)
+    ds = ogr.Open('/vsimem/ogr_gml_49.gml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetGeometryRef().GetGeometryType() != ogr.wkbPolygon:
+        gdaltest.post_reason('failure')
+        return 'fail'
     ds = None
 
     gdal.Unlink('/vsimem/ogr_gml_49.gml')
