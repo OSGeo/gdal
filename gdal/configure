@@ -16677,6 +16677,42 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __cplusplus
+    #error "broken C++"
+    #endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+
+else
+  CXX=;
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+if test "x$CXX" == x ; then
+  as_fn_error $? "\"You don't have a working C++ compiler.\"" "$LINENO" 5
+fi
+
 
 # Check whether --with-libtool was given.
 if test "${with_libtool+set}" = set; then :
@@ -29494,7 +29530,7 @@ $as_echo "yes" >&6; }
         if test "x$with_podofo_lib" != "x" ; then
             PODOFO_LIB="$with_podofo_lib"
         else
-            # This may be a static libpodofo.a, so add dependent libraries
+            # This may be a static libpodofo.a, so add dependent libraries.
             PODOFO_LIB="$PODOFO_LIB -lfreetype -lfontconfig -lpthread"
         fi
 

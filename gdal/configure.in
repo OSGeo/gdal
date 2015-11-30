@@ -85,6 +85,19 @@ AC_PROG_CXX
 AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
+dnl Check that CXX is really a working compiler
+AC_LANG_PUSH([C++])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+  [[#ifndef __cplusplus
+    #error "broken C++"
+    #endif]])],,
+  [CXX=;])
+AC_LANG_POP([C++])
+
+if test "x$CXX" == x ; then
+  AC_MSG_ERROR("You don't have a working C++ compiler.")
+fi
+
 dnl switch between libtool and native build system
 AC_ARG_WITH(libtool, [  --without-libtool     Don't use libtool to build the library],,)
 
