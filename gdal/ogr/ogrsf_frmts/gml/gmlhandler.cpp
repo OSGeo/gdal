@@ -1105,6 +1105,13 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
             {
                 m_bAlreadyFoundGeometry = TRUE;
                 bReadGeometry = TRUE;
+                m_nGeometryPropertyIndex = poClass->GetGeometryPropertyIndexBySrcElement( poState->osPath.c_str() );
+                if( m_nGeometryPropertyIndex < 0 )
+                {
+                    poClass->AddGeometryProperty( new GMLGeometryPropertyDefn(
+                            "geometry", poState->osPath.c_str(), wkbUnknown, -1, TRUE ) );
+                    m_nGeometryPropertyIndex = poClass->GetGeometryPropertyCount();
+                }
             }
 
             else
