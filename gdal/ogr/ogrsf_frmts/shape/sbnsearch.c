@@ -286,6 +286,7 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
         return NULL;
     }
 
+    /* coverity[tainted_data] */
     pabyData = (uchar*) malloc( nNodeDescSize );
     pasNodeDescriptor = (SBNNodeDescriptor*)
                 calloc ( nMaxNodes, sizeof(SBNNodeDescriptor) );
