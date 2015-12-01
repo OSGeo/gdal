@@ -2855,16 +2855,17 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     if( EQUAL( pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP ) ||
         EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR ) )
     {
-        char *pszPCSCode = NULL;
-        char *pszID = CPLStrdup( oSRS.GetAuthorityCode( "PROJCS" ) );
-        if( strlen( pszID ) > 0 )
+        CPLString osPCSCode;
+        const char *pszID = oSRS.GetAuthorityCode( "PROJCS" );
+        if( pszID != NULL && strlen( pszID ) > 0 )
         {
-            pszPCSCode = CPLStrdup( CSVGetField( CSVFilename( "stateplane.csv" ),
-                                                 "EPSG_PCS_CODE", pszID, CC_Integer, "ID" ) );
-            if( strlen( pszPCSCode ) > 0 )
+            const char* pszPCSCode = CSVGetField( CSVFilename( "stateplane.csv" ),
+                                                 "EPSG_PCS_CODE", pszID, CC_Integer, "ID" );
+            osPCSCode = (pszPCSCode) ? pszPCSCode : "";
+            if( osPCSCode.size() )
             {
-                int nZone      = pszPCSCode[strlen( pszPCSCode ) - 1] - '0';
-                int nSPCode    = atoi_nz( pszPCSCode );
+                int nZone      = osPCSCode[osPCSCode.size() - 1] - '0';
+                int nSPCode    = atoi_nz( osPCSCode );
 
                 if( nZone == 0 )
                     nZone = 1;
@@ -2922,8 +2923,6 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
                 *pszRefSystem = CPLStrdup(pszOutRefSystem);
             }
             *pszRefUnit = GetUnitDefault( oSRS.GetAttrValue( "UNIT" ), CPLSPrintf( "%f", oSRS.GetLinearUnits() ) );
-            CPLFree(pszPCSCode);
-            CPLFree(pszID);
             return CE_None;
         }
 
