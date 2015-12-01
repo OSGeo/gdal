@@ -1101,17 +1101,20 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     /* Read the header info and create the dataset */
     CPGDataset *poDS;
 
+#ifdef notdef
     if ( CPGType < 3 )
+#endif
       poDS = reinterpret_cast<CPGDataset *>(
           InitializeType1Or2Dataset( poOpenInfo->pszFilename ) );
 #ifdef notdef
     else
       poDS = reinterpret_cast<CPGDataset *>(
           InitializeType3Dataset( poOpenInfo->pszFilename ) );
-#endif
-
     if (poDS == NULL)
         return NULL;
+#endif
+
+
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
