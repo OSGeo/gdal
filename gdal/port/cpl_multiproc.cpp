@@ -2056,6 +2056,7 @@ int  CPLCreateOrAcquireSpinLockInternal( CPLLock** ppsLock )
         }
     }
     pthread_mutex_unlock(&global_mutex);
+    /* coverity[missing_unlock] */
     return( *ppsLock != NULL && CPLAcquireSpinLock( (*ppsLock)->u.hSpinLock ) );
 }
 

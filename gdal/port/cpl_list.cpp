@@ -121,6 +121,7 @@ CPLList *CPLListInsert( CPLList *psList, void *pData, int nPosition )
         if (psList == NULL)
             psList = psLast;
 
+        /* coverity[leaked_storage] */
         return psList;
     }
 

@@ -139,6 +139,7 @@ void *CPLMalloc( size_t nSize )
 
     if( static_cast<long>(nSize) < 0 )
     {
+        /* coverity[dead_error_begin] */
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CPLMalloc(%ld): Silly size requested.\n",
                   static_cast<long>(nSize) );
@@ -197,6 +198,7 @@ void * CPLRealloc( void * pData, size_t nNewSize )
 
     if( static_cast<long>(nNewSize) < 0 )
     {
+        /* coverity[dead_error_begin] */
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CPLRealloc(%ld): Silly size requested.\n",
                   (long) nNewSize );
