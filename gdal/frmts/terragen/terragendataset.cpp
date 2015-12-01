@@ -805,7 +805,7 @@ int TerragenDataset::LoadFromFile()
             get(m_nHeightScale);
             get(m_nBaseHeight);
             m_nDataOffset = VSIFTellL(m_fp);
-            if( !skip(xpts * ypts * sizeof(GInt16)) )
+            if( !skip(static_cast<size_t>(xpts) * static_cast<size_t>(ypts) * sizeof(GInt16)) )
                 return FALSE;
             continue;
         }
