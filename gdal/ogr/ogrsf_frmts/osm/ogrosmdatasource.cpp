@@ -2236,7 +2236,7 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                 if( strcmp(psRelation->pasMembers[i].pszRole, "outer") == 0 )
                 {
                     sqlite3_bind_int64( hDeletePolygonsStandaloneStmt, 1, psRelation->pasMembers[i].nID );
-                    sqlite3_step( hDeletePolygonsStandaloneStmt );
+                    CPL_IGNORE_RET_VAL(sqlite3_step( hDeletePolygonsStandaloneStmt ));
                     sqlite3_reset( hDeletePolygonsStandaloneStmt );
                 }
             }
