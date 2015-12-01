@@ -70,7 +70,7 @@ OGRAmigoCloudDataSource::~OGRAmigoCloudDataSource()
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("AMIGOCLOUD:%p", this));
-        CPLHTTPFetch( GetAPIURL(), papszOptions);
+        CPLHTTPDestroyResult( CPLHTTPFetch( GetAPIURL(), papszOptions) );
         CSLDestroy(papszOptions);
     }
 
@@ -396,8 +396,11 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
     papszOptions = CSLAddString(papszOptions, pszHeaders);
 
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
+    CSLDestroy(papszOptions);
+    if( psResult == NULL )
+        return NULL;
 
-    if (psResult && psResult->pszContentType &&
+    if (psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunPOST HTML Response:%s", psResult->pabyData );
@@ -406,11 +409,11 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult && psResult->pszErrBuf != NULL)
+    if (psResult->pszErrBuf != NULL)
     {
         CPLDebug( "AMIGOCLOUD", "RunPOST Error Message:%s", psResult->pszErrBuf );
     }
-    else if (psResult && psResult->nStatus != 0)
+    else if (psResult->nStatus != 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunPOST Error Status:%d", psResult->nStatus );
     }
@@ -490,8 +493,11 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
     papszOptions = CSLAddString(papszOptions, osPOSTFIELDS);
 
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
+    CSLDestroy(papszOptions);
+    if( psResult == NULL )
+        return NULL;
 
-    if (psResult && psResult->pszContentType &&
+    if (psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunDELETE HTML Response:%s", psResult->pabyData );
@@ -500,11 +506,11 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult && psResult->pszErrBuf != NULL)
+    if (psResult->pszErrBuf != NULL)
     {
         CPLDebug( "AMIGOCLOUD", "RunDELETE Error Message:%s", psResult->pszErrBuf );
     }
-    else if (psResult && psResult->nStatus != 0)
+    else if ( psResult->nStatus != 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunDELETE Error Status:%d", psResult->nStatus );
     }
@@ -581,8 +587,10 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
     }
 
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), NULL);
+    if( psResult == NULL )
+        return NULL;
 
-    if (psResult && psResult->pszContentType &&
+    if (psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunGET HTML Response:%s", psResult->pabyData );
@@ -591,11 +599,11 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult && psResult->pszErrBuf != NULL)
+    if ( psResult->pszErrBuf != NULL)
     {
         CPLDebug( "AMIGOCLOUD", "RunGET Error Message:%s", psResult->pszErrBuf );
     }
-    else if (psResult && psResult->nStatus != 0)
+    else if (psResult->nStatus != 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunGET Error Status:%d", psResult->nStatus );
     }
@@ -690,12 +698,14 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
 
     CPLHTTPResult * psResult = CPLHTTPFetch( pszAPIURL.c_str(), papszOptions);
     CSLDestroy(papszOptions);
+    if( psResult == NULL )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Check for some error conditions and report.  HTML Messages      */
 /*      are transformed info failure.                                   */
 /* -------------------------------------------------------------------- */
-    if (psResult && psResult->pszContentType &&
+    if (psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunSQL HTML Response:%s", psResult->pabyData );
@@ -704,11 +714,11 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult && psResult->pszErrBuf != NULL) 
+    if (psResult->pszErrBuf != NULL) 
     {
         CPLDebug( "AMIGOCLOUD", "RunSQL Error Message:%s", psResult->pszErrBuf );
     }
-    else if (psResult && psResult->nStatus != 0) 
+    else if (psResult->nStatus != 0) 
     {
         CPLDebug( "AMIGOCLOUD", "RunSQL Error Status:%d", psResult->nStatus );
     }
