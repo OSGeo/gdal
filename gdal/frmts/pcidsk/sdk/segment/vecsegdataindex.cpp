@@ -55,6 +55,11 @@ VecSegDataIndex::VecSegDataIndex()
     block_initialized = false;
     vs = NULL;
     dirty = false;
+    section = 0;
+    offset_on_disk_within_section = 0;
+    size_on_disk = 0;
+    block_count = 0;
+    bytes = 0;
 }
 
 /************************************************************************/

@@ -60,6 +60,8 @@ SysBlockMap::SysBlockMap( PCIDSKFile *file, int segment,
     full_loaded = false;
     dirty = false;
     growing_segment = 0;
+    block_count = 0;
+    first_free_block = 0;
 }
 
 /************************************************************************/

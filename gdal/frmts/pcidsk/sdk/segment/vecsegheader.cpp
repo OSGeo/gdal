@@ -55,6 +55,7 @@ VecSegHeader::VecSegHeader()
     vs = NULL;
     initialized = false;
     needs_swap = !BigEndianSystem();
+    header_blocks = 0;
 }
 
 /************************************************************************/
