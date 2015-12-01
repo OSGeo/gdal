@@ -344,6 +344,7 @@ OZIDataset::OZIDataset() :
     nZoomLevelCount(0),
     panZoomLevelOffsets(NULL),
     papoOvrBands(NULL),
+    nFileSize(0),
     bOzi3(FALSE),
     nKeyInit(0)
 {}
