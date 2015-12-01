@@ -52,20 +52,27 @@
 VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilename)
 {
     const char *pszDbNameConf;
-    CPLString   pszDbName;
+    CPLString   osDbName;
     CPLString   osCommand;
     VSIStatBufL sStatBufDb, sStatBufVfk;
     
     /* open tmp SQLite DB (re-use DB file if already exists) */
     pszDbNameConf = CPLGetConfigOption("OGR_VFK_DB_NAME", NULL);
     if (pszDbNameConf) {
-	pszDbName = pszDbNameConf;
+	osDbName = pszDbNameConf;
     }
     else {
-	pszDbName = CPLResetExtension(m_pszFilename, "db");
+	osDbName = CPLResetExtension(m_pszFilename, "db");
     }
-    m_pszDBname = new char [pszDbName.length()+1];
-    std::strcpy(m_pszDBname, pszDbName.c_str());
+    size_t nLen = osDbName.length();
+    if( nLen > 2048 )
+    {
+        nLen = 2048;
+        osDbName.resize(nLen);
+    }
+    m_pszDBname = new char [nLen+1];
+    std::strncpy(m_pszDBname, osDbName.c_str(), nLen);
+    m_pszDBname[nLen] = 0;
     CPLDebug("OGR-VFK", "Using internal DB: %s",
              m_pszDBname);
     
@@ -75,12 +82,12 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 	m_bSpatial = FALSE;   /* store also geometry in DB */
     
     m_bNewDb = TRUE;
-    if (VSIStatL(pszDbName, &sStatBufDb) == 0) {
+    if (VSIStatL(osDbName, &sStatBufDb) == 0) {
 	if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
 	    m_bNewDb = TRUE;     /* overwrite existing DB */
             CPLDebug("OGR-VFK", "Internal DB (%s) already exists and will be overwritten",
                      m_pszDBname);
-	    VSIUnlink(pszDbName);
+	    VSIUnlink(osDbName);
         }
         else {
             if (VSIStatL(pszFilename, &sStatBufVfk) == 0 &&
@@ -88,9 +95,9 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
                 CPLDebug("OGR-VFK",
                          "Found %s but ignoring because it appears\n"
                          "be older than the associated VFK file.",
-                         pszDbName.c_str());
+                         osDbName.c_str());
                 m_bNewDb = TRUE;
-                VSIUnlink(pszDbName);
+                VSIUnlink(osDbName);
             }
             else {
                 m_bNewDb = FALSE;    /* re-use existing DB */
@@ -108,13 +115,13 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     CPLDebug("OGR-VFK", "New DB: %s Spatial: %s",
 	     m_bNewDb ? "yes" : "no", m_bSpatial ? "yes" : "no");
 
-    if (SQLITE_OK != sqlite3_open(pszDbName, &m_poDB)) {
+    if (SQLITE_OK != sqlite3_open(osDbName, &m_poDB)) {
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "Creating SQLite DB failed");
     }
     else {
         char* pszErrMsg = NULL;
-        sqlite3_exec(m_poDB, "PRAGMA synchronous = OFF", NULL, NULL, &pszErrMsg);
+        CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "PRAGMA synchronous = OFF", NULL, NULL, &pszErrMsg));
         sqlite3_free(pszErrMsg);
     }
 
@@ -182,10 +189,10 @@ int VFKReaderSQLite::ReadDataBlocks()
     }
     
     if (m_nDataBlockCount == 0) {
-        sqlite3_exec(m_poDB, "BEGIN", 0, 0, 0);  
+        CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "BEGIN", 0, 0, 0));
         /* CREATE TABLE ... */
         nDataBlocks = VFKReader::ReadDataBlocks();
-        sqlite3_exec(m_poDB, "COMMIT", 0, 0, 0);
+        CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "COMMIT", 0, 0, 0));
 
         StoreInfo2DB();
     }

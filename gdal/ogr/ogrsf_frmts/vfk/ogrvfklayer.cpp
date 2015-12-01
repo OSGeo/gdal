@@ -157,33 +157,19 @@ GIntBig OGRVFKLayer::GetFeatureCount(CPL_UNUSED int bForce)
 */
 OGRFeature *OGRVFKLayer::GetNextFeature()
 {
-    IVFKFeature  *poVFKFeature;
-    
-    OGRFeature  *poOGRFeature;
-    OGRGeometry *poOGRGeom;
-    
-    poOGRFeature = NULL;
-    poOGRGeom    = NULL;
-    
     /* loop till we find and translate a feature meeting all our
        requirements
     */
     while( true ) {
-        /* cleanup last feature, and get a new raw vfk feature */
-        if (poOGRGeom != NULL) {
-            delete poOGRGeom;
-            poOGRGeom = NULL;
-        }
-        
-        poVFKFeature = (IVFKFeature *) poDataBlock->GetNextFeature();
+        IVFKFeature* poVFKFeature = poDataBlock->GetNextFeature();
         if (!poVFKFeature)
-            return NULL;        
-        
+            return NULL;
+
         /* skip feature with unknown geometry type */
         if (poVFKFeature->GetGeometryType() == wkbUnknown)
             continue;
         
-        poOGRFeature = GetFeature(poVFKFeature);
+        OGRFeature* poOGRFeature = GetFeature(poVFKFeature);
         if (poOGRFeature)
             return poOGRFeature;
     }
