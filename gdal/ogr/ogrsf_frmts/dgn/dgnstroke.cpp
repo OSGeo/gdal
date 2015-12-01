@@ -155,6 +155,7 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
 
     for( k = 0; k < nDGNPoints-1; k++ )
     {
+        /* coverity[overrun-local] */
         padfD[k] = sqrt( (pasDGNPoints[k+1].x-pasDGNPoints[k].x)
                            * (pasDGNPoints[k+1].x-pasDGNPoints[k].x)
                          + (pasDGNPoints[k+1].y-pasDGNPoints[k].y)

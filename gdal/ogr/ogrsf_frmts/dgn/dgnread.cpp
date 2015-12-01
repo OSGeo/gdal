@@ -101,8 +101,10 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /* -------------------------------------------------------------------- */
 /*      Read the rest of the element data into the working buffer.      */
 /* -------------------------------------------------------------------- */
-    CPLAssert( nWords * 2 + 4 <= (int) sizeof(psDGN->abyElem) );
+    if( nWords * 2 + 4 > (int) sizeof(psDGN->abyElem) )
+        return FALSE;
 
+    /* coverity[tainted_data] */
     if( (int) VSIFRead( psDGN->abyElem + 4, 2, nWords, psDGN->fp ) != nWords )
         return FALSE;
 
@@ -881,7 +883,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           DGNParseCore( psDGN, psElement );
 
           // Read B-Spline surface header
-          psSpline->desc_words = DGN_INT32(psDGN->abyElem + 36);
+          psSpline->desc_words = static_cast<long>(DGN_INT32(psDGN->abyElem + 36));
           psSpline->curve_type = psDGN->abyElem[41];
 
           // U
@@ -1371,7 +1373,7 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
     psTCB->master_units[1] = (char) psDGN->abyElem[1121];
     psTCB->master_units[2] = '\0';
 
-    psTCB->uor_per_subunit = DGN_INT32( psDGN->abyElem + 1116 );
+    psTCB->uor_per_subunit = static_cast<long>(DGN_INT32( psDGN->abyElem + 1116 ));
 
     psTCB->sub_units[0] = (char) psDGN->abyElem[1122];
     psTCB->sub_units[1] = (char) psDGN->abyElem[1123];
@@ -1444,7 +1446,7 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
         memcpy( &(psView->conversion), pabyRawView + 106, sizeof(double) );
         DGN2IEEEDouble( &(psView->conversion) );
 
-        psView->activez = DGN_INT32( pabyRawView + 114 );
+        psView->activez = static_cast<unsigned long>(DGN_INT32( pabyRawView + 114 ));
     }
 
     return psElement;
