@@ -58,6 +58,8 @@ CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header,
     this->file = file;
     this->channel_number = channel_number;
     this->ih_offset = ih_offset;
+    byte_order = 'S';
+    needs_swap = FALSE;
 
     width = file->GetWidth();
     height = file->GetHeight();

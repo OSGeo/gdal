@@ -64,6 +64,8 @@ CExternalChannel::CExternalChannel( PCIDSKBuffer &image_header,
 {
     db = NULL;
     mutex = NULL;
+    writable = false;
+    blocks_per_row = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Establish the data window.                                      */

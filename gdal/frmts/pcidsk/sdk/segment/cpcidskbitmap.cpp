@@ -49,6 +49,10 @@ CPCIDSKBitmap::CPCIDSKBitmap( PCIDSKFile *file, int segment,
 
 {
     loaded = false;
+    width = 0;
+    height = 0;
+    block_width = 0;
+    block_height = 0;
 }
 
 /************************************************************************/

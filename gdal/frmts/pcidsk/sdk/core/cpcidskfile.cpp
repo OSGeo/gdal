@@ -77,6 +77,25 @@ CPCIDSKFile::CPCIDSKFile( std::string filename )
     io_mutex = NULL;
     updatable = false;
     base_filename = filename;
+    width = 0;
+    height = 0;
+    channel_count = 0;
+    segment_count = 0;
+    segment_pointers_offset = 0;
+    block_size = 0;
+    pixel_group_size = 0;
+    segment_count = 0;
+    segment_pointers_offset = 0;
+    block_size = 0;
+    pixel_group_size = 0;
+    first_line_offset = 0;
+    last_block_index = 0;
+    last_block_dirty = 0;
+    last_block_xoff = 0;
+    last_block_xsize = 0;
+    last_block_data = 0;
+    last_block_mutex = 0;
+    file_size = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the metadata object, but do not try to load till     */
