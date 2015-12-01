@@ -45,8 +45,8 @@
 CPL_CVSID("$Id$");
 
 #else
-#define VSIFSeek(fp, pos, ref)    fseek(fp, pos, ref)
-#define VSIFRead(p, bs, nb, fp)   fread(p, bs, nb, fp)
+#define VSIFSeek(fp, pos, ref)    CPL_IGNORE_RET_VAL(fseek(fp, pos, ref))
+#define VSIFRead(p, bs, nb, fp)   CPL_IGNORE_RET_VAL(fread(p, bs, nb, fp))
 #endif
 
 namespace msg_native_format {
@@ -110,6 +110,7 @@ Msg_reader_core::Msg_reader_core(const char* fname) :
     _minute(0),
     _open_success(false)
 {
+    memset(&_main_header, 0, sizeof(_main_header));
     SecondaryProdHeaderInit(&_sec_header);
     for (size_t i=0; i < MSG_NUM_CHANNELS; ++i) {
       _calibration[i].cal_slope = 0.0;
