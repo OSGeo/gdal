@@ -998,9 +998,9 @@ CPLErr ILWISDataset::WriteProjection()
     string csFileName = CPLResetExtension(osFileName, "csy" );
     string pszBaseName = string(CPLGetBasename( osFileName ));
     string pszPath = string(CPLGetPath( osFileName ));
-    bool fProjection = ((strlen(pszProjection)>0) && (pszProjection != NULL));
+    bool bProjection = ((pszProjection != NULL) && (strlen(pszProjection)>0));
     bool bHaveSRS;
-    if( fProjection && (oSRS.importFromWkt( &pszP ) == OGRERR_NONE) )
+    if( bProjection && (oSRS.importFromWkt( &pszP ) == OGRERR_NONE) )
     {
         bHaveSRS = true;
     }
