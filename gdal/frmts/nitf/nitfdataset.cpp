@@ -4844,7 +4844,7 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
     /*      Write the Graphics segments at the end of the file.             */
     /* ==================================================================== */
 
-    #define PLACE(location,name,text)  strncpy(location,text,strlen(text))
+    #define PLACE(location,name,text)  memcpy(location,text,strlen(text))
 
     for (int i = 0; i < nNUMS; i++)
     {
@@ -4914,7 +4914,6 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
         PLACE( achGSH+240, SCOLOR, "C" );
         PLACE( achGSH+241, SBAND2, "0000000000" );
         PLACE( achGSH+251, SRES2, "00" );
-        // coverity[buffer_size] - No need to be a NUL terminated string.
         PLACE( achGSH+253, SXSHDL, "00000" );
 
         // Move to the end of the file
@@ -5085,7 +5084,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /* ==================================================================== */
 /*      Write the text segments at the end of the file.                 */
 /* ==================================================================== */
-#define PLACE(location,name,text)  strncpy(location,text,strlen(text))
+#define PLACE(location,name,text)  memcpy(location,text,strlen(text))
     int iTextSeg = 0;
 
     for( int iOpt = 0; papszList != NULL && papszList[iOpt] != NULL; iOpt++ )
@@ -5195,7 +5194,6 @@ static void NITFWriteTextSegments( const char *pszFilename,
             PLACE( achTSH+106, TSCLAS        , "U"                           );
             PLACE( achTSH+273, ENCRYP        , "0"                           );
             PLACE( achTSH+274, TXTFMT        , "STA"                         );
-            // coverity[buffer_size] - No need to be a NUL terminated string.
             PLACE( achTSH+277, TXSHDL        , "00000"                       );
         }
 
