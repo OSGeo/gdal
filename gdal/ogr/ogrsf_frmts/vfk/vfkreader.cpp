@@ -274,24 +274,25 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                     /* remove \244 (currency sign) from string */
                     pszLine[nLength - 1] = '\0';
 
-                    CPLString pszMultiLine(pszLine);
+                    CPLString osMultiLine(pszLine);
                     CPLFree(pszLine);
 
                     while ((pszLine = ReadLine()) != NULL &&
                            pszLine[strlen(pszLine) - 1] == '\244') {
                         /* append line */
-                        pszMultiLine += pszLine;
+                        osMultiLine += pszLine;
                         /* remove 0244 (currency sign) from string */
-                        pszMultiLine.erase(pszMultiLine.size() - 1);
+                        osMultiLine.erase(osMultiLine.size() - 1);
 
                         CPLFree(pszLine);
                     }
-                    pszMultiLine += pszLine;
+                    if( pszLine )
+                        osMultiLine += pszLine;
                     CPLFree(pszLine);
 
-                    nLength = static_cast<int>(pszMultiLine.size());
+                    nLength = static_cast<int>(osMultiLine.size());
                     pszLine = (char *) CPLMalloc(nLength + 1);
-                    strncpy(pszLine, pszMultiLine.c_str(), nLength);
+                    strncpy(pszLine, osMultiLine.c_str(), nLength);
                     pszLine[nLength] = '\0';
                 }
 
