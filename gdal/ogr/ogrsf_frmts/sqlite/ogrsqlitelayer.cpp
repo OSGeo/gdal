@@ -873,7 +873,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                                                     int* pnBytesConsumed,
                                                     int nRecLevel)
 {
-    OGRErr      eErr = OGRERR_NONE;
     OGRGeometry *poGeom = NULL;
     GInt32       nGType;
     GInt32       compressedSize;
@@ -2370,7 +2369,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
             nBytesUsed ++;
 
-            eErr = createFromSpatialiteInternal( pabyData + nBytesUsed,
+            OGRErr eErr = createFromSpatialiteInternal( pabyData + nBytesUsed,
                                                  &poThisGeom, nBytes - nBytesUsed,
                                                  eByteOrder, &nThisGeomSize, nRecLevel + 1);
             if( eErr != OGRERR_NONE )
@@ -2401,19 +2400,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Assign spatial reference system.                                */
-/* -------------------------------------------------------------------- */
-    if( eErr == OGRERR_NONE )
-    {
-        *ppoReturn = poGeom;
-    }
-    else
-    {
-        delete poGeom;
-    }
-
-    return eErr;
+    *ppoReturn = poGeom;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

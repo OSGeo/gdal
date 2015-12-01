@@ -54,6 +54,8 @@ OGRSQLiteViewLayer::OGRSQLiteViewLayer( OGRSQLiteDataSource *poDSIn )
     bHasCheckedSpatialIndexTable = FALSE;
 
     bLayerDefnError = FALSE;
+    eGeomFormat = OSGF_None;
+    poUnderlyingLayer = NULL;
 }
 
 /************************************************************************/

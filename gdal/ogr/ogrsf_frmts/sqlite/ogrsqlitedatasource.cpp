@@ -433,6 +433,8 @@ int OGRSQLiteBaseDataSource::SetCacheSize()
         }
 		
         /* computing the CacheSize as #Pages */
+        if( iSqlitePageSize == 0 )
+            return TRUE;
         iSqliteCachePages = iSqliteCacheBytes / iSqlitePageSize;
         if( iSqliteCachePages <= 0)
             return TRUE;
