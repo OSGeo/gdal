@@ -252,9 +252,13 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS,
     READ_CHAR_VAL( nRasterYSize, NUMBER_LINES_LENGTH, fp );
     VSIFSeekL( fp, SAR_DATA_RECORD_LENGTH_OFFSET, SEEK_SET );
     READ_CHAR_VAL( nRecordSize, SAR_DATA_RECORD_LENGTH_LENGTH, fp );
-    nRasterXSize = (nRecordSize -
+    int nDenom = ((nBitsPerSample / 8) * nSamplesPerGroup);
+    if( nDenom == 0 )
+        nRasterXSize = 0;
+    else
+        nRasterXSize = (nRecordSize -
                     (nFileType != level_15 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET))
-        / ((nBitsPerSample / 8) * nSamplesPerGroup);
+        / nDenom;
 
     poDS->nRasterXSize = nRasterXSize;
     poDS->nRasterYSize = nRasterYSize;
