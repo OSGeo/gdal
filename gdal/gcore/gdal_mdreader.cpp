@@ -1105,7 +1105,7 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
     if( osCurSection.size() )
         bOK &= VSIFPrintfL( fp, "END_GROUP = %s\n", osCurSection.c_str() ) > 0;
 
-    bOK &= VSIFPrintfL( fp, "END;\n" );
+    bOK &= VSIFPrintfL( fp, "END;\n" ) > 0;
 
     VSIFCloseL( fp );
 
