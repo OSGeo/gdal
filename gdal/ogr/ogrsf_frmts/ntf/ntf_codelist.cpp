@@ -46,8 +46,8 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
 
     CPLAssert( EQUAL(poRecord->GetField(1,2),"42") );
     
-    strcpy( szValType, poRecord->GetField(13,14) );
-    strcpy( szFInter, poRecord->GetField(15,19) );
+    snprintf( szValType, sizeof(szValType), "%s", poRecord->GetField(13,14) );
+    snprintf( szFInter, sizeof(szFInter), "%s", poRecord->GetField(15,19) );
 
     nNumCode = atoi(poRecord->GetField(20,22));
 

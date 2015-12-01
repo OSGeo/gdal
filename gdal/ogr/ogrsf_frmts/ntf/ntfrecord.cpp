@@ -209,7 +209,8 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 /* -------------------------------------------------------------------- */
 /*      Restore read pointer to beginning of next record.               */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( fp, nRecordEnd, SEEK_SET );
+    if( VSIFSeek( fp, nRecordEnd, SEEK_SET ) != 0 )
+        return -1;
     
     return nLength;
 }

@@ -282,29 +282,28 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         {
             const char      *pszData;
             int             iChar;
-            char            szFCName[100];
 
             nFCCount++;
 
             papszFCNum = CSLAddString( papszFCNum, poRecord->GetField(3,6) );
 
-            szFCName[0] = '\0';
+            CPLString osFCName;
             pszData = poRecord->GetData();
             
             // CODE_COM
             for( iChar = 15; pszData[iChar] == ' ' && iChar > 5; iChar-- ) {}
 
             if( iChar > 6 )
-                strcat( szFCName, poRecord->GetField(7,iChar+1) );
+                osFCName += poRecord->GetField(7,iChar+1);
 
             // STCLASS
             for( iChar = 35; pszData[iChar] == ' ' && iChar > 15; iChar-- ) {}
 
             if( iChar > 15 )
             {
-                if( strlen(szFCName) > 0 )
-                    strcat( szFCName, " : " );
-                strcat( szFCName, poRecord->GetField(17,iChar+1) );
+                if( osFCName.size() )
+                    osFCName += " : " ;
+                osFCName += poRecord->GetField(17,iChar+1);
             }
 
             // FEATDES
@@ -314,12 +313,12 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 
             if( iChar > 37 )
             {
-                if( strlen(szFCName) > 0 )
-                    strcat( szFCName, " : " );
-                strcat( szFCName, poRecord->GetField(37,iChar) );
+                if( osFCName.size() )
+                    osFCName += " : " ;
+                osFCName += poRecord->GetField(37,iChar);
             }
 
-            papszFCName = CSLAddString(papszFCName, szFCName );
+            papszFCName = CSLAddString(papszFCName, osFCName );
         }
 
 /* -------------------------------------------------------------------- */
@@ -789,16 +788,16 @@ int NTFFileReader::ProcessAttDesc( NTFRecord * poRecord, NTFAttDesc* psAD )
         return FALSE;
 
     psAD->poCodeList = NULL;
-    strcpy( psAD->val_type, poRecord->GetField( 3, 4 ));
-    strcpy( psAD->fwidth, poRecord->GetField( 5, 7 ));
-    strcpy( psAD->finter, poRecord->GetField( 8, 12 ));
+    snprintf( psAD->val_type, sizeof(psAD->val_type), "%s", poRecord->GetField( 3, 4 ));
+    snprintf( psAD->fwidth, sizeof(psAD->fwidth), "%s", poRecord->GetField( 5, 7 ));
+    snprintf( psAD->finter, sizeof(psAD->finter), "%s", poRecord->GetField( 8, 12 ));
     
     pszData = poRecord->GetData();
     for( iChar = 12; 
          pszData[iChar] != '\0' && pszData[iChar] != '\\';
          iChar++ ) {}
 
-    strcpy( psAD->att_name, poRecord->GetField( 13, iChar ));
+    snprintf( psAD->att_name, sizeof(psAD->att_name), "%s", poRecord->GetField( 13, iChar ));
 
     return TRUE;
 }
@@ -1467,8 +1466,12 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
 
         if( papoGroup == NULL )
             break;
-        
-        poLayer = apoTypeTranslation[papoGroup[0]->GetType()];
+
+        int nType = papoGroup[0]->GetType();
+        if( nType < 0 ||
+            nType >= (int)(sizeof(apoTypeTranslation) / sizeof(apoTypeTranslation[0])) )
+            continue;
+        poLayer = apoTypeTranslation[nType];
         if( poLayer == NULL )
             continue;
 

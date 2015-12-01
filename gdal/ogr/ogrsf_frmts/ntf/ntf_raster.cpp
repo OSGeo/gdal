@@ -69,7 +69,8 @@ void NTFFileReader::EstablishRasterAccess()
         delete poRecord;
     }
 
-    if( poRecord->GetType() != NRT_GRIDHREC )
+    if( poRecord == NULL ||
+        poRecord->GetType() != NRT_GRIDHREC )
     {
         delete poRecord;
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -355,7 +356,7 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( GIntBig nFeatureId )
 /*      Is this in the range of legal feature ids (pixels)?             */
 /* -------------------------------------------------------------------- */
     if( nFeatureId < 1
-        || nFeatureId > poReader->GetRasterXSize()*poReader->GetRasterYSize() )
+        || nFeatureId > static_cast<GIntBig>(poReader->GetRasterXSize())*poReader->GetRasterYSize() )
     {
         return NULL;
     }

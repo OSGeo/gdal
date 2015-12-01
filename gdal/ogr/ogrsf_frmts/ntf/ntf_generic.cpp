@@ -633,7 +633,7 @@ static OGRFeature *TranslateGenericPoint( NTFFileReader *poReader,
     {
         char    szValType[3];
 
-        strcpy( szValType, papoGroup[0]->GetField(9,10) );
+        snprintf( szValType, sizeof(szValType), "%s", papoGroup[0]->GetField(9,10) );
         if( !EQUAL(szValType,"  ") )
         {
             char        *pszProcessedValue;
@@ -685,7 +685,7 @@ static OGRFeature *TranslateGenericLine( NTFFileReader *poReader,
     {
         char    szValType[3];
 
-        strcpy( szValType, papoGroup[0]->GetField(9,10) );
+        snprintf( szValType, sizeof(szValType), "%s", papoGroup[0]->GetField(9,10) );
         if( !EQUAL(szValType,"  ") )
         {
             char        *pszProcessedValue;
