@@ -855,7 +855,10 @@ static void GDALGMLJP2XPathUUID(xmlXPathParserContextPtr ctxt, int nargs)
     osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
     osRet += "-";
     for( int i=0; i<6; i ++ )
+    {
+        /* coverity[dont_call] */
         osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
+    }
 
     valuePush(ctxt, xmlXPathNewString((const xmlChar*)osRet.c_str()));
 }

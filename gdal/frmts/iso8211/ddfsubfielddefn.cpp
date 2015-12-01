@@ -992,7 +992,8 @@ int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable,
     {
         if( GetBinaryFormat() == NotBinary )
         {
-            memset( pachData, '0', nSize );
+            const char chFillZeroASCII = '0';
+            memset( pachData, chFillZeroASCII, nSize );
             strncpy( pachData + nSize - strlen(szWork), szWork,
                      strlen(szWork) );
         }

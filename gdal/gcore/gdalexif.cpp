@@ -403,6 +403,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
                 }
             }
 
+            /* coverity[overrun-buffer-arg] */
             EXIFPrintData(szTemp,
                           poTIFFDirEntry->tdir_type,
                           poTIFFDirEntry->tdir_count, data);
