@@ -115,6 +115,7 @@ int main(int argc, char** argv)
     }
 
     GDALRasterizeOptionsForBinary* psOptionsForBinary = GDALRasterizeOptionsForBinaryNew();
+    /* coverity[tainted_data] */
     GDALRasterizeOptions *psOptions = GDALRasterizeOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 

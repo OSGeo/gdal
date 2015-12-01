@@ -398,6 +398,7 @@ int main( int argc, char ** argv )
     }
 
     GDALWarpAppOptionsForBinary* psOptionsForBinary = GDALWarpAppOptionsForBinaryNew();
+    /* coverity[tainted_data] */
     GDALWarpAppOptions *psOptions = GDALWarpAppOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 

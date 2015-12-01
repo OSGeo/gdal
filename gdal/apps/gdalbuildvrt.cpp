@@ -1467,6 +1467,7 @@ int main( int nArgc, char ** papszArgv )
                 exit( 1 );
             }
 
+            /* coverity[tainted_data] */
             if( OSRSetFromUserInput( hOutputSRS, papszArgv[iArg+1] ) != OGRERR_NONE )
             {
                 fprintf( stderr, "Failed to process SRS definition: %s\n", 

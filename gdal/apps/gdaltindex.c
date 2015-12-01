@@ -226,6 +226,7 @@ int main(int argc, char *argv[])
                     "when -t_srs is requested.\n" );
        }
        hTargetSRS = OSRNewSpatialReference("");
+       /* coverity[tainted_data] */
        if( OSRSetFromUserInput( hTargetSRS, pszTargetSRS ) != CE_None )
        {
            OSRDestroySpatialReference( hTargetSRS );
