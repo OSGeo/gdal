@@ -178,7 +178,7 @@ class OGRPCIDSKLayer : public OGRLayer
     OGRSpatialReference *poSRS;
 
   public:
-    OGRPCIDSKLayer( PCIDSK::PCIDSKSegment*, bool bUpdate );
+    OGRPCIDSKLayer( PCIDSK::PCIDSKSegment*, PCIDSK::PCIDSKVectorSegment *, bool bUpdate );
     ~OGRPCIDSKLayer();
 
     void                ResetReading();

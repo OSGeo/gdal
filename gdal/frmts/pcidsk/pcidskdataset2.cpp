@@ -1788,7 +1788,9 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
              segobj = poFile->GetSegment( PCIDSK::SEG_VEC, "",
                                           segobj->GetSegmentNumber() ) )
         {
-            poDS->apoLayers.push_back( new OGRPCIDSKLayer( segobj, eAccess == GA_Update ) );
+            PCIDSK::PCIDSKVectorSegment* poVecSeg = dynamic_cast<PCIDSK::PCIDSKVectorSegment*>( segobj );
+            if( poVecSeg )
+                poDS->apoLayers.push_back( new OGRPCIDSKLayer( segobj, poVecSeg, eAccess == GA_Update ) );
         }
 
 /* -------------------------------------------------------------------- */
@@ -2016,6 +2018,8 @@ PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
     PCIDSK::PCIDSKSegment *poSeg = poFile->GetSegment( nSegNum );
     PCIDSK::PCIDSKVectorSegment *poVecSeg = 
         dynamic_cast<PCIDSK::PCIDSKVectorSegment*>( poSeg );
+    if( poVecSeg == NULL )
+        return NULL;
 
     if( osLayerType != "" )
         poSeg->SetMetadataValue( "LAYER_TYPE", osLayerType );
@@ -2071,7 +2075,8 @@ PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    apoLayers.push_back( new OGRPCIDSKLayer( poSeg, TRUE ) );
+
+    apoLayers.push_back( new OGRPCIDSKLayer( poSeg, poVecSeg, TRUE ) );
 
     return apoLayers[apoLayers.size()-1];
 }

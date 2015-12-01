@@ -37,13 +37,14 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
+                                PCIDSK::PCIDSKVectorSegment * poVecSegIn,
                                 bool bUpdate )
 
 {
     poSRS = NULL;
     bUpdateAccess = bUpdate;
     poSeg = poSegIn;
-    poVecSeg = dynamic_cast<PCIDSK::PCIDSKVectorSegment*>( poSeg );
+    poVecSeg = poVecSegIn;
 
     poFeatureDefn = new OGRFeatureDefn( poSeg->GetName().c_str() );
     SetDescription( poFeatureDefn->GetName() );
