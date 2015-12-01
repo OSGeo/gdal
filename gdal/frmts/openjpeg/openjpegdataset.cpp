@@ -3229,6 +3229,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         GByte abyBuffer[4096];
         VSIFSeekL( fpSrc, nCodeStreamStart, SEEK_SET );
         vsi_l_offset nRead = 0;
+        /* coverity[tainted_data] */
         while( nRead < nCodeStreamLength )
         {
             int nToRead = ( nCodeStreamLength-nRead > 4096 ) ? 4049 :
