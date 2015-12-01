@@ -532,7 +532,7 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
             SAFE_strcat( szPROJ4, " +ellps=GRS80" );
         else if( CSLCount( papszTokens ) > 2 )
         {
-            snprintf( szPROJ4+strlen(szPROJ4), szPROJ4-strlen(szPROJ4),
+            snprintf( szPROJ4+strlen(szPROJ4), sizeof(szPROJ4)-strlen(szPROJ4),
                      " +a=%s +e=%s",
                      papszTokens[1], papszTokens[2] );
         }
