@@ -1456,9 +1456,7 @@ const char *OGRStyleTool::GetStyleString(const OGRStyleParamId *pasStyleParam,
         int i;
         GBool bFound;
         const char *pszClass;
-        // FIXME: we should use CPLString instead of static buffer:
-        char szCurrent[8192];
-        szCurrent[0] = '\0';
+        CPLString osCurrent;
     
         CPLFree(m_pszStyleString);
         
@@ -1480,7 +1478,7 @@ const char *OGRStyleTool::GetStyleString(const OGRStyleParamId *pasStyleParam,
             pszClass = "UNKNOWN(";
         }
 
-        strcat(szCurrent,pszClass);
+        osCurrent = pszClass;
 
         bFound = FALSE;
         for (i=0;i< nSize;i++)
@@ -1489,21 +1487,21 @@ const char *OGRStyleTool::GetStyleString(const OGRStyleParamId *pasStyleParam,
               continue;
 
             if (bFound)
-              strcat(szCurrent,",");
+              osCurrent += ",";
             bFound = TRUE;
             
-            strcat(szCurrent,pasStyleParam[i].pszToken);
+            osCurrent += pasStyleParam[i].pszToken;
             switch (pasStyleParam[i].eType)
             {
               case OGRSTypeString:
-                strcat(szCurrent,":");
-                strcat(szCurrent,pasStyleValue[i].pszValue);
+                osCurrent += ":";
+                osCurrent += pasStyleValue[i].pszValue;
                 break;
               case OGRSTypeDouble:
-                strcat(szCurrent,CPLString().Printf(":%f",pasStyleValue[i].dfValue));
+                osCurrent += CPLString().Printf(":%f",pasStyleValue[i].dfValue);
                 break;
               case OGRSTypeInteger:
-                strcat(szCurrent,CPLString().Printf(":%d",pasStyleValue[i].nValue));
+                osCurrent += CPLString().Printf(":%d",pasStyleValue[i].nValue);
                 break;
               default:
                 break;
@@ -1512,29 +1510,29 @@ const char *OGRStyleTool::GetStyleString(const OGRStyleParamId *pasStyleParam,
               switch (pasStyleValue[i].eUnit)
               {
                 case OGRSTUGround:
-                  strcat(szCurrent,"g");
+                  osCurrent += "g";
                   break;
                 case OGRSTUPixel:
-                  strcat(szCurrent,"px");
+                  osCurrent += "px";
                   break;
                 case OGRSTUPoints:
-                  strcat(szCurrent,"pt");
+                  osCurrent += "pt";
                   break;
                 case OGRSTUCM:
-                  strcat(szCurrent,"cm");
+                  osCurrent += "cm";
                   break;
                 case OGRSTUInches:
-                  strcat(szCurrent,"in");
+                  osCurrent += "in";
                   break;
                 case OGRSTUMM:
-                  //strcat(szCurrent,"mm");
+                  //osCurrent += "mm";
                 default:
                   break;    //imp
               }
         }
-        strcat(szCurrent,")");
+        osCurrent += ")";
 
-        m_pszStyleString = CPLStrdup(szCurrent);
+        m_pszStyleString = CPLStrdup(osCurrent);
 
         m_bModified = FALSE;
     }
