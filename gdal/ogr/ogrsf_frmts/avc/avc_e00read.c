@@ -1396,6 +1396,7 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
             bFirstLine = FALSE;
         }
 
+        /* coverity[tainted_data] */
         obj = _AVCE00ReadNextLineE00(psRead, pszLine);
 
         if (obj)
@@ -2062,6 +2063,7 @@ static int _AVCE00ReadSeekE00(AVCE00ReadE00Ptr psRead, int nOffset,
             (pszLine = CPLReadLine(psRead->hFile) ) != NULL )
     {
         /* obj = */
+        /* coverity[tainted_data] */
         _AVCE00ReadNextLineE00(psRead, pszLine);
     }
 
@@ -2091,6 +2093,7 @@ void *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead)
         pszLine = CPLReadLine(psRead->hFile);
         if (pszLine == 0)
             break;
+        /* coverity[tainted_data] */
         obj = _AVCE00ReadNextLineE00(psRead, pszLine);
     }
     while (obj == NULL &&

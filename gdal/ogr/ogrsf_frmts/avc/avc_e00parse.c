@@ -2132,6 +2132,10 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
         psInfo->nTableE00RecLength = 
             _AVCE00ComputeRecSize(psTableDef->numFields, 
                                   psTableDef->pasFieldDef, FALSE);
+        if( psInfo->nTableE00RecLength < 0 )
+        {
+            return NULL;
+        }
 
         if (psInfo->nBufSize < psInfo->nTableE00RecLength + 1)
         {

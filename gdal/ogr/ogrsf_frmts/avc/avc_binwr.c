@@ -1244,7 +1244,7 @@ int _AVCBinWritePCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     AVCRawBinWriteInt32(psFile, psTxt->numChars );
 
     if (nStrLen > 0)
-        AVCRawBinWritePaddedString(psFile, nStrLen, psTxt->pszText);
+        AVCRawBinWritePaddedString(psFile, nStrLen, psTxt->pszText ? psTxt->pszText : (const GByte*)"    ");
 
     /*-----------------------------------------------------------------
      * Write index entry (cnx.adf)

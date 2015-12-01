@@ -380,10 +380,11 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
          * move the FILE * to the right location and be ready to 
          * read from there.
          */
-        VSIFSeek(psFile->fp, psFile->nOffset+nTarget, SEEK_SET);
         psFile->nCurPos = 0;
         psFile->nCurSize = 0;
         psFile->nOffset = psFile->nOffset+nTarget;
+        if( VSIFSeek(psFile->fp, psFile->nOffset+nTarget, SEEK_SET) < 0 )
+            return;
     }
 
 }
