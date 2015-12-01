@@ -4567,7 +4567,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     nc_type nAttype=NC_NAT;
     size_t nAttlen = 0;
     nc_inq_att( cdfid, NC_GLOBAL, "Conventions", &nAttype, &nAttlen);
-    if( nAttlen < sizeof(szConventions) &&
+    if( nAttlen >= sizeof(szConventions) ||
         (status = nc_get_att_text( cdfid, NC_GLOBAL, "Conventions",
                                    szConventions )) != NC_NOERR ) {
         CPLError( CE_Warning, CPLE_AppDefined, 
