@@ -137,6 +137,11 @@ void CTiledChannel::EstablishAccess() const
         ThrowPCIDSKException( "Unknown channel type: %s", 
                               data_type.c_str() );
     }
+    if( block_width <= 0 || block_height <= 0 )
+    {
+        ThrowPCIDSKException( "Invalid blocksize: %d x %d", 
+                              block_width, block_height );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute information on the tiles.                               */
