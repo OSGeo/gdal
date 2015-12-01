@@ -763,7 +763,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
 /* -------------------------------------------------------------------- */
 /*      MULTIPOLYGON and MULTIPOLYGONZ                                  */
 /* -------------------------------------------------------------------- */
-    else if ( nOGRType == wkbMultiPolygon )
+    else /* if ( nOGRType == wkbMultiPolygon ) */
     {
         OGRMultiPolygon *poMPoly = (OGRMultiPolygon*)poGeom;
 
@@ -856,9 +856,6 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
 
         return OGRERR_NONE;
     }
-
-    // Should not be able to get here.
-    return OGRERR_UNSUPPORTED_OPERATION;
 }
 
 
