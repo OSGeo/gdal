@@ -917,7 +917,7 @@ TABINDNode::TABINDNode(TABAccess eAccessMode /*=TABRead*/)
     m_bUnique = FALSE;
 
     m_eAccessMode = eAccessMode;
-    m_nCurDataBlockPtr = NULL;
+    m_nCurDataBlockPtr = 0;
 }
 
 /**********************************************************************
