@@ -546,7 +546,7 @@ uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
                                           INGR_ColorTableVar *pEnvironTable )
 {
     GDALColorEntry oEntry;
-    real32 fNormFactor = 0xfff / 255;
+    const real32 fNormFactor = static_cast<real32>(0xfff) / 255;
     int i;
 
     for( i = 0; i < poColorTable->GetColorEntryCount(); i++ )
