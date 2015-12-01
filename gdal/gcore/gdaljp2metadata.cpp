@@ -231,6 +231,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                     if( pszXML != NULL && nXMLLength < 100 * 1024 * 1024 )
                     {
                         GIntBig i;
+                        /* coverity[tainted_data] */
                         for(i=nXMLLength-1; i >= 0; i--)
                         {
                             if( pszXML[i] == '\0' )
@@ -238,6 +239,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                             else
                                 break;
                         }
+                        /* coverity[tainted_data] */
                         for(i=0;i<nXMLLength;i++)
                         {
                             if( pszXML[i] == '\0' )
@@ -251,6 +253,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                             if( psNode == NULL )
                             {
                                 CPLDebug("GMLJP2", "GMLJP2 data contains nul characters inside content. Replacing them by \\n");
+                                /* coverity[tainted_data] */
                                 for(i=0;i<nXMLLength;i++)
                                 {
                                     if( pszXML[i] == '\0' )
