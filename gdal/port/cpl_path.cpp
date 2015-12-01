@@ -761,11 +761,10 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
 int CPLIsFilenameRelative( const char *pszFilename )
 
 {
-    size_t nLen = strlen(pszFilename);
-    if( (nLen > 2
+    if( (pszFilename[0] != '\0'
          && (STARTS_WITH(pszFilename+1, ":\\")
              || STARTS_WITH(pszFilename+1, ":/")))
-        || (nLen > 4 && STARTS_WITH(pszFilename, "\\\\?\\")) /* Windows extended Length Path */
+        || STARTS_WITH(pszFilename, "\\\\?\\") /* Windows extended Length Path */
         || pszFilename[0] == '\\'
         || pszFilename[0] == '/' )
         return FALSE;
