@@ -478,7 +478,7 @@ void CPCIDSKFile::InitializeFromHeader()
         first_line_offset = image_offset;
         pixel_group_size = count_8u + count_16s*2 + count_16u*2 + count_32r*4;
         
-        block_size = pixel_group_size * width;
+        block_size = static_cast<PCIDSK::uint64>(pixel_group_size) * width;
         if( block_size % 512 != 0 )
             block_size += 512 - (block_size % 512);
 
