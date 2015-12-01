@@ -1207,7 +1207,7 @@ int OGRCouchDBDataSource::IsError(json_object* poAnswerObj,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "%s : %s, %s",
                  pszErrorMsg,
-                 pszError ? pszError : "",
+                 pszError,
                  pszReason ? pszReason : "");
 
         return TRUE;
