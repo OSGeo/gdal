@@ -147,6 +147,7 @@ TABDATFile::TABDATFile()
     m_bWriteEOF = FALSE;
     
     m_bUpdated = FALSE;
+    m_eAccessMode = TABRead;
 }
 
 /**********************************************************************
@@ -253,7 +254,7 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
          * m_poHeaderBlock will be reused later to read field definition
          *-----------------------------------------------------------*/
         m_poHeaderBlock = new TABRawBinBlock(m_eAccessMode, TRUE);
-        m_poHeaderBlock->ReadFromFile(m_fp, 0, 32);
+        CPL_IGNORE_RET_VAL(m_poHeaderBlock->ReadFromFile(m_fp, 0, 32));
 
         m_poHeaderBlock->ReadByte();       // Table type ??? 0x03
         m_poHeaderBlock->ReadByte();       // Last update year

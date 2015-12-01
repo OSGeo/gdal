@@ -227,6 +227,17 @@ TABMAPFile::TABMAPFile()
     m_bLastOpWasRead = FALSE;
     m_bLastOpWasWrite = FALSE;
     
+    m_eAccessMode = TABRead;
+    m_poIdIndex = NULL;
+    m_sMinFilter.x = 0;
+    m_sMinFilter.y = 0;
+    m_sMaxFilter.x = 0;
+    m_sMaxFilter.y = 0;
+    m_XMinFilter = 0;
+    m_YMinFilter = 0;
+    m_XMaxFilter = 0;
+    m_YMaxFilter = 0;
+    
     m_oBlockManager.SetName("MAP");
 }
 
@@ -2486,7 +2497,7 @@ int TABMAPFile::PrepareCoordBlock(int nObjType,
         {
             int nNewBlockOffset = m_oBlockManager.AllocNewBlock("COORD");
             (*ppoCoordBlock)->SetNextCoordBlock(nNewBlockOffset);
-            (*ppoCoordBlock)->CommitToFile();
+            CPL_IGNORE_RET_VAL((*ppoCoordBlock)->CommitToFile());
             (*ppoCoordBlock)->InitNewBlock(m_fp, 512, nNewBlockOffset);
             poObjBlock->AddCoordBlockRef((*ppoCoordBlock)->GetStartAddress());
         }

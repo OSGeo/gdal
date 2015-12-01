@@ -602,7 +602,8 @@ class TABMAPObjPoint: public TABMAPObjHdr
     GInt32      m_nY;
     GByte       m_nSymbolId;
 
-    TABMAPObjPoint() {};
+    TABMAPObjPoint():
+        m_nX(0), m_nY(0), m_nSymbolId(0) {};
     virtual ~TABMAPObjPoint() {};
 
     virtual int WriteObj(TABMAPObjectBlock *);
@@ -622,7 +623,15 @@ class TABMAPObjFontPoint: public TABMAPObjPoint
     GInt16      m_nAngle;  /* In tenths of degree */
     GByte       m_nFontId;
 
-    TABMAPObjFontPoint() {};
+    TABMAPObjFontPoint():
+        m_nPointSize(0),
+        m_nFontStyle(0),
+        m_nR(0),
+        m_nG(0),
+        m_nB(0),
+        m_nAngle(0),
+        m_nFontId(0)
+        {};
     virtual ~TABMAPObjFontPoint() {};
 
     virtual int WriteObj(TABMAPObjectBlock *);
@@ -638,7 +647,11 @@ class TABMAPObjCustomPoint: public TABMAPObjPoint
     GByte m_nCustomStyle;
     GByte m_nFontId;
 
-    TABMAPObjCustomPoint() {};
+    TABMAPObjCustomPoint():
+        m_nUnknown_(0),
+        m_nCustomStyle(0),
+        m_nFontId(0)
+        {};
     virtual ~TABMAPObjCustomPoint() {};
 
     virtual int WriteObj(TABMAPObjectBlock *);
@@ -657,7 +670,13 @@ class TABMAPObjLine: public TABMAPObjHdr
     GInt32      m_nY2;
     GByte       m_nPenId;
 
-    TABMAPObjLine() {};
+    TABMAPObjLine():
+        m_nX1(0),
+        m_nY1(0),
+        m_nX2(0),
+        m_nY2(0),
+        m_nPenId(0)
+        {};
     virtual ~TABMAPObjLine() {};
 
     virtual int WriteObj(TABMAPObjectBlock *);
@@ -678,7 +697,16 @@ class TABMAPObjPLine: public TABMAPObjHdrWithCoord
     GByte       m_nBrushId;
     GBool       m_bSmooth;      /* TRUE if (m_nCoordDataSize & 0x80000000) */
 
-    TABMAPObjPLine() {};
+    TABMAPObjPLine():
+        m_numLineSections(0),
+        m_nLabelX(0),
+        m_nLabelY(0),
+        m_nComprOrgX(0),
+        m_nComprOrgY(0),
+        m_nPenId(0),
+        m_nBrushId(0),
+        m_bSmooth(0)
+        {};
     virtual ~TABMAPObjPLine() {};
 
     virtual int WriteObj(TABMAPObjectBlock *);
@@ -695,7 +723,12 @@ class TABMAPObjRectEllipse: public TABMAPObjHdr
     GByte       m_nPenId;
     GByte       m_nBrushId;
 
-    TABMAPObjRectEllipse() {};
+    TABMAPObjRectEllipse():
+        m_nCornerWidth(0),
+        m_nCornerHeight(0),
+        m_nPenId(0),
+        m_nBrushId(0)
+        {};
     virtual ~TABMAPObjRectEllipse() {};
 
     virtual int WriteObj(TABMAPObjectBlock *);
@@ -715,7 +748,15 @@ class TABMAPObjArc: public TABMAPObjHdr
     GInt32      m_nArcEllipseMaxY;
     GByte       m_nPenId;
 
-    TABMAPObjArc() {};
+    TABMAPObjArc():
+        m_nStartAngle(0),
+        m_nEndAngle(0),
+        m_nArcEllipseMinX(0),
+        m_nArcEllipseMinY(0),
+        m_nArcEllipseMaxX(0),
+        m_nArcEllipseMaxY(0),
+        m_nPenId(0)
+        {};
     virtual ~TABMAPObjArc() {};
 
     virtual int WriteObj(TABMAPObjectBlock *);
@@ -749,7 +790,22 @@ class TABMAPObjText: public TABMAPObjHdrWithCoord
 
     GByte       m_nPenId;
 
-    TABMAPObjText() {};
+    TABMAPObjText():
+        m_nTextAlignment(0),
+        m_nAngle(0),
+        m_nFontStyle(0),
+        m_nFGColorR(0),
+        m_nFGColorG(0),
+        m_nFGColorB(0),
+        m_nBGColorR(0),
+        m_nBGColorG(0),
+        m_nBGColorB(0),
+        m_nLineEndX(0),
+        m_nLineEndY(0),
+        m_nHeight(0),
+        m_nFontId(0),
+        m_nPenId(0)
+        {};
     virtual ~TABMAPObjText() {};
 
     virtual int WriteObj(TABMAPObjectBlock *);
@@ -769,7 +825,14 @@ class TABMAPObjMultiPoint: public TABMAPObjHdrWithCoord
     GInt32      m_nLabelX;      /* Not sure if it's a label point, but */
     GInt32      m_nLabelY;      /* it's similar to what we find in PLINE */
 
-    TABMAPObjMultiPoint() {};
+    TABMAPObjMultiPoint():
+        m_nNumPoints(0),
+        m_nComprOrgX(0),
+        m_nComprOrgY(0),
+        m_nSymbolId(0),
+        m_nLabelX(0),
+        m_nLabelY(0)
+        {};
     virtual ~TABMAPObjMultiPoint() {};
 
     virtual int WriteObj(TABMAPObjectBlock *);
@@ -795,7 +858,20 @@ class TABMAPObjCollection: public TABMAPObjHdrWithCoord
     GByte       m_nRegionBrushId;
     GByte       m_nPolylinePenId;
 
-    TABMAPObjCollection() {};
+    TABMAPObjCollection():
+        m_nRegionDataSize(0),
+        m_nPolylineDataSize(0),
+        m_nMPointDataSize(0),
+        m_nComprOrgX(0),
+        m_nComprOrgY(0),
+        m_nNumMultiPoints(0),
+        m_nNumRegSections(0),
+        m_nNumPLineSections(0),
+        m_nMultiPointSymbolId(0),
+        m_nRegionPenId(0),
+        m_nRegionBrushId(0),
+        m_nPolylinePenId(0)
+        {};
     virtual ~TABMAPObjCollection() 
     {}
 

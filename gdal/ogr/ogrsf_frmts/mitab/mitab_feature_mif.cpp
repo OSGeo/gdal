@@ -770,7 +770,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     OGRLineString       *poLine;
     OGRMultiLineString  *poMultiLine;
     GBool                bMultiple = FALSE;
-    int                  nNumPoints,nNumSec=0,i,j;
+    int                  nNumPoints=0,nNumSec=0,i,j;
     OGREnvelope          sEnvelope;
     
 
@@ -851,7 +851,6 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             poMultiLine = new OGRMultiLineString();
             for (j=0;j<nNumSec;j++)
             {
-                poLine = new OGRLineString();
                 if (j != 0)
                     nNumPoints = atoi(fp->GetLine());
                 if (nNumPoints < 2)
@@ -859,8 +858,10 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Invalid number of vertices (%d) in PLINE "
                              "MULTIPLE segment.", nNumPoints);
+                    delete poMultiLine;
                     return -1;
                 }
+                poLine = new OGRLineString();
                 poLine->setNumPoints(nNumPoints);
                 for (i=0;i<nNumPoints;i++)
                 {
@@ -894,7 +895,11 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                                                 " \t", CSLT_HONOURSTRINGS);
     
                 if (CSLCount(papszToken) != 2)
+                {
+                  CSLDestroy(papszToken);
+                  delete poLine;
                   return -1;
+                }
                 poLine->setPoint(i,fp->GetXTrans(CPLAtof(papszToken[0])),
                                  fp->GetYTrans(CPLAtof(papszToken[1])));
             }
@@ -2134,6 +2139,7 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         if (CSLCount(papszToken) !=2)
         {
             CSLDestroy(papszToken);
+            delete poMultiPoint;
             return -1;
         }
 

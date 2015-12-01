@@ -260,7 +260,7 @@ int TABINDFile::Close()
             if (m_papoIndexRootNodes &&
                 m_papoIndexRootNodes[iIndex])
             {
-                m_papoIndexRootNodes[iIndex]->CommitToFile();
+                CPL_IGNORE_RET_VAL(m_papoIndexRootNodes[iIndex]->CommitToFile());
             }
         }
     }
@@ -805,7 +805,7 @@ int TABINDFile::CreateIndex(TABFieldType eType, int nFieldSize)
                       (eType == TABFDecimal)  ? 8:
                       (eType == TABFDate)     ? 4:
                       (eType == TABFTime)     ? 4:
-                      (eType == TABFDateTime) ? 8:
+                      /*(eType == TABFDateTime) ? 8: */
                       (eType == TABFLogical)  ? 4: MIN(128,nFieldSize));
 
     m_papoIndexRootNodes[nNewIndexNo] = new TABINDNode(m_eAccessMode);
@@ -917,6 +917,7 @@ TABINDNode::TABINDNode(TABAccess eAccessMode /*=TABRead*/)
     m_bUnique = FALSE;
 
     m_eAccessMode = eAccessMode;
+    m_nCurDataBlockPtr = NULL;
 }
 
 /**********************************************************************
@@ -1840,6 +1841,7 @@ int TABINDNode::SplitNode()
                 poTmpNode->CommitToFile() != 0)
             {
                 delete poTmpNode;
+                delete poNewNode;
                 return -1;
             }
             delete poTmpNode;
@@ -1925,6 +1927,7 @@ int TABINDNode::SplitRootNode()
                             this, 0, 0)!= 0 ||
         poNewNode->SetFieldType(m_eFieldType) != 0)
     {
+        delete poNewNode;
         return -1;
     }
 
@@ -1935,6 +1938,7 @@ int TABINDNode::SplitRootNode()
                                          m_nCurIndexEntry,
                                          m_poCurChildNode) != 0)
     {
+        delete poNewNode;
         return -1;
     }
 
@@ -2146,8 +2150,8 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
 
               if (m_nSubTreeDepth > 1)
               {
-                oChildNode.InitNode(m_fp, nRecordPtr, m_nKeyLength, 
-                                    m_nSubTreeDepth - 1, FALSE);
+                CPL_IGNORE_RET_VAL(oChildNode.InitNode(m_fp, nRecordPtr, m_nKeyLength, 
+                                    m_nSubTreeDepth - 1, FALSE));
                 oChildNode.SetFieldType(m_eFieldType);
                 oChildNode.Dump(fpOut);
               }
