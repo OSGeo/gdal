@@ -590,8 +590,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 if( EQUALN( szEarthModel, pasDatum->pszPCIDatum, 4 ) )
                 {
                     nEPSGCode = pasDatum->nEPSGCode;
-                    OSRGetEllipsoidInfo( pasDatum->nEPSGCode, &pszName,
-                                         &dfSemiMajor, &dfInvFlattening );
+                    CPL_IGNORE_RET_VAL(OSRGetEllipsoidInfo( pasDatum->nEPSGCode, &pszName,
+                                         &dfSemiMajor, &dfInvFlattening ));
                     break;
 
                 }
