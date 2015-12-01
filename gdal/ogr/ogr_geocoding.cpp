@@ -1318,7 +1318,10 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
             if( pszResult != NULL )
             {
                 if( hSession->bWriteCache )
+                {
+                    /* coverity[tainted_data] */
                     OGRGeocodePutIntoCache(hSession, osURL, pszResult);
+                }
                 hLayer = OGRGeocodeBuildLayer(pszResult, bAddRawFeature);
             }
             CPLHTTPDestroyResult(psResult);
@@ -1439,6 +1442,7 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
         }
     }
 
+    /* coverity[tainted_data] */
     return OGRGeocodeCommon(hSession, osURL, papszOptions);
 #else
     return NULL;
@@ -1546,6 +1550,7 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
         }
     }
 
+    /* coverity[tainted_data] */
     return OGRGeocodeCommon(hSession, osURL, papszOptions);
 #else
     return NULL;
