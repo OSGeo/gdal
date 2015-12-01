@@ -73,7 +73,9 @@ class CPGDataset : public RawDataset
     static int FindType2( const char *pszWorkname );
     static int FindType3( const char *pszWorkname );
     static GDALDataset *InitializeType1Or2Dataset( const char *pszWorkname );
+#ifdef notdef
     static GDALDataset *InitializeType3Dataset( const char *pszWorkname );
+#endif
   CPLErr LoadStokesLine( int iLine, int bNativeOrder );
 
   public:
@@ -763,6 +765,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
     return poDS;
 }
 
+#ifdef notdef
 GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
 {
     int iBytesPerPixel = 0, iInterleave=-1;
@@ -1016,6 +1019,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
 
     return poDS;
 }
+#endif
 
 /************************************************************************/
 /*                                Open()                                */
@@ -1100,9 +1104,11 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( CPGType < 3 )
       poDS = reinterpret_cast<CPGDataset *>(
           InitializeType1Or2Dataset( poOpenInfo->pszFilename ) );
+#ifdef notdef
     else
       poDS = reinterpret_cast<CPGDataset *>(
           InitializeType3Dataset( poOpenInfo->pszFilename ) );
+#endif
 
     if (poDS == NULL)
         return NULL;
@@ -1270,8 +1276,9 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         const signed char *Byte = reinterpret_cast<signed char *>(
             pabyGroup - 1 ); /* A ones based alias */
 
+        /* coverity[tainted_data] */
         const double dfScale
-            = sqrt( (Byte[2] / 254 + 1.5) * afPowTable[Byte[1] + 128] );
+            = sqrt( (static_cast<double>(Byte[2]) / 254 + 1.5) * afPowTable[Byte[1] + 128] );
 
         float *pafImage = reinterpret_cast<float *>( pImage );
 
