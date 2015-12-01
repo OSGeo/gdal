@@ -949,7 +949,7 @@ static OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, 
     {
         OGRGeometry* pGeom = pPathFeature->GetGeometryRef();
 
-        if (wkbFlatten(pGeom->getGeometryType()) == wkbMultiLineString)
+        if (pGeom != NULL && wkbFlatten(pGeom->getGeometryType()) == wkbMultiLineString)
         {
             if (!bQuiet)
             {
