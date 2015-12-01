@@ -1248,6 +1248,7 @@ do {                                                                    \
 
     if ( poDS->sHeader.nExtHdrOffset && poDS->sHeader.nExtHdrSize )
     {
+        /* coverity[tainted_data] */
         GByte *pabyExtHeader = reinterpret_cast<GByte *>(
             VSICalloc( poDS->sHeader.nExtHdrSize, 1 ) );
         if (pabyExtHeader == NULL)
@@ -1297,10 +1298,15 @@ do {                                                                    \
         GInt32 nValue;
 
         CPLDebug( "RMF", "ROI coordinates:" );
+        /* coverity[tainted_data] */
         for ( GUInt32 i = 0; i < poDS->sHeader.nROISize; i += sizeof(nValue) )
         {
-            VSIFSeekL( poDS->fp, poDS->sHeader.nROIOffset + i, SEEK_SET );
-            VSIFReadL( &nValue, 1, sizeof(nValue), poDS->fp );
+            if( VSIFSeekL( poDS->fp, poDS->sHeader.nROIOffset + i, SEEK_SET ) != 0 ||
+                VSIFReadL( &nValue, 1, sizeof(nValue), poDS->fp ) != sizeof(nValue) )
+            {
+                delete poDS;
+                return NULL;
+            }
 
             CPLDebug( "RMF", "%d", nValue );
         }
@@ -1316,6 +1322,7 @@ do {                                                                    \
         return NULL;
     }
 
+    /* coverity[tainted_data] */
     poDS->paiTiles = reinterpret_cast<GUInt32 *>(
         VSIMalloc( poDS->sHeader.nTileTblSize ) );
     if ( !poDS->paiTiles )
@@ -1394,6 +1401,7 @@ do {                                                                    \
                         delete poDS;
                         return NULL;
                     }
+                    /* coverity[tainted_data] */
                     poDS->pabyColorTable = reinterpret_cast<GByte *>(
                         VSIMalloc( poDS->sHeader.nClrTblSize ) );
                     if (poDS->pabyColorTable == NULL)
@@ -1692,10 +1700,14 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     const char *pszValue = CSLFetchNameValue(papszParmList,"BLOCKXSIZE");
     if( pszValue != NULL )
         nBlockXSize = atoi( pszValue );
+    if( nBlockXSize <= 0 )
+        nBlockXSize = RMF_DEFAULT_BLOCKXSIZE;
 
     pszValue = CSLFetchNameValue(papszParmList,"BLOCKYSIZE");
     if( pszValue != NULL )
         nBlockYSize = atoi( pszValue );
+    if( nBlockYSize <= 0 )
+        nBlockYSize = RMF_DEFAULT_BLOCKXSIZE;
 
     poDS->sHeader.nTileWidth = nBlockXSize;
     poDS->sHeader.nTileHeight = nBlockYSize;
