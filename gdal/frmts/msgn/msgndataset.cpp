@@ -180,7 +180,8 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             packet_size*(3 - (i_nBlockYOff % 3)) + (packet_size - data_length);
     }
 
-    VSIFSeek( poGDS->fp, data_offset, SEEK_SET );
+    if( VSIFSeek( poGDS->fp, data_offset, SEEK_SET ) != 0 )
+        return CE_Failure;
 
     pszRecord = (char *) CPLMalloc(data_length);
     size_t nread = VSIFRead( pszRecord, 1, data_length, poGDS->fp );
@@ -409,7 +410,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
     // first reset the file pointer, then hand over to the msg_reader_core
-    VSIFSeek( poDS->fp, 0, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeek( poDS->fp, 0, SEEK_SET ));
 
     poDS->msg_reader_core = new Msg_reader_core(poDS->fp);
 
