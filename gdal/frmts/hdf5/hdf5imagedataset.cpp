@@ -466,10 +466,8 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int i;
     HDF5ImageDataset    *poDS;
-    char szFilename[2048];
 
-    if(!STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF5:") ||
-        strlen(poOpenInfo->pszFilename) > sizeof(szFilename) - 3 )
+    if(!STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF5:") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -507,12 +505,12 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     /* -------------------------------------------------------------------- */
     CPLString osSubdatasetName;
 
-    strcpy(szFilename, papszName[1]);
+    CPLString osFilename(papszName[1]);
 
     if( strlen(papszName[1]) == 1 && papszName[3] != NULL )
     {
-        strcat(szFilename, ":");
-        strcat(szFilename, papszName[2]);
+        osFilename += ":";
+        osFilename += papszName[2];
         osSubdatasetName = papszName[3];
     }
     else
@@ -523,17 +521,17 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     CSLDestroy(papszName);
     papszName = NULL;
 
-    if( !H5Fis_hdf5(szFilename) ) {
+    if( !H5Fis_hdf5(osFilename) ) {
         delete poDS;
         return NULL;
     }
 
-    poDS->SetPhysicalFilename( szFilename );
+    poDS->SetPhysicalFilename( osFilename );
 
     /* -------------------------------------------------------------------- */
     /*      Try opening the dataset.                                        */
     /* -------------------------------------------------------------------- */
-    poDS->hHDF5 = H5Fopen(szFilename,
+    poDS->hHDF5 = H5Fopen(osFilename,
                           H5F_ACC_RDONLY,
                           H5P_DEFAULT );
 
