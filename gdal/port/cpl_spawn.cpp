@@ -782,6 +782,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
 
     pid_t pid;
 #ifdef HAVE_VFORK
+    /* coverity[dead_error_line] */
     if( papszArgv != NULL && !bDup2In && !bDup2Out && !bDup2Err )
         pid = vfork();
     else

@@ -950,6 +950,7 @@ uLong VSIGZipHandle::getLong ()
         return 0;
     }
     x += ((uLong)c)<<24;
+    /* coverity[overflow_sink] */
     return x;
 }
 
