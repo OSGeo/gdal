@@ -145,6 +145,8 @@ void *qh_memalloc(int insize) {
           qh_fprintf(qhmem.ferr, 6080, "qhull error (qh_memalloc): insufficient memory to allocate short memory buffer (%d bytes)\n", bufsize);
           qh_errexit(qhmem_ERRmem, NULL, NULL);
         }
+        /* newbuffer cannot be NULL since above qh_errexit didn't return */
+        /* coverity[var_deref_op] */
         *((void **)newbuffer)= qhmem.curbuffer;  /* prepend newbuffer to curbuffer
                                                     list */
         qhmem.curbuffer= newbuffer;
@@ -232,9 +234,9 @@ void qh_memfree(void *object, int insize) {
   }else {
     qhmem .freelong++;
     qhmem .totlong -= insize;
-    qh_free(object);
     if (qhmem.IStracing >= 5)
       qh_fprintf(qhmem.ferr, 8058, "qh_mem %p n %8d free long: %d bytes (tot %d cnt %d)\n", object, qhmem.cntlong+qhmem.freelong, insize, qhmem.totlong, qhmem.cntlong-qhmem.freelong);
+    qh_free(object);
   }
 } /* memfree */
 

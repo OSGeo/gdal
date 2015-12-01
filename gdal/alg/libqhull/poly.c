@@ -779,7 +779,10 @@ void qh_matchneighbor(facetT *newfacet, int newskip, int hashsize, int *hashcoun
           qh_setfacetplane(facet);
         if (matchfacet) {
           matchskip= qh_setindex(matchfacet->neighbors, facet);
-          SETelem_(matchfacet->neighbors, matchskip)= qh_DUPLICATEridge;
+          if( matchskip >= 0 )
+          {
+            SETelem_(matchfacet->neighbors, matchskip)= qh_DUPLICATEridge;
+          }
           matchfacet->dupridge= True;
           if (!matchfacet->normal)
             qh_setfacetplane(matchfacet);
@@ -858,7 +861,10 @@ void qh_matchnewfacets(void /* qh newfacet_list */) {
   hashsize= qh_setsize(qh hash_table);
   FORALLnew_facets {
     for (newskip=1; newskip<qh hull_dim; newskip++) /* furthest/horizon already matched */
-      qh_matchneighbor(newfacet, newskip, hashsize, &hashcount);
+    {
+      if( hashsize )
+        qh_matchneighbor(newfacet, newskip, hashsize, &hashcount);
+    }
 #if 0   /* use the following to trap hashcount errors */
     {
       int count= 0, k;

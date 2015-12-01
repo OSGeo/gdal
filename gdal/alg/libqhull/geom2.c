@@ -34,6 +34,8 @@ coordT *qh_copypoints(coordT *points, int numpoints, int dimension) {
         numpoints);
     qh_errexit(qh_ERRmem, NULL, NULL);
   }
+  /* newpoints cannot be NULL since above qh_errexit didn't return */
+  /* coverity[var_deref_model] */
   memcpy((char *)newpoints, (char *)points, (size_t)size);
   return newpoints;
 } /* copypoints */
