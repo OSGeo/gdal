@@ -269,12 +269,12 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         fastpath = TRUE;
 
     if (! fastpath) {
-        VSIFReadL( tmpImage, recordSize, 1, poFIT_DS->fp );
+        CPL_IGNORE_RET_VAL(VSIFReadL( tmpImage, recordSize, 1, poFIT_DS->fp ));
         // offset to correct component to swap
         p = (char *) tmpImage + nBand-1;
     }
     else {
-        VSIFReadL( pImage, recordSize, 1, poFIT_DS->fp );
+        CPL_IGNORE_RET_VAL(VSIFReadL( pImage, recordSize, 1, poFIT_DS->fp ));
         p = (char *) pImage;
     }
 
@@ -1196,7 +1196,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     head->dataOffset = size;
     gst_swapb(head->dataOffset);
 
-    VSIFWriteL(head, size, 1, fpImage);
+    CPL_IGNORE_RET_VAL(VSIFWriteL(head, size, 1, fpImage));
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -1287,7 +1287,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
             } // switch
 #endif // swapping
 
-            VSIFWriteL(output, pageBytes, 1, fpImage);
+            CPL_IGNORE_RET_VAL(VSIFWriteL(output, pageBytes, 1, fpImage));
 
             double perc = ((double) (y * maxx + x)) / (maxx * maxy);
 //             printf("progress %f\n", perc);

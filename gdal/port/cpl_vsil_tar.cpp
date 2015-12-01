@@ -155,7 +155,8 @@ int VSITarReader::GotoNextFile()
         return FALSE;
     }
 
-    VSIFSeekL(fp, nBytesToSkip, SEEK_CUR);
+    if( VSIFSeekL(fp, nBytesToSkip, SEEK_CUR) < 0 )
+        return FALSE;
 
     return TRUE;
 }
@@ -166,7 +167,8 @@ int VSITarReader::GotoNextFile()
 
 int VSITarReader::GotoFirstFile()
 {
-    VSIFSeekL(fp, 0, SEEK_SET);
+    if( VSIFSeekL(fp, 0, SEEK_SET) < 0 )
+        return FALSE;
     return GotoNextFile();
 }
 
@@ -177,7 +179,8 @@ int VSITarReader::GotoFirstFile()
 int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 {
     VSITarEntryFileOffset* pTarEntryOffset = (VSITarEntryFileOffset*)pOffset;
-    VSIFSeekL(fp, pTarEntryOffset->m_nOffset - 512, SEEK_SET);
+    if( VSIFSeekL(fp, pTarEntryOffset->m_nOffset - 512, SEEK_SET) < 0 )
+        return FALSE;
     return GotoNextFile();
 }
 

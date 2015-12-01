@@ -304,7 +304,11 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
 
     pszRawXML = (char *) CPLMalloc((size_t)nXMLSize+1);
     pszRawXML[nXMLSize] = '\0';
-    VSIFReadL( pszRawXML, (size_t)nXMLSize, 1, fp );
+    if( VSIFReadL( pszRawXML, (size_t)nXMLSize, 1, fp ) != 1 )
+    {
+        VSIFCloseL(fp);
+        return OGRERR_FAILURE;
+    }
 
     VSIFCloseL( fp );
 
@@ -370,12 +374,12 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
         return OGRERR_FAILURE;
     }
 
-    VSIFWrite( pszRawXML, 1, strlen(pszRawXML), fp );
+    OGRErr eErr = (VSIFWrite( pszRawXML, strlen(pszRawXML), 1, fp ) == 1) ? OGRERR_NONE : OGRERR_FAILURE;
     VSIFClose( fp );
 
     CPLFree( pszRawXML );
     
-    return OGRERR_NONE;
+    return eErr;
 }
 
 /************************************************************************/

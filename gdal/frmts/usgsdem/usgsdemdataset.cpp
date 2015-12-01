@@ -85,7 +85,7 @@ static int ReadInt( VSILFILE *fp )
         nVal = c - '0';
     else
     {
-        VSIFSeekL(fp, nOffset + nRead, SEEK_SET);
+        CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nOffset + nRead, SEEK_SET));
         return 0;
     }
 
@@ -98,7 +98,7 @@ static int ReadInt( VSILFILE *fp )
             nVal = nVal * 10 + (c - '0');
         else
         {
-            VSIFSeekL(fp, nOffset + (nRead - 1), SEEK_SET);
+            CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nOffset + (nRead - 1), SEEK_SET));
             return nSign * nVal;
         }
     }
@@ -236,7 +236,7 @@ static double DConvert( VSILFILE *fp, int nCharCount )
 {
     char	szBuffer[100];
 
-    VSIFReadL( szBuffer, nCharCount, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFReadL( szBuffer, nCharCount, 1, fp ));
     szBuffer[nCharCount] = '\0';
 
     for( int i = 0; i < nCharCount; i++ )
@@ -346,7 +346,7 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL(poGDS->fp, poGDS->nDataStartOffset, 0);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(poGDS->fp, poGDS->nDataStartOffset, 0));
 
     double dfYMin = poGDS->adfGeoTransform[3]
         + (GetYSize()-0.5) * poGDS->adfGeoTransform[5];
@@ -490,7 +490,7 @@ USGSDEMDataset::~USGSDEMDataset()
 int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
 {
     // check for version of DEM format
-    VSIFSeekL(InDem, 864, 0);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 864, 0));
 
     // Read DEM into matrix
     const int nRow = ReadInt(InDem);
@@ -498,12 +498,12 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     const bool bNewFormat = nRow != 1 || nColumn != 1;
     if (bNewFormat)
     {
-        VSIFSeekL(InDem, 1024, 0); 	// New Format
+        CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 1024, 0)); 	// New Format
         int i = ReadInt(InDem);
         int j = ReadInt(InDem);
         if ( i != 1 || ( j != 1 && j != 0 ) )	// File OK?
         {
-            VSIFSeekL(InDem, 893, 0); 	// Undocumented Format (39109h1.dem)
+            CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 893, 0)); 	// Undocumented Format (39109h1.dem)
             i = ReadInt(InDem);
             j = ReadInt(InDem);
             if ( i != 1 || j != 1 )  // File OK?
@@ -521,11 +521,11 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     else
         nDataStartOffset = 864;
 
-    VSIFSeekL(InDem, 156, 0);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 156, 0));
     const int nCoordSystem = ReadInt(InDem);
     const int iUTMZone = ReadInt(InDem);
 
-    VSIFSeekL(InDem, 528, 0);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 528, 0));
     const int nGUnit = ReadInt(InDem);
     const int nVUnit = ReadInt(InDem);
 
@@ -535,7 +535,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     else
         pszUnits = "m";
 
-    VSIFSeekL(InDem, 816, 0);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 816, 0));
     const double dxdelta = DConvert(InDem, 12);
     const double dydelta = DConvert(InDem, 12);
     fVRes = DConvert(InDem, 12);
@@ -551,7 +551,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
 /* -------------------------------------------------------------------- */
 /*      Read four corner coordinates.                                   */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL(InDem, 546, 0);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 546, 0));
     DPoint2 corners[4];  // SW, NW, NE, SE
     for (int i = 0; i < 4; i++)
     {
@@ -569,7 +569,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     /* dElevMin = */ DConvert(InDem, 48);
     /* dElevMax = */ DConvert(InDem, 48);
 
-    VSIFSeekL(InDem, 858, 0);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 858, 0));
     const int nProfiles = ReadInt(InDem);
 
 /* -------------------------------------------------------------------- */
@@ -582,9 +582,9 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     if (bNewFormat)
     {
         // year of data compilation
-        VSIFSeekL(InDem, 876, 0);
+        CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 876, 0));
         char szDateBuffer[5];
-        VSIFReadL(szDateBuffer, 4, 1, InDem);
+        CPL_IGNORE_RET_VAL(VSIFReadL(szDateBuffer, 4, 1, InDem));
         szDateBuffer[4] = 0;
 
         // Horizontal datum
@@ -594,10 +594,10 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         // 4=NAD 83
         // 5=Old Hawaii Datum
         // 6=Puerto Rico Datum
-        VSIFSeekL(InDem, 890, 0);
+        CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 890, 0));
 
         char szHorzDatum[3];
-        VSIFReadL( szHorzDatum, 1, 2, InDem );
+        CPL_IGNORE_RET_VAL(VSIFReadL( szHorzDatum, 1, 2, InDem ));
         szHorzDatum[2] = '\0';
         const int datum = atoi(szHorzDatum);
         switch (datum)
@@ -671,7 +671,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         extent_max.y = ceil(extent_max.y/dydelta) * dydelta;
 
         // Forcibly compute X extents based on first profile and pixelsize.
-        VSIFSeekL(InDem, nDataStartOffset, 0);
+        CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, nDataStartOffset, 0));
         /* njunk = */ ReadInt(InDem);
         /* njunk = */ ReadInt(InDem);
         /* njunk = */ ReadInt(InDem);

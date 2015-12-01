@@ -212,8 +212,12 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
 /*      Preread info on the first record, to establish if it is         */
 /*      little endian.                                                  */
 /* -------------------------------------------------------------------- */
-    VSIFReadL( abyHeader, 16, 1, fp );
-    VSIFSeekL( fp, 0, SEEK_SET );
+    if( VSIFReadL( abyHeader, 16, 1, fp ) != 1 ||
+        VSIFSeekL( fp, 0, SEEK_SET ) < 0 )
+    {
+        CEOSClose( psImage );
+        return NULL;
+    }
     
     if( abyHeader[0] != 0 || abyHeader[1] != 0 )
         psImage->bLittleEndian = TRUE;

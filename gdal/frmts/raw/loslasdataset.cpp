@@ -165,10 +165,10 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( poDS->fpImage, 64, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( poDS->fpImage, 64, SEEK_SET ));
 
-    VSIFReadL( &(poDS->nRasterXSize), 4, 1, poDS->fpImage );
-    VSIFReadL( &(poDS->nRasterYSize), 4, 1, poDS->fpImage );
+    CPL_IGNORE_RET_VAL(VSIFReadL( &(poDS->nRasterXSize), 4, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( &(poDS->nRasterYSize), 4, 1, poDS->fpImage ));
 
     CPL_LSBPTR32( &(poDS->nRasterXSize) );
     CPL_LSBPTR32( &(poDS->nRasterYSize) );
@@ -179,14 +179,14 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    VSIFSeekL( poDS->fpImage, 76, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( poDS->fpImage, 76, SEEK_SET ));
 
     float min_lon, min_lat, delta_lon, delta_lat;
 
-    VSIFReadL( &min_lon, 4, 1, poDS->fpImage );
-    VSIFReadL( &delta_lon, 4, 1, poDS->fpImage );
-    VSIFReadL( &min_lat, 4, 1, poDS->fpImage );
-    VSIFReadL( &delta_lat, 4, 1, poDS->fpImage );
+    CPL_IGNORE_RET_VAL(VSIFReadL( &min_lon, 4, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( &delta_lon, 4, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( &min_lat, 4, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( &delta_lat, 4, 1, poDS->fpImage ));
 
     CPL_LSBPTR32( &min_lon );
     CPL_LSBPTR32( &delta_lon );

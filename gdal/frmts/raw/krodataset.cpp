@@ -126,7 +126,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Read the file header.                                           */
 /* -------------------------------------------------------------------- */
     char  achHeader[20];
-    VSIFReadL( achHeader, 1, 20, poDS->fpImage );
+    CPL_IGNORE_RET_VAL(VSIFReadL( achHeader, 1, 20, poDS->fpImage ));
 
     int nXSize;
     memcpy(&nXSize, achHeader + 4, 4);
@@ -262,8 +262,8 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
 /*      Zero out image data                                             */
 /* -------------------------------------------------------------------- */
 
-    VSIFSeekL(fp, (vsi_l_offset)nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8) * nBands - 1,
-              SEEK_CUR);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(fp, (vsi_l_offset)nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8) * nBands - 1,
+              SEEK_CUR));
     GByte byNul = 0;
     nRet += VSIFWriteL(&byNul, 1, 1, fp);
     VSIFCloseL(fp);

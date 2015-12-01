@@ -209,11 +209,12 @@ VRTCreateCopy( const char * pszFilename,
                 return NULL;
             }
 
-            VSIFWriteL( pszXML, 1, strlen(pszXML), fpVRT );
+            bool bRet = VSIFWriteL( pszXML, strlen(pszXML), 1, fpVRT ) > 0;
             VSIFCloseL( fpVRT );
 
-            pCopyDS = reinterpret_cast<GDALDataset *>(
-                GDALOpen( pszFilename, GA_Update ) );
+            if( bRet )
+                pCopyDS = reinterpret_cast<GDALDataset *>(
+                    GDALOpen( pszFilename, GA_Update ) );
         }
         else
         {

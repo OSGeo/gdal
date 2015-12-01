@@ -925,9 +925,9 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
     if( nBytes == 0 )
     {
         vsi_l_offset nCurPos = VSIFTellL(fpCSV);
-        VSIFSeekL(fpCSV, 0, SEEK_END);
+        CPL_IGNORE_RET_VAL(VSIFSeekL(fpCSV, 0, SEEK_END));
         vsi_l_offset nFileSize = VSIFTellL(fpCSV);
-        VSIFSeekL(fpCSV, nCurPos, SEEK_SET);
+        CPL_IGNORE_RET_VAL(VSIFSeekL(fpCSV, nCurPos, SEEK_SET));
         if( nFileSize < INT_MAX )
             nBytes = (int)nFileSize;
         else
@@ -1804,6 +1804,7 @@ OGRErr OGRCSVLayer::WriteHeader()
 /* -------------------------------------------------------------------- */
     bNew = FALSE;
     bHasFieldNames = TRUE;
+    bool bOK = true;
 
     for(int iFile=0;iFile<((bCreateCSVT) ? 2 : 1);iFile++)
     {
@@ -1835,44 +1836,44 @@ OGRErr OGRCSVLayer::WriteHeader()
 
         if (bWriteBOM && fpCSV)
         {
-            VSIFWriteL("\xEF\xBB\xBF", 1, 3, fpCSV);
+            bOK &= VSIFWriteL("\xEF\xBB\xBF", 1, 3, fpCSV) > 0;
         }
 
         if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ)
         {
-            if (fpCSV) VSIFPrintfL( fpCSV, "X%cY%cZ", chDelimiter, chDelimiter);
-            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "CoordX,CoordY,Real");
+            if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "X%cY%cZ", chDelimiter, chDelimiter) > 0;
+            if (fpCSVT) bOK &= VSIFPrintfL( fpCSVT, "%s", "CoordX,CoordY,Real") > 0;
             if (poFeatureDefn->GetFieldCount() > 0)
             {
-                if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
-                if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", ",");
+                if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
+                if (fpCSVT) bOK &= VSIFPrintfL( fpCSVT, "%s", ",") > 0;
             }
         }
         else if (eGeometryFormat == OGR_CSV_GEOM_AS_XY)
         {
-            if (fpCSV) VSIFPrintfL( fpCSV, "X%cY", chDelimiter);
-            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "CoordX,CoordY");
+            if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "X%cY", chDelimiter) > 0;
+            if (fpCSVT) bOK &= VSIFPrintfL( fpCSVT, "%s", "CoordX,CoordY") > 0;
             if (poFeatureDefn->GetFieldCount() > 0)
             {
-                if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
-                if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", ",");
+                if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
+                if (fpCSVT) bOK &= VSIFPrintfL( fpCSVT, "%s", ",") > 0;
             }
         }
         else if (eGeometryFormat == OGR_CSV_GEOM_AS_YX)
         {
-            if (fpCSV) VSIFPrintfL( fpCSV, "Y%cX", chDelimiter);
-            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "CoordY,CoordX");
+            if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "Y%cX", chDelimiter) > 0;
+            if (fpCSVT) bOK &= VSIFPrintfL( fpCSVT, "%s", "CoordY,CoordX") > 0;
             if (poFeatureDefn->GetFieldCount() > 0)
             {
-                if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
-                if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", ",");
+                if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
+                if (fpCSVT) bOK &= VSIFPrintfL( fpCSVT, "%s", ",") > 0;
             }
         }
 
         if( bHiddenWKTColumn )
         {
-            if (fpCSV) VSIFPrintfL( fpCSV, "%s", poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef() );
-            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "WKT");
+            if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "%s", poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef() ) >= 0;
+            if (fpCSVT) bOK &= VSIFPrintfL( fpCSVT, "%s", "WKT") > 0;
         }
 
         for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
@@ -1881,8 +1882,8 @@ OGRErr OGRCSVLayer::WriteHeader()
 
             if( iField > 0 || bHiddenWKTColumn )
             {
-                if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
-                if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", ",");
+                if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
+                if (fpCSVT) bOK &= VSIFPrintfL( fpCSVT, "%s", ",") > 0;
             }
 
             pszEscaped = 
@@ -1895,10 +1896,10 @@ OGRErr OGRCSVLayer::WriteHeader()
                 if( chDelimiter == ' ' && pszEscaped[0] != '"' && strchr(pszEscaped, ' ') != NULL )
                     bAddDoubleQuote = TRUE;
                 if( bAddDoubleQuote )
-                    VSIFWriteL( "\"", 1, 1, fpCSV );
-                VSIFPrintfL( fpCSV, "%s", pszEscaped );
+                    bOK &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
+                bOK &= VSIFPrintfL( fpCSV, "%s", pszEscaped ) >= 0;
                 if( bAddDoubleQuote )
-                    VSIFWriteL( "\"", 1, 1, fpCSV );
+                    bOK &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
             }
             CPLFree( pszEscaped );
 
@@ -1914,43 +1915,43 @@ OGRErr OGRCSVLayer::WriteHeader()
                       if( poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTBoolean )
                       {
                           nWidth = 0;
-                          VSIFPrintfL( fpCSVT, "%s", "Integer(Boolean)");
+                          bOK &= VSIFPrintfL( fpCSVT, "%s", "Integer(Boolean)") > 0;
                       }
                       else if( poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTInt16 )
                       {
                           nWidth = 0;
-                          VSIFPrintfL( fpCSVT, "%s", "Integer(Int16)");
+                          bOK &= VSIFPrintfL( fpCSVT, "%s", "Integer(Int16)") > 0;
                       }
                       else
-                          VSIFPrintfL( fpCSVT, "%s", "Integer");
+                          bOK &= VSIFPrintfL( fpCSVT, "%s", "Integer") > 0;
                       break;
                   }
                   case OFTInteger64:
-                      VSIFPrintfL( fpCSVT, "%s", "Integer64");
+                      bOK &= VSIFPrintfL( fpCSVT, "%s", "Integer64") > 0;
                       break;
                   case OFTReal:
                   {
                       if( poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTFloat32 )
                       {
                           nWidth = 0;
-                          VSIFPrintfL( fpCSVT, "%s", "Real(Float32)");
+                          bOK &= VSIFPrintfL( fpCSVT, "%s", "Real(Float32)") > 0;
                       }
                       else
-                          VSIFPrintfL( fpCSVT, "%s", "Real");
+                          bOK &= VSIFPrintfL( fpCSVT, "%s", "Real") > 0;
                       break;
                   }
-                  case OFTDate:     VSIFPrintfL( fpCSVT, "%s", "Date"); break;
-                  case OFTTime:     VSIFPrintfL( fpCSVT, "%s", "Time"); break;
-                  case OFTDateTime: VSIFPrintfL( fpCSVT, "%s", "DateTime"); break;
-                  default:          VSIFPrintfL( fpCSVT, "%s", "String"); break;
+                  case OFTDate:     bOK &= VSIFPrintfL( fpCSVT, "%s", "Date") > 0; break;
+                  case OFTTime:     bOK &= VSIFPrintfL( fpCSVT, "%s", "Time") > 0; break;
+                  case OFTDateTime: bOK &= VSIFPrintfL( fpCSVT, "%s", "DateTime") > 0; break;
+                  default:          bOK &= VSIFPrintfL( fpCSVT, "%s", "String") > 0; break;
                 }
 
                 if (nWidth != 0)
                 {
                     if (nPrecision != 0)
-                        VSIFPrintfL( fpCSVT, "(%d.%d)", nWidth, nPrecision);
+                        bOK &= VSIFPrintfL( fpCSVT, "(%d.%d)", nWidth, nPrecision) > 0;
                     else
-                        VSIFPrintfL( fpCSVT, "(%d)", nWidth);
+                        bOK &= VSIFPrintfL( fpCSVT, "(%d)", nWidth) > 0;
                 }
             }
         }
@@ -1960,20 +1961,20 @@ OGRErr OGRCSVLayer::WriteHeader()
         if( poFeatureDefn->GetFieldCount() == 1 ||
             (poFeatureDefn->GetFieldCount() == 0 && bHiddenWKTColumn) )
         {
-            if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
+            if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
         }
 
         if( bUseCRLF )
         {
-            if (fpCSV) VSIFPutcL( 13, fpCSV );
-            if (fpCSVT) VSIFPutcL( 13, fpCSVT );
+            if (fpCSV) bOK &= VSIFPutcL( 13, fpCSV ) > 0;
+            if (fpCSVT) bOK &= VSIFPutcL( 13, fpCSVT ) > 0;
         }
-        if (fpCSV) VSIFPutcL( '\n', fpCSV );
-        if (fpCSVT) VSIFPutcL( '\n', fpCSVT );
+        if (fpCSV) bOK &= VSIFPutcL( '\n', fpCSV ) > 0;
+        if (fpCSVT) bOK &= VSIFPutcL( '\n', fpCSVT ) > 0;
         if (fpCSVT) VSIFCloseL(fpCSVT);
     }
 
-    if (fpCSV == NULL) 
+    if (!bOK || fpCSV == NULL) 
         return OGRERR_FAILURE;
     else
         return OGRERR_NONE;
@@ -2017,6 +2018,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
     if (fpCSV == NULL)
         return OGRERR_FAILURE;
 
+    bool bRet = true;
 /* -------------------------------------------------------------------- */
 /*      Make sure we are at the end of the file.                        */
 /* -------------------------------------------------------------------- */
@@ -2026,21 +2028,21 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         {
             /* Add a newline character to the end of the file if necessary */
             bFirstFeatureAppendedDuringSession = FALSE;
-            VSIFSeekL( fpCSV, 0, SEEK_END );
-            VSIFSeekL( fpCSV, VSIFTellL(fpCSV) - 1, SEEK_SET);
+            bRet &= VSIFSeekL( fpCSV, 0, SEEK_END ) >= 0;
+            bRet &= VSIFSeekL( fpCSV, VSIFTellL(fpCSV) - 1, SEEK_SET) >= 0;
             char chLast;
-            VSIFReadL( &chLast, 1, 1, fpCSV );
-            VSIFSeekL( fpCSV, 0, SEEK_END );
+            bRet &= VSIFReadL( &chLast, 1, 1, fpCSV ) > 0;
+            bRet &= VSIFSeekL( fpCSV, 0, SEEK_END ) >= 0;
             if (chLast != '\n')
             {
                 if( bUseCRLF )
-                    VSIFPutcL( 13, fpCSV );
-                VSIFPutcL( '\n', fpCSV );
+                    bRet &= VSIFPutcL( 13, fpCSV ) != EOF;
+                bRet &= VSIFPutcL( '\n', fpCSV ) != EOF;
             }
         }
         else
         {
-            VSIFSeekL( fpCSV, 0, SEEK_END );
+            bRet &= VSIFSeekL( fpCSV, 0, SEEK_END ) >= 0;
         }
     }
 
@@ -2069,16 +2071,16 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
                     *pc = chDelimiter;
                 pc ++;
             }
-            VSIFPrintfL( fpCSV, "%s", szBuffer );
+            bRet &= VSIFPrintfL( fpCSV, "%s", szBuffer ) > 0;
         }
         else
         {
-            VSIFPrintfL( fpCSV, "%c", chDelimiter );
+            bRet &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
             if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ)
-                VSIFPrintfL( fpCSV, "%c", chDelimiter );
+                bRet &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
         }
         if (poFeatureDefn->GetFieldCount() > 0)
-            VSIFPrintfL( fpCSV, "%c", chDelimiter );
+            bRet &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2093,9 +2095,9 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         if (poGeom && poGeom->exportToWkt(&pszWKT) == OGRERR_NONE)
         {
             bNonEmptyLine = TRUE;
-            VSIFWriteL( "\"", 1, 1, fpCSV );
-            VSIFWriteL( pszWKT, 1, strlen(pszWKT), fpCSV );
-            VSIFWriteL( "\"", 1, 1, fpCSV );
+            bRet &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
+            bRet &= VSIFWriteL( pszWKT, strlen(pszWKT), 1, fpCSV ) > 0;
+            bRet &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
         }
         CPLFree(pszWKT);
     }
@@ -2109,7 +2111,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         char *pszEscaped;
         
         if( iField > 0 || bHiddenWKTColumn )
-            VSIFPrintfL( fpCSV, "%c", chDelimiter );
+            bRet &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
 
         if (eGeometryFormat == OGR_CSV_GEOM_AS_WKT &&
             panGeomFieldIndex[iField] >= 0 )
@@ -2147,25 +2149,25 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         if( chDelimiter == ' ' && pszEscaped[0] != '"' && strchr(pszEscaped, ' ') != NULL )
             bAddDoubleQuote = TRUE;
         if( bAddDoubleQuote )
-            VSIFWriteL( "\"", 1, 1, fpCSV );
-        VSIFWriteL( pszEscaped, 1, nLen, fpCSV );
+            bRet &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
+        bRet &= VSIFWriteL( pszEscaped, nLen, 1, fpCSV ) > 0;
         if( bAddDoubleQuote )
-            VSIFWriteL( "\"", 1, 1, fpCSV );
+            bRet &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
         CPLFree( pszEscaped );
     }
 
     if( (poFeatureDefn->GetFieldCount() == 1 ||
          (poFeatureDefn->GetFieldCount() == 0 && bHiddenWKTColumn)) && !bNonEmptyLine )
-        VSIFPrintfL( fpCSV, "%c", chDelimiter );
+        bRet &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
 
     if( bUseCRLF )
-        VSIFPutcL( 13, fpCSV );
-    VSIFPutcL( '\n', fpCSV );
+        bRet &= VSIFPutcL( 13, fpCSV ) != EOF;
+    bRet &= VSIFPutcL( '\n', fpCSV ) != EOF;
 
     if( nTotalFeatures >= 0 )
         nTotalFeatures ++;
 
-    return OGRERR_NONE;
+    return (bRet) ? OGRERR_NONE : OGRERR_FAILURE;
 }
 
 /************************************************************************/

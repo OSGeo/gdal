@@ -149,7 +149,7 @@ void VRTDataset::FlushCache()
         /* ------------------------------------------------------------------ */
         /*      Write to disk.                                                */
         /* ------------------------------------------------------------------ */
-        VSIFWriteL( papszContent[0], 1, strlen(papszContent[0]), fpVRT );
+        CPL_IGNORE_RET_VAL(VSIFWriteL( papszContent[0], 1, strlen(papszContent[0]), fpVRT ));
     }
     VSIFCloseL( fpVRT );
 }
@@ -679,9 +679,9 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else
         {
-            VSIFSeekL( fp, 0, SEEK_END );
+            CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_END ));
             nLength = static_cast<int>( VSIFTellL( fp ) );
-            VSIFSeekL( fp, 0, SEEK_SET );
+            CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_SET ));
 
             pszXML = reinterpret_cast<char *>( VSI_MALLOC_VERBOSE(nLength+1) );
 

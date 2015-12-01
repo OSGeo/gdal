@@ -265,10 +265,10 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
         else
             nPixelsToRead = ImageDesc->PixelsPerRecord;
 
-        VSIFSeekL( poGDS->fpImage, offset, SEEK_SET );
-        VSIFReadL( pabyRecord + nPixelsRead * ImageDesc->BytesPerPixel, 
+        CPL_IGNORE_RET_VAL(VSIFSeekL( poGDS->fpImage, offset, SEEK_SET ));
+        CPL_IGNORE_RET_VAL(VSIFReadL( pabyRecord + nPixelsRead * ImageDesc->BytesPerPixel, 
                    1, nPixelsToRead * ImageDesc->BytesPerPixel, 
-                   poGDS->fpImage );
+                   poGDS->fpImage ));
 
         nPixelsRead += nPixelsToRead;
         offset += ImageDesc->BytesPerRecord;
@@ -1800,7 +1800,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 CPLDebug( "CEOS", "Opened %s.\n", pszFilename );
 
-                VSIFSeekL( process_fp, 0, SEEK_END );
+                CPL_IGNORE_RET_VAL(VSIFSeekL( process_fp, 0, SEEK_END ));
                 if( ProcessData( process_fp, iFile, psVolume, -1, 
                                  VSIFTellL( process_fp ) ) == 0 )
                 {
@@ -2086,8 +2086,8 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
     while(max_records != 0 && max_bytes != 0)
     {
         record = (CeosRecord_t *) CPLMalloc( sizeof( CeosRecord_t ) );
-        VSIFSeekL( fp, start, SEEK_SET );
-        VSIFReadL( temp_buffer, 1, CEOS_HEADER_LENGTH, fp );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, start, SEEK_SET ));
+        CPL_IGNORE_RET_VAL(VSIFReadL( temp_buffer, 1, CEOS_HEADER_LENGTH, fp ));
         record->Length = DetermineCeosRecordBodyLength( temp_buffer );
 
         iThisRecord++;
@@ -2128,7 +2128,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             }
         }
 
-        VSIFReadL( temp_body, 1, MAX(0,record->Length-CEOS_HEADER_LENGTH),fp);
+        CPL_IGNORE_RET_VAL(VSIFReadL( temp_body, 1, MAX(0,record->Length-CEOS_HEADER_LENGTH),fp));
 
         InitCeosRecordWithHeader( record, temp_buffer, temp_body );
 

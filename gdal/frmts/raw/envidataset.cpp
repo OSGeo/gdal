@@ -2619,11 +2619,11 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 #endif
         ;
 
-    VSIFPrintfL( fp, "ENVI\n" );
-    VSIFPrintfL( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
-		nXSize, nYSize, nBands );
-    VSIFPrintfL( fp, "header offset = 0\nfile type = ENVI Standard\n" );
-    VSIFPrintfL( fp, "data type = %d\n", iENVIType );
+    bRet = VSIFPrintfL( fp, "ENVI\n" ) > 0;
+    bRet &= VSIFPrintfL( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
+		nXSize, nYSize, nBands ) > 0;
+    bRet &= VSIFPrintfL( fp, "header offset = 0\nfile type = ENVI Standard\n" ) > 0;
+    bRet &= VSIFPrintfL( fp, "data type = %d\n", iENVIType ) > 0;
     const char	*pszInterleaving = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
     if ( pszInterleaving )
     {
@@ -2636,10 +2636,13 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
     }
     else
 	pszInterleaving = "bsq";
-    VSIFPrintfL( fp, "interleave = %s\n", pszInterleaving);
-    VSIFPrintfL( fp, "byte order = %d\n", iBigEndian );
+    bRet &= VSIFPrintfL( fp, "interleave = %s\n", pszInterleaving) > 0;
+    bRet &= VSIFPrintfL( fp, "byte order = %d\n", iBigEndian ) > 0;
 
     VSIFCloseL( fp );
+
+    if( !bRet )
+        return FALSE;
 
     return reinterpret_cast<GDALDataset *>(
         GDALOpen( pszFilename, GA_Update ) );

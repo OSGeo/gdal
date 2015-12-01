@@ -175,9 +175,9 @@ CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         }
     }
 
-    VSIFSeekL( poGDS->fp, 1011 + nRecordSize*nBlockYOff, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( poGDS->fp, 1011 + nRecordSize*nBlockYOff, SEEK_SET ));
 
-    VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp );
+    CPL_IGNORE_RET_VAL(VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp ));
 
     if( !EQUALN((char *) poGDS->abyHeader,pszRecord,6) )
     {
@@ -331,7 +331,7 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFReadL( poDS->abyHeader, 1, 1012, poDS->fp );
+    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->abyHeader, 1, 1012, poDS->fp ));
 
     poDS->nRasterXSize = JDEMGetField( (char *) poDS->abyHeader + 23, 3 );
     poDS->nRasterYSize = JDEMGetField( (char *) poDS->abyHeader + 26, 3 );

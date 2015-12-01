@@ -205,14 +205,14 @@ int DDFRecord::Write()
 /* -------------------------------------------------------------------- */
 /*      Write the leader.                                               */
 /* -------------------------------------------------------------------- */
-    VSIFWriteL( szLeader, nLeaderSize, 1, poModule->GetFP() );
+    int bRet = VSIFWriteL( szLeader, nLeaderSize, 1, poModule->GetFP() ) > 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write the remainder of the record.                              */
 /* -------------------------------------------------------------------- */
-    VSIFWriteL( pachData, nDataSize, 1, poModule->GetFP() );
+    bRet &= VSIFWriteL( pachData, nDataSize, 1, poModule->GetFP() ) > 0;
     
-    return TRUE;
+    return bRet ? TRUE : FALSE;
 }
 
 /************************************************************************/
@@ -514,7 +514,8 @@ int DDFRecord::ReadHeader()
         int rewindSize = nFieldEntryWidth - 1;
         VSILFILE *fp = poModule->GetFP();
         vsi_l_offset pos = VSIFTellL(fp) - rewindSize;
-        VSIFSeekL(fp, pos, SEEK_SET);
+        if( VSIFSeekL(fp, pos, SEEK_SET) < 0 )
+            return FALSE;
         nDataSize -= rewindSize;
 
         // --------------------------------------------------------------------

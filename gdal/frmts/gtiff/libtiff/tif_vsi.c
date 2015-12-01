@@ -35,6 +35,8 @@
 #include "tiffiop.h"
 #include "cpl_vsi.h"
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 static tsize_t
 _tiffReadProc(thandle_t fd, tdata_t buf, tsize_t size)
 {
@@ -69,10 +71,10 @@ _tiffSizeProc(thandle_t fd)
     toff_t        file_size;
 
     old_off = VSIFTellL( (VSILFILE *) fd );
-    VSIFSeekL( (VSILFILE *) fd, 0, SEEK_END );
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( (VSILFILE *) fd, 0, SEEK_END ));
 
     file_size = (toff_t) VSIFTellL( (VSILFILE *) fd );
-    VSIFSeekL( (VSILFILE *) fd, old_off, SEEK_SET );
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( (VSILFILE *) fd, old_off, SEEK_SET ));
 
     return file_size;
 }

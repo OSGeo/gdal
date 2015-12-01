@@ -83,7 +83,11 @@ static char * HFAGetDictionary( HFAHandle hHFA )
     char	*pszDictionary = (char *) CPLMalloc(nDictMax);
     int		nDictSize = 0;
 
-    VSIFSeekL( hHFA->fp, hHFA->nDictionaryPos, SEEK_SET );
+    if( VSIFSeekL( hHFA->fp, hHFA->nDictionaryPos, SEEK_SET ) < 0 )
+    {
+        pszDictionary[nDictSize] = '\0';
+        return pszDictionary;
+    }
 
     while( true )
     {
@@ -177,32 +181,34 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 /* -------------------------------------------------------------------- */
 /*	Where is the header?						*/
 /* -------------------------------------------------------------------- */
-    VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, fp );
+    bool bRet = VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, fp ) > 0;
     HFAStandard( 4, &nHeaderPos );
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( fp, nHeaderPos, SEEK_SET );
+    bRet &= VSIFSeekL( fp, nHeaderPos, SEEK_SET ) >= 0;
 
-    VSIFReadL( &(psInfo->nVersion), sizeof(GInt32), 1, fp );
+    bRet &= VSIFReadL( &(psInfo->nVersion), sizeof(GInt32), 1, fp ) > 0;
     HFAStandard( 4, &(psInfo->nVersion) );
 
-    VSIFReadL( szHeader, 4, 1, fp ); /* skip freeList */
+    bRet &= VSIFReadL( szHeader, 4, 1, fp ) > 0; /* skip freeList */
 
-    VSIFReadL( &(psInfo->nRootPos), sizeof(GInt32), 1, fp );
+    bRet &= VSIFReadL( &(psInfo->nRootPos), sizeof(GInt32), 1, fp ) > 0;
     HFAStandard( 4, &(psInfo->nRootPos) );
 
-    VSIFReadL( &(psInfo->nEntryHeaderLength), sizeof(GInt16), 1, fp );
+    bRet &= VSIFReadL( &(psInfo->nEntryHeaderLength), sizeof(GInt16), 1, fp ) > 0;
     HFAStandard( 2, &(psInfo->nEntryHeaderLength) );
 
-    VSIFReadL( &(psInfo->nDictionaryPos), sizeof(GInt32), 1, fp );
+    bRet &= VSIFReadL( &(psInfo->nDictionaryPos), sizeof(GInt32), 1, fp ) > 0;
     HFAStandard( 4, &(psInfo->nDictionaryPos) );
 
 /* -------------------------------------------------------------------- */
 /*      Collect file size.                                              */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( fp, 0, SEEK_END );
+    bRet &= VSIFSeekL( fp, 0, SEEK_END ) >= 0;
+    if( !bRet )
+        return NULL;
     psInfo->nEndOfFile = (GUInt32) VSIFTellL( fp );
 
 /* -------------------------------------------------------------------- */
@@ -1866,11 +1872,11 @@ HFAHandle HFACreateLL( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     GInt32	nHeaderPos;
 
-    VSIFWriteL( (void *) "EHFA_HEADER_TAG", 1, 16, fp );
+    bool bRet = VSIFWriteL( (void *) "EHFA_HEADER_TAG", 1, 16, fp ) > 0;
 
     nHeaderPos = 20;
     HFAStandard( 4, &nHeaderPos );
-    VSIFWriteL( &nHeaderPos, 4, 1, fp );
+    bRet &= VSIFWriteL( &nHeaderPos, 4, 1, fp ) > 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write the Ehfa_File node, locked in at offset 20.               */
@@ -1890,11 +1896,11 @@ HFAHandle HFACreateLL( const char * pszFilename )
     HFAStandard( 2, &nEntryHeaderLength );
     HFAStandard( 4, &nDictionaryPtr );
 
-    VSIFWriteL( &nVersion, 4, 1, fp );
-    VSIFWriteL( &nFreeList, 4, 1, fp );
-    VSIFWriteL( &nRootEntry, 4, 1, fp );
-    VSIFWriteL( &nEntryHeaderLength, 2, 1, fp );
-    VSIFWriteL( &nDictionaryPtr, 4, 1, fp );
+    bRet &= VSIFWriteL( &nVersion, 4, 1, fp ) > 0;
+    bRet &= VSIFWriteL( &nFreeList, 4, 1, fp ) > 0;
+    bRet &= VSIFWriteL( &nRootEntry, 4, 1, fp ) > 0;
+    bRet &= VSIFWriteL( &nEntryHeaderLength, 2, 1, fp ) > 0;
+    bRet &= VSIFWriteL( &nDictionaryPtr, 4, 1, fp ) > 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write the dictionary, locked in at location 38.  Note that      */
@@ -1913,8 +1919,8 @@ HFAHandle HFACreateLL( const char * pszFilename )
     for( iChunk = 0; aszDefaultDD[iChunk] != NULL; iChunk++ )
         strcat( psInfo->pszDictionary, aszDefaultDD[iChunk] );
 
-    VSIFWriteL( (void *) psInfo->pszDictionary, 1,
-                strlen(psInfo->pszDictionary)+1, fp );
+    bRet &= VSIFWriteL( (void *) psInfo->pszDictionary, 
+                strlen(psInfo->pszDictionary)+1, 1, fp ) > 0;
 
     psInfo->poDictionary = new HFADictionary( psInfo->pszDictionary );
 
@@ -2004,14 +2010,14 @@ CPLErr HFAFlush( HFAHandle hHFA )
 /*      Flush Dictionary to disk.                                       */
 /* -------------------------------------------------------------------- */
     GUInt32 nNewDictionaryPos = hHFA->nDictionaryPos;
-
+    bool bRet = true;
     if( hHFA->poDictionary->bDictionaryTextDirty )
     {
-        VSIFSeekL( hHFA->fp, 0, SEEK_END );
+        bRet &= VSIFSeekL( hHFA->fp, 0, SEEK_END ) >= 0;
         nNewDictionaryPos = (GUInt32) VSIFTellL( hHFA->fp );
-        VSIFWriteL( hHFA->poDictionary->osDictionaryText.c_str(), 
+        bRet &= VSIFWriteL( hHFA->poDictionary->osDictionaryText.c_str(), 
                     strlen(hHFA->poDictionary->osDictionaryText.c_str()) + 1,
-                    1, hHFA->fp );
+                    1, hHFA->fp ) > 0;
         hHFA->poDictionary->bDictionaryTextDirty = FALSE;
     }
 
@@ -2024,22 +2030,22 @@ CPLErr HFAFlush( HFAHandle hHFA )
         GUInt32		nOffset;
         GUInt32         nHeaderPos;
 
-        VSIFSeekL( hHFA->fp, 16, SEEK_SET );
-        VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, hHFA->fp );
+        bRet &= VSIFSeekL( hHFA->fp, 16, SEEK_SET ) >= 0;
+        bRet &= VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, hHFA->fp ) > 0;
         HFAStandard( 4, &nHeaderPos );
 
         nOffset = hHFA->nRootPos = hHFA->poRoot->GetFilePos();
         HFAStandard( 4, &nOffset );
-        VSIFSeekL( hHFA->fp, nHeaderPos+8, SEEK_SET );
-        VSIFWriteL( &nOffset, 4, 1, hHFA->fp );
+        bRet &= VSIFSeekL( hHFA->fp, nHeaderPos+8, SEEK_SET ) >= 0;
+        bRet &= VSIFWriteL( &nOffset, 4, 1, hHFA->fp ) > 0;
 
         nOffset = hHFA->nDictionaryPos = nNewDictionaryPos;
         HFAStandard( 4, &nOffset );
-        VSIFSeekL( hHFA->fp, nHeaderPos+14, SEEK_SET );
-        VSIFWriteL( &nOffset, 4, 1, hHFA->fp );
+        bRet &= VSIFSeekL( hHFA->fp, nHeaderPos+14, SEEK_SET ) >= 0;
+        bRet &= VSIFWriteL( &nOffset, 4, 1, hHFA->fp ) > 0;
     }
 
-    return CE_None;
+    return (bRet) ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -2304,10 +2310,10 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
     poEhfa_Layer->SetStringField( "type", "raster" );
     poEhfa_Layer->SetIntField( "dictionaryPtr", nLDict );
 
-    VSIFSeekL( psInfo->fp, nLDict, SEEK_SET );
-    VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1, psInfo->fp );
+    bool bRet = VSIFSeekL( psInfo->fp, nLDict, SEEK_SET ) >= 0;
+    bRet &= VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1, psInfo->fp ) > 0;
 
-    return TRUE;
+    return bRet;
 }
 
 
@@ -2645,6 +2651,7 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Process each metadata item as a separate column.		*/
 /* -------------------------------------------------------------------- */
+    bool bRet = true;
     for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
     {
         HFAEntry        *poEdsc_Column;
@@ -2677,13 +2684,13 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 
         poEdsc_Column->SetIntField( "columnDataPtr", nOffset );
 
-        VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-        VSIFWriteL( (void *) pszValue, 1, strlen(pszValue)+1, hHFA->fp );
+        bRet &= VSIFSeekL( hHFA->fp, nOffset, SEEK_SET ) >= 0;
+        bRet &= VSIFWriteL( (void *) pszValue, strlen(pszValue)+1, 1, hHFA->fp ) > 0;
 
         CPLFree( pszKey );
     }
 
-    return CE_Failure;
+    return (bRet) ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -2808,6 +2815,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Special case to write out the histogram.                        */
 /* -------------------------------------------------------------------- */
+    bool bRet = true;
     if ( pszBinValues != NULL )
     {
         HFAEntry * poEntry = poNode->GetNamedChild( "HistogramParameters" );
@@ -2862,11 +2870,11 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 if ( pszEnd != NULL )
                 {
                     *pszEnd = 0;
-                    VSIFSeekL( hHFA->fp, nOffset + 8*nBin, SEEK_SET );
+                    bRet &= VSIFSeekL( hHFA->fp, nOffset + 8*nBin, SEEK_SET ) >= 0;
                     double nValue = CPLAtof( pszWork );
                     HFAStandard( 8, &nValue );
 
-                    VSIFWriteL( (void *)&nValue, 1, 8, hHFA->fp );
+                    bRet &= VSIFWriteL( (void *)&nValue, 8, 1, hHFA->fp ) > 0;
                     pszWork = pszEnd + 1;
                 }
             }
@@ -2907,16 +2915,16 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                         *pszEnd = 0;
                         if ( bCountIsInt ) {
                             // Histogram counts were written as ints, so re-write them the same way
-                            VSIFSeekL( hHFA->fp, nOffset + 4*nBin, SEEK_SET );
+                            bRet &= VSIFSeekL( hHFA->fp, nOffset + 4*nBin, SEEK_SET ) >= 0;
                             int nValue = atoi( pszWork );
                             HFAStandard( 4, &nValue );
-                            VSIFWriteL( (void *)&nValue, 1, 4, hHFA->fp );
+                            bRet &= VSIFWriteL( (void *)&nValue, 4, 1, hHFA->fp ) > 0;
                         } else {
                             // Histogram were written as doubles, as is now the default behaviour
-                            VSIFSeekL( hHFA->fp, nOffset + 8*nBin, SEEK_SET );
+                            bRet &= VSIFSeekL( hHFA->fp, nOffset + 8*nBin, SEEK_SET ) >= 0;
                             double nValue = CPLAtof( pszWork );
                             HFAStandard( 8, &nValue );
-                            VSIFWriteL( (void *)&nValue, 1, 8, hHFA->fp );
+                            bRet &= VSIFWriteL( (void *)&nValue, 8, 1, hHFA->fp ) > 0;
                         }
                         pszWork = pszEnd + 1;
                     }
@@ -2946,7 +2954,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Write out metadata items without a special place.               */
 /* -------------------------------------------------------------------- */
-    if( CSLCount( papszGDALMD) != 0 )
+    if( bRet && CSLCount( papszGDALMD) != 0 )
     {
         CPLErr eErr = HFASetGDALMetadata( hHFA, nBand, papszGDALMD );
         
@@ -2954,7 +2962,10 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         return eErr;
     }
     else
+    {
+        CSLDestroy( papszGDALMD );
         return CE_Failure;
+    }
 }
 
 /************************************************************************/
@@ -3070,6 +3081,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     static const char *pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";
     VSILFILE *fpVSIL;
+    bool bRet = true;
 
     fpVSIL = VSIFOpenL( pszFullFilename, "r+b" );
     if( fpVSIL == NULL )
@@ -3083,7 +3095,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
             return FALSE;
         }
 
-        VSIFWriteL( (void *) pszMagick, 1, strlen(pszMagick)+1, fpVSIL );
+        bRet &= VSIFWriteL( (void *) pszMagick, strlen(pszMagick)+1, 1, fpVSIL ) > 0;
     }
 
     CPLFree( pszFullFilename );
@@ -3110,27 +3122,27 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     GByte bUnknown;
     GInt32 nValue32;
 
-    VSIFSeekL( fpVSIL, 0, SEEK_END );
+    bRet &= VSIFSeekL( fpVSIL, 0, SEEK_END ) >= 0;
 
     bUnknown = 1;
-    VSIFWriteL( &bUnknown, 1, 1, fpVSIL );
+    bRet &= VSIFWriteL( &bUnknown, 1, 1, fpVSIL ) > 0;
     nValue32 = nLayers;
     HFAStandard( 4, &nValue32 );
-    VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+    bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
     nValue32 = nXSize;
     HFAStandard( 4, &nValue32 );
-    VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+    bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
     nValue32 = nYSize;
     HFAStandard( 4, &nValue32 );
-    VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+    bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
     nValue32 = nBlockSize;
     HFAStandard( 4, &nValue32 );
-    VSIFWriteL( &nValue32, 4, 1, fpVSIL );
-    VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+    bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
+    bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
     bUnknown = 3;
-    VSIFWriteL( &bUnknown, 1, 1, fpVSIL );
+    bRet &= VSIFWriteL( &bUnknown, 1, 1, fpVSIL ) > 0;
     bUnknown = 0;
-    VSIFWriteL( &bUnknown, 1, 1, fpVSIL );
+    bRet &= VSIFWriteL( &bUnknown, 1, 1, fpVSIL ) > 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write out ValidFlags section(s).                                */
@@ -3154,18 +3166,18 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 
         nValue32 = 1;	// Unknown
         HFAStandard( 4, &nValue32 );
-        VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+        bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
         nValue32 = 0;	// Unknown
-        VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+        bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
         nValue32 = nBlocksPerColumn;
         HFAStandard( 4, &nValue32 );
-        VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+        bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
         nValue32 = nBlocksPerRow;
         HFAStandard( 4, &nValue32 );
-        VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+        bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
         nValue32 = 0x30000;	// Unknown
         HFAStandard( 4, &nValue32 );
-        VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+        bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
 
         iRemainder = nBlocksPerRow % 8;
         CPLDebug( "HFACreate",
@@ -3177,7 +3189,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
                 pabyBlockMap[i] = (GByte) ((1<<iRemainder) - 1);
         }
 
-        VSIFWriteL( pabyBlockMap, 1, nBlockMapSize, fpVSIL );
+        bRet &= VSIFWriteL( pabyBlockMap, nBlockMapSize, 1, fpVSIL ) > 0;
     }
     CPLFree(pabyBlockMap);
     pabyBlockMap = NULL;
@@ -3190,7 +3202,8 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 
     *pnDataOffset = VSIFTellL( fpVSIL );
     
-    if( VSIFSeekL( fpVSIL, nTileDataSize - 1 + *pnDataOffset, SEEK_SET ) != 0 
+    if( !bRet ||
+        VSIFSeekL( fpVSIL, nTileDataSize - 1 + *pnDataOffset, SEEK_SET ) != 0 
         || VSIFWriteL( (void *) "", 1, 1, fpVSIL ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
