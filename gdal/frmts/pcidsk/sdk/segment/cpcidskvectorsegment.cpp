@@ -60,6 +60,9 @@ CPCIDSKVectorSegment::CPCIDSKVectorSegment( PCIDSKFile *file, int segment,
 
 {
     base_initialized = false;
+    needs_swap = false;
+    
+    shape_count = 0;
     
     last_shapes_id = NullShapeId;
     last_shapes_index = -1;

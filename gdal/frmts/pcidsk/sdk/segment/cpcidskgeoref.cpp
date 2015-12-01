@@ -52,6 +52,12 @@ CPCIDSKGeoref::CPCIDSKGeoref( PCIDSKFile *file, int segment,
 
 {
     loaded = false;
+    a1 = 0;
+    a2 = 0;
+    xrot = 0;
+    b1 = 0;
+    yrot = 0;
+    b3 = 0;
 }
 
 /************************************************************************/
