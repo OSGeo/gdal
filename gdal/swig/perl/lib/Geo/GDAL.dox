@@ -1,13 +1,10 @@
 ## @class Geo::GDAL
 # @brief GDAL utility functions and a root class for raster classes.
 #
-# Geo::GDAL wraps many GDAL utility functions and acts as a root class
-# for all GDAL raster classes. A "raster" is a dataset, whose core is
-# a rectagular grid or grids of pixels, called a "band" in GDAL. Each
-# pixel contains a numeric value of a specific data type
-
-##### ignore functions which are either used from other classes or not considered
-##### useful in the Perl API
+# Geo::GDAL wraps many GDAL utility functions and is as a root class
+# for all GDAL raster classes. A "raster" is an object, whose core is
+# a rectagular grid of cells, called a "band" in GDAL. Each cell
+# contains a numeric value of a specific data type.
 
 ## @ignore FileFromMemBuffer
 ## @ignore GDALDestroyDriverManager
@@ -178,11 +175,11 @@
 # @return the amount of memory currently used for caching within GDAL.
 
 ## @sub @DataTypes()
-# @return a list of GDAL pixel data types. These are currently:
+# @return a list of GDAL raster cell data types. These are currently:
 # +list Geo::GDAL::Const GDT_ TypeCount
 
 ## @sub $GetDataTypeSize($DataType)
-# @param DataType A GDAL pixel data type (one of those listed by Geo::GDAL::DataTypes).
+# @param DataType A GDAL raster cell data type (one of those listed by Geo::GDAL::DataTypes).
 # @return the size as the number of bits.
 
 ## @sub @DataTypeValueRange($DataType)
@@ -192,7 +189,7 @@
 # @return the minimum, maximum range of the data type.
 
 ## @sub $DataTypeIsComplex($DataType)
-# @param DataType A GDAL pixel data type (one of those listed by Geo::GDAL::DataTypes).
+# @param DataType A GDAL raster cell data type (one of those listed by Geo::GDAL::DataTypes).
 # @return true if the data type is a complex number.
 
 ## @sub @OpenFlags()
@@ -254,7 +251,7 @@
 # Geo::GDAL::Band::WriteRaster. Note that Geo::GDAL::Band::ReadTile
 # and Geo::GDAL::Band::WriteTile have simpler interfaces that do not
 # require pack and unpack.
-# @param DataType A GDAL pixel data type, typically from $band->DataType.
+# @param DataType A GDAL raster cell data type, typically from $band->DataType.
 # @return a character which can be used in Perl's pack and unpack.
 
 ## @ignore AccessTypes
@@ -428,14 +425,14 @@
 # @note a.k.a. CreateDataset
 #
 # @param params Named parameters:
-# - \a Name the name of the dataset (default is 'unnamed') or an object, which implements write and close.
-# - \a Width the width of the raster dataset (default is 256).
-# - \a Height the height of the raster dataset (default is 256).
-# - \a Bands number of bands in the raster dataset (default is 1).
-# - \a Type the data type of the pixels the raster dataset (default is 'Byte'). One of Geo::GDAL::Driver::CreationDataTypes.
-# - \a Options creation options as a reference to a hash (default is {}).
+# - \a Name The name for the dataset (default is 'unnamed') or an object, which implements write and close.
+# - \a Width The width for the raster dataset (default is 256).
+# - \a Height The height for the raster dataset (default is 256).
+# - \a Bands The number of bands to create into the raster dataset (default is 1).
+# - \a Type The data type for the raster cells (default is 'Byte'). One of Geo::GDAL::Driver::CreationDataTypes.
+# - \a Options Driver creation options as a reference to a hash (default is {}).
 #
-# @return a new Geo::GDAL::Dataset object.
+# @return A new Geo::GDAL::Dataset object.
 
 ## @ignore CreateCopy
 
@@ -460,15 +457,15 @@
 
 
 ## @class Geo::GDAL::GCP
-# @brief A ground control point for georeferencing images.
+# @brief A ground control point for georeferencing rasters.
 # @isa (Geo::GDAL)
 
 ## @cmethod $new($x = 0.0, $y = 0.0, $z = 0.0, $column = 0.0, $row = 0.0, $info = "", $id = "")
 # @param x projection coordinate
 # @param y projection coordinate
 # @param z projection coordinate
-# @param column pixel x coordinate
-# @param row pixel y coordinate
+# @param column cell x coordinate
+# @param row cell y coordinate
 # @param info informational message
 # @param id unique identifier (string)
 # @return a new Geo::GDAL::GCP object
@@ -483,10 +480,10 @@
 # projection coordinate (access as $gcp->{Z})
 
 ## @attr Column
-# pixel x coordinate (access as $gcp->{Column})
+# cell x coordinate (access as $gcp->{Column})
 
 ## @attr Row
-# pixel y coordinate (access as $gcp->{Row})
+# cell y coordinate (access as $gcp->{Row})
 
 ## @attr Info
 # informational message (access as $gcp->{Info})
@@ -624,7 +621,7 @@
 ## @ignore SetGeoTransform
 
 ## @method Geo::GDAL::GeoTransform GeoTransform(Geo::GDAL::GeoTransform $geo_transform)
-# Transformation from pixel coordinates (column,row) to projection
+# Transformation from cell coordinates (column,row) to projection
 # coordinates (x,y)
 # \code
 # x = geo_transform[0] + column*geo_transform[1] + row*geo_transform[2]
@@ -658,24 +655,25 @@
 # Write cached data to disk. There is usually no need to call this
 # method.
 
-## @method AddBand($datatype = 'Byte', hashref options = 0)
+## @method AddBand($datatype = 'Byte', hashref options = {})
 # Add a new band to the dataset. The driver must support the action.
-# @param datatype GDAL pixel data type (one of those listed by Geo::GDAL::DataTypes).
-# @param options reference to a hash of format specific key=>value options.
+# @param datatype GDAL raster cell data type (one of those listed by Geo::GDAL::DataTypes).
+# @param options reference to a hash of format specific options.
+# @return The added band.
 
 ## @method WriteRaster(%params)
 # Write data into the dataset. 
 #
 # @param params Named parameters:
-# - \a XOff x offset (pixel coordinates) (default is 0)
-# - \a YOff y offset (pixel coordinates) (default is 0)
+# - \a XOff x offset (cell coordinates) (default is 0)
+# - \a YOff y offset (cell coordinates) (default is 0)
 # - \a XSize width of the area to write (default is the width of the dataset)
 # - \a YSize height of the area to write (default is the height of the dataset)
 # - \a Buf a buffer (or a reference to a buffer) containing the data. Create the buffer with \a pack function of Perl. See Geo::GDAL::Band::PackCharacter.
 # - \a BufXSize (default is undef, i.e., the same as XSize)
 # - \a BufYSize (default is undef, i.e., the same as YSize)
 # - \a BufType data type of the buffer (default is the data type of the first band)
-# - \a BandList a reference to an array of band indeces (default is [1])
+# - \a BandList a reference to an array of band indices (default is [1])
 # - \a BufPixelSpace (default is 0)
 # - \a BufLineSpace (default is 0)
 # - \a BufBandSpace (default is 0)
@@ -686,14 +684,14 @@
 # Read data from the dataset.
 #
 # @param params Named parameters:
-# - \a XOff x offset (pixel coordinates) (default is 0)
-# - \a YOff y offset (pixel coordinates) (default is 0)
+# - \a XOff x offset (cell coordinates) (default is 0)
+# - \a YOff y offset (cell coordinates) (default is 0)
 # - \a XSize width of the area to read (default is the width of the dataset)
 # - \a YSize height of the area to read (default is the height of the dataset)
 # - \a BufXSize (default is undef, i.e., the same as XSize)
 # - \a BufYSize (default is undef, i.e., the same as YSize)
 # - \a BufType data type of the buffer (default is the data type of the first band)
-# - \a BandList a reference to an array of band indeces (default is [1])
+# - \a BandList a reference to an array of band indices (default is [1])
 # - \a BufPixelSpace (default is 0)
 # - \a BufLineSpace (default is 0)
 # - \a BufBandSpace (default is 0)
@@ -759,7 +757,7 @@
 # - \a SrcSRS Override the spatial reference system of this dataset if there is one (default is undef).
 # - \a DstSRS The target spatial reference system of the result (default is undef).
 # - \a ResampleAlg The resampling algorithm (default is 'NearestNeighbour').
-# - \a MaxError Maximum error measured in input pixels that is allowed in approximating the transformation (default is 0 for exact calculations).
+# - \a MaxError Maximum error measured in input cellsize that is allowed in approximating the transformation (default is 0 for exact calculations).
 #
 # # <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper.</a>
 #
@@ -935,7 +933,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 ## @ignore SetOffset
 
 ## @method ScaleAndOffset($scale, $offset)
-# Scale and offset are used to transform raw pixel values into the
+# Scale and offset are used to transform raw cell values into the
 # units returned by GetUnits(). The conversion function is:
 # \code
 # Units value = (raw value * scale) + offset
@@ -1056,10 +1054,10 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # .    return $_[0] < $_[1] ? $_[0] : $_[1];
 # }
 # \endcode
-# @param xoff Number of pixels to skip before starting to read from a row. Pixels are read from left to right.
-# @param yoff Number of pixels to skip before starting to read from a column. Pixels are read from top to bottom.
-# @param xsize Number of pixels to read from each row.
-# @param ysize Number of pixels to read from each column.
+# @param xoff Number of cell to skip before starting to read from a row. Pixels are read from left to right.
+# @param yoff Number of cells to skip before starting to read from a column. Pixels are read from top to bottom.
+# @param xsize Number of cells to read from each row.
+# @param ysize Number of cells to read from each column.
 # @return a two-dimensional Perl array, organizes as data->[y][x], y =
 # 0..height-1, x = 0..width-1. I.e., y is row and x is column.
 
@@ -1067,8 +1065,8 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # Write data into the band.
 #
 # @param params Named parameters:
-# - \a XOff x offset (pixel coordinates) (default is 0)
-# - \a YOff y offset (pixel coordinates) (default is 0)
+# - \a XOff x offset (cell coordinates) (default is 0)
+# - \a YOff y offset (cell coordinates) (default is 0)
 # - \a XSize width of the area to write (default is the width of the band)
 # - \a YSize height of the area to write (default is the height of the band)
 # - \a Buf a buffer (or a reference to a buffer) containing the data. Create the buffer with \a pack function of Perl. See Geo::GDAL::Band::PackCharacter.
@@ -1084,8 +1082,8 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # Read data from the band.
 #
 # @param params Named parameters:
-# - \a XOff x offset (pixel coordinates) (default is 0)
-# - \a YOff y offset (pixel coordinates) (default is 0)
+# - \a XOff x offset (cell coordinates) (default is 0)
+# - \a YOff y offset (cell coordinates) (default is 0)
 # - \a XSize width of the area to read (default is the width of the band)
 # - \a YSize height of the area to read (default is the height of the band)
 # - \a BufXSize (default is undef, i.e., the same as XSize)
@@ -1152,7 +1150,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @sub @MaskFlags
 # @return the list of mask flags. These are
-# - \a AllValid: There are no invalid pixels, all mask values will be 255.
+# - \a AllValid: There are no invalid cell, all mask values will be 255.
 # When used this will normally be the only flag set.
 # - \a PerDataset: The mask band is shared between all bands on the dataset.
 # - \a Alpha: The mask band is actually an alpha band and may have values
@@ -1196,8 +1194,8 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @param params Named parameters:
 # - \a Mask A raster band, which is used as a mask to select polygonized areas. Default is undef.
 # - \a OutLayer A vector layer into which the polygons are written. If not given, an in-memory layer 'polygonized' is created and returned.
-# - \a PixValField The name of the field in the output layer into which the pixel value of the polygon area is stored. Default is 'val'.
-# - \a Options Hash or list of options. Connectedness can be set to 4 to use 4-connectedness, otherwise 8-connectedness is used. ForceIntPixel can be set to 1 to force using a 32 bit int buffer for pixel values in the process. If this is not set and the data type of this raster does not fit into a 32 bit int buffer, a 32 bit float buffer is used.
+# - \a PixValField The name of the field in the output layer into which the cell value of the polygon area is stored. Default is 'val'.
+# - \a Options Hash or list of options. Connectedness can be set to 4 to use 4-connectedness, otherwise 8-connectedness is used. ForceIntPixel can be set to 1 to force using a 32 bit int buffer for cell values in the process. If this is not set and the data type of this raster does not fit into a 32 bit int buffer, a 32 bit float buffer is used.
 # - \a Progress Progress function.
 # - \a ProgressData Additional parameter for the progress function.
 #
@@ -1233,11 +1231,11 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 ## @ignore FillNodata
 
 ## @method FillNoData($mask, $max_search_dist, $smoothing_iterations, $options, subref progress, $progress_data)
-# Interpolate values for pixels in this raster. The pixels to fill
+# Interpolate values for cells in this raster. The cells to fill
 # should be marked in the mask band with zero.
 #
-# @param mask [optional] a mask band indicating pixels to be interpolated (zero valued) (default is to get it with Geo::GDAL::Band::GetMaskBand).
-# @param max_search_dist [optional] the maximum number of pixels to
+# @param mask [optional] a mask band indicating cells to be interpolated (zero valued) (default is to get it with Geo::GDAL::Band::GetMaskBand).
+# @param max_search_dist [optional] the maximum number of cells to
 # search in all directions to find values to interpolate from (default is 10).
 # @param smoothing_iterations [optional] the number of 3x3 smoothing filter passes to run (0 or more) (default is 0).
 # @param options [optional] A reference to a hash. No options have been defined so far for this algorithm (default is {}).
@@ -1268,7 +1266,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @param params Named parameters:
 # - \a Mask A raster band, which is used as a mask to select sieved areas. Default is undef.
 # - \a Dest A raster band into which the result is written. If not given, an new in-memory raster band is created and returned.
-# - \a Threshold The smallest area size (in pixels) which are not sieved away.
+# - \a Threshold The smallest area size (in number of cells) which are not sieved away.
 # - \a Options Hash or list of options. {Connectedness => 4} can be specified to use 4-connectedness, otherwise 8-connectedness is used.
 # - \a Progress Progress function.
 # - \a ProgressData Additional parameter for the progress function.
@@ -1276,16 +1274,16 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @return The filtered raster band.
 
 ## @method Geo::GDAL::Band Distance(%params)
-# Compute distances to specific pixels of this raster.
+# Compute distances to specific cells of this raster.
 # @param params Named parameters:
 # - \a Distance A raster band, into which the distances are computed. If not given, a not given, a new in-memory raster band is created and returned. The data type of the raster can be given in the options.
 # - \a Options Hash of options. Options are:
-#   - \a Values A list of pixel values in this band to measure the distance from. If this option is not provided, the distance will be computed to non-zero pixel values. Currently pixel values are internally processed as integers.
-#   - \a DistUnits=PIXEL|GEO Indicates whether distances will be computed in pixel units or in georeferenced units. The default is pixel units. This also determines the interpretation of MaxDist.
-#   - \a MaxDist=n The maximum distance to search. Distances greater than this value will not be computed. Instead output pixels will be set to a nodata value.
-#   - \a NoData=n The nodata value to use on the distance band for pixels that are beyond MaxDist. If not provided, the distance band will be queried for a nodata value. If one is not found, 65535 will be used (255 if the type is Byte).
-#   - \a Use_Input_NoData=YES|NO If this option is set, the nodata value of this band will be respected. Leaving nodata pixels in the input as nodata pixels in the distance raster.
-#   - \a Fixed_Buf_Val=n If this option is set, all pixels within the MaxDist threshold are set to this value instead of the distance value.
+#   - \a Values A list of cell values in this band to measure the distance from. If this option is not provided, the distance will be computed to non-zero pixel values. Currently pixel values are internally processed as integers.
+#   - \a DistUnits=PIXEL|GEO Indicates whether distances will be computed in cells or in georeferenced units. The default is pixel units. This also determines the interpretation of MaxDist.
+#   - \a MaxDist=n The maximum distance to search. Distances greater than this value will not be computed. Instead output cells will be set to a nodata value.
+#   - \a NoData=n The nodata value to use on the distance band for cells that are beyond MaxDist. If not provided, the distance band will be queried for a nodata value. If one is not found, 65535 will be used (255 if the type is Byte).
+#   - \a Use_Input_NoData=YES|NO If this option is set, the nodata value of this band will be respected. Leaving nodata cells in the input as nodata pixels in the distance raster.
+#   - \a Fixed_Buf_Val=n If this option is set, all cells within the MaxDist threshold are set to this value instead of the distance value.
 #   - \a DataType The data type for the result if it is not given.
 # - \a Progress Progress function.
 # - \a ProgressData Additional parameter for the progress function.
@@ -1405,7 +1403,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @return
 
 ## @method $GetRowOfValue($value)
-# @param value a pixel value
+# @param value a cell value
 # @return row index or -1
 
 ## @method $Value($row, $column, $value)
@@ -1451,8 +1449,8 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 ## @ignore SetLinearBinning
 
 ## @method LinearBinning($Row0MinIn, $BinSizeIn)
-# @param Row0MinIn [optional] the lower bound (pixel value) of the first category.
-# @param BinSizeIn [optional] the width of each category (in pixel value units).
+# @param Row0MinIn [optional] the lower bound (cell value) of the first category.
+# @param BinSizeIn [optional] the width of each category (in cell value units).
 # @return ($Row0MinIn, $BinSizeIn) or an empty list if LinearBinning is not set.
 
 
@@ -1538,7 +1536,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # y = d + column * e + row * f
 # \endcode
 # where<br/>
-# (column,row) is the location in pixel coordinates<br/>
+# (column,row) is the location in cell coordinates<br/>
 # (x,y) is the location in projection coordinates<br/>
 # or vice versa.
 # A Geo::GDAL::GeoTransform object is a reference to an anonymous array [a,b,c,d,e,f].

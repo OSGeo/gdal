@@ -742,7 +742,7 @@ sub Bands {
 }
 
 sub GetRasterBand {
-    my($self, $index) = @_;
+    my ($self, $index) = @_;
     $index //= 1;
     my $band = _GetRasterBand($self, $index);
     Geo::GDAL::error(2, $index, 'Band') unless $band;
@@ -752,9 +752,12 @@ sub GetRasterBand {
 *Band = *GetRasterBand;
 
 sub AddBand {
-    my @p = @_;
-    $p[1] = Geo::GDAL::string2int($p[1], \%Geo::GDAL::TYPE_STRING2INT);
-    return _AddBand(@p);
+    my ($self, $type, $options) = @_;
+    $type //= 'Byte';
+    $type = Geo::GDAL::string2int($type, \%Geo::GDAL::TYPE_STRING2INT);
+    $self->_AddBand($type, $options);
+    return unless defined wantarray;
+    return $self->GetRasterBand($self->{RasterCount});
 }
 
 sub CreateMaskBand {

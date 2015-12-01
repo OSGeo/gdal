@@ -11,6 +11,8 @@
 
 ## @ignore ApproximateArcAngles
 
+## @ignore OLMD_FID64
+
 ## @ignore ForceTo
 ## @ignore ForceToLineString
 ## @ignore ForceToMultiLineString
@@ -154,6 +156,10 @@
 # compared to each other with methods Clip, Erase, Identity,
 # Intersection, SymDifference, Union, and Update.
 # @isa (Geo::OGR)
+#
+# A layer may have metadata OLMD_FID64 => 'YES' if it holds features
+# with 64 bit FIDs. The metadata of a layer can be obtained with
+# GetMetadata method.
 
 ## @method @Capabilities()
 # Both a package subroutine and an object method.
