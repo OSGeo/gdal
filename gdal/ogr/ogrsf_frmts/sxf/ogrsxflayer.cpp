@@ -679,6 +679,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
         eGeomType = SXF_GT_Point;
     else if (code == 0x03) // xxxx0011
         eGeomType = SXF_GT_Text;
+#ifdef not_possible_given_above_code /* see below code too if re-enabling this */
     //beginning 4.0
     else if (code == 0x04) // xxxx0100
     {
@@ -686,6 +687,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
             "SXF. Not support type.");
         eGeomType = SXF_GT_Vector;
     }
+#endif
     else if (code == 0x05) // xxxx0101
         eGeomType = SXF_GT_TextTemplate;
     else if (code == 0x21)
@@ -792,6 +794,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
         poFeature = TranslateVetorAngle(stCertInfo, recordCertifBuf,
             stRecordHeader.nGeometryLength);
     }
+#ifdef not_possible_given_above_code
     else if (eGeomType == SXF_GT_Vector )
     {
       CPLError( CE_Warning, CPLE_NotSupported,
@@ -799,6 +802,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
       CPLFree(recordCertifBuf);
       return NULL;
     }
+#endif
     else if (eGeomType == SXF_GT_TextTemplate ) // TODO realise this
     {
       CPLError( CE_Warning, CPLE_NotSupported,
