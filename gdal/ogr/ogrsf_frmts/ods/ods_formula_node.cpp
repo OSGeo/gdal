@@ -676,6 +676,7 @@ static CaseType GetCase(const char* pszStr)
                 eCase = CASE_UPPER;
             else
                 return CASE_UNKNOWN;
+            bInit = FALSE;
         }
         else if (ch >= 'a' && ch <= 'z' && eCase == CASE_LOWER)
             ;
