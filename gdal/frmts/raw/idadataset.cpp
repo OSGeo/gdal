@@ -704,10 +704,10 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     // The file just be exactly the image size + header size in length.
-    GIntBig nExpectedFileSize = nXSize * nYSize + 512;
+    vsi_l_offset nExpectedFileSize = static_cast<vsi_l_offset>(nXSize) * nYSize + 512;
 
     VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END );
-    const GIntBig nActualFileSize = VSIFTellL( poOpenInfo->fpL );
+    const vsi_l_offset nActualFileSize = VSIFTellL( poOpenInfo->fpL );
     VSIRewindL( poOpenInfo->fpL );
 
     if( nActualFileSize != nExpectedFileSize )
