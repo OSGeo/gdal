@@ -133,11 +133,14 @@ GatherFeaturePoints(GDALDataset* poDataset, int* panBands,
 
     // Allocate memory for grayscale image
     double **padfImg = new double*[nHeight];
-    for (int i = 0; i < nHeight; ++i)
+    for (int i = 0; ;)
     {
         padfImg[i] = new double[nWidth];
         for (int j = 0; j < nWidth; ++j)
           padfImg[i][j] = 0.0;
+        ++i;
+        if( i == nHeight )
+            break;
     }
 
     // Create grayscale image
