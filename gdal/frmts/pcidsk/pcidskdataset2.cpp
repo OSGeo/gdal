@@ -286,19 +286,22 @@ bool PCIDSK2Band::CheckForColorTable()
             unsigned char abyPCT[768];
 
             PCIDSK_PCT *poPCT = dynamic_cast<PCIDSK_PCT*>( poPCTSeg );
-            nPCTSegNumber = poPCTSeg->GetSegmentNumber();
-
-            poPCT->ReadPCT( abyPCT );
-
-            for( int i = 0; i < 256; i++ )
+            if( poPCT )
             {
-                GDALColorEntry sEntry;
+                nPCTSegNumber = poPCTSeg->GetSegmentNumber();
 
-                sEntry.c1 = abyPCT[256 * 0 + i];
-                sEntry.c2 = abyPCT[256 * 1 + i];
-                sEntry.c3 = abyPCT[256 * 2 + i];
-                sEntry.c4 = 255;
-                poColorTable->SetColorEntry( i, &sEntry );
+                poPCT->ReadPCT( abyPCT );
+
+                for( int i = 0; i < 256; i++ )
+                {
+                    GDALColorEntry sEntry;
+
+                    sEntry.c1 = abyPCT[256 * 0 + i];
+                    sEntry.c2 = abyPCT[256 * 1 + i];
+                    sEntry.c3 = abyPCT[256 * 2 + i];
+                    sEntry.c4 = 255;
+                    poColorTable->SetColorEntry( i, &sEntry );
+                }
             }
         }
 
@@ -446,8 +449,8 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
 
         PCIDSK_PCT *poPCT = dynamic_cast<PCIDSK_PCT*>( 
             poFile->GetSegment( nPCTSegNumber ) );
-
-        poPCT->WritePCT( abyPCT );
+        if( poPCT )
+            poPCT->WritePCT( abyPCT );
 
         delete poColorTable;
         poColorTable = poCT->Clone();
@@ -1765,7 +1768,8 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
         {
             PCIDSKChannel *poChannel = 
                 dynamic_cast<PCIDSKChannel*>( poBitSeg );
-            if (poChannel->GetBlockWidth() <= 0 ||
+            if (poChannel == NULL ||
+                poChannel->GetBlockWidth() <= 0 ||
                 poChannel->GetBlockHeight() <= 0)
             {
                 delete poDS;
