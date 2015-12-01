@@ -617,7 +617,7 @@ void GDALAllRegister();
 
 void GDALDestroyDriverManager();
 
-#ifdef SWIGPYTHON
+#if defined(SWIGPYTHON) || defined(SWIGPERL)
 %inline {
 GIntBig wrapper_GDALGetCacheMax()
 {

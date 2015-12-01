@@ -97,7 +97,6 @@ for my $dox (@dox) {
     while (<$fh>) {
         chomp;
         next if $_ eq '';
-        #s/^[\s#]+//;
         s/^[#]+//;
         s/^ //;
         my ($w) = /^(\S+)\s/;
