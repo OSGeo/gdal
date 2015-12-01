@@ -431,6 +431,10 @@ char *CPCIDSKVectorSegment::GetData( int section, uint32 offset,
         pbuf_offset = &record_loaded_data_offset;
         pbuf_dirty = &record_loaded_data_dirty;
     }
+    else
+    {
+        ThrowPCIDSKException("Unexpected case");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If the desired data is not within our loaded section, reload    */
@@ -565,6 +569,10 @@ void CPCIDSKVectorSegment::FlushDataBuffer( int section )
         pbuf = &record_loaded_data;
         pbuf_offset = &record_loaded_data_offset;
         pbuf_dirty = &record_loaded_data_dirty;
+    }
+    else
+    {
+        ThrowPCIDSKException("Unexpected case");
     }
 
     if( ! *pbuf_dirty || pbuf->buffer_size == 0 )
