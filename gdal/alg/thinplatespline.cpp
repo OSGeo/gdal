@@ -291,6 +291,7 @@ static void FastApproxLog4Val(v2dfunion* x)
 
     GET_HIGH_WORD(hx[0].i[0],x[0].d[0]);
     GET_HIGH_WORD(hx[0].i[1],x[0].d[1]);
+    /* coverity[uninit_use] */
     k[0].li = hx[0].li & cst_expmask;
     hx[0].li &= ~cst_expmask;
     i[0].li = (hx[0].li + cst_0x95f64) & cst_0x100000;
@@ -317,7 +318,9 @@ static void FastApproxLog4Val(v2dfunion* x)
     s[0] = f[0]/(x[0].v2+v2_one);
     z[0] = s[0]*s[0];
     w[0] = z[0]*z[0];
+    /* coverity[ptr_arith] */
     t1[0]= w[0]*(v2_Lg2+w[0]*(v2_Lg4+w[0]*v2_Lg6));
+    /* coverity[ptr_arith] */
     t2[0]= z[0]*(v2_Lg1+w[0]*(v2_Lg3+w[0]*(v2_Lg5/*+w[0]*v2_Lg7*/)));
     R[0] = t2[0]+t1[0];
     x[0].v2 = ((dk[0].v2 - v2_const1023_mul_2pow20)*v2_ln2_div_2pow20-(s[0]*(f[0]-R[0])-f[0]));
@@ -326,7 +329,9 @@ static void FastApproxLog4Val(v2dfunion* x)
     s[1] = f[1]/(x[1].v2+v2_one);
     z[1] = s[1]*s[1];
     w[1] = z[1]*z[1];
+    /* coverity[ptr_arith] */
     t1[1]= w[1]*(v2_Lg2+w[1]*(v2_Lg4+w[1]*v2_Lg6));
+    /* coverity[ptr_arith] */
     t2[1]= z[1]*(v2_Lg1+w[1]*(v2_Lg3+w[1]*(v2_Lg5/*+w[1]*v2_Lg7*/)));
     R[1] = t2[1]+t1[1];
     x[1].v2 = ((dk[1].v2- v2_const1023_mul_2pow20)*v2_ln2_div_2pow20-(s[1]*(f[1]-R[1])-f[1]));

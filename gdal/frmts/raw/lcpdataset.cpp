@@ -1121,14 +1121,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             return NULL;
         }
 
-        if( bHaveGroundFuels )
-        {
-            panMetadata[9] = 1;
-        }
-        else
-        {
-            panMetadata[9] = 0;
-        }
+        panMetadata[9] = 1;
     }
 
     /*
