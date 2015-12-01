@@ -2473,6 +2473,7 @@ reloop:
     goto reloop;
   }
   /* analyze the line according to schema : */
+  /* coverity[mixed_enums] */ /* FIXME ? */
   if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(H) == vPragma_GCIO )
   {
     if( strstr(GetGCCache_GCIO(H),k3DOBJECTMONO_GCIO) )
@@ -2531,6 +2532,8 @@ reloop:
   SetExtentLROrdinate_GCIO(GetSubTypeExtent_GCIO(theSubType),pszBbox->MinY);
   if( d==vUnknown3D_GCIO && GetSubTypeDim_GCIO(theSubType)==vUnknown3D_GCIO )
   {
+    /* FIXME ? */
+#ifdef notdef
     switch( d )
     {
       case v3DM_GCIO :
@@ -2538,9 +2541,12 @@ reloop:
         SetSubTypeDim_GCIO(theSubType,v3D_GCIO);
         break;
       default        :
+#endif
         SetSubTypeDim_GCIO(theSubType,v2D_GCIO);
+#ifdef notdef
         break;
     }
+#endif
   }
   d= vUnknown3D_GCIO;
   theSubType= NULL;
@@ -2559,9 +2565,9 @@ GCExportFileH GCIOAPI_CALL1(*) Open_GCIO (
   GCExportFileH* hGXT;
 
   CPLDebug( "GEOCONCEPT", "filename '%s' - '%s' - mode '%s' - config path '%s'",
-                          pszGeoconceptFile? pszGeoconceptFile:"???",
+                          pszGeoconceptFile,
                           ext? ext:"gxt",
-                          mode? mode:"???",
+                          mode,
                           gctPath? gctPath:"???" );
 
   if( !(hGXT= _Create_GCIO(pszGeoconceptFile,ext,mode)) )
@@ -2679,8 +2685,8 @@ GCExportFileH GCIOAPI_CALL1(*) Rewind_GCIO (
       }
       else
       {
-        VSIFSeek(GetGCHandle_GCIO(hGXT), GetSubTypeBOF_GCIO(theSubType), SEEK_SET);
-        SetGCCurrentLinenum_GCIO(hGXT, GetSubTypeBOFLinenum_GCIO(theSubType));
+        if( VSIFSeek(GetGCHandle_GCIO(hGXT), GetSubTypeBOF_GCIO(theSubType), SEEK_SET) == 0 )
+            SetGCCurrentLinenum_GCIO(hGXT, GetSubTypeBOFLinenum_GCIO(theSubType));
       }
       SetGCStatus_GCIO(hGXT,vNoStatus_GCIO);
     }
@@ -3019,6 +3025,7 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
     {
       continue;
     }
+    /* coverity[mixed_enums] */ /* FIXME ? */
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vHeader_GCIO )
     {
       if( strstr(GetGCCache_GCIO(hGCT),kConfigEndField_GCIO)!=NULL)
@@ -3182,10 +3189,7 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
               { /* Skipping ... */
                 res= OGRERR_NONE;
               }
-      if( res != OGRERR_NONE )
-      {
-        goto onError;
-      }
+
       continue;
     }
 onError:
@@ -3227,6 +3231,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
     {
       continue;
     }
+    /* coverity[mixed_enums] */ /* FIXME ? */
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vHeader_GCIO )
     {
       if( strstr(GetGCCache_GCIO(hGCT),kConfigEndField_GCIO)!=NULL)
@@ -3371,10 +3376,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
               { /* Skipping ... */
                 res= OGRERR_NONE;
               }
-      if( res != OGRERR_NONE )
-      {
-        goto onError;
-      }
+
       continue;
     }
 onError:
@@ -3416,6 +3418,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
     {
       continue;
     }
+    /* coverity[mixed_enums] */ /* FIXME ? */
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vHeader_GCIO )
     {
       if( strstr(GetGCCache_GCIO(hGCT),kConfigEndField_GCIO)!=NULL)
@@ -3560,10 +3563,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
               { /* Skipping ... */
                 res= OGRERR_NONE;
               }
-      if( res != OGRERR_NONE )
-      {
-        goto onError;
-      }
+
       continue;
     }
 onError:
@@ -3604,6 +3604,7 @@ static OGRErr GCIOAPI_CALL _readConfigSubTypeType_GCIO (
     {
       continue;
     }
+    /* coverity[mixed_enums] */ /* FIXME ? */
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vHeader_GCIO )
     {
       if( strstr(GetGCCache_GCIO(hGCT),kConfigEndSubType_GCIO)!=NULL)
@@ -3788,6 +3789,7 @@ static OGRErr GCIOAPI_CALL _readConfigType_GCIO (
     {
       continue;
     }
+    /* coverity[mixed_enums] */ /* FIXME ? */
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vHeader_GCIO )
     {
       if( strstr(GetGCCache_GCIO(hGCT),kConfigEndType_GCIO)!=NULL )
@@ -3916,6 +3918,7 @@ static OGRErr GCIOAPI_CALL _readConfigMap_GCIO (
     {
       continue;
     }
+    /* coverity[mixed_enums] */ /* FIXME ? */
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vHeader_GCIO )
     {
       if( strstr(GetGCCache_GCIO(hGCT),kConfigEndMap_GCIO)!=NULL )
@@ -3964,10 +3967,7 @@ static OGRErr GCIOAPI_CALL _readConfigMap_GCIO (
         { /* Skipping ... */
           res= OGRERR_NONE;
         }
-      if( res != OGRERR_NONE )
-      {
-        goto onError;
-      }
+
       continue;
     }
 onError:
@@ -4024,6 +4024,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadConfig_GCIO (
     {
       continue;
     }
+    /* coverity[mixed_enums] */ /* FIXME ? */
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vHeader_GCIO )
     {
       if( strstr(GetGCCache_GCIO(hGCT),kConfigEndConfig_GCIO)!=NULL )
@@ -4589,6 +4590,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadHeader_GCIO (
     {
       continue;
     }
+    /* coverity[mixed_enums] */ /* FIXME ? */
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGXT)==vPragma_GCIO )
     {
       /* try config header first ... */
@@ -4862,6 +4864,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
       if( VSIFPrintf(h,"%s%s%s", quotes, escapedValue, quotes)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
+        CPLFree(escapedValue);
         return WRITEERROR_GCIO;
       }
       CPLFree(escapedValue);
@@ -5296,6 +5299,7 @@ int GCIOAPI_CALL WriteFeatureFieldAsString_GCIO (
     if( VSIFPrintf(h,"%c", delim)<=0 )
     {
       CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
+      CPLFree(escapedValue);
       return WRITEERROR_GCIO;
     }
   }
@@ -5345,6 +5349,7 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO (
       continue;
     }
     /* analyze the line according to schema : */
+    /* coverity[mixed_enums] */ /* FIXME ? */
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(H) == vPragma_GCIO )
     {
       if( strstr(GetGCCache_GCIO(H),k3DOBJECTMONO_GCIO) )
