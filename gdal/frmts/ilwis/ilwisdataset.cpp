@@ -760,6 +760,11 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return FALSE;
     }
+    if( !GDALCheckDatasetDimensions(Col, Row) )
+    {
+        delete poDS;
+        return FALSE;
+    }
     poDS->nRasterXSize = Col;
     poDS->nRasterYSize = Row;
     poDS->osFileName = poOpenInfo->pszFilename;
