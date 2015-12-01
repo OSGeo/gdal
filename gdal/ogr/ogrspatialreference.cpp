@@ -2108,6 +2108,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
             pszBufPtr += 6;
         }
 
+        /* coverity[tainted_data] */
         err = importFromWkt( &pszBufPtr );
         if( err == OGRERR_NONE && bESRI )
             err = morphFromESRI();
@@ -3016,7 +3017,7 @@ OGRErr OGRSpatialReference::SetGeocCS( const char * pszName )
     {
         OGR_SRSNode *poDatum = poGeogCS->GetNode( "DATUM" );
         OGR_SRSNode *poPRIMEM = poGeogCS->GetNode( "PRIMEM" );
-        if ( poDatum != NULL && poPRIMEM != NULL )
+        if ( poRoot != NULL && poDatum != NULL && poPRIMEM != NULL )
         {
             poRoot->InsertChild( poDatum->Clone(), 1 );
             poRoot->InsertChild( poPRIMEM->Clone(), 2 );
@@ -3287,7 +3288,7 @@ OGRErr OGRSpatialReference::SetProjCS( const char * pszName )
 
     SetNode( "PROJCS", pszName );
 
-    if( poGeogCS != NULL )
+    if( poRoot != NULL && poGeogCS != NULL )
         poRoot->InsertChild( poGeogCS, 1 );
 
     return OGRERR_NONE;
