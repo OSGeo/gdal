@@ -436,7 +436,7 @@ namespace Selafin {
         else {
             if (nLength==0) *papadfData=0; else {
                 *papadfData=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),nLength/4);
-                if (papadfData==0) return -1;
+                if (*papadfData==NULL) return -1;
             }
             for (int i=0;i<nLength/4;++i) if (read_float(fp,(*papadfData)[i])==0) {
                 CPLFree(*papadfData);
