@@ -1116,7 +1116,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /*      Fetch feature attributes to OGRFeature fields.                  */
 /* -------------------------------------------------------------------- */
 
-    for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; hDBF != NULL && iField < poDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn* poFieldDefn = poDefn->GetFieldDefn(iField);
         if (poFieldDefn->IsIgnored() )
@@ -1359,7 +1359,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
                 nStrLen = OGR_DBF_MAX_FIELD_WIDTH;
 
-                if(EQUAL(pszSHPEncoding, CPL_ENC_UTF8))
+                if(pszEncoded != NULL && /* to please Coverity */
+                   EQUAL(pszSHPEncoding, CPL_ENC_UTF8))
                 {
                     const char *p = pszStr + nStrLen;
                     int byteCount = nStrLen;
@@ -1375,7 +1376,6 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                         p--;
                     }
 
-                    // TODO: This can dereference a nullptr.  CID 1291944
                     pszEncoded[nStrLen] = 0;
                 }
               }

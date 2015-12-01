@@ -447,9 +447,9 @@ int OGRShapeLayer::ScanIndices()
     if( bTryQIXorSBN )
     {
         if( !bCheckedForQIX )
-            CheckForQIX();
+            CPL_IGNORE_RET_VAL(CheckForQIX());
         if( hQIX == NULL && !bCheckedForSBN )
-            CheckForSBN();
+            CPL_IGNORE_RET_VAL(CheckForSBN());
     }
 
 /* -------------------------------------------------------------------- */
