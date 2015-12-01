@@ -434,6 +434,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+    /* coverity[tainted_data] */
     for( int iBand = 0; iBand < poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand+1, new ELASRasterBand( poDS, iBand+1 ) );
