@@ -247,6 +247,11 @@ MIFFile::MIFFile()
     m_nPoints = m_nLines = m_nRegions = m_nTexts = 0;
 
     m_bExtentsSet = FALSE;
+    m_eAccessMode = TABRead;
+    m_dXMin = 0;
+    m_dYMin = 0;
+    m_dXMax = 0;
+    m_dYMax = 0;
 }
 
 /**********************************************************************

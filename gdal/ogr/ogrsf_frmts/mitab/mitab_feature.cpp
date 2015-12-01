@@ -191,7 +191,12 @@ TABFeature::TABFeature(OGRFeatureDefn *poDefnIn):
     m_nMapInfoType = TAB_GEOM_NONE;
     m_bDeletedFlag = FALSE;
 
-    SetMBR(0.0, 0.0, 0.0, 0.0);
+    m_nXMin = 0;
+    m_nYMin = 0;
+    m_nXMax = 0;
+    m_nYMax = 0;
+    m_nComprOrgX = 0;
+    m_nComprOrgY = 0;
 }
 
 /**********************************************************************
@@ -1843,6 +1848,8 @@ TABPolyline::TABPolyline(OGRFeatureDefn *poDefnIn):
     m_bCenterIsSet = FALSE;
     m_bSmooth = FALSE;
     m_bWriteTwoPointLineAsPolyline = FALSE;
+    m_dCenterX = 0;
+    m_dCenterY = 0;
 }
 
 /**********************************************************************
@@ -2900,6 +2907,8 @@ TABRegion::TABRegion(OGRFeatureDefn *poDefnIn):
 {
     m_bCenterIsSet = FALSE;
     m_bSmooth = FALSE;
+    m_dCenterX = 0;
+    m_dCenterY = 0;
 }
 
 /**********************************************************************
@@ -4341,6 +4350,10 @@ void TABRectangle::DumpMIF(FILE *fpOut /*=NULL*/)
 TABEllipse::TABEllipse(OGRFeatureDefn *poDefnIn):
               TABFeature(poDefnIn)
 {
+    m_dCenterX = 0;
+    m_dCenterY = 0;
+    m_dXRadius = 0;
+    m_dYRadius = 0;
 }
 
 /**********************************************************************
@@ -6364,6 +6377,8 @@ TABMultiPoint::TABMultiPoint(OGRFeatureDefn *poDefnIn):
               TABFeature(poDefnIn)
 {
     m_bCenterIsSet = FALSE;
+    m_dCenterX = 0;
+    m_dCenterY = 0;
 }
 
 /**********************************************************************
@@ -6532,6 +6547,7 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Failed reading coordinate data at offset %d", 
                          poMPointHdr->m_nCoordBlockPtr);
+                delete poGeometry;
                 return -1;
             }
 
@@ -7376,7 +7392,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     /*-----------------------------------------------------------------
      * MultiPoint Component
      *----------------------------------------------------------------*/
-    if(poCollHdr->m_nNumMultiPoints > 0)
+    if(poCoordBlock != NULL && poCollHdr->m_nNumMultiPoints > 0)
     {
         //
         // Build fake coord section header to pass to TABMultiPoint::ReadGeom()
@@ -8026,6 +8042,9 @@ void TABCollection::DumpMIF(FILE *fpOut /*=NULL*/)
 TABDebugFeature::TABDebugFeature(OGRFeatureDefn *poDefnIn):
               TABFeature(poDefnIn)
 {
+    m_nSize = 0;
+    m_nCoordDataPtr = NULL;
+    m_nCoordDataSize = 0;
 }
 
 /**********************************************************************

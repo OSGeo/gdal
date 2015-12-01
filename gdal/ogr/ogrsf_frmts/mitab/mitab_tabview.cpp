@@ -456,6 +456,7 @@ int TABView::OpenForWrite(const char *pszFname)
         m_papszTABFnames = CSLAppendPrintf(m_papszTABFnames, "%s%s%d.tab", 
                                                pszPath, pszBasename, iFile+1);
 #ifndef _WIN32
+        /* coverity[var_deref_op] */
         TABAdjustFilenameExtension(m_papszTABFnames[iFile]);
 #endif
         
@@ -1499,7 +1500,7 @@ int  TABRelation::Init(const char *pszViewName,
                      poMainDefn->GetName(), poRelDefn->GetName());
         }
     }
-
+    CSLDestroy(papszSelectedFields);
     return 0;
 }
 

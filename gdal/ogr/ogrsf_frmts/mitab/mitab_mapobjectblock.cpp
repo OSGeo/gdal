@@ -128,6 +128,18 @@ TABMAPObjectBlock::TABMAPObjectBlock(TABAccess eAccessMode /*= TABRead*/):
     TABRawBinBlock(eAccessMode, TRUE)
 {
     m_bLockCenter = FALSE;
+    m_numDataBytes = 0;
+    m_nFirstCoordBlock = 0;
+    m_nLastCoordBlock = 0;
+    m_nCenterX = 0;
+    m_nCenterY = 0;
+    m_nMinX = 0;
+    m_nMinY = 0;
+    m_nMaxX = 0;
+    m_nMaxY = 0;
+    m_nCurObjectOffset = 0;
+    m_nCurObjectId = 0;
+    m_nCurObjectType = TAB_GEOM_UNSET;
 }
 
 /**********************************************************************

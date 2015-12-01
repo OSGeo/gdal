@@ -98,7 +98,9 @@ MIDDATAFile::MIDDATAFile()
     m_dfYMultiplier = 1.0;
     m_dfXDisplacement = 0.0;
     m_dfYDisplacement = 0.0;
-
+    m_pszFname = NULL;
+    m_eAccessMode = TABRead;
+    m_bEof = FALSE;
 }
 
 MIDDATAFile::~MIDDATAFile()

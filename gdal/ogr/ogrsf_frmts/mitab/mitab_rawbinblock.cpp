@@ -96,7 +96,7 @@ TABRawBinBlock::TABRawBinBlock(TABAccess eAccessMode /*= TABRead*/,
     m_bModified = FALSE;
 
     m_eAccess = eAccessMode; 
-
+    m_nBlockType = 0;
 }
 
 /**********************************************************************

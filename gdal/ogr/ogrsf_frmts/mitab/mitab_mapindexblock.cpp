@@ -109,6 +109,7 @@ TABMAPIndexBlock::TABMAPIndexBlock(TABAccess eAccessMode /*= TABRead*/):
     m_nCurChildIndex = -1;
     m_poParentRef = NULL;
     m_poBlockManagerRef = NULL;
+    memset(m_asEntries, 0, sizeof(m_asEntries));
 }
 
 /**********************************************************************
