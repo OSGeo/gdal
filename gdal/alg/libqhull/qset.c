@@ -425,11 +425,17 @@ void *qh_setdelnth(setT *set, int nth) {
   setelemT *sizep;
   setelemT *elemp, *lastp;
 
+  if (nth < 0) {
+    qh_fprintf(qhmem.ferr, 6174, "qhull internal error (qh_setdelnth): nth %d is out-of-bounds for set:\n", nth);
+    qh_setprint(qhmem.ferr, "", set);
+    qh_errexit(qhmem_ERRqhull, NULL, NULL);
+    nth = 0;
+  }
   elemp= (setelemT *)SETelemaddr_(set, nth, void);
   sizep= SETsizeaddr_(set);
   if ((sizep->i--)==0)         /*  if was a full set */
     sizep->i= set->maxsize;  /*     *sizep= (maxsize-1)+ 1 */
-  if (nth < 0 || nth >= sizep->i) {
+  if (nth >= sizep->i) {
     qh_fprintf(qhmem.ferr, 6174, "qhull internal error (qh_setdelnth): nth %d is out-of-bounds for set:\n", nth);
     qh_setprint(qhmem.ferr, "", set);
     qh_errexit(qhmem_ERRqhull, NULL, NULL);

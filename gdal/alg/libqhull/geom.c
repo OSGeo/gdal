@@ -417,7 +417,7 @@ facetT *qh_findbestnew(pointT *point, facetT *startfacet,
   unsigned int visitid= ++qh visit_id;
   realT distoutside= 0.0;
   boolT isdistoutside; /* True if distoutside is defined */
-  boolT testhorizon = True; /* needed if precise, e.g., rbox c D6 | qhull Q0 Tv */
+  /*boolT testhorizon = True;*/ /* needed if precise, e.g., rbox c D6 | qhull Q0 Tv */
 
   if (!startfacet) {
     if (qh MERGING)
@@ -465,7 +465,7 @@ facetT *qh_findbestnew(pointT *point, facetT *startfacet,
       } /* end of !flipped */
     } /* FORALLfacet from startfacet or qh newfacet_list */
   }
-  if (testhorizon || !bestfacet)
+  if (/*testhorizon ||*/ !bestfacet)
     bestfacet= qh_findbesthorizon(!qh_IScheckmax, point, bestfacet ? bestfacet : startfacet,
                                         !qh_NOupper, &bestdist, numpart);
   *dist= bestdist;
@@ -682,6 +682,8 @@ pointT *qh_getcenter(setT *vertices) {
     *coord= 0.0;
     FOREACHvertex_(vertices)
       *coord += vertex->point[k];
+    /* count cannot be 0 since above qh_errexit didn't return */
+    /* coverity[divide_by_zero] */
     *coord /= count;
   }
   return(center);
