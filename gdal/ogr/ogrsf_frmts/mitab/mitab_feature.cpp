@@ -8043,7 +8043,7 @@ TABDebugFeature::TABDebugFeature(OGRFeatureDefn *poDefnIn):
               TABFeature(poDefnIn)
 {
     m_nSize = 0;
-    m_nCoordDataPtr = NULL;
+    m_nCoordDataPtr = 0;
     m_nCoordDataSize = 0;
 }
 
