@@ -52,13 +52,13 @@ OGRGeoconceptLayer::OGRGeoconceptLayer()
 OGRGeoconceptLayer::~OGRGeoconceptLayer()
 
 {
-  CPLDebug( "GEOCONCEPT",
-            "%ld features on layer %s.",
-            GetSubTypeNbFeatures_GCIO(_gcFeature),
-            _poFeatureDefn->GetName());
-
   if( _poFeatureDefn )
   {
+    CPLDebug( "GEOCONCEPT",
+                "%ld features on layer %s.",
+                GetSubTypeNbFeatures_GCIO(_gcFeature),
+                _poFeatureDefn->GetName());
+
     _poFeatureDefn->Release();
   }
 
@@ -331,11 +331,6 @@ OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
       nbGeom= ((OGRGeometryCollection*)poGeom)->getNumGeometries();
       isSingle= FALSE;
       break;
-    case wkbUnknown               :
-    case wkbGeometryCollection    :
-    case wkbGeometryCollection25D :
-    case wkbNone                  :
-    case wkbLinearRing            :
     default                       :
       nbGeom= 0;
       isSingle= FALSE;
@@ -648,12 +643,12 @@ void OGRGeoconceptLayer::SetSpatialRef( OGRSpatialReference *poSpatialRef )
     poSRS= poSpatialRef->Clone();
     if( !(hGXT= GetSubTypeGCHandle_GCIO(_gcFeature)) )
     {
-        // TODO: CID 1074346 - Free poSRS.
+        delete poSRS;
         return;
     }
     if( !(Meta= GetGCMeta_GCIO(hGXT)) )
     {
-        // TODO: CID 1074346 - Free poSRS.
+        delete poSRS;
         return;
     }
     os= GetMetaSysCoord_GCIO(Meta);
@@ -669,6 +664,8 @@ void OGRGeoconceptLayer::SetSpatialRef( OGRSpatialReference *poSpatialRef )
     {
       CPLError( CE_Warning, CPLE_AppDefined,
                 "Can't change SRS on Geoconcept layers.\n" );
+      DestroySysCoord_GCSRS( &ns );
+      delete poSRS;
       return;
     }
 
