@@ -175,7 +175,7 @@ CSF_FADDR32 CsfSeekAttrSpace(
 					noPosFound = 0;
                                         break;
 				case ATTR_NOT_USED:
-					if (i == NR_ATTR_IN_BLOCK)
+					if (i+1 == NR_ATTR_IN_BLOCK)
 						endBlock = b.next;
 					else
 						endBlock = b.attrs[i+1].attrOffset;
@@ -208,6 +208,10 @@ CSF_FADDR32 CsfSeekAttrSpace(
 		M_ERROR(WRITE_ERROR);
 		resultPos = 0;
 	}
-	fseek(m->fp, (long)resultPos, SEEK_SET); /* fsetpos() is better */
+	if( fseek(m->fp, (long)resultPos, SEEK_SET) != 0 ) /* fsetpos() is better */
+        {
+                M_ERROR(WRITE_ERROR);
+                resultPos = 0;
+        }
 error:	return resultPos;
 } /* CsfSeekAttrSpace */
