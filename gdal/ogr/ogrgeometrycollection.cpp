@@ -456,6 +456,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
     if( eErr != OGRERR_NONE )
         return eErr;
 
+    /* coverity[tainted_data] */
     papoGeoms = (OGRGeometry **) VSI_CALLOC_VERBOSE(sizeof(void*), nGeomCount);
     if (nGeomCount != 0 && papoGeoms == NULL)
     {

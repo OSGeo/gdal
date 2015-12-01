@@ -285,6 +285,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 {
     OGRwkbByteOrder eByteOrder;
     int nDataOffset = 0;
+    /* coverity[tainted_data] */
     OGRErr eErr = oCC.importPreambuleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 4, eWkbVariant);
     if( eErr != OGRERR_NONE )
