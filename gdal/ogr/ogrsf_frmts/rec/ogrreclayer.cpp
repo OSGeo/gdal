@@ -162,7 +162,7 @@ OGRRECLayer::~OGRRECLayer()
 void OGRRECLayer::ResetReading()
 
 {
-    VSIFSeek( fpREC, nStartOfData, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeek( fpREC, nStartOfData, SEEK_SET ));
     nNextFID = 1;
 }
 
@@ -251,7 +251,10 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
                          panFieldWidth[iAttr] );
 
         if( strlen(pszFieldText) != 0 )
+        {
+            /* coverity[tainted_data] */
             poFeature->SetField( iAttr, pszFieldText );
+        }
     }
     
 /* -------------------------------------------------------------------- */
