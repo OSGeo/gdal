@@ -973,7 +973,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
     
-    return psCore;
+    return (DGNElemCore*) psMP;
 }
 
 /************************************************************************/
@@ -1220,9 +1220,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
 
-    // TODO: Coverity wants to free psArc, but that crashes.  CID 1074360
-    // CPLFree(psArc);
-    return psCore;
+    return (DGNElemCore*) psArc;
 }
 
 /************************************************************************/
@@ -1369,7 +1367,7 @@ DGNCreateConeElem( DGNHandle hDGN,
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
 
-    return psCore;
+    return (DGNElemCore*) psCone;
 }
 
 /************************************************************************/
@@ -1536,7 +1534,7 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
 
-    return psCore;
+    return (DGNElemCore*) psText;
 }
 
 /************************************************************************/
@@ -1608,9 +1606,7 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
 
-    // TODO: Coverity wants a free, but it crashes.  CID 1074357
-    // CPLFree(psCT);
-    return psCore;
+    return (DGNElemCore*) psCT;
 }
 
 /************************************************************************/
@@ -1693,9 +1689,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
     DGNAddRawAttrLink( hDGN, psCore, 8, abyRawZeroLinkage );
 
-    // TODO: Coverity wants to free psCH, but that crashes.   CID 1074358
-    // CPLFree(psCH);
-    return psCore;
+    return (DGNElemCore*) psCH;
 }
 
 /************************************************************************/
@@ -1871,9 +1865,7 @@ DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
     unsigned char abyRawZeroLinkage[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     DGNAddRawAttrLink( hDGN, psCore, 8, abyRawZeroLinkage );
 
-    // TODO: Refactor to not leak.
-    // CPLFree(psCH);
-    return psCore;
+    return (DGNElemCore*) psCH;
 }
 
 /************************************************************************/
@@ -2130,9 +2122,7 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
 
-    // TODO: Coverity wants to free psCH, but that crashes.  CID 1074359
-    // CPLFree(psCH);
-    return psCore;
+    return (DGNElemCore*) psCH;
 }
 
 /************************************************************************/
