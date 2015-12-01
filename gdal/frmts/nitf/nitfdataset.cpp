@@ -5414,6 +5414,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
     nOffset ++;
 
     /* Original sample precision */
+    /* coverity[dead_error_line] */
     abyAPP6[nOffset] = (eDT == GDT_UInt16) ? 12 : 8;
     nOffset ++;
 
@@ -5422,6 +5423,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
     nOffset ++;
 
     /* JPEG coding process */
+    /* coverity[dead_error_line] */
     abyAPP6[nOffset] = (eDT == GDT_UInt16) ? 4 : 1;
     nOffset ++;
 
@@ -5434,6 +5436,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
     nOffset ++;
 
     /* Stream bits */
+    /* coverity[dead_error_line] */
     abyAPP6[nOffset] = (eDT == GDT_UInt16) ? 12 : 8;
     nOffset ++;
 
