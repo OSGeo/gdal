@@ -386,29 +386,26 @@ void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
 /*                                                                      */
 /*      Find Dataset path for HDopen                                    */
 /************************************************************************/
-static char* CreatePath( HDF5GroupObjects *poH5Object )
+static void CreatePath( HDF5GroupObjects *poH5Object )
 {
-    char pszPath[8192];
-    char pszUnderscoreSpaceInName[8192];
-    char *popszPath;
-    int  i;
-    char **papszPath;
+    char szPath[8192];
+    char szUnderscoreSpaceInName[8192];
 
 /* -------------------------------------------------------------------- */
 /*      Recurse to the root path                                        */
 /* -------------------------------------------------------------------- */
-    pszPath[0]='\0';
+    szPath[0]='\0';
     if( poH5Object->poHparent !=NULL ) {
-        popszPath=CreatePath( poH5Object->poHparent );
-        strcpy( pszPath,popszPath );
+        CreatePath( poH5Object->poHparent );
+        snprintf( szPath, sizeof(szPath), "%s", poH5Object->poHparent->pszPath );
     }
 
 /* -------------------------------------------------------------------- */
 /*      add name to the path                                            */
 /* -------------------------------------------------------------------- */
     if( !EQUAL( poH5Object->pszName,"/" ) ){
-        strcat( pszPath,"/" );
-        strcat( pszPath,poH5Object->pszName );
+        snprintf( szPath + strlen(szPath), sizeof(szPath) - strlen(szPath),
+                  "/%s", poH5Object->pszName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -417,30 +414,32 @@ static char* CreatePath( HDF5GroupObjects *poH5Object )
     if( poH5Object->pszPath == NULL ) {
 
         if( strlen( poH5Object->pszName ) == 1 ) {
-            strcat(pszPath, poH5Object->pszName );
-            strcpy(pszUnderscoreSpaceInName, poH5Object->pszName);
+            snprintf( szPath + strlen(szPath), sizeof(szPath) - strlen(szPath),
+                      "%s", poH5Object->pszName );
+            snprintf( szUnderscoreSpaceInName, sizeof(szUnderscoreSpaceInName),
+                      "%s", poH5Object->pszName);
         }
         else {
 /* -------------------------------------------------------------------- */
 /*      Change space for underscore                                     */
 /* -------------------------------------------------------------------- */
-            papszPath = CSLTokenizeString2( pszPath,
+            char** papszPath = CSLTokenizeString2( szPath,
                             " ", CSLT_HONOURSTRINGS );
 
-            strcpy(pszUnderscoreSpaceInName,papszPath[0]);
-            for( i=1; i < CSLCount( papszPath ); i++ ) {
-                strcat( pszUnderscoreSpaceInName, "_" );
-                strcat( pszUnderscoreSpaceInName, papszPath[ i ] );
+            szUnderscoreSpaceInName[0] = 0;
+            for( int i=0; papszPath[i] != NULL &&
+                      strlen(szUnderscoreSpaceInName) + 1 + strlen(papszPath[i ]) < sizeof(szUnderscoreSpaceInName) ; i++ ) {
+                if( i > 0 )
+                    strcat( szUnderscoreSpaceInName, "_" );
+                strcat( szUnderscoreSpaceInName, papszPath[ i ] );
             }
             CSLDestroy(papszPath);
 
         }
         poH5Object->pszUnderscorePath  =
-            CPLStrdup( pszUnderscoreSpaceInName );
-        poH5Object->pszPath  = CPLStrdup( pszPath );
+            CPLStrdup( szUnderscoreSpaceInName );
+        poH5Object->pszPath  = CPLStrdup( szPath );
     }
-
-    return( poH5Object->pszPath );
 }
 
 /************************************************************************/
@@ -522,10 +521,10 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
     poHchild->objno[0]  = oStatbuf.objno[0];
     poHchild->objno[1]  = oStatbuf.objno[1];
     if( poHchild->pszPath == NULL ) {
-        poHchild->pszPath  = CreatePath( poHchild );
+        CreatePath( poHchild );
     }
     if( poHparent->pszPath == NULL ) {
-        poHparent->pszPath = CreatePath( poHparent );
+        CreatePath( poHparent );
     }
 
 
