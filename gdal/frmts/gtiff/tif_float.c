@@ -116,6 +116,7 @@ GUInt32 HalfToFloat( GUInt16 iHalf )
 /*	 Assemble sign, exponent and mantissa.			        */
 /* -------------------------------------------------------------------- */
 
+    /* coverity[overflow_sink] */
     return (iSign << 31) | (iExponent << 23) | iMantissa;
 }
 
@@ -189,5 +190,6 @@ GUInt32 TripleToFloat( GUInt32 iTriple )
 /*	 Assemble sign, exponent and mantissa.			        */
 /* -------------------------------------------------------------------- */
 
+    /* coverity[overflow_sink] */
     return (iSign << 31) | (iExponent << 23) | iMantissa;
 }
