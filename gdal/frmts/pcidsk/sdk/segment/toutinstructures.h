@@ -27,6 +27,7 @@
 #ifndef INCLUDE_PCIDSK_TOUTIN_INFORMATION_H
 #define INCLUDE_PCIDSK_TOUTIN_INFORMATION_H
 
+#include <cstring>
 #include "segment/orbitstructures.h"
 
 namespace PCIDSK
@@ -59,6 +60,44 @@ namespace PCIDSK
          */
         SRITInfo_t()
         {
+            N0x2 = 0.0;
+            aa = 0.0;
+            SmALPHA = 0.0;
+            bb = 0.0;
+            C0 = 0.0;
+            cc = 0.0;
+            COS_KHI = 0.0;
+            DELTA_GAMMA = 0.0;
+            GAMMA = 0.0;
+            K_1 = 0.0;
+            L0 = 0.0;
+            P = 0.0;
+            Q = 0.0;
+            TAU = 0.0;
+            THETA = 0.0;
+            THETA_SEC = 0.0;
+            X0 = 0.0;
+            Y0 = 0.0;
+            delh = 0.0;
+            COEF_Y2 = 0.0;
+            delT = 0.0;
+            delL = 0.0;
+            delTau = 0.0;
+            nDownSample = 0;
+            nGCPCount = 0;
+            nEphemerisSegNo = 0;
+            nAttitudeFlag = 0;
+            GCPMeanHtFlag = 0;
+            dfGCPMeanHt = 0.0;
+            dfGCPMinHt = 0.0;
+            dfGCPMaxHt = 0.0;
+            std::memset(nGCPIds, 0, sizeof(nGCPIds));
+            std::memset(nPixel, 0, sizeof(nPixel));
+            std::memset(nLine, 0, sizeof(nLine));
+            std::memset(dfElev, 0, sizeof(dfElev));
+            nSensor = 0;
+            nModel = 0;
+            RawToGeo = false;
             OrbitPtr = NULL;
         }
         /**
