@@ -102,6 +102,9 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_GetRasterBand) GetRasterBand;
 %rename (_AddBand) AddBand;
 
+%rename (_GetMaskBand) GetMaskBand;
+%rename (_GetOverview) GetOverview;
+
 %rename (_GetPaletteInterpretation) GetPaletteInterpretation;
 %rename (_GetHistogram) GetHistogram;
 
@@ -1117,9 +1120,11 @@ sub ComputeColorTable {
                                         ProgressData => undef,
                                         Method => 'MedianCut');
     for my $b ($self->Bands) {
-        $p->{red} = $b if !$p->{red} && $b->ColorInterpretation eq 'RedBand';
-        $p->{green} = $b if !$p->{green} && $b->ColorInterpretation eq 'GreenBand';
-        $p->{blue} = $b if !$p->{blue} && $b->ColorInterpretation eq 'BlueBand';
+        for my $cion ($b->ColorInterpretation) {
+            if ($cion eq 'RedBand') { $p->{red} //= $b; last; }
+            if ($cion eq 'GreenBand') { $p->{green} //= $b; last; }
+            if ($cion eq 'BlueBand') { $p->{blue} //= $b; last; }
+        }
     }
     my $ct = Geo::GDAL::ColorTable->new;
     Geo::GDAL::ComputeMedianCutPCT($p->{red}, 
@@ -1142,23 +1147,25 @@ sub Dither {
                                         Progress => undef,
                                         ProgressData => undef);
     for my $b ($self->Bands) {
-        $p->{red} = $b if !$p->{red} && $b->ColorInterpretation eq 'RedBand';
-        $p->{green} = $b if !$p->{green} && $b->ColorInterpretation eq 'GreenBand';
-        $p->{blue} = $b if !$p->{blue} && $b->ColorInterpretation eq 'BlueBand';
+        for my $cion ($b->ColorInterpretation) {
+            if ($cion eq 'RedBand') { $p->{red} //= $b; last; }
+            if ($cion eq 'GreenBand') { $p->{green} //= $b; last; }
+            if ($cion eq 'BlueBand') { $p->{blue} //= $b; last; }
+        }
     }
     my ($w, $h) = $self->Size;
-    $p->{dest} = Geo::GDAL::Driver('MEM')->Create(Name => 'dithered', 
-                                                  Width => $w, 
-                                                  Height => $h, 
-                                                  Type => 'Byte')->Band unless $p->{dest};
-    $p->{colortable} = $p->{dest}->ColorTable unless $p->{colortable};
-    $p->{colortable} = $self->ComputeColorTable(
-        Red => $p->{red},
-        Green => $p->{green},
-        Blue => $p->{blue},
-        Progress => $p->{progress}, 
-        ProgressData => $p->{progressdata} ) unless $p->{colortable};
-    Geo::GDAL::DitherRGB2PCT($p->{red}, 
+    $p->{dest} //= Geo::GDAL::Driver('MEM')->Create(Name => 'dithered', 
+                                                    Width => $w, 
+                                                    Height => $h, 
+                                                    Type => 'Byte')->Band;
+    $p->{colortable} 
+        //= $p->{dest}->ColorTable 
+            // $self->ComputeColorTable(Red => $p->{red},
+                                        Green => $p->{green},
+                                        Blue => $p->{blue},
+                                        Progress => $p->{progress}, 
+                                        ProgressData => $p->{progressdata});
+    Geo::GDAL::DitherRGB2PCT($p->{red},
                              $p->{green}, 
                              $p->{blue}, 
                              $p->{dest}, 
@@ -1522,11 +1529,19 @@ sub Piddle {
     return $pdl;
 }
 
-# GetMaskBand should be redefined and the result should be put into 
-# %Geo::GDAL::Dataset::BANDS
+sub GetMaskBand {
+    my $self = shift;
+    my $band = _GetMaskBand($self);
+    $Geo::GDAL::Dataset::BANDS{tied(%{$band})} = $self;
+    return $band;
+}
 
-# GetOverview should be redefined and the result should be put into 
-# %Geo::GDAL::Dataset::BANDS
+sub GetOverview {
+    my ($self, $index) = @_;
+    my $band = _GetOverview($self, $index);
+    $Geo::GDAL::Dataset::BANDS{tied(%{$band})} = $self;
+    return $band;
+}
 
 sub RegenerateOverview {
     my $self = shift;
@@ -1546,14 +1561,21 @@ sub Polygonize {
     my $self = shift;
     my $p = Geo::GDAL::named_parameters(\@_, Mask => undef, OutLayer => undef, PixValField => 'val', Options => undef, Progress => undef, ProgressData => undef);
     my $dt = $self->DataType;
+    my %leInt32 = (Byte => 1, Int16 => 1, Int32 => 1, UInt16 => 1);
+    my $leInt32 = $leInt32{$dt};
     $dt = $dt =~ /Float/ ? 'Real' : 'Integer';
-    $p->{outlayer} = Geo::OGR::Driver('Memory')->Create()->
+    $p->{outlayer} //= Geo::OGR::Driver('Memory')->Create()->
         CreateLayer(Name => 'polygonized', 
                     Fields => [{Name => 'val', Type => $dt}, 
-                               {Name => 'geom', Type => 'Polygon'}]) unless $p->{outlayer};
+                               {Name => 'geom', Type => 'Polygon'}]);
     $p->{pixvalfield} = $p->{outlayer}->GetLayerDefn->GetFieldIndex($p->{pixvalfield});
     $p->{options}{'8CONNECTED'} = $p->{options}{Connectedness} if $p->{options}{Connectedness};
-    Geo::GDAL::_Polygonize($self, $p->{mask}, $p->{outlayer}, $p->{pixvalfield}, $p->{options}, $p->{progress}, $p->{progressdata});
+    if ($leInt32 || $p->{options}{ForceIntPixel}) {
+        Geo::GDAL::_Polygonize($self, $p->{mask}, $p->{outlayer}, $p->{pixvalfield}, $p->{options}, $p->{progress}, $p->{progressdata});
+    } else {
+        Geo::GDAL::FPolygonize($self, $p->{mask}, $p->{outlayer}, $p->{pixvalfield}, $p->{options}, $p->{progress}, $p->{progressdata});
+    }
+    set the srs of the outlayer if it was created here
     return $p->{outlayer};
 }
 
@@ -1571,6 +1593,21 @@ sub Sieve {
     }
     Geo::GDAL::SieveFilter($self, $p->{mask}, $p->{dest}, $p->{threshold}, $c, $p->{options}, $p->{progress}, $p->{progressdata});
     return $p->{dest};
+}
+
+sub Distance {
+    my $self = shift;
+    my $p = Geo::GDAL::named_parameters(\@_, Distance => undef, Options => undef, Progress => undef, ProgressData => undef);
+    for my $key (keys %{$p->{options}}) {
+        $p->{options}{uc($key)} = $p->{options}{$key};
+    }
+    $p->{options}{TYPE} //= $p->{options}{DATATYPE} //= 'Float32';
+    unless ($p->{distance}) {
+        my ($w, $h) = $self->Size;
+        $p->{distance} = Geo::GDAL::Driver('MEM')->Create(Name => 'distance', Width => $w, Height => $h, Type => $p->{options}{TYPE})->Band;
+    }
+    Geo::GDAL::ComputeProximity($self, $p->{distance}, $p->{options}, $p->{progress}, $p->{progressdata});
+    return $p->{distance};
 }
 
 
@@ -1626,28 +1663,31 @@ sub SetColorEntry {
 
 sub ColorEntry {
     my $self = shift;
-    my $index = shift;
-    SetColorEntry($self, $index, @_) if @_ > 0;
-    GetColorEntry($self, $index) if defined wantarray;
+    my $index = shift // 0;
+    SetColorEntry($self, $index, @_) if @_;
+    return unless defined wantarray;
+    return wantarray ? GetColorEntry($self, $index) : [GetColorEntry($self, $index)];
 }
+*Color = *ColorEntry;
 
 sub ColorTable {
     my $self = shift;
-    my @table;
     if (@_) {
         my $index = 0;
         for my $color (@_) {
-            push @table, [ColorEntry($self, $index, @$color)];
+            ColorEntry($self, $index, $color);
             $index++;
         }
-    } else {
-        for (my $index = 0; $index < GetCount($self); $index++) {
-            push @table, [ColorEntry($self, $index)];
-        }
+    }
+    return unless defined wantarray;
+    my @table;
+    for (my $index = 0; $index < GetCount($self); $index++) {
+        push @table, [ColorEntry($self, $index)];
     }
     return @table;
 }
 *ColorEntries = *ColorTable;
+*Colors = *ColorTable;
 
 
 
@@ -1993,6 +2033,48 @@ sub ExpandToInclude {
     $self->[2] = $e->[2] if $e->[2] > $self->[2];
     $self->[3] = $e->[3] if $e->[3] > $self->[3];
 }
+
+package Geo::GDAL::XML;
+
+use strict;
+use warnings;
+use Carp;
+
+# XML related subs in Geo::GDAL
+
+#Geo::GDAL::Child
+#Geo::GDAL::Children
+#Geo::GDAL::NodeData
+#Geo::GDAL::NodeType
+#Geo::GDAL::NodeTypes
+#Geo::GDAL::ParseXMLString
+#Geo::GDAL::SerializeXMLTree
+
+sub new {
+    my $class = shift;
+    my $xml = shift // '';
+    my $self = Geo::GDAL::ParseXMLString($xml);
+    bless $self, $class;
+    $self->traverse(sub {my $node = shift; bless $node, $class});
+    return $self;
+}
+
+sub traverse {
+    my ($self, $sub) = @_;
+    my $type = $self->[0];
+    my $data = $self->[1];
+    $type = Geo::GDAL::NodeType($type); 
+    $sub->($self, $type, $data);
+    for my $child (@{$self}[2..$#$self]) {
+        traverse($child, $sub);
+    }
+}
+
+sub serialize {
+    my $self = shift;
+    return Geo::GDAL::SerializeXMLTree($self);
+}
+
 
 %}
 

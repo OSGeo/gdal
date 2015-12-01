@@ -789,21 +789,30 @@ typedef unsigned long      GUIntBig;
     $1 = &e3;
     int ok = SvROK($input) && SvTYPE(SvRV($input))==SVt_PVAV;
     AV *av;
-    if (ok) {
+    if (ok)
         av = (AV*)(SvRV($input));
-        ok = av_len(av) == 3;
-    }
-    if (ok) {
-        SV **sv = av_fetch(av, 0, 0);
-        $1->c1 =  SvIV(*sv);
-        sv = av_fetch(av, 1, 0);
-        $1->c2 =  SvIV(*sv);
-        sv = av_fetch(av, 2, 0);
-        $1->c3 =  SvIV(*sv);
-        sv = av_fetch(av, 3, 0);
-        $1->c4 =  SvIV(*sv);
-    } else 
+    else 
         do_confess(NEED_ARRAY_REF, 1);
+    SV **sv = av_fetch(av, 0, 0);
+    if (sv)
+        $1->c1 = SvIV(*sv);
+    else
+        $1->c1 = 0;
+    sv = av_fetch(av, 1, 0);
+    if (sv)
+        $1->c2 = SvIV(*sv);
+    else
+        $1->c2 = 0;
+    sv = av_fetch(av, 2, 0);
+    if (sv)
+        $1->c3 = SvIV(*sv);
+    else
+        $1->c3 = 0;
+    sv = av_fetch(av, 3, 0);
+    if (sv)
+        $1->c4 = SvIV(*sv);
+    else
+        $1->c4 = 255;
 }
 
 /*

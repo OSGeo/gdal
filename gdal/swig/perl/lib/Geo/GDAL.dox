@@ -6,6 +6,9 @@
 # a rectagular grid or grids of pixels, called a "band" in GDAL. Each
 # pixel contains a numeric value of a specific data type
 
+##### ignore functions which are either used from other classes or not considered
+##### useful in the Perl API
+
 ## @ignore FileFromMemBuffer
 ## @ignore GDALDestroyDriverManager
 ## @ignore HasThreadSupport
@@ -25,10 +28,6 @@
 ## @ignore error
 ## @ignore named_parameters
 ## @ignore string2int
-
-## @sub $errstr
-# Clear the error stack and return all generated GDAL error messages in one (possibly multiline) string.
-# @return the chomped error stack joined with newlines.
 
 ## @ignore GeneralCmdLineProcessor
 ## @ignore ParseCommandLine
@@ -60,6 +59,65 @@
 ## @ignore ContourGenerate
 ## @ignore RegenerateOverviews
 ## @ignore RegenerateOverview
+
+## @ignore ApplyGeoTransform
+## @ignore InvGeoTransform
+## @ignore GCPsToGeoTransform
+
+## @ignore make_processing_options
+
+## @ignore_class Geo::GDAL::GDALDEMProcessingOptions
+## @ignore wrapper_GDALDEMProcessing
+
+## @ignore_class Geo::GDAL::GDALGridOptions
+## @ignore wrapper_GDALGrid
+
+## @ignore_class Geo::GDAL::GDALNearblackOptions
+## @ignore wrapper_GDALNearblackDestDS
+## @ignore wrapper_GDALNearblackDestName
+
+## @ignore_class Geo::GDAL::GDALRasterizeOptions
+## @ignore wrapper_GDALRasterizeDestDS
+## @ignore wrapper_GDALRasterizeDestName
+
+## @ignore_class Geo::GDAL::GDALTranslateOptions
+## @ignore wrapper_GDALTranslate
+
+## @ignore_class Geo::GDAL::GDALVectorTranslateOptions
+## @ignore wrapper_GDALVectorTranslateDestDS
+## @ignore wrapper_GDALVectorTranslateDestName
+
+## @ignore_class Geo::GDAL::GDALWarpAppOptions
+## @ignore wrapper_GDALWarpDestDS
+## @ignore wrapper_GDALWarpDestName
+
+## @ignore_class Geo::GDAL::GDALInfoOptions
+## @ignore GDALInfo
+
+## @ignore ComputeMedianCutPCT
+## @ignore DitherRGB2PCT
+## @ignore ReprojectImage
+## @ignore AutoCreateWarpedVRT
+## @ignore ComputeProximity
+## @ignore RasterizeLayer
+## @ignore Polygonize
+## @ignore FPolygonize
+## @ignore SieveFilter
+
+##### XML is in its own class
+
+## @ignore NodeTypes
+## @ignore NodeType
+## @ignore ParseXMLString
+## @ignore NodeData
+## @ignore Children
+## @ignore Child
+## @ignore SerializeXMLTree
+
+
+## @sub $errstr
+# Clear the error stack and return all generated GDAL error messages in one (possibly multiline) string.
+# @return the chomped error stack joined with newlines.
 
 ## @sub $VersionInfo($request = 'VERSION_NUM')
 # @param request A string specifying the request. Currently either
@@ -98,28 +156,17 @@
 # @return the path to the searched file or undef.
 
 ## @sub SetConfigOption($key, $value)
-# @param key A GDAL config option. Possible values include
-# 'GDAL_FORCE_CACHING', 'USE_RRD', GDAL_DATA', 'GDAL_SKIP',
-# 'GDAL_DRIVER_PATH', 'GDAL_IGNORE_AXIS_ORIENTATION',
-# 'GMLJP2OVERRIDE', 'GDAL_DISABLE_READDIR_ON_OPEN',
-# 'GDAL_PAM_ENABLED', 'GDAL_PAM_MODE', 'GDAL_PAM_PROXY_DIR',
-# 'GDAL_MAX_DATASET_POOL_SIZE', 'GDAL_FORCE_CACHING', 'GDAL_CACHEMAX',
-# 'GDAL_SWATH_SIZE', 'PROJSO', 'CENTER_LONG',
-# 'OGR_DEBUG_ORGANIZE_POLYGONS', 'OGR_ORGANIZE_POLYGONS',
-# and 'GDAL_JP2K_ALT_OFFSETVECTOR_ORDER'.
-# Consult the GDAL main documentation for the semantics of config options.
+# @param key A GDAL config option.  Consult <a
+# href="https://trac.osgeo.org/gdal/wiki/ConfigOptions">the GDAL
+# documentation</a> for available options and their use.
 # @param value A value for the option, typically 'YES', 'NO',
-# undef, a path, or a filename.
+# undef, path, numeric value, or a filename.
 
-## @sub $GetConfigOption($key, $default)
-# @param key A GDAL config option.
-# @param default A default value for the option.
-# @return the value of the GDAL config option or the value of the
-# default parameter.
-
-## @ignore ApplyGeoTransform
-## @ignore InvGeoTransform
-## @ignore GCPsToGeoTransform
+## @sub $GetConfigOption($key)
+# @param key A GDAL config option.  Consult <a
+# href="https://trac.osgeo.org/gdal/wiki/ConfigOptions">the GDAL
+# documentation</a> for available options and their use.
+# @return the value of the GDAL config option.
 
 ## @sub $GetCacheMax()
 # @return maximum amount of memory (as bytes) for caching within GDAL.
@@ -176,61 +223,6 @@
 # @param dec Decimal degrees
 # @return packed DMS, i.e., a number DDDMMMSSS.SS
 
-## @sub @NodeTypes()
-# @return a list of GDAL XML parser node types. These are currently:
-# +list Geo::GDAL::Const CXT_
-
-## @sub $NodeType($type)
-# Convert between integer and string expressions of CPLXMLNodeTypes
-# @param type (as integer)
-# @return type (as string)
-
-## @sub \@ParseXMLString($XML)
-# Parses a given XML into an array of arrays and returns a reference
-# to that. An array in the structure is: (CPLXMLNodeType, value,
-# child, child, ...). CPLXMLNodeType is an integer.
-# @param XML
-# @return an XMLTree.
-#
-# Example:
-# \code
-open FILE, "data.xml" or die "Couldn't open file: $!"; 
-my $xml = join("", <FILE>); 
-close FILE;
-my $tree = Geo::GDAL::ParseXMLString($xml);
-traverse($tree);
-print Geo::GDAL::SerializeXMLTree($tree),"\n";
- 
-sub traverse {
-.    my $node = shift;
-.    my $type = shift @$node;
-.    my $data = shift @$node;
-.    $type = Geo::GDAL::NodeType($type); 
-.    print "$type, $data\n";
-.    for my $child (@$node) {
-.        traverse($child);
-.    }
-}
-# \endcode
-
-## @sub @NodeData($node)
-# @param node
-# @return ($NodeType, $value)
-
-## @sub @Children($node)
-# @param node
-# @return
-
-## @sub @Child($node, $i)
-# @param node
-# @param i 0 .. number of children - 1
-# @return
-
-## @sub $SerializeXMLTree(arrayref XMLTree)
-# @param XMLTree
-# @return XML
-
-
 ## @ignore GetDriverCount
 ## @ignore GetDriver
 ## @ignore GetDriverByName
@@ -241,87 +233,20 @@ sub traverse {
 # @return a list of all available GDAL raster drivers.
 
 ## @sub @DriverNames()
-# A.k.a GetDriverNames
+# Available raster format drivers.
 # @note Use Geo::OGR::DriverNames for vector drivers.
 # @return a list of the short names of all available GDAL raster drivers.
 
-## @sub Geo::GDAL::Driver Driver($name)
-# A.k.a GetDriver.
-# @param name the short name of the driver.
-# @note No check is made that the driver is actually a raster driver.
+## @sub Geo::GDAL::Driver Driver($Name)
+# Access a raster format driver.
+# @param Name The short name of the driver. One of Geo::GDAL::DriverNames.
+# @note Use Geo::OGR::Driver to access a vector driver.
 # @return a Geo::GDAL::Driver object.
 
 ## @sub Geo::GDAL::Driver IdentifyDriver($path, $siblings)
 # @param path a dataset path.
 # @param siblings [optional] A list of names of files that belong to the data format.
 # @return a Geo::GDAL::Driver.
-
-
-## @ignore make_processing_options
-
-## @ignore_class Geo::GDAL::GDALDEMProcessingOptions
-## @ignore wrapper_GDALDEMProcessing
-
-## @ignore_class Geo::GDAL::GDALGridOptions
-## @ignore wrapper_GDALGrid
-
-## @ignore_class Geo::GDAL::GDALNearblackOptions
-## @ignore wrapper_GDALNearblackDestDS
-## @ignore wrapper_GDALNearblackDestName
-
-## @ignore_class Geo::GDAL::GDALRasterizeOptions
-## @ignore wrapper_GDALRasterizeDestDS
-## @ignore wrapper_GDALRasterizeDestName
-
-## @ignore_class Geo::GDAL::GDALTranslateOptions
-## @ignore wrapper_GDALTranslate
-
-## @ignore_class Geo::GDAL::GDALVectorTranslateOptions
-## @ignore wrapper_GDALVectorTranslateDestDS
-## @ignore wrapper_GDALVectorTranslateDestName
-
-## @ignore_class Geo::GDAL::GDALWarpAppOptions
-## @ignore wrapper_GDALWarpDestDS
-## @ignore wrapper_GDALWarpDestName
-
-## @ignore_class Geo::GDAL::GDALInfoOptions
-## @ignore GDALInfo
-
-## @ignore ComputeMedianCutPCT
-## @ignore DitherRGB2PCT
-## @ignore ReprojectImage
-## @ignore AutoCreateWarpedVRT
-
-## @sub ComputeProximity(Geo::GDAL::Band src, Geo::GDAL::Band proximity, hashref options, subref progress, $progress_data)
-# @param src The raster from which the proximities are computed from.
-# @param proximity The raster to which the proximities are computed to.
-# @param options Options. Supported key, value pairs are 
-# - VALUES => n[,n]* A list of target pixel values to measure the
-# distance from.  If this option is not provided proximity will be
-# computed from non-zero pixel values.  Currently pixel values are
-# internally processed as integers.
-# - DISTUNITS => PIXEL|GEO Indicates whether distances will be
-# computed in pixel units or in georeferenced units.  The default is
-# pixel units.  This also determines the interpretation of MAXDIST.
-# - MAXDIST => n The maximum distance to search.  Proximity distances
-# greater than this value will not be computed.  Instead output pixels
-# will be set to a nodata value.
-# - NODATA => n The NODATA value to use on the output band for pixels
-# that are beyond MAXDIST.  If not provided, the hProximityBand will
-# be queried for a nodata value.  If one is not found, 65535 will be
-# used.
-# - FIXED_BUF_VAL => n If this option is set, all pixels within the
-# MAXDIST threadhold are set to this fixed value instead of to a
-# proximity distance.
-# @param progress [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data)
-# @param progress_data [optional]
-#
-# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
-
-## @ignore RasterizeLayer
-## @ignore Polygonize
-## @ignore SieveFilter
 
 ## @sub $PackCharacter($DataType)
 # Get the character that is needed for Perl's pack and unpack when
@@ -366,6 +291,20 @@ sub traverse {
 
 
 
+## @class Geo::GDAL::XML
+# @brief A simple XML parser
+
+## @method new($string)
+# @param string String containing XML.
+# @return A new Geo::GDAL::XML object, which is a reference to an anonymous array.
+
+## @method traverse(coderef subroutine)
+# @param subroutine Code reference, which will be called for each node in the XML with parameters: node, node_type, node_value. Node type is either Attribute, Comment, Element, Literal, or Text.
+
+## @method serialize()
+# @return The XML serialized into a string.
+
+
 
 ## @class Geo::GDAL::AsyncReader
 # @brief Enable asynchronous requests.
@@ -373,7 +312,6 @@ sub traverse {
 # @todo Test and document.
 #
 # This class is not yet documented nor tested in the GDAL Perl wrappers
-
 
 
 
@@ -481,7 +419,7 @@ sub traverse {
 # name, type and description or Value. Value is a listref.
 
 ## @method @CreationDataTypes()
-# @return a list of data types that can be used for new datasets.
+# @return a list of data types that can be used for new datasets of this format. A subset of Geo::GDAL::DataTypes
 
 ## @ignore CreateDataset
 
@@ -494,7 +432,7 @@ sub traverse {
 # - \a Width the width of the raster dataset (default is 256).
 # - \a Height the height of the raster dataset (default is 256).
 # - \a Bands number of bands in the raster dataset (default is 1).
-# - \a Type the data type of the pixels the raster dataset (default is 'Byte'). One of Geo::OGR::Driver::CreationDataTypes.
+# - \a Type the data type of the pixels the raster dataset (default is 'Byte'). One of Geo::GDAL::Driver::CreationDataTypes.
 # - \a Options creation options as a reference to a hash (default is {}).
 #
 # @return a new Geo::GDAL::Dataset object.
@@ -546,13 +484,9 @@ sub traverse {
 
 ## @attr Column
 # pixel x coordinate (access as $gcp->{Column})
-# @note Pixel is deprecated.
-#
 
 ## @attr Row
 # pixel y coordinate (access as $gcp->{Row})
-# @note Line is deprecated.
-#
 
 ## @attr Info
 # informational message (access as $gcp->{Info})
@@ -908,7 +842,7 @@ sub traverse {
 #
 # @return the destination band.
 #
-# Usage example. This code converts an RGB JPEG image to a one band PNG image with a color table.
+# Usage example. This code converts an RGB JPEG image into a one band PNG image with a color table.
 \code
 my $d = Geo::GDAL::Open('pic.jpg');
 Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
@@ -933,23 +867,27 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # Object attribute.
 # scalar (access as $band->{YSize})
 
+## @ignore GetDataset
+
+## @method Geo::GDAL::Dataset Dataset()
+# @return The dataset which this band belongs to.
+
 ## @ignore GetBand
 
 ## @method $GetBandNumber()
-# @note a.k.a. GetBand
-# @return the number of this band.
+# @return The index of this band in the parent dataset list of bands.
 
 ## @method $DataType()
-# @return the data type of this band (as string, one of Geo::GDAL::DataTypes).
+# @return The data type of this band. One of Geo::GDAL::DataTypes.
 
 ## @method $PackCharacter()
-# @return the character to use in Perl pack and unpack for the DataType of this band.
+# @return The character to use in Perl pack and unpack for the data of this band.
 
 ## @method @Size()
-# @return the size of the band as a list (width, height).
+# @return The size of the band as a list (width, height).
 
 ## @method @GetBlockSize()
-# @return the size of a preferred i/o raster blocks as a list (width,
+# @return The size of a preferred i/o raster blocks as a list (width,
 # height).
 
 ## @ignore GetRasterColorInterpretation
@@ -963,21 +901,24 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # SetColorInterpretation (set only and requires an integer)
 # @param color_interpretation [optional] new color interpretation, one
 # of Geo::GDAL::Band::ColorInterpretations.
-# @return color interpretation, one of Geo::GDAL::Band::ColorInterpretations.
+# @return The color interpretation of this band. One of Geo::GDAL::Band::ColorInterpretations.
 
 ## @ignore GetNoDataValue
 ## @ignore SetNoDataValue
 
+## @method $DeleteNoDataValue()
+
 ## @method $NoDataValue($NoDataValue)
-# @note a.k.a. GetNoDataValue (get only), SetNoDataValue (set only)
+# Remove no data value from this band.
+
 # @param NoDataValue [optional]
 # Get or set the "no data" value.
-# @note $band->NoDataValue(undef) sets the "no data" value to the Posix
-# floating point maximum.
-# @return the "no data" value in scalar context. In list context
-# returns a numeric value and a boolean value, which indicates whether
-# a no data value is actually associated with this band. If the
-# boolean is true, then the first value is the no data value.
+# @note $band->NoDataValue(undef) sets the "no data" value to the
+# Posix floating point maximum. Use Geo::GDAL::Band::DeleteNoDataValue
+# to remove no data value from this band.
+# @return The "no data" value or undef in scalar context. An undef
+# value indicates that there is no no data value associated with this
+# band.
 
 ## @ignore GetUnitType
 ## @ignore SetUnitType
@@ -1197,22 +1138,17 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # Write cached data to disk. There is usually no need to call this
 # method.
 
+## @ignore GetRasterColorTable
+## @ignore SetRasterColorTable
+## @ignore GetColorTable
+## @ignore SetColorTable
+
 ## @method Geo::GDAL::ColorTable ColorTable($ColorTable)
 # Get or set the color table of this band.
 # @param ColorTable [optional] a Geo::GDAL::ColorTable object
-# @return a new Geo::GDAL::ColorTable object in a non-void context.
-
-## @ignore GetRasterColorTable
-## @ignore SetRasterColorTable
-
-## @method Geo::GDAL::ColorTable GetColorTable()
-# @note a.k.a. GetRasterColorTable, see also ColorTable
-# @return a color table object.
-
-## @method SetColorTable($ColorTable)
-# @note a.k.a. SetRasterColorTable, see also ColorTable
-# @param ColorTable A color table object.
-#
+# @return A new Geo::GDAL::ColorTable object which represents the
+# internal color table associated with this band. Returns undef this
+# band does not have an associated color table.
 
 ## @sub @MaskFlags
 # @return the list of mask flags. These are
@@ -1234,8 +1170,8 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # band.
 
 ## @method @GetMaskFlags()
-# @return th mask flags of the mask band associated with this
-# band. The flags are Geo::GDAL::Band::MaskFlags.
+# @return the mask flags of the mask band associated with this
+# band. The flags are one or more of Geo::GDAL::Band::MaskFlags.
 
 ## @ignore GetRasterCategoryNames
 ## @ignore SetRasterCategoryNames
@@ -1261,7 +1197,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # - \a Mask A raster band, which is used as a mask to select polygonized areas. Default is undef.
 # - \a OutLayer A vector layer into which the polygons are written. If not given, an in-memory layer 'polygonized' is created and returned.
 # - \a PixValField The name of the field in the output layer into which the pixel value of the polygon area is stored. Default is 'val'.
-# - \a Options Hash or list of options. {Connectedness => 4} can be specified to use 4-connectedness, otherwise 8-connectedness is used.
+# - \a Options Hash or list of options. Connectedness can be set to 4 to use 4-connectedness, otherwise 8-connectedness is used. ForceIntPixel can be set to 1 to force using a 32 bit int buffer for pixel values in the process. If this is not set and the data type of this raster does not fit into a 32 bit int buffer, a 32 bit float buffer is used.
 # - \a Progress Progress function.
 # - \a ProgressData Additional parameter for the progress function.
 #
@@ -1294,10 +1230,11 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @param progress_data [optional]
 # @return
 
-## @method FillNodata($mask, $max_search_dist, $smoothing_iterations, $options, subref progress, $progress_data)
+## @ignore FillNodata
+
+## @method FillNoData($mask, $max_search_dist, $smoothing_iterations, $options, subref progress, $progress_data)
 # Interpolate values for pixels in this raster. The pixels to fill
 # should be marked in the mask band with zero.
-# @note This is a wrapper for Geo::GDAL::FillNodata.
 #
 # @param mask [optional] a mask band indicating pixels to be interpolated (zero valued) (default is to get it with Geo::GDAL::Band::GetMaskBand).
 # @param max_search_dist [optional] the maximum number of pixels to
@@ -1330,7 +1267,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # Remove small areas by merging them into the largest neighbour area.
 # @param params Named parameters:
 # - \a Mask A raster band, which is used as a mask to select sieved areas. Default is undef.
-# - \a Dest A raster band into which the result is written. If not given, an in-memory raster band is used and returned.
+# - \a Dest A raster band into which the result is written. If not given, an new in-memory raster band is created and returned.
 # - \a Threshold The smallest area size (in pixels) which are not sieved away.
 # - \a Options Hash or list of options. {Connectedness => 4} can be specified to use 4-connectedness, otherwise 8-connectedness is used.
 # - \a Progress Progress function.
@@ -1338,66 +1275,79 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 #
 # @return The filtered raster band.
 
+## @method Geo::GDAL::Band Distance(%params)
+# Compute distances to specific pixels of this raster.
+# @param params Named parameters:
+# - \a Distance A raster band, into which the distances are computed. If not given, a not given, a new in-memory raster band is created and returned. The data type of the raster can be given in the options.
+# - \a Options Hash of options. Options are:
+#   - \a Values A list of pixel values in this band to measure the distance from. If this option is not provided, the distance will be computed to non-zero pixel values. Currently pixel values are internally processed as integers.
+#   - \a DistUnits=PIXEL|GEO Indicates whether distances will be computed in pixel units or in georeferenced units. The default is pixel units. This also determines the interpretation of MaxDist.
+#   - \a MaxDist=n The maximum distance to search. Distances greater than this value will not be computed. Instead output pixels will be set to a nodata value.
+#   - \a NoData=n The nodata value to use on the distance band for pixels that are beyond MaxDist. If not provided, the distance band will be queried for a nodata value. If one is not found, 65535 will be used (255 if the type is Byte).
+#   - \a Use_Input_NoData=YES|NO If this option is set, the nodata value of this band will be respected. Leaving nodata pixels in the input as nodata pixels in the distance raster.
+#   - \a Fixed_Buf_Val=n If this option is set, all pixels within the MaxDist threshold are set to this value instead of the distance value.
+#   - \a DataType The data type for the result if it is not given.
+# - \a Progress Progress function.
+# - \a ProgressData Additional parameter for the progress function.
+#
+# @note This GDAL function behind this API is called GDALComputeProximity.
+#
+# @return The distance raster.
+
 
 
 ## @class Geo::GDAL::ColorTable
-# @brief A color table in a raster band.
+# @brief A color table from a raster band or a color table, which can be used for a band.
 # @isa ( Geo::GDAL::MajorObject Geo::GDAL )
 
 ## @cmethod Geo::GDAL::ColorTable new($GDALPaletteInterp = 'RGB')
-#
-# Usage:
-# \code
-# $ct = Geo::GDAL::ColorTable->new(...arguments...);
-# \endcode
+# Create a new empty color table.
 # @return a new Geo::GDAL::ColorTable object
 
 ## @method Geo::GDAL::ColorTable Clone()
+# Clone an existing color table.
 # @return a new Geo::GDAL::ColorTable object
 
 ## @method $GetPaletteInterpretation()
 # @return paletter interpretation (string)
 
 ## @method $GetCount()
-# @return scalar (count of color entries as int)
+# @return The number of colors in this color table.
 
-## @method @ColorTable(@colortable)
-# Get or set the table of color entries.
-# @param colortable [optional]
-# @return a table of color entries (a list of lists) in a non void context
+## @ignore ColorEntries
+## @ignore ColorTable
 
-## @method @ColorEntries(@color_entries)
-# Get or set the table of color entries.
-# @deprecated use Geo::GDAL::ColorTable::ColorTable
-#
-# @param color_entries [optional]
-# @return a table of color entries (a list of lists) in a non void context
+## @method @Colors(@colors)
+# Get or set the colors in this color table.
+# @note The color table will expand to the size of the input list but
+# it will not shrink.
+# @param colors [optional] A list of all colors (a list of lists) for this color table.
+# @return A list of colors (a list of lists).
 
-## @method @ColorEntry($i, @color)
-# Get or set a color entry.
-# @param i
-# @param color [optional]
-# @return a color entry
+## @ignore GetColorEntry
+## @ignore GetColorEntryAsRGB
+## @ignore SetColorEntry
+## @ignore ColorEntry
 
-## @method @GetColorEntry($i)
-# @param i
-# @return array ColorEntry = ($c1, $c2, $c3, $c4)
-
-## @method @GetColorEntryAsRGB($i)
-# @param i
-# @return array ColorEntry = ($r, $g, $b, $alpha)
-
-## @method SetColorEntry($index, @ColorEntry)
-# @param index
-# @param ColorEntry a list or a reference to an array
-#
+## @method @Color($index, @color)
+# Get or set a color in this color table.
+# @param index The index of the color in the table. Note that the
+# color table may expand if the index is larger than the current max
+# index of this table and a color is given. An attempt to retrieve a
+# color out of the current size of the table causes an error.
+# @param color [optional] The color, either a list or a reference to a
+# list. If the list is too short or has undef values, the undef values
+# are taken as 0 except for alpha, which is taken as 255.
+# @note A color is an array of four integers having a value between 0
+# and 255: (gray, red, cyan or hue; green, magenta, or lightness;
+# blue, yellow, or saturation; alpha or blackband)
+# @return A color, in list context a list and in scalar context a reference to an anonymous array.
 
 ## @method CreateColorRamp($start_index, arrayref start_color, $end_index, arrayref end_color)
 # @param start_index
 # @param start_color
 # @param end_index
 # @param end_color
-#
 
 
 

@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use v5.10;
 use Scalar::Util 'blessed';
-use Test::More tests => 6;
+use Test::More tests => 7;
 BEGIN { use_ok('Geo::GDAL') };
 
 {
@@ -69,4 +69,14 @@ BEGIN { use_ok('Geo::GDAL') };
     my @n = $ct->ColorEntries;
     #say STDERR "@n";
     ok(@n == 256, "Dither using computed ct");
+}
+
+{
+    my $b = Geo::GDAL::Driver('MEM')->Create(Width => 20, Height => 20, Type => 'Byte')->Band;
+    my $d = $b->ReadTile;
+    $d->[9][9] = 1;
+    $b->WriteTile($d);
+    my $b2 = $b->Distance(Options => {Type => 'Byte'});
+    $d = $b2->ReadTile;
+    ok($d->[0][0] == 13, "Distance raster");
 }
