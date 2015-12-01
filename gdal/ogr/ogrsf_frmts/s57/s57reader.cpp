@@ -2520,9 +2520,12 @@ void S57Reader::AddFeatureDefn( OGRFeatureDefn * poFDefn )
         if( poClassContentExplorer->SelectClass( poFDefn->GetName() ) )
         {
             int nOBJL = poClassContentExplorer->GetOBJL();
-            if( nOBJL >= (int) apoFDefnByOBJL.size() )
-                apoFDefnByOBJL.resize(nOBJL+1);
-            apoFDefnByOBJL[nOBJL] = poFDefn;
+            if( nOBJL >= 0 )
+            {
+                if( nOBJL >= (int) apoFDefnByOBJL.size() )
+                    apoFDefnByOBJL.resize(nOBJL+1);
+                apoFDefnByOBJL[nOBJL] = poFDefn;
+            }
         }
     }
 }
