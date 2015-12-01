@@ -1180,7 +1180,7 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
     if( /* nShiftStart < 0
            || */ (nShiftSize < 0
 	    && nShiftStart < static_cast<vsi_l_offset>(-nShiftSize)) )
-	nShiftStart = (nShiftSize > 0) ? 0 : -nShiftSize;
+	nShiftStart = /*(nShiftSize > 0) ? 0 :*/  -nShiftSize;
 
     /* get offset at end of file */
     if( VSIFSeekL( fp, 0, SEEK_END ) != 0 )
