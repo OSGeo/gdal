@@ -1016,6 +1016,7 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
         }
         else
         {
+            /* coverity[overrun-local] */
             sprintf(psInfo->pszBuf, "%10d%10d%10d%10d%10d%10d%10d",
                                 pValue[0], pValue[1], pValue[2], 
                                 pValue[3], pValue[4], pValue[5], pValue[6]);

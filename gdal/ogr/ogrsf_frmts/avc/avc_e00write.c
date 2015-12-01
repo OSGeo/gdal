@@ -487,7 +487,7 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
     *pszTmp = '\0';
     pszTmp++;
 
-    strcpy(szOldExt, pszTmp);
+    snprintf(szOldExt, sizeof(szOldExt), "%s", pszTmp);
     if ( (pszTmp = strchr(szOldExt, ' ')) != NULL )
         *pszTmp = '\0';
 

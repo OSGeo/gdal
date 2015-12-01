@@ -570,7 +570,8 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
 {
     int	 bIndexed = FALSE;
     int  nObjectOffset, nRecordSize=0, nRecordStart = 0, nLen;
-    char *pszExt = NULL;
+    char szExt[4] = {0,0,0,0};
+    char *pszExt = szExt;
 
     if( iObjIndex < 0 )
         return NULL;
@@ -607,9 +608,6 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
     if( bIndexed && psFile->psIndexFile == NULL )
     {
         char chOrig;
-
-        if( pszExt == NULL )
-            return NULL;
 
         chOrig = pszExt[2];
         if( chOrig > 'A' && chOrig < 'Z' )
@@ -809,13 +807,19 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
      * double values in memory, even for single precision coverages.
      */
     if (psArc->pasVertices == NULL || numVertices > psArc->numVertices)
-        psArc->pasVertices = (AVCVertex*)CPLRealloc(psArc->pasVertices,
+    {
+        AVCVertex* pasNewVertices = (AVCVertex*)VSIRealloc(psArc->pasVertices,
                                                 numVertices*sizeof(AVCVertex));
+        if( pasNewVertices == NULL )
+            return -1;
+        psArc->pasVertices = pasNewVertices;
+    }
 
     psArc->numVertices = numVertices;
 
     if (nPrecision == AVC_SINGLE_PREC)
     {
+        /* coverity[tainted_data] */
         for(i=0; i<numVertices; i++)
         {
             psArc->pasVertices[i].x = AVCRawBinReadFloat(psFile);
@@ -824,6 +828,7 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
     }
     else
     {
+        /* coverity[tainted_data] */
         for(i=0; i<numVertices; i++)
         {
             psArc->pasVertices[i].x = AVCRawBinReadDouble(psFile);
@@ -919,11 +924,17 @@ int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
      * do not realloc to a smaller size.
      */
     if (psPal->pasArcs == NULL || numArcs > psPal->numArcs)
-        psPal->pasArcs = (AVCPalArc*)CPLRealloc(psPal->pasArcs,
+    {
+        AVCPalArc* pasNewArcs = (AVCPalArc*)VSIRealloc(psPal->pasArcs,
                                                  numArcs*sizeof(AVCPalArc));
+        if( pasNewArcs == NULL )
+            return -1;
+        psPal->pasArcs = pasNewArcs;
+    }
 
     psPal->numArcs = numArcs;
 
+    /* coverity[tainted_data] */
     for(i=0; i<numArcs; i++)
     {
         psPal->pasArcs[i].nArcId = AVCRawBinReadInt32(psFile);
@@ -1010,11 +1021,17 @@ int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
      * do not realloc to a smaller size.
      */
     if (psCnt->panLabelIds == NULL || numLabels > psCnt->numLabels)
-        psCnt->panLabelIds = (GInt32 *)CPLRealloc(psCnt->panLabelIds,
+    {
+        GInt32* panIds = (GInt32 *)VSIRealloc(psCnt->panLabelIds,
                                                   numLabels*sizeof(GInt32));
+        if( panIds == NULL )
+            return -1;
+        psCnt->panLabelIds = panIds;
+    }
 
     psCnt->numLabels = numLabels;
 
+    /* coverity[tainted_data] */
     for(i=0; i<numLabels; i++)
     {
         psCnt->panLabelIds[i] = AVCRawBinReadInt32(psFile);
@@ -1323,11 +1340,15 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     if (psTxt->pszText == NULL ||
         ((int)(strlen((char*)psTxt->pszText)+3)/4)*4 < numCharsToRead )
     {
-        psTxt->pszText = (GByte*)CPLRealloc(psTxt->pszText,
+        GByte* pszNewText = (GByte*)VSIRealloc(psTxt->pszText,
                                             (numCharsToRead+1)*sizeof(char));
+        if( pszNewText == NULL )
+            return -1;
+        psTxt->pszText = pszNewText;
     }
 
     AVCRawBinReadString(psFile, numCharsToRead, psTxt->pszText);
+    /* coverity[tainted_data] */
     psTxt->pszText[psTxt->numChars] = '\0';
 
     /* Realloc the vertices array only if it needs to grow...
@@ -1482,7 +1503,7 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
                                             (numCharsToRead+5)*sizeof(char));
     }
 
-
+    /* coverity[tainted_data] */
     AVCRawBinReadString(psFile, numCharsToRead, psTxt->pszText);
     psTxt->pszText[psTxt->numChars] = '\0';
 
@@ -2008,7 +2029,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
          *------------------------------------------------------------*/
         _AVCBinReadGetInfoFilename(pszInfoPath, sTableDef.szInfoFile,
                                    "dat", eCoverType, pszFname);
-        strcpy(sTableDef.szDataFile, pszFname+strlen(pszInfoPath));
+        snprintf(sTableDef.szDataFile, sizeof(sTableDef.szDataFile), "%s", pszFname+strlen(pszInfoPath));
    }
 
     /*-----------------------------------------------------------------
