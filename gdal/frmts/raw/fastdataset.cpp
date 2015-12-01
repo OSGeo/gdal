@@ -297,7 +297,7 @@ VSILFILE *FASTDataset::FOpenChannel( const char *pszBandname, int iBand, int iFA
                     CPLFormFilename( pszDirname,
                             CPLSPrintf( "%s.b%02d", pszPrefix, iFASTBand ),
                             NULL );
-                OpenChannel( pszChannelFilename, iBand );
+                CPL_IGNORE_RET_VAL(OpenChannel( pszChannelFilename, iBand ));
             }
             break;
 	case IRS:
@@ -352,7 +352,7 @@ VSILFILE *FASTDataset::FOpenChannel( const char *pszBandname, int iBand, int iFA
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
                 CPLSPrintf( "band%d.DAT", iFASTBand ), NULL );
-            OpenChannel( pszChannelFilename, iBand );
+            CPL_IGNORE_RET_VAL(OpenChannel( pszChannelFilename, iBand ));
             break;
     }
 
