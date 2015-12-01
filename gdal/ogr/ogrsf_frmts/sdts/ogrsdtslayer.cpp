@@ -110,9 +110,11 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
 /*      Get the attribute table reader, and the associated user         */
 /*      attribute field.                                                */
 /* -------------------------------------------------------------------- */
+        int nLayerIdx = poTransfer->FindLayer( papszATIDRefs[iTable] );
+        if( nLayerIdx < 0 )
+            continue;
         poAttrReader = (SDTSAttrReader *)
-            poTransfer->GetLayerIndexedReader(
-                poTransfer->FindLayer( papszATIDRefs[iTable] ) );
+            poTransfer->GetLayerIndexedReader(nLayerIdx);
 
         if( poAttrReader == NULL )
             continue;
