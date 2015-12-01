@@ -34,7 +34,7 @@
 
 CPP_GDALWMSMiniDriverFactory(WMS)
 
-GDALWMSMiniDriver_WMS::GDALWMSMiniDriver_WMS() {
+GDALWMSMiniDriver_WMS::GDALWMSMiniDriver_WMS() : m_iversion(0) {
 }
 
 GDALWMSMiniDriver_WMS::~GDALWMSMiniDriver_WMS() {
