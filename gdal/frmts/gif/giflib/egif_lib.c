@@ -494,14 +494,8 @@ EGifPutComment(GifFileType * GifFile,
             length -= 255;
         }
         /* Output any partial block and the clear code. */
-        if (length > 0) {
-            if (EGifPutExtensionLast(GifFile, 0, length, buf) == GIF_ERROR) {
-                return GIF_ERROR;
-            }
-        } else {
-            if (EGifPutExtensionLast(GifFile, 0, 0, NULL) == GIF_ERROR) {
-                return GIF_ERROR;
-            }
+        if (EGifPutExtensionLast(GifFile, 0, length, buf) == GIF_ERROR) {
+            return GIF_ERROR;
         }
     }
     return GIF_OK;
@@ -706,13 +700,14 @@ EGifCloseFile(GifFileType * GifFile) {
     GifFilePrivateType *Private;
     FILE *File;
 
-    if (GifFile == NULL)
+    if (GifFile == NULL || GifFile->Private == NULL)
         return GIF_ERROR;
 
     Private = (GifFilePrivateType *) GifFile->Private;
     if (!IS_WRITEABLE(Private)) {
         /* This file was NOT open for writing: */
         _GifError = E_GIF_ERR_NOT_WRITEABLE;
+        free(GifFile);
         return GIF_ERROR;
     }
 
@@ -729,18 +724,21 @@ EGifCloseFile(GifFileType * GifFile) {
         FreeMapObject(GifFile->SColorMap);
         GifFile->SColorMap = NULL;
     }
-    if (Private) {
-        if (Private->HashTable) {
-            free((char *) Private->HashTable);
-        }
-	    free((char *) Private);
+
+    if (Private->HashTable) {
+        free((char *) Private->HashTable);
     }
-    free(GifFile);
 
     if (File && fclose(File) != 0) {
         _GifError = E_GIF_ERR_CLOSE_FAILED;
+        free((char *) Private);
+        free(GifFile);
         return GIF_ERROR;
     }
+
+    free((char *) Private);
+    free(GifFile);
+
     return GIF_OK;
 }
 
