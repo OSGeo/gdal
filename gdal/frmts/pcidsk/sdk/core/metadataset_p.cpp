@@ -98,8 +98,8 @@ void MetadataSet::Load()
     }
 
     MetadataSegment *md_seg = dynamic_cast<MetadataSegment *>( seg );
-
-    md_seg->FetchGroupMetadata( group.c_str(), id, md_set );
+    if( md_seg )
+        md_seg->FetchGroupMetadata( group.c_str(), id, md_set );
     loaded = true;
 }
 
@@ -146,8 +146,8 @@ void MetadataSet::SetMetadataValue( const std::string& key, const std::string& v
     }
 
     MetadataSegment *md_seg = dynamic_cast<MetadataSegment *>( seg );
-
-    md_seg->SetGroupMetadataValue( group.c_str(), id, key, value );
+    if( md_seg )
+        md_seg->SetGroupMetadataValue( group.c_str(), id, key, value );
 }
 
 /************************************************************************/
