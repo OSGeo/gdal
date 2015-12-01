@@ -1332,14 +1332,12 @@ OGRErr OGRSpatialReference::morphToESRI()
     if( pszProjection != NULL && EQUAL(pszProjection,SRS_PT_MERCATOR_2SP) )
     {
         SetNode( "PROJCS|PROJECTION", "Mercator" );
-        pszProjection = GetAttrValue("PROJECTION");
     }
     
     /* See #4861 */
-    if( pszProjection != NULL && EQUAL(pszProjection,SRS_PT_MERCATOR_1SP) )
+    else if( pszProjection != NULL && EQUAL(pszProjection,SRS_PT_MERCATOR_1SP) )
     {
         SetNode( "PROJCS|PROJECTION", "Mercator" );
-        pszProjection = GetAttrValue("PROJECTION");
         
         double dfK0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
         
@@ -2405,8 +2403,9 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
                             searchCode += 6;
                         break;
                       case 4:
-                        if(unitCode == 2)
-                            searchCode += 4;
+                        // FIXME? The following cond is not possible
+                        /*if(unitCode == 2)
+                            searchCode += 4;*/
                         break;
                     }
                 }
