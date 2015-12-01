@@ -226,6 +226,7 @@ void OGRCloudantTableLayer::GetSpatialView()
         if ((papszTokens[0] == NULL) || (papszTokens[1] == NULL))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "GetSpatialView() failed, invalid spatial design doc.");
+            CSLDestroy(papszTokens);
             return;
         }
 
