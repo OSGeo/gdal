@@ -13,7 +13,7 @@ void SetMemMV(
 size_t index;
 
 	switch (cellRepr) {
-	  case CR_INT1: (void)memset(buf,MV_INT1,nrElements);break;
+	  case CR_INT1: (void)memset(buf,MV_INT1+256,nrElements);break;
 	  case CR_INT2: for (index=0;index<nrElements;index++)
 					 ((INT2 *) buf)[index]=MV_INT2;
 			break;
