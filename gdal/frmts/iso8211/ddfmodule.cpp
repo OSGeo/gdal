@@ -372,7 +372,7 @@ int DDFModule::Initialize( char chInterchangeLevel,
     _inlineCodeExtensionIndicator = chCodeExtensionIndicator;
     _versionNumber = chVersionNumber;
     _appIndicator = chAppIndicator;
-    strcpy( _extendedCharSet, pszExtendedCharSet );
+    snprintf( _extendedCharSet, sizeof(_extendedCharSet), "%s", pszExtendedCharSet );
     _sizeFieldLength = nSizeFieldLength;
     _sizeFieldPos = nSizeFieldPos;
     _sizeFieldTag = nSizeFieldTag;
