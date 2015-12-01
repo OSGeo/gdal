@@ -219,7 +219,7 @@ void MetadataSegment::Save()
                 i_split = i;
         }
 
-        if( pszNext[i] == '\0' )
+        if( i_split < 0 || pszNext[i] == '\0' )
             break;
 
 /* -------------------------------------------------------------------- */
