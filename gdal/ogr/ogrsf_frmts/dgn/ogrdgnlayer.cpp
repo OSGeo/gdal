@@ -484,11 +484,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
         }
         else
         {
-            OGRLineString       *poLine = new OGRLineString();
             DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
             
             if( psEMP->num_vertices > 0 )
             {
+                OGRLineString       *poLine = new OGRLineString();
                 poLine->setNumPoints( psEMP->num_vertices );
                 for( int i = 0; i < psEMP->num_vertices; i++ )
                 {
