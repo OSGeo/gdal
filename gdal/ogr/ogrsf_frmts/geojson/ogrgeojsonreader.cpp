@@ -1774,8 +1774,6 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj )
 
 OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
 {
-    VALIDATE_POINTER1( pszJson, "OGR_G_CreateGeometryFromJson", NULL );
-
     if( NULL == pszJson )
     {
         /* Translation failed */
