@@ -203,7 +203,7 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
         if (osAccessToken.size() == 0)
             return FALSE;
     }
-
+    /* coverity[copy_paste_error] */
     if (osAccessToken.size() == 0 && osAuth.size() > 0)
     {
         osRefreshToken.Seize(GOA2GetRefreshToken(osAuth, FUSION_TABLE_SCOPE));
