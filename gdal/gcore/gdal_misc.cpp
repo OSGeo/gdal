@@ -3105,6 +3105,7 @@ int GDALCheckDatasetDimensions( int nXSize, int nYSize )
   *
   * If the configuration option GDAL_MAX_BAND_COUNT is defined,
   * the band count will be compared to the maximum number of band allowed.
+  * If not defined, the maximum number allowed is 65536.
   *
   * @param nBands the band count
   * @param bIsZeroAllowed TRUE if band count == 0 is allowed
@@ -3114,17 +3115,21 @@ int GDALCheckDatasetDimensions( int nXSize, int nYSize )
 
 int GDALCheckBandCount( int nBands, int bIsZeroAllowed )
 {
-    int nMaxBands = -1;
-    const char* pszMaxBandCount = CPLGetConfigOption("GDAL_MAX_BAND_COUNT", NULL);
-    if (pszMaxBandCount != NULL)
-    {
-        nMaxBands = atoi(pszMaxBandCount);
-    }
-    if (nBands < 0 || (!bIsZeroAllowed && nBands == 0) ||
-        (nMaxBands >= 0 && nBands > nMaxBands) )
+    if (nBands < 0 || (!bIsZeroAllowed && nBands == 0) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid band count : %d", nBands);
+        return FALSE;
+    }
+    const char* pszMaxBandCount = CPLGetConfigOption("GDAL_MAX_BAND_COUNT", "65536");
+    /* coverity[tainted_data] */
+    int nMaxBands = atoi(pszMaxBandCount);
+    if ( nBands > nMaxBands )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid band count : %d. Maximum allowed currently is %d. "
+                 "Define GDAL_MAX_BAND_COUNT to a higher level if it is a legitimate number.",
+                 nBands, nMaxBands);
         return FALSE;
     }
     return TRUE;
