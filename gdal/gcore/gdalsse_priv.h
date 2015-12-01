@@ -45,7 +45,9 @@ class XMMReg2Double
   public:
     __m128d xmm;
 
+    /* coverity[uninit_member] */
     XMMReg2Double() {}
+
     XMMReg2Double(double  val)  { xmm = _mm_load_sd (&val); }
     XMMReg2Double(const XMMReg2Double& other) : xmm(other.xmm) {}
 
