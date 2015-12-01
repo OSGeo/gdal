@@ -287,7 +287,7 @@ CPLErr GSBGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
 	return CE_Failure;
 
-    GSBGDataset *poGDS = dynamic_cast<GSBGDataset *>(poDS);
+    GSBGDataset *poGDS = reinterpret_cast<GSBGDataset *>(poDS);
     if( VSIFSeekL( poGDS->fp,
 		   GSBGDataset::nHEADER_SIZE +
                         4 * nRasterXSize * (nRasterYSize - nBlockYOff - 1),
