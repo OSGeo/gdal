@@ -626,9 +626,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     char
         *pszHeader = reinterpret_cast<char *>( CPLMalloc( ADM_HEADER_SIZE + 1 ) );
 
-    VSIFSeekL( poDS->fpHeader, 0, SEEK_SET );
-    size_t nBytesRead
-        = VSIFReadL( pszHeader, 1, ADM_HEADER_SIZE, poDS->fpHeader );
+    size_t nBytesRead = 0;
+    if( VSIFSeekL( poDS->fpHeader, 0, SEEK_SET ) >= 0 )
+        nBytesRead = VSIFReadL( pszHeader, 1, ADM_HEADER_SIZE, poDS->fpHeader );
     if ( nBytesRead < ADM_MIN_HEADER_SIZE )
     {
 	CPLDebug( "FAST", "Header file too short. Reading failed" );

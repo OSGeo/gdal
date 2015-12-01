@@ -441,7 +441,7 @@ int DDFModule::Create( const char *pszFilename )
     sprintf( achLeader+21, "%1d", (int) _sizeFieldPos );
     achLeader[22] = '0';
     sprintf( achLeader+23, "%1d", (int) _sizeFieldTag );
-    VSIFWriteL( achLeader, 24, 1, fpDDF );
+    int bRet = VSIFWriteL( achLeader, 24, 1, fpDDF ) > 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write out directory entries.                                    */
@@ -466,11 +466,11 @@ int DDFModule::Create( const char *pszFilename )
                  szFormat, nOffset );
         nOffset += nLength;
 
-        VSIFWriteL( achDirEntry, _sizeFieldLength + _sizeFieldPos + _sizeFieldTag, 1, fpDDF );
+        bRet &= VSIFWriteL( achDirEntry, _sizeFieldLength + _sizeFieldPos + _sizeFieldTag, 1, fpDDF ) > 0;
     }
 
     char chUT = DDF_FIELD_TERMINATOR;
-    VSIFWriteL( &chUT, 1, 1, fpDDF );
+    bRet &= VSIFWriteL( &chUT, 1, 1, fpDDF ) > 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write out the field descriptions themselves.                    */
@@ -481,11 +481,11 @@ int DDFModule::Create( const char *pszFilename )
         int nLength;
 
         papoFieldDefns[iField]->GenerateDDREntry( &pachData, &nLength );
-        VSIFWriteL( pachData, nLength, 1, fpDDF );
+        bRet &= VSIFWriteL( pachData, nLength, 1, fpDDF ) > 0;
         CPLFree( pachData );
     }
     
-    return TRUE;
+    return bRet ? TRUE : FALSE;
 }
 
 /************************************************************************/
@@ -719,7 +719,8 @@ void DDFModule::Rewind( long nOffset )
     if( fpDDF == NULL )
         return;
     
-    VSIFSeekL( fpDDF, nOffset, SEEK_SET );
+    if( VSIFSeekL( fpDDF, nOffset, SEEK_SET ) < 0 )
+        return;
 
     if( nOffset == nFirstRecordOffset && poRecord != NULL )
         poRecord->Clear();

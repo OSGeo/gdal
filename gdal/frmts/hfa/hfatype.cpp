@@ -177,14 +177,14 @@ void HFAType::CompleteDefn( HFADictionary * poDict )
 void HFAType::Dump( FILE * fp )
 
 {
-    VSIFPrintf( fp, "HFAType %s/%d bytes\n", pszTypeName, nBytes );
+    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "HFAType %s/%d bytes\n", pszTypeName, nBytes ));
 
     for( int i = 0; i < nFields; i++ )
     {
         papoFields[i]->Dump( fp );
     }
 
-    VSIFPrintf( fp, "\n" );
+    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "\n" ));
 }
 
 /************************************************************************/

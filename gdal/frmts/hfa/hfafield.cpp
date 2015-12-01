@@ -349,17 +349,17 @@ void HFAField::Dump( FILE * fp )
         pszTypeName = "Unknown";
     }
     
-    VSIFPrintf( fp, "    %-19s %c %s[%d];\n",
+    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "    %-19s %c %s[%d];\n",
                 pszTypeName,
                 chPointer ? chPointer : ' ',
-                pszFieldName, nItemCount );
+                pszFieldName, nItemCount ));
 
     if( papszEnumNames != NULL )
     {
         for( int i = 0; papszEnumNames[i] != NULL; i++ )
         {
-            VSIFPrintf( fp, "        %s=%d\n",
-                        papszEnumNames[i], i );
+            CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "        %s=%d\n",
+                        papszEnumNames[i], i ));
         }
     }
 }
@@ -1458,12 +1458,12 @@ void HFAField::DumpInstValue( FILE *fpOut,
         if( ExtractInstValue( NULL, 0,
                               pabyData, nDataOffset, nDataSize,
                               's', &pReturn ) )
-            VSIFPrintf( fpOut, "%s%s = `%s'\n",
+            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s = `%s'\n",
                         pszPrefix, pszFieldName,
-                        (char *) pReturn );
+                        (char *) pReturn ));
         else
-            VSIFPrintf( fpOut, "%s%s = (access failed)\n",
-                        pszPrefix, pszFieldName );
+            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s = (access failed)\n",
+                        pszPrefix, pszFieldName ));
 
         return;
     }
@@ -1483,16 +1483,16 @@ void HFAField::DumpInstValue( FILE *fpOut,
                             nDataSize, 'i', &nColumns );
             ExtractInstValue( NULL, -1, pabyData, nDataOffset, 
                             nDataSize, 'i', &nRows );
-            VSIFPrintf( fpOut, "%sBASEDATA(%s): %dx%d of %s\n", 
+            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%sBASEDATA(%s): %dx%d of %s\n", 
                         pszPrefix, pszFieldName,
                         nColumns, nRows,
                         (nDataType >= EPT_MIN && nDataType <= EPT_MAX) ?
-                            HFAGetDataTypeName( static_cast<EPTType>(nDataType) ): "invalid type" );
+                            HFAGetDataTypeName( static_cast<EPTType>(nDataType) ): "invalid type" ));
         }
         else
         {
-            VSIFPrintf( fpOut, "%sBASEDATA(%s): empty\n", 
-                        pszPrefix, pszFieldName );
+            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%sBASEDATA(%s): empty\n", 
+                        pszPrefix, pszFieldName ));
         }
     }
         
@@ -1502,10 +1502,10 @@ void HFAField::DumpInstValue( FILE *fpOut,
     for( iEntry = 0; iEntry < MIN(MAX_ENTRY_REPORT,nEntries); iEntry++ )
     {
         if( nEntries == 1 )
-            VSIFPrintf( fpOut, "%s%s = ", pszPrefix, pszFieldName );
+            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s = ", pszPrefix, pszFieldName ));
         else
-            VSIFPrintf( fpOut, "%s%s[%d] = ",
-                        pszPrefix, pszFieldName, iEntry );
+            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s[%d] = ",
+                        pszPrefix, pszFieldName, iEntry ));
         
         switch( chItemType )
         {
@@ -1516,9 +1516,9 @@ void HFAField::DumpInstValue( FILE *fpOut,
               if( ExtractInstValue( NULL, iEntry,
                                     pabyData, nDataOffset, nDataSize,
                                     'd', &dfValue ) )
-                  VSIFPrintf( fpOut, "%f\n", dfValue );
+                  CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%f\n", dfValue ));
               else
-                  VSIFPrintf( fpOut, "(access failed)\n" );
+                  CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "(access failed)\n" ));
           }
           break;
 
@@ -1529,9 +1529,9 @@ void HFAField::DumpInstValue( FILE *fpOut,
               if( ExtractInstValue( NULL, iEntry, 
                                     pabyData, nDataOffset, nDataSize, 
                                     'd', &dfValue ) )
-                  VSIFPrintf( fpOut, "%s%.15g\n", pszPrefix, dfValue );
+                  CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%.15g\n", pszPrefix, dfValue ));
               else
-                  VSIFPrintf( fpOut, "%s(access failed)\n", pszPrefix );
+                  CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s(access failed)\n", pszPrefix ));
           }
           break;
 
@@ -1539,9 +1539,9 @@ void HFAField::DumpInstValue( FILE *fpOut,
             if( ExtractInstValue( NULL, iEntry,
                                   pabyData, nDataOffset, nDataSize,
                                   's', &pReturn ) )
-                VSIFPrintf( fpOut, "%s\n", (char *) pReturn );
+                CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s\n", (char *) pReturn ));
             else
-                VSIFPrintf( fpOut, "(access failed)\n" );
+                CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "(access failed)\n" ));
             break;
 
           case 'o':
@@ -1549,13 +1549,13 @@ void HFAField::DumpInstValue( FILE *fpOut,
                                    pabyData, nDataOffset, nDataSize,
                                    'p', &pReturn ) )
             {
-                VSIFPrintf( fpOut, "(access failed)\n" );
+                CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "(access failed)\n" ));
             }
             else
             {
                 int		nByteOffset;
 
-                VSIFPrintf( fpOut, "\n" );
+                CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "\n" ));
                 
                 nByteOffset = static_cast<int>(((GByte *) pReturn) - pabyData);
             
@@ -1577,9 +1577,9 @@ void HFAField::DumpInstValue( FILE *fpOut,
               if( ExtractInstValue( NULL, iEntry,
                                     pabyData, nDataOffset, nDataSize,
                                     'i', &nIntValue ) )
-                  VSIFPrintf( fpOut, "%d\n", nIntValue );
+                  CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%d\n", nIntValue ));
               else
-                  VSIFPrintf( fpOut, "(access failed)\n" );
+                  CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "(access failed)\n" ));
           }
           break;
         }
@@ -1589,6 +1589,6 @@ void HFAField::DumpInstValue( FILE *fpOut,
         printf( "%s ... remaining instances omitted ...\n", pszPrefix );
 
     if( nEntries == 0 )
-        VSIFPrintf( fpOut, "%s%s = (no values)\n", pszPrefix, pszFieldName );
+        CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s = (no values)\n", pszPrefix, pszFieldName ));
 
 }

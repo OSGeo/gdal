@@ -150,7 +150,8 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
         CPLFree( pszTrimmedLine );
         
         nNextChar = VSIFGetc( fp );
-        VSIUngetc( nNextChar, fp );
+        if( VSIUngetc( nNextChar, fp ) == EOF)
+            return NULL;
         
         if( nNextChar == '#' )
             pszLine = NULL;

@@ -375,8 +375,8 @@ void BTDataset::FlushCache()
 
     bHeaderModified = FALSE;
 
-    VSIFSeekL( fpImage, 0, SEEK_SET );
-    VSIFWriteL( abyHeader, 256, 1, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFWriteL( abyHeader, 256, 1, fpImage ));
 }
 
 /************************************************************************/
@@ -519,7 +519,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
     VSILFILE * fp = VSIFOpenL( pszPrjFile, "wt" );
     if( fp != NULL )
     {
-        VSIFPrintfL( fp, "%s\n", pszProjection );
+        CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s\n", pszProjection ));
         VSIFCloseL( fp );
         abyHeader[60] = 1;
     }
@@ -904,8 +904,8 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write to disk.                                                  */
 /* -------------------------------------------------------------------- */
-    VSIFWriteL( (void *) abyHeader, 256, 1, fp );
-    if( VSIFSeekL( fp, (GDALGetDataTypeSize(eType)/8) * nXSize * (vsi_l_offset)nYSize - 1, 
+    if( VSIFWriteL( (void *) abyHeader, 256, 1, fp ) != 1 ||
+        VSIFSeekL( fp, (GDALGetDataTypeSize(eType)/8) * nXSize * (vsi_l_offset)nYSize - 1, 
                    SEEK_CUR ) != 0 
         || VSIFWriteL( abyHeader+255, 1, 1, fp ) != 1 )
     {

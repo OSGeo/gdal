@@ -159,13 +159,13 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[2] = 0.0;
     poDS->adfGeoTransform[4] = 0.0;
 
-    VSIFReadL( poDS->adfGeoTransform+3, 8, 1, poDS->fpImage );
-    VSIFReadL( poDS->adfGeoTransform+0, 8, 1, poDS->fpImage );
-    VSIFReadL( poDS->adfGeoTransform+5, 8, 1, poDS->fpImage );
-    VSIFReadL( poDS->adfGeoTransform+1, 8, 1, poDS->fpImage );
+    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+3, 8, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+0, 8, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+5, 8, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( poDS->adfGeoTransform+1, 8, 1, poDS->fpImage ));
 
-    VSIFReadL( &(poDS->nRasterYSize), 4, 1, poDS->fpImage );
-    VSIFReadL( &(poDS->nRasterXSize), 4, 1, poDS->fpImage );
+    CPL_IGNORE_RET_VAL(VSIFReadL( &(poDS->nRasterYSize), 4, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( &(poDS->nRasterXSize), 4, 1, poDS->fpImage ));
 
     CPL_MSBPTR32( &(poDS->nRasterYSize) );
     CPL_MSBPTR32( &(poDS->nRasterXSize) );
@@ -193,7 +193,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Guess the data type. Since October 1, 2009, it should be        */
 /*      Float32. Before it was double.                                  */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL(poDS->fpImage, 0, SEEK_END);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(poDS->fpImage, 0, SEEK_END));
     const vsi_l_offset nSize = VSIFTellL(poDS->fpImage);
 
     GDALDataType eDT = GDT_Float32;
@@ -363,7 +363,7 @@ GDALDataset *GTXDataset::Create( const char * pszFilename,
     memcpy( header + 36, &nXSize32, 4 );
     CPL_MSBPTR32( header + 36 );
 
-    VSIFWriteL( header, 40, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( header, 40, 1, fp ));
     VSIFCloseL( fp );
 
     return reinterpret_cast<GDALDataset *>(

@@ -300,8 +300,8 @@ void ELASDataset::FlushCache()
 
     if( bHeaderModified )
     {
-        VSIFSeekL( fp, 0, SEEK_SET );
-        VSIFWriteL( &sHeader, 1024, 1, fp );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_SET ));
+        CPL_IGNORE_RET_VAL(VSIFWriteL( &sHeader, 1024, 1, fp ));
         bHeaderModified = FALSE;
     }
 }
@@ -580,7 +580,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write the header data.                                          */
 /* -------------------------------------------------------------------- */
-    VSIFWrite( &sHeader, 1024, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWrite( &sHeader, 1024, 1, fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Now write out zero data for all the imagery.  This is           */

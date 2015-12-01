@@ -577,7 +577,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         char szTRLData[896];
 
-        VSIFReadL( szTRLData, 1, 896, fpTRL );
+        CPL_IGNORE_RET_VAL(VSIFReadL( szTRLData, 1, 896, fpTRL ));
         VSIFCloseL( fpTRL );
 
         GDALColorTable *poCT = new GDALColorTable();
@@ -635,8 +635,8 @@ CPLErr LANDataset::SetGeoTransform( double * padfTransform )
 
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
 
-    VSIFSeekL( fpImage, 0, SEEK_SET );
-    VSIFReadL( abyHeader, 128, 1, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( abyHeader, 128, 1, fpImage ));
 
     // Upper Left X
     float f32Val = static_cast<float>(
@@ -694,8 +694,8 @@ CPLErr LANDataset::SetProjection( const char * pszWKT )
 {
     unsigned char abyHeader[128];
 
-    VSIFSeekL( fpImage, 0, SEEK_SET );
-    VSIFReadL( abyHeader, 128, 1, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( abyHeader, 128, 1, fpImage ));
 
     OGRSpatialReference oSRS( pszWKT );
 
@@ -771,8 +771,8 @@ CPLErr LANDataset::SetProjection( const char * pszWKT )
 
     memcpy( abyHeader + 88, &nProjCode, 2 );
 
-    VSIFSeekL( fpImage, 0, SEEK_SET );
-    VSIFWriteL( abyHeader, 128, 1, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFWriteL( abyHeader, 128, 1, fpImage ));
 
     return GDALPamDataset::SetProjection( pszWKT );
 }
@@ -962,7 +962,7 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
     f32Val = 1.0f;
     memcpy( abyHeader + 124, &f32Val, 4 );
 
-    VSIFWriteL( abyHeader, sizeof(abyHeader), 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( abyHeader, sizeof(abyHeader), 1, fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Extend the file to the target size.                             */

@@ -1177,8 +1177,8 @@ const char *OGR_STBL_Find( OGRStyleTableH hStyleTable, const char *pszName )
 void OGRStyleTable::Print(FILE *fpOut)
 {
     
-    VSIFPrintf(fpOut,"#OFS-Version: 1.0\n");
-    VSIFPrintf(fpOut,"#StyleField: style\n");
+    CPL_IGNORE_RET_VAL(VSIFPrintf(fpOut,"#OFS-Version: 1.0\n"));
+    CPL_IGNORE_RET_VAL(VSIFPrintf(fpOut,"#StyleField: style\n"));
     if (m_papszStyleTable)
     {
         CSLPrint(m_papszStyleTable,fpOut);

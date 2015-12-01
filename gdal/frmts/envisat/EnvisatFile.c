@@ -42,6 +42,9 @@ CPL_CVSID("$Id$");
 #  include "util/Files/EnvisatFile.h"
 #endif
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+CPL_INLINE static void CPL_IGNORE_RET_VAL_SIZET(CPL_UNUSED size_t unused) {}
+
 typedef struct 
 {
     char	*ds_name;
@@ -155,14 +158,14 @@ static int EnvisatFile_SetupLevel0( EnvisatFile *self )
      * Figure out how long the file is. 
      */
 
-    VSIFSeekL( self->fp, 0, SEEK_END );
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( self->fp, 0, SEEK_END ));
     file_length = (int) VSIFTellL( self->fp );
     
     /* 
      * Read the first record header, and verify the well known values.
      */
-    VSIFSeekL( self->fp, 3203, SEEK_SET );
-    VSIFReadL( header, 68, 1, self->fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( self->fp, 3203, SEEK_SET ));
+    CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( header, 68, 1, self->fp ));
 
     if( header[38] != 0 || header[39] != 0x1d
         || header[40] != 0 || header[41] != 0x54 )
@@ -482,13 +485,13 @@ int EnvisatFile_Create( EnvisatFile **self_ptr,
         return FAILURE;
     }
 
-    VSIFSeekL( fp, 0, SEEK_END );
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( fp, 0, SEEK_END ));
     template_size = (int) VSIFTellL( fp );
 
     template_data = (char *) CPLMalloc(template_size);
     
-    VSIFSeekL( fp, 0, SEEK_SET );
-    VSIFReadL( template_data, template_size, 1, fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( fp, 0, SEEK_SET ));
+    CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( template_data, template_size, 1, fp ));
     VSIFCloseL( fp );
 
     /*
@@ -508,7 +511,7 @@ int EnvisatFile_Create( EnvisatFile **self_ptr,
         return FAILURE;
     }
 
-    VSIFWriteL( template_data, template_size, 1, fp );
+    CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL( template_data, template_size, 1, fp ));
     VSIFCloseL( fp );
 
     CPLFree( template_data );

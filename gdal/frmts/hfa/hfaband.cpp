@@ -426,9 +426,8 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
     char	szHeader[49];
 
-    VSIFReadL( szHeader, 49, 1, fpExternal );
-
-    if( !STARTS_WITH( szHeader, "ERDAS_IMG_EXTERNAL_RASTER") )
+    if( VSIFReadL( szHeader, 49, 1, fpExternal ) != 1 ||
+        !STARTS_WITH( szHeader, "ERDAS_IMG_EXTERNAL_RASTER") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Raw data file %s appears to be corrupt.\n",
@@ -456,11 +455,10 @@ CPLErr	HFABand::LoadExternalBlockInfo()
         return CE_Failure;
     }
 
-    VSIFSeekL( fpExternal, 
+    if( VSIFSeekL( fpExternal, 
                poDMS->GetBigIntField( "layerStackValidFlagsOffset" ),  
-               SEEK_SET );
-
-    if( VSIFReadL( pabyBlockMap, nBytesPerRow * nBlocksPerColumn + 20, 1, 
+               SEEK_SET ) < 0 ||
+        VSIFReadL( pabyBlockMap, nBytesPerRow * nBlocksPerColumn + 20, 1, 
                    fpExternal ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -1412,22 +1410,25 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 #endif /* def CPL_MSB */
 
        /* Write out the Minimum value */
-            VSIFWriteL( &nMin, (size_t) sizeof( nMin ), 1, fpData );
+            bool bRet = VSIFWriteL( &nMin, (size_t) sizeof( nMin ), 1, fpData ) > 0;
 
             /* the number of runs */
-            VSIFWriteL( &nNumRuns, (size_t) sizeof( nNumRuns ), 1, fpData );
+            bRet &= VSIFWriteL( &nNumRuns, (size_t) sizeof( nNumRuns ), 1, fpData ) > 0;
 
             /* The offset to the data */
-            VSIFWriteL( &nDataOffset, (size_t) sizeof( nDataOffset ), 1, fpData );
+            bRet &= VSIFWriteL( &nDataOffset, (size_t) sizeof( nDataOffset ), 1, fpData ) > 0;
 
             /* The number of bits */
-            VSIFWriteL( &nNumBits, (size_t) sizeof( nNumBits ), 1, fpData );
+            bRet &= VSIFWriteL( &nNumBits, (size_t) sizeof( nNumBits ), 1, fpData ) > 0;
 
             /* The counters - MSB stuff handled in HFACompress */
-            VSIFWriteL( pCounts, (size_t) sizeof( GByte ), nSizeCount, fpData );
+            bRet &= VSIFWriteL( pCounts, nSizeCount, 1, fpData ) > 0;
 
             /* The values - MSB stuff handled in HFACompress */
-            VSIFWriteL( pValues, (size_t) sizeof( GByte ), nSizeValues, fpData );
+            bRet &= VSIFWriteL( pValues, nSizeValues, 1, fpData ) > 0;
+
+            if( !bRet )
+                return CE_Failure;
 
             /* Compressed data is freed in the HFACompress destructor */
         }
@@ -1956,9 +1957,11 @@ CPLErr HFABand::SetPCT( int nColors,
             padfFileData[iColor] = padfValues[iColor];
             HFAStandard( 8, padfFileData + iColor );
         }
-        VSIFSeekL( psInfo->fp, nOffset, SEEK_SET );
-        VSIFWriteL( padfFileData, 8, nColors, psInfo->fp );
+        bool bRet = VSIFSeekL( psInfo->fp, nOffset, SEEK_SET ) >= 0;
+        bRet &= VSIFWriteL( padfFileData, 8, nColors, psInfo->fp ) == (size_t)nColors;
         CPLFree( padfFileData );
+        if( !bRet )
+            return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */

@@ -324,6 +324,8 @@ CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32
     return NULL;
 }
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_SIZET(CPL_UNUSED size_t unused) {}
+
 void SerializeCeosRecordsToFile(Link_t *record_list, VSILFILE *fp)
 {
     Link_t *list;
@@ -337,8 +339,8 @@ void SerializeCeosRecordsToFile(Link_t *record_list, VSILFILE *fp)
 	memcpy(&crec,list->object,sizeof(CeosRecord_t));
 	Buffer = crec.Buffer;
 	crec.Buffer = NULL;
-	VSIFWriteL(&crec,sizeof(CeosRecord_t),1,fp);
-	VSIFWriteL(Buffer,crec.Length,1,fp);
+	CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL(&crec,sizeof(CeosRecord_t),1,fp));
+	CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL(Buffer,crec.Length,1,fp));
     }
 }
 
@@ -350,9 +352,9 @@ void SerializeCeosRecordsFromFile(Link_t *record_list, VSILFILE *fp)
     while(!VSIFEofL(fp))
     {
 	crec = HMalloc(sizeof(CeosRecord_t));
-	VSIFReadL(crec,sizeof(CeosRecord_t),1,fp);
+	CPL_IGNORE_RET_VAL_SIZET(VSIFReadL(crec,sizeof(CeosRecord_t),1,fp));
 	crec->Buffer = HMalloc(crec->Length * sizeof(char) );
-	VSIFReadL(crec->Buffer,sizeof(char),crec->Length,fp);
+	CPL_IGNORE_RET_VAL_SIZET(VSIFReadL(crec->Buffer,sizeof(char),crec->Length,fp));
 	Link = ceos2CreateLink(crec);
 	AddLink(record_list,Link);
     }

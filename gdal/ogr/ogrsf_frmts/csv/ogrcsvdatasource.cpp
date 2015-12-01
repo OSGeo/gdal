@@ -704,7 +704,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
                 VSILFILE* fpPRJ = VSIFOpenL(CPLResetExtension(osFilename, "prj"), "wb");
                 if( fpPRJ )
                 {
-                    VSIFPrintfL(fpPRJ, "%s\n", pszWKT);
+                    CPL_IGNORE_RET_VAL(VSIFPrintfL(fpPRJ, "%s\n", pszWKT));
                     VSIFCloseL(fpPRJ);
                 }
                 CPLFree(pszWKT);

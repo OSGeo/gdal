@@ -1619,20 +1619,20 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
         return CE_Failure;
     }
 
-    VSIFPrintfL(fp, "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">\n", nXSize, nYSize);
+    bool bOK = VSIFPrintfL(fp, "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">\n", nXSize, nYSize) > 0;
     const char* pszProjectionRef = GDALGetProjectionRef(hSrcDataset);
     if (pszProjectionRef && pszProjectionRef[0] != '\0')
     {
         char* pszEscapedString = CPLEscapeString(pszProjectionRef, -1, CPLES_XML);
-        VSIFPrintfL(fp, "  <SRS>%s</SRS>\n", pszEscapedString);
+        bOK &= VSIFPrintfL(fp, "  <SRS>%s</SRS>\n", pszEscapedString) > 0;
         VSIFree(pszEscapedString);
     }
     double adfGT[6];
     if (GDALGetGeoTransform(hSrcDataset, adfGT) == CE_None)
     {
-        VSIFPrintfL(fp, "  <GeoTransform> %.16g, %.16g, %.16g, "
+        bOK &= VSIFPrintfL(fp, "  <GeoTransform> %.16g, %.16g, %.16g, "
                         "%.16g, %.16g, %.16g</GeoTransform>\n",
-                        adfGT[0], adfGT[1], adfGT[2], adfGT[3], adfGT[4], adfGT[5]);
+                        adfGT[0], adfGT[1], adfGT[2], adfGT[3], adfGT[4], adfGT[5]) > 0;
     }
     int nBands = 3 + (bAddAlpha ? 1 : 0);
     int iBand;
@@ -1648,25 +1648,25 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
 
     for(iBand = 0; iBand < nBands; iBand++)
     {
-        VSIFPrintfL(fp, "  <VRTRasterBand dataType=\"Byte\" band=\"%d\">\n", iBand + 1);
-        VSIFPrintfL(fp, "    <ColorInterp>%s</ColorInterp>\n",
-                    GDALGetColorInterpretationName((GDALColorInterp)(GCI_RedBand + iBand)));
-        VSIFPrintfL(fp, "    <ComplexSource>\n");
-        VSIFPrintfL(fp, "      <SourceFilename relativeToVRT=\"%d\">%s</SourceFilename>\n",
-                        bRelativeToVRT, pszSourceFilename);
-        VSIFPrintfL(fp, "      <SourceBand>%d</SourceBand>\n", GDALGetBandNumber(hSrcBand));
-        VSIFPrintfL(fp, "      <SourceProperties RasterXSize=\"%d\" "
+        bOK &= VSIFPrintfL(fp, "  <VRTRasterBand dataType=\"Byte\" band=\"%d\">\n", iBand + 1) > 0;
+        bOK &= VSIFPrintfL(fp, "    <ColorInterp>%s</ColorInterp>\n",
+                    GDALGetColorInterpretationName((GDALColorInterp)(GCI_RedBand + iBand))) > 0;
+        bOK &= VSIFPrintfL(fp, "    <ComplexSource>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "      <SourceFilename relativeToVRT=\"%d\">%s</SourceFilename>\n",
+                        bRelativeToVRT, pszSourceFilename) > 0;
+        bOK &= VSIFPrintfL(fp, "      <SourceBand>%d</SourceBand>\n", GDALGetBandNumber(hSrcBand)) > 0;
+        bOK &= VSIFPrintfL(fp, "      <SourceProperties RasterXSize=\"%d\" "
                         "RasterYSize=\"%d\" DataType=\"%s\" "
                         "BlockXSize=\"%d\" BlockYSize=\"%d\"/>\n",
                         nXSize, nYSize,
                         GDALGetDataTypeName(GDALGetRasterDataType(hSrcBand)),
-                        nBlockXSize, nBlockYSize);
-        VSIFPrintfL(fp, "      <SrcRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
-                        nXSize, nYSize);
-        VSIFPrintfL(fp, "      <DstRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
-                        nXSize, nYSize);
+                        nBlockXSize, nBlockYSize) > 0;
+        bOK &= VSIFPrintfL(fp, "      <SrcRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
+                        nXSize, nYSize) > 0;
+        bOK &= VSIFPrintfL(fp, "      <DstRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
+                        nXSize, nYSize) > 0;
 
-        VSIFPrintfL(fp, "      <LUT>");
+        bOK &= VSIFPrintfL(fp, "      <LUT>") > 0;
         int iColor;
 #define EPSILON 1e-8
         for(iColor=0;iColor<nColorAssociation;iColor++)
@@ -1674,68 +1674,68 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
             if (eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY)
             {
                 if (iColor > 1)
-                    VSIFPrintfL(fp, ",");
+                    bOK &= VSIFPrintfL(fp, ",") > 0;
             }
             else if (iColor > 0)
-                VSIFPrintfL(fp, ",");
+                bOK &= VSIFPrintfL(fp, ",") > 0;
 
             double dfVal = pasColorAssociation[iColor].dfVal;
 
             if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY)
             {
-                VSIFPrintfL(fp, "%.12g:0,", dfVal - EPSILON);
+                bOK &= VSIFPrintfL(fp, "%.12g:0,", dfVal - EPSILON) > 0;
             }
             else if (iColor > 0 &&
                      eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY)
             {
                 double dfMidVal = (dfVal + pasColorAssociation[iColor-1].dfVal) / 2;
-                VSIFPrintfL(fp, "%.12g:%d", dfMidVal - EPSILON,
+                bOK &= VSIFPrintfL(fp, "%.12g:%d", dfMidVal - EPSILON,
                         (iBand == 0) ? pasColorAssociation[iColor-1].nR :
                         (iBand == 1) ? pasColorAssociation[iColor-1].nG :
                         (iBand == 2) ? pasColorAssociation[iColor-1].nB :
-                                       pasColorAssociation[iColor-1].nA);
-                VSIFPrintfL(fp, ",%.12g:%d", dfMidVal ,
+                                       pasColorAssociation[iColor-1].nA) > 0;
+                bOK &= VSIFPrintfL(fp, ",%.12g:%d", dfMidVal ,
                         (iBand == 0) ? pasColorAssociation[iColor].nR :
                         (iBand == 1) ? pasColorAssociation[iColor].nG :
                         (iBand == 2) ? pasColorAssociation[iColor].nB :
-                                       pasColorAssociation[iColor].nA);
+                                       pasColorAssociation[iColor].nA) > 0;
 
             }
 
             if (eColorSelectionMode != COLOR_SELECTION_NEAREST_ENTRY)
             {
                 if (dfVal != (double)(int)dfVal)
-                    VSIFPrintfL(fp, "%.12g", dfVal);
+                    bOK &= VSIFPrintfL(fp, "%.12g", dfVal) > 0;
                 else
-                    VSIFPrintfL(fp, "%d", (int)dfVal);
-                VSIFPrintfL(fp, ":%d",
+                    bOK &= VSIFPrintfL(fp, "%d", (int)dfVal) > 0;
+                bOK &= VSIFPrintfL(fp, ":%d",
                             (iBand == 0) ? pasColorAssociation[iColor].nR :
                             (iBand == 1) ? pasColorAssociation[iColor].nG :
                             (iBand == 2) ? pasColorAssociation[iColor].nB :
-                                           pasColorAssociation[iColor].nA);
+                                           pasColorAssociation[iColor].nA) > 0;
             }
 
             if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY)
             {
-                VSIFPrintfL(fp, ",%.12g:0", dfVal + EPSILON);
+                bOK &= VSIFPrintfL(fp, ",%.12g:0", dfVal + EPSILON) > 0;
             }
 
         }
-        VSIFPrintfL(fp, "</LUT>\n");
+        bOK &= VSIFPrintfL(fp, "</LUT>\n") > 0;
 
-        VSIFPrintfL(fp, "    </ComplexSource>\n");
-        VSIFPrintfL(fp, "  </VRTRasterBand>\n");
+        bOK &= VSIFPrintfL(fp, "    </ComplexSource>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "  </VRTRasterBand>\n") > 0;
     }
 
     CPLFree(pszSourceFilename);
 
-    VSIFPrintfL(fp, "</VRTDataset>\n");
+    bOK &= VSIFPrintfL(fp, "</VRTDataset>\n") > 0;
 
     VSIFCloseL(fp);
 
     CPLFree(pasColorAssociation);
 
-    return CE_None;
+    return (bOK) ? CE_None : CE_Failure;
 }
 
 

@@ -825,13 +825,16 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
         }
         pabyChunk[nChunkSize] = '\0';
 
-        VSIFSeekL( poDS->fp, nStartOfData, SEEK_SET );
+        if( VSIFSeekL( poDS->fp, nStartOfData, SEEK_SET ) < 0 )
+        {
+            delete poDS;
+            return NULL;
+        }
 
         /* Scan for dot in subsequent chunks of data. */
         while( !VSIFEofL( poDS->fp) )
         {
-            VSIFReadL( pabyChunk, sizeof(GByte), nChunkSize, poDS->fp );
-            CPLAssert( pabyChunk[nChunkSize] == '\0' );
+            CPL_IGNORE_RET_VAL(VSIFReadL( pabyChunk, nChunkSize, 1, poDS->fp ));
 
             for(i = 0; i < (int)nChunkSize; i++)
             {
@@ -1087,7 +1090,11 @@ GDALDataset * AAIGDataset::CreateCopy(
         sprintf( szHeader+strlen( szHeader ), "\n" );
     }
 
-    VSIFWriteL( szHeader, 1, strlen(szHeader), fpImage );
+    if( VSIFWriteL( szHeader, strlen(szHeader), 1, fpImage ) != 1)
+    {
+        VSIFCloseL(fpImage);
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -1165,7 +1172,8 @@ GDALDataset * AAIGDataset::CreateCopy(
                 }
             }
         }
-        VSIFWriteL( (void *) "\n", 1, 1, fpImage );
+        if( VSIFWriteL( (void *) "\n", 1, 1, fpImage ) != 1 )
+            eErr = CE_Failure;
 
         if( eErr == CE_None &&
             !pfnProgress((iLine + 1) / ((double) nYSize), NULL, pProgressData) )
@@ -1207,7 +1215,7 @@ GDALDataset * AAIGDataset::CreateCopy(
             oSRS.importFromWkt( (char **) &pszOriginalProjection );
             oSRS.morphToESRI();
             oSRS.exportToWkt( &pszESRIProjection );
-            VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp );
+            CPL_IGNORE_RET_VAL(VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp ));
 
             VSIFCloseL( fp );
             CPLFree( pszESRIProjection );

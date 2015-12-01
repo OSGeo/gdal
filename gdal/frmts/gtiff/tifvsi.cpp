@@ -201,10 +201,10 @@ _tiffSizeProc(thandle_t th)
     }
 
     old_off = VSIFTellL( psGTH->fpL );
-    VSIFSeekL( psGTH->fpL, 0, SEEK_END );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( psGTH->fpL, 0, SEEK_END ));
     
     file_size = (toff_t) VSIFTellL( psGTH->fpL );
-    VSIFSeekL( psGTH->fpL, old_off, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( psGTH->fpL, old_off, SEEK_SET ));
 
     return file_size;
 }
@@ -271,7 +271,8 @@ TIFF* VSI_TIFFOpen(const char* name, const char* mode,
 
     strcat( access, "b" );
 
-    VSIFSeekL(fpL, 0, SEEK_SET);
+    if( VSIFSeekL(fpL, 0, SEEK_SET) < 0 )
+        return NULL;
     
     GDALTiffHandle* psGTH = (GDALTiffHandle*) CPLMalloc(sizeof(GDALTiffHandle));
     psGTH->fpL = fpL;

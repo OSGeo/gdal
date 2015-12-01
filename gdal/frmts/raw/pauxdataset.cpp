@@ -890,8 +890,8 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /*      Just write out a couple of bytes to establish the binary        */
 /*      file, and then close it.                                        */
 /* -------------------------------------------------------------------- */
-    VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
-                2, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
+                2, 1, fp ));
     VSIFCloseL( fp );
 
 /* -------------------------------------------------------------------- */
@@ -934,13 +934,13 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
            && pszFilename[iStart-1] != '\\' )
         iStart--;
 
-    VSIFPrintfL( fp, "AuxilaryTarget: %s\n", pszFilename + iStart );
+    CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "AuxilaryTarget: %s\n", pszFilename + iStart ));
 
 /* -------------------------------------------------------------------- */
 /*      Write out the raw definition for the dataset as a whole.        */
 /* -------------------------------------------------------------------- */
-    VSIFPrintfL( fp, "RawDefinition: %d %d %d\n",
-                nXSize, nYSize, nBands );
+    CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "RawDefinition: %d %d %d\n",
+                nXSize, nYSize, nBands ));
 
 /* -------------------------------------------------------------------- */
 /*      Write out a definition for each band.  We always write band     */
@@ -990,7 +990,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         else
             pszTypeName = "8U";
 
-        VSIFPrintfL( fp, "ChanDefinition-%d: %s " CPL_FRMT_GIB " %d %d %s\n", 
+        CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "ChanDefinition-%d: %s " CPL_FRMT_GIB " %d %d %s\n", 
 					 iBand+1,
 					 pszTypeName, (GIntBig) nImgOffset,
 					 nPixelOffset, nLineOffset,
@@ -999,7 +999,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 #else
                     "Unswapped"
 #endif
-                    );
+                    ));
 
         nImgOffset = nNextImgOffset;
     }

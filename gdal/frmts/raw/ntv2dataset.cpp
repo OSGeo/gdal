@@ -159,11 +159,11 @@ void NTv2Dataset::FlushCache()
     char achFileHeader[11*16];
     char achGridHeader[11*16];
 
-    VSIFSeekL( fpImage, 0, SEEK_SET );
-    VSIFReadL( achFileHeader, 11, 16, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( achFileHeader, 11, 16, fpImage ));
 
-    VSIFSeekL( fpImage, nGridOffset, SEEK_SET );
-    VSIFReadL( achGridHeader, 11, 16, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, nGridOffset, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( achGridHeader, 11, 16, fpImage ));
 
 /* -------------------------------------------------------------------- */
 /*      Update the grid, and file headers with any available            */
@@ -255,11 +255,11 @@ void NTv2Dataset::FlushCache()
 /* -------------------------------------------------------------------- */
 /*      Load grid and file headers.                                     */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( fpImage, 0, SEEK_SET );
-    VSIFWriteL( achFileHeader, 11, 16, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFWriteL( achFileHeader, 11, 16, fpImage ));
 
-    VSIFSeekL( fpImage, nGridOffset, SEEK_SET );
-    VSIFWriteL( achGridHeader, 11, 16, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, nGridOffset, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFWriteL( achGridHeader, 11, 16, fpImage ));
 
 /* -------------------------------------------------------------------- */
 /*      Clear flags if we got everything, then let pam and below do     */
@@ -348,9 +348,9 @@ GDALDataset *NTv2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the file header.                                           */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( poDS->fpImage, 0, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( poDS->fpImage, 0, SEEK_SET ));
     char achHeader[11*16];
-    VSIFReadL( achHeader, 11, 16, poDS->fpImage );
+    CPL_IGNORE_RET_VAL(VSIFReadL( achHeader, 11, 16, poDS->fpImage ));
 
     CPL_LSBPTR32( achHeader + 2*16 + 8 );
     GInt32 nSubFileCount;
@@ -397,8 +397,8 @@ GDALDataset *NTv2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( int iGrid = 0; iGrid < nSubFileCount; iGrid++ )
     {
-        VSIFSeekL( poDS->fpImage, nGridOffset, SEEK_SET );
-        if (VSIFReadL( achHeader, 11, 16, poDS->fpImage ) != 16)
+        if (VSIFSeekL( poDS->fpImage, nGridOffset, SEEK_SET ) < 0 ||
+            VSIFReadL( achHeader, 11, 16, poDS->fpImage ) != 16)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot read header for subfile %d", iGrid);
@@ -589,8 +589,8 @@ CPLErr NTv2Dataset::SetGeoTransform( double * padfTransform )
     char   achHeader[11*16];
 
     // read grid header
-    VSIFSeekL( fpImage, nGridOffset, SEEK_SET );
-    VSIFReadL( achHeader, 11, 16, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, nGridOffset, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( achHeader, 11, 16, fpImage ));
 
     // S_LAT
     dfValue = 3600 * (adfGeoTransform[3] + (nRasterYSize-0.5) * adfGeoTransform[5]);
@@ -623,8 +623,8 @@ CPLErr NTv2Dataset::SetGeoTransform( double * padfTransform )
     memcpy( achHeader +  9*16 + 8, &dfValue, 8 );
 
     // write grid header.
-    VSIFSeekL( fpImage, nGridOffset, SEEK_SET );
-    VSIFWriteL( achHeader, 11, 16, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, nGridOffset, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 11, 16, fpImage ));
 
     return CE_None;
 }
@@ -721,7 +721,7 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
         memcpy( achHeader +  9*16, "MAJOR_T ", 8 );
         memcpy( achHeader + 10*16, "MINOR_T ", 8 );
 
-        VSIFWriteL( achHeader, 1, sizeof(achHeader), fp );
+        CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 1, sizeof(achHeader), fp ));
     }
 
 /* -------------------------------------------------------------------- */
@@ -730,19 +730,19 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     else
     {
-        VSIFSeekL( fp, 2*16 + 8, SEEK_SET );
-        VSIFReadL( &nNumFile, 1, 4, fp );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 2*16 + 8, SEEK_SET ));
+        CPL_IGNORE_RET_VAL(VSIFReadL( &nNumFile, 1, 4, fp ));
         CPL_LSBPTR32( &nNumFile );
 
         nNumFile++;
 
         CPL_LSBPTR32( &nNumFile );
-        VSIFSeekL( fp, 2*16 + 8, SEEK_SET );
-        VSIFWriteL( &nNumFile, 1, 4, fp );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 2*16 + 8, SEEK_SET ));
+        CPL_IGNORE_RET_VAL(VSIFWriteL( &nNumFile, 1, 4, fp ));
 
-        VSIFSeekL( fp, 0, SEEK_END );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_END ));
         vsi_l_offset nEnd = VSIFTellL( fp );
-        VSIFSeekL( fp, nEnd-16, SEEK_SET );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, nEnd-16, SEEK_SET ));
     }
 
 /* -------------------------------------------------------------------- */
@@ -801,7 +801,7 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
     CPL_LSBPTR32( &nGSCount );
     memcpy( achHeader + 10*16+8, &nGSCount, 4 );
 
-    VSIFWriteL( achHeader, 1, sizeof(achHeader), fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 1, sizeof(achHeader), fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Write zeroed grid data.                                         */
@@ -815,14 +815,14 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
     memset( achHeader + 15, 0xbf, 1 );
 
     for( int i = 0; i < nXSize * nYSize; i++ )
-        VSIFWriteL( achHeader, 1, 16, fp );
+        CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 1, 16, fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Write the end record.                                           */
 /* -------------------------------------------------------------------- */
     memset( achHeader, 0, 16 );
     memcpy( achHeader, "END     ", 8 );
-    VSIFWriteL( achHeader, 1, 16, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 1, 16, fp ));
     VSIFCloseL( fp );
 
     if( nNumFile == 1 )

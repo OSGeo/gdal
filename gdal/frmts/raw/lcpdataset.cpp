@@ -220,8 +220,8 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the header and extract some information.                   */
 /* -------------------------------------------------------------------- */
-   VSIFSeekL( poDS->fpImage, 0, SEEK_SET );
-   if (VSIFReadL( poDS->pachHeader, 1, LCP_HEADER_SIZE, poDS->fpImage ) != LCP_HEADER_SIZE)
+   if (VSIFSeekL( poDS->fpImage, 0, SEEK_SET ) < 0 ||
+       VSIFReadL( poDS->pachHeader, 1, LCP_HEADER_SIZE, poDS->fpImage ) != LCP_HEADER_SIZE)
    {
        CPLError(CE_Failure, CPLE_FileIO, "File too short");
        delete poDS;
@@ -1395,27 +1395,27 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 
     GInt32 nTemp = bHaveCrownFuels ? 21 : 20;
     CPL_LSBPTR32( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
     nTemp = bHaveGroundFuels ? 21 : 20;
     CPL_LSBPTR32( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
 
     const int nXSize = poSrcDS->GetRasterXSize();
     nTemp = static_cast<GInt32>( dfLatitude + 0.5 );
     CPL_LSBPTR32( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
     dfLongitude = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
     CPL_LSBPTR64( &dfLongitude );
-    VSIFWriteL( &dfLongitude, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfLongitude, 8, 1, fp ));
     dfLongitude = adfSrcGeoTransform[0];
     CPL_LSBPTR64( &dfLongitude );
-    VSIFWriteL( &dfLongitude, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfLongitude, 8, 1, fp ));
     dfLatitude = adfSrcGeoTransform[3];
     CPL_LSBPTR64( &dfLatitude );
-    VSIFWriteL( &dfLatitude, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfLatitude, 8, 1, fp ));
     dfLatitude = adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize;
     CPL_LSBPTR64( &dfLatitude );
-    VSIFWriteL( &dfLatitude, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfLatitude, 8, 1, fp ));
 
     /*
     ** Swap the two classification arrays if we are writing them, and they need
@@ -1439,34 +1439,34 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             */
             if( i == 5 && !bHaveCrownFuels && bHaveGroundFuels )
             {
-                VSIFSeekL( fp, 3340, SEEK_SET );
+                CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 3340, SEEK_SET ));
             }
             nTemp = (GInt32)padfMin[i];
             CPL_LSBPTR32( &nTemp );
-            VSIFWriteL( &nTemp, 4, 1, fp );
+            CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
             nTemp = (GInt32)padfMax[i];
             CPL_LSBPTR32( &nTemp );
-            VSIFWriteL( &nTemp, 4, 1, fp );
+            CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
             if( bClassifyData )
             {
                 /*
                 ** These two arrays were swapped in their entirety above.
                 */
-                VSIFWriteL( panFound + i, 4, 1, fp );
-                VSIFWriteL( panClasses + ( i * LCP_MAX_CLASSES ), 4, 100, fp );
+                CPL_IGNORE_RET_VAL(VSIFWriteL( panFound + i, 4, 1, fp ));
+                CPL_IGNORE_RET_VAL(VSIFWriteL( panClasses + ( i * LCP_MAX_CLASSES ), 4, 100, fp ));
             }
             else
             {
                 nTemp = -1;
                 CPL_LSBPTR32( &nTemp );
-                VSIFWriteL( &nTemp, 4, 1, fp );
-                VSIFSeekL( fp, 400, SEEK_CUR );
+                CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
+                CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 400, SEEK_CUR ));
             }
         }
     }
     else
     {
-        VSIFSeekL( fp, 4164, SEEK_SET );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 4164, SEEK_SET ));
     }
     CPLFree( reinterpret_cast<void *>( padfMin ) );
     CPLFree( reinterpret_cast<void *>( padfMax ) );
@@ -1479,52 +1479,52 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     CPLAssert( VSIFTellL( fp ) == 2104  ||
                VSIFTellL( fp ) == 3340  ||
                VSIFTellL( fp ) == 4164 );
-    VSIFSeekL( fp, 4164, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 4164, SEEK_SET ));
 
     /* Image size */
     nTemp = (GInt32)nXSize;
     CPL_LSBPTR32( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
     nTemp = (GInt32)nYSize;
     CPL_LSBPTR32( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
 
     /* X and Y boundaries */
     /* max x */
     double dfTemp = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
     /* min x */
     dfTemp = adfSrcGeoTransform[0];
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
     /* max y */
     dfTemp = adfSrcGeoTransform[3];
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
     /* min y */
     dfTemp = adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize;
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
 
     nTemp = nLinearUnits;
     CPL_LSBPTR32( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
 
     /* Resolution */
     /* x resolution */
     dfTemp = adfSrcGeoTransform[1];
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
     /* y resolution */
     dfTemp = fabs( adfSrcGeoTransform[5] );
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
 
 #ifdef CPL_MSB
     GDALSwapWords( panMetadata, 2, LCP_MAX_BANDS, 2 );
 #endif
-    VSIFWriteL( panMetadata, 2, LCP_MAX_BANDS, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( panMetadata, 2, LCP_MAX_BANDS, fp ));
 
     /* Write the source filenames */
     char **papszFileList = poSrcDS->GetFileList();
@@ -1534,11 +1534,11 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
         {
             if( i == 5 && !bHaveCrownFuels && bHaveGroundFuels )
             {
-                VSIFSeekL( fp, 6292, SEEK_SET );
+                CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 6292, SEEK_SET ));
             }
-            VSIFWriteL( papszFileList[0], 1,
-                        CPLStrnlen( papszFileList[0], LCP_MAX_PATH ), fp );
-            VSIFSeekL( fp, 4244 + ( 256 * ( i+1 ) ), SEEK_SET );
+            CPL_IGNORE_RET_VAL(VSIFWriteL( papszFileList[0], 1,
+                        CPLStrnlen( papszFileList[0], LCP_MAX_PATH ), fp ));
+            CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 4244 + ( 256 * ( i+1 ) ), SEEK_SET ));
         }
     }
     /*
@@ -1546,7 +1546,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     */
     else
     {
-        VSIFSeekL( fp, 6804, SEEK_SET );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 6804, SEEK_SET ));
     }
     CSLDestroy( papszFileList );
     /*
@@ -1555,16 +1555,16 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     CPLAssert( VSIFTellL( fp ) == 5524 ||
                VSIFTellL( fp ) == 6292 ||
                VSIFTellL( fp ) == 6804 );
-    VSIFSeekL( fp, 6804, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 6804, SEEK_SET ));
 
     /* Description */
-    VSIFWriteL( pszDescription, 1, CPLStrnlen( pszDescription, LCP_MAX_DESC ),
-                fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( pszDescription, 1, CPLStrnlen( pszDescription, LCP_MAX_DESC ),
+                fp ));
     /*
     ** Should be at or below location 7316, all done with the header.
     */
     CPLAssert( VSIFTellL( fp ) <= 7316 );
-    VSIFSeekL( fp, 7316, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 7316, SEEK_SET ));
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -1600,7 +1600,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 #ifdef CPL_MSB
         GDALSwapWords( panScanline, 2, nBands * nXSize, 2 );
 #endif
-        VSIFWriteL( panScanline, 2, nBands * nXSize, fp );
+        CPL_IGNORE_RET_VAL(VSIFWriteL( panScanline, 2, nBands * nXSize, fp ));
 
         if( !pfnProgress( iLine / (double)nYSize, NULL, pProgressData ) )
         {
@@ -1639,7 +1639,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             oSRS.morphToESRI();
             char *pszESRIProjection = NULL;
             oSRS.exportToWkt( &pszESRIProjection );
-            VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp );
+            CPL_IGNORE_RET_VAL(VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp ));
 
             VSIFCloseL( fp );
             CPLFree( pszESRIProjection );

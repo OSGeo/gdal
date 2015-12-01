@@ -255,7 +255,7 @@ int HFADictionary::GetItemSize( char chType )
 void HFADictionary::Dump( FILE * fp )
 
 {
-    VSIFPrintf( fp, "\nHFADictionary:\n" );
+    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "\nHFADictionary:\n" ));
 
     for( int i = 0; i < nTypes; i++ )
     {

@@ -565,7 +565,7 @@ GDALDataset *ISCEDataset::Create( const char *pszFilename,
 /*      Just write out a couple of bytes to establish the binary        */
 /*      file, and then close it.                                        */
 /* -------------------------------------------------------------------- */
-    VSIFWriteL( (void *) "\0\0", 2, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( (void *) "\0\0", 2, 1, fp ));
     VSIFCloseL( fp );
 
 /* -------------------------------------------------------------------- */

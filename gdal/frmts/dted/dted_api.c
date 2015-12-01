@@ -38,6 +38,9 @@ static int bWarnedTwoComplement = FALSE;
 
 static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo);
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+CPL_INLINE static void CPL_IGNORE_RET_VAL_SIZET(CPL_UNUSED size_t unused) {}
+
 /************************************************************************/
 /*                            DTEDGetField()                            */
 /*                                                                      */
@@ -196,11 +199,11 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
 
     psDInfo->nDSIOffset = (int)VSIFTellL( fp );
     psDInfo->pachDSIRecord = (char *) CPLMalloc(DTED_DSI_SIZE);
-    VSIFReadL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, fp );
+    CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, fp ));
     
     psDInfo->nACCOffset = (int)VSIFTellL( fp );
     psDInfo->pachACCRecord = (char *) CPLMalloc(DTED_ACC_SIZE);
-    VSIFReadL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, fp );
+    CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, fp ));
 
     if( !STARTS_WITH_CI(psDInfo->pachDSIRecord, "DSI")
         || !STARTS_WITH_CI(psDInfo->pachACCRecord, "ACC") )
@@ -352,8 +355,8 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo)
     int nSize;
     int nColByteSize = 12 + psDInfo->nYSize*2;
 
-    VSIFSeekL(psDInfo->fp, psDInfo->nDataOffset, SEEK_SET);
-    if (VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
+    if (VSIFSeekL(psDInfo->fp, psDInfo->nDataOffset, SEEK_SET) < 0 ||
+        VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
         pabyRecordHeader[0] != 0252)
     {
         CPLDebug("DTED", "Cannot find signature of first column");
@@ -363,7 +366,7 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo)
     nFirstDataBlockCount = (pabyRecordHeader[2] << 8) | pabyRecordHeader[3];
     nFirstLongitudeCount = (pabyRecordHeader[4] << 8) | pabyRecordHeader[5];
 
-    VSIFSeekL(psDInfo->fp, 0, SEEK_END);
+    CPL_IGNORE_RET_VAL_SIZET(VSIFSeekL(psDInfo->fp, 0, SEEK_END));
     nSize = (int)VSIFTellL(psDInfo->fp);
     if (nSize < 12 + psDInfo->nYSize*2)
     {
@@ -371,8 +374,8 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo)
         return;
     }
 
-    VSIFSeekL(psDInfo->fp, nSize - nColByteSize, SEEK_SET);
-    if (VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
+    if (VSIFSeekL(psDInfo->fp, nSize - nColByteSize, SEEK_SET) < 0 ||
+        VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
         pabyRecordHeader[0] != 0252)
     {
         CPLDebug("DTED", "Cannot find signature of last column");
@@ -440,8 +443,8 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo)
         {
             int nDataBlockCount, nLongitudeCount;
 
-            VSIFSeekL(psDInfo->fp, psDInfo->nDataOffset + i * nColByteSize, SEEK_SET);
-            if (VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
+            if (VSIFSeekL(psDInfo->fp, psDInfo->nDataOffset + i * nColByteSize, SEEK_SET) < 0 ||
+                VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
                 pabyRecordHeader[0] != 0252)
             {
                 CPLDebug("DTED", "Cannot find signature of physical column %d", i);
@@ -1054,14 +1057,14 @@ void DTEDClose( DTEDInfo * psDInfo )
 /* -------------------------------------------------------------------- */
 /*      Write all headers back to disk.                                 */
 /* -------------------------------------------------------------------- */
-        VSIFSeekL( psDInfo->fp, psDInfo->nUHLOffset, SEEK_SET );
-        VSIFWriteL( psDInfo->pachUHLRecord, 1, DTED_UHL_SIZE, psDInfo->fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFSeekL( psDInfo->fp, psDInfo->nUHLOffset, SEEK_SET ));
+        CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL( psDInfo->pachUHLRecord, 1, DTED_UHL_SIZE, psDInfo->fp ));
 
-        VSIFSeekL( psDInfo->fp, psDInfo->nDSIOffset, SEEK_SET );
-        VSIFWriteL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, psDInfo->fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFSeekL( psDInfo->fp, psDInfo->nDSIOffset, SEEK_SET ));
+        CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, psDInfo->fp ));
 
-        VSIFSeekL( psDInfo->fp, psDInfo->nACCOffset, SEEK_SET );
-        VSIFWriteL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, psDInfo->fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFSeekL( psDInfo->fp, psDInfo->nACCOffset, SEEK_SET ));
+        CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, psDInfo->fp ));
     }
 
     VSIFCloseL( psDInfo->fp );

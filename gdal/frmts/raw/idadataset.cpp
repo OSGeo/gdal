@@ -389,8 +389,8 @@ void IDADataset::FlushCache()
 
     if( bHeaderDirty )
     {
-        VSIFSeekL( fpRaw, 0, SEEK_SET );
-        VSIFWriteL( abyHeader, 512, 1, fpRaw );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fpRaw, 0, SEEK_SET ));
+        CPL_IGNORE_RET_VAL(VSIFWriteL( abyHeader, 512, 1, fpRaw ));
         bHeaderDirty = FALSE;
     }
 }
@@ -706,7 +706,7 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     // The file just be exactly the image size + header size in length.
     vsi_l_offset nExpectedFileSize = static_cast<vsi_l_offset>(nXSize) * nYSize + 512;
 
-    VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END ));
     const vsi_l_offset nActualFileSize = VSIFTellL( poOpenInfo->fpL );
     VSIRewindL( poOpenInfo->fpL );
 

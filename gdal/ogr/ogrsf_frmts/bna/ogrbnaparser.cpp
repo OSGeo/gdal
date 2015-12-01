@@ -189,22 +189,26 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], VSILFILE* f)
                 }
                 else
                 {
-                    VSIFSeekL(f, VSIFTellL(f) - 1, SEEK_SET);
+                    if( VSIFSeekL(f, VSIFTellL(f) - 1, SEEK_SET) != 0 )
+                        return BNA_LINE_EOF;
                 }
             }
         }
         else if (ptrCurLine[1] == 0x0a)
         {
-            VSIFSeekL(f, VSIFTellL(f) + ptrCurLine + 2 - (szLineBuffer + nRead), SEEK_SET);
+            if( VSIFSeekL(f, VSIFTellL(f) + ptrCurLine + 2 - (szLineBuffer + nRead), SEEK_SET) != 0 )
+                return BNA_LINE_EOF;
         }
         else
         {
-            VSIFSeekL(f, VSIFTellL(f) + ptrCurLine + 1 - (szLineBuffer + nRead), SEEK_SET);
+            if( VSIFSeekL(f, VSIFTellL(f) + ptrCurLine + 1 - (szLineBuffer + nRead), SEEK_SET) != 0 )
+                return BNA_LINE_EOF;
         }
     }
     else /* *ptrCurLine == 0x0a */
     {
-        VSIFSeekL(f, VSIFTellL(f) + ptrCurLine + 1 - (szLineBuffer + nRead), SEEK_SET);
+        if( VSIFSeekL(f, VSIFTellL(f) + ptrCurLine + 1 - (szLineBuffer + nRead), SEEK_SET) != 0 )
+            return BNA_LINE_EOF;
     }
     *ptrCurLine = 0;
 
