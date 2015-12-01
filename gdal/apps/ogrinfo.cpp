@@ -366,6 +366,7 @@ int main( int nArgc, char ** papszArgv )
 
     CPLDebug( "OGR", "GetLayerCount() = %d\n", poDS->GetLayerCount() );
 
+    /* coverity[tainted_data] */
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
         if ( CSLCount(papszLayers) == 0 )

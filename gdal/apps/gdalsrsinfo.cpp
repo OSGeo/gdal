@@ -163,6 +163,7 @@ int main( int argc, char ** argv )
     }
 
     /* Search for SRS */
+    /* coverity[tainted_data] */
     bGotSRS = FindSRS( pszInput, oSRS );
 
     CPLDebug( "gdalsrsinfo", 

@@ -113,6 +113,7 @@ int main( int nArgc, char ** papszArgv )
         }
         else 
         {
+            /* coverity[tainted_data] */
             if( oSRS.SetFromUserInput(papszArgv[i]) != OGRERR_NONE )
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Error occurred translating %s.\n",

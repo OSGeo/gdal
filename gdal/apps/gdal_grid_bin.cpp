@@ -143,6 +143,7 @@ int main(int argc, char** argv)
     }
 
     GDALGridOptionsForBinary* psOptionsForBinary = GDALGridOptionsForBinaryNew();
+    /* coverity[tainted_data] */
     GDALGridOptions *psOptions = GDALGridOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 
