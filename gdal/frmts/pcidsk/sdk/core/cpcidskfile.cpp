@@ -1205,8 +1205,8 @@ void CPCIDSKFile::MoveSegmentToEOF( int segment )
     {
         CPCIDSKSegment *seg = 
             dynamic_cast<CPCIDSKSegment *>( segments[segment] );
-
-        seg->LoadSegmentPointer( segment_pointers.buffer + segptr_off );
+        if( seg )
+            seg->LoadSegmentPointer( segment_pointers.buffer + segptr_off );
     }
 }
 
@@ -1270,7 +1270,8 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
                        SEG_SYS, 0 );
         bm_seg = GetSegment( SEG_SYS, "SysBMDir" );
         bm = dynamic_cast<SysBlockMap *>(bm_seg);
-        bm->Initialize();
+        if( bm )
+            bm->Initialize();
     }
     else
         bm = dynamic_cast<SysBlockMap *>(bm_seg);
@@ -1299,7 +1300,7 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
             }
         }
 
-        if (overview_exists == false)
+        if (overview_exists == false && bm != NULL)
         {
 /* -------------------------------------------------------------------- */
 /*      Create the overview as a tiled image layer.                     */
@@ -1325,7 +1326,9 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
 /* -------------------------------------------------------------------- */
 /*      Force channel to invalidate it's loaded overview list.          */
 /* -------------------------------------------------------------------- */
-        dynamic_cast<CPCIDSKChannel *>(channel)->InvalidateOverviewInfo();
+        CPCIDSKChannel* cpcidskchannel = dynamic_cast<CPCIDSKChannel *>(channel);
+        if( cpcidskchannel )
+            cpcidskchannel->InvalidateOverviewInfo();
     }
 }
 
