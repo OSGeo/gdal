@@ -42,7 +42,10 @@ OGRSVGDataSource::OGRSVGDataSource() :
     nLayers(0)
 #ifdef HAVE_EXPAT
     ,
-    bIsCloudmade(false)
+    eValidity(SVG_VALIDITY_UNKNOWN),
+    bIsCloudmade(false),
+    oCurrentParser(NULL),
+    nDataHandlerCounter(0)
 #endif
 {
 }
