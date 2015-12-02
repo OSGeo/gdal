@@ -529,14 +529,14 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
         for (unsigned int i = 0 ; i < count_to_read; i++) {
             GrowVirtualFile(i + current_start);
         }
-        
+
         printf("Coalescing the read of %d blocks\n", count_to_read);
 #endif
 
         // Perform the actual read
         PCIDSKSegment *data_seg_obj =
             file->GetSegment( cur_segment );
-        
+
         std::size_t data_size = block_size * count_to_read;
 
 #if 0
@@ -546,10 +546,10 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
         data_seg_obj->ReadFromFile( ((uint8*)buffer) + buffer_off,
                                     block_size * read_start,
                                     data_size );
-                                    
+
         buffer_off += data_size; // increase buffer offset
-        
-        // Increment the current start by the number of blocks we jsut read
+
+        // Increment the current start by the number of blocks we just read
         current_start += count_to_read;
         blocks_read += count_to_read;
     }
