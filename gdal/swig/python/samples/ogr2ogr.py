@@ -1,36 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#/******************************************************************************
-# * $Id$
-# *
-# * Project:  OpenGIS Simple Features Reference Implementation
-# * Purpose:  Python port of a simple client for translating between formats.
-# * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-# *
-# * Port from ogr2ogr.cpp whose author is Frank Warmerdam
-# *
-# ******************************************************************************
-# * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# * Copyright (c) 1999, Frank Warmerdam
-# *
-# * Permission is hereby granted, free of charge, to any person obtaining a
-# * copy of this software and associated documentation files (the "Software"),
-# * to deal in the Software without restriction, including without limitation
-# * the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# * and/or sell copies of the Software, and to permit persons to whom the
-# * Software is furnished to do so, subject to the following conditions:
-# *
-# * The above copyright notice and this permission notice shall be included
-# * in all copies or substantial portions of the Software.
-# *
-# * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# * DEALINGS IN THE SOFTWARE.
-# ****************************************************************************/
+#*****************************************************************************
+# $Id$
+#
+# Project:  OpenGIS Simple Features Reference Implementation
+# Purpose:  Python port of a simple client for translating between formats.
+# Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+#
+# Port from ogr2ogr.cpp whose author is Frank Warmerdam
+#
+#*****************************************************************************
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 1999, Frank Warmerdam
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+#**************************************************************************
 
 # Note : this is the most direct port of ogr2ogr.cpp possible
 # It could be made much more Python'ish !
@@ -114,9 +114,9 @@ class AssociatedLayers:
         self.poSrcLayer = None
         self.psInfo = None
 
-#/************************************************************************/
-#/*                                main()                                */
-#/************************************************************************/
+#**********************************************************************
+#                                main()
+#**********************************************************************
 
 bSkipFailures = False
 nGroupTransactions = 200
@@ -132,12 +132,12 @@ class Enum(set):
 GeomOperation = Enum(["NONE", "SEGMENTIZE", "SIMPLIFY_PRESERVE_TOPOLOGY"])
 
 def main(args = None, progress_func = TermProgress, progress_data = None):
-    
+
     global bSkipFailures
     global nGroupTransactions
     global bPreserveFID
     global nFIDToFetch
-    
+
     pszFormat = "ESRI Shapefile"
     pszDataSource = None
     pszDestDataSource = None
@@ -191,9 +191,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
     args = ogr.GeneralCmdLineProcessor( args )
 
-#/* -------------------------------------------------------------------- */
-#/*      Processing command line arguments.                              */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Processing command line arguments.
+# --------------------------------------------------------------------
     if args is None:
         return False
 
@@ -218,7 +218,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
         elif len(args[iArg]) >= 5 and EQUAL(args[iArg][0:5], "-skip"):
             bSkipFailures = True
-            nGroupTransactions = 1 # /* #2409 */
+            nGroupTransactions = 1 # #2409
 
         elif EQUAL(args[iArg],"-append"):
             bAppend = True
@@ -387,11 +387,11 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         elif EQUAL(args[iArg],"-progress"):
             bDisplayProgress = True
 
-        #/*elif EQUAL(args[iArg],"-wrapdateline") )
+        #elif EQUAL(args[iArg],"-wrapdateline") )
         #{
         #    bWrapDateline = True;
         #}
-        #*/
+        #
         elif EQUAL(args[iArg],"-clipsrc") and iArg < nArgc-1:
 
             bClipSrc = True
@@ -525,14 +525,14 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             print("FAILURE: cannot load dest clip geometry\n" )
             return Usage()
 
-#/* -------------------------------------------------------------------- */
-#/*      Open data source.                                               */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Open data source.
+# --------------------------------------------------------------------
     poDS = ogr.Open( pszDataSource, False )
 
-#/* -------------------------------------------------------------------- */
-#/*      Report failure                                                  */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report failure
+# --------------------------------------------------------------------
     if poDS is None:
         print("FAILURE:\n" + \
                 "Unable to open datasource `%s' with the following drivers." % pszDataSource)
@@ -542,9 +542,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
         return False
 
-#/* -------------------------------------------------------------------- */
-#/*      Try opening the output datasource as an existing, writable      */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Try opening the output datasource as an existing, writable
+# --------------------------------------------------------------------
     poODS = None
     poDriver = None
 
@@ -555,7 +555,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             if bOverwrite or bAppend:
                 poODS = ogr.Open( pszDestDataSource, False )
                 if poODS is None:
-                    # /* ok the datasource doesn't exist at all */
+                    # the datasource doesn't exist at all
                     bUpdate = False
                 else:
                     poODS.delete()
@@ -573,9 +573,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         if poODS is not None:
             poDriver = poODS.GetDriver()
 
-#/* -------------------------------------------------------------------- */
-#/*      Find the output driver.                                         */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Find the output driver.
+# --------------------------------------------------------------------
     if not bUpdate:
         poDriver = ogr.GetDriverByName(pszFormat)
         if poDriver is None:
@@ -591,14 +591,14 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             print( "%s driver does not support data source creation." % pszFormat)
             return False
 
-#/* -------------------------------------------------------------------- */
-#/*      Special case to improve user experience when translating        */
-#/*      a datasource with multiple layers into a shapefile. If the      */
-#/*      user gives a target datasource with .shp and it does not exist, */
-#/*      the shapefile driver will try to create a file, but this is not */
-#/*      appropriate because here we have several layers, so create      */
-#/*      a directory instead.                                            */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Special case to improve user experience when translating
+#      a datasource with multiple layers into a shapefile. If the
+#      user gives a target datasource with .shp and it does not exist,
+#      the shapefile driver will try to create a file, but this is not
+#      appropriate because here we have several layers, so create
+#      a directory instead.
+# --------------------------------------------------------------------
         if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
            pszSQLStatement is None and \
            (len(papszLayers) > 1 or \
@@ -618,35 +618,35 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                           "for shapefile datastore.\n" % pszDestDataSource )
                     return False
 
-#/* -------------------------------------------------------------------- */
-#/*      Create the output data source.                                  */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Create the output data source.
+# --------------------------------------------------------------------
         poODS = poDriver.CreateDataSource( pszDestDataSource, options = papszDSCO )
         if poODS is None:
             print( "%s driver failed to create %s" % (pszFormat, pszDestDataSource ))
             return False
 
-#/* -------------------------------------------------------------------- */
-#/*      Parse the output SRS definition if possible.                    */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Parse the output SRS definition if possible.
+# --------------------------------------------------------------------
     if pszOutputSRSDef is not None:
         poOutputSRS = osr.SpatialReference()
         if poOutputSRS.SetFromUserInput( pszOutputSRSDef ) != 0:
             print( "Failed to process SRS definition: %s" % pszOutputSRSDef )
             return False
 
-#/* -------------------------------------------------------------------- */
-#/*      Parse the source SRS definition if possible.                    */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Parse the source SRS definition if possible.
+# --------------------------------------------------------------------
     if pszSourceSRSDef is not None:
         poSourceSRS = osr.SpatialReference()
         if poSourceSRS.SetFromUserInput( pszSourceSRSDef ) != 0:
             print( "Failed to process SRS definition: %s" % pszSourceSRSDef )
             return False
 
-#/* -------------------------------------------------------------------- */
-#/*      For OSM file.                                                   */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      For OSM file.
+# --------------------------------------------------------------------
     bSrcIsOSM = poDS.GetDriver() is not None and \
                              poDS.GetDriver().GetName() == "OSM"
     nSrcFileSize = 0
@@ -655,9 +655,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         if sStat is not None:
             nSrcFileSize = sStat.size
 
-#/* -------------------------------------------------------------------- */
-#/*      Special case for -sql clause.  No source layers required.       */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Special case for -sql clause.  No source layers required.
+# --------------------------------------------------------------------
     if pszSQLStatement is not None:
         if pszWHERE is not None:
             print( "-where clause ignored in combination with -sql." )
@@ -683,11 +683,11 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                     pfnProgress = progress_func
                     pProgressArg = progress_data
 
-#/* -------------------------------------------------------------------- */
-#/*      Special case to improve user experience when translating into   */
-#/*      single file shapefile and source has only one layer, and that   */
-#/*      the layer name isn't specified                                  */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Special case to improve user experience when translating into
+#      single file shapefile and source has only one layer, and that
+#      the layer name isn't specified
+# --------------------------------------------------------------------
             if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
                 pszNewLayerName is None:
                 try:
@@ -735,9 +735,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             poDS.ReleaseResultSet( poResultSet )
 
 
-#/* -------------------------------------------------------------------- */
-#/*      Special case for layer interleaving mode.                       */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Special case for layer interleaving mode.
+# --------------------------------------------------------------------
     elif bSrcIsOSM and gdal.GetConfigOption("OGR_INTERLEAVED_READING", None) is None:
 
         gdal.SetConfigOption("OGR_INTERLEAVED_READING", "YES")
@@ -751,11 +751,11 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         nSrcLayerCount = poDS.GetLayerCount()
         pasAssocLayers = [ AssociatedLayers() for i in range(nSrcLayerCount) ]
 
-#/* -------------------------------------------------------------------- */
-#/*      Special case to improve user experience when translating into   */
-#/*      single file shapefile and source has only one layer, and that   */
-#/*      the layer name isn't specified                                  */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Special case to improve user experience when translating into
+#      single file shapefile and source has only one layer, and that
+#      the layer name isn't specified
+# --------------------------------------------------------------------
 
         if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
            (len(papszLayers) == 1 or nSrcLayerCount == 1) and pszNewLayerName is None:
@@ -770,9 +770,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             pfnProgress = progress_func
             pProgressArg = progress_data
 
-#/* -------------------------------------------------------------------- */
-#/*      If no target layer specified, use all source layers.            */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      If no target layer specified, use all source layers.
+# --------------------------------------------------------------------
         if len(papszLayers) == 0:
             papszLayers = [ None for i in range(nSrcLayerCount) ]
             for iLayer in range(nSrcLayerCount):
@@ -792,9 +792,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
                 poDS.ExecuteSQL(osInterestLayers, None, None)
 
-#/* -------------------------------------------------------------------- */
-#/*      First pass to set filters and create target layers.             */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      First pass to set filters and create target layers.
+# --------------------------------------------------------------------
         for iLayer in range(nSrcLayerCount):
             poLayer = poDS.GetLayer(iLayer)
             if poLayer is None:
@@ -837,9 +837,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             else:
                 pasAssocLayers[iLayer].psInfo = None
 
-#/* -------------------------------------------------------------------- */
-#/*      Second pass to process features in a interleaved layer mode.    */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Second pass to process features in a interleaved layer mode.
+# --------------------------------------------------------------------
         bHasLayersNonEmpty = True
         while bHasLayersNonEmpty:
             bHasLayersNonEmpty = False
@@ -867,7 +867,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
                         return False
                 else:
-                    #/* No matching target layer : just consumes the features */
+                    # No matching target layer : just consumes the features
 
                     poFeature = poLayer.GetNextFeature()
                     while poFeature is not None:
@@ -882,9 +882,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         nLayerCount = 0
         papoLayers = []
 
-#/* -------------------------------------------------------------------- */
-#/*      Process each data source layer.                                 */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Process each data source layer.
+# --------------------------------------------------------------------
         if len(papszLayers) == 0:
             nLayerCount = poDS.GetLayerCount()
             papoLayers = [None for i in range(nLayerCount)]
@@ -900,9 +900,9 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                 papoLayers[iLayer] = poLayer
                 iLayer = iLayer + 1
 
-#/* -------------------------------------------------------------------- */
-#/*      Process specified data source layers.                           */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Process specified data source layers.
+# --------------------------------------------------------------------
         else:
             nLayerCount = len(papszLayers)
             papoLayers = [None for i in range(nLayerCount)]
@@ -922,7 +922,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         nCountLayersFeatures = 0
         nAccCountFeatures = 0
 
-        #/* First pass to apply filters and count all features if necessary */
+        # First pass to apply filters and count all features if necessary
         for iLayer in range(nLayerCount):
             poLayer = papoLayers[iLayer]
 
@@ -943,7 +943,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                     panLayerCountFeatures[iLayer] = poLayer.GetFeatureCount()
                     nCountLayersFeatures += panLayerCountFeatures[iLayer]
 
-        #/* Second pass to do the real job */
+        # Second pass to do the real job
         for iLayer in range(nLayerCount):
             poLayer = papoLayers[iLayer]
 
@@ -960,11 +960,11 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
             nAccCountFeatures += panLayerCountFeatures[iLayer]
 
-#/* -------------------------------------------------------------------- */
-#/*      Special case to improve user experience when translating into   */
-#/*      single file shapefile and source has only one layer, and that   */
-#/*      the layer name isn't specified                                  */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Special case to improve user experience when translating into
+#      single file shapefile and source has only one layer, and that
+#      the layer name isn't specified
+# --------------------------------------------------------------------
             if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
                 nLayerCount == 1 and pszNewLayerName is None:
                 try:
@@ -1011,19 +1011,19 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
                 return False
 
-#/* -------------------------------------------------------------------- */
-#/*      Close down.                                                     */
-#/* -------------------------------------------------------------------- */
-    #/* We must explicitly destroy the output dataset in order the file */
-    #/* to be properly closed ! */
+# --------------------------------------------------------------------
+#      Close down.
+# --------------------------------------------------------------------
+    # We must explicitly destroy the output dataset in order the file
+    # to be properly closed !
     poODS.Destroy()
     poDS.Destroy()
 
     return True
 
-#/************************************************************************/
-#/*                               Usage()                                */
-#/************************************************************************/
+#**********************************************************************
+#                               Usage()
+#**********************************************************************
 
 def Usage():
 
@@ -1155,9 +1155,9 @@ def LoadGeometry( pszDS, pszSQL, pszLyr, pszWhere):
 def wkbFlatten(x):
     return x & (~ogr.wkb25DBit)
 
-#/************************************************************************/
-#/*                               SetZ()                                 */
-#/************************************************************************/
+#**********************************************************************
+#                               SetZ()
+#**********************************************************************
 
 def SetZ (poGeom, dfZ ):
 
@@ -1181,9 +1181,9 @@ def SetZ (poGeom, dfZ ):
         for i in range(poGeom.GetGeometryCount()):
             SetZ(poGeom.GetGeometryRef(i), dfZ)
 
-#/************************************************************************/
-#/*                         SetupTargetLayer()                           */
-#/************************************************************************/
+#**********************************************************************
+#                         SetupTargetLayer()
+#**********************************************************************
 
 def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     bTransform,  poOutputSRS, bNullifyOutputSRS, poSourceSRS, papszSelFields, \
@@ -1194,9 +1194,9 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
     if pszNewLayerName is None:
         pszNewLayerName = poSrcLayer.GetLayerDefn().GetName()
 
-#/* -------------------------------------------------------------------- */
-#/*      Setup coordinate transformation if we need it.                  */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Setup coordinate transformation if we need it.
+# --------------------------------------------------------------------
     poCT = None
 
     if bTransform:
@@ -1227,17 +1227,17 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
             print( "Target:\n" + pszWKT )
             return None
 
-#/* -------------------------------------------------------------------- */
-#/*      Get other info.                                                 */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Get other info.
+# --------------------------------------------------------------------
     poSrcFDefn = poSrcLayer.GetLayerDefn()
 
     if poOutputSRS is None and not bNullifyOutputSRS:
         poOutputSRS = poSrcLayer.GetSpatialRef()
 
-#/* -------------------------------------------------------------------- */
-#/*      Find the layer.                                                 */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Find the layer.
+# --------------------------------------------------------------------
 
     # GetLayerByName() can instantiate layers that would have been
     # 'hidden' otherwise, for example, non-spatial tables in a
@@ -1260,14 +1260,14 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                 break
 
         if (iLayer == nLayerCount):
-            # /* shouldn't happen with an ideal driver */
+            # Shouldn't happen with an ideal driver
             poDstLayer = None
 
-#/* -------------------------------------------------------------------- */
-#/*      If the user requested overwrite, and we have the layer in       */
-#/*      question we need to delete it now so it will get recreated      */
-#/*      (overwritten).                                                  */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      If the user requested overwrite, and we have the layer in
+#      question we need to delete it now so it will get recreated
+#      (overwritten).
+# --------------------------------------------------------------------
     if poDstLayer is not None and bOverwrite:
         if poDstDS.DeleteLayer( iLayer ) != 0:
             print("DeleteLayer() failed when overwrite requested." )
@@ -1275,9 +1275,9 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
         poDstLayer = None
 
-#/* -------------------------------------------------------------------- */
-#/*      If the layer does not exist, then create it.                    */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      If the layer does not exist, then create it.
+# --------------------------------------------------------------------
     if poDstLayer is None:
         if eGType == -2:
             eGType = poSrcFDefn.GetGeomType()
@@ -1321,9 +1321,9 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
         bAppend = False
 
-#/* -------------------------------------------------------------------- */
-#/*      Otherwise we will append to it, if append was requested.        */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Otherwise we will append to it, if append was requested.
+# --------------------------------------------------------------------
     elif not bAppend:
         print("FAILED: Layer " + pszNewLayerName + "already exists, and -append not specified.\n" + \
                             "        Consider using -append, or -overwrite.")
@@ -1333,12 +1333,12 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
             print("WARNING: Layer creation options ignored since an existing layer is\n" + \
                     "         being appended to." )
 
-#/* -------------------------------------------------------------------- */
-#/*      Add fields.  Default to copy all field.                         */
-#/*      If only a subset of all fields requested, then output only      */
-#/*      the selected fields, and in the order that they were            */
-#/*      selected.                                                       */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Add fields.  Default to copy all field.
+#      If only a subset of all fields requested, then output only
+#      the selected fields, and in the order that they were
+#      selected.
+# --------------------------------------------------------------------
 
     # Initialize the index-to-index map to -1's
     nSrcFieldCount = poSrcFDefn.GetFieldCount()
@@ -1380,7 +1380,7 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     if poDstFDefn is None:
                         poDstFDefn = poDstLayer.GetLayerDefn()
 
-                    #/* Sanity check : if it fails, the driver is buggy */
+                    # Sanity check : if it fails, the driver is buggy
                     if poDstFDefn is not None and \
                         poDstFDefn.GetFieldCount() != nDstFieldCount + 1:
                         print("The output driver has claimed to have added the %s field, but it did not!" %  oFieldDefn.GetNameRef() )
@@ -1393,9 +1393,9 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                 if not bSkipFailures:
                     return None
 
-        #/* -------------------------------------------------------------------- */
-        #/* Use SetIgnoredFields() on source layer if available                  */
-        #/* -------------------------------------------------------------------- */
+        # --------------------------------------------------------------------
+        # Use SetIgnoredFields() on source layer if available
+        # --------------------------------------------------------------------
 
         # Here we differ from the ogr2ogr.cpp implementation since the OGRFeatureQuery
         # isn't mapped to swig. So in that case just don't use SetIgnoredFields()
@@ -1413,7 +1413,7 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                 if pszZField is not None and EQUAL(pszFieldName, pszZField):
                     bFieldRequested = True
 
-                #/* If source field not requested, add it to ignored files list */
+                # If source field not requested, add it to ignored files list
                 if not bFieldRequested:
                     papszIgnoredFields.append(pszFieldName)
 
@@ -1451,7 +1451,7 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                 if poDstFDefn is None:
                     poDstFDefn = poDstLayer.GetLayerDefn()
 
-                #/* Sanity check : if it fails, the driver is buggy */
+                # Sanity check : if it fails, the driver is buggy
                 if poDstFDefn is not None and \
                     poDstFDefn.GetFieldCount() != nDstFieldCount + 1:
                     print("The output driver has claimed to have added the %s field, but it did not!" %  oFieldDefn.GetNameRef() )
@@ -1460,8 +1460,8 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     nDstFieldCount = nDstFieldCount + 1
 
     else:
-        #/* For an existing layer, build the map by fetching the index in the destination */
-        #/* layer for each source field */
+        # For an existing layer, build the map by fetching the index in the destination
+        # layer for each source field
         if poDstFDefn is None:
             print( "poDstFDefn == NULL.\n" )
             return None
@@ -1485,9 +1485,9 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
     return psInfo
 
-#/************************************************************************/
-#/*                           TranslateLayer()                           */
-#/************************************************************************/
+#**********************************************************************
+#                           TranslateLayer()
+#**********************************************************************
 
 def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                     poOutputSRS, bNullifyOutputSRS, \
@@ -1499,7 +1499,7 @@ def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
     bForceToPolygon = False
     bForceToMultiPolygon = False
     bForceToMultiLineString = False
-    
+
     poDstLayer = psInfo.poDstLayer
     #papszTransformOptions = psInfo.papszTransformOptions
     poCT = psInfo.poCT
@@ -1516,9 +1516,9 @@ def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
     elif wkbFlatten(eGType) == ogr.wkbMultiLineString:
         bForceToMultiLineString = True
 
-#/* -------------------------------------------------------------------- */
-#/*      Transfer features.                                              */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Transfer features.
+# --------------------------------------------------------------------
     nFeaturesInTransaction = 0
     nCount = 0
 
@@ -1583,14 +1583,14 @@ def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
             if poDstGeometry is not None:
 
                 if nParts > 0:
-                    # /* For -explodecollections, extract the iPart(th) of the geometry */
+                    # For -explodecollections, extract the iPart(th) of the geometry
                     poPart = poDstGeometry.GetGeometryRef(iPart).Clone()
                     poDstFeature.SetGeometryDirectly(poPart)
                     poDstGeometry = poPart
 
                 if iSrcZField != -1:
                     SetZ(poDstGeometry, poFeature.GetFieldAsDouble(iSrcZField))
-                    # /* This will correct the coordinate dimension to 3 */
+                    # This will correct the coordinate dimension to 3
                     poDupGeometry = poDstGeometry.Clone()
                     poDstFeature.SetGeometryDirectly(poDupGeometry)
                     poDstGeometry = poDupGeometry
@@ -1601,8 +1601,8 @@ def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
 
                 if eGeomOp == GeomOperation.SEGMENTIZE:
                     pass
-                    #/*if (poDstFeature.GetGeometryRef() is not None and dfGeomOpParam > 0)
-                    #    poDstFeature.GetGeometryRef().segmentize(dfGeomOpParam);*/
+                    #if (poDstFeature.GetGeometryRef() is not None and dfGeomOpParam > 0)
+                    #    poDstFeature.GetGeometryRef().segmentize(dfGeomOpParam);
                 elif eGeomOp == GeomOperation.SIMPLIFY_PRESERVE_TOPOLOGY and dfGeomOpParam > 0:
                     poNewGeom = poDstGeometry.SimplifyPreserveTopology(dfGeomOpParam)
                     if poNewGeom is not None:
@@ -1612,7 +1612,7 @@ def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                 if poClipSrc is not None:
                     poClipped = poDstGeometry.Intersection(poClipSrc)
                     if poClipped is None or poClipped.IsEmpty():
-                        #/* Report progress */
+                        # Report progress
                         nCount = nCount +1
                         if pfnProgress is not None:
                             pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressArg)
@@ -1660,7 +1660,7 @@ def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
 
                 return False
 
-        #/* Report progress */
+        # Report progress
         nCount = nCount  + 1
         if pfnProgress is not None:
             if nSrcFileSize != 0:
@@ -1694,4 +1694,3 @@ if __name__ == '__main__':
         sys.exit(1)
     else:
         sys.exit(0)
-
