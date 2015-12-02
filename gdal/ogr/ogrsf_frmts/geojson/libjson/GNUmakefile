@@ -1,6 +1,6 @@
 # $Id$
 #
-# Makefile building jcon-c library (http://oss.metaparadigm.com/json-c/)
+# Makefile building json-c library (http://oss.metaparadigm.com/json-c/)
 # 
 include ../../../../GDALmake.opt
 
