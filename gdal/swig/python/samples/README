@@ -8,7 +8,7 @@ assemblepoly.py		Script demonstrates how to assemble polygons from
 			arcs.  Demonstrates various aspects of OGR Python API.
 
 attachpct.py		Simple command line program for copying the color table of a
-                    raster into another raster.
+                        raster into another raster.
 
 fft.py			Script to perform forward and inverse two-dimensional
 			fast Fourier transform.
@@ -61,7 +61,7 @@ vec_tr.py		Example of applying some algorithm to all the
 			geometries in the file, such as a fixed offset.
 
 vec_tr_spat.py		Example of using Intersect() to filter based on 
-			only those features that truely intersect a given
+			only those features that truly intersect a given
 			rectangle.  Easily extended to general polygon!
 
 classify.py             Demonstrates using numpy for simple range based
@@ -74,7 +74,7 @@ gdal_lut.py             Read a LUT from a text file, and apply it to an image.
 magphase.py             Example script computing magnitude and phase images
                         from a complex image.
 
-hsv_merge.py            Merge greyscale image into rgb image as intensity
+hsv_merge.py            Merge greyscale image into RGB image as intensity
                         in HSV space.
 
 val_at_coord.py         Outputs the value of the raster bands at a given

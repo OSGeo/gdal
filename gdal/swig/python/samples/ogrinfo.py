@@ -1,47 +1,43 @@
 #!/usr/bin/env python
-#/******************************************************************************
-# * $Id$
-# *
-# * Project:  OpenGIS Simple Features Reference Implementation
-# * Purpose:  Python port of a simple client for viewing OGR driver data.
-# * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-# *
-# * Port from ogrinfo.cpp whose author is Frank Warmerdam
-# *
-# ******************************************************************************
-# * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# * Copyright (c) 1999, Frank Warmerdam
-# *
-# * Permission is hereby granted, free of charge, to any person obtaining a
-# * copy of this software and associated documentation files (the "Software"),
-# * to deal in the Software without restriction, including without limitation
-# * the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# * and/or sell copies of the Software, and to permit persons to whom the
-# * Software is furnished to do so, subject to the following conditions:
-# *
-# * The above copyright notice and this permission notice shall be included
-# * in all copies or substantial portions of the Software.
-# *
-# * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# * DEALINGS IN THE SOFTWARE.
-# ****************************************************************************/
+#*****************************************************************************
+# $Id$
+#
+# Project:  OpenGIS Simple Features Reference Implementation
+# Purpose:  Python port of a simple client for viewing OGR driver data.
+# Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+#
+# Port from ogrinfo.cpp whose author is Frank Warmerdam
+#
+#*****************************************************************************
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 1999, Frank Warmerdam
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+#***************************************************************************/
 
 # Note : this is the most direct port of ogrinfo.cpp possible
 # It could be made much more Python'ish !
 
 import sys
 
-try:
-    from osgeo import gdal
-    from osgeo import ogr
-except:
-    import gdal
-    import ogr
+from osgeo import gdal
+from osgeo import ogr
 
 bReadOnly = False
 bVerbose = True
@@ -52,18 +48,18 @@ papszOptions = None
 def EQUAL(a, b):
     return a.lower() == b.lower()
 
-#/************************************************************************/
-#/*                                main()                                */
-#/************************************************************************/
+#**********************************************************************
+#                                main()
+#**********************************************************************
 
 def main(argv = None):
-    
+
     global bReadOnly
     global bVerbose
     global bSummaryOnly
     global nFetchFID
     global papszOptions
-    
+
     pszWHERE = None
     pszDataSource = None
     papszLayers = None
@@ -80,9 +76,9 @@ def main(argv = None):
 
     argv = ogr.GeneralCmdLineProcessor( argv )
 
-#/* -------------------------------------------------------------------- */
-#/*      Processing command line arguments.                              */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Processing command line arguments.
+# --------------------------------------------------------------------
     if argv is None:
         return 1
 
@@ -164,9 +160,9 @@ def main(argv = None):
     if pszDataSource is None:
         return Usage()
 
-#/* -------------------------------------------------------------------- */
-#/*      Open data source.                                               */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Open data source.
+# --------------------------------------------------------------------
     poDS = None
     poDriver = None
 
@@ -177,9 +173,9 @@ def main(argv = None):
             print( "Had to open data source read-only." )
             bReadOnly = True
 
-#/* -------------------------------------------------------------------- */
-#/*      Report failure                                                  */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report failure.
+# --------------------------------------------------------------------
     if poDS is None:
         print( "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers." % pszDataSource )
@@ -191,9 +187,9 @@ def main(argv = None):
 
     poDriver = poDS.GetDriver()
 
-#/* -------------------------------------------------------------------- */
-#/*      Some information messages.                                      */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Some information messages.
+# --------------------------------------------------------------------
     if bVerbose:
         print( "INFO: Open of `%s'\n"
                 "      using driver `%s' successful." % (pszDataSource, poDriver.GetName()) )
@@ -205,9 +201,9 @@ def main(argv = None):
         print( "INFO: Internal data source name `%s'\n"
                 "      different from user name `%s'." % (poDS_Name, pszDataSource ))
 
-#/* -------------------------------------------------------------------- */
-#/*      Special case for -sql clause.  No source layers required.       */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Special case for -sql clause.  No source layers required.
+# --------------------------------------------------------------------
     if pszSQLStatement is not None:
         poResultSet = None
 
@@ -238,9 +234,9 @@ def main(argv = None):
 
     for iRepeat in range(nRepeatCount):
         if papszLayers is None:
-#/* -------------------------------------------------------------------- */ 
-#/*      Process each data source layer.                                 */ 
-#/* -------------------------------------------------------------------- */ 
+# --------------------------------------------------------------------
+#      Process each data source layer.
+# --------------------------------------------------------------------
             for iLayer in range(poDS.GetLayerCount()):
                 poLayer = poDS.GetLayer(iLayer)
 
@@ -272,9 +268,9 @@ def main(argv = None):
                     ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options )
 
         else:
-#/* -------------------------------------------------------------------- */ 
-#/*      Process specified data source layers.                           */ 
-#/* -------------------------------------------------------------------- */ 
+# --------------------------------------------------------------------
+#      Process specified data source layers.
+# --------------------------------------------------------------------
             for papszIter in papszLayers:
                 poLayer = poDS.GetLayerByName(papszIter)
 
@@ -287,16 +283,16 @@ def main(argv = None):
 
                 ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options )
 
-#/* -------------------------------------------------------------------- */
-#/*      Close down.                                                     */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Close down.
+# --------------------------------------------------------------------
     poDS.Destroy()
 
     return 0
 
-#/************************************************************************/
-#/*                               Usage()                                */
-#/************************************************************************/
+#**********************************************************************
+#                               Usage()
+#**********************************************************************
 
 def Usage():
 
@@ -307,17 +303,17 @@ def Usage():
             "               datasource_name [layer [layer ...]]")
     return 1
 
-#/************************************************************************/
-#/*                           ReportOnLayer()                            */
-#/************************************************************************/
+#**********************************************************************
+#                           ReportOnLayer()
+#**********************************************************************
 
 def ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options ):
 
     poDefn = poLayer.GetLayerDefn()
 
-#/* -------------------------------------------------------------------- */
-#/*      Set filters if provided.                                        */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Set filters if provided.
+# --------------------------------------------------------------------
     if pszWHERE is not None:
         if poLayer.SetAttributeFilter( pszWHERE ) != 0:
             print("FAILURE: SetAttributeFilter(%s) failed." % pszWHERE)
@@ -333,11 +329,11 @@ def ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options ):
         else:
             poLayer.SetSpatialFilter( poSpatialFilter )
 
-#/* -------------------------------------------------------------------- */
-#/*      Report various overall information.                             */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report various overall information.
+# --------------------------------------------------------------------
     print( "" )
-    
+
     print( "Layer name: %s" % poDefn.GetName() )
 
     if bVerbose:
@@ -348,9 +344,9 @@ def ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options ):
                 print( "Geometry (%s): %s" % (poGFldDefn.GetNameRef(), ogr.GeometryTypeToName( poGFldDefn.GetType() ) ))
         else:
             print( "Geometry: %s" % ogr.GeometryTypeToName( poDefn.GetGeomType() ) )
-        
+
         print( "Feature Count: %d" % poLayer.GetFeatureCount() )
-        
+
         if nGeomFieldCount > 1:
             for iGeom in range(nGeomFieldCount):
                 poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
@@ -376,10 +372,10 @@ def ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options ):
             else:
                 pszWKT = poLayer.GetSpatialRef().ExportToPrettyWkt()
             print( "Layer SRS WKT:\n%s" % pszWKT )
-    
+
         if len(poLayer.GetFIDColumn()) > 0:
             print( "FID Column = %s" % poLayer.GetFIDColumn() )
-    
+
         if nGeomFieldCount > 1:
             for iGeom in range(nGeomFieldCount):
                 poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
@@ -390,16 +386,16 @@ def ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options ):
 
         for iAttr in range(poDefn.GetFieldCount()):
             poField = poDefn.GetFieldDefn( iAttr )
-            
+
             print( "%s: %s (%d.%d)" % ( \
                     poField.GetNameRef(), \
                     poField.GetFieldTypeName( poField.GetType() ), \
                     poField.GetWidth(), \
                     poField.GetPrecision() ))
 
-#/* -------------------------------------------------------------------- */
-#/*      Read, and dump features.                                        */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Read, and dump features.
+# --------------------------------------------------------------------
     poFeature = None
 
     if nFetchFID == ogr.NullFID and not bSummaryOnly:

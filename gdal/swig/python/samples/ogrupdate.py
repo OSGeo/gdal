@@ -29,8 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import ogr, gdal
 import sys
+
+from osgeo import gdal
+from osgeo import ogr
 
 DEFAULT = 0
 UPDATE_ONLY = 1
@@ -81,7 +83,7 @@ def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
     # in case there's no existing matching feature in the target datasource
     # should we preserve the FID of the source feature that will be inserted ?
     preserve_fid = False
-    
+
     # whether we should compare all fields from the features that are found to
     # be matching before actually updating
     compare_before_update = False
@@ -91,7 +93,7 @@ def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
     quiet = False
 
     skip_failures = False
-    
+
     papszSelFields = None
 
     dry_run = False

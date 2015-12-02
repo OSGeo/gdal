@@ -29,11 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import gdal
-    from osgeo import osr
-except ImportError:
-    import gdal
+from osgeo import gdal
+from osgeo import osr
 
 import sys
 

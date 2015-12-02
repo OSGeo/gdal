@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 
-try:
-    from osgeo import osr
-    from osgeo import ogr
-    ogr.UseExceptions()
-except ImportError:
-    import osr
-    import ogr
-
-import sys
-import os
 import math
+import os
+import sys
 
-
+from osgeo import osr
+from osgeo import ogr
+ogr.UseExceptions()
 
 
 class Translator(object):
@@ -61,11 +55,11 @@ class Translator(object):
         parser.set_defaults(verbose=True, driver="ESRI Shapefile", overwrite=True)
 
         self.parser = parser
-        
+
     def __init__(self, arguments, options=None):
         self.input = None
         self.output = None
-        
+
         self.opts = options
         self.construct_parser()
         self.options, self.args = self.parser.parse_args(args=arguments)
@@ -74,7 +68,7 @@ class Translator(object):
         self.open()
         self.make_fields()
         self.translate()
-        
+
     def open(self):
         if self.options.input:
             self.in_ds = ogr.Open(self.options.input)
@@ -95,12 +89,12 @@ class Translator(object):
 
         if self.options.spat:
             self.input.SetSpatialFilterRect(*self.options.spat)
-            
+
         self.out_drv = ogr.GetDriverByName(self.options.driver)
-        
+
         if self.options.where:
             self.input.SetAttributeFilter(self.options.where)
-            
+
         if not self.out_drv:
             raise Exception("The '%s' driver was not found, did you misspell it or is it not available in this GDAL build?", self.options.driver)
         if not self.out_drv.TestCapability( 'CreateDataSource' ):
@@ -126,7 +120,7 @@ class Translator(object):
             dsco = (),
 
         self.out_ds = self.out_drv.CreateDataSource( self.options.output, dsco)
-        
+
         if self.options.t_srs:
             self.out_srs = osr.SpatialReference()
             self.out_srs.SetFromUserInput(self.options.t_srs)
@@ -159,21 +153,19 @@ class Translator(object):
             trans = osr.CoordinateTransformation(self.in_srs, self.out_srs)
         while f:
             geom = f.GetGeometryRef().Clone()
-            
+
             if trans:
                 geom.Transform(trans)
 
             if geometry_callback:
                 geom = geometry_callback(geom)
 
-                
             f.SetGeometry(geom)
             d = ogr.Feature(feature_def=self.output.GetLayerDefn())
             d.SetFrom(f)
             self.output.CreateFeature(d)
             f = self.input.GetNextFeature()
 
-            
     def __del__(self):
         if self.output:
             self.output.SyncToDisk()
@@ -182,24 +174,24 @@ def radians(degrees):
     return math.pi/180.0*degrees
 def degrees(radians):
     return radians*180.0/math.pi
-    
+
 class Densify(Translator):
 
     def calcpoint(self,x0, x1, y0, y1, d):
         a = x1 - x0
         b = y1 - y0
-        
+
         if a == 0:
             xn = x1
-            
+
             if b > 0:
                 yn = y0 + d
             else:
                 yn = y0 - d
             return (xn, yn)
-                      
+
         theta = degrees(math.atan(abs(b)/abs(a)))
-        
+
         if a > 0 and b > 0:
             omega = theta
         if a < 0 and b > 0:
@@ -218,21 +210,21 @@ class Densify(Translator):
         else:
             xn = x0 + d*math.cos(radians(omega))
             yn = y0 + d*math.sin(radians(omega))
-        
+
         return (xn, yn)
-                    
+
     def distance(self, x0, x1, y0, y1):
         deltax = x0 - x1
         deltay = y0 - y1
         d2 = (deltax)**2 + (deltay)**2
         d = math.sqrt(d2)
         return d
-    
+
     def densify(self, geometry):
         gtype = geometry.GetGeometryType()
         if  not (gtype == ogr.wkbLineString or gtype == ogr.wkbMultiLineString):
             raise Exception("The densify function only works on linestring or multilinestring geometries")
-            
+
         g = ogr.Geometry(ogr.wkbLineString)
 
         # add the first point
@@ -267,7 +259,7 @@ class Densify(Translator):
                         x = x + dx
                         y = y + dy
                         g.AddPoint(x, y)
-                        
+
                 elif self.options.remainder.upper() == "END":
                     segcount = int(math.floor(d/threshold))
                     xa = None
@@ -284,9 +276,9 @@ class Densify(Translator):
                         xa = xn
                         ya = yn
                         g.AddPoint(xa,ya)
-                        
+
                 elif self.options.remainder.upper() == "BEGIN":
-                    
+
                     # I think this might put an extra point in at the end of the 
                     # first segment
                     segcount = int(math.floor(d/threshold))
@@ -354,7 +346,8 @@ def GetLength(geometry):
     else:
         cumulative = cumulate(geometry)
     return cumulative
-    
+
+
 def main():
     import optparse
 
@@ -375,6 +368,7 @@ is chosen, the threshold distance will be used as an absolute value.""",
     options.append(o)
     d = Densify(sys.argv[1:], options=options)
     d.process()
+
 
 if __name__=='__main__':
     main()

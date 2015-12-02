@@ -9,7 +9,7 @@
 ###############################################################################
 # Copyright (c) 2003, Andrey Kiselev <dron@remotesensing.org>
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -29,11 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import gdal
-    gdal.TermProgress = gdal.TermProgress_nocb
-except ImportError:
-    import gdal
+import math
+import sys
+
+from osgeo import gdal
+gdal.TermProgress = gdal.TermProgress_nocb
 
 try:
     import numpy as Numeric
@@ -45,9 +45,6 @@ try:
     from osgeo import gdal_array as gdalnumeric
 except ImportError:
     import gdalnumeric
-
-import sys
-import math
 
 # =============================================================================
 def Usage():

@@ -1,26 +1,26 @@
 #!/usr/bin/env python
 #******************************************************************************
 #  $Id: epsg_tr.py 19102 2010-03-15 23:41:44Z warmerdam $
-# 
+#
 #  Project:  LOS/LAS to NTv2 Translator
 #  Purpose:  Translate one or many LOS/LAS sets into an NTv2 datum shift grid
 #            file.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
 #  Financial Support: i-cubed (http://www.i-cubed.com)
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2010, Frank Warmerdam
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -64,7 +64,7 @@ def TranslateLOSLAS( los, ntv2_filename, options ):
     # Open the LOS and LAS files.
     los_filename = los[:-4] + '.los'
     las_filename = los[:-4] + '.las'
-    
+
     los_db = gdal.Open( los_filename )
     las_db = gdal.Open( las_filename )
 
@@ -105,7 +105,7 @@ def auto_noaa( options, loslas_list ):
     options.verbose_flag = 0
 
     original_metadata = options.metadata
-    
+
     have_nad27 = 0
     #have_hpgn = 0
 
@@ -124,7 +124,7 @@ def auto_noaa( options, loslas_list ):
             options.metadata.append( 'MINOR_T=6356752.31414' )
             options.metadata.append( 'SYSTEM_F=HARN' )
             options.metadata.append( 'SYSTEM_T=NAD83' )
-            
+
         else:
             ntv2_filename = 'nad27_usa.gsb'
             options.metadata.append( 'SUB_NAME=' + los[:-4] )
@@ -141,11 +141,11 @@ def auto_noaa( options, loslas_list ):
             have_nad27 = 1
 
         print('Integrate %s into %s.' % (los, ntv2_filename))
-        
+
         TranslateLOSLAS( los, ntv2_filename, options )
-        
+
     sys.exit(0)
-    
+
 # =============================================================================
 
 if __name__ == '__main__':
@@ -160,13 +160,13 @@ if __name__ == '__main__':
     options.create_options = []
     options.metadata = []
     options.negate = 0
-    
+
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
     if argv is None:
         sys.exit( 0 )
-        
+
     # Parse command line arguments.
-    
+
     i = 1
     while i < len(argv):
         arg = argv[i]
@@ -224,10 +224,10 @@ if __name__ == '__main__':
 
         elif arg == '-negate':
             options.negate = 1
-            
+
         elif arg == '-auto':
             auto_flag = 1
-            
+
         elif arg == '-a':
             options.append = 1
 
@@ -236,10 +236,10 @@ if __name__ == '__main__':
 
         elif arg[-4:] == '.los' or arg[-4:] == '.las':
             loslas_list.append( arg )
-            
+
         elif arg[-4:] == '.gsb' and ntv2_filename is None:
             ntv2_filename = arg
-            
+
         else:
             print('Unrecognised argument: ', arg)
             Usage()
@@ -252,7 +252,7 @@ if __name__ == '__main__':
 
     if auto_flag == 1:
         auto_noaa( options, loslas_list )
-        
+
     if ntv2_filename is None:
         print('No NTv2 file specified.')
         Usage()
@@ -264,4 +264,3 @@ if __name__ == '__main__':
         TranslateLOSLAS( los, ntv2_filename, options )
         options.append = 1
 
-    

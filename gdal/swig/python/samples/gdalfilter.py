@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -28,11 +28,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import gdal
-    gdal.TermProgress = gdal.TermProgress_nocb
-except ImportError:
-    import gdal
+from osgeo import gdal
+gdal.TermProgress = gdal.TermProgress_nocb
 
 import sys
 import string
@@ -157,7 +154,7 @@ filt_template = \
 
 for iBand in range(vrt_ds.RasterCount):
     band = vrt_ds.GetRasterBand(iBand+1)
-    
+
     src_xml = filt_template % (iBand+1)
 
     band.SetMetadata( { 'source_0' : src_xml }, 'vrt_sources' )

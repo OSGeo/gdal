@@ -10,7 +10,7 @@
 ###############################################################################
 # Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -30,12 +30,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import ogr, gdal
-except ImportError:
-    import  ogr, gdal
-
 import sys
+
+from osgeo import ogr, gdal
 
 #############################################################################
 
@@ -87,7 +84,7 @@ openoptions = []
 argv = gdal.GeneralCmdLineProcessor( sys.argv )
 if argv is None:
     sys.exit( 0 )
-        
+
 i = 1
 while i < len(argv):
     arg = argv[i]
@@ -132,7 +129,7 @@ if schema and feature_count:
 if schema and extent:
     sys.stderr.write('Ignoring -extent when used with -schema.\n')
     extent = 0
-    
+
 #############################################################################
 # Open the datasource to read.
 

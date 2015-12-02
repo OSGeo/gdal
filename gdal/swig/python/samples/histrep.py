@@ -29,12 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
-
 import sys
+
+from osgeo import gdal
 
 # =============================================================================
 def Usage():
@@ -100,7 +97,7 @@ if __name__ == '__main__':
             print('Max: ', hist[1])
             print('Buckets: ', hist[2])
             print('Histogram: ', hist[3])
-        
+
     else:
         hist = ds.GetRasterBand(1).GetHistogram( req[0], req[1], req[2],
                                                 ioor, approxok )
