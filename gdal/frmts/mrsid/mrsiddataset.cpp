@@ -118,7 +118,7 @@ LT_USE_NAMESPACE(LizardTech)
 
 /* -------------------------------------------------------------------- */
 /*      Various wrapper templates used to force new/delete to happen    */
-/*      in the same heap.  See bug 1213 and MSDN knowledgebase          */
+/*      in the same heap.  See bug 1213 and MSDN knowledge base         */
 /*      article 122675.                                                 */
 /* -------------------------------------------------------------------- */
 
