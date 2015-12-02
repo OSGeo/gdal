@@ -962,7 +962,7 @@ SKIP_FUNCTION_MACROS   = YES
 # Adding location for the tag files is done as follows: 
 #   TAGFILES = file1=loc1 "file2 = loc2" ... 
 # where "loc1" and "loc2" can be relative or absolute paths or 
-# URLs. If a location is present for each tag, the installdox tool 
+# URLs. If a location is present for each tag, the installdox tool
 # does not have to be run to correct the links.
 # Note that each tag file must have a unique name
 # (where the name does NOT include the path)

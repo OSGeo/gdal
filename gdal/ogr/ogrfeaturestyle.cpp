@@ -663,7 +663,8 @@ int OGR_SM_GetPartCount(OGRStyleMgrH hSM, const char *pszStyleString)
  *
  * This method is the same as the C function OGR_SM_GetPart().
  *
- * This method instanciates a new object that should be freed with OGR_ST_Destroy().
+ * This method instantiates a new object that should be freed with
+ * OGR_ST_Destroy().
  *
  * @param nPartId the part number (0-based index).
  * @param pszStyleString (optional) the style string on which to operate.
@@ -716,7 +717,8 @@ OGRStyleTool *OGRStyleMgr::GetPart(int nPartId,
  *
  * This function is the same as the C++ method OGRStyleMgr::GetPart().
  *
- * This function instanciates a new object that should be freed with OGR_ST_Destroy().
+ * This function instantiates a new object that should be freed with
+ * OGR_ST_Destroy().
  *
  * @param hSM handle to the style manager.
  * @param nPartId the part number (0-based index).

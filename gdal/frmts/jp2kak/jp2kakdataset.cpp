@@ -1772,7 +1772,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         }
     }
 /* -------------------------------------------------------------------- */
-/*      Catch interal Kakadu errors.                                    */
+/*      Catch internal Kakadu errors.                                   */
 /* -------------------------------------------------------------------- */
     catch( ... )
     {

@@ -23,7 +23,7 @@
 #endif
 
 CPL_C_START
-// Cripes ... shouldn't this go in an include files!
+// Should this go in an include file?  Otherwise it should be static, correct?
 int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld);
 CPL_C_END
 

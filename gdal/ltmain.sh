@@ -4388,7 +4388,7 @@ EOF
         {
           /* however, if there is an option in the LTWRAPPER_OPTION_PREFIX
              namespace, but it is not one of the ones we know about and
-             have already dealt with, above (inluding dump-script), then
+             have already dealt with, above (including dump-script), then
              report an error. Otherwise, targets might begin to believe
              they are allowed to use options in the LTWRAPPER_OPTION_PREFIX
              namespace. The first time any user complains about this, we'll
@@ -7640,7 +7640,7 @@ func_mode_link ()
 	versuffix_save=$versuffix
 	major_save=$major
 	# I'm not sure if I'm treating the release correctly.  I think
-	# release should show up in the -l (ie -lgmp5) so we don't want to
+	# release should show up in the -l (i.e. -lgmp5) so we don't want to
 	# add it in twice.  Is that correct?
 	release=""
 	versuffix=""

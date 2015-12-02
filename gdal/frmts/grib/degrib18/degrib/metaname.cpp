@@ -1920,7 +1920,7 @@ void ParseElemName (uShort2 center, uShort2 subcenter, int prodType,
  * FILES/DATABASES: None
  *
  * RETURNS: char *
- *   Same as 'strcpy', ie it returns name.
+ *   Same as 'strcpy', i.e. it returns name.
  *
  * HISTORY
  *   9/2002 Arthur Taylor (MDL/RSIS): Created.

@@ -153,7 +153,7 @@ def ogr_rfc41_2():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Check setting to wkbNone and implicitely destroying the field
+    # Check setting to wkbNone and implicitly destroying the field.
     for i in range(2):
         feature_defn.SetGeomType(ogr.wkbNone)
         if feature_defn.GetGeomFieldCount() != 0:
@@ -545,28 +545,29 @@ def ogr_rfc41_5():
         return 'fail'
 
     try:
-        f['inexisting_field']
-        gdaltest.post_reason('fail')
-        return 'fail'
-    except:
-        pass
-    try:
-        f.inexisting_field
+        f['nonexistent_field']
         gdaltest.post_reason('fail')
         return 'fail'
     except:
         pass
 
     try:
-        f['inexisting_field'] = 'foo'
+        f.nonexistent_field
         gdaltest.post_reason('fail')
         return 'fail'
     except:
         pass
 
-    # This works. Default Python behaviour. Stored in a dictionnary
-    f.inexisting_field = 'bar'
-    if f.inexisting_field != 'bar':
+    try:
+        f['nonexistent_field'] = 'foo'
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    # This works.  Default Python behaviour. Stored in a dictionnary
+    f.nonexistent_field = 'bar'
+    if f.nonexistent_field != 'bar':
         gdaltest.post_reason('fail')
         return 'fail'
 

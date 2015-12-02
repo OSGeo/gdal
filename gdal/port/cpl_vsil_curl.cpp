@@ -2553,7 +2553,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGot
             VSICurlSetOptions(hCurlHandle, osDirname.c_str());
 
             /* On the first pass, we want to try fetching all the possible */
-            /* informations (filename, file/directory, size). If that */
+            /* information (filename, file/directory, size). If that */
             /* does not work, then try again with CURLOPT_DIRLISTONLY set */
             if (iTry == 1)
             {
@@ -3067,10 +3067,12 @@ class VSIS3WriteHandle: public VSIVirtualHandle
     int                 m_nOffsetInXML;
     bool                m_bError;
 
-    static size_t       ReadCallBackBuffer(char *buffer, size_t size, size_t nitems, void *instream);
+    static size_t       ReadCallBackBuffer( char *buffer, size_t size,
+                                            size_t nitems, void *instream );
     bool                InitiateMultipartUpload();
     bool                UploadPart();
-    static size_t       ReadCallBackXML(char *buffer, size_t size, size_t nitems, void *instream);
+    static size_t       ReadCallBackXML( char *buffer, size_t size,
+                                         size_t nitems, void *instream );
     bool                CompleteMultipart();
     bool                AbortMultipart();
     bool                DoSinglePartPUT();
@@ -3084,7 +3086,8 @@ class VSIS3WriteHandle: public VSIVirtualHandle
         virtual int       Seek( vsi_l_offset nOffset, int nWhence );
         virtual vsi_l_offset Tell();
         virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-        virtual size_t    Write( const void *pBuffer, size_t nSize,size_t nMemb);
+        virtual size_t    Write( const void *pBuffer, size_t nSize
+                                 ,size_t nMemb );
         virtual int       Eof();
         virtual int       Close();
 
@@ -3252,7 +3255,8 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
 /*                         ReadCallBackBuffer()                         */
 /************************************************************************/
 
-size_t VSIS3WriteHandle::ReadCallBackBuffer(char *buffer, size_t size, size_t nitems, void *instream)
+size_t VSIS3WriteHandle::ReadCallBackBuffer( char *buffer, size_t size,
+                                             size_t nitems, void *instream)
 {
     VSIS3WriteHandle* poThis = (VSIS3WriteHandle*)instream;
     int nSizeMax = (int)(size * nitems);

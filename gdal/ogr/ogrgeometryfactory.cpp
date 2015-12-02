@@ -1446,15 +1446,17 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     }
 
 
-    /* This a several steps algorithm :
+    /* This a nulti-step algorithm :
        1) Sort polygons by descending areas
        2) For each polygon of rank i, find its smallest enclosing polygon
           among the polygons of rank [i-1 ... 0]. If there are no such polygon,
-          this is a toplevel polygon. Otherwise, depending on if the enclosing
-          polygon is toplevel or not, we can decide if we are toplevel or not
-       3) Re-sort the polygons to retrieve their inital order (nicer for some applications)
-       4) For each non toplevel polygon (= inner ring), add it to its outer ring
-       5) Add the toplevel polygons to the multipolygon
+          this is a top-level polygon. Otherwise, depending on if the enclosing
+          polygon is top-level or not, we can decide if we are top-level or not
+       3) Re-sort the polygons to retrieve their initial order (nicer for
+          some applications)
+       4) For each non top-level polygon (= inner ring), add it to its
+          outer ring
+       5) Add the top-level polygons to the multipolygon
 
        Complexity : O(nPolygonCount^2)
     */

@@ -417,7 +417,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     /* -------------------------------------------------------------------- */
-    /*	We assume the user is pointing to the binary (ie. .sdat) file.	    */
+    /*  We assume the user is pointing to the binary (i.e. .sdat) file.     */
     /* -------------------------------------------------------------------- */
     if( !EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sdat"))
     {

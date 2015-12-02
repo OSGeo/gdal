@@ -597,7 +597,7 @@ png_handle_PLTE(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
    }
 #endif
 
-   /* If we actually NEED the PLTE chunk (ie for a paletted image), we do
+   /* If we actually NEED the PLTE chunk (i.e. for a paletted image), we do
     * whatever the normal CRC configuration tells us.  However, if we
     * have an RGB image, the PLTE can be considered ancillary, so
     * we will act as though it is.
@@ -2370,7 +2370,7 @@ png_handle_iTXt(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
 #endif
 
 /* This function is called when we haven't found a handler for a
-   chunk.  If there isn't a problem with the chunk itself (ie bad
+   chunk.  If there isn't a problem with the chunk itself (i.e. bad
    chunk name, CRC, or a critical chunk), the chunk is silently ignored
    -- unless the PNG_FLAG_UNKNOWN_CHUNKS_SUPPORTED flag is on in which
    case it will be saved away to be written out later. */

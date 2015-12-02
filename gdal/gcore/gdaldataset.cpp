@@ -3711,14 +3711,14 @@ OGRLayerH GDALDatasetCopyLayer( GDALDatasetH hDS,
  This method is the same as the C++ method GDALDataset::ExecuteSQL()
 
  For more information on the SQL dialect supported internally by OGR
- review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
+ review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (i.e.
  Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
 
  Starting with OGR 1.10, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
  can also be used.
- 
+
  @since GDAL 2.0
- 
+
  @param hDS the dataset handle.
  @param pszStatement the SQL statement to execute. 
  @param hSpatialFilter geometry which represents a spatial filter. Can be NULL.
@@ -5179,14 +5179,14 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
  deprecated OGR_DS_ExecuteSQL().
 
  For more information on the SQL dialect supported internally by OGR
- review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
+ review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (i.e.
  Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
 
  Starting with OGR 1.10, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
  can also be used.
 
  In GDAL 1.X, this method used to be in the OGRDataSource class.
- 
+
  @param pszStatement the SQL statement to execute. 
  @param poSpatialFilter geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
@@ -5339,7 +5339,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
                                                      poSelectParseOptions);
         if( poLayer == NULL )
         {
-            /* Each source layer owns an independant select info */
+            /* Each source layer owns an independent select info. */
             for(int i=0;i<nSrcLayers;i++)
                 delete papoSrcLayers[i];
             CPLFree(papoSrcLayers);

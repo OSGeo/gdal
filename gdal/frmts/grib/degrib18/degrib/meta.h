@@ -409,7 +409,7 @@ typedef struct {
    uChar center;             /* For lambert and polar stereographic, answers:
                                 (south/north?) and (bi-polar?) */
    uChar scan;               /* describes how the grid was traversed when it
-                                was stored. (ie top/down left/right etc.)
+                                was stored. (i.e. top/down left/right etc.)
                                 Internally we use 0100. (start lower left) */
    double lat2, lon2;        /* lat,lon position of last grid point.
                                 (0 if unused) */

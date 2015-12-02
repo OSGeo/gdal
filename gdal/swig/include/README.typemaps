@@ -54,13 +54,17 @@ in (int *optional_int) - Required -
 in (int nGCPs, GDAL_GCP const *pGCPs) -
   Pass a fixed length array of GCP pointers into a function.
 
-in (int nList, int *pList) - Required - Pass a fixed length integer array into a function.
+in (int nList, int *pList) - Required - Pass a fixed length integer
+array into a function.
 
-in (int nLen, char *pBuf) - Required - Pass a fixed length character buffer into a function.
+in (int nLen, char *pBuf) - Required - Pass a fixed length character
+buffer into a function.
 
-in (tostring argin ) - Required - Converts any argument in the script types to a string representation.
-In python this functionality directly calls AsString (ie str()) on the object.  This functionality
-could be reduced in other languages as long as it's documented.
+in (tostring argin ) - Required - Converts any argument in the script
+types to a string representation.  In python, this functionality
+directly calls AsString (i.e. str()) on the object.  This
+functionality could be reduced in other languages as long as it's
+documented.
 
 in (const char *utf8_path) - Optional - 
   Any inputs marked this way should be treated as utf-8, and if the language supports it

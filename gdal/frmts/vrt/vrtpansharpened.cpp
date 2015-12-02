@@ -741,7 +741,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
              nRasterYSize != nPanYSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Inconsistant declared VRT dimensions with panchro dataset");
+                 "Inconsistent declared VRT dimensions with panchro dataset");
         goto error;
     }
 
@@ -1007,7 +1007,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     }
 
 /* -------------------------------------------------------------------- */
-/*      Instanciate poPansharpener                                      */
+/*      Instantiate poPansharpener                                      */
 /* -------------------------------------------------------------------- */
     psPanOptions = GDALCreatePansharpenOptions();
     psPanOptions->ePansharpenAlg = GDAL_PSH_WEIGHTED_BROVEY;

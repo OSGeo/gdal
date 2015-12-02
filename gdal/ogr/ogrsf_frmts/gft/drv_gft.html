@@ -41,7 +41,7 @@ exception is read-only access to public tables.<p>
 
 In order to create an authorization key, it is necessary to 
 <a href="https://www.google.com/url?q=https%3A%2F%2Faccounts.google.com%2Fo%2Foauth2%2Fauth%3Fscope%3Dhttps%253A%252F%252Fwww.googleapis.com%252Fauth%252Ffusiontables%26state%3D%252Fprofile%26redirect_uri%3Durn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob%26response_type%3Dcode%26client_id%3D265656308688.apps.googleusercontent.com">
-login and authorize</a> access to fusion tables for a google (ie. gmail) 
+login and authorize</a> access to fusion tables for a Google (i.e. GMail) 
 account.  The resulting authorization key can be turned into a refresh 
 token for use OGR using the gdal/swig/python/scripts/gdal_auth.py script 
 distributed with GDAL (available in GDAL/OGR >= 1.10.0).  Note that auth 
@@ -54,7 +54,7 @@ indefinately.<p>
 
 This refresh token can then be either set as a configuration option 
 (GFT_REFRESH_TOKEN) or included in the connection string 
-(ie. GFT:refresh=<i>refresh_token</i>). <p>
+(i.e. GFT:refresh=<i>refresh_token</i>). <p>
 
 Generally OAuth2 credentials can be provided via these mechanisms:<p>
 

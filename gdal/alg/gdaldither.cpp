@@ -439,7 +439,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
                 int iRed   = nRedValue *   nCLevels   / 256;
                 int iGreen = nGreenValue * nCLevels / 256;
                 int iBlue  = nBlueValue *  nCLevels  / 256;
-                
+
                 iIndex = pabyColorMap[iRed + iGreen * nCLevels 
                                     + iBlue * nCLevels * nCLevels];
             }

@@ -416,11 +416,11 @@ KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccess )
 {
     try
     {
-        // create the image IO and initilize the refcount
+        // Create the image IO and initialize the refcount.
         m_pImageIO = new kealib::KEAImageIO();
         m_pnRefcount = new int(1);
 
-        // NULL until we read them in 
+        // NULL until we read them in.
         m_papszMetadataList = NULL;
         m_pGCPs = NULL;
         m_pszGCPProjection = NULL;
@@ -438,9 +438,10 @@ KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccess )
         // create all the bands
         for( int nCount = 0; nCount < nBands; nCount++ )
         {
-            // note GDAL uses indices starting at 1 and so does kealib
-            // create band object
-            KEARasterBand *pBand = new KEARasterBand( this, nCount + 1, eAccess, m_pImageIO, m_pnRefcount );
+            // Note: GDAL uses indices starting at 1 and so does kealib.
+            // Create band object.
+            KEARasterBand *pBand = new KEARasterBand(
+                this, nCount + 1, eAccess, m_pImageIO, m_pnRefcount );
             // read in overviews
             pBand->readExistingOverviews();
             // set the band into this dataset

@@ -1077,7 +1077,7 @@ void OGRShapeDataSource::SetLastUsedLayer( OGRShapeLayer* poLayer )
     /* The only rationale for that test is to avoid breaking applications */
     /* that would deal with layers of the same datasource in different */
     /* threads. In GDAL < 1.9.0, this would work in most cases I can */
-    /* imagine as shapefile layers are pretty much independant from each */
+    /* imagine as shapefile layers are pretty much independent from each */
     /* others (although it has never been guaranteed to be a valid use case, */
     /* and the shape driver is likely more the exception than the rule in */
     /* permitting accessing layers from different threads !) */

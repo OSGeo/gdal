@@ -549,13 +549,14 @@ static bool GDALRPCGetHeightAtLongLat( const GDALRPCTransformInfo *psTransform,
  *
  * @param psRPCInfo Definition of the RPC parameters.
  *
- * @param bReversed If true "forward" transformation will be lat/long to pixel/line instead of the normal pixel/line to lat/long.
+ * @param bReversed If true "forward" transformation will be lat/long to
+ * pixel/line instead of the normal pixel/line to lat/long.
  *
- * @param dfPixErrThreshold the error (measured in pixels) allowed in the 
+ * @param dfPixErrThreshold the error (measured in pixels) allowed in the
  * iterative solution of pixel/line to lat/long computations (the other way
- * is always exact given the equations). 
+ * is always exact given the equations).
  *
- * @param papszOptions Other transformer options (ie. RPC_HEIGHT=<z>). 
+ * @param papszOptions Other transformer options (i.e. RPC_HEIGHT=<z>).
  *
  * @return transformer callback data (deallocate with GDALDestroyTransformer()).
  */

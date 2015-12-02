@@ -369,7 +369,7 @@ void VFKReaderSQLite::CreateIndex(const char *name, const char *table, const cha
                                   bool unique)
 {
     CPLString   osSQL;
-    
+
     if (unique) {
         osSQL.Printf("CREATE UNIQUE INDEX %s ON %s (%s)",
                      name, table, column);
@@ -392,7 +392,7 @@ void VFKReaderSQLite::CreateIndex(const char *name, const char *table, const cha
 */
 IVFKDataBlock *VFKReaderSQLite::CreateDataBlock(const char *pszBlockName)
 {
-    /* create new data block, ie. table in DB */
+    /* create new data block, i.e. table in DB */
     return new VFKDataBlockSQLite(pszBlockName, (IVFKReader *) this);
 }
 
@@ -407,24 +407,24 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
     const char *pszKey;
     CPLString   osCommand, osColumn;
     bool        bUnique;
-        
+
     VFKPropertyDefn *poPropertyDefn;
-    
+
     sqlite3_stmt *hStmt;
 
     bUnique = !CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_IGNORE_DUPLICATES", "NO"));
-    
+
     pszBlockName = poDataBlock->GetName();
-    
+
     /* register table in VFK_DB_TABLE */
     osCommand.Printf("SELECT COUNT(*) FROM %s WHERE "
                      "table_name = '%s'",
                      VFK_DB_TABLE, pszBlockName);
     hStmt = PrepareStatement(osCommand.c_str());
-    
+
     if (ExecuteSQL(hStmt) == OGRERR_NONE &&
         sqlite3_column_int(hStmt, 0) == 0) {
-        
+
         osCommand.Printf("CREATE TABLE '%s' (", pszBlockName);
         for (int i = 0; i < poDataBlock->GetPropertyCount(); i++) {
             poPropertyDefn = poDataBlock->GetProperty(i);
@@ -442,18 +442,18 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
 	}
 	osCommand += ")";
         ExecuteSQL(osCommand.c_str()); /* CREATE TABLE */
-        
-        /* create indeces */
+
+        /* create indices */
         osCommand.Printf("%s_%s", pszBlockName, FID_COLUMN);
         CreateIndex(osCommand.c_str(), pszBlockName, FID_COLUMN,
                     !EQUAL(pszBlockName, "SBP"));
-        
+
         pszKey = ((VFKDataBlockSQLite *) poDataBlock)->GetKey();
         if (pszKey) {
             osCommand.Printf("%s_%s", pszBlockName, pszKey);
             CreateIndex(osCommand.c_str(), pszBlockName, pszKey, bUnique);
         }
-        
+
         if (EQUAL(pszBlockName, "SBP")) {
             /* create extra indices for SBP */
             CreateIndex("SBP_OB",        pszBlockName, "OB_ID", FALSE);

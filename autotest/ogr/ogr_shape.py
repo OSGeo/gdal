@@ -801,7 +801,7 @@ def ogr_shape_22():
 
 
 ###############################################################################
-# Function used internaly by ogr_shape_23
+# Function used internally by ogr_shape_23.
 
 def ogr_shape_23_write_valid_and_invalid(layer_name, wkt, invalid_wkt, wkbType, isEmpty):
 

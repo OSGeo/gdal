@@ -289,12 +289,12 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
 
             aoRootPath.assign(A[k].begin(), itAk);
 
-            // Remove old incedence edges of all other best paths.
-            // I.e. if the spur vertex can be reached in already found best
+            // Remove old incidence edges of all other best paths.
+            // i.e. if the spur vertex can be reached in already found best
             // paths we must remove the following edge after the end of root
             // path from the graph in order not to take in account these already
             // seen best paths.
-            // I.e. it ensures that the spur path will be different.
+            // i.e. it ensures that the spur path will be different.
             for (itA = A.begin(); itA != A.end(); ++itA)
             {
                 // check if the number of node exceed the number of last node in
@@ -330,7 +330,7 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
             // Remove root path nodes from the graph. If we do not delete them
             // the path will be found backwards and some parts of the path will
             // duplicate the parts of old paths.
-            // Note: we "delete" all the incedence to the root nodes edges, so
+            // Note: we "delete" all the incidence to the root nodes edges, so
             // to restore them in a common way.
 
             // end()-1, because we should not remove the spur node
@@ -351,9 +351,9 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
             // Find the new best path in the modified graph.
             aoSpurPath = DijkstraShortestPath(nSpurNode, nEndFID, mstEdges);
 
-            // Firstly Restore deleted edges, in order to calculate the summary
-            // cost of the path correctly later, because the costs will be gathered
-            // from the initial graph.
+            // Firstly, restore deleted edges in order to calculate the summary
+            // cost of the path correctly later, because the costs will be
+            // gathered from the initial graph.
             // We must do it here, after each edge removing, because the later
             // Dijkstra searchs must consider these edges.
             for (itDel = mDeletedEdges.begin(); itDel != mDeletedEdges.end();
@@ -378,7 +378,7 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
                 for (itR = aoRootPath.begin(); itR != aoRootPath.end(); ++itR)
                 {
                     // TODO: check: Note, that here the current cost can not be
-                    // infinfity, because everytime we assign infinity costs for
+                    // infinity, because every time we assign infinity costs for
                     // edges of old paths, we anyway have the alternative edges
                     // with non-infinity costs.
                     dfSumCost += mstEdges[itR->second].dfDirCost;
@@ -396,12 +396,13 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
         // the best path from all of the rest paths, even from those which were
         // found on previous iterations. That's why we need k iterations at all.
         // Note, that if there were two paths with the same costs and it is the
-        // LAST iteration the first occurred path will be added, rather than random.
+        // LAST iteration the first occurred path will be added, rather than
+        // random.
         A.push_back(B.begin()->second);
 
         // Sometimes B contains fully duplicate paths. Such duplicates have been
-        // formed during the search of alternative for almost the same paths which
-        // were already in A.
+        // formed during the search of alternative for almost the same paths
+        // which were already in A.
         // We allowed to add them into B so here we must delete all duplicates.
         while (!B.empty() && B.begin()->second == A.back())
         {

@@ -948,7 +948,7 @@ public class ogr2ogr
             " -s_srs srs_def: Override source SRS\n" +
             "\n" + 
             " Srs_def can be a full WKT definition (hard to escape properly),\n" +
-            " or a well known definition (ie. EPSG:4326) or a file with a WKT\n" +
+            " or a well known definition (i.e. EPSG:4326) or a file with a WKT\n" +
             " definition.\n" );
     
         System.exit( 1 );
@@ -1194,10 +1194,10 @@ public class ogr2ogr
     /*      Find the layer.                                                 */
     /* -------------------------------------------------------------------- */
 
-        /* GetLayerByName() can instanciate layers that would have been */
+        /* GetLayerByName() can instantiate layers that would have been */
         /* 'hidden' otherwise, for example, non-spatial tables in a */
-        /* Postgis-enabled database, so this apparently useless command is */
-        /* not useless... (#4012) */
+        /* PostGIS-enabled database, so this apparently useless command is */
+        /* not useless. (#4012) */
         gdal.PushErrorHandler("CPLQuietErrorHandler");
         poDstLayer = poDstDS.GetLayerByName(pszNewLayerName);
         gdal.PopErrorHandler();

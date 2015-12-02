@@ -260,10 +260,10 @@ static CPLErr ProcessLayer(
                 adfFullBurnValues.push_back( 0.0 );
             }
         }
-        
+
         OGR_F_Destroy( hFeat );
     }
-    
+
     if( hCT != NULL )
         OCTDestroyCoordinateTransformation(hCT);
 

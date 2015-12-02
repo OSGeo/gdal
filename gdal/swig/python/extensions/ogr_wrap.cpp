@@ -179,8 +179,8 @@ template <typename T> T SwigValueInit() {
   creating a static or dynamic library from the SWIG runtime code.
   In 99.9% of the cases, SWIG just needs to declare them as 'static'.
 
-  But only do this if strictly necessary, ie, if you have problems
-  with your compiler or suchlike.
+  But only do this if strictly necessary, i.e. if you have problems
+  with your compiler or such.
 */
 
 #ifndef SWIGRUNTIME
@@ -1189,7 +1189,7 @@ SWIGRUNTIME PyObject* SWIG_PyInstanceMethod_New(PyObject *SWIGUNUSEDPARM(self), 
 #define SWIG_ConvertFunctionPtr(obj, pptr, type)        SWIG_Python_ConvertFunctionPtr(obj, pptr, type)
 #define SWIG_NewFunctionPtrObj(ptr, type)               SWIG_Python_NewPointerObj(NULL, ptr, type, 0)
 
-/* for C++ member pointers, ie, member methods */
+/* for C++ member pointers, i.e. member methods */
 #define SWIG_ConvertMember(obj, ptr, sz, ty)            SWIG_Python_ConvertPacked(obj, ptr, sz, ty)
 #define SWIG_NewMemberObj(ptr, sz, type)                SWIG_Python_NewPackedObj(ptr, sz, type)
 
@@ -24532,7 +24532,7 @@ static PyMethodDef SwigMethods[] = {
 		"(destroyed).\n"
 		"\n"
 		"For more information on the SQL dialect supported internally by OGR\n"
-		"review theOGR SQL document. Some drivers (ie. Oracle and PostGIS) pass\n"
+		"review theOGR SQL document. Some drivers (i.e. Oracle and PostGIS) pass\n"
 		"the SQL directly through to the underlying RDBMS.\n"
 		"\n"
 		"This function is the same as the C++ method\n"
@@ -25179,11 +25179,11 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"OLCFastFeatureCount / \"FastFeatureCount\": TRUE if this layer can\n"
 		"return a feature count (via OGR_L_GetFeatureCount()) efficiently ...\n"
-		"ie. without counting the features. In some cases this will return TRUE\n"
+		"i.e. without counting the features. In some cases this will return TRUE\n"
 		"until a spatial filter is installed after which it will return FALSE.\n"
 		"\n"
 		"OLCFastGetExtent / \"FastGetExtent\": TRUE if this layer can return\n"
-		"its data extent (via OGR_L_GetExtent()) efficiently ... ie. without\n"
+		"its data extent (via OGR_L_GetExtent()) efficiently, i.e. without\n"
 		"scanning all the features. In some cases this will return TRUE until a\n"
 		"spatial filter is installed after which it will return FALSE.\n"
 		"\n"

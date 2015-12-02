@@ -660,9 +660,9 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         /* a tolerance of 10000 */
         dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", "10000" ));
 
-    // OGRThreadSafety: The following variable is not a thread safety issue 
-    // since the only issue is incrementing while accessing which at worse 
-    // means debug output could be one "increment" late. 
+    // OGRThreadSafety: The following variable is not a thread safety issue
+    // since the only issue is incrementing while accessing which at worse
+    // means debug output could be one "increment" late.
     static int   nDebugReportCount = 0;
 
     char        *pszSrcProj4Defn = NULL;

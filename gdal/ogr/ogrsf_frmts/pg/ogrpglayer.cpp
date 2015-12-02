@@ -151,7 +151,7 @@ void OGRPGLayer::CloseCursor()
         osCommand.Printf("CLOSE %s", pszCursorName );
 
         /* In case of interleaving read in different layers we might have */
-        /* close the transaction, and thus implicitely the cursor, so be */
+        /* close the transaction, and thus implicitly the cursor, so be */
         /* quiet about errors. This is potentially an issue by the way */
         hCursorResult = OGRPG_PQexec(hPGConn, osCommand.c_str(), FALSE, TRUE);
         OGRPGClearResult( hCursorResult );

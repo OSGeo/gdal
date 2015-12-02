@@ -320,7 +320,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFCloseL( fpQube );
 
 /* -------------------------------------------------------------------- */
-/*	Assume user is pointing to label (ie .lbl) file for detached option */
+/* Assume user is pointing to label (i.e. .lbl) file for detached option */
 /* -------------------------------------------------------------------- */
     //  Image can be inline or detached and point to an image name
     //  the Format can be Tiled or Raw

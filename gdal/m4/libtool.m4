@@ -763,7 +763,7 @@ _LT_EOF
 [cat <<_LT_EOF >> "$ofile"
 
 dnl Unfortunately we have to use $1 here, since _LT_TAG is not expanded
-dnl in a comment (ie after a #).
+dnl in a comment (i.e. after a #).
 # ### BEGIN LIBTOOL TAG CONFIG: $1
 _LT_LIBTOOL_TAG_VARS(_LT_TAG)
 # ### END LIBTOOL TAG CONFIG: $1

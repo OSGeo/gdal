@@ -2,7 +2,7 @@
  * $Id: sdedataset.cpp 10804 2007-02-08 23:24:59Z hobu $
  *
  * Project:  ESRI ArcSDE Raster reader
- * Purpose:  Rasterband implementaion for ESRI ArcSDE Rasters
+ * Purpose:  Rasterband implementation for ESRI ArcSDE Rasters
  * Author:   Howard Butler, hobu@hobu.net
  *
  * This work was sponsored by the Geological Survey of Canada, Natural
@@ -30,9 +30,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "sderasterband.h"
-
 
 
 /************************************************************************/
@@ -105,7 +103,7 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     this->nBand = nBand;
     this->nOverview = nOverview;
     this->poBand = band;
-    
+
     // Initialize our SDE opaque object pointers to NULL.
     // The nOverviews private data member will be updated when 
     // GetOverviewCount is called and subsequently returned immediately in 
@@ -113,7 +111,7 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     this->hConstraint = NULL;
     this->hQuery = NULL;
     this->poColorTable = NULL;
-    
+
     if (this->nOverview == -1 || this->nOverview == 0)
         this->nOverviews = GetOverviewCount();
     else
@@ -126,12 +124,12 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
         this->papoOverviews = NULL;
     }
     this->eDataType = GetRasterDataType();
-    
+
     // nSDERasterType is set by GetRasterDataType
     this->dfDepth = MorphESRIRasterDepth(nSDERasterType);
     InitializeBand(this->nOverview);
 
-    
+
 }
 
 /************************************************************************/
@@ -139,7 +137,7 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
 /************************************************************************/
 SDERasterBand::~SDERasterBand( void )
 
-{ 
+{
 
     if (hQuery)
         SE_queryinfo_free(hQuery);
@@ -151,7 +149,7 @@ SDERasterBand::~SDERasterBand( void )
         for (int i=0; i < nOverviews; i++)
             delete papoOverviews[i];
         CPLFree(papoOverviews);
-    
+
     if (poColorTable != NULL)
         delete poColorTable;
 }

@@ -1018,7 +1018,7 @@ class ITABFeatureSymbol
  *
  * TABFeature will be used as a base class for all the feature classes.
  *
- * This class will also be used to instanciate objects with no Geometry
+ * This class will also be used to instantiate objects with no Geometry
  * (i.e. type TAB_GEOM_NONE) which is a valid case in MapInfo.
  *
  * The logic to read/write the object from/to the .DAT and .MAP files is also

@@ -3014,7 +3014,10 @@ def ogr_pg_59():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" data/poly.shp -nln public.tpoly')
+    gdaltest.runexternal(
+        test_cli_utilities.get_ogr2ogr_path()
+        + ' -append -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string
+        + '" data/poly.shp -nln public.tpoly')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('tpoly')
@@ -3036,11 +3039,14 @@ def ogr_pg_60():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL("CREATE TABLE ogr_pg_60(id integer,name varchar(50),primary key (id)) without oids")
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("CREATE TABLE ogr_pg_60(id integer,"
+                                        "name varchar(50),primary key (id)) "
+                                        "without oids")
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     gdaltest.pg_ds = None
-    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string,
+                               update = 1 )
     lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_60')
     if lyr.GetFIDColumn() != 'id':
         gdaltest.post_reason('did not get expected name for FID column')
@@ -3623,7 +3629,7 @@ def ogr_pg_70():
     return 'success'
 
 ###############################################################################
-# Test interoperability of WKT/WKB with PostGIS
+# Test interoperability of WKT/WKB with PostGIS.
 
 def ogr_pg_71():
 

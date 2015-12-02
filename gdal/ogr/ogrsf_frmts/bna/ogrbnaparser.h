@@ -68,7 +68,7 @@ typedef struct
 /** Get the next BNA record in the file
    @param f open BNA files (VSI Large API handle)
    @param ok (out) set to TRUE if reading was OK (or EOF detected)
-   @param curLine (in/out) incremenet number line
+   @param curLine (in/out) increment number line
    @param verbose if TRUE, errors will be reported
    @param interestFeatureType if BNA_READ_ALL, any BNA feature will be parsed and read in details.
                               if BNA_READ_NONE, no BNA feature will be parsed and read in details.

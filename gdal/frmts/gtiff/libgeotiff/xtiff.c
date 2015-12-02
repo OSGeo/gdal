@@ -88,7 +88,7 @@ _XTIFFDefaultDirectory(TIFF *tif)
 
 /**
 Registers an extension with libtiff for adding GeoTIFF tags.
-After this one-time intialization, any TIFF open function may be called in
+After this one-time initialization, any TIFF open function may be called in
 the usual manner to create a TIFF file that compatible with libgeotiff.
 The XTIFF open functions are simply for convenience: they call this
 and then pass their parameters on to the appropriate TIFF open function.

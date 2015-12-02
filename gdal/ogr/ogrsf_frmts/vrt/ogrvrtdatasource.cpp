@@ -179,7 +179,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateWarpedLayer(
     if( poSrcLayer == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Cannot instanciate source layer" );
+                  "Cannot instantiate source layer" );
         return NULL;
     }
 

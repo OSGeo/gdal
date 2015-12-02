@@ -484,7 +484,7 @@ int DDFModule::Create( const char *pszFilename )
         bRet &= VSIFWriteL( pachData, nLength, 1, fpDDF ) > 0;
         CPLFree( pachData );
     }
-    
+
     return bRet ? TRUE : FALSE;
 }
 
@@ -497,9 +497,9 @@ int DDFModule::Create( const char *pszFilename )
  *
  * A variety of information about the module is written to the debugging
  * file.  This includes all the field and subfield definitions read from
- * the header. 
+ * the header.
  *
- * @param fp The standard io file handle to write to.  ie. stderr.
+ * @param fp The standard IO file handle to write to.  i.e. stderr.
  */
 
 void DDFModule::Dump( FILE * fp )

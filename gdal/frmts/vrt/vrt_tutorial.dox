@@ -501,7 +501,7 @@ from the start of one line to the start of the next is 9376 bytes
 Some things to note are that the VRTRasterBand has a subClass specifier
 of "VRTRawRasterBand".  Also, the VRTRawRasterBand contains a number of 
 previously unseen elements but no "source" information.  VRTRawRasterBands
-may never have sources (ie. SimpleSource), but should contain the following
+may never have sources (i.e. SimpleSource), but should contain the following
 elements in addition to all the normal "metadata" elements previously 
 described which are still supported. 
 
@@ -1053,7 +1053,7 @@ spectral bands (e.g. 12). If not specified, the NBITS metadata item from the
 panchromatic band will be used if it exists.</li>
 <li> <b>NoData</b>: Nodata value to take into account for panchromatic and
 spectral bands. It will be also used as the output nodata value. If not specified and
-all input bands have the same nodata value, it will be implictly used (unless
+all input bands have the same nodata value, it will be implicitly used (unless
 the special None value is put in NoData to prevent that).</li>
 <li> <b>SpatialExtentAdjustment</b>: Can be one of <i>Union</i> (default), <i>Intersection</i>,
 <i>None</i> or <i>NoneWithoutWarning</i>. Controls the behaviour when panchromatic

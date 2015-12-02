@@ -554,14 +554,14 @@ when writing new drivers is to:
 <li> Add a driver directory under gdal/frmts, with the directory name the same
 as the short name.
 
-<li> Add a GNUmakefile and makefile.vc in that directory modelled on those
-from other similar directories (ie. the jdem directory). 
+<li> Add a GNUmakefile and makefile.vc in that directory modeled on those
+from other similar directories (i.e. the jdem directory). 
 
 <li> Add the module with the dataset, and rasterband implementation.  
 Generally this is called <short_name>dataset.cpp, with all the GDAL specific
 code in one file, though that is not required.
 
-<li> Add the registration entry point declaration (ie. GDALRegister_JDEM()) to
+<li> Add the registration entry point declaration (i.e. GDALRegister_JDEM()) to
 gdal/gcore/gdal_frmts.h.
 
 <li> Add a call to the registration function to frmts/gdalallregister.cpp,

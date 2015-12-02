@@ -20,10 +20,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -41,7 +41,8 @@
  * Fixed crash when trying to get the same mitab mif feature twice (GDAL #3765)
  *
  * Revision 1.56  2010-10-12 19:02:40  aboudreault
- * Fixed incomplet patch to handle differently indented lines in mif files (gdal #3694)
+ * Fixed incomplete patch to handle differently indented lines in MIF
+ * files (gdal #3694).
  *
  * Revision 1.55  2010-10-08 18:50:52  aboudreault
  * Fixed handle differently indented lines in mif files. (GDAL bug #3694)
@@ -53,7 +54,8 @@
  * Fixed MIF driver: doesn't create a layer defn at layer creation (bug 2180)
  *
  * Revision 1.52  2010-01-07 20:39:12  aboudreault
- * Added support to handle duplicate field names, Added validation to check if a field name start with a number (bug 2141)
+ * Added support to handle duplicate field names, Added validation to check if
+ * a field name start with a number (bug 2141).
  *
  * Revision 1.51  2009-07-27 14:08:41  dmorissette
  * Fixed dataset version check in AddFieldNative for type TABFDateTime

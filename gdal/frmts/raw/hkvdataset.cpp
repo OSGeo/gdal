@@ -476,7 +476,7 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 {
     /* NOTE:  Geotransform coordinates must match the current projection   */
     /* of the dataset being changed (not the geotransform source).         */
-    /* ie. be in lat/longs for LL projected; UTM for UTM projected.        */
+    /* i.e. be in lat/longs for LL projected; UTM for UTM projected.       */
     /* SET PROJECTION BEFORE SETTING GEOTRANSFORM TO AVOID SYNCHRONIZATION */
     /* PROBLEMS!                                                           */
 

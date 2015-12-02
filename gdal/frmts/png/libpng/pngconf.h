@@ -313,7 +313,7 @@
 #endif
 
 /* This macro protects us against machines that don't have function
- * prototypes (ie K&R style headers).  If your compiler does not handle
+ * prototypes (i.e. K&R style headers).  If your compiler does not handle
  * function prototypes, define this macro and use the included ansi2knr.
  * I've always been able to use _NO_PROTO as the indicator, but you may
  * need to drag the empty declaration out in front of here, or change the

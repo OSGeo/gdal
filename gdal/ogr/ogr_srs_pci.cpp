@@ -524,7 +524,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         && (poRoot == NULL || IsProjected() || IsGeographic()) )
     {
         const PCIDatums   *pasDatum = asDatums;
-        
+
         // Search for matching datum
         while ( pasDatum->pszPCIDatum )
         {
@@ -537,9 +537,9 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             }
             pasDatum++;
         }
-        
+
 /* -------------------------------------------------------------------- */
-/*      If we did not find a datum definition in our incode epsg        */
+/*      If we did not find a datum definition in our in-code EPSG        */
 /*      lookup table, then try fetching from the pci_datum.txt          */
 /*      file.                                                           */
 /* -------------------------------------------------------------------- */
@@ -552,7 +552,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
             if( pszDatumCSV )
                 fp = VSIFOpen( pszDatumCSV, "r" );
-            
+
             if( fp != NULL )
             {
                 char **papszLineItems = NULL;

@@ -1163,15 +1163,16 @@ OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS,
  * \brief Set the linear units for the projection.
  *
  * This method creates a UNIT subnode with the specified values as a
- * child of the target node. 
+ * child of the target node.
  *
- * This method does the same as the C function OSRSetTargetLinearUnits(). 
+ * This method does the same as the C function OSRSetTargetLinearUnits().
  *
- * @param pszTargetKey the keyword to set the linear units for.  ie. "PROJCS" or "VERT_CS"
+ * @param pszTargetKey the keyword to set the linear units for.
+ * i.e. "PROJCS" or "VERT_CS"
  *
  * @param pszUnitsName the units name to be used.  Some preferred units
  * names can be found in ogr_srs_api.h such as SRS_UL_METER, SRS_UL_FOOT 
- * and SRS_UL_US_FOOT. 
+ * and SRS_UL_US_FOOT.
  *
  * @param dfInMeters the value to multiple by a length in the indicated
  * units to transform to meters.  Some standard conversion factors can
@@ -1315,11 +1316,11 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
  *
  * This method does the same thing as the C function OSRGetTargetLinearUnits()/
  *
- * @param pszTargetKey the key to look on. ie. "PROJCS" or "VERT_CS".
- * @param ppszName a pointer to be updated with the pointer to the 
+ * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS".
+ * @param ppszName a pointer to be updated with the pointer to the
  * units name.  The returned value remains internal to the OGRSpatialReference
  * and shouldn't be freed, or modified.  It may be invalidated on the next
- * OGRSpatialReference call. 
+ * OGRSpatialReference call.
  *
  * @return the value to multiply by linear distances to transform them to 
  * meters.
@@ -5731,8 +5732,8 @@ OGRErr OSRSetQSC( OGRSpatialReferenceH hSRS,
  *
  * This method is the same as the C function OSRSetAuthority().
  *
- * @param pszTargetKey the partial or complete path to the node to 
- * set an authority on.  ie. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
+ * @param pszTargetKey the partial or complete path to the node to
+ * set an authority on.  i.e. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
  *
  * @param pszAuthority authority name, such as "EPSG".
  *
@@ -5816,8 +5817,8 @@ OGRErr OSRSetAuthority( OGRSpatialReferenceH hSRS,
  *
  * This method is the same as the C function OSRGetAuthorityCode().
  *
- * @param pszTargetKey the partial or complete path to the node to 
- * get an authority from.  ie. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or NULL to 
+ * @param pszTargetKey the partial or complete path to the node to
+ * get an authority from.  i.e. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or NULL to
  * search for an authority node on the root element.
  *
  * @return value code from authority node, or NULL on failure.  The value
@@ -5890,8 +5891,8 @@ const char *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS,
  *
  * This method is the same as the C function OSRGetAuthorityName().
  *
- * @param pszTargetKey the partial or complete path to the node to 
- * get an authority from.  ie. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or NULL to 
+ * @param pszTargetKey the partial or complete path to the node to
+ * get an authority from.  i.e. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or NULL to
  * search for an authority node on the root element.
  *
  * @return value code from authority node, or NULL on failure. The value
@@ -6573,7 +6574,7 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Do the have the same root types?  Ie. is one PROJCS and one     */
+/*      Do the have the same root types?  i.e. is one PROJCS and one    */
 /*      GEOGCS or perhaps LOCALCS?                                      */
 /* -------------------------------------------------------------------- */
     if( !EQUAL(GetRoot()->GetValue(),poOtherSRS->GetRoot()->GetValue()) )

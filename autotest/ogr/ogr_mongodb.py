@@ -494,8 +494,8 @@ def ogr_mongodb_2():
     gdal.PushErrorHandler()
     sql_lyr = ogrtest.mongodb_ds.ExecuteSQL('{', dialect = 'MongoDB')
     gdal.PopErrorHandler()
-    
-    # MongoDB dialect of ExecuteSQL() with inexisting command
+
+    # MongoDB dialect of ExecuteSQL() with nonexistent command.
     sql_lyr = ogrtest.mongodb_ds.ExecuteSQL('{ "foo": 1 }', dialect = 'MongoDB')
     if sql_lyr is None:
         gdaltest.post_reason('fail')
@@ -503,7 +503,8 @@ def ogr_mongodb_2():
     ogrtest.mongodb_ds.ReleaseResultSet(sql_lyr)
 
     # MongoDB dialect of ExecuteSQL() with existing commnand
-    sql_lyr = ogrtest.mongodb_ds.ExecuteSQL('{ "listCommands" : 1 }', dialect = 'MongoDB')
+    sql_lyr = ogrtest.mongodb_ds.ExecuteSQL('{ "listCommands" : 1 }',
+                                            dialect = 'MongoDB')
     if sql_lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -519,7 +520,7 @@ def ogr_mongodb_2():
     sql_lyr.ResetReading()
     sql_lyr.TestCapability('')
     ogrtest.mongodb_ds.ReleaseResultSet(sql_lyr)
-    
+
     # Regular ExecuteSQL()
     sql_lyr = ogrtest.mongodb_ds.ExecuteSQL('SELECT * FROM ' + ogrtest.mongodb_layer_name)
     if sql_lyr is None:

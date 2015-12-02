@@ -1175,7 +1175,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     // * handle block size bigger than image size
     // * undesirable block size (non power of 2, others?)
     // * mismatched block sizes for different bands
-    // * image that isn't even pages (ie. partially empty pages at edge)
+    // * image that isn't even pages (i.e. partially empty pages at edge)
     CPLDebug("FIT write", "using block size %ix%i", blockX, blockY);
 
     head->xPageSize = blockX;

@@ -582,7 +582,7 @@ ie. without counting the features. In some cases this will return TRUE
 until a spatial filter is installed after which it will return FALSE.
 
 OLCFastGetExtent / \"FastGetExtent\": TRUE if this layer can return
-its data extent (via OGR_L_GetExtent()) efficiently ... ie. without
+its data extent (via OGR_L_GetExtent()) efficiently, i.e. without
 scanning all the features. In some cases this will return TRUE until a
 spatial filter is installed after which it will return FALSE.
 

@@ -174,7 +174,7 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
 def nitf_5():
 
     return nitf_check_created_file(32498, 42602, 38982)
-	
+
 ###############################################################################
 # Read existing NITF file.  Verifies the new adjusted IGEOLO interp.
 
@@ -199,7 +199,7 @@ def nitf_7():
 def nitf_8():
 
     ds = gdal.Open( 'data/fake_nsif.ntf' )
-    
+
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 12033
     if chksum != chksum_expect:

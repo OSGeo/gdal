@@ -415,7 +415,7 @@ double GRIBRasterBand::GetNoDataValue( int *pbSuccess )
 
 void GRIBRasterBand::ReadGribData( DataSource & fp, sInt4 start, int subgNum, double** data, grib_MetaData** metaData)
 {
-    /* Initialisation, for calling the ReadGrib2Record function */
+    /* Initialization, for calling the ReadGrib2Record function */
     sInt4 f_endMsg = 1;  /* 1 if we read the last grid in a GRIB message, or we haven't read any messages. */
     // int subgNum = 0;     /* The subgrid in the message that we are interested in. */
     sChar f_unit = 2;        /* None = 0, English = 1, Metric = 2 */

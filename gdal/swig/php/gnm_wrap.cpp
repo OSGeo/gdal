@@ -170,8 +170,8 @@ template <typename T> T SwigValueInit() {
   creating a static or dynamic library from the SWIG runtime code.
   In 99.9% of the cases, SWIG just needs to declare them as 'static'.
 
-  But only do this if strictly necessary, ie, if you have problems
-  with your compiler or suchlike.
+  But only do this if strictly necessary, i.e. if you have problems
+  with your compiler or such.
 */
 
 #ifndef SWIGRUNTIME

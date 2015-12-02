@@ -578,8 +578,8 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
         return FALSE;
     }
 
-    // ok, good to go with jpip, get to the codestream before returning 
-    // successful initialisation of the driver
+    // Okay, good to go with JPIP, get to the codestream before returning
+    // successful initialization of the driver
     try
     {
         poCache = new kdu_cache();

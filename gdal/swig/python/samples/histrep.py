@@ -9,7 +9,7 @@
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam, warmerdam@pobox.com
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
         else:
             Usage()
-            
+
         i = i + 1
 
     if file is None:

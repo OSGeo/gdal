@@ -636,7 +636,7 @@ BAG driver:
  * change nodata value for uncertainty band to 1e6 (#5482)
 
 BMP driver:
- * backout r17065 change that infered georeferencing based on the resolution information in the BMP header (#3578)
+ * back out r17065 change that inferred georeferencing based on the resolution information in the BMP header (#3578)
 
 DIMAP driver:
  * DIMAP 2: handle the case where the Raster_Data element is in main file (#5018, #4826)
@@ -1031,7 +1031,7 @@ GME driver:
 GML driver:
  * add XSD=filename open option
  * add FORCE_SRS_DETECTION, INVERT_AXIS_ORDER_IF_LAT_LONG, CONSIDER_EPSG_AS_URN, READ_MODE, EXPOSE_GML_ID, EXPOSE_FID, DOWNLOAD_SCHEMA and REGISTRY open options
- * fix bug that prevented multiple instanciation of the reader with Xerces backend (#5571)
+ * Fix bug that prevented multiple instances of the reader with Xerces backend (#5571)
  * parse correctly GML geometries whose srsDimension attribute is on top-level geometry element and not on posList (#5606)
  * add datasource option SRSDIMENSION_LOC=GEOMETRY to be able to write srsDimension attribute on top level geometry element, default on posList unchanged (#5066)
  * add support for reading layers resulting from a WFS 2.0 join query
@@ -2900,7 +2900,7 @@ Python bindings:
  * setup.py: Changes to run without setuptools (#4693)
  * setup.py: Automatically run 2to3 for Python3
  * Define __nonzero__ on Layer object to avoid GetFeatureCount() being called behind our back when doing 'if a_layer:' (#4758)
- * Fix performance problem when instanciating Feature, especially with Python 3
+ * Fix performance problem when instantiating Feature, especially with Python 3
  * Add RasterBand.ReadBlock(), mostly for driver testing
  * Reject strings when array of strings are expected
  * make gdal.PushErrorHandler() also accept a Python error handler function as an argument (#4993)
@@ -3041,7 +3041,7 @@ Utilities:
  * gdalwarp: detect situations where the user will override the source file
  * gdallocationinfo: do not let one off-db pixel cause all the rest to be suppressed (#4181)
  * gdal_rasterize: fix half pixel shift when rasterizing points; make gdal_rasterize utility increase the computed raster extent by a half-pixel for point layers (#3774)
- * gdal_rasterize: when source datasource has a single layer, use it implicitely if none of -l or -sql is specified
+ * gdal_rasterize: when source datasource has a single layer, use it implicitly if none of -l or -sql is specified
  * nearblack: add -color option (#4085)
  * nearblack: improve detection of collar
  * nearblack: remove useless restrictions on number of bands for -setmask and -setalpha options (#4124)
@@ -3414,7 +3414,7 @@ VRT driver:
 WCS driver:
  * Add time support (#3449)
  * Honour dimensionLimit restrictions on WCS request size.
- * Fetch projection from returned image file chunks if they have them (ie. GeoTIFF).
+ * Fetch projection from returned image file chunks if they have them (i.e. GeoTIFF).
  * Honour Resample option for WCS 1.0.
  * Include service url in GetFileList if ESRI_BUILD defined
  * Check validity of 'OverviewCount' parameter
@@ -4033,7 +4033,7 @@ BSB driver:
  * Added UNIVERSAL TRANSVERSE MERCATOR, LCC and POLYCONIC handling (#3409)
  * provide an option (BSB_IGNORE_LINENUMBERS) to ignore line numbers as some
    generators do them wrong but the image is otherwise readable (#3776)
- * Avoid turning missing values to indice 255 (#3777)
+ * Avoid turning missing values to index 255 (#3777)
 
 DODS driver:
  * Compilation fix to support libdap 3.10
@@ -5159,7 +5159,7 @@ OGDI driver:
 
 PCIDSK driver (old driver):
  * Added worldfile reading. Added PAM fallback for geotransform.
- * Added support for default overviews (ie. .ovr or .rrd).  (ESRI Merge)
+ * Added support for default overviews (i.e. .ovr or .rrd).  (ESRI Merge)
  * fail somewhat gracefully on compressed images
  
 PCIDSK driver (new driver):
@@ -5896,7 +5896,7 @@ NITF driver:
  * Fix #2135 by narrowing workaround test made for #1750
  * Prevent crash on NITF file without image segment (#2362)
  * Additionnal fix for handling 1-bit uncompressed NITF images with NITF_IC=NM  (#1854)
- * Set IREP=RGB implicitely when the first 3 channels of an image are R,G,B (#2343)
+ * Set IREP=RGB implicitly when the first 3 channels of an image are R,G,B (#2343)
  * Allocate one extra byte for the NULL terminating character when reading TEXT data in NITF file (#2366)
  * Fix 'adding BLOCKA TRE precludes writing IGEOLO' (#2475)
  * Add GDAL_DMD_CREATIONOPTIONLIST for NITF
@@ -6948,7 +6948,7 @@ HFA (Imagine) Driver:
  - Support creating compressed files. 
 
 GeoTIFF Driver:
- - Support reading files with odd bit depths (ie. 3, 12, etc). 
+ - Support reading files with odd bit depths (i.e. 3, 12, etc). 
  - Support 16/24bit floating point TIFFs (per Technote 3) (Andrey).
  - Support 12bit jpeg compressed imagery using libjpeg "MK1" library.
 
@@ -7801,7 +7801,7 @@ GDAL 1.1.6 - Overview of Changes
 
  o Support for writing DTED files. 
 
- o Some raw formats (ie. PAux, HKV) support files larger than 2GB.
+ o Some raw formats (i.e. PAux, HKV) support files larger than 2GB.
 
  o Add the AddBand() method on GDALDataset.
 
@@ -7836,7 +7836,7 @@ OGR 1.1.6 - Overview of Changes
  o DGN: Threat SHAPE elements as polygons.  Set style information for text.
    Added 3D support for most elements. 
 
- o Fixed bugs in WKT format for some OGR geometry types (ie. multipoint).
+ o Fixed bugs in WKT format for some OGR geometry types (i.e. multipoint).
 
  o Added support for morphing to/from ESRI WKT format for OGRSpatialReference.
 

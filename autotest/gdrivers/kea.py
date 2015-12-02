@@ -489,13 +489,13 @@ def kea_9():
     for i in range(gdal.GCI_GrayIndex, gdal.GCI_YCbCr_CrBand + 1):
         ds.GetRasterBand(i).SetColorInterpretation(i)
     ds = None
-    
+
     ds = gdal.Open('tmp/out.kea')
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
     ds = None
     for i in range(gdal.GCI_GrayIndex, gdal.GCI_YCbCr_CrBand + 1):
         if out2_ds.GetRasterBand(i).GetColorInterpretation() != i:
-            gdaltest.post_reason( 'Got wrong color interpreation.' )
+            gdaltest.post_reason( 'Got wrong color interpretation.' )
             print(i)
             print(out2_ds.GetRasterBand(i).GetColorInterpretation())
             return 'fail'

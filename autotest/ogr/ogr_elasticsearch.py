@@ -52,25 +52,27 @@ def ogr_elasticsearch_init():
         ogrtest.elasticsearch_drv = ogr.GetDriverByName('ElasticSearch')
     except:
         pass
-        
+
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
-    
+
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     return 'success'
 
 ###############################################################################
-# Test writing into an inexisting ElasticSearch datastore !
+# Test writing into an nonexistent ElasticSearch datastore.
 
 def ogr_elasticsearch_unexisting_server():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
     with gdaltest.error_handler():
-        ds = ogrtest.elasticsearch_drv.CreateDataSource("/vsimem/non_existing_host")
+        ds = ogrtest.elasticsearch_drv.CreateDataSource(
+            '/vsimem/non_existing_host')
     if ds is not None:
-        gdaltest.post_reason('managed to open inexisting ElasticSearch datastore !')
+        gdaltest.post_reason(
+            'managed to open nonexistent ElasticSearch datastore.')
         return 'fail'
 
     return 'success'
@@ -119,16 +121,22 @@ def ogr_elasticsearch_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { } } } }', '{}')
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS'
+        '={ "FeatureCollection": { "properties": { "type": '
+        '{ "type": "string" }, "properties": { } } } }', '{}')
 
-    # OVERWRITE an inexisting layer
-    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE', 'FID='])
+    # OVERWRITE an nonexistent layer.
+    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone,
+                         options = ['OVERWRITE=TRUE', 'FID='])
     if gdal.GetLastErrorType() != gdal.CE_None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Simulate failed overwrite
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection', '{"foo":{"mappings":{"FeatureCollection":{}}}}')
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection',
+        '{"foo":{"mappings":{"FeatureCollection":{}}}}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo', '{}')
     with gdaltest.error_handler():
         lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE'])

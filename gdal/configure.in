@@ -3063,7 +3063,7 @@ dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
 AC_SUBST(DODS_INC)
 
 dnl ---------------------------------------------------------------------------
-dnl Check for curl (ie. for wcs).
+dnl Check for curl (i.e. for wcs).
 dnl ---------------------------------------------------------------------------
 CURL_SETTING=no
 CURL_INC=
@@ -3585,7 +3585,7 @@ if test "$with_opencl" = "yes" ; then
   fi
     
   AC_ARG_WITH(opencl-lib,
-      [  --with-opencl-lib=ARG   OpenCL Link Flags (ie. -L/xxx -lOpenCL)],,,)
+      [  --with-opencl-lib=ARG   OpenCL Link Flags (i.e. -L/xxx -lOpenCL)],,,)
      
   if test "x$with_opencl_lib" = "x" ; then
     if test ! -z "`uname | grep Darwin`" ; then
@@ -3936,7 +3936,7 @@ AC_MSG_CHECKING([for podofo])
 if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
 
     AC_ARG_WITH(podofo-lib,
-      [  --with-podofo-lib=ARG   podofo Link Flags (ie. -L/xxx -lpodofo ...). Mainly for static libpodofo],,,)
+      [  --with-podofo-lib=ARG   podofo Link Flags (i.e. -L/xxx -lpodofo ...). Mainly for static libpodofo],,,)
 
     if test "$with_podofo" = "yes" ; then
         TEST_PODOFO_INC="-I/usr/include -I/usr/include/podofo"
@@ -3974,7 +3974,7 @@ if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
         fi
 
         AC_ARG_WITH(podofo-extra-lib-for-test,
-          [  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...). Mainly for static libpodofo],,,)
+          [  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -ljpeg ...). Mainly for static libpodofo],,,)
 
         if test "x$with_podofo_extra_lib_for_test" = "x" ; then
             TEST_PODOFO_LIB="$PODOFO_LIB"
@@ -4027,7 +4027,7 @@ AC_MSG_CHECKING([for pdfium])
 if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
 
     AC_ARG_WITH(pdfium-lib,
-      [  --with-pdfium-lib=ARG   pdfium Link Flags (ie. -L/xxx -lpdfium ...). Mainly for static libpdfium],,,)
+      [  --with-pdfium-lib=ARG   pdfium Link Flags (i.e. -L/xxx -lpdfium ...). Mainly for static libpdfium],,,)
 
     if test "$with_pdfium" = "yes" ; then
         TEST_PDFIUM_INC="-I/usr/include -I/usr/include/pdfium"
@@ -4080,7 +4080,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         fi
 
         AC_ARG_WITH(pdfium-extra-lib-for-test,
-          [  --with-pdfium-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...). Mainly for static libpdfium],,,)
+          [  --with-pdfium-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -ljpeg ...). Mainly for static libpdfium],,,)
 
         if test "x$with_pdfium_extra_lib_for_test" = "x" ; then
             TEST_PDFIUM_LIB="$PDFIUM_LIB"

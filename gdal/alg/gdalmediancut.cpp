@@ -1160,7 +1160,7 @@ shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
     ;
 }
 
-/* Explicitly instanciate template functions */
+/* Explicitly instantiate template functions */
 template int
 GDALComputeMedianCutPCTInternal<GUInt32>( GDALRasterBandH hRed, 
                            GDALRasterBandH hGreen, 

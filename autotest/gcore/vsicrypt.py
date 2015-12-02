@@ -153,21 +153,23 @@ def vsicrypt_2():
             header_new = header[0:i] + new_byte + header[i+1:]
             gdal.VSIFWriteL(header_new, 1, 46, fp)
             gdal.VSIFCloseL(fp)
-            
+
             with gdaltest.error_handler():
-                fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
+                fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file='
+                                    '/vsimem/file.bin', 'rb')
             if fp is not None:
                 gdal.VSIFCloseL(fp)
 
 
     gdal.SetConfigOption('VSICRYPT_IV', 'TOO_SHORT')
     with gdaltest.error_handler():
-        fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'wb')
+        fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file='
+                            '/vsimem/file.bin', 'wb')
     gdal.SetConfigOption('VSICRYPT_IV', None)
     if fp is not None:
         gdal.VSIFCloseL(fp)
 
-    # Inconsistant initial vector
+    # Inconsistent initial vector.
     header = struct.pack('B' * 38,
                        86, 83, 73, 67, 82, 89, 80, 84, # signature
                        38, 0, # header size
@@ -186,14 +188,15 @@ def vsicrypt_2():
     fp = gdal.VSIFOpenL('/vsimem/file.bin', 'wb')
     gdal.VSIFWriteL(header, 1, len(header), fp)
     gdal.VSIFCloseL(fp)
-    
+
     with gdaltest.error_handler():
-        fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
+        fp = gdal.VSIFOpenL(
+            '/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
     if fp is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Inconsistant initial vector with key check
+    # Inconsistent initial vector with key check.
     header = struct.pack('B' * 39,
                        86, 83, 73, 67, 82, 89, 80, 84, # signature
                        39, 0, # header size

@@ -165,7 +165,7 @@ def mask_4():
     msk = ds.GetRasterBand(1).GetMaskBand()
     cs = msk.Checksum()
     expected_cs = 770
-    
+
     if cs != expected_cs:
         gdaltest.post_reason( 'Did not get expected checksum' )
         print(cs)
@@ -193,14 +193,14 @@ def mask_5():
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
 
-    # so that we instanciate the mask band before
+    # So that we instantiate the mask band before.
     ds.GetRasterBand(1).GetMaskFlags()
 
     ds.BuildOverviews( overviewlist = [2,4] )
 
     # confirm mask flags on overview.
     ovr = ds.GetRasterBand(1).GetOverview(1)
-    
+
     if ovr.GetMaskFlags() != gdal.GMF_PER_DATASET:
         gdaltest.post_reason( 'did not get expected mask flags' )
         print(ovr.GetMaskFlags())
@@ -209,7 +209,7 @@ def mask_5():
     msk = ovr.GetMaskBand()
     cs = msk.Checksum()
     expected_cs = 20505
-    
+
     if cs != expected_cs:
         gdaltest.post_reason( 'Did not get expected checksum' )
         print(cs)
@@ -220,7 +220,7 @@ def mask_5():
 
     # Reopen and confirm we still get same results.
     ds = gdal.Open('tmp/mask_4.pnm')
-    
+
     # confirm mask flags on overview.
     ovr = ds.GetRasterBand(1).GetOverview(1)
     
@@ -691,7 +691,7 @@ def mask_and_ovr(order, method):
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetMaskBand().Fill(1)
-        # The overview for the mask will be implicitely created and computed
+        # The overview for the mask will be implicitly created and computed.
         ds.BuildOverviews( method, overviewlist = [2, 4] )
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
 
@@ -699,7 +699,7 @@ def mask_and_ovr(order, method):
         ds = None
         ds = gdal.Open('tmp/byte_with_ovr_and_mask.tif', gdal.GA_Update)
         ds.GetRasterBand(1).GetMaskBand().Fill(1)
-        # The overview of the mask will be implictely recomputed
+        # The overview of the mask will be implicitly recomputed.
         ds.BuildOverviews( method, overviewlist = [2, 4] )
 
     ds = None

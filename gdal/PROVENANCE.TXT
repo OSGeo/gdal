@@ -127,7 +127,7 @@ Note: all the following are build options, not required.
 * cubewerx_extra.wkt: derived from definitions distributed by Cubewerx, rights unclear. See http://trac.osgeo.org/gdal/ticket/2165
 * ecw_cs.wkt: Derived via much processing from ERMapper GDT definitions, rights unclear. See http://trac.osgeo.org/gdal/ticket/2162
 * esri_extra.wkt: Derived with some processing from projections definitions in ArcGIS, rights unclear. See http://trac.osgeo.org/gdal/ticket/2163
-* ellipsoid.csv, gcs.csv, gdal_datum.csv, pcs.csv, prime_meridian.csv, projop_wparm.csv, unit_of_measure.csv: Derived from EPSG.  Modifications to EPSG data violate the EPSG use agreement (if we are to still attribute it to EPSG) so I have segregated changes into override files (ie. gcs.override.csv). 
+* ellipsoid.csv, gcs.csv, gdal_datum.csv, pcs.csv, prime_meridian.csv, projop_wparm.csv, unit_of_measure.csv: Derived from EPSG.  Modifications to EPSG data violate the EPSG use agreement (if we are to still attribute it to EPSG) so I have segregated changes into override files (i.e. gcs.override.csv). 
 * seed_2d.dgn, seed_3d.dgn: Exact source of these files is unclear.  The files contain no substantial creative content since all but the header elements were stripped.  Judged to acceptable use. 
 * NTS-50kindex.csv: Provided by Matt Wilkie, derived from NRCan dataset, rights unclear.  See http://trac.osgeo.org/gdal/ticket/2164 (closed - this file isn't actually in the source tree - it is separately distributed as part of FWTools!)
 

@@ -21,8 +21,8 @@ All GDAL OGR command line utility programs support the following
 <dt> <b>\-\-formats</b></dt><dd> List all vector formats supported by this
 GDAL build (read-only and read-write) and exit. The format support is indicated
  as follows: 'ro' is read-only driver; 
-'rw' is read or write (ie. supports CreateCopy);
-'rw+' is read, write and update (ie. supports Create).
+'rw' is read or write (i.e. supports CreateCopy);
+'rw+' is read, write and update (i.e. supports Create).
 A 'v' is appended for formats supporting virtual IO (/vsimem, /vsigzip, /vsizip, etc).
 A 's' is appended for formats supporting subdatasets.
 </dd>
@@ -347,7 +347,7 @@ would select features 1, 3 and 5.</dd>
 </dl>
 
 Srs_def can be a full WKT definition (hard to escape properly), or a well
-known definition (ie. EPSG:4326) or a file with a WKT definition.
+known definition (i.e. EPSG:4326) or a file with a WKT definition.
 
 Advanced options :
 

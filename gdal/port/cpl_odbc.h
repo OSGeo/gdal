@@ -134,7 +134,7 @@ class CPL_DLL CPLODBCDriverInstaller
 
 class CPLODBCStatement;
 
-/* On MSVC SQLULEN is missing in some cases (ie. VC6)
+/* On MSVC SQLULEN is missing in some cases (i.e. VC6)
 ** but it is always a #define so test this way.   On Unix
 ** it is a typedef so we can't always do this.
 */

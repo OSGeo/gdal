@@ -635,7 +635,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
         /* We use a special column type, e.g. BLOB_POINT_25D_4326 */
         /* when the virtual table is created by OGRSQLiteExecuteSQL() */
-        /* and thus for interal use only. */
+        /* and thus for internal use only. */
         if( bInternalUse )
         {
             osSQL += "_";
@@ -653,7 +653,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
             }
         }
     }
-    
+
     osSQL += ", OGR_NATIVE_DATA VARCHAR";
     if( !bExposeOGRNativeData )
         osSQL += " HIDDEN";

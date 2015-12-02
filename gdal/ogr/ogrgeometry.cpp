@@ -1744,7 +1744,7 @@ OGRGeometry::IsSimple(  ) const
 
 /**
  * \brief Returns TRUE if the geometry is simple.
- * 
+ *
  * Returns TRUE if the geometry has no anomalous geometric points, such
  * as self intersection or self tangency. The description of each
  * instantiable geometric class will include the specific conditions that

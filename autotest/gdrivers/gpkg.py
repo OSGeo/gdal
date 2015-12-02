@@ -2533,7 +2533,7 @@ def gpkg_26():
     os.remove('tmp/tmp.gpkg')
 
     ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1, 1, options = ['TILING_SCHEME=GoogleCRS84Quad'])
-    # Test that implict SRS registration works
+    # Test that implicit SRS registration works.
     if ds.GetProjectionRef().find('4326') < 0:
         gdaltest.post_reason('fail')
         return 'fail'

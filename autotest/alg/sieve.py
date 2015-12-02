@@ -122,13 +122,13 @@ def sieve_3():
     if cs == cs_expected \
        or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( 'tmp/sieve_3.tif' )
-    
+
     if cs != cs_expected:
         print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
 
 ###############################################################################
 # Try the bug 2634 simplified data.
@@ -138,28 +138,28 @@ def sieve_4():
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/sieve_2634.grd')
     src_band = src_ds.GetRasterBand(1)
-    
+
     dst_ds = drv.Create('tmp/sieve_4.tif', 10, 8, 1, gdal.GDT_Byte )
     dst_band = dst_ds.GetRasterBand(1)
-    
+
     gdal.SieveFilter( src_band, None, dst_band, 2, 4 )
 
     cs_expected = 98
     cs = dst_band.Checksum()
-    
+
     dst_band = None
     dst_ds = None
 
     if cs == cs_expected \
        or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( 'tmp/sieve_4.tif' )
-    
+
     if cs != cs_expected:
         print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
 
 
 ###############################################################################
@@ -171,32 +171,32 @@ def sieve_5():
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/sieve_src.grd')
     src_band = src_ds.GetRasterBand(1)
-    
+
     dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte )
     dst_band = dst_ds.GetRasterBand(1)
-    
+
     gdal.SieveFilter( src_band, dst_band.GetMaskBand(), dst_band, 2, 4 )
 
     cs_expected = 364
     cs = dst_band.Checksum()
-    
+
     dst_band = None
     dst_ds = None
 
     if cs == cs_expected \
        or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( 'tmp/sieve_1.tif' )
-    
+
     if cs != cs_expected:
         print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
 
 ###############################################################################
-# Peformance test. When increasing the 'size' parameter, performance
-# should stay roughly linear with the number of pixels (ie size^2)
+# Performance test. When increasing the 'size' parameter, performance
+# should stay roughly linear with the number of pixels (i.e. size^2)
 
 def sieve_6():
 
@@ -217,20 +217,20 @@ def sieve_6():
         ar[i][0] = 255
     ar[size-1] = 255
     ds.GetRasterBand(1).WriteArray(ar)
-    
+
     band = ds.GetRasterBand(1)
 
     gdal.SieveFilter( band, None, band, 2, 4 )
-    
+
     #ar = band.ReadAsArray()
     #print(ar)
-    
+
     cs = band.Checksum()
     if (size == 102 and cs != 60955) or (size == 3002 and cs != 63178):
         print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################

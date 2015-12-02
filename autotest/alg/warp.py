@@ -1263,32 +1263,32 @@ def warp_35():
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         return 'skip'
-    
+
     ds = gdal.Open( 'data/utmsmall-int16-neg_mode.vrt' )
     ref_ds = gdal.Open( 'data/utmsmall-int16-neg_mode.tiff' )
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
     ref_ds = None
- 
+
     if maxdiff > 1:
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
     return 'success'
 
-# Mode (Int32) - this uses algo 2 (ineficient)
+# Mode (Int32) - this uses algorithm 2 (inefficient)
 def warp_36():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         return 'skip'
-    
+
     ds = gdal.Open( 'data/utmsmall_mode_int32.vrt' )
     ref_ds = gdal.Open( 'data/utmsmall_mode_int32.tiff' )
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
     ref_ds = None
- 
+
     if maxdiff > 1:
         gdaltest.post_reason('Image too different from reference')
         return 'fail'

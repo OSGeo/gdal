@@ -57,11 +57,11 @@ CPL_CVSID("$Id$");
 ** In General:
 **
 ** Multiple threads accessing the memory filesystem are ok as long as
-**  1) A given VSIMemHandle (ie. FILE * at app level) isn't used by multiple 
-**     threads at once. 
+**  1) A given VSIMemHandle (i.e. FILE * at app level) isn't used by multiple
+**     threads at once.
 **  2) A given memory file isn't accessed by more than one thread unless
 **     all threads are just reading.
-*/ 
+*/
 
 /************************************************************************/
 /* ==================================================================== */

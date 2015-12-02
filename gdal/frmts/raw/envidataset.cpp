@@ -189,7 +189,7 @@ static const int anUsgsEsriZones[] =
 /*                                                                      */
 /*      Convert ITTVIS style state plane zones to NOS style state       */
 /*      plane zones.  The ENVI default is to use the new NOS zones,     */
-/*      but the old state plane zones can be used.  Handle this.        */ 
+/*      but the old state plane zones can be used.  Handle this.        */
 /************************************************************************/
 
 static int ITTVISToUSGSZone( int nITTVISZone )
@@ -205,9 +205,9 @@ static int ITTVISToUSGSZone( int nITTVISZone )
             return anUsgsEsriZones[i*2];
     }
 
-	// If not found in the new style, see if it is present in the
-	// old style list and convert it.  We don't expect to see this
-	// often, but older files allowed it and may still exist.
+    // If not found in the new style, see if it is present in the
+    // old style list and convert it.  We don't expect to see this
+    // often, but older files allowed it and may still exist.
     for( int i = 0; i < nPairs; i++ )
     {
         if( anUsgsEsriZones[i*2+1] == nITTVISZone )
@@ -1897,7 +1897,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
-/*	We assume the user is pointing to the binary (ie. .bil) file.	*/
+/*      We assume the user is pointing to the binary (i.e. .bil) file.  */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 2 )
         return NULL;

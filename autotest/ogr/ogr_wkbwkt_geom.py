@@ -372,7 +372,8 @@ def ogr_wkbwkt_test_broken_geom():
         geom = ogr.CreateGeometryFromWkt(wkt)
         gdal.PopErrorHandler()
         if geom is not None:
-            gdaltest.post_reason( 'geom %s instanciated but not expected' % wkt )
+            gdaltest.post_reason(
+                'geom %s instantiated but not expected' % wkt )
             return 'fail'
 
     return 'success'
@@ -381,7 +382,7 @@ def ogr_wkbwkt_test_broken_geom():
 # Test importing WKT SF1.2
 
 def ogr_wkbwkt_test_import_wkt_sf12():
-    
+
     list_wkt_tuples = [ ('POINT EMPTY', 'POINT EMPTY'),
                         ('POINT Z EMPTY', 'POINT EMPTY'),
                         ('POINT M EMPTY', 'POINT EMPTY'),
@@ -494,11 +495,14 @@ def ogr_wkbwkt_test_import_wkt_sf12():
     for wkt_tuple in list_wkt_tuples:
         geom = ogr.CreateGeometryFromWkt(wkt_tuple[0])
         if geom is None:
-            gdaltest.post_reason( 'could not instanciate geometry %s' % wkt_tuple[0])
+            gdaltest.post_reason(
+                'could not instantiate geometry %s' % wkt_tuple[0])
             return 'fail'
         out_wkt = geom.ExportToWkt()
         if out_wkt != wkt_tuple[1]:
-            gdaltest.post_reason( 'in=%s, out=%s, expected=%s.' % (wkt_tuple[0], out_wkt, wkt_tuple[1]) )
+            gdaltest.post_reason(
+                'in=%s, out=%s, expected=%s.' % (wkt_tuple[0], out_wkt,
+                                                 wkt_tuple[1]) )
             return 'fail'
 
     return 'success'

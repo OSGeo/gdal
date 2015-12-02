@@ -617,13 +617,14 @@ const char *GDALGetColorInterpretationName( GDALColorInterp eInterp )
 /************************************************************************/
 
 /**
- * \brief Get color interpreation by symbolic name.
+ * \brief Get color interpretation by symbolic name.
  *
- * Returns a color interpreation corresponding to the given symbolic name. This
+ * Returns a color interpretation corresponding to the given symbolic name. This
  * function is opposite to the GDALGetColorInterpretationName().
  *
- * @param pszName string containing the symbolic name of the color interpretation.
- * 
+ * @param pszName string containing the symbolic name of the color
+ * interpretation.
+ *
  * @return GDAL color interpretation.
  *
  * @since GDAL 1.7.0
@@ -1180,12 +1181,12 @@ int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
 /************************************************************************/
 /*                         GDALLoadTabFile()                            */
 /*                                                                      */
-/*      Helper function for translator implementators wanting           */
+/*      Helper function for translator implementer wanting              */
 /*      support for MapInfo .tab-files.                                 */
 /************************************************************************/
 
 #define MAX_GCP 256
- 
+
 int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
                                  double *padfGeoTransform, char **ppszWKT, 
                                  int *pnGCPCount, GDAL_GCP **ppasGCPs )
@@ -1329,7 +1330,7 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
 /************************************************************************/
 /*                         GDALReadTabFile()                            */
 /*                                                                      */
-/*      Helper function for translator implementators wanting           */
+/*      Helper function for translator implementer wanting              */
 /*      support for MapInfo .tab-files.                                 */
 /************************************************************************/
 
@@ -1526,10 +1527,10 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
  * </ul>
  *
  * @param pszBaseFilename the target raster file.
- * @param pszExtension the extension to use (ie. ".wld") or NULL to derive it
+ * @param pszExtension the extension to use (i.e. ".wld") or NULL to derive it
  * from the pszBaseFilename
- * @param padfGeoTransform the six double array into which the 
- * geotransformation should be placed. 
+ * @param padfGeoTransform the six double array into which the
+ * geotransformation should be placed.
  *
  * @return TRUE on success or FALSE on failure.
  */
@@ -1663,9 +1664,9 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
 }
 
 /************************************************************************/
-/*                         GDALWriteWorldFile()                          */
+/*                         GDALWriteWorldFile()                         */
 /*                                                                      */
-/*      Helper function for translator implementators wanting           */
+/*      Helper function for translator implementer wanting              */
 /*      support for ESRI world files.                                   */
 /************************************************************************/
 
@@ -1687,9 +1688,9 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
  * </ul>
  *
  * @param pszBaseFilename the target raster file.
- * @param pszExtension the extension to use (ie. ".wld"). Must not be NULL
- * @param padfGeoTransform the six double array from which the 
- * geotransformation should be read. 
+ * @param pszExtension the extension to use (i.e. ".wld"). Must not be NULL
+ * @param padfGeoTransform the six double array from which the
+ * geotransformation should be read.
  *
  * @return TRUE on success or FALSE on failure.
  */
@@ -1746,13 +1747,13 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
  *
  * Available pszRequest values:
  * <ul>
- * <li> "VERSION_NUM": Returns GDAL_VERSION_NUM formatted as a string.  ie. "1170"
+ * <li> "VERSION_NUM": Returns GDAL_VERSION_NUM formatted as a string.  i.e. "1170"
  *      Note: starting with GDAL 1.10, this string will be longer than 4 characters.
- * <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a string.  
- * ie. "20020416".
+ * <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a string.
+ * i.e. "20020416".
  * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "1.1.7"
- * <li> "--version": Returns one line version message suitable for use in 
- * response to --version requests.  ie. "GDAL 1.1.7, released 2002/04/16"
+ * <li> "--version": Returns one line version message suitable for use in
+ * response to --version requests.  i.e. "GDAL 1.1.7, released 2002/04/16"
  * <li> "LICENSE": Returns the content of the LICENSE.TXT file from the GDAL_DATA directory.
  *      Before GDAL 1.7.0, the returned string was leaking memory but this is now resolved.
  *      So the result should not been freed by the caller.
@@ -1866,16 +1867,18 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 
 /** Return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor.
 
-    The purpose of this method is to ensure that calling code will run with the GDAL
-    version it is compiled for. It is primarly intented for external plugins.
+    The purpose of this method is to ensure that calling code will run
+    with the GDAL version it is compiled for. It is primarily intended
+    for external plugins.
 
     @param nVersionMajor Major version to be tested against
     @param nVersionMinor Minor version to be tested against
     @param pszCallingComponentName If not NULL, in case of version mismatch, the method
-                                   will issue a failure mentionning the name of
+                                   will issue a failure mentioning the name of
                                    the calling component.
 
-    @return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor, FALSE otherwise.
+    @return TRUE if GDAL library version at runtime matches
+    nVersionMajor.nVersionMinor, FALSE otherwise.
   */
 int CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
                                   const char* pszCallingComponentName)
@@ -2604,10 +2607,12 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             hDriver = GDALGetDriverByName( papszArgv[iArg+1] );
             if( hDriver == NULL )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "--format option given with format '%s', but that format not\n"
-                          "recognised.  Use the --formats option to get a list of available formats,\n"
-                          "and use the short code (ie. GTiff or HFA) as the format identifier.\n", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "--format option given with format '%s', but that "
+                          "format not\nrecognised.  Use the --formats option "
+                          "to get a list of available formats,\n"
+                          "and use the short code (i.e. GTiff or HFA) as the "
+                          "format identifier.\n",
                           papszArgv[iArg+1] );
                 return -1;
             }
@@ -2722,7 +2727,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             printf( "  --config key value: set system configuration option.\n" );
             printf( "  --debug [on/off/value]: set debug level.\n" );
             printf( "  --pause: wait for user input, time to attach debugger\n" );
-            printf( "  --locale [locale]: install locale for debugging (ie. en_US.UTF-8)\n" );
+            printf( "  --locale [locale]: install locale for debugging "
+                    "(i.e. en_US.UTF-8)\n" );
             printf( "  --help-general: report detailed help on general options.\n" );
             CSLDestroy( papszReturn );
             return 0;

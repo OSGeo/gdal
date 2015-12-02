@@ -133,7 +133,7 @@ start_pass_coef (j_compress_ptr cinfo, J_BUF_MODE pass_mode)
 /*
  * Process some data in the single-pass case.
  * We process the equivalent of one fully interleaved MCU row ("iMCU" row)
- * per call, ie, v_samp_factor block rows for each component in the image.
+ * per call, i.e. v_samp_factor block rows for each component in the image.
  * Returns TRUE if the iMCU row is completed, FALSE if suspended.
  *
  * NB: input_buf contains a plane for each component in image,
@@ -224,7 +224,7 @@ compress_data (j_compress_ptr cinfo, JSAMPIMAGE input_buf)
 /*
  * Process some data in the first pass of a multi-pass case.
  * We process the equivalent of one fully interleaved MCU row ("iMCU" row)
- * per call, ie, v_samp_factor block rows for each component in the image.
+ * per call, i.e. v_samp_factor block rows for each component in the image.
  * This amount of data is read from the source buffer, DCT'd and quantized,
  * and saved into the virtual arrays.  We also generate suitable dummy blocks
  * as needed at the right and lower edges.  (The dummy blocks are constructed

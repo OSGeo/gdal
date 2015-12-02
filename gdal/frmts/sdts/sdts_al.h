@@ -415,7 +415,7 @@ class SDTSRawPoint : public SDTSFeature
     /** Z coordinate of point. */
     double      dfZ;
 
-    /** Optional identifier of area marked by this point (ie. PC01:27). */
+    /** Optional identifier of area marked by this point (i.e. PC01:27). */
     SDTSModId   oAreaId;                /* ARID */
 
     virtual void Dump( FILE * );

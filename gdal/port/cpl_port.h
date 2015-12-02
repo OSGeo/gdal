@@ -462,7 +462,7 @@ static inline int CPL_afl_friendly_strncasecmp(const char* ptr1, const char* ptr
 /* -------------------------------------------------------------------- */
 /*      Handle isnan() and isinf().  Note that isinf() and isnan()      */
 /*      are supposed to be macros according to C99, defined in math.h   */
-/*      Some systems (ie. Tru64) don't have isinf() at all, so if       */
+/*      Some systems (i.e. Tru64) don't have isinf() at all, so if       */
 /*      the macro is not defined we just assume nothing is infinite.    */
 /*      This may mean we have no real CPLIsInf() on systems with isinf()*/
 /*      function but no corresponding macro, but I can live with        */

@@ -1533,7 +1533,7 @@ def RasterizeOptions(options = [], format = None,
           noData --- nodata value
           initValues --- Value or list of values to pre-initialize the output image bands with.  However, it is not marked as the nodata value in the output file.  If only one value is given, the same value is used in all the bands.
           bands --- list of output bands to burn values into
-          inverse --- whether to invert rasterization, ie burn the fixed burn value, or the burn value associated  with the first feature into all parts of the image not inside the provided a polygon.
+          inverse --- whether to invert rasterization, i.e. burn the fixed burn value, or the burn value associated  with the first feature into all parts of the image not inside the provided a polygon.
           allTouched -- whether to enable the ALL_TOUCHED rasterization option so that all pixels touched by lines or polygons will be updated, not just those on the line render path, or whose center point is within the polygon.
           burnValues -- list of fixed values to burn into each band for all objects. Excusive with attribute.
           attribute --- identifies an attribute field on the features to be used for a burn-in value. The value will be burned into all output bands. Excusive with burnValues.

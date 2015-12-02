@@ -151,9 +151,9 @@ class OGRFMELayerDB : public OGRFMELayer
 
 class OGRFMEDataSource : public OGRDataSource
 {
-    char                *pszName;          // full name, ie. "SHAPE:D:\DATA"
-    char                *pszReaderName;    // reader/driver name, ie. "SHAPE"
-    char                *pszDataset;       // FME dataset name, ie. "D:\DATA"
+    char                *pszName;          // full name, i.e. "SHAPE:D:\DATA"
+    char                *pszReaderName;    // reader/driver name, i.e. "SHAPE"
+    char                *pszDataset;       // FME dataset name, i.e. "D:\DATA"
 
     IFMEStringArray   *poUserDirectives;
     

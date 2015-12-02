@@ -822,7 +822,7 @@ const char CPL_DLL * CPL_STDCALL GDALVersionInfo( const char * );
 /** Return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor.
 
     The purpose of this method is to ensure that calling code will run with the GDAL
-    version it is compiled for. It is primarly intented for external plugins.
+    version it is compiled for. It is primarily indented for external plugins.
 
     @param nVersionMajor Major version to be tested against
     @param nVersionMinor Minor version to be tested against

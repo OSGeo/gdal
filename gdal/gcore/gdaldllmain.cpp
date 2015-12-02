@@ -79,7 +79,7 @@ void GDALDestroy(void)
     bInGDALGlobalDestructor = FALSE;
 
     /* See https://trac.osgeo.org/gdal/ticket/6139 */
-    /* Needed in case no driver manager has been instanciated */
+    /* Needed in case no driver manager has been instantiated. */
     CPLFreeConfig();
     CPLFinalizeTLS();
     CPLCleanupMasterMutex();

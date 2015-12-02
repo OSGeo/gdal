@@ -976,7 +976,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
-/*	We assume the user is pointing to the binary (ie. .bil) file.	*/
+/*      We assume the user is pointing to the binary (i.e. .bil) file.  */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 2 )
         return NULL;

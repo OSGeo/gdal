@@ -614,7 +614,7 @@ of 8bit data.  IDA files often have the extension .img though that is not
 required.</p>
 
 <p>Projection and georeferencing information is read though some projections
-(ie. Meteosat, and Hammer-Aitoff) are not supported.  When writing IDA files
+(i.e. Meteosat, and Hammer-Aitoff) are not supported.  When writing IDA files
 the projection must have a false easting and false northing of zero. The 
 support coordinate systems in IDA are Geographic, Lambert Conformal Conic,
 Lambert Azimuth Equal Area, Albers Equal-Area Conic and Goodes Homolosine.</p>
@@ -734,7 +734,7 @@ Erdas 7.x .LAN and .GIS raster files.  Currently
 and 8bit and 16bit for writing.  </p>
 
 <p>GDAL does read the map extents (geotransform) from LAN/GIS files, and 
-attempts to read the coordinate system informaton.  However, this format
+attempts to read the coordinate system information.  However, this format
 of file does not include complete coordinate system information, so for
 state plane and UTM coordinate systems a LOCAL_CS definition is returned
 with valid linear units but no other meaningful information.</p>
@@ -1369,12 +1369,15 @@ This format is an ASCII interchange format for gridded data
 in an ASCII line format for transport and storage. It is commonly used
 in applications in the Oil and Gas Exploration field.</p>
 
-<p>By default, files are interpreted and written according to the PIXEL_IS_AREA convention.
-If you define the ZMAP_PIXEL_IS_POINT configuration option to TRUE, the PIXEL_IS_POINT
-convention will be followed to interprete/write the file (the georeferenced values in the header
-of the file will then be considered as the coordinate of the center of the pixels). Note that in that case,
-GDAL will report the extent with its usual PIXEL_IS_AREA convention (the coordinates of the topleft corner
-as reported by GDAL will be a half-pixel at the top and left of the values that appear in the file).</p>
+<p>By default, files are interpreted and written according to the
+PIXEL_IS_AREA convention.  If you define the ZMAP_PIXEL_IS_POINT
+configuration option to TRUE, the PIXEL_IS_POINT convention will be
+followed to interpret/write the file (the georeferenced values in the
+header of the file will then be considered as the coordinate of the
+center of the pixels). Note that in that case, GDAL will report the
+extent with its usual PIXEL_IS_AREA convention (the coordinates of the
+topleft corner as reported by GDAL will be a half-pixel at the top and
+left of the values that appear in the file).</p>
 
 <p>Informal specification given in this <a href="http://lists.osgeo.org/pipermail/gdal-dev/2011-June/029173.html">GDAL-dev mailing list thread</a></p>
 

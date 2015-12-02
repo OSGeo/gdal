@@ -7,9 +7,10 @@
 
 \section odt_overall Overall Approach
 
-In general new formats are added to OGR by implementing format specific
-drivers with intanciating a GDALDriver and subclasses of GDALDatasetand OGRLayer.  The
-GDALDriver instance is registered with the GDALDriverManager at runtime.
+In general new formats are added to OGR by implementing format
+specific drivers with instantiating a GDALDriver and subclasses of
+GDALDataset and OGRLayer.  The GDALDriver instance is registered with
+the GDALDriverManager at runtime.
 
 Before following this tutorial to implement an OGR driver, please review 
 the <a href="ogr_arch.html">OGR Architecture</a> document carefully. 

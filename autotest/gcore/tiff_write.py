@@ -1269,7 +1269,7 @@ def tiff_write_30():
     return 'success'
 
 ###############################################################################
-# Create a BigTIFF image implicitely (more than 4Gb)
+# Create a BigTIFF image implicitly (more than 4Gb).
 
 def tiff_write_31():
 
@@ -4604,7 +4604,8 @@ def tiff_write_117():
     data = ''.join(['0' for i in range(65536 - adjust)]) + ''.join([('%c' % random.randint(0,255)) for i in range(adjust)])
     ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
 
-    # Second tile will be implicitely written at closing, or we could write any content
+    # Second tile will be implicitly written at closing, or we could write
+    # any content
 
     ds = None
 
@@ -5221,7 +5222,7 @@ def tiff_write_128():
     src_ds = gdal.Open('../gdrivers/data/rgb_ntf_cmyk.jpg')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
 
-    # Will received implictely CMYK photometric interpreation
+    # Will received implicitly CMYK photometric interpretation.
     old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options = [ 'COMPRESS=JPEG' ] )

@@ -95,8 +95,8 @@ namespace PCIDSK
      types in a convenient way that avoids memory leaks or ownership confusion.
      The object has a field type (initially FieldTypeNone on construction)
      and a value of the specified type.  Note that the appropriate value
-     accessor (ie. GetValueInteger()) must be used that corresponds to the
-     fields type. No attempt is made to automatically convert (ie. float to
+     accessor (i.e. GetValueInteger()) must be used that corresponds to the
+     fields type. No attempt is made to automatically convert (i.e. float to
      double) if the wrong accessor is used.
 
     */

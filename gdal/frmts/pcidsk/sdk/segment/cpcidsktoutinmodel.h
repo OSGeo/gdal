@@ -54,7 +54,7 @@ namespace PCIDSK {
 
     //functions to read/write binary information
     private:
-        //Toutin informations.
+        //Toutin information.
         SRITInfo_t* mpoInfo;
 
         SRITInfo_t *BinaryToSRITInfo();

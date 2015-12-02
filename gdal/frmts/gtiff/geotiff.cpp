@@ -4579,8 +4579,8 @@ int GTiffRasterBand::GetOverviewCount()
         if( nOverviewCount > 0 )
             return nOverviewCount;
 
-        /* Implict JPEG overviews are normally hidden, except when doing */
-        /* IRasterIO() operations */
+        /* Implicit JPEG overviews are normally hidden, except when doing */
+        /* IRasterIO() operations. */
         if( poGDS->nJPEGOverviewVisibilityFlag )
             return poGDS->GetJPEGOverviewCount();
         else
@@ -13775,8 +13775,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if (poDS->nOverviewCount != nSrcOverviews)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Did only manage to instanciate %d overview levels, whereas source contains %d",
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Did only manage to instantiate %d overview levels, "
+                      "whereas source contains %d",
                      poDS->nOverviewCount, nSrcOverviews);
             eErr = CE_Failure;
         }

@@ -396,7 +396,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /*                                                                      */
 /*      We actually do some funny stuff here to be able to read past    */
 /*      some garbage to try and find the 0x1a 0x00 sequence since in    */
-/*      at least some files (ie. optech/World.kap) we find a few        */
+/*      at least some files (i.e. optech/World.kap) we find a few       */
 /*      bytes of extra junk in the way.                                 */
 /* -------------------------------------------------------------------- */
 /* from optech/World.kap 

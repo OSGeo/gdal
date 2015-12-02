@@ -286,7 +286,7 @@ char *CPLRecodeStub( const char *pszSource,
  * Convert a wchar_t string into a multibyte utf-8 string.  The only
  * guaranteed supported source encoding is CPL_ENC_UCS2, and the only
  * guaranteed supported destination encodings are CPL_ENC_UTF8, CPL_ENC_ASCII
- * and CPL_ENC_ISO8859_1.  In some cases (ie. using iconv()) other encodings 
+ * and CPL_ENC_ISO8859_1.  In some cases (i.e. using iconv()) other encodings
  * may also be supported.
  *
  * Note that the wchar_t type varies in size on different systems. On
@@ -1027,7 +1027,7 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
 /*                             utf8froma()                              */
 /************************************************************************/
 
-/* Convert an ISO-8859-1 (ie normal c-string) byte stream to UTF-8.
+/* Convert an ISO-8859-1 (i.e. normal c-string) byte stream to UTF-8.
 
     It is possible this should convert Microsoft's CP1252 to UTF-8
     instead. This would translate the codes in the range 0x80-0x9f
@@ -1083,8 +1083,8 @@ static unsigned utf8froma(char* dst, unsigned dstlen,
 /*                            CPLWin32Recode()                          */
 /************************************************************************/
 
-/* Convert an CODEPAGE (ie normal c-string) byte stream
-     to another CODEPAGE (ie normal c-string) byte stream.
+/* Convert an CODEPAGE (i.e. normal c-string) byte stream
+     to another CODEPAGE (i.e. normal c-string) byte stream.
 
     \a src is target c-string byte stream (including a null terminator).
     \a src_code_page is target c-string byte code page.
@@ -1382,7 +1382,7 @@ unsigned utf8frommb(char* dst, unsigned dstlen,
     - Returns 0 if there is any illegal UTF-8 sequences, using the
       same rules as utf8decode(). Note that some UCS values considered
       illegal by RFC 3629, such as 0xffff, are considered legal by this.
-    - Returns 1 if there are only single-byte characters (ie no bytes
+    - Returns 1 if there are only single-byte characters (i.e. no bytes
       have the high bit set). This is legal UTF-8, but also indicates
       plain ASCII. It also returns 1 if \a srclen is zero.
     - Returns 2 if there are only characters less than 0x800.

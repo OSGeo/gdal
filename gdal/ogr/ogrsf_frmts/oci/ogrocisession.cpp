@@ -218,7 +218,7 @@ int OGROCISession::EstablishSession( const char *pszUserid,
     if( Failed( OCISessionBegin(hSvcCtx, hError, hSession, eCred,
                 (ub4) OCI_DEFAULT) ) )
     {
-        CPLDebug("OCI", "OCISessionBegin() failed to intialize session");
+        CPLDebug("OCI", "OCISessionBegin() failed to initialize session");
         return FALSE;
     }
 

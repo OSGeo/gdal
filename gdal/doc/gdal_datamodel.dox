@@ -31,8 +31,8 @@ strings.  This can contain:
 <li> A datum identifier. 
 <li> An ellipsoid name, semi-major axis, and inverse flattening. 
 <li> A prime meridian name and offset from Greenwich. 
-<li> A projection method type (ie. Transverse Mercator). 
-<li> A list of projection parameters (ie. central_meridian). 
+<li> A projection method type (i.e. Transverse Mercator). 
+<li> A list of projection parameters (i.e. central_meridian). 
 <li> A units name, and conversion factor to meters or radians. 
 <li> Names and ordering for the axes. 
 <li> Codes for most of the above in terms of predefined coordinate systems
@@ -139,7 +139,7 @@ Metadata is split into named groups called domains, with the default
 domain having no name (NULL or "").  Some specific domains exist for 
 special purposes.  Note that currently there is no way to enumerate all
 the domains available for a given object, but applications can "test" for
-any domains they know how to interprete.
+any domains they know how to interpret.
 
 The following metadata items have well defined semantics in the default
 domain:
@@ -315,7 +315,7 @@ thematic image).
 <li> An optional minimum and maximum value. 
 
 <li> An optional offset and scale for transforming raster values into meaning
-full values (ie translate height to meters) 
+full values (i.e. translate height to meters).
 
 <li> An optional raster unit name.  For instance, this might indicate linear 
 units for elevation data.

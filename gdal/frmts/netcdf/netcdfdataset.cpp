@@ -2008,9 +2008,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
             }
             //no radius, set as wgs84 as default?
             else {
-                // This would be too indiscrimant.  But we should set
+                // This would be too indiscriminate.  But we should set
                 // it if we know the data is geographic.
-                //oSRS.SetWellKnownGeogCS( "WGS84" );
+                // oSRS.SetWellKnownGeogCS( "WGS84" );
             }
 
 /* -------------------------------------------------------------------- */
@@ -2538,9 +2538,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
             oSRS.SetWellKnownGeogCS( "WGS84" );
 
         } else {
-            // This would be too indiscrimant.  But we should set
+            // This would be too indiscriminate.  But we should set
             // it if we know the data is geographic.
-            //oSRS.SetWellKnownGeogCS( "WGS84" );
+            // oSRS.SetWellKnownGeogCS( "WGS84" );
         }
     }
 /* -------------------------------------------------------------------- */

@@ -124,11 +124,11 @@ CPL_C_END
 
 #ifdef __cplusplus
 
-/* Instanciates the mutex if not already done. The parameter x should be a (void**)  */
+/* Instantiates the mutex if not already done. The parameter x should be a (void**). */
 #define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
 
-/* Instanciates the mutex with options if not already done. */
-/* The parameter x should be a (void**)  */
+/* Instantiates the mutex with options if not already done. */
+/* The parameter x should be a (void**). */
 #define CPLMutexHolderExD(x, nOptions)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__,nOptions);
 
 /* This variant assumes the mutex has already been created. If not, it will */
@@ -144,7 +144,7 @@ class CPL_DLL CPLMutexHolder
 
   public:
 
-    /* Instanciates the mutex if not already done */
+    /* Instantiates the mutex if not already done. */
     CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__,
@@ -159,7 +159,7 @@ class CPL_DLL CPLMutexHolder
     ~CPLMutexHolder();
 };
 
-/* Instanciates the lock if not already done. The parameter x should be a (CPLLock**) */
+/* Instantiates the lock if not already done. The parameter x should be a (CPLLock**). */
 #define CPLLockHolderD(x, eType)  CPLLockHolder oHolder(x,eType,__FILE__,__LINE__);
 
 /* This variant assumes the lock has already been created. If not, it will */
@@ -175,7 +175,7 @@ class CPL_DLL CPLLockHolder
 
   public:
 
-    /* Instanciates the lock if not already done */
+    /* Instantiates the lock if not already done. */
     CPLLockHolder( CPLLock **phSpin, CPLLockType eType,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__);

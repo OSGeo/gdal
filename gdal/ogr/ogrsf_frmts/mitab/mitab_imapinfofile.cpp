@@ -318,7 +318,7 @@ OGRFeature *IMapInfoFile::GetNextFeature()
 /**********************************************************************
  *                   IMapInfoFile::CreateTABFeature()
  *
- * Instanciate a TABFeature* from a OGRFeature* (or NULL on error)
+ * Instantiate a TABFeature* from a OGRFeature* (or NULL on error)
  **********************************************************************/
 
 TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
