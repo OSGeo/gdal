@@ -1544,13 +1544,13 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
     const char* pszGeomType = "";
     switch( wkbFlatten(poGeom->getGeometryType()) )
     {
-        case wkbPoint: pszGeomType = "point"; break;
-        case wkbLineString: pszGeomType = "linestring"; break;
-        case wkbPolygon: pszGeomType = "polygon"; break;
-        case wkbMultiPoint: pszGeomType = "multipoint"; break;
-        case wkbMultiLineString: pszGeomType = "multilinestring"; break;
-        case wkbMultiPolygon: pszGeomType = "multipolygon"; break;
-        case wkbGeometryCollection: pszGeomType = "geometrycollection"; break;
+        case wkbPoint: pszGeomType = "Point"; break;
+        case wkbLineString: pszGeomType = "LineString"; break;
+        case wkbPolygon: pszGeomType = "Polygon"; break;
+        case wkbMultiPoint: pszGeomType = "MultiPoint"; break;
+        case wkbMultiLineString: pszGeomType = "MultiLineString"; break;
+        case wkbMultiPolygon: pszGeomType = "MultiPolygon"; break;
+        case wkbGeometryCollection: pszGeomType = "GeometryCollection"; break;
         default: break;
     }
     json_object_object_add(geometry, "type", json_object_new_string(pszGeomType));
