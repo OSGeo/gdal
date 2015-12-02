@@ -196,7 +196,7 @@ def vrtpansharpen_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Inconsistant declared VRT dimensions with panchro dataset
+    # Inconsistent declared VRT dimensions with panchro dataset.
     gdal.PushErrorHandler()
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="1800" rasterYSize="400" subClass="VRTPansharpenedDataset">
     <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">

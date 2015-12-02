@@ -573,7 +573,8 @@ static OGRGeometry *kml2geom_rec (
         poKmlMultiGeometry = AsMultiGeometry ( poKmlGeometry );
         nGeom = poKmlMultiGeometry->get_geometry_array_size (  );
 
-        /* Detect subgeometry type to instanciate appropriate Multi geometry type */
+        // Detect subgeometry type to instantiate appropriate
+        // multi geometry type.
         kmldom::KmlDomType type = kmldom::Type_Unknown;
         for ( i = 0; i < nGeom; i++ ) {
             poKmlTmpGeometry = poKmlMultiGeometry->get_geometry_array_at ( i );

@@ -148,7 +148,7 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 
 static CPLLock *hAtomicOpLock = NULL;
 
-/* Slow, but safe, implemenation using a mutex */
+// Slow, but safe, implementation using a mutex.
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
     CPLLockHolderD(&hAtomicOpLock, LOCK_SPIN);

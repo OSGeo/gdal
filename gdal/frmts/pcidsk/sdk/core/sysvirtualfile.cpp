@@ -189,13 +189,14 @@ void SysVirtualFile::SetBlockInfo( int requested_block,
     }
 
     // Ah, we see they are now irregular.  We need to build up the
-    // segment/index arrays and proceed to populate them. 
-    Debug( file->GetInterfaces()->Debug, 
-           "SysVirtualFile - Discovered stream is irregulr.  %d/%d follows %d/%d at block %d.\n",
+    // segment/index arrays and proceed to populate them.
+    Debug( file->GetInterfaces()->Debug,
+           "SysVirtualFile - Discovered stream is irregular.  "
+           "%d/%d follows %d/%d at block %d.\n",
            new_block_segment, new_block_index,
            xblock_segment[0], xblock_index[0], 
            requested_block );
-           
+
     regular_blocks = false;
     while( (int) xblock_segment.size() < blocks_loaded )
     {

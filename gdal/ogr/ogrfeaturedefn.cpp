@@ -186,7 +186,7 @@ void OGR_FD_Release( OGRFeatureDefnH hDefn )
  * \brief Create a copy of this feature definition.
  *
  * Creates a deep copy of the feature definition. 
- * 
+ *
  * @return the copy. 
  */
 
@@ -202,7 +202,7 @@ OGRFeatureDefn *OGRFeatureDefn::Clone()
     for( i = 0; i < nFieldCount; i++ )
         poCopy->AddFieldDefn( GetFieldDefn( i ) );
 
-    /* There is a default geometry field created at OGRFeatureDefn instanciation */
+    // There is a default geometry field created at OGRFeatureDefn instantiation
     poCopy->DeleteGeomFieldDefn(0);
     GetGeomFieldCount();
     for( i = 0; i < nGeomFieldCount; i++ )

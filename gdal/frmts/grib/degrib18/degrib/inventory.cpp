@@ -83,7 +83,7 @@ void GRIB2InventoryFree (inventoryType *inv)
  *
  * PURPOSE
  *   Prints to standard out, an inventory of the file, assuming one has an
- * array of invenories of single grib messages.
+ * array of inventories of single GRIB messages.
  *
  * ARGUMENTS
  *    Inv = Pointer to an Array of inventories to print. (Input)

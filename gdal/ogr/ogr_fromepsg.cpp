@@ -2541,7 +2541,7 @@ int OGRSpatialReference::GetEPSGGeogCS()
         && GetPrimeMeridian() == 0.0 )
     {
         int nDatum = atoi(GetAuthorityCode("GEOGCS|DATUM"));
-        
+
         if( nDatum >= 6000 && nDatum <= 6999 )
             return nDatum - 2000;
     }
@@ -2557,12 +2557,12 @@ int OGRSpatialReference::GetEPSGGeogCS()
  * \brief Set EPSG authority info if possible.
  *
  * This method inspects a WKT definition, and adds EPSG authority nodes
- * where an aspect of the coordinate system can be easily and safely 
- * corresponded with an EPSG identifier.  In practice, this method will 
+ * where an aspect of the coordinate system can be easily and safely
+ * corresponded with an EPSG identifier.  In practice, this method will
  * evolve over time.  In theory it can add authority nodes for any object
- * (ie. spheroid, datum, GEOGCS, units, and PROJCS) that could have an 
- * authority node.  Mostly this is useful to inserting appropriate 
- * PROJCS codes for common formulations (like UTM n WGS84). 
+ * (i.e. spheroid, datum, GEOGCS, units, and PROJCS) that could have an
+ * authority node.  Mostly this is useful to inserting appropriate
+ * PROJCS codes for common formulations (like UTM n WGS84).
  *
  * If it success the OGRSpatialReference is updated in place, and the 
  * method return OGRERR_NONE.  If the method fails to identify the 

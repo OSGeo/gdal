@@ -34,7 +34,7 @@
 #include <math.h>
 #include "gdalbridge.h"
 
-static int 
+static int
 GDALInfoReportCorner( GDALDatasetH hDataset, 
                       const char * corner_name,
                       double x, double y );
@@ -52,7 +52,7 @@ int main( int argc, char ** argv )
 
     if( !GDALBridgeInitialize( "..", stderr ) )
     {
-        fprintf( stderr, "Unable to intiailize GDAL bridge.\n" );
+        fprintf( stderr, "Unable to initialize GDAL bridge.\n" );
         exit( 10 );
     }
 
@@ -65,7 +65,7 @@ int main( int argc, char ** argv )
     GDALAllRegister();
 
     hDataset = GDALOpen( argv[1], GA_ReadOnly );
-    
+
     if( hDataset == NULL )
     {
         fprintf( stderr,
@@ -73,7 +73,7 @@ int main( int argc, char ** argv )
                  CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
         exit( 1 );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Report general info.                                            */
 /* -------------------------------------------------------------------- */

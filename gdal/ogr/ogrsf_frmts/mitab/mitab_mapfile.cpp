@@ -656,8 +656,8 @@ int TABMAPFile::SyncToDisk()
         // OK, with V450 files, objects are not limited to 32k nodes
         // any more, and this means that m_nMaxCoordBufSize can become
         // huge, and actually more huge than can be held in memory.
-        // MapInfo counts m_nMaxCoordBufSize=0 for V450 objects, but 
-        // until this is cleanly implented, we will just prevent 
+        // MapInfo counts m_nMaxCoordBufSize=0 for V450 objects, but
+        // until this is cleanly implemented, we will just prevent
         // m_nMaxCoordBufSizefrom going beyond 512k in V450 files.
         if (m_nMinTABVersion >= 450)
         {
@@ -2715,13 +2715,13 @@ int TABMAPFile::InitDrawingTools()
         return -1;    // File not opened yet!
 
     /*-------------------------------------------------------------
-     * We want to perform this initialisation only ONCE
+     * We want to perform this initialization only once
      *------------------------------------------------------------*/
     if (m_poToolDefTable != NULL)
         return 0;
 
     /*-------------------------------------------------------------
-     * Create a new ToolDefTable... no more initialization is required 
+     * Create a new ToolDefTable... no more initialization is required
      * unless we want to read tool blocks from file.
      *------------------------------------------------------------*/
     m_poToolDefTable = new TABToolDefTable;
@@ -2733,7 +2733,7 @@ int TABMAPFile::InitDrawingTools()
 
         poBlock = new TABMAPToolBlock(TABRead);
         poBlock->InitNewBlock(m_fp, 512);
-    
+
         /*-------------------------------------------------------------
          * Use GotoByteInFile() to go to the first block's location.  This will
          * force loading the block if necessary and reading its header.

@@ -71,7 +71,7 @@ CTiledChannel::CTiledChannel( PCIDSKBuffer &image_header,
     vfile = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      If this is an unassociated channel (ie. an overview), we        */
+/*      If this is an unassociated channel (i.e. an overview), we        */
 /*      will set the size and blocksize values to something             */
 /*      unreasonable and set them properly in EstablishAccess()         */
 /* -------------------------------------------------------------------- */

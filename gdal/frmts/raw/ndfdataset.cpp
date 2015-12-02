@@ -161,7 +161,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
-/*      The user must select the header file (ie. .H1).                 */
+/*      The user must select the header file (i.e. .H1).                */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 50 )
         return NULL;

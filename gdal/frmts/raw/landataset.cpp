@@ -39,7 +39,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_LAN(void);
+void GDALRegister_LAN(void);
 CPL_C_END
 
 /**
@@ -48,9 +48,9 @@ Erdas Header format: "HEAD74"
 
 Offset   Size    Type      Description
 ------   ----    ----      -----------
-0          6     char      magic cookie / version (ie. HEAD74). 
+0          6     char      magic cookie / version (i.e. HEAD74).
 6          2    Int16      Pixel type, 0=8bit, 1=4bit, 2=16bit
-8          2    Int16      Number of Bands. 
+8          2    Int16      Number of Bands.
 10         6     char      Unknown.
 16         4    Int32      Width
 20         4    Int32      Height
@@ -71,9 +71,9 @@ Erdas Header format: "HEADER"
 
 Offset   Size    Type      Description
 ------   ----    ----      -----------
-0          6     char      magic cookie / version (ie. HEAD74). 
+0          6     char      magic cookie / version (i.e. HEAD74).
 6          2    Int16      Pixel type, 0=8bit, 1=4bit, 2=16bit
-8          2    Int16      Number of Bands. 
+8          2    Int16      Number of Bands.
 10         6     char      Unknown.
 16         4  Float32      Width
 20         4  Float32      Height
@@ -504,7 +504,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
-/*      Try to interprete georeferencing.                               */
+/*      Try to interpret georeferencing.                                */
 /* -------------------------------------------------------------------- */
     float fTmp;
 

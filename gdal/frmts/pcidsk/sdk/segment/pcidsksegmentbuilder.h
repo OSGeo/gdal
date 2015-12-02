@@ -36,7 +36,7 @@ namespace PCIDSK
 
     /**
      * PCIDSK Abstract Builder class. Given a segment pointer, constructs
-     * an instance of a given PCIDSKSegment implementor. Typically an instance
+     * an instance of a given PCIDSKSegment implementer. Typically an instance
      * of this will be registered with the PCIDSK Segment Factory.
      */
     struct IPCIDSKSegmentBuilder

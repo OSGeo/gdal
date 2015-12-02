@@ -785,7 +785,8 @@ try_again:
             /* Second pass: fill the OGRVRTGeomFieldProps objects from the */
             /* GeometryField definitions */
         int iGeomField = 0;
-        for( psChild = psLTree->psChild; psChild != NULL; psChild=psChild->psNext )
+        for( psChild = psLTree->psChild; psChild != NULL;
+             psChild=psChild->psNext )
         {
             if( psChild->eType == CXT_Element &&
                 EQUAL(psChild->pszValue,"GeometryField") )
@@ -798,7 +799,7 @@ try_again:
         }
         }
 
-        /* Instanciate real geometry fields from VRT properties */
+        /* Instantiate real geometry fields from VRT properties. */
         poFeatureDefn->SetGeomType(wkbNone);
         for( size_t i = 0; i < apoGeomFieldProps.size(); i ++ )
         {

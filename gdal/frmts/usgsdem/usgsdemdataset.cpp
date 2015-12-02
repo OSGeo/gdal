@@ -849,7 +849,7 @@ void GDALRegister_USGSDEM()
 "       <Value>DEFAULT</Value>"
 "       <Value>CDED50K</Value>"
 "   </Option>"
-"   <Option name='TOPLEFT' type='string' description='Top left product corner (ie. 117d15w,52d30n'/>"
+"   <Option name='TOPLEFT' type='string' description='Top left product corner (i.e. 117d15w,52d30n'/>"
 "   <Option name='RESAMPLE' type='string-select' description='Resampling kernel to use if resampled.'>"
 "       <Value>Nearest</Value>"
 "       <Value>Bilinear</Value>"

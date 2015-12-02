@@ -175,10 +175,10 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
  * DGNO_CAPTURE_RAW_DATA: If this is enabled (it is off by default),
  * then the raw binary data associated with elements will be kept in
  * the raw_data field within the DGNElemCore when they are read.  This
- * is required if the application needs to interprete the raw data itself.
+ * is required if the application needs to interpret the raw data itself.
  * It is also necessary if the element is to be written back to this file,
  * or another file using DGNWriteElement().  Off by default (to conserve
- * memory). 
+ * memory).
  *
  * @param hDGN handle to file returned by DGNOpen(). 
  * @param nOptions ORed option flags.

@@ -1272,8 +1272,8 @@ Inputs:
     ds_index -- the dataset index to fetch
 
 Outputs:
-    ds_name -- the dataset symbolic name, ie 'MDS1 SQ ADS              '.
-    ds_type -- the dataset type, ie. 'A', not sure of valid values.
+    ds_name -- the dataset symbolic name, i.e 'MDS1 SQ ADS              '.
+    ds_type -- the dataset type, i.e. 'A', not sure of valid values.
     filename -- dataset filename, normally spaces, or 'NOT USED          '.
     ds_offset -- the byte offset in the whole file to the first byte of 
                  dataset data.  This is 0 for unused datasets.

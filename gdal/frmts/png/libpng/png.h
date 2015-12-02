@@ -502,7 +502,7 @@ typedef struct png_text_struct
                               1: iTXt, none
                               2: iTXt, deflate  */
    png_charp key;          /* keyword, 1-79 character description of "text" */
-   png_charp text;         /* comment, may be an empty string (ie "")
+   png_charp text;         /* comment, may be an empty string (i.e. "")
                               or a NULL pointer */
    png_size_t text_length; /* length of the text string */
 #ifdef PNG_iTXt_SUPPORTED
@@ -1362,7 +1362,7 @@ extern PNG_EXPORT(void,png_set_sig_bytes) PNGARG((png_structp png_ptr,
 /* Check sig[start] through sig[start + num_to_check - 1] to see if it's a
  * PNG file.  Returns zero if the supplied bytes match the 8-byte PNG
  * signature, and non-zero otherwise.  Having num_to_check == 0 or
- * start > 7 will always fail (ie return non-zero).
+ * start > 7 will always fail (i.e. return non-zero).
  */
 extern PNG_EXPORT(int,png_sig_cmp) PNGARG((png_bytep sig, png_size_t start,
    png_size_t num_to_check));

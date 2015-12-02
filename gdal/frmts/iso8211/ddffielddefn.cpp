@@ -345,7 +345,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
                           nFieldEntrySize - iFDOffset,
                           DDF_UNIT_TERMINATOR, DDF_FIELD_TERMINATOR, 
                           &nCharsConsumed );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Parse the subfield info.                                        */
 /* -------------------------------------------------------------------- */
@@ -357,7 +357,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
         if( !ApplyFormats() )
             return FALSE;
     }
-    
+
     return TRUE;
 }
 
@@ -371,14 +371,14 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
  * A variety of information about this field definition, and all it's
  * subfields is written to the give debugging file handle.
  *
- * @param fp The standard io file handle to write to.  ie. stderr
+ * @param fp The standard IO file handle to write to.  i.e. stderr
  */
 
 void DDFFieldDefn::Dump( FILE * fp )
 
 {
     const char  *pszValue = "";
-    
+
     fprintf( fp, "  DDFFieldDefn:\n" );
     fprintf( fp, "      Tag = `%s'\n", pszTag );
     fprintf( fp, "      _fieldName = `%s'\n", _fieldName );
@@ -390,15 +390,15 @@ void DDFFieldDefn::Dump( FILE * fp )
       case dsc_elementary:
         pszValue = "elementary";
         break;
-        
+
       case dsc_vector:
         pszValue = "vector";
         break;
-        
+
       case dsc_array:
         pszValue = "array";
         break;
-        
+
       case dsc_concatenated:
         pszValue = "concatenated";
         break;

@@ -510,8 +510,8 @@ cl_int alloc_working_arr(struct oclWarper *warper,
 }
 
 /*
- Assemble and create the kernel. For optimization, portabilaty, and
- implimentation limitation reasons, the program is actually assembled from
+ Assemble and create the kernel. For optimization, portability, and
+ implementation limitation reasons, the program is actually assembled from
  several strings, then compiled with as many invariants as possible defined by
  the preprocessor. There is also quite a bit of error-catching code in here
  because the kernel is where many bugs show up.

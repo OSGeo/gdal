@@ -2065,8 +2065,8 @@ static int FindInTable (WxTable * table, int tableLen, char *data, uChar *ans)
  *   ugly = The ugly string structure to modify. (Output)
  *   data = The string (or phrase) to look for. (Input)
  *   word = Which word we are currently working on. (Input)
- *  place = What part of the word (ie # of :'s) (Input)
- * attNum = What part of attribute piece (ie # of ,'s) (Input)
+ *  place = What part of the word (i.e. # of :'s) (Input)
+ * attNum = What part of attribute piece (i.e. # of ,'s) (Input)
  *
  * FILES/DATABASES: None
  *

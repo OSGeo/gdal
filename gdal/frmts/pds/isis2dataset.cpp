@@ -231,7 +231,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFCloseL( fpQube );
 
 /* -------------------------------------------------------------------- */
-/*	We assume the user is pointing to the label (ie. .lab) file.  	*/
+/*      We assume the user is pointing to the label (i.e. .lab) file.   */
 /* -------------------------------------------------------------------- */
     // QUBE can be inline or detached and point to an image name
     // ^QUBE = 76
@@ -1133,7 +1133,7 @@ int ISIS2Dataset::WriteLabel(
 
     {
         CPLString tab = "";
-        iLevel *= 4; // each struct is idented by 4 spaces
+        iLevel *= 4; // each struct is indented by 4 spaces.
 
         return VSIFPrintfL(fpLabel,"%*s%s=%s\n", iLevel, tab.c_str(),
                            key.c_str(), value.c_str());

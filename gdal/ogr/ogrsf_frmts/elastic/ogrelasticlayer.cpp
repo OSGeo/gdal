@@ -2234,20 +2234,22 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
             poCT = OGRCreateCoordinateTransformation( oFieldDefn.GetSpatialRef(), &oSRS_WGS84 );
             if( poCT == NULL )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "On-the-fly reprojection to WGS84 longlat would be needed, but instanciation of transformer failed");
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "On-the-fly reprojection to WGS84 long/lat would be "
+                          "needed, but instantiation of transformer failed");
             }
         }
     }
     else
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "No SRS given for geometry column %s. SRS is assumed to be EPSG:4326 (WGS84 long/lat)",
-                 oFieldDefn.GetNameRef());
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "No SRS given for geometry column %s. SRS is assumed to "
+                  "be EPSG:4326 (WGS84 long/lat)",
+                  oFieldDefn.GetNameRef());
     }
-    
+
     m_apoCT.push_back(poCT);
-    
+
     m_bSerializeMapping = TRUE;
 
     return OGRERR_NONE;

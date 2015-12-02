@@ -1496,11 +1496,12 @@ CPLErr GDALPansharpenOperation::PansharpenChunk( GDALDataType eWorkDataType,
             break;
 
         default:
-            CPLError(CE_Failure, CPLE_NotSupported, "eWorkDataType not supported");
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "eWorkDataType not supported");
             eErr = CE_Failure;
             break;
     }
-    
+
     return eErr;
 }
 
@@ -1518,7 +1519,7 @@ GDALPansharpenOptions* GDALPansharpenOperation::GetOptions()
 /*                     GDALCreatePansharpenOperation()                  */
 /************************************************************************/
 
-/** Instanciate a pansharpening operation.
+/** Instantiate a pansharpening operation.
  *
  * The passed options are validated.
  *

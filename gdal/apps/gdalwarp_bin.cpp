@@ -78,12 +78,12 @@ with control information.
 <dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference set.
 The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
-(ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
 containing well known text.</dd>
 <dt> <b>-t_srs</b> <em>srs_def</em>:</dt><dd> target spatial reference set.
 The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
-(ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
 containing well known text.</dd>
 <dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable
 to pass to GDALCreateGenImgProjTransformer2(). </dd>

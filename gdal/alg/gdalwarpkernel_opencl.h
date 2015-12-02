@@ -31,7 +31,7 @@
 
 /* The following relates to the profiling calls to 
    clSetCommandQueueProperty() which are not available by default
-   with some OpenCL implementation (ie. ATI) */
+   with some OpenCL implementation (i.e. ATI) */
 
 #if defined(DEBUG_OPENCL) && DEBUG_OPENCL == 1
 #define CL_USE_DEPRECATED_OPENCL_1_0_APIS

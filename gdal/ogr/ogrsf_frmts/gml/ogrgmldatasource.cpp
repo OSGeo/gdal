@@ -29,8 +29,8 @@
  *
  ******************************************************************************
  * Contributor: Alessandro Furieri, a.furieri@lqt.it
- * Portions of this module implenting GML_SKIP_RESOLVE_ELEMS HUGE
- * Developed for Faunalia ( http://www.faunalia.it) with funding from 
+ * Portions of this module implementing GML_SKIP_RESOLVE_ELEMS HUGE
+ * Developed for Faunalia ( http://www.faunalia.it) with funding from
  * Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE
  *
  ****************************************************************************/

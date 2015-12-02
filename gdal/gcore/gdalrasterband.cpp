@@ -3405,11 +3405,11 @@ GDALRasterAdviseRead( GDALRasterBandH hBand,
  * the bApproxOK flag can be set to true in which case overviews, or a
  * subset of image tiles may be used in computing the statistics.  
  *
- * If bForce is FALSE results will only be returned if it can be done 
- * quickly (ie. without scanning the data).  If bForce is FALSE and 
+ * If bForce is FALSE results will only be returned if it can be done
+ * quickly (i.e. without scanning the data).  If bForce is FALSE and
  * results cannot be returned efficiently, the method will return CE_Warning
  * but no warning will have been issued.   This is a non-standard use of
- * the CE_Warning return value to indicate "nothing done". 
+ * the CE_Warning return value to indicate "nothing done".
  *
  * Note that file formats using PAM (Persistent Auxiliary Metadata) services
  * will generally cache statistics in the .pam file allowing fast fetch

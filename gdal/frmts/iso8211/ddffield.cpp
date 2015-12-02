@@ -60,7 +60,7 @@ void DDFField::Initialize( DDFFieldDefn *poDefnIn, const char * pachDataIn,
  * subfields is written to the given debugging file handle.  Note that
  * field definition information (ala DDFFieldDefn) isn't written.
  *
- * @param fp The standard io file handle to write to.  ie. stderr
+ * @param fp The standard IO file handle to write to.  i.e. stderr
  */
 
 void DDFField::Dump( FILE * fp )

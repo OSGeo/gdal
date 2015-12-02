@@ -663,7 +663,7 @@ static GUInt32 PDSConvertFromHex(const char* pszVal)
 int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 {
 /* ------------------------------------------------------------------- */
-/*	We assume the user is pointing to the label (ie. .lbl) file.  	   */
+/*      We assume the user is pointing to the label (i.e. .lbl) file.  */
 /* ------------------------------------------------------------------- */
     // IMAGE can be inline or detached and point to an image name
     // ^IMAGE = 3

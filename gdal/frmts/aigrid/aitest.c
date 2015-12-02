@@ -182,7 +182,7 @@ int main( int argc, char ** argv )
     
 /* -------------------------------------------------------------------- */
 /*      Do we want a dump of all the ``magic'' numbers for              */
-/*      instantated blocks?                                             */
+/*      instantiated blocks?                                            */
 /* -------------------------------------------------------------------- */
     if( !bSuppressMagic )
         DumpMagic( psInfo, bMagic );

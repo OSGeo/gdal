@@ -15,22 +15,22 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
  ******************************************************************************
  * Contributor: Alessandro Furieri, a.furieri@lqt.it
- * This module implents GML_SKIP_RESOLVE_ELEMS HUGE
- * Developed for Faunalia ( http://www.faunalia.it) with funding from 
+ * This module implements GML_SKIP_RESOLVE_ELEMS HUGE
+ * Developed for Faunalia ( http://www.faunalia.it) with funding from
  * Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE
  *
  ****************************************************************************/
@@ -1526,7 +1526,7 @@ static int gmlHugeResolveEdges( CPL_UNUSED struct huge_helper *helper,
     if( bError )
         return false;
 
-    /* indentifying any GML node to be rewritten */
+    /* Identifying any GML node to be rewritten. */
     pItem = helper->pFirstHref;
     while( pItem != NULL )
     {

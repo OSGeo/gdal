@@ -2318,16 +2318,17 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                         "Computing overviews on palette index raster bands "
-                        "with a palette whose color interpreation is not RGB "
+                        "with a palette whose color interpretation is not RGB "
                         "will probably lead to unexpected results.");
                 poColorTable = NULL;
             }
         }
         else
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                    "Computing overviews on palette index raster bands "
-                    "without a palette will probably lead to unexpected results.");
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Computing overviews on palette index raster bands "
+                      "without a palette will probably lead to unexpected "
+                      "results." );
         }
     }
     // Not ready yet

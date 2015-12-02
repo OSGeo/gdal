@@ -419,9 +419,9 @@ int OGRSXFLayer::TestCapability( const char * pszCap )
 /*                                TranslateXYH()                        */
 /************************************************************************/
 /****
- * TODO : Take into account informations given in the passport
- * like unit of mesurement, type and dimensions (integer, float, double) of coordinate,
- * the vector format ....
+ * TODO : Take into account information given in the passport
+ * like unit of mesurement, type and dimensions (integer, float, double) of
+ * coordinate, the vector format, etc.
  */
 
 GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,

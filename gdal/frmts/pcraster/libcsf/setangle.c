@@ -31,8 +31,8 @@
  * routines. And since they do a counter clockwise rotation we
  * take the sine and cosine of the negative angle.
  *
- * copy projection field into  raster, so raster can act as an 
- * indepent structure, for transformations
+ * Copy projection field into the raster, so raster can act as an 
+ * independent structure for transformations.
  */
 void CsfFinishMapInit(
 	MAP *m)		/* map handle */

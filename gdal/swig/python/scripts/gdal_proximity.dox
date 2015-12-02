@@ -38,7 +38,7 @@ format specific documentation for legal creation options for each format.
 </dd>
 
 <dt> <b>-ot</b> <i>datatype</i>:</dt><dd> 
-Force the output image bands to have a specific type. Use type names (ie. Byte, Int16,...)
+Force the output image bands to have a specific type. Use type names (i.e. Byte, Int16,...)
 </dd>
 
 <dt> <b>-values</b> <i>n,n,n</i>:</dt><dd> 

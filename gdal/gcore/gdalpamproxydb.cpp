@@ -5,7 +5,7 @@
  * Purpose:  Implementation of the GDAL PAM Proxy database interface.
  *           The proxy db is used to associate .aux.xml files in a temp
  *           directory - used for files for which aux.xml files can't be
- *           created (ie. read-only file systems). 
+ *           created (i.e. read-only file systems).
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************

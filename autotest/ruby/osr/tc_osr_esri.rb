@@ -5,7 +5,7 @@ require 'gdal/osr'
 
 class TestOsrEsri < Test::Unit::TestCase
   
-  # This test verifies that morphToESRI() translates ideosyncratic datum names
+  # This test verifies that morphToESRI() translates idiosyncratic datum names
   # from "EPSG" form to ESRI from when the exception list comes from the
   # gdal_datum.csv file. 
   def test_morph_to_esri

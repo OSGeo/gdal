@@ -34,7 +34,7 @@ Note that this does not restrict the tables that will be listed (see <i>schemas=
 When getting the list of tables, the name of the tables within that active schema will
 not be prefixed by the schema name. For example, if you have a table 'foo' within the public
 schema, and a table 'foo' within the 'bar_schema' schema, and that you specify
-active_schema=bar_schema, 2 layers will be listed : 'foo' (implicetly within 'bar_schema') and 'public.foo'.<p>
+active_schema=bar_schema, 2 layers will be listed : 'foo' (implicitly within 'bar_schema') and 'public.foo'.<p>
 
 <h2>Multiple geometry columns</h2>
 
@@ -151,7 +151,7 @@ that relied on implicit transactions being regularly flushed by the PG driver in
 
 <p>Efficient sequential reading in PostgreSQL requires to be done within a transaction
 (technically this is a CURSOR WITHOUT HOLD).
-So the PG driver will implicitely open such a transaction if none is currently
+So the PG driver will implicitly open such a transaction if none is currently
 opened as soon as a feature is retrieved. This transaction will be released if
 ResetReading() is called (provided that no other layer is still being read).</p>
 
@@ -167,7 +167,7 @@ reading from the beginning.</p>
 
 <p>As calling SetAttributeFilter() or SetSpatialFilter() implies an implicit
 ResetReading(), they have the same effect as ResetReading(). That is to say,
-while an implict transaction is in progress, the transaction will be committed
+while an implicit transaction is in progress, the transaction will be committed
 (if no other layer is being read), and a new one will be started again at the next
 GetNextFeature() call. On the contrary, if they are called within an explicit
 transaction, the transaction is maintained.</p>
@@ -176,7 +176,7 @@ transaction, the transaction is maintained.</p>
 run when using the OGR API in different scenarios.</p>
 <pre>
 
-lyr1->GetNextFeature()             BEGIN (implict)
+lyr1->GetNextFeature()             BEGIN (implicit)
                                    DECLARE cur1 CURSOR FOR SELECT * FROM lyr1
                                    FETCH 1 IN cur1
 
@@ -184,7 +184,7 @@ lyr1->SetAttributeFilter('xxx')
      --> lyr1->ResetReading()      CLOSE cur1
                                    COMMIT (implicit)
 
-lyr1->GetNextFeature()             BEGIN (implict)
+lyr1->GetNextFeature()             BEGIN (implicit)
                                    DECLARE cur1 CURSOR  FOR SELECT * FROM lyr1 WHERE xxx
                                    FETCH 1 IN cur1
 

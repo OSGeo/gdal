@@ -199,7 +199,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     poFeatureDefn->Reference();
     
     bAutoFIDOnCreateViaCopy = FALSE;
-    
+
     bDifferedCreation = FALSE;
     iFIDAsRegularColumnIndex = -1;
 }
@@ -228,7 +228,7 @@ OGRPGTableLayer::~OGRPGTableLayer()
 void  OGRPGTableLayer::SetGeometryInformation(PGGeomColumnDesc* pasDesc,
                                               int nGeomFieldCount)
 {
-    /* flag must be set before instanciating geometry fields */
+    // Flag must be set before instantiating geometry fields.
     bGeometryInformationSet = TRUE;
 
     for(int i=0; i<nGeomFieldCount; i++)
@@ -553,9 +553,12 @@ int OGRPGTableLayer::ReadTableDefinition()
         else
         {
             /* Fetch the name of the parent table */
-            osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
-                            "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
-                            "(SELECT c.oid FROM pg_class c, pg_namespace n WHERE c.relname = %s AND c.relnamespace=n.oid AND n.nspname = %s))",
+            osCommand.Printf(
+                "SELECT pg_class.relname FROM pg_class WHERE oid = "
+                "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
+                "(SELECT c.oid FROM pg_class c, pg_namespace n "
+                "WHERE c.relname = %s AND c.relnamespace=n.oid AND "
+                "n.nspname = %s))",
                             pszEscapedTableNameSingleQuote,
                             OGRPGEscapeString(hPGConn, pszSchemaName).c_str() );
 

@@ -153,7 +153,7 @@ OGR_DS_ReleaseResultSet() before the data source is closed
 (destroyed).
 
 For more information on the SQL dialect supported internally by OGR
-review theOGR SQL document. Some drivers (ie. Oracle and PostGIS) pass
+review theOGR SQL document. Some drivers (i.e. Oracle and PostGIS) pass
 the SQL directly through to the underlying RDBMS.
 
 This function is the same as the C++ method

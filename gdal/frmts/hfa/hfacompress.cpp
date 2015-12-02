@@ -157,7 +157,7 @@ GUInt32 HFACompress::findMin( GByte *pNumBits )
   return u32Min;
 }
 
-/* Codes the count in the way expected by Imagine - ie the lower 2 bits specify how many bytes
+/* Codes the count in the way expected by Imagine - i.e. the lower 2 bits specify how many bytes
    the count takes up */
 void HFACompress::makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount )
 {
@@ -230,7 +230,7 @@ void HFACompress::encodeValue( GUInt32 val, GUInt32 repeat )
 }
 
 /* This is the guts of the file - call this to compress the block */
-/* returns false if the compression fails - ie compressed block bigger than input */
+/* returns false if the compression fails - i.e. compressed block bigger than input */
 bool HFACompress::compressBlock()
 {
   GUInt32 nLastUnique = 0;
@@ -261,7 +261,7 @@ bool HFACompress::compressBlock()
     GUInt32 u32Val = valueAsUInt32( count );
     if( u32Val != u32Last )
     {
-      /* The values have changed - ie a run has come to and end */
+      /* The values have changed - i.e. a run has come to and end */
       encodeValue( u32Last, count - nLastUnique );
 
       if( ( m_pCurrValues - m_pValues ) > (int) m_nBlockSize )

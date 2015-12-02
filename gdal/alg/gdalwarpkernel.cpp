@@ -132,6 +132,7 @@ static CPLErr GWKNearestNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK );
+// TODO: Spelling INSTANCIATE
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK );
 #endif
@@ -3592,7 +3593,7 @@ static void GWKRoundSourceCoordinates(int nDstXSize,
 /*                                                                      */
 /*      This is identical to GWKGeneralCase(), but functions via        */
 /*      OpenCL. This means we have vector optimization (SSE) and/or     */
-/*      GPU optimization depending on our prefs. The code itsef is      */
+/*      GPU optimization depending on our prefs. The code itself is     */
 /*      general and not optimized, but by defining constants we can     */
 /*      make some pretty darn good code on the fly.                     */
 /************************************************************************/
@@ -3611,7 +3612,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     int useImag = FALSE;
     OCLResampAlg resampAlg;
     cl_int err;
-    
+
     switch ( poWK->eWorkingDataType )
     {
       case GDT_Byte:

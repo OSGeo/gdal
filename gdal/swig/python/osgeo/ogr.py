@@ -894,7 +894,7 @@ class DataSource(MajorObject):
         (destroyed).
 
         For more information on the SQL dialect supported internally by OGR
-        review theOGR SQL document. Some drivers (ie. Oracle and PostGIS) pass
+        review theOGR SQL document. Some drivers (i.e. Oracle and PostGIS) pass
         the SQL directly through to the underlying RDBMS.
 
         This function is the same as the C++ method
@@ -1700,11 +1700,11 @@ class Layer(MajorObject):
 
         OLCFastFeatureCount / "FastFeatureCount": TRUE if this layer can
         return a feature count (via OGR_L_GetFeatureCount()) efficiently ...
-        ie. without counting the features. In some cases this will return TRUE
+        i.e. without counting the features. In some cases this will return TRUE
         until a spatial filter is installed after which it will return FALSE.
 
         OLCFastGetExtent / "FastGetExtent": TRUE if this layer can return
-        its data extent (via OGR_L_GetExtent()) efficiently ... ie. without
+        its data extent (via OGR_L_GetExtent()) efficiently, i.e. without
         scanning all the features. In some cases this will return TRUE until a
         spatial filter is installed after which it will return FALSE.
 

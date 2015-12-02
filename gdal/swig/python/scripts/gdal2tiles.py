@@ -411,7 +411,7 @@ class GlobalGeodetic(object):
         return (b[1],b[0],b[3],b[2])
 
 #---------------------
-# TODO: Finish Zoomify implemtentation!!!
+# TODO: Finish Zoomify implementation.
 class Zoomify(object):
     """
     Tiles compatible with the Zoomify viewer

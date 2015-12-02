@@ -1457,7 +1457,7 @@ int WCSDataset::ExtractGridInfo()
 /*      Establish our coordinate system.                                */
 /* -------------------------------------------------------------------- */
     osCRS = CPLGetXMLValue( psGCRS, "GridBaseCRS", "" );
-    
+
     if( strlen(osCRS) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1479,7 +1479,7 @@ int WCSDataset::ExtractGridInfo()
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to interprete GridBaseCRS '%s'.",
+                      "Unable to interpret GridBaseCRS '%s'.",
                       osCRS.c_str() );
             return FALSE;
         }

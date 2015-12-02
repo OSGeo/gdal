@@ -147,7 +147,7 @@ def ogr_index_4():
 def ogr_index_5():
 
     gdaltest.s_lyr.SetAttributeFilter( 'SKEY = 5' )
-    
+
     expect = [ 'Value 5' ]
 
     tr = ogrtest.check_features_against_list( gdaltest.s_lyr, 'VALUE', expect )
@@ -155,7 +155,7 @@ def ogr_index_5():
         return 'success'
     else:
         return 'fail'
-        
+
 ###############################################################################
 # Check that indexable single string lookup works.
 #
@@ -167,9 +167,9 @@ def ogr_index_6():
     gdaltest.s_ds.Release()
     gdaltest.s_ds = ogr.OpenShared( 'join_t.dbf', update = 1 )
     gdaltest.s_lyr = gdaltest.s_ds.GetLayerByName( 'join_t' )
-                                  
+
     gdaltest.s_lyr.SetAttributeFilter( "VALUE='Value 5'" )
-    
+
     expect = [ 5 ]
     
     tr = ogrtest.check_features_against_list( gdaltest.s_lyr, 'SKEY', expect )

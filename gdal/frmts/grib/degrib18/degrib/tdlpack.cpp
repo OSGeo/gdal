@@ -2657,8 +2657,8 @@ static void findGroupRev0 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *      start1 = The starting index in data (Input)
- *      start2 = The starting index of the earlier group (ie don't go to any
- *               earlier indicies than this. (Input)
+ *      start2 = The starting index of the earlier group (i.e. don't go to any
+ *               earlier indices than this. (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *         bit = The range we are allowed to store this in. (Input)
@@ -2725,8 +2725,8 @@ static void shiftGroup2 (sInt4 *Data, int start1, int start2,
  * ARGUMENTS
  *        Data = The data. (Input)
  *      start1 = The starting index in data (Input)
- *      start2 = The starting index of the earlier group (ie don't go to any
- *               earlier indicies than this. (Input)
+ *      start2 = The starting index of the earlier group (i.e. don't go to any
+ *               earlier indices than this. (Input)
  * li_primMiss = scaled primary missing value (Input)
  *         bit = The range we are allowed to store this in. (Input)
  *         min = The min value for the group. (Input/Output)
@@ -2792,8 +2792,8 @@ static void shiftGroup1 (sInt4 *Data, int start1, int start2,
  * ARGUMENTS
  *        Data = The data. (Input)
  *      start1 = The starting index in data (Input)
- *      start2 = The starting index of the earlier group (ie don't go to any
- *               earlier indicies than this. (Input)
+ *      start2 = The starting index of the earlier group (i.e. don't go to any
+ *               earlier indices than this. (Input)
  *         bit = The range we are allowed to store this in. (Input)
  *         min = The min value for the group. (Input/Output)
  *         max = The max value for the group. (Input/Output)

@@ -2952,16 +2952,16 @@ def ogr_gml_63():
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'Staty':
         return 'fail'
-    
+
     # check geometry column name
     if lyr.GetGeometryColumn() != 'DefinicniBod':
         return 'fail'
-    
+
     ds = None
 
     ### test OB file type
     ds = ogr.Open('data/ruian_ob_v1.xml.gz')
-    
+
     # check number of layers
     nlayers = ds.GetLayerCount()
     if nlayers != 11: 
@@ -2978,7 +2978,7 @@ def ogr_gml_63():
     return 'success'
 
 ###############################################################################
-# Test multiple instanciation of parser (#5571)
+# Test multiple instances of parsers (#5571)
 
 def ogr_gml_64():
 

@@ -2793,7 +2793,7 @@ int GDALDatasetGetBestOverviewLevel(GDALDataset* poDS,
 /*      much like the GDALRasterBand::IRasterIO(), but it handles       */
 /*      all bands at once, so that a format driver that handles a       */
 /*      request for different bands of the same block efficiently       */
-/*      (ie. without re-reading interleaved data) will efficiently.     */
+/*      (i.e. without re-reading interleaved data) will efficiently.    */
 /*                                                                      */
 /*      This method is intended to be called by an overridden           */
 /*      IRasterIO() method in the driver specific GDALDataset           */

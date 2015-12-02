@@ -505,9 +505,9 @@ static void Usage()
     printf(" -a_srs srs_def: Assign an output SRS\n"
            " -t_srs srs_def: Reproject/transform to this SRS on output\n"
            " -s_srs srs_def: Override source SRS\n"
-           "\n" 
+           "\n"
            " Srs_def can be a full WKT definition (hard to escape properly),\n"
-           " or a well known definition (ie. EPSG:4326) or a file with a WKT\n"
+           " or a well known definition (i.e. EPSG:4326) or a file with a WKT\n"
            " definition.\n" );
 
     exit( 1 );
@@ -523,12 +523,11 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
 /*      are a GeometryCollection of all of the geometries for records   */
 /*      with that value.                                                */
 /* -------------------------------------------------------------------- */
-    
+
     StringGeometryMMap poGeometriesMap;
 
-    
     OGRFeature  *poFeature;
-    
+
     poSrcLayer->ResetReading();
 
     int iField;

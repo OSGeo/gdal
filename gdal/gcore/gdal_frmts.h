@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL
- * Purpose:  Prototypes for all format specific driver initializations.
+ * Purpose:  Prototypes for all format specific driver initialization.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************

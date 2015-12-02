@@ -96,7 +96,7 @@ void DDFRecordIndex::Clear()
 /*                                                                      */
 /*      Add a record to the index.  The index will assume ownership     */
 /*      of the record.  If passing a record just read from a            */
-/*      DDFModule it is imperitive that the caller Clone()'s the        */
+/*      DDFModule it is imperative that the caller Clone()'s the        */
 /*      record first.                                                   */
 /************************************************************************/
 

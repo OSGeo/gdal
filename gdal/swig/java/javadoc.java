@@ -1148,13 +1148,13 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds)
  * <p>
  * Available request values:
  * <ul>
- * <li> "VERSION_NUM": Returns GDAL_VERSION_NUM formatted as a string.  ie. "1170"
+ * <li> "VERSION_NUM": Returns GDAL_VERSION_NUM formatted as a string.  i.e. "1170"
  *      Note: starting with GDAL 1.10, this string will be longer than 4 characters.
  * <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a string.  
- * ie. "20020416".
- * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "1.1.7"
+ * i.e. "20020416".
+ * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. i.e. "1.1.7"
  * <li> "--version": Returns one line version message suitable for use in 
- * response to --version requests.  ie. "GDAL 1.1.7, released 2002/04/16"
+ * response to --version requests.  i.e. "GDAL 1.1.7, released 2002/04/16"
  * <li> "LICENCE": Returns the content of the LICENSE.TXT file from the GDAL_DATA directory.
  * </ul>
  *
@@ -1167,7 +1167,7 @@ public class gdal:public static String VersionInfo(String request)
 /**
  * Get runtime version information.
  *
- * @return a string containing GDAL_VERSION_NUM formatted as a string.  ie. "1170"
+ * @return a string containing GDAL_VERSION_NUM formatted as a string.  i.e. "1170"
  *
  * @since Java bindings 1.7.0
  */
@@ -1674,7 +1674,7 @@ public class ColorTable:public int GetCount()
 /**
  * Fetch palette interpretation.
  * <p>
- * The returned value is used to interprete the values in the GDALColorEntry.
+ * The returned value is used to interpret the values in the GDALColorEntry.
  *
  * @return palette interpretation enumeration value, usually gdalconst.GPI_RGB. 
  */
@@ -3352,7 +3352,7 @@ public class Band:public int GetRasterDataType()
  * subset of image tiles may be used in computing the statistics.  
  * <p>
  * If force is false results will only be returned if it can be done 
- * quickly (ie. without scanning the data).  If force is false and 
+ * quickly (i.e. without scanning the data).  If force is false and 
  * results cannot be returned efficiently, the method will return CE_Warning
  * but no warning will have been issued.   This is a non-standard use of
  * the CE_Warning return value to indicate "nothing done". 
@@ -6261,7 +6261,7 @@ public class DataSource:public int DeleteLayer(int index)
  ReleaseResultsSet() before the data source is closed  (destroyed).
  <p>
  For more information on the SQL dialect supported internally by OGR
- review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
+ review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (i.e.
  Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
 
  @param statement the SQL statement to execute. 
@@ -7104,12 +7104,12 @@ should build and maintain it's own spatial index for features in this layer.<p>
 
  <li> <b>OLCFastFeatureCount</b> / "FastFeatureCount": 
 true if this layer can return a feature
-count (via GetFeatureCount()) efficiently ... ie. without counting
+count (via GetFeatureCount()) efficiently, i.e. without counting
 the features.  In some cases this will return true until a spatial filter is
 installed after which it will return false.<p>
 
  <li> <b>OLCFastGetExtent</b> / "FastGetExtent": 
-true if this layer can return its data extent (via GetExtent()) efficiently ... ie. without scanning all the features.  In some cases this will return true until a spatial filter is installed after which it will return false.<p>
+true if this layer can return its data extent (via GetExtent()) efficiently, i.e. without scanning all the features.  In some cases this will return true until a spatial filter is installed after which it will return false.<p>
 
  <li> <b>OLCFastSetNextByIndex</b> / "FastSetNextByIndex": 
 true if this layer can perform the SetNextByIndex() call efficiently, otherwise
@@ -8179,7 +8179,7 @@ public class Geometry:public Geometry(int eGeometryType)
 /** 
  * Create a new geometry.
  * <p>
- * The geometry can be instanciated by 4 different and exclusive way :
+ * The geometry can be instantiated by 4 different and exclusive way:
  * <ul>
  * <li> By specifying the geometry type (ogr.wkbPoint, etc..)</li>
  * <li> By specifying the well known text representation (wkt)</li>
@@ -10199,7 +10199,7 @@ public class SpatialReference:public String __str__()
  * where an aspect of the coordinate system can be easily and safely 
  * corresponded with an EPSG identifier.  In practice, this method will 
  * evolve over time.  In theory it can add authority nodes for any object
- * (ie. spheroid, datum, GEOGCS, units, and PROJCS) that could have an 
+ * (i.e. spheroid, datum, GEOGCS, units, and PROJCS) that could have an 
  * authority node.  Mostly this is useful to inserting appropriate 
  * PROJCS codes for common formulations (like UTM n WGS84). 
  * <p>
@@ -10513,7 +10513,7 @@ public class SpatialReference:public String GetAttrValue(String name, int child)
  * code values should be integral.
  *
  * @param target_key the partial or complete path to the node to 
- * get an authority from.  ie. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or null to 
+ * get an authority from.  i.e. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or null to 
  * search for an authority node on the root element.
  *
  * @return value code from authority node, or null on failure.
@@ -10529,7 +10529,7 @@ public class SpatialReference:public String GetAuthorityCode(String target_key)
  * The most common authority is "EPSG".
  *
  * @param target_key the partial or complete path to the node to 
- * get an authority from.  ie. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or null to 
+ * get an authority from.  i.e. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or null to 
  * search for an authority node on the root element.
  *
  * @return value code from authority node, or null on failure.
@@ -11241,7 +11241,7 @@ public class SpatialReference:public int SetAttrValue(String name, String value)
  * Set the authority for a node.
  *
  * @param target_key the partial or complete path to the node to 
- * set an authority on.  ie. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
+ * set an authority on.  i.e. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
  *
  * @param authority authority name, such as "EPSG".
  *
@@ -11578,7 +11578,7 @@ public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, S
  * This method creates a UNIT subnode with the specified values as a
  * child of the target node.
  *
- * @param target the keyword to set the linear units for.  ie. "PROJCS" or "VERT_CS"
+ * @param target the keyword to set the linear units for.  i.e. "PROJCS" or "VERT_CS"
  *
  * @param name the units name to be used.  Some preferred units
  * names can be found in ogr_srs_api.h such as SRS_UL_METER, SRS_UL_FOOT

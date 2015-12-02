@@ -269,7 +269,7 @@ void GDALDefaultOverviews::OverviewScan()
 
 /* -------------------------------------------------------------------- */
 /*      If we still don't have an overview, check to see if we have     */
-/*      overview metadata referencing a remote (ie. proxy) or local     */
+/*      overview metadata referencing a remote (i.e. proxy) or local    */
 /*      subdataset overview dataset.                                    */
 /* -------------------------------------------------------------------- */
     if( poODS == NULL )

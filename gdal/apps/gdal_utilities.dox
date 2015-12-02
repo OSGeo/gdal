@@ -131,8 +131,8 @@ All GDAL command line utility programs support the following
 <dt> <b>\-\-formats</b></dt><dd> List all raster formats supported by this
 GDAL build (read-only and read-write) and exit. The format support is indicated
  as follows: 'ro' is read-only driver; 
-'rw' is read or write (ie. supports CreateCopy);
-'rw+' is read, write and update (ie. supports Create).
+'rw' is read or write (i.e. supports CreateCopy);
+'rw+' is read, write and update (i.e. supports Create).
 A 'v' is appended for formats supporting virtual IO (/vsimem, /vsigzip, /vsizip, etc).
 A 's' is appended for formats supporting subdatasets.
 Note: The valid formats for the output of gdalwarp are formats that support the
@@ -1247,12 +1247,12 @@ projection,including  GCP-based transformations.
 <dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference set.
 The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
-(ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
 containing well known text.</dd>
 <dt> <b>-t_srs</b> <em>srs_def</em>:</dt><dd> target spatial reference set.
 The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
-(ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
 containing well known text.</dd>
 <dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable
 to pass to GDALCreateGenImgProjTransformer2(). </dd>
@@ -1435,7 +1435,7 @@ Output format, defaults to GeoTIFF (GTiff).
 Creation option for output file.  Multiple options can be specified.
 </dd>
 <dt> <b>-ot</b> <i>datatype</i>:</dt><dd> 
-Force the output image bands to have a specific type. Use type names (ie. Byte, Int16,...)
+Force the output image bands to have a specific type. Use type names (i.e. Byte, Int16,...)
 </dd>
 <dt> <b>-ps</b> <i>pixelsize_x pixelsize_y</i>:</dt><dd> Pixel size to be used for the
 output file.  If not specified the resolution of the first input file will
@@ -1681,7 +1681,7 @@ Output format, defaults to GeoTIFF (GTiff).
 Creation option for output file.  Multiple options can be specified.
 </dd>
 <dt> <b>-ot</b> <i>datatype</i>:</dt><dd>
-Force the output image bands to have a specific type. Use type names (ie. Byte, Int16,...)
+Force the output image bands to have a specific type. Use type names (i.e. Byte, Int16,...)
 </dd>
 <dt> <b>-ps</b> <i>pixelsize_x pixelsize_y</i>:</dt><dd> Pixel size to be used for the
 output file.  If not specified, 256 x 256 is the default
@@ -1701,7 +1701,7 @@ Resampling algorithm, default is near
 <dt> <b>-s_srs</b> <i>srs_def</i>:</dt><dd>
 Source spatial reference to use. The coordinate systems  that  can  be
 passed  are  anything  supported by the OGRSpatialReference.SetFro‐mUserInput()  call,
-which  includes  EPSG  PCS  and   GCSes   (ie.EPSG:4296),  PROJ.4  declarations (as above),
+which  includes  EPSG, PCS, and GCSes (i.e. EPSG:4296), PROJ.4 declarations (as above),
 or the name of a .prf file containing well known text.
 If  no  srs_def  is  given,  the srs_def  of the source tiles is used (if there is any).
 The srs_def will be propagated to created tiles (if possible) and  to  the  optional

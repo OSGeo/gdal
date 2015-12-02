@@ -145,7 +145,7 @@
   In 99.9% of the cases, SWIG just needs to declare them as 'static'.
   
   But only do this if strictly necessary, ie, if you have problems
-  with your compiler or suchlike.
+  with your compiler or such.
 */
 
 #ifndef SWIGRUNTIME
@@ -1232,10 +1232,10 @@ SWIG_InitializeModule(void *clientdata) {
     module_head->next = &swig_module;
   }
 
-  /* When multiple interpeters are used, a module could have already been initialized in
-     a different interpreter, but not yet have a pointer in this interpreter.
-     In this case, we do not want to continue adding types... everything should be
-     set up already */
+  /* When multiple interpreters are used, a module could have already
+     been initialized in a different interpreter, but not yet have a
+     pointer in this interpreter.  In this case, we do not want to
+     continue adding types... everything should be set up already */
   if (init == 0) return;
 
   /* Now work on filling in swig_module.types */

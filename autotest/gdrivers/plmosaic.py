@@ -619,7 +619,7 @@ def plmosaic_17():
         pass
 
     for i in range(12):
-        # Read at one inexisting position
+        # Read at one nonexistent position.
         ds.GetRasterBand(1).ReadRaster(4096 * i,0,1,1)
         if gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')

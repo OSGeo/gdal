@@ -66,15 +66,15 @@ reporting options are provided.
 <dt> <b>-xml</b>:</dt>
 <dd> The output report will be XML formatted for convenient post processing.</dd>
 
-<dt> <b>-lifonly</b>:</dt> 
+<dt> <b>-lifonly</b>:</dt>
 <dd>The only output is filenames production from the LocationInfo request
-against the database (ie. for identifying impacted file from VRT).</dd>
+against the database (i.e. for identifying impacted file from VRT).</dd>
 
-<dt> <b>-valonly</b>:</dt> 
+<dt> <b>-valonly</b>:</dt>
 <dd>The only output is the pixel values of the selected pixel on each of
 the selected bands.</dd>
 
-<dt> <b>-b</b> <em>band</em>:</dt> 
+<dt> <b>-b</b> <em>band</em>:</dt>
 <dd>Selects a band to query.  Multiple bands can be listed.  By default all
 bands are queried.</dd>
 

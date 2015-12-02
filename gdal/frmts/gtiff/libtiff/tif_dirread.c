@@ -3741,7 +3741,7 @@ TIFFReadDirectory(TIFF* tif)
 					uint32 countrequired;
 					uint32 incrementpersample;
 					uint16* value=NULL;
-                    /* It would be dangerous to instanciate those tag values */
+                    /* It would be dangerous to instantiate those tag values */
                     /* since if td_bitspersample has not yet been read (due to */
                     /* unordered tags), it could be read afterwards with a */
                     /* values greater than the default one (1), which may cause */

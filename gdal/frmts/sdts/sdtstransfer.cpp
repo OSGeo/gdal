@@ -523,7 +523,7 @@ SDTSFeature *SDTSTransfer::GetIndexedFeatureRef( SDTSModId *poModId,
 /**
   Fetch the attribute fields given a particular module/record id.
 
-  @param poModId an attribute record identifer, normally taken from the
+  @param poModId an attribute record identifier, normally taken from the
   aoATID[] array of an SDTSIndexedFeature.
 
   @return a pointer to the DDFField containing the user attribute values as

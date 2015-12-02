@@ -92,13 +92,13 @@ def tiff_read_off():
 
 
 ###############################################################################
-# Confirm we interprete bands as alpha when we should, and not when we
+# Confirm we interpret bands as alpha when we should, and not when we
 # should not.
 
 def tiff_check_alpha():
 
     # Grey + alpha
-    
+
     ds = gdal.Open('data/stefan_full_greyalpha.tif')
 
     if ds.GetRasterBand(2).GetRasterColorInterpretation()!= gdal.GCI_AlphaBand:
@@ -109,7 +109,7 @@ def tiff_check_alpha():
     ds = None
 
     # RGB + alpha
-    
+
     ds = gdal.Open('data/stefan_full_rgba.tif')
 
     if ds.GetRasterBand(4).GetRasterColorInterpretation()!= gdal.GCI_AlphaBand:
@@ -120,7 +120,7 @@ def tiff_check_alpha():
     ds = None
 
     # RGB + undefined
-    
+
     ds = gdal.Open('data/stefan_full_rgba_photometric_rgb.tif')
 
     if ds.GetRasterBand(4).GetRasterColorInterpretation()!= gdal.GCI_Undefined:
@@ -487,11 +487,11 @@ def tiff_g4_split():
 
     if not 'GetBlockSize' in dir(gdal.Band):
         return 'skip'
-    
+
     ds = gdal.Open('data/slim_g4.tif')
 
     (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
-    
+
     if blocky != 1:
         gdaltest.post_reason( 'Did not get scanline sized blocks.' )
         return 'fail'
@@ -509,10 +509,11 @@ def tiff_g4_split():
 
 def tiff_multi_images():
 
-    # Implicitely get the content of the first image (backward compatibility)
+    # Implicitly get the content of the first image (backward compatibility).
     ds = gdal.Open('data/twoimages.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
-            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
+            print('Expected checksum = %d. Got = %d' %
+                  (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
 
     md = ds.GetMetadata('SUBDATASETS')

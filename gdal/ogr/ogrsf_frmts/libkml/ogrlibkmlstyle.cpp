@@ -853,9 +853,8 @@ static StyleSelectorPtr StyleFromStyleURL(
 
     char *pszUrl = CPLStrdup ( styleurl.c_str (  ) );
     char *pszStyleMapId = CPLStrdup ( stylemap->get_id().c_str (  ) );
-    
 
-    /***** is it an interenal style ref that starts with a # *****/
+    /***** Is it an internal style ref that starts with a #? *****/
 
     if ( *pszUrl == '#' && poStyleTable ) {
 
@@ -871,7 +870,7 @@ static StyleSelectorPtr StyleFromStyleURL(
 
     /***** We have a real URL and need to go out and fetch it *****/
     /***** FIXME this could be a relative path in a kmz *****/
-    
+
     else if ( strchr(pszUrl, '#') ) {
 
         const char *pszFetch = CPLGetConfigOption ( "LIBKML_EXTERNAL_STYLE", "no" );

@@ -63,7 +63,7 @@
  *
  * PURPOSE
  *   Unpack the local use data assuming that it was packed using the MDL
- * encoder.  This assumes "local" starts at octet 6 (ie skipping over the
+ * encoder.  This assumes "local" starts at octet 6 (i.e. skipping over the
  * length and section ID octets)
  *
  *   In Section 2, GRIB2 provides for local use data.  The MDL encoder packs

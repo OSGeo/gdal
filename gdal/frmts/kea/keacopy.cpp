@@ -238,12 +238,14 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                         break;
                 }
             }
-            
+
             fields->push_back(field);
         }
-        
-        keaAtt->addFields(fields); // This function will populate the field indexs used within the KEA RAT.
-        
+
+        // This function will populate the field indexes used within
+        // the KEA RAT.
+        keaAtt->addFields(fields);
+
         int numRows = gdalAtt->GetRowCount();
         keaAtt->addRows(numRows);
 
@@ -264,7 +266,8 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                 switch(field->dataType)
                 {
                     case kealib::kea_att_int:
-                        ((GDALRasterAttributeTable*)gdalAtt)->ValuesIO(GF_Read, nj, ni, nLength, pnIntBuffer);
+                        ((GDALRasterAttributeTable*)gdalAtt)->ValuesIO(
+                            GF_Read, nj, ni, nLength, pnIntBuffer);
                         for( int i = 0; i < nLength; i++ )
                         {
                             pnInt64Buffer[i] = pnIntBuffer[i];

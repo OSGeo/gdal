@@ -8,7 +8,7 @@ dnl This macro takes only one optional argument, required version
 dnl of SQLite 3 library. If required version is not passed,
 dnl 3.0.0 is used in the test of existence of SQLite 3.
 dnl
-dnl If no intallation prefix to the installed SQLite library is given
+dnl If no installation prefix to the installed SQLite library is given
 dnl the macro searches under /usr, /usr/local, and /opt.
 dnl
 dnl This macro calls:

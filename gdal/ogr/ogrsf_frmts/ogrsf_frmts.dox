@@ -429,7 +429,7 @@ success.
  (destroyed).  
 
  For more information on the SQL dialect supported internally by OGR
- review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
+ review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (i.e.
  Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
 
  Starting with OGR 1.10, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
@@ -906,7 +906,7 @@ by the OGRSFDriverManager.
  Note that some implementations of this method may alter the read cursor
  of the layer.
 
- Note to driver implementators: if you implement GetExtent(int,OGREnvelope*,int),
+ Note to driver implementer: if you implement GetExtent(int,OGREnvelope*,int),
  you must also implement GetExtent(OGREnvelope*, int) to make it call
  GetExtent(0,OGREnvelope*,int).
 
@@ -1106,7 +1106,7 @@ by the OGRSFDriverManager.
  Note that only the last spatial filter set is applied, even if several
  successive calls are done with different iGeomField values.
 
- Note to driver implementators: if you implement SetSpatialFilter(int,OGRGeometry*),
+ Note to driver implementer: if you implement SetSpatialFilter(int,OGRGeometry*),
  you must also implement SetSpatialFilter(OGRGeometry*) to make it call
  SetSpatialFilter(0,OGRGeometry*).
 
@@ -1277,7 +1277,7 @@ by the OGRSFDriverManager.
  form of SQL  WHERE clause as described in the "WHERE" section of the 
  <a href="ogr_sql.html">OGR SQL</a> tutorial.  In some cases (RDBMS 
  backed drivers) the native capabilities of the database may be used to 
- interprete the WHERE clause in which case the capabilities will be broader
+ interpret the WHERE clause in which case the capabilities will be broader
  than those of OGR SQL.
 
  Note that installing a query string will generally result in resetting
@@ -1712,13 +1712,13 @@ should build and maintain its own spatial index for features in this layer.<p>
 
  <li> <b>OLCFastFeatureCount</b> / "FastFeatureCount": 
 TRUE if this layer can return a feature
-count (via GetFeatureCount()) efficiently ... ie. without counting
+count (via GetFeatureCount()) efficiently. i.e. without counting
 the features.  In some cases this will return TRUE until a spatial filter is
 installed after which it will return FALSE.<p>
 
  <li> <b>OLCFastGetExtent</b> / "FastGetExtent": 
 TRUE if this layer can return its data extent (via GetExtent())
-efficiently ... ie. without scanning all the features.  In some cases this
+efficiently, i.e. without scanning all the features.  In some cases this
 will return TRUE until a spatial filter is installed after which it will
 return FALSE.<p>
 
@@ -1809,13 +1809,13 @@ layer.<p>
 
  <li> <b>OLCFastFeatureCount</b> / "FastFeatureCount": 
 TRUE if this layer can return a feature
-count (via OGR_L_GetFeatureCount()) efficiently ... ie. without counting
+count (via OGR_L_GetFeatureCount()) efficiently, i.e. without counting
 the features.  In some cases this will return TRUE until a spatial filter is
 installed after which it will return FALSE.<p>
 
  <li> <b>OLCFastGetExtent</b> / "FastGetExtent": 
 TRUE if this layer can return its data extent (via OGR_L_GetExtent())
-efficiently ... ie. without scanning all the features.  In some cases this
+efficiently, i.e. without scanning all the features.  In some cases this
 will return TRUE until a spatial filter is installed after which it will
 return FALSE.<p>
 

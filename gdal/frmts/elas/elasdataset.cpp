@@ -47,7 +47,7 @@ typedef struct ELASHeader {
     GInt32      NBPR;	/* bytes per data record (all bands of scanline) */
     GInt32	IL;	/* initial line - normally 1 */
     GInt32	LL;	/* last line */
-    GInt32	IE;	/* initial element (pixel), normally 1 */
+    GInt32      IE;     /* initial element (pixel), normally 1 */
     GInt32	LE;	/* last element (pixel) */
     GInt32	NC;	/* number of channels (bands) */
     GInt32	H4321;	/* header record identifier - always 4321. */

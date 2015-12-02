@@ -32,7 +32,8 @@
  *
  * $Log: mitab_middatafile.cpp,v $
  * Revision 1.15  2010-10-12 19:02:40  aboudreault
- * Fixed incomplet patch to handle differently indented lines in mif files (gdal #3694)
+ * Fixed incomplete patch to handle differently indented lines in MIF
+ * files (gdal #3694).
  *
  * Revision 1.14  2006-01-27 13:54:06  fwarmerdam
  * fixed memory leak

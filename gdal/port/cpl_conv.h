@@ -92,7 +92,7 @@ float CPL_DLL CPLStrtofDelim(const char *, char **, char);
 
 /* -------------------------------------------------------------------- */
 /*      Convert number to string.  This function is locale agnostic     */
-/*      (ie. it will support "," or "." regardless of current locale)   */
+/*      (i.e. it will support "," or "." regardless of current locale)  */
 /* -------------------------------------------------------------------- */
 double CPL_DLL CPLAtofM(const char *);
 

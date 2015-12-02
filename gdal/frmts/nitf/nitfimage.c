@@ -527,8 +527,8 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     }								
 
 /* -------------------------------------------------------------------- */
-/*      Some files (ie NSIF datasets) have truncated image              */
-/*      headers.  This has been observed with jpeg compressed           */
+/*      Some files (i.e. NSIF datasets) have truncated image              */
+/*      headers.  This has been observed with JPEG compressed           */
 /*      files.  In this case guess reasonable values for these          */
 /*      fields.                                                         */
 /* -------------------------------------------------------------------- */

@@ -502,7 +502,7 @@ int VSIIsCaseSensitiveFS( const char * pszFilename )
  * Analog of the POSIX fopen() function.
  *
  * @param pszFilename the file to open.  UTF-8 encoded.
- * @param pszAccess access requested (ie. "r", "r+", "w".  
+ * @param pszAccess access requested (i.e. "r", "r+", "w".
  *
  * @return NULL on failure, or the file handle.
  */
@@ -512,11 +512,11 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 {
     VSIFilesystemHandler *poFSHandler = 
         VSIFileManager::GetHandler( pszFilename );
-        
+
     VSILFILE* fp = (VSILFILE *) poFSHandler->Open( pszFilename, pszAccess );
 
     VSIDebug3( "VSIFOpenL(%s,%s) = %p", pszFilename, pszAccess, fp );
-        
+
     return fp;
 }
 

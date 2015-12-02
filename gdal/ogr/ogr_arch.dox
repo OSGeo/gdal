@@ -240,7 +240,7 @@ A GDALDriver object is instantiated for each file format supported.
 The GDALDriver objects are registered with the GDALDriverManager, a
 singleton class that is normally used to open new datasets.<p>
 
-It is intended that a new GDALDriver object is instanciated and define function
+It is intended that a new GDALDriver object is instantiated and define function
 pointers for operations like Identify(), Open() for each
 file format to be supported (along with a file format specific 
 GDALDataset, and OGRLayer classes).<p>

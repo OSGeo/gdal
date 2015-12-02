@@ -2185,11 +2185,13 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
 
         OGREnvelope sRasterEnvelope;
         sRasterEnvelope.MinX = adfGeoTransform[0];
-        sRasterEnvelope.MinY = adfGeoTransform[3] + poClippingDS->GetRasterYSize() * adfGeoTransform[5];
-        sRasterEnvelope.MaxX = adfGeoTransform[0] + poClippingDS->GetRasterXSize() * adfGeoTransform[1];
+        sRasterEnvelope.MinY = adfGeoTransform[3]
+            + poClippingDS->GetRasterYSize() * adfGeoTransform[5];
+        sRasterEnvelope.MaxX = adfGeoTransform[0]
+            + poClippingDS->GetRasterXSize() * adfGeoTransform[1];
         sRasterEnvelope.MaxY = adfGeoTransform[3];
 
-        /* Check that the reprojected geometry interescts the raster envelope */
+        // Check that the reprojected geometry intersects the raster envelope.
         OGR_G_GetEnvelope(hGeom, &sEnvelope);
         if( !(sRasterEnvelope.Intersects(sEnvelope)) )
         {

@@ -1375,7 +1375,7 @@ void JPGDatasetCommon::InitInternalOverviews()
     bHasInitInternalOverviews = TRUE;
 
 /* -------------------------------------------------------------------- */
-/*      Instanciate on-the-fly overviews (if no external ones).         */
+/*      Instantiate on-the-fly overviews (if no external ones).         */
 /* -------------------------------------------------------------------- */
     if( nScaleFactor == 1 && GetRasterBand(1)->GetOverviewCount() == 0 )
     {

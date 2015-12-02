@@ -2321,10 +2321,10 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
     if( pbErrorOccurred )
         *pbErrorOccurred = FALSE;
 
-    /* GetLayerByName() can instanciate layers that would have been */
+    /* GetLayerByName() can instantiate layers that would have been */
     /* 'hidden' otherwise, for example, non-spatial tables in a */
-    /* Postgis-enabled database, so this apparently useless command is */
-    /* not useless... (#4012) */
+    /* PostGIS-enabled database, so this apparently useless command is */
+    /* not useless. (#4012) */
     CPLPushErrorHandler(CPLQuietErrorHandler);
     OGRLayer* poDstLayer = poDstDS->GetLayerByName(pszNewLayerName);
     CPLPopErrorHandler();

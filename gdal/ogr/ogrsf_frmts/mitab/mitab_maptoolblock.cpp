@@ -240,7 +240,8 @@ int     TABMAPToolBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                                         int nFileOffset /* = 0*/)
 {
 #ifdef DEBUG_VERBOSE
-    CPLDebug("MITAB", "Instanciating new TOOL block at offset %d", nFileOffset);
+    CPLDebug( "MITAB",
+              "Instantiating new TOOL block at offset %d", nFileOffset);
 #endif
 
     /*-----------------------------------------------------------------
@@ -253,7 +254,7 @@ int     TABMAPToolBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
      * And then set default values for the block header.
      *----------------------------------------------------------------*/
     m_nNextToolBlock = 0;
- 
+
     m_numDataBytes = 0;
 
     GotoByteInBlock(0x000);

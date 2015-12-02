@@ -117,8 +117,8 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
     {
         bool bOldWrap = false;
 
-        // old coverages (ie. WCS) just have <pos> under <origin> so we
-        // may need to temporarily force <origin> to <Point>
+        // Old coverages (i.e. WCS) just have <pos> under <origin>, so we
+        // may need to temporarily force <origin> to <Point>.
         if( psOriginPoint->eType == CXT_Element
             && EQUAL(psOriginPoint->pszValue,"origin") )
         {
@@ -182,7 +182,7 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
         delete poOriginGeometry;
 
 /* -------------------------------------------------------------------- */
-/*      If we have gotten a geotransform, then try to interprete the    */
+/*      If we have gotten a geotransform, then try to interpret the     */
 /*      srsName.                                                        */
 /* -------------------------------------------------------------------- */
     if( bSuccess && pszSRSName != NULL 

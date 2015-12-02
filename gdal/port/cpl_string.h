@@ -155,7 +155,7 @@ size_t CPL_DLL CPLStrlcat(char* pszDest, const char* pszSrc, size_t nDestSize);
 size_t CPL_DLL CPLStrnlen (const char *pszStr, size_t nMaxLen);
 
 /* -------------------------------------------------------------------- */
-/*      Locale independant formatting functions.                        */
+/*      Locale independent formatting functions.                        */
 /* -------------------------------------------------------------------- */
 int CPL_DLL CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args) CPL_PRINT_FUNC_FORMAT (3, 0);
 int CPL_DLL CPLsnprintf(char *str, size_t size, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(3,4);

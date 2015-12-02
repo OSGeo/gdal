@@ -93,7 +93,7 @@ class OGDIRasterBand : public GDALRasterBand
 {
     friend class OGDIDataset;
 
-    int		nOGDIImageType; /* ie. 1 for RGB */
+    int nOGDIImageType; /* i.e. 1 for RGB */
 
     char	*pszLayerName;
     ecs_Family  eFamily;
@@ -591,7 +591,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Has the user hardcoded a layer and family in the URL?           */
 /*      Honour quoted strings for the layer name, since some layers     */
-/*      (ie. RPF/CADRG) have embedded colons.                           */
+/*      (i.e. RPF/CADRG) have embedded colons.                           */
 /* -------------------------------------------------------------------- */
     int       nC1=-1, nC2=-1, i, bInQuotes = FALSE;
     char      *pszURL = CPLStrdup(poOpenInfo->pszFilename);
@@ -603,7 +603,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( pszURL[i] == '"' && pszURL[i-1] != '\\' )
             bInQuotes = !bInQuotes;
-            
+
         else if( pszURL[i] == ':' && !bInQuotes )
         {
             if( nC1 == -1 )
@@ -617,7 +617,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
                 pszURL[nC2] = '\0';
             }
         }
-    }	
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we got a "family", and it is a vector family then return     */
@@ -654,7 +654,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         char	*pszLayerName = CPLStrdup( pszURL+nC2+1 );
-        
+
         if( pszLayerName[0] == '"' )
         {
             int		nOut = 0;
@@ -682,14 +682,14 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLFree( pszURL );
 
 /* -------------------------------------------------------------------- */
-/*      If this is a 3.1 server (ie, it support                         */
+/*      If this is a 3.1 server (i.e, it support                         */
 /*      cln_GetLayerCapabilities()) and it has no raster layers then    */
 /*      we can assume it must be a vector datastore.  End without an    */
 /*      error in case the application wants to try this through         */
 /*      OGR.                                                            */
 /* -------------------------------------------------------------------- */
     psResult = cln_GetVersion(nClientID);
-    
+
     if( (ECSERROR(psResult) || CPLAtof(ECSTEXT(psResult)) >= 3.1)
         && CSLCount(papszMatrices) == 0 
         && CSLCount(papszImages) == 0 )
@@ -701,7 +701,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
         cln_DestroyClient( nClientID );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */

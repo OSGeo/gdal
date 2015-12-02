@@ -64,7 +64,7 @@ CPL_C_END
             During a IRasterIO() query,
             i) we will do a SQL query to retrieve the PKID of tiles that intersect the query window.
             ii) If some tiles are not registered as sources, then do a SQL query to fetch their metadata
-            and instanciate them and register them.
+            and instantiate them and register them.
             iii) If some tiles are not cached, then determine if the query window is not too big (w.r.t. GDAL cache),
             and if not, then do a SQL query to fetch their raster column.
 

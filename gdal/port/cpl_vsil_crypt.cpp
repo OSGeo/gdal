@@ -543,8 +543,8 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
 
         if( osIV.size() != poEncCipher->BlockSize() )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Inconsistant initial vector");
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Inconsistent initial vector" );
             delete poEncCipher;
             return FALSE;
         }
@@ -778,8 +778,8 @@ int VSICryptFileHandle::Init(const CPLString& osKey, int bWriteHeader)
 
     if( poHeader->osIV.size() != poEncCipher->BlockSize() )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                    "Inconsistant initial vector");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Inconsistent initial vector" );
         return FALSE;
     }
 

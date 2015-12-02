@@ -45,7 +45,7 @@
     $*csclassname ret = (cPtr == IntPtr.Zero) ? null : new $*csclassname(cPtr, $owner, ThisOwn_$owner());$excode
     return ret;
   }
-// Proxy classes (base classes, ie, not derived classes)
+// Proxy classes (base classes, i.e, not derived classes)
 %typemap(csbody) SWIGTYPE %{
   private HandleRef swigCPtr;
   protected bool swigCMemOwn;

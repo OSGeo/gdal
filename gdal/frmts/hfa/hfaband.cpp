@@ -1434,7 +1434,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         }
         else
         {
-            /* If we have actually made the block bigger - ie does not compress well */
+            /* If we have actually made the block bigger - i.e. does not compress well */
             panBlockFlag[iBlock] ^= BFLG_COMPRESSED;
             // alloc more space for the uncompressed block
             ReAllocBlock( iBlock, nInBlockSize );

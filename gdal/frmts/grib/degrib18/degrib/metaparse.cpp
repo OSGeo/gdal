@@ -989,14 +989,14 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
    }
    if (meta->gds.scan != GRIB2BIT_2) {
 #ifdef DEBUG
-      printf ("Scan mode is expected to be 0100 (ie %d) not %d\n",
+      printf ("Scan mode is expected to be 0100 (i.e. %d) not %d\n",
               GRIB2BIT_2, meta->gds.scan);
       printf ("The merged GRIB2 Library should return it in 0100\n");
       printf ("The merged library swaps both NCEP and MDL data to scan "
               "mode 0100\n");
 #endif
 /*
-      errSprintf ("Scan mode is expected to be 0100 (ie %d) not %d",
+      errSprintf ("Scan mode is expected to be 0100 (i.e. %d) not %d",
                   GRIB2BIT_2, meta->gds.scan);
       return -2;
 */

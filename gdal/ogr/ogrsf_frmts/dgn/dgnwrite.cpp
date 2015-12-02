@@ -2381,7 +2381,7 @@ int DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement,
  * Add a raw attribute linkage to element.
  *
  * Given a raw data buffer, append it to this element as an attribute linkage
- * without trying to interprete the linkage data.   
+ * without trying to interpret the linkage data.
  *
  * The target element must already have raw_data loaded, and it will be 
  * resized (see DGNResizeElement()) as needed for the new attribute data. 
@@ -2398,7 +2398,7 @@ int DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement,
  * @param pabyRawLinkData the raw linkage data (nLinkSize bytes worth). 
  *
  * @return -1 on failure, or the link index. 
- */ 
+ */
 
 int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement, 
                        int nLinkSize, unsigned char *pabyRawLinkData )

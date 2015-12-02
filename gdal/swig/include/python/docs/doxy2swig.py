@@ -43,14 +43,13 @@ def my_open_write(dest):
         return open(dest, 'w')
 
 
-class Doxy2SWIG:    
+class Doxy2SWIG:
     """Converts Doxygen generated XML files into a file containing
     docstrings that can be used by SWIG-1.3.x that have support for
     feature("docstring").  Once the data is parsed it is stored in
     self.pieces.
+    """
 
-    """    
-    
     def __init__(self, src):
         """Initialize the instance given a source object (file or
         filename).
@@ -76,7 +75,7 @@ class Doxy2SWIG:
                         'reimplementedby', 'derivedcompoundref',
                         'basecompoundref')
         #self.generics = []
-        
+
     def generate(self):
         """Parses the file set in the initialization.  The resulting
         data is stored in `self.pieces`.

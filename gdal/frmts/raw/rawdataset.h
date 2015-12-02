@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Raw Translator
- * Purpose:  Implementation of RawDataset class.  Intented to be subclassed
+ * Purpose:  Implementation of RawDataset class.  Intended to be subclassed
  *           by other raw formats.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *

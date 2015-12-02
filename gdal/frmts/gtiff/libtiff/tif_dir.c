@@ -170,7 +170,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 	 * We want to force the custom code to be used for custom
 	 * fields even if the tag happens to match a well known 
 	 * one - important for reinterpreted handling of standard
-	 * tag values in custom directories (ie. EXIF) 
+	 * tag values in custom directories (i.e. EXIF) 
 	 */
 	if (fip->field_bit == FIELD_CUSTOM) {
 		standard_tag = 0;
@@ -834,7 +834,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 	 * We want to force the custom code to be used for custom
 	 * fields even if the tag happens to match a well known 
 	 * one - important for reinterpreted handling of standard
-	 * tag values in custom directories (ie. EXIF) 
+	 * tag values in custom directories (i.e. EXIF) 
 	 */
 	if (fip->field_bit == FIELD_CUSTOM) {
 		standard_tag = 0;

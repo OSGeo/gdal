@@ -1151,15 +1151,18 @@ void OGRPGDataSource::LoadTables()
         /* tables */
         if ( bHavePostGIS && !bListAllTables && sPostGISVersion.nMajor < 2 )
         {
-        /* -------------------------------------------------------------------- */
-        /*      Fetch inherited tables                                          */
-        /* -------------------------------------------------------------------- */
-            hResult = OGRPG_PQexec(hPGConn,
-                                "SELECT c1.relname AS derived, c2.relname AS parent, n.nspname "
-                                "FROM pg_class c1, pg_class c2, pg_namespace n, pg_inherits i "
-                                "WHERE i.inhparent = c2.oid AND i.inhrelid = c1.oid AND c1.relnamespace=n.oid "
-                                "AND c1.relkind in ('r', 'v') AND c1.relnamespace=n.oid AND c2.relkind in ('r','v') "
-                                "AND c2.relname !~ '^pg_' AND c2.relnamespace=n.oid");
+        /* ------------------------------------------------------------------ */
+        /*      Fetch inherited tables                                        */
+        /* ------------------------------------------------------------------ */
+            hResult = OGRPG_PQexec(
+                hPGConn,
+                "SELECT c1.relname AS derived, c2.relname AS parent, n.nspname "
+                "FROM pg_class c1, pg_class c2, pg_namespace n, pg_inherits i "
+                "WHERE i.inhparent = c2.oid AND i.inhrelid = c1.oid AND "
+                "c1.relnamespace=n.oid "
+                "AND c1.relkind in ('r', 'v') AND c1.relnamespace=n.oid AND "
+                "c2.relkind in ('r','v') "
+                "AND c2.relname !~ '^pg_' AND c2.relnamespace=n.oid");
 
             if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
             {
@@ -1170,9 +1173,9 @@ void OGRPGDataSource::LoadTables()
                 goto end;
             }
 
-        /* -------------------------------------------------------------------- */
-        /*      Parse the returned table list                                   */
-        /* -------------------------------------------------------------------- */
+        /* ------------------------------------------------------------------ */
+        /*      Parse the returned table list                                 */
+        /* ------------------------------------------------------------------ */
             int bHasDoneSomething;
             do
             {
@@ -1512,7 +1515,9 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     int iLayer;
 
     CPLString osSQLLayerName;
-    if (pszSchemaName == NULL || (strlen(osCurrentSchema) > 0 && EQUAL(pszSchemaName, osCurrentSchema.c_str())))
+    if (pszSchemaName == NULL ||
+        ( strlen(osCurrentSchema) > 0 &&
+          EQUAL(pszSchemaName, osCurrentSchema.c_str() ) ) )
         osSQLLayerName = pszTableName;
     else
     {
@@ -1521,10 +1526,10 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         osSQLLayerName += pszTableName;
     }
 
-    /* GetLayerByName() can instanciate layers that would have been */
+    /* GetLayerByName() can instantiate layers that would have been */
     /* 'hidden' otherwise, for example, non-spatial tables in a */
-    /* Postgis-enabled database, so this apparently useless command is */
-    /* not useless... (#4012) */
+    /* PostGIS-enabled database, so this apparently useless command is */
+    /* not useless. (#4012) */
     CPLPushErrorHandler(CPLQuietErrorHandler);
     GetLayerByName(osSQLLayerName);
     CPLPopErrorHandler();

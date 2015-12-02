@@ -173,17 +173,17 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Format type of `%c' not supported.\n",
                   pszFormatString[0] );
-        
+
         return FALSE;
-        
+
       default:
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Format type of `%c' not recognised.\n",
                   pszFormatString[0] );
-        
+
         return FALSE;
     }
-    
+
     return TRUE;
 }
 
@@ -197,7 +197,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
  * A variety of information about this field definition is written to the
  * give debugging file handle.
  *
- * @param fp The standard io file handle to write to.  ie. stderr
+ * @param fp The standard IO file handle to write to.  i.e. stderr
  */
 
 void DDFSubfieldDefn::Dump( FILE * fp )

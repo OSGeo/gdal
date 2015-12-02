@@ -30,10 +30,10 @@
  ****************************************************************************
  *
  * dataset.cpp:
- * Initialization of the GDALWMSdriver, parsing the XML configuration file, 
- * instantiation of the minidrivers and accessors used by minidrivers
+ * Initialization of the GDALWMSdriver, parsing the XML configuration file,
+ * instantiation of the minidrivers and accessors used by minidrivers.
  *
- ***************************************************************************/ 
+ ***************************************************************************/
 
 
 #include "wmsdriver.h"

@@ -3169,7 +3169,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               if ( pszTmp )
               {
                   dfScale = CPLAtof( pszTmp );
-                  // some producers (ie. lndcsm from LEDAPS) emit
+                  // some producers (i.e. lndcsm from LEDAPS) emit
                   // files with scale_factor=0 which is crazy to carry
                   // through.
                   if( dfScale == 0.0 )

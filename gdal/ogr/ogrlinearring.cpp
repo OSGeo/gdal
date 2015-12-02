@@ -606,7 +606,7 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTe
     double prev_diff_x = getX(0) - dfTestX;
     double prev_diff_y = getY(0) - dfTestY;
 
-    for ( int iPoint = 1; iPoint < iNumPoints; iPoint++ ) 
+    for ( int iPoint = 1; iPoint < iNumPoints; iPoint++ )
     {
         const double x1 = getX(iPoint) - dfTestX;
         const double y1 = getY(iPoint) - dfTestY;
@@ -614,10 +614,11 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTe
         const double x2 = prev_diff_x;
         const double y2 = prev_diff_y;
 
-        /* If the point is on the segment, return immediatly */
+        /* If the point is on the segment, return immediately. */
         /* FIXME? If the test point is not exactly identical to one of */
         /* the vertices of the ring, but somewhere on a segment, there's */
-        /* little chance that we get 0. So that should be tested against some epsilon */
+        /* little chance that we get 0. So that should be tested against some */
+        /* epsilon. */
 
         if ( x1 * y2 - x2 * y1 == 0 )
         {

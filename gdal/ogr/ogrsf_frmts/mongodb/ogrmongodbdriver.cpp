@@ -1373,7 +1373,7 @@ OGRErr OGRMongoDBLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
         oFieldDefn.SetName("geometry");
 
     m_poFeatureDefn->AddGeomFieldDefn( &oFieldDefn );
-    
+
     std::vector<CPLString> aosPaths;
     if( m_bDotAsNestedField )
     {
@@ -1386,7 +1386,7 @@ OGRErr OGRMongoDBLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
         aosPaths.push_back(oFieldDefn.GetNameRef());
     m_aaosGeomFieldPaths.push_back(aosPaths);
     m_aosGeomIndexes.push_back("none");
-    
+
     OGRCoordinateTransformation* poCT = NULL;
     if( oFieldDefn.GetSpatialRef() != NULL )
     {
@@ -1397,8 +1397,9 @@ OGRErr OGRMongoDBLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
             poCT = OGRCreateCoordinateTransformation( oFieldDefn.GetSpatialRef(), &oSRS_WGS84 );
             if( poCT == NULL )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "On-the-fly reprojection to WGS84 longlat would be needed, but instanciation of transformer failed");
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "On-the-fly reprojection to WGS84 long/lat would be "
+                          "needed, but instantiation of transformer failed" );
             }
         }
     }

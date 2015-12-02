@@ -968,7 +968,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /* -------------------------------------------------------------------- */
 /*      If we still don't have an srsName, check for it on the          */
 /*      boundedBy Envelope.  Some products                              */
-/*      (ie. EuropeRasterTile23.jpx) use this as the only srsName       */
+/*      (i.e. EuropeRasterTile23.jpx) use this as the only srsName      */
 /*      delivery vehicle.                                               */
 /* -------------------------------------------------------------------- */
     if( pszSRSName == NULL )
@@ -988,7 +988,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have gotten a geotransform, then try to interprete the    */
+/*      If we have gotten a geotransform, then try to interpret the     */
 /*      srsName.                                                        */
 /* -------------------------------------------------------------------- */
     bool bNeedAxisFlip = false;

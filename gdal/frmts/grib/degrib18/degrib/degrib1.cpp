@@ -816,7 +816,7 @@ int GRIB1_RefTime (DataSource &fp, uInt4 gribLen, double *refTime)
  *  12/2003 AAT: adas data encoder seems to have # of vertical data = 1, but
  *        parameters of vertical data = 255, which doesn't make sense.
  *        Changed the error from "fatal" to a warning in debug mode.
- *   6/2004 AAT: Modified to allow "extended" lat/lon grids (ie stretched or
+ *   6/2004 AAT: Modified to allow "extended" lat/lon grids (i.e. stretched or
  *        stretched and rotated).
  *
  * NOTES

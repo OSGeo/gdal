@@ -4737,7 +4737,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
     int32           nrec;	/* Number of records in Vdata */
 
     int32           offset[8];	/* I/O offset (start) */
-    int32           incr[8];	/* I/O incrment (stride) */
+    int32           incr[8];	/* I/O increment (stride) */
     int32           count[8];	/* I/O count (edge) */
     int32           dims[8];	/* Field/SDS dimensions */
     int32           mrgOffset;	/* Merged field offset */
@@ -10639,7 +10639,7 @@ SWupdatescene(int32 swathID, int32 regionID)
  
     int32           startReg;   /* Indexed start region */
     int32           stopReg;    /* Indexed stop region */
-    int32           index[MAXNREGIONS]; /* to store indicies when stop and 
+    int32           index[MAXNREGIONS]; /* to store indices when stop and 
 					   start are different */
 					   
     int32           ind;        /* index */
@@ -10781,7 +10781,7 @@ SWupdatescene(int32 swathID, int32 regionID)
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  indexout       int32               array of index values                   |
-|  indicies	  int32		      array of start and stop in region       |
+|  indices	  int32		      array of start and stop in region       |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |

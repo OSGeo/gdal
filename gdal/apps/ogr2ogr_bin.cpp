@@ -388,7 +388,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
            " -s_srs srs_def: Override source SRS\n"
            "\n" 
            " Srs_def can be a full WKT definition (hard to escape properly),\n"
-           " or a well known definition (ie. EPSG:4326) or a file with a WKT\n"
+           " or a well known definition (i.e. EPSG:4326) or a file with a WKT\n"
            " definition.\n" );
 
     if( pszAdditionalMsg )

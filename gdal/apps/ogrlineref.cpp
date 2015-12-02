@@ -146,7 +146,7 @@ static OGRLayer* SetupTargetLayer(OGRLayer * poSrcLayer, GDALDataset *poDstDS, c
     OGRSpatialReference *poOutputSRS;
 
     CPLString szLayerName;
-    
+
     if (pszNewLayerName == NULL)
     {
         szLayerName = CPLGetBasename(poDstDS->GetDescription());
@@ -171,9 +171,9 @@ static OGRLayer* SetupTargetLayer(OGRLayer * poSrcLayer, GDALDataset *poDstDS, c
     /*      Find the layer.                                                 */
     /* -------------------------------------------------------------------- */
 
-    /* GetLayerByName() can instanciate layers that would have been */
+    /* GetLayerByName() can instantiate layers that would have been */
     /* 'hidden' otherwise, for example, non-spatial tables in a */
-    /* Postgis-enabled database, so this apparently useless command is */
+    /* PostGIS-enabled database, so this apparently useless command is */
     /* not useless... (#4012) */
     CPLPushErrorHandler(CPLQuietErrorHandler);
     poDstLayer = poDstDS->GetLayerByName(szLayerName);
@@ -567,6 +567,7 @@ static double Project(OGRLineString* pLine, OGRPoint* pPoint)
 #ifdef HAVE_GEOS_PROJECT
 static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
 {
+    // TODO: What is a reper?
     //check repers type
     OGRwkbGeometryType eGeomType = poPkLayer->GetGeomType();
     if (wkbFlatten(eGeomType) != wkbPoint)
@@ -595,7 +596,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
                         "The distance %f is already present in repers file!", dfReperPos);
                 }
             }
-            //check if reper is incide the path
+            // Check if reper is inside the path
             dfTestDistance = Project(pPathGeom, pPt);
             if (dfTestDistance < 0)
             {

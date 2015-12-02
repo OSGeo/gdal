@@ -43,7 +43,7 @@ import gdaltest
 from osgeo import gdal, osr
 
 ###############################################################################
-# This test verifies that morphToESRI() translates ideosyncratic datum names
+# This test verifies that morphToESRI() translates idiosyncratic datum names
 # from "EPSG" form to ESRI from when the exception list comes from the
 # gdal_datum.csv file.
 
@@ -781,7 +781,7 @@ def osr_esri_test_esri_ogc_esri( ifile, ofile_base, fix_config='NO', check_epsg=
     ofile_srs = 'tmp/'+ofile_base+'_srs.txt'
     ofile_wkt = 'tmp/'+ofile_base+'_wkt.txt'
 
-    #initialise output files
+    # Initialize output files.
     if not os.path.exists('tmp'):
         os.mkdir('tmp')
     if os.path.exists(ofile_epsg):
@@ -964,7 +964,7 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base, fix_config='NO', check_epsg=F
     ofile_srs = 'tmp/'+ofile_base+'_srs.txt'
     ofile_wkt = 'tmp/'+ofile_base+'_wkt.txt'
 
-    #initialise output files
+    # Initialize output files.
     if not os.path.exists('tmp'):
         os.mkdir('tmp')
     if os.path.exists(ofile_epsg):

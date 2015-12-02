@@ -302,7 +302,7 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /* -------------------------------------------------------------------- */
 /*      Run through the whole geoloc array forward projecting and       */
 /*      pushing into the backmap.                                       */
-/*      Initialise to the nMaxIter+1 value so we can spot genuinely     */
+/*      Initialize to the nMaxIter+1 value so we can spot genuinely     */
 /*      valid pixels in the hole-filling loop.                          */
 /* -------------------------------------------------------------------- */
     int iBMX, iBMY;

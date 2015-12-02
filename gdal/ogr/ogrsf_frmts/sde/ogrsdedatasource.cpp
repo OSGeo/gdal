@@ -389,7 +389,7 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
     const char* pszOverwriteVersion =  CPLGetConfigOption( "SDE_VERSIONOVERWRITE", "FALSE" );
     if( EQUAL(pszOverwriteVersion, "TRUE") && bDSUpdate ) {
         nSDEErr = SE_version_delete(hConnection, pszChildVersion);
-        
+
         // if the version didn't exist in the first place, just continue on.
         if( nSDEErr != SE_SUCCESS && nSDEErr != SE_VERSION_NOEXIST)
         {
@@ -401,29 +401,30 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
     // Attempt to use the child version if it is there.
     nSDEErr = SE_version_get_info(hConnection, pszChildVersion, hChildVersion);
     if( nSDEErr != SE_SUCCESS)
-    {   
+    {
         if (nSDEErr != SE_VERSION_NOEXIST) {
             IssueSDEError( nSDEErr, "SE_version_get_info child" );
             return FALSE;
-        } 
-    } else { 
+        }
+    } else {
         SE_versioninfo_free(hParentVersion);
         SE_versioninfo_free(hChildVersion);
         return TRUE; 
     }
 
     if (!bDSUpdate) {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "The version %s does not exist and cannot be created because the datasource is not in update mode", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "The version %s does not exist and cannot be created "
+                  "because the datasource is not in update mode",
                   pszChildVersion);
         return FALSE;
     }
-    
+
     nSDEErr = SE_version_get_info(hConnection, pszParentVersion, hParentVersion);
     if( nSDEErr != SE_SUCCESS )
     {
-        // this usually denotes incongruent versions of the client 
-        // and server.  If this is the case, we're going to attempt to 
+        // This usually denotes incongruent versions of the client
+        // and server.  If this is the case, we're going to attempt to
         // not do versioned queries at all.
         if ( nSDEErr == SE_INVALID_RELEASE ) {
             CPLDebug("OGR_SDE", "nState was set to SE_INVALID_RELEASE\n\n\n");
@@ -434,12 +435,12 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
                            "  Your client/server versions must not match or " 
                            "you have some other major configuration problem");
             return FALSE;
-            
+
         } else {
             IssueSDEError( nSDEErr, "SE_version_get_info parent" );
             return FALSE;
         }
-    } 
+    }
 
     // Fill in details of our child version from our parent version
     nSDEErr = SE_versioninfo_set_name(hChildVersion, pszChildVersion);
@@ -449,7 +450,7 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
                                 "Version names must be in the form \"MYVERSION\""
                                 "not \"SDE.MYVERSION\"" );
         return FALSE;
-    }    
+    }
 
     nSDEErr = SE_versioninfo_set_access(hChildVersion, SE_VERSION_ACCESS_PUBLIC);
     if( nSDEErr != SE_SUCCESS )
@@ -499,11 +500,11 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
         IssueSDEError( nSDEErr, "SE_version_create" );
         return FALSE;
     }
-    
+
     SE_versioninfo_free(hParentVersion);
     SE_versioninfo_free(hChildVersion);
     SE_versioninfo_free(hDummyVersion);
-    
+
     return TRUE;
 }
 
@@ -526,8 +527,8 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
     nSDEErr = SE_version_get_info(hConnection, pszVersionName, hVersion);
     if( nSDEErr != SE_SUCCESS )
     {
-        // this usually denotes incongruent versions of the client 
-        // and server.  If this is the case, we're going to attempt to 
+        // This usually denotes incongruent versions of the client
+        // and server.  If this is the case, we're going to attempt to
         // not do versioned queries at all.
         if ( nSDEErr == SE_INVALID_RELEASE ) {
             CPLDebug("OGR_SDE", "nState was set to SE_INVALID_RELEASE\n\n\n");
@@ -538,13 +539,12 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
                            "  Your client/server versions must not match or " 
                            "you have some other major configuration problem");
             return FALSE;
-            
         } else {
             IssueSDEError( nSDEErr, "SE_version_get_info" );
             return FALSE;
         }
-    } 
-    
+    }
+
     nSDEErr = SE_versioninfo_get_state_id(hVersion, &nState);
     if( nSDEErr != SE_SUCCESS )
     {
@@ -552,8 +552,6 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
         return FALSE;
     }
 
-
-    
     if (bDSUpdate && bDSUseVersionEdits) {
         LONG nLockCount = 0;
         SE_VERSION_LOCK* pahLocks = NULL;
@@ -894,10 +892,13 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         {
             if( !CSLFetchBoolean( papszOptions, "OVERWRITE", FALSE ) )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Registration informatin for  %s already exists, CreateLayer failed.\n"
-                          "Use the layer creation option OVERWRITE=YES to pre-clear it.",
-                          pszLayerName );
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Registration information for  %s already exists, "
+                    "CreateLayer failed.\n"
+                    "Use the layer creation option OVERWRITE=YES to "
+                    "pre-clear it.",
+                    pszLayerName );
                 return NULL;
             }
 

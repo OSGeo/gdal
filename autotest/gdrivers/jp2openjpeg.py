@@ -3086,7 +3086,7 @@ yeah: """) < 0:
         gdal.Unlink("/vsimem/template.xml")
         gdal.Unlink("/vsimem/source.xml")
         del out_ds
-        
+
         ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
         gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
         ds = None
@@ -3100,7 +3100,7 @@ yeah: """) < 0:
             return 'fail'
 
 
-    # Inexisting template
+    # Nonexistent template.
     gdal.FileFromMemBuffer("/vsimem/source.xml","""<A/>""")
     conf = {
     "root_instance": {
@@ -3123,8 +3123,9 @@ yeah: """) < 0:
     gdal.Unlink("/vsimem/source.xml")
     gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
 
-    # Inexisting source
-    gdal.FileFromMemBuffer("/vsimem/template.xml","""<gmljp2:metadata></gmljp2:metadata>""")
+    # Nonexistent source
+    gdal.FileFromMemBuffer(
+        "/vsimem/template.xml","""<gmljp2:metadata></gmljp2:metadata>""")
     conf = {
     "root_instance": {
         "metadata": [

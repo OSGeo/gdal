@@ -295,8 +295,6 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
     {
         m_nCurObjectOffset += poHeader->GetMapObjectSize( m_nCurObjectType );
     }
-    
-    
 
     if( m_nCurObjectOffset + 5 < m_numDataBytes + 20 )
     {
@@ -320,7 +318,7 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
 
         // Is this object marked as deleted?  If so, skip it.
         // I check both the top bits but I have only seen this occur
-        // with the second highest bit set (ie. in usa/states.tab). NFW.
+        // with the second highest bit set (i.e. in usa/states.tab). NFW.
 
         if( (((GUInt32)m_nCurObjectId) & (GUInt32) 0xC0000000) != 0 )
         {

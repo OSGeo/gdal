@@ -212,16 +212,16 @@ def test_gdalsrsinfo_8():
 
 
 ###############################################################################
-# Test inexistent file
+# Test nonexistent file.
 
 def test_gdalsrsinfo_9():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    (ret,err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalsrsinfo_path() + \
-                                   ' inexistent_file')
+    ret, err = gdaltest.runexternal_out_and_err(
+        test_cli_utilities.get_gdalsrsinfo_path() + ' nonexistent_file')
 
-    if err.strip() != "ERROR 1: ERROR - failed to load SRS definition from inexistent_file":
+    if err.strip() != "ERROR 1: ERROR - failed to load SRS definition from nonexistent_file":
         return 'fail'
 
     return 'success'
@@ -233,7 +233,7 @@ def test_gdalsrsinfo_9():
 def test_gdalsrsinfo_10():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
-    
+
     wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
     if sys.platform == 'win32':
         # Win32 shell quoting oddities

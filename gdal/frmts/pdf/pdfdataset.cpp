@@ -6383,9 +6383,9 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     }
     bGeoTransformValid = TRUE;
 
-    /* If the non scaling terms of the geotransform are significantly smaller than */
-    /* the pixel size, then nullify them as being just artifacts of reprojection and */
-    /* GDALGCPsToGeoTransform() numerical imprecisions */
+    // If the non scaling terms of the geotransform are significantly smaller
+    // than the pixel size, then nullify them as being just artifacts of
+    //  reprojection and GDALGCPsToGeoTransform() numerical imprecisions.
     double dfPixelSize = MIN(fabs(adfGeoTransform[1]), fabs(adfGeoTransform[5]));
     double dfRotationShearTerm = MAX(fabs(adfGeoTransform[2]), fabs(adfGeoTransform[4]));
     if (dfRotationShearTerm < 1e-5 * dfPixelSize ||

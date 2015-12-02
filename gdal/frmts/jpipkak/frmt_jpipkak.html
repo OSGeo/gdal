@@ -69,13 +69,19 @@ The JPIPKAK driver is written using a HTTP client library with the Kakadu cache 
     <li>
     Open
     <p>
-    If the filename contained in the <code>GDALOpenInfo</code> object has a case insensitive URI scheme of jpip or jpips the <code>JPIPKAKDataset</code> is created and initialised</a>, otherwise NULL is returned.
+    If the filename contained in the <code>GDALOpenInfo</code> object
+    has a case insensitive URI scheme of JPIP or JPIPS
+    the <code>JPIPKAKDataset</code> is created and initialized</a>,
+    otherwise NULL is returned.
     </p>
     </li>
     <li>
     Initialize
     <p>
-    Initialisation involves making an initial connection to the JPIP Server to establish a session and to retrieve the initial metadata about the image (ref. <a href="#initJPIP">JPIP Sequence Diagram</a>).
+    Initialization involves making an initial connection to the JPIP
+    Server to establish a session and to retrieve the initial metadata
+    about the image (ref. <a href="#initJPIP">JPIP Sequence
+    Diagram</a>).
     </p>
     <p>
     If the connection fails, the function returns false and the <code>Open</code> function returns NULL indicating that opening the dataset with this driver failed.

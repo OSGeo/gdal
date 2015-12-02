@@ -69,7 +69,8 @@ KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAc
 
     if( pImageIO->attributeTablePresent(nSrcBand) )
     {
-        this->m_nAttributeChunkSize = pImageIO->getAttributeTableChunkSize(nSrcBand);
+        this->m_nAttributeChunkSize
+            = pImageIO->getAttributeTableChunkSize(nSrcBand);
     }
     else
     {
@@ -82,7 +83,7 @@ KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAc
     // increment the refcount as we now have a reference to imageio
     (*this->m_pnRefCount)++;
 
-    // initialise overview variables
+    // Initialize overview variables
     m_nOverviews = 0;
     m_panOverviewBands = NULL;
 
@@ -96,7 +97,7 @@ KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAc
     this->m_pAttributeTable = NULL;  // no RAT yet
     this->m_pColorTable = NULL;     // no color table yet
 
-    // initialise the metadata as a CPLStringList
+    // Initialize the metadata as a CPLStringList.
     m_papszMetadataList = NULL;
     this->UpdateMetadataList();
 }

@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  GeoRaster Testing.
 # Author:   Ivan Lucena <ivan.lucena@pmldnet.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Ivan Lucena <ivan.lucena@pmldnet.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,32 +29,33 @@
 ###############################################################################
 
 import os
+import string
 import sys
 from osgeo import gdal
 from osgeo import ogr
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 
 ###############################################################################
-# 
+#
 def get_connection_str():
 
     oci_dsname = os.environ.get('OCI_DSNAME')
 
     if oci_dsname is None:
+        # TODO: Spelling - informe?
         return '<error: informe ORACLE connection>'
     else:
         return 'geor:' + oci_dsname.split(':')[1]
 
 ###############################################################################
-# 
+#
 def georaster_init():
 
     gdaltest.oci_ds = None
-    
+
     try:
         gdaltest.georasterDriver = gdal.GetDriverByName('GeoRaster')
     except:
@@ -65,7 +66,7 @@ def georaster_init():
 
     if os.environ.get('OCI_DSNAME') is None:
         return 'skip'
-    
+
     gdaltest.oci_ds = ogr.Open( os.environ.get('OCI_DSNAME') )
 
     if gdaltest.oci_ds is None:
@@ -74,15 +75,16 @@ def georaster_init():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     rs = gdaltest.oci_ds.ExecuteSQL( 'select owner from all_sdo_geor_sysdata' )
     gdal.PopErrorHandler()
-    
+
     err_msg = gdal.GetLastErrorMsg()
-    
+
     if rs is not None:
         gdaltest.oci_ds.ReleaseResultSet(rs)
         rs = None
 
     if err_msg != '':
-        gdaltest.post_reason( 'ALL_SDO_GEOR_SYSDATA inaccesable, likely georaster unavailable.' )
+        gdaltest.post_reason( 'ALL_SDO_GEOR_SYSDATA inaccessible, '
+                              'likely georaster unavailable.' )
 
         gdaltest.oci_ds = None
         return 'skip'
@@ -96,7 +98,7 @@ def georaster_byte():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
 

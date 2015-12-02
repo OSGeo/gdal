@@ -841,7 +841,7 @@ CPLErr GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
 
 /**
  * Return the lines related to the map projection.  It is up to   
- * the caller to parse them and interprete.  The return result    
+ * the caller to parse them and interpret.  The return result    
  * will be NULL if no #MAP_PROJECTION line was found in the header.
  * 
  * @param hGXF the GXF file handle.

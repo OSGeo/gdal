@@ -545,7 +545,7 @@ EHchkfid(int32 fid, char *name, int32 * HDFfid, int32 * sdInterfaceID,
 |                                                                             |
 |  FUNCTION: EHidinfo                                                         |
 |                                                                             |
-|  DESCRIPTION: Gets Hopen and SD intereface IDs from HDF-EOS id              |
+|  DESCRIPTION: Gets Hopen and SD interface IDs from HDF-EOS id               |
 |                                                                             |
 |                                                                             |
 |  Return Value    Type     Units     Description                             |

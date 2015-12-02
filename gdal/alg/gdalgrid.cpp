@@ -215,7 +215,8 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
 /************************************************************************/
 
 /**
- * Inverse distance to a power with nearest neighbor search, ideal when max_points used.
+ * Inverse distance to a power with nearest neighbor search, ideal when
+ * max_points used.
  *
  * The Inverse Distance to a Power gridding method is a weighted average
  * interpolator. You should supply the input arrays with the scattered data
@@ -2307,7 +2308,7 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
         int i;
 
         sJob.nYStep = nThreads;
-        sJob.hCondMutex = CPLCreateMutex(); /* and take implicitely the mutex */
+        sJob.hCondMutex = CPLCreateMutex(); /* and  implicitly take the mutex */
         sJob.hCond = CPLCreateCond();
         if( sJob.pfnRealProgress != NULL && sJob.pfnRealProgress != GDALDummyProgress )
             sJob.pfnProgress = GDALGridProgressMultiThread;

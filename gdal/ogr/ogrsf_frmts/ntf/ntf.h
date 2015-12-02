@@ -53,7 +53,7 @@
 #define NRT_CPOLY    33                /* Complex Polygon */
 #define NRT_COLLECT  34                /* Collection of features */
 #define NRT_ADR      40                /* Attribute Description Record */
-#define NRT_CODELIST 42                /* Codelist Record (ie. BL2000) */
+#define NRT_CODELIST 42                /* Codelist Record (i.e. BL2000) */
 #define NRT_TEXTREC  43                /* Text */
 #define NRT_TEXTPOS  44                /* Text position */
 #define NRT_TEXTREP  45                /* Text representation */
@@ -166,7 +166,7 @@ public:
 
     const char  *Lookup( const char * );
 
-    char        szValType[3];   /* attribute code for list, ie. AC */
+    char        szValType[3];   /* attribute code for list, i.e. AC */
     char        szFInter[6];    /* format of code values */
  
     int         nNumCode;

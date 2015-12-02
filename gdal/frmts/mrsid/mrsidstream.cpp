@@ -3,7 +3,7 @@
  *
  * Project:  Multi-resolution Seamless Image Database (MrSID)
  * Purpose:  Input/output stream wrapper for usage with LizardTech's
- *           MrSID SDK, implemenattion of the wrapper class methods.
+ *           MrSID SDK, implementation of the wrapper class methods.
  * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************

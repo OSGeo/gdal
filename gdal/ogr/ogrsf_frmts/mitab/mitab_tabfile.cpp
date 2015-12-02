@@ -19,16 +19,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -37,7 +37,8 @@
  * Fixed missing initializations that cause crashes
  *
  * Revision 1.77  2010-10-08 18:38:13  aboudreault
- * Added attribute index support for the sql queries in mapinfo tab format (GDAL bug #3687)
+ * Added attribute index support for the sql queries in mapinfo tab format
+ * (GDAL bug #3687)
  *
  * Revision 1.76  2010-07-07 19:00:15  aboudreault
  * Cleanup Win32 Compile Warnings (GDAL bug #2930)
@@ -46,7 +47,8 @@
  * Fixed bad feature count after we deleted a feature in MapInfo (bug 2227)
  *
  * Revision 1.74  2010-01-07 20:39:12  aboudreault
- * Added support to handle duplicate field names, Added validation to check if a field name start with a number (bug 2141)
+ * Added support to handle duplicate field names, Added validation to check
+ * if a field name start with a number (bug 2141)
  *
  * Revision 1.73  2008-11-27 20:50:23  aboudreault
  * Improved support for OGR date/time types. New Read/Write methods (bug 1948)

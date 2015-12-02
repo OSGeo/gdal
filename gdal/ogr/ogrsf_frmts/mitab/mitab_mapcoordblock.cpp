@@ -153,7 +153,7 @@ int     TABMAPCoordBlock::InitBlockFromData(GByte *pabyBuf,
 {
     int nStatus;
 #ifdef DEBUG_VERBOSE
-    CPLDebug("MITAB", "Instanciating COORD block to/from offset %d", nOffset);
+    CPLDebug("MITAB", "Instantiating COORD block to/from offset %d", nOffset);
 #endif
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
@@ -273,7 +273,8 @@ int     TABMAPCoordBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
 {
     CPLErrorReset();
 #ifdef DEBUG_VERBOSE
-    CPLDebug("MITAB", "Instanciating new COORD block at offset %d", nFileOffset);
+    CPLDebug( "MITAB", "Instantiating new COORD block at offset %d",
+              nFileOffset);
 #endif
     /*-----------------------------------------------------------------
      * Start with the default initialisation
