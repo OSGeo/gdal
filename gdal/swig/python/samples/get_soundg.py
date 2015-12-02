@@ -10,7 +10,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -30,12 +30,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import ogr
-except ImportError:
-    import ogr
-
 import sys
+
+from osgeo import ogr
 
 #############################################################################
 def Usage():
@@ -77,7 +74,7 @@ field_count = src_defn.GetFieldCount()
 out_mapping = []
 for fld_index in range(field_count):
     src_fd = src_defn.GetFieldDefn( fld_index )
-    
+
     fd = ogr.FieldDefn( src_fd.GetName(), src_fd.GetType() )
     fd.SetWidth( src_fd.GetWidth() )
     fd.SetPrecision( src_fd.GetPrecision() )
@@ -90,7 +87,7 @@ fd = ogr.FieldDefn( 'ELEV', ogr.OFTReal )
 fd.SetWidth( 12 )
 fd.SetPrecision( 4 )
 shp_layer.CreateField( fd )
-    
+
 #############################################################################
 # Process all SOUNDG features.
 

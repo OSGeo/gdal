@@ -31,9 +31,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-from osgeo import gdal
-import numpy
 import sys
+
+import numpy
+from osgeo import gdal
 
 # =============================================================================
 # rgb_to_hsv()

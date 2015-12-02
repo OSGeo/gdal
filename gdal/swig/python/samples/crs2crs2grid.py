@@ -34,7 +34,8 @@ import os
 import numpy
 import sys
 
-from osgeo import gdal, gdal_array
+from osgeo import gdal
+from osgeo import gdal_array
 
 # Input looks like this:
 """
@@ -140,7 +141,6 @@ def write_grid(grid,out_filename):
             fd_out.write('%f %f 0 "PNT_%d_%d"\n' % (grid[1,j,i],grid[0,j,i],i,j))
     fd_out.close()
 
-    
 ##############################################################################
 # Write the resulting grid out in GeoTIFF format.
 def write_gdal_grid(filename, grid, griddef ):
@@ -161,7 +161,7 @@ def write_control( control_fn, out_grid_fn, in_grid_fn,
                    dst_crs_id, dst_crs_date ):
 
     # start_date, end_date should be something like "2011.0"
-    
+
     control_template = """
 4
 %s
@@ -208,7 +208,7 @@ eg.
         print("""
 The output file will be in CTable2 format suitable for use with PROJ.4
 +nadgrids= directive.
- 
+
 Format dates like 2002.0 (for the start of 2002)
 
 CRS Ids
@@ -220,7 +220,7 @@ CRS Ids
   31...NAD_83(PACP00)  (NAD 83(PA11) will be used) 
   3...NAD_83(MA11) (Mariana tectonic plate fixed) 
   32...NAD_83(MARP00)  (NAD_83(MA11) will be used) 
-                                                   
+
   4...WGS_72                             16...ITRF92 
   5...WGS_84(transit) = NAD_83(2011)     17...ITRF93 
   6...WGS_84(G730) = ITRF92              18...ITRF94 = ITRF96 
@@ -237,21 +237,21 @@ CRS Ids
 """)
 
     sys.exit(1)
-    
+
 #############################################################################
 # Main
 
 if __name__ == '__main__':
 
     # Default GDAL argument parsing.
-    
+
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
     if argv is None:
         sys.exit( 0 )
 
     if len(argv) == 1:
         Usage(brief=0)
-        
+
     # Script argument defaults
     src_crs_id = None
     src_crs_date = None

@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 #******************************************************************************
 #  $Id: pct2rgb.py 13087 2007-11-26 20:56:29Z hobu $
-# 
+#
 #  Name:     gdal_lut
 #  Project:  GDAL Python Interface
 #  Purpose:  Utility to apply a lookup table provided in a text file.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,20 +29,16 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-try:
-    from osgeo import gdal
-    gdal.TermProgress = gdal.TermProgress_nocb
-except ImportError:
-    import gdal
+import sys
+
+from osgeo import gdal
+gdal.TermProgress = gdal.TermProgress_nocb
 
 try:
     import numpy
 except:
     import Numeric as numpy
     numpy.arange = numpy.arrayrange
-
-
-import sys
 
 # =============================================================================
 #		read_lut()
@@ -59,7 +55,7 @@ def read_lut( filename ):
         lut.append(int(line))
 
     return lut
-    
+
 # =============================================================================
 #		Usage()
 # =============================================================================
@@ -84,7 +80,7 @@ would map input pixel values 0,1,2,3,4,5 to 0,5,11,12,12,13 respectively.
 Values not mapped by the lut file (for instance values 6-255 in the above
 case) will be left unaltered.  Sixteen bit (UInt16) output values are
 supported as well as luts of more than 256 input values.
-""")                   
+""")
     sys.exit(1)
 
 # =============================================================================
@@ -142,7 +138,7 @@ while i < len(argv):
 
 if src_filename is None or lut_filename is None:
     Usage()
-    
+
 # ----------------------------------------------------------------------------
 # Load the LUT file.
 
@@ -183,7 +179,7 @@ if dst_filename is None:
 else:
     src_ds = gdal.Open( src_filename )
     dst_ds = None
-    
+
 if src_ds is None:
     print('Unable to open ', src_filename)
     sys.exit(1)
@@ -211,7 +207,7 @@ if dst_ds is None:
                                    1, gc, options = create_options )
         dst_ds.SetProjection( src_ds.GetProjection() )
         dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
-        
+
 
 dst_band = dst_ds.GetRasterBand(dst_band_n)
 

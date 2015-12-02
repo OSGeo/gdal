@@ -4,13 +4,13 @@
 #
 # Project:  GDAL Python samples
 # Purpose:  Script to perform forward and inverse two-dimensional fast
-#	    Fourier transform.
+#           Fourier transform.
 # Author:   Andrey Kiselev, dron@remotesensing.org
 #
 ###############################################################################
 # Copyright (c) 2003, Andrey Kiselev <dron@remotesensing.org>
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -30,13 +30,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
-    
-import FFT
 import sys
+
+import FFT
+from osgeo import gdal
 
 # =============================================================================
 def Usage():
@@ -89,7 +86,7 @@ while i < len(sys.argv):
         transformation = 'inverse'
         if type == None:
             type = gdal.GDT_Float32
-        
+
     elif arg == '-of':
         i = i + 1
         format = sys.argv[i]

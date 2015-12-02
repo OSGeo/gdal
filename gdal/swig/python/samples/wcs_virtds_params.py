@@ -2,7 +2,7 @@
 #!/usr/bin/env python
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Name:     wcs_virtds_params.py
 #  Project:  GDAL Python Interface
 #  Purpose:  Generates MapServer WCS layer definition from a tileindex with mixed SRS
@@ -17,10 +17,10 @@
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -30,12 +30,12 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
+import os
+import sys
 
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
-import os
-import sys
 
 
 def Usage():

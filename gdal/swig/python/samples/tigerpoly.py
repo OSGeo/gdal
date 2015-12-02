@@ -9,7 +9,7 @@
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -29,14 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import osr
-    from osgeo import ogr
-except ImportError:
-    import osr
-    import ogr
-
 import sys
+
+from osgeo import ogr
+from osgeo import osr
+
 
 #############################################################################
 class Module:
@@ -104,7 +101,7 @@ poly_field_count = src_defn.GetFieldCount()
 
 for fld_index in range(poly_field_count):
     src_fd = src_defn.GetFieldDefn( fld_index )
-    
+
     fd = ogr.FieldDefn( src_fd.GetName(), src_fd.GetType() )
     fd.SetWidth( src_fd.GetWidth() )
     fd.SetPrecision( src_fd.GetPrecision() )
@@ -163,12 +160,11 @@ while feat is not None:
     lpoly_id = feat.GetField( lpoly_field )
     rpoly_id = feat.GetField( rpoly_field )
 
- 
     if lpoly_id == rpoly_id:
         feat.Destroy()
         feat = link_layer.GetNextFeature()
-        continue    
-    
+        continue
+
     try:
         module.poly_line_links[lpoly_id].append( tlid )
     except:
@@ -217,7 +213,7 @@ while feat is not None:
             feat.Destroy()
             feat = poly_layer.GetNextFeature()
             continue
-        
+
         #print poly.ExportToWkt()
         #feat.SetGeometryDirectly( poly )
 
