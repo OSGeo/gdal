@@ -222,7 +222,7 @@ static bool LoadProjLibrary_unlocked()
 #else
     CPLPushErrorHandler( CPLQuietErrorHandler );
 
-    /* coverity[tainted_data] */
+    /* coverity[tainted_string] */
     pfn_pj_init = (projPJ (*)(int, char**)) CPLGetSymbol( pszLibName,
                                                        "pj_init" );
     CPLPopErrorHandler();
