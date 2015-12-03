@@ -525,7 +525,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     }
 
     // --------------------------------------------------------------------
-    //  Fill headers with minimun information
+    //  Fill headers with minimum information
     // --------------------------------------------------------------------
 
     INGR_HeaderOne  hHdr1;

@@ -316,7 +316,7 @@ bool AOToOGRSpatialReference(esriGeometry::ISpatialReference* pSR, OGRSpatialRef
   }
 
   *ppSR = new OGRSpatialReference(strESRIWKT);
-  
+
   OGRErr result = (*ppSR)->morphFromESRI();
 
   if (result == OGRERR_NONE)
@@ -328,8 +328,9 @@ bool AOToOGRSpatialReference(esriGeometry::ISpatialReference* pSR, OGRSpatialRef
     delete *ppSR;
     *ppSR = NULL;
 
-    CPLError( CE_Failure, CPLE_AppDefined, "Failed morhping from ESRI Geometry: %s", strESRIWKT);
-   
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "Failed morphing from ESRI Geometry: %s", strESRIWKT);
+
     return false;
   }
 }
@@ -341,7 +342,7 @@ bool OGRGeometryToAOGeometry(OGRGeometry* pOGRGeom, esriGeometry::IGeometry** pp
   *ppGeometry = NULL;
 
   GByte* pWKB = NULL;
-  
+
   long wkbSize = pOGRGeom->WkbSize();
   pWKB = (GByte *) CPLMalloc(wkbSize);
 

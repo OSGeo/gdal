@@ -814,8 +814,8 @@ OGRSpatialReference *TABSeamless::GetSpatialRef()
 /**********************************************************************
  *                   IMapInfoFile::SetSpatialFilter()
  *
- * Standard OGR SetSpatialFiltere implementation.  This methode is used
- * to set a SpatialFilter for this OGRLayer
+ * Standard OGR SetSpatialFiltere implementation.  This method is used
+ * to set a SpatialFilter for this OGRLayer.
  **********************************************************************/
 void TABSeamless::SetSpatialFilter (OGRGeometry * poGeomIn )
 

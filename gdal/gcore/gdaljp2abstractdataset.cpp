@@ -326,7 +326,9 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                  STARTS_WITH(psChild->psChild->pszValue, "https://")) )
             {
                 if( !bOpenRemoteResources )
-                    CPLDebug("GMLJP2", "Remote feature collection %s mentionned in GMLJP2 box",
+                    CPLDebug("GMLJP2",
+                             "Remote feature collection %s mentioned in "
+                             "GMLJP2 box",
                              psChild->psChild->pszValue);
                 else
                     osGMLTmpFile = "/vsicurl/" + CPLString(psChild->psChild->pszValue);

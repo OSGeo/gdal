@@ -5266,7 +5266,7 @@ GRIB1ParmTable parm_table_dwd_002[256] = {
    /* 31 */ {"WDIR", "Wind direction", "degree true", UC_NONE},
    /* 32 */ {"WIND", "Wind speed", "m/s", UC_NONE},
    /* 33 */ {"U", "u-component (zonal) of wind", "m/s", UC_NONE},
-   /* 34 */ {"V", "v-component (merdional) of wind", "m/s", UC_NONE},
+   /* 34 */ {"V", "v-component (meridional) of wind", "m/s", UC_NONE},
    /* 35 */ {"STRM", "Stream function", "m^2/s", UC_NONE},
    /* 36 */ {"VPOT", "Velocity potential", "m^2/s", UC_NONE},
    /* 37 */ {"MNTSF", "Montgomery stream function", "m^2/s^2", UC_NONE},

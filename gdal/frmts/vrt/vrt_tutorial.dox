@@ -1032,7 +1032,7 @@ for example to only output part of the input spectral bands (e.g. only RGB when
 the input multispectral dataset is RGBNir). It is also possible to add "classic"
 VRTRasterBands, in addition to the pansharpened bands.
 
-In addition to the above mentionned required PanchroBand and SpectralBand elements,
+In addition to the above mentioned required PanchroBand and SpectralBand elements,
 the PansharpeningOptions element may have the following children elements :
 <ul>
 <li> <b>Algorithm</b>: to specify the pansharpening algorithm. Currently, only

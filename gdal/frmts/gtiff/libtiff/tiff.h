@@ -358,7 +358,7 @@ typedef enum {
 #define	TIFFTAG_JPEGRESTARTINTERVAL	515	/* !restart interval length */
 #define	TIFFTAG_JPEGLOSSLESSPREDICTORS	517	/* !lossless proc predictor */
 #define	TIFFTAG_JPEGPOINTTRANSFORM	518	/* !lossless point transform */
-#define	TIFFTAG_JPEGQTABLES		519	/* !Q matrice offsets */
+#define	TIFFTAG_JPEGQTABLES		519	/* !Q matrix offsets */
 #define	TIFFTAG_JPEGDCTABLES		520	/* !DCT table offsets */
 #define	TIFFTAG_JPEGACTABLES		521	/* !AC coefficient offsets */
 #define	TIFFTAG_YCBCRCOEFFICIENTS	529	/* !RGB -> YCbCr transform */

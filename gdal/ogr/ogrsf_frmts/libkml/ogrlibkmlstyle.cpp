@@ -82,7 +82,7 @@ StylePtr addstylestring2kml (
     PolyStylePtr poKmlPolyStyle = NULL;
     IconStylePtr poKmlIconStyle = NULL;
     LabelStylePtr poKmlLabelStyle = NULL;
-    
+
     /***** just bail now if stylestring is empty *****/
 
     if ( !pszStyleString || !*pszStyleString ) {
@@ -105,7 +105,7 @@ StylePtr addstylestring2kml (
         if ( !poOgrST ) {
             continue;
         }
-        
+
         switch ( poOgrST->GetType (  ) ) {
         case OGRSTCPen:
             {

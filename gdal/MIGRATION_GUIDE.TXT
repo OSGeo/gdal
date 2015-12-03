@@ -209,7 +209,7 @@ C API:
   * GDALGetRasterSampleOverviewEx() is added.
 
 Out-of-tree drivers :
-  * See the virtual method API changes mentionned above in the C++ API paragraph.
+  * See the virtual method API changes mentioned above in the C++ API paragraph.
 
 MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
 -------------------------------------------

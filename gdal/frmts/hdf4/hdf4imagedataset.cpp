@@ -2450,7 +2450,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
                       pszEllipsoidLine, pszEllipsoid );
 #endif
 
-            // Transform all mnemonical codes in the values.
+            // Transform all mnemonic codes in the values.
             int nParms;
             // Projection is UTM by default
             long iProjSys = (pszProj) ?

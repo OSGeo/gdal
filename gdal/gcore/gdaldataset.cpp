@@ -3365,7 +3365,7 @@ void GDALDatasetReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer )
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
- to the strings themselves to avoid mispelling.
+ to the strings themselves to avoid misspelling.
 
  This function is the same as the C++ method GDALDataset::TestCapability()
 
@@ -3375,8 +3375,7 @@ void GDALDatasetReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer )
  @param pszCap the capability to test.
 
  @return TRUE if capability available otherwise FALSE.
-
-*/ 
+*/
 int GDALDatasetTestCapability( GDALDatasetH hDS, const char *pszCap )
 
 {
@@ -5806,7 +5805,7 @@ OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
- to the strings themselves to avoid mispelling.
+ to the strings themselves to avoid misspelling.
 
  This method is the same as the C function GDALDatasetTestCapability() and the
  deprecated OGR_DS_TestCapability().
@@ -5816,7 +5815,6 @@ OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
  @param pszCap the capability to test.
 
  @return TRUE if capability available otherwise FALSE.
-
 */
 
 int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )

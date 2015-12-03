@@ -72,11 +72,12 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
         && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
         return NULL;
 
-    /* Disabling the attempt to guess if a MDB file is a PGeo database */
-    /* or not. The mention to GDB_GeomColumns might be quite far in the */
-    /* file, which can cause mis-detection. See http://trac.osgeo.org/gdal/ticket/4498 */
-    /* This was initially meant to know if a MDB should be opened by the PGeo or the */
-    /* Geomedia driver. */
+    // Disabling the attempt to guess if a MDB file is a PGeo database
+    // or not. The mention to GDB_GeomColumns might be quite far in
+    // the/ file, which can cause misdetection.  See
+    // http://trac.osgeo.org/gdal/ticket/4498 This was initially meant
+    // to know if a MDB should be opened by the PGeo or the Geomedia
+    // driver.
 #if 0
     if( !STARTS_WITH_CI(pszFilename, "PGEO:") &&
         EQUAL(CPLGetExtension(pszFilename),"mdb") )
@@ -89,7 +90,9 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
         VSIFCloseL(fp);
 
         /* Look for GDB_GeomColumns table */
-        const GByte pabyNeedle[] = { 'G', 0, 'D', 0, 'B', 0, '_', 0, 'G', 0, 'e', 0, 'o', 0, 'm', 0, 'C', 0, 'o', 0, 'l', 0, 'u', 0, 'm', 0, 'n', 0, 's' };
+        const GByte pabyNeedle[] = {
+            'G', 0, 'D', 0, 'B', 0, '_', 0, 'G', 0, 'e', 0, 'o', 0, 'm', 0,
+            'C', 0, 'o', 0, 'l', 0, 'u', 0, 'm', 0, 'n', 0, 's' };
         int bFound = FALSE;
         for(int i=0;i<100000 - (int)sizeof(pabyNeedle);i++)
         {

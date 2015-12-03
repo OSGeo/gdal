@@ -203,7 +203,7 @@ def minixml_4():
     return 'success'
 
 ###############################################################################
-# Parse manformed xml.  Complains, but still makes a tree.
+# Parse malformed XML.  Complains, but still makes a tree.
 
 def minixml_5():
 
@@ -231,7 +231,7 @@ def minixml_5():
     return 'success'
 
 ###############################################################################
-# Parse manformed xml.
+# Parse malformed XML.
 
 def minixml_6():
 
@@ -269,7 +269,7 @@ def minixml_6():
     return 'success'
 
 ###############################################################################
-# Parse manformed xml.  Pass withou warning, but should not pass.
+# Parse malformed XML.  Pass without warning, but should not pass.
 
 def minixml_7():
 

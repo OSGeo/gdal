@@ -8,11 +8,11 @@ these same OGR classes could be used by an implementation of SFCORBA
 for instance or used directly by C++ programs wanting to use an OpenGIS
 simple features inspired API.<p>
 
-Because OGR is modelled on the OpenGIS simple features data model, it is
+Because OGR is modeled on the OpenGIS simple features data model, it is
 very helpful to review the SFCOM, or other simple features interface
 specifications which can be retrieved from the 
 <a href="http://www.opengeospatial.org">Open Geospatial Consortium</a> web site.  Data
-types, and method names are modelled on those from the interface 
+types, and method names are modeled on those from the interface 
 specifications.<p>
 
 \section ogr_arch_overview Class Overview
@@ -72,8 +72,8 @@ OGRMultiSurface classes.
 Additional intermediate abstract base classes contain functionality that
 could eventually be implemented by other geometry types.  These include
 OGRCurve (base class for OGRLineString) and OGRSurface (base class for 
-OGRPolygon).  Some intermediate interfaces modelled in the simple features
-abstract model and SFCOM are not modelled in OGR at this time.  In most 
+OGRPolygon).  Some intermediate interfaces modeled in the simple features
+abstract model and SFCOM are not modeled in OGR at this time.  In most 
 cases the methods are aggregated into other classes.<p>
 
 The OGRGeometryFactory is used to convert well known text, and well known
@@ -142,7 +142,7 @@ manner by the feature of that type (or feature class).<p>
 The feature id (FID) of a feature is intended to be a unique identifier for
 the feature within the layer it is a member of.  Freestanding features, or
 features not yet written to a layer may have a null (OGRNullFID) feature id. 
-The feature ids are modelled in OGR as a 64-bit integer (GDAL 2.0 or later);
+The feature ids are modeled in OGR as a 64-bit integer (GDAL 2.0 or later);
 however, this is not sufficiently expressive to model the natural feature ids in some
 formats.  For instance, the GML feature id is a string.<p>
 

@@ -197,7 +197,7 @@
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
- to the strings themselves to avoid mispelling.
+ to the strings themselves to avoid misspelling.
 
  @deprecated Use GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE) in GDAL 2.0
 
@@ -489,7 +489,7 @@ can also be used.
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
- to the strings themselves to avoid mispelling.
+ to the strings themselves to avoid misspelling.
 
  @deprecated Use GDALDatasetTestCapability() in GDAL 2.0
 

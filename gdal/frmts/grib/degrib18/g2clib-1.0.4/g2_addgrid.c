@@ -89,7 +89,7 @@ g2int g2_addgrid(unsigned char *cgrib,g2int *igds,g2int *igdstmpl,g2int *ideflis
 //
       if ( cgrib[0]!=G || cgrib[1]!=R || cgrib[2]!=I || cgrib[3]!=B ) {
         printf("g2_addgrid: GRIB not found in given message.\n");
-        printf("g2_addgrid: Call to routine gribcreate required to initialize GRIB messge.\n");
+        printf("g2_addgrid: Call to routine gribcreate required to initialize GRIB message.\n");
         ierr=-1;
         return(ierr);
       }

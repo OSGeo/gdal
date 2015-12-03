@@ -1155,9 +1155,9 @@ void  netCDFRasterBand::CheckData ( void * pImage,
     }
   }
 
-  /* if mininum longitude is > 180, subtract 360 from all 
-     if not, disable checking for further calls (check just once) 
-     only check first and last block elements since lon must be monotonic */
+  /* If minimum longitude is > 180, subtract 360 from all.
+     If not, disable checking for further calls (check just once).
+     Only check first and last block elements since lon must be monotonic. */
   if ( bCheckLongitude && std::numeric_limits<T>::is_signed &&
        MIN( ((T *)pImage)[0], ((T *)pImage)[nTmpBlockXSize-1] ) > 180.0 ) {
     for( size_t j=0; j<nTmpBlockYSize; j++) {
@@ -2582,7 +2582,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 
         if ( NCDFIsVarLongitude( cdfid, nVarDimXID, NULL ) &&
              CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES"))) ) {
-            /* if mininum longitude is > 180, subtract 360 from all */
+            // If minimum longitude is > 180, subtract 360 from all.
             if ( MIN( pdfXCoord[0], pdfXCoord[xdim-1] ) > 180.0 ) {
                 for ( size_t i=0; i<xdim ; i++ )
                         pdfXCoord[i] -= 360;

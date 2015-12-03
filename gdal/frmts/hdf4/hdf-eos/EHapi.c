@@ -1412,7 +1412,7 @@ EHrevflds(char *dimlist, char *revdimlist)
 |  count          int32               Number of OBJECTs in GROUP              |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  metabur        char                Begin & end metadata pointer array      |
+|  metabuf        char                Begin & end metadata pointer array      |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -1472,7 +1472,7 @@ EHcntOBJECT(char *metabuf[])
 |  count          int32               Number of GROUPs in GROUP               |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  metabur        char                Begin & end metadata pointer array      |
+|  metabuf        char                Begin & end metadata pointer array      |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -2337,7 +2337,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	*(metabuf + seglen + i) = *(metabuf + i);
     }
 
-    /* Copy new metadat string (utlstr) into metadata */
+    /* Copy new metadata string (utlstr) into metadata */
     /* ---------------------------------------------- */
     memcpy(metaptr, utlstr, seglen);
 
@@ -2359,19 +2359,12 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 		  32000, metabuf + i * 32000);
     }
 
-
-
     free(metabuf);
     free(utlstr);
     free(utlstr2);
 
     return (status);
-
 }
-
-
-
-
 
 
 /*----------------------------------------------------------------------------|

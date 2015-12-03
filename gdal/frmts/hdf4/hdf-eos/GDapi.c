@@ -7016,7 +7016,7 @@ homDyDtheta(float64 parms[])
 |  Nov 96   Joel Gales    Original Programmer                                 |
 |  Mar 97   Joel Gales    Add support for LAMCC, POLYC, TM                    |
 |  Aug 99   Abe Taaheri   Add support for ALBERS, and MERCAT projections.     |
-|                         Also changed misstyped bisectParm[2] to             |
+|                         Also changed mistyped bisectParm[2] to              |
 |                         bisectParm[3] for HOM projection.                   |
 |  Jun 00   Abe Taaheri   Added support for EASE grid                         |
 |                                                                             |
@@ -7623,10 +7623,10 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
     int32           spherecode;	    /* Sphere code */
     int32           row[32];	    /* Row array */
     int32           col[32];	    /* Column array */
-    int32           minCol = 0;	    /* Minimun column value */
-    int32           minRow = 0;	    /* Minimun row value */
-    int32           maxCol = 0;	    /* Maximun column value */
-    int32           maxRow = 0;	    /* Maximun row value */
+    int32           minCol = 0;	    /* Minimum column value */
+    int32           minRow = 0;	    /* Minimum row value */
+    int32           maxCol = 0;	    /* Maximum column value */
+    int32           maxRow = 0;	    /* Maximum row value */
     int32           npnts;	    /* Number of boundary
                                        (edge & tangent) pnts */
 

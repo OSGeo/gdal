@@ -293,7 +293,7 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDSIn, int nBandIn,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Recover Global Metadat and set Band Metadata                    */
+/*      Recover Global Metadata and set Band Metadata                   */
 /* -------------------------------------------------------------------- */
 
     SetMetadata( poDSIn->papszMetadata );

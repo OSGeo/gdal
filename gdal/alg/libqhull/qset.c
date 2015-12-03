@@ -1170,7 +1170,7 @@ setT *qh_settemp(int setsize) {
     errors if set not from previous   qh_settemp
 
   to locate errors:
-    use 'T2' to find source and then find mis-matching qh_settemp
+    use 'T2' to find source and then find mismatching qh_settemp
 
   design:
     check top of qhmem.tempstack

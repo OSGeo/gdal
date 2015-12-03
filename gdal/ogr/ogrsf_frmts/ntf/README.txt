@@ -151,7 +151,7 @@ Adding a New Product
 --------------------
 
 It is anticipated that over time the UK Ordnance Survey will define new 
-product formats, and to get decent milage out of them this library should
+product formats, and to get decent mileage out of them this library should
 be updated to support them.  While I will endeavor to do this myself, it
 seems prudent to define how it is done in case I am not available to do it,
 or am unwilling to do it on a timely basis.  To add a new product type the 

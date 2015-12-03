@@ -3534,7 +3534,7 @@ static void shiftGroup (sInt4 *Data,
  *   Attempts to find groups for packing the data.  It starts by preparing
  * the data, by removing the overall min value.
  *
- *   Next it Creates any 0 bit groups (primary missing: missings are all 0
+ *   Next it Creates any 0 bit groups (primary missing: missing are all 0
  * bit groups, const values are 0 bit groups.  No missing: const values are
  * 0 bit groups.)
  *

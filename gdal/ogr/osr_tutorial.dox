@@ -4,7 +4,7 @@
 
 The OGRSpatialReference, and OGRCoordinateTransformation classes provide
 services to represent coordinate systems (projections and datums) and to
-transform between them.  These services are loosely modelled on the 
+transform between them.  These services are loosely modeled on the 
 OpenGIS Coordinate Transformations specification, and use the same 
 Well Known Text format for describing coordinate systems. 
 

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * myasert.c
+ * myassert.c
  *
  * DESCRIPTION
  *    This file contains the code to handle assert statements.  There is no

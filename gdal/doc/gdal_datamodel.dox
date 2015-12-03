@@ -253,7 +253,7 @@ items defining the model are:
 <li> SAMP_DEN_COEFF (1-20): Sample Denominator Coefficients. Twenty coefficients for the polynomial in the Denominator of the cn equation. (space separated)
 </ul>
 
-These fields are directly derived from the document prospective GeoTIFF RPC document (http://geotiff.maptools.org/rpc_prop.html) which in turn is closely modelled on the NITF RPC00B definition.
+These fields are directly derived from the document prospective GeoTIFF RPC document (http://geotiff.maptools.org/rpc_prop.html) which in turn is closely modeled on the NITF RPC00B definition.
 
 The line and pixel offset expressed with LINE_OFF and SAMP_OFF are with respect to the center of the pixel.
 

@@ -423,7 +423,7 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
                                         sizeof(OGRPLScenesLayer*) * (nLayers + 1));
             papoLayers[nLayers ++] = poLayer;
 
-            /* Attach scene matadata */
+            /* Attach scene metadata. */
             poLayer->SetAttributeFilter(CPLSPrintf("id = '%s'", osScene.c_str()));
             OGRFeature* poFeat = poLayer->GetNextFeature();
             if( poFeat )
@@ -445,7 +445,7 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
             delete poFeat;
         }
     }
-    
+
     if( bUseVSICURL )
     {
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD",

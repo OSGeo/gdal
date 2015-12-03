@@ -6156,7 +6156,7 @@ def tiff_write_140():
 
     # Strange case: set alpha to a band, but it is already set on another one (because of ALPHA=YES)
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_140.tif',1,1,5, options = ['ALPHA=YES'])
-    # Should emit a warning mentionning ALPHA creation option
+    # Should emit a warning mentioning ALPHA creation option.
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ret = ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)

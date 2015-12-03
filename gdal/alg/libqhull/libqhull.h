@@ -729,7 +729,7 @@ struct qhT {
   >--------------------------------</a><a name="qh-buf">-</a>
 
   qh global buffers
-    defines buffers for maxtrix operations, input, and error messages
+    defines buffers for matrix operations, input, and error messages
 */
   coordT *gm_matrix;      /* (dim+1)Xdim matrix for geom.c */
   coordT **gm_row;        /* array of gm_matrix rows */

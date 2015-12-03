@@ -2037,8 +2037,8 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
         for (i = 0; i < warper->numBands; ++i)
             warper->useBandSrcValid[i] = FALSE;
         
-        //Allocate one array for all the band validity masks
-        //Remember that the masks don't use much memeory (they're bitwise)
+        // Allocate one array for all the band validity masks.
+        // Remember that the masks don't use much memory (they're bitwise).
         err = alloc_pinned_mem(warper, 0, sz * sizeof(int),
                                (void **)&(warper->nBandSrcValid),
                                &(warper->nBandSrcValidCL));
@@ -2170,7 +2170,7 @@ cl_int GDALWarpKernelOpenCL_setDstImg(struct oclWarper *warper, void *imgData,
  values from an original matrix. When bilinearly sampled in the GPU hardware,
  the generated values are as close as possible to the original matrix.
  
- Complication: matricies have arbitrary dimensions and the sub-sampling factor
+ Complication: matrices have arbitrary dimensions and the sub-sampling factor
  is an arbitrary integer greater than zero. Getting the edge cases right is 
  difficult.
  

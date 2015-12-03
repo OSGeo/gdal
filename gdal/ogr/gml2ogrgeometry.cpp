@@ -1084,7 +1084,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                     {
                         double dfRadius = CPLAtof(CPLGetXMLValue((CPLXMLNode*)psRadius, NULL, "0"));
                         const char* pszUnits = CPLGetXMLValue((CPLXMLNode*)psRadius, "uom", NULL);
-                        bool bSRSUnitIsDegree = false;  // TODO: Is degree a mispelling of degree?
+                        bool bSRSUnitIsDegree = false;
                         bool bInvertedAxisOrder = false;
                         if( pszSRSName != NULL )
                         {

@@ -139,7 +139,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
 //
       if ( cgrib[0]!=G || cgrib[1]!=R || cgrib[2]!=I || cgrib[3]!=B ) {
         printf("g2_addfield: GRIB not found in given message.\n");
-        printf("g2_addfield: Call to routine g2_create required to initialize GRIB messge.\n");
+        printf("g2_addfield: Call to routine g2_create required to initialize GRIB message.\n");
         ierr=-1;
         return(ierr);
       }

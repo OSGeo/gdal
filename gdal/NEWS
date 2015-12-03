@@ -1788,7 +1788,7 @@ OGRSpatialReference:
  * morph central_latitude to latitude_of_origin in morphFromESRI() (#3191)
  * OGRProj4CT: avoid using proj when the 2 projections are actually identical (#5188)
  * add sanity checks in OGR_SRSNode::importFromWkt() (#5193)
- * VERT_CS: when importing from proj.4 put AXIS node after UNIT; COMPD_CS: when importing from EPSG:x+y, set a more meaningfull name for the COMPD_CS node
+ * VERT_CS: when importing from proj.4 put AXIS node after UNIT; COMPD_CS: when importing from EPSG:x+y, set a more meaningful name for the COMPD_CS node
  * OGRSpatialReference::Validate() : in addition to hand-validation, use WKT grammar from OGC 01-009 CT
  * preserve authority when importing +init=auth_name:auth_code (e.g. +init=IGNF:LAMB93)
 
@@ -2314,7 +2314,7 @@ GTiff driver:
  * Add support for GEO_NORMALIZE_DISABLE_TOWGS84 (#3309)
  * Improve handling of description and offset/scale without reverting to .aux.xml
  * Workaround defects in libtiff 3.X when generating several overview levels at the same time
- * Special case where the EGM96 Vertical Datum code is mis-used as a Vertical CS code (#4922)
+ * Special case where the EGM96 Vertical Datum code is misused as a Vertical CS code (#4922)
  * Support unsetting geotiff tags when calling SetGeoTransform([0,1,0,0,0,1]) and SetProjection('')
  * Rework how CSV files are searched w.r.t libgeotiff (#4994)
 
@@ -3852,7 +3852,7 @@ Ruby bindings:
 = GDAL/OGR 1.8.0 release notes =
 
 (Note: Most changes/bugfixes between 1.7.0 and 1.8.0 that have already gone
-to the 1.7.X maintenance releases are not mentionned hereafter.)
+to the 1.7.X maintenance releases are not mentioned hereafter.)
 
 == In a nutshell... ==
 
@@ -3926,7 +3926,7 @@ Core:
  * On Unix, add capability of opening the target of a symlink through GDALOpen()
    even if it not a real filename. Useful for opening resources expressed as
    GDAL virtual filenames in software offering only file explorers (#3902)
- * Assume anything less than 100000 for GDAL_CACHEMAX is measured in metabytes.
+ * Assume anything less than 100000 for GDAL_CACHEMAX is measured in megabytes.
  * Read cartesian coordinates if applicable in GDALLoadOziMapFile().
  * Avoid being overly sensitive to numeric imprecision when comparing pixel
    value and nodata value in GDALRasterBand::ComputeStatistics()/
@@ -4230,7 +4230,7 @@ NITF driver:
    files written with the IGEOLO corners out of order.
  * Implement readonly support for RSets (#3457)
  * Add capability of writing CGM segment as creation option (or from the source
-   CGM metatada domain if no CGM= creation option); for consistency, also add
+   CGM metadata domain if no CGM= creation option); for consistency, also add
    the capability of writing TEXT segment as creation option, in addition to
    the existing capability of writing it from the source TEXT metadata domain (#3376)
  * Fix read out of buffer for NBPP < 8 and very small block size; fix decoding
@@ -4745,7 +4745,7 @@ Python bindings:
 
 = GDAL/OGR 1.7.0 =
 
-(Some of the bugfixes mentionned below might also have gone into 1.6.X maintenance releases.)
+(Some of the bug fixes mentioned below might also have gone into 1.6.X maintenance releases.)
 
 == In a nutshell... ==
 
@@ -5261,7 +5261,7 @@ OGRSpatialReference :
  * Expose more of the axis orientation API to C
  * Add missing Eckert 1, 2, 3 and 5 projections
  * Fix typos in proj4 conversion for Wagner projections
- * hack in EXTENSION nodes for google mercators (#3136)
+ * Hack in EXTENSION nodes for Google Mercator (#3136)
  * Validates PROJCS with AXIS definitions (#2739)
  * Added support for urn:ogc:def:crs:OGC::CRS:84 (and CRS:83, CRS:27) per WMS spec.
  * Wide variety of improvements to preserve PE strings through a morphFromESRI()

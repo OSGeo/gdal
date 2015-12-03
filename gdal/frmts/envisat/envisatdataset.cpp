@@ -436,11 +436,11 @@ void EnvisatDataset::ScanForGCPs_MERIS()
         / nSamplesPerTiePoint;
 
 /* -------------------------------------------------------------------- */
-/*      Find a Mesurement type dataset to use as a reference raster     */
+/*      Find a measurement type dataset to use as a reference raster    */
 /*      band.                                                           */
 /* -------------------------------------------------------------------- */
 
-    int	nMDSIndex = 0;
+    int nMDSIndex = 0;
 
     for( ; true; nMDSIndex++ )
     {
@@ -492,20 +492,20 @@ void EnvisatDataset::ScanForGCPs_MERIS()
             "received=%d expected=%d", nTPPerColumn , 
                 1 + (arTP.getFirstOffset()+arTP.getLastOffset()+
                       GetRasterYSize()-1) / nLinesPerTiePoint ) ; 
-        return; /* That is far more serious - we risk missplaces TPs. */
+        return;  // That is far more serious - we risk misplaces TPs.
     }
 
     bool isBrowseProduct;
     if ( 50*nTPPerLine + 13 == nDSRSize ) /* regular product */
     {
         isBrowseProduct = false ; 
-    } 
+    }
     else if ( 8*nTPPerLine + 13 == nDSRSize ) /* browse product */
-    { 
+    {
         /* although BPs are rare there is no reason not to support them */
         isBrowseProduct = true ; 
-    } 
-    else 
+    }
+    else
     {
         CPLDebug( "EnvisatDataset", "Unexpectd size of 'Tie points ADS' !"
                 " received=%d expected=%d or %d" , nDSRSize ,
@@ -862,7 +862,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Find a Mesurement type dataset to use as our reference          */
+/*      Find a measurement type dataset to use as our reference          */
 /*      raster band.                                                    */
 /* -------------------------------------------------------------------- */
     int         dsr_size, num_dsr, ds_offset;

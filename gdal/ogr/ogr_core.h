@@ -827,7 +827,7 @@ const char CPL_DLL * CPL_STDCALL GDALVersionInfo( const char * );
     @param nVersionMajor Major version to be tested against
     @param nVersionMinor Minor version to be tested against
     @param pszCallingComponentName If not NULL, in case of version mismatch, the method
-                                   will issue a failure mentionning the name of
+                                   will issue a failure mentioning the name of
                                    the calling component.
   */
 int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
