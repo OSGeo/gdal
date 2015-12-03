@@ -49,7 +49,7 @@
                      gfsSchemaLocation="ruian_vf_st_v1.gfs" />
     </namespace>
     <namespace prefix="vf"
-               uri="urn:cz:isvs:ruian:schemas:SpecialniVymennyFormatTypy:v1 SpecialniVymennyFormatTypy.xsd"
+               uri="urn:cz:isvs:ruian:schemas:SpecialniVymennyFormatTypy:v1 ../ruian/xsd/vymenny_format/SpecialniVymennyFormatTypy.xsd"
                useGlobalSRSName="true">
         <featureType elementName="TypSouboru"
                      elementValue="ST_UVOH"
