@@ -114,6 +114,8 @@ CSF_FADDR32 CsfSeekAttrSpace(
 	CSF_FADDR32 currBlockPos, prevBlockPos=USED_UNINIT_ZERO, newPos, endBlock, resultPos=0;
 	int noPosFound;
 	int i;
+        
+        memset(&b, 0, sizeof(b));
 
 	if (MattributeAvail(m ,id))
 	{
