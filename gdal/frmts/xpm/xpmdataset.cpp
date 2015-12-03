@@ -540,7 +540,7 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
     int anCharLookup[256];
     GDALColorTable oCTable;
 
-    for( int i = 0; i < 256; i++ )
+    for( i = 0; i < 256; i++ )
         anCharLookup[i] = -1;
 
     for( int iColor = 0; iColor < nColorCount; iColor++ )

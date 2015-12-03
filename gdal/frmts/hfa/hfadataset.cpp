@@ -1906,16 +1906,16 @@ CPLXMLNode *HFARasterAttributeTable::Serialize() const
 /*                           HFARasterBand()                            */
 /************************************************************************/
 
-HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
+HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
 
 {
     if( iOverview == -1 )
-        this->poDS = poDS;
+        poDS = poDSIn;
     else
-        this->poDS = NULL;
+        poDS = NULL;
 
-    this->hHFA = poDS->hHFA;
-    this->nBand = nBand;
+    this->hHFA = poDSIn->hHFA;
+    nBand = nBandIn;
     this->poCT = NULL;
     this->nThisOverview = iOverview;
     this->papoOverviewBands = NULL;
@@ -3012,8 +3012,8 @@ GDALRasterAttributeTable *HFARasterBand::GetDefaultRAT()
 /*                            WriteNamedRAT()                            */
 /************************************************************************/
 
-CPLErr HFARasterBand::WriteNamedRAT( CPL_UNUSED const char *pszName,
-                                     CPL_UNUSED const GDALRasterAttributeTable *poRAT )
+CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
+                                     const GDALRasterAttributeTable* poRAT )
 {
 /* -------------------------------------------------------------------- */
 /*      Find the requested table.                                       */
@@ -4969,8 +4969,8 @@ CPLErr HFADataset::ReadProjection()
     // then do not use the ESRI PE String.
     if( pszProjection != NULL )
     {
-        OGRSpatialReference oSRS(pszProjection);
-        if( oSRS.GetAuthorityCode(NULL) != NULL )
+        OGRSpatialReference oSRS2(pszProjection);
+        if( oSRS2.GetAuthorityCode(NULL) != NULL )
             bTryReadingPEString = FALSE;
     }
 

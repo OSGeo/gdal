@@ -93,7 +93,7 @@ OGRLayer *
 PDFWritableVectorDataset::ICreateLayer( const char * pszLayerName,
                                         OGRSpatialReference *poSRS,
                                         OGRwkbGeometryType eType,
-                                        CPL_UNUSED char ** papszOptions )
+                                        char ** )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */

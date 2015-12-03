@@ -98,16 +98,16 @@ class HF2RasterBand : public GDALPamRasterBand
 /*                           HF2RasterBand()                            */
 /************************************************************************/
 
-HF2RasterBand::HF2RasterBand( HF2Dataset *poDS, int nBand, GDALDataType eDT ) :
+HF2RasterBand::HF2RasterBand( HF2Dataset *poDSIn, int nBandIn, GDALDataType eDT ) :
     pafBlockData(NULL),
     nLastBlockYOff(-1)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = eDT;
 
-    nBlockXSize = poDS->nTileSize;
+    nBlockXSize = poDSIn->nTileSize;
     nBlockYSize = 1;
 }
 

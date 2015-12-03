@@ -141,23 +141,23 @@ static CPLString ConvertUnitInText(int bMetricUnits, const char* pszTxt)
 /*                           GRIBRasterBand()                            */
 /************************************************************************/
 
-GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDS, int nBand, 
+GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn, 
                                 inventoryType *psInv )
   : m_Grib_Data(NULL), m_Grib_MetaData(NULL)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     this->start = psInv->start;
     this->subgNum = psInv->subgNum;
     this->longFstLevel = CPLStrdup(psInv->longFstLevel);
 
     eDataType = GDT_Float64; // let user do -ot Float32 if needed for saving space, GRIB contains Float64 (though not fully utilized most of the time)
 
-    nBlockXSize = poDS->nRasterXSize;
+    nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    nGribDataXSize = poDS->nRasterXSize;
-    nGribDataYSize = poDS->nRasterYSize;
+    nGribDataXSize = poDSIn->nRasterXSize;
+    nGribDataYSize = poDSIn->nRasterYSize;
 
     const char* pszGribNormalizeUnits = CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
     int bMetricUnits = CSLTestBoolean(pszGribNormalizeUnits);

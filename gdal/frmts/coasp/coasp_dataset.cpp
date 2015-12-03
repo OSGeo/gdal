@@ -141,14 +141,14 @@ char *COASPMetadataItem::GetItemValue()
 	return VSIStrdup(pszItemValue);
 }
 
-COASPMetadataGeorefGridItem::COASPMetadataGeorefGridItem(int nId, int nPixels, 
-	int nLines, double ndLat, double ndLong)
+COASPMetadataGeorefGridItem::COASPMetadataGeorefGridItem(int nIdIn, int nPixelsIn, 
+	int nLinesIn, double ndLatIn, double ndLongIn)
 {
-	this->nId = nId;
-	this->nPixels = nPixels;
-	this->nLines = nLines;
-	this->ndLat = ndLat;
-	this->ndLong = ndLong;
+	this->nId = nIdIn;
+	this->nPixels = nPixelsIn;
+	this->nLines = nLinesIn;
+	this->ndLat = ndLatIn;
+	this->ndLong = ndLongIn;
         pszItemName = VSIStrdup("georef_grid");
 }
 
@@ -289,13 +289,13 @@ public:
 		void *pImage);
 };
 
-COASPRasterBand::COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType,
-	int ePol, VSILFILE *fp)
+COASPRasterBand::COASPRasterBand( COASPDataset *poDSIn, GDALDataType eDataTypeIn,
+	int ePolIn, VSILFILE *fpIn)
 {
-	this->fp = fp;
-	this->ePol = ePol;
-	this->poDS = poDS;
-	this->eDataType = eDataType;
+	this->fp = fpIn;
+	this->ePol = ePolIn;
+	this->poDS = poDSIn;
+	this->eDataType = eDataTypeIn;
         nBlockXSize = poDS->GetRasterXSize();
         nBlockYSize = 1;
 }

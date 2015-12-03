@@ -52,10 +52,10 @@ class DataSet
     int index ;
     int nrec ; 
 
-    DataSet( EnvisatFile & envfile , int index ) : 
-        envfile(envfile), index(index), nrec(0)
+    DataSet( EnvisatFile & envfileIn , int indexIn ) : 
+        envfile(envfileIn), index(indexIn), nrec(0)
     { 
-        EnvisatFile_GetDatasetInfo( &envfile, index, NULL, NULL, NULL,
+        EnvisatFile_GetDatasetInfo( &envfileIn, indexIn, NULL, NULL, NULL,
                 NULL , NULL, &nrec, NULL ) ;
     } 
 

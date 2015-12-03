@@ -84,12 +84,12 @@ class GMTRasterBand : public GDALPamRasterBand
 /*                           GMTRasterBand()                            */
 /************************************************************************/
 
-GMTRasterBand::GMTRasterBand( GMTDataset *poDS, int nZId, int nBand )
+GMTRasterBand::GMTRasterBand( GMTDataset *poDSIn, int nZIdIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->nZId = nZId;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->nZId = nZIdIn;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
@@ -97,7 +97,7 @@ GMTRasterBand::GMTRasterBand( GMTDataset *poDS, int nZId, int nBand )
 /* -------------------------------------------------------------------- */
 /*      Get the type of the "z" variable, our target raster array.      */
 /* -------------------------------------------------------------------- */
-    if( nc_inq_var( poDS->cdfid, nZId, NULL, &nc_datatype, NULL, NULL,
+    if( nc_inq_var( poDSIn->cdfid, nZId, NULL, &nc_datatype, NULL, NULL,
                     NULL ) != NC_NOERR )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 

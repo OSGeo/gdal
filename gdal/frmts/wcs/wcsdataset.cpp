@@ -157,19 +157,19 @@ class WCSRasterBand : public GDALPamRasterBand
 /*                           WCSRasterBand()                            */
 /************************************************************************/
 
-WCSRasterBand::WCSRasterBand( WCSDataset *poDS, int nBand, int iOverview )
+WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn, int iOverviewIn )
 
 {
-    poODS = poDS;
-    this->nBand = nBand;
+    poODS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = GDALGetDataTypeByName( 
-        CPLGetXMLValue( poDS->psService, "BandType", "Byte" ) );
+        CPLGetXMLValue( poDSIn->psService, "BandType", "Byte" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Establish resolution reduction for this overview level.         */
 /* -------------------------------------------------------------------- */
-    this->iOverview = iOverview;
+    this->iOverview = iOverviewIn;
     nResFactor = 1 << (iOverview+1); // iOverview == -1 is base layer
 
 /* -------------------------------------------------------------------- */
@@ -178,8 +178,8 @@ WCSRasterBand::WCSRasterBand( WCSDataset *poDS, int nBand, int iOverview )
     nRasterXSize = poDS->GetRasterXSize() / nResFactor;
     nRasterYSize = poDS->GetRasterYSize() / nResFactor;
     
-    nBlockXSize = atoi(CPLGetXMLValue( poDS->psService, "BlockXSize", "0" ) );
-    nBlockYSize = atoi(CPLGetXMLValue( poDS->psService, "BlockYSize", "0" ) );
+    nBlockXSize = atoi(CPLGetXMLValue( poDSIn->psService, "BlockXSize", "0" ) );
+    nBlockYSize = atoi(CPLGetXMLValue( poDSIn->psService, "BlockYSize", "0" ) );
 
     if( nBlockXSize < 1 )
     {
@@ -427,13 +427,13 @@ int WCSRasterBand::GetOverviewCount()
 /*                            GetOverview()                             */
 /************************************************************************/
 
-GDALRasterBand *WCSRasterBand::GetOverview( int iOverview )
+GDALRasterBand *WCSRasterBand::GetOverview( int iOverviewIn )
 
 {
-    if( iOverview < 0 || iOverview >= nOverviewCount )
+    if( iOverviewIn < 0 || iOverviewIn >= nOverviewCount )
         return NULL;
     else
-        return papoOverviews[iOverview];
+        return papoOverviews[iOverviewIn];
 }
 
 /************************************************************************/
@@ -1569,7 +1569,6 @@ int WCSDataset::ExtractGridInfo()
 /* -------------------------------------------------------------------- */
     if( CPLGetXMLValue( psService, "PreferredFormat", NULL ) == NULL )
     {
-        CPLXMLNode *psNode;
         CPLString osPreferredFormat;
 
         for( psNode = psCO->psChild; psNode != NULL; psNode = psNode->psNext )

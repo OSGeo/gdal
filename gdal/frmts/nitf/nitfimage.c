@@ -171,7 +171,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     }
     else if( EQUAL(psFile->szVersion,"NITF02.00") )
     {
-        int nOffset = 0;
+        nOffset = 0;
         GetMD( psImage, pachHeader,   2,  10, IID1   );
         GetMD( psImage, pachHeader,  12,  14, IDATIM );
         GetMD( psImage, pachHeader,  26,  17, TGTID  );
@@ -793,7 +793,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     else if( psImage->szIC[0] != 'M' && psImage->szIC[1] != 'M' )
     {
-        int iBlockX, iBlockY, iBand;
+        int iBlockX, iBlockY;
 
         for( iBlockY = 0; iBlockY < psImage->nBlocksPerColumn; iBlockY++ )
         {
@@ -858,14 +858,13 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         {
             int nStoredBlocks = psImage->nBlocksPerRow 
                 * psImage->nBlocksPerColumn; 
-            int iBand;
 
             for( i = 0; i < nStoredBlocks; i++ )
             {
-                GUInt32 nOffset;
-                VSIFReadL( &nOffset, 4, 1, psFile->fp );
-                CPL_MSBPTR32( &nOffset );
-                psImage->panBlockStart[i] = nOffset;
+                GUInt32 l_nOffset;
+                VSIFReadL( &l_nOffset, 4, 1, psFile->fp );
+                CPL_MSBPTR32( &l_nOffset );
+                psImage->panBlockStart[i] = l_nOffset;
                 if( psImage->panBlockStart[i] != 0xffffffff )
                 {
                     psImage->panBlockStart[i] 
@@ -891,10 +890,10 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             int isM4 = EQUAL(psImage->szIC,"M4");
             for( i=0; i < nBlockCount; i++ )
             {
-                GUInt32 nOffset;
-                VSIFReadL( &nOffset, 4, 1, psFile->fp );
-                CPL_MSBPTR32( &nOffset );
-                psImage->panBlockStart[i] = nOffset;
+                GUInt32 l_nOffset;
+                VSIFReadL( &l_nOffset, 4, 1, psFile->fp );
+                CPL_MSBPTR32( &l_nOffset );
+                psImage->panBlockStart[i] = l_nOffset;
                 if( psImage->panBlockStart[i] != 0xffffffff )
                 {
                     if (isM4 && (psImage->panBlockStart[i] % 6144) != 0)
@@ -928,10 +927,10 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
                 for( i=0; i < nBlockCount; i++ )
                 {
-                    GUInt32 nOffset;
-                    VSIFReadL( &nOffset, 4, 1, psFile->fp );
-                    CPL_MSBPTR32( &nOffset );
-                    psImage->panBlockStart[i] = nOffset;
+                    GUInt32 l_nOffset;
+                    VSIFReadL( &l_nOffset, 4, 1, psFile->fp );
+                    CPL_MSBPTR32( &l_nOffset );
+                    psImage->panBlockStart[i] = l_nOffset;
                     if( psImage->panBlockStart[i] != 0xffffffff )
                     {
                         if ((psImage->panBlockStart[i] % 6144) != 0)
@@ -956,7 +955,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             }
             else if( EQUAL(psImage->szIC,"NM") )
             {
-                int iBlockX, iBlockY, iBand;
+                int iBlockX, iBlockY;
 
                 for( iBlockY = 0; iBlockY < psImage->nBlocksPerColumn; iBlockY++ )
                 {

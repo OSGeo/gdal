@@ -151,19 +151,19 @@ class AAIGRasterBand : public GDALPamRasterBand
 /*                           AAIGRasterBand()                            */
 /************************************************************************/
 
-AAIGRasterBand::AAIGRasterBand( AAIGDataset *poDS, int nDataStart )
+AAIGRasterBand::AAIGRasterBand( AAIGDataset *poDSIn, int nDataStart )
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 
     nBand = 1;
-    eDataType = poDS->eDataType;
+    eDataType = poDSIn->eDataType;
 
-    nBlockXSize = poDS->nRasterXSize;
+    nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
     panLineOffset = 
-        (GUIntBig *) VSI_CALLOC_VERBOSE( poDS->nRasterYSize, sizeof(GUIntBig) );
+        (GUIntBig *) VSI_CALLOC_VERBOSE( poDSIn->nRasterYSize, sizeof(GUIntBig) );
     if (panLineOffset == NULL)
     {
         return;

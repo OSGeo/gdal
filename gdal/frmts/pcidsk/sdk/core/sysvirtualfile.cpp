@@ -59,19 +59,19 @@ const int SysVirtualFile::block_size = SYSVIRTUALFILE_BLOCKSIZE;
 /*                           SysVirtualFile()                           */
 /************************************************************************/
 
-SysVirtualFile::SysVirtualFile( CPCIDSKFile *file, int start_block, 
+SysVirtualFile::SysVirtualFile( CPCIDSKFile *fileIn, int start_block, 
                                 uint64 image_length, 
-                                SysBlockMap *sysblockmap,
-                                int image_index )
+                                SysBlockMap *sysblockmapIn,
+                                int image_indexIn )
 
 {
     io_handle = NULL;
     io_mutex = NULL;
 
     file_length = image_length;
-    this->file = file;
-    this->sysblockmap = sysblockmap;
-    this->image_index = image_index;
+    this->file = fileIn;
+    this->sysblockmap = sysblockmapIn;
+    this->image_index = image_indexIn;
 
     loaded_block = -1;
     loaded_block_dirty = false;

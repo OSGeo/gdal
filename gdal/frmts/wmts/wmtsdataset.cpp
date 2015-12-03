@@ -199,12 +199,12 @@ class WMTSBand : public GDALPamRasterBand
 /*                            WMTSBand()                                */
 /************************************************************************/
 
-WMTSBand::WMTSBand(WMTSDataset* poDS, int nBand)
+WMTSBand::WMTSBand(WMTSDataset* poDSIn, int nBandIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     eDataType = GDT_Byte;
-    poDS->apoDatasets[0]->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    poDSIn->apoDatasets[0]->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
 }
 
 /************************************************************************/
@@ -678,14 +678,14 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
         {
             if( psSubIter->eType != CXT_Element || strcmp(psSubIter->pszValue, "TileMatrix") != 0 )
                 continue;
-            const char* pszIdentifier = CPLGetXMLValue(psSubIter, "Identifier", NULL);
+            const char* l_pszIdentifier = CPLGetXMLValue(psSubIter, "Identifier", NULL);
             const char* pszScaleDenominator = CPLGetXMLValue(psSubIter, "ScaleDenominator", NULL);
             const char* pszTopLeftCorner = CPLGetXMLValue(psSubIter, "TopLeftCorner", NULL);
             const char* pszTileWidth = CPLGetXMLValue(psSubIter, "TileWidth", NULL);
             const char* pszTileHeight = CPLGetXMLValue(psSubIter, "TileHeight", NULL);
             const char* pszMatrixWidth = CPLGetXMLValue(psSubIter, "MatrixWidth", NULL);
             const char* pszMatrixHeight = CPLGetXMLValue(psSubIter, "MatrixHeight", NULL);
-            if( pszIdentifier == NULL || pszScaleDenominator == NULL ||
+            if( l_pszIdentifier == NULL || pszScaleDenominator == NULL ||
                 pszTopLeftCorner == NULL || strchr(pszTopLeftCorner, ' ') == NULL ||
                 pszTileWidth == NULL || pszTileHeight == NULL ||
                 pszMatrixWidth == NULL || pszMatrixHeight == NULL )
@@ -695,7 +695,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
                 return FALSE;
             }
             WMTSTileMatrix oTM;
-            oTM.osIdentifier = pszIdentifier;
+            oTM.osIdentifier = l_pszIdentifier;
             oTM.dfScaleDenominator = CPLAtof(pszScaleDenominator);
             oTM.dfPixelSize = oTM.dfScaleDenominator * WMTS_PITCH;
             if( oTMS.oSRS.IsGeographic() )
@@ -704,7 +704,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             double dfVal2 = CPLAtof(strchr(pszTopLeftCorner, ' ')+1);
             if( !bSwap ||
                 /* Hack for http://osm.geobretagne.fr/gwc01/service/wmts?request=getcapabilities */
-                ( STARTS_WITH_CI(pszIdentifier, "EPSG:4326:") &&
+                ( STARTS_WITH_CI(l_pszIdentifier, "EPSG:4326:") &&
                   dfVal1 == -180.0 ) )
             {
                 oTM.dfTLX = dfVal1;
@@ -1202,27 +1202,27 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             {
                 int bIsDefault = CSLTestBoolean(CPLGetXMLValue(
                                             psSubIter, "isDefault", "false"));
-                const char* pszIdentifier = CPLGetXMLValue(
+                const char* l_pszIdentifier = CPLGetXMLValue(
                                             psSubIter, "Identifier", "");
-                if( osStyle.size() && strcmp(osStyle, pszIdentifier) != 0 )
+                if( osStyle.size() && strcmp(osStyle, l_pszIdentifier) != 0 )
                     continue;
                 const char* pszStyleTitle = CPLGetXMLValue(
-                                        psSubIter, "Title", pszIdentifier);
+                                        psSubIter, "Title", l_pszIdentifier);
                 if( bIsDefault )
                 {
                     aosStylesIdentifier.insert(aosStylesIdentifier.begin(),
-                                                CPLString(pszIdentifier));
+                                                CPLString(l_pszIdentifier));
                     aosStylesTitle.insert(aosStylesTitle.begin(),
                                             CPLString(pszStyleTitle));
-                    if( strcmp(osSelectLayer, pszIdentifier) == 0 &&
+                    if( strcmp(osSelectLayer, l_pszIdentifier) == 0 &&
                         osSelectStyle.size() == 0 )
                     {
-                        osSelectStyle = pszIdentifier;
+                        osSelectStyle = l_pszIdentifier;
                     }
                 }
                 else
                 {
-                    aosStylesIdentifier.push_back(pszIdentifier);
+                    aosStylesIdentifier.push_back(l_pszIdentifier);
                     aosStylesTitle.push_back(pszStyleTitle);
                 }
             }

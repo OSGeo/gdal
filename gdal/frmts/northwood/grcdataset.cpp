@@ -102,10 +102,10 @@ class NWT_GRCRasterBand : public GDALPamRasterBand
 /*                           NWT_GRCRasterBand()                        */
 /************************************************************************/
 
-NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
+NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
 
     if( poGDS->pGrd->nBitsPerPixel == 8 )
@@ -139,17 +139,17 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
         oEntry.c3 = poGDS->pGrd->stClassDict->stClassifedItem[i]->b;
         oEntry.c4 = 0;            // alpha 0 = solid
 
-        poGDS->poColorTable->SetColorEntry( poDS->pGrd->
+        poGDS->poColorTable->SetColorEntry( poGDS->pGrd->
                                           stClassDict->stClassifedItem[i]->
                                           usPixVal, &oEntry );
     }
 
     // find the max value used in the grc
     int maxValue = 0;
-    for( int i=0; i < static_cast<int>( poDS->pGrd->stClassDict->nNumClassifiedItems ); i++ )
+    for( int i=0; i < static_cast<int>( poGDS->pGrd->stClassDict->nNumClassifiedItems ); i++ )
     {
-        if( poDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal > maxValue )
-            maxValue = poDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal;
+        if( poGDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal > maxValue )
+            maxValue = poGDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal;
     }
 
     // load a value for the null value
@@ -162,20 +162,20 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
         int i = 0;
         // loop throught the GRC dictionary to see if the value is defined
         for( ;
-             i < static_cast<int>( poDS->pGrd->stClassDict->nNumClassifiedItems );
+             i < static_cast<int>( poGDS->pGrd->stClassDict->nNumClassifiedItems );
              i++ )
         {
-            if( static_cast<int>( poDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal ) ==
+            if( static_cast<int>( poGDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal ) ==
                 val )
             {
                 poGDS->papszCategories =
                     CSLAddString( poGDS->papszCategories,
-                                    poDS->pGrd->stClassDict->
+                                    poGDS->pGrd->stClassDict->
                                     stClassifedItem[i]->szClassName );
                 break;
             }
         }
-        if( i >= static_cast<int>( poDS->pGrd->stClassDict->nNumClassifiedItems ) )
+        if( i >= static_cast<int>( poGDS->pGrd->stClassDict->nNumClassifiedItems ) )
             poGDS->papszCategories = CSLAddString( poGDS->papszCategories, "" );
 
     }

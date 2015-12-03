@@ -712,7 +712,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             // This drive only supports a map list which stores a set
             // of ILWIS raster maps,
             string sMapStoreName = ReadElement("MapStore", "Data", sBandName);
-            string sExt = CPLGetExtension( sMapStoreName.c_str() );
+            sExt = CPLGetExtension( sMapStoreName.c_str() );
             if ( !STARTS_WITH_CI(sExt.c_str(), "mp#"))
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -1223,19 +1223,22 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*                       ILWISRasterBand()                              */
 /************************************************************************/
 
-ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
+ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn )
 
 {
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+
     string sBandName;
-    if ( EQUAL(poDS->pszFileType.c_str(),"Map"))
-        sBandName = string(poDS->osFileName);
+    if ( EQUAL(poDSIn->pszFileType.c_str(),"Map"))
+        sBandName = string(poDSIn->osFileName);
     else //map list
     {
         //Form the band name
         char cBandName[45];
         sprintf( cBandName, "Map%d", nBand-1);
-        sBandName = ReadElement("MapList", string(cBandName), string(poDS->osFileName));
-        string sInputPath = string(CPLGetPath( poDS->osFileName));	
+        sBandName = ReadElement("MapList", string(cBandName), string(poDSIn->osFileName));
+        string sInputPath = string(CPLGetPath( poDSIn->osFileName));	
         string sBandPath = string(CPLGetPath( sBandName.c_str()));
         string sBandBaseName = string(CPLGetBasename( sBandName.c_str()));
         if ( 0==sBandPath.length() )
@@ -1244,7 +1247,7 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
           sBandName = string(CPLFormFilename(sBandPath.c_str(),sBandBaseName.c_str(),"mpr" ));
     }
 
-    if (poDS->bNewDataset)
+    if (poDSIn->bNewDataset)
     {
       // Called from Create():
       // eDataType is defaulted to GDT_Byte by GDALRasterBand::GDALRasterBand
@@ -1256,8 +1259,7 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
     }
     else // Called from Open(), thus convert ILWIS type from ODF to eDataType
         GetILWISInfo(sBandName);
-    this->poDS = poDS;
-    this->nBand = nBand;
+
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
     switch (psInfo.stStoreType)
@@ -1988,11 +1990,11 @@ string ValueRange::ToString()
     return string(buffer);
 }
 
-double ValueRange::rValue(int iRaw)
+double ValueRange::rValue(int iRawIn)
 {
-    if (iRaw == iUNDEF || iRaw == iRawUndef)
+    if (iRawIn == iUNDEF || iRawIn == iRawUndef)
         return rUNDEF;
-    double rVal = iRaw + _r0;
+    double rVal = iRawIn + _r0;
     rVal *= _rStep;
     if (get_rLo() == get_rHi())
         return rVal;
@@ -2003,17 +2005,17 @@ double ValueRange::rValue(int iRaw)
     return rVal;
 }
 
-int ValueRange::iRaw(double rValue)
+int ValueRange::iRaw(double rValueIn)
 {
-    if (rValue == rUNDEF) // || !fContains(rValue))
+    if (rValueIn == rUNDEF) // || !fContains(rValue))
         return iUNDEF;
     const double rEpsilon = _rStep == 0.0 ? 1e-6 : _rStep / 3.0;
-    if (rValue - get_rLo() < -rEpsilon) // take a little rounding tolerance
+    if (rValueIn - get_rLo() < -rEpsilon) // take a little rounding tolerance
         return iUNDEF;
-    else if (rValue - get_rHi() > rEpsilon) // take a little rounding tolerance
+    else if (rValueIn - get_rHi() > rEpsilon) // take a little rounding tolerance
         return iUNDEF;
-    rValue /= _rStep;
-    double rVal = floor(rValue+0.5);
+    rValueIn /= _rStep;
+    double rVal = floor(rValueIn+0.5);
     rVal -= _r0;
     long iVal = longConv(rVal);
     return static_cast<int>(iVal);

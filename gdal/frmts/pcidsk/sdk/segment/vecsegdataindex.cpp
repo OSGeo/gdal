@@ -75,11 +75,11 @@ VecSegDataIndex::~VecSegDataIndex()
 /*                             Initialize()                             */
 /************************************************************************/
 
-void VecSegDataIndex::Initialize( CPCIDSKVectorSegment *vs, int section )
+void VecSegDataIndex::Initialize( CPCIDSKVectorSegment *vsIn, int sectionIn )
 
 {
-    this->section = section;
-    this->vs = vs;
+    this->section = sectionIn;
+    this->vs = vsIn;
 
     if( section == sec_vert )
         offset_on_disk_within_section = 0;

@@ -97,9 +97,9 @@ class GIFRasterBand : public GIFAbstractRasterBand
 /*                           GIFRasterBand()                            */
 /************************************************************************/
 
-GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand, 
+GIFRasterBand::GIFRasterBand( GIFDataset *poDSIn, int nBandIn, 
                               SavedImage *psSavedImage, int nBackground ) :
-                GIFAbstractRasterBand(poDS, nBand, psSavedImage, nBackground, FALSE)
+                GIFAbstractRasterBand(poDSIn, nBandIn, psSavedImage, nBackground, FALSE)
 
 {
 }

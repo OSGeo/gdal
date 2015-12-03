@@ -334,7 +334,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
 
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL, GetMaskBand, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0, GetMaskFlags, (), ())
-RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlags ), (nFlags))
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (nFlagsIn))
 
 
 /************************************************************************/
@@ -353,16 +353,16 @@ void NITFProxyPamRasterBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand
 /*                           NITFRasterBand()                           */
 /************************************************************************/
 
-NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
+NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn )
 
 {
-    NITFBandInfo *psBandInfo = poDS->psImage->pasBandInfo + nBand - 1;
+    NITFBandInfo *psBandInfo = poDSIn->psImage->pasBandInfo + nBandIn - 1;
 
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
-    eAccess = poDS->eAccess;
-    psImage = poDS->psImage;
+    eAccess = poDSIn->eAccess;
+    psImage = poDSIn->psImage;
 
 /* -------------------------------------------------------------------- */
 /*      Translate data type(s).                                         */
@@ -882,14 +882,14 @@ void NITFRasterBand::Unpack( GByte* pData )
 /*                      NITFWrapperRasterBand()                         */
 /************************************************************************/
 
-NITFWrapperRasterBand::NITFWrapperRasterBand( NITFDataset * poDS,
-                                              GDALRasterBand* poBaseBand,
-                                              int nBand) :
+NITFWrapperRasterBand::NITFWrapperRasterBand( NITFDataset * poDSIn,
+                                              GDALRasterBand* poBaseBandIn,
+                                              int nBandIn) :
     poColorTable(NULL)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->poBaseBand = poBaseBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->poBaseBand = poBaseBandIn;
     eDataType = poBaseBand->GetRasterDataType();
     poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     eInterp = poBaseBand->GetColorInterpretation();
@@ -951,9 +951,9 @@ GDALColorInterp NITFWrapperRasterBand::GetColorInterpretation()
 /*                        SetColorInterpretation()                      */
 /************************************************************************/
 
-CPLErr NITFWrapperRasterBand::SetColorInterpretation( GDALColorInterp eInterp)
+CPLErr NITFWrapperRasterBand::SetColorInterpretation( GDALColorInterp eInterpIn)
 {
-    this->eInterp = eInterp;
+    this->eInterp = eInterpIn;
     if( poBaseBand->GetDataset() != NULL &&
         poBaseBand->GetDataset()->GetDriver() != NULL &&
         EQUAL(poBaseBand->GetDataset()->GetDriver()->GetDescription(), "JP2ECW") )

@@ -45,8 +45,8 @@ static std::map<CPLString, GDALDerivedPixelFunc> osMapPixelFunction;
 /*                        VRTDerivedRasterBand()                        */
 /************************************************************************/
 
-VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDS, int nBand) :
-    VRTSourcedRasterBand( poDS, nBand ),
+VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn) :
+    VRTSourcedRasterBand( poDSIn, nBandIn ),
     pszFuncName(NULL),
     eSourceTransferType(GDT_Unknown)
 {}
@@ -55,10 +55,10 @@ VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDS, int nBand) :
 /*                        VRTDerivedRasterBand()                        */
 /************************************************************************/
 
-VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDS, int nBand,
+VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn,
 					   GDALDataType eType, 
 					   int nXSize, int nYSize) :
-    VRTSourcedRasterBand(poDS, nBand, eType, nXSize, nYSize),
+    VRTSourcedRasterBand(poDSIn, nBandIn, eType, nXSize, nYSize),
     pszFuncName(NULL),
     eSourceTransferType(GDT_Unknown)
 {}
@@ -189,9 +189,9 @@ void VRTDerivedRasterBand::SetPixelFunctionName(const char *pszFuncNameIn)
  * @param eDataType Data type to use to obtain pixel information from
  * the sources to be passed to the derived band pixel function.
  */
-void VRTDerivedRasterBand::SetSourceTransferType(GDALDataType eDataType)
+void VRTDerivedRasterBand::SetSourceTransferType(GDALDataType eDataTypeIn)
 {
-    this->eSourceTransferType = eDataType;
+    this->eSourceTransferType = eDataTypeIn;
 }
 
 /************************************************************************/
@@ -279,14 +279,14 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 /*      nodata value if available.                                      */
 /* -------------------------------------------------------------------- */
     if ( nPixelSpace == typesize &&
-         (!bNoDataValueSet || dfNoDataValue == 0) ) {
+         (!m_bNoDataValueSet || m_dfNoDataValue == 0) ) {
         memset( pData, 0, static_cast<size_t>(nBufXSize * nBufYSize * nPixelSpace) );
     }
-    else if ( !bEqualAreas || bNoDataValueSet )
+    else if ( !bEqualAreas || m_bNoDataValueSet )
     {
         double dfWriteValue = 0.0;
-        if( bNoDataValueSet )
-            dfWriteValue = dfNoDataValue;
+        if( m_bNoDataValueSet )
+            dfWriteValue = m_dfNoDataValue;
 
         for( int iLine = 0; iLine < nBufYSize; iLine++ )
         {
@@ -349,13 +349,13 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         /* don't need any special line-by-line handling when a nonzero  */
         /* nodata value is set.                                         */
         /* ------------------------------------------------------------ */
-        if ( !bNoDataValueSet || dfNoDataValue == 0 )
+        if ( !m_bNoDataValueSet || m_dfNoDataValue == 0 )
         {
             memset( pBuffers[iSource], 0, sourcesize * nBufXSize * nBufYSize );
         }
         else
         {
-            GDALCopyWords( &dfNoDataValue, GDT_Float64, 0,
+            GDALCopyWords( &m_dfNoDataValue, GDT_Float64, 0,
                            reinterpret_cast<GByte *>( pBuffers[iSource] ), eSrcType, sourcesize,
                            nBufXSize * nBufYSize);
         }

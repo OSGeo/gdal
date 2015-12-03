@@ -163,13 +163,13 @@ EpsilonDataset::~EpsilonDataset()
 /*                       EpsilonRasterBand()                            */
 /************************************************************************/
 
-EpsilonRasterBand::EpsilonRasterBand(EpsilonDataset* poDS, int nBand)
+EpsilonRasterBand::EpsilonRasterBand(EpsilonDataset* poDSIn, int nBandIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     this->eDataType = GDT_Byte;
-    this->nBlockXSize = poDS->pasBlocks[0].w;
-    this->nBlockYSize = poDS->pasBlocks[0].h;
+    this->nBlockXSize = poDSIn->pasBlocks[0].w;
+    this->nBlockYSize = poDSIn->pasBlocks[0].h;
 }
 
 /************************************************************************/
@@ -206,17 +206,17 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
     //CPLDebug("EPSILON", "IReadBlock(nBand=%d,nBlockXOff=%d,nBlockYOff=%d)",
     //         nBand, nBlockXOff, nBlockYOff);
 
-    int nBlocksPerRow = (poGDS->nRasterXSize + nBlockXSize - 1) / nBlockXSize;
-    int nBlock = nBlockXOff + nBlockYOff * nBlocksPerRow;
+    int l_nBlocksPerRow = (poGDS->nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+    int nBlock = nBlockXOff + nBlockYOff * l_nBlocksPerRow;
     
     BlockDesc* psDesc = &poGDS->pasBlocks[nBlock];
 #ifdef DEBUG
-    int nBlocksPerColumn = (poGDS->nRasterYSize + nBlockYSize - 1) / nBlockYSize;
+    int l_nBlocksPerColumn = (poGDS->nRasterYSize + nBlockYSize - 1) / nBlockYSize;
     CPLAssert(psDesc->x == nBlockXOff * nBlockXSize);
     CPLAssert(psDesc->y == nBlockYOff * nBlockYSize);
-    CPLAssert(psDesc->w == (nBlockXOff < nBlocksPerRow - 1) ?
+    CPLAssert(psDesc->w == (nBlockXOff < l_nBlocksPerRow - 1) ?
                                 nBlockXSize : poGDS->nRasterXSize - psDesc->x);
-    CPLAssert(psDesc->h == (nBlockYOff < nBlocksPerColumn - 1) ?
+    CPLAssert(psDesc->h == (nBlockYOff < l_nBlocksPerColumn - 1) ?
                                 nBlockYSize : poGDS->nRasterYSize - psDesc->y);
 #endif
 

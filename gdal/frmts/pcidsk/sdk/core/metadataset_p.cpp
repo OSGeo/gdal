@@ -63,12 +63,12 @@ MetadataSet::~MetadataSet()
 /*                             Initialize()                             */
 /************************************************************************/
 
-void MetadataSet::Initialize( PCIDSKFile *file, const std::string& group, int id )
+void MetadataSet::Initialize( PCIDSKFile *fileIn, const std::string& groupIn, int idIn )
 
 {
-    this->file = file;
-    this->group = group;
-    this->id = id;
+    this->file = fileIn;
+    this->group = groupIn;
+    this->id = idIn;
 }
 
 /************************************************************************/

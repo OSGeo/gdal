@@ -88,13 +88,13 @@ class GXFRasterBand : public GDALPamRasterBand
 /*                           GXFRasterBand()                            */
 /************************************************************************/
 
-GXFRasterBand::GXFRasterBand( GXFDataset *poDS, int nBand )
+GXFRasterBand::GXFRasterBand( GXFDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    poDS = poDSIn;
+    nBand = nBandIn;
     
-    eDataType = poDS->eDataType;
+    eDataType = poDSIn->eDataType;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;

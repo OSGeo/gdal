@@ -208,8 +208,8 @@ bool PCIDSKAPModelMiscParams::HasRadius(void) const
 /**
  * Create a new PCIDSK APMODEL segment
  */
-CPCIDSKAPModelSegment::CPCIDSKAPModelSegment(PCIDSKFile *file, int segment, const char *segment_pointer) : 
-    CPCIDSKSegment(file, segment, segment_pointer)
+CPCIDSKAPModelSegment::CPCIDSKAPModelSegment(PCIDSKFile *fileIn, int segmentIn, const char *segment_pointer) : 
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer)
 {
     filled_ = false;
     io_params_ = NULL;

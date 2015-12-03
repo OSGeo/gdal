@@ -39,10 +39,10 @@
 
 using namespace PCIDSK;
 
-CLinkSegment::CLinkSegment(PCIDSKFile *file, 
-                           int segment,
+CLinkSegment::CLinkSegment(PCIDSKFile *fileIn, 
+                           int segmentIn,
                            const char *segment_pointer) :
-    CPCIDSKSegment(file, segment, segment_pointer), 
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer), 
     loaded_(false), modified_(false)
 {
     Load();

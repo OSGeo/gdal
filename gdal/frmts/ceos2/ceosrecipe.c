@@ -268,10 +268,10 @@ void RegisterRecipes( void )
 void FreeRecipes( void )
 
 {
-    Link_t *link;
+    Link_t *l_link;
 
-    for( link = RecipeFunctions; link != NULL; link = link->next )
-        HFree( link->object );
+    for( l_link = RecipeFunctions; l_link != NULL; l_link = l_link->next )
+        HFree( l_link->object );
 
     DestroyList( RecipeFunctions );
     RecipeFunctions = NULL;
@@ -656,7 +656,7 @@ static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token )
 
 void GetCeosSARImageDesc( CeosSARVolume_t *volume )
 {
-    Link_t *link;
+    Link_t *l_link;
     RecipeFunctionData_t *rec_data;
     int (*function)(CeosSARVolume_t *volume, void *token);
 
@@ -670,11 +670,11 @@ void GetCeosSARImageDesc( CeosSARVolume_t *volume )
 	return ;
     }
 
-    for(link = RecipeFunctions; link != NULL; link = link->next)
+    for(l_link = RecipeFunctions; l_link != NULL; l_link = l_link->next)
     {
-	if(link->object)
+	if(l_link->object)
 	{
-	    rec_data = link->object;
+	    rec_data = l_link->object;
             function = rec_data->function;
 	    if(( *function )( volume, rec_data->token ) )
             {

@@ -168,10 +168,10 @@ public:
 /*                           IRISRasterBand()                           */
 /************************************************************************/
 
-IRISRasterBand::IRISRasterBand( IRISDataset *poDS, int nBand )
+IRISRasterBand::IRISRasterBand( IRISDataset *poDSIn, int nBandIn )
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     eDataType = GDT_Float32;
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;

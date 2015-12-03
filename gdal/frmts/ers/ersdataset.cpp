@@ -739,13 +739,13 @@ class ERSRasterBand : public RawRasterBand
 /*                           ERSRasterBand()                            */
 /************************************************************************/
 
-ERSRasterBand::ERSRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
-                                vsi_l_offset nImgOffset, int nPixelOffset,
-                                int nLineOffset,
-                                GDALDataType eDataType, int bNativeOrder,
-                                int bIsVSIL, int bOwnsFP ) :
-    RawRasterBand(poDS, nBand, fpRaw, nImgOffset, nPixelOffset,
-                  nLineOffset, eDataType, bNativeOrder, bIsVSIL, bOwnsFP)
+ERSRasterBand::ERSRasterBand( GDALDataset *poDSIn, int nBandIn, void * fpRawIn,
+                                vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
+                                int nLineOffsetIn,
+                                GDALDataType eDataTypeIn, int bNativeOrderIn,
+                                int bIsVSILIn, int bOwnsFPIn ) :
+    RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
+                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, bIsVSILIn, bOwnsFPIn)
 {
 }
 

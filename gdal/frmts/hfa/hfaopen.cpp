@@ -3013,7 +3013,7 @@ const char *HFAGetIGEFilename( HFAHandle hHFA )
                 {
                     CPLString osExtension = CPLGetExtension(pszRawFilename);
                     CPLString osBasename = CPLGetBasename(hHFA->pszFilename);
-                    CPLString osFullFilename = 
+                    osFullFilename = 
                         CPLFormFilename( hHFA->pszPath, osBasename, 
                                          osExtension );
 

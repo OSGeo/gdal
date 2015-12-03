@@ -216,16 +216,16 @@ class SAR_CEOSRasterBand : public GDALPamRasterBand
 /*                         SAR_CEOSRasterBand()                         */
 /************************************************************************/
 
-SAR_CEOSRasterBand::SAR_CEOSRasterBand( SAR_CEOSDataset *poGDS, int nBand,
+SAR_CEOSRasterBand::SAR_CEOSRasterBand( SAR_CEOSDataset *poGDSIn, int nBandIn,
                                         GDALDataType eType )
 
 {
-    this->poDS = poGDS;
-    this->nBand = nBand;
+    this->poDS = poGDSIn;
+    this->nBand = nBandIn;
 
     eDataType = eType;
 
-    nBlockXSize = poGDS->nRasterXSize;
+    nBlockXSize = poGDSIn->nRasterXSize;
     nBlockYSize = 1;
 }
 
@@ -318,16 +318,16 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
 /*                           CCPRasterBand()                            */
 /************************************************************************/
 
-CCPRasterBand::CCPRasterBand( SAR_CEOSDataset *poGDS, int nBand,
+CCPRasterBand::CCPRasterBand( SAR_CEOSDataset *poGDSIn, int nBandIn,
                               GDALDataType eType )
 
 {
-    this->poDS = poGDS;
-    this->nBand = nBand;
+    this->poDS = poGDSIn;
+    this->nBand = nBandIn;
 
     eDataType = eType;
 
-    nBlockXSize = poGDS->nRasterXSize;
+    nBlockXSize = poGDSIn->nRasterXSize;
     nBlockYSize = 1;
 
     if( nBand == 1 )
@@ -476,15 +476,15 @@ CPLErr CCPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                           PALSARRasterBand()                         */
 /************************************************************************/
 
-PALSARRasterBand::PALSARRasterBand( SAR_CEOSDataset *poGDS, int nBand )
+PALSARRasterBand::PALSARRasterBand( SAR_CEOSDataset *poGDSIn, int nBandIn )
 
 {
-    this->poDS = poGDS;
-    this->nBand = nBand;
+    this->poDS = poGDSIn;
+    this->nBand = nBandIn;
 
     eDataType = GDT_CInt16;
 
-    nBlockXSize = poGDS->nRasterXSize;
+    nBlockXSize = poGDSIn->nRasterXSize;
     nBlockYSize = 1;
 
     if( nBand == 1 )

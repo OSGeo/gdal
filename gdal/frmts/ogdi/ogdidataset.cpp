@@ -133,18 +133,18 @@ class OGDIRasterBand : public GDALRasterBand
 /*                           OGDIRasterBand()                            */
 /************************************************************************/
 
-OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDS, int nBand, 
-                                const char * pszName, ecs_Family eFamily,
-                                int nComponent )
+OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDSIn, int nBandIn, 
+                                const char * pszName, ecs_Family eFamilyIn,
+                                int nComponentIn )
 
 {
     ecs_Result	*psResult;
     
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eFamily = eFamily;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->eFamily = eFamilyIn;
     this->pszLayerName = CPLStrdup(pszName);
-    this->nComponent = nComponent;
+    this->nComponent = nComponentIn;
     poCT = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -157,7 +157,7 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDS, int nBand,
 /* -------------------------------------------------------------------- */
 /*      Get the raster info.                                            */
 /* -------------------------------------------------------------------- */
-    psResult = cln_GetRasterInfo( poDS->nClientID );
+    psResult = cln_GetRasterInfo( poDSIn->nClientID );
     if( ECSERROR(psResult) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -593,10 +593,10 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Honour quoted strings for the layer name, since some layers     */
 /*      (i.e. RPF/CADRG) have embedded colons.                           */
 /* -------------------------------------------------------------------- */
-    int       nC1=-1, nC2=-1, i, bInQuotes = FALSE;
+    int       nC1=-1, nC2=-1, bInQuotes = FALSE;
     char      *pszURL = CPLStrdup(poOpenInfo->pszFilename);
 
-    for( i = static_cast<int>(strlen(pszURL))-1; i > 0; i-- )
+    for( int i = static_cast<int>(strlen(pszURL))-1; i > 0; i-- )
     {
         if( pszURL[i] == '/' )
             break;
@@ -659,7 +659,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             int		nOut = 0;
 
-            for( i = 1; pszLayerName[i] != '\0'; i++ )
+            for( int i = 1; pszLayerName[i] != '\0'; i++ )
             {
                 if( pszLayerName[i+1] == '"' && pszLayerName[i] == '\\' )
                     pszLayerName[nOut++] = pszLayerName[++i];
@@ -802,7 +802,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( i=0; papszMatrices != NULL && papszMatrices[i] != NULL; i++)
+    for( int i=0; papszMatrices != NULL && papszMatrices[i] != NULL; i++)
     {
         if( CSLFindString( papszImages, papszMatrices[i] ) == -1 )
             poDS->SetBand( poDS->GetRasterCount()+1, 
@@ -810,7 +810,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
                                                papszMatrices[i], Matrix, 0 ) );
     }
 
-    for( i=0; papszImages != NULL && papszImages[i] != NULL; i++)
+    for( int i=0; papszImages != NULL && papszImages[i] != NULL; i++)
     {
         OGDIRasterBand	*poBand;
 

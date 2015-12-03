@@ -44,19 +44,19 @@ CPL_CVSID("$Id$");
 /*                           RawRasterBand()                            */
 /************************************************************************/
 
-RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
-                              void *fpRawIn, vsi_l_offset nImgOffset,
-                              int nPixelOffset, int nLineOffset,
-                              GDALDataType eDataType, int bNativeOrder,
-                              int bIsVSIL, int bOwnsFP ) :
+RawRasterBand::RawRasterBand( GDALDataset *poDSIn, int nBandIn,
+                              void *fpRawIn, vsi_l_offset nImgOffsetIn,
+                              int nPixelOffsetIn, int nLineOffsetIn,
+                              GDALDataType eDataTypeIn, int bNativeOrderIn,
+                              int bIsVSILIn, int bOwnsFPIn ) :
     fpRaw(NULL),
     fpRawL(NULL)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eDataType = eDataType;
-    this->bIsVSIL = bIsVSIL;
-    this->bOwnsFP =bOwnsFP;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->eDataType = eDataTypeIn;
+    this->bIsVSIL = bIsVSILIn;
+    this->bOwnsFP =bOwnsFPIn;
 
     if (bIsVSIL)
     {
@@ -66,10 +66,10 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
     {
         fpRaw = reinterpret_cast<FILE *>( fpRawIn );
     }
-    this->nImgOffset = nImgOffset;
-    this->nPixelOffset = nPixelOffset;
-    this->nLineOffset = nLineOffset;
-    this->bNativeOrder = bNativeOrder;
+    this->nImgOffset = nImgOffsetIn;
+    this->nPixelOffset = nPixelOffsetIn;
+    this->nLineOffset = nLineOffsetIn;
+    this->bNativeOrder = bNativeOrderIn;
 
     CPLDebug( "GDALRaw", 
               "RawRasterBand(%p,%d,%p,\n"
@@ -94,10 +94,10 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 /*                           RawRasterBand()                            */
 /************************************************************************/
 
-RawRasterBand::RawRasterBand( void *fpRawIn, vsi_l_offset nImgOffset,
-                              int nPixelOffset, int nLineOffset,
-                              GDALDataType eDataType, int bNativeOrder,
-                              int nXSize, int nYSize, int bIsVSIL, int bOwnsFP ) :
+RawRasterBand::RawRasterBand( void *fpRawIn, vsi_l_offset nImgOffsetIn,
+                              int nPixelOffsetIn, int nLineOffsetIn,
+                              GDALDataType eDataTypeIn, int bNativeOrderIn,
+                              int nXSize, int nYSize, int bIsVSILIn, int bOwnsFPIn ) :
     fpRaw(NULL),
     fpRawL(NULL),
     nLineSize(0),
@@ -110,9 +110,9 @@ RawRasterBand::RawRasterBand( void *fpRawIn, vsi_l_offset nImgOffset,
 {
     this->poDS = NULL;
     this->nBand = 1;
-    this->eDataType = eDataType;
-    this->bIsVSIL = bIsVSIL;
-    this->bOwnsFP =bOwnsFP;
+    this->eDataType = eDataTypeIn;
+    this->bIsVSIL = bIsVSILIn;
+    this->bOwnsFP =bOwnsFPIn;
 
     if (bIsVSIL)
     {
@@ -122,10 +122,10 @@ RawRasterBand::RawRasterBand( void *fpRawIn, vsi_l_offset nImgOffset,
     {
         this->fpRaw = reinterpret_cast<FILE *>( fpRawIn );
     }
-    this->nImgOffset = nImgOffset;
-    this->nPixelOffset = nPixelOffset;
-    this->nLineOffset = nLineOffset;
-    this->bNativeOrder = bNativeOrder;
+    this->nImgOffset = nImgOffsetIn;
+    this->nPixelOffset = nPixelOffsetIn;
+    this->nLineOffset = nLineOffsetIn;
+    this->bNativeOrder = bNativeOrderIn;
 
 
     CPLDebug( "GDALRaw", 

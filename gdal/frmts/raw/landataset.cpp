@@ -711,60 +711,60 @@ CPLErr LANDataset::SetProjection( const char * pszWKT )
 
     else 
     {
-        const char *pszProjection = oSRS.GetAttrValue("PROJECTION");
+        const char *l_pszProjection = oSRS.GetAttrValue("PROJECTION");
 
-        if( pszProjection == NULL )
+        if( l_pszProjection == NULL )
             ;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
             nProjCode = 3;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
             nProjCode = 4;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_MERCATOR_1SP) )
             nProjCode = 5;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_POLAR_STEREOGRAPHIC) )
             nProjCode = 6;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_POLYCONIC) )
             nProjCode = 7;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_EQUIDISTANT_CONIC) )
             nProjCode = 8;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_TRANSVERSE_MERCATOR) )
             nProjCode = 9;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_STEREOGRAPHIC) )
             nProjCode = 10;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
             nProjCode = 11;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_AZIMUTHAL_EQUIDISTANT) )
             nProjCode = 12;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_GNOMONIC) )
             nProjCode = 13;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_ORTHOGRAPHIC) )
             nProjCode = 14;
         // we don't have GVNP.
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_SINUSOIDAL) )
             nProjCode = 16;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_EQUIRECTANGULAR) )
             nProjCode = 17;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_MILLER_CYLINDRICAL) )
             nProjCode = 18;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_VANDERGRINTEN) )
             nProjCode = 19;
-        else if( EQUAL(pszProjection,
+        else if( EQUAL(l_pszProjection,
                        SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
             nProjCode = 20;
     }

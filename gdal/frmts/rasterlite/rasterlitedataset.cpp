@@ -95,15 +95,15 @@ CPLString RasterliteGetSpatialFilterCond(double minx, double miny,
 /*                            RasterliteBand()                          */
 /************************************************************************/
 
-RasterliteBand::RasterliteBand(RasterliteDataset* poDS, int nBand,
-                                GDALDataType eDataType,
-                                int nBlockXSize, int nBlockYSize)
+RasterliteBand::RasterliteBand(RasterliteDataset* poDSIn, int nBandIn,
+                                GDALDataType eDataTypeIn,
+                                int nBlockXSizeIn, int nBlockYSizeIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eDataType = eDataType;
-    this->nBlockXSize = nBlockXSize;
-    this->nBlockYSize = nBlockYSize;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->eDataType = eDataTypeIn;
+    this->nBlockXSize = nBlockXSizeIn;
+    this->nBlockYSize = nBlockYSizeIn;
 }
 
 /************************************************************************/
@@ -814,7 +814,7 @@ char** RasterliteDataset::GetFileList()
 /*                         GetBlockParams()                             */
 /************************************************************************/
 
-int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
+int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevelIn,
                                       int* pnBands, GDALDataType* peDataType,
                                       int* pnBlockXSize, int* pnBlockYSize)
 {
@@ -823,7 +823,7 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
                  "FROM \"%s_metadata\" AS m, \"%s_rasters\" AS r "
                  "WHERE %s AND r.id = m.id",
                  osTableName.c_str(), osTableName.c_str(),
-                 RasterliteGetPixelSizeCond(padfXResolutions[nLevel],padfYResolutions[nLevel], "m.").c_str());
+                 RasterliteGetPixelSizeCond(padfXResolutions[nLevelIn],padfYResolutions[nLevelIn], "m.").c_str());
 
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
     if (hSQLLyr == NULL)
@@ -913,11 +913,11 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
 
         if (*pnBands == 1 && this->poCT == NULL)
         {
-            GDALColorTable* poCT =
+            GDALColorTable* l_poCT =
                 reinterpret_cast<GDALColorTable *>(
                     GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1) ) );
-            if (poCT)
-                this->poCT = poCT->Clone();
+            if (l_poCT)
+                this->poCT = l_poCT->Clone();
         }
 
         GDALClose(hDSTile);

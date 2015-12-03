@@ -544,7 +544,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
         m_bsx=m_bsy=-1;
         m_data_window.m_sx=m_data_window.m_sy=0;
 
-        for (int once=1;once;once--) { // Something to break out of
+        for (int once2=1;once2;once2--) { // Something to break out of
             while ((NULL!=Pattern)&&(NULL!=(Pattern=SearchXMLSiblings(Pattern,"=TilePattern")))) {
                 int mbsx,mbsy;
 

@@ -125,11 +125,11 @@ class ADRGRasterBand : public GDALPamRasterBand
 /*                           ADRGRasterBand()                            */
 /************************************************************************/
 
-ADRGRasterBand::ADRGRasterBand( ADRGDataset *poDS, int nBand )
+ADRGRasterBand::ADRGRasterBand( ADRGDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = GDT_Byte;
 
@@ -213,35 +213,35 @@ CPLErr ADRGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    ADRGDataset* poDS = (ADRGDataset*)this->poDS;
-    int nBlock = nBlockYOff * poDS->NFC + nBlockXOff;
-    if (nBlockXOff >= poDS->NFC || nBlockYOff >= poDS->NFL)
+    ADRGDataset* l_poDS = (ADRGDataset*)this->poDS;
+    int nBlock = nBlockYOff * l_poDS->NFC + nBlockXOff;
+    if (nBlockXOff >= l_poDS->NFC || nBlockYOff >= l_poDS->NFL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "nBlockXOff=%d, NFC=%d, nBlockYOff=%d, NFL=%d",
-                 nBlockXOff, poDS->NFC, nBlockYOff, poDS->NFL);
+                 nBlockXOff, l_poDS->NFC, nBlockYOff, l_poDS->NFL);
         return CE_Failure;
     }
     CPLDebug("ADRG", "(%d,%d) -> nBlock = %d", nBlockXOff, nBlockYOff, nBlock);
 
     int offset;
-    if (poDS->TILEINDEX)
+    if (l_poDS->TILEINDEX)
     {
-        if (poDS->TILEINDEX[nBlock] == 0)
+        if (l_poDS->TILEINDEX[nBlock] == 0)
         {
             memset(pImage, 0, 128 * 128);
             return CE_None;
         }
-        offset = poDS->offsetInIMG + (poDS->TILEINDEX[nBlock] - 1) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
+        offset = l_poDS->offsetInIMG + (l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
     }
     else
-        offset = poDS->offsetInIMG + nBlock * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
+        offset = l_poDS->offsetInIMG + nBlock * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
 
-    if (VSIFSeekL(poDS->fdIMG, offset, SEEK_SET) != 0)
+    if (VSIFSeekL(l_poDS->fdIMG, offset, SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset %d", offset);
         return CE_Failure;
     }
-    if (VSIFReadL(pImage, 1, 128 * 128, poDS->fdIMG) != 128 * 128)
+    if (VSIFReadL(pImage, 1, 128 * 128, l_poDS->fdIMG) != 128 * 128)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot read data at offset %d", offset);
         return CE_Failure;
@@ -258,21 +258,21 @@ CPLErr ADRGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    ADRGDataset* poDS = (ADRGDataset*)this->poDS;
-    int nBlock = nBlockYOff * poDS->NFC + nBlockXOff;
-    if (poDS->eAccess != GA_Update)
+    ADRGDataset* l_poDS = (ADRGDataset*)this->poDS;
+    int nBlock = nBlockYOff * l_poDS->NFC + nBlockXOff;
+    if (l_poDS->eAccess != GA_Update)
     {
         return CE_Failure;
     }
-    if (nBlockXOff >= poDS->NFC || nBlockYOff >= poDS->NFL)
+    if (nBlockXOff >= l_poDS->NFC || nBlockYOff >= l_poDS->NFL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "nBlockXOff=%d, NFC=%d, nBlockYOff=%d, NFL=%d",
-                 nBlockXOff, poDS->NFC, nBlockYOff, poDS->NFL);
+                 nBlockXOff, l_poDS->NFC, nBlockYOff, l_poDS->NFL);
         return CE_Failure;
     }
     CPLDebug("ADRG", "(%d,%d) -> nBlock = %d", nBlockXOff, nBlockYOff, nBlock);
 
-    if (poDS->TILEINDEX[nBlock] == 0)
+    if (l_poDS->TILEINDEX[nBlock] == 0)
     {
         unsigned int i;
         int* pi = (int*)pImage;
@@ -286,18 +286,18 @@ CPLErr ADRGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             return CE_None;
         }
 
-        poDS->TILEINDEX[nBlock] = poDS->nNextAvailableBlock ++;
+        l_poDS->TILEINDEX[nBlock] = l_poDS->nNextAvailableBlock ++;
     }
 
     int offset
-        = poDS->offsetInIMG + (poDS->TILEINDEX[nBlock] - 1) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
+        = l_poDS->offsetInIMG + (l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
 
-    if (VSIFSeekL(poDS->fdIMG, offset, SEEK_SET) != 0)
+    if (VSIFSeekL(l_poDS->fdIMG, offset, SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset %d", offset);
         return CE_Failure;
     }
-    if (VSIFWriteL(pImage, 1, 128 * 128, poDS->fdIMG) != 128 * 128)
+    if (VSIFWriteL(pImage, 1, 128 * 128, l_poDS->fdIMG) != 128 * 128)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot read data at offset %d", offset);
         return CE_Failure;
@@ -552,6 +552,7 @@ ADRGDataset::~ADRGDataset()
         VSIFSeekL(fdIMG, 0, SEEK_SET);
         {
             VSILFILE* fd = fdIMG;
+            {
             int nFields = 0;
             int sizeOfFields[] = { 0, 0, 0, 0 };
             const char* nameOfFields[] = { "000", "001", "PAD", "SCN" };
@@ -569,6 +570,7 @@ ADRGDataset::~ADRGDataset()
                                                     "(A(1))");
 
             FinishWriteHeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields), sizeOfFields, nameOfFields);
+            }
 
             /* Write IMAGE_RECORD */
             {

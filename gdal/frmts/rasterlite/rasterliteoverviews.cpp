@@ -475,10 +475,10 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                     CPLPrintPointer(szTmp,
                                     pabyPrevOvrMEMDSBuffer + iBand * nDataTypeSize *
                                     nPrevOvrReqXSize * nPrevOvrReqYSize, sizeof(szTmp));
-                    char** papszOptions
+                    char** l_papszOptions
                         = CSLSetNameValue(NULL, "DATAPOINTER", szTmp);
-                    GDALAddBand(hPrevOvrMemDS, eDataType, papszOptions);
-                    CSLDestroy(papszOptions);
+                    GDALAddBand(hPrevOvrMemDS, eDataType, l_papszOptions);
+                    CSLDestroy(l_papszOptions);
                 }
             }
             else
@@ -513,10 +513,10 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                 CPLPrintPointer(szTmp,
                                 pabyMEMDSBuffer + iBand * nDataTypeSize *
                                 nReqXSize * nReqYSize, sizeof(szTmp));
-                char** papszOptions
+                char** l_papszOptions
                     = CSLSetNameValue(NULL, "DATAPOINTER", szTmp);
-                GDALAddBand(hMemDS, eDataType, papszOptions);
-                CSLDestroy(papszOptions);
+                GDALAddBand(hMemDS, eDataType, l_papszOptions);
+                CSLDestroy(l_papszOptions);
             }
 
             if( hPrevOvrMemDS != NULL )
@@ -721,7 +721,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 
 CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling, 
                                            int nOverviews, int * panOverviewList,
-                                           int nBands, int * panBandList,
+                                           int nBandsIn, int * panBandList,
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData )
 {
@@ -756,7 +756,7 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
         bCheckForExistingOverview = FALSE;
         CPLErr eErr = GDALDataset::IBuildOverviews( 
                             pszResampling, nOverviews, panOverviewList, 
-                            nBands, panBandList, pfnProgress, pProgressData );
+                            nBandsIn, panBandList, pfnProgress, pProgressData );
         bCheckForExistingOverview = TRUE;
         return eErr;
     }
@@ -770,7 +770,7 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
         return CleanOverviews();
     }
 
-    if( nBands != GetRasterCount() )
+    if( nBandsIn != GetRasterCount() )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Generation of overviews in RASTERLITE only"

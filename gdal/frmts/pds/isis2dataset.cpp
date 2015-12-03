@@ -691,11 +691,11 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
         char **papszLines = CSLLoad( pszPrjFile );
 
-        OGRSpatialReference oSRS;
-        if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
+        OGRSpatialReference oSRS2;
+        if( oSRS2.importFromESRI( papszLines ) == OGRERR_NONE )
         {
             char *pszResult = NULL;
-            oSRS.exportToWkt( &pszResult );
+            oSRS2.exportToWkt( &pszResult );
             poDS->osProjection = pszResult;
             CPLFree( pszResult );
         }

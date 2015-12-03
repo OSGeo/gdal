@@ -89,8 +89,8 @@ class BIGGifRasterBand : public GIFAbstractRasterBand
 /*                          BIGGifRasterBand()                          */
 /************************************************************************/
 
-BIGGifRasterBand::BIGGifRasterBand( BIGGIFDataset *poDS, int nBackground ) :
-    GIFAbstractRasterBand(poDS, 1, poDS->hGifFile->SavedImages, nBackground, TRUE)
+BIGGifRasterBand::BIGGifRasterBand( BIGGIFDataset *poDSIn, int nBackground ) :
+    GIFAbstractRasterBand(poDSIn, 1, poDSIn->hGifFile->SavedImages, nBackground, TRUE)
 
 {
 }

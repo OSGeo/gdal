@@ -1238,8 +1238,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
 
     char** papszBandDescriptions = (char**) CPLMalloc(nBands * sizeof(char*));
-    int i;
-    for (i=0;i<nBands;i++){
+    for (int i=0;i<nBands;i++){
         /* Make a copy since ECWGetColorInterpretationName() can return a string generated */
         /* by CPLSPrintf(), which has just a few rotating entries. */
         papszBandDescriptions[i] = CPLStrdup(ECWGetColorInterpretationName(poSrcDS->GetRasterBand(i+1)->GetColorInterpretation(), i));
@@ -1258,7 +1257,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                 poSrcDS )
         != CE_None )
     {
-        for (i=0;i<nBands;i++)
+        for (int i=0;i<nBands;i++)
             CPLFree(papszBandDescriptions[i]);
         CPLFree(papszBandDescriptions);
         return NULL;
@@ -1272,7 +1271,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
         ECWReportError(oErr);
-        for (i=0;i<nBands;i++)
+        for (int i=0;i<nBands;i++)
             CPLFree(papszBandDescriptions[i]);
         CPLFree(papszBandDescriptions);
         return NULL;
@@ -1282,7 +1281,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Cleanup, and return read-only handle.                           */
 /* -------------------------------------------------------------------- */
     oCompressor.CloseDown();
-    for (i=0;i<nBands;i++)
+    for (int i=0;i<nBands;i++)
         CPLFree(papszBandDescriptions[i]);
     CPLFree(papszBandDescriptions);
     pfnProgress( 1.001, NULL, pProgressData );
@@ -1516,19 +1515,19 @@ class IRasterIORequest
         int nBufXSize;
         int nBufYSize;
 
-        IRasterIORequest( GDALRasterBand* poBand,
-                          int nXOff, int nYOff, int nXSize, int nYSize,
-                          void * pData, int nBufXSize, int nBufYSize,
+        IRasterIORequest( GDALRasterBand* poBandIn,
+                          int nXOffIn, int nYOffIn, int nXSizeIn, int nYSizeIn,
+                          void * pData, int nBufXSizeIn, int nBufYSizeIn,
                           GDALDataType eBufType, 
                           GSpacing nPixelSpace, GSpacing nLineSpace ) :
-                            poBand(poBand),
-                            nXOff(nXOff),
-                            nYOff(nYOff),
-                            nXSize(nXSize),
-                            nYSize(nYSize),
+                            poBand(poBandIn),
+                            nXOff(nXOffIn),
+                            nYOff(nYOffIn),
+                            nXSize(nXSizeIn),
+                            nYSize(nYSizeIn),
                             pabyData(NULL),
-                            nBufXSize(nBufXSize),
-                            nBufYSize(nBufYSize)
+                            nBufXSize(nBufXSizeIn),
+                            nBufYSize(nBufYSizeIn)
         {
             GDALDataType eDataType = poBand->GetRasterDataType();
             int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
@@ -1648,10 +1647,10 @@ class ECWWriteRasterBand : public GDALRasterBand
 /*                          ECWWriteDataset()                           */
 /************************************************************************/
 
-ECWWriteDataset::ECWWriteDataset( const char *pszFilename, 
+ECWWriteDataset::ECWWriteDataset( const char *pszFilenameIn, 
                                   int nXSize, int nYSize, int nBandCount, 
                                   GDALDataType eType,
-                                  char **papszOptions, int bIsJPEG2000 )
+                                  char **papszOptionsIn, int bIsJPEG2000In )
 
 {
     bCrystalized = FALSE;
@@ -1660,10 +1659,10 @@ ECWWriteDataset::ECWWriteDataset( const char *pszFilename,
 
     eAccess = GA_Update;
 
-    this->bIsJPEG2000 = bIsJPEG2000;
+    this->bIsJPEG2000 = bIsJPEG2000In;
     this->eDataType = eType;
-    this->papszOptions = CSLDuplicate( papszOptions );
-    this->pszFilename = CPLStrdup( pszFilename );
+    this->papszOptions = CSLDuplicate( papszOptionsIn );
+    this->pszFilename = CPLStrdup( pszFilenameIn );
 
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;

@@ -160,16 +160,16 @@ class netCDFRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS, 
-                                    int nZId, 
-                                    int nZDim,
-                                    int nLevel, 
-                                    const int *panBandZLev, 
-                                    const int *panBandZPos, 
+                                    int nZIdIn, 
+                                    int nZDimIn,
+                                    int nLevelIn, 
+                                    const int *panBandZLevIn, 
+                                    const int *panBandZPosIn, 
                                     const int *paDimIds,
-                                    int nBand ) :
+                                    int nBandIn ) :
     cdfid(poNCDFDS->GetCDFID()),
-    nBandXPos(panBandZPos[0]),
-    nBandYPos(panBandZPos[1]),
+    nBandXPos(panBandZPosIn[0]),
+    nBandYPos(panBandZPosIn[1]),
     dfScale(1.0),
     dfOffset(0.0),
     bSignedData(true),   // Default signed, except for Byte.
@@ -178,10 +178,10 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     this->poDS = poNCDFDS;
     this->panBandZPos = NULL;
     this->panBandZLev = NULL;
-    this->nBand = nBand;
-    this->nZId = nZId;
-    this->nZDim = nZDim;
-    this->nLevel = nLevel;
+    this->nBand = nBandIn;
+    this->nZId = nZIdIn;
+    this->nZDim = nZDimIn;
+    this->nLevel = nLevelIn;
 
 /* ------------------------------------------------------------------- */
 /*      Take care of all other dimensions                              */
@@ -193,8 +193,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             (int *) CPLCalloc( nZDim-1, sizeof( int ) );
 
         for ( int i=0; i < nZDim - 2; i++ ){
-            this->panBandZPos[i] = panBandZPos[i+2];
-            this->panBandZLev[i] = panBandZLev[i];
+            this->panBandZPos[i] = panBandZPosIn[i+2];
+            this->panBandZLev[i] = panBandZLevIn[i];
         }
     }
 
@@ -463,15 +463,15 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /* TODO get metadata, missing val from band #1 if nZDim>2 */
 netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                                     GDALDataType eType,
-                                    int nBand,
+                                    int nBandIn,
                                     bool bSigned,
                                     const char *pszBandName,
                                     const char *pszLongName,
-                                    int nZId,
-                                    int nZDim,
-                                    int nLevel,
-                                    const int *panBandZLev,
-                                    const int *panBandZPos,
+                                    int nZIdIn,
+                                    int nZDimIn,
+                                    int nLevelIn,
+                                    const int *panBandZLevIn,
+                                    const int *panBandZPosIn,
                                     const int *paDimIds ) :
     nc_datatype(NC_NAT),
     cdfid(poNCDFDS->GetCDFID()),
@@ -485,10 +485,10 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     bCheckLongitude(false)
 {
     this->poDS = poNCDFDS;
-    this->nBand = nBand;
-    this->nZId = nZId;
-    this->nZDim = nZDim;
-    this->nLevel = nLevel;
+    this->nBand = nBandIn;
+    this->nZId = nZIdIn;
+    this->nZDim = nZDimIn;
+    this->nLevel = nLevelIn;
     this->panBandZPos = NULL;
     this->panBandZLev = NULL;
 
@@ -507,15 +507,15 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /*      Take care of all other dimensions                             */
 /* ------------------------------------------------------------------ */
     if ( nZDim > 2 && paDimIds != NULL ) {
-        nBandXPos = panBandZPos[0];
-        nBandYPos = panBandZPos[1];
+        nBandXPos = panBandZPosIn[0];
+        nBandYPos = panBandZPosIn[1];
 
         this->panBandZPos = (int *) CPLCalloc( nZDim-1, sizeof( int ) );
         this->panBandZLev = (int *) CPLCalloc( nZDim-1, sizeof( int ) );
 
         for ( int i=0; i < nZDim - 2; i++ ){
-            this->panBandZPos[i] = panBandZPos[i+2];
-            this->panBandZLev[i] = panBandZLev[i];
+            this->panBandZPos[i] = panBandZPosIn[i+2];
+            this->panBandZLev[i] = panBandZLevIn[i];
         }
     }
 
@@ -589,7 +589,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         NCDF_ERR(status);
         CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d) id=%d",
                   cdfid, pszTemp, nc_datatype, nZId );
-        this->nZId = nZId;
 
         if ( !pszLongName || EQUAL(pszLongName,"")  )
         {
@@ -614,22 +613,22 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
           /* add valid_range and _Unsigned ( defined in CF-1 and NUG ) */
           int status = NC_NOERR;
           if ( (nc_datatype == NC_BYTE) && (poNCDFDS->eFormat != NCDF_FORMAT_NC4) ) {
-            short int adfValidRange[2]; 
+            short int l_adfValidRange[2]; 
             if  ( bSignedData ) {
-                adfValidRange[0] = -128;
-                adfValidRange[1] = 127;
+                l_adfValidRange[0] = -128;
+                l_adfValidRange[1] = 127;
                 status = nc_put_att_text( cdfid,nZId, 
                                           "_Unsigned", 5, "false" );
             }
             else {
-                adfValidRange[0] = 0;
-                adfValidRange[1] = 255;
+                l_adfValidRange[0] = 0;
+                l_adfValidRange[1] = 255;
                     status = nc_put_att_text( cdfid,nZId, 
                                               "_Unsigned", 4, "true" );
             }
             NCDF_ERR(status);
             status=nc_put_att_short( cdfid,nZId, "valid_range",
-                                     NC_SHORT, 2, adfValidRange );
+                                     NC_SHORT, 2, l_adfValidRange );
             NCDF_ERR(status);
           }
         }
@@ -948,7 +947,7 @@ CPLXMLNode *netCDFRasterBand::SerializeToXML( CPL_UNUSED const char *pszUnused )
 CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
 
 {
-    netCDFDataset *poDS = reinterpret_cast<netCDFDataset *>( this->poDS );
+    netCDFDataset *l_poDS = reinterpret_cast<netCDFDataset *>( this->poDS );
 
 /* -------------------------------------------------------------------- */
 /*      Compute all dimensions from Band number and save in Metadata    */
@@ -998,7 +997,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
         }
 
         snprintf(szVarName,sizeof(szVarName),"%s",
-               poDS->papszDimName[paDimIds[panBandZPos[i]]] );
+               l_poDS->papszDimName[paDimIds[panBandZPos[i]]] );
 
         // TODO: Make sure all the status checks make sense.
 
@@ -3679,9 +3678,9 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         OGRSpatialReference *poLatLonSRS = NULL;
         OGRCoordinateTransformation *poTransform = NULL;
 
-        char *pszWKT = (char *) pszProjection;
-        OGRSpatialReference oSRS;
-        oSRS.importFromWkt( &pszWKT );
+        char *pszWKT2 = (char *) pszProjection;
+        OGRSpatialReference oSRS2;
+        oSRS2.importFromWkt( &pszWKT2 );
 
         double *padYVal = NULL;
         double *padXVal = NULL;
@@ -3752,9 +3751,9 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
         /* Get OGR transform if GEOLOCATION is not available */
         if ( bWriteLonLat && !bHasGeoloc ) {
-            poLatLonSRS = oSRS.CloneGeogCS();
+            poLatLonSRS = oSRS2.CloneGeogCS();
             if ( poLatLonSRS != NULL )
-                poTransform = OGRCreateCoordinateTransformation( &oSRS, poLatLonSRS );
+                poTransform = OGRCreateCoordinateTransformation( &oSRS2, poLatLonSRS );
             /* if no OGR transform, then don't write CF lon/lat */
             if( poTransform == NULL ) {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -4023,30 +4022,30 @@ double netCDFDataset::rint( double dfX)
 /************************************************************************/
 /*                        ReadAttributes()                              */
 /************************************************************************/
-CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
+CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
 
 {
     char    szVarName [ NC_MAX_NAME+1 ];
     int     nbAttr;
 
-    nc_inq_varnatts( cdfid, var, &nbAttr );
+    nc_inq_varnatts( cdfidIn, var, &nbAttr );
     if( var == NC_GLOBAL ) {
         strcpy( szVarName, "NC_GLOBAL" );
     }
     else {
         szVarName[0] = '\0';
-        nc_inq_varname( cdfid, var, szVarName );
+        nc_inq_varname( cdfidIn, var, szVarName );
     }
 
     for( int l=0; l < nbAttr; l++) {
         char szAttrName[ NC_MAX_NAME+1 ];
         szAttrName[0] = 0;
-        nc_inq_attname( cdfid, var, l, szAttrName);
+        nc_inq_attname( cdfidIn, var, l, szAttrName);
         char szMetaName[ NC_MAX_NAME * 2 + 1 + 1 ];
         snprintf( szMetaName, sizeof(szMetaName), "%s#%s", szVarName, szAttrName  );
 
         char *pszMetaTemp = NULL;
-        if ( NCDFGetAttr( cdfid, var, szAttrName, &pszMetaTemp )
+        if ( NCDFGetAttr( cdfidIn, var, szAttrName, &pszMetaTemp )
              == CE_None ) {
             papszMetadata = CSLSetNameValue(papszMetadata, 
                                             szMetaName, 

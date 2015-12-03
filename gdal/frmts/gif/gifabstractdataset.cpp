@@ -423,15 +423,15 @@ int GIFAbstractDataset::ReadFunc( GifFileType *psGFile, GifByteType *pabyBuffer,
 /************************************************************************/
 
 GIFAbstractRasterBand::GIFAbstractRasterBand(
-                              GIFAbstractDataset *poDS, int nBand, 
+                              GIFAbstractDataset *poDSIn, int nBandIn, 
                               SavedImage *psSavedImage, int nBackground,
                               int bAdvertizeInterlacedMDI ) :
     panInterlaceMap(NULL),
     poColorTable(NULL),
     nTransparentColor(0)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = GDT_Byte;
 
@@ -454,12 +454,12 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(
         if( bAdvertizeInterlacedMDI )
             poDS->SetMetadataItem( "INTERLACED", "YES", "IMAGE_STRUCTURE" );
 
-        panInterlaceMap = (int *) CPLCalloc(poDS->nRasterYSize,sizeof(int));
+        panInterlaceMap = (int *) CPLCalloc(poDSIn->nRasterYSize,sizeof(int));
 
         for (int i = 0; i < 4; i++)
         {
             for (int j = InterlacedOffset[i];
-                 j < poDS->nRasterYSize;
+                 j < poDSIn->nRasterYSize;
                  j += InterlacedJumps[i]) 
                 panInterlaceMap[j] = iLine++;
         }
@@ -494,7 +494,7 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(
 /* -------------------------------------------------------------------- */
     ColorMapObject      *psGifCT = psImage->ImageDesc.ColorMap;
     if( psGifCT == NULL )
-        psGifCT = poDS->hGifFile->SColorMap;
+        psGifCT = poDSIn->hGifFile->SColorMap;
 
     poColorTable = new GDALColorTable();
     for( int iColor = 0; iColor < psGifCT->ColorCount; iColor++ )

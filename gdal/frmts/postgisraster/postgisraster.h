@@ -217,7 +217,7 @@ private:
     char* pszProjection;
     ResolutionStrategy resolutionStrategy;
     WorkingMode nMode;
-    int nTiles;
+    int m_nTiles;
     double xmin, ymin, xmax, ymax;
     PostGISRasterTileDataset ** papoSourcesHolders;
     CPLQuadTree * hQuadTree;

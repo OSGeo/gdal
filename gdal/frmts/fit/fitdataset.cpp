@@ -113,33 +113,33 @@ public:
 /*                           FITRasterBand()                            */
 /************************************************************************/
 
-FITRasterBand::FITRasterBand( FITDataset *poDS, int nBand ) : tmpImage( NULL )
+FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn ) : tmpImage( NULL )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
 /* -------------------------------------------------------------------- */
 /*      Get the GDAL data type.                                         */
 /* -------------------------------------------------------------------- */
-    eDataType = fitDataType(poDS->info->dtype);
+    eDataType = fitDataType(poDSIn->info->dtype);
 
 /* -------------------------------------------------------------------- */
 /*      Get the page sizes.                                             */
 /* -------------------------------------------------------------------- */
-    nBlockXSize = poDS->info->xPageSize;
-    nBlockYSize = poDS->info->yPageSize;
+    nBlockXSize = poDSIn->info->xPageSize;
+    nBlockYSize = poDSIn->info->yPageSize;
 
 /* -------------------------------------------------------------------- */
 /*      Caculate the values for record offset calculations.             */
 /* -------------------------------------------------------------------- */
     bytesPerComponent = (GDALGetDataTypeSize(eDataType) / 8);
-    bytesPerPixel = poDS->nBands * bytesPerComponent;
+    bytesPerPixel = poDSIn->nBands * bytesPerComponent;
     recordSize = bytesPerPixel * nBlockXSize * nBlockYSize;
     numXBlocks =
-        (unsigned long) ceil((double) poDS->info->xSize / nBlockXSize);
+        (unsigned long) ceil((double) poDSIn->info->xSize / nBlockXSize);
     numYBlocks =
-        (unsigned long) ceil((double) poDS->info->ySize / nBlockYSize);
+        (unsigned long) ceil((double) poDSIn->info->ySize / nBlockYSize);
 
     tmpImage = (char *) malloc(recordSize);
     if (! tmpImage)
@@ -170,10 +170,10 @@ FITRasterBand::~FITRasterBand()
                 t *dstp = (t *) pImage; \
                 t *srcp = (t *) tmpImage; \
                 srcp += nBand-1; \
-                long i = 0; \
+                long imacro = 0; \
                 for(long y=ystart; y != ystop; y+= yinc) \
-                    for(long x=xstart; x != xstop; x+= xinc, i++) { \
-                        dstp[i] = srcp[(y * nBlockXSize + x) * \
+                    for(long x=xstart; x != xstop; x+= xinc, imacro++) { \
+                        dstp[imacro] = srcp[(y * nBlockXSize + x) * \
                                        poFIT_DS->nBands]; \
                     } \
     }
@@ -183,10 +183,10 @@ FITRasterBand::~FITRasterBand()
                 t *dstp = (t *) pImage; \
                 t *srcp = (t *) tmpImage; \
                 srcp += nBand-1; \
-                long i = 0; \
-                for(long x=xstart; x != xstop; x+= xinc, i++) \
+                long imacro = 0; \
+                for(long x=xstart; x != xstop; x+= xinc, imacro++) \
                     for(long y=ystart; y != ystop; y+= yinc) { \
-                        dstp[i] = srcp[(x * nBlockYSize + y) * \
+                        dstp[imacro] = srcp[(x * nBlockYSize + y) * \
                                        poFIT_DS->nBands]; \
                     } \
     }

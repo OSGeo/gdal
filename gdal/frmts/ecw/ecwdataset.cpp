@@ -78,16 +78,16 @@ void ECWReportError(CNCSError& oErr, const char* pszMsg)
 /*                           ECWRasterBand()                            */
 /************************************************************************/
 
-ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
+ECWRasterBand::ECWRasterBand( ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
                               char** papszOpenOptions )
 
 {
-    this->poDS = poDS;
-    poGDS = poDS;
+    this->poDS = poDSIn;
+    poGDS = poDSIn;
 
-    this->iOverview = iOverview;
-    this->nBand = nBand;
-    eDataType = poDS->eRasterDataType;
+    this->iOverview = iOverviewIn;
+    this->nBand = nBandIn;
+    eDataType = poDSIn->eRasterDataType;
 
     nRasterXSize = poDS->GetRasterXSize() / ( 1 << (iOverview+1));
     nRasterYSize = poDS->GetRasterYSize() / ( 1 << (iOverview+1));
@@ -98,20 +98,20 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
 /* -------------------------------------------------------------------- */
 /*      Work out band color interpretation.                             */
 /* -------------------------------------------------------------------- */
-    if( poDS->psFileInfo->eColorSpace == NCSCS_NONE )
+    if( poDSIn->psFileInfo->eColorSpace == NCSCS_NONE )
         eBandInterp = GCI_Undefined;
-    else if( poDS->psFileInfo->eColorSpace == NCSCS_GREYSCALE )
+    else if( poDSIn->psFileInfo->eColorSpace == NCSCS_GREYSCALE )
     {
         eBandInterp = GCI_GrayIndex;
         //we could also have alpha band. 
-        if ( strcmp(poDS->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0 ||
-             strcmp(poDS->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_GreyscaleOpacity) ==0 ){
+        if ( strcmp(poDSIn->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0 ||
+             strcmp(poDSIn->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_GreyscaleOpacity) ==0 ){
             eBandInterp = GCI_AlphaBand;
         }
-    }else if (poDS->psFileInfo->eColorSpace == NCSCS_MULTIBAND ){
-        eBandInterp = ECWGetColorInterpretationByName(poDS->psFileInfo->pBands[nBand-1].szDesc);
-    }else if (poDS->psFileInfo->eColorSpace == NCSCS_sRGB){
-        eBandInterp = ECWGetColorInterpretationByName(poDS->psFileInfo->pBands[nBand-1].szDesc);
+    }else if (poDSIn->psFileInfo->eColorSpace == NCSCS_MULTIBAND ){
+        eBandInterp = ECWGetColorInterpretationByName(poDSIn->psFileInfo->pBands[nBand-1].szDesc);
+    }else if (poDSIn->psFileInfo->eColorSpace == NCSCS_sRGB){
+        eBandInterp = ECWGetColorInterpretationByName(poDSIn->psFileInfo->pBands[nBand-1].szDesc);
         if( eBandInterp == GCI_Undefined )
         {
             if( nBand == 1 )
@@ -122,7 +122,7 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
                 eBandInterp = GCI_BlueBand;
             else if (nBand == 4 )
             {
-                if (strcmp(poDS->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0)
+                if (strcmp(poDSIn->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0)
                     eBandInterp = GCI_AlphaBand;
                 else
                     eBandInterp = GCI_Undefined;
@@ -133,7 +133,7 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
             }
         }
     }
-    else if( poDS->psFileInfo->eColorSpace == NCSCS_YCbCr )
+    else if( poDSIn->psFileInfo->eColorSpace == NCSCS_YCbCr )
     {
         if( CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ))
         {
@@ -172,28 +172,28 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
                  && nRasterYSize / (1 << (i+1)) > 128;
              i++ )
         {
-            apoOverviews.push_back( new ECWRasterBand( poDS, nBand, i, papszOpenOptions ) );
+            apoOverviews.push_back( new ECWRasterBand( poDSIn, nBandIn, i, papszOpenOptions ) );
         }
     }
 
     bPromoteTo8Bit = 
-        poDS->psFileInfo->nBands == 4 && nBand == 4 &&
-        poDS->psFileInfo->pBands[0].nBits == 8 &&
-        poDS->psFileInfo->pBands[1].nBits == 8 &&
-        poDS->psFileInfo->pBands[2].nBits == 8 &&
-        poDS->psFileInfo->pBands[3].nBits == 1 &&
+        poDSIn->psFileInfo->nBands == 4 && nBand == 4 &&
+        poDSIn->psFileInfo->pBands[0].nBits == 8 &&
+        poDSIn->psFileInfo->pBands[1].nBits == 8 &&
+        poDSIn->psFileInfo->pBands[2].nBits == 8 &&
+        poDSIn->psFileInfo->pBands[3].nBits == 1 &&
         eBandInterp == GCI_AlphaBand && 
         CSLFetchBoolean(papszOpenOptions, "1BIT_ALPHA_PROMOTION",
             CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
     if( bPromoteTo8Bit )
         CPLDebug("ECW", "Fourth (alpha) band is promoted from 1 bit to 8 bit");
 
-    if( (poDS->psFileInfo->pBands[nBand-1].nBits % 8) != 0 && !bPromoteTo8Bit )
+    if( (poDSIn->psFileInfo->pBands[nBand-1].nBits % 8) != 0 && !bPromoteTo8Bit )
         SetMetadataItem("NBITS",
-                        CPLString().Printf("%d",poDS->psFileInfo->pBands[nBand-1].nBits),
+                        CPLString().Printf("%d",poDSIn->psFileInfo->pBands[nBand-1].nBits),
                         "IMAGE_STRUCTURE" );
 
-    SetDescription(poDS->psFileInfo->pBands[nBand-1].szDesc);
+    SetDescription(poDSIn->psFileInfo->pBands[nBand-1].szDesc);
 }
 
 /************************************************************************/
@@ -216,11 +216,11 @@ ECWRasterBand::~ECWRasterBand()
 /*                            GetOverview()                             */
 /************************************************************************/
 
-GDALRasterBand *ECWRasterBand::GetOverview( int iOverview )
+GDALRasterBand *ECWRasterBand::GetOverview( int iOverviewIn )
 
 {
-    if( iOverview >= 0 && iOverview < (int) apoOverviews.size() )
-        return apoOverviews[iOverview];
+    if( iOverviewIn >= 0 && iOverviewIn < (int) apoOverviews.size() )
+        return apoOverviews[iOverviewIn];
     else
         return NULL;
 }
@@ -333,8 +333,8 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
             //compute. Save.
             pamError = GDALPamRasterBand::GetDefaultHistogram(pdfMin, pdfMax, pnBuckets, ppanHistogram, TRUE, f,pProgressData);
             if (pamError == CE_None){
-                CPLErr error = SetDefaultHistogram(*pdfMin, *pdfMax, *pnBuckets, *ppanHistogram);
-                if (error != CE_None){
+                CPLErr error2 = SetDefaultHistogram(*pdfMin, *pdfMax, *pnBuckets, *ppanHistogram);
+                if (error2 != CE_None){
                     //Histogram is there but we failed to save it back to file. 
                     CPLError (CE_Warning, CPLE_AppDefined,
                         "SetDefaultHistogram failed in ECWRasterBand::GetDefaultHistogram. Histogram might not be saved in .ecw file." );
@@ -928,10 +928,10 @@ CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
 /*                            ECWDataset()                              */
 /************************************************************************/
 
-ECWDataset::ECWDataset(int bIsJPEG2000)
+ECWDataset::ECWDataset(int bIsJPEG2000In)
 
 {
-    this->bIsJPEG2000 = bIsJPEG2000;
+    this->bIsJPEG2000 = bIsJPEG2000In;
     bUsingCustomStream = FALSE;
     poFileView = NULL;
     bWinActive = FALSE;
@@ -1934,13 +1934,13 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             sCachedMultiBandIO.pabyData != NULL )
         {
             int j;
-            int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+            int nBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
             for(j = 0; j < nBufYSize; j++)
             {
                 GDALCopyWords(sCachedMultiBandIO.pabyData +
-                                    (*panBandMap - 1) * nBufXSize * nBufYSize * nDataTypeSize +
-                                    j * nBufXSize * nDataTypeSize,
-                            eBufType, nDataTypeSize,
+                                    (*panBandMap - 1) * nBufXSize * nBufYSize * nBufTypeSize +
+                                    j * nBufXSize * nBufTypeSize,
+                            eBufType, nBufTypeSize,
                             ((GByte*)pData) + j * nLineSpace, eBufType, (int)nPixelSpace,
                             nBufXSize);
             }
@@ -2057,13 +2057,13 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         sCachedMultiBandIO.eBufType = eBufType;
         sCachedMultiBandIO.nBandsTried = 1;
 
-        int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+        int nBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
 
         if( sCachedMultiBandIO.bEnabled )
         {
             GByte* pNew = (GByte*)VSIRealloc(
                 sCachedMultiBandIO.pabyData,
-                    nBufXSize * nBufYSize * nBands * nDataTypeSize);
+                    nBufXSize * nBufYSize * nBands * nBufTypeSize);
             if( pNew == NULL )
                 CPLFree(sCachedMultiBandIO.pabyData);
             sCachedMultiBandIO.pabyData = pNew;
@@ -2098,9 +2098,9 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             CPLErr eErr = ReadBands(sCachedMultiBandIO.pabyData,
                                     nBufXSize, nBufYSize, eBufType,
                                     nBands,
-                                    nDataTypeSize,
-                                    nBufXSize * nDataTypeSize,
-                                    nBufXSize * nBufYSize * nDataTypeSize,
+                                    nBufTypeSize,
+                                    nBufXSize * nBufTypeSize,
+                                    nBufXSize * nBufYSize * nBufTypeSize,
                                     psExtraArg);
             if( eErr != CE_None )
                 return eErr;
@@ -2109,8 +2109,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             for(j = 0; j < nBufYSize; j++)
             {
                 GDALCopyWords(sCachedMultiBandIO.pabyData +
-                                    j * nBufXSize * nDataTypeSize,
-                              eBufType, nDataTypeSize,
+                                    j * nBufXSize * nBufTypeSize,
+                              eBufType, nBufTypeSize,
                               ((GByte*)pData) + j * nLineSpace, eBufType, (int)nPixelSpace,
                               nBufXSize);
             }

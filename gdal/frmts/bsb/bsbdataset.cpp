@@ -105,10 +105,10 @@ class BSBRasterBand : public GDALPamRasterBand
 /*                           BSBRasterBand()                            */
 /************************************************************************/
 
-BSBRasterBand::BSBRasterBand( BSBDataset *poDS )
+BSBRasterBand::BSBRasterBand( BSBDataset *poDSIn )
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     this->nBand = 1;
 
     eDataType = GDT_Byte;
@@ -118,13 +118,13 @@ BSBRasterBand::BSBRasterBand( BSBDataset *poDS )
 
     // Note that the first color table entry is dropped, everything is
     // shifted down.
-    for( int i = 0; i < poDS->psInfo->nPCTSize-1; i++ )
+    for( int i = 0; i < poDSIn->psInfo->nPCTSize-1; i++ )
     {
         GDALColorEntry  oColor;
 
-        oColor.c1 = poDS->psInfo->pabyPCT[i*3+0+3];
-        oColor.c2 = poDS->psInfo->pabyPCT[i*3+1+3];
-        oColor.c3 = poDS->psInfo->pabyPCT[i*3+2+3];
+        oColor.c1 = poDSIn->psInfo->pabyPCT[i*3+0+3];
+        oColor.c2 = poDSIn->psInfo->pabyPCT[i*3+1+3];
+        oColor.c3 = poDSIn->psInfo->pabyPCT[i*3+2+3];
         oColor.c4 = 255;
 
         oCT.SetColorEntry( i, &oColor );

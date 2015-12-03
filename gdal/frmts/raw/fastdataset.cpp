@@ -156,12 +156,12 @@ class FASTRasterBand : public RawRasterBand
 /*                           FASTRasterBand()                           */
 /************************************************************************/
 
-FASTRasterBand::FASTRasterBand( FASTDataset *poDS, int nBand, VSILFILE * fpRaw,
-                                vsi_l_offset nImgOffset, int nPixelOffset,
-                                int nLineOffset, GDALDataType eDataType,
-				int bNativeOrder) :
-                 RawRasterBand( poDS, nBand, fpRaw, nImgOffset, nPixelOffset,
-                               nLineOffset, eDataType, bNativeOrder, TRUE)
+FASTRasterBand::FASTRasterBand( FASTDataset *poDSIn, int nBandIn, VSILFILE * fpRawIn,
+                                vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
+                                int nLineOffsetIn,
+                                GDALDataType eDataTypeIn, int bNativeOrderIn ) :
+        RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
+                      nLineOffsetIn, eDataTypeIn, bNativeOrderIn, TRUE)
 {
 
 }
@@ -263,11 +263,11 @@ char** FASTDataset::GetFileList()
 /*                             OpenChannel()                            */
 /************************************************************************/
 
-int FASTDataset::OpenChannel( const char *pszFilename, int iBand )
+int FASTDataset::OpenChannel( const char *pszFilenameIn, int iBand )
 {
-    fpChannels[iBand] = VSIFOpenL( pszFilename, "rb" );
+    fpChannels[iBand] = VSIFOpenL( pszFilenameIn, "rb" );
     if (fpChannels[iBand])
-        apoChannelFilenames[iBand] = pszFilename;
+        apoChannelFilenames[iBand] = pszFilenameIn;
     return fpChannels[iBand] != NULL;
 }
 

@@ -310,14 +310,14 @@ class GTARasterBand : public GDALPamRasterBand
 /*                           GTARasterBand()                            */
 /************************************************************************/
 
-GTARasterBand::GTARasterBand( GTADataset *poDS, int nBand )
+GTARasterBand::GTARasterBand( GTADataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     // Data type
-    switch( poDS->oHeader.component_type( nBand-1 ) )
+    switch( poDSIn->oHeader.component_type( nBand-1 ) )
     {
     case gta::int8:
         eDataType = GDT_Byte;
@@ -360,23 +360,23 @@ GTARasterBand::GTARasterBand( GTADataset *poDS, int nBand )
     nBlockYSize = 1;
 
     // Component information
-    sComponentSize = static_cast<size_t>(poDS->oHeader.component_size( nBand-1 ));
+    sComponentSize = static_cast<size_t>(poDSIn->oHeader.component_size( nBand-1 ));
     sComponentOffset = 0;
     for( int i = 0; i < nBand-1; i++ )
     {
-        sComponentOffset += poDS->oHeader.component_size( i );
+        sComponentOffset += poDSIn->oHeader.component_size( i );
     }
 
     // Metadata
     papszCategoryNames = NULL;
     papszMetaData = NULL;
-    if( poDS->oHeader.component_taglist( nBand-1 ).get( "DESCRIPTION" ) )
+    if( poDSIn->oHeader.component_taglist( nBand-1 ).get( "DESCRIPTION" ) )
     {
-        SetDescription( poDS->oHeader.component_taglist( nBand-1 ).get( "DESCRIPTION" ) );
+        SetDescription( poDSIn->oHeader.component_taglist( nBand-1 ).get( "DESCRIPTION" ) );
     }
-    for( uintmax_t i = 0; i < poDS->oHeader.component_taglist( nBand-1 ).tags(); i++)
+    for( uintmax_t i = 0; i < poDSIn->oHeader.component_taglist( nBand-1 ).tags(); i++)
     {
-        const char *pszTagName = poDS->oHeader.component_taglist( nBand-1 ).name( i );
+        const char *pszTagName = poDSIn->oHeader.component_taglist( nBand-1 ).name( i );
         if( STARTS_WITH(pszTagName, "GDAL/META/") )
         {
             const char *pDomainEnd = strchr( pszTagName + 10, '/' );
@@ -394,7 +394,7 @@ GTARasterBand::GTARasterBand( GTADataset *poDS, int nBand )
                 }
                 pszDomain[j] = '\0';
                 const char *pszName = pszTagName + 10 + j + 1;
-                const char *pszValue = poDS->oHeader.component_taglist( nBand-1 ).value( i );
+                const char *pszValue = poDSIn->oHeader.component_taglist( nBand-1 ).value( i );
                 SetMetadataItem( pszName, pszValue,
                         strcmp( pszDomain, "DEFAULT" ) == 0 ? NULL : pszDomain );
                 VSIFree( pszDomain );

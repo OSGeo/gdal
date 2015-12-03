@@ -7,10 +7,10 @@ FileDataSource::FileDataSource(const char * fileName)
     fp = VSIFOpenL(fileName, "rb");
 }
 
-FileDataSource::FileDataSource(VSILFILE* fp)
+FileDataSource::FileDataSource(VSILFILE* fpIn)
 : closeFile(false)
 {
-    this->fp = fp;
+    this->fp = fpIn;
 }
 
 FileDataSource::~FileDataSource()

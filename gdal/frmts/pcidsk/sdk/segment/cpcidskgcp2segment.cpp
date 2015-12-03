@@ -49,8 +49,8 @@ struct CPCIDSKGCP2Segment::PCIDSKGCP2SegInfo
     bool changed;
 };
 
-CPCIDSKGCP2Segment::CPCIDSKGCP2Segment(PCIDSKFile *file, int segment, const char *segment_pointer)
-    : CPCIDSKSegment(file, segment, segment_pointer), loaded_(false)
+CPCIDSKGCP2Segment::CPCIDSKGCP2Segment(PCIDSKFile *fileIn, int segmentIn, const char *segment_pointer)
+    : CPCIDSKSegment(fileIn, segmentIn, segment_pointer), loaded_(false)
 {
     pimpl_ = new PCIDSKGCP2SegInfo;
     pimpl_->gcps.clear();

@@ -47,8 +47,8 @@ CPL_C_END
 class Subset
 {
 public:
-  Subset(int x_lo, int x_hi, int y_lo, int y_hi)
-    : m_x_lo(x_lo), m_x_hi(x_hi),  m_y_lo(y_lo),  m_y_hi(y_hi)
+  Subset(int x_loIn, int x_hiIn, int y_loIn, int y_hiIn)
+    : m_x_lo(x_loIn), m_x_hi(x_hiIn),  m_y_lo(y_loIn),  m_y_hi(y_hiIn)
   {}
 
   bool operator < (const Subset& rhs) const {
@@ -335,17 +335,17 @@ public:
 /*                           RasdamanRasterBand()                       */
 /************************************************************************/
 
-RasdamanRasterBand::RasdamanRasterBand( RasdamanDataset *poDS, int nBand, GDALDataType type, int offset, int size, int nBlockXSize, int nBlockYSize )
+RasdamanRasterBand::RasdamanRasterBand( RasdamanDataset *poDSIn, int nBandIn, GDALDataType type, int offset, int size, int nBlockXSizeIn, int nBlockYSizeIn )
 {
-  this->poDS = poDS;
-  this->nBand = nBand;
+  this->poDS = poDSIn;
+  this->nBand = nBandIn;
 
   eDataType = type;
   typeSize = size;
   typeOffset = offset;
 
-  this->nBlockXSize = nBlockXSize;
-  this->nBlockYSize = nBlockYSize;
+  this->nBlockXSize = nBlockXSizeIn;
+  this->nBlockYSize = nBlockYSizeIn;
 
   nRecordSize = nBlockXSize * nBlockYSize * typeSize;
 }

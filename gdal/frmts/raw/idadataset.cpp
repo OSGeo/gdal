@@ -131,8 +131,8 @@ class IDARasterBand : public RawRasterBand
 /************************************************************************/
 
 IDARasterBand::IDARasterBand( IDADataset *poDSIn,
-                              VSILFILE *fpRaw, int nXSize ) :
-    RawRasterBand( poDSIn, 1, fpRaw, 512, 1, nXSize,
+                              VSILFILE *fpRawIn, int nXSize ) :
+    RawRasterBand( poDSIn, 1, fpRawIn, 512, 1, nXSize,
                    GDT_Byte, FALSE, TRUE ),
     poRAT(NULL),
     poColorTable(NULL)
@@ -496,13 +496,13 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
 /*      Lambert Conformal Conic.  Note that we don't support false      */
 /*      eastings or nothings.                                           */
 /* -------------------------------------------------------------------- */
-    const char *pszProjection = oSRS.GetAttrValue( "PROJECTION" );
+    const char *l_pszProjection = oSRS.GetAttrValue( "PROJECTION" );
 
-    if( pszProjection == NULL )
+    if( l_pszProjection == NULL )
     {
         /* do nothing - presumably geographic  */;
     }
-    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+    else if( EQUAL(l_pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
     {
         nProjection = 4;
         dfParallel1 = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
@@ -510,13 +510,13 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
         dfLatCenter = oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
     }
-    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
+    else if( EQUAL(l_pszProjection,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
         nProjection = 6;
         dfLatCenter = oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
     }
-    else if( EQUAL(pszProjection,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
+    else if( EQUAL(l_pszProjection,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
         nProjection = 8;
         dfParallel1 = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
@@ -524,7 +524,7 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
         dfLatCenter = oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
     }
-    else if( EQUAL(pszProjection,SRS_PT_GOODE_HOMOLOSINE) )
+    else if( EQUAL(l_pszProjection,SRS_PT_GOODE_HOMOLOSINE) )
     {
         nProjection = 9;
         dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);

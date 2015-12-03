@@ -105,12 +105,12 @@ static const int M22 = 9;
 /*                          AirSARRasterBand()                          */
 /************************************************************************/
 
-AirSARRasterBand::AirSARRasterBand( AirSARDataset *poDS,
-                                    int nBand )
+AirSARRasterBand::AirSARRasterBand( AirSARDataset *poDSIn,
+                                    int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;

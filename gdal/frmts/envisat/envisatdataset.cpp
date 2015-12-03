@@ -70,17 +70,17 @@ class MerisL2FlagBand : public GDALPamRasterBand
 /************************************************************************/
 /*                        MerisL2FlagBand()                       */
 /************************************************************************/
-MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDS, int nBand,
-                                  VSILFILE* fpImage, vsi_l_offset nImgOffset,
-                                  int nPrefixBytes ) :
+MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDSIn, int nBandIn,
+                                  VSILFILE* fpImageIn, vsi_l_offset nImgOffsetIn,
+                                  int nPrefixBytesIn ) :
     nBytePerPixel(3)
 {
-    this->poDS = (GDALDataset *) poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
-    this->fpImage = fpImage;
-    this->nImgOffset = nImgOffset;
-    this->nPrefixBytes = nPrefixBytes;
+    this->fpImage = fpImageIn;
+    this->nImgOffset = nImgOffsetIn;
+    this->nPrefixBytes = nPrefixBytesIn;
 
     eDataType = GDT_UInt32;
 

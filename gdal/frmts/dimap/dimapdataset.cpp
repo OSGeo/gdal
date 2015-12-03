@@ -111,9 +111,9 @@ class DIMAPWrapperRasterBand : public GDALProxyRasterBand
     virtual GDALRasterBand* RefUnderlyingRasterBand() { return poBaseBand; }
 
   public:
-    DIMAPWrapperRasterBand( GDALRasterBand* poBaseBand )
+    DIMAPWrapperRasterBand( GDALRasterBand* poBaseBandIn )
         {
-            this->poBaseBand = poBaseBand;
+            this->poBaseBand = poBaseBandIn;
             eDataType = poBaseBand->GetRasterDataType();
             poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
         }
@@ -556,7 +556,7 @@ int DIMAPDataset::ReadImageInformation()
 /*      Get overall image information.                                  */
 /* -------------------------------------------------------------------- */
 #ifdef DEBUG
-    int nBands = 
+    int l_nBands = 
         atoi(CPLGetXMLValue( psImageAttributes, "NBANDS", "-1" ));
 #endif
 
@@ -588,7 +588,7 @@ int DIMAPDataset::ReadImageInformation()
 /* -------------------------------------------------------------------- */
 /*      Attach the bands.                                               */
 /* -------------------------------------------------------------------- */
-    CPLAssert( nBands == poImageDS->GetRasterCount() );
+    CPLAssert( l_nBands == poImageDS->GetRasterCount() );
 
     for( int iBand = 1; iBand <= poImageDS->GetRasterCount(); iBand++ )
         SetBand( iBand, new DIMAPWrapperRasterBand(poImageDS->GetRasterBand( iBand )) );
@@ -801,7 +801,7 @@ int DIMAPDataset::ReadImageInformation2()
 /*      Get overall image information.                                  */
 /* -------------------------------------------------------------------- */
 #ifdef DEBUG
-    int nBands = 
+    int l_nBands = 
         atoi(CPLGetXMLValue( psImageAttributes, "NBANDS", "-1" ));
 #endif
 
@@ -847,7 +847,7 @@ int DIMAPDataset::ReadImageInformation2()
 /* -------------------------------------------------------------------- */
 /*      Attach the bands.                                               */
 /* -------------------------------------------------------------------- */
-    CPLAssert( nBands == poImageDS->GetRasterCount() );
+    CPLAssert( l_nBands == poImageDS->GetRasterCount() );
 
     for( int iBand = 1; iBand <= poImageDS->GetRasterCount(); iBand++ )
         SetBand( iBand, new DIMAPWrapperRasterBand(poImageDS->GetRasterBand( iBand )) );
@@ -1043,12 +1043,12 @@ int DIMAPDataset::ReadImageInformation2()
 /*                          SetMetadataFromXML()                        */
 /************************************************************************/
 
-void DIMAPDataset::SetMetadataFromXML(CPLXMLNode *psProduct, const char *apszMetadataTranslation[])
+void DIMAPDataset::SetMetadataFromXML(CPLXMLNode *psProductIn, const char *apszMetadataTranslation[])
 {
-    CPLXMLNode *psDoc = CPLGetXMLNode( psProduct, "=Dimap_Document" );
+    CPLXMLNode *psDoc = CPLGetXMLNode( psProductIn, "=Dimap_Document" );
     if( psDoc == NULL ) 
     {
-      psDoc = CPLGetXMLNode( psProduct, "=PHR_DIMAP_Document" );
+      psDoc = CPLGetXMLNode( psProductIn, "=PHR_DIMAP_Document" );
     }
 
     for( int iTrItem = 0; apszMetadataTranslation[iTrItem] != NULL; iTrItem += 2 )

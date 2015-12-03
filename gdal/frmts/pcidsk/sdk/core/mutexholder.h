@@ -38,9 +38,9 @@ namespace PCIDSK
     class PCIDSK_DLL MutexHolder
     {
     public:
-        MutexHolder( Mutex *mutex ) 
+        MutexHolder( Mutex *mutexIn ) 
         { 
-            this->mutex = mutex; 
+            this->mutex = mutexIn; 
             if( mutex != NULL )
                 mutex->Acquire(); 
         }

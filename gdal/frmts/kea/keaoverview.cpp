@@ -31,10 +31,10 @@
 #include "keaoverview.h"
 
 // constructor
-KEAOverview::KEAOverview(KEADataset *pDataset, int nSrcBand, GDALAccess eAccess,
+KEAOverview::KEAOverview(KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn,
                 kealib::KEAImageIO *pImageIO, int *pRefCount,
                 int nOverviewIndex, uint64_t nXSize, uint64_t nYSize)
- : KEARasterBand( pDataset, nSrcBand, eAccess, pImageIO, pRefCount )
+ : KEARasterBand( pDataset, nSrcBand, eAccessIn, pImageIO, pRefCount )
 {
     this->m_nOverviewIndex = nOverviewIndex;
     // overridden from the band - not the same size as the band obviously

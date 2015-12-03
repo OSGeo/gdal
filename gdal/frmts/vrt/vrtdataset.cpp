@@ -43,26 +43,26 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 VRTDataset::VRTDataset( int nXSize, int nYSize ) :
-    pszProjection(NULL),
-    bGeoTransformSet(FALSE),
-    nGCPCount(0),
-    pasGCPList(NULL),
-    pszGCPProjection(NULL),
-    bNeedsFlush(FALSE),
-    bWritable(TRUE),
-    pszVRTPath(NULL),
-    poMaskBand(NULL),
-    bCompatibleForDatasetIO(-1)
+    m_pszProjection(NULL),
+    m_bGeoTransformSet(FALSE),
+    m_nGCPCount(0),
+    m_pasGCPList(NULL),
+    m_pszGCPProjection(NULL),
+    m_bNeedsFlush(FALSE),
+    m_bWritable(TRUE),
+    m_pszVRTPath(NULL),
+    m_poMaskBand(NULL),
+    m_bCompatibleForDatasetIO(-1)
 {
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
+    m_adfGeoTransform[0] = 0.0;
+    m_adfGeoTransform[1] = 1.0;
+    m_adfGeoTransform[2] = 0.0;
+    m_adfGeoTransform[3] = 0.0;
+    m_adfGeoTransform[4] = 0.0;
+    m_adfGeoTransform[5] = 1.0;
 
     GDALRegister_VRT();
 
@@ -91,22 +91,22 @@ VRTDataset::~VRTDataset()
 
 {
     FlushCache();
-    CPLFree( pszProjection );
+    CPLFree( m_pszProjection );
 
-    CPLFree( pszGCPProjection );
-    if( nGCPCount > 0 )
+    CPLFree( m_pszGCPProjection );
+    if( m_nGCPCount > 0 )
     {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
+        GDALDeinitGCPs( m_nGCPCount, m_pasGCPList );
+        CPLFree( m_pasGCPList );
     }
-    CPLFree( pszVRTPath );
+    CPLFree( m_pszVRTPath );
 
-    delete poMaskBand;
+    delete m_poMaskBand;
 
-    for(size_t i=0;i<apoOverviews.size();i++)
-        delete apoOverviews[i];
-    for(size_t i=0;i<apoOverviewsBak.size();i++)
-        delete apoOverviewsBak[i];
+    for(size_t i=0;i<m_apoOverviews.size();i++)
+        delete m_apoOverviews[i];
+    for(size_t i=0;i<m_apoOverviewsBak.size();i++)
+        delete m_apoOverviewsBak[i];
 }
 
 /************************************************************************/
@@ -118,10 +118,10 @@ void VRTDataset::FlushCache()
 {
     GDALDataset::FlushCache();
 
-    if( !bNeedsFlush || bWritable == FALSE)
+    if( !m_bNeedsFlush || m_bWritable == FALSE)
         return;
 
-    bNeedsFlush = FALSE;
+    m_bNeedsFlush = FALSE;
 
     // We don't write to disk if there is no filename.  This is a 
     // memory only dataset.
@@ -165,13 +165,13 @@ char** VRTDataset::GetMetadata( const char *pszDomain )
         /* ------------------------------------------------------------------ */
         /*      Convert tree to a single block of XML text.                   */
         /* ------------------------------------------------------------------ */
-        char *pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
-        CPLXMLNode *psDSTree = SerializeToXML( pszVRTPath );
+        char *l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
+        CPLXMLNode *psDSTree = SerializeToXML( l_pszVRTPath );
         char *pszXML = CPLSerializeXMLTree( psDSTree );
 
         CPLDestroyXMLNode( psDSTree );
 
-        CPLFree( pszVRTPath );
+        CPLFree( l_pszVRTPath );
 
         char* apszContent[2] = { pszXML, NULL };
         GDALDataset::SetMetadata(apszContent, "xml:VRT");
@@ -200,7 +200,7 @@ void CPL_STDCALL VRTFlushCache( VRTDatasetH hDataset )
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
+CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPathIn )
 
 {
     /* -------------------------------------------------------------------- */
@@ -218,23 +218,23 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
  /* -------------------------------------------------------------------- */
  /*      SRS                                                             */
  /* -------------------------------------------------------------------- */
-    if( pszProjection != NULL && strlen(pszProjection) > 0 )
-        CPLSetXMLValue( psDSTree, "SRS", pszProjection );
+    if( m_pszProjection != NULL && strlen(m_pszProjection) > 0 )
+        CPLSetXMLValue( psDSTree, "SRS", m_pszProjection );
 
  /* -------------------------------------------------------------------- */
  /*      Geotransform.                                                   */
  /* -------------------------------------------------------------------- */
-    if( bGeoTransformSet )
+    if( m_bGeoTransformSet )
     {
         CPLSetXMLValue(
             psDSTree, "GeoTransform",
             CPLSPrintf( "%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e",
-                        adfGeoTransform[0],
-                        adfGeoTransform[1],
-                        adfGeoTransform[2],
-                        adfGeoTransform[3],
-                        adfGeoTransform[4],
-                        adfGeoTransform[5] ) );
+                        m_adfGeoTransform[0],
+                        m_adfGeoTransform[1],
+                        m_adfGeoTransform[2],
+                        m_adfGeoTransform[3],
+                        m_adfGeoTransform[4],
+                        m_adfGeoTransform[5] ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -249,12 +249,12 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
  /* -------------------------------------------------------------------- */
  /*      GCPs                                                            */
  /* -------------------------------------------------------------------- */
-    if( nGCPCount > 0 )
+    if( m_nGCPCount > 0 )
     {
         GDALSerializeGCPListToXML( psDSTree,
-                                   pasGCPList,
-                                   nGCPCount,
-                                   pszGCPProjection );
+                                   m_pasGCPList,
+                                   m_nGCPCount,
+                                   m_pszGCPProjection );
     }
 
     /* -------------------------------------------------------------------- */
@@ -264,7 +264,7 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
     {
         CPLXMLNode *psBandTree =
             reinterpret_cast<VRTRasterBand *>(
-                papoBands[iBand])->SerializeToXML( pszVRTPath );
+                papoBands[iBand])->SerializeToXML( pszVRTPathIn );
 
         if( psBandTree != NULL )
             CPLAddXMLChild( psDSTree, psBandTree );
@@ -273,10 +273,10 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
     /* -------------------------------------------------------------------- */
     /*      Serialize dataset mask band.                                    */
     /* -------------------------------------------------------------------- */
-    if (poMaskBand)
+    if (m_poMaskBand)
     {
         CPLXMLNode *psBandTree =
-            poMaskBand->SerializeToXML(pszVRTPath);
+            m_poMaskBand->SerializeToXML(pszVRTPathIn);
 
         if( psBandTree != NULL )
         {
@@ -310,24 +310,24 @@ CPLXMLNode * CPL_STDCALL VRTSerializeToXML( VRTDatasetH hDataset,
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
+CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
 
 {
-    if( pszVRTPath != NULL )
-        this->pszVRTPath = CPLStrdup(pszVRTPath);
+    if( pszVRTPathIn != NULL )
+        m_pszVRTPath = CPLStrdup(pszVRTPathIn);
 
 /* -------------------------------------------------------------------- */
 /*      Check for an SRS node.                                          */
 /* -------------------------------------------------------------------- */
     if( strlen(CPLGetXMLValue(psTree, "SRS", "")) > 0 )
     {
-        CPLFree( pszProjection );
-        pszProjection = NULL;
+        CPLFree( m_pszProjection );
+        m_pszProjection = NULL;
 
         OGRSpatialReference oSRS;
         if( oSRS.SetFromUserInput( CPLGetXMLValue(psTree, "SRS", "") )
             == OGRERR_NONE )
-            oSRS.exportToWkt( &pszProjection );
+            oSRS.exportToWkt( &m_pszProjection );
     }
 
 /* -------------------------------------------------------------------- */
@@ -346,8 +346,8 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
         else
         {
             for( int iTA = 0; iTA < 6; iTA++ )
-                adfGeoTransform[iTA] = CPLAtof(papszTokens[iTA]);
-            bGeoTransformSet = TRUE;
+                m_adfGeoTransform[iTA] = CPLAtof(papszTokens[iTA]);
+            m_bGeoTransformSet = TRUE;
         }
 
         CSLDestroy( papszTokens );
@@ -361,9 +361,9 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     if( psGCPList != NULL )
     {
         GDALDeserializeGCPListFromXML( psGCPList,
-                                       &pasGCPList,
-                                       &nGCPCount,
-                                       &pszGCPProjection );
+                                       &m_pasGCPList,
+                                       &m_nGCPCount,
+                                       &m_pszGCPProjection );
     }
 
 /* -------------------------------------------------------------------- */
@@ -409,7 +409,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
                           pszSubclass );
 
             if( poBand != NULL
-                && poBand->XMLInit( psChild, pszVRTPath ) == CE_None )
+                && poBand->XMLInit( psChild, pszVRTPathIn ) == CE_None )
             {
                 SetMaskBand(poBand);
                 break;
@@ -426,7 +426,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int		nBands = 0;
+    int		l_nBands = 0;
     for( psChild=psTree->psChild; psChild != NULL; psChild=psChild->psNext )
     {
         if( psChild->eType == CXT_Element
@@ -437,24 +437,24 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 
             VRTRasterBand  *poBand = NULL;
             if( EQUAL(pszSubclass,"VRTSourcedRasterBand") )
-                poBand = new VRTSourcedRasterBand( this, nBands+1 );
+                poBand = new VRTSourcedRasterBand( this, l_nBands+1 );
             else if( EQUAL(pszSubclass, "VRTDerivedRasterBand") )
-                poBand = new VRTDerivedRasterBand( this, nBands+1 );
+                poBand = new VRTDerivedRasterBand( this, l_nBands+1 );
             else if( EQUAL(pszSubclass, "VRTRawRasterBand") )
-                poBand = new VRTRawRasterBand( this, nBands+1 );
+                poBand = new VRTRawRasterBand( this, l_nBands+1 );
             else if( EQUAL(pszSubclass, "VRTWarpedRasterBand") )
-                poBand = new VRTWarpedRasterBand( this, nBands+1 );
+                poBand = new VRTWarpedRasterBand( this, l_nBands+1 );
             else if( EQUAL(pszSubclass, "VRTPansharpenedRasterBand") )
-                poBand = new VRTPansharpenedRasterBand( this, nBands+1 );
+                poBand = new VRTPansharpenedRasterBand( this, l_nBands+1 );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "VRTRasterBand of unrecognised subclass '%s'.",
                           pszSubclass );
 
             if( poBand != NULL 
-                && poBand->XMLInit( psChild, pszVRTPath ) == CE_None )
+                && poBand->XMLInit( psChild, pszVRTPathIn ) == CE_None )
             {
-                SetBand( ++nBands, poBand );
+                SetBand( ++l_nBands, poBand );
             }
             else
             {
@@ -475,7 +475,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 int VRTDataset::GetGCPCount()
 
 {
-    return nGCPCount;
+    return m_nGCPCount;
 }
 
 /************************************************************************/
@@ -485,10 +485,10 @@ int VRTDataset::GetGCPCount()
 const char *VRTDataset::GetGCPProjection()
 
 {
-    if( pszGCPProjection == NULL )
+    if( m_pszGCPProjection == NULL )
         return "";
 
-    return pszGCPProjection;
+    return m_pszGCPProjection;
 }
 
 /************************************************************************/
@@ -498,31 +498,31 @@ const char *VRTDataset::GetGCPProjection()
 const GDAL_GCP *VRTDataset::GetGCPs()
 
 {
-    return pasGCPList;
+    return m_pasGCPList;
 }
 
 /************************************************************************/
 /*                              SetGCPs()                               */
 /************************************************************************/
 
-CPLErr VRTDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection )
+CPLErr VRTDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                            const char *pszGCPProjectionIn )
 
 {
-    CPLFree( this->pszGCPProjection );
-    if( this->nGCPCount > 0 )
+    CPLFree( m_pszGCPProjection );
+    if( m_nGCPCount > 0 )
     {
-        GDALDeinitGCPs( this->nGCPCount, this->pasGCPList );
-        CPLFree( this->pasGCPList );
+        GDALDeinitGCPs( m_nGCPCount, m_pasGCPList );
+        CPLFree( m_pasGCPList );
     }
 
-    this->pszGCPProjection = CPLStrdup(pszGCPProjection);
+    m_pszGCPProjection = CPLStrdup(pszGCPProjectionIn);
 
-    this->nGCPCount = nGCPCount;
+    m_nGCPCount = nGCPCountIn;
 
-    this->pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPList );
+    m_pasGCPList = GDALDuplicateGCPs( nGCPCountIn, pasGCPListIn );
 
-    bNeedsFlush = TRUE;
+    m_bNeedsFlush = TRUE;
 
     return CE_None;
 }
@@ -534,13 +534,13 @@ CPLErr VRTDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 CPLErr VRTDataset::SetProjection( const char *pszWKT )
 
 {
-    CPLFree( pszProjection );
-    pszProjection = NULL;
+    CPLFree( m_pszProjection );
+    m_pszProjection = NULL;
 
     if( pszWKT != NULL )
-        pszProjection = CPLStrdup(pszWKT);
+        m_pszProjection = CPLStrdup(pszWKT);
 
-    bNeedsFlush = TRUE;
+    m_bNeedsFlush = TRUE;
 
     return CE_None;
 }
@@ -552,10 +552,10 @@ CPLErr VRTDataset::SetProjection( const char *pszWKT )
 const char *VRTDataset::GetProjectionRef()
 
 {
-    if( pszProjection == NULL )
+    if( m_pszProjection == NULL )
         return "";
 
-    return pszProjection;
+    return m_pszProjection;
 }
 
 /************************************************************************/
@@ -565,10 +565,10 @@ const char *VRTDataset::GetProjectionRef()
 CPLErr VRTDataset::SetGeoTransform( double *padfGeoTransformIn )
 
 {
-    memcpy( adfGeoTransform, padfGeoTransformIn, sizeof(double) * 6 );
-    bGeoTransformSet = TRUE;
+    memcpy( m_adfGeoTransform, padfGeoTransformIn, sizeof(double) * 6 );
+    m_bGeoTransformSet = TRUE;
 
-    bNeedsFlush = TRUE;
+    m_bNeedsFlush = TRUE;
 
     return CE_None;
 }
@@ -580,9 +580,9 @@ CPLErr VRTDataset::SetGeoTransform( double *padfGeoTransformIn )
 CPLErr VRTDataset::GetGeoTransform( double * padfGeoTransform )
 
 {
-    memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
+    memcpy( padfGeoTransform, m_adfGeoTransform, sizeof(double) * 6 );
 
-    return bGeoTransformSet ? CE_None : CE_Failure;
+    return m_bGeoTransformSet ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -782,7 +782,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         OpenXML( pszXML, pszVRTPath, poOpenInfo->eAccess ) );
 
     if( poDS != NULL )
-        poDS->bNeedsFlush = FALSE;
+        poDS->m_bNeedsFlush = FALSE;
 
     CPLFree( pszXML );
     CPLFree( pszVRTPath );
@@ -884,7 +884,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
 CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
 {
-    bNeedsFlush = 1;
+    m_bNeedsFlush = TRUE;
 
 /* ==================================================================== */
 /*      Handle a new raw band.                                          */
@@ -936,18 +936,18 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
         VRTRawRasterBand *poBand = 
             new VRTRawRasterBand( this, GetRasterCount() + 1, eType );
 
-        char* pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
-        if EQUAL(pszVRTPath, "")
+        char* l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
+        if EQUAL(l_pszVRTPath, "")
         {
-            CPLFree(pszVRTPath);
-            pszVRTPath = NULL;
+            CPLFree(l_pszVRTPath);
+            l_pszVRTPath = NULL;
         }
 
         CPLErr eErr =
-            poBand->SetRawLink( pszFilename, pszVRTPath, bRelativeToVRT,
+            poBand->SetRawLink( pszFilename, l_pszVRTPath, bRelativeToVRT,
                                 nImageOffset, nPixelOffset, nLineOffset,
                                 pszByteOrder );
-        CPLFree(pszVRTPath);
+        CPLFree(l_pszVRTPath);
         if( eErr != CE_None )
         {
             delete poBand;
@@ -1108,7 +1108,7 @@ VRTDataset::Create( const char * pszName,
     for( int iBand = 0; iBand < nBands; iBand++ )
         poDS->AddBand( eType, NULL );
 
-    poDS->bNeedsFlush = 1;
+    poDS->m_bNeedsFlush = TRUE;
 
     poDS->oOvManager.Initialize( poDS, pszName );
 
@@ -1175,9 +1175,9 @@ CPLErr VRTDataset::Delete( const char * pszFilename )
 /*                          CreateMaskBand()                            */
 /************************************************************************/
 
-CPLErr VRTDataset::CreateMaskBand( CPL_UNUSED int nFlags )
+CPLErr VRTDataset::CreateMaskBand( int )
 {
-    if (poMaskBand != NULL)
+    if (m_poMaskBand != NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "This VRT dataset has already a mask band");
@@ -1193,11 +1193,11 @@ CPLErr VRTDataset::CreateMaskBand( CPL_UNUSED int nFlags )
 /*                           SetMaskBand()                              */
 /************************************************************************/
 
-void VRTDataset::SetMaskBand(VRTRasterBand* poMaskBand)
+void VRTDataset::SetMaskBand(VRTRasterBand* poMaskBandIn)
 {
-    delete this->poMaskBand;
-    this->poMaskBand = poMaskBand;
-    poMaskBand->SetIsMaskBand();
+    delete m_poMaskBand;
+    m_poMaskBand = poMaskBandIn;
+    m_poMaskBand->SetIsMaskBand();
 }
 
 /************************************************************************/
@@ -1382,12 +1382,12 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg)
 {
-    if (bCompatibleForDatasetIO < 0)
+    if (m_bCompatibleForDatasetIO < 0)
     {
-        bCompatibleForDatasetIO = CheckCompatibleForDatasetIO();
+        m_bCompatibleForDatasetIO = CheckCompatibleForDatasetIO();
     }
 
-    bool bLocalCompatibleForDatasetIO = CPL_TO_BOOL(bCompatibleForDatasetIO);
+    bool bLocalCompatibleForDatasetIO = CPL_TO_BOOL(m_bCompatibleForDatasetIO);
     if (bLocalCompatibleForDatasetIO && eRWFlag == GF_Read &&
         (nBufXSize < nXSize || nBufYSize < nYSize))
     {
@@ -1562,7 +1562,7 @@ void VRTDataset::BuildVirtualOverviews()
     // Currently we expose virtual overviews only if the dataset is made of
     // a single SimpleSource/ComplexSource, in each band.
     // And if the underlying sources have overviews of course
-    if( apoOverviews.size() || apoOverviewsBak.size() )
+    if( m_apoOverviews.size() || m_apoOverviewsBak.size() )
         return;
 
     int nOverviews = 0;
@@ -1590,9 +1590,9 @@ void VRTDataset::BuildVirtualOverviews()
             return;
 
         // To prevent recursion
-        apoOverviewsBak.push_back(NULL);
+        m_apoOverviewsBak.push_back(NULL);
         const int nOvrCount = poSrcBand->GetOverviewCount();
-        apoOverviewsBak.resize(0);
+        m_apoOverviewsBak.resize(0);
 
         if( nOvrCount == 0 )
             return;
@@ -1616,7 +1616,7 @@ void VRTDataset::BuildVirtualOverviews()
         if( nOvrXSize < 128 || nOvrYSize < 128 )
             break;
         VRTDataset* poOvrVDS = new VRTDataset(nOvrXSize, nOvrYSize);
-        apoOverviews.push_back(poOvrVDS);
+        m_apoOverviews.push_back(poOvrVDS);
 
         for(int i=0;i<nBands;i++)
         {
@@ -1666,16 +1666,16 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
     /* Make implicit overviews invisible, but do not destroy */
     /* them in case they are already used (not sure that the client */
     /* has the right to do that. behaviour undefined in GDAL API I think) */
-    if( apoOverviews.size() )
+    if( m_apoOverviews.size() )
     {
-        apoOverviewsBak = apoOverviews;
-        apoOverviews.resize(0);
+        m_apoOverviewsBak = m_apoOverviews;
+        m_apoOverviews.resize(0);
     }
     else
     {
         // Add a dummy overview so that GDALDataset::IBuildOverviews()
         // doesn't manage to get a virtual implicit overview
-        apoOverviews.push_back(NULL);
+        m_apoOverviews.push_back(NULL);
     }
 
     return GDALDataset::IBuildOverviews(pszResampling,

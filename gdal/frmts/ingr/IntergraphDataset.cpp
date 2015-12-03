@@ -718,8 +718,6 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
     // Copy information to the raster band
     // --------------------------------------------------------------------
 
-    GDALRasterBand *poSrcBand;
-    GDALRasterBand *poDstBand;
     double dfMin;
     double dfMax;
     double dfMean;
@@ -742,10 +740,10 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
     {
         for( int i = 1; i <= poSrcDS->GetRasterCount(); i++ )
         {
-            poSrcBand = poSrcDS->GetRasterBand(i);
+            GDALRasterBand* poSrcBand = poSrcDS->GetRasterBand(i);
             eType = poSrcDS->GetRasterBand(i)->GetRasterDataType();
 
-            poDstBand = new IntergraphRasterBand( poDstDS, i, 0, eType );
+            GDALRasterBand* poDstBand = new IntergraphRasterBand( poDstDS, i, 0, eType );
             poDstDS->SetBand( i, poDstBand );
 
             poDstBand->SetCategoryNames( poSrcBand->GetCategoryNames() );

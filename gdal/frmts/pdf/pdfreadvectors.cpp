@@ -285,12 +285,12 @@ void PDFDataset::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
                     osLayerName = CPLSPrintf("Layer%d", nLayers + 1);
             }
 
-            const char* pszWKT = GetProjectionRef();
+            const char* l_pszWKT = GetProjectionRef();
             OGRSpatialReference* poSRS = NULL;
-            if (pszWKT && pszWKT[0] != '\0')
+            if (l_pszWKT && l_pszWKT[0] != '\0')
             {
                 poSRS = new OGRSpatialReference();
-                poSRS->importFromWkt((char**) &pszWKT);
+                poSRS->importFromWkt((char**) &l_pszWKT);
             }
 
             OGRPDFLayer* poLayer =
@@ -1603,12 +1603,12 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
                 OGRPDFLayer* poLayer = (OGRPDFLayer*) GetLayerByName(osSanitizedName.c_str());
                 if (poLayer == NULL)
                 {
-                    const char* pszWKT = GetProjectionRef();
+                    const char* l_pszWKT = GetProjectionRef();
                     OGRSpatialReference* poSRS = NULL;
-                    if (pszWKT && pszWKT[0] != '\0')
+                    if (l_pszWKT && l_pszWKT[0] != '\0')
                     {
                         poSRS = new OGRSpatialReference();
-                        poSRS->importFromWkt((char**) &pszWKT);
+                        poSRS->importFromWkt((char**) &l_pszWKT);
                     }
 
                     poLayer =

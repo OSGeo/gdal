@@ -164,7 +164,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
         return FALSE;
     }
 
-    for( int i = 0; i < pGrd->iNumColorInflections; i++ )
+    for( i = 0; i < pGrd->iNumColorInflections; i++ )
     {
         memcpy( reinterpret_cast<void *>( &pGrd->stInflection[i].zVal ),
                 reinterpret_cast<void *>( &nwtHeader[518 + (7 * i)] ), 4 );

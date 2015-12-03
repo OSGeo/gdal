@@ -96,9 +96,9 @@ class SNODASRasterBand : public RawRasterBand
 /*                         SNODASRasterBand()                           */
 /************************************************************************/
 
-SNODASRasterBand::SNODASRasterBand(VSILFILE* fpRaw,
+SNODASRasterBand::SNODASRasterBand(VSILFILE* fpRawIn,
                                    int nXSize, int nYSize) :
-    RawRasterBand( fpRaw, 0, 2,
+    RawRasterBand( fpRawIn, 0, 2,
                    nXSize * 2, GDT_Int16,
                    !CPL_IS_LSB, nXSize, nYSize, TRUE, TRUE)
 {

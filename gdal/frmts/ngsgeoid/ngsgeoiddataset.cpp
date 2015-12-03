@@ -97,10 +97,10 @@ class NGSGEOIDRasterBand : public GDALPamRasterBand
 /*                        NGSGEOIDRasterBand()                          */
 /************************************************************************/
 
-NGSGEOIDRasterBand::NGSGEOIDRasterBand( NGSGEOIDDataset *poDS )
+NGSGEOIDRasterBand::NGSGEOIDRasterBand( NGSGEOIDDataset *poDSIn )
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     this->nBand = 1;
 
     eDataType = GDT_Float32;

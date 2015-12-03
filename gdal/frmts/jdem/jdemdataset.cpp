@@ -126,12 +126,12 @@ class JDEMRasterBand : public GDALPamRasterBand
 /*                           JDEMRasterBand()                            */
 /************************************************************************/
 
-JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDS, int nBand ) :
+JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDSIn, int nBandIn ) :
     pszRecord(NULL),
     bBufferAllocFailed(FALSE)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = GDT_Float32;
 
