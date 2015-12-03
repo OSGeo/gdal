@@ -248,7 +248,7 @@ int OGREDIGEODataSource::ReadGEO()
         return FALSE;
     }
 
-    /* All the SRS names mentionned in B.8.2.3 and B.8.3.1 are in the IGN file */
+    /* All the SRS names mentioned in B.8.2.3 and B.8.3.1 are in the IGN file */
     poSRS = new OGRSpatialReference();
     CPLString osProj4Str = "+init=IGNF:" + osREL;
     if (poSRS->SetFromUserInput(osProj4Str.c_str()) != OGRERR_NONE)

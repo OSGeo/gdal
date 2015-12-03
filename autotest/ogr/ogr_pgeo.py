@@ -85,16 +85,16 @@ def ogr_pgeo_1(tested_driver = 'PGeo', other_driver = 'MDB'):
                 return 'skip'
         except:
             return 'skip'
-            
+
     ogrtest.pgeo_ds = ogr.Open('tmp/cache/Autodesk Test.mdb')
     if ogrtest.pgeo_ds is None:
         gdaltest.post_reason('could not open DB. Driver probably misconfigured')
         return 'skip'
-    
+
     if ogrtest.pgeo_ds.GetLayerCount() != 3:
         gdaltest.post_reason('did not get expected layer count')
         return 'fail'
-        
+
     lyr = ogrtest.pgeo_ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetField('OBJECTID') != 1 or \
@@ -103,7 +103,7 @@ def ogr_pgeo_1(tested_driver = 'PGeo', other_driver = 'MDB'):
         gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
         return 'fail'
-        
+
     if ogrtest.check_feature_geometry(feat,'LINESTRING (1910941.703951031 445833.57942859828 0,1910947.927691862 445786.43811868131 0)', max_error = 0.0000001) != 0:
         gdaltest.post_reason('did not get expected geometry')
         feat.DumpReadable()

@@ -3299,7 +3299,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
             if( iCurLayer < 0 )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Layer '%s' mentionned in %s is unknown to the driver",
+                         "Layer '%s' mentioned in %s is unknown to the driver",
                          pszLine, pszFilename);
             }
             continue;

@@ -5819,7 +5819,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have PIXELTYPE metadadata in the source, pass it          */
+/*      If we have PIXELTYPE metadata in the source, pass it            */
 /*      through as a creation option.                                   */
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( papszOptions, "PIXELTYPE" ) == NULL

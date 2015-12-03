@@ -2544,7 +2544,7 @@ def ogr_vrt_33():
     feat.SetField("X", -1)
     feat.SetField("Y", -2)
     lyr.CreateFeature(feat)
-    
+
     lyr = ds.GetLayerByName('test2')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeomField(0, ogr.CreateGeometryFromWkt('POLYGON ((1 1,1 2,2 2,2 1,1 1))'))
@@ -2557,7 +2557,7 @@ def ogr_vrt_33():
 
     for i in range(2):
         if i == 0:
-            # Minimalistic definition
+            # Minimalist definition.
             ds_str = """<OGRVRTDataSource>
     <OGRVRTLayer name="test">
         <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>

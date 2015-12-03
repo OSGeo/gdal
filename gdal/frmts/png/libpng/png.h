@@ -307,8 +307,8 @@
 /* Careful here.  At one time, Guy wanted to use 082, but that would be octal.
  * We must not include leading zeros.
  * Versions 0.7 through 1.0.0 were in the range 0 to 100 here (only
- * version 1.0.0 was mis-numbered 100 instead of 10000).  From
- * version 1.0.1 it's    xxyyzz, where x=major, y=minor, z=release
+ * version 1.0.0 was misnumbered 100 instead of 10000).  From
+ * version 1.0.1 it's xxyyzz, where x=major, y=minor, z=release
  */
 #define PNG_LIBPNG_VER 10254 /* 1.2.54 */
 

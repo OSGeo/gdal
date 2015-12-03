@@ -216,15 +216,15 @@ No known bug
 
             if(( dy < dy2 ) && (dy >= dy1))
             {
-                
+
                 intersect = (dy-dy1) * (dx2-dx1) / (dy2-dy1) + dx1;
 
                 polyInts[ints++] = (int) floor(intersect+0.5);
             }
         }
 
-        /* 
-         * It would be more efficient to do this inline, to avoid 
+        /*
+         * It would be more efficient to do this inline, to avoid
          * a function call for each comparison.
          * NOTE - mloskot: make llCompareInt a functor and use std
          * algorithm and it will be optimized and expanded

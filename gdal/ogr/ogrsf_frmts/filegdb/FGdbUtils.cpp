@@ -524,7 +524,7 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
         *ppSR = NULL;
 
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed morhping from ESRI Geometry: %s", wkt.c_str());
+                  "Failed morphing from ESRI Geometry: %s", wkt.c_str());
 
         return false;
     }

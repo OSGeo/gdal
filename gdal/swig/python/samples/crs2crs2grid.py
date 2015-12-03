@@ -321,19 +321,19 @@ if __name__ == '__main__':
         i = i + 1
         # next argument
 
-
     if output_grid_name is None:
         print('Missing output grid name (-o)')
         Usage()
 
     if dst_crs_date is None:
-        print('Source and Destination CRS Ids and Dates are manditory, not all provided.')
+        print('Source and Destination CRS Ids and Dates are mandatory, '
+              'not all provided.')
         Usage()
 
     # Do a bit of validation of parameters.
     if src_crs_id < 1 or src_crs_id > 32 \
        or dst_crs_id < 1 or dst_crs_id > 32:
-        print('Invalid source or destination CRS Id %d and %d.' \
+        print('Invalid source or destination CRS Id %d and %d.'
               % (src_crs_id, dst_crs_id))
         Usage(brief=0)
 

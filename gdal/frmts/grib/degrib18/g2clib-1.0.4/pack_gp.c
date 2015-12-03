@@ -281,13 +281,13 @@ typedef g2int logical;
 /*                       AND A MINIMUM THAT HAS BEEN SET TO ZERO WHEN */
 /*                       ALL VALUES ARE MISSING.  0 OTHERWISE. */
 /*                       NOTE THAT THIS DOES NOT DISTINGUISH BETWEEN */
-/*                       PRIMARY AND SECONDARY MISSINGS WHEN SECONDARY */
-/*                       MISSINGS ARE PRESENT.  THIS MEANS THAT */
+/*                       PRIMARY AND SECONDARY MISSING WHEN SECONDARY */
+/*                       MISSING ARE PRESENT.  THIS MEANS THAT */
 /*                       LBIT( ) WILL NOT BE ZERO WITH THE RESULTING */
-/*                       COMPRESSION EFFICIENCY WHEN SECONDARY MISSINGS */
+/*                       COMPRESSION EFFICIENCY WHEN SECONDARY MISSING */
 /*                       ARE PRESENT.  ALSO NOTE THAT A CHECK HAS BEEN */
 /*                       MADE EARLIER TO DETERMINE THAT SECONDARY */
-/*                       MISSINGS ARE REALLY THERE. */
+/*                       MISSING ARE REALLY THERE. */
 /*              MISLLB = SET TO 1 WHEN ALL VALUES IN GROUP B ARE MISSING. */
 /*                       THIS IS USED TO DISTINGUISH BETWEEN A REAL */
 /*                       MINIMUM WHEN ALL VALUES ARE NOT MISSING */

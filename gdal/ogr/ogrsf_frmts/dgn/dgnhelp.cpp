@@ -1389,20 +1389,20 @@ void DGNTransformPointWithQuaternionVertex( CPL_UNUSED int *quat,
 #endif
 
 /* ==================================================================== */
-/*      Impelementation provided by Peggy Jung - 2004/03/05.            */
+/*      Implementation provided by Peggy Jung - 2004/03/05.            */
 /*      peggy.jung at moskito-gis dot de.  I haven't tested it.         */
 /* ==================================================================== */
 
 /*  Version: 0.1                                 Datum: 26.01.2004
- 
+
 IN:
 x,y,z               // DGNPoint &v1
 quat[]              // 
- 
+
 OUT:
 newX, newY, newZ    // DGNPoint &v2
 
-A u t o r  :  Peggy Jung
+Author: Peggy Jung
 */
 /*
     double ROT[12];  //rotation matrix for a given quaternion
@@ -1412,7 +1412,7 @@ A u t o r  :  Peggy Jung
     x = v1->x;
     y = v1->y;
     z = v1->z;
- 
+
     n = sqrt((double)PDP2PC_long(quat[0])*(double)PDP2PC_long(quat[0])+(double)PDP2PC_long(quat[1])*(double)PDP2PC_long(quat[1])+
              (double)PDP2PC_long(quat[2])*(double)PDP2PC_long(quat[2])+(double)PDP2PC_long(quat[3])*(double)PDP2PC_long(quat[3]));
  

@@ -308,12 +308,12 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
                 break;
             }
 #endif
-  
+
           default:
              SetField(i,papszToken[i]);
        }
     }
-    
+
     fp->GetLine();
 
     CSLDestroy(papszToken);
@@ -324,7 +324,7 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
 /**********************************************************************
  *                   TABFeature::WriteRecordToMIDFile()
  *
- *  This methode is used to write the Record (Attributs) for all type
+ *  This method is used to write the Record (Attributes) for all type
  *  of feature included in a mid file.
  *
  *  Return 0 on success, -1 on error
@@ -341,7 +341,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
 #endif
 
     CPLAssert(fp);
-    
+
     const char *delimiter = fp->GetDelimiter();
 
     numFields = GetFieldCount();
@@ -362,7 +362,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
             char *pszWorkString = (char*)CPLMalloc((2*(nStringLen)+1)*sizeof(char));
             int j = 0;
             for (int i =0; i < nStringLen; ++i)
-            { 
+            {
               if (pszString[i] == '"')
               {
                 pszWorkString[j] = pszString[i];
@@ -379,7 +379,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
                 pszWorkString[j] = pszString[i];
               ++j;
             }
-            
+
             pszWorkString[j] = '\0';
             CPLFree(pszString);
             pszString = (char*)CPLMalloc((strlen(pszWorkString)+1)*sizeof(char));

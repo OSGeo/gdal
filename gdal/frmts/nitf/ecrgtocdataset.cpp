@@ -793,9 +793,10 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                         }
                         if( nCountScales > 1 )
                         {
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                     "Scale should be mentionned in subdatasets "
-                                     "syntax since this disk contains several scales");
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                      "Scale should be mentioned in "
+                                      "subdatasets syntax since this disk "
+                                      "contains several scales" );
                             delete poDS;
                             return NULL;
                         }

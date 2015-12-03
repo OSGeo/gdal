@@ -1310,7 +1310,7 @@ jpeg_save_markers (j_decompress_ptr cinfo, int marker_code,
   long maxlength;
   jpeg_marker_parser_method processor;
 
-  /* Length limit mustn't be larger than what we can allocate
+  /* Length limit must not be larger than what we can allocate
    * (should only be a concern in a 16-bit environment).
    */
   maxlength = cinfo->mem->max_alloc_chunk - SIZEOF(struct jpeg_marker_struct);

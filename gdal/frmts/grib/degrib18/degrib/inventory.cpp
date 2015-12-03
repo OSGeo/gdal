@@ -275,7 +275,7 @@ static int GRIB2SectToBuffer (DataSource &fp,
    if (*sect == -1) {
       *sect = buffer[5 - 5];
    } else if (buffer[5 - 5] != *sect) {
-      errSprintf ("ERROR: Section %d misslabeled\n", *sect);
+      errSprintf ("ERROR: Section %d mislabeled\n", *sect);
       return -2;
    }
    return 0;
@@ -341,17 +341,17 @@ static int GRIB2SectJump (DataSource &fp,
    if (*sect == -1) {
       *sect = sectNum;
    } else if (sectNum != *sect) {
-      errSprintf ("ERROR: Section %d misslabeled\n", *sect);
-      return -2;
+       errSprintf ("ERROR: Section %d mislabeled\n", *sect);
+       return -2;
    }
-   /* Since fseek does not give an error if we jump outside the file, we test 
+   /* Since fseek does not give an error if we jump outside the file, we test
     * it by using fgetc / ungetc. */
    fp.DataSourceFseek (*secLen - 5, SEEK_CUR);
    if ((c = fp.DataSourceFgetc()) == EOF) {
-      errSprintf ("ERROR: Ran out of file in Section %d\n", *sect);
-      return -1;
+       errSprintf ("ERROR: Ran out of file in Section %d\n", *sect);
+       return -1;
    } else {
-		 fp.DataSourceUngetc(c);
+       fp.DataSourceUngetc(c);
    }
    return 0;
 }
@@ -444,7 +444,7 @@ static int GRIB2Inventory2to7 (sChar sectNum, DataSource &fp, sInt4 gribLen,
          return -6;
       }
       if ((sectNum != 2) && (sectNum != 3)) {
-         errSprintf ("ERROR: Section 2 or 3 misslabeled\n");
+         errSprintf ("ERROR: Section 2 or 3 mislabeled\n");
          return -5;
       } else if (sectNum == 2) {
          /* Jump past section 3. */

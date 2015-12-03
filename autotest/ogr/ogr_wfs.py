@@ -194,7 +194,7 @@ def ogr_wfs_geoserver():
         # Disable it for wfs-t test
         gdaltest.geoserver_wfs = False
         return 'skip'
-    
+
     if feat.GetField('NAME') != 'museam' or \
        ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
                                       max_error = 0.000001 ) != 0:

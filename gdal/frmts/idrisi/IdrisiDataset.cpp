@@ -936,9 +936,9 @@ GDALDataset *IdrisiDataset::Create( const char *pszFilename,
         return NULL;
     }
 
-    // ---------------------------------------------------------------- 
-    //  Create the header file with minimun information
-    // ---------------------------------------------------------------- 
+    // ----------------------------------------------------------------
+    //  Create the header file with minimum information
+    // ----------------------------------------------------------------
 
     const char *pszLDataType;
 

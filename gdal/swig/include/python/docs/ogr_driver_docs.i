@@ -114,7 +114,7 @@ ODrCDeleteDataSource: True if this driver supports deleting data
 sources.
 
 The #define macro forms of the capability names should be used in
-preference to the strings themselves to avoid mispelling.
+preference to the strings themselves to avoid misspelling.
 
 This function is the same as the C++ method
 OGRSFDriver::TestCapability().

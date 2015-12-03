@@ -2376,13 +2376,13 @@ void  VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle* poSubFile)
  * The syntax to open a file inside a zip file is /vsizip/path/to/the/file.zip/path/inside/the/zip/file
  * were path/to/the/file.zip is relative or absolute and path/inside/the/zip/file
  * is the relative path to the file inside the archive.
- * 
+ *
  * If the path is absolute, it should begin with a / on a Unix-like OS (or C:\ on Windows),
  * so the line looks like /vsizip//home/gdal/...
  * For example gdalinfo /vsizip/myarchive.zip/subdir1/file1.tif
  *
- * Syntaxic sugar : if the .zip file contains only one file located at its root,
- * just mentionning "/vsizip/path/to/the/file.zip" will work
+ * Syntactic sugar : if the .zip file contains only one file located at its
+ * root, just mentioning "/vsizip/path/to/the/file.zip" will work
  *
  * VSIStatL() will return the uncompressed size in st_size member and file
  * nature- file or directory - in st_mode member.

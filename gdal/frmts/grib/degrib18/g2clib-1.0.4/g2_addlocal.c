@@ -67,7 +67,7 @@ g2int g2_addlocal(unsigned char *cgrib,unsigned char *csec2,g2int lcsec2)
 //
       if ( cgrib[0]!=G || cgrib[1]!=R || cgrib[2]!=I || cgrib[3]!=B ) {
         printf("g2_addlocal: GRIB not found in given message.\n");
-        printf("g2_addlocal: Call to routine g2_create required to initialize GRIB messge.\n");
+        printf("g2_addlocal: Call to routine g2_create required to initialize GRIB message.\n");
         ierr=-1;
         return(ierr);
       }

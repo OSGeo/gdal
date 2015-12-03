@@ -198,7 +198,7 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
         int nFID = static_cast<int>(seqFeatures_.size());
         poNewFeature->SetFID( nFID );
 
-        // TODO - mlokot: We need to redesign creation of FID column
+        // TODO - mloskot: We need to redesign creation of FID column
         int nField = poNewFeature->GetFieldIndex( DefaultFIDColumn );
         if( -1 != nField && GetLayerDefn()->GetFieldDefn(nField)->GetType() == OFTInteger )
         {

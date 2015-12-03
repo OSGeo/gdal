@@ -537,7 +537,7 @@ def ogr_plscenes_3():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Error case: mssing properties
+    # Error case: missing properties.
     gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id', """{}""")
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')

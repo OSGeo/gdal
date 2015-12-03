@@ -420,7 +420,7 @@ int OGRSXFLayer::TestCapability( const char * pszCap )
 /************************************************************************/
 /****
  * TODO : Take into account information given in the passport
- * like unit of mesurement, type and dimensions (integer, float, double) of
+ * like unit of measurement, type and dimensions (integer, float, double) of
  * coordinate, the vector format, etc.
  */
 

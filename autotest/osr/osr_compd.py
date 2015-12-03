@@ -72,7 +72,7 @@ def osr_compd_1():
         print( 'Expected: %s' % expected_proj4 )
         gdaltest.post_reason( 'did not get expected proj.4 translation of compd_cs' )
         return 'fail'
-    
+
     if srs.GetLinearUnitsName() != 'metre_1':
         gdaltest.post_reason( 'Did not get expected linear units.' )
         return 'fail'

@@ -11382,7 +11382,7 @@ public class SpatialReference:public int SetGeogCS(String pszGeogName, String ps
  * This can be computed from the semi minor axis as 
  * 1/f = 1.0 / (1.0 - semiminor/semimajor).
  *
- * @param pszPMName the name of the prime merdidian (not to serve as a key)
+ * @param pszPMName the name of the prime meridian (not to serve as a key)
  * If this is null a default value of "Greenwich" will be used. 
  * 
  * @param dfPMOffset the longitude of greenwich relative to this prime

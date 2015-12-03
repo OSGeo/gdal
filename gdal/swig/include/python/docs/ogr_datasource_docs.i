@@ -210,7 +210,7 @@ whether or not the capability is available for this object.
 ODsCCreateLayer: True if this datasource can create new layers.
 
 The #define macro forms of the capability names should be used in
-preference to the strings themselves to avoid mispelling.
+preference to the strings themselves to avoid misspelling.
 
 This function is the same as the C++ method
 OGRDataSource::TestCapability().

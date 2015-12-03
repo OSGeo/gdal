@@ -2122,7 +2122,7 @@ OGRSpatialReference *MIFFile::GetSpatialRef()
 /**********************************************************************
  *                   MIFFile::UpdateExtents()
  *
- * Private Methode used to update the dataset extents
+ * Private method used to update the dataset extents.
  **********************************************************************/
 void MIFFile::UpdateExtents(double dfX, double dfY)
 {

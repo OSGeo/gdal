@@ -13,7 +13,7 @@ CSF_ATTR_ID CsfGetAttribute(
 	 MAP *m, /* map handle */
 	 CSF_ATTR_ID id, /* id of attribute to be read */
 	 size_t  elSize, /* size of each data-element */
-	 size_t *nmemb, /* write-only. how many elSize mebers are read */
+	 size_t *nmemb, /* write-only. How many elSize members are read. */
 	 void  *attr) /* write-only. buffer where attribute is read in.
 	               * Must be big enough to hold buffer.
 	               */

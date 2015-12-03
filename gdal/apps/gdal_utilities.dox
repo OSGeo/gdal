@@ -1337,8 +1337,8 @@ nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_
 
 This utility will scan an image and try to set all pixels that are nearly or exactly
 black, white or one or more custom colors around the collar to black or white.  This
-is often used to "fix up" lossy compressed airphotos so that color pixels
-can be treated as transparent when mosaicking. 
+is often used to "fix up" lossy compressed air photos so that color pixels
+can be treated as transparent when mosaicing.
 
 <dl>
 <dt> <b>-o</b> <i>outfile</i>:</dt><dd> The name of the output file to be

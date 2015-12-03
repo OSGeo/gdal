@@ -92,7 +92,7 @@ public:
     GDALColorInterp GetColorInterpretation();
     CPLErr SetColorInterpretation(GDALColorInterp gdalinterp);
 
-    // virtual mthods for band masks
+    // Virtual methods for band masks.
     CPLErr CreateMaskBand(int nFlags);
     GDALRasterBand* GetMaskBand();
     int GetMaskFlags();

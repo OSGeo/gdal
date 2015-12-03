@@ -2559,13 +2559,13 @@ GetConnectionInfo(const char * pszFilename,
         if (nPos != -1) {
             *ppszSchema = 
                 CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
-                
+
             /* Delete this pair from params array */
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
 
         /**
-         * Remove the rest of the parameters, if exist (they mustn't be 
+         * Remove the rest of the parameters, if exist (they must not be
          * present if we want a valid PQ connection string)
          **/
         nPos = CSLFindName(papszParams, "column");

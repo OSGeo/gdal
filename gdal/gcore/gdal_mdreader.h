@@ -104,8 +104,8 @@ public:
      */
     virtual char ** GetMetadataDomain(const char *pszDomain);
     /**
-     * @brief Fill provided metatada store class
-     * @param poMDMD Metatada store class
+     * @brief Fill provided metadata store class
+     * @param poMDMD Metadata store class
      * @return true on success or false
      */
     virtual bool FillMetadata(GDALMultiDomainMetadata* poMDMD);
