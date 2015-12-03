@@ -1087,7 +1087,7 @@ void GDALRegister_SAFE()
     poDriver->SetDescription( "SAFE" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Sentinel SAFE Product" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Sentinel-1 SAR SAFE Product" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_safe.html" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "NO" );
 
