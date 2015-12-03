@@ -552,7 +552,14 @@ class TABMAPObjHdr
     GInt32      m_nMaxX;
     GInt32      m_nMaxY;
 
-    TABMAPObjHdr() {};
+    TABMAPObjHdr():
+        m_nType(TAB_GEOM_NONE),
+        m_nId(0),
+        m_nMinX(0),
+        m_nMinY(0),
+        m_nMaxX(0),
+        m_nMaxY(0)
+        {};
     virtual ~TABMAPObjHdr() {};
 
     static TABMAPObjHdr *NewObj(TABGeomType nNewObjType, GInt32 nId=0);
