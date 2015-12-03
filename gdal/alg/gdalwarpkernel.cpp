@@ -2302,7 +2302,6 @@ static int GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
             adfImag[0], adfImag[1], adfImag[2], adfImag[3]);
     }
 
-    
 /* -------------------------------------------------------------------- */
 /*      For now, if we have any pixels missing in the kernel area,      */
 /*      we fallback on using bilinear interpolation.  Ideally we        */
@@ -2318,7 +2317,7 @@ static int GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
     *pdfImag = CubicConvolution(dfDeltaY, dfDeltaY2, dfDeltaY3,
                                    adfValueImag[0], adfValueImag[1],
                                    adfValueImag[2], adfValueImag[3]);
-    
+
     return TRUE;
 }
 

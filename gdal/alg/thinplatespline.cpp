@@ -197,9 +197,9 @@ static CPL_INLINE double VizGeorefSpline2DBase_func( const double x1, const doub
  */
 
 /* __ieee754_log(x)
- * Return the logrithm of x
+ * Return the logarithm of x
  *
- * Method :                  
+ * Method:
  *   1. Argument Reduction: find k and f such that
  *                      x = 2^k * (1+f),
  *         where  sqrt(2)/2 < 1+f < sqrt(2) .
@@ -224,7 +224,7 @@ static CPL_INLINE double VizGeorefSpline2DBase_func( const double x1, const doub
  *      by
  *              log(1+f) = f - s*(f - R)        (if f is not too large)
  *              log(1+f) = f - (hfsq - s*(hfsq+R)).     (better accuracy)
- *      
+ *
  *      3. Finally,  log(x) = k*ln2 + log(1+f).  
  *                          = k*ln2_hi+(f-(hfsq-(s*(hfsq+R)+k*ln2_lo)))
  *         Here ln2 is split into two floating point number:

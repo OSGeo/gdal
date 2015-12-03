@@ -877,7 +877,7 @@ size, number of bands, and pixel data type of the desired file is provided
 but other information (such as georeferencing, and imagery data) would be
 supplied later via other method calls on the resulting GDALDataset.  
 
-The following sample implement PCI .aux labelled raw raster creation.  It
+The following sample implement PCI .aux labeled raw raster creation.  It
 follows a common approach of creating a blank, but valid file using non-GDAL
 calls, and then calling GDALOpen(,GA_Update) at the end to return a writable
 file handle.  This avoids having to duplicate the various setup actions in
@@ -899,7 +899,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         && eType != GDT_Int16 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-              "Attempt to create PCI .Aux labelled dataset with an illegal\n"
+              "Attempt to create PCI .Aux labeled dataset with an illegal\n"
               "data type (%s).\n",
               GDALGetDataTypeName(eType) );
 

@@ -6541,7 +6541,7 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 |  FUNCTION: GDrs2ll                                                          |
 |                                                                             |
 |  DESCRIPTION:  Converts EASE grid's (r,s) coordinates to longitude and      |
-|                latritude (in decimal degrees).                              |
+|                latitude (in decimal degrees).                               |
 |                                                                             |
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
@@ -7042,7 +7042,7 @@ GDtangentpnts(int32 projcode, float64 projparm[], float64 cornerlon[],
     float64         minLat;	/* Minimum latitude */
     float64         bisectParm[4];	/* Bisection parameters */
     float64         tanLat;	/* Tangent latitude */
-    float64         tanLon;	/* Tangent lontitude */
+    float64         tanLon;	/* Tangent longitude */
     float64         dotPrd;	/* Dot product */
     float64         centMerd;	/* Central Meridian */
     float64         orgLat;	/* Latitude of origin */

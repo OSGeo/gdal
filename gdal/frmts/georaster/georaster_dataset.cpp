@@ -645,9 +645,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
             return NULL;
         }
 
-        /* There is a limite on how big a compressed block can be.
-         */
-        if( ( poGRW->nColumnBlockSize * 
+        // There is a limit on how big a compressed block can be.
+        if( ( poGRW->nColumnBlockSize *
               poGRW->nRowBlockSize *
               poGRW->nBandBlockSize *
               ( GDALGetDataTypeSize( eType ) / 8 ) ) > ( 50 * 1024 * 1024 ) )

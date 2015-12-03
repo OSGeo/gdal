@@ -439,7 +439,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 	// Value string ends in "&", so use long string conventions
 	char* longString = 0;
 	fits_read_key_longstr(hFITS, key, &longString, 0, &status);
-	// Note that read_key_longst already strips quotes
+        // Note that read_key_longstr already strips quotes
 	if (status) {
 	  CPLError(CE_Failure, CPLE_AppDefined,
 		   "Error while reading long string for key %s from "

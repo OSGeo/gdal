@@ -714,7 +714,7 @@ gdalbuildvrt [-tileindex field_name]
              [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"] 
              [-a_srs srs_def]
              [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
-             [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*
+             [-input_file_list my_list.txt] [-overwrite] output.vrt [gdalfile]*
 \endverbatim
 
 \section gdalbuildvrt_description DESCRIPTION
@@ -857,7 +857,7 @@ gdalbuildvrt doq_index.vrt doq/*.tif
 
 Make a virtual mosaic from files whose name is specified in a text file :
 \verbatim
-gdalbuildvrt -input_file_list my_liste.txt doq_index.vrt
+gdalbuildvrt -input_file_list my_list.txt doq_index.vrt
 \endverbatim
 
 Make a RGB virtual mosaic from 3 single-band input files :
@@ -2197,7 +2197,7 @@ The following general options are available :
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
 is GeoTIFF (GTiff).  Use the short format name.</dd>
 <dt> <b>-compute_edges</b>:</dt><dd> (GDAL >= 1.8.0) Do the computation at raster edges and near nodata values</dd>
-<dt> <b>-alg</b> <i>ZevenbergenThorne</i>:</dt><dd> (GDAL >= 1.8.0) Use Zevenbergen & Thorne formula, instead of Horn's formula, to compute slope & aspect. The litterature suggests Zevenbergen & Thorne to be more suited to smooth landscapes, whereas Horn's formula to perform better on rougher terrain.</dd>
+<dt> <b>-alg</b> <i>ZevenbergenThorne</i>:</dt><dd> (GDAL >= 1.8.0) Use Zevenbergen & Thorne formula, instead of Horn's formula, to compute slope & aspect. The literature suggests Zevenbergen & Thorne to be more suited to smooth landscapes, whereas Horn's formula to perform better on rougher terrain.</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input <i>band</i> to be processed. Bands are numbered from 1.</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
 output format driver.  Multiple <b>-co</b> options may be listed.  See format 

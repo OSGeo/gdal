@@ -1852,7 +1852,7 @@ GeoJSON driver:
  * report integer values that are int64 as strings
  * add 3d support to esri geojson reader (#5219)
  * be less strict on looking for esri field type tag (#5219)
- * fix sometimes incorrect result (significant digit losts...) when using -lco COORDINATE_PRECISION=0
+ * fix sometimes incorrect result (significant digit lost...) when using -lco COORDINATE_PRECISION=0
  * fix handling of huge coordinates when writing (#5377)
 
 GeoRSS driver:
@@ -3833,7 +3833,7 @@ Perl bindings:
  * Detect context in a typemap which returns a array, this now returns a list in list context; the change affects at least GetExtent and GetEnvelope methods, which retain backward compatibility though new and/or changed methods: FeatureDefn::Name, FeatureDefn::GeometryIgnored, FeatureDefn::StyleIgnored, Feature::ReferenceGeometry, Feature::SetFrom, FieldDefn::Ignored, Geometry::AsJSON
  * Perl typemaps: more correct manipulation of the stack, more cases where a list is returned in a list context, better handling of callback_data @Band::COLORINTERPRETATIONS, Band methods Unit, ScaleAndOffset, GetBandNumber, RasterAttributeTable method LinearBinning
  * Typemaps for VSIF{Write|Read}L, tests and docs for some VSI* functions.
- * Perl bindings: better by name / by index logics, some checks for silent failures, return schema as a hash if wanted, support ->{field} syntax for features, return list attributes as lists or listrefs as wished so that ->{field} works for lists too (API change)
+ * Perl bindings: better by name / by index logic, some checks for silent failures, return schema as a hash if wanted, support ->{field} syntax for features, return list attributes as lists or listrefs as wished so that ->{field} works for lists too (API change)
 
 Python bindings:
  * Improvements for ogr.Feature field get/set
@@ -6335,7 +6335,7 @@ Algorithms / Utilities:
  * gdal_rasterize: added -i flag to rasterize all areas outside geometry.
  * gdalenhance: new utility for applying histogram equalization enhancements.
  * gdalmanage: Utility for managing datasets (identify, delete, copy, rename)
- * nearblack: Utility for fixing lossily compressed nodata collars.
+ * nearblack: Utility for fixing lossy compressed nodata collars.
 
 Intergraph Raster Driver:
  * New for 1.5.0.

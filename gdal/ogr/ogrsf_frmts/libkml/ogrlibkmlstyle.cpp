@@ -931,7 +931,7 @@ static StyleSelectorPtr StyleFromStyleURL(
                 }
 
                 /***** get the root container *****/
-                
+
                 ContainerPtr poKmlContainer;
                 kmldom::KmlFactory* poKmlFactory = kmldom::KmlFactory::GetFactory();
                 if ( !( poKmlContainer = MyGetContainerFromRoot ( poKmlFactory, poKmlRoot ) ) ) {
@@ -943,10 +943,10 @@ static StyleSelectorPtr StyleFromStyleURL(
                 }
 
                 /**** parse the styles into the table *****/
-                
+
                 ParseStyles ( AsDocument ( poKmlContainer ), &poStyleTable );
-                    
-                /***** look for the style we leed to map to in the table *****/
+
+                /***** look for the style we need to map to in the table *****/
 
                 const char *pszTest = NULL;
                 pszTest = poStyleTable->Find(pszRemoteStyleName);
@@ -961,7 +961,7 @@ static StyleSelectorPtr StyleFromStyleURL(
     }
 
     /***** FIXME add suport here for relative links inside kml *****/
-    
+
     CPLFree ( pszUrl );
     CPLFree ( pszStyleMapId );
 

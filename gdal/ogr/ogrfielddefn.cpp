@@ -410,7 +410,7 @@ void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
  * low-level layers to do the job. So retrieving the feature from the layer is
  * recommended.
  *
- * The accepted values are NULL, a numeric value, a litteral value enclosed
+ * The accepted values are NULL, a numeric value, a literal value enclosed
  * between single quote characters (and inner single quote characters escaped by
  * repetition of the single quote character),
  * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
@@ -480,7 +480,7 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
  * low-level layers to do the job. So retrieving the feature from the layer is
  * recommended.
  *
- * The accepted values are NULL, a numeric value, a litteral value enclosed
+ * The accepted values are NULL, a numeric value, a literal value enclosed
  * between single quote characters (and inner single quote characters escaped by
  * repetition of the single quote character),
  * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
@@ -549,11 +549,13 @@ const char *OGR_Fld_GetDefault( OGRFieldDefnH hDefn )
 /**
  * \brief Returns whether the default value is driver specific.
  *
- * Driver specific default values are those that are *not* NULL, a numeric value,
- * a litteral value enclosed between single quote characters, CURRENT_TIMESTAMP,
- * CURRENT_TIME, CURRENT_DATE or datetime literal value.
+ * Driver specific default values are those that are *not* NULL, a
+ * numeric value, a literal value enclosed between single quote
+ * characters, CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
+ * datetime literal value.
  *
- * This method is the same as the C function OGR_Fld_IsDefaultDriverSpecific().
+ * This method is the same as the C function
+ * OGR_Fld_IsDefaultDriverSpecific().
  *
  * @return TRUE if the default value is driver specific.
  * @since GDAL 2.0
@@ -588,11 +590,13 @@ int OGRFieldDefn::IsDefaultDriverSpecific() const
 /**
  * \brief Returns whether the default value is driver specific.
  *
- * Driver specific default values are those that are *not* NULL, a numeric value,
- * a litteral value enclosed between single quote characters, CURRENT_TIMESTAMP,
- * CURRENT_TIME, CURRENT_DATE or datetime literal value.
+ * Driver specific default values are those that are *not* NULL, a
+ * numeric value, a literal value enclosed between single quote
+ * characters, CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
+ * datetime literal value.
  *
- * This function is the same as the C++ method OGRFieldDefn::IsDefaultDriverSpecific().
+ * This function is the same as the C++ method
+ * OGRFieldDefn::IsDefaultDriverSpecific().
  *
  * @param hDefn handle to the field definition
  * @return TRUE if the default value is driver specific.
