@@ -257,7 +257,7 @@ static intn GDmm2ll_cea(int32, int32, int32, float64[],	int32, int32,
 |                                                                             |
 |  INPUTS:                                                                    |
 |  filename       char                Filename                                |
-|  access         intn                HDF access code                         |
+|  l_access         intn                HDF l_access code                         |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -273,14 +273,14 @@ static intn GDmm2ll_cea(int32, int32, int32, float64[],	int32, int32,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-GDopen(char *filename, intn access)
+GDopen(char *filename, intn l_access)
 
 {
     int32           fid /* HDF-EOS file ID */ ;
 
-    /* Call EHopen to perform file access */
+    /* Call EHopen to perform file l_access */
     /* ---------------------------------- */
-    fid = EHopen(filename, access);
+    fid = EHopen(filename, l_access);
 
     return (fid);
 
@@ -331,7 +331,7 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
     intn            ngridopen = 0;	/* # of grid structures open */
     intn            status = 0;	/* routine return status variable */
 
-    uint8           access;	/* Read/Write file access code */
+    uint8           l_access;	/* Read/Write file l_access code */
 
     int32           HDFfid;	/* HDF file id */
     int32           vgRef;	/* Vgroup reference number */
@@ -354,9 +354,9 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
 
     /*
      * Check HDF-EOS file ID, get back HDF file ID, SD interface ID  and
-     * access code
+     * l_access code
      */
-    status = EHchkfid(fid, gridname, &HDFfid, &sdInterfaceID, &access);
+    status = EHchkfid(fid, gridname, &HDFfid, &sdInterfaceID, &l_access);
 
 
     /* Check gridname for length */
@@ -593,7 +593,7 @@ GDattach(int32 fid, char *gridname)
     intn            ngridopen = 0;	/* # of grid structures open */
     intn            status;	/* routine return status variable */
 
-    uint8           acs;	/* Read/Write file access code */
+    uint8           acs;	/* Read/Write file l_access code */
 
     int32           HDFfid;	/* HDF file id */
     int32           vgRef;	/* Vgroup reference number */
@@ -605,24 +605,24 @@ GDattach(int32 fid, char *gridname)
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           nObjects;	/* # of objects in Vgroup */
     int32           nSDS;	/* SDS counter */
-    int32           index;	/* SDS index */
+    int32           l_index;	/* SDS l_index */
     int32           sdid;	/* SDS object ID */
     int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
 
     char            name[80];	/* Vgroup name */
     char            class[80];	/* Vgroup class */
     char            errbuf[256];/* Buffer for error message */
-    char            acsCode[1];	/* Read/Write access char: "r/w" */
+    char            acsCode[1];	/* Read/Write l_access char: "r/w" */
 
 
-    /* Check HDF-EOS file ID, get back HDF file ID and access code */
+    /* Check HDF-EOS file ID, get back HDF file ID and l_access code */
     /* ----------------------------------------------------------- */
     status = EHchkfid(fid, gridname, &HDFfid, &dum, &acs);
 
 
     if (status == 0)
     {
-	/* Convert numeric access code to character */
+	/* Convert numeric l_access code to character */
 	/* ---------------------------------------- */
 
 	acsCode[0] = (acs == 1) ? 'w' : 'r';
@@ -773,8 +773,8 @@ GDattach(int32 fid, char *gridname)
 			    /* ---------------------------- */
 			    if (tags[j] == DFTAG_NDG)
 			    {
-				index = SDreftoindex(sdInterfaceID, refs[j]);
-				sdid = SDselect(sdInterfaceID, index);
+				l_index = SDreftoindex(sdInterfaceID, refs[j]);
+				sdid = SDselect(sdInterfaceID, l_index);
 				GDXGrid[i].sdsID[nSDS] = sdid;
 				nSDS++;
 				GDXGrid[i].nSDS++;
@@ -856,7 +856,7 @@ GDchkgdid(int32 gridID, char *routname,
 	  int32 * fid, int32 * sdInterfaceID, int32 * gdVgrpID)
 {
     intn            status = 0;	/* routine return status variable */
-    uint8           access;	/* Read/Write access code */
+    uint8           l_access;	/* Read/Write l_access code */
     int32           gID;	/* Grid ID - offset */
 
     int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
@@ -898,7 +898,7 @@ GDchkgdid(int32 gridID, char *routname,
 	    /* Get file & SDS ids and Grid key */
 	    /* -------------------------------- */
 	    status = EHchkfid(GDXGrid[gID].fid, " ",
-			      fid, sdInterfaceID, &access);
+			      fid, sdInterfaceID, &l_access);
 	    *gdVgrpID = GDXGrid[gID].IDTable;
 	}
     }
@@ -1016,7 +1016,7 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 	  float64 projparm[])
 {
     intn            i;		/* Loop index */
-    intn	    projx;	/* Projection table index */
+    intn	    projx;	/* Projection table l_index */
     intn            status = 0;	/* routine return status variable */
 
     int32           fid;	/* HDF-EOS file ID */
@@ -3535,7 +3535,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
     int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
     int32           dum;	/* Dummy variable */
     int32           dums[128];	/* Dummy array */
-    int32           attrIndex;	/* Attribute index */
+    int32           attrIndex;	/* Attribute l_index */
 
     char            name[2048];	/* Merged-Field Names */
     char            gridname[80];	/* Grid Name */
@@ -3664,7 +3664,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 		/* ------------------- */
 		if (*solo == 0)
 		{
-		    /* Get "Field Offsets" SDS attribute index */
+		    /* Get "Field Offsets" SDS attribute l_index */
 		    /* --------------------------------------- */
 		    attrIndex = SDfindattr(*sdid, "Field Offsets");
 
@@ -3679,7 +3679,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 		    }
 
 
-		    /* Get "Field Dims" SDS attribute index */
+		    /* Get "Field Dims" SDS attribute l_index */
 		    /* ------------------------------------ */
 		    attrIndex = SDfindattr(*sdid, "Field Dims");
 
@@ -8237,7 +8237,7 @@ GDregioninfo(int32 gridID, int32 regionID, char *fieldname,
     int32           fid;	/* HDF-EOS file ID */
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           gdVgrpID;	/* Grid root Vgroup ID */
-    int32           index;	/* Dimension index */
+    int32           l_index;	/* Dimension l_index */
 
     char            dimlist[256];	/* Dimension list */
     char           *errMesg = "Vertical Dimension Not Found: \"%s\".\n";
@@ -8388,16 +8388,16 @@ GDregioninfo(int32 gridID, int32 regionID, char *fieldname,
 	    {
 		/* Find vertical dimension within dimlist */
 		/* -------------------------------------- */
-		index = EHstrwithin(GDXRegion[regionID]->DimNamePtr[j],
+		l_index = EHstrwithin(GDXRegion[regionID]->DimNamePtr[j],
 				    dimlist, ',');
 
 		/* If dimension found ... */
 		/* ---------------------- */
-		if (index != -1)
+		if (l_index != -1)
 		{
 		    /* Compute dimension size */
 		    /* ---------------------- */
-		    dims[index] =
+		    dims[l_index] =
 			GDXRegion[regionID]->StopVertical[j] -
 			GDXRegion[regionID]->StartVertical[j] + 1;
 		}
@@ -8490,7 +8490,7 @@ GDextractregion(int32 gridID, int32 regionID, char *fieldname,
     int32           fid;	/* HDF-EOS file ID */
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           gdVgrpID;	/* Grid root Vgroup ID */
-    int32           index;	/* Dimension index */
+    int32           l_index;	/* Dimension l_index */
     int32           start[8];	/* Start array for data read */
     int32           edge[8];	/* Edge array for data read */
     int32           dims[8];	/* Dimensions */
@@ -8629,43 +8629,43 @@ GDextractregion(int32 gridID, int32 regionID, char *fieldname,
 	/* --------------------------------- */
 	if (EHstrwithin("SOMBlockDim", dimlist, ',') == 0)
 	{
-	    index = EHstrwithin("SOMBlockDim", dimlist, ',');
-	    edge[index] = GDXRegion[regionID]->somCount;
-	    start[index] = GDXRegion[regionID]->somStart;
+	    l_index = EHstrwithin("SOMBlockDim", dimlist, ',');
+	    edge[l_index] = GDXRegion[regionID]->somCount;
+	    start[l_index] = GDXRegion[regionID]->somStart;
 	}
 
 
 	/* Set start & edge arrays for XDim */
 	/* -------------------------------- */
-	index = EHstrwithin("XDim", dimlist, ',');
+	l_index = EHstrwithin("XDim", dimlist, ',');
 	if (GDXRegion[regionID]->xCount != 0)
 	{
-	    edge[index] = GDXRegion[regionID]->xCount;
-	    start[index] = GDXRegion[regionID]->xStart;
+	    edge[l_index] = GDXRegion[regionID]->xCount;
+	    start[l_index] = GDXRegion[regionID]->xStart;
 	}
 
 	/* Adjust X-dim start if origin on right edge */
 	/* ------------------------------------------ */
 	if ((origincode & 1) == 1)
 	{
-	    start[index] = dims[index] - (start[index] + edge[index]);
+	    start[l_index] = dims[l_index] - (start[l_index] + edge[l_index]);
 	}
 
 
 	/* Set start & edge arrays for YDim */
 	/* -------------------------------- */
-	index = EHstrwithin("YDim", dimlist, ',');
+	l_index = EHstrwithin("YDim", dimlist, ',');
 	if (GDXRegion[regionID]->yCount != 0)
 	{
-	    start[index] = GDXRegion[regionID]->yStart;
-	    edge[index] = GDXRegion[regionID]->yCount;
+	    start[l_index] = GDXRegion[regionID]->yStart;
+	    edge[l_index] = GDXRegion[regionID]->yCount;
 	}
 
 	/* Adjust Y-dim start if origin on lower edge */
 	/* ------------------------------------------ */
 	if ((origincode & 2) == 2)
 	{
-	    start[index] = dims[index] - (start[index] + edge[index]);
+	    start[l_index] = dims[l_index] - (start[l_index] + edge[l_index]);
 	}
 
 
@@ -8681,17 +8681,17 @@ GDextractregion(int32 gridID, int32 regionID, char *fieldname,
 
 		/* Find vertical dimension within dimlist */
 		/* -------------------------------------- */
-		index = EHstrwithin(GDXRegion[regionID]->DimNamePtr[j],
+		l_index = EHstrwithin(GDXRegion[regionID]->DimNamePtr[j],
 				    dimlist, ',');
 
 		/* If dimension found ... */
 		/* ---------------------- */
-		if (index != -1)
+		if (l_index != -1)
 		{
 		    /* Compute start and edge for vertical dimension */
 		    /* --------------------------------------------- */
-		    start[index] = GDXRegion[regionID]->StartVertical[j];
-		    edge[index] = GDXRegion[regionID]->StopVertical[j] -
+		    start[l_index] = GDXRegion[regionID]->StartVertical[j];
+		    edge[l_index] = GDXRegion[regionID]->StopVertical[j] -
 			GDXRegion[regionID]->StartVertical[j] + 1;
 		}
 		else
@@ -9723,7 +9723,7 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
 |   Date     Programmer   Description                                         |
 |  ======   ============  =================================================   |
 |  Aug 96   Joel Gales    Original Programmer                                 |
-|  Oct 96   Joel Gales    Fix array index problem with interpVal write        |
+|  Oct 96   Joel Gales    Fix array l_index problem with interpVal write        |
 |  Apr 97   Joel Gales    Trap interpolation boundary out of bounds error     |
 |  Jun 98   Abe Taaheri   changed the return value so that the Return Value   |
 |                         is size in bytes for the data buffer which is       |

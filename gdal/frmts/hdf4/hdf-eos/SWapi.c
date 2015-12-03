@@ -38,13 +38,13 @@ June 05, 2003 Abe Taaheri / Bruce Beaumont
 			      in SWwrrdfield
 			    Removed declaration for unused variable tmpVal 
 			      in SWdefboxregion
-			    Added code in SWdefboxregion to check for index k
+			    Added code in SWdefboxregion to check for l_index k
 			      exceeding NSWATHREGN to avoid overwriting 
 			      memory
 			    Removed declaration for unused variable retchar 
-			      in SWregionindex
+			      in SWregionl_index
 			    Removed initialization code for unused variables 
-			      in SWregionindex
+			      in SWregionl_index
 			    Removed declarations for unused variables tstatus,
 			      nfields, nflgs, and swathname in SWextractregion
 			    Removed initialization code for unused variables 
@@ -506,7 +506,7 @@ SWattach(int32 fid, char *swathname)
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           nObjects;	/* # of objects in Vgroup */
     int32           nSDS;	/* SDS counter */
-    int32           index;	/* SDS index */
+    int32           l_index;	/* SDS l_index */
     int32           sdid;	/* SDS object ID */
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
 
@@ -677,8 +677,8 @@ SWattach(int32 fid, char *swathname)
 			    /* ---------------------------- */
 			    if (tags[j] == DFTAG_NDG)
 			    {
-				index = SDreftoindex(sdInterfaceID, refs[j]);
-				sdid = SDselect(sdInterfaceID, index);
+				l_index = SDreftoindex(sdInterfaceID, refs[j]);
+				sdid = SDselect(sdInterfaceID, l_index);
 				SWXSwath[i].sdsID[nSDS] = sdid;
 				nSDS++;
 				SWXSwath[i].nSDS++;
@@ -742,8 +742,8 @@ SWattach(int32 fid, char *swathname)
 			    /* ---------------------------- */
 			    if (tags[j] == DFTAG_NDG)
 			    {
-				index = SDreftoindex(sdInterfaceID, refs[j]);
-				sdid = SDselect(sdInterfaceID, index);
+				l_index = SDreftoindex(sdInterfaceID, refs[j]);
+				sdid = SDselect(sdInterfaceID, l_index);
 				SWXSwath[i].sdsID[SWXSwath[i].nSDS] = sdid;
 				SWXSwath[i].nSDS++;
 			    }
@@ -1199,12 +1199,12 @@ SWmapinfo(int32 swathID, char *geodim, char *datadim, int32 * offset,
 |                                                                             |
 |  FUNCTION: SWidxmapinfo                                                     |
 |                                                                             |
-|  DESCRIPTION: Returns indexed mapping information                           |
+|  DESCRIPTION: Returns l_indexed mapping information                           |
 |                                                                             |
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  gsize          int32               Number of index values (sz of geo dim)  |
+|  gsize          int32               Number of l_index values (sz of geo dim)  |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  swathID        int32               swath structure id                      |
@@ -1213,7 +1213,7 @@ SWmapinfo(int32 swathID, char *geodim, char *datadim, int32 * offset,
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  index          int32               array of index values                   |
+|  l_index          int32               array of l_index values                   |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -1225,7 +1225,7 @@ SWmapinfo(int32 swathID, char *geodim, char *datadim, int32 * offset,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWidxmapinfo(int32 swathID, char *geodim, char *datadim, int32 index[])
+SWidxmapinfo(int32 swathID, char *geodim, char *datadim, int32 l_index[])
 {
     intn            status;	/* routine return status variable */
 
@@ -1251,13 +1251,13 @@ SWidxmapinfo(int32 swathID, char *geodim, char *datadim, int32 index[])
 	vgid = SWXSwath[swathID % idOffset].VIDTable[2];
 	vdataID = EHgetid(fid, vgid, utlbuf, 1, "r");
 
-	/* If found then get geodim size & read index mapping values */
+	/* If found then get geodim size & read l_index mapping values */
 	if (vdataID != -1)
 	{
 	    gsize = SWdiminfo(swathID, geodim);
 
 	    VSsetfields(vdataID, "Index");
-	    VSread(vdataID, (uint8 *) index, 1, FULL_INTERLACE);
+	    VSread(vdataID, (uint8 *) l_index, 1, FULL_INTERLACE);
 	    VSdetach(vdataID);
 	}
 	else
@@ -1901,7 +1901,7 @@ SWdefdimmap(int32 swathID, char *geodim, char *datadim, int32 offset,
 |                                                                             |
 |  FUNCTION: SWdefidxmap                                                      |
 |                                                                             |
-|  DESCRIPTION: Defines indexed (non-linear) mapping between geolocation      |
+|  DESCRIPTION: Defines l_indexed (non-linear) mapping between geolocation      |
 |               and data dimensions                                           |
 |                                                                             |
 |                                                                             |
@@ -1913,7 +1913,7 @@ SWdefdimmap(int32 swathID, char *geodim, char *datadim, int32 offset,
 |  swathID        int32               swath structure ID                      |
 |  geodim         char                Geolocation dimension                   |
 |  datadim        char                Data dimension                          |
-|  index          int32               Index mapping array                     |
+|  l_index          int32               Index mapping array                     |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -1928,7 +1928,7 @@ SWdefdimmap(int32 swathID, char *geodim, char *datadim, int32 offset,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWdefidxmap(int32 swathID, char *geodim, char *datadim, int32 index[])
+SWdefidxmap(int32 swathID, char *geodim, char *datadim, int32 l_index[])
 
 {
     intn            status;	/* routine return status variable */
@@ -2007,7 +2007,7 @@ SWdefidxmap(int32 swathID, char *geodim, char *datadim, int32 index[])
 	    /* Fieldname is "Index" */
 	    VSfdefine(vdataID, "Index", DFNT_INT32, gsize);
 	    VSsetfields(vdataID, "Index");
-	    memcpy(buf, index, 4 * gsize);
+	    memcpy(buf, l_index, 4 * gsize);
 
 	    /* Write to vdata and free data buffer */
 	    VSwrite(vdataID, buf, 1, FULL_INTERLACE);
@@ -3628,18 +3628,18 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
 |                                                                             |
 |  FUNCTION: SWinqidxmaps                                                     |
 |                                                                             |
-|  DESCRIPTION: Returns indexed mappings and index sizes                      |
+|  DESCRIPTION: Returns l_indexed mappings and l_index sizes                      |
 |                                                                             |
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nMap           int32               Number of indexed dimension mappings    |
+|  nMap           int32               Number of l_indexed dimension mappings    |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  swathID        int32               swath structure ID                      |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  idxmaps        char                indexed dimension mappings              |
+|  idxmaps        char                l_indexed dimension mappings              |
 |                                     (comma-separated)                       |
 |  idxsizes       int32               Number of elements in each mapping      |
 |                                                                             |
@@ -3688,7 +3688,7 @@ SWinqidxmaps(int32 swathID, char *idxmaps, int32 idxsizes[])
 
     if (status == 0)
     {
-	/* If mapping names or index sizes desired ... */
+	/* If mapping names or l_index sizes desired ... */
 	/* ------------------------------------------- */
 	if (idxmaps != NULL || idxsizes != NULL)
 	{
@@ -4504,7 +4504,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
     int32           dum;	/* Dummy variable */
     int32           dums[128];	/* Dummy array */
-    int32           attrIndex;	/* Attribute index */
+    int32           attrIndex;	/* Attribute l_index */
 
     char            name[2048];	/* Merged-Field Names */
     char            swathname[80];	/* Swath Name */
@@ -4620,7 +4620,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 		/* ------------------- */
 		if (*solo == 0)
 		{
-		    /* Get "Field Offsets" SDS attribute index */
+		    /* Get "Field Offsets" SDS attribute l_index */
 		    /* --------------------------------------- */
 		    attrIndex = SDfindattr(*sdid, "Field Offsets");
 
@@ -4635,7 +4635,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 		    }
 
 
-		    /* Get "Field Dims" SDS attribute index */
+		    /* Get "Field Dims" SDS attribute l_index */
 		    /* ------------------------------------ */
 		    attrIndex = SDfindattr(*sdid, "Field Dims");
 
@@ -5863,10 +5863,10 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
-|  FUNCTION: SWregionindex                                                    |
+|  FUNCTION: SWregionl_index                                                    |
 |                                                                             |
 |  DESCRIPTION: Finds swath cross tracks within area of interest and returns  |
-|               region index and region ID                                    |
+|               region l_index and region ID                                    |
 |                                                                             |
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
@@ -5953,7 +5953,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 
     /* Check for valid swath ID */
     /* ------------------------ */
-    status = SWchkswid(swathID, "SWregionindex", &fid, &sdInterfaceID,
+    status = SWchkswid(swathID, "SWregionl_index", &fid, &sdInterfaceID,
 		       &swVgrpID);
 
 
@@ -5962,7 +5962,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     if (mode < 0 || mode > 2)
     {
 	status = -1;
-	HEpush(DFE_GENAPP, "SWregionindex", __FILE__, __LINE__);
+	HEpush(DFE_GENAPP, "SWregionl_index", __FILE__, __LINE__);
 	HEreport("Improper Inclusion Mode: %d.\n", mode);
     }
 
@@ -5975,7 +5975,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 	if (statLon != 0)
 	{
 	    status = -1;
-	    HEpush(DFE_GENAPP, "SWregionindex", __FILE__, __LINE__);
+	    HEpush(DFE_GENAPP, "SWregionl_index", __FILE__, __LINE__);
 	    HEreport("\"Longitude\" field not found.\n");
 	}
 
@@ -5999,7 +5999,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		  /* Neither "Latitude" nor "Colatitude" field found */
 		  /* ----------------------------------------------- */
 		  status = -1;
-		  HEpush(DFE_GENAPP, "SWregionindex", __FILE__, __LINE__);
+		  HEpush(DFE_GENAPP, "SWregionl_index", __FILE__, __LINE__);
 		  HEreport(
 			   "Neither \"Latitude\" nor \"Colatitude\" fields found.\n");
 		}
@@ -6089,14 +6089,14 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 	    lonArr = (char *) calloc(nElem, sizeof(float64));
 	    if(lonArr == NULL)
 	    { 
-		HEpush(DFE_NOSPACE,"SWregionindex", __FILE__, __LINE__);
+		HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 		return(-1);
 	    }
 	    
 	    latArr = (char *) calloc(nElem, sizeof(float64));
 	    if(latArr == NULL)
 	    { 
-		HEpush(DFE_NOSPACE,"SWregionindex", __FILE__, __LINE__);
+		HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 		free(lonArr);
 		return(-1);
 	    }
@@ -6107,7 +6107,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 	    flag = (uint8 *) calloc(edge[0] + 1, 1);
 	    if(flag == NULL)
 	    { 
-		HEpush(DFE_NOSPACE,"SWregionindex", __FILE__, __LINE__);
+		HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 		free(lonArr);
 		free(latArr);
 		return(-1);
@@ -6235,13 +6235,13 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		lonArr = (char *) calloc(dims[1], sizeof(float64));
 		if(lonArr == NULL)
 		{ 
-		    HEpush(DFE_NOSPACE,"SWregionindex", __FILE__, __LINE__);
+		    HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 		    return(-1);
 		}
 		latArr = (char *) calloc(dims[1], sizeof(float64));
 		if(latArr == NULL)
 		{ 
-		    HEpush(DFE_NOSPACE,"SWregionindex", __FILE__, __LINE__);
+		    HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 		    free(lonArr);
 		    return(-1);
 		}
@@ -6382,7 +6382,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 			    calloc(1, sizeof(struct swathRegion));
 			if(SWXRegion[k] == NULL)
 			{ 
-			    HEpush(DFE_NOSPACE,"SWregionindex", __FILE__, __LINE__);
+			    HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 			    return(-1);
 			}
 
@@ -6411,7 +6411,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		}
 		if (k >= NSWATHREGN)
 		  {
-		    HEpush(DFE_GENAPP, "SWregionindex", __FILE__, __LINE__);
+		    HEpush(DFE_GENAPP, "SWregionl_index", __FILE__, __LINE__);
 		    HEreport(
 			     "regionID exceeded NSWATHREGN.\n");
                     return (-1);
@@ -6825,7 +6825,7 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
 |  Oct 96   Joel Gales    Mapping offset value not read from SWmapinfo        |
 |  Dec 96   Joel Gales    Vert Subset overwriting data buffer                 |
 |  Dec 96   Joel Gales    Add multiple vertical subsetting capability         |
-|  Mar 97   Joel Gales    Add support for index mapping                       |
+|  Mar 97   Joel Gales    Add support for l_index mapping                       |
 |  Jul 99   DaW 	  Add support for floating scene subsetting 	      |
 |  Feb 03   Terry Haran/                                                      |
 |           Abe Taaheri   Forced map offset to 0 so that data is extracted    |
@@ -6863,7 +6863,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 
     int32	    numtype = 0; /* Used for L7 float scene sub. */
     int32	    count = 0;   /* Used for L7 float scene sub. */
-    int32           index = 0;	/* Geo Dim Index */
+    int32           l_index = 0;	/* Geo Dim Index */
     int32           nDim;	/* Number of dimensions */
     int32           slen[64];	/* String length array */
     int32           dum;	/* Dummy variable */
@@ -6880,8 +6880,8 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
     int32           ntype = 0;	/* Field number type */
     int32           bufOffset = 0;	/* Output buffer offset */
     int32           size;	/* Size of data buffer */
-    int32           idxMapElem = -1;	/* Number of index map elements  */
-    int32          *idxmap = NULL;	/* Pointer to index mapping array */
+    int32           idxMapElem = -1;	/* Number of l_index map elements  */
+    int32          *idxmap = NULL;	/* Pointer to l_index mapping array */
 
     int32	startscanline = 0;
     int32	stopscanline = 0;
@@ -7151,7 +7151,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 		    if (statMap == 0)
 		    {
 			found = 1;
-			index = i;
+			l_index = i;
 			break;
 		    }
 		}
@@ -7161,11 +7161,11 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 		/* ---------------------------------------------------- */
 		if (found == 0)
 		{
-		    index = EHstrwithin(geodim, dimlist, ',');
+		    l_index = EHstrwithin(geodim, dimlist, ',');
 
 		    /* Geo dimension found within subset field dimlist */
 		    /* ----------------------------------------------- */
-		    if (index != -1)
+		    if (l_index != -1)
 		    {
 			found = 1;
 			offset = 0;
@@ -7175,15 +7175,15 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 
 
 
-		/* If mapping not found check for indexed mapping */
+		/* If mapping not found check for l_indexed mapping */
 		/* ---------------------------------------------- */
 		if (found == 0)
 		{
-		    /* Get size of geo dim & allocate space of index mapping */
+		    /* Get size of geo dim & allocate space of l_index mapping */
 		    /* ----------------------------------------------------- */
 		    dum = SWdiminfo(swathID, geodim);
 
-                    /* For Landsat files, the index mapping has two values   */
+                    /* For Landsat files, the l_index mapping has two values   */
                     /* for each point, a left and right point.  So for a 37  */
                     /* scene band file there are 2x2 points for each scene   */
                     /* meaning, 2x2x37 = 148 values.  The above function     */
@@ -7219,7 +7219,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 			if (idxMapElem != -1)
 			{
 			    found = 1;
-			    index = i;
+			    l_index = i;
 			    break;
 			}
 		    }
@@ -7268,47 +7268,47 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 			{
                            if (SWXRegion[regionID]->scanflag == 1)
                            {
-                              start[index] = SWXRegion[regionID]->StartRegion[k]/incr;
+                              start[l_index] = SWXRegion[regionID]->StartRegion[k]/incr;
                               if(SWXRegion[regionID]->band8flag == 2 || 
                                  SWXRegion[regionID]->band8flag == 3)
                               {
-                                 start[index] = (SWXRegion[regionID]->StartRegion[k]+detect_cnt)/incr;
+                                 start[l_index] = (SWXRegion[regionID]->StartRegion[k]+detect_cnt)/incr;
                                  status = SWfieldinfo(SWXRegion[regionID]->swathID,"scan_no",&rank,dims2,&nt,dimlist);
                                  buffer2 = (uint16 *)calloc(dims2[0], sizeof(uint16));
                                  status = SWreadfield(SWXRegion[regionID]->swathID,"scan_no",NULL,NULL,NULL,buffer2);
                                  if(incr == 1)
-                                    start[index] = start[index] - (buffer2[0] * detect_cnt);
+                                    start[l_index] = start[l_index] - (buffer2[0] * detect_cnt);
                                  else
-                                    start[index] = start[index] - buffer2[0];
+                                    start[l_index] = start[l_index] - buffer2[0];
                                  free(buffer2);
                               }
                               scan_shift = nXtrk % incr;
                               if(scan_shift != 0)
                                  nXtrk = nXtrk - scan_shift;
-			      edge[index] = nXtrk / incr;
+			      edge[l_index] = nXtrk / incr;
                               if (nXtrk % incr != 0)
-                                 edge[index]++;
+                                 edge[l_index]++;
                               if(long_status == -1 || incr == 1)
                               {
                                  scan_shift = nXtrk % detect_cnt;
                                  if(scan_shift != 0)
-                                    edge[index] = nXtrk - scan_shift;
+                                    edge[l_index] = nXtrk - scan_shift;
                               }
 
                            }
                            else
                            {
-			      start[index] = SWXRegion[regionID]->StartRegion[k] * incr + offset;
-			      edge[index] = nXtrk * incr - offset;
+			      start[l_index] = SWXRegion[regionID]->StartRegion[k] * incr + offset;
+			      edge[l_index] = nXtrk * incr - offset;
                            }
 			}
 			else
 			{
 			    /* Negative increment (geodim > datadim) */
 			    /* ------------------------------------- */
-			    start[index] = SWXRegion[regionID]->StartRegion[k]
+			    start[l_index] = SWXRegion[regionID]->StartRegion[k]
 				/ (-incr) + offset;
-			    edge[index] = nXtrk / (-incr);
+			    edge[l_index] = nXtrk / (-incr);
 
 			    /*
 			     * If Xtrk not exactly divisible by incr, round
@@ -7317,7 +7317,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 
 			    if (nXtrk % (-incr) != 0)
 			    {
-				edge[index]++;
+				edge[l_index]++;
 			    }
 			}
 
@@ -7359,7 +7359,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 			}
 
 
-			/* Compute start & edge from index mappings */
+			/* Compute start & edge from l_index mappings */
 			/* ---------------------------------------- */
                         if (SWXRegion[regionID]->scanflag == 1 &&
                             (strcmp(fieldname, "Latitude") == 0 ||
@@ -7384,11 +7384,11 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                                  if(startscanline < idxmap[0])
                                  {
                                     startscandim = 0;
-                                    start[index] = 0;
+                                    start[l_index] = 0;
                                     if(stopscanline > idxmap[scene_cnt * 2 - 1])
                                     {
                                        stopscandim = scene_cnt*2 - startscandim;
-                                       edge[index] = scene_cnt*2 - startscandim;
+                                       edge[l_index] = scene_cnt*2 - startscandim;
                                     }
                                  }
                            }
@@ -7398,14 +7398,14 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                               if(idxmap[j] <= startscanline && idxmap[j+1] >= startscanline)
                                  if(startscandim == -1)
                                  {
-                                    start[index] = j;
+                                    start[l_index] = j;
                                     startscandim = j;
                                  }
                               if(idxmap[j] <= stopscanline && idxmap[j+1] >= stopscanline)
                                  if(startscandim != -1)
                                  {
-                                    edge[index] = j - start[index] + 2;
-                                    stopscandim = j - start[index] + 1;
+                                    edge[l_index] = j - start[l_index] + 2;
+                                    stopscandim = j - start[l_index] + 1;
                                  }
                               j = j + 2;
                            }
@@ -7416,13 +7416,13 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                                  if(startscanline < idxmap[0])
                                  {
                                     startscandim = 0;
-                                    start[index] = 0;
+                                    start[l_index] = 0;
                                  }
                               if(stopscandim == -1)
                                  if(stopscanline > idxmap[scene_cnt * 2 - 1])
                                  {
-                                    stopscandim = scene_cnt*2 - start[index];
-                                    edge[index] = scene_cnt*2 - start[index];
+                                    stopscandim = scene_cnt*2 - start[l_index];
+                                    edge[l_index] = scene_cnt*2 - start[l_index];
                                  }
                            }
                            if(SWXRegion[regionID]->band8flag == 2)
@@ -7441,10 +7441,10 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                                     {
                                        if(idxmap[j] <= startscanline && idxmap[j+1] >= startscanline)
                                        {
-                                          start[index] = j;
+                                          start[l_index] = j;
                                        }
                                        if(idxmap[j] <= stopscanline && idxmap[j+1] >= stopscanline)
-                                          edge[index] = j - start[index] + 2;
+                                          edge[l_index] = j - start[l_index] + 2;
                                        j = j + 2;
                                        if(idxmap[j] == 0  || idxmap[j+1] == 0)
                                           l = scene_cnt;
@@ -7465,20 +7465,20 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                            if(startscanline < idxmap[0])
                            {
                               startscandim = 0;
-                              start[index] = 0;
+                              start[l_index] = 0;
                            }
                            for (l = 0; l < scene_cnt-1; l++)
                            {
                               if(idxmap[l] <= startscanline && idxmap[l+1] >= startscanline)
                                  if(startscandim == -1)
                                  {
-                                    start[index] = l;
+                                    start[l_index] = l;
                                     startscandim = l;
                                  }
                               if(idxmap[l] <= stopscanline && idxmap[l+1] >= stopscanline)
                                  if(stopscandim == -1)
                                  {
-                                    edge[index] = l - start[index] + 2;
+                                    edge[l_index] = l - start[l_index] + 2;
                                     stopscandim = l + 1;
                                  }
                             }
@@ -7486,7 +7486,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                             {
                                if(stopscanline > idxmap[scene_cnt - 1])
                                {
-                                  edge[index] = scene_cnt - start[index];
+                                  edge[l_index] = scene_cnt - start[l_index];
                                   stopscandim = scene_cnt - 1;
                                }
                             }
@@ -7496,7 +7496,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                                if(stopscandim == -1)
                                   if(stopscanline > idxmap[scene_cnt - 1])
                                   {
-                                     edge[index] = scene_cnt - start[index];
+                                     edge[l_index] = scene_cnt - start[l_index];
                                      stopscandim = scene_cnt -1;
                                   }
                             }
@@ -7508,8 +7508,8 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                                   if(startscanline < idxmap[0])
                                   {
                                      startscandim = 0;
-                                     start[index] = 0;
-                                     edge[index] = stopscandim - startscandim + 1;
+                                     start[l_index] = 0;
+                                     edge[l_index] = stopscandim - startscandim + 1;
                                   }
                                }
                                if(startscandim == -1)
@@ -7519,9 +7519,9 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                                   for (l = 0; l < scene_cnt-1; l++)
                                   {
                                      if(idxmap[l] <= startscanline && idxmap[l+1] >= startscanline)
-                                        start[index] = l;
+                                        start[l_index] = l;
                                      if(idxmap[l] <= stopscanline && idxmap[l+1] >= stopscanline)
-                                        edge[index] = l - start[index] + 1;
+                                        edge[l_index] = l - start[l_index] + 1;
                                   }
                                }
                            }
@@ -7531,8 +7531,8 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                            if (SWXRegion[regionID]->scanflag == 1 && 
                                strcmp(fieldname,dfieldlist) == 0)
                            {
-                              start[index] = SWXRegion[regionID]->StartRegion[k];
-                              edge[index] = SWXRegion[regionID]->StopRegion[k] - 
+                              start[l_index] = SWXRegion[regionID]->StartRegion[k];
+                              edge[l_index] = SWXRegion[regionID]->StopRegion[k] - 
                                              SWXRegion[regionID]->StartRegion[k] + 1;
                               if(SWXRegion[regionID]->band8flag == 2 ||
 				 SWXRegion[regionID]->band8flag == 3 )
@@ -7540,15 +7540,15 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                                  status = SWfieldinfo(SWXRegion[regionID]->swathID,"scan_no",&rank,dims2,&nt,dimlist);
                                  buffer2 = (uint16 *)calloc(dims2[0], sizeof(uint16));
                                  status = SWreadfield(SWXRegion[regionID]->swathID,"scan_no",NULL,NULL,NULL,buffer2);
-                                 start[index] = start[index] - (buffer2[0] * detect_cnt - detect_cnt);
+                                 start[l_index] = start[l_index] - (buffer2[0] * detect_cnt - detect_cnt);
                                  free(buffer2);
                               }
                            }
                            else
                            {
-			      start[index] = idxmap[SWXRegion[regionID]->StartRegion[k]];
+			      start[l_index] = idxmap[SWXRegion[regionID]->StartRegion[k]];
 
-			      edge[index] = idxmap[SWXRegion[regionID]->StopRegion[k]] -
+			      edge[l_index] = idxmap[SWXRegion[regionID]->StopRegion[k]] -
 			                 idxmap[SWXRegion[regionID]->StartRegion[k]] + 1;
                            }
                         }
@@ -7600,7 +7600,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 	}
     }
 
-    /* Free index mappings if applicable */
+    /* Free l_index mappings if applicable */
     /* --------------------------------- */
     if (idxmap != NULL)
     {
@@ -7633,7 +7633,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 |  buffer	  void		      Values to update                        |
 |  start	  int32		                                              |
 |  edge		  int32							      |
-|  idxmap	  int32 *	      Buffer of index mapping values          |
+|  idxmap	  int32 *	      Buffer of l_index mapping values          |
 |  startscanline  int32		      Start of scan region		      |
 |  stopscanline   int32		      Stop of scan region		      |
 |                                                                             |
@@ -8122,7 +8122,7 @@ SWdupregion(int32 oldregionID)
 |  Jun 96   Joel Gales    Original Programmer                                 |
 |  Aug 96   Joel Gales    Add vertical subsetting                             |
 |  Dec 96   Joel Gales    Add multiple vertical subsetting capability         |
-|  Mar 97   Joel Gales    Add support for index mapping                       |
+|  Mar 97   Joel Gales    Add support for l_index mapping                       |
 |  Jul 99   DaW           Add support for floating scene subsetting           |
 |                                                                             |
 |  END_PROLOG                                                                 |
@@ -8152,7 +8152,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           swVgrpID;	/* Swath Vgroup ID */
 
-    int32           index = 0;	/* Geo Dim Index */
+    int32           l_index = 0;	/* Geo Dim Index */
     int32           nDim;	/* Number of dimensions */
     int32           slen[64];	/* String length array */
     int32           dum;	/* Dummy variable */
@@ -8162,8 +8162,8 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
     int32	    startscandim = -1;    /* Used for floating scene region size */
     int32	    stopscandim = -1;    /* Used for floating scene region size */
     int32           dumdims[8];	/* Dimensions from SWfieldinfo */
-    int32           idxMapElem = -1;	/* Number of index map elements  */
-    int32          *idxmap = NULL;	/* Pointer to index mapping array */
+    int32           idxMapElem = -1;	/* Number of l_index map elements  */
+    int32          *idxmap = NULL;	/* Pointer to l_index mapping array */
     int32	    datafld = 0;
 
    uint8	scene_cnt = 0;		/* Number of scenes in swath */
@@ -8348,7 +8348,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 		if (statMap == 0)
 		{
 		    found = 1;
-		    index = i;
+		    l_index = i;
 		    break;
 		}
 	    }
@@ -8358,11 +8358,11 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 	    /* ---------------------------------------------------- */
 	    if (found == 0)
 	    {
-		index = EHstrwithin(geodim, dimlist, ',');
+		l_index = EHstrwithin(geodim, dimlist, ',');
 
 		/* Geo dimension found within subset field dimlist */
 		/* ----------------------------------------------- */
-		if (index != -1)
+		if (l_index != -1)
 		{
 		    found = 1;
 		    incr = 1;
@@ -8371,11 +8371,11 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 
 
 
-	    /* If mapping not found check for indexed mapping */
+	    /* If mapping not found check for l_indexed mapping */
 	    /* ---------------------------------------------- */
 	    if (found == 0)
 	    {
-		/* Get size of geo dim & allocate space of index mapping */
+		/* Get size of geo dim & allocate space of l_index mapping */
 		/* ----------------------------------------------------- */
 		dum = SWdiminfo(swathID, geodim);
 		idxmap = (int32 *) calloc(dum, sizeof(int32));
@@ -8400,7 +8400,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 		    if (idxMapElem != -1)
 		    {
 			found = 1;
-			index = i;
+			l_index = i;
 			break;
 		    }
 		}
@@ -8411,7 +8411,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 	    /* --------------------- */
 	    if (found == 1 && idxMapElem == -1)
 	    {
-		dims[index] = 0;
+		dims[l_index] = 0;
 
 		/* Loop through all regions */
 		/* ------------------------ */
@@ -8432,24 +8432,24 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                             scan_shift = nXtrk % incr;
                             if(scan_shift != 0)
                                nXtrk = nXtrk - scan_shift;
-                            dims[index] += nXtrk/incr;
+                            dims[l_index] += nXtrk/incr;
                             if(long_status == -1 || incr == 1)
                             {
                                scan_shift = nXtrk % detect_cnt;
                                if(scan_shift != 0)
-                                  dims[index] = nXtrk - scan_shift;
+                                  dims[l_index] = nXtrk - scan_shift;
                             }
                         }
 			else
                         {
-			   dims[index] += nXtrk * incr;
+			   dims[l_index] += nXtrk * incr;
                         }
 		    }
 		    else
 		    {
 			/* Negative increment (geodim > datadim) */
 			/* ------------------------------------- */
-			dims[index] += nXtrk / (-incr);
+			dims[l_index] += nXtrk / (-incr);
 
 			/*
 			 * If Xtrk not exactly divisible by incr, round dims
@@ -8457,7 +8457,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 			 */
 			if (nXtrk % (-incr) != 0)
 			{
-			    dims[index]++;
+			    dims[l_index]++;
 			}
 		    }
 		}
@@ -8468,7 +8468,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 		/* Indexed Mapping */
 		/* --------------- */
 
-		dims[index] = 0;
+		dims[l_index] = 0;
 
 		/* Loop through all regions */
 		/* ------------------------ */
@@ -8481,7 +8481,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                       stopscanline = SWXRegion[regionID]->StopRegion[k];
                       if (strcmp(fieldname,dfieldlist) == 0)
                       {
-                         dims[index] = stopscanline - startscanline + 1;
+                         dims[l_index] = stopscanline - startscanline + 1;
                          datafld = 1;
                       }
                       if (strcmp(fieldname, "Latitude") == 0 ||
@@ -8502,11 +8502,11 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                                if(startscanline < idxmap[0])
                                {
                                   startscandim = 0;
-                                  dims[index] = 0;
+                                  dims[l_index] = 0;
                                   if(stopscanline > idxmap[scene_cnt *2 - 1])
                                   {
                                      stopscandim = scene_cnt*2 - startscandim;
-                                     dims[index] = scene_cnt*2 - startscandim;
+                                     dims[l_index] = scene_cnt*2 - startscandim;
                                   }
                                }
                          }
@@ -8515,13 +8515,13 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                             if(idxmap[j] <= startscanline && idxmap[j+1] >= startscanline)
                                if(startscandim == -1)
                                {
-                                  dims[index] = j;
+                                  dims[l_index] = j;
                                   startscandim = j;
                                }
                             if(idxmap[j] <= stopscanline && idxmap[j+1] >= stopscanline)
                                if(startscandim != -1)
                                {
-                                  dims[index] = j - startscandim + 2;
+                                  dims[l_index] = j - startscandim + 2;
                                   stopscandim = j + 1;
                                }
                             j = j + 2;
@@ -8534,8 +8534,8 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                             if(stopscandim == -1)
                                if(stopscanline > idxmap[scene_cnt * 2 - 1])
                                {
-                                  stopscandim = scene_cnt*2 - dims[index];
-                                  dims[index] = scene_cnt*2 - dims[index];
+                                  stopscandim = scene_cnt*2 - dims[l_index];
+                                  dims[l_index] = scene_cnt*2 - dims[l_index];
                                }
                          }
                          if(SWXRegion[regionID]->band8flag == 3)
@@ -8545,7 +8545,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                                {
                                   startscandim = 0;
                                   if(stopscandim != -1)
-                                     dims[index] = stopscandim - startscandim + 1;
+                                     dims[l_index] = stopscandim - startscandim + 1;
                                }
                          }
                          if(SWXRegion[regionID]->band8flag == 2)
@@ -8564,11 +8564,11 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                                   {
                                      if(idxmap[j] <= startscanline && idxmap[j+1] >= startscanline)
                                      {
-                                        dims[index] = j;
+                                        dims[l_index] = j;
                                         startscandim = j;
                                      }
                                      if(idxmap[j] <= stopscanline && idxmap[j+1] >= stopscanline)
-                                        dims[index] = j - startscandim + 2;
+                                        dims[l_index] = j - startscandim + 2;
                                      j = j + 2;
                                      if(idxmap[j] == 0  || idxmap[j+1] == 0)
                                         l = scene_cnt;
@@ -8585,19 +8585,19 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                          if(startscanline < idxmap[0])
                          {
                             startscandim = 0;
-                            dims[index] = 0;
+                            dims[l_index] = 0;
                          }
                          for (l = 0; l < scene_cnt-1; l++)
                          {
                             if(idxmap[l] <= startscanline && idxmap[l+1] >= startscanline)
                                if(startscandim == -1)
                                {
-                                  dims[index] = l;
+                                  dims[l_index] = l;
                                   startscandim = l;
                                }
                             if(idxmap[l] <= stopscanline && idxmap[l+1] >= stopscanline)
                             {
-                               dims[index] = l - startscandim + 2;
+                               dims[l_index] = l - startscandim + 2;
                                stopscandim = l + 1;
                             }
                          }
@@ -8605,7 +8605,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                          {
                             if(stopscanline > idxmap[scene_cnt - 1])
                             {
-                               dims[index] = scene_cnt - startscandim;
+                               dims[l_index] = scene_cnt - startscandim;
                                stopscandim = scene_cnt - 1;
                             }
                          }
@@ -8614,7 +8614,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                             if(stopscandim == -1)
                                if(stopscanline > idxmap[scene_cnt - 1])
                                {
-                                  dims[index] = scene_cnt - startscandim;
+                                  dims[l_index] = scene_cnt - startscandim;
                                   stopscandim = scene_cnt - 1;
                                }
                          }
@@ -8626,7 +8626,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                                if(startscanline < idxmap[0])
                                {
                                   startscandim = 0;
-                                  dims[index] = stopscandim - startscandim + 1;
+                                  dims[l_index] = stopscandim - startscandim + 1;
                                }
                             }
                             if(startscandim == -1)
@@ -8636,9 +8636,9 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                                for (l = 0; l < scene_cnt-1; l++)
                                {
                                   if(idxmap[l] <= startscanline && idxmap[l+1] >= startscanline)
-                                     dims[index] = l;
+                                     dims[l_index] = l;
                                   if(idxmap[l] <= stopscanline && idxmap[l+1] >= stopscanline)
-                                     dims[index] = l - dims[index] + 1;
+                                     dims[l_index] = l - dims[l_index] + 1;
                                }
                             }
                          }
@@ -8653,7 +8653,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 		         nXtrk = idxmap[SWXRegion[regionID]->StopRegion[k]] -
 			         idxmap[SWXRegion[regionID]->StartRegion[k]] + 1;
 
-		         dims[index] += nXtrk;
+		         dims[l_index] += nXtrk;
                       }
                     }
 		}
@@ -8686,16 +8686,16 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 
 		    /* Find vertical dimension within dimlist */
 		    /* -------------------------------------- */
-		    index = EHstrwithin(SWXRegion[regionID]->DimNamePtr[j],
+		    l_index = EHstrwithin(SWXRegion[regionID]->DimNamePtr[j],
 					dimlist, ',');
 
 		    /* If dimension found ... */
 		    /* ---------------------- */
-		    if (index != -1)
+		    if (l_index != -1)
 		    {
 			/* Compute dimension size */
 			/* ---------------------- */
-			dims[index] =
+			dims[l_index] =
 			    SWXRegion[regionID]->StopVertical[j] -
 			    SWXRegion[regionID]->StartVertical[j] + 1;
 		    }
@@ -8740,7 +8740,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 
 
 
-    /* Free index mappings if applicable */
+    /* Free l_index mappings if applicable */
     /* --------------------------------- */
     if (idxmap != NULL)
     {
@@ -10639,13 +10639,13 @@ SWupdatescene(int32 swathID, int32 regionID)
  
     int32           startReg;   /* Indexed start region */
     int32           stopReg;    /* Indexed stop region */
-    int32           index[MAXNREGIONS]; /* to store indices when stop and 
+    int32           l_index[MAXNREGIONS]; /* to store indices when stop and 
 					   start are different */
 					   
-    int32           ind;        /* index */
+    int32           ind;        /* l_index */
     int32           tempnRegions; /* temp number of regions */
 
-    memset(index, 0, sizeof(int32) * MAXNREGIONS);
+    memset(l_index, 0, sizeof(int32) * MAXNREGIONS);
 
     /* Check for valid swath ID */
     /* ------------------------ */
@@ -10707,9 +10707,9 @@ SWupdatescene(int32 swathID, int32 regionID)
 	   }
 	   else
 	   {
-	       /* store index number of regions that have different start and
+	       /* store l_index number of regions that have different start and
 		  stop */
-	       index[ind] = k;
+	       l_index[ind] = k;
 	       ind += 1;
 	   }
 	}
@@ -10725,9 +10725,9 @@ SWupdatescene(int32 swathID, int32 regionID)
 	for (k = 0; k < SWXRegion[regionID]->nRegions; k++)
 	{
 	    SWXRegion[regionID]->StartRegion[k] =
-	      SWXRegion[regionID]->StartRegion[index[k]];
+	      SWXRegion[regionID]->StartRegion[l_index[k]];
 	    SWXRegion[regionID]->StopRegion[k] =
-	      SWXRegion[regionID]->StopRegion[index[k]];
+	      SWXRegion[regionID]->StopRegion[l_index[k]];
 	}
 	
     }
@@ -10766,21 +10766,21 @@ SWupdatescene(int32 swathID, int32 regionID)
 |                                                                             |
 |  FUNCTION: SWupdateidxmap                                                   |
 |                                                                             |
-|  DESCRIPTION: Updates the map index for a specified region.                 |
+|  DESCRIPTION: Updates the map l_index for a specified region.                 |
 |                                                                             |
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
 |  nout           int32               return Number of elements in output     |
-|                                     index array if SUCCEED, (-1) FAIL       |
+|                                     l_index array if SUCCEED, (-1) FAIL       |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  swathID        int32               Swath structure ID                      |
 |  regionID       int32               Region ID                               |
-|  indexin        int32               array of index values                   |
+|  l_indexin        int32               array of l_index values                   |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  indexout       int32               array of index values                   |
+|  l_indexout       int32               array of l_index values                   |
 |  indices	  int32		      array of start and stop in region       |
 |                                                                             |
 |  NOTES:                                                                     |
@@ -10789,13 +10789,13 @@ SWupdatescene(int32 swathID, int32 regionID)
 |   Date     Programmer   Description                                         |
 |  ======   ============  =================================================   |
 |  Aug 97   Abe Taaheri   Original Programmer                                 |
-|  AUG 97   Abe Taaheri   Add support for index mapping                       |
+|  AUG 97   Abe Taaheri   Add support for l_index mapping                       |
 |  Sep 99   DaW		  Add support for Floating Scene Subsetting Landsat 7 |
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[], int32 indicies[])
+SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexout[], int32 indicies[])
 {
     intn            i;          /* Loop index */
     intn            j;          /* Loop index */
@@ -10812,7 +10812,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
  
     int32           startReg = 0;   /* Indexed start region */
     int32           stopReg = 0;    /* Indexed stop region */
-    int32           nout=-1;       /* Number of elements in output index array */
+    int32           nout=-1;       /* Number of elements in output l_index array */
     int32	    indexoffset = 0;
     uint8	    scene_cnt = 0;	/* Used for L7 float scene sub.      */
     uint8           detect_cnt = 0;     /* Used to convert scan to scanline  */
@@ -10858,7 +10858,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
 	for (k = 0; k < SWXRegion[regionID]->nRegions; k++)
 	{
 	    
-	    /* fix overlap index mapping problem for Landsat 7 */
+	    /* fix overlap l_index mapping problem for Landsat 7 */
 	    
 	    startReg = SWXRegion[regionID]->StartRegion[k];
 	    stopReg = SWXRegion[regionID]->StopRegion[k];
@@ -10898,18 +10898,18 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                {
                   for(i=0; i<scene_cnt;i++)
                   {
-                     if(indexin[j] <= startReg && indexin[j+1] >= startReg)
+                     if(l_indexin[j] <= startReg && l_indexin[j+1] >= startReg)
                         if(indicies[0] == -1)
                            indicies[0] = j;
-                     if(indexin[j] <= stopReg && indexin[j+1] >= stopReg)
+                     if(l_indexin[j] <= stopReg && l_indexin[j+1] >= stopReg)
                         indicies[1] = j + 1;
                      j = j + 2;
-                     if(indexin[j] == 0 || indexin[j+1] == 0)
+                     if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                         i = scene_cnt;
                   }
                   if(indicies[0] == -1)
                   {
-                     if(startReg <= indexin[0])
+                     if(startReg <= l_indexin[0])
                         indicies[0] = 0;
                   }
                   if(indicies[0] == -1)
@@ -10917,11 +10917,11 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                      j = 0;
                      for(i=0; i<scene_cnt; i++)
                      {
-                        if(indexin[j] <= startReg && indexin[j+1] >= startReg)
+                        if(l_indexin[j] <= startReg && l_indexin[j+1] >= startReg)
                            if(indicies[0] == -1)
                               indicies[0] = j;
                         j = j + 1;
-                        if(indexin[j] == 0 || indexin[j+1] == 0)
+                        if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                            i = scene_cnt;
                      }
                   }
@@ -10930,16 +10930,16 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                      j = 0;
                      for(i=0; i<scene_cnt; i++)
                      {
-                        if(indexin[j] <= stopReg && indexin[j+1] >= stopReg)
+                        if(l_indexin[j] <= stopReg && l_indexin[j+1] >= stopReg)
                            if(indicies[1] == -1)
                               indicies[1] = j + 1;
                         j = j + 1;
-                        if(indexin[j] == 0 || indexin[j+1] == 0)
+                        if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                            i = scene_cnt;
                      }
                   }
                   if(indicies[1] == -1)
-                     if(stopReg > indexin[scene_cnt - 1])
+                     if(stopReg > l_indexin[scene_cnt - 1])
                         indicies[1] = scene_cnt - 1;
                }
 
@@ -10954,9 +10954,9 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                   for(i=0; i<scene_cnt; i++)
                   {
                      j = j + 2;
-                     if(indexin[j] == 0 || indexin[j+1] == 0)
+                     if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                      {
-                        if(indexin[j] == 0)
+                        if(l_indexin[j] == 0)
                            gtflag = 1;
                         else
                            ngtflag = 1;
@@ -10968,28 +10968,28 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                   {
                      for(i=0; i<scene_cnt; i++)
                      {
-		      if( startReg >= (indexin[j] + indexoffset - detect_cnt) && 
-			  startReg <= (indexin[j+1] + indexoffset - detect_cnt) )
+		      if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) && 
+			  startReg <= (l_indexin[j+1] + indexoffset - detect_cnt) )
                            if(indicies[0] == -1)
                               indicies[0] = j;
-		      if( stopReg >= (indexin[j] + indexoffset - detect_cnt ) && 
-			  stopReg <= (indexin[j+1] + indexoffset - detect_cnt ) )
+		      if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) && 
+			  stopReg <= (l_indexin[j+1] + indexoffset - detect_cnt ) )
                            indicies[1] = j + 1;
                         j = j + 2;
-                        if(indexin[j] == 0 || indexin[j+1] == 0)
+                        if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                            i = scene_cnt;
                      }
                      if(SWXRegion[regionID]->band8flag == 1)
                      {
                         if(indicies[1] == -1)
-                           if(stopReg > (indexin[j - 1] + indexoffset - detect_cnt))
+                           if(stopReg > (l_indexin[j - 1] + indexoffset - detect_cnt))
                               indicies[1] = j - 1;
                      }
                      if(SWXRegion[regionID]->band8flag == 2 ||
                         SWXRegion[regionID]->band8flag == 3)
                      {
 		       
-                        if(startReg >= (indexin[j - 1] + indexoffset - detect_cnt))
+                        if(startReg >= (l_indexin[j - 1] + indexoffset - detect_cnt))
                         {
                            indicies[0] = -1;
                            indicies[1] = -1;
@@ -11003,15 +11003,15 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                            j = 0;
                            for(i=0; i<scene_cnt; i++)
                            {
-			     if( startReg >= (indexin[j] + indexoffset - detect_cnt) && 
-				 startReg <= (indexin[j+1] + indexoffset - detect_cnt) )
+			     if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) && 
+				 startReg <= (l_indexin[j+1] + indexoffset - detect_cnt) )
 			       if(indicies[0] == -1)
 				 indicies[0] = j;
-			     if( stopReg >= (indexin[j] + indexoffset - detect_cnt ) && 
-				 stopReg <= (indexin[j+1] + indexoffset - detect_cnt ) )
+			     if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) && 
+				 stopReg <= (l_indexin[j+1] + indexoffset - detect_cnt ) )
 			       indicies[1] = j + 1;
                               j = j + 2;
-                              if(indexin[j] == 0 || indexin[j+1] == 0)
+                              if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                                  i = scene_cnt;
                            }
                         }
@@ -11021,18 +11021,18 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                            j = 0;
                            for(i=0; i<scene_cnt; i++)
                            {
-			     if( startReg >= (indexin[j] + indexoffset - detect_cnt) && 
-				 startReg <= (indexin[j+1] + indexoffset - detect_cnt) )
+			     if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) && 
+				 startReg <= (l_indexin[j+1] + indexoffset - detect_cnt) )
 			       if(indicies[0] == -1)
 				 indicies[0] = j;
 		      
 			     j = j + 2;
-			     if(indexin[j] == 0 || indexin[j+1] == 0)
+			     if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
 			       i = scene_cnt;
                            }
                         }
                         if(indicies[1] == -1)
-                           if(stopReg > (indexin[j - 1] + indexoffset - detect_cnt) )
+                           if(stopReg > (l_indexin[j - 1] + indexoffset - detect_cnt) )
                               indicies[1] = j - 1;
                      }
                      if(indicies[1] == -1)
@@ -11040,11 +11040,11 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                         j = 0;
                         for(i=0; i<scene_cnt; i++)
                         {
-			  if( stopReg >= (indexin[j] + indexoffset - detect_cnt ) && 
-			      stopReg <= (indexin[j+1] + indexoffset - detect_cnt ) )
+			  if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) && 
+			      stopReg <= (l_indexin[j+1] + indexoffset - detect_cnt ) )
 			    indicies[1] = j;
 			  j = j + 2;
-			  if(indexin[j] == 0 || indexin[j+1] == 0)
+			  if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
 			    i = scene_cnt;
                         }
                      }
@@ -11054,18 +11054,18 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                   {
                      for(i=0; i<scene_cnt; i++)
                      {
-		      if( startReg >= indexin[j] && startReg <= indexin[j+1])
+		      if( startReg >= l_indexin[j] && startReg <= l_indexin[j+1])
                            if(indicies[0] == -1)
                               indicies[0] = j;
-		      if( stopReg >= indexin[j] && stopReg <= indexin[j+1])
+		      if( stopReg >= l_indexin[j] && stopReg <= l_indexin[j+1])
                            indicies[1] = j + 1;
                         j = j + 2;
-                        if(indexin[j] == 0 || indexin[j+1] == 0)
+                        if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                            i = scene_cnt;
                      }
                      if(SWXRegion[regionID]->band8flag == 2)
                      {
-                        if(startReg >= indexin[j] )
+                        if(startReg >= l_indexin[j] )
                         {
                            if(indicies[0] == -1)
                               indicies[0] = j;
@@ -11073,10 +11073,10 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                               indicies[1] = j;
                         }
                         if(indicies[0] == -1)
-                           if(startReg <= indexin[0])
+                           if(startReg <= l_indexin[0])
                               indicies[0] = 0;
                         if(indicies[1] == -1)
-                           if(stopReg > indexin[j])
+                           if(stopReg > l_indexin[j])
                               indicies[1] = j;
                      }
                      if(indicies[0] == -1)
@@ -11084,10 +11084,10 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                         j = 0;
                         for(i=0; i<scene_cnt; i++)
                         {
-			  if( startReg >= indexin[j] && startReg <= indexin[j+1])
+			  if( startReg >= l_indexin[j] && startReg <= l_indexin[j+1])
 			    indicies[0] = j;
                            j = j + 2;
-                           if(indexin[j] == 0 || indexin[j+1] == 0)
+                           if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                               i = scene_cnt;
                         }
                      }
@@ -11096,25 +11096,25 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                         j = 0;
                         for(i=0; i<scene_cnt; i++)
                         {
-		      if( stopReg >= indexin[j] && stopReg <= indexin[j+1])
+		      if( stopReg >= l_indexin[j] && stopReg <= l_indexin[j+1])
                               indicies[1] = j;
                            j = j + 2;
-                           if(indexin[j] == 0 || indexin[j+1] == 0)
+                           if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                               i = scene_cnt;
                         }
                      }
                      if(indicies[1] == -1)
                      {
-                        if(stopReg > indexin[j])
+                        if(stopReg > l_indexin[j])
                            indicies[1] = j;
                      }
                   }
                   if(indicies[0] == -1)
                   {
-                     if(startReg <= (indexin[0]+ indexoffset - detect_cnt) )
+                     if(startReg <= (l_indexin[0]+ indexoffset - detect_cnt) )
                         indicies[0] = 0;
                      if(indicies[1] == -1)
-                        if(stopReg > (indexin[j] + indexoffset - detect_cnt))
+                        if(stopReg > (l_indexin[j] + indexoffset - detect_cnt))
                            indicies[1] = j;
                   }
                }
@@ -11123,7 +11123,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                   if(SWXRegion[regionID]->band8flag == 2 ||
                      SWXRegion[regionID]->band8flag == 3)
                   {
-                     if(stopReg < (indexin[0] + indexoffset - detect_cnt))
+                     if(stopReg < (l_indexin[0] + indexoffset - detect_cnt))
                      {
 		       /*status = SWfieldinfo(swathID, "scan_no", &rank, dims2, &nt, dimlist);
                         buffer = (uint16 *)calloc(dims2[0], sizeof(uint16));
@@ -11132,7 +11132,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                         free(buffer);
                         startReg = startReg + (indexoffset - detect_cnt);
                         stopReg = stopReg + (indexoffset - 1); */
-                        if(stopReg >= (indexin[scene_cnt - 1] + indexoffset - detect_cnt))
+                        if(stopReg >= (l_indexin[scene_cnt - 1] + indexoffset - detect_cnt))
                         {
                            indicies[1] = scene_cnt - 1;
                         }
@@ -11141,17 +11141,17 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                            j = 0;
                            for(i=0;i<scene_cnt;i++)
                            {
-		      if( stopReg >= (indexin[j] + indexoffset - detect_cnt ) && 
-			  stopReg <= (indexin[j+1] + indexoffset - detect_cnt ) )
+		      if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) && 
+			  stopReg <= (l_indexin[j+1] + indexoffset - detect_cnt ) )
 			         indicies[1] = j;
 			      j = j + 2;
-                              if(indexin[j] == 0 || indexin[j+1] == 0)
+                              if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                                  i = scene_cnt;
                            }
                         }	
                      }
 
-                     if(startReg > (indexin[j - 1] + indexoffset - detect_cnt ))
+                     if(startReg > (l_indexin[j - 1] + indexoffset - detect_cnt ))
                      {
                         indicies[0] = -1;
                         indicies[1] = -1;
@@ -11165,22 +11165,22 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                         j = 0;
                         for(i=0; i<scene_cnt; i++)
                         {
-		      if( startReg >= (indexin[j] + indexoffset - detect_cnt) && 
-			  startReg <= (indexin[j+1] + indexoffset - detect_cnt) )
+		      if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) && 
+			  startReg <= (l_indexin[j+1] + indexoffset - detect_cnt) )
                               if(indicies[0] == -1)
                                  indicies[0] = j;
-		      if( stopReg >= (indexin[j] + indexoffset - detect_cnt ) && 
-			  stopReg <= (indexin[j+1] + indexoffset - detect_cnt ) )
+		      if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) && 
+			  stopReg <= (l_indexin[j+1] + indexoffset - detect_cnt ) )
                               indicies[1] = j + 1;
                            j = j + 2;
-                           if(indexin[j] == 0 || indexin[j+1] == 0)
+                           if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                               i = scene_cnt;
                         }
                         if(indicies[0] == -1)
-                           if(startReg < (indexin[0] +  indexoffset - detect_cnt))
+                           if(startReg < (l_indexin[0] +  indexoffset - detect_cnt))
                               indicies[0] = 0;
                         if(indicies[1] == -1)
-                           if(stopReg > (indexin[j - 1] + indexoffset - detect_cnt))
+                           if(stopReg > (l_indexin[j - 1] + indexoffset - detect_cnt))
                               indicies[1] = j - 1;
                      }
                   }
@@ -11207,26 +11207,26 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
 	   }
         }
 	
-	if (indexout != NULL)
+	if (l_indexout != NULL)
 	{ 
            if(SWXRegion[regionID]->scanflag == 1)
            {
               nout = (indicies[1] - indicies[0] + 1);
               j = 0;
               if (nout == 1)
-                 indexout[0] = indexin[indicies[0]];
+                 l_indexout[0] = l_indexin[indicies[0]];
               for(i=0; i<nout;i++)
               {
-                 indexout[i] = indexin[indicies[0] + i];
+                 l_indexout[i] = l_indexin[indicies[0] + i];
               }
            }
            else
            {
-	      /* get new index values */
+	      /* get new l_index values */
               /* ==================== */
 	      for(i = startReg; i <= stopReg  ; i++)
 	      {
-	         indexout[i-startReg] = indexin[i];
+	         l_indexout[i-startReg] = l_indexin[i];
 	      }
 	      nout = (stopReg - startReg) + 1;
            }
@@ -11261,7 +11261,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                2 for indexed mapping, 1 for regular    |
+|  status         intn                2 for l_indexed mapping, 1 for regular    |
 |                                     mapping, 0 if the dimension is not      |
 |                                     and (-1) FAIL                           |
 |                                                                             |
@@ -11358,7 +11358,7 @@ SWgeomapinfo(int32 swathID, char *geodim)
 
 	/*
 	** If regular mapping found add 1 to status
-        ** If indexed mapping found add 2
+        ** If l_indexed mapping found add 2
         */
 	if (metaptrsr[0] < metaptrsr[1] && metaptrsr[0] != NULL)
 	{

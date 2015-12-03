@@ -77,21 +77,21 @@ void VRTSource::GetFileList(CPL_UNUSED char*** ppapszFileList,
 /************************************************************************/
 
 VRTSimpleSource::VRTSimpleSource() :
-    dfSrcXOff(0.0),
-    dfSrcYOff(0.0),
-    dfSrcXSize(0.0),
-    dfSrcYSize(0.0),
-    dfDstXOff(0.0),
-    dfDstYOff(0.0),
-    dfDstXSize(0.0),
-    dfDstYSize(0.0)
+    m_dfSrcXOff(0.0),
+    m_dfSrcYOff(0.0),
+    m_dfSrcXSize(0.0),
+    m_dfSrcYSize(0.0),
+    m_dfDstXOff(0.0),
+    m_dfDstYOff(0.0),
+    m_dfDstXSize(0.0),
+    m_dfDstYSize(0.0)
 {
-    poRasterBand = NULL;
-    poMaskBandMainBand = NULL;
-    bNoDataSet = FALSE;
-    dfNoDataValue = VRT_NODATA_UNSET;
-    bRelativeToVRTOri = -1;
-    nMaxValue = 0;
+    m_poRasterBand = NULL;
+    m_poMaskBandMainBand = NULL;
+    m_bNoDataSet = FALSE;
+    m_dfNoDataValue = VRT_NODATA_UNSET;
+    m_bRelativeToVRTOri = -1;
+    m_nMaxValue = 0;
 }
 
 /************************************************************************/
@@ -101,20 +101,20 @@ VRTSimpleSource::VRTSimpleSource() :
 VRTSimpleSource::VRTSimpleSource(const VRTSimpleSource* poSrcSource,
                                  double dfXDstRatio, double dfYDstRatio)
 {
-    poRasterBand = poSrcSource->poRasterBand;
-    poMaskBandMainBand = poSrcSource->poMaskBandMainBand;
-    bNoDataSet = poSrcSource->bNoDataSet;
-    dfNoDataValue = poSrcSource->dfNoDataValue;
-    dfSrcXOff = poSrcSource->dfSrcXOff;
-    dfSrcYOff = poSrcSource->dfSrcYOff;
-    dfSrcXSize = poSrcSource->dfSrcXSize;
-    dfSrcYSize = poSrcSource->dfSrcYSize;
-    dfDstXOff = poSrcSource->dfDstXOff * dfXDstRatio;
-    dfDstYOff = poSrcSource->dfDstYOff * dfYDstRatio;
-    dfDstXSize = poSrcSource->dfDstXSize * dfXDstRatio;
-    dfDstYSize = poSrcSource->dfDstYSize * dfYDstRatio;
-    bRelativeToVRTOri = -1;
-    nMaxValue = poSrcSource->nMaxValue;
+    m_poRasterBand = poSrcSource->m_poRasterBand;
+    m_poMaskBandMainBand = poSrcSource->m_poMaskBandMainBand;
+    m_bNoDataSet = poSrcSource->m_bNoDataSet;
+    m_dfNoDataValue = poSrcSource->m_dfNoDataValue;
+    m_dfSrcXOff = poSrcSource->m_dfSrcXOff;
+    m_dfSrcYOff = poSrcSource->m_dfSrcYOff;
+    m_dfSrcXSize = poSrcSource->m_dfSrcXSize;
+    m_dfSrcYSize = poSrcSource->m_dfSrcYSize;
+    m_dfDstXOff = poSrcSource->m_dfDstXOff * dfXDstRatio;
+    m_dfDstYOff = poSrcSource->m_dfDstYOff * dfYDstRatio;
+    m_dfDstXSize = poSrcSource->m_dfDstXSize * dfXDstRatio;
+    m_dfDstYSize = poSrcSource->m_dfDstYSize * dfYDstRatio;
+    m_bRelativeToVRTOri = -1;
+    m_nMaxValue = poSrcSource->m_nMaxValue;
 }
 
 /************************************************************************/
@@ -127,22 +127,22 @@ VRTSimpleSource::~VRTSimpleSource()
     // We use bRelativeToVRTOri to know if the file has been opened from
     // XMLInit(), and thus we are sure that no other code has a direct reference
     // to the dataset
-    if( poMaskBandMainBand != NULL )
+    if( m_poMaskBandMainBand != NULL )
     {
-        if (poMaskBandMainBand->GetDataset() != NULL )
+        if (m_poMaskBandMainBand->GetDataset() != NULL )
         {
-            if( poMaskBandMainBand->GetDataset()->GetShared() || bRelativeToVRTOri >= 0 )
-                GDALClose( (GDALDatasetH) poMaskBandMainBand->GetDataset() );
+            if( m_poMaskBandMainBand->GetDataset()->GetShared() || m_bRelativeToVRTOri >= 0 )
+                GDALClose( (GDALDatasetH) m_poMaskBandMainBand->GetDataset() );
             else
-                poMaskBandMainBand->GetDataset()->Dereference();
+                m_poMaskBandMainBand->GetDataset()->Dereference();
         }
     }
-    else if( poRasterBand != NULL && poRasterBand->GetDataset() != NULL )
+    else if( m_poRasterBand != NULL && m_poRasterBand->GetDataset() != NULL )
     {
-        if( poRasterBand->GetDataset()->GetShared() || bRelativeToVRTOri >= 0 )
-            GDALClose( (GDALDatasetH) poRasterBand->GetDataset() );
+        if( m_poRasterBand->GetDataset()->GetShared() || m_bRelativeToVRTOri >= 0 )
+            GDALClose( (GDALDatasetH) m_poRasterBand->GetDataset() );
         else
-            poRasterBand->GetDataset()->Dereference();
+            m_poRasterBand->GetDataset()->Dereference();
     }
 }
 
@@ -152,8 +152,8 @@ VRTSimpleSource::~VRTSimpleSource()
 
 void VRTSimpleSource::UnsetPreservedRelativeFilenames()
 {
-    bRelativeToVRTOri = -1;
-    osSourceFileNameOri = "";
+    m_bRelativeToVRTOri = -1;
+    m_osSourceFileNameOri = "";
 }
 
 /************************************************************************/
@@ -163,7 +163,7 @@ void VRTSimpleSource::UnsetPreservedRelativeFilenames()
 void VRTSimpleSource::SetSrcBand( GDALRasterBand *poNewSrcBand )
 
 {
-    poRasterBand = poNewSrcBand;
+    m_poRasterBand = poNewSrcBand;
 }
 
 
@@ -175,8 +175,8 @@ void VRTSimpleSource::SetSrcBand( GDALRasterBand *poNewSrcBand )
 void VRTSimpleSource::SetSrcMaskBand( GDALRasterBand *poNewSrcBand )
 
 {
-    poRasterBand = poNewSrcBand->GetMaskBand();
-    poMaskBandMainBand = poNewSrcBand;
+    m_poRasterBand = poNewSrcBand->GetMaskBand();
+    m_poMaskBandMainBand = poNewSrcBand;
 }
 
 /************************************************************************/
@@ -187,10 +187,10 @@ void VRTSimpleSource::SetSrcWindow( double dfNewXOff, double dfNewYOff,
                                     double dfNewXSize, double dfNewYSize )
 
 {
-    dfSrcXOff = dfNewXOff;
-    dfSrcYOff = dfNewYOff;
-    dfSrcXSize = dfNewXSize;
-    dfSrcYSize = dfNewYSize;
+    m_dfSrcXOff = dfNewXOff;
+    m_dfSrcYOff = dfNewYOff;
+    m_dfSrcXSize = dfNewXSize;
+    m_dfSrcYSize = dfNewYSize;
 }
 
 /************************************************************************/
@@ -201,10 +201,10 @@ void VRTSimpleSource::SetDstWindow( double dfNewXOff, double dfNewYOff,
                                     double dfNewXSize, double dfNewYSize )
 
 {
-    dfDstXOff = dfNewXOff;
-    dfDstYOff = dfNewYOff;
-    dfDstXSize = dfNewXSize;
-    dfDstYSize = dfNewYSize;
+    m_dfDstXOff = dfNewXOff;
+    m_dfDstYOff = dfNewYOff;
+    m_dfDstXSize = dfNewXSize;
+    m_dfDstYSize = dfNewYSize;
 }
 
 /************************************************************************/
@@ -216,13 +216,13 @@ void VRTSimpleSource::SetNoDataValue( double dfNewNoDataValue )
 {
     if( dfNewNoDataValue == VRT_NODATA_UNSET )
     {
-        bNoDataSet = FALSE;
-        dfNoDataValue = VRT_NODATA_UNSET;
+        m_bNoDataSet = FALSE;
+        m_dfNoDataValue = VRT_NODATA_UNSET;
     }
     else
     {
-        bNoDataSet = TRUE;
-        dfNoDataValue = dfNewNoDataValue;
+        m_bNoDataSet = TRUE;
+        m_dfNoDataValue = dfNewNoDataValue;
     }
 }
 
@@ -246,39 +246,39 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     const char      *pszRelativePath;
     int              nBlockXSize, nBlockYSize;
 
-    if( poRasterBand == NULL )
+    if( m_poRasterBand == NULL )
         return NULL;
 
     GDALDataset     *poDS;
 
-    if (poMaskBandMainBand)
+    if (m_poMaskBandMainBand)
     {
-        poDS = poMaskBandMainBand->GetDataset();
-        if( poDS == NULL || poMaskBandMainBand->GetBand() < 1 )
+        poDS = m_poMaskBandMainBand->GetDataset();
+        if( poDS == NULL || m_poMaskBandMainBand->GetBand() < 1 )
             return NULL;
     }
     else
     {
-        poDS = poRasterBand->GetDataset();
-        if( poDS == NULL || poRasterBand->GetBand() < 1 )
+        poDS = m_poRasterBand->GetDataset();
+        if( poDS == NULL || m_poRasterBand->GetBand() < 1 )
             return NULL;
     }
 
     psSrc = CPLCreateXMLNode( NULL, CXT_Element, "SimpleSource" );
 
-    if( osResampling.size() )
+    if( m_osResampling.size() )
     {
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psSrc, CXT_Attribute, "resampling" ), 
-                CXT_Text, osResampling.c_str() );
+                CXT_Text, m_osResampling.c_str() );
     }
 
     VSIStatBufL sStat;
     CPLString osTmp;
-    if( bRelativeToVRTOri >= 0 )
+    if( m_bRelativeToVRTOri >= 0 )
     {
-        pszRelativePath = osSourceFileNameOri;
-        bRelativeToVRT = bRelativeToVRTOri;
+        pszRelativePath = m_osSourceFileNameOri;
+        bRelativeToVRT = m_bRelativeToVRTOri;
     }
     else if ( strstr(poDS->GetDescription(), "/vsicurl/http") != NULL ||
          strstr(poDS->GetDescription(), "/vsicurl/ftp") != NULL )
@@ -369,52 +369,52 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     char** papszOpenOptions = poDS->GetOpenOptions();
     GDALSerializeOpenOptionsToXML(psSrc, papszOpenOptions);
 
-    if (poMaskBandMainBand)
+    if (m_poMaskBandMainBand)
         CPLSetXMLValue( psSrc, "SourceBand",
-                        CPLSPrintf("mask,%d",poMaskBandMainBand->GetBand()) );
+                        CPLSPrintf("mask,%d",m_poMaskBandMainBand->GetBand()) );
     else
         CPLSetXMLValue( psSrc, "SourceBand",
-                        CPLSPrintf("%d",poRasterBand->GetBand()) );
+                        CPLSPrintf("%d",m_poRasterBand->GetBand()) );
 
     /* Write a few additional useful properties of the dataset */
     /* so that we can use a proxy dataset when re-opening. See XMLInit() */
     /* below */
     CPLSetXMLValue( psSrc, "SourceProperties.#RasterXSize", 
-                    CPLSPrintf("%d",poRasterBand->GetXSize()) );
+                    CPLSPrintf("%d",m_poRasterBand->GetXSize()) );
     CPLSetXMLValue( psSrc, "SourceProperties.#RasterYSize", 
-                    CPLSPrintf("%d",poRasterBand->GetYSize()) );
+                    CPLSPrintf("%d",m_poRasterBand->GetYSize()) );
     CPLSetXMLValue( psSrc, "SourceProperties.#DataType", 
-                GDALGetDataTypeName( poRasterBand->GetRasterDataType() ) );
-    poRasterBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+                GDALGetDataTypeName( m_poRasterBand->GetRasterDataType() ) );
+    m_poRasterBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     CPLSetXMLValue( psSrc, "SourceProperties.#BlockXSize", 
                     CPLSPrintf("%d",nBlockXSize) );
     CPLSetXMLValue( psSrc, "SourceProperties.#BlockYSize", 
                     CPLSPrintf("%d",nBlockYSize) );
 
-    if( dfSrcXOff != -1 
-        || dfSrcYOff != -1 
-        || dfSrcXSize != -1 
-        || dfSrcYSize != -1 )
+    if( m_dfSrcXOff != -1 
+        || m_dfSrcYOff != -1 
+        || m_dfSrcXSize != -1 
+        || m_dfSrcYSize != -1 )
     {
         CPLSetXMLValue( psSrc, "SrcRect.#xOff", 
-                        CPLSPrintf( "%g", dfSrcXOff ) );
+                        CPLSPrintf( "%g", m_dfSrcXOff ) );
         CPLSetXMLValue( psSrc, "SrcRect.#yOff", 
-                        CPLSPrintf( "%g", dfSrcYOff ) );
+                        CPLSPrintf( "%g", m_dfSrcYOff ) );
         CPLSetXMLValue( psSrc, "SrcRect.#xSize", 
-                        CPLSPrintf( "%g", dfSrcXSize ) );
+                        CPLSPrintf( "%g", m_dfSrcXSize ) );
         CPLSetXMLValue( psSrc, "SrcRect.#ySize", 
-                        CPLSPrintf( "%g", dfSrcYSize ) );
+                        CPLSPrintf( "%g", m_dfSrcYSize ) );
     }
 
-    if( dfDstXOff != -1 
-        || dfDstYOff != -1 
-        || dfDstXSize != -1 
-        || dfDstYSize != -1 )
+    if( m_dfDstXOff != -1 
+        || m_dfDstYOff != -1 
+        || m_dfDstXSize != -1 
+        || m_dfDstYSize != -1 )
     {
-        CPLSetXMLValue( psSrc, "DstRect.#xOff", CPLSPrintf( "%g", dfDstXOff ) );
-        CPLSetXMLValue( psSrc, "DstRect.#yOff", CPLSPrintf( "%g", dfDstYOff ) );
-        CPLSetXMLValue( psSrc, "DstRect.#xSize",CPLSPrintf( "%g", dfDstXSize ));
-        CPLSetXMLValue( psSrc, "DstRect.#ySize",CPLSPrintf( "%g", dfDstYSize ));
+        CPLSetXMLValue( psSrc, "DstRect.#xOff", CPLSPrintf( "%g", m_dfDstXOff ) );
+        CPLSetXMLValue( psSrc, "DstRect.#yOff", CPLSPrintf( "%g", m_dfDstYOff ) );
+        CPLSetXMLValue( psSrc, "DstRect.#xSize",CPLSPrintf( "%g", m_dfDstXSize ));
+        CPLSetXMLValue( psSrc, "DstRect.#ySize",CPLSPrintf( "%g", m_dfDstYSize ));
     }
 
     return psSrc;
@@ -427,7 +427,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 
 {
-    osResampling = CPLGetXMLValue( psSrc, "resampling", "");
+    m_osResampling = CPLGetXMLValue( psSrc, "resampling", "");
 
 /* -------------------------------------------------------------------- */
 /*      Prepare filename.                                               */
@@ -446,8 +446,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     
     // Backup original filename and relativeToVRT so as to be able to
     // serialize them identically again (#5985)
-    osSourceFileNameOri = pszFilename;
-    bRelativeToVRTOri = atoi(CPLGetXMLValue( psSourceFileNameNode, "relativetoVRT", "0"));
+    m_osSourceFileNameOri = pszFilename;
+    m_bRelativeToVRTOri = atoi(CPLGetXMLValue( psSourceFileNameNode, "relativetoVRT", "0"));
     const char* pszShared = CPLGetXMLValue( psSourceFileNameNode, "shared", NULL);
     int bShared = FALSE;
     if( pszShared != NULL )
@@ -456,7 +456,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         bShared = CSLTestBoolean(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE"));
 
     if( pszVRTPath != NULL
-        && bRelativeToVRTOri )
+        && m_bRelativeToVRTOri )
     {
         int bDone = FALSE;
         for( size_t i = 0; i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]); i ++)
@@ -609,8 +609,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 /*      Get the raster band.                                            */
 /* -------------------------------------------------------------------- */
     
-    poRasterBand = poSrcDS->GetRasterBand(nSrcBand);
-    if( poRasterBand == NULL )
+    m_poRasterBand = poSrcDS->GetRasterBand(nSrcBand);
+    if( m_poRasterBand == NULL )
     {
         if( poSrcDS->GetShared() )
             GDALClose( (GDALDatasetH) poSrcDS );
@@ -618,9 +618,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     }
     if (bGetMaskBand)
     {
-        poMaskBandMainBand = poRasterBand;
-        poRasterBand = poRasterBand->GetMaskBand();
-        if( poRasterBand == NULL )
+        m_poMaskBandMainBand = m_poRasterBand;
+        m_poRasterBand = m_poRasterBand->GetMaskBand();
+        if( m_poRasterBand == NULL )
             return CE_Failure;
     }
 
@@ -630,27 +630,27 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     CPLXMLNode* psSrcRect = CPLGetXMLNode(psSrc,"SrcRect");
     if (psSrcRect)
     {
-        dfSrcXOff = CPLAtof(CPLGetXMLValue(psSrcRect,"xOff","-1"));
-        dfSrcYOff = CPLAtof(CPLGetXMLValue(psSrcRect,"yOff","-1"));
-        dfSrcXSize = CPLAtof(CPLGetXMLValue(psSrcRect,"xSize","-1"));
-        dfSrcYSize = CPLAtof(CPLGetXMLValue(psSrcRect,"ySize","-1"));
+        m_dfSrcXOff = CPLAtof(CPLGetXMLValue(psSrcRect,"xOff","-1"));
+        m_dfSrcYOff = CPLAtof(CPLGetXMLValue(psSrcRect,"yOff","-1"));
+        m_dfSrcXSize = CPLAtof(CPLGetXMLValue(psSrcRect,"xSize","-1"));
+        m_dfSrcYSize = CPLAtof(CPLGetXMLValue(psSrcRect,"ySize","-1"));
     }
     else
     {
-        dfSrcXOff = dfSrcYOff = dfSrcXSize = dfSrcYSize = -1;
+        m_dfSrcXOff = m_dfSrcYOff = m_dfSrcXSize = m_dfSrcYSize = -1;
     }
 
     CPLXMLNode* psDstRect = CPLGetXMLNode(psSrc,"DstRect");
     if (psDstRect)
     {
-        dfDstXOff = CPLAtof(CPLGetXMLValue(psDstRect,"xOff","-1"));
-        dfDstYOff = CPLAtof(CPLGetXMLValue(psDstRect,"yOff","-1"));
-        dfDstXSize = CPLAtof(CPLGetXMLValue(psDstRect,"xSize","-1"));
-        dfDstYSize = CPLAtof(CPLGetXMLValue(psDstRect,"ySize","-1"));
+        m_dfDstXOff = CPLAtof(CPLGetXMLValue(psDstRect,"xOff","-1"));
+        m_dfDstYOff = CPLAtof(CPLGetXMLValue(psDstRect,"yOff","-1"));
+        m_dfDstXSize = CPLAtof(CPLGetXMLValue(psDstRect,"xSize","-1"));
+        m_dfDstYSize = CPLAtof(CPLGetXMLValue(psDstRect,"ySize","-1"));
     }
     else
     {
-        dfDstXOff = dfDstYOff = dfDstXSize = dfDstYSize = -1;
+        m_dfDstXOff = m_dfDstYOff = m_dfDstXSize = m_dfDstYSize = -1;
     }
 
     return CE_None;
@@ -664,8 +664,8 @@ void VRTSimpleSource::GetFileList(char*** ppapszFileList, int *pnSize,
                                   int *pnMaxSize, CPLHashSet* hSetFiles)
 {
     const char* pszFilename;
-    if (poRasterBand != NULL && poRasterBand->GetDataset() != NULL &&
-        (pszFilename = poRasterBand->GetDataset()->GetDescription()) != NULL)
+    if (m_poRasterBand != NULL && m_poRasterBand->GetDataset() != NULL &&
+        (pszFilename = m_poRasterBand->GetDataset()->GetDescription()) != NULL)
     {
 /* -------------------------------------------------------------------- */
 /*      Is the filename even a real filesystem object?                  */
@@ -716,7 +716,7 @@ void VRTSimpleSource::GetFileList(char*** ppapszFileList, int *pnSize,
 
 GDALRasterBand* VRTSimpleSource::GetBand()
 {
-    return poMaskBandMainBand ? NULL : poRasterBand;
+    return m_poMaskBandMainBand ? NULL : m_poRasterBand;
 }
 
 /************************************************************************/
@@ -725,16 +725,16 @@ GDALRasterBand* VRTSimpleSource::GetBand()
 
 int VRTSimpleSource::IsSameExceptBandNumber(VRTSimpleSource* poOtherSource)
 {
-    return dfSrcXOff == poOtherSource->dfSrcXOff &&
-           dfSrcYOff == poOtherSource->dfSrcYOff &&
-           dfSrcXSize == poOtherSource->dfSrcXSize &&
-           dfSrcYSize == poOtherSource->dfSrcYSize &&
-           dfDstXOff == poOtherSource->dfDstXOff &&
-           dfDstYOff == poOtherSource->dfDstYOff &&
-           dfDstXSize == poOtherSource->dfDstXSize &&
-           dfDstYSize == poOtherSource->dfDstYSize &&
-           bNoDataSet == poOtherSource->bNoDataSet &&
-           dfNoDataValue == poOtherSource->dfNoDataValue &&
+    return m_dfSrcXOff == poOtherSource->m_dfSrcXOff &&
+           m_dfSrcYOff == poOtherSource->m_dfSrcYOff &&
+           m_dfSrcXSize == poOtherSource->m_dfSrcXSize &&
+           m_dfSrcYSize == poOtherSource->m_dfSrcYSize &&
+           m_dfDstXOff == poOtherSource->m_dfDstXOff &&
+           m_dfDstYOff == poOtherSource->m_dfDstYOff &&
+           m_dfDstXSize == poOtherSource->m_dfDstXSize &&
+           m_dfDstYSize == poOtherSource->m_dfDstYSize &&
+           m_bNoDataSet == poOtherSource->m_bNoDataSet &&
+           m_dfNoDataValue == poOtherSource->m_dfNoDataValue &&
            GetBand() != NULL && poOtherSource->GetBand() != NULL &&
            GetBand()->GetDataset() != NULL &&
            poOtherSource->GetBand()->GetDataset() != NULL &&
@@ -752,8 +752,8 @@ void VRTSimpleSource::SrcToDst( double dfX, double dfY,
                                 double &dfXOut, double &dfYOut )
 
 {
-    dfXOut = ((dfX - dfSrcXOff) / dfSrcXSize) * dfDstXSize + dfDstXOff;
-    dfYOut = ((dfY - dfSrcYOff) / dfSrcYSize) * dfDstYSize + dfDstYOff;
+    dfXOut = ((dfX - m_dfSrcXOff) / m_dfSrcXSize) * m_dfDstXSize + m_dfDstXOff;
+    dfYOut = ((dfY - m_dfSrcYOff) / m_dfSrcYSize) * m_dfDstYSize + m_dfDstYOff;
 }
 
 /************************************************************************/
@@ -766,8 +766,8 @@ void VRTSimpleSource::DstToSrc( double dfX, double dfY,
                                 double &dfXOut, double &dfYOut )
 
 {
-    dfXOut = ((dfX - dfDstXOff) / dfDstXSize) * dfSrcXSize + dfSrcXOff;
-    dfYOut = ((dfY - dfDstYOff) / dfDstYSize) * dfSrcYSize + dfSrcYOff;
+    dfXOut = ((dfX - m_dfDstXOff) / m_dfDstXSize) * m_dfSrcXSize + m_dfSrcXOff;
+    dfYOut = ((dfY - m_dfDstYOff) / m_dfDstYSize) * m_dfSrcYSize + m_dfSrcYOff;
 }
 
 /************************************************************************/
@@ -785,12 +785,12 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
                                   int *pnOutXSize, int *pnOutYSize )
 
 {
-    int bDstWinSet = dfDstXOff != -1 || dfDstXSize != -1 
-        || dfDstYOff != -1 || dfDstYSize != -1;
+    const bool bDstWinSet = m_dfDstXOff != -1 || m_dfDstXSize != -1 
+        || m_dfDstYOff != -1 || m_dfDstYSize != -1;
 
 #ifdef DEBUG
-    int bSrcWinSet = dfSrcXOff != -1 || dfSrcXSize != -1 
-        || dfSrcYOff != -1 || dfSrcYSize != -1;
+    const bool bSrcWinSet = m_dfSrcXOff != -1 || m_dfSrcXSize != -1 
+        || m_dfSrcYOff != -1 || m_dfSrcYSize != -1;
 
     if( bSrcWinSet != bDstWinSet )
     {
@@ -804,10 +804,10 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     if( bDstWinSet )
     {
-        if( nXOff >= dfDstXOff + dfDstXSize
-            || nYOff >= dfDstYOff + dfDstYSize
-            || nXOff + nXSize < dfDstXOff
-            || nYOff + nYSize < dfDstYOff )
+        if( nXOff >= m_dfDstXOff + m_dfDstXSize
+            || nYOff >= m_dfDstYOff + m_dfDstYSize
+            || nXOff + nXSize < m_dfDstXOff
+            || nYOff + nYSize < m_dfDstYOff )
             return FALSE;
     }
 
@@ -833,29 +833,29 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 
     if( bDstWinSet )
     {
-        if( dfRXOff < dfDstXOff )
+        if( dfRXOff < m_dfDstXOff )
         {
-            dfRXSize = dfRXSize + dfRXOff - dfDstXOff;
-            dfRXOff = dfDstXOff;
+            dfRXSize = dfRXSize + dfRXOff - m_dfDstXOff;
+            dfRXOff = m_dfDstXOff;
             bModifiedX = TRUE;
         }
 
-        if( dfRYOff < dfDstYOff )
+        if( dfRYOff < m_dfDstYOff )
         {
-            dfRYSize = dfRYSize + dfRYOff - dfDstYOff;
-            dfRYOff = dfDstYOff;
+            dfRYSize = dfRYSize + dfRYOff - m_dfDstYOff;
+            dfRYOff = m_dfDstYOff;
             bModifiedY = TRUE;
         }
 
-        if( dfRXOff + dfRXSize > dfDstXOff + dfDstXSize )
+        if( dfRXOff + dfRXSize > m_dfDstXOff + m_dfDstXSize )
         {
-            dfRXSize = dfDstXOff + dfDstXSize - dfRXOff;
+            dfRXSize = m_dfDstXOff + m_dfDstXSize - dfRXOff;
             bModifiedX = TRUE;
         }
 
-        if( dfRYOff + dfRYSize > dfDstYOff + dfDstYSize )
+        if( dfRYOff + dfRYSize > m_dfDstYOff + m_dfDstYSize )
         {
-            dfRYSize = dfDstYOff + dfDstYSize - dfRYOff;
+            dfRYSize = m_dfDstYOff + m_dfDstYSize - dfRYOff;
             bModifiedY = TRUE;
         }
     }
@@ -864,11 +864,11 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Translate requested region in virtual file into the source      */
 /*      band coordinates.                                               */
 /* -------------------------------------------------------------------- */
-    double      dfScaleX = dfSrcXSize / dfDstXSize;
-    double      dfScaleY = dfSrcYSize / dfDstYSize;
+    const double      dfScaleX = m_dfSrcXSize / m_dfDstXSize;
+    const double      dfScaleY = m_dfSrcYSize / m_dfDstYSize;
     
-    *pdfReqXOff = (dfRXOff - dfDstXOff) * dfScaleX + dfSrcXOff;
-    *pdfReqYOff = (dfRYOff - dfDstYOff) * dfScaleY + dfSrcYOff;
+    *pdfReqXOff = (dfRXOff - m_dfDstXOff) * dfScaleX + m_dfSrcXOff;
+    *pdfReqYOff = (dfRYOff - m_dfDstYOff) * dfScaleY + m_dfSrcYOff;
     *pdfReqXSize = dfRXSize * dfScaleX;
     *pdfReqYSize = dfRYSize * dfScaleY;
 
@@ -903,25 +903,25 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     if( *pnReqYSize == 0 )
         *pnReqYSize = 1;
 
-    if( *pnReqXOff + *pnReqXSize > poRasterBand->GetXSize() )
+    if( *pnReqXOff + *pnReqXSize > m_poRasterBand->GetXSize() )
     {
-        *pnReqXSize = poRasterBand->GetXSize() - *pnReqXOff;
+        *pnReqXSize = m_poRasterBand->GetXSize() - *pnReqXOff;
         bModifiedX = TRUE;
     }
-    if( *pdfReqXOff + *pdfReqXSize > poRasterBand->GetXSize() )
+    if( *pdfReqXOff + *pdfReqXSize > m_poRasterBand->GetXSize() )
     {
-        *pdfReqXSize = poRasterBand->GetXSize() - *pdfReqXOff;
+        *pdfReqXSize = m_poRasterBand->GetXSize() - *pdfReqXOff;
         bModifiedX = TRUE;
     }
 
-    if( *pnReqYOff + *pnReqYSize > poRasterBand->GetYSize() )
+    if( *pnReqYOff + *pnReqYSize > m_poRasterBand->GetYSize() )
     {
-        *pnReqYSize = poRasterBand->GetYSize() - *pnReqYOff;
+        *pnReqYSize = m_poRasterBand->GetYSize() - *pnReqYOff;
         bModifiedY = TRUE;
     }
-    if( *pdfReqYOff + *pdfReqYSize > poRasterBand->GetYSize() )
+    if( *pdfReqYOff + *pdfReqYSize > m_poRasterBand->GetYSize() )
     {
-        *pdfReqYSize = poRasterBand->GetYSize() - *pdfReqYOff;
+        *pdfReqYSize = m_poRasterBand->GetYSize() - *pdfReqYOff;
         bModifiedY = TRUE;
     }
 
@@ -929,8 +929,8 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Don't do anything if the requesting region is completely off    */
 /*      the source image.                                               */
 /* -------------------------------------------------------------------- */
-    if( *pnReqXOff >= poRasterBand->GetXSize()
-        || *pnReqYOff >= poRasterBand->GetYSize()
+    if( *pnReqXOff >= m_poRasterBand->GetXSize()
+        || *pnReqYOff >= m_poRasterBand->GetYSize()
         || *pnReqXSize <= 0 || *pnReqYSize <= 0 )
     {
         return FALSE;
@@ -995,12 +995,12 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 
 int VRTSimpleSource::NeedMaxValAdjustment() const
 {
-    if( nMaxValue )
+    if( m_nMaxValue )
     {
-        const char* pszNBITS = poRasterBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        const char* pszNBITS = m_poRasterBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
         int nBits = (pszNBITS) ? atoi(pszNBITS) : 0;
         int nBandMaxValue = (1 << nBits) - 1;
-        if( nBandMaxValue == 0 || nBandMaxValue > nMaxValue )
+        if( nBandMaxValue == 0 || nBandMaxValue > m_nMaxValue )
         {
             return TRUE;
         }
@@ -1054,9 +1054,9 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
 
-    if( osResampling.size() )
+    if( m_osResampling.size() )
     {
-        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
     else if( psExtraArgIn != NULL )
     {
@@ -1072,7 +1072,7 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                 + nOutXOff * nPixelSpace
                                 + (GPtrDiff_t)nOutYOff * nLineSpace;
     eErr = 
-        poRasterBand->RasterIO( GF_Read, 
+        m_poRasterBand->RasterIO( GF_Read, 
                                 nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                 pabyOut,
                                 nOutXSize, nOutYSize, 
@@ -1089,8 +1089,8 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                 eBufType, 0,
                                 &nVal, GDT_Int32, 0,
                                 1);
-                if( nVal > nMaxValue )
-                    nVal = nMaxValue;
+                if( nVal > m_nMaxValue )
+                    nVal = m_nMaxValue;
                 GDALCopyWords(&nVal, GDT_Int32, 0,
                                 pabyOut + j * nLineSpace + i * nPixelSpace,
                                 eBufType, 0,
@@ -1121,16 +1121,16 @@ double VRTSimpleSource::GetMinimum( int nXSize, int nYSize, int *pbSuccess )
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) ||
         nReqXOff != 0 || nReqYOff != 0 ||
-        nReqXSize != poRasterBand->GetXSize() ||
-        nReqYSize != poRasterBand->GetYSize())
+        nReqXSize != m_poRasterBand->GetXSize() ||
+        nReqYSize != m_poRasterBand->GetYSize())
     {
         *pbSuccess = FALSE;
         return 0;
     }
 
-    double dfVal = poRasterBand->GetMinimum(pbSuccess);
-    if( NeedMaxValAdjustment() && dfVal > nMaxValue )
-        dfVal = nMaxValue;
+    double dfVal = m_poRasterBand->GetMinimum(pbSuccess);
+    if( NeedMaxValAdjustment() && dfVal > m_nMaxValue )
+        dfVal = m_nMaxValue;
     return dfVal;
 }
 
@@ -1153,16 +1153,16 @@ double VRTSimpleSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) ||
         nReqXOff != 0 || nReqYOff != 0 ||
-        nReqXSize != poRasterBand->GetXSize() ||
-        nReqYSize != poRasterBand->GetYSize())
+        nReqXSize != m_poRasterBand->GetXSize() ||
+        nReqYSize != m_poRasterBand->GetYSize())
     {
         *pbSuccess = FALSE;
         return 0;
     }
 
-    double dfVal = poRasterBand->GetMaximum(pbSuccess);
-    if( NeedMaxValAdjustment() && dfVal > nMaxValue )
-        dfVal = nMaxValue;
+    double dfVal = m_poRasterBand->GetMaximum(pbSuccess);
+    if( NeedMaxValAdjustment() && dfVal > m_nMaxValue )
+        dfVal = m_nMaxValue;
     return dfVal;
 }
 
@@ -1185,19 +1185,19 @@ CPLErr VRTSimpleSource::ComputeRasterMinMax( int nXSize, int nYSize, int bApprox
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) ||
         nReqXOff != 0 || nReqYOff != 0 ||
-        nReqXSize != poRasterBand->GetXSize() ||
-        nReqYSize != poRasterBand->GetYSize())
+        nReqXSize != m_poRasterBand->GetXSize() ||
+        nReqYSize != m_poRasterBand->GetYSize())
     {
         return CE_Failure;
     }
 
-    CPLErr eErr = poRasterBand->ComputeRasterMinMax(bApproxOK, adfMinMax);
+    CPLErr eErr = m_poRasterBand->ComputeRasterMinMax(bApproxOK, adfMinMax);
     if( NeedMaxValAdjustment() )
     {
-        if( adfMinMax[0] > nMaxValue )
-            adfMinMax[0] = nMaxValue;
-        if( adfMinMax[1] > nMaxValue )
-            adfMinMax[1] = nMaxValue;
+        if( adfMinMax[0] > m_nMaxValue )
+            adfMinMax[0] = m_nMaxValue;
+        if( adfMinMax[1] > m_nMaxValue )
+            adfMinMax[1] = m_nMaxValue;
     }
     return eErr;
 }
@@ -1226,13 +1226,13 @@ CPLErr VRTSimpleSource::ComputeStatistics( int nXSize, int nYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) ||
         nReqXOff != 0 || nReqYOff != 0 ||
-        nReqXSize != poRasterBand->GetXSize() ||
-        nReqYSize != poRasterBand->GetYSize())
+        nReqXSize != m_poRasterBand->GetXSize() ||
+        nReqYSize != m_poRasterBand->GetYSize())
     {
         return CE_Failure;
     }
 
-    return poRasterBand->ComputeStatistics(bApproxOK, pdfMin, pdfMax,
+    return m_poRasterBand->ComputeStatistics(bApproxOK, pdfMin, pdfMax,
                                            pdfMean, pdfStdDev,
                                            pfnProgress, pProgressData);
 }
@@ -1261,13 +1261,13 @@ CPLErr VRTSimpleSource::GetHistogram( int nXSize, int nYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) ||
         nReqXOff != 0 || nReqYOff != 0 ||
-        nReqXSize != poRasterBand->GetXSize() ||
-        nReqYSize != poRasterBand->GetYSize())
+        nReqXSize != m_poRasterBand->GetXSize() ||
+        nReqYSize != m_poRasterBand->GetYSize())
     {
         return CE_Failure;
     }
 
-    return poRasterBand->GetHistogram( dfMin, dfMax, nBuckets,
+    return m_poRasterBand->GetHistogram( dfMin, dfMax, nBuckets,
                                        panHistogram,
                                        bIncludeOutOfRange, bApproxOK,
                                        pfnProgress, pProgressData );
@@ -1314,13 +1314,13 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
         return CE_None;
     }
 
-    GDALDataset* poDS = poRasterBand->GetDataset();
+    GDALDataset* poDS = m_poRasterBand->GetDataset();
     if (poDS == NULL)
         return CE_Failure;
 
-    if( osResampling.size() )
+    if( m_osResampling.size() )
     {
-        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
     else if( psExtraArgIn != NULL )
     {
@@ -1355,8 +1355,8 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                                 eBufType, 0,
                                 &nVal, GDT_Int32, 0,
                                 1);
-                    if( nVal > nMaxValue )
-                        nVal = nMaxValue;
+                    if( nVal > m_nMaxValue )
+                        nVal = m_nMaxValue;
                     GDALCopyWords(&nVal, GDT_Int32, 0,
                                 pabyOut + k * nBandSpace + j * nLineSpace + i * nPixelSpace,
                                 eBufType, 0,
@@ -1375,7 +1375,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
 
 void VRTSimpleSource::SetResampling( const char* pszResampling )
 {
-    osResampling = (pszResampling) ? pszResampling : "";
+    m_osResampling = (pszResampling) ? pszResampling : "";
 }
 
 /************************************************************************/
@@ -1458,9 +1458,9 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
 
-    if( osResampling.size() )
+    if( m_osResampling.size() )
     {
-        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
     else if( psExtraArgIn != NULL )
     {
@@ -1473,7 +1473,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
 
-    eErr = poRasterBand->RasterIO( GF_Read, 
+    eErr = m_poRasterBand->RasterIO( GF_Read, 
                                    nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                    pafSrc, nReqXSize, nReqYSize, GDT_Float32, 
                                    0, 0, psExtraArg );
@@ -1556,7 +1556,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                     if (CPLIsNan(fSampledValue))
                         continue;
 
-                    if( bNoDataSet && ARE_REAL_EQUAL(fSampledValue, dfNoDataValue))
+                    if( m_bNoDataSet && ARE_REAL_EQUAL(fSampledValue, m_dfNoDataValue))
                         continue;
 
                     nPixelCount++;
@@ -1674,60 +1674,60 @@ CPLErr VRTAveragedSource::GetHistogram( CPL_UNUSED int nXSize,
 VRTComplexSource::VRTComplexSource()
 
 {
-    eScalingType = VRT_SCALING_NONE;
-    dfScaleOff = 0.0;
-    dfScaleRatio = 1.0;
+    m_eScalingType = VRT_SCALING_NONE;
+    m_dfScaleOff = 0.0;
+    m_dfScaleRatio = 1.0;
     
-    padfLUTInputs = NULL;
-    padfLUTOutputs = NULL;
-    nLUTItemCount = 0;
-    nColorTableComponent = 0;
+    m_padfLUTInputs = NULL;
+    m_padfLUTOutputs = NULL;
+    m_nLUTItemCount = 0;
+    m_nColorTableComponent = 0;
 
-    bSrcMinMaxDefined = FALSE;
-    dfSrcMin = 0.0;
-    dfSrcMax = 0.0;
-    dfDstMin = 0.0;
-    dfDstMax = 0.0;
-    dfExponent = 1.0;
+    m_bSrcMinMaxDefined = FALSE;
+    m_dfSrcMin = 0.0;
+    m_dfSrcMax = 0.0;
+    m_dfDstMin = 0.0;
+    m_dfDstMax = 0.0;
+    m_dfExponent = 1.0;
 }
 
 VRTComplexSource::VRTComplexSource(const VRTComplexSource* poSrcSource,
                                    double dfXDstRatio, double dfYDstRatio) :
                         VRTSimpleSource(poSrcSource, dfXDstRatio, dfYDstRatio)
 {
-    eScalingType = poSrcSource->eScalingType;
-    dfScaleOff = poSrcSource->dfScaleOff;
-    dfScaleRatio = poSrcSource->dfScaleRatio;
+    m_eScalingType = poSrcSource->m_eScalingType;
+    m_dfScaleOff = poSrcSource->m_dfScaleOff;
+    m_dfScaleRatio = poSrcSource->m_dfScaleRatio;
 
-    nLUTItemCount = poSrcSource->nLUTItemCount;
-    if( nLUTItemCount )
+    m_nLUTItemCount = poSrcSource->m_nLUTItemCount;
+    if( m_nLUTItemCount )
     {
-        padfLUTInputs = (double*)CPLMalloc(sizeof(double) * nLUTItemCount);
-        memcpy(padfLUTInputs, poSrcSource->padfLUTInputs, sizeof(double) * nLUTItemCount);
-        padfLUTOutputs = (double*)CPLMalloc(sizeof(double) * nLUTItemCount);
-        memcpy(padfLUTOutputs, poSrcSource->padfLUTOutputs, sizeof(double) * nLUTItemCount);
+        m_padfLUTInputs = (double*)CPLMalloc(sizeof(double) * m_nLUTItemCount);
+        memcpy(m_padfLUTInputs, poSrcSource->m_padfLUTInputs, sizeof(double) * m_nLUTItemCount);
+        m_padfLUTOutputs = (double*)CPLMalloc(sizeof(double) * m_nLUTItemCount);
+        memcpy(m_padfLUTOutputs, poSrcSource->m_padfLUTOutputs, sizeof(double) * m_nLUTItemCount);
     }
     else
     {
-        padfLUTInputs = NULL;
-        padfLUTOutputs = NULL;
+        m_padfLUTInputs = NULL;
+        m_padfLUTOutputs = NULL;
     }
-    nColorTableComponent = poSrcSource->nColorTableComponent;
+    m_nColorTableComponent = poSrcSource->m_nColorTableComponent;
 
-    bSrcMinMaxDefined = poSrcSource->bSrcMinMaxDefined;
-    dfSrcMin = poSrcSource->dfSrcMin;
-    dfSrcMax = poSrcSource->dfSrcMax;
-    dfDstMin = poSrcSource->dfDstMin;
-    dfDstMax = poSrcSource->dfDstMax;
-    dfExponent = poSrcSource->dfExponent;
+    m_bSrcMinMaxDefined = poSrcSource->m_bSrcMinMaxDefined;
+    m_dfSrcMin = poSrcSource->m_dfSrcMin;
+    m_dfSrcMax = poSrcSource->m_dfSrcMax;
+    m_dfDstMin = poSrcSource->m_dfDstMin;
+    m_dfDstMax = poSrcSource->m_dfDstMax;
+    m_dfExponent = poSrcSource->m_dfExponent;
 }
 
 VRTComplexSource::~VRTComplexSource()
 {
-    if (padfLUTInputs)
-        VSIFree( padfLUTInputs );
-    if (padfLUTOutputs)
-        VSIFree( padfLUTOutputs );
+    if (m_padfLUTInputs)
+        VSIFree( m_padfLUTInputs );
+    if (m_padfLUTOutputs)
+        VSIFree( m_padfLUTOutputs );
 }
 
 /************************************************************************/
@@ -1745,16 +1745,16 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
     CPLFree( psSrc->pszValue );
     psSrc->pszValue = CPLStrdup( "ComplexSource" );
 
-    if( bNoDataSet )
+    if( m_bNoDataSet )
     {
-        if (CPLIsNan(dfNoDataValue))
+        if (CPLIsNan(m_dfNoDataValue))
             CPLSetXMLValue( psSrc, "NODATA", "nan");
         else
             CPLSetXMLValue( psSrc, "NODATA", 
-                            CPLSPrintf("%.16g", dfNoDataValue) );
+                            CPLSPrintf("%.16g", m_dfNoDataValue) );
     }
         
-    switch( eScalingType )
+    switch( m_eScalingType )
     {
         case VRT_SCALING_NONE:
             break;
@@ -1762,41 +1762,41 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
         case VRT_SCALING_LINEAR:
         {
             CPLSetXMLValue( psSrc, "ScaleOffset", 
-                            CPLSPrintf("%g", dfScaleOff) );
+                            CPLSPrintf("%g", m_dfScaleOff) );
             CPLSetXMLValue( psSrc, "ScaleRatio", 
-                            CPLSPrintf("%g", dfScaleRatio) );
+                            CPLSPrintf("%g", m_dfScaleRatio) );
             break;
         }
 
         case VRT_SCALING_EXPONENTIAL:
         {
             CPLSetXMLValue( psSrc, "Exponent", 
-                            CPLSPrintf("%g", dfExponent) );
+                            CPLSPrintf("%g", m_dfExponent) );
             CPLSetXMLValue( psSrc, "SrcMin", 
-                            CPLSPrintf("%g", dfSrcMin) );
+                            CPLSPrintf("%g", m_dfSrcMin) );
             CPLSetXMLValue( psSrc, "SrcMax", 
-                            CPLSPrintf("%g", dfSrcMax) );
+                            CPLSPrintf("%g", m_dfSrcMax) );
             CPLSetXMLValue( psSrc, "DstMin", 
-                            CPLSPrintf("%g", dfDstMin) );
+                            CPLSPrintf("%g", m_dfDstMin) );
             CPLSetXMLValue( psSrc, "DstMax", 
-                            CPLSPrintf("%g", dfDstMax) );
+                            CPLSPrintf("%g", m_dfDstMax) );
             break;
         }
     }
 
-    if ( nLUTItemCount )
+    if ( m_nLUTItemCount )
     {
-        CPLString osLUT = CPLString().Printf("%g:%g", padfLUTInputs[0], padfLUTOutputs[0]);
+        CPLString osLUT = CPLString().Printf("%g:%g", m_padfLUTInputs[0], m_padfLUTOutputs[0]);
         int i;
-        for ( i = 1; i < nLUTItemCount; i++ )
-            osLUT += CPLString().Printf(",%g:%g", padfLUTInputs[i], padfLUTOutputs[i]);
+        for ( i = 1; i < m_nLUTItemCount; i++ )
+            osLUT += CPLString().Printf(",%g:%g", m_padfLUTInputs[i], m_padfLUTOutputs[i]);
         CPLSetXMLValue( psSrc, "LUT", osLUT );
     }
 
-    if ( nColorTableComponent )
+    if ( m_nColorTableComponent )
     {
         CPLSetXMLValue( psSrc, "ColorTableComponent", 
-                        CPLSPrintf("%d", nColorTableComponent) );
+                        CPLSPrintf("%d", m_nColorTableComponent) );
     }
 
     return psSrc;
@@ -1824,33 +1824,33 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     if( CPLGetXMLValue(psSrc, "ScaleOffset", NULL) != NULL 
         || CPLGetXMLValue(psSrc, "ScaleRatio", NULL) != NULL )
     {
-        eScalingType = VRT_SCALING_LINEAR;
-        dfScaleOff = CPLAtof(CPLGetXMLValue(psSrc, "ScaleOffset", "0") );
-        dfScaleRatio = CPLAtof(CPLGetXMLValue(psSrc, "ScaleRatio", "1") );
+        m_eScalingType = VRT_SCALING_LINEAR;
+        m_dfScaleOff = CPLAtof(CPLGetXMLValue(psSrc, "ScaleOffset", "0") );
+        m_dfScaleRatio = CPLAtof(CPLGetXMLValue(psSrc, "ScaleRatio", "1") );
     }
     else if( CPLGetXMLValue(psSrc, "Exponent", NULL) != NULL &&
              CPLGetXMLValue(psSrc, "DstMin", NULL) != NULL && 
              CPLGetXMLValue(psSrc, "DstMax", NULL) != NULL )
     {
-        eScalingType = VRT_SCALING_EXPONENTIAL;
-        dfExponent = CPLAtof(CPLGetXMLValue(psSrc, "Exponent", "1.0") );
+        m_eScalingType = VRT_SCALING_EXPONENTIAL;
+        m_dfExponent = CPLAtof(CPLGetXMLValue(psSrc, "Exponent", "1.0") );
 
         if( CPLGetXMLValue(psSrc, "SrcMin", NULL) != NULL 
          && CPLGetXMLValue(psSrc, "SrcMax", NULL) != NULL )
         {
-            dfSrcMin = CPLAtof(CPLGetXMLValue(psSrc, "SrcMin", "0.0") );
-            dfSrcMax = CPLAtof(CPLGetXMLValue(psSrc, "SrcMax", "0.0") );
-            bSrcMinMaxDefined = TRUE;
+            m_dfSrcMin = CPLAtof(CPLGetXMLValue(psSrc, "SrcMin", "0.0") );
+            m_dfSrcMax = CPLAtof(CPLGetXMLValue(psSrc, "SrcMax", "0.0") );
+            m_bSrcMinMaxDefined = TRUE;
         }
 
-        dfDstMin = CPLAtof(CPLGetXMLValue(psSrc, "DstMin", "0.0") );
-        dfDstMax = CPLAtof(CPLGetXMLValue(psSrc, "DstMax", "0.0") );
+        m_dfDstMin = CPLAtof(CPLGetXMLValue(psSrc, "DstMin", "0.0") );
+        m_dfDstMax = CPLAtof(CPLGetXMLValue(psSrc, "DstMax", "0.0") );
     }
 
     if( CPLGetXMLValue(psSrc, "NODATA", NULL) != NULL )
     {
-        bNoDataSet = TRUE;
-        dfNoDataValue = CPLAtofM(CPLGetXMLValue(psSrc, "NODATA", "0"));
+        m_bNoDataSet = TRUE;
+        m_dfNoDataValue = CPLAtofM(CPLGetXMLValue(psSrc, "NODATA", "0"));
     }
 
     if( CPLGetXMLValue(psSrc, "LUT", NULL) != NULL )
@@ -1858,55 +1858,55 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         int nIndex;
         char **papszValues = CSLTokenizeString2(CPLGetXMLValue(psSrc, "LUT", ""), ",:", CSLT_ALLOWEMPTYTOKENS);
 
-        if (nLUTItemCount)
+        if (m_nLUTItemCount)
         {
-            if (padfLUTInputs)
+            if (m_padfLUTInputs)
             {
-                VSIFree( padfLUTInputs );
-                padfLUTInputs = NULL;
+                VSIFree( m_padfLUTInputs );
+                m_padfLUTInputs = NULL;
             }
-            if (padfLUTOutputs)
+            if (m_padfLUTOutputs)
             {
-                VSIFree( padfLUTOutputs );
-                padfLUTOutputs = NULL;
+                VSIFree( m_padfLUTOutputs );
+                m_padfLUTOutputs = NULL;
             }
-            nLUTItemCount = 0;
+            m_nLUTItemCount = 0;
         }
 
-        nLUTItemCount = CSLCount(papszValues) / 2;
+        m_nLUTItemCount = CSLCount(papszValues) / 2;
 
-        padfLUTInputs = (double *) VSIMalloc2(nLUTItemCount, sizeof(double));
-        if ( !padfLUTInputs )
+        m_padfLUTInputs = (double *) VSIMalloc2(m_nLUTItemCount, sizeof(double));
+        if ( !m_padfLUTInputs )
         {
             CSLDestroy(papszValues);
-            nLUTItemCount = 0;
+            m_nLUTItemCount = 0;
             return CE_Failure;
         }
 
-        padfLUTOutputs = (double *) VSIMalloc2(nLUTItemCount, sizeof(double));
-        if ( !padfLUTOutputs )
+        m_padfLUTOutputs = (double *) VSIMalloc2(m_nLUTItemCount, sizeof(double));
+        if ( !m_padfLUTOutputs )
         {
             CSLDestroy(papszValues);
-            VSIFree( padfLUTInputs );
-            padfLUTInputs = NULL;
-            nLUTItemCount = 0;
+            VSIFree( m_padfLUTInputs );
+            m_padfLUTInputs = NULL;
+            m_nLUTItemCount = 0;
             return CE_Failure;
         }
         
-        for ( nIndex = 0; nIndex < nLUTItemCount; nIndex++ )
+        for ( nIndex = 0; nIndex < m_nLUTItemCount; nIndex++ )
         {
-            padfLUTInputs[nIndex] = CPLAtof( papszValues[nIndex * 2] );
-            padfLUTOutputs[nIndex] = CPLAtof( papszValues[nIndex * 2 + 1] );
+            m_padfLUTInputs[nIndex] = CPLAtof( papszValues[nIndex * 2] );
+            m_padfLUTOutputs[nIndex] = CPLAtof( papszValues[nIndex * 2 + 1] );
 
 	    // Enforce the requirement that the LUT input array is monotonically non-decreasing.
-	    if ( nIndex > 0 && padfLUTInputs[nIndex] < padfLUTInputs[nIndex - 1] )
+	    if ( nIndex > 0 && m_padfLUTInputs[nIndex] < m_padfLUTInputs[nIndex - 1] )
 	    {
 		CSLDestroy(papszValues);
-		VSIFree( padfLUTInputs );
-		VSIFree( padfLUTOutputs );
-		padfLUTInputs = NULL;
-		padfLUTOutputs = NULL;
-		nLUTItemCount = 0;
+		VSIFree( m_padfLUTInputs );
+		VSIFree( m_padfLUTOutputs );
+		m_padfLUTInputs = NULL;
+		m_padfLUTOutputs = NULL;
+		m_nLUTItemCount = 0;
 		return CE_Failure;
 	    }
         }
@@ -1916,7 +1916,7 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     
     if( CPLGetXMLValue(psSrc, "ColorTableComponent", NULL) != NULL )
     {
-        nColorTableComponent = atoi(CPLGetXMLValue(psSrc, "ColorTableComponent", "0"));
+        m_nColorTableComponent = atoi(CPLGetXMLValue(psSrc, "ColorTableComponent", "0"));
     }
 
     return CE_None;
@@ -1931,22 +1931,22 @@ VRTComplexSource::LookupValue( double dfInput )
 {
     // Find the index of the first element in the LUT input array that
     // is not smaller than the input value.
-    int i = static_cast<int>(std::lower_bound(padfLUTInputs, padfLUTInputs + nLUTItemCount, dfInput) - padfLUTInputs);
+    int i = static_cast<int>(std::lower_bound(m_padfLUTInputs, m_padfLUTInputs + m_nLUTItemCount, dfInput) - m_padfLUTInputs);
 
     if (i == 0)
-	return padfLUTOutputs[0];
+	return m_padfLUTOutputs[0];
 
     // If the index is beyond the end of the LUT input array, the input
     // value is larger than all the values in the array.
-    if (i == nLUTItemCount)
-	return padfLUTOutputs[nLUTItemCount - 1];
+    if (i == m_nLUTItemCount)
+	return m_padfLUTOutputs[m_nLUTItemCount - 1];
 
-    if (padfLUTInputs[i] == dfInput)
-	return padfLUTOutputs[i];
+    if (m_padfLUTInputs[i] == dfInput)
+	return m_padfLUTOutputs[i];
 
     // Otherwise, interpolate.
-    return padfLUTOutputs[i - 1] + (dfInput - padfLUTInputs[i - 1]) *
-	((padfLUTOutputs[i] - padfLUTOutputs[i - 1]) / (padfLUTInputs[i] - padfLUTInputs[i - 1]));
+    return m_padfLUTOutputs[i - 1] + (dfInput - m_padfLUTInputs[i - 1]) *
+	((m_padfLUTOutputs[i] - m_padfLUTOutputs[i - 1]) / (m_padfLUTInputs[i] - m_padfLUTInputs[i - 1]));
 }
 
 /************************************************************************/
@@ -1955,28 +1955,28 @@ VRTComplexSource::LookupValue( double dfInput )
 
 void VRTComplexSource::SetLinearScaling(double dfOffset, double dfScale)
 {
-    eScalingType = VRT_SCALING_LINEAR;
-    dfScaleOff = dfOffset;
-    dfScaleRatio = dfScale;
+    m_eScalingType = VRT_SCALING_LINEAR;
+    m_dfScaleOff = dfOffset;
+    m_dfScaleRatio = dfScale;
 }
 
 /************************************************************************/
 /*                         SetPowerScaling()                           */
 /************************************************************************/
 
-void VRTComplexSource::SetPowerScaling(double dfExponent,
-                                       double dfSrcMin,
-                                       double dfSrcMax,
-                                       double dfDstMin,
-                                       double dfDstMax)
+void VRTComplexSource::SetPowerScaling(double dfExponentIn,
+                                       double dfSrcMinIn,
+                                       double dfSrcMaxIn,
+                                       double dfDstMinIn,
+                                       double dfDstMaxIn)
 {
-    eScalingType = VRT_SCALING_EXPONENTIAL;
-    this->dfExponent = dfExponent;
-    this->dfSrcMin = dfSrcMin;
-    this->dfSrcMax = dfSrcMax;
-    this->dfDstMin = dfDstMin;
-    this->dfDstMax = dfDstMax;
-    bSrcMinMaxDefined = TRUE;
+    m_eScalingType = VRT_SCALING_EXPONENTIAL;
+    m_dfExponent = dfExponentIn;
+    m_dfSrcMin = dfSrcMinIn;
+    m_dfSrcMax = dfSrcMaxIn;
+    m_dfDstMin = dfDstMinIn;
+    m_dfDstMax = dfDstMaxIn;
+    m_bSrcMinMaxDefined = TRUE;
 }
 
 /************************************************************************/
@@ -1985,7 +1985,7 @@ void VRTComplexSource::SetPowerScaling(double dfExponent,
 
 void VRTComplexSource::SetColorTableComponent(int nComponent)
 {
-    nColorTableComponent = nComponent;
+    m_nColorTableComponent = nComponent;
 }
 
 /************************************************************************/
@@ -2019,9 +2019,9 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
 
-    if( osResampling.size() )
+    if( m_osResampling.size() )
     {
-        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
     else if( psExtraArgIn != NULL )
     {
@@ -2064,13 +2064,13 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
     float *pafData;
     CPLErr eErr;
     GDALColorTable* poColorTable = NULL;
-    int bIsComplex = GDALDataTypeIsComplex(eBufType);
-    GDALDataType eWrkDataType = (bIsComplex) ? GDT_CFloat32 : GDT_Float32;
-    int nWordSize = GDALGetDataTypeSize(eWrkDataType) / 8;
-    int bNoDataSetIsNan = bNoDataSet && CPLIsNan(dfNoDataValue);
-    int bNoDataSetAndNotNan = bNoDataSet && !CPLIsNan(dfNoDataValue);
+    const int bIsComplex = GDALDataTypeIsComplex(eBufType);
+    const GDALDataType eWrkDataType = (bIsComplex) ? GDT_CFloat32 : GDT_Float32;
+    const int nWordSize = GDALGetDataTypeSize(eWrkDataType) / 8;
+    const int bNoDataSetIsNan = m_bNoDataSet && CPLIsNan(m_dfNoDataValue);
+    const int bNoDataSetAndNotNan = m_bNoDataSet && !CPLIsNan(m_dfNoDataValue);
 
-    if( eScalingType == VRT_SCALING_LINEAR && bNoDataSet == FALSE && dfScaleRatio == 0)
+    if( m_eScalingType == VRT_SCALING_LINEAR && m_bNoDataSet == FALSE && m_dfScaleRatio == 0)
     {
 /* -------------------------------------------------------------------- */
 /*      Optimization when outputing a constant value                    */
@@ -2087,16 +2087,16 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
         }
 
         GDALRIOResampleAlg     eResampleAlgBack = psExtraArg->eResampleAlg;
-        if( osResampling.size() )
+        if( m_osResampling.size() )
         {
-            psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
+            psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
         }
 
-        eErr = poRasterBand->RasterIO( GF_Read, 
+        eErr = m_poRasterBand->RasterIO( GF_Read, 
                                        nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                        pafData, nOutXSize, nOutYSize, eWrkDataType,
                                        nWordSize, nWordSize * (GSpacing)nOutXSize, psExtraArg );
-        if( osResampling.size() )
+        if( m_osResampling.size() )
             psExtraArg->eResampleAlg = eResampleAlgBack;
 
         if( eErr != CE_None )
@@ -2105,9 +2105,9 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
             return eErr;
         }
 
-        if (nColorTableComponent != 0)
+        if (m_nColorTableComponent != 0)
         {
-            poColorTable = poRasterBand->GetColorTable();
+            poColorTable = m_poRasterBand->GetColorTable();
             if (poColorTable == NULL)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -2139,21 +2139,21 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                 float fResult = pafData[iX + iY * nOutXSize];
                 if( bNoDataSetIsNan && CPLIsNan(fResult) )
                     continue;
-                if( bNoDataSetAndNotNan && ARE_REAL_EQUAL(fResult, dfNoDataValue) )
+                if( bNoDataSetAndNotNan && ARE_REAL_EQUAL(fResult, m_dfNoDataValue) )
                     continue;
 
-                if (nColorTableComponent)
+                if (m_nColorTableComponent)
                 {
                     const GDALColorEntry* poEntry = poColorTable->GetColorEntry((int)fResult);
                     if (poEntry)
                     {
-                        if (nColorTableComponent == 1)
+                        if (m_nColorTableComponent == 1)
                             fResult = poEntry->c1;
-                        else if (nColorTableComponent == 2)
+                        else if (m_nColorTableComponent == 2)
                             fResult = poEntry->c2;
-                        else if (nColorTableComponent == 3)
+                        else if (m_nColorTableComponent == 3)
                             fResult = poEntry->c3;
-                        else if (nColorTableComponent == 4)
+                        else if (m_nColorTableComponent == 4)
                             fResult = poEntry->c4;
                     }
                     else
@@ -2169,22 +2169,22 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                     }
                 }
 
-                if( eScalingType == VRT_SCALING_LINEAR )
-                    fResult = (float) (fResult * dfScaleRatio + dfScaleOff);
-                else if( eScalingType == VRT_SCALING_EXPONENTIAL )
+                if( m_eScalingType == VRT_SCALING_LINEAR )
+                    fResult = (float) (fResult * m_dfScaleRatio + m_dfScaleOff);
+                else if( m_eScalingType == VRT_SCALING_EXPONENTIAL )
                 {
-                    if( !bSrcMinMaxDefined )
+                    if( !m_bSrcMinMaxDefined )
                     {
                         int bSuccessMin = FALSE, bSuccessMax = FALSE;
                         double adfMinMax[2];
-                        adfMinMax[0] = poRasterBand->GetMinimum(&bSuccessMin);
-                        adfMinMax[1] = poRasterBand->GetMaximum(&bSuccessMax);
+                        adfMinMax[0] = m_poRasterBand->GetMinimum(&bSuccessMin);
+                        adfMinMax[1] = m_poRasterBand->GetMaximum(&bSuccessMax);
                         if( (bSuccessMin && bSuccessMax) ||
-                            poRasterBand->ComputeRasterMinMax( TRUE, adfMinMax ) == CE_None )
+                            m_poRasterBand->ComputeRasterMinMax( TRUE, adfMinMax ) == CE_None )
                         {
-                            dfSrcMin = adfMinMax[0];
-                            dfSrcMax = adfMinMax[1];
-                            bSrcMinMaxDefined = TRUE;
+                            m_dfSrcMin = adfMinMax[0];
+                            m_dfSrcMax = adfMinMax[1];
+                            m_bSrcMinMaxDefined = TRUE;
                         }
                         else
                         {
@@ -2195,19 +2195,19 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                     }
 
                     double dfPowVal =
-                        (fResult - dfSrcMin) / (dfSrcMax - dfSrcMin);
+                        (fResult - m_dfSrcMin) / (m_dfSrcMax - m_dfSrcMin);
                     if( dfPowVal < 0.0 )
                         dfPowVal = 0.0;
                     else if( dfPowVal > 1.0 )
                         dfPowVal = 1.0;
-                    fResult = static_cast<float>((dfDstMax - dfDstMin) * pow( dfPowVal, dfExponent ) + dfDstMin);
+                    fResult = static_cast<float>((m_dfDstMax - m_dfDstMin) * pow( dfPowVal, m_dfExponent ) + m_dfDstMin);
                 }
 
-                if (nLUTItemCount)
+                if (m_nLUTItemCount)
                     fResult = static_cast<float>(LookupValue( fResult ));
 
-                if( nMaxValue != 0 && fResult > nMaxValue )
-                    fResult = static_cast<float>(nMaxValue);
+                if( m_nMaxValue != 0 && fResult > m_nMaxValue )
+                    fResult = static_cast<float>(m_nMaxValue);
 
                 if( eBufType == GDT_Byte )
                     *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
@@ -2223,10 +2223,10 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
                 /* Do not use color table */
 
-                if( eScalingType == VRT_SCALING_LINEAR )
+                if( m_eScalingType == VRT_SCALING_LINEAR )
                 {
-                    afResult[0] = (float) (afResult[0] * dfScaleRatio + dfScaleOff);
-                    afResult[1] = (float) (afResult[1] * dfScaleRatio + dfScaleOff);
+                    afResult[0] = (float) (afResult[0] * m_dfScaleRatio + m_dfScaleOff);
+                    afResult[1] = (float) (afResult[1] * m_dfScaleRatio + m_dfScaleOff);
                 }
 
                 /* Do not use LUT */
@@ -2239,13 +2239,13 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
             }
             else
             {
-                float fResult = static_cast<float>(dfScaleOff);
+                float fResult = static_cast<float>(m_dfScaleOff);
 
-                if (nLUTItemCount)
+                if (m_nLUTItemCount)
                     fResult = static_cast<float>(LookupValue( fResult ));
 
-                if( nMaxValue != 0 && fResult > nMaxValue )
-                    fResult = static_cast<float>(nMaxValue);
+                if( m_nMaxValue != 0 && fResult > m_nMaxValue )
+                    fResult = static_cast<float>(m_nMaxValue);
 
                 if( eBufType == GDT_Byte )
                     *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
@@ -2268,8 +2268,8 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
 double VRTComplexSource::GetMinimum( int nXSize, int nYSize, int *pbSuccess )
 {
-    if (dfScaleOff == 0.0 && dfScaleRatio == 1.0 &&
-        nLUTItemCount == 0 && nColorTableComponent == 0)
+    if (m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
+        m_nLUTItemCount == 0 && m_nColorTableComponent == 0)
     {
         return VRTSimpleSource::GetMinimum(nXSize, nYSize, pbSuccess);
     }
@@ -2284,8 +2284,8 @@ double VRTComplexSource::GetMinimum( int nXSize, int nYSize, int *pbSuccess )
 
 double VRTComplexSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
 {
-    if (dfScaleOff == 0.0 && dfScaleRatio == 1.0 &&
-        nLUTItemCount == 0 && nColorTableComponent == 0)
+    if (m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
+        m_nLUTItemCount == 0 && m_nColorTableComponent == 0)
     {
         return VRTSimpleSource::GetMaximum(nXSize, nYSize, pbSuccess);
     }
@@ -2300,8 +2300,8 @@ double VRTComplexSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
 
 CPLErr VRTComplexSource::ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK, double* adfMinMax )
 {
-    if (dfScaleOff == 0.0 && dfScaleRatio == 1.0 &&
-        nLUTItemCount == 0 && nColorTableComponent == 0)
+    if (m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
+        m_nLUTItemCount == 0 && m_nColorTableComponent == 0)
     {
         return VRTSimpleSource::ComputeRasterMinMax(nXSize, nYSize, bApproxOK, adfMinMax);
     }
@@ -2319,8 +2319,8 @@ CPLErr VRTComplexSource::GetHistogram( int nXSize, int nYSize,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc pfnProgress, void *pProgressData )
 {
-    if (dfScaleOff == 0.0 && dfScaleRatio == 1.0 &&
-        nLUTItemCount == 0 && nColorTableComponent == 0)
+    if (m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
+        m_nLUTItemCount == 0 && m_nColorTableComponent == 0)
     {
         return VRTSimpleSource::GetHistogram(nXSize, nYSize,
                                              dfMin, dfMax, nBuckets,
@@ -2342,8 +2342,8 @@ CPLErr VRTComplexSource::ComputeStatistics( int nXSize, int nYSize,
                                       double *pdfMean, double *pdfStdDev,
                                       GDALProgressFunc pfnProgress, void *pProgressData )
 {
-    if (dfScaleOff == 0.0 && dfScaleRatio == 1.0 &&
-        nLUTItemCount == 0 && nColorTableComponent == 0)
+    if (m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
+        m_nLUTItemCount == 0 && m_nColorTableComponent == 0)
     {
         return VRTSimpleSource::ComputeStatistics(nXSize, nYSize, bApproxOK, pdfMin, pdfMax,
                                            pdfMean, pdfStdDev,

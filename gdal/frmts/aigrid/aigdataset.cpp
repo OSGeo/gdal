@@ -111,26 +111,26 @@ class AIGRasterBand : public GDALPamRasterBand
 /*                           AIGRasterBand()                            */
 /************************************************************************/
 
-AIGRasterBand::AIGRasterBand( AIGDataset *poDS, int nBand )
+AIGRasterBand::AIGRasterBand( AIGDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
-    nBlockXSize = poDS->psInfo->nBlockXSize;
-    nBlockYSize = poDS->psInfo->nBlockYSize;
+    nBlockXSize = poDSIn->psInfo->nBlockXSize;
+    nBlockYSize = poDSIn->psInfo->nBlockYSize;
 
-    if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT
-        && poDS->psInfo->dfMin >= 0.0 && poDS->psInfo->dfMax <= 254.0 )
+    if( poDSIn->psInfo->nCellType == AIG_CELLTYPE_INT
+        && poDSIn->psInfo->dfMin >= 0.0 && poDSIn->psInfo->dfMax <= 254.0 )
     {
         eDataType = GDT_Byte;
     }
-    else if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT
-        && poDS->psInfo->dfMin >= -32767 && poDS->psInfo->dfMax <= 32767 )
+    else if( poDSIn->psInfo->nCellType == AIG_CELLTYPE_INT
+        && poDSIn->psInfo->dfMin >= -32767 && poDSIn->psInfo->dfMax <= 32767 )
     {
         eDataType = GDT_Int16;
     }
-    else if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT )
+    else if( poDSIn->psInfo->nCellType == AIG_CELLTYPE_INT )
     {
         eDataType = GDT_Int32;
     }

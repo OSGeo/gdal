@@ -71,13 +71,13 @@ class ADSRange
     { 
     } 
 
-    ADSRange( const int idx_first, const int idx_last, 
-        const int off_first, const int off_last, 
-        const TimeDelta &mjd_first, const TimeDelta &mjd_last, 
-        const TimeDelta &mjd_m_first, const TimeDelta &mjd_m_last ) :
-        idx_first(idx_first), idx_last(idx_last), off_first(off_first),
-        off_last(off_last), mjd_first(mjd_first), mjd_last(mjd_last),
-        mjd_m_first(mjd_m_first), mjd_m_last(mjd_m_last) 
+    ADSRange( const int idx_firstIn, const int idx_lastIn, 
+        const int off_firstIn, const int off_lastIn, 
+        const TimeDelta &mjd_firstIn, const TimeDelta &mjd_lastIn, 
+        const TimeDelta &mjd_m_firstIn, const TimeDelta &mjd_m_lastIn ) :
+        idx_first(idx_firstIn), idx_last(idx_lastIn), off_first(off_firstIn),
+        off_last(off_lastIn), mjd_first(mjd_firstIn), mjd_last(mjd_lastIn),
+        mjd_m_first(mjd_m_firstIn), mjd_m_last(mjd_m_lastIn) 
     { 
     } 
 

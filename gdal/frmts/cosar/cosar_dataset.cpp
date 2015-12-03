@@ -68,10 +68,10 @@ public:
  * COSARRasterBand Implementation
  *****************************************************************************/
 
-COSARRasterBand::COSARRasterBand(COSARDataset *pDS, unsigned long nRTNB)  // :
+COSARRasterBand::COSARRasterBand(COSARDataset *pDS, unsigned long nRTNBIn)  // :
     // nBurstNumber(1)
 {
-	this->nRTNB = nRTNB;
+	this->nRTNB = nRTNBIn;
 	nBlockXSize = pDS->GetRasterXSize();
 	nBlockYSize = 1;
 	eDataType = GDT_CInt16;

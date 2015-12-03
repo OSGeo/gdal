@@ -241,19 +241,19 @@ class PNGRasterBand : public GDALPamRasterBand
 /*                           PNGRasterBand()                            */
 /************************************************************************/
 
-PNGRasterBand::PNGRasterBand( PNGDataset *poDS, int nBand ) :
+PNGRasterBand::PNGRasterBand( PNGDataset *poDSIn, int nBandIn ) :
     bHaveNoData(FALSE),
     dfNoDataValue(-1)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
-    if( poDS->nBitDepth == 16 )
+    if( poDSIn->nBitDepth == 16 )
         eDataType = GDT_UInt16;
     else
         eDataType = GDT_Byte;
 
-    nBlockXSize = poDS->nRasterXSize;;
+    nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
 #ifdef SUPPORT_CREATE

@@ -106,16 +106,16 @@ g2int getpdsindex(g2int number)
 //
 //$$$/
 {
-           g2int j,getpdsindex=-1;
+           g2int j,l_getpdsindex=-1;
 
            for (j=0;j<MAXPDSTEMP;j++) {
               if (number == templatespds[j].template_num) {
-                 getpdsindex=j;
-                 return(getpdsindex);
+                 l_getpdsindex=j;
+                 return(l_getpdsindex);
               }
            }
 
-           return(getpdsindex);
+           return(l_getpdsindex);
 }
 
 

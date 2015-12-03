@@ -49,7 +49,7 @@ VRTDriver::VRTDriver()
         VRTWarpedOverviewTransform,
         VRTDeserializeWarpedOverviewTransformer );
 #else
-    pDeserializerData = NULL;
+    m_pDeserializerData = NULL;
 #endif
 }
 

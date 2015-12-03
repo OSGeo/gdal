@@ -105,16 +105,16 @@ class RRasterBand : public GDALPamRasterBand
 /*                            RRasterBand()                             */
 /************************************************************************/
 
-RRasterBand::RRasterBand( RDataset *poDS, int nBand, 
-                          const double *padfMatrixValues )
+RRasterBand::RRasterBand( RDataset *poDSIn, int nBandIn, 
+                          const double *padfMatrixValuesIn )
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->padfMatrixValues = padfMatrixValues;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->padfMatrixValues = padfMatrixValuesIn;
 
     eDataType = GDT_Float64;
 
-    nBlockXSize = poDS->nRasterXSize;
+    nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 }
 

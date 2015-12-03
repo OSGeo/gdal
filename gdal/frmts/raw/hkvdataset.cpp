@@ -230,13 +230,13 @@ class HKVDataset : public RawDataset
 /*                           HKVRasterBand()                            */
 /************************************************************************/
 
-HKVRasterBand::HKVRasterBand( HKVDataset *poDSIn, int nBandIn, VSILFILE * fpRaw,
-                              unsigned int nImgOffset, int nPixelOffset,
-                              int nLineOffset,
-                              GDALDataType eDataType, int bNativeOrder ) :
-    RawRasterBand( reinterpret_cast<GDALDataset *>( poDSIn ), nBandIn, fpRaw,
-                   nImgOffset, nPixelOffset, nLineOffset, eDataType,
-                   bNativeOrder, TRUE )
+HKVRasterBand::HKVRasterBand( HKVDataset *poDSIn, int nBandIn, VSILFILE * fpRawIn,
+                              unsigned int nImgOffsetIn, int nPixelOffsetIn,
+                              int nLineOffsetIn,
+                              GDALDataType eDataTypeIn, int bNativeOrderIn ) :
+    RawRasterBand( reinterpret_cast<GDALDataset *>( poDSIn ), nBandIn, fpRawIn,
+                   nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn, eDataTypeIn,
+                   bNativeOrderIn, TRUE )
 
 {
     poDS = poDSIn;
@@ -907,7 +907,7 @@ const GDAL_GCP *HKVDataset::GetGCPs()
 /*                          ProcessGeorefGCP()                          */
 /************************************************************************/
 
-void HKVDataset::ProcessGeorefGCP( char **papszGeoref, const char *pszBase,
+void HKVDataset::ProcessGeorefGCP( char **papszGeorefIn, const char *pszBase,
                                    double dfRasterX, double dfRasterY )
 
 {
@@ -917,17 +917,17 @@ void HKVDataset::ProcessGeorefGCP( char **papszGeoref, const char *pszBase,
     char szFieldName[128];
     sprintf( szFieldName, "%s.latitude", pszBase );
     double dfLat;
-    if( CSLFetchNameValue(papszGeoref, szFieldName) == NULL )
+    if( CSLFetchNameValue(papszGeorefIn, szFieldName) == NULL )
         return;
     else
-        dfLat = CPLAtof(CSLFetchNameValue(papszGeoref, szFieldName));
+        dfLat = CPLAtof(CSLFetchNameValue(papszGeorefIn, szFieldName));
 
     sprintf( szFieldName, "%s.longitude", pszBase );
     double dfLong;
-    if( CSLFetchNameValue(papszGeoref, szFieldName) == NULL )
+    if( CSLFetchNameValue(papszGeorefIn, szFieldName) == NULL )
         return;
     else
-        dfLong = CPLAtof(CSLFetchNameValue(papszGeoref, szFieldName));
+        dfLong = CPLAtof(CSLFetchNameValue(papszGeorefIn, szFieldName));
 
 /* -------------------------------------------------------------------- */
 /*      Add the gcp to the internal list.                               */

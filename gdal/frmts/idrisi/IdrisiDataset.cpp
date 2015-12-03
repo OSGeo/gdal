@@ -1437,13 +1437,13 @@ CPLErr IdrisiDataset::SetProjection( const char *pszProjString )
 /*                          IdrisiRasterBand()                          */
 /************************************************************************/
 
-IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDS, 
-                                    int nBand, 
-                                    GDALDataType eDataType )
+IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDSIn, 
+                                    int nBandIn, 
+                                    GDALDataType eDataTypeIn )
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eDataType = eDataType;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->eDataType = eDataTypeIn;
     this->poDefaultRAT = NULL;
     this->fMinimum = 0.0;
     this->fMaximum = 0.0;
@@ -1462,9 +1462,9 @@ IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDS,
 
     nRecordSize  = poDS->GetRasterXSize() * GDALGetDataTypeSize( eDataType ) / 8;
 
-    pabyScanLine = (GByte*) VSI_MALLOC2_VERBOSE( nRecordSize, poDS->nBands );
+    pabyScanLine = (GByte*) VSI_MALLOC2_VERBOSE( nRecordSize, poDSIn->nBands );
 
-    nRecordSize *= poDS->nBands;
+    nRecordSize *= poDSIn->nBands;
 }
 
 /************************************************************************/

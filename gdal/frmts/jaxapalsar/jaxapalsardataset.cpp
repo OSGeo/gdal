@@ -219,11 +219,13 @@ public:
 /*                         PALSARJaxaRasterBand()                       */
 /************************************************************************/
 
-PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS,
-                                            int nBand, VSILFILE *fp ) :
+PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDSIn,
+                                            int nBandIn, VSILFILE *fpIn ) :
     nPolarization(hh)
 {
-    this->fp = fp;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    this->fp = fpIn;
 
     /* Read image options record to determine the type of data */
     VSIFSeekL( fp, BITS_PER_SAMPLE_OFFSET, SEEK_SET );
@@ -245,7 +247,7 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS,
         nFileType = level_15;
     }
 
-    poDS->nFileType = nFileType;
+    poDSIn->nFileType = nFileType;
 
     /* Read number of range/azimuth lines */
     VSIFSeekL( fp, NUMBER_LINES_OFFSET, SEEK_SET );
@@ -260,8 +262,8 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS,
                     (nFileType != level_15 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET))
         / nDenom;
 
-    poDS->nRasterXSize = nRasterXSize;
-    poDS->nRasterYSize = nRasterYSize;
+    poDSIn->nRasterXSize = nRasterXSize;
+    poDSIn->nRasterYSize = nRasterYSize;
 
     /* Polarization */
     switch (nBand) {

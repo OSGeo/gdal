@@ -1066,15 +1066,15 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
                   IS->is[5], IS->ns[5], gribLen, xmissp, xmisss, simpVer)
        != 0) {
 #ifdef DEBUG
-      FILE *fp;
-      if ((fp = fopen ("dump.is0", "wt")) != NULL) {
+      FILE *l_fp;
+      if ((l_fp = fopen ("dump.is0", "wt")) != NULL) {
          for (i = 0; i < 8; i++) {
-            fprintf (fp, "---Section %d---\n", (int) i);
+            fprintf (l_fp, "---Section %d---\n", (int) i);
             for (j = 1; j <= IS->ns[i]; j++) {
-               fprintf (fp, "IS%d Item %d = %d\n", (int) i, (int) j, IS->is[i][j - 1]);
+               fprintf (l_fp, "IS%d Item %d = %d\n", (int) i, (int) j, IS->is[i][j - 1]);
             }
          }
-         fclose (fp);
+         fclose (l_fp);
       }
 #endif
       preErrSprintf ("Inside ReadGrib2Record.. Problems in MetaParse\n");

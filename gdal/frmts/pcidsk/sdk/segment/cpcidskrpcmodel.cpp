@@ -85,8 +85,8 @@ struct CPCIDSKRPCModelSegment::PCIDSKRPCInfo
     PCIDSKBuffer seg_data;
 };
 
-CPCIDSKRPCModelSegment::CPCIDSKRPCModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer) :
-    CPCIDSKSegment(file, segment, segment_pointer), pimpl_(new CPCIDSKRPCModelSegment::PCIDSKRPCInfo), 
+CPCIDSKRPCModelSegment::CPCIDSKRPCModelSegment(PCIDSKFile *fileIn, int segmentIn,const char *segment_pointer) :
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer), pimpl_(new CPCIDSKRPCModelSegment::PCIDSKRPCInfo), 
     loaded_(false),mbModified(false)
 {
     Load();

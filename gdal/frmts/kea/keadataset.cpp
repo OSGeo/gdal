@@ -412,7 +412,7 @@ GDALDataset *KEADataset::CreateCopy( const char * pszFilename, GDALDataset *pSrc
 }
 
 // constructor
-KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccess )
+KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccessIn )
 {
     try
     {
@@ -433,7 +433,7 @@ KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccess )
         this->nBands = m_pImageIO->getNumOfImageBands();
         this->nRasterXSize = static_cast<int>(pSpatialInfo->xSize);
         this->nRasterYSize = static_cast<int>(pSpatialInfo->ySize);
-        this->eAccess = eAccess;
+        this->eAccess = eAccessIn;
 
         // create all the bands
         for( int nCount = 0; nCount < nBands; nCount++ )

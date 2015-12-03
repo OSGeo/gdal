@@ -699,7 +699,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
 
 STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len, int *side, blxdata *outbuf, int outbufsize, int overviewlevel) {
     unsigned char *inptr=inbuf;
-    int resolution,div,level,c,n,i,j,dpos,v,tmp,a,value,index,step,cellsize;
+    int resolution,l_div,level,c,n,i,j,dpos,v,tmp,a,value,l_index,step,cellsize;
     int baseside[12];
     blxdata *base, *diff;
     struct component_s linfo[MAXLEVELS][MAXCOMPONENTS];
@@ -713,8 +713,8 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
     len --;
 
     tmp = (resolution+4)*32;
-    for(div=1; div<12; div++) 
-	baseside[div-1] = tmp >> div;
+    for(l_div=1; l_div<12; l_div++) 
+	baseside[l_div-1] = tmp >> l_div;
 
     if(side != NULL)
 	*side = tmp >> overviewlevel;
@@ -912,26 +912,26 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
         }
 	a = *((char *)inptr++);
         len --;
-	index=0;
+	l_index=0;
 	while(len >= 3) {
 	    step = inptr[0] | (inptr[1]<<8); inptr+=2;
 	    value = *((char *)inptr++);
             len -= 3;
 
-	    index += step;
+	    l_index += step;
 
 	    if(value & 1) 
 		value = (value-1)/2-a;
 	    else	
 		value = value/2+a;
 
-	    if(index>=cellsize) {
+	    if(l_index>=cellsize) {
 		BLXerror0("Cell data corrupt\n");
 		outbuf = NULL;
 		goto error;
 	    }
 
-	    outbuf[index] = outbuf[index] + (blxdata)value;
+	    outbuf[l_index] = outbuf[l_index] + (blxdata)value;
 	}
 
         if (len != 0)

@@ -49,20 +49,20 @@ using namespace PCIDSK;
 /*                           CTiledChannel()                            */
 /************************************************************************/
 
-CTiledChannel::CTiledChannel( PCIDSKBuffer &image_header,
-                              uint64 ih_offset,
-                              CPL_UNUSED PCIDSKBuffer &file_header,
-                              int channelnum,
-                              CPCIDSKFile *file,
-                              eChanType pixel_type )
-        : CPCIDSKChannel( image_header, ih_offset, file, pixel_type, channelnum)
+CTiledChannel::CTiledChannel( PCIDSKBuffer &image_headerIn,
+                              uint64 ih_offsetIn,
+                              CPL_UNUSED PCIDSKBuffer &file_headerIn,
+                              int channelnumIn,
+                              CPCIDSKFile *fileIn,
+                              eChanType pixel_typeIn )
+        : CPCIDSKChannel( image_headerIn, ih_offsetIn, fileIn, pixel_typeIn, channelnumIn)
 {
 /* -------------------------------------------------------------------- */
 /*      Establish the virtual file we will be accessing.                */
 /* -------------------------------------------------------------------- */
     std::string filename;
 
-    image_header.Get(64,64,filename);
+    image_headerIn.Get(64,64,filename);
 
     assert( strstr(filename.c_str(),"SIS=") != NULL );
 
@@ -75,7 +75,7 @@ CTiledChannel::CTiledChannel( PCIDSKBuffer &image_header,
 /*      will set the size and blocksize values to something             */
 /*      unreasonable and set them properly in EstablishAccess()         */
 /* -------------------------------------------------------------------- */
-    if( channelnum == -1 )
+    if( channelnumIn == -1 )
     {
         width = -1;
         height = -1;

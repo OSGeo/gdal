@@ -525,7 +525,7 @@ int DDFRecord::ReadHeader()
             int nEntryOffset = (i*nFieldEntryWidth) + _sizeFieldTag;
             int nFieldLength = DDFScanInt(pachData + nEntryOffset,
                                           _sizeFieldLength);
-            char *tmpBuf = NULL;
+            tmpBuf = NULL;
             if( nFieldLength >= 0 )
                 tmpBuf = (char*)VSI_MALLOC_VERBOSE(nFieldLength);
             if( tmpBuf == NULL )
@@ -725,7 +725,7 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     int         nBytesRemaining;
 
-    const char *pachData = poField->GetSubfieldData(poSFDefn,
+    const char *l_pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
                                                     iSubfieldIndex);
 
@@ -735,7 +735,7 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
 /*      Assume an error has occurred if no bytes are consumed.           */
 /* -------------------------------------------------------------------- */
     int nConsumedBytes = 0;
-    int nResult = poSFDefn->ExtractIntData( pachData, nBytesRemaining, 
+    int nResult = poSFDefn->ExtractIntData( l_pachData, nBytesRemaining, 
                                             &nConsumedBytes );
 
     if( nConsumedBytes > 0 )
@@ -798,7 +798,7 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     int         nBytesRemaining;
     
-    const char *pachData = poField->GetSubfieldData(poSFDefn,
+    const char *l_pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
                                                     iSubfieldIndex);
 
@@ -806,7 +806,7 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
 /*      Return the extracted value.                                     */
 /* -------------------------------------------------------------------- */
     int nConsumedBytes = 0;
-    double dfResult = poSFDefn->ExtractFloatData( pachData, nBytesRemaining, 
+    double dfResult = poSFDefn->ExtractFloatData( l_pachData, nBytesRemaining, 
                                                   &nConsumedBytes );
 
     if( nConsumedBytes > 0 )
@@ -872,7 +872,7 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     int         nBytesRemaining;
     
-    const char *pachData = poField->GetSubfieldData(poSFDefn,
+    const char *l_pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
                                                     iSubfieldIndex);
 
@@ -881,7 +881,7 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     *pnSuccess = TRUE;
 
-    return( poSFDefn->ExtractStringData( pachData, nBytesRemaining, NULL ) );
+    return( poSFDefn->ExtractStringData( l_pachData, nBytesRemaining, NULL ) );
 }
 
 /************************************************************************/

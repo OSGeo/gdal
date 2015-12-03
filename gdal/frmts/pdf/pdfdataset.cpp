@@ -173,13 +173,13 @@ class GDALPDFOutputDev : public SplashOutputDev
 
         virtual void startPage(int pageNum, GfxState *state
 #ifdef POPPLER_0_23_OR_LATER
-                               ,XRef* xref
+                               ,XRef* xrefIn
 #endif
         )
         {
             SplashOutputDev::startPage(pageNum, state
 #ifdef POPPLER_0_23_OR_LATER
-                                       ,xref
+                                       ,xrefIn
 #endif
             );
             SplashBitmap* poBitmap = getBitmap();
@@ -562,12 +562,12 @@ void GDALPDFDumper::Dump(GDALPDFDictionary* poDict, int nDepth)
 /*                         PDFRasterBand()                              */
 /************************************************************************/
 
-PDFRasterBand::PDFRasterBand( PDFDataset *poDS, int nBand, int nResolutionLevel )
+PDFRasterBand::PDFRasterBand( PDFDataset *poDSIn, int nBandIn, int nResolutionLevelIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->nResolutionLevel = nResolutionLevel;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->nResolutionLevel = nResolutionLevelIn;
 
     eDataType = GDT_Byte;
 
@@ -575,23 +575,23 @@ PDFRasterBand::PDFRasterBand( PDFDataset *poDS, int nBand, int nResolutionLevel 
     {
         nBlockXSize = 256;
         nBlockYSize = 256;
-        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+        poDSIn->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
-    else if( poDS->nBlockXSize )
+    else if( poDSIn->nBlockXSize )
     {
-        nBlockXSize = poDS->nBlockXSize;
-        nBlockYSize = poDS->nBlockYSize;
+        nBlockXSize = poDSIn->nBlockXSize;
+        nBlockYSize = poDSIn->nBlockYSize;
     }
-    else if( poDS->GetRasterXSize() < 64 * 1024 * 1024 / poDS->GetRasterYSize() )
+    else if( poDSIn->GetRasterXSize() < 64 * 1024 * 1024 / poDSIn->GetRasterYSize() )
     {
-        nBlockXSize = poDS->GetRasterXSize();
+        nBlockXSize = poDSIn->GetRasterXSize();
         nBlockYSize = 1;
     }
     else
     {
-        nBlockXSize = MIN(1024, poDS->GetRasterXSize());
-        nBlockYSize = MIN(1024, poDS->GetRasterYSize());
-        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+        nBlockXSize = MIN(1024, poDSIn->GetRasterXSize());
+        nBlockYSize = MIN(1024, poDSIn->GetRasterYSize());
+        poDSIn->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 }
 
@@ -2088,7 +2088,7 @@ class PDFImageRasterBand : public PDFRasterBand
 /*                        PDFImageRasterBand()                          */
 /************************************************************************/
 
-PDFImageRasterBand::PDFImageRasterBand( PDFDataset *poDS, int nBand ) : PDFRasterBand(poDS, nBand, 0)
+PDFImageRasterBand::PDFImageRasterBand( PDFDataset *poDSIn, int nBandIn ) : PDFRasterBand(poDSIn, nBandIn, 0)
 
 {
 }
@@ -2851,7 +2851,7 @@ int GDALPDFParseStreamContent(const char* pszContent,
 int PDFDataset::CheckTiledRaster()
 {
     size_t i;
-    int nBlockXSize = 0, nBlockYSize = 0;
+    int l_nBlockXSize = 0, l_nBlockYSize = 0;
     const double dfUserUnit = dfDPI * USER_UNIT_IN_INCH;
 
     /* First pass : check that all tiles have same DPI, */
@@ -2909,18 +2909,18 @@ int PDFDataset::CheckTiledRaster()
                      asTiles[i].dfWidth, asTiles[i].dfHeight);
             return FALSE;
         }
-        if( nBlockXSize == 0 && nBlockYSize == 0 &&
+        if( l_nBlockXSize == 0 && l_nBlockYSize == 0 &&
             nX == 0 && nY != 0 )
         {
-            nBlockXSize = nWidth;
-            nBlockYSize = nHeight;
+            l_nBlockXSize = nWidth;
+            l_nBlockYSize = nHeight;
         }
     }
-    if( nBlockXSize <= 0 || nBlockYSize <= 0 || nBlockXSize > 2048 || nBlockYSize > 2048 )
+    if( l_nBlockXSize <= 0 || l_nBlockYSize <= 0 || l_nBlockXSize > 2048 || l_nBlockYSize > 2048 )
         return FALSE;
 
-    int nXBlocks = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
-    int nYBlocks = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
+    int nXBlocks = DIV_ROUND_UP(nRasterXSize, l_nBlockXSize);
+    int nYBlocks = DIV_ROUND_UP(nRasterYSize, l_nBlockYSize);
 
     /* Second pass to determine that all tiles are properly aligned on block size */
     for(i=0; i<asTiles.size(); i++)
@@ -2932,17 +2932,17 @@ int PDFDataset::CheckTiledRaster()
         int nWidth = (int)(asTiles[i].dfWidth + 1e-8);
         int nHeight = (int)(asTiles[i].dfHeight + 1e-8);
         int bOK = TRUE;
-        int nBlockXOff = nX / nBlockXSize;
-        if( (nX % nBlockXSize) != 0 )
+        int nBlockXOff = nX / l_nBlockXSize;
+        if( (nX % l_nBlockXSize) != 0 )
             bOK = FALSE;
-        if( nBlockXOff < nXBlocks - 1 && nWidth != nBlockXSize )
+        if( nBlockXOff < nXBlocks - 1 && nWidth != l_nBlockXSize )
             bOK = FALSE;
         if( nBlockXOff == nXBlocks - 1 && nX + nWidth != nRasterXSize )
             bOK = FALSE;
 
-        if( nY > 0 && nHeight != nBlockYSize )
+        if( nY > 0 && nHeight != l_nBlockYSize )
             bOK = FALSE;
-        if( nY == 0 && nHeight != nRasterYSize - (nYBlocks - 1) * nBlockYSize)
+        if( nY == 0 && nHeight != nRasterYSize - (nYBlocks - 1) * l_nBlockYSize)
             bOK = FALSE;
 
         if( !bOK )
@@ -2962,13 +2962,13 @@ int PDFDataset::CheckTiledRaster()
         int nHeight = (int)(asTiles[i].dfHeight + 1e-8);
         int nX = (int)(dfX+0.1);
         int nY = nRasterYSize - ((int)(dfY+0.1) + nHeight);
-        int nBlockXOff = nX / nBlockXSize;
-        int nBlockYOff = nY / nBlockYSize;
+        int nBlockXOff = nX / l_nBlockXSize;
+        int nBlockYOff = nY / l_nBlockYSize;
         aiTiles[ nBlockYOff * nXBlocks + nBlockXOff ] = (int) i;
     }
 
-    this->nBlockXSize = nBlockXSize;
-    this->nBlockYSize = nBlockYSize;
+    this->nBlockXSize = l_nBlockXSize;
+    this->nBlockYSize = l_nBlockYSize;
 
     return TRUE;
 }
@@ -3138,7 +3138,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                                 poSubtype->GetType() == PDFObjectType_Name &&
                                 poSubtype->GetName() == "Form")
                             {
-                                int nLength = poPageStream->GetLength();
+                                nLength = poPageStream->GetLength();
                                 if( nLength < 100000 )
                                 {
                                     pszContent = poPageStream->GetBytes();
@@ -4210,15 +4210,15 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     poDocPodofo->SetPassword(pszUserPwd);
                 }
-                catch(PoDoFo::PdfError& oError)
+                catch(PoDoFo::PdfError& oError2)
                 {
-                    if (oError.GetError() == PoDoFo::ePdfError_InvalidPassword)
+                    if (oError2.GetError() == PoDoFo::ePdfError_InvalidPassword)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined, "Invalid password");
                     }
                     else
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : %s", oError.what());
+                        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : %s", oError2.what());
                     }
                     delete poDocPodofo;
                     return NULL;
@@ -6391,8 +6391,8 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     if (dfRotationShearTerm < 1e-5 * dfPixelSize ||
         (bUseLib.test(PDFLIB_PDFIUM) && MIN(fabs(adfGeoTransform[2]), fabs(adfGeoTransform[4])) < 1e-5 * dfPixelSize))
     {
-        double dfLRX = adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1] + nRasterYSize * adfGeoTransform[2];
-        double dfLRY = adfGeoTransform[3] + nRasterXSize * adfGeoTransform[4] + nRasterYSize * adfGeoTransform[5];
+        dfLRX = adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1] + nRasterYSize * adfGeoTransform[2];
+        dfLRY = adfGeoTransform[3] + nRasterXSize * adfGeoTransform[4] + nRasterYSize * adfGeoTransform[5];
         adfGeoTransform[1] = (dfLRX - adfGeoTransform[0]) / nRasterXSize;
         adfGeoTransform[5] = (dfLRY - adfGeoTransform[3]) / nRasterYSize;
         adfGeoTransform[2] = adfGeoTransform[4] = 0;

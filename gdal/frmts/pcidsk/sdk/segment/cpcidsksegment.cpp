@@ -43,12 +43,12 @@ using namespace PCIDSK;
 /*                           PCIDSKSegment()                            */
 /************************************************************************/
 
-CPCIDSKSegment::CPCIDSKSegment( PCIDSKFile *file, int segment,
+CPCIDSKSegment::CPCIDSKSegment( PCIDSKFile *fileIn, int segmentIn,
                               const char *segment_pointer )
 
 {
-    this->file = file;
-    this->segment = segment;
+    this->file = fileIn;
+    this->segment = segmentIn;
 
     LoadSegmentPointer( segment_pointer );
     LoadSegmentHeader(); // eventually we might want to defer this.

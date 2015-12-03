@@ -36,11 +36,11 @@
 /************************
  * \brief Constructor
  ************************/
-PostGISRasterTileDataset::PostGISRasterTileDataset(PostGISRasterDataset* poRDS,
+PostGISRasterTileDataset::PostGISRasterTileDataset(PostGISRasterDataset* poRDSIn,
                                                    int nXSize, 
                                                    int nYSize)
 {
-    this->poRDS = poRDS;
+    this->poRDS = poRDSIn;
     this->pszPKID = NULL;
     this->nRasterXSize = nXSize;
     this->nRasterYSize = nYSize;

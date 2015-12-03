@@ -47,16 +47,16 @@ const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
 /*      This constructor is used for main file channels.                */
 /************************************************************************/
 
-PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS, 
-                          PCIDSKFile *poFile,
-                          int nBand )
+PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDSIn, 
+                          PCIDSKFile *poFileIn,
+                          int nBandIn )
 
 {
     Initialize();
 
-    this->poDS = poDS;
-    this->poFile = poFile;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->poFile = poFileIn;
+    this->nBand = nBandIn;
 
     poChannel = poFile->GetChannel( nBand );
 
@@ -82,12 +82,12 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
 /*      as bands.                                                       */
 /************************************************************************/
 
-PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannel )
+PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannelIn )
 
 {
     Initialize();
 
-    this->poChannel = poChannel;
+    this->poChannel = poChannelIn;
 
     nBand = 1;
 

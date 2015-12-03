@@ -294,16 +294,16 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
 /*                        JP2OpenJPEGRasterBand()                       */
 /************************************************************************/
 
-JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBand,
-                                              GDALDataType eDataType, int nBits,
-                                              int bPromoteTo8Bit,
-                                              int nBlockXSize, int nBlockYSize )
+JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDSIn, int nBandIn,
+                                              GDALDataType eDataTypeIn, int nBits,
+                                              int bPromoteTo8BitIn,
+                                              int nBlockXSizeIn, int nBlockYSizeIn )
 
 {
-    this->eDataType = eDataType;
-    this->nBlockXSize = nBlockXSize;
-    this->nBlockYSize = nBlockYSize;
-    this->bPromoteTo8Bit = bPromoteTo8Bit;
+    this->eDataType = eDataTypeIn;
+    this->nBlockXSize = nBlockXSizeIn;
+    this->nBlockYSize = nBlockYSizeIn;
+    this->bPromoteTo8Bit = bPromoteTo8BitIn;
     poCT = NULL;
 
     if( (nBits % 8) != 0 )
@@ -312,8 +312,8 @@ JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBan
                         "IMAGE_STRUCTURE" );
     GDALRasterBand::SetMetadataItem("COMPRESSION", "JPEG2000",
                     "IMAGE_STRUCTURE" );
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 }
 
 /************************************************************************/
@@ -546,15 +546,15 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
 
         if( nBlocksToLoad > 1 )
         {
-            int nThreads = MIN(nBlocksToLoad, nMaxThreads);
-            CPLJoinableThread** pahThreads = (CPLJoinableThread**) VSI_CALLOC_VERBOSE( sizeof(CPLJoinableThread*), nThreads );
+            int l_nThreads = MIN(nBlocksToLoad, nMaxThreads);
+            CPLJoinableThread** pahThreads = (CPLJoinableThread**) VSI_CALLOC_VERBOSE( sizeof(CPLJoinableThread*), l_nThreads );
             if( pahThreads == NULL )
             {
                 return -1;
             }
             int i;
 
-            CPLDebug("OPENJPEG", "%d blocks to load (%d threads)", nBlocksToLoad, nThreads);
+            CPLDebug("OPENJPEG", "%d blocks to load (%d threads)", nBlocksToLoad, l_nThreads);
 
             oJob.poGDS = this;
             oJob.nBand = poBand->GetBand();
@@ -586,13 +586,13 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
             /* This is a workaround to a design defect of the block cache */
             GDALRasterBlock::FlushDirtyBlocks();
 
-            for(i=0;i<nThreads;i++)
+            for(i=0;i<l_nThreads;i++)
             {
                 pahThreads[i] = CPLCreateJoinableThread(JP2OpenJPEGReadBlockInThread, &oJob);
                 if( pahThreads[i] == NULL )
                     oJob.bSuccess = false;
             }
-            for(i=0;i<nThreads;i++)
+            for(i=0;i<l_nThreads;i++)
                 CPLJoinThread( pahThreads[i] );
             CPLFree(pahThreads);
             if( !oJob.bSuccess )
@@ -690,7 +690,7 @@ static opj_stream_t* JP2OpenJPEGCreateReadStream(JP2OpenJPEGFile* psJP2OpenJPEGF
 /*                             ReadBlock()                              */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
+CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
                                       int nBlockXOff, int nBlockYOff, void * pImage,
                                       int nBandCount, int* panBandMap )
 {
@@ -733,7 +733,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
         goto end;
     }
 
-    sJP2OpenJPEGFile.fp = fp;
+    sJP2OpenJPEGFile.fp = fpIn;
     sJP2OpenJPEGFile.nBaseOffset = nCodeStreamStart;
     pStream = JP2OpenJPEGCreateReadStream(&sJP2OpenJPEGFile, nCodeStreamLength);
     if( pStream == NULL )
@@ -1538,7 +1538,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 #ifdef DEBUG
-    int i;
     CPLDebug("OPENJPEG", "nX0 = %u", nX0);
     CPLDebug("OPENJPEG", "nY0 = %u", nY0);
     CPLDebug("OPENJPEG", "nTileW = %u", nTileW);
@@ -1553,7 +1552,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug("OPENJPEG", "psImage->numcomps = %d", psImage->numcomps);
     //CPLDebug("OPENJPEG", "psImage->color_space = %d", psImage->color_space);
     CPLDebug("OPENJPEG", "numResolutions = %d", numResolutions);
-    for(i=0;i<(int)psImage->numcomps;i++)
+    for(int i=0;i<(int)psImage->numcomps;i++)
     {
         CPLDebug("OPENJPEG", "psImage->comps[%d].dx = %u", i, psImage->comps[i].dx);
         CPLDebug("OPENJPEG", "psImage->comps[%d].dy = %u", i, psImage->comps[i].dy);

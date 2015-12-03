@@ -2155,9 +2155,9 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                                    int& iObj,
                                    int& iObjLayer)
 {
-    GDALDataset* poClippingDS = oPageContext.poClippingDS;
-    int  nHeight = poClippingDS->GetRasterYSize();
-    double dfUserUnit = oPageContext.dfDPI * USER_UNIT_IN_INCH;
+    GDALDataset* const  poClippingDS = oPageContext.poClippingDS;
+    const int  nHeight = poClippingDS->GetRasterYSize();
+    const double dfUserUnit = oPageContext.dfDPI * USER_UNIT_IN_INCH;
     double adfGeoTransform[6];
     poClippingDS->GetGeoTransform(adfGeoTransform);
 
@@ -2771,10 +2771,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         {
             GDALPDFDictionaryRW oDict;
 
-            GDALDataset* poClippingDS = oPageContext.poClippingDS;
             int  nWidth = poClippingDS->GetRasterXSize();
-            int  nHeight = poClippingDS->GetRasterYSize();
-            double dfUserUnit = oPageContext.dfDPI * USER_UNIT_IN_INCH;
             double dfWidthInUserUnit = nWidth / dfUserUnit + oPageContext.sMargins.nLeft + oPageContext.sMargins.nRight;
             double dfHeightInUserUnit = nHeight / dfUserUnit + oPageContext.sMargins.nBottom + oPageContext.sMargins.nTop;
 
@@ -2824,10 +2821,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         /* -------------------------------------------------------------- */
         VSIFPrintfL(fp, "stream\n");
 
-        vsi_l_offset nStreamStart = VSIFTellL(fp);
+        nStreamStart = VSIFTellL(fp);
 
-        VSILFILE* fpGZip = NULL;
-        VSILFILE* fpBack = fp;
+        fpGZip = NULL;
+        fpBack = fp;
         if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
         {
             fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
@@ -2879,7 +2876,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
             VSIFCloseL(fpGZip);
         fp = fpBack;
 
-        vsi_l_offset nStreamEnd = VSIFTellL(fp);
+        nStreamEnd = VSIFTellL(fp);
         VSIFPrintfL(fp, "\n");
         VSIFPrintfL(fp, "endstream\n");
         EndObj();
@@ -2904,7 +2901,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
 
     if (bWriteOGRAttributes)
     {
-        int iField = -1;
+        iField = -1;
         if (pszOGRDisplayField &&
             (iField = OGR_FD_GetFieldIndex(OGR_F_GetDefnRef(hFeat), pszOGRDisplayField)) >= 0)
             osFeatureName = OGR_F_GetFieldAsString(hFeat, iField);
@@ -4067,8 +4064,7 @@ void GDALPDFWriter::WritePages()
 
             /* Build "Order" array of D dict */
             GDALPDFArrayRW* poArrayOrder = new GDALPDFArrayRW();
-            size_t i;
-            for(i=0;i<asOCGs.size();i++)
+            for(size_t i=0;i<asOCGs.size();i++)
             {
                 poArrayOrder->Add(asOCGs[i].nId, 0);
                 if (i + 1 < asOCGs.size() && asOCGs[i+1].nParentId == asOCGs[i].nId)
@@ -4155,7 +4151,7 @@ void GDALPDFWriter::WritePages()
             }
 
             GDALPDFArrayRW* poArrayOGCs = new GDALPDFArrayRW();
-            for(i=0;i<asOCGs.size();i++)
+            for(size_t i=0;i<asOCGs.size();i++)
                 poArrayOGCs->Add(asOCGs[i].nId, 0);
             poDictOCProperties->Add("OCGs", poArrayOGCs);
         }
@@ -4209,7 +4205,7 @@ class GDALPDFClippingDataset: public GDALDataset
         double adfGeoTransform[6];
 
     public:
-        GDALPDFClippingDataset(GDALDataset* poSrcDS, double adfClippingExtent[4]) : poSrcDS(poSrcDS)
+        GDALPDFClippingDataset(GDALDataset* poSrcDSIn, double adfClippingExtent[4]) : poSrcDS(poSrcDSIn)
         {
             double adfSrcGeoTransform[6];
             poSrcDS->GetGeoTransform(adfSrcGeoTransform);

@@ -168,7 +168,7 @@ class GS7BGRasterBand : public GDALPamRasterBand
 /*                           GS7BGRasterBand()                          */
 /************************************************************************/
 
-GS7BGRasterBand::GS7BGRasterBand( GS7BGDataset *poDS, int nBand ) :
+GS7BGRasterBand::GS7BGRasterBand( GS7BGDataset *poDSIn, int nBandIn ) :
     dfMinX(0.0), dfMaxX(0.0), dfMinY(0.0), dfMaxY(0.0), dfMinZ(0.0),
     dfMaxZ(0.0),
     pafRowMinZ(NULL),
@@ -177,8 +177,8 @@ GS7BGRasterBand::GS7BGRasterBand( GS7BGDataset *poDS, int nBand ) :
     nMaxZRow(-1)
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = GDT_Float64;
 

@@ -655,7 +655,7 @@ DDFFieldDefn *DDFModule::GetField(int i)
 /*      them up when the module is destroyed.                           */
 /************************************************************************/
 
-void DDFModule::AddCloneRecord( DDFRecord * poRecord )
+void DDFModule::AddCloneRecord( DDFRecord * poRecordIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -671,21 +671,21 @@ void DDFModule::AddCloneRecord( DDFRecord * poRecord )
 /* -------------------------------------------------------------------- */
 /*      Add to the list.                                                */
 /* -------------------------------------------------------------------- */
-    papoClones[nCloneCount++] = poRecord;
+    papoClones[nCloneCount++] = poRecordIn;
 }
 
 /************************************************************************/
 /*                         RemoveCloneRecord()                          */
 /************************************************************************/
 
-void DDFModule::RemoveCloneRecord( DDFRecord * poRecord )
+void DDFModule::RemoveCloneRecord( DDFRecord * poRecordIn )
 
 {
     int         i;
  
     for( i = 0; i < nCloneCount; i++ )
     {
-        if( papoClones[i] == poRecord )
+        if( papoClones[i] == poRecordIn )
         {
             papoClones[i] = papoClones[nCloneCount-1];
             nCloneCount--;

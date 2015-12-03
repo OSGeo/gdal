@@ -792,7 +792,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
                 !bErrorFlag)
         {
             int	    nPixValue;
-            int     nRunCount, i;
+            int     nRunCount;
 
             nPixValue = (byNext & byValueMask) >> nValueShift;
 

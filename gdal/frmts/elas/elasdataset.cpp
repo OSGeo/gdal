@@ -172,15 +172,15 @@ class ELASRasterBand : public GDALPamRasterBand
 /*                           ELASRasterBand()                            */
 /************************************************************************/
 
-ELASRasterBand::ELASRasterBand( ELASDataset *poDS, int nBand )
+ELASRasterBand::ELASRasterBand( ELASDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
-    this->eAccess = poDS->eAccess;
+    this->eAccess = poDSIn->eAccess;
 
-    eDataType = poDS->eRasterDataType;
+    eDataType = poDSIn->eRasterDataType;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;

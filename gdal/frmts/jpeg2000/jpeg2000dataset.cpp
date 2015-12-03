@@ -220,15 +220,15 @@ class JPEG2000RasterBand : public GDALPamRasterBand
 /*                           JPEG2000RasterBand()                       */
 /************************************************************************/
 
-JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
-                int iDepth, int bSignedness )
+JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDSIn, int nBandIn,
+                int iDepthIn, int bSignednessIn )
 
 {
-    this->poDS = poDS;
-    poGDS = poDS;
-    this->nBand = nBand;
-    this->iDepth = iDepth;
-    this->bSignedness = bSignedness;
+    this->poDS = poDSIn;
+    poGDS = poDSIn;
+    this->nBand = nBandIn;
+    this->iDepth = iDepthIn;
+    this->bSignedness = bSignednessIn;
 
     // XXX: JasPer can't handle data with depth > 32 bits
     // Maximum possible depth for JPEG2000 is 38!
@@ -256,11 +256,11 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
     }
     // FIXME: Figure out optimal block size!
     // Should the block size be fixed or determined dynamically?
-    nBlockXSize = MIN(256, poDS->nRasterXSize);
-    nBlockYSize = MIN(256, poDS->nRasterYSize);
+    nBlockXSize = MIN(256, poDSIn->nRasterXSize);
+    nBlockYSize = MIN(256, poDSIn->nRasterYSize);
     psMatrix = jas_matrix_create(nBlockYSize, nBlockXSize);
 
-    if( iDepth % 8 != 0 && !poDS->bPromoteTo8Bit )
+    if( iDepth % 8 != 0 && !poDSIn->bPromoteTo8Bit )
     {
         SetMetadataItem( "NBITS", 
                          CPLString().Printf("%d",iDepth), 

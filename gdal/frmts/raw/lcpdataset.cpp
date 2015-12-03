@@ -1625,7 +1625,6 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     pszOriginalProjection = (char *)poSrcDS->GetProjectionRef();
     if( !EQUAL( pszOriginalProjection, "" ) )
     {
-        VSILFILE                *fp;
         OGRSpatialReference     oSRS;
 
         char *pszDirname = CPLStrdup( CPLGetPath(pszFilename) );

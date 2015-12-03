@@ -56,10 +56,10 @@ namespace
 #endif
 }
 
-CPCIDSKToutinModelSegment::CPCIDSKToutinModelSegment(PCIDSKFile *file, 
-                                                   int segment,
+CPCIDSKToutinModelSegment::CPCIDSKToutinModelSegment(PCIDSKFile *fileIn, 
+                                                   int segmentIn,
                                                    const char *segment_pointer) :
-    CPCIDSKEphemerisSegment(file, segment, segment_pointer,false)
+    CPCIDSKEphemerisSegment(fileIn, segmentIn, segment_pointer,false)
 {
     loaded_ = false;
     mbModified = false;

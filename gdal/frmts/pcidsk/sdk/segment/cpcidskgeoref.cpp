@@ -46,9 +46,9 @@ static double PAK2PCI( double deg, int function );
 /*                           CPCIDSKGeoref()                            */
 /************************************************************************/
 
-CPCIDSKGeoref::CPCIDSKGeoref( PCIDSKFile *file, int segment,
+CPCIDSKGeoref::CPCIDSKGeoref( PCIDSKFile *fileIn, int segmentIn,
                               const char *segment_pointer )
-        : CPCIDSKSegment( file, segment, segment_pointer )
+        : CPCIDSKSegment( fileIn, segmentIn, segment_pointer )
 
 {
     loaded = false;
@@ -180,18 +180,18 @@ std::string CPCIDSKGeoref::GetGeosys()
 /*                            GetTransform()                            */
 /************************************************************************/
 
-void CPCIDSKGeoref::GetTransform( double &a1, double &a2, double &xrot, 
-                                  double &b1, double &yrot, double &b3 )
+void CPCIDSKGeoref::GetTransform( double &a1Out, double &a2Out, double &xrotOut, 
+                                  double &b1Out, double &yrotOut, double &b3Out )
 
 {
     Load();
 
-    a1   = this->a1;
-    a2   = this->a2;
-    xrot = this->xrot;
-    b1   = this->b1;
-    yrot = this->yrot;
-    b3   = this->b3;
+    a1Out   = this->a1;
+    a2Out   = this->a2;
+    xrotOut = this->xrot;
+    b1Out   = this->b1;
+    yrotOut = this->yrot;
+    b3Out   = this->b3;
 }
 
 /************************************************************************/
@@ -243,14 +243,14 @@ std::vector<double> CPCIDSKGeoref::GetParameters()
 /*                            WriteSimple()                             */
 /************************************************************************/
 
-void CPCIDSKGeoref::WriteSimple( std::string const& geosys, 
-                                 double a1, double a2, double xrot, 
-                                 double b1, double yrot, double b3 )
+void CPCIDSKGeoref::WriteSimple( std::string const& geosysIn, 
+                                 double a1In, double a2In, double xrotIn, 
+                                 double b1In, double yrotIn, double b3In )
 
 {
     Load();
 
-    std::string geosys_clean(ReformatGeosys( geosys ));
+    std::string geosys_clean(ReformatGeosys( geosysIn ));
 
 /* -------------------------------------------------------------------- */
 /*      Establish the appropriate units code when possible.             */
@@ -299,14 +299,14 @@ void CPCIDSKGeoref::WriteSimple( std::string const& geosys,
     PrepareGCTPFields();
 
     // SD.PRO.P26
-    seg_data.Put( a1,  1980 + 0*26, 26, "%26.18E" );
-    seg_data.Put( a2,  1980 + 1*26, 26, "%26.18E" );
-    seg_data.Put( xrot,1980 + 2*26, 26, "%26.18E" );
+    seg_data.Put( a1In,  1980 + 0*26, 26, "%26.18E" );
+    seg_data.Put( a2In,  1980 + 1*26, 26, "%26.18E" );
+    seg_data.Put( xrotIn,1980 + 2*26, 26, "%26.18E" );
 
     // SD.PRO.P27
-    seg_data.Put( b1,   2526 + 0*26, 26, "%26.18E" );
-    seg_data.Put( yrot, 2526 + 1*26, 26, "%26.18E" );
-    seg_data.Put( b3,   2526 + 2*26, 26, "%26.18E" );
+    seg_data.Put( b1In,   2526 + 0*26, 26, "%26.18E" );
+    seg_data.Put( yrotIn, 2526 + 1*26, 26, "%26.18E" );
+    seg_data.Put( b3In,   2526 + 2*26, 26, "%26.18E" );
 
     WriteToFile( seg_data.buffer, 0, seg_data.buffer_size );
 
@@ -393,7 +393,7 @@ std::vector<double> CPCIDSKGeoref::GetUSGSParameters()
 /*      DecodeGeosys() function in the PCI SDK does.                    */
 /************************************************************************/
 
-std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosys )
+std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -402,7 +402,7 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosys )
 /* -------------------------------------------------------------------- */
     char local_buf[33];
 
-    strncpy( local_buf, geosys.c_str(), 16 );
+    strncpy( local_buf, geosysIn.c_str(), 16 );
     local_buf[16] = '\0';
     strcat( local_buf, "                " );
     local_buf[16] = '\0';
@@ -773,7 +773,7 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosys )
 /* -------------------------------------------------------------------- */
     else
     {
-        sprintf( local_buf, "%-11.11s %4s", geosys.c_str(), earthmodel );
+        sprintf( local_buf, "%-11.11s %4s", geosysIn.c_str(), earthmodel );
     }
 
     return local_buf;

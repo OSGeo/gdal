@@ -143,7 +143,7 @@ void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
 /*      of from an existing file.                                       */
 /************************************************************************/
 
-int DDFFieldDefn::Create( const char *pszTag, const char *pszFieldName, 
+int DDFFieldDefn::Create( const char *pszTagIn, const char *pszFieldName, 
                           const char *pszDescription, 
                           DDF_data_struct_code eDataStructCode,
                           DDF_data_type_code   eDataTypeCode,
@@ -152,7 +152,7 @@ int DDFFieldDefn::Create( const char *pszTag, const char *pszFieldName,
 {
     CPLAssert( this->pszTag == NULL );
     poModule = NULL;
-    this->pszTag = CPLStrdup( pszTag );
+    this->pszTag = CPLStrdup( pszTagIn );
     _fieldName = CPLStrdup( pszFieldName );
     _arrayDescr = CPLStrdup( pszDescription );
     

@@ -52,11 +52,11 @@ class MBTilesBand;
 static OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
                                       GDALAccess eAccess)
 {
-    const char* apszAllowedDrivers[] = { "SQLITE", NULL };
+    const char* l_apszAllowedDrivers[] = { "SQLITE", NULL };
     return (OGRDataSourceH)GDALOpenEx(pszFilename,
                                       GDAL_OF_VECTOR |
                                       ((eAccess == GA_Update) ? GDAL_OF_UPDATE : 0),
-                                      apszAllowedDrivers, NULL, NULL);
+                                      l_apszAllowedDrivers, NULL, NULL);
 }
 
 /************************************************************************/
@@ -151,15 +151,15 @@ class MBTilesBand: public GDALPamRasterBand
 /*                            MBTilesBand()                          */
 /************************************************************************/
 
-MBTilesBand::MBTilesBand(MBTilesDataset* poDS, int nBand,
-                                GDALDataType eDataType,
-                                int nBlockXSize, int nBlockYSize)
+MBTilesBand::MBTilesBand(MBTilesDataset* poDSIn, int nBandIn,
+                                GDALDataType eDataTypeIn,
+                                int nBlockXSizeIn, int nBlockYSizeIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eDataType = eDataType;
-    this->nBlockXSize = nBlockXSize;
-    this->nBlockYSize = nBlockYSize;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->eDataType = eDataTypeIn;
+    this->nBlockXSize = nBlockXSizeIn;
+    this->nBlockYSize = nBlockYSizeIn;
 }
 
 /************************************************************************/
@@ -974,11 +974,11 @@ MBTilesDataset::MBTilesDataset()
 /*                          MBTilesDataset()                            */
 /************************************************************************/
 
-MBTilesDataset::MBTilesDataset(MBTilesDataset* poMainDS, int nLevel)
+MBTilesDataset::MBTilesDataset(MBTilesDataset* poMainDSIn, int nLevelIn)
 {
     bMustFree = FALSE;
-    this->nLevel = nLevel;
-    this->poMainDS = poMainDS;
+    this->nLevel = nLevelIn;
+    this->poMainDS = poMainDSIn;
     nResolutions = poMainDS->nResolutions - nLevel;
     hDS = poMainDS->hDS;
     papoOverviews = poMainDS->papoOverviews + nLevel;

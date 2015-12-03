@@ -444,25 +444,25 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
 /************************************************************************/
 
 ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet
-        (ECRGTOCSubDataset* poSubDataset,
-         const char* fileName,
-         int nXSize, int nYSize,
-         double dfMinX, double dfMaxY,
-         double dfPixelXSize, double dfPixelYSize) :
+        (ECRGTOCSubDataset* poSubDatasetIn,
+         const char* fileNameIn,
+         int nXSizeIn, int nYSizeIn,
+         double dfMinXIn, double dfMaxYIn,
+         double dfPixelXSizeIn, double dfPixelYSizeIn) :
     /* Mark as shared since the VRT will take several references if we are in RGBA mode (4 bands for this dataset) */
-    GDALProxyPoolDataset(fileName, nXSize, nYSize, GA_ReadOnly, TRUE, SRS_WKT_WGS84),
+    GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly, TRUE, SRS_WKT_WGS84),
     checkDone(FALSE),
     checkOK(FALSE)
 {
-    this->poSubDataset = poSubDataset;
-    this->dfMinX = dfMinX;
-    this->dfMaxY = dfMaxY;
-    this->dfPixelXSize = dfPixelXSize;
-    this->dfPixelYSize = dfPixelYSize;
+    this->poSubDataset = poSubDatasetIn;
+    this->dfMinX = dfMinXIn;
+    this->dfMaxY = dfMaxYIn;
+    this->dfPixelXSize = dfPixelXSizeIn;
+    this->dfPixelYSize = dfPixelYSizeIn;
 
     for(int i=0;i<3;i++)
     {
-        SetBand(i + 1, new GDALProxyPoolRasterBand(this, i+1, GDT_Byte, nXSize, 1));
+        SetBand(i + 1, new GDALProxyPoolRasterBand(this, i+1, GDT_Byte, nXSizeIn, 1));
     }
 }
 
@@ -477,20 +477,20 @@ int ECRGTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* poSourceDS)
 {
     /*int nSrcBlockXSize, nSrcBlockYSize;
     int nBlockXSize, nBlockYSize;*/
-    double adfGeoTransform[6];
+    double l_adfGeoTransform[6];
     if (checkDone)
         return checkOK;
 
     checkOK = TRUE;
     checkDone = TRUE;
 
-    poSourceDS->GetGeoTransform(adfGeoTransform);
-    WARN_CHECK_DS(fabs(adfGeoTransform[0] - dfMinX) < 1e-10);
-    WARN_CHECK_DS(fabs(adfGeoTransform[3] - dfMaxY) < 1e-10);
-    WARN_CHECK_DS(fabs(adfGeoTransform[1] - dfPixelXSize) < 1e-10);
-    WARN_CHECK_DS(fabs(adfGeoTransform[5] - (-dfPixelYSize)) < 1e-10);
-    WARN_CHECK_DS(adfGeoTransform[2] == 0 &&
-                  adfGeoTransform[4] == 0); /* No rotation */
+    poSourceDS->GetGeoTransform(l_adfGeoTransform);
+    WARN_CHECK_DS(fabs(l_adfGeoTransform[0] - dfMinX) < 1e-10);
+    WARN_CHECK_DS(fabs(l_adfGeoTransform[3] - dfMaxY) < 1e-10);
+    WARN_CHECK_DS(fabs(l_adfGeoTransform[1] - dfPixelXSize) < 1e-10);
+    WARN_CHECK_DS(fabs(l_adfGeoTransform[5] - (-dfPixelYSize)) < 1e-10);
+    WARN_CHECK_DS(l_adfGeoTransform[2] == 0 &&
+                  l_adfGeoTransform[4] == 0); /* No rotation */
     WARN_CHECK_DS(poSourceDS->GetRasterCount() == 3);
     WARN_CHECK_DS(poSourceDS->GetRasterXSize() == nRasterXSize);
     WARN_CHECK_DS(poSourceDS->GetRasterYSize() == nRasterYSize);

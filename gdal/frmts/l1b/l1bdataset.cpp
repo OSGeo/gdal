@@ -371,12 +371,12 @@ class L1BMaskBand: public GDALPamRasterBand
 /*                            L1BMaskBand()                             */
 /************************************************************************/
 
-L1BMaskBand::L1BMaskBand( L1BDataset *poDS )
+L1BMaskBand::L1BMaskBand( L1BDataset *poDSIn )
 {
-    CPLAssert(poDS->eL1BFormat == L1B_NOAA15 ||
-              poDS->eL1BFormat == L1B_NOAA15_NOHDR);
+    CPLAssert(poDSIn->eL1BFormat == L1B_NOAA15 ||
+              poDSIn->eL1BFormat == L1B_NOAA15_NOHDR);
 
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     eDataType = GDT_Byte;
 
     nRasterXSize = poDS->GetRasterXSize();
@@ -413,11 +413,11 @@ CPLErr L1BMaskBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                           L1BRasterBand()                            */
 /************************************************************************/
 
-L1BRasterBand::L1BRasterBand( L1BDataset *poDS, int nBand )
+L1BRasterBand::L1BRasterBand( L1BDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     eDataType = GDT_UInt16;
 
     nBlockXSize = poDS->GetRasterXSize();
@@ -553,7 +553,7 @@ CPLErr L1BRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                           L1BDataset()                               */
 /************************************************************************/
 
-L1BDataset::L1BDataset( L1BFileFormat eL1BFormat )
+L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn )
 
 {
     eSource = UNKNOWN_STATION;
@@ -570,7 +570,7 @@ L1BDataset::L1BDataset( L1BFileFormat eL1BFormat )
     eLocationIndicator = DESCEND; // XXX: should be initialised
     iGCPStart = 0;
     iGCPStep = 0;
-    this->eL1BFormat = eL1BFormat;
+    this->eL1BFormat = eL1BFormatIn;
     nBufferSize = 0;
     eSpacecraftID = TIROSN;
     eProductType = HRPT;
@@ -2300,11 +2300,11 @@ class L1BGeolocRasterBand: public GDALRasterBand
 /*                        L1BGeolocDataset()                            */
 /************************************************************************/
 
-L1BGeolocDataset::L1BGeolocDataset(L1BDataset* poL1BDS,
-                                   int bInterpolGeolocationDS)
+L1BGeolocDataset::L1BGeolocDataset(L1BDataset* poL1BDSIn,
+                                   int bInterpolGeolocationDSIn)
 {
-    this->poL1BDS = poL1BDS;
-    this->bInterpolGeolocationDS = bInterpolGeolocationDS;
+    this->poL1BDS = poL1BDSIn;
+    this->bInterpolGeolocationDS = bInterpolGeolocationDSIn;
     if( bInterpolGeolocationDS )
         nRasterXSize = poL1BDS->nRasterXSize;
     else
@@ -2325,12 +2325,12 @@ L1BGeolocDataset::~L1BGeolocDataset()
 /*                        L1BGeolocRasterBand()                         */
 /************************************************************************/
 
-L1BGeolocRasterBand::L1BGeolocRasterBand(L1BGeolocDataset* poDS, int nBand)
+L1BGeolocRasterBand::L1BGeolocRasterBand(L1BGeolocDataset* poDSIn, int nBandIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    nRasterXSize = poDS->nRasterXSize;
-    nRasterYSize = poDS->nRasterYSize;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    nRasterXSize = poDSIn->nRasterXSize;
+    nRasterYSize = poDSIn->nRasterYSize;
     eDataType = GDT_Float64;
     nBlockXSize = nRasterXSize;
     nBlockYSize = 1;
@@ -2433,8 +2433,8 @@ L1BInterpol(double vals[],
     /* Interpolate all intermediate points using two before and two after */
     for (i=knownFirst; i<IDX(numKnown-1); i++)
     {
-        double x[MIDDLE_INTERP_ORDER];
-        double y[MIDDLE_INTERP_ORDER];
+        double x2[MIDDLE_INTERP_ORDER];
+        double y2[MIDDLE_INTERP_ORDER];
         int startpt;
 
         /* Find a suitable set of two known points before and two after */
@@ -2445,10 +2445,10 @@ L1BInterpol(double vals[],
             startpt = numKnown-MIDDLE_INTERP_ORDER;
         for (j=0; j<MIDDLE_INTERP_ORDER; j++)
         {
-            x[j] = IDX(startpt+j);
-            y[j] = vals[IDX(startpt+j)];
+            x2[j] = IDX(startpt+j);
+            y2[j] = vals[IDX(startpt+j)];
         }
-        vals[i] = LagrangeInterpol(x, y, i, MIDDLE_INTERP_ORDER);
+        vals[i] = LagrangeInterpol(x2, y2, i, MIDDLE_INTERP_ORDER);
     }
 }
 
@@ -2598,11 +2598,11 @@ class L1BSolarZenithAnglesRasterBand: public GDALRasterBand
 /*                  L1BSolarZenithAnglesDataset()                       */
 /************************************************************************/
 
-L1BSolarZenithAnglesDataset::L1BSolarZenithAnglesDataset(L1BDataset* poL1BDS)
+L1BSolarZenithAnglesDataset::L1BSolarZenithAnglesDataset(L1BDataset* poL1BDSIn)
 {
-    this->poL1BDS = poL1BDS;
+    this->poL1BDS = poL1BDSIn;
     nRasterXSize = 51;
-    nRasterYSize = poL1BDS->nRasterYSize;
+    nRasterYSize = poL1BDSIn->nRasterYSize;
 }
 
 /************************************************************************/
@@ -2618,12 +2618,12 @@ L1BSolarZenithAnglesDataset::~L1BSolarZenithAnglesDataset()
 /*                  L1BSolarZenithAnglesRasterBand()                    */
 /************************************************************************/
 
-L1BSolarZenithAnglesRasterBand::L1BSolarZenithAnglesRasterBand(L1BSolarZenithAnglesDataset* poDS, int nBand)
+L1BSolarZenithAnglesRasterBand::L1BSolarZenithAnglesRasterBand(L1BSolarZenithAnglesDataset* poDSIn, int nBandIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    nRasterXSize = poDS->nRasterXSize;
-    nRasterYSize = poDS->nRasterYSize;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    nRasterXSize = poDSIn->nRasterXSize;
+    nRasterYSize = poDSIn->nRasterYSize;
     eDataType = GDT_Float32;
     nBlockXSize = nRasterXSize;
     nBlockYSize = 1;
@@ -2783,9 +2783,9 @@ class L1BNOAA15AnglesRasterBand: public GDALRasterBand
 /*                       L1BNOAA15AnglesDataset()                       */
 /************************************************************************/
 
-L1BNOAA15AnglesDataset::L1BNOAA15AnglesDataset(L1BDataset* poL1BDS)
+L1BNOAA15AnglesDataset::L1BNOAA15AnglesDataset(L1BDataset* poL1BDSIn)
 {
-    this->poL1BDS = poL1BDS;
+    this->poL1BDS = poL1BDSIn;
     nRasterXSize = 51;
     nRasterYSize = poL1BDS->nRasterYSize;
 }
@@ -2803,12 +2803,12 @@ L1BNOAA15AnglesDataset::~L1BNOAA15AnglesDataset()
 /*                      L1BNOAA15AnglesRasterBand()                     */
 /************************************************************************/
 
-L1BNOAA15AnglesRasterBand::L1BNOAA15AnglesRasterBand(L1BNOAA15AnglesDataset* poDS, int nBand)
+L1BNOAA15AnglesRasterBand::L1BNOAA15AnglesRasterBand(L1BNOAA15AnglesDataset* poDSIn, int nBandIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    nRasterXSize = poDS->nRasterXSize;
-    nRasterYSize = poDS->nRasterYSize;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    nRasterXSize = poDSIn->nRasterXSize;
+    nRasterYSize = poDSIn->nRasterYSize;
     eDataType = GDT_Float32;
     nBlockXSize = nRasterXSize;
     nBlockYSize = 1;
@@ -2911,11 +2911,11 @@ class L1BCloudsRasterBand: public GDALRasterBand
 /*                         L1BCloudsDataset()                           */
 /************************************************************************/
 
-L1BCloudsDataset::L1BCloudsDataset(L1BDataset* poL1BDS)
+L1BCloudsDataset::L1BCloudsDataset(L1BDataset* poL1BDSIn)
 {
-    this->poL1BDS = poL1BDS;
-    nRasterXSize = poL1BDS->nRasterXSize;
-    nRasterYSize = poL1BDS->nRasterYSize;
+    this->poL1BDS = poL1BDSIn;
+    nRasterXSize = poL1BDSIn->nRasterXSize;
+    nRasterYSize = poL1BDSIn->nRasterYSize;
 }
 
 /************************************************************************/
@@ -2931,12 +2931,12 @@ L1BCloudsDataset::~L1BCloudsDataset()
 /*                         L1BCloudsRasterBand()                        */
 /************************************************************************/
 
-L1BCloudsRasterBand::L1BCloudsRasterBand(L1BCloudsDataset* poDS, int nBand)
+L1BCloudsRasterBand::L1BCloudsRasterBand(L1BCloudsDataset* poDSIn, int nBandIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    nRasterXSize = poDS->nRasterXSize;
-    nRasterYSize = poDS->nRasterYSize;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    nRasterXSize = poDSIn->nRasterXSize;
+    nRasterYSize = poDSIn->nRasterYSize;
     eDataType = GDT_Byte;
     nBlockXSize = nRasterXSize;
     nBlockYSize = 1;

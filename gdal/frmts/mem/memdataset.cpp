@@ -52,7 +52,7 @@ GDALRasterBandH MEMCreateRasterBand( GDALDataset *poDS, int nBand,
 /*                           MEMRasterBand()                            */
 /************************************************************************/
 
-MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
+MEMRasterBand::MEMRasterBand( GDALDataset *poDSIn, int nBandIn,
                               GByte *pabyDataIn, GDALDataType eTypeIn, 
                               GSpacing nPixelOffsetIn, GSpacing nLineOffsetIn,
                               int bAssumeOwnership, const char * pszPixelType) :
@@ -70,8 +70,8 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
     dfScale(1.0),
     psSavedHistograms(NULL)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     this->eAccess = poDS->GetAccess();
 

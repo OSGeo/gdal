@@ -113,19 +113,19 @@ private:
 /*                         JPIPKAKRasterBand()                          */
 /************************************************************************/
 
-JPIPKAKRasterBand::JPIPKAKRasterBand( int nBand, int nDiscardLevels,
-                                      kdu_codestream *oCodeStream,
+JPIPKAKRasterBand::JPIPKAKRasterBand( int nBandIn, int nDiscardLevelsIn,
+                                      kdu_codestream *oCodeStreamIn,
                                       int nResCount,
                                       JPIPKAKDataset *poBaseDSIn )
 
 {
-    this->nBand = nBand;
+    this->nBand = nBandIn;
     poBaseDS = poBaseDSIn;
 
     eDataType = poBaseDSIn->eDT;
 
-    this->nDiscardLevels = nDiscardLevels;
-    this->oCodeStream = oCodeStream;
+    this->nDiscardLevels = nDiscardLevelsIn;
+    this->oCodeStream = oCodeStreamIn;
 
     oCodeStream->apply_input_restrictions( 0, 0, nDiscardLevels, 0, NULL );
     oCodeStream->get_dims( 0, band_dims );
@@ -609,7 +609,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 
         while (!bFinished && !bError )
         {
-            CPLHTTPResult *psResult = CPLHTTPFetch(osRequestUrl, apszOptions);
+            psResult = CPLHTTPFetch(osRequestUrl, apszOptions);
             bFinished = ReadFromInput(psResult->pabyData, psResult->nDataLen,
                                       bError );
             CPLHTTPDestroyResult(psResult);
@@ -990,17 +990,17 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
 /******************************************/
 /*           KakaduClassId()              */
 /******************************************/
-int JPIPKAKDataset::KakaduClassId(int nClassId)
+int JPIPKAKDataset::KakaduClassId(int nClassIdIn)
 {
-    if (nClassId == 0)
+    if (nClassIdIn == 0)
         return KDU_PRECINCT_DATABIN;
-    else if (nClassId == 2)
+    else if (nClassIdIn == 2)
         return KDU_TILE_HEADER_DATABIN;
-    else if (nClassId == 6)
+    else if (nClassIdIn == 6)
         return KDU_MAIN_HEADER_DATABIN;
-    else if (nClassId == 8)  
+    else if (nClassIdIn == 8)  
         return KDU_META_DATABIN;
-    else if (nClassId == 4)
+    else if (nClassIdIn == 4)
         return KDU_TILE_DATABIN;
     else
         return -1;

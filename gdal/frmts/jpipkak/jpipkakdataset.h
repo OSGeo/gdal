@@ -77,15 +77,15 @@ public:
     int IsFinal(){return bIsFinal;}
     int IsEOR(){return bIsEOR;}
 
-    void SetId(long nId){this->nId = nId;}
-    void SetAux(long nAux){this->nAux = nAux;}
-    void SetClassId(long nClassId){this->nClassId = nClassId;}
-    void SetCodestreamIdx(long nCodestream){this->nCodestream = nCodestream;}
-    void SetOffset(long nOffset){this->nOffset = nOffset;}
-    void SetLen(long nLen){this->nLen = nLen;}
-    void SetData(GByte* pabyData){this->pabyData = pabyData;}
-    void SetFinal(int bIsFinal){this->bIsFinal = bIsFinal;}
-    void SetEOR(int bIsEOR){this->bIsEOR = bIsEOR;}
+    void SetId(long nIdIn){this->nId = nIdIn;}
+    void SetAux(long nAuxIn){this->nAux = nAuxIn;}
+    void SetClassId(long nClassIdIn){this->nClassId = nClassIdIn;}
+    void SetCodestreamIdx(long nCodestreamIn){this->nCodestream = nCodestreamIn;}
+    void SetOffset(long nOffsetIn){this->nOffset = nOffsetIn;}
+    void SetLen(long nLenIn){this->nLen = nLenIn;}
+    void SetData(GByte* pabyDataIn){this->pabyData = pabyDataIn;}
+    void SetFinal(int bIsFinalIn){this->bIsFinal = bIsFinalIn;}
+    void SetEOR(int bIsEORIn){this->bIsEOR = bIsEORIn;}
     JPIPDataSegment();
     ~JPIPDataSegment();
 };

@@ -465,7 +465,7 @@ int Clock_NumDay (int month, int day, sInt4 year, char f_tot)
  * Arthur Taylor / MDL
  *
  * PURPOSE
- *   To format part of the output clock string.
+ *   To format part of the output l_clock string.
  *
  * ARGUMENTS
  *    buffer = The output string to write to. (Output)
@@ -708,17 +708,17 @@ static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
  */
 sChar Clock_GetTimeZone ()
 {
-   struct tm time;
+   struct tm l_time;
    time_t ansTime;
    struct tm *gmTime;
    static int timeZone = 9999;
 
    if (timeZone == 9999) {
       /* Cheap method of getting global time_zone variable. */
-      memset (&time, 0, sizeof (struct tm));
-      time.tm_year = 70;
-      time.tm_mday = 2;
-      ansTime = mktime (&time);
+      memset (&l_time, 0, sizeof (struct tm));
+      l_time.tm_year = 70;
+      l_time.tm_mday = 2;
+      ansTime = mktime (&l_time);
       gmTime = gmtime (&ansTime);
       timeZone = gmTime->tm_hour;
       if (gmTime->tm_mday != 2) {
@@ -740,7 +740,7 @@ sChar Clock_GetTimeZone ()
  * At 2 AM DT (or 1 AM ST) in October -> 1 AM ST (and we return 0)
  *
  * ARGUMENTS
- *    clock = The time stored as a double. (Input)
+ *    l_clock = The time stored as a double. (Input)
  * TimeZone = hours to add to local time to get UTC. (Input)
  *
  * RETURNS: int
@@ -754,20 +754,20 @@ sChar Clock_GetTimeZone ()
  * NOTES
  *****************************************************************************
  */
-int Clock_IsDaylightSaving2 (double clock, sChar TimeZone)
+int Clock_IsDaylightSaving2 (double l_clock, sChar TimeZone)
 {
    sInt4 totDay, year;
    int day, first;
    double secs;
 
-   clock = clock - TimeZone * 3600.;
+   l_clock = l_clock - TimeZone * 3600.;
    /* Clock should now be in Standard Time, so comparisons later have to be
     * based on Standard Time. */
 
-   totDay = (sInt4) floor (clock / SEC_DAY);
+   totDay = (sInt4) floor (l_clock / SEC_DAY);
    Clock_Epoch2YearDay (totDay, &day, &year);
    /* Figure out number of seconds since beginning of year. */
-   secs = clock - (totDay - day) * SEC_DAY;
+   secs = l_clock - (totDay - day) * SEC_DAY;
 
    /* figure out if 1/1/year is mon/tue/.../sun */
    first = ((4 + (totDay - day)) % 7); /* -day should get 1/1 but may need
@@ -863,7 +863,7 @@ int Clock_IsDaylightSaving2 (double clock, sChar TimeZone)
  * PURPOSE
  *
  * ARGUMENTS
- * clock = The time stored as a double. (Input)
+ * l_clock = The time stored as a double. (Input)
  *  year = The year. (Output)
  * month = The month. (Output)
  *   day = The day. (Output)
@@ -879,17 +879,17 @@ int Clock_IsDaylightSaving2 (double clock, sChar TimeZone)
  * NOTES
  *****************************************************************************
  */
-void Clock_PrintDate (double clock, sInt4 *year, int *month, int *day,
+void Clock_PrintDate (double l_clock, sInt4 *year, int *month, int *day,
                       int *hour, int *min, double *sec)
 {
    sInt4 totDay;
    sInt4 intSec;
 
-   totDay = (sInt4) floor (clock / SEC_DAY);
+   totDay = (sInt4) floor (l_clock / SEC_DAY);
    Clock_Epoch2YearDay (totDay, day, year);
    *month = Clock_MonthNum (*day, *year);
    *day = *day - Clock_NumDay (*month, 1, *year, 1) + 1;
-   *sec = clock - ((double) totDay) * SEC_DAY;
+   *sec = l_clock - ((double) totDay) * SEC_DAY;
    intSec = (sInt4) (*sec);
    *hour = (int) ((intSec % 86400L) / 3600);
    *min = (int) ((intSec % 3600) / 60);
@@ -908,7 +908,7 @@ void Clock_PrintDate (double clock, sInt4 *year, int *month, int *day,
  * ARGUMENTS
  * buffer = Destination to write the format to. (Output)
  *      n = The number of characters in buffer. (Input)
- *  clock = The time stored as a double. (Input)
+ *  l_clock = The time stored as a double. (Input)
  * format = The desired output format. (Input)
  *  f_gmt = 0 output GMT, 1 output LDT, 2 output LST. (Input)
  *
@@ -921,7 +921,7 @@ void Clock_PrintDate (double clock, sInt4 *year, int *month, int *day,
  * NOTES
  *****************************************************************************
  */
-void Clock_Print (char *buffer, int n, double clock, const char *format,
+void Clock_Print (char *buffer, int n, double l_clock, const char *format,
                   char f_gmt)
 {
    sInt4 totDay, year;
@@ -937,19 +937,19 @@ void Clock_Print (char *buffer, int n, double clock, const char *format,
    /* Handle gmt problems. */
    if (f_gmt != 0) {
       timeZone = Clock_GetTimeZone ();
-      /* clock is currently in UTC */
-      clock -= timeZone * 3600;
-      /* clock is now in local standard time Note: A 0 is passed to
+      /* l_clock is currently in UTC */
+      l_clock -= timeZone * 3600;
+      /* l_clock is now in local standard time Note: A 0 is passed to
        * DaylightSavings so it converts from local to local standard time. */
-      if ((f_gmt == 1) && (Clock_IsDaylightSaving2 (clock, 0) == 1)) {
-         clock = clock + 3600;
+      if ((f_gmt == 1) && (Clock_IsDaylightSaving2 (l_clock, 0) == 1)) {
+         l_clock = l_clock + 3600;
       }
    }
    /* Convert from seconds to days and seconds. */
-   totDay = (sInt4) floor (clock / SEC_DAY);
+   totDay = (sInt4) floor (l_clock / SEC_DAY);
    Clock_Epoch2YearDay (totDay, &day, &year);
    month = Clock_MonthNum (day, year);
-   floatSec = clock - ((double) totDay) * SEC_DAY;
+   floatSec = l_clock - ((double) totDay) * SEC_DAY;
    sec = (sInt4) floatSec;
    floatSec = floatSec - sec;
 
@@ -994,7 +994,7 @@ void Clock_Print (char *buffer, int n, double clock, const char *format,
  * ARGUMENTS
  *     buffer = Destination to write the format to. (Output)
  *          n = The number of characters in buffer. (Input)
- *      clock = The time stored as a double (asumed in UTC). (Input)
+ *      l_clock = The time stored as a double (asumed in UTC). (Input)
  *     format = The desired output format. (Input)
  *   timeZone = Hours to add to local time to get UTC. (Input)
  * f_dayCheck = True if we should check if daylight savings is in effect,
@@ -1008,7 +1008,7 @@ void Clock_Print (char *buffer, int n, double clock, const char *format,
  * NOTES
  *****************************************************************************
  */
-void Clock_Print2 (char *buffer, int n, double clock, char *format,
+void Clock_Print2 (char *buffer, int n, double l_clock, char *format,
                    sChar timeZone, sChar f_dayCheck)
 {
    sInt4 totDay, year;
@@ -1020,22 +1020,22 @@ void Clock_Print2 (char *buffer, int n, double clock, char *format,
    char f_perc;
    char locBuff[100];
 
-   /* clock is currently in UTC */
-   clock -= timeZone * 3600;
-   /* clock is now in local standard time */
+   /* l_clock is currently in UTC */
+   l_clock -= timeZone * 3600;
+   /* l_clock is now in local standard time */
    if (f_dayCheck) {
       /* Note: A 0 is passed to DaylightSavings so it converts from local to
        * local standard time. */
-      if (Clock_IsDaylightSaving2 (clock, 0) == 1) {
-         clock += 3600;
+      if (Clock_IsDaylightSaving2 (l_clock, 0) == 1) {
+         l_clock += 3600;
       }
    }
 
    /* Convert from seconds to days and seconds. */
-   totDay = (sInt4) floor (clock / SEC_DAY);
+   totDay = (sInt4) floor (l_clock / SEC_DAY);
    Clock_Epoch2YearDay (totDay, &day, &year);
    month = Clock_MonthNum (day, year);
-   floatSec = clock - ((double) totDay) * SEC_DAY;
+   floatSec = l_clock - ((double) totDay) * SEC_DAY;
    sec = (sInt4) floatSec;
    floatSec = floatSec - sec;
 
@@ -1110,16 +1110,16 @@ double Clock_Clicks (void)
  * NOTES
  *****************************************************************************
  */
-int Clock_SetSeconds (double *time, sChar f_set)
+int Clock_SetSeconds (double *ptime, sChar f_set)
 {
    static double ans = 0;
    static int f_ansSet = 0;
 
    if (f_set) {
-      ans = *time;
+      ans = *ptime;
       f_ansSet = 1;
    } else if (f_ansSet) {
-      *time = ans;
+      *ptime = ans;
    }
    return f_ansSet;
 }
@@ -1612,7 +1612,7 @@ Example:
 1994-11-05T13:15:30Z corresponds to the same instant.
 */
 static int Clock_ScanDash (char *word, int *mon, int *day, sInt4 *year,
-                           double *time, char *f_time)
+                           double *ptime, char *f_time)
 {
    char *ptr3;
    char *ptr = word;
@@ -1707,7 +1707,7 @@ static int Clock_ScanDash (char *word, int *mon, int *day, sInt4 *year,
       }
    }
    *f_time = 1;
-   *time = sec + min * 60 + hour * 3600 - offset;
+   *ptime = sec + min * 60 + hour * 3600 - offset;
    return 0;
 }
 
@@ -1728,17 +1728,17 @@ static int Clock_ScanDash (char *word, int *mon, int *day, sInt4 *year,
  * NOTES
  *****************************************************************************
  */
-/* prj::slosh prj::stm2trk and prj::degrib use this with clock zero'ed
-   out, so I have now made sure clock is zero'ed. */
-void Clock_ScanDate (double *clock, sInt4 year, int mon, int day)
+/* prj::slosh prj::stm2trk and prj::degrib use this with l_clock zero'ed
+   out, so I have now made sure l_clock is zero'ed. */
+void Clock_ScanDate (double *l_clock, sInt4 year, int mon, int day)
 {
    int i;
    sInt4 delt, temp, totDay;
 
    myAssert ((mon >= 1) && (mon <= 12));
 
-   /* Makes sure clock is zero'ed out. */
-   *clock = 0;
+   /* Makes sure l_clock is zero'ed out. */
+   *l_clock = 0;
 
    if ((mon < 1) || (mon > 12) || (day < 0) || (day > 31))
       return;
@@ -1797,10 +1797,10 @@ void Clock_ScanDate (double *clock, sInt4 year, int mon, int day)
          }
       }
    }
-   *clock = *clock + ((double) (totDay)) * 24 * 3600;
+   *l_clock = *l_clock + ((double) (totDay)) * 24 * 3600;
 }
 
-int Clock_ScanDateNumber (double *clock, char *buffer)
+int Clock_ScanDateNumber (double *l_clock, char *buffer)
 {
    int buffLen = (int)strlen (buffer);
    sInt4 year;
@@ -1811,7 +1811,7 @@ int Clock_ScanDateNumber (double *clock, char *buffer)
    int sec = 0;
    char c_temp;
 
-   *clock = 0;
+   *l_clock = 0;
    if ((buffLen != 4) && (buffLen != 6) && (buffLen != 8) &&
        (buffLen != 10) && (buffLen != 12) && (buffLen != 14)) {
       return 1;
@@ -1850,18 +1850,18 @@ int Clock_ScanDateNumber (double *clock, char *buffer)
       sec = atoi (buffer + 12);
       buffer[14] = c_temp;
    }
-   Clock_ScanDate (clock, year, mon, day);
-   *clock = *clock + sec + min * 60 + hour * 3600;
+   Clock_ScanDate (l_clock, year, mon, day);
+   *l_clock = *l_clock + sec + min * 60 + hour * 3600;
    return 0;
 }
 
-void Clock_PrintDateNumber (double clock, char buffer[15])
+void Clock_PrintDateNumber (double l_clock, char buffer[15])
 {
    sInt4 year;
    int month, day, hour, min, sec;
    double d_sec;
 
-   Clock_PrintDate (clock, &year, &month, &day, &hour, &min, &d_sec);
+   Clock_PrintDate (l_clock, &year, &month, &day, &hour, &min, &d_sec);
    sec = (int) d_sec;
    sprintf (buffer, "%04d%02d%02d%02d%02d%02d", year, month, day, hour, min,
             sec);
@@ -1988,13 +1988,13 @@ typedef struct {
  * NOTES
  * * f_gmt == 0 no adjust, 1 adjust as LDT, 2 adjust as LST *
  *  Adjusted from:
- * if ((f_gmt == 2) && (Clock_IsDaylightSaving2 (*clock, 0) == 1)) {
+ * if ((f_gmt == 2) && (Clock_IsDaylightSaving2 (*l_clock, 0) == 1)) {
  * to:
- * if ((f_gmt == 1) && (Clock_IsDaylightSaving2 (*clock, 0) == 1)) {
+ * if ((f_gmt == 1) && (Clock_IsDaylightSaving2 (*l_clock, 0) == 1)) {
 
  *****************************************************************************
  */
-int Clock_Scan (double *clock, char *buffer, char f_gmt)
+int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
 {
    char *ptr, *ptr2;
    char *ptr3;
@@ -2008,7 +2008,7 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    int day;
    sInt4 year;
    char f_year = 0;
-   int index;
+   int l_index;
    int ans;
    stackType *Stack = NULL;
    relType *Rel = NULL;
@@ -2100,12 +2100,12 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          }
          f_timeZone = 1;
          wordType = WT_TIMEZONE;
-      } else if ((index = Clock_ScanMonth (word)) != -1) {
+      } else if ((l_index = Clock_ScanMonth (word)) != -1) {
          if ((f_slashWord) || (f_monthWord)) {
             printf ("Detected multiple months or already defined month.\n");
             goto errorReturn;
          }
-         month = index;
+         month = l_index;
          /* Get the next word? First preserve the pointer */
          ptr3 = ptr2;
          ptr = ptr2;
@@ -2150,7 +2150,7 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          f_dateWord = 1;
 
          /* Ignore the day of the week info? */
-      } else if ((index = Clock_ScanWeekday (word)) != -1) {
+      } else if ((l_index = Clock_ScanWeekday (word)) != -1) {
          if ((f_slashWord) || (f_dayWord)) {
             printf ("Detected multiple day of week or already defined "
                     "day.\n");
@@ -2159,7 +2159,7 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          wordType = WT_DAY;
          f_dayWord = 1;
          f_dateWord = 1;
-      } else if (GetIndexFromStr (word, PreRel, &index) != -1) {
+      } else if (GetIndexFromStr (word, PreRel, &l_index) != -1) {
          wordType = WT_PRE_RELATIVE;
          /* Next word must be a unit word. */
          ptr = ptr2;
@@ -2172,19 +2172,19 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
             printf ("Couldn't get the Relative unit\n");
             goto errorReturn;
          }
-         if (index != 1) {
+         if (l_index != 1) {
             lenRel++;
             Rel = (relType *) realloc ((void *) Rel,
                                        lenRel * sizeof (relType));
             Rel[lenRel - 1].relUnit = ans;
             Rel[lenRel - 1].amount = 1;
-            if (index == 0) {
+            if (l_index == 0) {
                Rel[lenRel - 1].f_negate = 1;
             } else {
                Rel[lenRel - 1].f_negate = 0;
             }
          }
-         printf ("Pre Relative Word: %s %d\n", word, index);
+         printf ("Pre Relative Word: %s %d\n", word, l_index);
 
       } else if (strcmp (word, "AGO") == 0) {
          if ((lastWordType != WT_PRE_RELATIVE) ||
@@ -2194,10 +2194,10 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          }
          Rel[lenRel - 1].f_negate = 1;
          wordType = WT_POST_RELATIVE;
-      } else if (GetIndexFromStr (word, RelUnit, &index) != -1) {
+      } else if (GetIndexFromStr (word, RelUnit, &l_index) != -1) {
          lenRel++;
          Rel = (relType *) realloc ((void *) Rel, lenRel * sizeof (relType));
-         Rel[lenRel - 1].relUnit = index;
+         Rel[lenRel - 1].relUnit = l_index;
          Rel[lenRel - 1].amount = 1;
          Rel[lenRel - 1].f_negate = 0;
          if (lastWordType == WT_INTEGER) {
@@ -2205,14 +2205,14 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
             Rel[lenRel - 1].amount = Stack[lenStack].val;
          }
          wordType = WT_RELATIVE_UNIT;
-      } else if (GetIndexFromStr (word, AdjDay, &index) != -1) {
-         if (index != 1) {
+      } else if (GetIndexFromStr (word, AdjDay, &l_index) != -1) {
+         if (l_index != 1) {
             lenRel++;
             Rel = (relType *) realloc ((void *) Rel,
                                        lenRel * sizeof (relType));
             Rel[lenRel - 1].relUnit = 13; /* DAY in RelUnit list */
             Rel[lenRel - 1].amount = 1;
-            if (index == 0) {
+            if (l_index == 0) {
                Rel[lenRel - 1].f_negate = 1;
             } else {
                Rel[lenRel - 1].f_negate = 0;
@@ -2311,8 +2311,8 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    if (f_dateWord || f_slashWord) {
       /* Check if we don't have the year. */
       if (!f_year) {
-         *clock = Clock_Seconds ();
-         Clock_Epoch2YearDay ((sInt4) (floor (*clock / SEC_DAY)), &i, &year);
+         *l_clock = Clock_Seconds ();
+         Clock_Epoch2YearDay ((sInt4) (floor (*l_clock / SEC_DAY)), &i, &year);
       }
       /* Deal with relative adjust by year and month. */
       for (i = 0; i < lenRel; i++) {
@@ -2330,14 +2330,14 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          year++;
          month -= 12;
       }
-      *clock = 0;
-      Clock_ScanDate (clock, year, month, day);
+      *l_clock = 0;
+      Clock_ScanDate (l_clock, year, month, day);
 
    } else {
       /* Pure Time words. */
-      *clock = Clock_Seconds ();
+      *l_clock = Clock_Seconds ();
       /* round off to start of day */
-      *clock = (floor (*clock / SEC_DAY)) * SEC_DAY;
+      *l_clock = (floor (*l_clock / SEC_DAY)) * SEC_DAY;
       /* Deal with relative adjust by year and month. */
       monthAdj = 0;
       yearAdj = 0;
@@ -2357,8 +2357,8 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          }
       }
       if ((monthAdj != 0) || (yearAdj != 0)) {
-         /* Break clock into mon/day/year */
-         Clock_Epoch2YearDay ((sInt4) (floor (*clock / SEC_DAY)),
+         /* Break l_clock into mon/day/year */
+         Clock_Epoch2YearDay ((sInt4) (floor (*l_clock / SEC_DAY)),
                               &day, &year);
          month = Clock_MonthNum (day, year);
          day -= (Clock_NumDay (month, 1, year, 1) - 1);
@@ -2372,58 +2372,58 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
             year++;
             month -= 12;
          }
-         *clock = 0;
-         Clock_ScanDate (clock, year, month, day);
+         *l_clock = 0;
+         Clock_ScanDate (l_clock, year, month, day);
       }
    }
 
    /* Join the date and the time. */
-   *clock += curTime;
+   *l_clock += curTime;
 
    /* Finish the relative adjustments. */
    for (i = 0; i < lenRel; i++) {
       switch (Rel[i].relUnit) {
          case 3:       /* Fortnight. */
          case 4:
-            *clock += (Rel[i].amount * 14 * 24 * 3600.);
+            *l_clock += (Rel[i].amount * 14 * 24 * 3600.);
             break;
          case 5:       /* Week. */
          case 6:
-            *clock += (Rel[i].amount * 7 * 24 * 3600.);
+            *l_clock += (Rel[i].amount * 7 * 24 * 3600.);
             break;
          case 7:       /* Day. */
          case 8:
-            *clock += (Rel[i].amount * 24 * 3600.);
+            *l_clock += (Rel[i].amount * 24 * 3600.);
             break;
          case 9:       /* Hour. */
          case 10:
-            *clock += (Rel[i].amount * 3600.);
+            *l_clock += (Rel[i].amount * 3600.);
             break;
          case 11:      /* Minute. */
          case 12:
          case 13:
          case 14:
-            *clock += (Rel[i].amount * 60.);
+            *l_clock += (Rel[i].amount * 60.);
             break;
          case 15:      /* Second. */
          case 16:
          case 17:
          case 18:
-            *clock += Rel[i].amount;
+            *l_clock += Rel[i].amount;
             break;
       }
    }
 
    if (f_gmt != 0) {
-      /* IsDaylightSaving takes clock in GMT, and Timezone. */
+      /* IsDaylightSaving takes l_clock in GMT, and Timezone. */
       /* Note: A 0 is passed to DaylightSavings so it converts from LST to
        * LST. */
-      if ((f_gmt == 1) && (Clock_IsDaylightSaving2 (*clock, 0) == 1)) {
-         *clock = *clock - 3600;
+      if ((f_gmt == 1) && (Clock_IsDaylightSaving2 (*l_clock, 0) == 1)) {
+         *l_clock = *l_clock - 3600;
       }
       /* Handle gmt problems. We are going from Local time to GMT so we add
        * the TimeZone here. */
-      *clock = *clock + TimeZone * 3600;
+      *l_clock = *l_clock + TimeZone * 3600;
    }
 
    free (Stack);
@@ -2437,5 +2437,5 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
 }
 
 #ifdef CLOCK_PROGRAM
-/* See clockstart.c */
+/* See l_clockstart.c */
 #endif

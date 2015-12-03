@@ -55,7 +55,7 @@
 #include <limits.h>
 
 // constructor
-KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccess, kealib::KEAImageIO *pImageIO, int *pRefCount )
+KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn, kealib::KEAImageIO *pImageIO, int *pRefCount )
 {
     this->poDS = pDataset; // our pointer onto the dataset
     this->nBand = nSrcBand; // this is the band we are
@@ -65,7 +65,7 @@ KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAc
     this->nBlockYSize = pImageIO->getImageBlockSize(nSrcBand);
     this->nRasterXSize = this->poDS->GetRasterXSize();          // ask the dataset for the total image size
     this->nRasterYSize = this->poDS->GetRasterYSize();
-    this->eAccess = eAccess;
+    this->eAccess = eAccessIn;
 
     if( pImageIO->attributeTablePresent(nSrcBand) )
     {
@@ -926,7 +926,7 @@ GDALRasterBand* KEARasterBand::GetOverview(int nOverview)
     }
 }
 
-CPLErr KEARasterBand::CreateMaskBand(CPL_UNUSED int nFlags)
+CPLErr KEARasterBand::CreateMaskBand(int)
 {
     if( m_bMaskBandOwned )
         delete m_pMaskBand;

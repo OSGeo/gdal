@@ -762,12 +762,12 @@ int NITFCreate( const char *pszFilename,
 
 #define OVR(width,location,name,text) { 				\
     const char* _text = text; \
-    const char *pszParmValue; 						\
-    pszParmValue = CSLFetchNameValue( papszOptions, #name ); 		\
-    if( pszParmValue == NULL )						\
-        pszParmValue = _text;						\
+    const char *pszParmValueMacro; 						\
+    pszParmValueMacro = CSLFetchNameValue( papszOptions, #name ); 		\
+    if( pszParmValueMacro == NULL )						\
+        pszParmValueMacro = _text;						\
     NITFGotoOffset(fp, location); \
-    VSIFWriteL(pszParmValue, 1, MIN(width,strlen(pszParmValue)), fp); }
+    VSIFWriteL(pszParmValueMacro, 1, MIN(width,strlen(pszParmValueMacro)), fp); }
 
 #define WRITE_BYTE(location, val) { \
     char cVal = val; \

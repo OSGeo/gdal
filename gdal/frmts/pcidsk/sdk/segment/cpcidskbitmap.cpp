@@ -43,9 +43,9 @@ using namespace PCIDSK;
 /*                           CPCIDSKBitmap()                            */
 /************************************************************************/
 
-CPCIDSKBitmap::CPCIDSKBitmap( PCIDSKFile *file, int segment,
+CPCIDSKBitmap::CPCIDSKBitmap( PCIDSKFile *fileIn, int segmentIn,
                               const char *segment_pointer )
-        : CPCIDSKSegment( file, segment, segment_pointer )
+        : CPCIDSKSegment( fileIn, segmentIn, segment_pointer )
 
 {
     loaded = false;

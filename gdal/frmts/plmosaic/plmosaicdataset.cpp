@@ -174,16 +174,16 @@ class PLMosaicRasterBand : public GDALRasterBand
 /*                        PLMosaicRasterBand()                          */
 /************************************************************************/
 
-PLMosaicRasterBand::PLMosaicRasterBand( PLMosaicDataset *poDS, int nBand,
-                                        GDALDataType eDataType )
+PLMosaicRasterBand::PLMosaicRasterBand( PLMosaicDataset *poDSIn, int nBandIn,
+                                        GDALDataType eDataTypeIn )
 
 {
-    this->eDataType = eDataType;
+    this->eDataType = eDataTypeIn;
     nBlockXSize = 256;
     nBlockYSize = 256;
 
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     if( eDataType == GDT_UInt16 )
     {
@@ -1386,10 +1386,10 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
                 if( poGeom )
                 {
                     CPLXMLNode* psItem = CPLCreateXMLNode(psQuad, CXT_Element, "geometry");
-                    char* pszWKT = NULL;
-                    poGeom->exportToWkt(&pszWKT);
-                    CPLCreateXMLNode(psItem, CXT_Text, pszWKT);
-                    CPLFree(pszWKT);
+                    char* l_pszWKT = NULL;
+                    poGeom->exportToWkt(&l_pszWKT);
+                    CPLCreateXMLNode(psItem, CXT_Text, l_pszWKT);
+                    CPLFree(l_pszWKT);
                 }
                 delete poFeat;
             }
@@ -1447,10 +1447,10 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
                         }
                     }
                     CPLXMLNode* psItem = CPLCreateXMLNode(psScene, CXT_Element, "geometry");
-                    char* pszWKT = NULL;
-                    poGeom->exportToWkt(&pszWKT);
-                    CPLCreateXMLNode(psItem, CXT_Text, pszWKT);
-                    CPLFree(pszWKT);
+                    char* l_pszWKT = NULL;
+                    poGeom->exportToWkt(&l_pszWKT);
+                    CPLCreateXMLNode(psItem, CXT_Text, l_pszWKT);
+                    CPLFree(l_pszWKT);
                 }
                 delete poFeat;
             }

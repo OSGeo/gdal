@@ -115,13 +115,13 @@ class PAuxRasterBand : public RawRasterBand
 /*                           PAuxRasterBand()                           */
 /************************************************************************/
 
-PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
-                                VSILFILE * fpRaw, vsi_l_offset nImgOffset,
-                                int nPixelOffset, int nLineOffset,
-                                GDALDataType eDataType, int bNativeOrder ) :
-    RawRasterBand( poDS, nBand, fpRaw,
-                   nImgOffset, nPixelOffset, nLineOffset,
-                   eDataType, bNativeOrder, TRUE ),
+PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
+                                VSILFILE * fpRawIn, vsi_l_offset nImgOffsetIn,
+                                int nPixelOffsetIn, int nLineOffsetIn,
+                                GDALDataType eDataTypeIn, int bNativeOrderIn ) :
+    RawRasterBand( poDSIn, nBandIn, fpRawIn,
+                   nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
+                   eDataTypeIn, bNativeOrderIn, TRUE ),
     poCT(NULL)
 {
     PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>( poDS );

@@ -848,7 +848,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
 /************************************************************************/
 CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
 {
-    hid_t       hGroupID;       /* identifier of group */
+    hid_t       l_hGroupID;       /* identifier of group */
     hid_t       hDatasetID;
     int         nbAttrs;
 
@@ -870,9 +870,9 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
     case H5G_GROUP:
 
         if( nbAttrs > 0 ) {
-            hGroupID = H5Gopen( hHDF5, poH5Object->pszPath );
-            H5Aiterate( hGroupID, NULL, HDF5AttrIterate, (void *)poDS  );
-            H5Gclose( hGroupID );
+            l_hGroupID = H5Gopen( hHDF5, poH5Object->pszPath );
+            H5Aiterate( l_hGroupID, NULL, HDF5AttrIterate, (void *)poDS  );
+            H5Gclose( l_hGroupID );
         }
 
         break;

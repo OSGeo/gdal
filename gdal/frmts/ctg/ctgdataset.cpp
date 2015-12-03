@@ -167,11 +167,11 @@ class CTGRasterBand : public GDALPamRasterBand
 /*                           CTGRasterBand()                            */
 /************************************************************************/
 
-CTGRasterBand::CTGRasterBand( CTGDataset *poDS, int nBand ) :
+CTGRasterBand::CTGRasterBand( CTGDataset *poDSIn, int nBandIn ) :
     papszCategories(NULL)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = GDT_Int32;
 

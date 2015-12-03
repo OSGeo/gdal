@@ -163,7 +163,7 @@ static bool AlmostEqual( double dfVal1, double dfVal2 )
 /*                           GSAGRasterBand()                           */
 /************************************************************************/
 
-GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
+GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
 				vsi_l_offset nDataStart ) :
     dfMinX(0.0),
     dfMaxX(0.0),
@@ -177,8 +177,8 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
     nMinZRow(-1),
     nMaxZRow(-1)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = GDT_Float64;
 
@@ -186,14 +186,14 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
     nBlockYSize = 1;
 
     panLineOffset =
-	(vsi_l_offset *)VSI_CALLOC_VERBOSE( poDS->nRasterYSize+1, sizeof(vsi_l_offset) );
+	(vsi_l_offset *)VSI_CALLOC_VERBOSE( poDSIn->nRasterYSize+1, sizeof(vsi_l_offset) );
     if( panLineOffset == NULL )
     {
 	return;
     }
 
-    panLineOffset[poDS->nRasterYSize-1] = nDataStart;
-    nLastReadLine = poDS->nRasterYSize;
+    panLineOffset[poDSIn->nRasterYSize-1] = nDataStart;
+    nLastReadLine = poDSIn->nRasterYSize;
 }
 
 /************************************************************************/

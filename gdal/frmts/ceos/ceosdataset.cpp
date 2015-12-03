@@ -79,11 +79,11 @@ class CEOSRasterBand : public GDALPamRasterBand
 /*                           CEOSRasterBand()                            */
 /************************************************************************/
 
-CEOSRasterBand::CEOSRasterBand( CEOSDataset *poDS, int nBand )
+CEOSRasterBand::CEOSRasterBand( CEOSDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = GDT_Byte;
 

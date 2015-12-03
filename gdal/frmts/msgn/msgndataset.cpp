@@ -118,14 +118,14 @@ class MSGNRasterBand : public GDALRasterBand
 /*                           MSGNRasterBand()                            */
 /************************************************************************/
 
-MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDS, int nBand , open_mode_type mode, int orig_band_no, int band_in_file)
+MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDSIn, int nBandIn , open_mode_type mode, int orig_band_noIn, int band_in_fileIn)
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;                // GDAL's band number, i.e. always starts at 1
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;                // GDAL's band number, i.e. always starts at 1
     this->open_mode = mode;
-    this->orig_band_no = orig_band_no;
-    this->band_in_file = band_in_file;
+    this->orig_band_no = orig_band_noIn;
+    this->band_in_file = band_in_fileIn;
 
     sprintf(band_description, "band %02d", orig_band_no);
 
@@ -141,14 +141,14 @@ MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDS, int nBand , open_mode_type mo
     nBlockYSize = 1;
 
     if (mode != MODE_HRV) {
-        packet_size = poDS->msg_reader_core->get_visir_packet_size();
-        bytes_per_line = poDS->msg_reader_core->get_visir_bytes_per_line();
+        packet_size = poDSIn->msg_reader_core->get_visir_packet_size();
+        bytes_per_line = poDSIn->msg_reader_core->get_visir_bytes_per_line();
     } else {
-        packet_size = poDS->msg_reader_core->get_hrv_packet_size();
-        bytes_per_line = poDS->msg_reader_core->get_hrv_bytes_per_line();
+        packet_size = poDSIn->msg_reader_core->get_hrv_packet_size();
+        bytes_per_line = poDSIn->msg_reader_core->get_hrv_bytes_per_line();
     }
 
-    interline_spacing = poDS->msg_reader_core->get_interline_spacing();
+    interline_spacing = poDSIn->msg_reader_core->get_interline_spacing();
 }
 
 /************************************************************************/

@@ -162,13 +162,13 @@ static short ReadShort(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
 /*                         OZIRasterBand()                             */
 /************************************************************************/
 
-OZIRasterBand::OZIRasterBand( OZIDataset *poDS, int nZoomLevel,
-                              int nRasterXSize, int nRasterYSize,
-                              int nXBlocks,
-                              GDALColorTable* poColorTable ) :
+OZIRasterBand::OZIRasterBand( OZIDataset *poDSIn, int nZoomLevelIn,
+                              int nRasterXSizeIn, int nRasterYSizeIn,
+                              int nXBlocksIn,
+                              GDALColorTable* poColorTableIn ) :
     pabyTranslationTable(NULL)
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     this->nBand = 1;
 
     eDataType = GDT_Byte;
@@ -176,11 +176,11 @@ OZIRasterBand::OZIRasterBand( OZIDataset *poDS, int nZoomLevel,
     nBlockXSize = 64;
     nBlockYSize = 64;
 
-    this->nZoomLevel = nZoomLevel;
-    this->nRasterXSize = nRasterXSize;
-    this->nRasterYSize = nRasterYSize;
-    this->poColorTable = poColorTable;
-    this->nXBlocks = nXBlocks;
+    this->nZoomLevel = nZoomLevelIn;
+    this->nRasterXSize = nRasterXSizeIn;
+    this->nRasterYSize = nRasterYSizeIn;
+    this->poColorTable = poColorTableIn;
+    this->nXBlocks = nXBlocksIn;
 }
 
 /************************************************************************/

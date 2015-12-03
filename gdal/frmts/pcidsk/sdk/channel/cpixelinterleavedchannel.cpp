@@ -40,17 +40,17 @@ using namespace PCIDSK;
 /*                      CPixelInterleavedChannel()                      */
 /************************************************************************/
 
-CPixelInterleavedChannel::CPixelInterleavedChannel( PCIDSKBuffer &image_header,
-                                                    uint64 ih_offset,
-                                                    CPL_UNUSED PCIDSKBuffer &file_header,
-                                                    int channelnum,
-                                                    CPCIDSKFile *file,
-                                                    int image_offset,
-                                                    eChanType pixel_type )
-        : CPCIDSKChannel( image_header, ih_offset, file, pixel_type, channelnum)
+CPixelInterleavedChannel::CPixelInterleavedChannel( PCIDSKBuffer &image_headerIn,
+                                                    uint64 ih_offsetIn,
+                                                    CPL_UNUSED PCIDSKBuffer &file_headerIn,
+                                                    int channelnumIn,
+                                                    CPCIDSKFile *fileIn,
+                                                    int image_offsetIn,
+                                                    eChanType pixel_typeIn )
+        : CPCIDSKChannel( image_headerIn, ih_offsetIn, fileIn, pixel_typeIn, channelnumIn)
 
 {
-    this->image_offset = image_offset;
+    this->image_offset = image_offsetIn;
 }
 
 /************************************************************************/

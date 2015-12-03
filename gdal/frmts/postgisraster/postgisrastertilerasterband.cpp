@@ -37,13 +37,13 @@
  * \brief Constructor
  ************************/
 PostGISRasterTileRasterBand::PostGISRasterTileRasterBand(
-    PostGISRasterTileDataset * poRTDS, int nBand,
-    GDALDataType eDataType, GBool bIsOffline)
+    PostGISRasterTileDataset * poRTDSIn, int nBandIn,
+    GDALDataType eDataTypeIn, GBool bIsOfflineIn)
 {
     /* Basic properties */
-    this->poDS = poRTDS;
-    this->bIsOffline = bIsOffline;
-    this->nBand = nBand;
+    this->poDS = poRTDSIn;
+    this->bIsOffline = bIsOfflineIn;
+    this->nBand = nBandIn;
     
 #if 0
     CPLDebug("PostGIS_Raster", 
@@ -52,10 +52,10 @@ PostGISRasterTileRasterBand::PostGISRasterTileRasterBand(
         poRTDS->GetRasterYSize());
 #endif
 
-    this->eDataType = eDataType;
+    this->eDataType = eDataTypeIn;
 
-    nRasterXSize = poRTDS->GetRasterXSize();
-    nRasterYSize = poRTDS->GetRasterYSize();
+    nRasterXSize = poRTDSIn->GetRasterXSize();
+    nRasterYSize = poRTDSIn->GetRasterYSize();
 
     nBlockXSize = nRasterXSize;
     nBlockYSize = nRasterYSize;

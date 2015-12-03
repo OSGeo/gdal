@@ -2652,13 +2652,13 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 /*                           ENVIRasterBand()                           */
 /************************************************************************/
 
-ENVIRasterBand::ENVIRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
-                                vsi_l_offset nImgOffset, int nPixelOffset,
-                                int nLineOffset,
-                                GDALDataType eDataType, int bNativeOrder,
-                                int bIsVSIL, int bOwnsFP ) :
-        RawRasterBand(poDS, nBand, fpRaw, nImgOffset, nPixelOffset,
-                      nLineOffset, eDataType, bNativeOrder, bIsVSIL, bOwnsFP)
+ENVIRasterBand::ENVIRasterBand( GDALDataset *poDSIn, int nBandIn, void * fpRawIn,
+                                vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
+                                int nLineOffsetIn,
+                                GDALDataType eDataTypeIn, int bNativeOrderIn,
+                                int bIsVSILIn, int bOwnsFPIn ) :
+        RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
+                      nLineOffsetIn, eDataTypeIn, bNativeOrderIn, bIsVSILIn, bOwnsFPIn)
 {
 }
 
@@ -2676,10 +2676,10 @@ void ENVIRasterBand::SetDescription( const char * pszDescription )
 /*                           SetCategoryNames()                         */
 /************************************************************************/
 
-CPLErr ENVIRasterBand::SetCategoryNames( char ** papszCategoryNames )
+CPLErr ENVIRasterBand::SetCategoryNames( char ** papszCategoryNamesIn )
 {
     reinterpret_cast<ENVIDataset *>( poDS )->bHeaderDirty = TRUE;
-    return RawRasterBand::SetCategoryNames(papszCategoryNames);
+    return RawRasterBand::SetCategoryNames(papszCategoryNamesIn);
 }
 
 /************************************************************************/

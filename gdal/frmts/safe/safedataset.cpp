@@ -636,7 +636,7 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
 
                 //check object type 
-                const char *pszRepId = CPLGetXMLValue( psDO, "repID", "" );
+                pszRepId = CPLGetXMLValue( psDO, "repID", "" );
 
                 if ( EQUAL(pszRepId, "s1Level1ProductSchema") ) {
                     /* Get annotation filename */

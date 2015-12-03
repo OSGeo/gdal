@@ -48,16 +48,16 @@ using namespace PCIDSK;
 /************************************************************************/
 
 CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header, 
-                                uint64 ih_offset,
-                                CPCIDSKFile *file, 
-                                eChanType pixel_type,
-                                int channel_number )
+                                uint64 ih_offsetIn,
+                                CPCIDSKFile *fileIn, 
+                                eChanType pixel_typeIn,
+                                int channel_numberIn )
 
 {
-    this->pixel_type = pixel_type;
-    this->file = file;
-    this->channel_number = channel_number;
-    this->ih_offset = ih_offset;
+    this->pixel_type = pixel_typeIn;
+    this->file = fileIn;
+    this->channel_number = channel_numberIn;
+    this->ih_offset = ih_offsetIn;
     byte_order = 'S';
     needs_swap = FALSE;
 

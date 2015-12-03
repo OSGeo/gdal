@@ -47,10 +47,10 @@ struct CPCIDSKADS40ModelSegment::PCIDSKADS40Info
     PCIDSKBuffer seg_data;
 };
 
-CPCIDSKADS40ModelSegment::CPCIDSKADS40ModelSegment(PCIDSKFile *file, 
-                                                   int segment,
+CPCIDSKADS40ModelSegment::CPCIDSKADS40ModelSegment(PCIDSKFile *fileIn, 
+                                                   int segmentIn,
                                                    const char *segment_pointer) :
-    CPCIDSKSegment(file, segment, segment_pointer), 
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer), 
     pimpl_(new CPCIDSKADS40ModelSegment::PCIDSKADS40Info), 
     loaded_(false),mbModified(false)
 {

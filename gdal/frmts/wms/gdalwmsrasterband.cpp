@@ -679,9 +679,9 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                                {
                                   // the file had 3 bands and we are reading band 4 (Alpha) so fill with 255 (no alpha)
                                   GByte *byte_buffer = reinterpret_cast<GByte *>(p);
-                                  for (int y = 0; y < sy; ++y) {
-                                     for (int x = 0; x < sx; ++x) {
-                                        const int offset = x + y * line_space;
+                                  for (int l_y = 0; l_y < sy; ++l_y) {
+                                     for (int l_x = 0; l_x < sx; ++l_x) {
+                                        const int offset = l_x + l_y * line_space;
                                         byte_buffer[offset] = 255;  // fill with opaque
                                      }
                                   }
@@ -701,9 +701,9 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                             if (ret == CE_None) {
                                 GByte *band_color_table = color_table + 256 * (ib - 1);
                                 GByte *byte_buffer = reinterpret_cast<GByte *>(p);
-                                for (int y = 0; y < sy; ++y) {
-                                    for (int x = 0; x < sx; ++x) {
-                                        const int offset = x + y * line_space;
+                                for (int l_y = 0; l_y < sy; ++l_y) {
+                                    for (int l_x = 0; l_x < sx; ++l_x) {
+                                        const int offset = l_x + l_y * line_space;
                                         byte_buffer[offset] = band_color_table[byte_buffer[offset]];
                                     }
                                 }
@@ -756,9 +756,9 @@ CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buff
                 }
             }
             if (p != NULL) {
-                unsigned char *b = reinterpret_cast<unsigned char *>(p);
+                unsigned char *paby = reinterpret_cast<unsigned char *>(p);
                 int block_size = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
-                for (int i = 0; i < block_size; ++i) b[i] = 0;
+                for (int i = 0; i < block_size; ++i) paby[i] = 0;
             }
             if (b != NULL) {
                 b->DropLock();

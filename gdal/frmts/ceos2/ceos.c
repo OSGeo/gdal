@@ -390,22 +390,22 @@ void swapbyte(void *dst,void *src,size_t toswap)
 void NativeToCeos( void *dst, const void *src, const size_t len, const size_t swapunit)
 {
     size_t i;
-    size_t remainder;
+    size_t l_remainder;
     size_t units;
 
 
-    remainder = len % swapunit;
+    l_remainder = len % swapunit;
 
-    units = len - remainder;
+    units = len - l_remainder;
 
     for(i = 0;i < units; i += swapunit )
     {
 	swapbyte( ( unsigned char *) dst + i, ( unsigned char * ) src + i, swapunit);
     }
 
-    if(remainder)
+    if(l_remainder)
     {
-	memcpy( ( unsigned char * ) dst + i, ( unsigned char * ) src + i, remainder );
+	memcpy( ( unsigned char * ) dst + i, ( unsigned char * ) src + i, l_remainder );
     }
 }
 

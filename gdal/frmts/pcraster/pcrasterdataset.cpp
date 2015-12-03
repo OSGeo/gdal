@@ -289,9 +289,9 @@ GDALDataset* PCRasterDataset::createCopy(
 /*!
   \param     map PCRaster map handle. It is ours to close.
 */
-PCRasterDataset::PCRasterDataset( MAP* map) :
+PCRasterDataset::PCRasterDataset( MAP* mapIn) :
     GDALPamDataset(),
-    d_map(map),
+    d_map(mapIn),
     d_west(0.0),
     d_north(0.0),
     d_cellSize(0.0),

@@ -251,15 +251,18 @@ private:
 /*                           JP2KAKRasterBand()                         */
 /************************************************************************/
 
-JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
-                                    kdu_codestream oCodeStream,
-                                    int nResCount, kdu_client *jpip_client,
+JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
+                                    kdu_codestream oCodeStreamIn,
+                                    int nResCount, kdu_client *jpip_clientIn,
                                     jp2_channels oJP2Channels,
                                     JP2KAKDataset *poBaseDSIn )
 
 {
-    this->nBand = nBand;
+    this->nBand = nBandIn;
     this->poBaseDS = poBaseDSIn;
+    this->jpip_client = jpip_clientIn;
+    this->nDiscardLevels = nDiscardLevelsIn;
+    this->oCodeStream = oCodeStreamIn;
 
     bYCbCrReported = FALSE;
 
@@ -273,11 +276,6 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
         this->eDataType = GDT_UInt16;
     else
         this->eDataType = GDT_Byte;
-
-    this->nDiscardLevels = nDiscardLevels;
-    this->oCodeStream = oCodeStream;
-
-    this->jpip_client = jpip_client;
 
     oCodeStream.apply_input_restrictions( 0, 0, nDiscardLevels, 0, NULL );
     oCodeStream.get_dims( 0, band_dims );
@@ -1537,46 +1535,46 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     try
     {
-        kdu_dims dims;
+        kdu_dims l_dims;
         poCodeStream->apply_input_restrictions( 0, 0, nDiscardLevels, 0, NULL );
-        poCodeStream->get_dims( 0, dims );
-        int nOvrXSize = dims.size.x;
-        int nOvrYSize = dims.size.y;
+        poCodeStream->get_dims( 0, l_dims );
+        int nOvrXSize = l_dims.size.x;
+        int nOvrYSize = l_dims.size.y;
 
-        dims.pos.x = dims.pos.x + nXOff/nResMult;
-        dims.pos.y = dims.pos.y + nYOff/nResMult;
-        dims.size.x = nXSize/nResMult;
-        dims.size.y = nYSize/nResMult;
+        l_dims.pos.x = l_dims.pos.x + nXOff/nResMult;
+        l_dims.pos.y = l_dims.pos.y + nYOff/nResMult;
+        l_dims.size.x = nXSize/nResMult;
+        l_dims.size.y = nYSize/nResMult;
 
         // Check if rounding helps detecting when data is being requested exactly
         // at the current resolution
-        if( nBufXSize != dims.size.x &&
+        if( nBufXSize != l_dims.size.x &&
             (int)(0.5 + (double)nXSize/nResMult) == nBufXSize )
         {
-            dims.size.x = nBufXSize;
+            l_dims.size.x = nBufXSize;
         }
-        if( nBufYSize != dims.size.y &&
+        if( nBufYSize != l_dims.size.y &&
             (int)(0.5 + (double)nYSize/nResMult) == nBufYSize )
         {
-            dims.size.y = nBufYSize;
+            l_dims.size.y = nBufYSize;
         }
-        if( dims.pos.x + dims.size.x > nOvrXSize )
-            dims.size.x = nOvrXSize - dims.pos.x;
-        if( dims.pos.y + dims.size.y > nOvrYSize )
-            dims.size.y = nOvrYSize - dims.pos.y;
+        if( l_dims.pos.x + l_dims.size.x > nOvrXSize )
+            l_dims.size.x = nOvrXSize - l_dims.pos.x;
+        if( l_dims.pos.y + l_dims.size.y > nOvrYSize )
+            l_dims.size.y = nOvrYSize - l_dims.pos.y;
 
-        kdu_dims dims_roi;
+        kdu_dims l_dims_roi;
 
-        poCodeStream->map_region( 0, dims, dims_roi );
+        poCodeStream->map_region( 0, l_dims, l_dims_roi );
         poCodeStream->apply_input_restrictions( nBandCount, component_indices, 
-                                              nDiscardLevels, 0, &dims_roi,
+                                              nDiscardLevels, 0, &l_dims_roi,
                                               KDU_WANT_OUTPUT_COMPONENTS);
 
 /* -------------------------------------------------------------------- */
 /*      Special case where the data is being requested exactly at       */
 /*      this resolution.  Avoid any extra sampling pass.                */
 /* -------------------------------------------------------------------- */
-        if( nBufXSize == dims.size.x && nBufYSize == dims.size.y )
+        if( nBufXSize == l_dims.size.x && nBufYSize == l_dims.size.y )
         {
             kdu_stripe_decompressor decompressor;
             decompressor.start(*poCodeStream,false,false,poThreadEnv);
@@ -1587,7 +1585,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 
             for( i = 0; i < nBandCount; i++ )
             {
-                stripe_heights[i] = dims.size.y;
+                stripe_heights[i] = l_dims.size.y;
                 precisions[i] = poCodeStream->get_bit_depth(i);
                 if( eBufType == GDT_Byte )
                 {
@@ -1638,7 +1636,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         {
             int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
             GByte *pabyIntermediate = (GByte *) 
-                VSI_MALLOC3_VERBOSE(dims.size.x, dims.size.y, nDataTypeSize*nBandCount );
+                VSI_MALLOC3_VERBOSE(l_dims.size.x, l_dims.size.y, nDataTypeSize*nBandCount );
             if( pabyIntermediate == NULL )
             {
                 return CE_Failure;
@@ -1647,7 +1645,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
             CPLDebug( "JP2KAK", 
                       "DirectRasterIO() for %d,%d,%d,%d -> %dx%d -> %dx%d %s",
                       nXOff, nYOff, nXSize, nYSize, 
-                      dims.size.x, dims.size.y, 
+                      l_dims.size.x, l_dims.size.y, 
                       nBufXSize, nBufYSize, 
                       pszPersistency );
 
@@ -1656,7 +1654,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         
             for( i = 0; i < nBandCount; i++ )
             {
-                stripe_heights[i] = dims.size.y;
+                stripe_heights[i] = l_dims.size.y;
                 precisions[i] = poCodeStream->get_bit_depth(i);
 
                 if( eBufType == GDT_Int16 || eBufType == GDT_UInt16 )
@@ -1687,20 +1685,20 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /*      buffer into the final buffer in the desired output layout.      */
 /* -------------------------------------------------------------------- */
                 int iY, iX;
-                double dfYRatio = dims.size.y / (double) nBufYSize;
-                double dfXRatio = dims.size.x / (double) nBufXSize;
+                double dfYRatio = l_dims.size.y / (double) nBufYSize;
+                double dfXRatio = l_dims.size.x / (double) nBufXSize;
 
                 for( iY = 0; iY < nBufYSize; iY++ )
                 {
                     int iSrcY = (int) floor( (iY + 0.5) * dfYRatio );
 
-                    iSrcY = MIN(iSrcY, dims.size.y-1);
+                    iSrcY = MIN(iSrcY, l_dims.size.y-1);
 
                     for( iX = 0; iX < nBufXSize; iX++ )
                     {
                         int iSrcX = (int) floor( (iX + 0.5) * dfXRatio );
 
-                        iSrcX = MIN(iSrcX, dims.size.x-1);
+                        iSrcX = MIN(iSrcX, l_dims.size.x-1);
 
                         for( i = 0; i < nBandCount; i++ )
                         {
@@ -1709,7 +1707,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                                                 + iY*nLineSpace
                                                 + i*nBandSpace] = 
                                     pabyIntermediate[iSrcX*nBandCount
-                                                    + iSrcY*dims.size.x*nBandCount
+                                                    + iSrcY*l_dims.size.x*nBandCount
                                                     + i];
                             else if( eBufType == GDT_Int16
                                     || eBufType == GDT_UInt16 )
@@ -1718,7 +1716,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                                                 + i*nBandSpace/2] = 
                                     ((GUInt16 *)pabyIntermediate)[
                                         iSrcX*nBandCount
-                                        + iSrcY*dims.size.x*nBandCount
+                                        + iSrcY*l_dims.size.x*nBandCount
                                         + i];
                         }
                     }
@@ -1727,8 +1725,8 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
             else
             {
                 /* Create a MEM dataset that wraps the input buffer */
-                GDALDataset* poMEMDS = MEMDataset::Create("", dims.size.x,
-                                                        dims.size.y, 0,
+                GDALDataset* poMEMDS = MEMDataset::Create("", l_dims.size.x,
+                                                        l_dims.size.y, 0,
                                                         eBufType, NULL);
                 char szBuffer[64];
                 int nRet;
@@ -1744,7 +1742,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                         CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nBandCount));
 
                     papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
-                        CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nBandCount * dims.size.x));
+                        CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nBandCount * l_dims.size.x));
 
                     poMEMDS->AddBand(eBufType, papszOptions);
                     CSLDestroy(papszOptions);
@@ -1758,7 +1756,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                 INIT_RASTERIO_EXTRA_ARG(sExtraArgTmp);
                 sExtraArgTmp.eResampleAlg = psExtraArg->eResampleAlg;
 
-                CPL_IGNORE_RET_VAL(poMEMDS->RasterIO(GF_Read, 0, 0, dims.size.x, dims.size.y,
+                CPL_IGNORE_RET_VAL(poMEMDS->RasterIO(GF_Read, 0, 0, l_dims.size.x, l_dims.size.y,
                                   pData, nBufXSize, nBufYSize,
                                   eBufType,
                                   nBandCount, NULL,

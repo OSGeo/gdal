@@ -53,13 +53,13 @@ using namespace PCIDSK;
 /************************************************************************/
 
 CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header,
-                                                  uint64 ih_offset,
+                                                  uint64 ih_offsetIn,
                                                   CPL_UNUSED PCIDSKBuffer &file_header,
                                                   int channelnum,
-                                                  CPCIDSKFile *file,
+                                                  CPCIDSKFile *fileIn,
                                                   uint64 image_offset,
-                                                  eChanType pixel_type )
-        : CPCIDSKChannel( image_header, ih_offset, file, pixel_type, channelnum)
+                                                  eChanType pixel_typeIn )
+        : CPCIDSKChannel( image_header, ih_offsetIn, fileIn, pixel_typeIn, channelnum)
 
 {
     io_handle_p = NULL;
@@ -290,13 +290,13 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
 /************************************************************************/
 void CBandInterleavedChannel
 ::GetChanInfo( std::string &filename_ret, uint64 &image_offset, 
-               uint64 &pixel_offset, uint64 &line_offset, 
+               uint64 &pixel_offsetOut, uint64 &line_offsetOut, 
                bool &little_endian ) const
 
 {
     image_offset = start_byte;
-    pixel_offset = this->pixel_offset;
-    line_offset = this->line_offset;
+    pixel_offsetOut = this->pixel_offset;
+    line_offsetOut = this->line_offset;
     little_endian = (byte_order == 'S');
 
 /* -------------------------------------------------------------------- */
@@ -315,8 +315,8 @@ void CBandInterleavedChannel
 /************************************************************************/
 
 void CBandInterleavedChannel
-::SetChanInfo( std::string filename, uint64 image_offset, 
-               uint64 pixel_offset, uint64 line_offset, 
+::SetChanInfo( std::string filenameIn, uint64 image_offset, 
+               uint64 pixel_offsetIn, uint64 line_offsetIn, 
                bool little_endian )
 
 {
@@ -337,7 +337,7 @@ void CBandInterleavedChannel
 /* -------------------------------------------------------------------- */
     std::string IHi2_filename;
     
-    if( filename.size() > 64 )
+    if( filenameIn.size() > 64 )
     {
         int link_segment;
         
@@ -365,7 +365,7 @@ void CBandInterleavedChannel
         
         if( link != NULL )
         {
-            link->SetPath( filename );
+            link->SetPath( filenameIn );
             link->Synchronize();
         }
     }
@@ -385,7 +385,7 @@ void CBandInterleavedChannel
             file->DeleteSegment( link_segment );
         }
         
-        IHi2_filename = filename;
+        IHi2_filename = filenameIn;
     }
         
 /* -------------------------------------------------------------------- */
@@ -398,10 +398,10 @@ void CBandInterleavedChannel
     ih.Put( image_offset, 168, 16 );
 
     // IHi.6.2
-    ih.Put( pixel_offset, 184, 8 );
+    ih.Put( pixel_offsetIn, 184, 8 );
 
     // IHi.6.3
-    ih.Put( line_offset, 192, 8 );
+    ih.Put( line_offsetIn, 192, 8 );
 
     // IHi.6.5
     if( little_endian )
@@ -416,11 +416,11 @@ void CBandInterleavedChannel
 /* -------------------------------------------------------------------- */
     this->filename = MergeRelativePath( file->GetInterfaces()->io,
                                         file->GetFilename(), 
-                                        filename );
+                                        filenameIn );
 
     start_byte = image_offset;
-    this->pixel_offset = pixel_offset;
-    this->line_offset = line_offset;
+    this->pixel_offset = pixel_offsetIn;
+    this->line_offset = line_offsetIn;
     
     if( little_endian )
         byte_order = 'S';

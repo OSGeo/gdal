@@ -425,11 +425,11 @@ public:
 /*                         LevellerRasterBand()                         */
 /************************************************************************/
 
-LevellerRasterBand::LevellerRasterBand( LevellerDataset *poDS ) :
+LevellerRasterBand::LevellerRasterBand( LevellerDataset *poDSIn ) :
     m_pLine(NULL),
     m_bFirstTime(true)
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     this->nBand = 1;
 
     eDataType = GDT_Float32;

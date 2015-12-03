@@ -90,16 +90,16 @@ g2int getgridindex(g2int number)
 !
 !$$$*/
 {
-           g2int j,getgridindex=-1;
+           g2int j,l_getgridindex=-1;
 
            for (j=0;j<MAXGRIDTEMP;j++) {
               if (number == templatesgrid[j].template_num) {
-                 getgridindex=j;
-                 return(getgridindex);
+                 l_getgridindex=j;
+                 return(l_getgridindex);
               }
            }
 
-           return(getgridindex);
+           return(l_getgridindex);
 }
 
 xxtemplate *getgridtemplate(g2int number)

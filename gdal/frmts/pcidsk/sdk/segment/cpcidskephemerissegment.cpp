@@ -56,16 +56,16 @@ namespace
 
 /**
  * Ephemeris Segment constructor
- * @param file the PCIDSK file
- * @param segment the segment index
+ * @param fileIn the PCIDSK file
+ * @param segmentIn the segment index
  * @param segment_pointer the segement pointer
  * @param bLoad true to load the segment, else false (default true)
  */
-CPCIDSKEphemerisSegment::CPCIDSKEphemerisSegment(PCIDSKFile *file, 
-                                                   int segment,
+CPCIDSKEphemerisSegment::CPCIDSKEphemerisSegment(PCIDSKFile *fileIn, 
+                                                   int segmentIn,
                                                    const char *segment_pointer,
                                                    bool bLoad) :
-    CPCIDSKSegment(file, segment, segment_pointer),
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer),
     loaded_(false),mbModified(false)
 {
     mpoEphemeris = NULL;
@@ -557,146 +557,146 @@ EphemerisSeg_t *
 CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
 
 {
-    EphemerisSeg_t *segment;
+    EphemerisSeg_t *l_segment;
     int		i;
     int nPos = nStartBlock;
 
-    segment = new EphemerisSeg_t();
+    l_segment = new EphemerisSeg_t();
     
 /* -------------------------------------------------------------------- */
 /*	Process first block.						*/
 /* -------------------------------------------------------------------- */
     
-    segment->SatelliteDesc = seg_data.Get(nPos+8,32);  
-    segment->SceneID = seg_data.Get(nPos+40, 32);
+    l_segment->SatelliteDesc = seg_data.Get(nPos+8,32);  
+    l_segment->SceneID = seg_data.Get(nPos+40, 32);
 
 /* -------------------------------------------------------------------- */
 /*	Process the second block.					*/
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 512;
 
-    segment->SatelliteSensor = seg_data.Get(nPos, 16);
+    l_segment->SatelliteSensor = seg_data.Get(nPos, 16);
     for (i=0; i<16; i++)
     {
-        if (segment->SatelliteSensor[i] == ' ')
+        if (l_segment->SatelliteSensor[i] == ' ')
         {
-            segment->SatelliteSensor = segment->SatelliteSensor.substr(0,i);
+            l_segment->SatelliteSensor = l_segment->SatelliteSensor.substr(0,i);
             break;
         }
     }
 
-    segment->SensorNo = seg_data.Get(nPos+22, 2);
-    segment->DateImageTaken = seg_data.Get(nPos+44, 22);
+    l_segment->SensorNo = seg_data.Get(nPos+22, 2);
+    l_segment->DateImageTaken = seg_data.Get(nPos+44, 22);
 
     if (seg_data.buffer[nPos+66] == 'Y' || 
         seg_data.buffer[nPos+66] == 'y')
-        segment->SupSegExist = true;
+        l_segment->SupSegExist = true;
     else
-        segment->SupSegExist = false;
-    segment->FieldOfView = seg_data.GetDouble(nPos+88, 22); 
-    segment->ViewAngle = seg_data.GetDouble(nPos+110, 22);
-    segment->NumColCentre = seg_data.GetDouble(nPos+132, 22);
-    segment->RadialSpeed = seg_data.GetDouble(nPos+154, 22);
-    segment->Eccentricity = seg_data.GetDouble(nPos+176, 22);
-    segment->Height = seg_data.GetDouble(nPos+198, 22);
-    segment->Inclination = seg_data.GetDouble(nPos+220, 22);
-    segment->TimeInterval = seg_data.GetDouble(nPos+242, 22);
-    segment->NumLineCentre = seg_data.GetDouble(nPos+264, 22);
-    segment->LongCentre = seg_data.GetDouble(nPos+286, 22);
-    segment->AngularSpd = seg_data.GetDouble(nPos+308, 22);		
-    segment->AscNodeLong = seg_data.GetDouble(nPos+330, 22);
-    segment->ArgPerigee = seg_data.GetDouble(nPos+352, 22);
-    segment->LatCentre = seg_data.GetDouble(nPos+374, 22);
-    segment->EarthSatelliteDist = seg_data.GetDouble(nPos+396, 22);
-    segment->NominalPitch = seg_data.GetDouble(nPos+418, 22);
-    segment->TimeAtCentre = seg_data.GetDouble(nPos+440, 22);
-    segment->SatelliteArg = seg_data.GetDouble(nPos+462, 22);
-    segment->bDescending = true;
+        l_segment->SupSegExist = false;
+    l_segment->FieldOfView = seg_data.GetDouble(nPos+88, 22); 
+    l_segment->ViewAngle = seg_data.GetDouble(nPos+110, 22);
+    l_segment->NumColCentre = seg_data.GetDouble(nPos+132, 22);
+    l_segment->RadialSpeed = seg_data.GetDouble(nPos+154, 22);
+    l_segment->Eccentricity = seg_data.GetDouble(nPos+176, 22);
+    l_segment->Height = seg_data.GetDouble(nPos+198, 22);
+    l_segment->Inclination = seg_data.GetDouble(nPos+220, 22);
+    l_segment->TimeInterval = seg_data.GetDouble(nPos+242, 22);
+    l_segment->NumLineCentre = seg_data.GetDouble(nPos+264, 22);
+    l_segment->LongCentre = seg_data.GetDouble(nPos+286, 22);
+    l_segment->AngularSpd = seg_data.GetDouble(nPos+308, 22);		
+    l_segment->AscNodeLong = seg_data.GetDouble(nPos+330, 22);
+    l_segment->ArgPerigee = seg_data.GetDouble(nPos+352, 22);
+    l_segment->LatCentre = seg_data.GetDouble(nPos+374, 22);
+    l_segment->EarthSatelliteDist = seg_data.GetDouble(nPos+396, 22);
+    l_segment->NominalPitch = seg_data.GetDouble(nPos+418, 22);
+    l_segment->TimeAtCentre = seg_data.GetDouble(nPos+440, 22);
+    l_segment->SatelliteArg = seg_data.GetDouble(nPos+462, 22);
+    l_segment->bDescending = true;
     if (seg_data.buffer[nPos+484] == 'A')
-        segment->bDescending = false;
+        l_segment->bDescending = false;
 
 /* -------------------------------------------------------------------- */
 /*	Process the third block.					*/
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 2*512;
 
-    segment->XCentre = seg_data.GetDouble(nPos, 22);
-    segment->YCentre = seg_data.GetDouble(nPos+22, 22);
-    segment->UtmXCentre = seg_data.GetDouble(nPos+44, 22);
-    segment->UtmYCentre = seg_data.GetDouble(nPos+66, 22);
-    segment->PixelRes = seg_data.GetDouble(nPos+88, 22);
-    segment->LineRes = seg_data.GetDouble(nPos+110, 22);
+    l_segment->XCentre = seg_data.GetDouble(nPos, 22);
+    l_segment->YCentre = seg_data.GetDouble(nPos+22, 22);
+    l_segment->UtmXCentre = seg_data.GetDouble(nPos+44, 22);
+    l_segment->UtmYCentre = seg_data.GetDouble(nPos+66, 22);
+    l_segment->PixelRes = seg_data.GetDouble(nPos+88, 22);
+    l_segment->LineRes = seg_data.GetDouble(nPos+110, 22);
     if (seg_data.buffer[nPos+132] == 'Y' || 
         seg_data.buffer[nPos+132] == 'y')
-        segment->CornerAvail = true;
+        l_segment->CornerAvail = true;
     else
-        segment->CornerAvail = false;
-    segment->MapUnit = seg_data.Get(nPos+133, 16);
+        l_segment->CornerAvail = false;
+    l_segment->MapUnit = seg_data.Get(nPos+133, 16);
 
-    segment->XUL = seg_data.GetDouble(nPos+149, 22);
-    segment->YUL = seg_data.GetDouble(nPos+171, 22);
-    segment->XUR = seg_data.GetDouble(nPos+193, 22);
-    segment->YUR = seg_data.GetDouble(nPos+215, 22);
-    segment->XLR = seg_data.GetDouble(nPos+237, 22);
-    segment->YLR = seg_data.GetDouble(nPos+259, 22);
-    segment->XLL = seg_data.GetDouble(nPos+281, 22);
-    segment->YLL = seg_data.GetDouble(nPos+303, 22);
-    segment->UtmXUL = seg_data.GetDouble(nPos+325, 22);
-    segment->UtmYUL = seg_data.GetDouble(nPos+347, 22);
-    segment->UtmXUR = seg_data.GetDouble(nPos+369, 22);
-    segment->UtmYUR = seg_data.GetDouble(nPos+391, 22);
-    segment->UtmXLR = seg_data.GetDouble(nPos+413, 22);
-    segment->UtmYLR = seg_data.GetDouble(nPos+435, 22);
-    segment->UtmXLL = seg_data.GetDouble(nPos+457, 22);
-    segment->UtmYLL = seg_data.GetDouble(nPos+479, 22);
+    l_segment->XUL = seg_data.GetDouble(nPos+149, 22);
+    l_segment->YUL = seg_data.GetDouble(nPos+171, 22);
+    l_segment->XUR = seg_data.GetDouble(nPos+193, 22);
+    l_segment->YUR = seg_data.GetDouble(nPos+215, 22);
+    l_segment->XLR = seg_data.GetDouble(nPos+237, 22);
+    l_segment->YLR = seg_data.GetDouble(nPos+259, 22);
+    l_segment->XLL = seg_data.GetDouble(nPos+281, 22);
+    l_segment->YLL = seg_data.GetDouble(nPos+303, 22);
+    l_segment->UtmXUL = seg_data.GetDouble(nPos+325, 22);
+    l_segment->UtmYUL = seg_data.GetDouble(nPos+347, 22);
+    l_segment->UtmXUR = seg_data.GetDouble(nPos+369, 22);
+    l_segment->UtmYUR = seg_data.GetDouble(nPos+391, 22);
+    l_segment->UtmXLR = seg_data.GetDouble(nPos+413, 22);
+    l_segment->UtmYLR = seg_data.GetDouble(nPos+435, 22);
+    l_segment->UtmXLL = seg_data.GetDouble(nPos+457, 22);
+    l_segment->UtmYLL = seg_data.GetDouble(nPos+479, 22);
     
 /* -------------------------------------------------------------------- */
 /*      Process the 4th block (Corner lat/long coordinates)             */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 3*512;
 
-    segment->LongCentreDeg = seg_data.GetDouble(nPos, 16);
-    segment->LatCentreDeg = seg_data.GetDouble(nPos+16, 16);
-    segment->LongUL =  seg_data.GetDouble(nPos+32, 16);
-    segment->LatUL = seg_data.GetDouble(nPos+48, 16);
-    segment->LongUR =  seg_data.GetDouble(nPos+64, 16);
-    segment->LatUR = seg_data.GetDouble(nPos+80, 16);
-    segment->LongLR = seg_data.GetDouble(nPos+96, 16);
-    segment->LatLR = seg_data.GetDouble(nPos+112, 16);
-    segment->LongLL = seg_data.GetDouble(nPos+128, 16);
-    segment->LatLL = seg_data.GetDouble(nPos+144, 16);
-    segment->HtCentre = seg_data.GetDouble(nPos+160, 16);
-    segment->HtUL = seg_data.GetDouble(nPos+176, 16);
-    segment->HtUR = seg_data.GetDouble(nPos+192, 16);
-    segment->HtLR = seg_data.GetDouble(nPos+208, 16);
-    segment->HtLL = seg_data.GetDouble(nPos+224, 16);
+    l_segment->LongCentreDeg = seg_data.GetDouble(nPos, 16);
+    l_segment->LatCentreDeg = seg_data.GetDouble(nPos+16, 16);
+    l_segment->LongUL =  seg_data.GetDouble(nPos+32, 16);
+    l_segment->LatUL = seg_data.GetDouble(nPos+48, 16);
+    l_segment->LongUR =  seg_data.GetDouble(nPos+64, 16);
+    l_segment->LatUR = seg_data.GetDouble(nPos+80, 16);
+    l_segment->LongLR = seg_data.GetDouble(nPos+96, 16);
+    l_segment->LatLR = seg_data.GetDouble(nPos+112, 16);
+    l_segment->LongLL = seg_data.GetDouble(nPos+128, 16);
+    l_segment->LatLL = seg_data.GetDouble(nPos+144, 16);
+    l_segment->HtCentre = seg_data.GetDouble(nPos+160, 16);
+    l_segment->HtUL = seg_data.GetDouble(nPos+176, 16);
+    l_segment->HtUR = seg_data.GetDouble(nPos+192, 16);
+    l_segment->HtLR = seg_data.GetDouble(nPos+208, 16);
+    l_segment->HtLL = seg_data.GetDouble(nPos+224, 16);
 
 /* -------------------------------------------------------------------- */
 /*      Process the 5th block.                                          */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 512*4;
 
-    segment->ImageRecordLength = seg_data.GetInt(nPos, 16);
-    segment->NumberImageLine = seg_data.GetInt(nPos+16, 16);
-    segment->NumberBytePerPixel = seg_data.GetInt(nPos+32, 16);
-    segment->NumberSamplePerLine = seg_data.GetInt(nPos+48, 16);
-    segment->NumberPrefixBytes = seg_data.GetInt(nPos+64, 16);
-    segment->NumberSuffixBytes = seg_data.GetInt(nPos+80, 16);
+    l_segment->ImageRecordLength = seg_data.GetInt(nPos, 16);
+    l_segment->NumberImageLine = seg_data.GetInt(nPos+16, 16);
+    l_segment->NumberBytePerPixel = seg_data.GetInt(nPos+32, 16);
+    l_segment->NumberSamplePerLine = seg_data.GetInt(nPos+48, 16);
+    l_segment->NumberPrefixBytes = seg_data.GetInt(nPos+64, 16);
+    l_segment->NumberSuffixBytes = seg_data.GetInt(nPos+80, 16);
 
 /* -------------------------------------------------------------------- */
 /*      Process the 6th and 7th block.                                  */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 5*512;
 
-    segment->SPNCoeff = 0;
+    l_segment->SPNCoeff = 0;
 
     if(STARTS_WITH(seg_data.Get(nPos,8), "SPOT1BOD") ||
        STARTS_WITH(seg_data.Get(nPos,8), "SPOT1BNW"))
     {
-        segment->SPNCoeff = seg_data.GetInt(nPos+22, 22);
+        l_segment->SPNCoeff = seg_data.GetInt(nPos+22, 22);
         for (i=0; i<20; i++)   
         {
-            segment->SPCoeff1B[i] = 
+            l_segment->SPCoeff1B[i] = 
                 seg_data.GetDouble(nPos+(i+2)*22, 22);
         }
 
@@ -706,44 +706,44 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
 
             for (i=0; i<19; i++)   
             {
-                segment->SPCoeff1B[i+20] = 
+                l_segment->SPCoeff1B[i+20] = 
                     seg_data.GetDouble(nPos+i*22, 22);
             }
-            segment->SPCoeffSg[0] = seg_data.GetInt(nPos+418, 8);
-            segment->SPCoeffSg[1] = seg_data.GetInt(nPos+426, 8);
-            segment->SPCoeffSg[2] = seg_data.GetInt(nPos+434, 8);
-            segment->SPCoeffSg[3] = seg_data.GetInt(nPos+442, 8);
+            l_segment->SPCoeffSg[0] = seg_data.GetInt(nPos+418, 8);
+            l_segment->SPCoeffSg[1] = seg_data.GetInt(nPos+426, 8);
+            l_segment->SPCoeffSg[2] = seg_data.GetInt(nPos+434, 8);
+            l_segment->SPCoeffSg[3] = seg_data.GetInt(nPos+442, 8);
         }
     }
 
 /* -------------------------------------------------------------------- */
-/*	6th and 7th block of ORBIT segment are blank.			*/
+/*	6th and 7th block of ORBIT l_segment are blank.			*/
 /*	Read in the 8th block.						*/
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 7*512;
     
     if (STARTS_WITH(seg_data.Get(nPos,8), "ATTITUDE"))
-        segment->Type = OrbAttitude;
+        l_segment->Type = OrbAttitude;
     else if (STARTS_WITH(seg_data.Get(nPos,8), "RADAR   "))
-        segment->Type = OrbLatLong;
+        l_segment->Type = OrbLatLong;
     else if (STARTS_WITH(seg_data.Get(nPos,8), "AVHRR   "))
-        segment->Type = OrbAvhrr;
+        l_segment->Type = OrbAvhrr;
     else if (STARTS_WITH(seg_data.Get(nPos,8), "NO_DATA "))
-        segment->Type = OrbNone;
+        l_segment->Type = OrbNone;
     else
         throw PCIDSKException("Invalid Orbit type found: [%s]", 
                               seg_data.Get(nPos,8));
 
 /* -------------------------------------------------------------------- */
-/*	Orbit segment is a Satellite Attitude Segment(ATTITUDE) only	*/
+/*	Orbit l_segment is a Satellite Attitude Segment(ATTITUDE) only	*/
 /*	for SPOT 1A.							*/
 /* -------------------------------------------------------------------- */
-    if (segment->Type == OrbAttitude)
+    if (l_segment->Type == OrbAttitude)
     {
         AttitudeSeg_t 	*AttitudeSeg;
         int		nBlock, nData;
 
-        AttitudeSeg = segment->AttitudeSeg = new AttitudeSeg_t();  
+        AttitudeSeg = l_segment->AttitudeSeg = new AttitudeSeg_t();  
 	
 /* -------------------------------------------------------------------- */
 /*	Read in the 9th block.						*/
@@ -793,19 +793,19 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
         {
             throw PCIDSKException("Number of data line read (%d) "
                      "does not matches with what is specified in "
-                     "the segment (%d).\n", nData, 
+                     "the l_segment (%d).\n", nData, 
                      AttitudeSeg->NumberOfLine);
         }
     }
 /* -------------------------------------------------------------------- */
-/*	Radar segment (LATLONG)						*/
+/*	Radar l_segment (LATLONG)						*/
 /* -------------------------------------------------------------------- */
-    else if (segment->Type == OrbLatLong)
+    else if (l_segment->Type == OrbLatLong)
     {
         RadarSeg_t *RadarSeg;
         int	nBlock, nData;
 
-        RadarSeg = segment->RadarSeg = new RadarSeg_t(); 
+        RadarSeg = l_segment->RadarSeg = new RadarSeg_t(); 
 /* -------------------------------------------------------------------- */
 /*	Read in the 9th block.						*/
 /* -------------------------------------------------------------------- */
@@ -927,19 +927,19 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
         {
             throw PCIDSKException("Number "
 		     "of data lines read (%d) does not match with"
-                     "\nwhat is specified in segment (%d).\n", nData, 
+                     "\nwhat is specified in l_segment (%d).\n", nData, 
                      RadarSeg->NumberData);
         }
     }
 /* -------------------------------------------------------------------- */
-/*	AVHRR segment 							*/
+/*	AVHRR l_segment 							*/
 /* -------------------------------------------------------------------- */
-    else if (segment->Type == OrbAvhrr)
+    else if (l_segment->Type == OrbAvhrr)
     {
-        ReadAvhrrEphemerisSegment( nStartBlock, segment);
+        ReadAvhrrEphemerisSegment( nStartBlock, l_segment);
     }
 
-    return segment;
+    return l_segment;
 }
 
 /************************************************************************/
@@ -1210,7 +1210,6 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
         for (nBlock=0, nData=0; nBlock<AttitudeSeg->NumberBlockData; 
              nBlock++)
         {
-            int		i;
             nPos = nStartBlock + 512*(nBlock + 9);
 
 /* -------------------------------------------------------------------- */
@@ -1245,7 +1244,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
     else if (psOrbit->Type == OrbLatLong)
     {
         RadarSeg_t *RadarSeg;
-        int	   i, nBlock, nData;
+        int	   nBlock, nData;
 
         RadarSeg = psOrbit->RadarSeg;
 

@@ -54,9 +54,9 @@ static const int shapeid_page_size = 1024;
 /*                        CPCIDSKVectorSegment()                        */
 /************************************************************************/
 
-CPCIDSKVectorSegment::CPCIDSKVectorSegment( PCIDSKFile *file, int segment,
+CPCIDSKVectorSegment::CPCIDSKVectorSegment( PCIDSKFile *fileIn, int segmentIn,
                                             const char *segment_pointer )
-        : CPCIDSKSegment( file, segment, segment_pointer )
+        : CPCIDSKSegment( fileIn, segmentIn, segment_pointer )
 
 {
     base_initialized = false;

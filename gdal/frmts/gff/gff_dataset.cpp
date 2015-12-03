@@ -106,13 +106,13 @@ public:
 /************************************************************************/
 /*                           GFFRasterBand()                            */
 /************************************************************************/
-GFFRasterBand::GFFRasterBand( GFFDataset *poDS, int nBand,
-	GDALDataType eDataType ) 
+GFFRasterBand::GFFRasterBand( GFFDataset *poDSIn, int nBandIn,
+	GDALDataType eDataTypeIn ) 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
-    this->eDataType = eDataType;
+    this->eDataType = eDataTypeIn;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;

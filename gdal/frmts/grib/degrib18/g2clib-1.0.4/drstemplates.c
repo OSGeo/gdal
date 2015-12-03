@@ -60,16 +60,16 @@ g2int getdrsindex(g2int number)
 !
 !$$$*/
 {
-           g2int j,getdrsindex=-1;
+           g2int j,l_getdrsindex=-1;
 
            for (j=0;j<MAXDRSTEMP;j++) {
               if (number == templatesdrs[j].template_num) {
-                 getdrsindex=j;
-                 return(getdrsindex);
+                 l_getdrsindex=j;
+                 return(l_getdrsindex);
               }
            }
 
-           return(getdrsindex);
+           return(l_getdrsindex);
 }
 
 

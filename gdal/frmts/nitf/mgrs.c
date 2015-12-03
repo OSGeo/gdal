@@ -916,7 +916,7 @@ long Convert_UPS_To_MGRS (char   Hemisphere,
   long ltr2_low_value;        /* 2nd letter range - low number                */
   int letters[MGRS_LETTERS];  /* Number location of 3 letters in alphabet     */
   double divisor;
-  int index = 0;
+  int l_index = 0;
   long error_code = MGRS_NO_ERROR;
 
   if ((Hemisphere != 'N') && (Hemisphere != 'S'))
@@ -940,10 +940,10 @@ long Convert_UPS_To_MGRS (char   Hemisphere,
       else
         letters[0] = LETTER_Y;
 
-      index = letters[0] - 22;
-      ltr2_low_value = UPS_Constant_Table[index].ltr2_low_value;
-      false_easting = UPS_Constant_Table[index].false_easting;
-      false_northing = UPS_Constant_Table[index].false_northing;
+      l_index = letters[0] - 22;
+      ltr2_low_value = UPS_Constant_Table[l_index].ltr2_low_value;
+      false_easting = UPS_Constant_Table[l_index].false_easting;
+      false_northing = UPS_Constant_Table[l_index].false_northing;
     }
     else
     {
@@ -1023,7 +1023,7 @@ long Convert_MGRS_To_UPS ( char   *MGRS,
   long zone;
   long letters[MGRS_LETTERS];
   long in_precision;
-  int index = 0;
+  int l_index = 0;
   long error_code = MGRS_NO_ERROR;
 
   error_code = Break_MGRS_String (MGRS, &zone, letters, Easting, Northing, &in_precision);
@@ -1037,12 +1037,12 @@ long Convert_MGRS_To_UPS ( char   *MGRS,
       {
         *Hemisphere = 'N';
 
-        index = (int)(letters[0] - 22);
-        ltr2_low_value = UPS_Constant_Table[index].ltr2_low_value;
-        ltr2_high_value = UPS_Constant_Table[index].ltr2_high_value;
-        ltr3_high_value = UPS_Constant_Table[index].ltr3_high_value;
-        false_easting = UPS_Constant_Table[index].false_easting;
-        false_northing = UPS_Constant_Table[index].false_northing;
+        l_index = (int)(letters[0] - 22);
+        ltr2_low_value = UPS_Constant_Table[l_index].ltr2_low_value;
+        ltr2_high_value = UPS_Constant_Table[l_index].ltr2_high_value;
+        ltr3_high_value = UPS_Constant_Table[l_index].ltr3_high_value;
+        false_easting = UPS_Constant_Table[l_index].false_easting;
+        false_northing = UPS_Constant_Table[l_index].false_northing;
       }
       else
       {

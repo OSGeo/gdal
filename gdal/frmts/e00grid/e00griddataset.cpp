@@ -147,12 +147,12 @@ class E00GRIDRasterBand : public GDALPamRasterBand
 /*                         E00GRIDRasterBand()                          */
 /************************************************************************/
 
-E00GRIDRasterBand::E00GRIDRasterBand( E00GRIDDataset *poDS, int nBand,
+E00GRIDRasterBand::E00GRIDRasterBand( E00GRIDDataset *poDSIn, int nBandIn,
                                       GDALDataType eDT )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = eDT;
 

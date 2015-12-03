@@ -100,12 +100,12 @@ public:
 /*                          FITSRasterBand()                           */
 /************************************************************************/
 
-FITSRasterBand::FITSRasterBand(FITSDataset *poDS, int nBand) {
+FITSRasterBand::FITSRasterBand(FITSDataset *poDSIn, int nBandIn) {
 
-  this->poDS = poDS;
-  this->nBand = nBand;
-  eDataType = poDS->gdalDataType;
-  nBlockXSize = poDS->nRasterXSize;;
+  this->poDS = poDSIn;
+  this->nBand = nBandIn;
+  eDataType = poDSIn->gdalDataType;
+  nBlockXSize = poDSIn->nRasterXSize;;
   nBlockYSize = 1;
 }
 

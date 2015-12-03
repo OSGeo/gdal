@@ -267,13 +267,13 @@ HDF5ImageRasterBand::~HDF5ImageRasterBand()
 /************************************************************************/
 /*                           HDF5ImageRasterBand()                      */
 /************************************************************************/
-HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
+HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDSIn, int nBandIn,
                                           GDALDataType eType )
 
 {
     char          **papszMetaGlobal;
-    this->poDS    = poDS;
-    this->nBand   = nBand;
+    this->poDS    = poDSIn;
+    this->nBand   = nBandIn;
     eDataType     = eType;
     bNoDataSet    = FALSE;
     dfNoDataValue = -9999;
@@ -284,26 +284,26 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
 /*      Take a copy of Global Metadata since  I can't pass Raster       */
 /*      variable to Iterate function.                                   */
 /* -------------------------------------------------------------------- */
-    papszMetaGlobal = CSLDuplicate( poDS->papszMetadata );
-    CSLDestroy( poDS->papszMetadata );
-    poDS->papszMetadata = NULL;
+    papszMetaGlobal = CSLDuplicate( poDSIn->papszMetadata );
+    CSLDestroy( poDSIn->papszMetadata );
+    poDSIn->papszMetadata = NULL;
 
-    if( poDS->poH5Objects->nType == H5G_DATASET ) {
-        poDS->CreateMetadata( poDS->poH5Objects, H5G_DATASET );
+    if( poDSIn->poH5Objects->nType == H5G_DATASET ) {
+        poDSIn->CreateMetadata( poDSIn->poH5Objects, H5G_DATASET );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Recover Global Metadat and set Band Metadata                    */
 /* -------------------------------------------------------------------- */
 
-    SetMetadata( poDS->papszMetadata );
+    SetMetadata( poDSIn->papszMetadata );
 
-    CSLDestroy( poDS->papszMetadata );
-    poDS->papszMetadata = CSLDuplicate( papszMetaGlobal );
+    CSLDestroy( poDSIn->papszMetadata );
+    poDSIn->papszMetadata = CSLDuplicate( papszMetaGlobal );
     CSLDestroy( papszMetaGlobal );
 
     /* check for chunksize and set it as the blocksize (optimizes read) */
-    hid_t listid = H5Dget_create_plist(((HDF5ImageDataset * )poDS)->dataset_id);
+    hid_t listid = H5Dget_create_plist(((HDF5ImageDataset * )poDSIn)->dataset_id);
     if (listid>0)
     {
         if(H5Pget_layout(listid) == H5D_CHUNKED)
@@ -311,9 +311,9 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
             hsize_t panChunkDims[3];
             int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
             CPL_IGNORE_RET_VAL(nDimSize);
-            CPLAssert(nDimSize == poDS->ndims);
-            nBlockXSize   = (int) panChunkDims[poDS->GetXIndex()];
-            nBlockYSize   = (int) panChunkDims[poDS->GetYIndex()];
+            CPLAssert(nDimSize == poDSIn->ndims);
+            nBlockXSize   = (int) panChunkDims[poDSIn->GetXIndex()];
+            nBlockYSize   = (int) panChunkDims[poDSIn->GetYIndex()];
         }
 
         H5Pclose(listid);
@@ -1234,7 +1234,7 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
                 CPLError( CE_Failure, CPLE_OpenFailed,
                              "Error retrieving CSK GCPs\n" );
                 // Free on failure, e.g. in case of QLK subdataset.
-                for( int i = 0; i < 4; i++ )
+                for( i = 0; i < 4; i++ )
                 {
                     if( pasGCPList[i].pszId )
                         CPLFree( pasGCPList[i].pszId );

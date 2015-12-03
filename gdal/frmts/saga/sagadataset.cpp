@@ -395,13 +395,13 @@ CPLErr SAGADataset::SetProjection( const char *pszSRS )
 /*      Write to .prj file.                                             */
 /* -------------------------------------------------------------------- */
     const CPLString osPrjFilename = CPLResetExtension( GetDescription(), "prj" );
-    VSILFILE *fp = VSIFOpenL( osPrjFilename.c_str(), "wt" );
-    if( fp != NULL )
+    VSILFILE *l_fp = VSIFOpenL( osPrjFilename.c_str(), "wt" );
+    if( l_fp != NULL )
     {
-        VSIFWriteL( pszESRI_SRS, 1, strlen(pszESRI_SRS), fp );
+        VSIFWriteL( pszESRI_SRS, 1, strlen(pszESRI_SRS), l_fp );
         VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>(  "\n" ) ),
-                    1, 1, fp );
-        VSIFCloseL( fp );
+                    1, 1, l_fp );
+        VSIFCloseL( l_fp );
     }
 
     CPLFree( pszESRI_SRS );

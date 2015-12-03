@@ -52,14 +52,14 @@ using namespace PCIDSK;
 /*                          CExternalChannel()                          */
 /************************************************************************/
 
-CExternalChannel::CExternalChannel( PCIDSKBuffer &image_header,
-                                    uint64 ih_offset,
-                                    CPL_UNUSED PCIDSKBuffer &file_header,
-                                    std::string filename,
-                                    int channelnum,
-                                    CPCIDSKFile *file,
-                                    eChanType pixel_type )
-        : CPCIDSKChannel( image_header, ih_offset, file, pixel_type, channelnum)
+CExternalChannel::CExternalChannel( PCIDSKBuffer &image_headerIn,
+                                    uint64 ih_offsetIn,
+                                    CPL_UNUSED PCIDSKBuffer &file_headerIn,
+                                    std::string filenameIn,
+                                    int channelnumIn,
+                                    CPCIDSKFile *fileIn,
+                                    eChanType pixel_typeIn )
+        : CPCIDSKChannel( image_headerIn, ih_offsetIn, fileIn, pixel_typeIn, channelnumIn)
 
 {
     db = NULL;
@@ -70,24 +70,24 @@ CExternalChannel::CExternalChannel( PCIDSKBuffer &image_header,
 /* -------------------------------------------------------------------- */
 /*      Establish the data window.                                      */
 /* -------------------------------------------------------------------- */
-    exoff  = atoi(image_header.Get( 250, 8 ));
-    eyoff  = atoi(image_header.Get( 258, 8 ));
-    exsize = atoi(image_header.Get( 266, 8 ));
-    eysize = atoi(image_header.Get( 274, 8 ));
+    exoff  = atoi(image_headerIn.Get( 250, 8 ));
+    eyoff  = atoi(image_headerIn.Get( 258, 8 ));
+    exsize = atoi(image_headerIn.Get( 266, 8 ));
+    eysize = atoi(image_headerIn.Get( 274, 8 ));
 
-    echannel = atoi(image_header.Get( 282, 8 ));
+    echannel = atoi(image_headerIn.Get( 282, 8 ));
 
     if (echannel == 0) {
-        echannel = channelnum;
+        echannel = channelnumIn;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Establish the file we will be accessing.                        */
 /* -------------------------------------------------------------------- */
-    if( filename != "" )
-        this->filename = filename;
+    if( filenameIn != "" )
+        this->filename = filenameIn;
     else
-        image_header.Get(64,64,this->filename);
+        image_headerIn.Get(64,64,this->filename);
 }
 
 /************************************************************************/
@@ -648,26 +648,26 @@ int CExternalChannel::WriteBlock( int block_index, void *buffer )
 /************************************************************************/
 /*                            GetEChanInfo()                            */
 /************************************************************************/
-void CExternalChannel::GetEChanInfo( std::string &filename, int &echannel,
-                                     int &exoff, int &eyoff, 
-                                     int &exsize, int &eysize ) const
+void CExternalChannel::GetEChanInfo( std::string &filenameOut, int &echannelOut,
+                                     int &exoffOut, int &eyoffOut, 
+                                     int &exsizeOut, int &eysizeOut ) const
 
 {
-    echannel = this->echannel;
-    exoff = this->exoff;
-    eyoff = this->eyoff;
-    exsize = this->exsize;
-    eysize = this->eysize;
-    filename = this->filename;
+    echannelOut = this->echannel;
+    exoffOut = this->exoff;
+    eyoffOut = this->eyoff;
+    exsizeOut = this->exsize;
+    eysizeOut = this->eysize;
+    filenameOut = this->filename;
 }
 
 /************************************************************************/
 /*                            SetEChanInfo()                            */
 /************************************************************************/
 
-void CExternalChannel::SetEChanInfo( std::string filename, int echannel,
-                                     int exoff, int eyoff, 
-                                     int exsize, int eysize )
+void CExternalChannel::SetEChanInfo( std::string filenameIn, int echannelIn,
+                                     int exoffIn, int eyoffIn, 
+                                     int exsizeIn, int eysizeIn )
 
 {
     if( ih_offset == 0 )
@@ -687,7 +687,7 @@ void CExternalChannel::SetEChanInfo( std::string filename, int echannel,
 /* -------------------------------------------------------------------- */
     std::string IHi2_filename;
     
-    if( filename.size() > 64 )
+    if( filenameIn.size() > 64 )
     {
         int link_segment;
         
@@ -715,7 +715,7 @@ void CExternalChannel::SetEChanInfo( std::string filename, int echannel,
         
         if( link != NULL )
         {
-            link->SetPath( filename );
+            link->SetPath( filenameIn );
             link->Synchronize();
         }
     }
@@ -735,7 +735,7 @@ void CExternalChannel::SetEChanInfo( std::string filename, int echannel,
             file->DeleteSegment( link_segment );
         }
         
-        IHi2_filename = filename;
+        IHi2_filename = filenameIn;
     }
         
 /* -------------------------------------------------------------------- */
@@ -757,19 +757,19 @@ void CExternalChannel::SetEChanInfo( std::string filename, int echannel,
     ih.Put( "", 201, 1 );
 
     // IHi.6.7
-    ih.Put( exoff, 250, 8 );
+    ih.Put( exoffIn, 250, 8 );
 
     // IHi.6.8
-    ih.Put( eyoff, 258, 8 );
+    ih.Put( eyoffIn, 258, 8 );
 
     // IHi.6.9
-    ih.Put( exsize, 266, 8 );
+    ih.Put( exsizeIn, 266, 8 );
 
     // IHi.6.10
-    ih.Put( eysize, 274, 8 );
+    ih.Put( eysizeIn, 274, 8 );
 
     // IHi.6.11
-    ih.Put( echannel, 282, 8 );
+    ih.Put( echannelIn, 282, 8 );
 
     file->WriteToFile( ih.buffer, ih_offset, 1024 );
 
@@ -778,11 +778,11 @@ void CExternalChannel::SetEChanInfo( std::string filename, int echannel,
 /* -------------------------------------------------------------------- */
     this->filename = MergeRelativePath( file->GetInterfaces()->io,
                                         file->GetFilename(), 
-                                        filename );
+                                        filenameIn );
 
-    this->exoff = exoff;
-    this->eyoff = eyoff;
-    this->exsize = exsize;
-    this->eysize = eysize;
-    this->echannel = echannel;
+    this->exoff = exoffIn;
+    this->eyoff = eyoffIn;
+    this->exsize = exsizeIn;
+    this->eysize = eysizeIn;
+    this->echannel = echannelIn;
 }

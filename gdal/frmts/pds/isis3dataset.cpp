@@ -85,39 +85,39 @@ class ISISTiledBand : public GDALPamRasterBand
 /*                           ISISTiledBand()                            */
 /************************************************************************/
 
-ISISTiledBand::ISISTiledBand( GDALDataset *poDS, VSILFILE *fpVSIL,
-                              int nBand, GDALDataType eDT,
+ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
+                              int nBandIn, GDALDataType eDT,
                               int nTileXSize, int nTileYSize, 
-                              GIntBig nFirstTileOffset, 
-                              GIntBig nXTileOffset,
-                              GIntBig nYTileOffset,
-                              int bNativeOrder )
+                              GIntBig nFirstTileOffsetIn, 
+                              GIntBig nXTileOffsetIn,
+                              GIntBig nYTileOffsetIn,
+                              int bNativeOrderIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->fpVSIL = fpVSIL;
-    this->bNativeOrder = bNativeOrder;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->fpVSIL = fpVSILIn;
+    this->bNativeOrder = bNativeOrderIn;
     eDataType = eDT;
     nBlockXSize = nTileXSize;
     nBlockYSize = nTileYSize;
+    this->nXTileOffset = nXTileOffsetIn;
+    this->nYTileOffset = nYTileOffsetIn;
 
-    const int nBlocksPerRow =
+    const int l_nBlocksPerRow =
             (poDS->GetRasterXSize() + nTileXSize - 1) / nTileXSize;
-    const int nBlocksPerColumn =
+    const int l_nBlocksPerColumn =
             (poDS->GetRasterYSize() + nTileYSize - 1) / nTileYSize;
 
     if( nXTileOffset == 0 && nYTileOffset == 0 )
     {
         nXTileOffset = static_cast<GIntBig>(GDALGetDataTypeSize(eDT)/8) * nTileXSize * nTileYSize;
-        nYTileOffset = nXTileOffset * nBlocksPerRow;
+        nYTileOffset = nXTileOffset * l_nBlocksPerRow;
     }
 
-    this->nFirstTileOffset = nFirstTileOffset
-        + (nBand-1) * nYTileOffset * nBlocksPerColumn;
+    this->nFirstTileOffset = nFirstTileOffsetIn
+        + (nBand-1) * nYTileOffset * l_nBlocksPerColumn;
 
-    this->nXTileOffset = nXTileOffset;
-    this->nYTileOffset = nYTileOffset;
 }
 
 /************************************************************************/
@@ -776,11 +776,11 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
         char **papszLines = CSLLoad( pszPrjFile );
 
-        OGRSpatialReference oSRS;
-        if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
+        OGRSpatialReference oSRS2;
+        if( oSRS2.importFromESRI( papszLines ) == OGRERR_NONE )
         {
             char *pszResult = NULL;
-            oSRS.exportToWkt( &pszResult );
+            oSRS2.exportToWkt( &pszResult );
             poDS->osProjection = pszResult;
             CPLFree( pszResult );
         }
