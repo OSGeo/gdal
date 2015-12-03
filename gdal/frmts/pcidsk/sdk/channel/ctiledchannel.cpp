@@ -82,6 +82,9 @@ CTiledChannel::CTiledChannel( PCIDSKBuffer &image_header,
         block_width = -1;
         block_height = -1;
     }
+    tile_count = 0;
+    tiles_per_row = 0;
+    tiles_per_col = 0;
 }
 
 /************************************************************************/

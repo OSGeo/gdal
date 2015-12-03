@@ -556,6 +556,7 @@ namespace PCIDSK
          */
         EphemerisSeg_t()
         {
+            SupSegExist = false;
             FieldOfView = 0.0;
             ViewAngle = 0.0;
             NumColCentre = 0.0;
