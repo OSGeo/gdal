@@ -151,7 +151,10 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
         
         nNextChar = VSIFGetc( fp );
         if( VSIUngetc( nNextChar, fp ) == EOF)
+        {
+            CSLDestroy(papszReturn);
             return NULL;
+        }
         
         if( nNextChar == '#' )
             pszLine = NULL;

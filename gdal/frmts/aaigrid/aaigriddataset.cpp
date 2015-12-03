@@ -828,6 +828,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
         if( VSIFSeekL( poDS->fp, nStartOfData, SEEK_SET ) < 0 )
         {
             delete poDS;
+            VSIFree( pabyChunk );
             return NULL;
         }
 
