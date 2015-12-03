@@ -929,6 +929,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+    /* coverity[tainted_data] */
     for (int iBandNum = 1; iBandNum <= nNumBands; iBandNum++) {
         poDS->SetBand( iBandNum, new IRISRasterBand( poDS, iBandNum ));
 
