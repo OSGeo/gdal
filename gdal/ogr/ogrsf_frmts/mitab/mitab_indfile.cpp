@@ -1825,6 +1825,7 @@ int TABINDNode::SplitNode()
                                 m_nPrevNodePtr, GetNodeBlockPtr())!= 0 ||
             poNewNode->SetFieldType(m_eFieldType) != 0 )
         {
+            delete poNewNode;
             return -1;
         }
 

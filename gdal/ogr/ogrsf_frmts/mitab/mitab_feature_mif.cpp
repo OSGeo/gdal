@@ -859,6 +859,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                              "Invalid number of vertices (%d) in PLINE "
                              "MULTIPLE segment.", nNumPoints);
                     delete poMultiLine;
+                    CSLDestroy(papszToken);
                     return -1;
                 }
                 poLine = new OGRLineString();
