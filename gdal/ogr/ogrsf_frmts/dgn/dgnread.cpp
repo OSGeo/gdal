@@ -914,7 +914,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           DGNParseCore( psDGN, psElement );
 
           // Read B-Spline curve header
-          psSpline->desc_words = DGN_INT32(psDGN->abyElem + 36);
+          psSpline->desc_words = static_cast<long>(DGN_INT32(psDGN->abyElem + 36));
 
           // flags
           psSpline->order = (psDGN->abyElem[40] & 0x0f) + 2;
@@ -1367,7 +1367,7 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
     else
         psTCB->dimension = 2;
           
-    psTCB->subunits_per_master = DGN_INT32( psDGN->abyElem + 1112 );
+    psTCB->subunits_per_master = static_cast<long>(DGN_INT32( psDGN->abyElem + 1112 ));
 
     psTCB->master_units[0] = (char) psDGN->abyElem[1120];
     psTCB->master_units[1] = (char) psDGN->abyElem[1121];
