@@ -151,7 +151,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to read 16 byte header failed for\n%s.",
                   pszFilename );
-
+        VSIFCloseL(fp);
         return NULL;
     }
 
@@ -160,7 +160,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s is not an Imagine HFA file ... header wrong.",
                   pszFilename );
-
+        VSIFCloseL(fp);
         return NULL;
     }
 
@@ -208,7 +208,11 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     bRet &= VSIFSeekL( fp, 0, SEEK_END ) >= 0;
     if( !bRet )
+    {
+        VSIFCloseL(fp);
+        CPLFree(psInfo);
         return NULL;
+    }
     psInfo->nEndOfFile = (GUInt32) VSIFTellL( fp );
 
 /* -------------------------------------------------------------------- */
@@ -217,6 +221,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     psInfo->poRoot = HFAEntry::New( psInfo, psInfo->nRootPos, NULL, NULL );
     if( psInfo->poRoot == NULL )
     {
+        VSIFCloseL(fp);
         CPLFree(psInfo);
         return NULL;
     }
