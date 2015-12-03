@@ -920,6 +920,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 /*      Set multipoint specific information in the structure.           */
 /* -------------------------------------------------------------------- */
     psMP->num_vertices = nPointCount;
+    // coverity[overrun-buffer-arg]
     memcpy( psMP->vertices + 0, pasVertices, sizeof(DGNPoint) * nPointCount );
 
 /* -------------------------------------------------------------------- */
@@ -1592,14 +1593,14 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
 /* -------------------------------------------------------------------- */
 /*      Setup Raw data for the color table specific portion.            */
 /* -------------------------------------------------------------------- */
-    psCore->raw_bytes = 806; /* FIXME: this is invalid : 806 < 41 + 783 (see below lines) */
+    psCore->raw_bytes = 41+(256-1)*3;
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
     psCore->raw_data[36] = (unsigned char) (nScreenFlag % 256);
     psCore->raw_data[37] = (unsigned char) (nScreenFlag / 256);
 
     memcpy( psCore->raw_data + 38, abyColorInfo[255], 3 );
-    memcpy( psCore->raw_data + 41, abyColorInfo, 783 );
+    memcpy( psCore->raw_data + 41, abyColorInfo, (256-1)*3 );
     
 /* -------------------------------------------------------------------- */
 /*      Set the core raw data.                                          */
