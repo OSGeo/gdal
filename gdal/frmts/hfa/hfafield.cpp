@@ -147,7 +147,7 @@ const char *HFAField::Initialize( const char * pszInput )
                 nBraceDepth++;
             else if( *pszInput == '}' )
                 nBraceDepth--;
-            
+
             pszInput++;
         }
         if (*pszInput == '\0')

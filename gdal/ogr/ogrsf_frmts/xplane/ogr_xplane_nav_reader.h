@@ -178,8 +178,8 @@ enum
 {
     NAVAID_NDB            = 2, 
     NAVAID_VOR            = 3, /* VOR, VORTAC or VOR-DME.*/
-    NAVAID_LOC_ILS        = 4, /* Localiser that is part of a full ILS */
-    NAVAID_LOC_STANDALONE = 5, /* Stand-alone localiser (LOC), also including a LDA (Landing Directional Aid) or SDF (Simplified Directional Facility) */
+    NAVAID_LOC_ILS        = 4, /* Localizer that is part of a full ILS */
+    NAVAID_LOC_STANDALONE = 5, /* Stand-alone Localizer (LOC), also including a LDA (Landing Directional Aid) or SDF (Simplified Directional Facility) */
     NAVAID_GS             = 6, /* Glideslope */
     NAVAID_OM             = 7, /* Outer marker */
     NAVAID_MM             = 8, /* Middle marker */

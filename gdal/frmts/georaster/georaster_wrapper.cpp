@@ -2842,14 +2842,14 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
 
     char szRDT[OWCODE];
     char szNoData[OWTEXT];
-    
+
     strcpy( szRDT, sDataTable.c_str() );
     strcpy( szNoData, pszValue );
 
     int nRID = nRasterId;
 
     // ------------------------------------------------------------
-    //  Write the in memory XML metada to avoid lossing other changes
+    //  Write the in memory XML metadata to avoid losing other changes.
     // ------------------------------------------------------------
 
     char* pszMetadata = CPLSerializeXMLTree( phMetadata );
@@ -2861,7 +2861,7 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
 
     OCILobLocator* phLocatorR = NULL;
     OCILobLocator* phLocatorW = NULL;
-    
+
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  GR1 sdo_georaster;\n"

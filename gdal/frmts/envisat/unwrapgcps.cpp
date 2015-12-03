@@ -57,7 +57,7 @@ extern void EnvisatUnwrapGCPs( int cnt, GDAL_GCP *gcp );
 // the original tiepoints are returned.
 
 static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp ) 
-{ 
+{
     // the histogram array - it is expected to fit the stack
     int hist[NBIN] ; 
 
@@ -66,17 +66,17 @@ static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp )
 
     // accumulate the histogram 
     for( int i = 0 ; i < cnt ; i++ ) 
-    { 
-        double x = (gcp[i].dfGCPX-XMIN)/XDIF ;
-        int idx = (int)(NBIN*(x-floor(x))) ; 
+    {
+        double x = (gcp[i].dfGCPX-XMIN)/XDIF;
+        int idx = (int)(NBIN*(x-floor(x)));
 
-        // the lattitudes should lay in the +/-180 bounds 
+        // The latitudes should lay in the +/-180 bounds
         // although it should never happen we check the outliers
         if (idx < 0) idx = 0 ; 
         if (idx >= NBIN ) idx = NBIN-1; 
 
         hist[idx] += 1 ; 
-    } 
+    }
 
     // find a middle of at least NEMPTY consecutive empty bins and get its middle
     int i0 = -1 , i1 = -1 , last_is_empty = 0 ; 

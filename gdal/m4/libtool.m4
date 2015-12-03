@@ -4548,7 +4548,7 @@ dnl Note also adjust exclude_expsyms for C++ above.
 
   case $host_os in
   cygwin* | mingw* | pw32* | cegcc*)
-    # FIXME: the MSVC++ port hasn't been tested in a loooong time
+    # FIXME: the MSVC++ port hasn't been tested in a long time
     # When not using gcc, we currently assume that we are using
     # Microsoft Visual C++.
     if test "$GCC" != yes; then

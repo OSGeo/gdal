@@ -741,7 +741,7 @@ GBool GDALFloatEquals(float A, float B)
      */
     //int bInt = *(int*)&B;
     memcpy(&bInt, &B, 4);
-    
+
     if (bInt < 0)
         bInt = 0x80000000 - bInt;
     /* to make -ftrapv happy we compute the diff on larger type and cast down later */
@@ -763,14 +763,14 @@ GBool GDALFloatEquals(float A, float B)
  *
  * This function creates vector polygons for all connected regions of pixels in
  * the raster sharing a common pixel value.  Optionally each polygon may be
- * labelled with the pixel value in an attribute.  Optionally a mask band
+ * labeled with the pixel value in an attribute.  Optionally a mask band
  * can be provided to determine which pixels are eligible for processing.
  *
  * Note that currently the source pixel band values are read into a
- * signed 32bit integer buffer (Int32), so floating point or complex 
+ * signed 32bit integer buffer (Int32), so floating point or complex
  * bands will be implicitly truncated before processing. If you want to use a
  * version using 32bit float buffers, see GDALFPolygonize().
- *
+  *
  * Polygon features will be created on the output layer, with polygon 
  * geometries representing the polygons.  The polygon geometries will be
  * in the georeferenced coordinate system of the image (based on the
@@ -846,7 +846,7 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
  *
  * This function creates vector polygons for all connected regions of pixels in
  * the raster sharing a common pixel value.  Optionally each polygon may be
- * labelled with the pixel value in an attribute.  Optionally a mask band
+ * labeled with the pixel value in an attribute.  Optionally a mask band
  * can be provided to determine which pixels are eligible for processing.
  *
  * The source pixel band values are read into a 32bit float buffer. If you want

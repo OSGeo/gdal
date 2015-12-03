@@ -39,7 +39,7 @@ min Y: The minimum Y coordinate (bottom edge) of the image.
 
 max Y: The maximum Y coordinate (top edge) of the image.
 
-pos'n error: A measure of the accuracy of the positions in the image. This field can be used to record the RMS (Root Mean Square) error of locational positions in the reference system. At present, this field is not analytical, but rather is for informational purposes only. (See RESAMPLE Note 5.)
+pos'n error: A measure of the accuracy of the positions in the image. This field can be used to record the RMS (Root Mean Square) error of positions in the reference system. At present, this field is not analytic, but rather is for informational purposes only. (See RESAMPLE Note 5.)
 
 resolution: The inherent resolution of the image. In most cases, this should correspond to the result of dividing the range of reference coordinates in X by the number of columns in the image. However, there are some rare instances where it might differ from this result. An example is the case of LANDSAT Band 6 (Thermal) imagery. The resolution of those data is actually 120 meters, and would be recorded as such in this field. However, the data is distributed in an apparent 30 meter format to make them physically match the dimensions of the other bands of the scene. The resolution field is a way of correctly indicating the underlying resolution of these data.
 

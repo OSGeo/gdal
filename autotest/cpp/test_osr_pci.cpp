@@ -93,7 +93,7 @@ namespace tut
 
         const double maxError = 0.0000005;
         double val = 0;
-        
+
         val = OSRGetProjParm(srs_, SRS_PP_STANDARD_PARALLEL_1, -1111, &err_);
         ensure_equals("OSRGetProjParm() failed", err_, OGRERR_NONE);
         ensure("Standard parallel 1 is invalid",
@@ -111,7 +111,7 @@ namespace tut
 
         val = OSRGetProjParm(srs_, SRS_PP_LONGITUDE_OF_CENTER, -1111, &err_);
         ensure_equals("OSRGetProjParm() failed", err_, OGRERR_NONE);
-        ensure("Longtitude of center is invalid",
+        ensure("Longitude of center is invalid",
                std::fabs(val - 45.0) <= maxError);
 
         val = OSRGetProjParm(srs_, SRS_PP_FALSE_EASTING, -1111, &err_);
@@ -129,7 +129,7 @@ namespace tut
     void object::test<2>()
     {
         ensure("SRS handle is NULL", NULL != srs_);
-        
+
         const char* wkt = "\"\"PROJCS[\"unnamed\",GEOGCS[\"NAD27\","
             "DATUM[\"North_American_Datum_1927\","
             "SPHEROID[\"Clarke 1866\",6378206.4,294.9786982139006,"
