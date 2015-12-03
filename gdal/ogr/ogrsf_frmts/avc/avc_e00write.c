@@ -471,7 +471,7 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
     char szSysId[40], szUserId[40];
     int  i;
 
-    strcpy(szNewName, pszNewCoverName);
+    snprintf(szNewName, sizeof(szNewName), "%s", pszNewCoverName);
     for(i=0; szNewName[i] != '\0'; i++)
         szNewName[i] = (char) toupper(szNewName[i]);
 
