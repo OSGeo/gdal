@@ -565,7 +565,8 @@ DGifGetExtensionNext(GifFileType * GifFile,
     if (Buf > 0) {
         *Extension = Private->Buf;    /* Use private unused buffer. */
         (*Extension)[0] = Buf;  /* Pascal strings notation (pos. 0 is len.). */
-        /* coverity[tainted_data,check_return] */
+        /* coverity[check_return] */
+        /* coverity[tainted_data] */
         if (READ(GifFile, &((*Extension)[1]), Buf) != Buf) {
             _GifError = D_GIF_ERR_READ_FAILED;
             return GIF_ERROR;
