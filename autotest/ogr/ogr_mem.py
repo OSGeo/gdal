@@ -695,6 +695,18 @@ def ogr_mem_16():
         print(lyr.GetFeatureCount())
         return 'fail'
 
+    # Test first feature with huge ID
+    lyr = gdaltest.mem_ds.CreateLayer('ogr_mem_16_bis')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1234567890123)
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetFID() != 1234567890123:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 def ogr_mem_cleanup():
