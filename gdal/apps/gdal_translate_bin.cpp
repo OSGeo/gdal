@@ -179,6 +179,11 @@ int main( int argc, char ** argv )
         Usage(NULL);
     }
 
+    if( strcmp(psOptionsForBinary->pszDest, "/vsistdout/") == 0 )
+    {
+        psOptionsForBinary->bQuiet = TRUE;
+    }
+
     if( !(psOptionsForBinary->bQuiet) )
     {
         GDALTranslateOptionsSetProgress(psOptions, GDALTermProgress, NULL);
@@ -194,11 +199,6 @@ int main( int argc, char ** argv )
         Usage("No target dataset specified.");
     }
 
-    if( strcmp(psOptionsForBinary->pszDest, "/vsistdout/") == 0)
-    {
-        GDALTranslateOptionsSetProgress(psOptions, GDALTermProgress, NULL);
-    }
-    
     if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
         CheckExtensionConsistency(psOptionsForBinary->pszDest, psOptionsForBinary->pszFormat);
 
