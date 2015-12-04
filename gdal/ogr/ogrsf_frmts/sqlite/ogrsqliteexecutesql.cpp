@@ -743,8 +743,8 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 #ifdef HAVE_SPATIALITE
 
 /* -------------------------------------------------------------------- */
-/*      Creating an empty spatialite DB (with spatial_ref_sys populated */
-/*      has a non-neglectable cost. So at the first attempt, let's make */
+/*      Creating an empty SpatiaLite DB (with spatial_ref_sys populated */
+/*      has a significant cost. So at the first attempt, let's make     */
 /*      one and cache it for later use.                                 */
 /* -------------------------------------------------------------------- */
 #if 1
@@ -759,7 +759,9 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
         {
             bTried = TRUE;
             char* pszCachedFilename = (char*) CPLMalloc(256);
-            sprintf(pszCachedFilename, "/vsimem/ogr2sqlite/reference_%p.db",pszCachedFilename);
+            // TODO: Is this sprintf safe?
+            sprintf(pszCachedFilename, "/vsimem/ogr2sqlite/reference_%p.db",
+                    pszCachedFilename);
             char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
             OGRSQLiteDataSource* poCachedDS = new OGRSQLiteDataSource();
             nRet = poCachedDS->Create( pszCachedFilename, papszOptions );

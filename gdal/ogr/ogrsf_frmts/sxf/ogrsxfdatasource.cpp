@@ -809,7 +809,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
         return eErr;
     }
 
-    //TODO: Need to normalise more SRS:
+    //TODO: Need to normalize more SRS:
     //PAN_PROJ_WAG1
     //PAN_PROJ_MERCAT
     //PAN_PROJ_PS

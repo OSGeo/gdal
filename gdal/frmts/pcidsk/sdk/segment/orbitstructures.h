@@ -487,14 +487,14 @@ namespace PCIDSK
             Line = oAS.Line;
         }
 
-        /* Nineth Block Part 1 - General/header information */
+        /* Ninth Block Part 1 - General/header information */
         std::string  szImageFormat;
         int   nImageXSize;
         int   nImageYSize;
         bool bIsAscending;
         bool bIsImageRotated;
 
-        /* Nineth Block Part 2 - Ephemeris information */
+        /* Ninth Block Part 2 - Ephemeris information */
         std::string  szOrbitNumber;
         std::string  szAscendDescendNodeFlag;
         std::string  szEpochYearAndDay;

@@ -193,13 +193,13 @@ def ogr_s57_5():
 def ogr_s57_6():
 
     ds = ogr.Open( 'data/bug1526.000' )
-    
+
     feat = ds.GetLayerByName('FOGSIG').GetNextFeature()
 
     if feat is None:
         gdaltest.post_reason( 'Did not get expected FOGSIG feature at all.' )
         return 'fail'
-    
+
     if feat.GetField( 'INFORM' ) != 'During South winds nautophone is not always heard in S direction from lighthouse' \
        or len(feat.GetField( 'NINFOM' )) < 1:
         gdaltest.post_reason( 'FOGSIG: did not get expected attributes' )
@@ -213,7 +213,7 @@ def ogr_s57_6():
 def ogr_s57_7():
 
     ds = ogr.Open( 'data/bug2147_3R7D0889.000' )
-    
+
     feat = ds.GetLayerByName('ROADWY').GetNextFeature()
 
     if feat is None:

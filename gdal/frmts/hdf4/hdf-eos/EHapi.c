@@ -239,7 +239,7 @@ EHopen(char *filename, intn access)
 #ifndef _PGS_OLDNFS
 /* The following loop around the function Hopen is intended to deal with the NFS cache 
    problem when opening file fails with errno = 150 or 151. When NFS cache is updated,
-   this part of change is no longer neccessary.              10/18/1999   */
+   this part of change is no longer necessary.              10/18/1999   */
                 retryCount = 0;
                 HDFfid = -1;
                 while ((HDFfid == -1) && (retryCount < MAX_RETRIES))
@@ -346,7 +346,7 @@ EHopen(char *filename, intn access)
 #ifndef _PGS_OLDNFS
 /* The following loop around the function Hopen is intended to deal with the NFS cache 
    problem when opening file fails with errno = 150 or 151. When NFS cache is updated,
-   this part of change is no longer neccessary.              10/18/1999   */
+   this part of change is no longer necessary.              10/18/1999   */
                 retryCount = 0;
                 HDFfid = -1;
                 while ((HDFfid == -1) && (retryCount < MAX_RETRIES))

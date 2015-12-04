@@ -2472,38 +2472,40 @@ OGRErr OGRShapeLayer::Repack()
         oTempFile = CPLResetExtension( oTempFile, "shp" );
         if( VSIRename( oTempFile, osSHPName ) != 0 )
         {
-            CPLDebug( "Shape", "Can not rename SHP file: %s", VSIStrerror( errno ) );
+            CPLDebug( "Shape", "Can not rename SHP file: %s",
+                      VSIStrerror( errno ) );
             CPLFree( panRecordsToDelete );
             return OGRERR_FAILURE;
         }
-    
+
         oTempFile = CPLResetExtension( oTempFile, "shx" );
         if( VSIRename( oTempFile, osSHXName ) != 0 )
         {
-            CPLDebug( "Shape", "Can not rename SHX file: %s", VSIStrerror( errno ) );
+            CPLDebug( "Shape", "Can not rename SHX file: %s",
+                      VSIStrerror( errno ) );
             CPLFree( panRecordsToDelete );
             return OGRERR_FAILURE;
         }
     }
-    
+
     CPLFree( panRecordsToDelete );
     panRecordsToDelete = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Reopen the shapefile                                            */
 /*                                                                      */
-/* We do not need to reimplement OGRShapeDataSource::OpenFile() here    */  
+/* We do not need to reimplement OGRShapeDataSource::OpenFile() here    */
 /* with the fully featured error checking.                              */
-/* If all operations above succeeded, then all necessery files are      */
+/* If all operations above succeeded, then all necessary files are      */
 /* in the right place and accessible.                                   */
 /* -------------------------------------------------------------------- */
-    
+
     const char* pszAccess = NULL;
     if( bUpdateAccess )
         pszAccess = "r+";
     else
         pszAccess = "r";
-    
+
     if( bMustReopenSHP )
         hSHP = poDS->DS_SHPOpen ( osSHPName , pszAccess );
     if( bMustReopenDBF )

@@ -1186,7 +1186,7 @@ static int PrintGDS (gdsType *gds, int version)
       Print ("GDS", "Dx", Prt_FS, gds->Dx, "m");
       Print ("GDS", "Dy", Prt_FS, gds->Dy, "m");
    }
-   /* For scan mode... The user of this data doesn't necesarily care how it
+   /* For scan mode... The user of this data doesn't necessarily care how it
     * was stored in the Grib2 grid (i.e. gds->scan), they just care about how
     * the data they are accessing is scanned (i.e. scan=0000) */
    sprintf (buffer, "%d%d%d%d", ((gds->scan & GRIB2BIT_1) / GRIB2BIT_1),

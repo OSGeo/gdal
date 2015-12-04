@@ -43,7 +43,7 @@ void	GDALRegister_DIPEx(void);
 CPL_C_END
 
 typedef struct {
-    GInt32	NBIH;	/* bytes in header, normaly 1024 */
+    GInt32      NBIH;   /* bytes in header, normally 1024 */
     GInt32      NBPR;	/* bytes per data record (all bands of scanline) */
     GInt32	IL;	/* initial line - normally 1 */
     GInt32	LL;	/* last line */

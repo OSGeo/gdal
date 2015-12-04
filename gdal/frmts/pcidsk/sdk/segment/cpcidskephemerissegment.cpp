@@ -183,12 +183,12 @@ double CPCIDSKEphemerisSegment::ConvertDeg(double degree, int mode)
 /************************************************************************/
 /*		      ReadAvhrrEphemerisSegment()                       */
 /************************************************************************/
-/**                                                                      
+/**
  *  Read the contents of blocks 9, 11, and onwards from the orbit	
  *  segment into the EphemerisSeg_t structure.	
  * @param nStartBlock where to start to read in the buffer
  * @param psEphSegRec the structure to populate with information.
- */   
+ */
 void 
 CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
                                          EphemerisSeg_t *psEphSegRec)
@@ -205,16 +205,15 @@ CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
     as = psEphSegRec->AvhrrSeg;
 
 /* -------------------------------------------------------------------- */
-/*  Read in the Nineth Block which contains general info + ephemeris	*/
-/*  info as well.							*/
+/*  Read in the Ninth Block which contains general info + ephemeris     */
+/*  info as well.                                                       */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 8*512;
-    
+
     as->szImageFormat = seg_data.Get(nPos, 16);
     as->nImageXSize = seg_data.GetInt(nPos+16, 16);
     as->nImageYSize = seg_data.GetInt(nPos+32, 16);
 
-    
     if ( STARTS_WITH(seg_data.Get(nPos+48,9), "ASCENDING") )
         as->bIsAscending = true;
     else
@@ -1172,12 +1171,12 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
 /*      Add one block                                                   */
 /* -------------------------------------------------------------------- */
         seg_data.SetSize(seg_data.buffer_size + 512);
-            
+
         nPos = nStartBlock + 512*8;
         memset(seg_data.buffer+nPos,' ',512);
-            
+
 /* -------------------------------------------------------------------- */
-/*	Write the nineth block.						*/
+/*      Write the ninth block.                                          */
 /* -------------------------------------------------------------------- */
 
         seg_data.Put(AttitudeSeg->Roll,nPos,22,"%22.14f");
@@ -1199,11 +1198,11 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
 /* -------------------------------------------------------------------- */
         seg_data.SetSize(seg_data.buffer_size + 
                                  512 * AttitudeSeg->NumberBlockData);
-            
+
         nPos = nStartBlock + 512*9;
         memset(seg_data.buffer+nPos,' ',
                512 * AttitudeSeg->NumberBlockData);
-            
+
 /* -------------------------------------------------------------------- */
 /*	Write out the line required.					*/
 /* -------------------------------------------------------------------- */
@@ -1257,14 +1256,13 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
 /*      Add two blocks.                                                 */
 /* -------------------------------------------------------------------- */
         seg_data.SetSize(seg_data.buffer_size + 512*2);
-            
+
         nPos = nStartBlock + 512*8;
         memset(seg_data.buffer+nPos,' ', 512*2);
-            
-/* -------------------------------------------------------------------- */
-/*	Write out the nineth block.					*/
-/* -------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------- */
+/*      Write out the ninth block.                                      */
+/* -------------------------------------------------------------------- */
         seg_data.Put(RadarSeg->Identifier.c_str(), nPos,16);
         seg_data.Put(RadarSeg->Facility.c_str(), nPos+16,16);
         seg_data.Put(RadarSeg->Ellipsoid.c_str(), nPos+32,16);
@@ -1289,7 +1287,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
 /* -------------------------------------------------------------------- */
         seg_data.SetSize(seg_data.buffer_size + 
                                  512 * RadarSeg->NumberBlockData);
-            
+
         nPos = nStartBlock + 512*10;
         memset(seg_data.buffer+nPos,' ', 
                512 * RadarSeg->NumberBlockData);
