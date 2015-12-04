@@ -447,6 +447,14 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( poBand->GetColorTable() == NULL )
     {
         psGifCT = GifMakeMapObject( 256, NULL );
+        if( psGifCT == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot allocate color table");
+            GIFAbstractDataset::myEGifCloseFile(hGifFile);
+            VSIFCloseL( fp );
+            return NULL;
+        }
         for( int iColor = 0; iColor < 256; iColor++ )
         {
             psGifCT->Colors[iColor].Red = (GifByteType) iColor;
@@ -457,12 +465,20 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     else
     {
         GDALColorTable	*poCT = poBand->GetColorTable();
-        int nFullCount = 1;
+        int nFullCount = 2;
 
         while( nFullCount < poCT->GetColorEntryCount() )
             nFullCount = nFullCount * 2;
 
         psGifCT = GifMakeMapObject( nFullCount, NULL );
+        if( psGifCT == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot allocate color table");
+            GIFAbstractDataset::myEGifCloseFile(hGifFile);
+            VSIFCloseL( fp );
+            return NULL;
+        }
         int iColor = 0;
         for( ; iColor < poCT->GetColorEntryCount(); iColor++ )
         {
