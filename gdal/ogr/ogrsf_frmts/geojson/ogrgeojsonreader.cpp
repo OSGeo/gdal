@@ -1134,19 +1134,20 @@ OGRGeoJSONReader::ReadFeatureCollection( OGRGeoJSONLayer* poLayer, json_object* 
             osNativeData += ": ";
             osNativeData += json_object_to_json_string(it.val);
         }
-        if( osNativeData.size() != 0 )
+        if( osNativeData.size() == 0 )
         {
-            osNativeData += " }";
-
-            osNativeData = "NATIVE_DATA=" + osNativeData;
-
-            char* apszMetadata[3];
-            apszMetadata[0] = (char*) osNativeData.c_str();
-            apszMetadata[1] = (char*) "NATIVE_MEDIA_TYPE=application/vnd.geo+json";
-            apszMetadata[2] = NULL;
-
-            poLayer->SetMetadata( apszMetadata, "NATIVE_DATA" );
+            osNativeData = "{ ";
         }
+        osNativeData += " }";
+
+        osNativeData = "NATIVE_DATA=" + osNativeData;
+
+        char* apszMetadata[3];
+        apszMetadata[0] = (char*) osNativeData.c_str();
+        apszMetadata[1] = (char*) "NATIVE_MEDIA_TYPE=application/vnd.geo+json";
+        apszMetadata[2] = NULL;
+
+        poLayer->SetMetadata( apszMetadata, "NATIVE_DATA" );
     }
 }
 

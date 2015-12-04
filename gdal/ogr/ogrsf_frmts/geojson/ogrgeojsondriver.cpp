@@ -435,14 +435,6 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
         poDS = NULL;
     }
 
-    if( NULL != poDS && poOpenInfo->eAccess == GA_Update )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "GeoJSON Driver doesn't support update." );
-        delete poDS;
-        return NULL;
-    }
-
     if( poDS != NULL && poDS->HasOtherPages() )
     {
         const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
