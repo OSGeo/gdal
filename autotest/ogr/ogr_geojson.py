@@ -2295,13 +2295,14 @@ def ogr_geojson_48():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_geojson_48.json',
-"""{ "type": "Feature", "bar": "baz", "properties": { "myprop": "myvalue" }, "geometry": null }""")
+"""{ "type": "Feature", "bar": "baz", "bbox": [2,49,2,49], "properties": { "myprop": "myvalue" }, "geometry": {"type": "Point", "coordinates": [ 2, 49]} }""")
 
     # Test read support
     ds = ogr.Open('/vsimem/ogr_geojson_48.json', update = 1)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     f.SetField("myprop", "another_value")
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (3 50)'))
     lyr.SetFeature(f)
     ds = None
 
@@ -2316,6 +2317,7 @@ def ogr_geojson_48():
 
     # we don't want crs if there's no in the source
     if data.find('"bar": "baz"') < 0 or \
+       data.find('"bbox": [ 3.0, 50.0, 3.0, 50.0 ]') < 0 or \
        data.find('crs') >= 0 or \
        data.find('FeatureCollection') >= 0 or \
        data.find('"myprop": "another_value"') < 0:

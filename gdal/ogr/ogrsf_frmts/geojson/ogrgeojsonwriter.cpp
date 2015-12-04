@@ -295,6 +295,11 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature, int bWriteBBOX, int 
                 {
                     continue;
                 }
+                if( strcmp(it.key, "bbox") == 0 )
+                {
+                    bWriteBBOX = TRUE;
+                    continue;
+                }
                 if( strcmp(it.key, "geometry") == 0 )
                 {
                     poNativeGeom = json_object_get(it.val);
