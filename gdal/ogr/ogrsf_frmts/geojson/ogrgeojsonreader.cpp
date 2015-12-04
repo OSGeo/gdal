@@ -1825,7 +1825,7 @@ json_object* json_ex_get_object_by_path(json_object* poObj, const char* pszPath 
 /*                             OGRJSonParse()                           */
 /************************************************************************/
 
-bool OGRJSonParse(const char* pszText, json_object** ppoObj)
+bool OGRJSonParse(const char* pszText, json_object** ppoObj, bool bVerboseError)
 {
     if( ppoObj == NULL )
         return false;
@@ -1833,9 +1833,12 @@ bool OGRJSonParse(const char* pszText, json_object** ppoObj)
     *ppoObj = json_tokener_parse_ex(jstok, pszText, -1);
     if( jstok->err != json_tokener_success)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "GeoJSON parsing error: %s (at offset %d)",
-                    json_tokener_error_desc(jstok->err), jstok->char_offset);
+        if( bVerboseError )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                        "GeoJSON parsing error: %s (at offset %d)",
+                        json_tokener_error_desc(jstok->err), jstok->char_offset);
+        }
 
         json_tokener_free(jstok);
         *ppoObj = NULL;
