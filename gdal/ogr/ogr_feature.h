@@ -282,6 +282,8 @@ class CPL_DLL OGRFeature
     char                *m_pszNativeData;
     char                *m_pszNativeMediaType;
 
+    bool                SetFieldInternal( int i, OGRField * puValue );
+
   protected: 
     char *              m_pszStyleString;
     OGRStyleTable       *m_poStyleTable;

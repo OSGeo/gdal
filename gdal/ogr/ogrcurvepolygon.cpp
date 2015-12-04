@@ -110,11 +110,17 @@ OGRGeometry *OGRCurvePolygon::clone() const
 
     poNewPolygon = (OGRCurvePolygon*)
             OGRGeometryFactory::createGeometry(getGeometryType());
+    if( poNewPolygon == NULL )
+        return NULL;
     poNewPolygon->assignSpatialReference( getSpatialReference() );
 
     for( int i = 0; i < oCC.nCurveCount; i++ )
     {
-        poNewPolygon->addRing( oCC.papoCurves[i] );
+        if( poNewPolygon->addRing( oCC.papoCurves[i] ) != OGRERR_NONE )
+        {
+            delete poNewPolygon;
+            return NULL;
+        }
     }
 
     return poNewPolygon;
@@ -301,6 +307,8 @@ OGRErr OGRCurvePolygon::addRing( OGRCurve * poNewRing )
 
 {
     OGRCurve* poNewRingCloned = (OGRCurve* )poNewRing->clone();
+    if( poNewRingCloned == NULL )
+        return OGRERR_FAILURE;
     OGRErr eErr = addRingDirectly(poNewRingCloned);
     if( eErr != OGRERR_NONE )
         delete poNewRingCloned;

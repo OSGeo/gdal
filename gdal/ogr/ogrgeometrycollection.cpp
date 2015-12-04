@@ -144,11 +144,17 @@ OGRGeometry *OGRGeometryCollection::clone() const
 
     poNewGC = (OGRGeometryCollection*)
             OGRGeometryFactory::createGeometry(getGeometryType());
+    if( poNewGC == NULL )
+        return NULL;
     poNewGC->assignSpatialReference( getSpatialReference() );
 
     for( int i = 0; i < nGeomCount; i++ )
     {
-        poNewGC->addGeometry( papoGeoms[i] );
+        if( poNewGC->addGeometry( papoGeoms[i] ) != OGRERR_NONE )
+        {
+            delete poNewGC;
+            return NULL;
+        }
     }
 
     return poNewGC;
@@ -300,6 +306,8 @@ OGRErr OGRGeometryCollection::addGeometry( const OGRGeometry * poNewGeom )
     OGRGeometry *poClone = poNewGeom->clone();
     OGRErr      eErr;
 
+    if( poClone == NULL )
+        return OGRERR_FAILURE;
     eErr = addGeometryDirectly( poClone );
     if( eErr != OGRERR_NONE )
         delete poClone;
@@ -344,8 +352,11 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
     else if( poNewGeom->getCoordinateDimension() != 3 && getCoordinateDimension() == 3 )
         poNewGeom->setCoordinateDimension(3);
 
-    papoGeoms = (OGRGeometry **) OGRRealloc( papoGeoms,
+    OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE( papoGeoms,
                                              sizeof(void*) * (nGeomCount+1) );
+    if( papoNewGeoms == NULL )
+        return OGRERR_FAILURE;
+    papoGeoms = papoNewGeoms;
 
     papoGeoms[nGeomCount] = poNewGeom;
 
@@ -492,7 +503,10 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
         if( OGR_GT_IsSubClassOf(eSubGeomType, wkbGeometryCollection) )
         {
             poSubGeom = OGRGeometryFactory::createGeometry( eSubGeomType );
-            eErr = ((OGRGeometryCollection*)poSubGeom)->
+            if( poSubGeom == NULL )
+                eErr = OGRERR_FAILURE;
+            else
+                eErr = ((OGRGeometryCollection*)poSubGeom)->
                         importFromWkbInternal( pabySubData, nSize, nRecLevel + 1, eWkbVariant );
         }
         else
@@ -1129,6 +1143,8 @@ OGRGeometry* OGRGeometryCollection::getLinearGeometry(double dfMaxAngleStepSizeD
 {
     OGRGeometryCollection* poGC = (OGRGeometryCollection*)
         OGRGeometryFactory::createGeometry(OGR_GT_GetLinear(getGeometryType()));
+    if( poGC == NULL )
+        return NULL;
     poGC->assignSpatialReference( getSpatialReference() );
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
@@ -1147,6 +1163,8 @@ OGRGeometry* OGRGeometryCollection::getCurveGeometry(const char* const* papszOpt
 {
     OGRGeometryCollection* poGC = (OGRGeometryCollection*)
         OGRGeometryFactory::createGeometry(OGR_GT_GetCurve(getGeometryType()));
+    if( poGC == NULL )
+        return NULL;
     poGC->assignSpatialReference( getSpatialReference() );
     bool bHasCurveGeometry = false;
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )

@@ -33,6 +33,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_geos.h"
+#include <new>
 
 #ifndef HAVE_GEOS
 #define UNUSED_IF_NO_GEOS CPL_UNUSED
@@ -422,43 +423,43 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
     switch( wkbFlatten(eGeometryType) )
     {
       case wkbPoint:
-          return new OGRPoint();
+          return new (std::nothrow) OGRPoint();
 
       case wkbLineString:
-          return new OGRLineString();
+          return new (std::nothrow) OGRLineString();
 
       case wkbPolygon:
-          return new OGRPolygon();
+          return new (std::nothrow) OGRPolygon();
 
       case wkbGeometryCollection:
-          return new OGRGeometryCollection();
+          return new (std::nothrow) OGRGeometryCollection();
 
       case wkbMultiPolygon:
-          return new OGRMultiPolygon();
+          return new (std::nothrow) OGRMultiPolygon();
 
       case wkbMultiPoint:
-          return new OGRMultiPoint();
+          return new (std::nothrow) OGRMultiPoint();
 
       case wkbMultiLineString:
-          return new OGRMultiLineString();
+          return new (std::nothrow) OGRMultiLineString();
 
       case wkbLinearRing:
-          return new OGRLinearRing();
+          return new (std::nothrow) OGRLinearRing();
 
       case wkbCircularString:
-          return new OGRCircularString();
+          return new (std::nothrow) OGRCircularString();
 
       case wkbCompoundCurve:
-          return new OGRCompoundCurve();
+          return new (std::nothrow) OGRCompoundCurve();
 
       case wkbCurvePolygon:
-          return new OGRCurvePolygon();
+          return new (std::nothrow) OGRCurvePolygon();
 
       case wkbMultiCurve:
-          return new OGRMultiCurve();
+          return new (std::nothrow) OGRMultiCurve();
 
       case wkbMultiSurface:
-          return new OGRMultiSurface();
+          return new (std::nothrow) OGRMultiSurface();
 
       default:
           return NULL;

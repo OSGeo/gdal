@@ -33,6 +33,7 @@
 
 /* for std::numeric_limits */
 #include <limits>
+#include <new>
 
 CPL_CVSID("$Id$");
 
@@ -149,7 +150,9 @@ OGRPoint& OGRPoint::operator=( const OGRPoint& other )
 OGRGeometry *OGRPoint::clone() const
 
 {
-    OGRPoint    *poNewPoint = new OGRPoint( x, y, z );
+    OGRPoint    *poNewPoint = new (std::nothrow) OGRPoint( x, y, z );
+    if( poNewPoint == NULL )
+        return NULL;
 
     poNewPoint->assignSpatialReference( getSpatialReference() );
     poNewPoint->setCoordinateDimension( nCoordDimension );

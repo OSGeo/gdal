@@ -123,9 +123,16 @@ OGRGeometry *OGRSimpleCurve::clone() const
 
     poCurve = (OGRSimpleCurve*)
             OGRGeometryFactory::createGeometry(getGeometryType());
+    if( poCurve == NULL )
+        return NULL;
 
     poCurve->assignSpatialReference( getSpatialReference() );
     poCurve->setPoints( nPointCount, paoPoints, padfZ );
+    if( poCurve->getNumPoints() != nPointCount )
+    {
+        delete poCurve;
+        return NULL;
+    }
     poCurve->setCoordinateDimension( getCoordinateDimension() );
     
     return poCurve;
