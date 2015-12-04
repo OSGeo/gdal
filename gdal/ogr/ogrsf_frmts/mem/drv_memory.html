@@ -27,11 +27,12 @@ Any name may be used for a created datasource.  There are no datasource
 or layer creation options supported.  Layer names need to be unique, but
 are not otherwise constrained.<p>
 
-Feature ids passed to CreateFeature() are preserved <i>unless</i> they exceed 
+Before GDAL 2.1, feature ids passed to CreateFeature() are preserved <i>unless</i> they exceed 
 10000000 in which case they will be reset to avoid a requirement for an 
-excessively large and sparse feature array.<p>
+excessively large and sparse feature array. Starting with GDAL 2.1, sparse
+IDs can be handled.<p>
 
-New fields can be added to layer that already has features. <p>
+New fields can be added or removed to a layer that already has features. <p>
 
 
 </body>
