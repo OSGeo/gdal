@@ -285,7 +285,8 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
         }
     }
 
-    if( papoFeatures != NULL || oMapFeatures.size() == 0 )
+    if( papoFeatures != NULL ||
+        (oMapFeatures.size() == 0 && nFID <= 100000) )
     {
         if( nFID >= nMaxFeatureCount )
         {
