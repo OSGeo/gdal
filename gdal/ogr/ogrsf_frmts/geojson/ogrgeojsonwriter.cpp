@@ -425,7 +425,7 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature )
         else if( OFTString == eType )
         {
             const char* pszStr = poFeature->GetFieldAsString(nField);
-            int nLen = strlen(pszStr);
+            const size_t nLen = strlen(pszStr);
             poObjProp = NULL;
             if( (pszStr[0] == '{' && pszStr[nLen-1] == '}') ||
                 (pszStr[0] == '[' && pszStr[nLen-1] == ']') )
