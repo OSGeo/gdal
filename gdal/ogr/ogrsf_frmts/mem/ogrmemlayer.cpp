@@ -274,7 +274,7 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
             papoFeatures = NULL;
             nMaxFeatureCount = 0;
         }
-        catch( std::bad_alloc& e )
+        catch( const std::bad_alloc& )
         {
             oMapFeatures.clear();
             CPLError(CE_Failure, CPLE_OutOfMemory,
@@ -338,7 +338,7 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
                 oMapFeatures[nFID] = poFeatureCloned;
                 nFeatureCount++;
             }
-            catch( std::bad_alloc& e )
+            catch( const std::bad_alloc& )
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
                         "Cannot allocate memory");
