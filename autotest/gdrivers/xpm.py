@@ -58,6 +58,10 @@ class TestXPM:
         return 'success'
 
 
+def xpm_1():
+
+    tst = gdaltest.GDALTest( 'XPM', 'byte.tif', 1, 4583 )
+    return tst.testCreateCopy( vsimem = 1, check_minmax = False )
 
 gdaltest_list = []
 
@@ -68,6 +72,7 @@ for item in xpm_list:
     ut = TestXPM( item[0], item[1], item[2], item[3] )
     gdaltest_list.append( (ut.test, item[1]) )
 
+gdaltest_list.append( xpm_1 )
 
 if __name__ == '__main__':
 
