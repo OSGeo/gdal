@@ -7,7 +7,7 @@
 
 <h1>SENTINEL2 -- Sentinel-2 Products</h1>
 
-<p>Driver for Sentinel-2 Level-1B and Level-1C products. (GDAL &gt;= 2.1)</p>
+<p>Driver for Sentinel-2 Level-1B, Level-1C and Level-2A products. (GDAL &gt;= 2.1)</p>
 
 <p>The SENTINEL2 driver will be used if the main metadata .xml file at the
 root of a SENTINEL2 data product is opened (whose name is typically
@@ -72,11 +72,60 @@ in UTM WGS84 projections. The imagery of each band is put in a separate JPEG2000
 </p>
 
 <p>When opening the main
-metadata .xml file, the driver will typically expose 4 sub-datasets: one for the 4
-10m bands, one for the 6 20m bands, one for the 3 60m bands and one for a preview
-of the R,G,B bands at a 320m resolution, by mosaicing all tiles of same resolution
-and projection. If a product spans over several UTM zones,
+metadata .xml file, the driver will typically expose 4 sub-datasets:
+<ul>
+<li>one for the 4 10m bands,</li>
+<li>one for the 6 20m bands, </li>
+<li>one for the 3 60m bands and,</li>
+<li> one for a preview of the R,G,B bands at a 320m resolution</li>
+</ul>
+</p>
+<p>
+All tiles of same resolution and projection are mosaiced together.
+If a product spans over several UTM zones,
 they will be exposed as separate subdatasets.</p>
+
+<p>It is also possible to open the metadata .xml file of each tile, in which case
+the driver will typically expose the 4 above mentionned types of sub-datasets.</p>
+
+<h2>Level-2A</h2>
+
+<p>Similarly to Level-1C, Level-2A products are organized in ortho-rectified
+tiles of 100 km x 100 km in UTM WGS84 projections. The imagery of each band is
+put in a separate JPEG2000 file.
+The values are Bottom-Of-Atmosphere (BOA) reflectances. L2A specific bands are
+also computed:
+<ul>
+<li>AOT: Aerosol Optical Thickness map (at 550nm)</li>
+<li>CLD: Raster mask values range from 0 for high confidence clear sky to 100
+for high confidence cloudy</li>
+<li>SCL: Scene Classification. The meaning of the values is indicated in the
+Category Names of the band.</li>
+<li>SNW: Raster mask values range from 0 for high confidence NO snow/ice to 100
+for high confidence snow/ice</li>
+<li>WVP: Scene-average Water Vapour map</li>
+</ul></p>
+
+<p>When opening the main
+metadata .xml file, the driver will typically expose 4 sub-datasets:
+<ul>
+<li>one for the 4 native 10m bands, and L2A specific bands (AOT and WVP)</li>
+<li>one for the 6 native 20m bands, plus the 10m bands, except B8, resampled to
+20m, and L2A specific bands (AOT, WVP, SCL, CLD and SNW), </li>
+<li>one for the 3 native 60m bands, plus the 10m&amp;20m bands, except B8,
+resampled to 60m, and L2A specific bands (AOT, WVP, SCL, CLD and SNW),</li>
+<li> one for a preview of the R,G,B bands at a 320m resolution</li>
+</ul>
+</p>
+<p>
+All tiles of same resolution and projection are mosaiced together.
+If a product spans over several UTM zones,
+they will be exposed as separate subdatasets.</p>
+
+<p>Note: at the time of writing (December 2015), the exact format of Level-2A
+has not been yet decided by ESA. The driver is based on the output of the
+<a href="https://github.com/umwilm/SEN2COR">sen2cor</a> v2.0.5 (Sentinel 2 Level 2A
+Prototype Processor) software that processes Level-1C datasets into Level-2A.</p>
 
 <h2>Metadata</h2>
 
@@ -87,7 +136,7 @@ domain.</p>
 <p>Subdatasets are based on the VRT format, so the definition of this VRT can
 be obtained by querying the xml:VRT metadata domain.</p>
 
-<h2>Performance issues for L1C</h2>
+<h2>Performance issues for L1C and L2A</h2>
 
 <p>Due to the way Sentinel-2 products are structured, in particular because of
 the number of JPEG2000 files involved, zoom-out operations can be very slow for

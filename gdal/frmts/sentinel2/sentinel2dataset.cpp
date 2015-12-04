@@ -54,6 +54,12 @@ CPL_C_START
 void    GDALRegister_SENTINEL2(void);
 CPL_C_END
 
+typedef enum
+{
+    SENTINEL2_L1B,
+    SENTINEL2_L1C,
+    SENTINEL2_L2A
+} SENTINEL2Level;
 
 typedef struct
 {
@@ -82,6 +88,31 @@ static const SENTINEL2BandDescription asBandDesc[] =
 };
 
 #define NB_BANDS (sizeof(asBandDesc)/sizeof(asBandDesc[0]))
+
+typedef enum
+{
+    TL_IMG_DATA,                /* Tile is located in IMG_DATA/ */
+    TL_IMG_DATA_Rxxm,           /* Tile is located in IMG_DATA/Rxxm/ */
+    TL_QI_DATA                  /* Tile is located in QI_DATA/ */
+} SENTINEL2_L2A_Tilelocation;
+
+typedef struct
+{
+    const char* pszBandName;
+    const char* pszBandDescription;
+    SENTINEL2_L2A_Tilelocation eLocation;
+} SENTINEL2_L2A_BandDescription;
+
+static const SENTINEL2_L2A_BandDescription asL2ABandDesc[] =
+{
+    { "AOT", "Aerosol Optical Thickness map (at 550nm)", TL_IMG_DATA_Rxxm },
+    { "WVP", "Scene-average Water Vapour map", TL_IMG_DATA_Rxxm },
+    { "SCL", "Scene Classification", TL_IMG_DATA },
+    { "CLD", "Raster mask values range from 0 for high confidence clear sky to 100 for high confidence cloudy", TL_QI_DATA },
+    { "SNW", "Raster mask values range from 0 for high confidence NO snow/ice to 100 for high confidence snow/ice", TL_QI_DATA },
+};
+
+#define NB_L2A_BANDS (sizeof(asL2ABandDesc)/sizeof(asL2ABandDesc[0]))
 
 static
 const char* SENTINEL2GetOption( GDALOpenInfo* poOpenInfo,
@@ -117,7 +148,23 @@ class SENTINEL2DatasetContainer: public GDALPamDataset
 class SENTINEL2Dataset : public VRTDataset
 {
         std::vector<CPLString>   aosNonJP2Files;
+        
+        void   AddL1CL2ABandMetadata(SENTINEL2Level eLevel,
+                                     CPLXMLNode* psRoot,
+                                     const std::vector<CPLString>& aosBands);
 
+        static SENTINEL2Dataset *CreateL1CL2ADataset(
+                SENTINEL2Level eLevel,
+                const std::vector<CPLString>& aosGranuleList,
+                std::vector<CPLString>& aosNonJP2Files,
+                int nSubDSPrecision,
+                bool bIsPreview,
+                int nSubDSEPSGCode,
+                bool bAlpha,
+                const std::vector<CPLString>& aosBands,
+                int nSaturatedVal,
+                int nNodataVal);
+        
     public:
                     SENTINEL2Dataset(int nXSize, int nYSize);
                     ~SENTINEL2Dataset();
@@ -131,8 +178,15 @@ class SENTINEL2Dataset : public VRTDataset
                                             int nResolutionOfInterest = 0,
                                             std::set<CPLString> *poBandSet = NULL);
         static GDALDataset *OpenL1BSubdataset( GDALOpenInfo * );
-        static GDALDataset *OpenL1C( GDALOpenInfo * );
-        static GDALDataset *OpenL1CSubdataset( GDALOpenInfo * );
+        static GDALDataset *OpenL1C_L2A( const char* pszFilename,
+                                         SENTINEL2Level eLevel );
+        static GDALDataset *OpenL1CTile( const char* pszFilename,
+                                         CPLXMLNode** ppsRootMainMTD = NULL,
+                                         int nResolutionOfInterest = 0,
+                                         std::set<CPLString>* poBandSet = NULL);
+        static GDALDataset *OpenL1CTileSubdataset( GDALOpenInfo * );
+        static GDALDataset *OpenL1C_L2ASubdataset( GDALOpenInfo *,
+                                                   SENTINEL2Level eLevel );
 
         static int Identify( GDALOpenInfo * );
 };
@@ -302,11 +356,17 @@ int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo )
         return TRUE;
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL2_L1C:") )
         return TRUE;
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL2_L1C_TILE:") )
+        return TRUE;
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL2_L2A:") )
+        return TRUE;
 
     /* Accept directly .zip as provided by https://scihub.esa.int/ */
     const char* pszJustFilename = CPLGetFilename(poOpenInfo->pszFilename);
     if( (STARTS_WITH_CI(pszJustFilename, "S2A_OPER_PRD_MSI") ||
-         STARTS_WITH_CI(pszJustFilename, "S2B_OPER_PRD_MSI") ) &&
+         STARTS_WITH_CI(pszJustFilename, "S2B_OPER_PRD_MSI") ||
+         STARTS_WITH_CI(pszJustFilename, "S2A_USER_PRD_MSI") ||
+         STARTS_WITH_CI(pszJustFilename, "S2B_USER_PRD_MSI") ) &&
          EQUAL(CPLGetExtension(pszJustFilename), "zip") )
     {
         return TRUE;
@@ -327,6 +387,14 @@ int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo )
 
     if( strstr(pszHeader,  "<n1:Level-1C_User_Product" ) != NULL &&
         strstr(pszHeader, "User_Product_Level-1C.xsd" ) != NULL )
+        return TRUE;
+
+    if( strstr(pszHeader,  "<n1:Level-1C_Tile_ID" ) != NULL &&
+        strstr(pszHeader, "S2_PDI_Level-1C_Tile_Metadata.xsd" ) != NULL )
+        return TRUE;
+
+    if( strstr(pszHeader,  "<n1:Level-2A_User_Product" ) != NULL &&
+        strstr(pszHeader, "User_Product_Level-2A_Metadata" ) != NULL )
         return TRUE;
 
     return FALSE;
@@ -361,11 +429,19 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return OpenL1BSubdataset(poOpenInfo);
 
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL2_L1C:") )
-        return OpenL1CSubdataset(poOpenInfo);
+        return OpenL1C_L2ASubdataset(poOpenInfo, SENTINEL2_L1C);
+
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL2_L1C_TILE:") )
+        return OpenL1CTileSubdataset(poOpenInfo);
+
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL2_L2A:") )
+        return OpenL1C_L2ASubdataset(poOpenInfo, SENTINEL2_L2A);
 
     const char* pszJustFilename = CPLGetFilename(poOpenInfo->pszFilename);
     if( (STARTS_WITH_CI(pszJustFilename, "S2A_OPER_PRD_MSI") ||
-         STARTS_WITH_CI(pszJustFilename, "S2B_OPER_PRD_MSI") ) &&
+         STARTS_WITH_CI(pszJustFilename, "S2B_OPER_PRD_MSI") ||
+         STARTS_WITH_CI(pszJustFilename, "S2A_USER_PRD_MSI") ||
+         STARTS_WITH_CI(pszJustFilename, "S2B_USER_PRD_MSI") ) &&
          EQUAL(CPLGetExtension(pszJustFilename), "zip") )
     {
         CPLString osBasename(CPLGetBasename(pszJustFilename));
@@ -403,8 +479,16 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( strstr(pszHeader,  "<n1:Level-1C_User_Product" ) != NULL &&
         strstr(pszHeader, "User_Product_Level-1C.xsd" ) != NULL )
     {
-        return OpenL1C(poOpenInfo);
+        return OpenL1C_L2A(poOpenInfo->pszFilename, SENTINEL2_L1C);
     }
+
+    if( strstr(pszHeader,  "<n1:Level-1C_Tile_ID" ) != NULL &&
+        strstr(pszHeader, "S2_PDI_Level-1C_Tile_Metadata.xsd" ) != NULL )
+        return OpenL1CTile(poOpenInfo->pszFilename);
+
+    if( strstr(pszHeader,  "<n1:Level-2A_User_Product" ) != NULL &&
+        strstr(pszHeader, "User_Product_Level-2A_Metadata" ) != NULL )
+        return OpenL1C_L2A(poOpenInfo->pszFilename, SENTINEL2_L2A);
 
     return NULL;
 }
@@ -424,17 +508,32 @@ static const SENTINEL2BandDescription* SENTINEL2GetBandDesc(const char* pszBandN
 }
 
 /************************************************************************/
-/*                      SENTINEL2_L1C_GetGranuleInfo()                  */
+/*                       SENTINEL2GetL2ABandDesc()                      */
 /************************************************************************/
 
-static bool SENTINEL2_L1C_GetGranuleInfo(const CPLString& osGranuleMTDPath,
-                                         int nDesiredResolution,
-                                         int* pnEPSGCode = NULL,
-                                         double* pdfULX = NULL,
-                                         double* pdfULY = NULL,
-                                         int* pnResolution = NULL,
-                                         int* pnWidth = NULL,
-                                         int* pnHeight = NULL)
+static const SENTINEL2_L2A_BandDescription* SENTINEL2GetL2ABandDesc(const char* pszBandName)
+{
+    for(size_t i=0; i < NB_L2A_BANDS; i++)
+    {
+        if( EQUAL(asL2ABandDesc[i].pszBandName, pszBandName) )
+            return &(asL2ABandDesc[i]);
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                        SENTINEL2GetGranuleInfo()                     */
+/************************************************************************/
+
+static bool SENTINEL2GetGranuleInfo(SENTINEL2Level eLevel,
+                                    const CPLString& osGranuleMTDPath,
+                                    int nDesiredResolution,
+                                    int* pnEPSGCode = NULL,
+                                    double* pdfULX = NULL,
+                                    double* pdfULY = NULL,
+                                    int* pnResolution = NULL,
+                                    int* pnWidth = NULL,
+                                    int* pnHeight = NULL)
 {
     static bool bTryOptimization = true;
     CPLXMLNode *psRoot = NULL;
@@ -459,7 +558,8 @@ static bool SENTINEL2_L1C_GetGranuleInfo(const CPLString& osGranuleMTDPath,
         szBuffer[nRead] = 0;
         VSIFCloseL(fp);
         char* pszTileGeocoding = strstr(szBuffer, "</Tile_Geocoding>");
-        if( pszTileGeocoding != NULL &&
+        if( eLevel == SENTINEL2_L1C &&
+            pszTileGeocoding != NULL &&
             strstr(szBuffer, "<n1:Level-1C_Tile_ID") != NULL &&
             strstr(szBuffer, "<n1:Geometric_Info") != NULL &&
             static_cast<size_t>(pszTileGeocoding - szBuffer) <
@@ -467,6 +567,17 @@ static bool SENTINEL2_L1C_GetGranuleInfo(const CPLString& osGranuleMTDPath,
         {
             strcpy(pszTileGeocoding,
                 "</Tile_Geocoding></n1:Geometric_Info></n1:Level-1C_Tile_ID>");
+            psRoot = CPLParseXMLString( szBuffer );
+        }
+        else if( eLevel == SENTINEL2_L2A &&
+            pszTileGeocoding != NULL &&
+            strstr(szBuffer, "<n1:Level-2A_Tile_ID") != NULL &&
+            strstr(szBuffer, "<n1:Geometric_Info") != NULL &&
+            static_cast<size_t>(pszTileGeocoding - szBuffer) <
+                sizeof(szBuffer) - strlen("</Tile_Geocoding></n1:Geometric_Info></n1:Level-2A_Tile_ID>") - 1 )
+        {
+            strcpy(pszTileGeocoding,
+                "</Tile_Geocoding></n1:Geometric_Info></n1:Level-2A_Tile_ID>");
             psRoot = CPLParseXMLString( szBuffer );
         }
         else
@@ -485,12 +596,15 @@ static bool SENTINEL2_L1C_GetGranuleInfo(const CPLString& osGranuleMTDPath,
     SENTINEL2_CPLXMLNodeHolder oXMLHolder(psRoot);
     CPLStripXMLNamespace(psRoot, NULL, TRUE);
 
-    CPLXMLNode* psTileGeocoding = CPLGetXMLNode(psRoot,
-                            "=Level-1C_Tile_ID.Geometric_Info.Tile_Geocoding");
+    const char* pszNodePath =
+        (eLevel == SENTINEL2_L1C ) ?
+             "=Level-1C_Tile_ID.Geometric_Info.Tile_Geocoding" :
+             "=Level-2A_Tile_ID.Geometric_Info.Tile_Geocoding";
+    CPLXMLNode* psTileGeocoding = CPLGetXMLNode(psRoot, pszNodePath);
     if( psTileGeocoding == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s in %s",
-                 "=Level-1C_Tile_ID.Geometric_Info.Tile_Geocoding",
+                 pszNodePath,
                  osGranuleMTDPath.c_str());
         return false;
     }
@@ -595,35 +709,45 @@ static char SENTINEL2GetPathSeparator(const char* pszBasename)
 }
 
 /************************************************************************/
-/*                   SENTINEL2_L1B_L1C_GetGranuleList()                 */
+/*                      SENTINEL2GetGranuleList()                       */
 /************************************************************************/
 
-static bool SENTINEL2_L1B_L1C_GetGranuleList(CPLXMLNode* psMainMTD,
-                                         const char* pszRootNode,
-                                         const char* pszFilename,
-                                         std::vector<CPLString>& osList)
+static bool SENTINEL2GetGranuleList(CPLXMLNode* psMainMTD,
+                                    SENTINEL2Level eLevel,
+                                    const char* pszFilename,
+                                    std::vector<CPLString>& osList,
+                                    std::set<int>* poSetResolutions = NULL,
+                                    std::map<int, std::set<CPLString> >*
+                                                poMapResolutionsToBands = NULL)
 {
+    const char* pszNodePath =
+        (eLevel == SENTINEL2_L1B ) ? "Level-1B_User_Product" :
+        (eLevel == SENTINEL2_L1C ) ? "Level-1C_User_Product" :
+                                     "Level-2A_User_Product";
+
     CPLXMLNode* psRoot =  CPLGetXMLNode(psMainMTD,
-                                        CPLSPrintf("=%s", pszRootNode));
+                                        CPLSPrintf("=%s", pszNodePath));
     if( psRoot == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find =%s", pszRootNode);
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find =%s", pszNodePath);
         return false;
     }
-    CPLXMLNode* psProductInfo = CPLGetXMLNode(psRoot, "General_Info.Product_Info");
+    pszNodePath = (eLevel == SENTINEL2_L2A) ? 
+            "General_Info.L2A_Product_Info" : "General_Info.Product_Info";
+    CPLXMLNode* psProductInfo = CPLGetXMLNode(psRoot, pszNodePath);
     if( psProductInfo == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
-                 "General_Info.Product_Info");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s", pszNodePath);
         return false;
     }
 
+    pszNodePath = (eLevel == SENTINEL2_L2A) ? 
+            "L2A_Product_Organisation" : "Product_Organisation";
     CPLXMLNode* psProductOrganisation =
-                        CPLGetXMLNode(psProductInfo, "Product_Organisation");
+                        CPLGetXMLNode(psProductInfo, pszNodePath);
     if( psProductOrganisation == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
-                 "Product_Organisation");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s", pszNodePath);
         return false;
     }
 
@@ -640,6 +764,7 @@ static bool SENTINEL2_L1B_L1C_GetGranuleList(CPLXMLNode* psMainMTD,
     }
 #endif
 
+    std::set<CPLString> aoSetGranuleId;
     for(CPLXMLNode* psIter = psProductOrganisation->psChild; psIter != NULL;
                                                     psIter = psIter->psNext )
     {
@@ -662,6 +787,52 @@ static bool SENTINEL2_L1B_L1C_GetGranuleList(CPLXMLNode* psMainMTD,
                 CPLDebug("SENTINEL2", "Missing granuleIdentifier attribute");
                 continue;
             }
+
+            if( eLevel == SENTINEL2_L2A )
+            {
+                for(CPLXMLNode* psIter3 = psIter2->psChild; psIter3 != NULL;
+                                                     psIter3 = psIter3->psNext )
+                {
+                    if( psIter3->eType != CXT_Element ||
+                        !EQUAL(psIter3->pszValue, "IMAGE_ID_2A") )
+                    {
+                        continue;
+                    }
+                    const char* pszTileName = CPLGetXMLValue(psIter3, NULL, "");
+                    size_t nLen = strlen(pszTileName);
+                    if( nLen > 4 && pszTileName[nLen-4] == '_' &&
+                        pszTileName[nLen-1] == 'm' )
+                    {
+                        int nResolution = atoi(pszTileName + nLen - 3);
+                        if( poSetResolutions != NULL )
+                            (*poSetResolutions).insert(nResolution);
+                        if( poMapResolutionsToBands != NULL )
+                        {
+                            nLen -= 4;
+                            if( nLen > 4 && pszTileName[nLen-4] == '_' &&
+                                pszTileName[nLen-3] == 'B' )
+                            {
+                                (*poMapResolutionsToBands)[nResolution].
+                                    insert(CPLString(pszTileName).substr(nLen-2,2));
+                            }
+                            else if ( nLen > strlen("S2A_USER_MSI_") &&
+                                      pszTileName[8] == '_' &&
+                                      pszTileName[12] == '_' &&
+                                      !EQUALN(pszTileName+9, "MSI", 3) )
+                            {
+                                (*poMapResolutionsToBands)[nResolution].
+                                    insert(CPLString(pszTileName).substr(9,3));
+                            }
+                        }
+                    }
+                }
+            }
+
+            // For L2A we can have several time the same granuleIdentifier
+            // for the different resolutions
+            if( aoSetGranuleId.find(pszGranuleId) != aoSetGranuleId.end() )
+                continue;
+            aoSetGranuleId.insert(pszGranuleId);
 
             /* S2A_OPER_MSI_L1C_TL_SGS__20151024T023555_A001758_T53JLJ_N01.04 --> */
             /* S2A_OPER_MTD_L1C_TL_SGS__20151024T023555_A001758_T53JLJ */
@@ -699,11 +870,11 @@ static bool SENTINEL2_L1B_L1C_GetGranuleList(CPLXMLNode* psMainMTD,
 }
 
 /************************************************************************/
-/*                       SENTINEL2GetL1B_L1CMetadata()                  */
+/*                     SENTINEL2GetUserProductMetadata()                */
 /************************************************************************/
 
 static
-char** SENTINEL2GetL1B_L1CMetadata( CPLXMLNode* psMainMTD,
+char** SENTINEL2GetUserProductMetadata( CPLXMLNode* psMainMTD,
                                     const char* pszRootNode )
 {
     CPLStringList aosList;
@@ -716,7 +887,8 @@ char** SENTINEL2GetL1B_L1CMetadata( CPLXMLNode* psMainMTD,
         return NULL;
     }
     CPLXMLNode* psProductInfo = CPLGetXMLNode(psRoot,
-                                              "General_Info.Product_Info");
+        EQUAL(pszRootNode, "Level-2A_User_Product") ?
+            "General_Info.L2A_Product_Info" : "General_Info.Product_Info");
     int nDataTakeCounter = 1;
     for( CPLXMLNode* psIter = (psProductInfo ? psProductInfo->psChild : NULL);
                      psIter != NULL;
@@ -752,7 +924,9 @@ char** SENTINEL2GetL1B_L1CMetadata( CPLXMLNode* psMainMTD,
     }
 
     CPLXMLNode* psIC = CPLGetXMLNode(psRoot,
-            "General_Info.Product_Image_Characteristics");
+            EQUAL(pszRootNode, "Level-2A_User_Product") ?
+                "General_Info.L2A_Product_Image_Characteristics" :
+                "General_Info.Product_Image_Characteristics");
     if( psIC != NULL )
     {
         for( CPLXMLNode* psIter = psIC->psChild; psIter != NULL;
@@ -781,6 +955,22 @@ char** SENTINEL2GetL1B_L1CMetadata( CPLXMLNode* psMainMTD,
             CPLGetXMLValue(psIC, "Reflectance_Conversion.U", NULL);
         if( pszRCU != NULL )
             aosList.AddNameValue("REFLECTANCE_CONVERSION_U", pszRCU);
+
+        // L2A specific
+        CPLXMLNode* psQVL = CPLGetXMLNode(psIC, "L1C_L2A_Quantification_Values_List");
+        for( CPLXMLNode* psIter = psQVL ? psQVL->psChild : NULL; psIter != NULL;
+                                                 psIter = psIter->psNext )
+        {
+            if( psIter->eType != CXT_Element )
+            {
+                continue;
+            }
+            aosList.AddNameValue( psIter->pszValue,
+                                  CPLGetXMLValue(psIter, NULL, NULL));
+            const char* pszUnit = CPLGetXMLValue(psIter, "unit", NULL);
+            if( pszUnit )
+                aosList.AddNameValue( CPLSPrintf("%s_UNIT", psIter->pszValue), pszUnit);
+        }
 
         const char* pszRefBand =
             CPLGetXMLValue(psIC, "REFERENCE_BAND", NULL);
@@ -815,6 +1005,24 @@ char** SENTINEL2GetL1B_L1CMetadata( CPLXMLNode* psMainMTD,
         for( CPLXMLNode* psIter = (psQualInspect ? psQualInspect->psChild : NULL);
                      psIter != NULL;
                      psIter = psIter->psNext )
+        {
+            if( psIter->eType != CXT_Element )
+                continue;
+            if( psIter->psChild != NULL && psIter->psChild->eType == CXT_Text )
+            {
+                aosList.AddNameValue( psIter->pszValue,
+                                    psIter->psChild->pszValue );
+            }
+        }
+    }
+    
+    CPLXMLNode* psL2A_QII = CPLGetXMLNode(psRoot, "L2A_Quality_Indicators_Info");
+    if( psL2A_QII != NULL )
+    {
+        CPLXMLNode* psICCQI = CPLGetXMLNode(psL2A_QII, "Image_Content_QI");
+        for( CPLXMLNode* psIter = (psICCQI ? psICCQI->psChild : NULL);
+                    psIter != NULL;
+                    psIter = psIter->psNext )
         {
             if( psIter->eType != CXT_Element )
                 continue;
@@ -934,7 +1142,10 @@ static CPLString SENTINEL2GetBandListForResolution(
         const char* pszName = *oIterBandnames;
         if( *pszName == '0' )
             pszName ++;
-        osBandNames += "B" + CPLString(pszName);
+        if( atoi(pszName) > 0 )
+            osBandNames += "B" + CPLString(pszName);
+        else
+            osBandNames += pszName;
     }
     return osBandNames;
 }
@@ -977,16 +1188,16 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct( GDALOpenInfo * poOpenInfo )
     }
 
     std::vector<CPLString> aosGranuleList;
-    if( !SENTINEL2_L1B_L1C_GetGranuleList(psRoot,
-                                          "Level-1B_User_Product",
-                                          poOpenInfo->pszFilename,
-                                          aosGranuleList) )
+    if( !SENTINEL2GetGranuleList(psRoot,
+                                 SENTINEL2_L1B,
+                                 poOpenInfo->pszFilename,
+                                 aosGranuleList) )
     {
         return NULL;
     }
 
     SENTINEL2DatasetContainer* poDS = new SENTINEL2DatasetContainer();
-    char** papszMD = SENTINEL2GetL1B_L1CMetadata(psRoot,
+    char** papszMD = SENTINEL2GetUserProductMetadata(psRoot,
                                                  "Level-1B_User_Product");
     poDS->GDALDataset::SetMetadata(papszMD);
     CSLDestroy(papszMD);
@@ -1130,7 +1341,8 @@ char** SENTINEL2GetL1BGranuleMetadata( CPLXMLNode* psMainMTD )
 static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
                                       const CPLString& osGranuleName,
                                       const CPLString& osBandName,
-                                      bool bIsPreview = false)
+                                      bool bIsPreview = false,
+                                      int nPrecisionL2A = 0)
 {
     CPLString osJPEG2000Name(osGranuleName);
     if( osJPEG2000Name.size() > 7 &&
@@ -1140,20 +1352,33 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
         osJPEG2000Name.resize(osJPEG2000Name.size()-7);
     }
 
+    const SENTINEL2_L2A_BandDescription* psL2ABandDesc =
+                    (nPrecisionL2A) ? SENTINEL2GetL2ABandDesc(osBandName): NULL;
+
     CPLString osTile(osGranulePath);
     const char chSeparator = SENTINEL2GetPathSeparator(osTile);
     if( osTile.size() )
         osTile += chSeparator;
-    if( bIsPreview )
+    if( bIsPreview ||
+        (psL2ABandDesc != NULL && psL2ABandDesc->eLocation == TL_QI_DATA ) )
     {
         osTile += "QI_DATA";
         osTile += chSeparator;
         if( osJPEG2000Name.size() > 12 &&
             osJPEG2000Name[8] == '_' && osJPEG2000Name[12] == '_' )
         {
-            osJPEG2000Name[9] = 'P';
-            osJPEG2000Name[10] = 'V';
-            osJPEG2000Name[11] = 'I';
+            if( atoi(osBandName) > 0 )
+            {
+                osJPEG2000Name[9] = 'P';
+                osJPEG2000Name[10] = 'V';
+                osJPEG2000Name[11] = 'I';
+            }
+            else if( nPrecisionL2A && osBandName.size() == 3 )
+            {
+                osJPEG2000Name[9] = osBandName[0];
+                osJPEG2000Name[10] = osBandName[1];
+                osJPEG2000Name[11] = osBandName[2];
+            }
         }
         else
         {
@@ -1161,17 +1386,34 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
                      osGranulePath.c_str());
         }
         osTile += osJPEG2000Name;
+        if( nPrecisionL2A && !bIsPreview )
+            osTile += CPLSPrintf("_%02dm", nPrecisionL2A);
     }
     else
     {
         osTile += "IMG_DATA";
         osTile += chSeparator;
+        if( (psL2ABandDesc != NULL && psL2ABandDesc->eLocation == TL_IMG_DATA_Rxxm) ||
+            (psL2ABandDesc == NULL && nPrecisionL2A != 0) )
+        {
+            osTile += CPLSPrintf("R%02dm", nPrecisionL2A);
+            osTile += chSeparator;
+        }
         if( osJPEG2000Name.size() > 12 &&
             osJPEG2000Name[8] == '_' && osJPEG2000Name[12] == '_' )
         {
-            osJPEG2000Name[9] = 'M';
-            osJPEG2000Name[10] = 'S';
-            osJPEG2000Name[11] = 'I';
+            if( atoi(osBandName) > 0 )
+            {
+                osJPEG2000Name[9] = 'M';
+                osJPEG2000Name[10] = 'S';
+                osJPEG2000Name[11] = 'I';
+            }
+            else if( nPrecisionL2A && osBandName.size() == 3 )
+            {
+                osJPEG2000Name[9] = osBandName[0];
+                osJPEG2000Name[10] = osBandName[1];
+                osJPEG2000Name[11] = osBandName[2];
+            }
         }
         else
         {
@@ -1179,38 +1421,27 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
                      osGranulePath.c_str());
         }
         osTile += osJPEG2000Name;
-        osTile += "_B";
-        if( osBandName.size() == 3 && osBandName[0] == '0' )
-            osTile += osBandName.substr(1);
-        else
-            osTile += osBandName;
+        if( atoi(osBandName) > 0 )
+        {
+            osTile += "_B";
+            if( osBandName.size() == 3 && osBandName[0] == '0' )
+                osTile += osBandName.substr(1);
+            else
+                osTile += osBandName;
+        }
+        if( nPrecisionL2A )
+            osTile += CPLSPrintf("_%02dm", nPrecisionL2A);
     }
     osTile += ".jp2";
     return osTile;
 }
 
 /************************************************************************/
-/*                           OpenL1BGranule()                           */
+/*                 SENTINEL2GetMainMTDFilenameFromGranuleMTD()          */
 /************************************************************************/
 
-GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
-                                               CPLXMLNode** ppsRoot,
-                                               int nResolutionOfInterest,
-                                               std::set<CPLString> *poBandSet )
+static CPLString SENTINEL2GetMainMTDFilenameFromGranuleMTD(const char* pszFilename)
 {
-    CPLXMLNode *psRoot = CPLParseXMLFile( pszFilename );
-    if( psRoot == NULL )
-        return NULL;
-
-    char* pszOriginalXML = CPLSerializeXMLTree(psRoot);
-    CPLString osOriginalXML;
-    if( pszOriginalXML )
-        osOriginalXML = pszOriginalXML;
-    CPLFree(pszOriginalXML);
-
-    SENTINEL2_CPLXMLNodeHolder oXMLHolder(psRoot);
-    CPLStripXMLNamespace(psRoot, NULL, TRUE);
-
     // Look for product MTD file
     CPLString osTopDir(CPLFormFilename(
         CPLFormFilename( CPLGetDirname(pszFilename), "..", NULL ),
@@ -1243,22 +1474,29 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
         }
     }
     CSLDestroy(papszContents);
+    return osMainMTD;
+}
 
-    SENTINEL2DatasetContainer* poDS = new SENTINEL2DatasetContainer();
+/************************************************************************/
+/*            SENTINEL2GetResolutionSetAndMainMDFromGranule()           */
+/************************************************************************/
 
-    if( osOriginalXML.size() )
-    {
-        char* apszXMLMD[2];
-        apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
-        apszXMLMD[1] = NULL;
-        poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
-    }
+static void SENTINEL2GetResolutionSetAndMainMDFromGranule(
+                    const char* pszFilename,
+                    const char* pszRootPathWithoutEqual,
+                    int nResolutionOfInterest,
+                    std::set<int>& oSetResolutions,
+                    std::map<int, std::set<CPLString> >& oMapResolutionsToBands,
+                    char**& papszMD,
+                    CPLXMLNode** ppsRootMainMTD)
+{
+    CPLString osMainMTD(SENTINEL2GetMainMTDFilenameFromGranuleMTD(pszFilename));
 
-    std::set<int> oSetResolutions;
-    std::map<int, std::set<CPLString> > oMapResolutionsToBands;
     // Parse product MTD if available
-    char** papszMD = NULL;
-    if( osMainMTD.size() != 0 )
+    papszMD = NULL;
+    if( osMainMTD.size() != 0 &&
+        /* env var for debug only */
+        CSLTestBoolean(CPLGetConfigOption("SENTINEL2_USE_MAIN_MTD", "YES")) )
     {
         CPLXMLNode *psRootMainMTD = CPLParseXMLFile( osMainMTD );
         if( psRootMainMTD != NULL )
@@ -1266,7 +1504,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
             CPLStripXMLNamespace(psRootMainMTD, NULL, TRUE);
 
             CPLXMLNode* psProductInfo = CPLGetXMLNode(psRootMainMTD,
-                            "=Level-1B_User_Product.General_Info.Product_Info");
+                CPLSPrintf("=%s.General_Info.Product_Info", pszRootPathWithoutEqual));
             if( psProductInfo != NULL )
             {
                 SENTINEL2GetResolutionSet(psProductInfo,
@@ -1274,9 +1512,12 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
                                           oMapResolutionsToBands);
             }
 
-            papszMD = SENTINEL2GetL1B_L1CMetadata(psRootMainMTD,
-                                                        "Level-1B_User_Product");
-            CPLDestroyXMLNode(psRootMainMTD);
+            papszMD = SENTINEL2GetUserProductMetadata(psRootMainMTD,
+                                                      pszRootPathWithoutEqual);
+            if( ppsRootMainMTD != NULL )
+                *ppsRootMainMTD = psRootMainMTD;
+            else
+                CPLDestroyXMLNode(psRootMainMTD);
         }
     }
     else
@@ -1305,7 +1546,52 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
             }
         }
     }
+}
 
+/************************************************************************/
+/*                           OpenL1BGranule()                           */
+/************************************************************************/
+
+GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
+                                               CPLXMLNode** ppsRoot,
+                                               int nResolutionOfInterest,
+                                               std::set<CPLString> *poBandSet )
+{
+    CPLXMLNode *psRoot = CPLParseXMLFile( pszFilename );
+    if( psRoot == NULL )
+        return NULL;
+
+    char* pszOriginalXML = CPLSerializeXMLTree(psRoot);
+    CPLString osOriginalXML;
+    if( pszOriginalXML )
+        osOriginalXML = pszOriginalXML;
+    CPLFree(pszOriginalXML);
+
+    SENTINEL2_CPLXMLNodeHolder oXMLHolder(psRoot);
+    CPLStripXMLNamespace(psRoot, NULL, TRUE);
+
+    CPLString osMainMTD(SENTINEL2GetMainMTDFilenameFromGranuleMTD(pszFilename));
+
+    SENTINEL2DatasetContainer* poDS = new SENTINEL2DatasetContainer();
+
+    if( osOriginalXML.size() )
+    {
+        char* apszXMLMD[2];
+        apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
+        apszXMLMD[1] = NULL;
+        poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
+    }
+
+    std::set<int> oSetResolutions;
+    std::map<int, std::set<CPLString> > oMapResolutionsToBands;
+    char** papszMD = NULL;
+    SENTINEL2GetResolutionSetAndMainMDFromGranule(pszFilename,
+                                                  "Level-1B_User_Product",
+                                                  nResolutionOfInterest,
+                                                  oSetResolutions,
+                                                  oMapResolutionsToBands,
+                                                  papszMD,
+                                                  NULL);
     if( poBandSet != NULL )
         *poBandSet = oMapResolutionsToBands[nResolutionOfInterest];
 
@@ -1382,7 +1668,8 @@ static void SENTINEL2SetBandMetadata(GDALRasterBand* poBand,
     CPLString osLookupBandName(osBandName);
     if( osLookupBandName[0] == '0' )
         osLookupBandName = osLookupBandName.substr(1);
-    osLookupBandName = "B" + osLookupBandName;
+    if( atoi(osLookupBandName) > 0 )
+        osLookupBandName = "B" + osLookupBandName;
 
     CPLString osBandDesc(osLookupBandName);
     const SENTINEL2BandDescription* psBandDesc =
@@ -1399,6 +1686,15 @@ static void SENTINEL2SetBandMetadata(GDALRasterBand* poBand,
         poBand->SetMetadataItem("WAVELENGTH", CPLSPrintf("%d",
                                                 psBandDesc->nWaveLength));
         poBand->SetMetadataItem("WAVELENGTH_UNIT", "nm");
+    }
+    else
+    {
+        const SENTINEL2_L2A_BandDescription* psL2ABandDesc =
+                                        SENTINEL2GetL2ABandDesc(osBandName);
+        if(psL2ABandDesc != NULL )
+            osBandDesc += psL2ABandDesc->pszBandDescription;
+
+        poBand->SetMetadataItem("BANDNAME", osBandName);
     }
     poBand->SetDescription(osBandDesc);
 }
@@ -1734,12 +2030,13 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                               OpenL1C()                              */
+/*                           OpenL1C_L2A()                              */
 /************************************************************************/
 
-GDALDataset *SENTINEL2Dataset::OpenL1C( GDALOpenInfo * poOpenInfo )
+GDALDataset *SENTINEL2Dataset::OpenL1C_L2A( const char* pszFilename,
+                                            SENTINEL2Level eLevel )
 {
-    CPLXMLNode *psRoot = CPLParseXMLFile( poOpenInfo->pszFilename );
+    CPLXMLNode *psRoot = CPLParseXMLFile( pszFilename );
     if( psRoot == NULL )
         return NULL;
 
@@ -1752,18 +2049,20 @@ GDALDataset *SENTINEL2Dataset::OpenL1C( GDALOpenInfo * poOpenInfo )
     SENTINEL2_CPLXMLNodeHolder oXMLHolder(psRoot);
     CPLStripXMLNamespace(psRoot, NULL, TRUE);
 
-    CPLXMLNode* psProductInfo = CPLGetXMLNode(psRoot,
-                            "=Level-1C_User_Product.General_Info.Product_Info");
+    const char* pszNodePath = (eLevel == SENTINEL2_L1C ) ?
+                "=Level-1C_User_Product.General_Info.Product_Info" :
+                "=Level-2A_User_Product.General_Info.L2A_Product_Info";
+    CPLXMLNode* psProductInfo = CPLGetXMLNode(psRoot, pszNodePath);
     if( psProductInfo == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
-                 "=Level-1C_User_Product.General_Info.Product_Info");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s", pszNodePath);
         return NULL;
     }
 
     std::set<int> oSetResolutions;
     std::map<int, std::set<CPLString> > oMapResolutionsToBands;
-    if( !SENTINEL2GetResolutionSet(psProductInfo,
+    if( eLevel == SENTINEL2_L1C &&
+        !SENTINEL2GetResolutionSet(psProductInfo,
                                    oSetResolutions,
                                    oMapResolutionsToBands) )
     {
@@ -1771,10 +2070,14 @@ GDALDataset *SENTINEL2Dataset::OpenL1C( GDALOpenInfo * poOpenInfo )
     }
 
     std::vector<CPLString> aosGranuleList;
-    if( !SENTINEL2_L1B_L1C_GetGranuleList(psRoot,
-                                      "Level-1C_User_Product",
-                                      poOpenInfo->pszFilename,
-                                      aosGranuleList) )
+    if( !SENTINEL2GetGranuleList(psRoot,
+                                 eLevel,
+                                 pszFilename,
+                                 aosGranuleList,
+                                 (eLevel == SENTINEL2_L1C) ? NULL : 
+                                                    &oSetResolutions,
+                                 (eLevel == SENTINEL2_L1C) ? NULL :
+                                                    &oMapResolutionsToBands) )
     {
         return NULL;
     }
@@ -1783,16 +2086,18 @@ GDALDataset *SENTINEL2Dataset::OpenL1C( GDALOpenInfo * poOpenInfo )
     for(size_t i=0;i<aosGranuleList.size();i++)
     {
         int nEPSGCode = 0;
-        if( SENTINEL2_L1C_GetGranuleInfo(aosGranuleList[i],
-                    *(oSetResolutions.begin()), &nEPSGCode) )
+        if( SENTINEL2GetGranuleInfo(eLevel,
+                                    aosGranuleList[i],
+                                    *(oSetResolutions.begin()), &nEPSGCode) )
         {
             oSetEPSGCodes.insert(nEPSGCode);
         }
     }
 
     SENTINEL2DatasetContainer* poDS = new SENTINEL2DatasetContainer();
-    char** papszMD = SENTINEL2GetL1B_L1CMetadata(psRoot,
-                                                 "Level-1C_User_Product");
+    char** papszMD = SENTINEL2GetUserProductMetadata(psRoot,
+        (eLevel == SENTINEL2_L1C ) ? "Level-1C_User_Product" :
+                                     "Level-2A_User_Product");
     poDS->GDALDataset::SetMetadata(papszMD);
     CSLDestroy(papszMD);
 
@@ -1803,6 +2108,9 @@ GDALDataset *SENTINEL2Dataset::OpenL1C( GDALOpenInfo * poOpenInfo )
         apszXMLMD[1] = NULL;
         poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
     }
+
+    const char* pszPrefix = (eLevel == SENTINEL2_L1C) ? "SENTINEL2_L1C" :
+                                                        "SENTINEL2_L2A";
 
     /* Create subdatsets per resolution (10, 20, 60m) and EPSG codes */
     int iSubDSNum = 1;
@@ -1819,8 +2127,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1C( GDALOpenInfo * poOpenInfo )
             const int nEPSGCode = *oIterEPSG;
             poDS->GDALDataset::SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
-                CPLSPrintf("SENTINEL2_L1C:%s:%dm:EPSG_%d",
-                            poOpenInfo->pszFilename, nResolution, nEPSGCode),
+                CPLSPrintf("%s:%s:%dm:EPSG_%d",
+                            pszPrefix, pszFilename, nResolution, nEPSGCode),
                 "SUBDATASETS");
 
             CPLString osBandNames = SENTINEL2GetBandListForResolution(
@@ -1851,8 +2159,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1C( GDALOpenInfo * poOpenInfo )
         const int nEPSGCode = *oIterEPSG;
         poDS->GDALDataset::SetMetadataItem(
             CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
-            CPLSPrintf("SENTINEL2_L1C:%s:PREVIEW:EPSG_%d",
-                        poOpenInfo->pszFilename, nEPSGCode),
+            CPLSPrintf("%s:%s:PREVIEW:EPSG_%d",
+                        pszPrefix, pszFilename, nEPSGCode),
             "SUBDATASETS");
 
         CPLString osDesc("RGB preview");
@@ -1870,9 +2178,12 @@ GDALDataset *SENTINEL2Dataset::OpenL1C( GDALOpenInfo * poOpenInfo )
         iSubDSNum ++;
     }
 
-    const char* pszPosList = CPLGetXMLValue(psRoot,
+    pszNodePath = (eLevel == SENTINEL2_L1C ) ?
         "=Level-1C_User_Product.Geometric_Info.Product_Footprint."
-        "Product_Footprint.Global_Footprint.EXT_POS_LIST", NULL);
+        "Product_Footprint.Global_Footprint.EXT_POS_LIST" :
+        "=Level-2A_User_Product.Geometric_Info.Product_Footprint."
+        "Product_Footprint.Global_Footprint.EXT_POS_LIST";
+    const char* pszPosList = CPLGetXMLValue(psRoot, pszNodePath, NULL);
     if( pszPosList != NULL )
     {
         CPLString osPolygon = SENTINEL2GetPolygonWKTFromPosList(pszPosList);
@@ -1884,44 +2195,159 @@ GDALDataset *SENTINEL2Dataset::OpenL1C( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                     SENTINEL2GetSpecialValueIndices()                */
+/*                    SENTINEL2GetL1BCTileMetadata()                    */
 /************************************************************************/
 
-static void SENTINEL2GetSpecialValueIndices(CPLXMLNode* psRoot,
-                                            int& nNodataVal,
-                                            int& nSaturatedVal)
+static
+char** SENTINEL2GetL1BCTileMetadata( CPLXMLNode* psMainMTD )
 {
-    CPLXMLNode* psProductImageCharacteristics = CPLGetXMLNode(psRoot,
-                "=Level-1C_User_Product.General_Info.Product_Image_Characteristics");
-    if( psProductImageCharacteristics != NULL )
+    CPLStringList aosList;
+
+    CPLXMLNode* psRoot =  CPLGetXMLNode(psMainMTD,
+                                        "=Level-1C_Tile_ID");
+    if( psRoot == NULL )
     {
-        for(CPLXMLNode* psIter = psProductImageCharacteristics->psChild;
-                        psIter != NULL; psIter = psIter->psNext )
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find =Level-1C_Tile_ID");
+        return NULL;
+    }
+    CPLXMLNode* psGeneralInfo = CPLGetXMLNode(psRoot,
+                                              "General_Info");
+    for( CPLXMLNode* psIter = (psGeneralInfo ? psGeneralInfo->psChild : NULL);
+                     psIter != NULL;
+                     psIter = psIter->psNext )
+    {
+        if( psIter->eType != CXT_Element )
+            continue;
+        const char* pszValue = CPLGetXMLValue(psIter, NULL, NULL);
+        if( pszValue != NULL )
         {
-            if( psIter->eType != CXT_Element ||
-                !EQUAL(psIter->pszValue, "Special_Values") )
-            {
+            aosList.AddNameValue( psIter->pszValue, pszValue );
+        }
+    }
+
+    CPLXMLNode* psQII = CPLGetXMLNode(psRoot, "Quality_Indicators_Info");
+    if( psQII != NULL )
+    {
+        CPLXMLNode* psICCQI = CPLGetXMLNode(psQII, "Image_Content_QI");
+        for( CPLXMLNode* psIter = (psICCQI ? psICCQI->psChild : NULL);
+                     psIter != NULL;
+                     psIter = psIter->psNext )
+        {
+            if( psIter->eType != CXT_Element )
                 continue;
-            }
-            const char* pszSpecialValueText =
-                        CPLGetXMLValue(psIter, "SPECIAL_VALUE_TEXT", "");
-            if( EQUAL(pszSpecialValueText, "NODATA") )
+            if( psIter->psChild != NULL && psIter->psChild->eType == CXT_Text )
             {
-                nNodataVal = atoi(CPLGetXMLValue(psIter, "SPECIAL_VALUE_INDEX", "-1"));
-                //CPLDebug("SENTINEL2", "NODATA value: %d", nNodataVal);
-            }
-            else if( EQUAL(pszSpecialValueText, "SATURATED") )
-            {
-                nSaturatedVal = atoi(CPLGetXMLValue(psIter, "SPECIAL_VALUE_INDEX", "-1"));
-                //CPLDebug("SENTINEL2", "SATURATED value: %d", nSaturatedVal);
+                aosList.AddNameValue( psIter->pszValue,
+                                    psIter->psChild->pszValue );
             }
         }
     }
-    else
+
+    return aosList.StealList();
+}
+
+/************************************************************************/
+/*                              OpenL1CTile()                           */
+/************************************************************************/
+
+GDALDataset *SENTINEL2Dataset::OpenL1CTile( const char* pszFilename,
+                                            CPLXMLNode** ppsRootMainMTD,
+                                            int nResolutionOfInterest,
+                                            std::set<CPLString>* poBandSet )
+{
+    CPLXMLNode *psRoot = CPLParseXMLFile( pszFilename );
+    if( psRoot == NULL )
+        return NULL;
+
+    char* pszOriginalXML = CPLSerializeXMLTree(psRoot);
+    CPLString osOriginalXML;
+    if( pszOriginalXML )
+        osOriginalXML = pszOriginalXML;
+    CPLFree(pszOriginalXML);
+
+    SENTINEL2_CPLXMLNodeHolder oXMLHolder(psRoot);
+    CPLStripXMLNamespace(psRoot, NULL, TRUE);
+
+    std::set<int> oSetResolutions;
+    std::map<int, std::set<CPLString> > oMapResolutionsToBands;
+    char** papszMD = NULL;
+    SENTINEL2GetResolutionSetAndMainMDFromGranule(pszFilename,
+                                                  "Level-1C_User_Product",
+                                                  nResolutionOfInterest,
+                                                  oSetResolutions,
+                                                  oMapResolutionsToBands,
+                                                  papszMD,
+                                                  ppsRootMainMTD);
+    if( poBandSet != NULL )
+        *poBandSet = oMapResolutionsToBands[nResolutionOfInterest];
+
+    SENTINEL2DatasetContainer* poDS = new SENTINEL2DatasetContainer();
+
+    char** papszGranuleMD = SENTINEL2GetL1BCTileMetadata(psRoot);
+    papszMD = CSLMerge(papszMD, papszGranuleMD);
+    CSLDestroy(papszGranuleMD);
+
+    // Remove CLOUD_COVERAGE_ASSESSMENT that comes from main metadata, if granule
+    // CLOUDY_PIXEL_PERCENTAGE is present.
+    if( CSLFetchNameValue(papszMD, "CLOUDY_PIXEL_PERCENTAGE") != NULL &&
+        CSLFetchNameValue(papszMD, "CLOUD_COVERAGE_ASSESSMENT") != NULL )
     {
-        CPLDebug("SENTINEL2", "Cannot find %s",
-                 "=Level-1C_User_Product.General_Info.Product_Image_Characteristics");
+        papszMD = CSLSetNameValue(papszMD, "CLOUD_COVERAGE_ASSESSMENT", NULL);
     }
+
+    poDS->GDALDataset::SetMetadata(papszMD);
+    CSLDestroy(papszMD);
+
+    if( osOriginalXML.size() )
+    {
+        char* apszXMLMD[2];
+        apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
+        apszXMLMD[1] = NULL;
+        poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
+    }
+
+    /* Create subdatsets per resolution (10, 20, 60m) */
+    int iSubDSNum = 1;
+    for(std::set<int>::const_iterator oIterRes = oSetResolutions.begin();
+                                oIterRes != oSetResolutions.end();
+                              ++oIterRes )
+    {
+        const int nResolution = *oIterRes;
+
+        poDS->GDALDataset::SetMetadataItem(
+            CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
+            CPLSPrintf("%s:%s:%dm",
+                        "SENTINEL2_L1C_TILE", pszFilename, nResolution),
+                        "SUBDATASETS");
+
+        CPLString osBandNames = SENTINEL2GetBandListForResolution(
+                                        oMapResolutionsToBands[nResolution]);
+
+        CPLString osDesc(CPLSPrintf("Bands %s with %dm resolution",
+                                    osBandNames.c_str(), nResolution));
+        poDS->GDALDataset::SetMetadataItem(
+            CPLSPrintf("SUBDATASET_%d_DESC", iSubDSNum),
+            osDesc.c_str(),
+            "SUBDATASETS");
+
+        iSubDSNum ++;
+    }
+
+    /* Expose PREVIEW subdataset */
+    poDS->GDALDataset::SetMetadataItem(
+        CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
+        CPLSPrintf("%s:%s:PREVIEW",
+                    "SENTINEL2_L1C_TILE", pszFilename),
+        "SUBDATASETS");
+
+    CPLString osDesc("RGB preview");
+    poDS->GDALDataset::SetMetadataItem(
+        CPLSPrintf("SUBDATASET_%d_DESC", iSubDSNum),
+        osDesc.c_str(),
+        "SUBDATASETS");
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -2082,31 +2508,37 @@ static bool SENTINEL2GetTileInfo(const char* pszFilename,
 }
 
 /************************************************************************/
-/*                         OpenL1CSubdataset()                          */
+/*                         OpenL1C_L2ASubdataset()                      */
 /************************************************************************/
 
-GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
+GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
+                                                      SENTINEL2Level eLevel )
 {
     CPLString osFilename;
-    CPLAssert( STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL2_L1C:") );
-    osFilename = poOpenInfo->pszFilename + strlen("SENTINEL2_L1C:");
+    const char* pszPrefix = (eLevel == SENTINEL2_L1C) ? "SENTINEL2_L1C" :
+                                                        "SENTINEL2_L2A";
+    CPLAssert( STARTS_WITH_CI(poOpenInfo->pszFilename, pszPrefix) );
+    osFilename = poOpenInfo->pszFilename + strlen(pszPrefix) + 1;
     const char* pszEPSGCode = strrchr(osFilename.c_str(), ':');
     if( pszEPSGCode == NULL || pszEPSGCode == osFilename.c_str() )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid syntax for SENTINEL2_L1C:");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid syntax for %s:", pszPrefix);
         return NULL;
     }
     osFilename[ (size_t)(pszEPSGCode - osFilename.c_str()) ] = '\0';
     const char* pszPrecision = strrchr(osFilename.c_str(), ':');
     if( pszPrecision == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid syntax for SENTINEL2_L1C:");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid syntax for %s:", pszPrefix);
         return NULL;
     }
 
     if( !STARTS_WITH_CI(pszEPSGCode+1, "EPSG_") )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid syntax for SENTINEL2_L1C:");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid syntax for %s:", pszPrefix);
         return NULL;
     }
 
@@ -2139,74 +2571,31 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
     CPLStripXMLNamespace(psRoot, NULL, TRUE);
 
     std::vector<CPLString> aosGranuleList;
-    if( !SENTINEL2_L1B_L1C_GetGranuleList(psRoot,
-                                      "Level-1C_User_Product",
-                                      osFilename, aosGranuleList) )
+    std::set<int> oSetResolutions;
+    std::map<int, std::set<CPLString> > oMapResolutionsToBands;
+    if( !SENTINEL2GetGranuleList(psRoot,
+                                 eLevel,
+                                 osFilename,
+                                 aosGranuleList,
+                                 NULL,
+                                 (eLevel == SENTINEL2_L1C) ? NULL :
+                                                    &oMapResolutionsToBands) )
     {
         return NULL;
     }
-
-    /* Iterate over granule metadata to know the layer extent */
-    /* and the location of each granule */
-    double dfMinX = 1e20, dfMinY = 1e20, dfMaxX = -1e20, dfMaxY = -1e20;
-    std::vector<SENTINEL2GranuleInfo> aosGranuleInfoList;
-    const int nDesiredResolution = (bIsPreview) ? 0 : nSubDSPrecision;
-    for(size_t i=0;i<aosGranuleList.size();i++)
-    {
-        int nEPSGCode = 0;
-        double dfULX = 0.0, dfULY = 0.0;
-        int nResolution = 0;
-        int nWidth = 0, nHeight = 0;
-        if( SENTINEL2_L1C_GetGranuleInfo(aosGranuleList[i],
-                        nDesiredResolution,
-                        &nEPSGCode,
-                        &dfULX, &dfULY,
-                        &nResolution,
-                        &nWidth, &nHeight) &&
-            nSubDSEPSGCode == nEPSGCode )
-        {
-            aosNonJP2Files.push_back(aosGranuleList[i]);
-
-            if( dfULX < dfMinX ) dfMinX = dfULX;
-            if( dfULY > dfMaxY ) dfMaxY = dfULY;
-            const double dfLRX = dfULX + nResolution * nWidth;
-            const double dfLRY = dfULY - nResolution * nHeight;
-            if( dfLRX > dfMaxX ) dfMaxX = dfLRX;
-            if( dfLRY < dfMinY ) dfMinY = dfLRY;
-
-            SENTINEL2GranuleInfo oGranuleInfo;
-            oGranuleInfo.osPath = CPLGetPath(aosGranuleList[i]);
-            oGranuleInfo.dfMinX = dfULX;
-            oGranuleInfo.dfMinY = dfLRY;
-            oGranuleInfo.dfMaxX = dfLRX;
-            oGranuleInfo.dfMaxY = dfULY;
-            oGranuleInfo.nWidth = nWidth / (nSubDSPrecision / nResolution);
-            oGranuleInfo.nHeight = nHeight / (nSubDSPrecision / nResolution);
-            aosGranuleInfoList.push_back(oGranuleInfo);
-        }
-    }
-    if( dfMinX > dfMaxX )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "No granule found for EPSG code %d",
-                 nSubDSEPSGCode);
-        return NULL;
-    }
-
-    int nSaturatedVal = -1;
-    int nNodataVal = -1;
-    SENTINEL2GetSpecialValueIndices(psRoot, nNodataVal, nSaturatedVal);
 
     std::vector<CPLString> aosBands;
+    std::set<CPLString> oSetBands;
     if( bIsPreview )
     {
         aosBands.push_back("04");
         aosBands.push_back("03");
         aosBands.push_back("02");
     }
-    else
+    else if( eLevel == SENTINEL2_L1C )
     {
         CPLXMLNode* psBandList = CPLGetXMLNode(psRoot,
-                "=Level-1C_User_Product.General_Info.Product_Info.Query_Options.Band_List");
+            "=Level-1C_User_Product.General_Info.Product_Info.Query_Options.Band_List");
         if( psBandList == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
@@ -2214,7 +2603,6 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        std::set<CPLString> oSetBands;
         for(CPLXMLNode* psIter = psBandList->psChild; psIter != NULL;
                                                       psIter = psIter->psNext )
         {
@@ -2238,6 +2626,14 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
         }
         if( oSetBands.size() == 0 )
             return NULL;
+    }
+    else
+    {
+        oSetBands = oMapResolutionsToBands[nSubDSPrecision];
+    }
+
+    if( aosBands.size() == 0 )
+    {
         for(std::set<CPLString>::const_iterator oIterBandnames = oSetBands.begin();
                                                 oIterBandnames != oSetBands.end();
                                             ++oIterBandnames)
@@ -2258,12 +2654,249 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create dataset.                                                 */
 /* -------------------------------------------------------------------- */
+
+    char** papszMD = SENTINEL2GetUserProductMetadata(psRoot,
+        (eLevel == SENTINEL2_L1C ) ? "Level-1C_User_Product" : "Level-2A_User_Product");
+
+    const int nSaturatedVal = atoi(CSLFetchNameValueDef(papszMD,
+                                                  "SPECIAL_VALUE_SATURATED", "-1"));
+    const int nNodataVal = atoi(CSLFetchNameValueDef(papszMD,
+                                               "SPECIAL_VALUE_NODATA", "-1"));
+
+    const bool bAlpha =
+        CSLTestBoolean(SENTINEL2GetOption(poOpenInfo, "ALPHA", "FALSE")) != FALSE;
+
+    SENTINEL2Dataset* poDS = CreateL1CL2ADataset(eLevel,
+                                                 aosGranuleList,
+                                                 aosNonJP2Files,
+                                                 nSubDSPrecision,
+                                                 bIsPreview,
+                                                 nSubDSEPSGCode,
+                                                 bAlpha,
+                                                 aosBands,
+                                                 nSaturatedVal,
+                                                 nNodataVal);
+    if( poDS == NULL )
+    {
+        CSLDestroy(papszMD);
+        return NULL;
+    }
+
+    if( osOriginalXML.size() )
+    {
+        char* apszXMLMD[2];
+        apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
+        apszXMLMD[1] = NULL;
+        poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
+    }
+
+    poDS->GDALDataset::SetMetadata(papszMD);
+    CSLDestroy(papszMD);
+
+/* -------------------------------------------------------------------- */
+/*      Add extra band metadata.                                        */
+/* -------------------------------------------------------------------- */
+    poDS->AddL1CL2ABandMetadata(eLevel, psRoot, aosBands);
+
+/* -------------------------------------------------------------------- */
+/*      Initialize overview information.                                */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    CPLString osOverviewFile;
+    if( bIsPreview )
+        osOverviewFile = CPLSPrintf("%s_PREVIEW_EPSG_%d.tif.ovr",
+                                    osFilename.c_str(), nSubDSEPSGCode);
+    else
+        osOverviewFile = CPLSPrintf("%s_%dm_EPSG_%d.tif.ovr",
+                                    osFilename.c_str(), nSubDSPrecision,
+                                    nSubDSEPSGCode);
+    poDS->SetMetadataItem( "OVERVIEW_FILE", osOverviewFile, "OVERVIEWS" );
+    poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
+
+    return poDS;
+}
+
+/************************************************************************/
+/*                         AddL1CL2ABandMetadata()                      */
+/************************************************************************/
+
+void SENTINEL2Dataset::AddL1CL2ABandMetadata(SENTINEL2Level eLevel,
+                                             CPLXMLNode* psRoot,
+                                             const std::vector<CPLString>& aosBands)
+{
+    CPLXMLNode* psIC = CPLGetXMLNode(psRoot,
+        (eLevel == SENTINEL2_L1C) ?
+            "=Level-1C_User_Product.General_Info.Product_Image_Characteristics" : 
+            "=Level-2A_User_Product.General_Info.L2A_Product_Image_Characteristics");
+    if( psIC != NULL )
+    {
+        CPLXMLNode* psSIL = CPLGetXMLNode(psIC,
+                            "Reflectance_Conversion.Solar_Irradiance_List");
+        if( psSIL != NULL )
+        {
+            for(CPLXMLNode* psIter = psSIL->psChild; psIter != NULL;
+                                                     psIter = psIter->psNext )
+            {
+                if( psIter->eType != CXT_Element ||
+                    !EQUAL(psIter->pszValue, "SOLAR_IRRADIANCE") )
+                {
+                    continue;
+                }
+                const char* pszBandId = CPLGetXMLValue(psIter, "bandId", NULL);
+                const char* pszUnit = CPLGetXMLValue(psIter, "unit", NULL);
+                const char* pszValue = CPLGetXMLValue(psIter, NULL, NULL);
+                if( pszBandId != NULL && pszUnit != NULL && pszValue != NULL )
+                {
+                    int nIdx = atoi(pszBandId);
+                    if( nIdx >= 0 || nIdx < (int)NB_BANDS )
+                    {
+                        for(int i=0;i<nBands;i++)
+                        {
+                            GDALRasterBand* poBand = GetRasterBand(i+1);
+                            const char* pszBandName =
+                                poBand->GetMetadataItem("BANDNAME");
+                            if( pszBandName != NULL &&
+                                EQUAL(asBandDesc[nIdx].pszBandName, pszBandName) )
+                            {
+                                poBand->GDALRasterBand::SetMetadataItem(
+                                    "SOLAR_IRRADIANCE", pszValue);
+                                poBand->GDALRasterBand::SetMetadataItem(
+                                    "SOLAR_IRRADIANCE_UNIT",
+                                     LaunderUnit(pszUnit));
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add Scene Classification category values (L2A)                  */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode* psSCL = CPLGetXMLNode(psRoot,
+            "=Level-2A_User_Product.General_Info."
+            "L2A_Product_Image_Characteristics.L2A_Scene_Classification_List");
+    int nSCLBand = 0;
+    for(int nBand=1;nBand<=static_cast<int>(aosBands.size());nBand++)
+    {
+        if( EQUAL(aosBands[nBand-1], "SCL") )
+        {
+            nSCLBand = nBand;
+            break;
+        }
+    }
+    if( psSCL != NULL && nSCLBand > 0 )
+    {
+        std::vector<CPLString> osCategories;
+        for(CPLXMLNode* psIter = psSCL->psChild; psIter != NULL;
+                                                     psIter = psIter->psNext )
+        {
+            if( psIter->eType != CXT_Element ||
+                !EQUAL(psIter->pszValue, "L2A_Scene_Classification_ID") )
+            {
+                continue;
+            }
+            const char* pszText = CPLGetXMLValue(psIter,
+                                        "L2A_SCENE_CLASSIFICATION_TEXT", NULL);
+            const char* pszIdx = CPLGetXMLValue(psIter,
+                                        "L2A_SCENE_CLASSIFICATION_INDEX", NULL);
+            if( pszText && pszIdx && atoi(pszIdx) >= 0 && atoi(pszIdx) < 100 )
+            {
+                int nIdx = atoi(pszIdx);
+                if( nIdx >= (int)osCategories.size() )
+                    osCategories.resize(nIdx + 1);
+                if( STARTS_WITH_CI(pszText, "SC_") )
+                    osCategories[nIdx] = pszText + 3;
+                else
+                    osCategories[nIdx] = pszText;
+            }
+        }
+        char** papszCategories =
+                    (char**)CPLCalloc(osCategories.size()+1,sizeof(char*));
+        for(size_t i=0;i<osCategories.size();i++)
+            papszCategories[i] = CPLStrdup(osCategories[i]);
+        GetRasterBand(nSCLBand)->SetCategoryNames(papszCategories);
+        CSLDestroy(papszCategories);
+    }
+}
+
+/************************************************************************/
+/*                         CreateL1CL2ADataset()                        */
+/************************************************************************/
+
+SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
+                SENTINEL2Level eLevel,
+                const std::vector<CPLString>& aosGranuleList,
+                std::vector<CPLString>& aosNonJP2Files,
+                int nSubDSPrecision,
+                bool bIsPreview,
+                int nSubDSEPSGCode, /* or -1 if not known at this point */
+                bool bAlpha,
+                const std::vector<CPLString>& aosBands,
+                int nSaturatedVal,
+                int nNodataVal)
+{
+
+    /* Iterate over granule metadata to know the layer extent */
+    /* and the location of each granule */
+    double dfMinX = 1e20, dfMinY = 1e20, dfMaxX = -1e20, dfMaxY = -1e20;
+    std::vector<SENTINEL2GranuleInfo> aosGranuleInfoList;
+    const int nDesiredResolution = (bIsPreview) ? 0 : nSubDSPrecision;
+    for(size_t i=0;i<aosGranuleList.size();i++)
+    {
+        int nEPSGCode = 0;
+        double dfULX = 0.0, dfULY = 0.0;
+        int nResolution = 0;
+        int nWidth = 0, nHeight = 0;
+        if( SENTINEL2GetGranuleInfo(eLevel,
+                                    aosGranuleList[i],
+                                    nDesiredResolution,
+                                    &nEPSGCode,
+                                    &dfULX, &dfULY,
+                                    &nResolution,
+                                    &nWidth, &nHeight) &&
+            (nSubDSEPSGCode == nEPSGCode || nSubDSEPSGCode < 0) &&
+            nResolution != 0 )
+        {
+            nSubDSEPSGCode = nEPSGCode;
+            aosNonJP2Files.push_back(aosGranuleList[i]);
+
+            if( dfULX < dfMinX ) dfMinX = dfULX;
+            if( dfULY > dfMaxY ) dfMaxY = dfULY;
+            const double dfLRX = dfULX + nResolution * nWidth;
+            const double dfLRY = dfULY - nResolution * nHeight;
+            if( dfLRX > dfMaxX ) dfMaxX = dfLRX;
+            if( dfLRY < dfMinY ) dfMinY = dfLRY;
+
+            SENTINEL2GranuleInfo oGranuleInfo;
+            oGranuleInfo.osPath = CPLGetPath(aosGranuleList[i]);
+            oGranuleInfo.dfMinX = dfULX;
+            oGranuleInfo.dfMinY = dfLRY;
+            oGranuleInfo.dfMaxX = dfLRX;
+            oGranuleInfo.dfMaxY = dfULY;
+            oGranuleInfo.nWidth = nWidth / (nSubDSPrecision / nResolution);
+            oGranuleInfo.nHeight = nHeight / (nSubDSPrecision / nResolution);
+            aosGranuleInfoList.push_back(oGranuleInfo);
+        }
+    }
+    if( dfMinX > dfMaxX )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "No granule found for EPSG code %d",
+                 nSubDSEPSGCode);
+        return NULL;
+    }
+
     const int nRasterXSize = static_cast<int>
                                     ((dfMaxX - dfMinX) / nSubDSPrecision + 0.5);
     const int nRasterYSize = static_cast<int>
                                     ((dfMaxY - dfMinY) / nSubDSPrecision + 0.5);
     SENTINEL2Dataset* poDS = new SENTINEL2Dataset(nRasterXSize, nRasterYSize);
-    
+
+    poDS->aosNonJP2Files = aosNonJP2Files;
+
     OGRSpatialReference oSRS;
     char* pszProjection = NULL;
     if( oSRS.importFromEPSG(nSubDSEPSGCode) == OGRERR_NONE &&
@@ -2289,25 +2922,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
     if( bIsPreview )
         poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
 
-    char** papszMD = SENTINEL2GetL1B_L1CMetadata(psRoot,
-                                                 "Level-1C_User_Product");
-    poDS->GDALDataset::SetMetadata(papszMD);
-    CSLDestroy(papszMD);
-
-    if( osOriginalXML.size() )
-    {
-        char* apszXMLMD[2];
-        apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
-        apszXMLMD[1] = NULL;
-        poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
-    }
-
-    poDS->aosNonJP2Files = aosNonJP2Files;
-
     int nBits = (bIsPreview) ? 8 : 0 /* 0 = unknown yet*/;
     int nValMax = (bIsPreview) ? 255 : 0 /* 0 = unknown yet*/;
-    const bool bAlpha =
-        CSLTestBoolean(SENTINEL2GetOption(poOpenInfo, "ALPHA", "FALSE")) != FALSE;
     const int nBands = (bIsPreview) ? 3 : ((bAlpha) ? 1 : 0) + static_cast<int>(aosBands.size());
     const int nAlphaBand = (bIsPreview || !bAlpha) ? 0 : nBands;
     const GDALDataType eDT = (bIsPreview) ? GDT_Byte: GDT_UInt16;
@@ -2349,10 +2965,12 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
         for(size_t iSrc=0;iSrc<aosGranuleInfoList.size();iSrc++)
         {
             const SENTINEL2GranuleInfo& oGranuleInfo = aosGranuleInfoList[iSrc];
-            CPLString osTile(SENTINEL2GetTilename(oGranuleInfo.osPath,
-                                                  CPLGetFilename(oGranuleInfo.osPath),
-                                                  osBandName,
-                                                  bIsPreview));
+            CPLString osTile(SENTINEL2GetTilename(
+                    oGranuleInfo.osPath,
+                    CPLGetFilename(oGranuleInfo.osPath),
+                    osBandName,
+                    bIsPreview,
+                    (eLevel == SENTINEL2_L1C) ? 0 : nSubDSPrecision));
 
             bool bTileFound = false;
             if( nValMax == 0 )
@@ -2390,11 +3008,11 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
                 proxyDS = oMapPVITile[osTile];
                 if( proxyDS == NULL )
                 {
-                    proxyDS = new GDALProxyPoolDataset(     osTile,
-                                                            oGranuleInfo.nWidth,
-                                                            oGranuleInfo.nHeight,
-                                                            GA_ReadOnly,
-                                                            TRUE);
+                    proxyDS = new GDALProxyPoolDataset( osTile,
+                                                        oGranuleInfo.nWidth,
+                                                        oGranuleInfo.nHeight,
+                                                        GA_ReadOnly,
+                                                        TRUE);
                     for(int j=0;j<nBands;j++)
                         proxyDS->AddSrcBandDescription(eDT, 128, 128);
                     oMapPVITile[osTile] = proxyDS;
@@ -2404,11 +3022,11 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
             }
             else
             {
-                proxyDS = new GDALProxyPoolDataset(         osTile,
-                                                            oGranuleInfo.nWidth,
-                                                            oGranuleInfo.nHeight,
-                                                            GA_ReadOnly,
-                                                            TRUE);
+                proxyDS = new GDALProxyPoolDataset( osTile,
+                                                    oGranuleInfo.nWidth,
+                                                    oGranuleInfo.nHeight,
+                                                    GA_ReadOnly,
+                                                    TRUE);
                 proxyDS->AddSrcBandDescription(eDT, 128, 128);
             }
 
@@ -2452,54 +3070,110 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
         }
     }
 
+    return poDS;
+}
+
+/************************************************************************/
+/*                      OpenL1CTileSubdataset()                         */
+/************************************************************************/
+
+GDALDataset* SENTINEL2Dataset::OpenL1CTileSubdataset( GDALOpenInfo * poOpenInfo )
+{
+    CPLString osFilename;
+    CPLAssert( STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL2_L1C_TILE:") );
+    osFilename = poOpenInfo->pszFilename + strlen("SENTINEL2_L1C_TILE:");
+    const char* pszPrecision = strrchr(osFilename.c_str(), ':');
+    if( pszPrecision == NULL || pszPrecision == osFilename.c_str() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid syntax for SENTINEL2_L1C_TILE:");
+        return NULL;
+    }
+    const bool bIsPreview = STARTS_WITH_CI(pszPrecision + 1, "PREVIEW");
+    const int nSubDSPrecision = (bIsPreview) ? 320 : atoi(pszPrecision + 1);
+    if( !bIsPreview && nSubDSPrecision != 10 && nSubDSPrecision != 20 && nSubDSPrecision != 60 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported precision: %d",
+                 nSubDSPrecision);
+        return NULL;
+    }
+    osFilename.resize( pszPrecision - osFilename.c_str() );
+
+    std::set<CPLString> oSetBands;
+    CPLXMLNode* psRootMainMTD = NULL;
+    GDALDataset* poTmpDS = OpenL1CTile( osFilename, &psRootMainMTD, nSubDSPrecision, &oSetBands);
+    SENTINEL2_CPLXMLNodeHolder oXMLHolder(psRootMainMTD);
+    if( poTmpDS == NULL )
+        return NULL;
+
+    std::vector<CPLString> aosBands;
+    if( bIsPreview )
+    {
+        aosBands.push_back("04");
+        aosBands.push_back("03");
+        aosBands.push_back("02");
+    }
+    else
+    {
+        for(std::set<CPLString>::const_iterator oIterBandnames = oSetBands.begin();
+                                                oIterBandnames != oSetBands.end();
+                                            ++oIterBandnames)
+        {
+            aosBands.push_back(*oIterBandnames);
+        }
+        /* Put 2=Blue, 3=Green, 4=Band bands in RGB order for conveniency */
+        if( aosBands.size() >= 3 &&
+            aosBands[0] == "02" &&
+            aosBands[1] == "03" &&
+            aosBands[2] == "04" )
+        {
+            aosBands[0] = "04";
+            aosBands[2] = "02";
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create dataset.                                                 */
+/* -------------------------------------------------------------------- */
+
+    std::vector<CPLString> aosGranuleList;
+    aosGranuleList.push_back(osFilename);
+
+    const int nSaturatedVal = atoi(CSLFetchNameValueDef(poTmpDS->GetMetadata(),
+                                                  "SPECIAL_VALUE_SATURATED", "-1"));
+    const int nNodataVal = atoi(CSLFetchNameValueDef(poTmpDS->GetMetadata(),
+                                               "SPECIAL_VALUE_NODATA", "-1"));
+
+    const bool bAlpha =
+        CSLTestBoolean(SENTINEL2GetOption(poOpenInfo, "ALPHA", "FALSE")) != FALSE;
+
+    std::vector<CPLString> aosNonJP2Files;
+    SENTINEL2Dataset* poDS = CreateL1CL2ADataset(SENTINEL2_L1C,
+                                                 aosGranuleList,
+                                                 aosNonJP2Files,
+                                                 nSubDSPrecision,
+                                                 bIsPreview,
+                                                 -1 /*nSubDSEPSGCode*/,
+                                                 bAlpha,
+                                                 aosBands,
+                                                 nSaturatedVal,
+                                                 nNodataVal);
+    if( poDS == NULL )
+    {
+        delete poTmpDS;
+        return NULL;
+    }
+
+    // Transfer metadata
+    poDS->GDALDataset::SetMetadata( poTmpDS->GetMetadata() );
+    poDS->GDALDataset::SetMetadata( poTmpDS->GetMetadata("xml:SENTINEL2"), "xml:SENTINEL2" );
+
+    delete poTmpDS;
+
 /* -------------------------------------------------------------------- */
 /*      Add extra band metadata.                                        */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode* psIC = CPLGetXMLNode(psRoot,
-            "=Level-1C_User_Product.General_Info.Product_Image_Characteristics");
-    if( psIC != NULL )
-    {
-        CPLXMLNode* psSIL = CPLGetXMLNode(psIC,
-                            "Reflectance_Conversion.Solar_Irradiance_List");
-        if( psSIL != NULL )
-        {
-            for(CPLXMLNode* psIter = psSIL->psChild; psIter != NULL;
-                                                     psIter = psIter->psNext )
-            {
-                if( psIter->eType != CXT_Element ||
-                    !EQUAL(psIter->pszValue, "SOLAR_IRRADIANCE") )
-                {
-                    continue;
-                }
-                const char* pszBandId = CPLGetXMLValue(psIter, "bandId", NULL);
-                const char* pszUnit = CPLGetXMLValue(psIter, "unit", NULL);
-                const char* pszValue = CPLGetXMLValue(psIter, NULL, NULL);
-                if( pszBandId != NULL && pszUnit != NULL && pszValue != NULL )
-                {
-                    int nIdx = atoi(pszBandId);
-                    if( nIdx >= 0 || nIdx < (int)NB_BANDS )
-                    {
-                        for(int i=0;i<poDS->nBands;i++)
-                        {
-                            GDALRasterBand* poBand = poDS->GetRasterBand(i+1);
-                            const char* pszBandName =
-                                poBand->GetMetadataItem("BANDNAME");
-                            if( pszBandName != NULL &&
-                                EQUAL(asBandDesc[nIdx].pszBandName, pszBandName) )
-                            {
-                                poBand->GDALRasterBand::SetMetadataItem(
-                                    "SOLAR_IRRADIANCE", pszValue);
-                                poBand->GDALRasterBand::SetMetadataItem(
-                                    "SOLAR_IRRADIANCE_UNIT",
-                                     LaunderUnit(pszUnit));
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    if( psRootMainMTD != NULL )
+        poDS->AddL1CL2ABandMetadata(SENTINEL2_L1C, psRootMainMTD, aosBands);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize overview information.                                */
@@ -2507,12 +3181,11 @@ GDALDataset *SENTINEL2Dataset::OpenL1CSubdataset( GDALOpenInfo * poOpenInfo )
     poDS->SetDescription( poOpenInfo->pszFilename );
     CPLString osOverviewFile;
     if( bIsPreview )
-        osOverviewFile = CPLSPrintf("%s_PREVIEW_EPSG_%d.tif.ovr",
-                                    osFilename.c_str(), nSubDSEPSGCode);
+        osOverviewFile = CPLSPrintf("%s_PREVIEW.tif.ovr",
+                                    osFilename.c_str());
     else
-        osOverviewFile = CPLSPrintf("%s_%dm_EPSG_%d.tif.ovr",
-                                    osFilename.c_str(), nSubDSPrecision,
-                                    nSubDSEPSGCode);
+        osOverviewFile = CPLSPrintf("%s_%dm.tif.ovr",
+                                    osFilename.c_str(), nSubDSPrecision);
     poDS->SetMetadataItem( "OVERVIEW_FILE", osOverviewFile, "OVERVIEWS" );
     poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
 
