@@ -47,22 +47,24 @@ class OGRMemLayer : public OGRLayer
     typedef std::map<GIntBig, OGRFeature*>           FeatureMap;
     typedef std::map<GIntBig, OGRFeature*>::iterator FeatureIterator;
 
-    OGRFeatureDefn     *poFeatureDefn;
+    OGRFeatureDefn     *m_poFeatureDefn;
 
-    GIntBig             nFeatureCount;
+    GIntBig             m_nFeatureCount;
 
-    GIntBig             iNextReadFID;
-    GIntBig             nMaxFeatureCount; // max size of papoFeatures
-    OGRFeature        **papoFeatures;
-    int                 bHasHoles;
+    GIntBig             m_iNextReadFID;
+    GIntBig             m_nMaxFeatureCount; // max size of papoFeatures
+    OGRFeature        **m_papoFeatures;
+    int                 m_bHasHoles;
 
-    FeatureMap          oMapFeatures;
-    FeatureIterator     oMapFeaturesIter;
+    FeatureMap          m_oMapFeatures;
+    FeatureIterator     m_oMapFeaturesIter;
 
-    GIntBig             iNextCreateFID;
+    GIntBig             m_iNextCreateFID;
 
-    int                 bUpdatable;
-    int                 bAdvertizeUTF8;
+    int                 m_bUpdatable;
+    int                 m_bAdvertizeUTF8;
+
+    bool                m_bUpdated;
 
     // only use it in the lifetime of a function where the list of features doesn't change
     IOGRMemLayerFeatureIterator* GetIterator();
@@ -82,7 +84,7 @@ class OGRMemLayer : public OGRLayer
     OGRErr              ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( GIntBig nFID );
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() { return m_poFeatureDefn; }
 
     GIntBig             GetFeatureCount( int );
 
@@ -96,10 +98,13 @@ class OGRMemLayer : public OGRLayer
 
     int                 TestCapability( const char * );
 
-    void                SetUpdatable(int bUpdatableIn) { bUpdatable = bUpdatableIn; }
-    void                SetAdvertizeUTF8(int bAdvertizeUTF8In) { bAdvertizeUTF8 = bAdvertizeUTF8In; }
+    void                SetUpdatable(int bUpdatableIn) { m_bUpdatable = bUpdatableIn; }
+    void                SetAdvertizeUTF8(int bAdvertizeUTF8In) { m_bAdvertizeUTF8 = bAdvertizeUTF8In; }
 
-    GIntBig             GetNextReadFID() { return iNextReadFID; }
+    bool                HasBeenUpdated() const { return m_bUpdated; }
+    void                SetUpdated(bool bUpdated) { m_bUpdated = bUpdated; }
+
+    GIntBig             GetNextReadFID() { return m_iNextReadFID; }
 };
 
 /************************************************************************/
