@@ -879,6 +879,9 @@ class OGRMemLayerIteratorMap: public IOGRMemLayerFeatureIterator
            }
            return NULL;
        }
+
+    private:
+        CPL_DISALLOW_COPY_ASSIGN(OGRMemLayerIteratorMap)
 };
 
 /************************************************************************/
