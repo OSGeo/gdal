@@ -33,26 +33,39 @@
 
 #include "ogrsf_frmts.h"
 
+#include <map>
+
 /************************************************************************/
 /*                             OGRMemLayer                              */
 /************************************************************************/
 class OGRMemDataSource;
 
+class IOGRMemLayerFeatureIterator;
+
 class OGRMemLayer : public OGRLayer
 {
+    typedef std::map<GIntBig, OGRFeature*>           FeatureMap;
+    typedef std::map<GIntBig, OGRFeature*>::iterator FeatureIterator;
+
     OGRFeatureDefn     *poFeatureDefn;
 
     GIntBig             nFeatureCount;
-    GIntBig             nMaxFeatureCount;
-    OGRFeature        **papoFeatures;
 
     GIntBig             iNextReadFID;
+    GIntBig             nMaxFeatureCount; // max size of papoFeatures
+    OGRFeature        **papoFeatures;
+    int                 bHasHoles;
+
+    FeatureMap          oMapFeatures;
+    FeatureIterator     oMapFeaturesIter;
+
     GIntBig             iNextCreateFID;
 
     int                 bUpdatable;
     int                 bAdvertizeUTF8;
 
-    int                 bHasHoles;
+    // only use it in the lifetime of a function where the list of features doesn't change
+    IOGRMemLayerFeatureIterator* GetIterator();
 
   public:
                         OGRMemLayer( const char * pszName,
