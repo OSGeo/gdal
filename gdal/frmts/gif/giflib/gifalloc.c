@@ -206,9 +206,15 @@ UnionColorMap(const ColorMapObject * ColorIn1,
             Map[j].Red = Map[j].Green = Map[j].Blue = 0;
 
         /* perhaps we can shrink the map? */
-        if (RoundUpTo < ColorUnion->ColorCount)
-            ColorUnion->Colors = (GifColorType *)realloc(Map,
-                                 sizeof(GifColorType) * RoundUpTo);
+        if (RoundUpTo < ColorUnion->ColorCount) {
+            GifColorType *new_map = (GifColorType *)realloc(Map,
+                                 RoundUpTo * sizeof(GifColorType));
+            if( new_map == NULL ) {
+                FreeMapObject(ColorUnion);
+                return ((ColorMapObject *) NULL);
+            }
+            ColorUnion->Colors = new_map;
+        }
     }
 
     ColorUnion->ColorCount = RoundUpTo;
@@ -261,10 +267,14 @@ AddExtensionBlock(SavedImage * New,
 
     if (New->ExtensionBlocks == NULL)
         New->ExtensionBlocks=(ExtensionBlock *)malloc(sizeof(ExtensionBlock));
-    else
-        New->ExtensionBlocks = (ExtensionBlock *)realloc(New->ExtensionBlocks,
+    else {
+        ExtensionBlock* ep_new = (ExtensionBlock *)realloc(New->ExtensionBlocks,
                                       sizeof(ExtensionBlock) *
                                       (New->ExtensionBlockCount + 1));
+        if( ep_new == NULL )
+            return (GIF_ERROR);
+        New->ExtensionBlocks = ep_new;
+    }
 
     if (New->ExtensionBlocks == NULL)
         return (GIF_ERROR);
