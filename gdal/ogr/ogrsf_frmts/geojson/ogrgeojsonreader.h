@@ -160,7 +160,7 @@ GeoJSONObject::Type OGRGeoJSONGetType( json_object* poObj );
 
 json_object* json_ex_get_object_by_path(json_object* poObj, const char* pszPath );
 
-bool OGRJSonParse(const char* pszText, json_object** ppoObj);
+bool OGRJSonParse(const char* pszText, json_object** ppoObj, bool bVerboseError = true);
 
 /************************************************************************/
 /*                 GeoJSON Geometry Translators                         */

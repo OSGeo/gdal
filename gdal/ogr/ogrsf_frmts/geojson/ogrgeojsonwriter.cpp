@@ -424,8 +424,16 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature )
         }
         else if( OFTString == eType )
         {
-            poObjProp = json_object_new_string( 
-                poFeature->GetFieldAsString(nField) );
+            const char* pszStr = poFeature->GetFieldAsString(nField);
+            int nLen = strlen(pszStr);
+            poObjProp = NULL;
+            if( (pszStr[0] == '{' && pszStr[nLen-1] == '}') ||
+                (pszStr[0] == '[' && pszStr[nLen-1] == ']') )
+            {
+                OGRJSonParse(pszStr, &poObjProp, false);
+            }
+            if( poObjProp == NULL )
+                poObjProp = json_object_new_string( pszStr );
         }
         else if( OFTIntegerList == eType )
         {
