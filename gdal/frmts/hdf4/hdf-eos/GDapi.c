@@ -2974,15 +2974,13 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 	}
 	free(dimbuf);
 
-
-
 	/* Check fieldname length */
 	/* ---------------------- */
 	if (status == 0)
 	{
 /* if ((intn) strlen(fieldname) > MAX_NC_NAME - 7)
 ** this was changed because HDF4.1r3 made a change in the
-** hlimits.h file.  We have notidfied NCSA and asked to have 
+** hlimits.h file.  We have notified NCSA and asked to have 
 ** it made the same as in previous versions of HDF
 ** see ncr 26314.  DaW  Apr 2000
 */
@@ -2993,8 +2991,6 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 		HEreport("Fieldname \"%s\" too long.\n", fieldname);
 	    }
 	}
-
-
 
 	/* Check for valid numbertype */
 	/* -------------------------- */

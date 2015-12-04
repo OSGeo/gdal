@@ -541,7 +541,7 @@ def ogr_osm_9():
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
     ret = ogr_osm_8()
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', old_val)
-    
+
     return ret
 
 ###############################################################################
@@ -552,8 +552,8 @@ def ogr_osm_10():
     if ogrtest.osm_drv is None:
         return 'skip'
 
-    # Non existing file
-    ds = ogr.Open('/nonexisting/foo.osm')
+    # A file that does not exist.
+    ds = ogr.Open('/nonexistent/foo.osm')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'

@@ -939,7 +939,7 @@ static unsigned utf8toa(const char* src, unsigned srclen,
     needed.
 
     \a srclen is the number of words in \a src to convert. On Windows
-    this is not necessairly the number of characters, due to there
+    this is not necessarily the number of characters, due to there
     possibly being "surrogate pairs" in the UTF-16 encoding used.
     On Unix wchar_t is 32 bits and each location is a character.
 

@@ -199,7 +199,7 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
     psDT->nFacets = j;
     psDT->pasFacets = pasFacets;
 
-    // Store vertex and neighor information for each triangle
+    // Store vertex and neighbor information for each triangle.
     for(facet = qh facet_list;
         facet != NULL && facet->next != NULL;
         facet = facet->next)

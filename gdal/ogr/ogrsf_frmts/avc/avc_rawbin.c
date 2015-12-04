@@ -80,7 +80,7 @@
 
 /*---------------------------------------------------------------------
  * Define a static flag and set it with the byte ordering on this machine
- * we will then compare with this value to decide if we nned to swap
+ * we will then compare with this value to decide if we need to swap
  * bytes or not.
  *
  * CPL_MSB or CPL_LSB should be set in the makefile... the default is

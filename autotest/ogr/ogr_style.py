@@ -58,7 +58,7 @@ def ogr_style_styletable():
 
     style_table = ogr.StyleTable()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = style_table.LoadStyleTable('/nonexisting')
+    ret = style_table.LoadStyleTable('/nonexistent')
     gdal.PopErrorHandler()
     if ret != 0:
         gdaltest.post_reason('failure')

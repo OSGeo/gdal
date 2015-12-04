@@ -115,7 +115,7 @@ void qh_premerge(vertexT *apex, realT maxcentrum, realT maxangle) {
       set qh.visible_list and qh.newfacet_list to qh.facet_list
       add all facets to qh.newfacet_list
       mark non-simplicial facets, facet->newmerge
-      set qh.newvertext_list to qh.vertex_list
+      set qh.newvertex_list to qh.vertex_list
       add all vertices to qh.newvertex_list
       if a pre-merge occurred
         set vertex->delridge {will retest the ridge}
@@ -3530,7 +3530,7 @@ void qh_updatetested(facetT *facet1, facetT *facet2) {
     return temporary set of ridges adjacent to a vertex
     vertex->neighbors defined
 
-  ntoes:
+  notes:
     uses qh.visit_id
     does not include implicit ridges for simplicial facets
 
