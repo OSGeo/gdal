@@ -153,8 +153,11 @@ OGRErr OGRCurveCollection::addCurveDirectly( OGRGeometry* poGeom,
 
     if( bNeedRealloc )
     {
-        papoCurves = (OGRCurve **) OGRRealloc( papoCurves,
+        OGRCurve** papoNewCurves = (OGRCurve **) VSI_REALLOC_VERBOSE( papoCurves,
                                              sizeof(OGRCurve*) * (nCurveCount+1) );
+        if( papoNewCurves == NULL )
+            return OGRERR_FAILURE;
+        papoCurves = papoNewCurves;
     }
 
     papoCurves[nCurveCount] = poCurve;
