@@ -32,6 +32,7 @@
 
 #include "cpl_port.h"
 #include <ogrsf_frmts.h>
+#include "../mem/ogr_mem.h"
 
 #include <cstdio>
 #include <vector> // used by OGRGeoJSONLayer
@@ -45,8 +46,9 @@ class OGRGeoJSONDataSource;
 /*                           OGRGeoJSONLayer                            */
 /************************************************************************/
 
-class OGRGeoJSONLayer : public OGRLayer
+class OGRGeoJSONLayer : public OGRMemLayer
 {
+    friend class OGRGeoJSONDataSource;
 public:
 
     static const char* const DefaultName;
@@ -62,31 +64,22 @@ public:
     //
     // OGRLayer Interface
     //
-    OGRFeatureDefn* GetLayerDefn();
+    virtual const char* GetFIDColumn();
+    virtual int         TestCapability( const char * pszCap );
     
-    GIntBig GetFeatureCount( int bForce = TRUE );
-    void ResetReading();
-    OGRFeature* GetNextFeature();
-    int TestCapability( const char* pszCap );
-    const char* GetFIDColumn();
-    void SetFIDColumn( const char* pszFIDColumn );
-    
+    virtual OGRErr      SyncToDisk();
     //
     // OGRGeoJSONLayer Interface
     //
+    void SetFIDColumn( const char* pszFIDColumn );
     void AddFeature( OGRFeature* poFeature );
     void DetectGeometryType();
 
 private:
 
-    typedef std::vector<OGRFeature*> FeaturesSeq;
-    FeaturesSeq seqFeatures_;
-    FeaturesSeq::iterator iterCurrent_;
-
-
-    // CPL_UNUSED OGRGeoJSONDataSource* poDS_;
-    OGRFeatureDefn* poFeatureDefn_;
+    OGRGeoJSONDataSource* poDS_;
     CPLString sFIDColumn_;
+    bool bUpdated_;
 };
 
 /************************************************************************/
@@ -179,6 +172,9 @@ public:
     int  GetFpOutputIsSeekable() const { return bFpOutputIsSeekable_; }
     int  GetBBOXInsertLocation() const { return nBBOXInsertLocation_; }
     int  HasOtherPages() const { return bOtherPages_; }
+    bool IsUpdatable() const { return bUpdatable_; }
+
+    virtual void        FlushCache();
 
 private:
 
@@ -188,7 +184,8 @@ private:
     char* pszName_;
     char* pszGeoData_;
     vsi_l_offset nGeoDataLen_;
-    OGRLayer** papoLayers_;
+    OGRGeoJSONLayer** papoLayers_;
+    OGRGeoJSONWriteLayer** papoLayersWriter_;
     int nLayers_;
     VSILFILE* fpOut_;
     
@@ -201,6 +198,8 @@ private:
 
     int bFpOutputIsSeekable_;
     int nBBOXInsertLocation_;
+
+    bool bUpdatable_;
 
     //
     // Private utility functions
