@@ -190,7 +190,7 @@ public class gdal:public static int SetErrorHandler()
  * The msg_class argument can have the value gdalconst.CE_Warning indicating that the
  * message is an informational warning, gdalconst.CE_Failure indicating that the
  * action failed, but that normal recover mechanisms will be used or
- * CE_Fatal meaning that a fatal error has occured, and that Error()
+ * CE_Fatal meaning that a fatal error has occurred, and that Error()
  * should not return.  
  * <p>
  * The default behaviour of Error() is to report errors to stderr,

@@ -435,7 +435,8 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
         if ret != 0:
             if not skip_failures:
                 if gdal.GetLastErrorMsg() == '':
-                    print('An error occured during feature insertion/update. Interrupting processing.')
+                    print('An error occurred during feature insertion/update. '
+                          'Interrupting processing.')
                 ret = 1
                 break
             else:

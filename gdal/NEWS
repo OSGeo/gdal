@@ -1174,7 +1174,7 @@ OpenAir driver:
 OpenFileGDB driver:
  * add compatibility with .gdbtable files bigger than 4 GB (#5615)
  * support opening files with ConfigurationKeyword=MAX_FILE_SIZE_4GB or MAX_FILE_SIZE_256TB (#5615)
- * fix occasionnal write-after-end-of-buffer (#5464)
+ * fix occasional write-after-end-of-buffer (#5464)
  * avoid error message when failing to import SRS from WKID code (might be an ESRI code for example)
  * fix spatial filter with GeneralPolygon shapes (#5591)
  * fix for reading GDB with string fields with a default value length > 127 (#5636)
@@ -3008,7 +3008,7 @@ Core:
  * Fix performance problem when serializing huge color tables, metadata, CategoryNames and GCPs to VRT/PAM (#3961)
  * Be careful about Nan complex values getting histogram, avoid locale issues with statistics metadata
  * GDALRasterBand::IRasterIO() default implementation : don't try to use full-res band if I/O failed on the appropriate overview band (for WMS errors)
- * RasterIO: Return earlier when a write error occured while flushing dirty block
+ * RasterIO: Return earlier when a write error occurred while flushing dirty block
  * GDAL_DISABLE_READDIR_ON_OPEN can be set to EMPTY_DIR to avoid reading the dir, but it set an empty dir to avoid looking for auxiliary files
  * Use sibling file list to look for .aux.xml, .aux, .ovr, world files, tab files
  * Add GDALFindAssociatedFile() (#4008)
@@ -3032,7 +3032,7 @@ Utilities:
  * gdalinfo: add '-sd num' option to report subdataset with the specified number.
  * gdalinfo: add '-proj4' option to gdalinfo, to report a PROJ.4 string for the CRS
  * gdal_translate: propagate INTERLEAVE metadata to intermediate VRT dataset
- * gdal_translate: force quiet mode when outputing to /vsistdout/
+ * gdal_translate: force quiet mode when writing to /vsistdout/
  * gdalwarp: Disable CENTER_LONG rewrapping for cutline (#3932)
  * gdalwarp: add -refine_gcps option to discard outliers GCPs before warping (#4143)
  * gdalwarp: add warning if user specifies several of -order, -tps, -rpc or -geoloc options
@@ -3062,7 +3062,7 @@ Multi-driver topics:
  * Port DOQ1, DOQ2, ELAS, Idrisi, L1B, NDF, NWT_GRD, NWT_GRC, USGSDEM to VSI virtual file API
  * PAM-enable BT and BLX drivers
  * Implement Identify() for AAIGrid, ACE2, DTED, NWT_GRD, NWT_GRC, WMS, WCS, JDEM and BSB drivers
- * Make GIF, JPEG and PNG drivers return a non NULL dataset when outputing to /vsistdout/
+ * Make GIF, JPEG and PNG drivers return a non NULL dataset when writing to /vsistdout/
  * HFA and GTiff: add explicit error message when trying to add external overviews when there are already internal overviews (#4044)
  * Initialize overview manager to support external overviews for AAIGRID, DIPX, ELAS, GXF, FIT, FITS, GMT, GRIB, GSAG, GSBG, GS7BG, ILWIS, L1B, LCP, Leveller, NWT_GRD, NWT_GRC, RIK, SDTS and SAGA
 
@@ -3158,7 +3158,7 @@ GeoRaster driver:
  * Fix loading of small images, FlushCache issue (#4363)
 
 GIF driver:
- * Make CreateCopy() more friendly with outputing in /vsistdout/
+ * Make CreateCopy() more friendly with writing in /vsistdout/
 
 GRIB driver:
  * Fix grid vs cell-center convention (#2637)
@@ -3190,7 +3190,7 @@ GTiff driver:
  * Migrate in some ESRI only logic for 1bit color tables, AdjustLinearUnits and default for 1bit data
  * Add a GTIFF_IGNORE_READ_ERRORS configuration option (#3994)
  * Lazy loading of RPC/RPB/IMD files (#3996)
- * Add mutex protection in GTiffOneTimeInit() to avoid occasionnal segfaults
+ * Add mutex protection in GTiffOneTimeInit() to avoid occasional segfaults
  * Stop interpreting 4th band as alpha when not defined
  * Also list nSubType == FILETYPE_PAGE as subdatasets
  * CreateCopy(): copies category names from the source bands
@@ -3968,7 +3968,7 @@ Algorithms:
  * warper : integrate Google Summer of Code OpenCL implementation of warper
  * gdalgrid: Move ParseAlgorithmAndOptions from apps/gdal_grid.cpp to
              alg/gdalgrid.cpp (#3583)
- * RPCTransformer: take into account optionnal DEM file to extract elevation
+ * RPCTransformer: take into account optional DEM file to extract elevation
    offsets (RPC_HEIGHT_SCALE and RPC_DEM transformation options added) (#3634)
  * GDALReprojectImage() : correctly assign nSrcAlphaBand and nDstAlphaBand (#3821)
  * gdalgrid : Properly initialize the first nearest distance in GDALGridNearestNeighbor().
@@ -4116,7 +4116,7 @@ GTiff driver :
    overviews when adding them after dataset reopening
  * auto-promote mask band to full 8 bits by default (unless
    GDAL_TIFF_INTERNAL_MASK_TO_8BIT is set TO FALSE).
- * add LZMA compression optionnal support (requires latest libtiff4 CVS HEAD)
+ * add LZMA compression optional support (requires latest libtiff4 CVS HEAD)
  * Supporting writing compound coordinate systems.
 
 GTX driver:
@@ -4362,7 +4362,7 @@ Core:
  * Make the GetStyleTable() SetStyleTable() SetStyleTableDirectly() methods on
    datasources and layers virtual (#2978)
  * Add OGRSFDriverRegistrar::DeregisterDriver() and OGRDeregisterDriver()
- * Improve detection of rounding errors when outputing coordinates as text with
+ * Improve detection of rounding errors when writing coordinates as text with
    OGRMakeWktCoordinate()
  * OGR SQL: allow comparing datetime columns in WHERE clause
  * OGR indexing: re-use .ind file in read-write mode when calling CreateIndex()
@@ -4527,7 +4527,7 @@ GML driver:
    be considered as urn:ogc:def:crs:EPSG::XXXX
  * Expose gml:id as a string field when reading <wfs:FeatureCollection>
  * Add dataset creation option FORMAT=GML3 to write GML3 SF-0 compliant data
- * Add dataset creation option SPACE_INDENTATION=YES/NO to optionnaly disable space indentation
+ * Add dataset creation option SPACE_INDENTATION=YES/NO to optionally disable space indentation
    when writing GML.
  * Recognize GML answer of MapServer WMS GetFeatureInfo request
  * Fix datatype detection to fallback to Real when an integer cannot fit into a 32bit int (#3866)
@@ -5447,7 +5447,7 @@ General:
     - OSR :
         osr.ImportFromMICoordSys(), osr.ExportToMICoordSys(), SpatialReference.Clone()
         osr.EPSGTreatsAsLatLong(), osr.ImportFromEPSGA()
- * Make resampling an optionnal parameter for gdal.RegenerateOverview(),
+ * Make resampling an optional parameter for gdal.RegenerateOverview(),
    to be consistent with gdal.RegenerateOverviews()
  * NONNULL checks have been added to check various arguments of methods
  * add missing constants : DCAP_VIRTUALIO, color interpretations, OGR constants
@@ -5487,7 +5487,7 @@ Java bindings (general changes):
 Build (Unix):
  * Added basic support for LDFLAGS
  * Try prefix/lib before prefix/src for proj.4 linking (#1345)
- * Allow specification of a python binary for --with-ogpython (#2258)
+ * Allow specification of a python binary for --with-python (#2258)
  * Added NAS driver config support
  * Fixed Expat detection problem on MinGW (#2050)
  * Fix INST_DATA setting (/share/gdal instead of /share) (#2382)

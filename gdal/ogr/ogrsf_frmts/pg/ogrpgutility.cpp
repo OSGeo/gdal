@@ -81,7 +81,7 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllo
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      Generate an error report if an error occured.                   */
+/*      Generate an error report if an error occurred.                  */
 /* -------------------------------------------------------------------- */
     if ( !hResult || (PQresultStatus(hResult) == PGRES_NONFATAL_ERROR ||
                       PQresultStatus(hResult) == PGRES_FATAL_ERROR ) )

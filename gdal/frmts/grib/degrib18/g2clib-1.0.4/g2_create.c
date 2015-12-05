@@ -30,8 +30,8 @@ g2int g2_create(unsigned char *cgrib,g2int *listsec0,g2int *listsec1)
 //                listsec0[1]=GRIB Edition Number (currently 2)
 //     listsec1 - Contains information needed for GRIB Identification Section 1.
 //                Must be dimensioned >= 13.
-//                listsec1[0]=Id of orginating centre (Common Code Table C-1)
-//                listsec1[1]=Id of orginating sub-centre (local table)
+//                listsec1[0]=Id of originating centre (Common Code Table C-1)
+//                listsec1[1]=Id of originating sub-centre (local table)
 //                listsec1[2]=GRIB Master Tables Version Number (Code Table 1.0)
 //                listsec1[3]=GRIB Local Tables Version Number (Code Table 1.1)
 //                listsec1[4]=Significance of Reference Time (Code Table 1.2)

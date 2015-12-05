@@ -39,12 +39,12 @@
 
 //#define DEBUG_GPB_ERRORS
 #ifdef DEBUG_GPB_ERRORS
-static void error_occured(int nLine)
+static void error_occurred(int nLine)
 {
-    CPLError(CE_Failure, CPLE_AppDefined, "Parsing error occured at line %d", nLine);
+    CPLError(CE_Failure, CPLE_AppDefined, "Parsing error occurred at line %d", nLine);
 }
 
-#define GOTO_END_ERROR do { error_occured(__LINE__); goto end_error; } while(0)
+#define GOTO_END_ERROR do { error_occurred(__LINE__); goto end_error; } while(0)
 #else
 #define GOTO_END_ERROR goto end_error
 #endif

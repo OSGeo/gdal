@@ -3726,7 +3726,8 @@ int OGROSMDataSource::ParseNextChunk(int nIdxLayer)
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "An error occured during the parsing of data around byte " CPL_FRMT_GUIB,
+                         "An error occurred during the parsing of data "
+                         "around byte " CPL_FRMT_GUIB,
                          OSM_GetBytesRead(psParser));
 
                 bStopParsing = TRUE;

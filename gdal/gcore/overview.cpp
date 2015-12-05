@@ -2378,7 +2378,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
     /* In case the mask made be computed from another band of the dataset, */
     /* we can't use cascaded generation, as the computation of the overviews */
-    /* of the band used for the mask band may not have yet occured (#3033) */
+    /* of the band used for the mask band may not have yet occurred (#3033) */
     if( (STARTS_WITH_CI(pszResampling, "AVER") |
          STARTS_WITH_CI(pszResampling, "GAUSS") ||
          EQUAL(pszResampling,"CUBIC") ||

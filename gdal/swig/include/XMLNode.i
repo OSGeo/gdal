@@ -112,8 +112,8 @@ typedef struct CPLXMLNode
         return CPLGetXMLValue( self, pszPath, pszDefault );                    
     }
     
-    // for Java, I don't want to deal with ownerships issues
-    // so I just clone
+    // For Java, I don't want to deal with ownership issues,
+    // so I just clone.
 #ifdef SWIGJAVA
     %apply Pointer NONNULL {CPLXMLNode *psChild};
     void AddXMLChild( CPLXMLNode *psChild )

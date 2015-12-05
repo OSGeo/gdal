@@ -207,12 +207,12 @@ already exists. The spatial extent of the existing file will not
 be modified to accommodate new data, so you may have to remove it in that case, or
 use the -overwrite option.
 
-Polygon cutlines may be used as a mask to restrict the area of the destination file
-that may be updated, including blending.  If the OGR layer containing the cutline
-features has no explicit SRS, the cutline features must be in the SRS of the
-destination file. When outputing to a not yet existing target dataset,
-its extent will be the one of the original raster unless -te or -crop_to_cutline are
-specified.
+Polygon cutlines may be used as a mask to restrict the area of the
+destination file that may be updated, including blending.  If the OGR
+layer containing the cutline features has no explicit SRS, the cutline
+features must be in the SRS of the destination file. When writing to a
+not yet existing target dataset, its extent will be the one of the
+original raster unless -te or -crop_to_cutline are specified.
 
 <p>
 \section gdalwarp_example EXAMPLE

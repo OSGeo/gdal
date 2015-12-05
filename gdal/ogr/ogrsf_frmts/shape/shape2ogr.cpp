@@ -1428,10 +1428,15 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                 static int nCounter = 0;
                 if( nCounter <= 10 )
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Value %.18g of field %s with 0 decimal of feature " CPL_FRMT_GIB " is bigger than 2^53. Precision loss likely occured or going to happen.%s",
-                             dfVal, poFieldDefn->GetNameRef(), poFeature->GetFID(),
-                             (nCounter == 10) ? " This warning will not be emitted anymore." : "");
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Value %.18g of field %s with 0 decimal of "
+                              "feature " CPL_FRMT_GIB " is bigger than 2^53. "
+                              "Precision loss likely occurred or going to "
+                              "happen.%s",
+                              dfVal, poFieldDefn->GetNameRef(),
+                              poFeature->GetFID(),
+                              (nCounter == 10) ? " This warning will not be "
+                              "emitted anymore." : "");
                     nCounter ++;
                 }
             }

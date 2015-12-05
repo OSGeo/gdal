@@ -9903,7 +9903,7 @@ SWdetach(int32 swathID)
 	Vgetname(SWXSwath[sID].IDTable, swathname);
 
 
-	/* Create 1D "orphened" fields */
+	/* Create 1D "orphaned" fields */
 	/* --------------------------- */
 	i = 0;
 

@@ -34,8 +34,8 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
 //     listsec1 - pointer to an array containing information read from GRIB 
 //                Identification Section 1.
 //                Must be allocated with >= 13 elements.
-//                listsec1[0]=Id of orginating centre (Common Code Table C-1)
-//                listsec1[1]=Id of orginating sub-centre (local table)
+//                listsec1[0]=Id of originating centre (Common Code Table C-1)
+//                listsec1[1]=Id of originating sub-centre (local table)
 //                listsec1[2]=GRIB Master Tables Version Number (Code Table 1.0)
 //                listsec1[3]=GRIB Local Tables Version Number 
 //                listsec1[4]=Significance of Reference Time (Code Table 1.1)

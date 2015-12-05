@@ -825,7 +825,7 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Optionnaly initialize the content of the spatial_ref_sys table  */
+/*      Optionally initialize the content of the spatial_ref_sys table  */
 /*      with the EPSG database                                          */
 /* -------------------------------------------------------------------- */
     if ( (bSpatialite || bMetadata) &&

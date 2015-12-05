@@ -1980,7 +1980,7 @@ boolT qh_sharpnewfacets() {
 
   qh_voronoi_center( dim, points )
     return Voronoi center for a set of points
-    dim is the orginal dimension of the points
+    dim is the original dimension of the points
     gh.gm_matrix/qh.gm_row are scratch buffers
 
   returns:

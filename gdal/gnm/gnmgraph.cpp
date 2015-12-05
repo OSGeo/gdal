@@ -218,7 +218,7 @@ GNMPATH GNMGraph::DijkstraShortestPath( GNMGFID nStartFID, GNMGFID nEndFID,
             // final array.
             aoShortestPath.push_back(std::make_pair(nNextVertexId, it->second));
 
-            // An edge has only two vertexes, so we get the opposit one to the
+            // An edge has only two vertexes, so we get the opposite one to the
             // current vertex in order to continue search backwards.
             nNextVertexId = GetOppositVertex(it->second, it->first);
         }

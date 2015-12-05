@@ -1552,8 +1552,8 @@ retry:
             /* add other options here. */
         }
 
-        /* In the non direct case, we need to check that the geometry intersects the source */
-        /* region before an optionnal clipping */
+        // In the non-direct case, we need to check that the geometry
+        // intersects the source region before an optional clipping.
         if( bUseSrcRegion &&
             apoGeomFieldProps[i]->eGeometryStyle != VGS_Direct &&
             apoGeomFieldProps[i]->poSrcRegion != NULL )

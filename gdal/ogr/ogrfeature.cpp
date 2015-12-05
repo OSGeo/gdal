@@ -423,7 +423,7 @@ OGRErr OGR_F_SetGeometry( OGRFeatureH hFeat, OGRGeometryH hGeom )
  *
  * Fetch the geometry from this feature, and clear the reference to the
  * geometry on the feature.  This is a mechanism for the application to
- * take over ownship of the geometry from the feature without copying. 
+ * take over ownership of the geometry from the feature without copying.
  * Sort of an inverse to SetGeometryDirectly().
  *
  * After this call the OGRFeature will have a NULL geometry.
@@ -466,7 +466,7 @@ OGRGeometry *OGRFeature::StealGeometry(int iGeomField)
  *
  * Fetch the geometry from this feature, and clear the reference to the
  * geometry on the feature.  This is a mechanism for the application to
- * take over ownship of the geometry from the feature without copying. 
+ * take over ownership of the geometry from the feature without copying.
  * Sort of an inverse to OGR_FSetGeometryDirectly().
  *
  * After this call the OGRFeature will have a NULL geometry.
@@ -1372,12 +1372,14 @@ int OGRFeature::GetFieldAsInteger( int iField )
         {
         case SPF_FID:
         {
-            int nVal = (nFID > INT_MAX) ? INT_MAX : (nFID < INT_MIN) ? INT_MIN : (int) nFID;
+            int nVal = (nFID > INT_MAX) ? INT_MAX :
+                (nFID < INT_MIN) ? INT_MIN : (int) nFID;
+
             if( (GIntBig)nVal != nFID )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                 "Integer overflow occured when trying to return 64bit integer. "
-                 "Use GetFieldAsInteger64() instead");
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Integer overflow occurred when trying to return "
+                          "64bit integer. Use GetFieldAsInteger64() instead" );
             }
             return nVal;
         }
@@ -1391,27 +1393,29 @@ int OGRFeature::GetFieldAsInteger( int iField )
             return 0;
         }
     }
-    
+
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
-    
+
     if( poFDefn == NULL )
         return 0;
-    
+
     if( !IsFieldSet(iField) )
         return 0;
-    
+
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTInteger )
         return pauFields[iField].Integer;
     else if( eType == OFTInteger64 )
     {
         GIntBig nVal64 = pauFields[iField].Integer64;
-        int nVal = (nVal64 > INT_MAX) ? INT_MAX : (nVal64 < INT_MIN) ? INT_MIN : (int) nVal64;
+        int nVal = (nVal64 > INT_MAX) ? INT_MAX :
+            (nVal64 < INT_MIN) ? INT_MIN : (int) nVal64;
+
         if( (GIntBig)nVal != nVal64 )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                 "Integer overflow occured when trying to return 64bit integer. "
-                 "Use GetFieldAsInteger64() instead");
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Integer overflow occurred when trying to return 64bit "
+                      "integer. Use GetFieldAsInteger64() instead");
         }
         return nVal;
     }
@@ -2770,11 +2774,14 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTInteger )
     {
-        int nVal32 = (nValue < INT_MIN ) ? INT_MIN : (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+        int nVal32 = (nValue < INT_MIN ) ? INT_MIN :
+            (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+
         if( (GIntBig)nVal32 != nValue )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                 "Integer overflow occured when trying to set 32bit field.");
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Integer overflow occurred when trying to set "
+                      "32bit field." );
         }
         SetField(iField, nVal32);
     }
@@ -2788,11 +2795,14 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     }
     else if( eType == OFTIntegerList )
     {
-        int nVal32 = (nValue < INT_MIN ) ? INT_MIN : (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+        int nVal32 = (nValue < INT_MIN ) ? INT_MIN :
+            (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+
         if( (GIntBig)nVal32 != nValue )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                 "Integer overflow occured when trying to set 32bit field.");
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Integer overflow occurred when trying to set "
+                      "32bit field." );
         }
         SetField( iField, 1, &nVal32 );
     }
@@ -3341,11 +3351,14 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
         for( int i=0; i < nCount; i++ )
         {
             GIntBig nValue = panValues[i];
-            int nVal32 = (nValue < INT_MIN ) ? INT_MIN : (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+            int nVal32 = (nValue < INT_MIN ) ? INT_MIN :
+                (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+
             if( (GIntBig)nVal32 != nValue )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                     "Integer overflow occured when trying to set 32bit field.");
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Integer overflow occured when trying to set "
+                          "32bit field." );
             }
             anValues.push_back( nVal32 );
         }

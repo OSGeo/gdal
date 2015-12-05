@@ -204,11 +204,11 @@ int FGdbLayer::EditIndexesForFIDHack(const char* pszRadixTablename)
 
     CPLString osGDBTablX = CPLResetExtension(pszRadixTablename, "gdbtablx");
     CPLString osNewGDBTablX = CPLResetExtension(pszRadixTablename, "gdbtablx.new");
-    
+
     if( !EditGDBTablX(osGDBTablX, osNewGDBTablX) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                         "Error occured when editing %s", osNewGDBTablX.c_str());
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Error occurred when editing %s", osNewGDBTablX.c_str());
         VSIUnlink(osNewGDBTablX);
         return FALSE;
     }
@@ -226,8 +226,8 @@ int FGdbLayer::EditIndexesForFIDHack(const char* pszRadixTablename)
             CPLString osIndex(CPLFormFilename(osDirectory, *papszIter, NULL));
             if( !EditATXOrSPX(osIndex) )
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Error occured when editing %s", osIndex.c_str());
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Error occurred when editing %s", osIndex.c_str());
                 bRet = FALSE;
             }
         }

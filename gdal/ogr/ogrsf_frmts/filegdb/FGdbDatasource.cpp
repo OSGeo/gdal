@@ -687,8 +687,9 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
     }
     catch(...)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Exception occured at executing '%s'. Application may become unstable", pszSQLCommand);
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Exception occurred at executing '%s'. Application may "
+                  "become unstable", pszSQLCommand );
         delete pEnumRows;
         return NULL;
     }

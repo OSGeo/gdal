@@ -464,7 +464,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       }
       //
       //   Calculate length of section 6 and store it in octets
-      //   1-4 of section 6.  Pad to end of octect, if necessary.
+      //   1-4 of section 6.  Pad to end of octet, if necessary.
       //
       left=8-(iofst%8);
       if (left != 8) {

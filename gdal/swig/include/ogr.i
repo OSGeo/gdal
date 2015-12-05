@@ -1111,7 +1111,7 @@ public:
     return OGR_F_SetGeometry(self, geom);
   }
 
-/* The feature takes over owernship of the geometry. */
+/* The feature takes over ownership of the geometry. */
 /* Don't change the 'geom' name as Java bindings depends on it */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom};
   OGRErr SetGeometryDirectly(OGRGeometryShadow* geom) {
@@ -1140,7 +1140,7 @@ public:
         return OGR_F_SetGeomField(self, iField, geom);
   }
 
-/* The feature takes over owernship of the geometry. */
+/* The feature takes over ownership of the geometry. */
 /* Don't change the 'geom' name as Java bindings depends on it */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom};
   OGRErr SetGeomFieldDirectly(int iField, OGRGeometryShadow* geom) {

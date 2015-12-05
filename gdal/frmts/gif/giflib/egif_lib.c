@@ -216,7 +216,7 @@ EGifSetGifVersion(const char *Version) {
 
 /******************************************************************************
  * This routine should be called before any other EGif calls, immediately
- * follows the GIF file openning.
+ * follows the GIF file opening.
  *****************************************************************************/
 int
 EGifPutScreenDesc(GifFileType * GifFile,

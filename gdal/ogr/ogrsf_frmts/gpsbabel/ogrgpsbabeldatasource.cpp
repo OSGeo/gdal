@@ -207,7 +207,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
         if (!IsValidDriverName(pszGPSBabelDriverName))
             return FALSE;
 
-        /* Parse optionnal features= option */
+        /* Parse optional features= option */
         if (STARTS_WITH_CI(pszSep+1, "features="))
         {
             const char* pszNextSep = strchr(pszSep+1, ':');

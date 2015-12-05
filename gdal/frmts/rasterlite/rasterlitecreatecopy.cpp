@@ -397,7 +397,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Analyze arguments                                               */
 /* -------------------------------------------------------------------- */
 
-    /* Skip optionnal RASTERLITE: prefix */
+    /* Skip optional RASTERLITE: prefix */
     const char* pszFilenameWithoutPrefix = pszFilename;
     if (STARTS_WITH_CI(pszFilename, "RASTERLITE:"))
         pszFilenameWithoutPrefix += 11;

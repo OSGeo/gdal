@@ -630,9 +630,9 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
     {
-    	double      adfGeoTransform[6];
+        double      adfGeoTransform[6];
 
-	if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+        if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
             GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
@@ -640,7 +640,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
 
-    /* If outputing to stdout, we can't reopen it, so we'll return */
+    /* If writing to stdout, we can't reopen it, so return */
     /* a fake dataset to make the caller happy */
     CPLPushErrorHandler(CPLQuietErrorHandler);
     poDS = (GDALPamDataset*) GDALOpen(pszFilename, GA_ReadOnly);

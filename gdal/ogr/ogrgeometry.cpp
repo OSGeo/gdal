@@ -4157,12 +4157,12 @@ int OGR_G_Centroid( OGRGeometryH hGeom, OGRGeometryH hCentroidPoint )
  *
  * This method is built on the GEOS library, check it for the definition
  * of the geometry operation.
- * If OGR is built without the GEOS library, this method will always fail, 
- * issuing a CPLE_NotSupported error. 
+ * If OGR is built without the GEOS library, this method will always fail,
+ * issuing a CPLE_NotSupported error.
  *
- * @param hGeom the geometry to operate on. 
+ * @param hGeom the geometry to operate on.
  * @return a point guaranteed to lie on the surface or NULL if an error
- *         occured.
+ *         occurred.
  *
  * @since OGR 1.10
  */
@@ -4183,7 +4183,7 @@ OGRGeometryH OGR_G_PointOnSurface( OGRGeometryH hGeom )
 
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
     hThisGeosGeom = poThis->exportToGEOS(hGEOSCtxt);
- 
+
     if( hThisGeosGeom != NULL )
     {
         hOtherGeosGeom = GEOSPointOnSurface_r( hGEOSCtxt, hThisGeosGeom );

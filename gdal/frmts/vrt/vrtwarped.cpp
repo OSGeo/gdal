@@ -364,7 +364,7 @@ int VRTWarpedDataset::CloseDependentDatasets()
         }
 
 /* -------------------------------------------------------------------- */
-/*      We are responsible for cleaning up the transformer outselves.   */
+/*      We are responsible for cleaning up the transformer ourselves.   */
 /* -------------------------------------------------------------------- */
         if( psWO != NULL && psWO->pTransformerArg != NULL )
             GDALDestroyTransformer( psWO->pTransformerArg );
@@ -1112,7 +1112,7 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
     if( eErr != CE_None)
     {
 /* -------------------------------------------------------------------- */
-/*      We are responsible for cleaning up the transformer outselves.   */
+/*      We are responsible for cleaning up the transformer ourselves.   */
 /* -------------------------------------------------------------------- */
         if( psWO->pTransformerArg != NULL )
         {

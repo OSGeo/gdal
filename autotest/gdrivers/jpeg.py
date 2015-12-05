@@ -483,12 +483,13 @@ def jpeg_12():
     return 'success'
 
 ###############################################################################
-# Test outputing to /vsistdout/
+# Test writing to /vsistdout/
 
 def jpeg_13():
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsistdout_redirect//vsimem/tmp.jpg', src_ds)
+    ds = gdal.GetDriverByName('JPEG').CreateCopy(
+        '/vsistdout_redirect//vsimem/tmp.jpg', src_ds)
     if ds.GetRasterBand(1).Checksum() != 0:
         return 'fail'
     ds.ReadRaster(0,0,1,1)
@@ -504,7 +505,7 @@ def jpeg_13():
     return 'success'
 
 ###############################################################################
-# Test outputing to /vsistdout/
+# Test writing to /vsistdout/
 
 def jpeg_14():
 

@@ -38,7 +38,7 @@
 #include "keaband.h"
 
 // overview class. Derives from our band class
-// and just overrited and read/write block functions
+// and just overrides the read/write block functions
 class KEAOverview : public KEARasterBand
 {
     int         m_nOverviewIndex; // the index of this overview
