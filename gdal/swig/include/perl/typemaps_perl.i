@@ -875,7 +875,9 @@ typedef unsigned long      GUIntBig;
                 AV *av = (AV*)(SvRV($input));
                 for (int i = 0; i < av_len(av)+1; i++) {
                     SV *sv = *(av_fetch(av, i, 0));
-                    $1 = CSLAddString( $1, sv_to_utf8_string(sv, NULL) );
+                    char *tmp = sv_to_utf8_string(sv, NULL);
+                    $1 = CSLAddString($1, tmp);
+                    free(tmp);
                 }
             } else if (SvTYPE(SvRV($input))==SVt_PVHV) {
                 HV *hv = (HV*)SvRV($input);
@@ -884,8 +886,10 @@ typedef unsigned long      GUIntBig;
                 I32 klen;
                 $1 = NULL;
                 hv_iterinit(hv);
-                while(sv = hv_iternextsv(hv,&key,&klen)) {
-                    $1 = CSLAddNameValue( $1, key, sv_to_utf8_string(sv, NULL) );
+                while(sv = hv_iternextsv(hv, &key, &klen)) {
+                    char *tmp = sv_to_utf8_string(sv, NULL);
+                    $1 = CSLAddNameValue($1, key, tmp);
+                    free(tmp);
                 }
             } else
                 do_confess(NEED_REF, 1);
@@ -1059,7 +1063,9 @@ typedef unsigned long      GUIntBig;
 
         nType = SvIV(*(av_fetch(av,0,0)));
         SV *sv = *(av_fetch(av,1,0));
-        psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, sv_to_utf8_string(sv, NULL) );
+        char *tmp = sv_to_utf8_string(sv, NULL);
+        psThisNode = CPLCreateXMLNode(NULL, (CPLXMLNodeType)nType, tmp);
+        free(tmp);
     
         for( iChild = 0; iChild < nChildCount; iChild++ )
         {
