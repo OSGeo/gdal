@@ -225,7 +225,7 @@ int GDALWarpOperation::ValidateOptions()
     }
 
     if( (int) psOptions->eWorkingDataType < 1
-        && (int) psOptions->eWorkingDataType >= GDT_TypeCount )
+        || (int) psOptions->eWorkingDataType >= GDT_TypeCount )
     {
         CPLError( CE_Failure, CPLE_IllegalArg, 
                   "GDALWarpOptions.Validate()\n"
