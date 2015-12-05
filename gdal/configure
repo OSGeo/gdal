@@ -853,6 +853,7 @@ LIBTOOL
 OBJDUMP
 DLLTOOL
 AS
+NO_LOGICAL_OP_FLAG
 SHADOW_WFLAGS
 NO_NON_VIRTUAL_DTOR_FLAG
 NO_SIGN_COMPARE
@@ -1770,17 +1771,17 @@ Optional Packages:
   --with-qhull=ARG     Include QHull support (ARG=no, yes, internal)
   --with-opencl=ARG       Include OpenCL (GPU) support
   --with-opencl-include=ARG OpenCL Include directory (with a CL subdirectory)
-  --with-opencl-lib=ARG   OpenCL Link Flags (ie. -L/xxx -lOpenCL)
+  --with-opencl-lib=ARG   OpenCL Link Flags (i.e. -L/xxx -lOpenCL)
   --with-freexl=ARG    Include freexl support (ARG=no, yes (default) or libfreexl install path)
   --with-libjson-c=ARG       Include libjson-c support (ARG=internal or libjson-c directory)
   --without-pam         Disable PAM (.aux.xml) support
   --with-poppler=ARG    Include poppler(for PDF) support (ARG=no(default), yes or poppler install path)
   --with-podofo=ARG    Include podofo(for PDF) support (ARG=no(default), yes or podofo install path)
-  --with-podofo-lib=ARG   podofo Link Flags (ie. -L/xxx -lpodofo ...). Mainly for static libpodofo
-  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...). Mainly for static libpodofo
+  --with-podofo-lib=ARG   podofo Link Flags (i.e. -L/xxx -lpodofo ...). Mainly for static libpodofo
+  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -ljpeg ...). Mainly for static libpodofo
   --with-pdfium=ARG    Include pdfium (for PDF) support (ARG=no(default), yes or pdfium install path)
-  --with-pdfium-lib=ARG   pdfium Link Flags (ie. -L/xxx -lpdfium ...). Mainly for static libpdfium
-  --with-pdfium-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...). Mainly for static libpdfium
+  --with-pdfium-lib=ARG   pdfium Link Flags (i.e. -L/xxx -lpdfium ...). Mainly for static libpdfium
+  --with-pdfium-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -ljpeg ...). Mainly for static libpdfium
   --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
@@ -4543,6 +4544,41 @@ else
   :
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wlogical-op" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wlogical-op... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wlogical_op+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wlogical-op"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wlogical_op=yes
+else
+  ax_cv_check_cflags___Werror__Wlogical_op=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wlogical_op" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wlogical_op" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wlogical_op" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"
+else
+  :
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wshadow" >&5
 $as_echo_n "checking whether C compiler accepts -Werror -Wshadow... " >&6; }
 if ${ax_cv_check_cflags___Werror__Wshadow+:} false; then :
@@ -4885,6 +4921,8 @@ NO_SIGN_COMPARE=$NO_SIGN_COMPARE
 NO_NON_VIRTUAL_DTOR_FLAG=$NO_NON_VIRTUAL_DTOR_FLAG
 
 SHADOW_WFLAGS=$SHADOW_WFLAGS
+
+NO_LOGICAL_OP_FLAG=$NO_LOGICAL_OP_FLAG
 
 
 ac_ext=c
@@ -10613,7 +10651,7 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
 
   case $host_os in
   cygwin* | mingw* | pw32* | cegcc*)
-    # FIXME: the MSVC++ port hasn't been tested in a loooong time
+    # FIXME: the MSVC++ port hasn't been tested in a long time
     # When not using gcc, we currently assume that we are using
     # Microsoft Visual C++.
     if test "$GCC" != yes; then
