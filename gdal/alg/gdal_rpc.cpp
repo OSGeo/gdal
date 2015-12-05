@@ -1229,7 +1229,7 @@ static int GDALRPCTransformWholeLineWithDEM( GDALRPCTransformInfo *psTransform,
     }
 
     VSIFree(padfDEMBuffer);
-    
+
     return TRUE;
 }
 
@@ -1252,7 +1252,7 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
         bDstToSrc = !bDstToSrc;
 
 /* -------------------------------------------------------------------- */
-/*      Lazy opening of the optionnal DEM file.                         */
+/*      Lazy opening of the optional DEM file.                          */
 /* -------------------------------------------------------------------- */
     if(psTransform->pszDEMPath != NULL &&
        psTransform->bHasTriedOpeningDS == FALSE)
@@ -1262,7 +1262,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
         CPLString osPrevValueConfigOption;
         if( psTransform->bApplyDEMVDatumShift )
         {
-            osPrevValueConfigOption = CPLGetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "");
+            osPrevValueConfigOption
+                = CPLGetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "");
             CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "YES");
         }
         psTransform->poDS = (GDALDataset *)

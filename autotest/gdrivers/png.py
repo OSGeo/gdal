@@ -206,7 +206,7 @@ def png_9():
     return tst.testCreateCopy( vsimem = 1 )
 
 ###############################################################################
-# Test outputing to /vsistdout/
+# Test writing to /vsistdout/
 
 def png_10():
 

@@ -754,7 +754,7 @@ void OGR_SRSNode::MakeValueSafe()
  * continues.
  *
  * @param pszNode Restrict remapping to children of this type of node 
- *                (eg. "PROJECTION")
+ *                (e.g. "PROJECTION")
  * @param papszSrcValues a NULL terminated array of source string.  If the
  * node value matches one of these (case insensitive) then replacement occurs.
  * @param papszDstValues an array of destination strings.  On a match, the
@@ -765,9 +765,9 @@ void OGR_SRSNode::MakeValueSafe()
  * @param bChildOfHit Only TRUE if we the current node is the child of a match,
  * and so needs to be set.  Application code would normally pass FALSE for this
  * argument.
- * 
+ *
  * @return returns OGRERR_NONE unless something bad happens.  There is no
- * indication returned about whether any replacement occured.  
+ * indication returned about whether any replacement occurred.
  */
 
 OGRErr OGR_SRSNode::applyRemapper( const char *pszNode, 

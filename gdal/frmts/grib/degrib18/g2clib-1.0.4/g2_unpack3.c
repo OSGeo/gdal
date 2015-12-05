@@ -20,7 +20,7 @@ g2int g2_unpack3(unsigned char *cgrib,g2int *iofst,g2int **igds,g2int **igdstmpl
 //                          g2int **igdstmpl,g2int *mapgridlen,
 //                          g2int **ideflist,g2int *idefnum)
 //   INPUT ARGUMENTS:
-//     cgrib    - Char array ontaining Section 3 of the GRIB2 message
+//     cgrib    - Char array containing Section 3 of the GRIB2 message.
 //     iofst    - Bit offset for the beginning of Section 3 in cgrib.
 //
 //   OUTPUT ARGUMENTS:      

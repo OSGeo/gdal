@@ -644,9 +644,9 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
     rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
     if( rc != SQLITE_OK )
     {
-        CPLDebug("SQLITE",
-                    "Error occured during spatial index creation : %s",
-                    sqlite3_errmsg(hDB));
+        CPLDebug( "SQLITE",
+                  "Error occurred during spatial index creation : %s",
+                  sqlite3_errmsg(hDB));
     }
 #else //  ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
     rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, NULL );
@@ -700,9 +700,9 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         rc = sqlite3_exec( hDB, "COMMIT", NULL, NULL, NULL );
     else
     {
-        CPLDebug("SQLITE",
-                    "Error occured during spatial index creation : %s",
-                    sqlite3_errmsg(hDB));
+        CPLDebug( "SQLITE",
+                  "Error occurred during spatial index creation : %s",
+                  sqlite3_errmsg(hDB));
         rc = sqlite3_exec( hDB, "ROLLBACK", NULL, NULL, NULL );
     }
 #endif //  ENABLE_VIRTUAL_OGR_SPATIAL_INDEX

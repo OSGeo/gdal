@@ -489,7 +489,7 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 
     nShapeRecId = GetShapeRecordId( nRecordId, nTLID );
 
-    // -2 means an error occured.
+    // -2 means an error occurred.
     if( nShapeRecId == -2 )
         return FALSE;
 

@@ -188,7 +188,7 @@ void OGR_SM_Destroy( OGRStyleMgrH hSM )
 /*                                       GBool bNoMatching)                 */
 /*      Set the given representation to the feature,                        */
 /*      if bNoMatching == TRUE, don't try to find it in the styletable      */
-/*      otherwize, we will use the name defined in the styletable           */
+/*      otherwise, we will use the name defined in the styletable.          */
 /****************************************************************************/
 
 /**

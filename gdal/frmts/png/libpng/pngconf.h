@@ -1297,7 +1297,7 @@ typedef unsigned char png_byte;
 
 /* Suggest testing for specific compiler first before testing for
  * FAR.  The Watcom compiler defines both __MEDIUM__ and M_I86MM,
- * making reliance oncertain keywords suspect. (SJT)
+ * making reliance on certain keywords suspect. (SJT)
  */
 
 /* MSC Medium model */

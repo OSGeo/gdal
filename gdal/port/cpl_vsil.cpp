@@ -756,7 +756,7 @@ size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *f
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
-    
+
     return poFileHandle->Write( pBuffer, nSize, nCount );
 }
 
@@ -767,7 +767,7 @@ size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *f
 /**
  * \brief Test for end of file.
  *
- * Returns TRUE (non-zero) if an end-of-file condition occured during the
+ * Returns TRUE (non-zero) if an end-of-file condition occurred during the
  * previous read operation. The end-of-file flag is cleared by a successful
  * VSIFSeekL() call.
  *
@@ -776,7 +776,7 @@ size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *f
  *
  * Analog of the POSIX feof() call.
  *
- * @param fp file handle opened with VSIFOpenL(). 
+ * @param fp file handle opened with VSIFOpenL().
  *
  * @return TRUE if at EOF else FALSE.
  */
@@ -785,7 +785,7 @@ int VSIFEofL( VSILFILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
-    
+
     return poFileHandle->Eof();
 }
 

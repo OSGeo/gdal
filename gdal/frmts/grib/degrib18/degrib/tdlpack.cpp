@@ -880,13 +880,13 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
    uChar kbit;          /* # of bits for # values in a group. */
    TDLGroupType *grp;   /* Holds the info about each group. */
    size_t i, j;         /* Loop counters. */
-   uInt4 t_numPack;     /* Used to total number of values in a group to check 
+   uInt4 t_numPack;     /* Used to total number of values in a group to check
                          * the numPack value. */
    uInt4 t_numBits;     /* Used to total number of bits used in the groups. */
    uInt4 t_numBytes;    /* Used to total number of bytes used to compare to
                          * sectLen. */
    sInt4 maxVal;        /* The max value in a group. */
-   uInt4 dataCnt;       /* How many values (miss or othewise) we have read. */
+   uInt4 dataCnt;       /* How many values (miss or otherwise) we have read. */
    uInt4 lastData;      /* Index to last actual data. */
    uInt4 numVal;        /* # of actual (non-missing values) we have. */
    double scale;        /* Amount to scale values by. */

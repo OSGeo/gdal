@@ -448,9 +448,9 @@ class CFChecker:
   def setUpAttributeList(self):
   #-----------------------------
       """Set up Dictionary of valid attributes, their corresponding
-      Type; S(tring), N(umeric) D(ata variable type)  and Use C(oordinate),
+      Type; S(tring), N(umeric) D(ata variable type) and Use C(oordinate),
       D(ata non-coordinate) or G(lobal) variable."""
-    
+
       self.AttrList={}
       self.AttrList['add_offset']=['N','D']
       self.AttrList['ancillary_variables']=['S','D']
@@ -468,7 +468,7 @@ class CFChecker:
 
       if self.version >= 1.3:
           self.AttrList['flag_masks']=['D','D']
-          
+
       self.AttrList['flag_meanings']=['S','D']
       self.AttrList['flag_values']=['D','D']
       self.AttrList['formula_terms']=['S','C']

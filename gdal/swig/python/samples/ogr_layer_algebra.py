@@ -433,7 +433,7 @@ def main(argv = None):
     output_ds = None
 
     if ret != 0:
-        print('An error occured during %s operation' % op_str)
+        print('An error occurred during %s operation' % op_str)
         return 1
 
     return 0

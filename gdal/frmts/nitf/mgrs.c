@@ -1005,7 +1005,7 @@ long Convert_MGRS_To_UPS ( char   *MGRS,
  *  The function Convert_MGRS_To_UPS converts an MGRS coordinate string
  *  to UPS (hemisphere, easting, and northing) coordinates, according 
  *  to the current ellipsoid parameters. If any errors occur, the error 
- *  code(s) are returned by the function, otherwide UPS_NO_ERROR is returned.
+ *  code(s) are returned by the function, otherwise UPS_NO_ERROR is returned.
  *
  *    MGRS          : MGRS coordinate string           (input)
  *    Hemisphere    : Hemisphere either 'N' or 'S'     (output)

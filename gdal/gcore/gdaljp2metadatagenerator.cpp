@@ -743,7 +743,7 @@ static CPLString GDALGMLJP2EvalExpr(const CPLString& osTemplate,
 
         // Add portion of template before the expression
         osXMLRes += osTemplate.substr(nPos, nStartPos - nPos);
-        
+
         const char* pszExpr = osTemplate.c_str() + nStartPos;
         GDALGMLJP2Expr* poExpr = GDALGMLJP2Expr::Build(pszExpr, pszExpr);
         if( poExpr == NULL )
@@ -772,7 +772,7 @@ static void GDALGMLJP2XPathErrorHandler(CPL_UNUSED void * userData,
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "An error occured in libxml2");
+        CPLError(CE_Failure, CPLE_AppDefined, "An error occurred in libxml2");
     }
 }
 

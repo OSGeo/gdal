@@ -2553,12 +2553,12 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
         columnDataPtr = poColumn->GetIntField( "columnDataPtr" );
         if( columnDataPtr == 0 )
             continue;
-            
+
 /* -------------------------------------------------------------------- */
-/*      read up to nMaxNumChars bytes from the indicated location.      */
+/*      Read up to nMaxNumChars bytes from the indicated location.      */
 /*      allocate required space temporarily                             */
-/*      nMaxNumChars should have been set by GDAL orginally so we should*/
-/*      trust it, but who knows...                                      */
+/*      nMaxNumChars should have been set by GDAL originally so we      */
+/*      should trust it, but who knows...                               */
 /* -------------------------------------------------------------------- */
         int nMaxNumChars = poColumn->GetIntField( "maxNumChars" );
 

@@ -2888,7 +2888,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 /*      file.  Check that we are the dependent file of the aux          */
 /*      file, or if we aren't verify that the dependent file does       */
 /*      not exist, likely mean it is us but some sort of renaming       */
-/*      has occured.                                                    */
+/*      has occurred.                                                   */
 /* -------------------------------------------------------------------- */
     CPLString osJustFile = CPLGetFilename(pszBasename); // without dir
     CPLString osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);

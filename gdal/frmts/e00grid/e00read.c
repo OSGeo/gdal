@@ -313,7 +313,7 @@ const char *E00ReadNextLine(E00ReadPtr psInfo)
         }
 
         /* If we just reached EOF then make sure we don't add an extra
-         * empty line at the end of the uncompressed oputput.
+         * empty line at the end of the uncompressed output.
          */
         if (psInfo->bEOF && strlen(pszLine) == 0)
             pszLine = NULL;

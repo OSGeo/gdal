@@ -198,12 +198,13 @@ def gif_8():
     return 'success'
 
 ###############################################################################
-# Test outputing to /vsistdout/
+# Test writing to /vsistdout/
 
 def gif_9():
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdal.GetDriverByName('GIF').CreateCopy('/vsistdout_redirect//vsimem/tmp.gif', src_ds)
+    ds = gdal.GetDriverByName('GIF').CreateCopy(
+        '/vsistdout_redirect//vsimem/tmp.gif', src_ds)
     if ds.GetRasterBand(1).Checksum() != 0:
         return 'fail'
     src_ds = None
@@ -218,7 +219,7 @@ def gif_9():
     gdal.Unlink('/vsimem/tmp.gif')
 
     return 'success'
-    
+
 ###############################################################################
 # Test interlacing
 

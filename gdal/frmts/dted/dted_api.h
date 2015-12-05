@@ -138,7 +138,7 @@ DTEDInfo *DTEDOpenEx( VSILFILE* fp, const char * pszFilename,
 
 /**     Read one single sample. The coordinates are given from the
         top-left corner of the file (contrary to the internal
-        organisation or a DTED file)
+        organization or a DTED file)
 */
 int DTEDReadPoint( DTEDInfo * psDInfo, int nXOff, int nYOff, GInt16* panVal);
 

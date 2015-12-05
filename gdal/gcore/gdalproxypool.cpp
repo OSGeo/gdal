@@ -263,7 +263,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
         }
         CPLFree(lastEntryWithZeroRefCount->pszFileName);
 
-        /* Recycle this entry for the to-be-openeded dataset and */
+        /* Recycle this entry for the to-be-opened dataset and */
         /* moves it to the top of the list */
         if (lastEntryWithZeroRefCount->prev)
             lastEntryWithZeroRefCount->prev->next = lastEntryWithZeroRefCount->next;

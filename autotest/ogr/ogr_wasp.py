@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  WAsP driver testing.
 # Author:   Vincent Mora <vincent dot mora at oslandia dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2014, Oslandia <info at oslandia dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -45,7 +45,7 @@ def ogr_wasp_create_ds():
 
     wasp_drv = ogr.GetDriverByName('WAsP')
     wasp_drv.DeleteDataSource( 'tmp.map' )
-    
+
     gdaltest.wasp_ds = wasp_drv.CreateDataSource( 'tmp.map' )
 
 

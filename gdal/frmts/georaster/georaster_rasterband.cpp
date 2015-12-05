@@ -221,10 +221,10 @@ CPLErr GeoRasterRasterBand::IReadBlock( int nBlockXOff,
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "Error reading GeoRaster ofsett X (%d) offset Y (%d) band (%d)",
-            nBlockXOff, nBlockYOff, nBand );
-
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Error reading GeoRaster offset X (%d) offset Y (%d) "
+                  "band (%d)",
+                  nBlockXOff, nBlockYOff, nBand );
         return CE_Failure;
     }
 }
@@ -247,10 +247,10 @@ CPLErr GeoRasterRasterBand::IWriteBlock( int nBlockXOff,
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "Error writing GeoRaster ofsett X (%d) offset Y (%d) band (%d)",
-            nBlockXOff, nBlockYOff, nBand );
-
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Error writing GeoRaster offset X (%d) offset Y (%d) "
+                  "band (%d)",
+                  nBlockXOff, nBlockYOff, nBand );
         return CE_Failure;
     }
 }

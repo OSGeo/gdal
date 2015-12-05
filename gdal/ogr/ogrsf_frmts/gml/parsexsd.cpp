@@ -364,7 +364,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             delete poClass;
             return NULL;
         }
-        
+
         /* Parse stuff like :
         <xs:choice>
             <xs:element ref="gml:polygonProperty"/>

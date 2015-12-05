@@ -89,24 +89,24 @@ GDALAsyncReader::~GDALAsyncReader()
  *
  * Provide an opportunity for an asynchronous IO request to update the
  * image buffer and return an indication of the area of the buffer that
- * has been updated.  
+ * has been updated.
  *
- * The dfTimeout parameter can be used to wait for additional data to 
+ * The dfTimeout parameter can be used to wait for additional data to
  * become available.  The timeout does not limit the amount
  * of time this method may spend actually processing available data.
  *
  * The following return status are possible.
- * - GARIO_PENDING: No imagery was altered in the buffer, but there is still 
- * activity pending, and the application should continue to call 
+ * - GARIO_PENDING: No imagery was altered in the buffer, but there is still
+ * activity pending, and the application should continue to call
  * GetNextUpdatedRegion() as time permits.
- * - GARIO_UPDATE: Some of the imagery has been updated, but there is still 
+ * - GARIO_UPDATE: Some of the imagery has been updated, but there is still
  * activity pending.
- * - GARIO_ERROR: Something has gone wrong. The asynchronous request should 
+ * - GARIO_ERROR: Something has gone wrong. The asynchronous request should
  * be ended.
- * - GARIO_COMPLETE: An update has occured and there is no more pending work 
- * on this request. The request should be ended and the buffer used. 
+ * - GARIO_COMPLETE: An update has occurred and there is no more pending work
+ * on this request. The request should be ended and the buffer used.
  *
- * @param dfTimeout the number of seconds to wait for additional updates.  Use 
+ * @param dfTimeout the number of seconds to wait for additional updates.  Use
  * -1 to wait indefinitely, or zero to not wait at all if there is no data
  * available.
  * @param pnBufXOff location to return the X offset of the area of the
