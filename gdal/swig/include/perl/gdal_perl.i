@@ -1813,6 +1813,11 @@ package Geo::GDAL::VSIF;
 use strict;
 use warnings;
 use Carp;
+require Exporter;
+our @ISA = qw(Exporter);
+
+our @EXPORT_OK   = qw(Open Close Write Read Seek Tell Truncate MkDir ReadDir ReadDirRecursive Rename RmDir Stat Unlink);
+our %EXPORT_TAGS = (all => \@EXPORT_OK);
 
 sub Open {
     my ($path, $mode) = @_;

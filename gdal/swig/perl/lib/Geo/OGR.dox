@@ -174,7 +174,7 @@
 # @cap = $layer->Capabilities(); # the object method
 # \endcode
 
-## @method Clip(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, subref callback, $callback_data)
+## @method Clip(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, coderef callback, $callback_data)
 # Clip off areas that are not covered by the method layer. The schema
 # of the result layer can be set before calling this method, or is
 # initialized to to contain all fields from
@@ -186,7 +186,7 @@
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
 
-## @method Intersection(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, subref callback, $callback_data)
+## @method Intersection(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, coderef callback, $callback_data)
 # The result layer contains features whose geometries represent areas
 # that are common between features in the input layer and in the
 # method layer. The schema of the result layer can be set before
@@ -199,7 +199,7 @@
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
 
-## @method Union(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, subref callback, $callback_data)
+## @method Union(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, coderef callback, $callback_data)
 # The result layer contains features whose geometries represent areas
 # that are in either in the input layer or in the method layer. The
 # schema of the result layer can be set before calling this method, or
@@ -211,7 +211,7 @@
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
 
-## @method SymDifference(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, subref callback, $callback_data)
+## @method SymDifference(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, coderef callback, $callback_data)
 # The result layer contains features whose geometries represent areas
 # that are in either in the input layer or in the method layer but not
 # in both. The features in the result layer have attributes from both
@@ -227,7 +227,7 @@
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
 
-## @method Identity(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, subref callback, $callback_data)
+## @method Identity(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, coderef callback, $callback_data)
 # The result layer contains features whose geometries represent areas
 # that are in the input layer. The features in the result layer have
 # attributes from both input and method layers. The schema of the
@@ -240,7 +240,7 @@
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
 
-## @method Update(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, subref callback, $callback_data)
+## @method Update(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, coderef callback, $callback_data)
 # The result layer contains features whose geometries represent areas
 # that are either in the input layer or in the method layer. The
 # features in the result layer have areas of the features of the
@@ -256,7 +256,7 @@
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
 
-## @method Erase(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, subref callback, $callback_data)
+## @method Erase(Geo::OGR::Layer method, Geo::OGR::Layer result, hashref options, coderef callback, $callback_data)
 # The result layer contains features whose geometries represent areas
 # that are in the input layer but not in the method layer. The
 # features in the result layer have attributes from the input
