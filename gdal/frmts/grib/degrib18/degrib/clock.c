@@ -2187,7 +2187,7 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
          printf ("Pre Relative Word: %s %d\n", word, l_index);
 
       } else if (strcmp (word, "AGO") == 0) {
-         if ((lastWordType != WT_PRE_RELATIVE) ||
+         if ((lastWordType != WT_PRE_RELATIVE) &&
              (lastWordType != WT_RELATIVE_UNIT)) {
             printf ("Ago did not follow relative words\n");
             goto errorReturn;
