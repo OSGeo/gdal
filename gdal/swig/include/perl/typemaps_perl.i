@@ -72,6 +72,7 @@ typedef unsigned long      GUIntBig;
 %typemap(argout) (double *val, int *hasval) {
     /* %typemap(argout) (double *val, int *hasval) */
     if (GIMME_V == G_ARRAY) {
+        EXTEND(SP, argvi+2-items+1);
         $result = sv_newmortal();
         sv_setnv($result, *$1);
         argvi++;
@@ -100,9 +101,10 @@ typedef unsigned long      GUIntBig;
     /* %typemap(out) char **CSL */
     if (GIMME_V == G_ARRAY) {
         if ($1) {
+            int n = CSLCount($1);
+            EXTEND(SP, argvi+n-items+1);
             int i;
             for (i = 0; $1[i]; i++) {
-                if (argvi > items-1) EXTEND(SP, 1);
                 SV *sv = newSVpv($1[i], 0);
                 SvUTF8_on(sv); /* expecting GDAL to give us UTF-8 */
                 ST(argvi++) = sv_2mortal(sv);
@@ -116,8 +118,7 @@ typedef unsigned long      GUIntBig;
             for (i = 0; $1[i]; i++) {
                 SV *sv = newSVpv($1[i], 0);
                 SvUTF8_on(sv); /* expecting GDAL to give us UTF-8 */
-                if (!av_store(av, i, sv))
-                    SvREFCNT_dec(sv);
+                av_push(av, sv);
             }
             CSLDestroy($1);
         }
@@ -135,8 +136,7 @@ typedef unsigned long      GUIntBig;
         for (i = 0; $1[i]; i++) {
             SV *sv = newSVpv($1[i], 0);
             SvUTF8_on(sv); /* expecting GDAL to give us UTF-8 */
-            if (!av_store(av, i, sv))
-                SvREFCNT_dec(sv);
+            av_push(av, sv);
         }
         CSLDestroy($1);
     }
@@ -1353,8 +1353,6 @@ IF_UNDEF_NULL(const char *, target_key)
 %typemap(argout) (VSIStatBufL *)
 {
     /* %typemap(argout) (VSIStatBufL *) */
-    SP -= 1; /* should be somewhere else, remove the filename arg */
-    EXTEND(SP, 1);
     char mode[2];
     mode[0] = ' ';
     mode[1] = '\0';
@@ -1365,11 +1363,9 @@ IF_UNDEF_NULL(const char *, target_key)
     else if (S_ISSOCK(sStatBuf2.st_mode)) mode[0] = 'S';
     else if (S_ISBLK(sStatBuf2.st_mode)) mode[0] = 'b';
     else if (S_ISCHR(sStatBuf2.st_mode)) mode[0] = 'c';
-    PUSHs(sv_2mortal(newSVpv(mode, 0)));
-    argvi++;
-    EXTEND(SP, 1);
-    PUSHs(sv_2mortal(newSVuv(sStatBuf2.st_size)));
-    argvi++;
+    EXTEND(SP, argvi+2-items+1);
+    ST(argvi++) = sv_2mortal(newSVpv(mode, 0));
+    ST(argvi++) = sv_2mortal(newSVuv(sStatBuf2.st_size));
 }
 
 /*

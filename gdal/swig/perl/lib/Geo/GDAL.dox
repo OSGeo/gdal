@@ -630,7 +630,7 @@
 # @param geo_transform [optional]
 # @return the geo transform in a non-void context.
 
-## @method BuildOverviews($resampling, arrayref overviews, subref progress, $progress_data)
+## @method BuildOverviews($resampling, arrayref overviews, coderef progress, $progress_data)
 # @param resampling the resampling method, one of Geo::GDAL::RIOResamplingTypes.
 # @param overviews The list of overview decimation factors to
 # build. For example [2,4,8].
@@ -705,7 +705,7 @@
 ## @method CreateMaskBand()
 # Add a mask band to the dataset.
 
-## @method Geo::GDAL::Dataset DEMProcessing($Dest, $Processing, $ColorFilename, $Options, subref progress, $progress_data)
+## @method Geo::GDAL::Dataset DEMProcessing($Dest, $Processing, $ColorFilename, $Options, coderef progress, $progress_data)
 # Apply a DEM processing to this dataset.
 # @param Dest Destination raster dataset definition string (typically filename) or an object, which implements write and close.
 # @param Processing Processing to apply, one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", or "Roughness".
@@ -720,7 +720,7 @@
 # @param progress_data [optional]
 #
 
-## @method Geo::GDAL::Dataset Nearblack($Dest, $Options, subref progress, $progress_data)
+## @method Geo::GDAL::Dataset Nearblack($Dest, $Options, coderef progress, $progress_data)
 # Convert nearly black/white pixels to black/white.
 # @param Dest Destination raster dataset definition string (typically
 # filename), destination dataset to which to add an alpha or mask
@@ -735,7 +735,7 @@
 # otherwise a boolean for success/fail but the method croaks if there
 # was an error.
 
-## @method Geo::GDAL::Dataset Translate($Dest, $Options, subref progress, $progress_data)
+## @method Geo::GDAL::Dataset Translate($Dest, $Options, coderef progress, $progress_data)
 # Convert this dataset into another format.
 # @param Dest Destination dataset definition string (typically
 # filename) or an object, which implements write and close.
@@ -763,7 +763,7 @@
 #
 # @return a new Geo::GDAL::Dataset object
 
-## @method Geo::GDAL::Dataset Warp($Dest, $Options, subref progress, $progress_data)
+## @method Geo::GDAL::Dataset Warp($Dest, $Options, coderef progress, $progress_data)
 # Reproject this dataset.
 # @param Dest Destination raster dataset definition string (typically
 # filename) or an object, which implements write and close.
@@ -787,7 +787,7 @@
 # complete list of options.
 #
 
-## @method Geo::GDAL::Dataset Rasterize($Dest, $Options, subref progress, $progress_data)
+## @method Geo::GDAL::Dataset Rasterize($Dest, $Options, coderef progress, $progress_data)
 # Render data from this data source into a raster.
 # @param Dest Destination raster dataset definition string (typically
 # filename), destination dataset, or an object, which implements write and close.
@@ -1118,7 +1118,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # use Math::BigInt.
 # @return a list which contains the count of values in each bucket
 
-## @method @GetDefaultHistogram($force = 1, subref progress = undef, $progress_data = undef)
+## @method @GetDefaultHistogram($force = 1, coderef progress = undef, $progress_data = undef)
 # @param force true to force the computation
 # @param progress [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, progress_data)
@@ -1203,7 +1203,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @ignore ContourGenerate
 
-## @method Geo::OGR::Layer Contours($DataSource, hashref LayerConstructor, $ContourInterval, $ContourBase, arrayref FixedLevels, $NoDataValue, $IDField, $ElevField, subref Progress, $ProgressData)
+## @method Geo::OGR::Layer Contours($DataSource, hashref LayerConstructor, $ContourInterval, $ContourBase, arrayref FixedLevels, $NoDataValue, $IDField, $ElevField, coderef Progress, $ProgressData)
 # Generate contours for this raster band. This method can also be used with named parameters.
 # @note This method is a wrapper for ContourGenerate.
 #
@@ -1230,7 +1230,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @ignore FillNodata
 
-## @method FillNoData($mask, $max_search_dist, $smoothing_iterations, $options, subref progress, $progress_data)
+## @method FillNoData($mask, $max_search_dist, $smoothing_iterations, $options, coderef progress, $progress_data)
 # Interpolate values for cells in this raster. The cells to fill
 # should be marked in the mask band with zero.
 #
@@ -1245,7 +1245,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @method RegenerateOverviews(arrayref overviews, $resampling, subref progress, $progress_data)
+## @method RegenerateOverviews(arrayref overviews, $resampling, coderef progress, $progress_data)
 # @todo This is not yet available
 #
 # @param overviews a list of Geo::GDAL::Band objects for the overviews.
@@ -1254,7 +1254,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # be called with parameters (number progress, string msg, progress_data)
 # @param progress_data [optional]
 
-## @method RegenerateOverview(Geo::GDAL::Band overview, $resampling, subref progress, $progress_data)
+## @method RegenerateOverview(Geo::GDAL::Band overview, $resampling, coderef progress, $progress_data)
 # @param overview a Geo::GDAL::Band object for the overview.
 # @param resampling [optional] the resampling method (one of Geo::GDAL::RIOResamplingTypes) (default is Average).
 # @param progress [optional] a reference to a subroutine, which will
