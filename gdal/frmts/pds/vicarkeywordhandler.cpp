@@ -248,7 +248,7 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
         }
     }
 
-    else if( *pszHeaderNext == '(' && *pszHeaderNext-1 != '\'' )
+    else if( *pszHeaderNext == '(' && *(pszHeaderNext-1) != '\'' )
     {
         CPLString osWord;
 
