@@ -78,6 +78,7 @@ NO_UNUSED_PARAMETER_FLAG = @NO_UNUSED_PARAMETER_FLAG@
 NO_SIGN_COMPARE = @NO_SIGN_COMPARE@
 NO_NON_VIRTUAL_DTOR_FLAG = @NO_NON_VIRTUAL_DTOR_FLAG@
 SHADOW_WFLAGS = @SHADOW_WFLAGS@
+NO_LOGICAL_OP_FLAG = @NO_LOGICAL_OP_FLAG@
 
 # Also available -DAFL_FRIENDLY for strcmp(), etc.. variants that will
 # work better with American Fuzzy Lop branch examination logic

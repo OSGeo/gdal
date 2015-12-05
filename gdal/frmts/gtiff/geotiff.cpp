@@ -1561,7 +1561,9 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
 
     if( !(CPLIsVirtualMemFileMapAvailable() &&
           VSIFGetNativeFileDescriptorL(fp) != NULL &&
+#if SIZEOF_VOIDP == 4
           nLength == (size_t)nLength &&
+#endif
           poGDS->nCompression == COMPRESSION_NONE &&
           (poGDS->nPhotometric == PHOTOMETRIC_MINISBLACK ||
            poGDS->nPhotometric == PHOTOMETRIC_RGB ||
