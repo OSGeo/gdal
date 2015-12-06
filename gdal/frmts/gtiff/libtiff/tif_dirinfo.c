@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.122 2015-10-28 19:10:20 erouault Exp $ */
+/* $Id: tif_dirinfo.c,v 1.123 2015-12-06 23:51:44 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -42,10 +42,10 @@
  *       values accordingly.
  */
 
-static TIFFFieldArray tiffFieldArray;
-static TIFFFieldArray exifFieldArray;
+static const TIFFFieldArray tiffFieldArray;
+static const TIFFFieldArray exifFieldArray;
 
-static TIFFField
+static const TIFFField
 tiffFields[] = {
 	{ TIFFTAG_SUBFILETYPE, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UNDEFINED, FIELD_SUBFILETYPE, 1, 0, "SubfileType", NULL },
 	{ TIFFTAG_OSUBFILETYPE, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_SUBFILETYPE, 1, 0, "OldSubfileType", NULL },
@@ -95,7 +95,7 @@ tiffFields[] = {
 	{ TIFFTAG_TILELENGTH, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UNDEFINED, FIELD_TILEDIMENSIONS, 0, 0, "TileLength", NULL },
 	{ TIFFTAG_TILEOFFSETS, -1, 1, TIFF_LONG8, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_STRIPOFFSETS, 0, 0, "TileOffsets", NULL },
 	{ TIFFTAG_TILEBYTECOUNTS, -1, 1, TIFF_LONG8, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_STRIPBYTECOUNTS, 0, 0, "TileByteCounts", NULL },
-	{ TIFFTAG_SUBIFD, -1, -1, TIFF_IFD8, 0, TIFF_SETGET_C16_IFD8, TIFF_SETGET_UNDEFINED, FIELD_SUBIFD, 1, 1, "SubIFD", &tiffFieldArray },
+	{ TIFFTAG_SUBIFD, -1, -1, TIFF_IFD8, 0, TIFF_SETGET_C16_IFD8, TIFF_SETGET_UNDEFINED, FIELD_SUBIFD, 1, 1, "SubIFD", (TIFFFieldArray*) &tiffFieldArray },
 	{ TIFFTAG_INKSET, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "InkSet", NULL },
 	{ TIFFTAG_INKNAMES, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_C16_ASCII, TIFF_SETGET_UNDEFINED, FIELD_INKNAMES, 1, 1, "InkNames", NULL },
 	{ TIFFTAG_NUMBEROFINKS, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "NumberOfInks", NULL },
@@ -134,7 +134,7 @@ tiffFields[] = {
 	/* end Pixar tags */
 	{ TIFFTAG_RICHTIFFIPTC, -3, -3, TIFF_LONG, 0, TIFF_SETGET_C32_UINT32, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "RichTIFFIPTC", NULL },
 	{ TIFFTAG_PHOTOSHOP, -3, -3, TIFF_BYTE, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "Photoshop", NULL },
-	{ TIFFTAG_EXIFIFD, 1, 1, TIFF_IFD8, 0, TIFF_SETGET_IFD8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "EXIFIFDOffset", &exifFieldArray },
+	{ TIFFTAG_EXIFIFD, 1, 1, TIFF_IFD8, 0, TIFF_SETGET_IFD8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "EXIFIFDOffset", (TIFFFieldArray*) &exifFieldArray },
 	{ TIFFTAG_ICCPROFILE, -3, -3, TIFF_UNDEFINED, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "ICC Profile", NULL },
 	{ TIFFTAG_GPSIFD, 1, 1, TIFF_IFD8, 0, TIFF_SETGET_IFD8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "GPSIFDOffset", NULL },
 	{ TIFFTAG_FAXRECVPARAMS, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UINT32, FIELD_CUSTOM, TRUE, FALSE, "FaxRecvParams", NULL },
@@ -211,7 +211,7 @@ tiffFields[] = {
 	/* begin pseudo tags */
 };
 
-static TIFFField
+static const TIFFField
 exifFields[] = {
 	{ EXIFTAG_EXPOSURETIME, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "ExposureTime", NULL },
 	{ EXIFTAG_FNUMBER, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "FNumber", NULL },
@@ -271,10 +271,10 @@ exifFields[] = {
 	{ EXIFTAG_IMAGEUNIQUEID, 33, 33, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "ImageUniqueID", NULL }
 };
 
-static TIFFFieldArray
-tiffFieldArray = { tfiatImage, 0, TIFFArrayCount(tiffFields), tiffFields };
-static TIFFFieldArray
-exifFieldArray = { tfiatExif, 0, TIFFArrayCount(exifFields), exifFields };
+static const TIFFFieldArray
+tiffFieldArray = { tfiatImage, 0, TIFFArrayCount(tiffFields), (TIFFField*) tiffFields };
+static const TIFFFieldArray
+exifFieldArray = { tfiatExif, 0, TIFFArrayCount(exifFields), (TIFFField*) exifFields };
 
 /*
  *  We have our own local lfind() equivalent to avoid subtle differences
