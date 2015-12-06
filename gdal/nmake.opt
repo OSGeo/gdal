@@ -738,7 +738,12 @@ GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED
+!IF $(MSVC_VER) >= 1900
+# legacy_stdio_definitions.lib : https://connect.microsoft.com/VisualStudio/feedback/details/1134693/vs-2015-ctp-5-c-vsnwprintf-s-and-other-functions-are-not-exported-in-appcrt140-dll-breaking-linkage-of-static-libraries
+ODBCLIB = legacy_stdio_definitions.lib odbc32.lib odbccp32.lib user32.lib
+!ELSE
 ODBCLIB = odbc32.lib odbccp32.lib user32.lib
+!ENDIF
 !ENDIF
 
 !IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR) || DEFINED(MRSID_LIDAR_DIR)
