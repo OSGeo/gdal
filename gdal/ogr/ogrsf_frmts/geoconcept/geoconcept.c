@@ -3004,7 +3004,7 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
                                                    GCExportFileH* hGCT
                                                  )
 {
-  int eof;
+  int bEOF;
   char *k, n[kItemSize_GCIO], x[kExtraSize_GCIO], e[kExtraSize_GCIO];
   const char* normName;
   long id;
@@ -3012,7 +3012,7 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
   CPLList* L;
   GCField* theField;
 
-  eof= 0;
+  bEOF= 0;
   n[0]= '\0';
   x[0]= '\0';
   e[0]= '\0';
@@ -3030,7 +3030,7 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
     {
       if( strstr(GetGCCache_GCIO(hGCT),kConfigEndField_GCIO)!=NULL)
       {
-        eof= 1;
+        bEOF= 1;
         if( n[0]=='\0' || id==UNDEFINEDID_GCIO || knd==vUnknownItemType_GCIO )
         {
           CPLError( CE_Failure, CPLE_AppDefined,
@@ -3178,7 +3178,7 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
 onError:
     return OGRERR_CORRUPT_DATA;
   }
-  if (eof!=1)
+  if (bEOF!=1)
   {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Geoconcept config field end block %s not found.\n",
@@ -3195,13 +3195,13 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
                                                        GCType* theClass
                                                      )
 {
-  int eof;
+  int bEOF;
   char *k, n[kItemSize_GCIO], x[kExtraSize_GCIO], e[kExtraSize_GCIO];
   long id;
   GCTypeKind knd;
   GCField* theField;
 
-  eof= 0;
+  bEOF= 0;
   n[0]= '\0';
   x[0]= '\0';
   e[0]= '\0';
@@ -3219,7 +3219,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
     {
       if( strstr(GetGCCache_GCIO(hGCT),kConfigEndField_GCIO)!=NULL)
       {
-        eof= 1;
+        bEOF= 1;
         if( n[0]=='\0' || id==UNDEFINEDID_GCIO || knd==vUnknownItemType_GCIO )
         {
           CPLError( CE_Failure, CPLE_AppDefined,
@@ -3350,7 +3350,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
 onError:
     return OGRERR_CORRUPT_DATA;
   }
-  if (eof!=1)
+  if (bEOF!=1)
   {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Geoconcept config field end block %s not found.\n",
@@ -3368,13 +3368,13 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
                                                           GCSubType* theSubType
                                                         )
 {
-  int eof;
+  int bEOF;
   char *k, n[kItemSize_GCIO], x[kExtraSize_GCIO], e[kExtraSize_GCIO];
   long id;
   GCTypeKind knd;
   GCField* theField;
 
-  eof= 0;
+  bEOF= 0;
   n[0]= '\0';
   x[0]= '\0';
   e[0]= '\0';
@@ -3391,7 +3391,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
     {
       if( strstr(GetGCCache_GCIO(hGCT),kConfigEndField_GCIO)!=NULL)
       {
-        eof= 1;
+        bEOF= 1;
         if( n[0]=='\0' || id==UNDEFINEDID_GCIO || knd==vUnknownItemType_GCIO )
         {
           CPLError( CE_Failure, CPLE_AppDefined,
@@ -3522,7 +3522,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
 onError:
     return OGRERR_CORRUPT_DATA;
   }
-  if (eof!=1)
+  if (bEOF!=1)
   {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Geoconcept config field end block %s not found.\n",

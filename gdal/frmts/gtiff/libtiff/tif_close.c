@@ -1,4 +1,4 @@
-/* $Id: tif_close.c,v 1.19 2010-03-10 18:56:48 bfriesen Exp $ */
+/* $Id: tif_close.c,v 1.20 2015-12-06 10:51:14 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -62,11 +62,11 @@ TIFFCleanup(TIFF* tif)
          */
 	while( tif->tif_clientinfo )
 	{
-		TIFFClientInfoLink *link = tif->tif_clientinfo;
+		TIFFClientInfoLink *psLink = tif->tif_clientinfo;
 
-		tif->tif_clientinfo = link->next;
-		_TIFFfree( link->name );
-		_TIFFfree( link );
+		tif->tif_clientinfo = psLink->next;
+		_TIFFfree( psLink->name );
+		_TIFFfree( psLink );
 	}
 
 	if (tif->tif_rawdata && (tif->tif_flags&TIFF_MYBUFFER))
