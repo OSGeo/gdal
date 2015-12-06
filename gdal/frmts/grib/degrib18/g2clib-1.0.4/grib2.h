@@ -227,9 +227,9 @@ extern void simpack(g2float *,g2int,g2int *,unsigned char *,g2int *);
 extern void compack(g2float *,g2int,g2int,g2int *,unsigned char *,g2int *);
 void misspack(g2float *,g2int ,g2int ,g2int *, unsigned char *, g2int *);
 void gbit(unsigned char *,g2int *,g2int ,g2int );
-void sbit(unsigned char *,g2int *,g2int ,g2int );
+void sbit(unsigned char *,const g2int *,g2int ,g2int );
 void gbits(unsigned char *,g2int *,g2int ,g2int ,g2int ,g2int );
-void sbits(unsigned char *,g2int *,g2int ,g2int ,g2int ,g2int );
+void sbits(unsigned char *,const g2int *,g2int ,g2int ,g2int ,g2int );
 
 int pack_gp(g2int *, g2int *, g2int *,
             g2int *, g2int *, g2int *, g2int *, g2int *,

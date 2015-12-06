@@ -5,7 +5,7 @@ void gbit(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte)
       gbits(in,iout,iskip,nbyte,(g2int)0,(g2int)1);
 }
 
-void sbit(unsigned char *out,g2int *in,g2int iskip,g2int nbyte)
+void sbit(unsigned char *out,const g2int *in,g2int iskip,g2int nbyte)
 {
       sbits(out,in,iskip,nbyte,(g2int)0,(g2int)1);
 }
@@ -27,7 +27,7 @@ void gbits(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte,g2int nskip,
 {
       g2int i,tbit,bitcnt,ibit,itmp;
       g2int nbit,l_index;
-      static g2int ones[]={1,3,7,15,31,63,127,255};
+      static const g2int ones[]={1,3,7,15,31,63,127,255};
 
 //     nbit is the start position of the field in bits
       nbit = iskip;
@@ -61,7 +61,7 @@ void gbits(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte,g2int nskip,
 }
 
 
-void sbits(unsigned char *out,g2int *in,g2int iskip,g2int nbyte,g2int nskip,
+void sbits(unsigned char *out,const g2int *in,g2int iskip,g2int nbyte,g2int nskip,
            g2int n)
 /*C          Store bits - pack bits:  Put arbitrary size values into a
 /          packed bit string, taking the low order bits from each value
@@ -77,7 +77,7 @@ void sbits(unsigned char *out,g2int *in,g2int iskip,g2int nbyte,g2int nskip,
 {
       g2int i,bitcnt,tbit,ibit,itmp,imask,itmp2,itmp3;
       g2int nbit,l_index;
-      static g2int ones[]={1,3,7,15,31,63,127,255};
+      static const g2int ones[]={1,3,7,15,31,63,127,255};
 
 //     number bits from zero to ...
 //     nbit is the last bit of the field to be filled

@@ -69,7 +69,7 @@ void jpcpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
 //$$$
 {
       g2int  *ifld;
-      static g2float alog2=0.69314718;       //  ln(2.0)
+      const g2float alog2=0.69314718;       //  ln(2.0)
       g2int  j,nbits,imin,imax,maxdif;
       g2int  ndpts,nbytes,nsize,retry;
       g2float  bscale,dscale,rmax,rmin,temp;

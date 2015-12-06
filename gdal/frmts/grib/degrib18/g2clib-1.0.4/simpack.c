@@ -59,12 +59,12 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
 //$$$
 {
 
-      static g2int zero=0;
+      const g2int zero=0;
       g2int  *ifld;
       g2int  j,nbits,imin,imax,maxdif,nbittot,left;
       g2float  bscale,dscale,rmax,rmin,temp;
       double maxnum;
-      static g2float alog2=0.69314718;       //  ln(2.0)
+      const g2float alog2=0.69314718;       //  ln(2.0)
       
       bscale=int_power(2.0,-idrstmpl[1]);
       dscale=int_power(10.0,idrstmpl[2]);
