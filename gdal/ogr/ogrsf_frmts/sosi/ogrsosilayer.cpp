@@ -126,8 +126,6 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
     long  nNumCoo;
     unsigned short nInfo;
 
-    typedef std::map<CPLString, CPLString> S2S;
-
     /* iterate through the SOSI groups*/
     while (LC_NextBgr(poNextSerial,LC_FRAMGR)) {
         nName = LC_RxGr(&oNextSerial, LES_OPTIMALT, &nNumLines, &nNumCoo, &nInfo);
