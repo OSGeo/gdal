@@ -35,7 +35,7 @@ CPL_C_START
 void    GDALRegister_ISCE(void);
 CPL_C_END
 
-static const char *papszISCE2GDALDatatypes[] = {
+static const char * const apszISCE2GDALDatatypes[] = {
     "BYTE:Byte",
     "CHAR:Byte",
     "SHORT:Int16",
@@ -52,7 +52,7 @@ static const char *papszISCE2GDALDatatypes[] = {
     "CDOUBLE:CFloat64",
     NULL };
 
-static const char *papszGDAL2ISCEDatatypes[] = {
+static const char * const apszGDAL2ISCEDatatypes[] = {
     "Byte:BYTE",
     "Int16:SHORT",
     "Int32:INT",
@@ -67,7 +67,7 @@ static const char *papszGDAL2ISCEDatatypes[] = {
     NULL };
 
 enum Scheme { BIL = 0, BIP = 1, BSQ = 2 };
-const char *papszSchemeNames[] = { "BIL", "BIP", "BSQ", NULL };
+static const char * const apszSchemeNames[] = { "BIL", "BIP", "BSQ", NULL };
 
 /************************************************************************/
 /* ==================================================================== */
@@ -222,10 +222,10 @@ void ISCEDataset::FlushCache( void )
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "DATA_TYPE" );
     CPLCreateXMLElementAndValue( psTmpNode, "value", 
                                  CSLFetchNameValue(
-                                         (char **)papszGDAL2ISCEDatatypes, 
+                                         (char **)apszGDAL2ISCEDatatypes, 
                                          sType ) );
 
-    const char *sScheme = papszSchemeNames[eScheme];
+    const char *sScheme = apszSchemeNames[eScheme];
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "SCHEME" );
     CPLCreateXMLElementAndValue( psTmpNode, "value", sScheme );
@@ -441,7 +441,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     const char *sDataType =
-        CSLFetchNameValue( (char **)papszISCE2GDALDatatypes,
+        CSLFetchNameValue( (char **)apszISCE2GDALDatatypes,
                            CSLFetchNameValue( papszXmlProps, "DATA_TYPE" ) );
     const GDALDataType eDataType = GDALGetDataTypeByName( sDataType );
     const int nBands = atoi( CSLFetchNameValue( papszXmlProps, "NUMBER_BANDS" ) );
@@ -594,7 +594,7 @@ GDALDataset *ISCEDataset::Create( const char *pszFilename,
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "DATA_TYPE" );
     CPLCreateXMLElementAndValue( psTmpNode, "value", 
                                  CSLFetchNameValue(
-                                         (char **)papszGDAL2ISCEDatatypes, 
+                                         (char **)apszGDAL2ISCEDatatypes, 
                                          sType ));
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );

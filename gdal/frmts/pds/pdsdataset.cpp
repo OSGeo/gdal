@@ -1251,7 +1251,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Transfer a few interesting keywords as metadata.                */
 /* -------------------------------------------------------------------- */
-    static const char *apszKeywords[] = 
+    static const char * const apszKeywords[] = 
         { "FILTER_NAME", "DATA_SET_ID", "PRODUCT_ID", 
           "PRODUCER_INSTITUTION_NAME", "PRODUCT_TYPE", "MISSION_NAME",
           "SPACECRAFT_NAME", "INSTRUMENT_NAME", "INSTRUMENT_ID", 

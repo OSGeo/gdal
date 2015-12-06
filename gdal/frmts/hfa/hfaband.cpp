@@ -1860,7 +1860,7 @@ CPLErr HFABand::SetPCT( int nColors,
 			double *padfAlpha)
 
 {
-    static const char *apszColNames[4] = {"Red", "Green", "Blue", "Opacity"};
+    static const char * const apszColNames[4] = {"Red", "Green", "Blue", "Opacity"};
     HFAEntry	*poEdsc_Table;
 
 /* -------------------------------------------------------------------- */

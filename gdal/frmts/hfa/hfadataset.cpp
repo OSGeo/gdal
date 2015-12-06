@@ -51,7 +51,7 @@ CPL_C_END
 int WritePeStringIfNeeded(OGRSpatialReference* poSRS, HFAHandle hHFA);
 void ClearSR(HFAHandle hHFA);
 
-static const char *apszDatumMap[] = {
+static const char * const apszDatumMap[] = {
     /* Imagine name, WKT name */
     "NAD27", "North_American_Datum_1927",
     "NAD83", "North_American_Datum_1983",
@@ -61,7 +61,7 @@ static const char *apszDatumMap[] = {
     NULL, NULL
 };
 
-static const char *apszUnitMap[] = {
+static const char * const apszUnitMap[] = {
     "meters", "1.0",
     "meter", "1.0",
     "m", "1.0",

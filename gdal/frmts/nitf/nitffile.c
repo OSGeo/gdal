@@ -1338,7 +1338,7 @@ static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
                             char **papszOptions )
 
 {
-    static const char *apszFields[] = { 
+    static const char * const apszFields[] = { 
         "BLOCK_INSTANCE", "0", "2",
         "N_GRAY",         "2", "5",
         "L_LINES",        "7", "5",

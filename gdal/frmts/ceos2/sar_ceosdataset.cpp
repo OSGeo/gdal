@@ -53,7 +53,7 @@ static GInt16 CastToGInt16(float val)
     return static_cast<GInt16>(val);
 }
 
-static const char *CeosExtension[][6] = { 
+static const char * const CeosExtension[][6] = { 
 { "vol", "led", "img", "trl", "nul", "ext" },
 { "vol", "lea", "img", "trl", "nul", "ext" },
 { "vol", "led", "img", "tra", "nul", "ext" },
