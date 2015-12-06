@@ -326,8 +326,9 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     sys.stderr.write('Bad headers: %s\n' % str(self.headers))
                     self.send_response(403)
                     return
-                expected_authorization = 'AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=38901846b865b12ac492bc005bb394ca8d60c098b68db57c084fac686a932f9e'
-                if self.headers['Authorization'] != expected_authorization:
+                expected_authorization_8080 = 'AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=38901846b865b12ac492bc005bb394ca8d60c098b68db57c084fac686a932f9e'
+                expected_authorization_8081 = 'AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=9f623b7ffce76188a456c70fb4813eb31969e88d130d6b4d801b3accbf050d6c'
+                if self.headers['Authorization'] != expected_authorization_8080 and self.headers['Authorization'] != expected_authorization_8081:
                     sys.stderr.write("Bad Authorization: '%s'\n" % str(self.headers['Authorization']))
                     self.send_response(403)
                     return
