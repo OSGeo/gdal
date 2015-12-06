@@ -787,6 +787,11 @@ PCIDSK2Dataset::PCIDSK2Dataset() :
 /*                            ~PCIDSK2Dataset()                          */
 /************************************************************************/
 
+// FIXME? is an exception can really be thrown in the destructor, then it is very dangerous !
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4702 )  /*  unreachable code */
+#endif
 PCIDSK2Dataset::~PCIDSK2Dataset()
 {
     FlushCache();
@@ -797,11 +802,6 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
         apoLayers.pop_back();
     }
 
-// FIXME? is an exception can really be thrown in the destructor, then it is very dangerous !
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4702 )  /*  unreachable code */
-#endif
     try {
         if( poFile != NULL)
             delete poFile;
@@ -820,12 +820,12 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "PCIDSK SDK Failure in Close(), unexpected exception." );
     }
-#ifdef _MSC_VER
-#pragma warning( pop )
-#endif
 
     CSLDestroy( papszLastMDListValue );
 }
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 /************************************************************************/
 /*                            GetFileList()                             */
