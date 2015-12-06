@@ -998,6 +998,7 @@ static const GRIB2ParmTable OceanSurface[] = {
    /* 1 */ {"DSLM", "Deviation of sea level from mean", "m", UC_NONE},
 };
 
+#ifdef unused
 /* GRIB2 Code table 4.2 : 10.4 */
 static const GRIB2ParmTable OceanSubSurface[] = {
    /* 0 */ {"MTHD", "Main thermocline depth", "m", UC_NONE},
@@ -1005,6 +1006,7 @@ static const GRIB2ParmTable OceanSubSurface[] = {
    /* 2 */ {"TTHDP", "Transient thermocline depth", "m", UC_NONE},
    /* 3 */ {"SALTY", "Salinity", "kg/kg", UC_NONE},
 };
+#endif
 
 /* *INDENT-ON* */
 
