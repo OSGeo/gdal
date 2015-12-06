@@ -208,7 +208,8 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
             && szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
             && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
         {
-            memmove( szTemp+i+1, szTemp+i+2, 2 );
+            szTemp[i+1] = szTemp[i+2];
+            szTemp[i+2] = szTemp[i+3];
             szTemp[i+3] = '\0';
             break;
         }
@@ -257,7 +258,8 @@ static void USGSDEMPrintSingle( char *pszBuffer, double dfValue )
             && szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
             && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
         {
-            memmove( szTemp+i+1, szTemp+i+2, 2 );
+            szTemp[i+1] = szTemp[i+2];
+            szTemp[i+2] = szTemp[i+3];
             szTemp[i+3] = '\0';
             break;
         }
