@@ -820,7 +820,7 @@ double  TABRawBinBlock::ReadDouble()
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int  TABRawBinBlock::WriteBytes(int nBytesToWrite, GByte *pabySrcBuf)
+int  TABRawBinBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
 {
     /*----------------------------------------------------------------
      * Make sure block is initialized with Write access and that the

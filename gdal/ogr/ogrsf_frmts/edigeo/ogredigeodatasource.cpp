@@ -1324,7 +1324,7 @@ static int OGREDIGEOSortForQGIS(const void* a, const void* b)
         if (nCmp == 0)
             return 0;
 
-        static const char* apszPolyOrder[] =
+        static const char* const apszPolyOrder[] =
             { "COMMUNE_id", "LIEUDIT_id", "SECTION_id", "SUBDSECT_id",
               "SUBDFISC_id", "PARCELLE_id", "BATIMENT_id" };
         for(int i=0;i<(int)(sizeof(apszPolyOrder)/sizeof(char*));i++)

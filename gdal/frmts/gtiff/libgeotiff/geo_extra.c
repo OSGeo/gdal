@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_extra.c 1568 2009-04-22 21:10:55Z warmerdam $
+ * $Id: geo_extra.c 2691 2015-12-06 21:54:31Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize a few common PCS values without use of CSV
@@ -37,7 +37,7 @@
 #include "geo_normalize.h"
 #include "geovalues.h"
 
-static int StatePlaneTable[] = 
+static const int StatePlaneTable[] = 
 {
     PCS_NAD83_Alabama_East,		Proj_Alabama_CS83_East,
     PCS_NAD83_Alabama_West,		Proj_Alabama_CS83_West,

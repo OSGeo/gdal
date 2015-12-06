@@ -807,7 +807,7 @@ int OGRParseXMLDateTime( const char* pszXMLDateTime,
 /*                      OGRParseRFC822DateTime()                        */
 /************************************************************************/
 
-static const char* aszMonthStr[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+static const char* const aszMonthStr[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
 int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )

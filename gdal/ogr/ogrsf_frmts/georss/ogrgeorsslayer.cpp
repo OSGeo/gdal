@@ -35,10 +35,10 @@
 
 CPL_CVSID("$Id$");
 
-static const char* apszAllowedATOMFieldNamesWithSubElements[] = { "author", "contributor", NULL };
+static const char* const apszAllowedATOMFieldNamesWithSubElements[] = { "author", "contributor", NULL };
 
 static
-const char* apszAllowedRSSFieldNames[] = {  "title", "link", "description", "author",
+const char* const apszAllowedRSSFieldNames[] = {  "title", "link", "description", "author",
                                             "category", "category_domain",
                                             "comments",
                                             "enclosure_url", "enclosure_length", "enclosure_type",
@@ -47,7 +47,7 @@ const char* apszAllowedRSSFieldNames[] = {  "title", "link", "description", "aut
                                             "source", "source_url", NULL};
 
 static
-const char* apszAllowedATOMFieldNames[] = { "category_term", "category_scheme", "category_label",
+const char* const apszAllowedATOMFieldNames[] = { "category_term", "category_scheme", "category_label",
                                             "content", "content_type", "content_xml_lang", "content_xml_base",
                                             "summary", "summary_type", "summary_xml_lang", "summary_xml_base",
                                             "author_name", "author_uri", "author_email",
@@ -944,7 +944,7 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
 /************************************************************************/
 
 static int OGRGeoRSSLayerIsStandardFieldInternal(const char* pszName,
-                                                 const char** papszNames)
+                                                 const char* const * papszNames)
 {
     unsigned int i;
     for( i = 0; papszNames[i] != NULL; i++)
@@ -1056,7 +1056,7 @@ static void OGRGeoRSSLayerSplitComposedField(const char* pszName,
 static void OGRGeoRSSLayerWriteSimpleElement(VSILFILE* fp,
                                              const char* pszElementName,
                                              const char* pszNumber,
-                                             const char** papszNames,
+                                             const char* const * papszNames,
                                              OGRFeatureDefn* poFeatureDefn,
                                              OGRFeature* poFeature)
 {

@@ -118,7 +118,7 @@ typedef enum {          // AVHRR Earth location indication
 /*                      AVHRR band widths                               */
 /************************************************************************/
 
-static const char *apszBandDesc[] =
+static const char * const apszBandDesc[] =
 {
     // NOAA-7 -- METOP-2 channels
     "AVHRR Channel 1:  0.58  micrometers -- 0.68 micrometers",

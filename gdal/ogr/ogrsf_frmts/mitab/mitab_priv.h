@@ -1005,7 +1005,7 @@ class TABRawBinBlock
     float       ReadFloat();
     double      ReadDouble();
 
-    virtual int WriteBytes(int nBytesToWrite, GByte *pBuf);
+    virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf);
     int         WriteByte(GByte byValue);
     int         WriteInt16(GInt16 n16Value);
     int         WriteInt32(GInt32 n32Value);
@@ -1348,7 +1348,7 @@ class TABMAPCoordBlock: public TABRawBinBlock
 
     void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockManager);
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf);
-    virtual int WriteBytes(int nBytesToWrite, GByte *pBuf);
+    virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf);
     void        SetComprCoordOrigin(GInt32 nX, GInt32 nY);
     int         ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY);
     int         ReadIntCoords(GBool bCompressed, int numCoords, GInt32 *panXY);
@@ -1415,7 +1415,7 @@ class TABMAPToolBlock: public TABRawBinBlock
 
     void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockManager);
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf);
-    virtual int WriteBytes(int nBytesToWrite, GByte *pBuf);
+    virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf);
 
     void        SetNextToolBlock(GInt32 nNextCoordBlockAddress);
 

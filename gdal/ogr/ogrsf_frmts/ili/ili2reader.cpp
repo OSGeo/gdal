@@ -45,8 +45,8 @@ CPL_CVSID("$Id$");
 //
 // constants
 //
-static const char *ILI2_TID = "TID";
-static const char *ILI2_REF = "REF";
+static const char * const ILI2_TID = "TID";
+static const char * const ILI2_REF = "REF";
 
 static const int ILI2_STRING_TYPE = 0;
 static const int ILI2_COORD_TYPE = 1;
@@ -56,12 +56,12 @@ static const int ILI2_BOUNDARY_TYPE = 8;
 static const int ILI2_AREA_TYPE = 16; // also SURFACE
 static const int ILI2_GEOMCOLL_TYPE = 32;
 
-static const char *ILI2_COORD = "COORD";
-static const char *ILI2_ARC = "ARC";
-static const char *ILI2_POLYLINE = "POLYLINE";
-static const char *ILI2_BOUNDARY = "BOUNDARY";
-static const char *ILI2_AREA = "AREA";
-static const char *ILI2_SURFACE = "SURFACE";
+static const char * const ILI2_COORD = "COORD";
+static const char * const ILI2_ARC = "ARC";
+static const char * const ILI2_POLYLINE = "POLYLINE";
+static const char * const ILI2_BOUNDARY = "BOUNDARY";
+static const char * const ILI2_AREA = "AREA";
+static const char * const ILI2_SURFACE = "SURFACE";
 
 
 //

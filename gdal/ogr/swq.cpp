@@ -806,7 +806,7 @@ CPLErr swq_expr_compile2( const char *where_clause,
 /*                        swq_is_reserved_keyword()                     */
 /************************************************************************/
 
-static const char* apszSQLReservedKeywords[] = {
+static const char* const apszSQLReservedKeywords[] = {
     "OR",
     "AND",
     "NOT",

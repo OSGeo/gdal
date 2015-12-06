@@ -268,9 +268,9 @@ void GDALPamDataset::PamInitialize()
 
 {
 #ifdef PAM_ENABLED
-    static const char *pszPamDefault = "YES";
+    static const char * const pszPamDefault = "YES";
 #else
-    static const char *pszPamDefault = "NO";
+    static const char * const pszPamDefault = "NO";
 #endif
     
     if( psPam || (nPamFlags & GPF_DISABLED) )

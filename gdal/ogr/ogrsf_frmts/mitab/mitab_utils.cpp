@@ -690,7 +690,7 @@ typedef struct
     const char *pszAbbrev;
 } MapInfoUnitsInfo;
 
-static MapInfoUnitsInfo gasUnitsList[] = 
+static const MapInfoUnitsInfo gasUnitsList[] = 
 {
     {0, "mi"},
     {1, "km"},
@@ -721,7 +721,7 @@ static MapInfoUnitsInfo gasUnitsList[] =
  **********************************************************************/
 const char *TABUnitIdToString(int nId)
 {
-    MapInfoUnitsInfo *psList;
+    const MapInfoUnitsInfo *psList;
 
     psList = gasUnitsList;
 
@@ -744,7 +744,7 @@ const char *TABUnitIdToString(int nId)
  **********************************************************************/
 int TABUnitIdFromString(const char *pszName)
 {
-    MapInfoUnitsInfo *psList;
+    const MapInfoUnitsInfo *psList;
 
     psList = gasUnitsList;
     

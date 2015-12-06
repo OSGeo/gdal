@@ -416,7 +416,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     char **papszCreateOptions = CSLDuplicate( papszOptions );
     int  iOptItem;
-    static const char *apszOptItems[] = {
+    static const char * const apszOptItems[] = {
         "NBITS", "IMAGE_STRUCTURE",
         "PIXELTYPE", "IMAGE_STRUCTURE", 
         NULL };

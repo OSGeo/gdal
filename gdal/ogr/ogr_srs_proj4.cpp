@@ -42,7 +42,7 @@ CPL_CVSID("$Id$");
 /*      The following list comes from osrs/proj/src/pj_ellps.c.         */
 /*      Please update from time to time.                                */
 /* -------------------------------------------------------------------- */
-static const char *ogr_pj_ellps[] = {
+static const char * const ogr_pj_ellps[] = {
 "MERIT",        "a=6378137.0", "rf=298.257", "MERIT 1983",
 "SGS85",        "a=6378136.0", "rf=298.257",  "Soviet Geodetic System 85",
 "GRS80",        "a=6378137.0", "rf=298.257222101", "GRS 1980(IUGG, 1980)",

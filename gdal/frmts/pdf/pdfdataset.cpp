@@ -70,7 +70,7 @@ CPL_C_END
 #define HAVE_MULTIPLE_PDF_BACKENDS
 #endif
 
-static const char* pszOpenOptionList =
+static const char* const szOpenOptionList =
 "<OpenOptionList>"
 #if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
 "  <Option name='RENDERING_OPTIONS' type='string-select' description='Which graphical elements to render' default='RASTER,VECTOR,TEXT' alt_config_option='GDAL_PDF_RENDERING_OPTIONS'>"
@@ -1318,7 +1318,7 @@ const char* PDFDataset::GetOption(char** papszOpenOptions,
     CPLErr eLastErrType = CPLGetLastErrorType();
     CPLErrorNum nLastErrno = CPLGetLastErrorNo();
     CPLString osLastErrorMsg(CPLGetLastErrorMsg());
-    CPLXMLNode* psNode = CPLParseXMLString(pszOpenOptionList);
+    CPLXMLNode* psNode = CPLParseXMLString(szOpenOptionList);
     CPLErrorSetState(eLastErrType, nLastErrno, osLastErrorMsg);
     if( psNode == NULL ) return pszDefaultVal;
     CPLXMLNode* psIter = psNode->psChild;
@@ -6825,7 +6825,7 @@ void GDALRegister_PDF()
 "</CreationOptionList>\n" );
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, pszOpenOptionList );
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, szOpenOptionList );
         poDriver->pfnOpen = PDFDataset::Open;
         poDriver->pfnIdentify = PDFDataset::Identify;
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );

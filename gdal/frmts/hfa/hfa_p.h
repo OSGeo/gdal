@@ -111,7 +111,7 @@ int HFACreateSpillStack( HFAInfo_t *, int nXSize, int nYSize, int nLayers,
                          GIntBig *pnValidFlagsOffset, 
                          GIntBig *pnDataOffset );
 
-const char ** GetHFAAuxMetaDataList();
+const char * const * GetHFAAuxMetaDataList();
 
 double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors );
 

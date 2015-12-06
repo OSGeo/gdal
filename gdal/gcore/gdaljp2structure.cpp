@@ -1209,7 +1209,7 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                                       GDALJP2Box* poParentBox,
                                       char** papszOptions)
 {
-    static const char* szHex = "0123456789ABCDEF";
+    static const char* const szHex = "0123456789ABCDEF";
     GDALJP2Box oBox( fp );
     if( oBox.ReadFirstChild(poParentBox) )
     {

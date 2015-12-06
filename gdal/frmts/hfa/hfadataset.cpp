@@ -2098,7 +2098,7 @@ void HFARasterBand::ReadAuxMetadata()
 
     HFABand *poBand = hHFA->papoBand[nBand-1];
 
-    const char ** pszAuxMetaData = GetHFAAuxMetaDataList();
+    const char * const * pszAuxMetaData = GetHFAAuxMetaDataList();
     for( int i = 0; pszAuxMetaData[i] != NULL; i += 4 )
     {
         HFAEntry *poEntry;
