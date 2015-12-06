@@ -75,13 +75,15 @@ CPL_C_END
 
 class GS7BGRasterBand;
 
+static const double dfDefaultNoDataValue = 1.701410009187828e+38f;
+
 class GS7BGDataset : public GDALPamDataset
 {
     friend class GS7BGRasterBand;
 
-    static double dfNoData_Value;
+    double dfNoData_Value;
     static const size_t nHEADER_SIZE;
-    static size_t nData_Position;
+    size_t nData_Position;
 
     static CPLErr WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
                    double dfMinX, double dfMaxX,
@@ -91,7 +93,12 @@ class GS7BGDataset : public GDALPamDataset
     VSILFILE    *fp;
 
   public:
-    GS7BGDataset() : fp(NULL) { }
+    GS7BGDataset() :
+    /* NOTE:  This is not mentioned in the spec, but Surfer 8 uses this value */
+    /* 0x7effffee (Little Endian: eeffff7e) */
+        dfNoData_Value(dfDefaultNoDataValue),
+        nData_Position(0),
+        fp(NULL) { }
     ~GS7BGDataset();
 
     static int          Identify( GDALOpenInfo * );
@@ -111,18 +118,11 @@ class GS7BGDataset : public GDALPamDataset
 };
 
 
-
-/* NOTE:  This is not mentioned in the spec, but Surfer 8 uses this value */
-/* 0x7effffee (Little Endian: eeffff7e) */
-double GS7BGDataset::dfNoData_Value = 1.701410009187828e+38f;
-
 const size_t GS7BGDataset::nHEADER_SIZE = 100;
 
-size_t GS7BGDataset::nData_Position = 0;
-
-const long  nHEADER_TAG = 0x42525344;
-const long  nGRID_TAG = 0x44495247;
-const long  nDATA_TAG = 0x41544144;
+static const long  nHEADER_TAG = 0x42525344;
+static const long  nGRID_TAG = 0x44495247;
+static const long  nDATA_TAG = 0x41544144;
 #if 0 /* Unused */
 const long  nFAULT_TAG = 0x49544c46;
 #endif
@@ -204,6 +204,7 @@ GS7BGRasterBand::~GS7BGRasterBand( )
 CPLErr GS7BGRasterBand::ScanForMinMaxZ()
 
 {
+    GS7BGDataset* poGDS = reinterpret_cast<GS7BGDataset*>(poDS);
     double *pafRowVals = (double *)VSI_MALLOC2_VERBOSE( nRasterXSize, sizeof(double));
 
     if( pafRowVals == NULL )
@@ -233,7 +234,7 @@ CPLErr GS7BGRasterBand::ScanForMinMaxZ()
         pafRowMaxZ[iRow] = -FLT_MAX;
         for( int iCol=0; iCol<nRasterXSize; iCol++ )
         {
-            if( pafRowVals[iCol] == GS7BGDataset::dfNoData_Value )
+            if( pafRowVals[iCol] == poGDS->dfNoData_Value )
                 continue;
 
             if( pafRowVals[iCol] < pafRowMinZ[iRow] )
@@ -297,7 +298,7 @@ CPLErr GS7BGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GS7BGDataset *poGDS = (GS7BGDataset *) ( poDS );
 
     if( VSIFSeekL( poGDS->fp,
-        ( GS7BGDataset::nData_Position +
+        ( poGDS->nData_Position +
             sizeof(double) * nRasterXSize * (nRasterYSize - nBlockYOff - 1) ),
         SEEK_SET ) != 0 )
     {
@@ -380,7 +381,7 @@ CPLErr GS7BGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     pafRowMaxZ[nBlockYOff] = -DBL_MAX;
     for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
     {
-        if( pdfImage[iPixel] != GS7BGDataset::dfNoData_Value )
+        if( pdfImage[iPixel] != poGDS->dfNoData_Value )
         {
             if( pdfImage[iPixel] < pafRowMinZ[nBlockYOff] )
                 pafRowMinZ[nBlockYOff] = pdfImage[iPixel];
@@ -476,10 +477,11 @@ CPLErr GS7BGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
 double GS7BGRasterBand::GetNoDataValue( int * pbSuccess )
 {
+    GS7BGDataset* poGDS = reinterpret_cast<GS7BGDataset*>(poDS);
     if( pbSuccess )
         *pbSuccess = TRUE;
 
-    return GS7BGDataset::dfNoData_Value;
+    return poGDS->dfNoData_Value;
 }
 
 /************************************************************************/
@@ -1066,7 +1068,7 @@ CPLErr GS7BGDataset::WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
         return CE_Failure;
     }
 
-    dfTemp = dfNoData_Value;  
+    dfTemp = dfDefaultNoDataValue;  
     CPL_LSBPTR64( &dfTemp );
     if( VSIFWriteL( (void *)&dfTemp, sizeof(double), 1, fp ) != 1 )
     {
@@ -1155,7 +1157,7 @@ GDALDataset *GS7BGDataset::Create( const char * pszFilename,
         return NULL;
     }
 
-    double dfVal = dfNoData_Value;
+    double dfVal = dfDefaultNoDataValue;
     CPL_LSBPTR64( &dfVal );
     for( int iRow = 0; iRow < nYSize; iRow++ )
     {
@@ -1280,7 +1282,7 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
         {
             if( bSrcHasNDValue && pfData[iCol] == dfSrcNoDataValue )
             {
-                pfData[iCol] = dfNoData_Value;
+                pfData[iCol] = dfDefaultNoDataValue;
             }
             else
             {
