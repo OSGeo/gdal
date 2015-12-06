@@ -151,18 +151,18 @@ xxtemplate *getpdstemplate(g2int number)
 //
 //$$$/
 {
-           g2int index;
+           g2int l_index;
            xxtemplate *new;
 
-           index=getpdsindex(number);
+           l_index=getpdsindex(number);
 
-           if (index != -1) {
+           if (l_index != -1) {
               new=(xxtemplate *)malloc(sizeof(xxtemplate));
               new->type=4;
-              new->num=templatespds[index].template_num;
-              new->maplen=templatespds[index].mappdslen;
-              new->needext=templatespds[index].needext;
-              new->map=(g2int *)templatespds[index].mappds;
+              new->num=templatespds[l_index].template_num;
+              new->maplen=templatespds[l_index].mappdslen;
+              new->needext=templatespds[l_index].needext;
+              new->map=(g2int *)templatespds[l_index].mappds;
               new->extlen=0;
               new->ext=0;        //NULL
               return(new);
@@ -209,10 +209,10 @@ xxtemplate *extpdstemplate(g2int number,g2int *list)
 //$$$
 {
            xxtemplate *new;
-           g2int index,i,j,k,l;
+           g2int l_index,i,j,k,l;
 
-           index=getpdsindex(number);
-           if (index == -1) return(0);
+           l_index=getpdsindex(number);
+           if (l_index == -1) return(0);
 
            new=getpdstemplate(number);
 
