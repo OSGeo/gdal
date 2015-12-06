@@ -183,9 +183,13 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
 
     if ( !pszBuffer )
         return;
-
+    int nOffset = 0;
 #if defined(HAVE_SNPRINTF)
-    CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
+    if( CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue ) == 25 &&
+        szTemp[0] == ' ' )
+    {
+        nOffset = 1;
+    }
 #else
     CPLsprintf( szTemp, pszFormat, dfValue );
 #endif
@@ -207,7 +211,7 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
 #endif
     }
 
-    TextFillR( pszBuffer, 24, szTemp );
+    TextFillR( pszBuffer, 24, szTemp + nOffset );
 }
 
 /************************************************************************/
@@ -233,9 +237,13 @@ static void USGSDEMPrintSingle( char *pszBuffer, double dfValue )
 
     if ( !pszBuffer )
         return;
-
+    int nOffset = 0;
 #if defined(HAVE_SNPRINTF)
-    CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
+    if( CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue ) == 13 &&
+        szTemp[0] == ' ' )
+    {
+        nOffset = 1;
+    }
 #else
     CPLsprintf( szTemp, pszFormat, dfValue );
 #endif
@@ -257,7 +265,7 @@ static void USGSDEMPrintSingle( char *pszBuffer, double dfValue )
 #endif
     }
 
-    TextFillR( pszBuffer, 12, szTemp );
+    TextFillR( pszBuffer, 12, szTemp + nOffset );
 }
 
 /************************************************************************/
