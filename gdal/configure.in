@@ -56,7 +56,7 @@ AX_CHECK_COMPILE_FLAG([-Werror -Wformat], [C_WFLAGS="$C_WFLAGS -Wformat" CXX_WFL
 AX_CHECK_COMPILE_FLAG([-Werror -Wformat -Werror=format-security -Wno-format-nonliteral], [C_WFLAGS="$C_WFLAGS -Werror=format-security -Wno-format-nonliteral" CXX_WFLAGS="$CXX_WFLAGS -Werror=format-security -Wno-format-nonliteral"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wshorten-64-to-32], [C_WFLAGS="$C_WFLAGS -Wshorten-64-to-32" CXX_WFLAGS="$CXX_WFLAGS -Wshorten-64-to-32"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wlogical-op], [C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wshadow], [SHADOW_WFLAGS="-Wshadow"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wshadow], [C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CXX_WFLAGS -Wshadow"])
 
 dnl Error out on things that will fail with MSVC
 AX_CHECK_COMPILE_FLAG([-Werror -Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"])
@@ -78,7 +78,6 @@ AC_SUBST(C_WFLAGS,$C_WFLAGS)
 AC_SUBST(NO_UNUSED_PARAMETER_FLAG,$NO_UNUSED_PARAMETER_FLAG)
 AC_SUBST(NO_SIGN_COMPARE,$NO_SIGN_COMPARE)
 AC_SUBST(NO_NON_VIRTUAL_DTOR_FLAG,$NO_NON_VIRTUAL_DTOR_FLAG)
-AC_SUBST(SHADOW_WFLAGS,$SHADOW_WFLAGS)
 AC_SUBST(NO_LOGICAL_OP_FLAG,$NO_LOGICAL_OP_FLAG)
 
 dnl Checks for programs.
