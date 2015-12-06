@@ -156,7 +156,9 @@
 /* Ellipsoid parameters, default to WGS 84 */
 static const double MGRS_a = 6378137.0;    /* Semi-major axis of ellipsoid in meters */
 static const double MGRS_f = 1 / 298.257223563; /* Flattening of ellipsoid           */
+#ifdef unused
 static const double MGRS_recpf = 298.257223563;
+#endif
 static const char   MGRS_Ellipsoid_Code[3] = {'W','E',0};
 
 
