@@ -490,11 +490,11 @@ static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
                                sInt4 totDay, sInt4 year, int month, int day,
                                char format)
 {
-   static char *MonthName[] = {
+   static const char * const MonthName[] = {
       "January", "February", "March", "April", "May", "June", "July",
       "August", "September", "October", "November", "December"
    };
-   static char *DayName[] = {
+   static const char * const DayName[] = {
       "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
       "Saturday"
    };
@@ -1396,7 +1396,7 @@ int Clock_ScanMonth (char *ptr)
  */
 void Clock_PrintMonth3 (int mon, char *buffer, CPL_UNUSED int buffLen)
 {
-   static char *MonthName[] = {
+   static const char * const MonthName[] = {
       "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT",
       "NOV", "DEC"
    };
@@ -1424,7 +1424,7 @@ void Clock_PrintMonth3 (int mon, char *buffer, CPL_UNUSED int buffLen)
  */
 void Clock_PrintMonth (int mon, char *buffer, CPL_UNUSED int buffLen)
 {
-   static char *MonthName[] = {
+   static const char * const MonthName[] = {
       "January", "February", "March", "April", "May", "June", "July",
       "August", "September", "October", "November", "December"
    };

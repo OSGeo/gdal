@@ -152,7 +152,7 @@ static const int delta_075_level_2_bc_3[128] =
  12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,
  35,36,37,38,39,40,41,42,43,45,48,52,56,60,64,68,73,79,85,92,100,109,
  118,130,144,159,177,196,217,236};
-static const int *delta_075_level_2[4] = 
+static const int * const delta_075_level_2[4] = 
 { delta_075_level_2_bc_0, delta_075_level_2_bc_1, 
   delta_075_level_2_bc_2, delta_075_level_2_bc_3 };
 
@@ -161,14 +161,14 @@ static const int delta_075_level_3_bc_2[16] =
 {-68,-37,-23,-15, -9, -6, -3, -1, 1, 4, 7,10,16,24,37,70 };
 static const int delta_075_level_3_bc_3[16] = 
 {-117,-72, -50, -36, -25, -17, -10, -5,-1, 3, 7,14,25,45,82,166};
-static const int *delta_075_level_3[4] = 
+static const int *const delta_075_level_3[4] = 
 { NULL, delta_075_level_3_bc_1, 
   delta_075_level_3_bc_2, delta_075_level_3_bc_3 };
 
 static const int delta_075_level_4_bc_3[4] = {-47,-8,4,43};
-static const int *delta_075_level_4[4] = { NULL, NULL, NULL, delta_075_level_4_bc_3 };
+static const int *const delta_075_level_4[4] = { NULL, NULL, NULL, delta_075_level_4_bc_3 };
 
-static const int **delta_075_by_level_by_bc[4] = 
+static const int *const * const delta_075_by_level_by_bc[4] = 
 { NULL, delta_075_level_2, delta_075_level_3, delta_075_level_4 };
 
 /************************************************************************/

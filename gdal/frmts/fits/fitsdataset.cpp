@@ -215,7 +215,7 @@ CPLErr FITSRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 // Simple static function to determine if FITS header keyword should
 // be saved in meta data.
 static const int ignorableHeaderCount = 15;
-static const char* ignorableFITSHeaders[ignorableHeaderCount] = {
+static const char* const ignorableFITSHeaders[ignorableHeaderCount] = {
   "SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "NAXIS3", "END",
   "XTENSION", "PCOUNT", "GCOUNT", "EXTEND", "CONTINUE",
   "COMMENT", "", "LONGSTRN"

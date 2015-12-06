@@ -20,7 +20,7 @@
 #define GRIB_SIGN_INT2(a,b) ((1-(int) ((unsigned) (a & 0x80) >> 6)) * (int) (((a & 0x7f) << 8) + b))
 
 /* *INDENT-OFF* */
-TDLP_TableType TDLP_B_Table[5] = {
+static const TDLP_TableType TDLP_B_Table[5] = {
    /* 0 */ {0, "Continuous field"},
    /* 1 */ {1, "Point Binary - cumulative from above"},
    /* 2 */ {2, "Point Binary - cumulative from below"},
@@ -28,7 +28,7 @@ TDLP_TableType TDLP_B_Table[5] = {
    /* 4 */ {5, "Grid Binary - "},
 };
 
-TDLP_TableType TDLP_DD_Table[9] = {
+static const TDLP_TableType TDLP_DD_Table[9] = {
    /* 0 */ {0, "Independent of model"},
    /* 1 */ {6, "NGM model"},
    /* 2 */ {7, "Eta model"},
@@ -40,20 +40,20 @@ TDLP_TableType TDLP_DD_Table[9] = {
    /* 8 */ {82, "Obs matching AEV Forecasts"},
 };
 
-TDLP_TableType TDLP_V_Table[4] = {
+static const TDLP_TableType TDLP_V_Table[4] = {
    /* 0 */ {0, "No vertical processing"},
    /* 1 */ {1, "Difference Levels (UUUU - LLLL)"},
    /* 2 */ {2, "Sum Levels (UUUU + LLLL)"},
    /* 3 */ {3, "Mean Levels (UUUU + LLLL) / 2."},
 };
 
-TDLP_TableType TDLP_T_Table[3] = {
+static const TDLP_TableType TDLP_T_Table[3] = {
    /* 0 */ {0, "No nolinear tranform"},
    /* 1 */ {1, "Square transform"},
    /* 2 */ {2, "Square root tranform"},
 };
 
-TDLP_TableType TDLP_Oper_Table[9] = {
+static const TDLP_TableType TDLP_Oper_Table[9] = {
    /* 0 */ {0, "No time operator"},
    /* 1 */ {1, "Mean (Var 1, Var 2)"},
    /* 2 */ {2, "Difference (Var 1 - Var 2)"},
@@ -65,14 +65,14 @@ TDLP_TableType TDLP_Oper_Table[9] = {
    /* 8 */ {8, "Minimum (Var 1, Var 2)"},
 };
 
-TDLP_TableType TDLP_I_Table[4] = {
+static const TDLP_TableType TDLP_I_Table[4] = {
    /* 0 */ {0, "No interpolation"},
    /* 1 */ {1, "Bi-quadratic interpolation"},
    /* 2 */ {2, "Bi-linear interpolation"},
    /* 3 */ {3, "Special interpolation for QPF"},
 };
 
-TDLP_TableType TDLP_S_Table[6] = {
+static const TDLP_TableType TDLP_S_Table[6] = {
    /* 0 */ {0, "No smoothing"},
    /* 1 */ {1, "5-point smoothing"},
    /* 2 */ {2, "9-point smoothing"},
@@ -291,7 +291,7 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
  * NOTES
  *****************************************************************************
  */
-static const char *TDLP_TableLookUp(TDLP_TableType * table, int tableLen,
+static const char *TDLP_TableLookUp(const TDLP_TableType * table, int tableLen,
                                     int index)
 {
    int i;               /* Loop counter. */

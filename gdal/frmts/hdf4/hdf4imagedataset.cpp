@@ -64,8 +64,10 @@ CPL_C_END
 
 static const int HDF4_SDS_MAXNAMELEN = 65;
 
+extern const char * const pszGDALSignature;
+
 // Signature to recognize files written by GDAL
-const char      *pszGDALSignature =
+const char      * const pszGDALSignature =
         "Created with GDAL (http://www.remotesensing.org/gdal/)";
 
 extern CPLMutex *hHDF4Mutex;
