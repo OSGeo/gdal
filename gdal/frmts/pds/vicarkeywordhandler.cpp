@@ -160,9 +160,10 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 
     if (pszLBLSIZE)
         nOffset = static_cast<int>(pszLBLSIZE - (const char *)szChunk);
-    pch1 = strstr( reinterpret_cast<char *>( szChunk + nOffset ), "=" ) + 1;
+    pch1 = strstr( reinterpret_cast<char *>( szChunk + nOffset ), "=" );
     if( pch1 == NULL )
         return FALSE;
+    pch1 ++;
     pch2 = strstr( pch1, " " );
     if( pch2 == NULL )
         return FALSE;
