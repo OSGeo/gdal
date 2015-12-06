@@ -1,4 +1,4 @@
-static const char *apszGcsNameMapping[] = {
+static const char * const apszGcsNameMapping[] = {
 "North_American_Datum_1983", "GCS_North_American_1983",
 "North_American_Datum_1927", "GCS_North_American_1927",
 "NAD27_CONUS", "GCS_North_American_1927",
@@ -105,7 +105,7 @@ static const char *apszGcsNameMapping[] = {
 "ETRS89", "GCS_ETRS_1989",
 NULL, NULL};
 
-static const char *apszGcsNameMappingBasedOnProjCS[] = {
+static const char * const apszGcsNameMappingBasedOnProjCS[] = {
 "EUREF_FIN_TM35FIN", "GCS_ETRS_1989", "GCS_EUREF_FIN",
 "Nord_Maroc_Degree", "GCS_Merchich", "GCS_Merchich_Degree",
 "Sahara_Degree", "GCS_Merchich", "GCS_Merchich_Degree",
@@ -122,7 +122,7 @@ NULL, NULL, NULL};
 
 
 
-static const char *apszGcsNameMappingBasedOnUnit[] = {
+static const char * const apszGcsNameMappingBasedOnUnit[] = {
 "Voirol_Unifie_1960", "Degree", "GCS_Voirol_Unifie_1960_Degree",
 "Voirol_1960", "Degree", "GCS_Voirol_Unifie_1960_Degree",
 "Voirol 1960", "Degree", "GCS_Voirol_Unifie_1960_Degree",
@@ -131,7 +131,7 @@ static const char *apszGcsNameMappingBasedOnUnit[] = {
 "NTF", "Grad", "GCS_NTF_Paris",
 NULL, NULL, NULL};
 
-static const char *apszGcsNameMappingBasedPrime[] = {
+static const char * const apszGcsNameMappingBasedPrime[] = {
 "Bern_1898", "Bern", "GCS_Bern_1898_Bern",
 "Madrid_1870", "Madrid", "GCS_Madrid_1870_Madrid",
 "MGI", "Ferro", "GCS_MGI_Ferro",
@@ -142,7 +142,7 @@ static const char *apszGcsNameMappingBasedPrime[] = {
 "Stockholm_1938", "Stockholm", "GCS_RT38_Stockholm",
 NULL, NULL, NULL};
 
-static const char *apszInvFlatteningMapping[] = {
+static const char * const apszInvFlatteningMapping[] = {
 "293.464999999", "293.465", 
 "293.465000003", "293.465",
 "293.465073361", "293.465",
@@ -187,7 +187,7 @@ static const char *apszInvFlatteningMapping[] = {
 "300.80170009712", "300.8017",
 NULL, NULL};
 
-static const char *apszParamValueMapping[] = {
+static const char * const apszParamValueMapping[] = {
 "Cassini", "false_easting", "283799.9999", "283800.0",
 "Cassini", "false_easting", "132033.9199", "132033.92",
 "Cassini", "false_northing", "214499.9999", "214500.0",
@@ -205,7 +205,7 @@ static const char *apszParamValueMapping[] = {
 "Hotine_Oblique_Mercator_Azimuth_Center", "latitude_of_center",	"46.95240555555557", "46.95240555555556",
 NULL, NULL, NULL, NULL};
 
-static const char *apszParamNameMapping[] = {
+static const char * const apszParamNameMapping[] = {
 "Lambert_Azimuthal_Equal_Area", "longitude_of_center", "Central_Meridian",
 "Lambert_Azimuthal_Equal_Area", "Latitude_Of_Center", "Latitude_Of_Origin",
 "Miller_Cylindrical", "longitude_of_center", "Central_Meridian",
@@ -220,7 +220,7 @@ static const char *apszParamNameMapping[] = {
 "Hotine_Oblique_Mercator_Two_Point_Natural_Origin", "longitude_of_point_2", "Longitude_Of_2nd_Point", 
 NULL, NULL, NULL};
 
-static const char *apszDeleteParametersBasedOnProjection[] = {
+static const char * const apszDeleteParametersBasedOnProjection[] = {
 "Stereographic_South_Pole", "scale_factor",
 "Stereographic_North_Pole", "scale_factor",
 "Mercator", "scale_factor",
@@ -234,12 +234,12 @@ static const char *apszDeleteParametersBasedOnProjection[] = {
 "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", "rectified_grid_angle", 
 NULL, NULL};
 
-static const char *apszAddParametersBasedOnProjection[] = {
+static const char * const apszAddParametersBasedOnProjection[] = {
 "Cassini", "scale_factor", "1.0", 
 "Mercator", "standard_parallel_1", "0.0", 
 NULL, NULL, NULL};
 
-static int statePlaneZoneMapping[] = {
+static const int statePlaneZoneMapping[] = {
 /* old zone code, prj code, new zone code */
  3126, -1,    101,
  3151, -1,    102,
@@ -364,7 +364,7 @@ static int statePlaneZoneMapping[] = {
  }; 
 
 /* This is not a complete mapping. Need to add more. */
-static int statePlanePcsCodeToZoneCode[] = {
+static const int statePlanePcsCodeToZoneCode[] = {
 /* pcs code, state plane prj str index*/
 2222, 2016,
 2223, 2026,
@@ -634,7 +634,7 @@ static int statePlanePcsCodeToZoneCode[] = {
 /* ==================================================================== */
 /*      WISCRS Table                                                    */
 /* ==================================================================== */
-static double apszWISCRS_LCC_meter[] = {
+static const double apszWISCRS_LCC_meter[] = {
 // Central_Meridian, Latitude_Of_Origin, SR code
    -91.1527777777, 46.6696483772, 103303.0, 
    -92.4577777777, 45.8987148658, 103306.0, 
@@ -666,7 +666,7 @@ static double apszWISCRS_LCC_meter[] = {
    0.0, 0,0, 0,0
 };
 
-static double apszWISCRS_TM_meter[] = {
+static const double apszWISCRS_TM_meter[] = {
 // Central_Meridian, Latitude_Of_Origin, SR code 
    -90.0000000000, 43.3666666666, 103300.0, 
    -90.6222222222, 45.7061111111, 103301.0, 

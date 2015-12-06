@@ -2479,7 +2479,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, dou
             return OGRERR_FAILURE;
         return importFromDict( "esri_Wisconsin_extra.wkt", codeS);
     }
-    double* tableWISCRS;
+    const double* tableWISCRS;
     if(prjName != NULL && STARTS_WITH_CI(prjName, "Lambert_Conformal_Conic"))
         tableWISCRS = apszWISCRS_LCC_meter;
     else if(prjName != NULL && EQUAL(prjName, SRS_PT_TRANSVERSE_MERCATOR))
