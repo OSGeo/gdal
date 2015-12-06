@@ -42,7 +42,7 @@ CPL_CVSID("$Id: geoconcept.c,v 1.0.0 2007-11-03 20:58:19 drichard Exp $")
 #define kIdSize_GCIO         12
 #define UNDEFINEDID_GCIO 199901L
 
-static char* gkGCCharset[]=
+static const char* const gkGCCharset[]=
 {
 /* 0 */ "",
 /* 1 */ "ANSI",
@@ -50,7 +50,7 @@ static char* gkGCCharset[]=
 /* 3 */ "MAC"
 };
 
-static char* gkGCAccess[]=
+static const char* const gkGCAccess[]=
 {
 /* 0 */ "",
 /* 1 */ "NO",
@@ -59,14 +59,14 @@ static char* gkGCAccess[]=
 /* 4 */ "WRITE"
 };
 
-static char* gkGCStatus[]=
+static const char* const gkGCStatus[]=
 {
 /* 0 */ "NONE",
 /* 1 */ "MEMO",
 /* 2 */ "EOF"
 };
 
-static char* gk3D[]=
+static const char* const gk3D[]=
 {
 /* 0 */ "",
 /* 1 */ "2D",
@@ -74,7 +74,7 @@ static char* gk3D[]=
 /* 3 */ "3D"
 };
 
-static char* gkGCTypeKind[]=
+static const char* const gkGCTypeKind[]=
 {
 /* 0 */ "",
 /* 1 */ "POINT",
@@ -4705,7 +4705,8 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
   FILE *h;
   int n, i;
   GCField* theField;
-  char* fieldName, *quotes, *escapedValue, delim;
+  char* fieldName, *escapedValue, delim;
+  const char *quotes;
 
   if( (n= CountSubTypeFields_GCIO(theSubType))==0 )
   {
@@ -5069,7 +5070,8 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
   GCExportFileH* H;
   FILE *h;
   int n, i, iAn, pCS, hCS;
-  char *quotes, delim;
+  const char *quotes;
+  char delim;
 
   H= GetSubTypeGCHandle_GCIO(theSubType);
   h= GetGCHandle_GCIO(H);
@@ -5207,7 +5209,8 @@ int GCIOAPI_CALL WriteFeatureFieldAsString_GCIO (
   GCExportFileH* H;
   FILE *h;
   int n;
-  char *quotes, *escapedValue, delim;
+  const char *quotes;
+  char *escapedValue, delim;
   GCField* theField;
 
   H= GetSubTypeGCHandle_GCIO(theSubType);

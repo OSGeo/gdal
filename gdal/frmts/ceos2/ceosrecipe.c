@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 /* Array of Datatypes and their names/values */
 
 typedef struct { 
-    char *String;
+    const char *String;
     int Type;
 } CeosStringType_t;
 

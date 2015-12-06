@@ -46,7 +46,7 @@ CPL_CVSID("$Id: geoconcept_syscoord.c,v 1.0.0 2007-12-24 15:40:28 drichard Exp $
  * noticed as FIXME in the source.
  */
 
-static GCSysCoord gk_asSysCoordList[]=
+static const GCSysCoord gk_asSysCoordList[]=
 /*
  * pszSysCoordName, pszUnit, dfPM, dfLambda0, dfPhi0, dfk0, dfX0, dfY0, dfPhi1, dfPhi2, nDatumID, nProjID, coordSystemID, timeZoneValue
  *
@@ -146,7 +146,7 @@ static GCSysCoord gk_asSysCoordList[]=
 {NULL,                              NULL,  0.000000000000,   0.000000000,  0.00000000,0.00000000000,      0.000,       0.000,  0.0,  0.0,  -1,  -1,   -1,-1}
 };
 
-static GCProjectionInfo gk_asProjList[]=
+static const GCProjectionInfo gk_asProjList[]=
 /*
  * pszProjName, nSphere, nProjID
  */
@@ -170,7 +170,7 @@ static GCProjectionInfo gk_asProjList[]=
 {NULL,                      0,   -1}
 };
 
-static GCDatumInfo gk_asDatumList[]=
+static const GCDatumInfo gk_asDatumList[]=
   /*
    * pszDatumName, dfShiftX, dfShiftY, dfShiftZ, dfRotX, dfRotY, dfRotZ, dfScaleFactor, dfFA, dfFlattening, nEllipsoidID, nDatumID
    */
@@ -224,7 +224,7 @@ static GCDatumInfo gk_asDatumList[]=
 {NULL,                                 0.0000,   0.0000,   0.0000, 0.00000, 0.00000,  0.00000,  0.0,          0.000,  0.0,            -1,  -1}
 };
 
-static GCSpheroidInfo gk_asSpheroidList[]=
+static const GCSpheroidInfo gk_asSpheroidList[]=
   /*
    * pszSpheroidName, dfA, dfE, nEllipsoidID
    *
@@ -365,10 +365,10 @@ CPLDebug( "GEOCONCEPT", "SemiMajor:%.4f;Eccentricity:%.10f;",\
 );
 
 /* -------------------------------------------------------------------- */
-static GCSpheroidInfo GCSRSAPI_CALL1(*) _findSpheroid_GCSRS ( double a, double rf )
+static const GCSpheroidInfo GCSRSAPI_CALL1(*) _findSpheroid_GCSRS ( double a, double rf )
 {
   int iSpheroid, iResol= 0, nResol= 2;
-  GCSpheroidInfo* ell;
+  const GCSpheroidInfo* ell;
   double e, p[]= {1e-10, 1e-8};
 
   /* f = 1 - sqrt(1 - e^2) */
@@ -403,14 +403,14 @@ CPLDebug( "GEOCONCEPT", "ID:%d;ShiftX:%.4f;ShiftY:%.4f;ShiftZ:%.4f;DiffA:%.4f;Di
 );
 
 /* -------------------------------------------------------------------- */
-static GCDatumInfo GCSRSAPI_CALL1(*) _findDatum_GCSRS ( double dx,
+static const GCDatumInfo GCSRSAPI_CALL1(*) _findDatum_GCSRS ( double dx,
                                                         double dy,
                                                         double dz,
                                                         double a,
                                                         double f )
 {
   int iDatum, bRelax= FALSE;
-  GCDatumInfo* datum;
+  const GCDatumInfo* datum;
 
 datum_relax:
   for( iDatum= 0, datum= &(gk_asDatumList[0]);
@@ -442,10 +442,10 @@ datum_relax:
 }/* _findDatum_GCSRS */
 
 /* -------------------------------------------------------------------- */
-static GCProjectionInfo GCSRSAPI_CALL1(*) _findProjection_GCSRS ( const char* p, double lat_ts )
+static const GCProjectionInfo GCSRSAPI_CALL1(*) _findProjection_GCSRS ( const char* p, double lat_ts )
 {
   int iProj;
-  GCProjectionInfo* proj;
+  const GCProjectionInfo* proj;
 
   for( iProj= 0, proj= &(gk_asProjList[0]);
        GetInfoProjID_GCSRS(proj)!=-1;
@@ -528,7 +528,7 @@ CPLDebug( "GEOCONCEPT", "[%s]ID=%d;Zone=%d;DatumID=%d;ProjID=%d;PrimeMeridian=%.
 static GCSysCoord GCSRSAPI_CALL1(*) _findSysCoord_GCSRS ( GCSysCoord* theSysCoord )
 {
   int iSysCoord, bestSysCoord= -1;
-  GCSysCoord* gcsc;
+  const GCSysCoord* gcsc;
 
   if( !theSysCoord) return NULL;
 
@@ -612,9 +612,9 @@ static GCSysCoord GCSRSAPI_CALL1(*) _findSysCoord_GCSRS ( GCSysCoord* theSysCoor
     }
     SetSysCoordTimeZone_GCSRS(theSysCoord, GetSysCoordTimeZone_GCSRS(gcsc));
     if( GetSysCoordName_GCSRS(gcsc) )
-      SetSysCoordName_GCSRS(theSysCoord, CPLStrdup(GetSysCoordName_GCSRS(gcsc)));
+      SetSysCoordName_GCSRS(theSysCoord, GetSysCoordName_GCSRS(gcsc));
     if( GetSysCoordUnit_GCSRS(gcsc) )
-      SetSysCoordUnit_GCSRS(theSysCoord, CPLStrdup(GetSysCoordUnit_GCSRS(gcsc)));
+      SetSysCoordUnit_GCSRS(theSysCoord, GetSysCoordUnit_GCSRS(gcsc));
   }
 
   return theSysCoord;
@@ -648,7 +648,8 @@ GCSysCoord GCSRSAPI_CALL1(*) CreateSysCoord_GCSRS (
                                                   )
 {
   int iSysCoord;
-  GCSysCoord* theSysCoord, *gcsc;
+  GCSysCoord* theSysCoord;
+  const GCSysCoord* gcsc;
 
   if( !(theSysCoord= VSI_MALLOC_VERBOSE(sizeof(GCSysCoord))) )
   {
@@ -666,9 +667,9 @@ GCSysCoord GCSRSAPI_CALL1(*) CreateSysCoord_GCSRS (
         SetSysCoordSystemID_GCSRS(theSysCoord, srsid);
         SetSysCoordTimeZone_GCSRS(theSysCoord, nTimezone);
         if( GetSysCoordName_GCSRS(gcsc) )
-          SetSysCoordName_GCSRS(theSysCoord, CPLStrdup(GetSysCoordName_GCSRS(gcsc)));
+          SetSysCoordName_GCSRS(theSysCoord, GetSysCoordName_GCSRS(gcsc));
         if( GetSysCoordUnit_GCSRS(gcsc) )
-          SetSysCoordUnit_GCSRS(theSysCoord, CPLStrdup(GetSysCoordUnit_GCSRS(gcsc)));
+          SetSysCoordUnit_GCSRS(theSysCoord, GetSysCoordUnit_GCSRS(gcsc));
         SetSysCoordCentralMeridian_GCSRS(theSysCoord, GetSysCoordCentralMeridian_GCSRS(gcsc));
         SetSysCoordLatitudeOfOrigin_GCSRS(theSysCoord, GetSysCoordLatitudeOfOrigin_GCSRS(gcsc));
         SetSysCoordStandardParallel1_GCSRS(theSysCoord, GetSysCoordStandardParallel1_GCSRS(gcsc));
@@ -691,14 +692,6 @@ static void GCSRSAPI_CALL _ReInitSysCoord_GCSRS (
                                                   GCSysCoord* theSysCoord
                                                 )
 {
-  if( GetSysCoordName_GCSRS(theSysCoord) )
-  {
-    CPLFree(GetSysCoordName_GCSRS(theSysCoord));
-  }
-  if( GetSysCoordUnit_GCSRS(theSysCoord) )
-  {
-    CPLFree(GetSysCoordUnit_GCSRS(theSysCoord));
-  }
   _InitSysCoord_GCSRS(theSysCoord);
 }/* _ReInitSysCoord_GCSRS */
 
@@ -716,9 +709,9 @@ void GCSRSAPI_CALL DestroySysCoord_GCSRS (
 GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialReferenceH poSR )
 {
   char* pszProj4= NULL;
-  GCSpheroidInfo* ell= NULL;
-  GCDatumInfo* datum= NULL;
-  GCProjectionInfo* gcproj= NULL;
+  const GCSpheroidInfo* ell= NULL;
+  const GCDatumInfo* datum= NULL;
+  const GCProjectionInfo* gcproj= NULL;
   double a, rf, f, p[7];
   GCSysCoord* syscoord= NULL;
 
@@ -853,8 +846,8 @@ onError:
 OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoord* syscoord )
 {
   OGRSpatialReferenceH poSR;
-  GCDatumInfo* datum= NULL;
-  GCSpheroidInfo* ell= NULL;
+  const GCDatumInfo* datum= NULL;
+  const GCSpheroidInfo* ell= NULL;
   int i;
   double f;
 

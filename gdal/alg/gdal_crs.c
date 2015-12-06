@@ -122,7 +122,7 @@ static int CRS_compute_georef_equations(struct Control_Points *,
     double [], double [], double [], double [], int);
 static int remove_outliers(GCPTransformInfo *);
 
-static char *CRS_error_message[] = {
+static const char * const CRS_error_message[] = {
     "Failed to compute GCP transform: Not enough points available",
     "Failed to compute GCP transform: Transform is not solvable",
     "Failed to compute GCP transform: Not enough memory",

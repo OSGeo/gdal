@@ -110,7 +110,7 @@ CPL_CVSID("$Id$");
 /*      This table was copied from gt_wkt_srs.cpp in the libgeotiff     */
 /*      distribution.  Please keep changes in sync.                     */
 /* -------------------------------------------------------------------- */
-static char *papszDatumEquiv[] =
+static const char * const papszDatumEquiv[] =
 {
     "Militar_Geographische_Institut",
     "Militar_Geographische_Institute",
