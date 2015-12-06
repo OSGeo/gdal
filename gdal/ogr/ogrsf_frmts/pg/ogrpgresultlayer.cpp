@@ -65,8 +65,7 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
     CPLString osRequest;
     std::map< std::pair<int,int>, int> oMapAttributeToFieldIndex;
 
-    int iRawField;
-    for( iRawField = 0; iRawField < PQnfields(hInitialResultIn); iRawField++ )
+    for( int iRawField = 0; iRawField < PQnfields(hInitialResultIn); iRawField++ )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 1 &&
             strcmp(PQfname(hInitialResultIn,iRawField),

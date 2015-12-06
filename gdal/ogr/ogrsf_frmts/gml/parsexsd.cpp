@@ -649,8 +649,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 </xs:complexType>
             </xs:element>
             */
-            CPLXMLNode* psComplexType = GetSingleChildElement( psAttrDef, "complexType" );
-            CPLXMLNode* psComplexTypeSequence = GetSingleChildElement( psComplexType, "sequence" );
+            CPLXMLNode* l_psComplexType = GetSingleChildElement( psAttrDef, "complexType" );
+            CPLXMLNode* psComplexTypeSequence = GetSingleChildElement( l_psComplexType, "sequence" );
             CPLXMLNode* psComplexTypeSequenceElement = GetSingleChildElement( psComplexTypeSequence, "element" );
 
             if( pszElementName != NULL &&

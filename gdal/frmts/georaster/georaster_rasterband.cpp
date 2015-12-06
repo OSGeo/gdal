@@ -41,12 +41,12 @@
 //  ---------------------------------------------------------------------------
 
 GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
-                                          int nBand,
+                                          int nBandIn,
                                           int nLevel )
 {
     poDS                = (GDALDataset*) poGDS;
     poGeoRaster         = poGDS->poGeoRaster;
-    this->nBand         = nBand;
+    this->nBand         = nBandIn;
     this->eDataType     = OWGetDataType( poGeoRaster->sCellDepth.c_str() );
     poColorTable        = new GDALColorTable();
     poDefaultRAT        = NULL;
@@ -426,13 +426,13 @@ CPLErr GeoRasterRasterBand::GetStatistics( int bApproxOK, int bForce,
 //                                                              SetStatistics()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterRasterBand::SetStatistics( double dfMin, double dfMax,
-                                           double dfMean, double dfStdDev )
+CPLErr GeoRasterRasterBand::SetStatistics( double dfMinIn, double dfMaxIn,
+                                           double dfMeanIn, double dfStdDevIn )
 {
-    this->dfMin       = dfMin;
-    this->dfMax       = dfMax;
-    this->dfMean      = dfMean;
-    this->dfStdDev    = dfStdDev;
+    this->dfMin       = dfMinIn;
+    this->dfMax       = dfMaxIn;
+    this->dfMean      = dfMeanIn;
+    this->dfStdDev    = dfStdDevIn;
 
     return CE_None;
 }
@@ -763,16 +763,16 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     // Get the name of the VAT Table
     // ----------------------------------------------------------
 
-    char* pszVATName = poGDS->poGeoRaster->GetVAT( nBand );
+    char* l_pszVATName = poGDS->poGeoRaster->GetVAT( nBand );
 
-    if( pszVATName == NULL )
+    if( l_pszVATName == NULL )
     {
         return NULL;
     }
 
     OCIParam* phDesc = NULL;
 
-    phDesc = poGDS->poGeoRaster->poConnection->GetDescription( pszVATName );
+    phDesc = poGDS->poGeoRaster->poConnection->GetDescription( l_pszVATName );
 
     if( phDesc == NULL )
     {
@@ -827,7 +827,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
                 break;
             default:
                 CPLDebug("GEORASTER", "VAT (%s) Column (%s) type (%d) not supported"
-                    "as GDAL RAT", pszVATName, szField, hType );
+                    "as GDAL RAT", l_pszVATName, szField, hType );
                 continue;
         }
         strcpy( szColumnList, CPLSPrintf( "%s substr(%s,1,%d),",
@@ -845,7 +845,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     OWStatement* poStmt = NULL;
 
     poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf (
-        "SELECT %s FROM %s", szColumnList, pszVATName ) );
+        "SELECT %s FROM %s", szColumnList, l_pszVATName ) );
 
     char** papszValue = (char**) CPLMalloc( sizeof(char**) * iCol );
 
@@ -860,7 +860,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     if( ! poStmt->Execute() )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Error reading VAT %s",
-            pszVATName );
+            l_pszVATName );
         return NULL;
     }
 
@@ -883,7 +883,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
 
     delete poStmt;
 
-    CPLFree( pszVATName );
+    CPLFree( l_pszVATName );
 
     return poDefaultRAT;
 }
@@ -914,10 +914,8 @@ GDALRasterBand* GeoRasterRasterBand::GetOverview( int nLevel )
 //                                                             CreateMaskBand()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterRasterBand::CreateMaskBand( int nFlags )
+CPLErr GeoRasterRasterBand::CreateMaskBand( int /*nFlags*/ )
 {
-    (void) nFlags;
-
     if( ! poGeoRaster->bHasBitmapMask )
     {
         return CE_Failure;

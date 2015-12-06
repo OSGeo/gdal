@@ -41,9 +41,9 @@ CPL_CVSID("$Id$");
 /*                       OGRCloudantTableLayer()                         */
 /************************************************************************/
 
-OGRCloudantTableLayer::OGRCloudantTableLayer(OGRCloudantDataSource* poDS,
+OGRCloudantTableLayer::OGRCloudantTableLayer(OGRCloudantDataSource* poDSIn,
                                            const char* pszName) :
-                                                        OGRCouchDBTableLayer((OGRCouchDBDataSource*) poDS, pszName)
+                                                        OGRCouchDBTableLayer((OGRCouchDBDataSource*) poDSIn, pszName)
 
 {
     bHasStandardSpatial = -1;

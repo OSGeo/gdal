@@ -2706,7 +2706,7 @@ OGRErr TABFile::ReorderFields( int* panMap )
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-OGRErr TABFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+OGRErr TABFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
 {
     if( m_poDATFile == NULL || !TestCapability(OLCDeleteField) )
     {
@@ -2723,21 +2723,21 @@ OGRErr TABFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
         return OGRERR_FAILURE;
     }
 
-    if ( m_poDATFile->AlterFieldDefn( iField, poNewFieldDefn, nFlags ) == 0 )
+    if ( m_poDATFile->AlterFieldDefn( iField, poNewFieldDefn, nFlagsIn ) == 0 )
     {
         m_bNeedTABRewrite = TRUE;
 
         OGRFieldDefn* poFieldDefn = m_poDefn->GetFieldDefn(iField);
-        if ((nFlags & ALTER_TYPE_FLAG) &&
+        if ((nFlagsIn & ALTER_TYPE_FLAG) &&
             poNewFieldDefn->GetType() != poFieldDefn->GetType())
         {
             poFieldDefn->SetType(poNewFieldDefn->GetType());
-            if( (nFlags & ALTER_WIDTH_PRECISION_FLAG) == 0 )
+            if( (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG) == 0 )
                 poFieldDefn->SetWidth(254);
         }
-        if (nFlags & ALTER_NAME_FLAG)
+        if (nFlagsIn & ALTER_NAME_FLAG)
             poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
-        if ((nFlags & ALTER_WIDTH_PRECISION_FLAG) &&
+        if ((nFlagsIn & ALTER_WIDTH_PRECISION_FLAG) &&
             poFieldDefn->GetType() == OFTString)
         {
             poFieldDefn->SetWidth(m_poDATFile->GetFieldWidth(iField));

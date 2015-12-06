@@ -49,8 +49,8 @@ class OGRCartoDBGeomFieldDefn: public OGRGeomFieldDefn
     public:
         int nSRID;
 
-        OGRCartoDBGeomFieldDefn(const char* pszName, OGRwkbGeometryType eType) :
-                OGRGeomFieldDefn(pszName, eType), nSRID(0)
+        OGRCartoDBGeomFieldDefn(const char* pszNameIn, OGRwkbGeometryType eType) :
+                OGRGeomFieldDefn(pszNameIn, eType), nSRID(0)
         {
         }
 };
@@ -66,7 +66,6 @@ protected:
     OGRCARTODBDataSource* poDS;
 
     OGRFeatureDefn      *poFeatureDefn;
-    OGRSpatialReference *poSRS;
     CPLString            osBaseSQL;
     CPLString            osFIDColName;
 

@@ -642,7 +642,7 @@ OGRErr OGRMemLayer::ReorderFields( int* panMap )
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
 {
     if (!m_bUpdatable)
         return OGRERR_FAILURE;
@@ -656,7 +656,7 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, in
 
     OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
 
-    if ((nFlags & ALTER_TYPE_FLAG) &&
+    if ((nFlagsIn & ALTER_TYPE_FLAG) &&
         poFieldDefn->GetType() != poNewFieldDefn->GetType())
     {
         if ((poNewFieldDefn->GetType() == OFTDate ||
@@ -762,9 +762,9 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, in
         poFieldDefn->SetType(poNewFieldDefn->GetType());
     }
 
-    if (nFlags & ALTER_NAME_FLAG)
+    if (nFlagsIn & ALTER_NAME_FLAG)
         poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
-    if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+    if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
     {
         poFieldDefn->SetWidth(poNewFieldDefn->GetWidth());
         poFieldDefn->SetPrecision(poNewFieldDefn->GetPrecision());
@@ -839,10 +839,10 @@ class OGRMemLayerIteratorArray: public IOGRMemLayerFeatureIterator
             OGRFeature **m_papoFeatures;
 
     public:
-        OGRMemLayerIteratorArray(GIntBig m_nMaxFeatureCount,
-                                 OGRFeature **m_papoFeatures):
-            m_iCurIdx(0), m_nMaxFeatureCount(m_nMaxFeatureCount),
-            m_papoFeatures(m_papoFeatures)
+        OGRMemLayerIteratorArray(GIntBig nMaxFeatureCount,
+                                 OGRFeature **papoFeatures):
+            m_iCurIdx(0), m_nMaxFeatureCount(nMaxFeatureCount),
+            m_papoFeatures(papoFeatures)
         {
         }
 
@@ -876,9 +876,9 @@ class OGRMemLayerIteratorMap: public IOGRMemLayerFeatureIterator
             FeatureIterator      m_oIter;
 
     public:
-        OGRMemLayerIteratorMap(FeatureMap& m_oMapFeatures):
-            m_oMapFeatures(m_oMapFeatures),
-            m_oIter(m_oMapFeatures.begin())
+        OGRMemLayerIteratorMap(FeatureMap& oMapFeatures):
+            m_oMapFeatures(oMapFeatures),
+            m_oIter(oMapFeatures.begin())
         {
         }
 

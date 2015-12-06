@@ -283,19 +283,19 @@ OGRFeature *OGRWalkTableLayer::GetFeature( GIntBig nFeatureId )
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRWalkTableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRWalkTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
 
-    if( (pszQuery == NULL && this->pszQuery == NULL)
-        || (pszQuery != NULL && this->pszQuery != NULL 
-            && EQUAL(pszQuery,this->pszQuery)) )
+    if( (pszQueryIn == NULL && this->pszQuery == NULL)
+        || (pszQueryIn != NULL && this->pszQuery != NULL 
+            && EQUAL(pszQueryIn,this->pszQuery)) )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
-    this->pszQuery = (pszQuery != NULL ) ? CPLStrdup( pszQuery ) : NULL;
+    this->pszQuery = (pszQueryIn != NULL ) ? CPLStrdup( pszQueryIn ) : NULL;
 
     ClearStatement();
 

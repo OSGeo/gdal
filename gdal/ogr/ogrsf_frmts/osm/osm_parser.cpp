@@ -856,14 +856,14 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
             pabyDataNewLimit = pabyData + nSize;
             while (pabyData < pabyDataNewLimit)
             {
-                unsigned int nKey;
-                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey);
+                unsigned int nKey2;
+                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
 
-                if (nKey >= psCtxt->nStrCount)
+                if (nKey2 >= psCtxt->nStrCount)
                     GOTO_END_ERROR;
 
                 psCtxt->pasTags[sNode.nTags].pszK = psCtxt->pszStrBuf +
-                                              psCtxt->panStrOff[nKey];
+                                              psCtxt->panStrOff[nKey2];
                 psCtxt->pasTags[sNode.nTags].pszV = NULL;
                 sNode.nTags ++;
             }
@@ -982,14 +982,14 @@ int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
             pabyDataNewLimit = pabyData + nSize;
             while (pabyData < pabyDataNewLimit)
             {
-                unsigned int nKey;
-                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey);
+                unsigned int nKey2;
+                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
 
-                if (nKey >= psCtxt->nStrCount)
+                if (nKey2 >= psCtxt->nStrCount)
                     GOTO_END_ERROR;
 
                 psCtxt->pasTags[sWay.nTags].pszK = psCtxt->pszStrBuf +
-                                                   psCtxt->panStrOff[nKey];
+                                                   psCtxt->panStrOff[nKey2];
                 psCtxt->pasTags[sWay.nTags].pszV = NULL;
                 sWay.nTags ++;
             }
@@ -1146,14 +1146,14 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
             pabyDataNewLimit = pabyData + nSize;
             while (pabyData < pabyDataNewLimit)
             {
-                unsigned int nKey;
-                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey);
+                unsigned int nKey2;
+                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
 
-                if (nKey >= psCtxt->nStrCount)
+                if (nKey2 >= psCtxt->nStrCount)
                     GOTO_END_ERROR;
 
                 psCtxt->pasTags[sRelation.nTags].pszK = psCtxt->pszStrBuf +
-                                                        psCtxt->panStrOff[nKey];
+                                                        psCtxt->panStrOff[nKey2];
                 psCtxt->pasTags[sRelation.nTags].pszV = NULL;
                 sRelation.nTags ++;
             }

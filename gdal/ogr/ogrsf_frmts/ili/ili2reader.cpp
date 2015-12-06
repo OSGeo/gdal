@@ -240,25 +240,25 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
 
       DOMElement *arcElem = (DOMElement *)lineElem->getFirstChild();
       while (arcElem != NULL) {
-        char* pszTagName = XMLString::transcode(arcElem->getTagName());
+        char* pszTagName2 = XMLString::transcode(arcElem->getTagName());
         char* pszObjValue = getObjValue(arcElem);
-        if (cmpStr("C1", pszTagName) == 0)
+        if (cmpStr("C1", pszTagName2) == 0)
           ptEnd->setX(CPLAtof(pszObjValue));
-        else if (cmpStr("C2", pszTagName) == 0)
+        else if (cmpStr("C2", pszTagName2) == 0)
           ptEnd->setY(CPLAtof(pszObjValue));
-        else if (cmpStr("C3", pszTagName) == 0)
+        else if (cmpStr("C3", pszTagName2) == 0)
           ptEnd->setZ(CPLAtof(pszObjValue));
-        else if (cmpStr("A1", pszTagName) == 0)
+        else if (cmpStr("A1", pszTagName2) == 0)
           ptOnArc->setX(CPLAtof(pszObjValue));
-        else if (cmpStr("A2", pszTagName) == 0)
+        else if (cmpStr("A2", pszTagName2) == 0)
           ptOnArc->setY(CPLAtof(pszObjValue));
-        else if (cmpStr("A3", pszTagName) == 0)
+        else if (cmpStr("A3", pszTagName2) == 0)
           ptOnArc->setZ(CPLAtof(pszObjValue));
-        else if (cmpStr("R", pszTagName) == 0) {
+        else if (cmpStr("R", pszTagName2) == 0) {
           // radius = CPLAtof(pszObjValue);
         }
         CPLFree(pszObjValue);
-        XMLString::release(&pszTagName);
+        XMLString::release(&pszTagName2);
 
         arcElem = (DOMElement *)arcElem->getNextSibling();
       }

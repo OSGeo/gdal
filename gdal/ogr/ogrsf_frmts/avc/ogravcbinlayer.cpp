@@ -43,7 +43,7 @@ OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
         : OGRAVCLayer( psSectionIn->eType, poDSIn )
 
 {
-    psSection = psSectionIn;
+    m_psSection = psSectionIn;
     hFile = NULL;
     poArcLayer = NULL;
     bNeedReset = FALSE;
@@ -53,17 +53,17 @@ OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
     nTableBaseField = -1;
     nTableAttrIndex = -1;
 
-    SetupFeatureDefinition( psSection->pszName );
+    SetupFeatureDefinition( m_psSection->pszName );
     
     szTableName[0] = '\0';
-    if( psSection->eType == AVCFilePAL )
+    if( m_psSection->eType == AVCFilePAL )
         sprintf( szTableName, "%s.PAT", poDS->GetCoverageName() );
-    else if( psSection->eType == AVCFileRPL )
+    else if( m_psSection->eType == AVCFileRPL )
         sprintf( szTableName, "%s.PAT%s", poDS->GetCoverageName(),
-                 psSectionIn->pszName );
-    else if( psSection->eType == AVCFileARC )
+                 m_psSection->pszName );
+    else if( m_psSection->eType == AVCFileARC )
         sprintf( szTableName, "%s.AAT", poDS->GetCoverageName() );
-    else if( psSection->eType == AVCFileLAB )
+    else if( m_psSection->eType == AVCFileLAB )
     {
         AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
 
@@ -130,9 +130,9 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
         AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
 
         hFile = AVCBinReadOpen(psInfo->pszCoverPath, 
-                               psSection->pszFilename, 
+                               m_psSection->pszFilename, 
                                psInfo->eCoverType, 
-                               psSection->eType,
+                               m_psSection->eType,
                                psInfo->psDBCSInfo);
     }
 
@@ -172,7 +172,7 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 /*      LAB's we have to assign the FID to directly, since it           */
 /*      doesn't seem to be stored in the file structure.                */
 /* -------------------------------------------------------------------- */
-    if( psSection->eType == AVCFileLAB )
+    if( m_psSection->eType == AVCFileLAB )
     {
         if( nFID == -3 )
             poFeature->SetFID( nNextFID++ );
@@ -184,8 +184,8 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 /*      If this is a polygon layer, try to assemble the arcs to form    */
 /*      the whole polygon geometry.                                     */
 /* -------------------------------------------------------------------- */
-    if( psSection->eType == AVCFilePAL 
-        || psSection->eType == AVCFileRPL )
+    if( m_psSection->eType == AVCFilePAL 
+        || m_psSection->eType == AVCFileRPL )
         FormPolygonGeometry( poFeature, (AVCPal *) pFeature );
 
 /* -------------------------------------------------------------------- */
@@ -210,7 +210,7 @@ OGRFeature *OGRAVCBinLayer::GetNextFeature()
 
     // Skip universe polygon.
     if( poFeature != NULL && poFeature->GetFID() == 1 
-        && psSection->eType == AVCFilePAL )
+        && m_psSection->eType == AVCFilePAL )
     {
         OGRFeature::DestroyFeature( poFeature );
         poFeature = GetFeature( -3 );
@@ -340,7 +340,7 @@ int OGRAVCBinLayer::CheckSetupTable()
 /* -------------------------------------------------------------------- */
     AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
     int           iSection;
-    AVCE00Section *psSection = NULL;
+    AVCE00Section *l_psSection = NULL;
     char	  szPaddedName[65];
     
     sprintf( szPaddedName, "%s%32s", szTableName, " " );
@@ -350,10 +350,10 @@ int OGRAVCBinLayer::CheckSetupTable()
     {
         if( EQUAL(szPaddedName,psInfo->pasSections[iSection].pszName) 
             && psInfo->pasSections[iSection].eType == AVCFileTABLE )
-            psSection = psInfo->pasSections + iSection;
+            l_psSection = psInfo->pasSections + iSection;
     }
 
-    if( psSection == NULL )
+    if( l_psSection == NULL )
     {
         szTableName[0] = '\0';
         return FALSE;

@@ -113,8 +113,8 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
         return poLayer;
         
     char* pszGeomColumnName = NULL;
-    char* pszName = CPLStrdup(pszLayerName);
-    char *pszLeftParenthesis = strchr(pszName, '(');
+    char* l_pszName = CPLStrdup(pszLayerName);
+    char *pszLeftParenthesis = strchr(l_pszName, '(');
     if( pszLeftParenthesis != NULL )
     {
         *pszLeftParenthesis = '\0';
@@ -124,10 +124,10 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
             pszGeomColumnName[len - 1] = '\0';
     }
     
-    CPLString osTableId(pszName);
+    CPLString osTableId(l_pszName);
     for(int i=0;i<nLayers;i++)
     {
-        if( strcmp(papoLayers[i]->GetName(), pszName) == 0)
+        if( strcmp(papoLayers[i]->GetName(), l_pszName) == 0)
         {
             osTableId = ((OGRGFTTableLayer*)papoLayers[i])->GetTableId();
             break;
@@ -136,7 +136,7 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
 
     poLayer = new OGRGFTTableLayer(this, pszLayerName, osTableId,
                                    pszGeomColumnName);
-    CPLFree(pszName);
+    CPLFree(l_pszName);
     CPLFree(pszGeomColumnName);
     if (poLayer->GetLayerDefn()->GetFieldCount() == 0)
     {
@@ -302,7 +302,7 @@ const char*  OGRGFTDataSource::GetAPIURL() const
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszName,
+OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszNameIn,
                                             CPL_UNUSED OGRSpatialReference *poSpatialRef,
                                             OGRwkbGeometryType eGType,
                                             char ** papszOptions )
@@ -327,12 +327,12 @@ OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszName,
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszName,papoLayers[iLayer]->GetName()) )
+        if( EQUAL(pszNameIn,papoLayers[iLayer]->GetName()) )
         {
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
             {
-                DeleteLayer( pszName );
+                DeleteLayer( pszNameIn );
                 break;
             }
             else
@@ -341,13 +341,13 @@ OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszName,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
-                          pszName );
+                          pszNameIn );
                 return NULL;
             }
         }
     }
 
-    OGRGFTTableLayer* poLayer = new OGRGFTTableLayer(this, pszName);
+    OGRGFTTableLayer* poLayer = new OGRGFTTableLayer(this, pszNameIn);
     poLayer->SetGeometryType(eGType);
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;

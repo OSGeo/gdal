@@ -38,20 +38,20 @@ CPL_CVSID("$Id$");
 /*                           OGRPDSLayer()                              */
 /************************************************************************/
 
-OGRPDSLayer::OGRPDSLayer(   CPLString osTableID,
+OGRPDSLayer::OGRPDSLayer(   CPLString osTableIDIn,
                             const char* pszLayerName, VSILFILE* fp,
                             CPLString osLabelFilename,
                             CPLString osStructureFilename,
-                            int nRecords,
-                            int nStartBytes, int nRecordSize,
+                            int nRecordsIn,
+                            int nStartBytesIn, int nRecordSizeIn,
                             GByte* pabyRecordIn, int bIsASCII)
 
 {
     fpPDS = fp;
-    this->osTableID = osTableID;
-    this->nRecords = nRecords;
-    this->nStartBytes = nStartBytes;
-    this->nRecordSize = nRecordSize;
+    this->osTableID = osTableIDIn;
+    this->nRecords = nRecordsIn;
+    this->nStartBytes = nStartBytesIn;
+    this->nRecordSize = nRecordSizeIn;
     nLongitudeIndex = -1;
     nLatitudeIndex = -1;
 
@@ -320,8 +320,8 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                         break;
                     papszTokens =
                         CSLTokenizeString2( pszLine, " =", CSLT_HONOURSTRINGS );
-                    int nTokens = CSLCount(papszTokens);
-                    if (nTokens == 2 &&
+                    int nTokens2 = CSLCount(papszTokens);
+                    if (nTokens2 == 2 &&
                         EQUAL(papszTokens[0], "OBJECT") &&
                         EQUAL(papszTokens[1], osTableID.c_str()))
                     {

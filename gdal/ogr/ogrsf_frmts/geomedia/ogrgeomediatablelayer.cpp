@@ -65,7 +65,7 @@ OGRGeomediaTableLayer::~OGRGeomediaTableLayer()
 
 CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
                                           const char *pszGeomCol,
-                                          OGRSpatialReference* poSRS )
+                                          OGRSpatialReference* poSRSIn )
 
 
 {
@@ -80,7 +80,7 @@ CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
 
-    this->poSRS = poSRS;
+    this->poSRS = poSRSIn;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */
@@ -234,16 +234,16 @@ OGRFeature *OGRGeomediaTableLayer::GetFeature( GIntBig nFeatureId )
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRGeomediaTableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRGeomediaTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
-    if( (pszQuery == NULL && this->pszQuery == NULL)
-        || (pszQuery != NULL && this->pszQuery != NULL 
-            && EQUAL(pszQuery,this->pszQuery)) )
+    if( (pszQueryIn == NULL && this->pszQuery == NULL)
+        || (pszQueryIn != NULL && this->pszQuery != NULL 
+            && EQUAL(pszQueryIn,this->pszQuery)) )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
-    this->pszQuery = pszQuery ? CPLStrdup( pszQuery ) : NULL; 
+    this->pszQuery = pszQueryIn ? CPLStrdup( pszQueryIn ) : NULL; 
 
     ClearStatement();
 

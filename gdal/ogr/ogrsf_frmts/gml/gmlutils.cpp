@@ -233,10 +233,9 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
                         OGRGeometryCollection* poGeomColl = (OGRGeometryCollection* )poGeom;
                         OGRGeometryCollection* poGeomColl2 = (OGRGeometryCollection* )poSubGeom;
                         int nCount = poGeomColl2->getNumGeometries();
-                        int i;
-                        for(i=0;i<nCount;i++)
+                        for(int j=0;j<nCount;j++)
                         {
-                            poGeomColl->addGeometry(poGeomColl2->getGeometryRef(i));
+                            poGeomColl->addGeometry(poGeomColl2->getGeometryRef(j));
                         }
                         delete poSubGeom;
                     }

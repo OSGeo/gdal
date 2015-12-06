@@ -1482,7 +1482,7 @@ void kml2field (
 
                 /***** find the field index *****/
 
-                int iField = -1;
+                iField = -1;
 
                 if ( poKmlSimpleData->has_name (  ) ) {
                     const string oName = poKmlSimpleData->get_name (  );
@@ -1514,7 +1514,7 @@ void kml2field (
                     CPLString osName = data->get_name();
                     if (bLaunderFieldNames)
                         osName = OGRLIBKMLLayer::LaunderFieldNames(osName);
-                    int iField = poOgrFeat->GetFieldIndex ( osName );
+                    iField = poOgrFeat->GetFieldIndex ( osName );
                     if (iField >= 0)
                     {
                         poOgrFeat->SetField ( iField, data->get_value().c_str() );

@@ -120,7 +120,7 @@ CPLString OGRCSVDataSource::GetRealExtension(CPLString osFilename)
 /************************************************************************/
 
 int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
-                            int bForceOpen, char** papszOpenOptions )
+                            int bForceOpen, char** papszOpenOptionsIn )
 
 {
     pszName = CPLStrdup( pszFilename );
@@ -213,14 +213,14 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
     {
         if (EQUAL(CPLGetFilename(osFilename), "NfdcFacilities.xls"))
         {
-            return OpenTable( osFilename, papszOpenOptions, "ARP");
+            return OpenTable( osFilename, papszOpenOptionsIn, "ARP");
         }
         else if (EQUAL(CPLGetFilename(osFilename), "NfdcRunways.xls"))
         {
-            OpenTable( osFilename, papszOpenOptions, "BaseEndPhysical");
-            OpenTable( osFilename, papszOpenOptions, "BaseEndDisplaced");
-            OpenTable( osFilename, papszOpenOptions, "ReciprocalEndPhysical");
-            OpenTable( osFilename, papszOpenOptions, "ReciprocalEndDisplaced");
+            OpenTable( osFilename, papszOpenOptionsIn, "BaseEndPhysical");
+            OpenTable( osFilename, papszOpenOptionsIn, "BaseEndDisplaced");
+            OpenTable( osFilename, papszOpenOptionsIn, "ReciprocalEndPhysical");
+            OpenTable( osFilename, papszOpenOptionsIn, "ReciprocalEndDisplaced");
             return nLayers != 0;
         }
         else if (bUSGeonamesFile)
@@ -231,22 +231,22 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
                 STARTS_WITH_CI(osBaseFilename, "ANTARCTICA_") ||
                 (strlen(osBaseFilename) > 2 && STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_")))
             {
-                OpenTable( osFilename, papszOpenOptions, NULL, "PRIMARY");
+                OpenTable( osFilename, papszOpenOptionsIn, NULL, "PRIMARY");
             }
             else if (STARTS_WITH_CI(osBaseFilename, "GOVT_UNITS_") ||
                      STARTS_WITH_CI(osBaseFilename, "Feature_Description_History_"))
             {
-                OpenTable( osFilename, papszOpenOptions, NULL, "");
+                OpenTable( osFilename, papszOpenOptionsIn, NULL, "");
             }
             else
             {
-                OpenTable( osFilename, papszOpenOptions, NULL, "PRIM");
-                OpenTable( osFilename, papszOpenOptions, NULL, "SOURCE");
+                OpenTable( osFilename, papszOpenOptionsIn, NULL, "PRIM");
+                OpenTable( osFilename, papszOpenOptionsIn, NULL, "SOURCE");
             }
             return nLayers != 0;
         }
 
-        return OpenTable( osFilename, papszOpenOptions );
+        return OpenTable( osFilename, papszOpenOptionsIn );
     }
 
 /* -------------------------------------------------------------------- */
@@ -265,7 +265,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         }
         osFilename = CPLFormFilename(osFilename, papszFiles[0], NULL);
         CSLDestroy(papszFiles);
-        return OpenTable( osFilename, papszOpenOptions );
+        return OpenTable( osFilename, papszOpenOptionsIn );
     }
 
 /* -------------------------------------------------------------------- */
@@ -300,7 +300,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 
         if (EQUAL(CPLGetExtension(oSubFilename),"csv"))
         {
-            if( !OpenTable( oSubFilename, papszOpenOptions ) )
+            if( !OpenTable( oSubFilename, papszOpenOptionsIn ) )
             {
                 CPLDebug("CSV", "Cannot open %s", oSubFilename.c_str());
                 nNotCSVCount++;
@@ -313,8 +313,8 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
                   STARTS_WITH_CI(papszNames[i]+2, "_Features_") &&
                   EQUAL(CPLGetExtension(papszNames[i]), "txt") )
         {
-            int bRet = OpenTable( oSubFilename, papszOpenOptions, NULL, "PRIM");
-            bRet |= OpenTable( oSubFilename, papszOpenOptions, NULL, "SOURCE");
+            int bRet = OpenTable( oSubFilename, papszOpenOptionsIn, NULL, "PRIM");
+            bRet |= OpenTable( oSubFilename, papszOpenOptionsIn, NULL, "SOURCE");
             if ( !bRet )
             {
                 CPLDebug("CSV", "Cannot open %s", oSubFilename.c_str());
@@ -327,7 +327,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
                   STARTS_WITH_CI(papszNames[i]+2, "_FedCodes_") &&
                   EQUAL(CPLGetExtension(papszNames[i]), "txt") )
         {
-            if ( !OpenTable( oSubFilename, papszOpenOptions, NULL, "PRIMARY") )
+            if ( !OpenTable( oSubFilename, papszOpenOptionsIn, NULL, "PRIMARY") )
             {
                 CPLDebug("CSV", "Cannot open %s", oSubFilename.c_str());
                 nNotCSVCount++;
@@ -355,7 +355,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /************************************************************************/
 
 int OGRCSVDataSource::OpenTable( const char * pszFilename,
-                                 char** papszOpenOptions,
+                                 char** papszOpenOptionsIn,
                                  const char* pszNfdcRunwaysGeomField,
                                  const char* pszGeonamesGeomFieldPrefix)
 
@@ -440,7 +440,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
     VSIRewindL( fp );
 
 #if 0
-    const char *pszDelimiter = CSLFetchNameValueDef( papszOpenOptions, "SEPARATOR", "AUTO");
+    const char *pszDelimiter = CSLFetchNameValueDef( papszOpenOptionsIn, "SEPARATOR", "AUTO");
     if( !EQUAL(pszDelimiter, "AUTO") )
     {
         if (EQUAL(pszDelimiter, "COMMA"))
@@ -502,7 +502,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
                          chDelimiter  );
     papoLayers[nLayers-1]->BuildFeatureDefn( pszNfdcRunwaysGeomField,
                                              pszGeonamesGeomFieldPrefix,
-                                             papszOpenOptions );
+                                             papszOpenOptionsIn );
     return TRUE;
 }
 

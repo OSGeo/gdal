@@ -135,9 +135,9 @@ OGRLayer* OGRCouchDBDataSource::OpenDatabase(const char* pszLayerName)
         if (pszLastSlash)
         {
             osEscapedName = pszLastSlash + 1;
-            char* pszName = CPLUnescapeString(osEscapedName, NULL, CPLES_URL);
-            osTableName = pszName;
-            CPLFree(pszName);
+            char* l_pszName = CPLUnescapeString(osEscapedName, NULL, CPLES_URL);
+            osTableName = l_pszName;
+            CPLFree(l_pszName);
             *pszLastSlash = 0;
         }
         osURL = pszURL;
@@ -316,7 +316,7 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
+OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszNameIn,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )
@@ -335,12 +335,12 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszName,papoLayers[iLayer]->GetName()) )
+        if( EQUAL(pszNameIn,papoLayers[iLayer]->GetName()) )
         {
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
             {
-                DeleteLayer( pszName );
+                DeleteLayer( pszNameIn );
                 break;
             }
             else
@@ -349,13 +349,13 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
-                          pszName );
+                          pszNameIn );
                 return NULL;
             }
         }
     }
 
-    char* pszEscapedName = CPLEscapeString(pszName, -1, CPLES_URL);
+    char* pszEscapedName = CPLEscapeString(pszNameIn, -1, CPLES_URL);
     CPLString osEscapedName = pszEscapedName;
     CPLFree(pszEscapedName);
 
@@ -440,7 +440,7 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
     int bGeoJSONDocument = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
     int nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
 
-    OGRCouchDBTableLayer* poLayer = new OGRCouchDBTableLayer(this, pszName);
+    OGRCouchDBTableLayer* poLayer = new OGRCouchDBTableLayer(this, pszNameIn);
     if (nCoordPrecision != -1)
         poLayer->SetCoordinatePrecision(nCoordPrecision);
     poLayer->SetInfoAfterCreation(eGType, poSpatialRef, nUpdateSeq, bGeoJSONDocument);

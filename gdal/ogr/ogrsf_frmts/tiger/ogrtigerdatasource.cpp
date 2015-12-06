@@ -292,7 +292,6 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 {
     VSIStatBufL     stat;
     char            **papszFileList = NULL;
-    int             i;
 
     pszName = CPLStrdup( pszFilename );
 
@@ -390,7 +389,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
     papszModules = NULL;
     
-    for( i = 0; papszFileList[i] != NULL; i++ )
+    for( int i = 0; papszFileList[i] != NULL; i++ )
     {
         if( bTestOpen || i == 0 )
         {
@@ -398,12 +397,12 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             VSILFILE    *fp;
             char        *pszRecStart = NULL;
             int         bIsGDT = FALSE;
-            char       *pszFilename;
+            char       *l_pszFilename;
 
-            pszFilename = BuildFilename( papszFileList[i], "1" );
+            l_pszFilename = BuildFilename( papszFileList[i], "1" );
 
-            fp = VSIFOpenL( pszFilename, "rb" );
-            CPLFree( pszFilename );
+            fp = VSIFOpenL( l_pszFilename, "rb" );
+            CPLFree( l_pszFilename );
 
             if( fp == NULL )
                 continue;
@@ -765,7 +764,7 @@ int OGRTigerDataSource::TestCapability( const char *pszCap )
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
+int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptionsIn )
 
 {
     VSIStatBufL      stat;
@@ -793,7 +792,7 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
     pszName = CPLStrdup( pszNameIn );
     bWriteMode = TRUE;
 
-    SetOptionList( papszOptions );
+    SetOptionList( papszOptionsIn );
 
 /* -------------------------------------------------------------------- */
 /*      Work out the version.                                           */
@@ -818,7 +817,7 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
 OGRLayer *OGRTigerDataSource::ICreateLayer( const char *pszLayerName,
                                             OGRSpatialReference *poSpatRef,
                                             CPL_UNUSED OGRwkbGeometryType eGType,
-                                            CPL_UNUSED char **papszOptions )
+                                            char ** /* papszOptions */ )
 {
     OGRTigerLayer       *poLayer = NULL;
 

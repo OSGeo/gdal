@@ -153,7 +153,7 @@ int OGRGPSBabelDataSource::IsValidDriverName(const char* pszGPSBabelDriverName)
 
 int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
                                  const char* pszGPSBabelDriverNameIn,
-                                 char** papszOpenOptions )
+                                 char** papszOpenOptionsIn )
 
 {
     int bExplicitFeatures = FALSE;
@@ -167,11 +167,11 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
     }
     else
     {
-        if( CSLFetchNameValue(papszOpenOptions, "FILENAME") )
-            pszFilename = CPLStrdup(CSLFetchNameValue(papszOpenOptions,
+        if( CSLFetchNameValue(papszOpenOptionsIn, "FILENAME") )
+            pszFilename = CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn,
                                                       "FILENAME"));
 
-        if( CSLFetchNameValue(papszOpenOptions, "GPSBABEL_DRIVER") )
+        if( CSLFetchNameValue(papszOpenOptionsIn, "GPSBABEL_DRIVER") )
         {
             if( pszFilename == NULL )
             {
@@ -179,7 +179,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
                 return FALSE;
             }
 
-            pszGPSBabelDriverName = CPLStrdup(CSLFetchNameValue(papszOpenOptions,
+            pszGPSBabelDriverName = CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn,
                                                             "DRIVER"));
 
             /* A bit of validation to avoid command line injection */

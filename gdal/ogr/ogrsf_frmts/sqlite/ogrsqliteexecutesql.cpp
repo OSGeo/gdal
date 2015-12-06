@@ -57,18 +57,18 @@ class OGRSQLiteExecuteSQLLayer: public OGRSQLiteSelectLayer
 /*                         OGRSQLiteExecuteSQLLayer()                   */
 /************************************************************************/
 
-OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(char* pszTmpDBName,
-                                                   OGRSQLiteDataSource* poDS,
+OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(char* pszTmpDBNameIn,
+                                                   OGRSQLiteDataSource* poDSIn,
                                                    CPLString osSQL,
-                                                   sqlite3_stmt * hStmt,
+                                                   sqlite3_stmt * hStmtIn,
                                                    int bUseStatementForGetNextFeature,
                                                    int bEmptyLayer ) :
 
-                               OGRSQLiteSelectLayer(poDS, osSQL, hStmt,
+                               OGRSQLiteSelectLayer(poDSIn, osSQL, hStmtIn,
                                                     bUseStatementForGetNextFeature,
                                                     bEmptyLayer, TRUE)
 {
-    this->pszTmpDBName = pszTmpDBName;
+    this->pszTmpDBName = pszTmpDBNameIn;
 }
 
 /************************************************************************/

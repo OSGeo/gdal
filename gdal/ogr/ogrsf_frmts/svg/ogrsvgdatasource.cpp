@@ -82,12 +82,12 @@ OGRLayer *OGRSVGDataSource::GetLayer( int iLayer )
 /*                startElementValidateCbk()                             */
 /************************************************************************/
 
-void OGRSVGDataSource::startElementValidateCbk(const char *pszName,
+void OGRSVGDataSource::startElementValidateCbk(const char *pszNameIn,
                                                const char **ppszAttr)
 {
     if (eValidity == SVG_VALIDITY_UNKNOWN)
     {
-        if (strcmp(pszName, "svg") == 0)
+        if (strcmp(pszNameIn, "svg") == 0)
         {
             int i;
             eValidity = SVG_VALIDITY_VALID;

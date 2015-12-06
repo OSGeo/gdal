@@ -630,7 +630,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
 
 bool GeoRasterWrapper::Create( char* pszDescription,
                                char* pszInsert,
-                               bool bUpdate )
+                               bool bUpdateIn )
 {
     CPLString sValues;
     CPLString sFormat;
@@ -677,7 +677,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
     char szDescription[OWTEXT];
 
-    if( bUpdate == false )
+    if( bUpdateIn == false )
     {
 
         if ( pszDescription  )
@@ -868,7 +868,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
     OWStatement* poStmt;
 
-    if( ! bUpdate )
+    if( ! bUpdateIn )
     {
         poStmt = poConnection->CreateStatement( CPLSPrintf(
             "DECLARE\n"
@@ -908,7 +908,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
     CPLString sCommand;
 
-    if( bUpdate )
+    if( bUpdateIn )
     {
         sCommand = CPLSPrintf(
             "SELECT %s INTO GR1 FROM %s%s T WHERE %s FOR UPDATE;",

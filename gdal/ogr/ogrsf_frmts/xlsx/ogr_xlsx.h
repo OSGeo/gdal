@@ -101,8 +101,8 @@ class OGRXLSXLayer : public OGRMemLayer
     virtual OGRErr      ReorderFields( int* panMap )
     { Init(); SetUpdated(); return OGRMemLayer::ReorderFields(panMap); }
 
-    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
-    { Init(); SetUpdated(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlags); }
+    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
+    { Init(); SetUpdated(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn); }
 
     int                 TestCapability( const char * pszCap )
     { Init(); return OGRMemLayer::TestCapability(pszCap); }
@@ -142,9 +142,9 @@ public:
     int               bHasMS;
 
                     XLSXFieldTypeExtended() : eType(OFTMaxType), bHasMS(FALSE) {}
-                    XLSXFieldTypeExtended(OGRFieldType eType,
-                                          int bHasMS = FALSE) :
-                                    eType(eType), bHasMS(bHasMS) {}
+                    XLSXFieldTypeExtended(OGRFieldType eTypeIn,
+                                          int bHasMSIn = FALSE) :
+                                    eType(eTypeIn), bHasMS(bHasMSIn) {}
 };
 
 class OGRXLSXDataSource : public OGRDataSource

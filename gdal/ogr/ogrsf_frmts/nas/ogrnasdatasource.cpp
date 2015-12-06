@@ -334,18 +334,18 @@ void OGRNASDataSource::PopulateRelations()
         {
             int nGMLIdIndex = poFeature->GetClass()->GetPropertyIndex( "gml_id" );
             const GMLProperty *psGMLId = (nGMLIdIndex >= 0) ? poFeature->GetProperty(nGMLIdIndex ) : NULL;
-            char *pszName = NULL;
+            char *l_pszName = NULL;
             const char *pszValue = CPLParseNameValue( papszOBProperties[i],
-                                                      &pszName );
+                                                      &l_pszName );
 
             if( STARTS_WITH_CI(pszValue, "urn:adv:oid:")
                 && psGMLId != NULL && psGMLId->nSubProperties == 1 )
             {
                 poRelationLayer->AddRelation( psGMLId->papszSubProperties[0],
-                                              pszName,
+                                              l_pszName,
                                               pszValue + 12 );
             }
-            CPLFree( pszName );
+            CPLFree( l_pszName );
         }
 
         delete poFeature;

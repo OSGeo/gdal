@@ -86,7 +86,7 @@ OGRILI2DataSource::~OGRILI2DataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptions, int bTestOpen )
+int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptionsIn, int bTestOpen )
 
 {
     FILE        *fp;
@@ -94,10 +94,10 @@ int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
     CPLString   osBasename;
     CPLString   osModelFilename;
 
-    if( CSLFetchNameValue(papszOpenOptions, "MODEL") != NULL )
+    if( CSLFetchNameValue(papszOpenOptionsIn, "MODEL") != NULL )
     {
         osBasename = pszNewName;
-        osModelFilename = CSLFetchNameValue(papszOpenOptions, "MODEL");
+        osModelFilename = CSLFetchNameValue(papszOpenOptionsIn, "MODEL");
     }
     else
     {

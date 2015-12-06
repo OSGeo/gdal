@@ -152,12 +152,12 @@ OGRGeometry *OGRDXFDataSource::SimplifyBlockGeometry(
 DXFBlockDefinition *OGRDXFDataSource::LookupBlock( const char *pszName )
 
 {
-    CPLString osName = pszName;
+    CPLString l_osName = pszName;
 
-    if( oBlockMap.count( osName ) == 0 )
+    if( oBlockMap.count( l_osName ) == 0 )
         return NULL;
     else
-        return &(oBlockMap[osName]);
+        return &(oBlockMap[l_osName]);
 }
 
 /************************************************************************/

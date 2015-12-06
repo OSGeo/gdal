@@ -306,7 +306,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     return TRUE;
 }
 
-OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passport)
+OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& passport)
 {
     /* int nObjectsRead; */
 
@@ -314,7 +314,7 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
     {
         //78
         GByte buff[62];
-        /* nObjectsRead = */ VSIFReadL(&buff, 62, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&buff, 62, 1, fpSXFIn);
         char date[3] = { 0 };
 
         //read year
@@ -353,7 +353,7 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
     {
         //96
         GByte buff[80];
-        /* nObjectsRead = */ VSIFReadL(&buff, 80, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&buff, 80, 1, fpSXFIn);
         char date[5] = { 0 };
 
         //read year
@@ -388,11 +388,11 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
     return OGRERR_NONE;
 }
 
-OGRErr OGRSXFDataSource::ReadSXFInformationFlags(VSILFILE* fpSXF, SXFPassport& passport)
+OGRErr OGRSXFDataSource::ReadSXFInformationFlags(VSILFILE* fpSXFIn, SXFPassport& passport)
 {
     /* int nObjectsRead; */
     GByte val[4];
-    /* nObjectsRead = */ VSIFReadL(&val, 4, 1, fpSXF);
+    /* nObjectsRead = */ VSIFReadL(&val, 4, 1, fpSXFIn);
 
     if (!(CHECK_BIT(val[0], 0) && CHECK_BIT(val[0], 1)))
     {
@@ -504,7 +504,7 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
         return;
     }
 }
-OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& passport)
+OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& passport)
 {
     /* int nObjectsRead;*/
     int i;
@@ -519,15 +519,15 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
     if (passport.version == 3)
     {
         short nNoObjClass, nNoSemClass;
-        /* nObjectsRead = */ VSIFReadL(&nNoObjClass, 2, 1, fpSXF);
-        /* nObjectsRead = */ VSIFReadL(&nNoSemClass, 2, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&nNoObjClass, 2, 1, fpSXFIn);
+        /* nObjectsRead = */ VSIFReadL(&nNoSemClass, 2, 1, fpSXFIn);
         GByte baMask[8];
-        /* nObjectsRead = */ VSIFReadL(&baMask, 8, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&baMask, 8, 1, fpSXFIn);
 
         int nCorners[8];
 
         //get projected corner coords
-        /* nObjectsRead = */ VSIFReadL(&nCorners, 32, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&nCorners, 32, 1, fpSXFIn);
 
         for (i = 0; i < 8; i++)
         {
@@ -549,7 +549,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
             bIsX = !bIsX;
         }
         //get geographic corner coords
-        /* nObjectsRead = */ VSIFReadL(&nCorners, 32, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&nCorners, 32, 1, fpSXFIn);
 
         for (i = 0; i < 8; i++)
         {
@@ -559,7 +559,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
     else if (passport.version == 4)
     {
         int nEPSG;
-        /* nObjectsRead = */ VSIFReadL(&nEPSG, 4, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&nEPSG, 4, 1, fpSXFIn);
 
         if (nEPSG != 0)
         {
@@ -568,7 +568,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
         }
 
         double dfCorners[8];
-        /* nObjectsRead = */ VSIFReadL(&dfCorners, 64, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&dfCorners, 64, 1, fpSXFIn);
 
         for (i = 0; i < 8; i++)
         {
@@ -591,7 +591,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
 
         }
         //get geographic corner coords
-        /* nObjectsRead = */ VSIFReadL(&dfCorners, 64, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&dfCorners, 64, 1, fpSXFIn);
 
         for (i = 0; i < 8; i++)
         {
@@ -606,7 +606,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
     }
 
     GByte anData[8] = { 0 };
-    /* nObjectsRead = */ VSIFReadL(&anData, 8, 1, fpSXF);
+    /* nObjectsRead = */ VSIFReadL(&anData, 8, 1, fpSXFIn);
     long iEllips = anData[0];
     long iVCS = anData[1];
     long iProjSys = anData[2];
@@ -640,20 +640,20 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
         }
 
 
-        VSIFSeekL(fpSXF, 212, SEEK_SET);
+        VSIFSeekL(fpSXFIn, 212, SEEK_SET);
         struct _buff{
             GUInt32 nRes;
             GInt16 anFrame[8];
             GUInt32 nFrameCode;
         } buff;
-        /* nObjectsRead = */ VSIFReadL(&buff, 20, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&buff, 20, 1, fpSXFIn);
         passport.stMapDescription.nResolution = buff.nRes; //resolution
 
         for (i = 0; i < 8; i++)
             passport.stMapDescription.stFrameCoords[i] = buff.anFrame[i];
 
         int anParams[5];
-        /* nObjectsRead = */ VSIFReadL(&anParams, 20, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&anParams, 20, 1, fpSXFIn);
 
         if (anParams[0] != -1)
             dfProjScale = double(anParams[0]) / 100000000.0;
@@ -697,16 +697,16 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
             break;
         }
 
-        VSIFSeekL(fpSXF, 312, SEEK_SET);
+        VSIFSeekL(fpSXFIn, 312, SEEK_SET);
         GUInt32 buff[10];
-        /* nObjectsRead = */ VSIFReadL(&buff, 40, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&buff, 40, 1, fpSXFIn);
 
         passport.stMapDescription.nResolution = buff[0]; //resolution
         for (i = 0; i < 8; i++)
             passport.stMapDescription.stFrameCoords[i] = buff[1 + i];
 
         double adfParams[6];
-        /* nObjectsRead = */ VSIFReadL(&adfParams, 48, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&adfParams, 48, 1, fpSXFIn);
 
         if (adfParams[1] != -1)
             dfProjScale = adfParams[1];
@@ -1289,7 +1289,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
     nOffset = stRSCFileHeader.Objects.nOffset;
     _object OBJECT;
 
-    for (unsigned i = 0; i < stRSCFileHeader.Objects.nRecordCount; ++i)
+    for (unsigned j = 0; j < stRSCFileHeader.Objects.nRecordCount; ++j)
     {
         VSIFReadL(&OBJECT, sizeof(_object), 1, fpRSC);
 

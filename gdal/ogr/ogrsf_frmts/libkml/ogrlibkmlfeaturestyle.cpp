@@ -142,7 +142,6 @@ void featurestyle2kml (
         /***** parse the style table *****/
 
         poOgrSTBL->ResetStyleStringReading (  );
-        const char *pszStyleString;
 
         while ( ( pszStyleString = poOgrSTBL->GetNextStyle (  ) ) != NULL ) {
 

@@ -75,14 +75,14 @@ OGRSQLiteViewLayer::~OGRSQLiteViewLayer()
 /*                             Initialize()                             */
 /************************************************************************/
 
-CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
+CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewNameIn,
                                        const char *pszViewGeometry,
                                        const char *pszViewRowid,
                                        const char *pszUnderlyingTableName,
                                        const char *pszUnderlyingGeometryColumn)
 
 {
-    this->pszViewName = CPLStrdup(pszViewName);
+    this->pszViewName = CPLStrdup(pszViewNameIn);
     SetDescription( pszViewName );
 
     osGeomColumn = pszViewGeometry;
@@ -158,9 +158,9 @@ OGRwkbGeometryType OGRSQLiteViewLayer::GetGeomType()
     if (poFeatureDefn)
         return poFeatureDefn->GetGeomType();
 
-    OGRSQLiteLayer* poUnderlyingLayer = GetUnderlyingLayer();
-    if (poUnderlyingLayer)
-        return poUnderlyingLayer->GetGeomType();
+    OGRSQLiteLayer* l_poUnderlyingLayer = GetUnderlyingLayer();
+    if (l_poUnderlyingLayer)
+        return l_poUnderlyingLayer->GetGeomType();
 
     return wkbUnknown;
 }
@@ -176,15 +176,15 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
     sqlite3_stmt *hColStmt = NULL;
     const char *pszSQL;
 
-    OGRSQLiteLayer* poUnderlyingLayer = GetUnderlyingLayer();
-    if (poUnderlyingLayer == NULL)
+    OGRSQLiteLayer* l_poUnderlyingLayer = GetUnderlyingLayer();
+    if (l_poUnderlyingLayer == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find underlying layer %s for view %s",
                  osUnderlyingTableName.c_str(), pszViewName);
         return CE_Failure;
     }
-    if ( !poUnderlyingLayer->IsTableLayer() )
+    if ( !l_poUnderlyingLayer->IsTableLayer() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Underlying layer %s for view %s is not a regular table",
@@ -193,7 +193,7 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
     }
 
     int nUnderlyingLayerGeomFieldIndex =
-        poUnderlyingLayer->GetLayerDefn()->GetGeomFieldIndex(osUnderlyingGeometryColumn);
+        l_poUnderlyingLayer->GetLayerDefn()->GetGeomFieldIndex(osUnderlyingGeometryColumn);
     if ( nUnderlyingLayerGeomFieldIndex < 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -203,7 +203,7 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
         return CE_Failure;
     }
 
-    this->bHasSpatialIndex = poUnderlyingLayer->HasSpatialIndex(nUnderlyingLayerGeomFieldIndex);
+    this->bHasSpatialIndex = l_poUnderlyingLayer->HasSpatialIndex(nUnderlyingLayerGeomFieldIndex);
 
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
@@ -248,7 +248,7 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
     {
         OGRSQLiteGeomFieldDefn* poSrcGeomFieldDefn =
-            poUnderlyingLayer->myGetLayerDefn()->myGetGeomFieldDefn(nUnderlyingLayerGeomFieldIndex);
+            l_poUnderlyingLayer->myGetLayerDefn()->myGetGeomFieldDefn(nUnderlyingLayerGeomFieldIndex);
         OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
             poFeatureDefn->myGetGeomFieldDefn(0);
         poGeomFieldDefn->SetType(poSrcGeomFieldDefn->GetType());

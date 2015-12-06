@@ -37,19 +37,18 @@ CPL_CVSID("$Id: ogrgmtlayer.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 /*                            OGRGmtLayer()                             */
 /************************************************************************/
 
-OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
+OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn )
 
 {
     poSRS = NULL;
     
+    bUpdate = bUpdateIn;
     iNextFID = 0;
     bValidFile = FALSE;
     bHeaderComplete = !bUpdate; // assume header complete in readonly mode.
     eWkbType = wkbUnknown;
     poFeatureDefn = NULL;
     papszKeyedValues = NULL;
-
-    this->bUpdate = bUpdate;
 
     bRegionComplete = FALSE;
     nRegionOffset = 0;

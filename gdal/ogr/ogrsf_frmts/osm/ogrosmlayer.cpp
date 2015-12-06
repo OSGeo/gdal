@@ -45,10 +45,10 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 
-OGROSMLayer::OGROSMLayer(OGROSMDataSource* poDS, int nIdxLayer, const char* pszName )
+OGROSMLayer::OGROSMLayer(OGROSMDataSource* poDSIn, int nIdxLayerIn, const char* pszName )
 {
-    this->poDS = poDS;
-    this->nIdxLayer = nIdxLayer;
+    this->poDS = poDSIn;
+    this->nIdxLayer = nIdxLayerIn;
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn->GetName() );

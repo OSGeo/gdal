@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 /*                          OGRS57DataSource()                          */
 /************************************************************************/
 
-OGRS57DataSource::OGRS57DataSource(char** papszOpenOptions)
+OGRS57DataSource::OGRS57DataSource(char** papszOpenOptionsIn)
 
 {
     nLayers = 0;
@@ -59,9 +59,9 @@ OGRS57DataSource::OGRS57DataSource(char** papszOpenOptions)
 /* -------------------------------------------------------------------- */
 /*      Allow initialization of options from the environment.           */
 /* -------------------------------------------------------------------- */
-    if( papszOpenOptions != NULL )
+    if( papszOpenOptionsIn != NULL )
     {
-        papszOptions = CSLDuplicate(papszOpenOptions);
+        papszOptions = CSLDuplicate(papszOpenOptionsIn);
     }
     else
     {
@@ -457,7 +457,7 @@ OGRErr OGRS57DataSource::GetDSExtent( OGREnvelope *psExtent, int bForce )
 /************************************************************************/
 
 int OGRS57DataSource::Create( const char *pszFilename,
-                              char **papszOptions )
+                              char **papszOptionsIn )
 {
 /* -------------------------------------------------------------------- */
 /*      Instantiate the class registrar if possible.                    */
@@ -524,21 +524,21 @@ int OGRS57DataSource::Create( const char *pszFilename,
     int nEXPP = 1, nINTU = 4, nAGEN = 540, nNOMR = 0, nNOGR = 0,
         nNOLR = 0, nNOIN = 0, nNOCN = 0, nNOED = 0;
     const char
-        *pszEXPP = CSLFetchNameValue(papszOptions, "S57_EXPP"),
-        *pszINTU = CSLFetchNameValue(papszOptions, "S57_INTU"),
-        *pszEDTN = CSLFetchNameValue(papszOptions, "S57_EDTN"),
-        *pszUPDN = CSLFetchNameValue(papszOptions, "S57_UPDN"),
-        *pszUADT = CSLFetchNameValue(papszOptions, "S57_UADT"),
-        *pszISDT = CSLFetchNameValue(papszOptions, "S57_ISDT"),
-        *pszSTED = CSLFetchNameValue(papszOptions, "S57_STED"),
-        *pszAGEN = CSLFetchNameValue(papszOptions, "S57_AGEN"),
-        *pszCOMT = CSLFetchNameValue(papszOptions, "S57_COMT"),
-        *pszNOMR = CSLFetchNameValue(papszOptions, "S57_NOMR"),
-        *pszNOGR = CSLFetchNameValue(papszOptions, "S57_NOGR"),
-        *pszNOLR = CSLFetchNameValue(papszOptions, "S57_NOLR"),
-        *pszNOIN = CSLFetchNameValue(papszOptions, "S57_NOIN"),
-        *pszNOCN = CSLFetchNameValue(papszOptions, "S57_NOCN"),
-        *pszNOED = CSLFetchNameValue(papszOptions, "S57_NOED");
+        *pszEXPP = CSLFetchNameValue(papszOptionsIn, "S57_EXPP"),
+        *pszINTU = CSLFetchNameValue(papszOptionsIn, "S57_INTU"),
+        *pszEDTN = CSLFetchNameValue(papszOptionsIn, "S57_EDTN"),
+        *pszUPDN = CSLFetchNameValue(papszOptionsIn, "S57_UPDN"),
+        *pszUADT = CSLFetchNameValue(papszOptionsIn, "S57_UADT"),
+        *pszISDT = CSLFetchNameValue(papszOptionsIn, "S57_ISDT"),
+        *pszSTED = CSLFetchNameValue(papszOptionsIn, "S57_STED"),
+        *pszAGEN = CSLFetchNameValue(papszOptionsIn, "S57_AGEN"),
+        *pszCOMT = CSLFetchNameValue(papszOptionsIn, "S57_COMT"),
+        *pszNOMR = CSLFetchNameValue(papszOptionsIn, "S57_NOMR"),
+        *pszNOGR = CSLFetchNameValue(papszOptionsIn, "S57_NOGR"),
+        *pszNOLR = CSLFetchNameValue(papszOptionsIn, "S57_NOLR"),
+        *pszNOIN = CSLFetchNameValue(papszOptionsIn, "S57_NOIN"),
+        *pszNOCN = CSLFetchNameValue(papszOptionsIn, "S57_NOCN"),
+        *pszNOED = CSLFetchNameValue(papszOptionsIn, "S57_NOED");
     if (pszEXPP) nEXPP = atoi(pszEXPP);
     if (pszINTU) nINTU = atoi(pszINTU);
     if (pszAGEN) nAGEN = atoi(pszAGEN);
@@ -554,10 +554,10 @@ int OGRS57DataSource::Create( const char *pszFilename,
 
     int nHDAT = 2, nVDAT = 17, nSDAT = 23, nCSCL = 52000;
     const char
-        *pszHDAT = CSLFetchNameValue(papszOptions, "S57_HDAT"),
-        *pszVDAT = CSLFetchNameValue(papszOptions, "S57_VDAT"),
-        *pszSDAT = CSLFetchNameValue(papszOptions, "S57_SDAT"),
-        *pszCSCL = CSLFetchNameValue(papszOptions, "S57_CSCL");
+        *pszHDAT = CSLFetchNameValue(papszOptionsIn, "S57_HDAT"),
+        *pszVDAT = CSLFetchNameValue(papszOptionsIn, "S57_VDAT"),
+        *pszSDAT = CSLFetchNameValue(papszOptionsIn, "S57_SDAT"),
+        *pszCSCL = CSLFetchNameValue(papszOptionsIn, "S57_CSCL");
     if (pszHDAT)
         nHDAT = atoi(pszHDAT);
     if (pszVDAT)

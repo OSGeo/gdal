@@ -141,16 +141,16 @@ static CPLString OGRCARTODBGetOptionValue(const char* pszFilename,
 /************************************************************************/
 
 int OGRCARTODBDataSource::Open( const char * pszFilename,
-                                char** papszOpenOptions,
+                                char** papszOpenOptionsIn,
                                 int bUpdateIn )
 
 {
     bReadWrite = bUpdateIn;
-    bBatchInsert = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions, "BATCH_INSERT", "YES"));
+    bBatchInsert = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptionsIn, "BATCH_INSERT", "YES"));
 
     pszName = CPLStrdup( pszFilename );
-    if( CSLFetchNameValue(papszOpenOptions, "ACCOUNT") )
-        pszAccount = CPLStrdup(CSLFetchNameValue(papszOpenOptions, "ACCOUNT"));
+    if( CSLFetchNameValue(papszOpenOptionsIn, "ACCOUNT") )
+        pszAccount = CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn, "ACCOUNT"));
     else
     {
         pszAccount = CPLStrdup(pszFilename + strlen("CARTODB:"));
@@ -164,7 +164,7 @@ int OGRCARTODBDataSource::Open( const char * pszFilename,
         }
     }
 
-    osAPIKey = CSLFetchNameValueDef(papszOpenOptions, "API_KEY",
+    osAPIKey = CSLFetchNameValueDef(papszOpenOptionsIn, "API_KEY",
                                     CPLGetConfigOption("CARTODB_API_KEY", ""));
 
     CPLString osTables = OGRCARTODBGetOptionValue(pszFilename, "tables");
@@ -393,7 +393,7 @@ int OGRCARTODBDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
+OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszNameIn,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )
@@ -412,7 +412,7 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszName,papoLayers[iLayer]->GetName()) )
+        if( EQUAL(pszNameIn,papoLayers[iLayer]->GetName()) )
         {
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
@@ -425,16 +425,16 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
-                          pszName );
+                          pszNameIn );
                 return NULL;
             }
         }
     }
     
-    CPLString osName(pszName);
+    CPLString osName(pszNameIn);
     if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
     {
-        char* pszTmp = OGRPGCommonLaunderName(pszName);
+        char* pszTmp = OGRPGCommonLaunderName(pszNameIn);
         osName = pszTmp;
         CPLFree(pszTmp);
     }

@@ -89,12 +89,12 @@ static bool OGRPLScenesLayerFieldNameComparator(const CPLString& osFirst,
 /*                           OGRPLScenesLayer()                         */
 /************************************************************************/
 
-OGRPLScenesLayer::OGRPLScenesLayer(OGRPLScenesDataset* poDS,
+OGRPLScenesLayer::OGRPLScenesLayer(OGRPLScenesDataset* poDSIn,
                                    const char* pszName,
                                    const char* pszBaseURL,
                                    json_object* poObjCount10)
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     osBaseURL = pszBaseURL;
     SetDescription(pszName);
     poFeatureDefn = new OGRFeatureDefn(pszName);

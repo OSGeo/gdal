@@ -3431,7 +3431,6 @@ OGRFeature *FGdbLayer::GetFeature( GIntBig oid )
 
 GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
 {
-    long           hr;
     int32          rowCount = 0;
     
     if( m_pTable == NULL )
@@ -3468,6 +3467,7 @@ GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
         return nFeatures;
     }
 
+    long hr;
     if (FAILED(hr = m_pTable->GetRowCount(rowCount)))
     {
         GDBErr(hr, "Failed counting rows");
