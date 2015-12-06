@@ -230,7 +230,7 @@ void VRTSimpleSource::SetNoDataValue( double dfNewNoDataValue )
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-static const char* apszSpecialSyntax[] = { "HDF5:\"{FILENAME}\":{ANY}",
+static const char* const apszSpecialSyntax[] = { "HDF5:\"{FILENAME}\":{ANY}",
                                             "HDF5:{FILENAME}:{ANY}",
                                             "NETCDF:\"{FILENAME}\":{ANY}",
                                             "NETCDF:{FILENAME}:{ANY}",

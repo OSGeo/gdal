@@ -257,7 +257,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
                 if( poRecord->GetStringSubfield( "IDEN", 0, "MODN", 0 ) == NULL )
                     continue;
 
-                static const char* fields[][2] = { { "TITL", "TITLE" },
+                static const char* const fields[][2] = { { "TITL", "TITLE" },
                                                    { "DAID", "DATASET_ID" },
                                                    { "DAST", "DATA_STRUCTURE" },
                                                    { "MPDT", "MAP_DATE" },

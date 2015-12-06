@@ -2181,10 +2181,10 @@ CPLErr NITFDataset::SetProjection(const char* _pszProjection)
 
 void NITFDataset::InitializeNITFDESMetadata()
 {
-    static const char   *pszDESMetadataDomain       = "NITF_DES_METADATA";
-    static const char   *pszDESsDomain              = "NITF_DES";
-    static const char   *pszMDXmlDataContentDESDATA = "NITF_DES_XML_DATA_CONTENT_DESDATA";
-    static const char   *pszXmlDataContent          = "XML_DATA_CONTENT";
+    static const char   * const pszDESMetadataDomain       = "NITF_DES_METADATA";
+    static const char   * const pszDESsDomain              = "NITF_DES";
+    static const char   * const pszMDXmlDataContentDESDATA = "NITF_DES_XML_DATA_CONTENT_DESDATA";
+    static const char   * const pszXmlDataContent          = "XML_DATA_CONTENT";
     static const int     idxXmlDataContentDESDATA   = 973;
     static const int     sizeXmlDataContent         =
         static_cast<int>( strlen( pszXmlDataContent ) );
@@ -2251,7 +2251,7 @@ void NITFDataset::InitializeNITFDESMetadata()
 
 void NITFDataset::InitializeNITFDESs()
 {
-    static const char *pszDESsDomain = "NITF_DES";
+    static const char * const pszDESsDomain = "NITF_DES";
 
     char **ppszDESsList = oSpecialMD.GetMetadata( pszDESsDomain );
 
@@ -2338,8 +2338,8 @@ void NITFDataset::InitializeNITFDESs()
 
 void NITFDataset::InitializeNITFTREs()
 {
-    static const char *pszFileHeaderTREsDomain   = "NITF_FILE_HEADER_TRES";
-    static const char *pszImageSegmentTREsDomain = "NITF_IMAGE_SEGMENT_TRES";
+    static const char * const pszFileHeaderTREsDomain   = "NITF_FILE_HEADER_TRES";
+    static const char * const pszImageSegmentTREsDomain = "NITF_IMAGE_SEGMENT_TRES";
 
     char **ppszFileHeaderTREsList   = oSpecialMD.GetMetadata( pszFileHeaderTREsDomain );
     char **ppszImageSegmentTREsList = oSpecialMD.GetMetadata( pszImageSegmentTREsDomain );
@@ -2450,9 +2450,9 @@ void NITFDataset::InitializeNITFTREs()
 void NITFDataset::InitializeNITFMetadata()
 
 {
-    static const char *pszDomainName            = "NITF_METADATA";
-    static const char *pszTagNITFFileHeader     = "NITFFileHeader";
-    static const char *pszTagNITFImageSubheader = "NITFImageSubheader";
+    static const char * const pszDomainName            = "NITF_METADATA";
+    static const char * const pszTagNITFFileHeader     = "NITFFileHeader";
+    static const char * const pszTagNITFImageSubheader = "NITFImageSubheader";
 
     if( oSpecialMD.GetMetadata( pszDomainName ) != NULL )
         return;
@@ -5611,7 +5611,7 @@ static const NITFFieldDescription asFieldDescription [] =
 };
 
 /* Keep in sync with NITFWriteBLOCKA */
-static const char *apszFieldsBLOCKA[] = { 
+static const char * const apszFieldsBLOCKA[] = { 
         "BLOCK_INSTANCE", "0", "2",
         "N_GRAY",         "2", "5",
         "L_LINES",        "7", "5",

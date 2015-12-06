@@ -94,7 +94,7 @@ static const LULCDescStruct asLULCDesc[] =
     {92, "Glaciers" }
 };
 
-static const char* apszBandDescription[] =
+static const char* const apszBandDescription[] =
 {
     "Land Use and Land Cover",
     "Political units",

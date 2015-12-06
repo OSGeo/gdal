@@ -34,7 +34,7 @@
 
 CPL_CVSID("$Id$");
 
-static const char *apszDefDefn[] = {
+static const char * const apszDefDefn[] = {
 
     "Edsc_Table",
     "{1:lnumrows,}Edsc_Table",
