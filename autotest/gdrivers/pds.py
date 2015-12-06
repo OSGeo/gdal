@@ -227,7 +227,7 @@ def pds_8():
     gdal.SetConfigOption( 'PDS_SampleProjOffset_Shift', None )
     gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', None )
     gdal.SetConfigOption( 'PDS_SampleProjOffset_Mult', None )
-    gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', None )
+    gdal.SetConfigOption( 'PDS_LineProjOffset_Mult', None )
 
     return result
 

@@ -64,10 +64,8 @@ def vicar_1():
             gdaltest.post_reason('failure')
             print(got_gt)
             print(expected_gt)
-            # FIXME: remove this once we have found the reason for random failures
-            if gdal.GetConfigOption('TRAVIS', None) is None and gdal.GetConfigOption('APPVEYOR', None) is None:
-                return 'fail'
-    
+            return 'fail'
+
     if ds.GetRasterBand(1).GetNoDataValue() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
