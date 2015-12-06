@@ -3051,6 +3051,10 @@ def jp2openjpeg_46():
     if gdal.GetLastErrorMsg().find('dynamic_metadata not supported') >= 0:
         gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
         return 'skip'
+    # Maybe a conflict with FileGDB libxml2
+    if gdal.GetLastErrorMsg().find('An error occurred in libxml2') >= 0:
+        gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
+        return 'skip'
 
     ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
@@ -3059,9 +3063,6 @@ def jp2openjpeg_46():
 yeah: """) < 0:
         gdaltest.post_reason('fail')
         print(gmljp2)
-        # Maybe a conflict with FileGDB libxml2
-        if gdal.GetLastErrorMsg().find('An error occurred in libxml2') >= 0:
-            return 'skip'
         return 'fail'
     ds = None
 
