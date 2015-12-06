@@ -56,47 +56,6 @@
 #define DEF_NCEP_TABLE rean_nowarn
 enum Def_NCEP_Table { rean, opn, rean_nowarn, opn_nowarn };
 
-extern GRIB1ParmTable parm_table_ncep_opn[256];
-extern GRIB1ParmTable parm_table_ncep_reanal[256];
-extern GRIB1ParmTable parm_table_ncep_tdl[256];
-extern GRIB1ParmTable parm_table_ncep_mdl[256];
-extern GRIB1ParmTable parm_table_omb[256];
-extern GRIB1ParmTable parm_table_nceptab_129[256];
-extern GRIB1ParmTable parm_table_nceptab_130[256];
-extern GRIB1ParmTable parm_table_nceptab_131[256];
-
-extern GRIB1ParmTable parm_table_nohrsc[256];
-
-extern GRIB1ParmTable parm_table_cptec_254[256];
-
-extern GRIB1ParmTable parm_table_afwa_000[256];
-extern GRIB1ParmTable parm_table_afwa_001[256];
-extern GRIB1ParmTable parm_table_afwa_002[256];
-extern GRIB1ParmTable parm_table_afwa_003[256];
-extern GRIB1ParmTable parm_table_afwa_010[256];
-extern GRIB1ParmTable parm_table_afwa_011[256];
-
-extern GRIB1ParmTable parm_table_dwd_002[256];
-extern GRIB1ParmTable parm_table_dwd_201[256];
-extern GRIB1ParmTable parm_table_dwd_202[256];
-extern GRIB1ParmTable parm_table_dwd_203[256];
-
-extern GRIB1ParmTable parm_table_ecmwf_128[256];
-extern GRIB1ParmTable parm_table_ecmwf_129[256];
-extern GRIB1ParmTable parm_table_ecmwf_130[256];
-extern GRIB1ParmTable parm_table_ecmwf_131[256];
-extern GRIB1ParmTable parm_table_ecmwf_140[256];
-extern GRIB1ParmTable parm_table_ecmwf_150[256];
-extern GRIB1ParmTable parm_table_ecmwf_160[256];
-extern GRIB1ParmTable parm_table_ecmwf_170[256];
-extern GRIB1ParmTable parm_table_ecmwf_180[256];
-
-extern GRIB1ParmTable parm_table_athens[256];
-
-extern GRIB1ParmTable parm_table_cmc[256];
-
-extern GRIB1ParmTable parm_table_undefined[256];
-
 /*****************************************************************************
  * Choose_ParmTable() --
  *
@@ -123,7 +82,7 @@ extern GRIB1ParmTable parm_table_undefined[256];
  * NOTES
  *****************************************************************************
  */
-static GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
+static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
                                          unsigned short int center,
                                          unsigned short int subcenter)
 {
@@ -285,7 +244,7 @@ static void GRIB1_Table2LookUp (pdsG1Type *pdsMeta, const char **name,
                                 unsigned short int center,
                                 unsigned short int subcenter)
 {
-   GRIB1ParmTable *table; /* The parameter table chosen by the pdsMeta data */
+   const GRIB1ParmTable *table; /* The parameter table chosen by the pdsMeta data */
 
    table = Choose_ParmTable (pdsMeta, center, subcenter);
    if ((center == NMC) && (pdsMeta->mstrVersion == 129)
@@ -304,8 +263,6 @@ static void GRIB1_Table2LookUp (pdsG1Type *pdsMeta, const char **name,
    *convert = table[pdsMeta->cat].convert;
 /*   printf ("%s %s %s\n", *name, *comment, *unit);*/
 }
-
-extern GRIB1SurfTable GRIB1Surface[256];
 
 /* Similar to metaname.c :: ParseLevelName() */
 static void GRIB1_Table3LookUp (pdsG1Type *pdsMeta, char **shortLevelName,

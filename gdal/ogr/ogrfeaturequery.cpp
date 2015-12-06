@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
 /*     Support for special attributes (feature query and selection)     */
 /************************************************************************/
 
-const char* SpecialFieldNames[SPECIAL_FIELD_COUNT] 
+const char* const SpecialFieldNames[SPECIAL_FIELD_COUNT] 
 = {"FID", "OGR_GEOMETRY", "OGR_STYLE", "OGR_GEOM_WKT", "OGR_GEOM_AREA"};
 const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT] 
 = {SWQ_INTEGER, SWQ_STRING, SWQ_STRING, SWQ_STRING, SWQ_FLOAT};

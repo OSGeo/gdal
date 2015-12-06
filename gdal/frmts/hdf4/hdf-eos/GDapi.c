@@ -156,7 +156,7 @@ static struct gridRegion *GDXRegion[NGRIDREGN];
 /* Static projection table */
 static const struct {
     int32 projcode;
-    char *projname;
+    const char *projname;
 } Projections[] = {
     {GCTP_GEO,	   "GCTP_GEO"},
     {GCTP_UTM,	   "GCTP_UTM"},
@@ -197,7 +197,7 @@ static const struct {
 };
 
 /* Compression Codes */
-static const char *HDFcomp[] = {
+static const char * const HDFcomp[] = {
     "HDFE_COMP_NONE",
     "HDFE_COMP_RLE",
     "HDFE_COMP_NBIT",
@@ -206,7 +206,7 @@ static const char *HDFcomp[] = {
 };
 
 /* Origin Codes */
-static const char *originNames[] = {
+static const char * const originNames[] = {
     "HDFE_GD_UL",
     "HDFE_GD_UR",
     "HDFE_GD_LL",
@@ -214,7 +214,7 @@ static const char *originNames[] = {
 };
 
 /* Pixel Registration Codes */
-static const char *pixregNames[] = {
+static const char * const pixregNames[] = {
     "HDFE_CENTER",
     "HDFE_CORNER"
 };

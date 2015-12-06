@@ -116,7 +116,7 @@ int CPL_DLL OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOpti
 #define SPF_OGR_GEOM_AREA 4
 #define SPECIAL_FIELD_COUNT 5
 
-extern const char* SpecialFieldNames[SPECIAL_FIELD_COUNT];
+extern const char* const SpecialFieldNames[SPECIAL_FIELD_COUNT];
 
 #ifdef SWQ_H_INCLUDED_
 extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];

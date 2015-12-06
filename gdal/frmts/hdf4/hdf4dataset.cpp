@@ -47,7 +47,7 @@ CPL_C_START
 void GDALRegister_HDF4(void);
 CPL_C_END
 
-extern const char *pszGDALSignature;
+extern const char * const pszGDALSignature;
 
 CPLMutex *hHDF4Mutex = NULL;
 
