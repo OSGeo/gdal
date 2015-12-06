@@ -31,11 +31,11 @@
 #include "gnm.h"
 #include "gnm_priv.h"
 
-OGRGNMWrappedResultLayer::OGRGNMWrappedResultLayer(GDALDataset* poDS,
-                                                   OGRLayer* poLayer)
+OGRGNMWrappedResultLayer::OGRGNMWrappedResultLayer(GDALDataset* poDSIn,
+                                                   OGRLayer* poLayerIn)
 {
-    this->poDS = poDS;
-    this->poLayer = poLayer;
+    this->poDS = poDSIn;
+    this->poLayer = poLayerIn;
 
     //create standard fields
 
