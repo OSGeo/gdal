@@ -954,7 +954,8 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
 /* -------------------------------------------------------------------- */
     char szVarName[NC_MAX_NAME+1];
     szVarName[0] = '\0';
-    nc_inq_varname( cdfid, nZId, szVarName );
+    int status = nc_inq_varname( cdfid, nZId, szVarName );
+    NCDF_ERR(status);
 
     int nd;
     nc_inq_varndims( cdfid, nZId, &nd );
@@ -980,7 +981,6 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
 /* -------------------------------------------------------------------- */
     int nVarID = -1;
     int result = 0;
-    int status;
     int Taken = 0;
 
     for( int i=0; i < nd-2 ; i++ ) {
@@ -1826,7 +1826,10 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 
     char szVarName[ NC_MAX_NAME+1 ];
     szVarName[0] = '\0';
-    nc_inq_varname( cdfid, nVarId, szVarName );
+    {
+    int status = nc_inq_varname( cdfid, nVarId, szVarName );
+    NCDF_ERR(status);
+    }
     char szTemp[ NC_MAX_NAME+1 ];
     snprintf(szTemp,sizeof(szTemp), "%s#%s", szVarName,CF_GRD_MAPPING);
 
@@ -4034,13 +4037,15 @@ CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
     }
     else {
         szVarName[0] = '\0';
-        nc_inq_varname( cdfidIn, var, szVarName );
+        int status = nc_inq_varname( cdfid, var, szVarName );
+        NCDF_ERR(status);
     }
 
     for( int l=0; l < nbAttr; l++) {
         char szAttrName[ NC_MAX_NAME+1 ];
         szAttrName[0] = 0;
-        nc_inq_attname( cdfidIn, var, l, szAttrName);
+        int status = nc_inq_attname( cdfid, var, l, szAttrName);
+        NCDF_ERR(status);
         char szMetaName[ NC_MAX_NAME * 2 + 1 + 1 ];
         snprintf( szMetaName, sizeof(szMetaName), "%s#%s", szVarName, szAttrName  );
 
@@ -4145,7 +4150,8 @@ void netCDFDataset::CreateSubDatasetList( )
                     break;
             }
             szName[0] = '\0';
-            nc_inq_varname( cdfid, nVar, szName);
+            int status = nc_inq_varname( cdfid, nVar, szName);
+            NCDF_ERR(status);
             nAttlen = 0;
             nc_inq_att( cdfid, nVar, CF_STD_NAME, &nAttype, &nAttlen);
             if( nAttlen < sizeof(szVarStdName) &&
@@ -4632,7 +4638,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         char szVarName[NC_MAX_NAME+1];
         szVarName[0] = '\0';
-        nc_inq_varname( cdfid, nVarID, szVarName);
+        status = nc_inq_varname( cdfid, nVarID, szVarName);
+        NCDF_ERR(status);
         osSubdatasetName = szVarName;
     }
 
@@ -4708,8 +4715,10 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         szDimName2[0]='\0';
         szDimName3[0]='\0';
         szDimName4[0]='\0';
-        nc_inq_dimname( cdfid, paDimIds[nd-1], szDimName1 );
-        nc_inq_dimname( cdfid, paDimIds[nd-2], szDimName2 );
+        status = nc_inq_dimname( cdfid, paDimIds[nd-1], szDimName1 );
+        NCDF_ERR(status);
+        status = nc_inq_dimname( cdfid, paDimIds[nd-2], szDimName2 );
+        NCDF_ERR(status);
         if (  NCDFIsVarLongitude( cdfid, -1, szDimName1 )==false && 
               NCDFIsVarProjectionX( cdfid, -1, szDimName1 )==false ) {
             CPLError( CE_Warning, CPLE_AppDefined, 
@@ -4723,9 +4732,11 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                       nd-2, szDimName2 );
         }
         if ( nd >= 3 ) {
-            nc_inq_dimname( cdfid, paDimIds[nd-3], szDimName3 );
+            status = nc_inq_dimname( cdfid, paDimIds[nd-3], szDimName3 );
+            NCDF_ERR(status);
             if ( nd >= 4 ) {
-                nc_inq_dimname( cdfid, paDimIds[nd-4], szDimName4 );
+                status = nc_inq_dimname( cdfid, paDimIds[nd-4], szDimName4 );
+                NCDF_ERR(status);
                 if ( NCDFIsVarVerticalCoord( cdfid, -1, szDimName3 )==false ) {
                     CPLError( CE_Warning, CPLE_AppDefined, 
                               "dimension #%d (%s) is not a Time  dimension.", 
@@ -4816,7 +4827,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( int j=0; j < dim_count; j++ ){
         char szTemp[NC_MAX_NAME+1];
-        nc_inq_dimname( cdfid, j, szTemp );
+        status = nc_inq_dimname( cdfid, j, szTemp );
+        NCDF_ERR(status);
         poDS->papszDimName.AddString( szTemp );
         status = nc_inq_varid( cdfid, poDS->papszDimName[j], &nDimID );
         if( status == NC_NOERR ) {
