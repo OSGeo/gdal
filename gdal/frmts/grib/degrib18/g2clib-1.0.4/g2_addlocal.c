@@ -51,13 +51,13 @@ g2int g2_addlocal(unsigned char *cgrib,unsigned char *csec2,g2int lcsec2)
 {
 
       g2int ierr; 
-      static unsigned char G=0x47;       // 'G'
-      static unsigned char R=0x52;       // 'R'
-      static unsigned char I=0x49;       // 'I'
-      static unsigned char B=0x42;       // 'B'
-      static unsigned char seven=0x37;   // '7'
+      const unsigned char G=0x47;       // 'G'
+      const unsigned char R=0x52;       // 'R'
+      const unsigned char I=0x49;       // 'I'
+      const unsigned char B=0x42;       // 'B'
+      const unsigned char seven=0x37;   // '7'
 
-      static g2int two=2;
+      const g2int two=2;
       g2int   j,k,lensec2,iofst,ibeg,lencurr,ilen,len,istart;
       g2int   isecnum;
  

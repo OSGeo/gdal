@@ -1035,7 +1035,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
 int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans)
 {
    /* Following is a lookup table for unit conversion (see code table 4.4). */
-   static sInt4 unit2sec[] = {
+   static const sInt4 unit2sec[] = {
       60, 3600, 86400L, 0, 0,
       0, 0, 0, 0, 0,
       10800, 21600L, 43200L
@@ -1084,7 +1084,7 @@ int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans)
 int ParseSect4Time2sec (sInt4 time, int unit, double *ans)
 {
    /* Following is a lookup table for unit conversion (see code table 4.4). */
-   static sInt4 unit2sec[] = {
+   static const sInt4 unit2sec[] = {
       60, 3600, 86400L, 0, 0,
       0, 0, 0, 0, 0,
       10800, 21600L, 43200L, 1

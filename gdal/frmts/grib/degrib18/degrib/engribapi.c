@@ -580,7 +580,7 @@ int fillSect3 (enGribMeta *en, uShort2 tmplNum, double majEarth,
 static int getCodedTime (uChar timeCode, double time, sInt4 *ans)
 {
    /* Following is a lookup table for unit conversion (see code table 4.4). */
-   static sInt4 unit2sec[] = {
+   static const sInt4 unit2sec[] = {
       60, 3600, 86400L, 0, 0,
       0, 0, 0, 0, 0,
       10800, 21600L, 43200L, 1

@@ -72,13 +72,13 @@ g2int g2_addgrid(unsigned char *cgrib,g2int *igds,g2int *igdstmpl,g2int *ideflis
 {
 
       g2int ierr;
-      static unsigned char G=0x47;       // 'G'
-      static unsigned char R=0x52;       // 'R'
-      static unsigned char I=0x49;       // 'I'
-      static unsigned char B=0x42;       // 'B'
-      static unsigned char seven=0x37;   // '7'
+      const unsigned char G=0x47;       // 'G'
+      const unsigned char R=0x52;       // 'R'
+      const unsigned char I=0x49;       // 'I'
+      const unsigned char B=0x42;       // 'B'
+      const unsigned char seven=0x37;   // '7'
 
-      static g2int one=1,three=3,miss=65535;
+      const g2int one=1,three=3,miss=65535;
       g2int   lensec3,iofst,ibeg,lencurr,len;
       g2int   i,j,temp,ilen,isecnum,nbits;
       xxtemplate *mapgrid=0;

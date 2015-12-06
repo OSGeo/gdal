@@ -64,7 +64,7 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //$$$
 {
 
-      static g2int zero=0;
+      const g2int zero=0;
       g2int  *ifld,*gref,*glen,*gwidth;
       g2int  *jmin, *jmax, *lbit;
       g2int  i,j,n, /* nbits, */ imin,imax,left;
@@ -76,9 +76,9 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
       g2int  kfildo, minpk, inc, maxgrps, ibit, jbit, kbit, novref, lbitref;
       g2int  missopt, miss1, miss2, ier;
       g2float  bscale,dscale,rmax,rmin,temp;
-      static g2int simple_alg = 0;
-      static g2float alog2=0.69314718;       //  ln(2.0)
-      static g2int one=1;
+      const g2int simple_alg = 0;
+      const g2float alog2=0.69314718;       //  ln(2.0)
+      const g2int one=1;
 
       bscale=int_power(2.0,-idrstmpl[1]);
       dscale=int_power(10.0,idrstmpl[2]);
