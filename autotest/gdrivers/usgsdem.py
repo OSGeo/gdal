@@ -164,6 +164,8 @@ def usgsdem_7():
 
     if ds2.RasterXSize != 1201 or ds2.RasterYSize != 1201:
         gdaltest.post_reason( 'Bad image dimensions.' )
+        print(ds2.RasterXSize)
+        print(ds2.RasterYSize)
         return 'fail'
 
     expected_gt = (-80.000104166666674,0.000208333333333,0,44.000104166666667,0,-0.000208333333333)
