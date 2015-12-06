@@ -156,7 +156,7 @@ void    AVCE00GenReset(AVCE00GenInfo  *psInfo)
 const char *AVCE00GenStartSection(AVCE00GenInfo *psInfo, AVCFileType eType, 
                                   const char *pszClassName)
 {
-    char *pszName = "UNK";
+    const char *pszName = "UNK";
 
     AVCE00GenReset(psInfo);
 

@@ -100,8 +100,8 @@ struct _tProjectionInfo_GCSRS {
 };
 
 struct _tSysCoord_GCSRS {
-  char   *pszSysCoordName;
-  char   *pszUnit;
+  const char   *pszSysCoordName;
+  const char   *pszUnit;
 
   double  dfPM;
   /* inherited : */
