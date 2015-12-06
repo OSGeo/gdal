@@ -125,7 +125,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
                                   CPLString& osCurrentSchema,
                                   const char * pszTableNameIn,
                                   const char * pszSchemaNameIn,
-                                  const char * pszGeomColForced,
+                                  const char * pszGeomColForcedIn,
                                   int bUpdate )
 
 {
@@ -151,7 +151,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     else
         pszSchemaName = CPLStrdup( osCurrentSchema );
     this->pszGeomColForced =
-        pszGeomColForced ? CPLStrdup(pszGeomColForced) : NULL;
+        pszGeomColForcedIn ? CPLStrdup(pszGeomColForcedIn) : NULL;
 
     pszSqlGeomParentTableName = NULL;
     bTableDefinitionValid = -1;
@@ -514,9 +514,9 @@ int OGRPGTableLayer::ReadTableDefinition()
 
       while(bGoOn)
       {
-        CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn,
+        osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn,
                 (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName);
-        const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
+        pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
 
         osCommand.Printf(
             "SELECT type, coord_dimension, srid FROM %s WHERE f_table_name = %s",
@@ -2301,7 +2301,7 @@ OGRErr OGRPGTableLayer::DeleteField( int iField )
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
 {
     PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult = NULL;
@@ -2333,17 +2333,17 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
 
     poDS->SoftStartTransaction();
 
-    if (!(nFlags & ALTER_TYPE_FLAG))
+    if (!(nFlagsIn & ALTER_TYPE_FLAG))
         oField.SetType(poFieldDefn->GetType());
 
-    if (!(nFlags & ALTER_WIDTH_PRECISION_FLAG))
+    if (!(nFlagsIn & ALTER_WIDTH_PRECISION_FLAG))
     {
         oField.SetWidth(poFieldDefn->GetWidth());
         oField.SetPrecision(poFieldDefn->GetPrecision());
     }
 
-    if ((nFlags & ALTER_TYPE_FLAG) ||
-        (nFlags & ALTER_WIDTH_PRECISION_FLAG))
+    if ((nFlagsIn & ALTER_TYPE_FLAG) ||
+        (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG))
     {
         CPLString osFieldType = OGRPGCommonLayerGetType(oField,
                                                        bPreservePrecision,
@@ -2377,7 +2377,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         OGRPGClearResult( hResult );
     }
 
-    if( (nFlags & ALTER_NULLABLE_FLAG) &&
+    if( (nFlagsIn & ALTER_NULLABLE_FLAG) &&
         poFieldDefn->IsNullable() != poNewFieldDefn->IsNullable() )
     {
         oField.SetNullable(poNewFieldDefn->IsNullable());
@@ -2408,7 +2408,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         OGRPGClearResult( hResult );
     }
     
-    if( (nFlags & ALTER_DEFAULT_FLAG) &&
+    if( (nFlagsIn & ALTER_DEFAULT_FLAG) &&
         ((poFieldDefn->GetDefault() == NULL && poNewFieldDefn->GetDefault() != NULL) ||
          (poFieldDefn->GetDefault() != NULL && poNewFieldDefn->GetDefault() == NULL) ||
          (poFieldDefn->GetDefault() != NULL && poNewFieldDefn->GetDefault() != NULL &&
@@ -2443,7 +2443,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         OGRPGClearResult( hResult );
     }
 
-    if( (nFlags & ALTER_NAME_FLAG) )
+    if( (nFlagsIn & ALTER_NAME_FLAG) )
     {
         if (bLaunderColumnNames)
         {
@@ -2485,18 +2485,18 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
 
     poDS->SoftCommitTransaction();
 
-    if (nFlags & ALTER_NAME_FLAG)
+    if (nFlagsIn & ALTER_NAME_FLAG)
         poFieldDefn->SetName(oField.GetNameRef());
-    if (nFlags & ALTER_TYPE_FLAG)
+    if (nFlagsIn & ALTER_TYPE_FLAG)
         poFieldDefn->SetType(oField.GetType());
-    if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+    if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
     {
         poFieldDefn->SetWidth(oField.GetWidth());
         poFieldDefn->SetPrecision(oField.GetPrecision());
     }
-    if (nFlags & ALTER_NULLABLE_FLAG)
+    if (nFlagsIn & ALTER_NULLABLE_FLAG)
         poFieldDefn->SetNullable(oField.IsNullable());
-    if (nFlags & ALTER_DEFAULT_FLAG)
+    if (nFlagsIn & ALTER_DEFAULT_FLAG)
         poFieldDefn->SetDefault(oField.GetDefault());
 
     return OGRERR_NONE;

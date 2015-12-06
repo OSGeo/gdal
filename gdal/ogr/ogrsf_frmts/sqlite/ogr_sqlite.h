@@ -155,8 +155,8 @@ enum OGRSpatialiteGeomType
 class OGRSQLiteGeomFieldDefn : public OGRGeomFieldDefn
 {
     public:
-        OGRSQLiteGeomFieldDefn( const char* pszName, int iGeomColIn ) :
-            OGRGeomFieldDefn(pszName, wkbUnknown), nSRSId(-1),
+        OGRSQLiteGeomFieldDefn( const char* pszNameIn, int iGeomColIn ) :
+            OGRGeomFieldDefn(pszNameIn, wkbUnknown), nSRSId(-1),
             iCol(iGeomColIn), bTriedAsSpatiaLite(FALSE), eGeomFormat(OSGF_None),
             bHasM(FALSE), bCachedExtentIsValid(FALSE), bHasSpatialIndex(FALSE),
             bHasCheckedSpatialIndexTable(FALSE)

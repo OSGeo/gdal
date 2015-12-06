@@ -457,7 +457,6 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
 
         if( m_poHeader->m_nFirstIndexBlock != 0 )
         {
-            TABRawBinBlock *poBlock;
             poBlock = GetIndexObjectBlock( m_poHeader->m_nFirstIndexBlock );
             if( poBlock == NULL || (poBlock->GetBlockType() != TABMAP_INDEX_BLOCK &&
                                     poBlock->GetBlockType() != TABMAP_OBJECT_BLOCK) )

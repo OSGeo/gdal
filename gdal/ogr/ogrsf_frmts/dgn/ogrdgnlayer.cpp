@@ -39,12 +39,12 @@ CPL_CVSID("$Id$");
 /*                           OGRDGNLayer()                              */
 /************************************************************************/
 
-OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
-                          int bUpdate ) :
+OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
+                          int bUpdateIn ) :
     iNextShapeId(0)
 {
-    this->hDGN = hDGN;
-    this->bUpdate = bUpdate;
+    this->hDGN = hDGNIn;
+    this->bUpdate = bUpdateIn;
 
 /* -------------------------------------------------------------------- */
 /*      Work out what link format we are using.                         */

@@ -46,10 +46,10 @@ using std::wstring;
 /*                          FGdbDataSource()                           */
 /************************************************************************/
 
-FGdbDataSource::FGdbDataSource(FGdbDriver* poDriver, 
+FGdbDataSource::FGdbDataSource(FGdbDriver* poDriverIn, 
                                FGdbDatabaseConnection* pConnection):
 OGRDataSource(),
-m_poDriver(poDriver), m_pConnection(pConnection), m_pGeodatabase(NULL), m_bUpdate(false),
+m_poDriver(poDriverIn), m_pConnection(pConnection), m_pGeodatabase(NULL), m_bUpdate(false),
 m_poOpenFileGDBDrv(NULL)
 {
     bPerLayerCopyingForTransaction = -1;
@@ -551,7 +551,7 @@ class OGRFGdbSingleFeatureLayer : public OGRLayer
 /************************************************************************/
 
 OGRFGdbSingleFeatureLayer::OGRFGdbSingleFeatureLayer(const char* pszLayerName,
-                                                     const char *pszVal )
+                                                     const char *pszValIn )
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
@@ -560,7 +560,7 @@ OGRFGdbSingleFeatureLayer::OGRFGdbSingleFeatureLayer(const char* pszLayerName,
     poFeatureDefn->AddFieldDefn( &oField );
 
     iNextShapeId = 0;
-    this->pszVal = pszVal ? CPLStrdup(pszVal) : NULL;
+    this->pszVal = pszValIn ? CPLStrdup(pszValIn) : NULL;
 }
 
 /************************************************************************/

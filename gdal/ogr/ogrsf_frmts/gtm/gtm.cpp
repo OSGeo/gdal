@@ -139,21 +139,21 @@ void writeUShort(VSILFILE* fp, unsigned short val)
 /************************************************************************/
 /*             Implementation of Waypoint Function Members              */
 /************************************************************************/
-Waypoint::Waypoint(double latitude,
-                   double longitude,
-                   double altitude,
-                   const char* name,
-                   const char* comment,
-                   int icon,
-                   GIntBig wptdate)
+Waypoint::Waypoint(double latitudeIn,
+                   double longitudeIn,
+                   double altitudeIn,
+                   const char* nameIn,
+                   const char* commentIn,
+                   int iconIn,
+                   GIntBig wptdateIn)
 {
-    this->latitude = latitude;
-    this->longitude = longitude;
-    this->altitude = altitude;
-    this->name = CPLStrdup(name);
-    this->comment = CPLStrdup(comment);
-    this->icon = icon;
-    this->wptdate = wptdate;
+    this->latitude = latitudeIn;
+    this->longitude = longitudeIn;
+    this->altitude = altitudeIn;
+    this->name = CPLStrdup(nameIn);
+    this->comment = CPLStrdup(commentIn);
+    this->icon = iconIn;
+    this->wptdate = wptdateIn;
 }
 
 Waypoint::~Waypoint()
@@ -200,13 +200,13 @@ GIntBig Waypoint::getDate()
 /************************************************************************/
 /*               Implementation of Track Function Members               */
 /************************************************************************/
-Track::Track(const char* pszName,
-             unsigned char type,
-             int color)
+Track::Track(const char* pszNameIn,
+             unsigned char typeIn,
+             int colorIn)
 {
-    this->pszName = CPLStrdup(pszName);
-    this->type = type;
-    this->color = color;
+    this->pszName = CPLStrdup(pszNameIn);
+    this->type = typeIn;
+    this->color = colorIn;
     nPoints = 0;
     pasTrackPoints = NULL;
 }
@@ -296,14 +296,14 @@ GTM::~GTM()
     }
 }
 
-bool GTM::Open(const char* pszFilename)
+bool GTM::Open(const char* pszFilenameIn)
 {
 
     if (pGTMFile != NULL)
         VSIFCloseL(pGTMFile);
         
     CPLFree(this->pszFilename);
-    this->pszFilename = CPLStrdup(pszFilename);
+    this->pszFilename = CPLStrdup(pszFilenameIn);
 
     pGTMFile = VSIFOpenL( pszFilename, "r" );
     if (pGTMFile == NULL)

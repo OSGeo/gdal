@@ -50,10 +50,9 @@ static GDALDataset *OGRARCGENDriverOpen( GDALOpenInfo* poOpenInfo )
 
     /* Check that the first line is compatible with a generate file */
     /* and in particular contain >= 32 && <= 127 bytes */
-    int i;
     int bFoundEOL = FALSE;
     char* szFirstLine = CPLStrdup((const char*) poOpenInfo->pabyHeader);
-    for(i=0;szFirstLine[i] != '\0';i++)
+    for(int i=0;szFirstLine[i] != '\0';i++)
     {
         if (szFirstLine[i] == '\n' || szFirstLine[i] == '\r')
         {

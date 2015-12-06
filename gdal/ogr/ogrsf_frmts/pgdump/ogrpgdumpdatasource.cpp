@@ -38,13 +38,13 @@ CPL_CVSID("$Id$");
 /*                      OGRPGDumpDataSource()                           */
 /************************************************************************/
 
-OGRPGDumpDataSource::OGRPGDumpDataSource(const char* pszName,
+OGRPGDumpDataSource::OGRPGDumpDataSource(const char* pszNameIn,
                                          char** papszOptions)
 
 {
     nLayers = 0;
     papoLayers = NULL;
-    this->pszName = CPLStrdup(pszName);
+    this->pszName = CPLStrdup(pszNameIn);
     bTriedOpen = FALSE;
     fp = NULL;
     bInTransaction = FALSE;

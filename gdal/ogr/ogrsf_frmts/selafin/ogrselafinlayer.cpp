@@ -628,7 +628,7 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap) {
 /************************************************************************/
 OGRErr OGRSelafinLayer::AlterFieldDefn(int iField,
                                        OGRFieldDefn *poNewFieldDefn,
-                                       CPL_UNUSED int nFlags) {
+                                       int /* nFlagsIn */) {
     CPLDebug("Selafin","AlterFieldDefn(%i,%s,%s)",iField,poNewFieldDefn->GetNameRef(),OGRFieldDefn::GetFieldTypeName(poNewFieldDefn->GetType()));
     // Test if the field type is legal (only double precision values are allowed)
     if (poNewFieldDefn->GetType()!=OFTReal) {

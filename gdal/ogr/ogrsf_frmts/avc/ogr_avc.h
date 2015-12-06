@@ -102,7 +102,7 @@ class OGRAVCBinDataSource;
 
 class OGRAVCBinLayer : public OGRAVCLayer
 {
-    AVCE00Section       *psSection;
+    AVCE00Section       *m_psSection;
     AVCBinFile          *hFile;
 
     OGRAVCBinLayer      *poArcLayer;

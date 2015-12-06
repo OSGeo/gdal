@@ -40,12 +40,12 @@ CPL_CVSID("$Id$");
 /*                   OGRSQLiteSelectLayerCommonBehaviour()              */
 /************************************************************************/
 
-OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(OGRSQLiteBaseDataSource* poDS,
-                                            IOGRSQLiteSelectLayer* poLayer,
-                                            CPLString osSQL,
-                                            int bEmptyLayer) :
-            poDS(poDS), poLayer(poLayer), osSQLBase(osSQL),
-            bEmptyLayer(bEmptyLayer), osSQLCurrent(osSQL)
+OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(OGRSQLiteBaseDataSource* poDSIn,
+                                            IOGRSQLiteSelectLayer* poLayerIn,
+                                            CPLString osSQLIn,
+                                            int bEmptyLayerIn) :
+            poDS(poDSIn), poLayer(poLayerIn), osSQLBase(osSQLIn),
+            bEmptyLayer(bEmptyLayerIn), osSQLCurrent(osSQLIn)
 {
     bAllowResetReadingEvenIfIndexAtZero = FALSE;
     bSpatialFilterInSQL = TRUE;
@@ -60,13 +60,13 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                                             sqlite3_stmt *hStmtIn,
                                             int bUseStatementForGetNextFeature,
                                             int bEmptyLayer,
-                                            int bAllowMultipleGeomFields )
+                                            int bAllowMultipleGeomFieldsIn )
 
 {
     poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn, bEmptyLayer);
     poDS = poDSIn;
 
-    this->bAllowMultipleGeomFields = bAllowMultipleGeomFields;
+    this->bAllowMultipleGeomFields = bAllowMultipleGeomFieldsIn;
 
     std::set<CPLString> aosEmpty;
     BuildFeatureDefn( "SELECT", hStmtIn, aosEmpty, aosEmpty );

@@ -574,13 +574,13 @@ int OGREDIGEODataSource::CreateLayerFromObjectDesc(const OGREDIGEOObjectDescript
             const OGREDIGEOAttributeDescriptor& attrDesc = it->second;
             const OGREDIGEOAttributeDef& attrDef =
                                     mapAttributes[attrDesc.osNameRID];
-            OGRFieldType eType = OFTString;
+            OGRFieldType eFieldType = OFTString;
             if (attrDef.osTYP == "R" || attrDef.osTYP == "E")
-                eType = OFTReal;
+                eFieldType = OFTReal;
             else if (attrDef.osTYP == "I" || attrDef.osTYP == "N")
-                eType = OFTInteger;
+                eFieldType = OFTInteger;
 
-            poLayer->AddFieldDefn(attrDef.osLAB, eType, objDesc.aosAttrRID[j]);
+            poLayer->AddFieldDefn(attrDef.osLAB, eFieldType, objDesc.aosAttrRID[j]);
         }
     }
 

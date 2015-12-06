@@ -341,9 +341,9 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     int                 TestCapability( const char * );
     OGRFeatureDefn*     GetLayerDefn() { return m_poFeatureDefn; }
 
-    virtual int          HasFastSpatialFilter(CPL_UNUSED int iGeomCol) { return FALSE; }
-    virtual CPLString    GetSpatialWhere(CPL_UNUSED int iGeomCol,
-                                         CPL_UNUSED OGRGeometry* poFilterGeom) { return ""; }
+    virtual int          HasFastSpatialFilter(int /*iGeomCol*/) { return FALSE; }
+    virtual CPLString    GetSpatialWhere(int /*iGeomCol*/,
+                                         OGRGeometry* /*poFilterGeom*/) { return ""; }
 
 };
 

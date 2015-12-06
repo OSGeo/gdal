@@ -231,7 +231,7 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRGMEDataSource::ICreateLayer( const char *pszName,
+OGRLayer   *OGRGMEDataSource::ICreateLayer( const char *pszNameIn,
                                             CPL_UNUSED OGRSpatialReference *poSpatialRef,
                                             OGRwkbGeometryType eGType,
                                             char ** papszOptions )
@@ -252,7 +252,7 @@ OGRLayer   *OGRGMEDataSource::ICreateLayer( const char *pszName,
         papszOptions = CSLAddNameValue( papszOptions, "projectId", osProjectId.c_str() );
     }
 
-    osTraceToken = OGRGMEGetOptionValue(pszName, "trace");
+    osTraceToken = OGRGMEGetOptionValue(pszNameIn, "trace");
     if (osTraceToken.size() == 0) {
       osTraceToken = CPLGetConfigOption("GME_TRACE_TOKEN", "");
     }
@@ -260,7 +260,7 @@ OGRLayer   *OGRGMEDataSource::ICreateLayer( const char *pszName,
       CPLDebug("GME", "Found trace token %s", osTraceToken.c_str());
     }
 
-    OGRGMELayer* poLayer = new OGRGMELayer(this, pszName, papszOptions);
+    OGRGMELayer* poLayer = new OGRGMELayer(this, pszNameIn, papszOptions);
     poLayer->SetGeometryType(eGType);
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;

@@ -89,7 +89,7 @@ OGRHTFPolygonLayer::OGRHTFPolygonLayer( const char* pszFilename, int nZone, int 
 /*                        OGRHTFSoundingLayer()                         */
 /************************************************************************/
 
-OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone, int bIsNorth, int nTotalSoundings ) :
+OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone, int bIsNorth, int nTotalSoundingsIn ) :
                                         OGRHTFLayer(pszFilename, nZone, bIsNorth)
 
 {
@@ -99,7 +99,7 @@ OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone, in
     poFeatureDefn->SetGeomType( wkbPoint  );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    this->nTotalSoundings = nTotalSoundings;
+    this->nTotalSoundings = nTotalSoundingsIn;
     bHasFPK = FALSE;
     nFieldsPresent = 0;
     panFieldPresence = NULL;
@@ -604,13 +604,13 @@ OGRErr OGRHTFLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 /*                             SetExtent()                              */
 /************************************************************************/
 
-void OGRHTFLayer::SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY)
+void OGRHTFLayer::SetExtent(double dfMinXIn, double dfMinYIn, double dfMaxXIn, double dfMaxYIn)
 {
     bHasExtent = TRUE;
-    this->dfMinX = dfMinX;
-    this->dfMinY = dfMinY;
-    this->dfMaxX = dfMaxX;
-    this->dfMaxY = dfMaxY;
+    this->dfMinX = dfMinXIn;
+    this->dfMinY = dfMinYIn;
+    this->dfMaxX = dfMaxXIn;
+    this->dfMaxY = dfMaxYIn;
 }
 
 
@@ -618,9 +618,9 @@ void OGRHTFLayer::SetExtent(double dfMinX, double dfMinY, double dfMaxX, double 
 /*                        OGRHTFMetadataLayer()                         */
 /************************************************************************/
 
-OGRHTFMetadataLayer::OGRHTFMetadataLayer(std::vector<CPLString> aosMD)
+OGRHTFMetadataLayer::OGRHTFMetadataLayer(std::vector<CPLString> aosMDIn)
 {
-    this->aosMD = aosMD;
+    this->aosMD = aosMDIn;
     nNextFID = 0;
 
     poFeatureDefn = new OGRFeatureDefn( "metadata" );

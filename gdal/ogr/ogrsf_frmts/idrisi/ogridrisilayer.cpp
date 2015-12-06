@@ -41,13 +41,13 @@ CPL_CVSID("$Id$");
 
 OGRIdrisiLayer::OGRIdrisiLayer( const char* pszFilename,
                                 const char* pszLayerName,
-                                VSILFILE* fp,
-                                OGRwkbGeometryType eGeomType,
+                                VSILFILE* fpIn,
+                                OGRwkbGeometryType eGeomTypeIn,
                                 const char* pszWTKString )
 
 {
-    this->fp = fp;
-    this->eGeomType = eGeomType;
+    this->fp = fpIn;
+    this->eGeomType = eGeomTypeIn;
     nNextFID = 1;
     bEOF = FALSE;
     fpAVL = NULL;
@@ -580,13 +580,13 @@ void OGRIdrisiLayer::ReadAVLLine(OGRFeature* poFeature)
 /*                             SetExtent()                              */
 /************************************************************************/
 
-void OGRIdrisiLayer::SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY)
+void OGRIdrisiLayer::SetExtent(double dfMinXIn, double dfMinYIn, double dfMaxXIn, double dfMaxYIn)
 {
     bExtentValid = TRUE;
-    this->dfMinX = dfMinX;
-    this->dfMinY = dfMinY;
-    this->dfMaxX = dfMaxX;
-    this->dfMaxY = dfMaxY;
+    this->dfMinX = dfMinXIn;
+    this->dfMinY = dfMinYIn;
+    this->dfMaxX = dfMaxXIn;
+    this->dfMaxY = dfMaxYIn;
 }
 
 /************************************************************************/

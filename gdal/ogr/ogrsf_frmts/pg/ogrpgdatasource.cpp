@@ -492,9 +492,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
 
-    CPLString      osCurrentSchema;
-    PGresult      *hResult = NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
@@ -612,7 +609,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     sPostgreSQLVersion.nMinor = -1;
     sPostgreSQLVersion.nRelease = -1;
 
-    hResult = OGRPG_PQexec(hPGConn, "SELECT version()" );
+    PGresult* hResult = OGRPG_PQexec(hPGConn, "SELECT version()" );
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
         && PQntuples(hResult) > 0 )
     {
@@ -810,7 +807,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     else
         nUndefinedSRID = -1;
 
-    osCurrentSchema = GetCurrentSchema();
+    GetCurrentSchema();
 
     bListAllTables = CSLTestBoolean(CSLFetchNameValueDef(
         papszOpenOptions, "LIST_ALL_TABLES",
@@ -835,8 +832,7 @@ void OGRPGDataSource::LoadTables()
     CPLHashSet    *hSetTables = NULL;
     std::set<CPLString> osRegisteredLayers;
 
-    int i;
-    for( i = 0; i < nLayers; i++) 
+    for( int i = 0; i < nLayers; i++) 
     {
         osRegisteredLayers.insert(papoLayers[i]->GetName());
     }
@@ -847,7 +843,7 @@ void OGRPGDataSource::LoadTables()
 
         papszTableList = CSLTokenizeString2( pszForcedTables, ",", 0 );
 
-        for( i = 0; i < CSLCount(papszTableList); i++ )
+        for( int i = 0; i < CSLCount(papszTableList); i++ )
         {
             char      **papszQualifiedParts;
 
@@ -1305,7 +1301,7 @@ end:
 /*                             OpenTable()                              */
 /************************************************************************/
 
-OGRPGTableLayer* OGRPGDataSource::OpenTable( CPLString& osCurrentSchema,
+OGRPGTableLayer* OGRPGDataSource::OpenTable( CPLString& osCurrentSchemaIn,
                                 const char *pszNewName,
                                 const char *pszSchemaName,
                                 const char * pszGeomColumnForced,
@@ -1318,7 +1314,7 @@ OGRPGTableLayer* OGRPGDataSource::OpenTable( CPLString& osCurrentSchema,
 /* -------------------------------------------------------------------- */
     OGRPGTableLayer  *poLayer;
 
-    poLayer = new OGRPGTableLayer( this, osCurrentSchema,
+    poLayer = new OGRPGTableLayer( this, osCurrentSchemaIn,
                                    pszNewName, pszSchemaName,
                                    pszGeomColumnForced, bUpdate );
     if( bTestOpen && !(poLayer->ReadTableDefinition()) )
@@ -1934,14 +1930,14 @@ OGRLayer *OGRPGDataSource::GetLayer( int iLayer )
 /*                           GetLayerByName()                           */
 /************************************************************************/
 
-OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
+OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszNameIn )
 
 {
     char* pszTableName = NULL;
     char *pszGeomColumnName = NULL;
     char *pszSchemaName = NULL;
 
-    if ( ! pszName )
+    if ( ! pszNameIn )
         return NULL;
 
     int  i;
@@ -1952,7 +1948,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     {
         OGRPGTableLayer *poLayer = papoLayers[i];
 
-        if( strcmp( pszName, poLayer->GetName() ) == 0 )
+        if( strcmp( pszNameIn, poLayer->GetName() ) == 0 )
         {
             return poLayer;
         }
@@ -1963,13 +1959,13 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     {
         OGRPGTableLayer *poLayer = papoLayers[i];
 
-        if( EQUAL( pszName, poLayer->GetName() ) )
+        if( EQUAL( pszNameIn, poLayer->GetName() ) )
         {
             return poLayer;
         }
     }
 
-    char* pszNameWithoutBracket = CPLStrdup(pszName);
+    char* pszNameWithoutBracket = CPLStrdup(pszNameIn);
     char *pos = strchr(pszNameWithoutBracket, '(');
     if (pos != NULL)
     {
@@ -2571,9 +2567,9 @@ OGRErr OGRPGDataSource::DoTransactionCommand(const char* pszCommand)
 {
     OGRErr      eErr = OGRERR_NONE;
     PGresult    *hResult = NULL;
-    PGconn      *hPGConn = GetPGConn();
+    PGconn      *l_hPGConn = GetPGConn();
 
-    hResult = OGRPG_PQexec(hPGConn, pszCommand);
+    hResult = OGRPG_PQexec(l_hPGConn, pszCommand);
     osDebugLastTransactionCommand = pszCommand;
 
     if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )

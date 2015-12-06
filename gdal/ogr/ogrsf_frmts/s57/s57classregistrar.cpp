@@ -68,8 +68,8 @@ S57ClassRegistrar::~S57ClassRegistrar()
 /*                        S57ClassContentExplorer()                     */
 /************************************************************************/
 
-S57ClassContentExplorer::S57ClassContentExplorer(S57ClassRegistrar* poRegistrar):
-    poRegistrar(poRegistrar)
+S57ClassContentExplorer::S57ClassContentExplorer(S57ClassRegistrar* poRegistrarIn):
+    poRegistrar(poRegistrarIn)
 {
     
     iCurrentClass = -1;

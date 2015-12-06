@@ -644,7 +644,7 @@ static void GCSRSAPI_CALL _InitSysCoord_GCSRS (
 /* -------------------------------------------------------------------- */
 GCSysCoord GCSRSAPI_CALL1(*) CreateSysCoord_GCSRS (
                                                     int srsid,
-                                                    int timezone
+                                                    int nTimezone
                                                   )
 {
   int iSysCoord;
@@ -664,7 +664,7 @@ GCSysCoord GCSRSAPI_CALL1(*) CreateSysCoord_GCSRS (
       if( srsid==GetSysCoordSystemID_GCSRS(gcsc) )
       {
         SetSysCoordSystemID_GCSRS(theSysCoord, srsid);
-        SetSysCoordTimeZone_GCSRS(theSysCoord, timezone);
+        SetSysCoordTimeZone_GCSRS(theSysCoord, nTimezone);
         if( GetSysCoordName_GCSRS(gcsc) )
           SetSysCoordName_GCSRS(theSysCoord, CPLStrdup(GetSysCoordName_GCSRS(gcsc)));
         if( GetSysCoordUnit_GCSRS(gcsc) )

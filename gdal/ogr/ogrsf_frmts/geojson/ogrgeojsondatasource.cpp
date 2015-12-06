@@ -186,7 +186,7 @@ OGRLayer* OGRGeoJSONDataSource::GetLayer( int nLayer )
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszName_,
+OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
                                              OGRSpatialReference* poSRS,
                                              OGRwkbGeometryType eGType,
                                              char** papszOptions )
@@ -206,7 +206,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszName_,
     }
 
     OGRGeoJSONWriteLayer* poLayer
-        = new OGRGeoJSONWriteLayer( pszName_, eGType, papszOptions, this );
+        = new OGRGeoJSONWriteLayer( pszNameIn, eGType, papszOptions, this );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -534,7 +534,7 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 /*                           LoadLayers()                               */
 /************************************************************************/
 
-void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
+void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
 {
     if( NULL == pszGeoData_ )
     {
@@ -624,12 +624,12 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
     }
 
     reader.SetFlattenNestedAttributes(
-        CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", FALSE)),
-        CSLFetchNameValueDef(papszOpenOptions, "NESTED_ATTRIBUTE_SEPARATOR", "_")[0]);
+        CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptionsIn, "FLATTEN_NESTED_ATTRIBUTES", FALSE)),
+        CSLFetchNameValueDef(papszOpenOptionsIn, "NESTED_ATTRIBUTE_SEPARATOR", "_")[0]);
 
     const int bDefaultNativeData = bUpdatable_ ? TRUE : FALSE ;
     reader.SetStoreNativeData(
-        CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptions, "NATIVE_DATA", bDefaultNativeData)));
+        CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptionsIn, "NATIVE_DATA", bDefaultNativeData)));
 
 /* -------------------------------------------------------------------- */
 /*      Parse GeoJSON and build valid OGRLayer instance.                */

@@ -49,7 +49,7 @@ typedef enum
 /*                           OGRIDFDataSource()                         */
 /************************************************************************/
 
-OGRIDFDataSource::OGRIDFDataSource(VSILFILE* fpL) : fpL(fpL)
+OGRIDFDataSource::OGRIDFDataSource(VSILFILE* fpLIn) : fpL(fpLIn)
 {
     bHasParsed = FALSE;
     poMemDS = NULL;
@@ -286,7 +286,7 @@ void OGRIDFDataSource::Parse()
     if( poLinkLyr )
     {
         OGRFeature* poFeat;
-        int iLinkID = poLinkLyr->GetLayerDefn()->GetFieldIndex("LINK_ID");
+        iLinkID = poLinkLyr->GetLayerDefn()->GetFieldIndex("LINK_ID");
         if( iLinkID >= 0 )
         {
             poLinkLyr->ResetReading();

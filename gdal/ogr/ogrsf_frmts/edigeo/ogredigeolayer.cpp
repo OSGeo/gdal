@@ -39,15 +39,15 @@ CPL_CVSID("$Id$");
 /*                          OGREDIGEOLayer()                            */
 /************************************************************************/
 
-OGREDIGEOLayer::OGREDIGEOLayer( OGREDIGEODataSource* poDS,
+OGREDIGEOLayer::OGREDIGEOLayer( OGREDIGEODataSource* poDSIn,
                                 const char* pszName, OGRwkbGeometryType eType,
-                                OGRSpatialReference* poSRS )
+                                OGRSpatialReference* poSRSIn )
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     nNextFID = 0;
 
-    this->poSRS = poSRS;
+    this->poSRS = poSRSIn;
     if (poSRS)
         poSRS->Reference();
 

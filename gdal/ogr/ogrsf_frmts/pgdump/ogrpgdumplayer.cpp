@@ -53,14 +53,17 @@ static CPLString OGRPGDumpEscapeStringWithUserData(   CPL_UNUSED void* user_data
 /*                        OGRPGDumpLayer()                              */
 /************************************************************************/
 
-OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
-                               const char* pszSchemaName,
+OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDSIn,
+                               const char* pszSchemaNameIn,
                                const char* pszTableName,
-                               const char *pszFIDColumn,
+                               const char *pszFIDColumnIn,
                                int         bWriteAsHexIn,
-                               int         bCreateTable)
+                               int         bCreateTableIn)
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
+    this->pszSchemaName = CPLStrdup(pszSchemaNameIn);
+    this->pszFIDColumn = CPLStrdup(pszFIDColumnIn);
+    this->bCreateTable = bCreateTableIn;
     poFeatureDefn = new OGRFeatureDefn( pszTableName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->SetGeomType(wkbNone);
@@ -68,9 +71,6 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
     pszSqlTableName = CPLStrdup(CPLString().Printf("%s.%s",
                                OGRPGDumpEscapeColumnName(pszSchemaName).c_str(),
                                OGRPGDumpEscapeColumnName(pszTableName).c_str() ));
-    this->pszSchemaName = CPLStrdup(pszSchemaName);
-    this->pszFIDColumn = CPLStrdup(pszFIDColumn);
-    this->bCreateTable = bCreateTable;
     bLaunderColumnNames = TRUE;
     bPreservePrecision = TRUE;
     bUseCopy = USE_COPY_UNSET;
@@ -1287,7 +1287,7 @@ int OGRPGCommonLayerSetType(OGRFieldDefn& oField,
         else
         {
             const char *pszPrecision = strstr(pszFormatType,",");
-            int    nWidth, nPrecision = 0;
+            int    nPrecision = 0;
 
             nWidth = atoi(pszFormatType + 8);
             if( pszPrecision != NULL )

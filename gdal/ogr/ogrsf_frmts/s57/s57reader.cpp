@@ -984,8 +984,6 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
 
         if( pszAcronym == NULL )
         {
-            static int bAttrWarningIssued = FALSE;
-
             if( !bAttrWarningIssued )
             {
                 bAttrWarningIssued = TRUE;

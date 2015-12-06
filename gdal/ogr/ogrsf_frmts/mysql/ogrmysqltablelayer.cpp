@@ -402,12 +402,12 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
             pszType = papszRow[0];
 
-            OGRwkbGeometryType nGeomType = OGRFromOGCGeomType(pszType);
+            OGRwkbGeometryType l_nGeomType = OGRFromOGCGeomType(pszType);
 
             if( papszRow[1] != NULL && atoi(papszRow[1]) == 3 )
-                nGeomType = wkbSetZ(nGeomType);
+                l_nGeomType = wkbSetZ(l_nGeomType);
 
-            poDefn->SetGeomType( nGeomType );
+            poDefn->SetGeomType( l_nGeomType );
 
         }
         else if (eForcedGeomType != wkbUnknown)
@@ -593,18 +593,18 @@ char *OGRMySQLTableLayer::BuildFields()
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRMySQLTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
 
     CPLFree( this->pszQuery );
 
-    if( pszQuery == NULL || strlen(pszQuery) == 0 )
+    if( pszQueryIn == NULL || strlen(pszQueryIn) == 0 )
         this->pszQuery = NULL;
     else
-        this->pszQuery = CPLStrdup( pszQuery );
+        this->pszQuery = CPLStrdup( pszQueryIn );
 
     BuildWhere();
 

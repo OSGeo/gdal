@@ -1086,10 +1086,10 @@ static void ReadVarIntAndAddNoCheck(GByte*& pabyIter, GIntBig& nOutVal)
     int nShift = 6;
     while( true )
     {
-        GUIntBig b = *pabyLocalIter;
+        GUIntBig b64 = *pabyLocalIter;
         pabyLocalIter ++;
-        nVal |= ( b & 0x7F ) << nShift;
-        if( (b & 0x80) == 0 )
+        nVal |= ( b64 & 0x7F ) << nShift;
+        if( (b64 & 0x80) == 0 )
         {
             pabyIter = pabyLocalIter;
             nOutVal += nVal * nSign;
@@ -1637,19 +1637,19 @@ int FileGDBTable::GetIndexCount()
     }
 
     VSIFSeekL(fpIndexes, 0, SEEK_END);
-    vsi_l_offset nFileSize = VSIFTellL(fpIndexes);
-    returnErrorAndCleanupIf(nFileSize > 1024 * 1024, VSIFCloseL(fpIndexes) );
+    vsi_l_offset l_nFileSize = VSIFTellL(fpIndexes);
+    returnErrorAndCleanupIf(l_nFileSize > 1024 * 1024, VSIFCloseL(fpIndexes) );
 
-    GByte* pabyIdx = (GByte*)VSI_MALLOC_VERBOSE((size_t)nFileSize);
+    GByte* pabyIdx = (GByte*)VSI_MALLOC_VERBOSE((size_t)l_nFileSize);
     returnErrorAndCleanupIf(pabyIdx == NULL, VSIFCloseL(fpIndexes) );
 
     VSIFSeekL(fpIndexes, 0, SEEK_SET);
-    int nRead = (int)VSIFReadL( pabyIdx, (size_t)nFileSize, 1, fpIndexes );
+    int nRead = (int)VSIFReadL( pabyIdx, (size_t)l_nFileSize, 1, fpIndexes );
     VSIFCloseL(fpIndexes);
     returnErrorAndCleanupIf(nRead != 1, VSIFree(pabyIdx) );
 
     GByte* pabyCur = pabyIdx;
-    GByte* pabyEnd = pabyIdx + nFileSize;
+    GByte* pabyEnd = pabyIdx + l_nFileSize;
     returnErrorAndCleanupIf(pabyEnd - pabyCur < 4, VSIFree(pabyIdx) );
     GUInt32 nIndexCount = GetUInt32(pabyCur, 0);
     pabyCur += 4;
@@ -1976,8 +1976,8 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
 /*                           FileGDBField()                             */
 /************************************************************************/
 
-FileGDBField::FileGDBField(FileGDBTable* poParent) :
-    poParent(poParent), eType(FGFT_UNDEFINED), bNullable(FALSE),
+FileGDBField::FileGDBField(FileGDBTable* poParentIn) :
+    poParent(poParentIn), eType(FGFT_UNDEFINED), bNullable(FALSE),
     nMaxWidth(0), poIndex(NULL)
 {
     sDefault.Set.nMarker1 = OGRUnsetMarker;
@@ -2021,8 +2021,8 @@ FileGDBIndex *FileGDBField::GetIndex()
 /*                           FileGDBGeomField()                         */
 /************************************************************************/
 
-FileGDBGeomField::FileGDBGeomField(FileGDBTable* poParent) :
-    FileGDBField(poParent), bHasZ(FALSE), bHasM(FALSE),
+FileGDBGeomField::FileGDBGeomField(FileGDBTable* poParentIn) :
+    FileGDBField(poParentIn), bHasZ(FALSE), bHasM(FALSE),
     dfXOrigin(0.0), dfYOrigin(0.0), dfXYScale(0.0), dfMOrigin(0.0),
     dfMScale(0.0), dfZOrigin(0.0), dfZScale(0.0), dfXYTolerance(0.0),
     dfMTolerance(0.0), dfZTolerance(0.0), dfXMin(0.0), dfYMin(0.0),
@@ -2074,8 +2074,8 @@ class FileGDBOGRGeometryConverterImpl : public FileGDBOGRGeometryConverter
 /************************************************************************/
 
 FileGDBOGRGeometryConverterImpl::FileGDBOGRGeometryConverterImpl(
-                                    const FileGDBGeomField* poGeomField) :
-                                                poGeomField(poGeomField)
+                                    const FileGDBGeomField* poGeomFieldIn) :
+                                                poGeomField(poGeomFieldIn)
 {
     panPointCount = NULL;
     nPointCountMax = 0;
@@ -2169,7 +2169,7 @@ class XYLineStringSetter
 {
         OGRRawPoint* paoPoints;
     public:
-        XYLineStringSetter(OGRRawPoint* paoPoints) : paoPoints(paoPoints) {}
+        XYLineStringSetter(OGRRawPoint* paoPointsIn) : paoPoints(paoPointsIn) {}
 
         void set(int i, double dfX, double dfY)
         {
@@ -2186,7 +2186,7 @@ class XYMultiPointSetter
 {
         OGRMultiPoint* poMPoint;
     public:
-        XYMultiPointSetter(OGRMultiPoint* poMPoint) : poMPoint(poMPoint) {}
+        XYMultiPointSetter(OGRMultiPoint* poMPointIn) : poMPoint(poMPointIn) {}
 
         void set(int i, double dfX, double dfY)
         {
@@ -2204,7 +2204,7 @@ class XYArraySetter
         double* padfX;
         double* padfY;
     public:
-        XYArraySetter(double* padfX, double* padfY) : padfX(padfX), padfY(padfY) {}
+        XYArraySetter(double* padfXIn, double* padfYIn) : padfX(padfXIn), padfY(padfYIn) {}
 
         void set(int i, double dfX, double dfY)
         {
@@ -2253,7 +2253,7 @@ class ZLineStringSetter
 {
         OGRLineString* poLS;
     public:
-        ZLineStringSetter(OGRLineString* poLS) : poLS(poLS) {}
+        ZLineStringSetter(OGRLineString* poLSIn) : poLS(poLSIn) {}
 
         void set(int i, double dfZ)
         {
@@ -2269,7 +2269,7 @@ class ZMultiPointSetter
 {
         OGRMultiPoint* poMPoint;
     public:
-        ZMultiPointSetter(OGRMultiPoint* poMPoint) : poMPoint(poMPoint) {}
+        ZMultiPointSetter(OGRMultiPoint* poMPointIn) : poMPoint(poMPointIn) {}
 
         void set(int i, double dfZ)
         {
@@ -2285,7 +2285,7 @@ class ZArraySetter
 {
         double* padfZ;
     public:
-        ZArraySetter(double* padfZ) : padfZ(padfZ) {}
+        ZArraySetter(double* padfZIn) : padfZ(padfZIn) {}
 
         void set(int i, double dfZ)
         {

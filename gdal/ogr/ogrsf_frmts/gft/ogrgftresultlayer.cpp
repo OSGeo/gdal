@@ -35,8 +35,8 @@ CPL_CVSID("$Id$");
 /*                        OGRGFTResultLayer()                           */
 /************************************************************************/
 
-OGRGFTResultLayer::OGRGFTResultLayer(OGRGFTDataSource* poDS,
-                                     const char* pszSQL) : OGRGFTLayer(poDS)
+OGRGFTResultLayer::OGRGFTResultLayer(OGRGFTDataSource* poDSIn,
+                                     const char* pszSQL) : OGRGFTLayer(poDSIn)
 
 {
     osSQL = PatchSQL(pszSQL);

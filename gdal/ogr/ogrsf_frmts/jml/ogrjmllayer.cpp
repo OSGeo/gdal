@@ -39,14 +39,14 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRJMLLayer::OGRJMLLayer( const char* pszLayerName,
-                                    OGRJMLDataset* poDS,
-                                    VSILFILE* fp )
+                                    OGRJMLDataset* poDSIn,
+                                    VSILFILE* fpIn )
 
 {
     nNextFID = 0;
 
-    this->poDS = poDS;
-    this->fp = fp;
+    this->poDS = poDSIn;
+    this->fp = fpIn;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );

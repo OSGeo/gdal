@@ -2248,10 +2248,8 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
 //                                                             CreateMaskBand()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::CreateMaskBand( int nFlags )
+CPLErr GeoRasterDataset::CreateMaskBand( int /*nFlags*/ )
 {
-    (void) nFlags;
-
     if( ! poGeoRaster->InitializeMask( DEFAULT_BMP_MASK,
             poGeoRaster->nRowBlockSize,
             poGeoRaster->nColumnBlockSize,

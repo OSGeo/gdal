@@ -427,13 +427,13 @@ void OGRDXFDataSource::ReadHeaderSection()
         if( nCode != 9 )
             continue;
 
-        CPLString osName = szLineBuf;
+        CPLString l_osName = szLineBuf;
 
         ReadValue( szLineBuf, sizeof(szLineBuf) );
 
         CPLString osValue = szLineBuf;
 
-        oHeaderVariables[osName] = osValue;
+        oHeaderVariables[l_osName] = osValue;
     }
 
     if (nCode != -1)
@@ -453,13 +453,13 @@ void OGRDXFDataSource::ReadHeaderSection()
             if( nCode != 9 )
                 continue;
 
-            CPLString osName = szLineBuf;
+            CPLString l_osName = szLineBuf;
 
             ReadValue( szLineBuf, sizeof(szLineBuf) );
 
             CPLString osValue = szLineBuf;
 
-            oHeaderVariables[osName] = osValue;
+            oHeaderVariables[l_osName] = osValue;
         }
     }
 
@@ -537,7 +537,7 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
 
     if( !bInlineBlocks )
     {
-        OGRFieldDefn  oTextField( "BlockName", OFTString );
-        poFeatureDefn->AddFieldDefn( &oTextField );
+        OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
+        poFeatureDefn->AddFieldDefn( &oBlockNameField );
     }
 }

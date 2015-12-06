@@ -35,10 +35,10 @@ CPL_CVSID("$Id$");
 /*                         OGRGFTTableLayer()                           */
 /************************************************************************/
 
-OGRGFTTableLayer::OGRGFTTableLayer(OGRGFTDataSource* poDS,
+OGRGFTTableLayer::OGRGFTTableLayer(OGRGFTDataSource* poDSIn,
                          const char* pszTableName,
                          const char* pszTableId,
-                         const char* pszGeomColumnName) : OGRGFTLayer(poDS)
+                         const char* pszGeomColumnName) : OGRGFTLayer(poDSIn)
 
 {
     osTableName = pszTableName;

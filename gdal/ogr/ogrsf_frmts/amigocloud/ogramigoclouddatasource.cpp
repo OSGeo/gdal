@@ -141,7 +141,7 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename,
 /************************************************************************/
 
 int OGRAmigoCloudDataSource::Open( const char * pszFilename,
-                                char** papszOpenOptions,
+                                char** papszOpenOptionsIn,
                                 int bUpdateIn )
 
 {
@@ -149,8 +149,8 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
     bReadWrite = bUpdateIn;
 
     pszName = CPLStrdup( pszFilename );
-    if( CSLFetchNameValue(papszOpenOptions, "PROJECTID") )
-        pszProjetctId = CPLStrdup(CSLFetchNameValue(papszOpenOptions, "PROJECTID"));
+    if( CSLFetchNameValue(papszOpenOptionsIn, "PROJECTID") )
+        pszProjetctId = CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn, "PROJECTID"));
     else
     {
         pszProjetctId = CPLStrdup(pszFilename + strlen("AMIGOCLOUD:"));
@@ -164,7 +164,7 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
         }
     }
 
-    osAPIKey = CSLFetchNameValueDef(papszOpenOptions, "API_KEY",
+    osAPIKey = CSLFetchNameValueDef(papszOpenOptionsIn, "API_KEY",
                                     CPLGetConfigOption("AMIGOCLOUD_API_KEY", ""));
 
     CPLString osDatasets = OGRAMIGOCLOUDGetOptionValue(pszFilename, "datasets");
@@ -280,7 +280,7 @@ int OGRAmigoCloudDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszName,
+OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )
@@ -295,7 +295,7 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszName,
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
-    CPLString osName(pszName);
+    CPLString osName(pszNameIn);
 
     OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
     int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);

@@ -1172,8 +1172,8 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
     GByte abyRawSector[SECTOR_SIZE + SECURITY_MARGIN];
     memset(abyRawSector + SECTOR_SIZE, 0, SECURITY_MARGIN);
 
-    int nBucketOld = -1;
-    int nOffInBucketReducedOld = -1;
+    int l_nBucketOld = -1;
+    int l_nOffInBucketReducedOld = -1;
     int k = 0;
     int nOffFromBucketStart = 0;
 
@@ -1186,14 +1186,14 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
         int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
-        if( nBucket != nBucketOld )
+        if( nBucket != l_nBucketOld )
         {
-            nOffInBucketReducedOld = -1;
+            l_nOffInBucketReducedOld = -1;
             k = 0;
             nOffFromBucketStart = 0;
         }
 
-        if ( nOffInBucketReduced != nOffInBucketReducedOld )
+        if ( nOffInBucketReduced != l_nOffInBucketReducedOld )
         {
             if( nBucket >= nBuckets )
             {
@@ -1251,8 +1251,8 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
                 }
             }
 
-            nBucketOld = nBucket;
-            nOffInBucketReducedOld = nOffInBucketReduced;
+            l_nBucketOld = nBucket;
+            l_nOffInBucketReducedOld = nOffInBucketReduced;
         }
 
         panReqIds[j] = id;
@@ -2662,7 +2662,7 @@ static void OGROSMNotifyBounds( double dfXMin, double dfYMin,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptions )
+int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptionsIn )
 
 {
     pszName = CPLStrdup( pszFilename );
@@ -2676,7 +2676,7 @@ int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptions )
     if( psParser == NULL )
         return FALSE;
 
-    if( CSLFetchBoolean(papszOpenOptions, "INTERLEAVED_READING", FALSE) )
+    if( CSLFetchBoolean(papszOpenOptionsIn, "INTERLEAVED_READING", FALSE) )
         bInterleavedReading = TRUE;
 
     /* The following 4 config options are only useful for debugging */
@@ -2686,12 +2686,12 @@ int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptions )
     bUseWaysIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_WAYS_INDEX", "YES"));
 
     bCustomIndexing = CSLTestBoolean(CSLFetchNameValueDef(
-            papszOpenOptions, "USE_CUSTOM_INDEXING",
+            papszOpenOptionsIn, "USE_CUSTOM_INDEXING",
                         CPLGetConfigOption("OSM_USE_CUSTOM_INDEXING", "YES")));
     if( !bCustomIndexing )
         CPLDebug("OSM", "Using SQLite indexing for points");
     bCompressNodes = CSLTestBoolean(CSLFetchNameValueDef(
-            papszOpenOptions, "COMPRESS_NODES",
+            papszOpenOptionsIn, "COMPRESS_NODES",
                         CPLGetConfigOption("OSM_COMPRESS_NODES", "NO")));
     if( bCompressNodes )
         CPLDebug("OSM", "Using compression for nodes DB");
@@ -2714,7 +2714,7 @@ int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptions )
     papoLayers[IDX_LYR_OTHER_RELATIONS] = new OGROSMLayer(this, IDX_LYR_OTHER_RELATIONS, "other_relations");
     papoLayers[IDX_LYR_OTHER_RELATIONS]->GetLayerDefn()->SetGeomType(wkbGeometryCollection);
 
-    if( !ParseConf(papszOpenOptions) )
+    if( !ParseConf(papszOpenOptionsIn) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Could not parse configuration file for OSM import");
@@ -2754,7 +2754,7 @@ int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptions )
         return FALSE;
     }
 
-    nMaxSizeForInMemoryDBInMB = atoi(CSLFetchNameValueDef(papszOpenOptions,
+    nMaxSizeForInMemoryDBInMB = atoi(CSLFetchNameValueDef(papszOpenOptionsIn,
         "MAX_TMPFILE_SIZE", CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100")));
     GIntBig nSize = (GIntBig)nMaxSizeForInMemoryDBInMB * 1024 * 1024;
     if (nSize < 0 || (GIntBig)(size_t)nSize != nSize)
@@ -3252,10 +3252,10 @@ void OGROSMDataSource::AddComputedAttributes(int iCurLayer,
 /*                           ParseConf()                                */
 /************************************************************************/
 
-int OGROSMDataSource::ParseConf(char** papszOpenOptions)
+int OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
 {
     const char *pszFilename = 
-        CSLFetchNameValueDef(papszOpenOptions, "CONFIG_FILE",
+        CSLFetchNameValueDef(papszOpenOptionsIn, "CONFIG_FILE",
                              CPLGetConfigOption("OSM_CONFIG_FILE", NULL));
     if( pszFilename == NULL )
         pszFilename = CPLFindFile( "gdal", "osmconf.ini" );
@@ -3273,8 +3273,6 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
     int iCurLayer = -1;
     std::vector<OGROSMComputedAttribute> oAttributes;
 
-    int i;
-
     while((pszLine = CPLReadLine2L(fpConf, -1, NULL)) != NULL)
     {
         if(pszLine[0] == '#')
@@ -3288,7 +3286,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
             iCurLayer = -1;
             pszLine ++;
             ((char*)pszLine)[strlen(pszLine)-1] = '\0'; /* Evil but OK */
-            for(i = 0; i < nLayers; i++)
+            for(int i = 0; i < nLayers; i++)
             {
                 if( strcmp(pszLine, papoLayers[i]->GetName()) == 0 )
                 {
@@ -3558,7 +3556,7 @@ int OGROSMDataSource::ParseConf(char** papszOpenOptions)
     if( iCurLayer >= 0 )
         AddComputedAttributes(iCurLayer, oAttributes);
 
-    for(i=0;i<nLayers;i++)
+    for(int i=0;i<nLayers;i++)
     {
         if( papoLayers[i]->HasAllTags() )
         {
@@ -3978,7 +3976,7 @@ class OGROSMSingleFeatureLayer : public OGRLayer
 /************************************************************************/
 
 OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer(  const char* pszLayerName,
-                                                     int nVal )
+                                                     int nValIn )
 {
     poFeatureDefn = new OGRFeatureDefn( "SELECT" );
     poFeatureDefn->Reference();
@@ -3986,7 +3984,7 @@ OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer(  const char* pszLayerName,
     poFeatureDefn->AddFieldDefn( &oField );
 
     iNextShapeId = 0;
-    this->nVal = nVal;
+    this->nVal = nValIn;
     pszVal = NULL;
 }
 
@@ -3995,7 +3993,7 @@ OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer(  const char* pszLayerName,
 /************************************************************************/
 
 OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer(  const char* pszLayerName,
-                                                     const char *pszVal )
+                                                     const char *pszValIn )
 {
     poFeatureDefn = new OGRFeatureDefn( "SELECT" );
     poFeatureDefn->Reference();
@@ -4004,7 +4002,7 @@ OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer(  const char* pszLayerName,
 
     iNextShapeId = 0;
     nVal = 0;
-    this->pszVal = CPLStrdup(pszVal);
+    this->pszVal = CPLStrdup(pszValIn);
 }
 
 /************************************************************************/
@@ -4046,11 +4044,11 @@ class OGROSMResultLayerDecorator : public OGRLayerDecorator
 
     public:
         OGROSMResultLayerDecorator(OGRLayer* poLayer,
-                                   CPLString osDSName,
-                                   CPLString osInterestLayers) :
+                                   CPLString osDSNameIn,
+                                   CPLString osInterestLayersIn) :
                                         OGRLayerDecorator(poLayer, TRUE),
-                                        osDSName(osDSName),
-                                        osInterestLayers(osInterestLayers) {}
+                                        osDSName(osDSNameIn),
+                                        osInterestLayers(osInterestLayersIn) {}
 
         virtual GIntBig     GetFeatureCount( int bForce = TRUE )
         {

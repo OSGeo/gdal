@@ -163,10 +163,10 @@ void OGR2SQLITEModule::SetHandleSQLFunctions(void* hHandleSQLFunctionsIn)
 /*                            AddExtraDS()                              */
 /************************************************************************/
 
-int OGR2SQLITEModule::AddExtraDS(OGRDataSource* poDS)
+int OGR2SQLITEModule::AddExtraDS(OGRDataSource* poDSIn)
 {
     int nRet = (int)apoExtraDS.size();
-    apoExtraDS.push_back(poDS);
+    apoExtraDS.push_back(poDSIn);
     return nRet;
 }
 
@@ -2372,11 +2372,11 @@ static const struct sqlite3_module sOGR2SQLITESpatialIndex =
 /*                              Setup()                                 */
 /************************************************************************/
 
-int OGR2SQLITEModule::Setup(sqlite3* hDB)
+int OGR2SQLITEModule::Setup(sqlite3* hDBIn)
 {
     int rc;
 
-    this->hDB = hDB;
+    this->hDB = hDBIn;
 
     rc = sqlite3_create_module_v2(hDB, "VirtualOGR", &sOGR2SQLITEModule, this,
                                   OGR2SQLITEDestroyModule);

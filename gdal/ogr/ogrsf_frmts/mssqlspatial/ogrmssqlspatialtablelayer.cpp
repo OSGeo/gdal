@@ -245,7 +245,7 @@ OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn()
 /************************************************************************/
 
 CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
-                                              const char *pszLayerName,
+                                              const char *pszLayerNameIn,
                                               const char *pszGeomCol,
                                               CPL_UNUSED int nCoordDimension,
                                               int nSRId,
@@ -260,20 +260,20 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 /*      schema is provided if there is a dot in the name, and that      */
 /*      it is in the form <schema>.<tablename>                          */
 /* -------------------------------------------------------------------- */
-    const char *pszDot = strstr(pszLayerName,".");
+    const char *pszDot = strstr(pszLayerNameIn,".");
     if( pszDot != NULL )
     {
         pszTableName = CPLStrdup(pszDot + 1);
-        pszSchemaName = CPLStrdup(pszLayerName);
-        pszSchemaName[pszDot - pszLayerName] = '\0';
-        this->pszLayerName = CPLStrdup(pszLayerName);
+        pszSchemaName = CPLStrdup(pszLayerNameIn);
+        pszSchemaName[pszDot - pszLayerNameIn] = '\0';
+        this->pszLayerName = CPLStrdup(pszLayerNameIn);
     }
     else
     {
-        pszTableName = CPLStrdup(pszLayerName);
+        pszTableName = CPLStrdup(pszLayerNameIn);
         pszSchemaName = CPLStrdup(pszSchema);
         if ( EQUAL(pszSchemaName, "dbo") )
-            this->pszLayerName = CPLStrdup(pszLayerName);
+            this->pszLayerName = CPLStrdup(pszLayerNameIn);
         else
             this->pszLayerName = CPLStrdup(CPLSPrintf("%s.%s", pszSchemaName, pszTableName));
     }
@@ -659,19 +659,19 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( GIntBig nFeatureId )
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRMSSQLSpatialTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
 
-    if( (pszQuery == NULL && this->pszQuery == NULL)
-        || (pszQuery != NULL && this->pszQuery != NULL 
-            && EQUAL(pszQuery,this->pszQuery)) )
+    if( (pszQueryIn == NULL && this->pszQuery == NULL)
+        || (pszQueryIn != NULL && this->pszQuery != NULL 
+            && EQUAL(pszQueryIn,this->pszQuery)) )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
-    this->pszQuery = (pszQuery) ? CPLStrdup( pszQuery ) : NULL;
+    this->pszQuery = (pszQueryIn) ? CPLStrdup( pszQueryIn ) : NULL;
 
     ClearStatement();
 

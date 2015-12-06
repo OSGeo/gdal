@@ -98,7 +98,7 @@ OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError)
 /*                          OGRVRTDataSource()                          */
 /************************************************************************/
 
-OGRVRTDataSource::OGRVRTDataSource(GDALDriver* poDriver) :
+OGRVRTDataSource::OGRVRTDataSource(GDALDriver* poDriverIn) :
     papoLayers(NULL),
     paeLayerType(NULL),
     nLayers(0),
@@ -109,7 +109,7 @@ OGRVRTDataSource::OGRVRTDataSource(GDALDriver* poDriver) :
     poParentDS(NULL),
     bRecursionDetected(FALSE)
 {
-    this->poDriver = poDriver;
+    this->poDriver = poDriverIn;
 }
 
 /************************************************************************/
@@ -386,15 +386,15 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
 /* -------------------------------------------------------------------- */
 /*      Field name.                                                     */
 /* -------------------------------------------------------------------- */
-             const char *pszName = CPLGetXMLValue( psSubNode, "name", NULL );
-             if( pszName == NULL )
+             const char *l_pszName = CPLGetXMLValue( psSubNode, "name", NULL );
+             if( l_pszName == NULL )
              {
                  CPLError( CE_Failure, CPLE_AppDefined,
                            "Unable to identify Field name." );
                  break;
              }
 
-             OGRFieldDefn oFieldDefn( pszName, OFTString );
+             OGRFieldDefn oFieldDefn( l_pszName, OFTString );
 
 /* -------------------------------------------------------------------- */
 /*      Type                                                            */
@@ -432,7 +432,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
              {
                 CPLError( CE_Failure, CPLE_IllegalArg,
                           "Invalid width for field %s.",
-                          pszName );
+                          l_pszName );
                 break;
              }
              oFieldDefn.SetWidth(nWidth);
@@ -442,7 +442,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
              {
                 CPLError( CE_Failure, CPLE_IllegalArg,
                           "Invalid precision for field %s.",
-                          pszName );
+                          l_pszName );
                 break;
              }
              oFieldDefn.SetPrecision(nPrecision);
@@ -456,8 +456,8 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
          else if( psSubNode->eType == CXT_Element &&
                   EQUAL(psSubNode->pszValue,"GeometryField") )
          {
-             const char *pszName = CPLGetXMLValue( psSubNode, "name", NULL );
-             if( pszName == NULL )
+             const char *l_pszName = CPLGetXMLValue( psSubNode, "name", NULL );
+             if( l_pszName == NULL )
              {
                  CPLError( CE_Failure, CPLE_AppDefined,
                            "Unable to identify GeometryField name." );
@@ -506,7 +506,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
              }
 
              OGRUnionLayerGeomFieldDefn* poFieldDefn =
-                    new OGRUnionLayerGeomFieldDefn(pszName, eGeomType);
+                    new OGRUnionLayerGeomFieldDefn(l_pszName, eGeomType);
              if( poSRS != NULL )
              {
                 poFieldDefn->SetSpatialRef(poSRS);
@@ -812,13 +812,13 @@ static int CountOGRVRTLayers(CPLXMLNode *psTree)
 /*                             Initialize()                             */
 /************************************************************************/
 
-int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
+int OGRVRTDataSource::Initialize( CPLXMLNode *psTreeIn, const char *pszNewName,
                                   int bUpdate )
 
 {
     CPLAssert( nLayers == 0 );
 
-    this->psTree = psTree;
+    this->psTree = psTreeIn;
 
 /* -------------------------------------------------------------------- */
 /*      Set name, and capture the directory path so we can use it       */

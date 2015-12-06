@@ -98,7 +98,7 @@ OGROCIDataSource::~OGROCIDataSource()
 /************************************************************************/
 
 int OGROCIDataSource::Open( const char * pszNewName,
-                            char** papszOpenOptions,
+                            char** papszOpenOptionsIn,
                             int bUpdate,
                             int bTestOpen )
 
@@ -130,10 +130,10 @@ int OGROCIDataSource::Open( const char * pszNewName,
 
     if( pszNewName[4] == '\0' )
     {
-        pszUserid = CPLStrdup(CSLFetchNameValueDef(papszOpenOptions, "USER", ""));
-        pszPassword = CSLFetchNameValueDef(papszOpenOptions, "PASSWORD", "");
-        pszDatabase = CSLFetchNameValueDef(papszOpenOptions, "DBNAME", "");
-        const char* pszTables = CSLFetchNameValue(papszOpenOptions, "TABLES");
+        pszUserid = CPLStrdup(CSLFetchNameValueDef(papszOpenOptionsIn, "USER", ""));
+        pszPassword = CSLFetchNameValueDef(papszOpenOptionsIn, "PASSWORD", "");
+        pszDatabase = CSLFetchNameValueDef(papszOpenOptionsIn, "DBNAME", "");
+        const char* pszTables = CSLFetchNameValue(papszOpenOptionsIn, "TABLES");
         if( pszTables )
             papszTableList = CSLTokenizeStringComplex(pszTables, ",", TRUE, FALSE );
     }
@@ -992,13 +992,13 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*                           GetLayerByName()                           */
 /************************************************************************/
 
-OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszName )
+OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszNameIn )
 
 {
     OGROCILayer *poLayer = NULL;
     int  i, count;
 
-    if ( !pszName )
+    if ( !pszNameIn )
 	return NULL;
 
     count = GetLayerCount();
@@ -1008,13 +1008,13 @@ OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszName )
     {
         poLayer = papoLayers[i];
 
-        if( strcmp( pszName, poLayer->GetName() ) == 0 )
+        if( strcmp( pszNameIn, poLayer->GetName() ) == 0 )
         {
             return poLayer;
         }
     }
 
-    char *pszSafeLayerName = CPLStrdup( pszName );
+    char *pszSafeLayerName = CPLStrdup( pszNameIn );
     poSession->CleanName( pszSafeLayerName );
 
     /* then case insensitive and laundered */

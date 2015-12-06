@@ -473,9 +473,9 @@ void GMLReader::CleanupParser()
 
 #ifdef HAVE_XERCES
 
-GMLBinInputStream::GMLBinInputStream(VSILFILE* fp)
+GMLBinInputStream::GMLBinInputStream(VSILFILE* fpIn)
 {
-    this->fp = fp;
+    this->fp = fpIn;
     emptyString = 0;
 }
 

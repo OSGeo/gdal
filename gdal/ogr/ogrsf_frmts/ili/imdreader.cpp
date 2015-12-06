@@ -100,17 +100,17 @@ public:
             return CPLStrdup(psClassTID);
         }
     };
-    void AddFieldNode(CPLXMLNode* node, int iOrderPos)
+    void AddFieldNode(CPLXMLNode* nodeIn, int iOrderPos)
     {
         if (iOrderPos >= (int)oFields.size())
             oFields.resize(iOrderPos+1);
         //CPLDebug( "OGR_ILI", "Register field with OrderPos %d to Class %s", iOrderPos, GetName());
-        oFields[iOrderPos] = node;
+        oFields[iOrderPos] = nodeIn;
     }
-    void AddRoleNode(CPLXMLNode* node, int iOrderPos)
+    void AddRoleNode(CPLXMLNode* nodeIn, int iOrderPos)
     {
         isAssocClass = true;
-        AddFieldNode(node, iOrderPos);
+        AddFieldNode(nodeIn, iOrderPos);
     }
     bool isEmbedded()
     {
@@ -167,9 +167,9 @@ public:
         OGRwkbGeometryType geomType = (dim > 2) ? wkbPoint25D : wkbPoint;
         AddGeomField(psName, geomType);
     }
-    OGRFieldType GetFormattedType(CPLXMLNode* node)
+    OGRFieldType GetFormattedType(CPLXMLNode* nodeIn)
     {
-        const char* psRefSuper = CPLGetXMLValue( node, "Super.REF", NULL );
+        const char* psRefSuper = CPLGetXMLValue( nodeIn, "Super.REF", NULL );
         if (psRefSuper)
             return GetFormattedType(oTidLookup[psRefSuper]);
         else

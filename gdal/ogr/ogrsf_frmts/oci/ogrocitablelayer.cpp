@@ -268,7 +268,6 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         OCIParam     *hParmDesc;
         ub2          nOCIType;
         ub4          nOCILen;
-        sword        nStatus;
 
         nStatus = OCIParamGet( hAttrList, OCI_DTYPE_PARAM,
                                poSession->hError, (dvoid**)&hParmDesc, 
@@ -763,23 +762,23 @@ char *OGROCITableLayer::BuildFields()
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGROCITableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGROCITableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
 
-    if( (pszQuery == NULL && this->pszQuery == NULL)
-        || (pszQuery != NULL && this->pszQuery != NULL
-            && strcmp(pszQuery,this->pszQuery) == 0) )
+    if( (pszQueryIn == NULL && this->pszQuery == NULL)
+        || (pszQueryIn != NULL && this->pszQuery != NULL
+            && strcmp(pszQueryIn,this->pszQuery) == 0) )
         return OGRERR_NONE;
     
     CPLFree( this->pszQuery );
 
-    if( pszQuery == NULL )
+    if( pszQueryIn == NULL )
         this->pszQuery = NULL;
     else
-        this->pszQuery = CPLStrdup( pszQuery );
+        this->pszQuery = CPLStrdup( pszQueryIn );
 
     BuildWhere();
 
@@ -921,7 +920,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
 {
     OGROCISession      *poSession = poDS->GetSession();
     char                *pszCommand;
-    int                 i, bNeedComma = FALSE;
+    int                 bNeedComma = FALSE;
     size_t              nCommandBufSize;
 
 /* -------------------------------------------------------------------- */
@@ -951,7 +950,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
     }
     
 
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
             continue;
@@ -1054,7 +1053,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Set the other fields.                                           */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
             continue;

@@ -256,9 +256,9 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         {
             pszType = papszRow[0];
 
-            OGRwkbGeometryType nGeomType = OGRFromOGCGeomType(pszType);
+            OGRwkbGeometryType l_nGeomType = OGRFromOGCGeomType(pszType);
 
-            poDefn->SetGeomType( nGeomType );
+            poDefn->SetGeomType( l_nGeomType );
 
         } 
 

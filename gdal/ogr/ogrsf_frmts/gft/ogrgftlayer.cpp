@@ -36,10 +36,10 @@ CPL_CVSID("$Id$");
 /*                            OGRGFTLayer()                             */
 /************************************************************************/
 
-OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDS)
+OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDSIn)
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 
     nNextInSeq = 0;
 
@@ -287,8 +287,8 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
                     if (psIter->eType == CXT_Element &&
                         strcmp(psIter->pszValue, "innerBoundaryIs") == 0)
                     {
-                        CPLXMLNode* psLinearRing = CPLGetXMLNode(psIter, "LinearRing");
-                        const char* pszCoordinates = CPLGetXMLValue(
+                        psLinearRing = CPLGetXMLNode(psIter, "LinearRing");
+                        pszCoordinates = CPLGetXMLValue(
                             psLinearRing ? psLinearRing : psIter, "coordinates", NULL);
                         if (pszCoordinates)
                         {

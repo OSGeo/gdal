@@ -111,12 +111,12 @@ int OGRNTFDataSource::TestCapability( const char * )
 /*                           GetNamedLayer()                            */
 /************************************************************************/
 
-OGRNTFLayer * OGRNTFDataSource::GetNamedLayer( const char * pszName )
+OGRNTFLayer * OGRNTFDataSource::GetNamedLayer( const char * pszNameIn )
 
 {
     for( int i = 0; i < nLayers; i++ )
     {
-        if( EQUAL(papoLayers[i]->GetLayerDefn()->GetName(),pszName) )
+        if( EQUAL(papoLayers[i]->GetLayerDefn()->GetName(),pszNameIn) )
             return (OGRNTFLayer *) papoLayers[i];
     }
 

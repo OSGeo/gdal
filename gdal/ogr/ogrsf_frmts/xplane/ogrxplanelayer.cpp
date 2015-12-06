@@ -113,13 +113,13 @@ void OGRXPlaneLayer::ResetReading()
 /*                            SetReader()                               */
 /************************************************************************/
 
-void OGRXPlaneLayer::SetReader(OGRXPlaneReader* poReader)
+void OGRXPlaneLayer::SetReader(OGRXPlaneReader* poReaderIn)
 {
     if (this->poReader)
     {
         delete this->poReader;
     }
-    this->poReader = poReader;
+    this->poReader = poReaderIn;
 }
 
 /************************************************************************/
@@ -225,16 +225,16 @@ OGRFeature *OGRXPlaneLayer::GetNextFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *  OGRXPlaneLayer::GetFeature( GIntBig nFID )
+OGRFeature *  OGRXPlaneLayer::GetFeature( GIntBig nFIDIn )
 {
     if (poReader)
-        return OGRLayer::GetFeature(nFID);
+        return OGRLayer::GetFeature(nFIDIn);
     else
         poDS->ReadWholeFileIfNecessary();
 
-    if (nFID >= 0 && nFID < nFeatureArraySize)
+    if (nFIDIn >= 0 && nFIDIn < nFeatureArraySize)
     {
-        return papoFeatures[nFID]->Clone();
+        return papoFeatures[nFIDIn]->Clone();
     }
     else
     {
@@ -333,7 +333,7 @@ OGRFeatureDefn * OGRXPlaneLayer::GetLayerDefn()
 /*                        SetDataSource()                               */
 /************************************************************************/
 
-void OGRXPlaneLayer::SetDataSource(OGRXPlaneDataSource* poDS)
+void OGRXPlaneLayer::SetDataSource(OGRXPlaneDataSource* poDSIn)
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 }

@@ -901,14 +901,14 @@ int TABFeature::WriteGeometryToMAPFile(TABMAPFile * /* poMapFile*/,
  **********************************************************************/
 void TABFeature::DumpMID(FILE *fpOut /*=NULL*/)
 {
-    OGRFeatureDefn      *poDefn = GetDefnRef();
+    OGRFeatureDefn      *l_poDefn = GetDefnRef();
 
     if (fpOut == NULL)
         fpOut = stdout;
 
     for( int iField = 0; iField < GetFieldCount(); iField++ )
     {
-        OGRFieldDefn    *poFDefn = poDefn->GetFieldDefn(iField);
+        OGRFieldDefn    *poFDefn = l_poDefn->GetFieldDefn(iField);
         
         fprintf( fpOut, "  %s (%s) = %s\n",
                  poFDefn->GetNameRef(),
