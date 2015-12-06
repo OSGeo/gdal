@@ -2022,30 +2022,6 @@ def ecw_46():
     return 'success'
 
 ###############################################################################
-# Check that we can open filename with UTF-8 characters
-
-def ecw_47():
-    
-    if gdaltest.ecw_drv is None:
-        return 'skip'
-    if gdaltest.ecw_drv.major_version < 4:
-        return 'skip'
-
-    if sys.version_info >= (3,0,0):
-        filename = 'tmp/\u00e9ven.ecw'
-    else:
-        exec("filename = u'tmp/\\u00e9ven.ecw'")
-    shutil.copy('data/jrc.ecw', filename)
-    ds = gdal.Open( filename )
-    if ds is None:
-        os.unlink(filename)
-        return 'fail'
-    ds = None
-    os.unlink(filename)
-
-    return 'success' 
-
-###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -2394,7 +2370,6 @@ gdaltest_list = [
     ecw_44,
     ecw_45,
     ecw_46,
-    ecw_47,
     ecw_online_1,
     ecw_online_2,
     #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3, 
