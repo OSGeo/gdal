@@ -862,7 +862,7 @@ static const char * const apszGEOCCSRule[] =
 static const char * const apszVERTCSRule[] = 
 { "VERT_CS", "VERT_DATUM", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", NULL };
 
-static const char * const *apszOrderingRules[] = {
+static const char * const * const apszOrderingRules[] = {
     apszPROJCSRule, apszGEOGCSRule, apszDATUMRule, apszGEOCCSRule, apszVERTCSRule, NULL };
 
 /**

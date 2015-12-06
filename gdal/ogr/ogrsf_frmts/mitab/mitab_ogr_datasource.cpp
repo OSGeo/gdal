@@ -483,7 +483,7 @@ char **OGRTABDataSource::GetFileList()
     if( VSIStatL( m_pszName, &sStatBuf ) == 0 &&
         VSI_ISDIR(sStatBuf.st_mode) )
     {
-        static const char *apszExtensions[] = 
+        static const char * const apszExtensions[] = 
             { "mif", "mid", "tab", "map", "ind", "dat", "id", NULL };
         char **papszDirEntries = CPLReadDir( m_pszName );
         int  iFile;
@@ -505,9 +505,9 @@ char **OGRTABDataSource::GetFileList()
     }
     else
     {
-        static const char* apszMIFExtensions[] = { "mif", "mid", NULL };
-        static const char* apszTABExtensions[] = { "tab", "map", "ind", "dat", "id", NULL };
-        const char** papszExtensions;
+        static const char* const apszMIFExtensions[] = { "mif", "mid", NULL };
+        static const char* const apszTABExtensions[] = { "tab", "map", "ind", "dat", "id", NULL };
+        const char* const * papszExtensions;
         if( EQUAL(CPLGetExtension(m_pszName), "mif") ||
             EQUAL(CPLGetExtension(m_pszName), "mid") )
         {
@@ -517,7 +517,7 @@ char **OGRTABDataSource::GetFileList()
         {
             papszExtensions = apszTABExtensions;
         }
-        const char** papszIter = papszExtensions;
+        const char* const * papszIter = papszExtensions;
         while( *papszIter )
         {
             const char *pszFile = CPLResetExtension(m_pszName, *papszIter );

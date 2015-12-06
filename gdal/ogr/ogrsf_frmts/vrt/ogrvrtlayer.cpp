@@ -537,7 +537,7 @@ int OGRVRTLayer::FullInitialize()
     if( CSLTestBoolean(CPLGetXMLValue( psLTree, "SrcDataSource.relativetoVRT", 
                                        "0")) )
     {
-        static const char* apszPrefixes[] = { "CSV:", "GPSBABEL:" };
+        static const char* const apszPrefixes[] = { "CSV:", "GPSBABEL:" };
         int bDone = FALSE;
         for( size_t i = 0; i < sizeof(apszPrefixes) / sizeof(apszPrefixes[0]); i ++)
         {

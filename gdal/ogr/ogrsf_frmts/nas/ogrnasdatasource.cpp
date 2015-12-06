@@ -34,7 +34,7 @@
 
 CPL_CVSID("$Id$");
 
-static const char *apszURNNames[] =
+static const char * const apszURNNames[] =
 {
     "DE_DHDN_3GK2_*", "EPSG:31466",
     "DE_DHDN_3GK3_*", "EPSG:31467",

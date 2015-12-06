@@ -33,7 +33,7 @@
 
 CPL_CVSID("$Id$");
 
-static const char *papszParameterDefinitions[] = {
+static const char * const papszParameterDefinitions[] = {
     SRS_PP_CENTRAL_MERIDIAN,    "Central Meridian",     "Long",  "0.0",
     SRS_PP_SCALE_FACTOR,        "Scale Factor",         "Ratio", "1.0",
     SRS_PP_STANDARD_PARALLEL_1, "Standard Parallel 1",  "Lat",   "0.0",
@@ -56,7 +56,7 @@ static const char *papszParameterDefinitions[] = {
     NULL
 };
 
-static const char *papszProjectionDefinitions[] = {
+static const char * const papszProjectionDefinitions[] = {
 
     "*", 
     SRS_PT_TRANSVERSE_MERCATOR,

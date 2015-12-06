@@ -45,7 +45,7 @@
 CPL_CVSID("$Id$");
 
 
-static const char *apszAuxMetadataItems[] = {
+static const char * const apszAuxMetadataItems[] = {
 
 // node/entry            field_name                  metadata_key       type
 
@@ -66,7 +66,7 @@ static const char *apszAuxMetadataItems[] = {
 };
 
 
-const char ** GetHFAAuxMetaDataList()
+const char * const * GetHFAAuxMetaDataList()
 {
     return apszAuxMetadataItems;
 }
@@ -1731,7 +1731,7 @@ static void	HFADumpNode( HFAEntry *poEntry, int nIndent, int bVerbose,
                              FILE * fp )
 
 {
-    static char	szSpaces[256];
+    char	szSpaces[256];
     int		i;
 
     for( i = 0; i < nIndent*2; i++ )
@@ -1813,7 +1813,7 @@ void HFAStandard( int nBytes, void * pData )
 /*      file.                                                           */
 /* ==================================================================== */
 
-static const char *aszDefaultDD[] = {
+static const char * const aszDefaultDD[] = {
 "{1:lversion,1:LfreeList,1:LrootEntryPtr,1:sentryHeaderLength,1:LdictionaryPtr,}Ehfa_File,{1:Lnext,1:Lprev,1:Lparent,1:Lchild,1:Ldata,1:ldataSize,64:cname,32:ctype,1:tmodTime,}Ehfa_Entry,{16:clabel,1:LheaderPtr,}Ehfa_HeaderTag,{1:LfreeList,1:lfreeSize,}Ehfa_FreeListNode,{1:lsize,1:Lptr,}Ehfa_Data,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,",
 "1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer_SubSample,{1:e2:raster,vector,type,1:LdictionaryPtr,}Ehfa_Layer,{1:LspaceUsedForRasterData,}ImgFormatInfo831,{1:sfileCode,1:Loffset,1:lsize,1:e2:false,true,logvalid,",
 "1:e2:no compression,ESRI GRID compression,compressionType,}Edms_VirtualBlockInfo,{1:lmin,1:lmax,}Edms_FreeIDList,{1:lnumvirtualblocks,1:lnumobjectsperblock,1:lnextobjectnum,1:e2:no compression,RLC compression,compressionType,0:poEdms_VirtualBlockInfo,blockinfo,0:poEdms_FreeIDList,freelist,1:tmodTime,}Edms_State,{0:pcstring,}Emif_String,{1:oEmif_String,fileName,2:LlayerStackValidFlagsOffset,2:LlayerStackDataOffset,1:LlayerStackCount,1:LlayerStackIndex,}ImgExternalRaster,{1:oEmif_String,algorithm,0:poEmif_String,nameList,}Eimg_RRDNamesList,{1:oEmif_String,projection,1:oEmif_String,units,}Eimg_MapInformation,",
@@ -2726,7 +2726,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     char * pszBinValues = NULL;
     int bCreatedHistogramParameters = FALSE;
     int bCreatedStatistics = FALSE;
-    const char ** pszAuxMetaData = GetHFAAuxMetaDataList();
+    const char * const * pszAuxMetaData = GetHFAAuxMetaDataList();
     // check each metadata item
     for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
     {
@@ -3084,7 +3084,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /*      Try and open it.  If we fail, create it and write the magic     */
 /*      header.                                                         */
 /* -------------------------------------------------------------------- */
-    static const char *pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";
+    static const char * const pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";
     VSILFILE *fpVSIL;
     bool bRet = true;
 
@@ -3610,7 +3610,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
     const char *pszValue;
     int i;
     char **papszMD = NULL;
-    static const char *apszFields[] = { 
+    static const char * const apszFields[] = { 
         "direction", "refType", "demsource", "PhotoDirection", "RotationSystem",
         "demfilename", "demzunits", 
         "forSrcAffine[0]", "forSrcAffine[1]", "forSrcAffine[2]", 
@@ -3745,7 +3745,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 
         if( poElevInfo->GetDataSize() != 0 )
         {
-            static const char *apszEFields[] = { 
+            static const char * const apszEFields[] = { 
                 "verticalDatum.datumname", 
                 "verticalDatum.type",
                 "elevationUnit",

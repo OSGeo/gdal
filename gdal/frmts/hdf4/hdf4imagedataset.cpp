@@ -1337,7 +1337,7 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
 /*      Collect the four corners.                                       */
 /* -------------------------------------------------------------------- */
     double adfXY[8];
-    static const char *apszItems[] = {
+    static const char * const apszItems[] = {
         "mapUpperLeft", "mapUpperRight", "mapLowerLeft", "mapLowerRight" };
     bool bLLPossible = true;
 

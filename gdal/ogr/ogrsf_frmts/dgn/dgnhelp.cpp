@@ -31,7 +31,7 @@
 
 CPL_CVSID("$Id$");
 
-static unsigned char abyDefaultPCT[256][3] = 
+static const unsigned char abyDefaultPCT[256][3] = 
 {
   {255,255,255},
   {0,0,255},

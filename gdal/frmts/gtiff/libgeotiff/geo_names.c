@@ -17,7 +17,7 @@
 #include "geonames.h"
 #include "geo_tiffp.h" /* for tag names */
 
-static KeyInfo _formatInfo[] =  {
+static const KeyInfo _formatInfo[] =  {
    {TYPE_BYTE,    "Byte"},
    {TYPE_SHORT,   "Short"},
    {TYPE_LONG,    "Long"},
@@ -32,7 +32,7 @@ static KeyInfo _formatInfo[] =  {
     END_LIST
 };
 
-static KeyInfo _tagInfo[] =  {
+static const KeyInfo _tagInfo[] =  {
     {GTIFF_PIXELSCALE,  "ModelPixelScaleTag"},
     {GTIFF_TRANSMATRIX, "ModelTransformationTag"},
     {GTIFF_TIEPOINTS,   "ModelTiepointTag"},
@@ -41,7 +41,7 @@ static KeyInfo _tagInfo[] =  {
     END_LIST
 };
 
-static char *FindName(KeyInfo *info,int key)
+static char *FindName(const KeyInfo *info,int key)
 {
    static char errmsg[80];
    
@@ -72,7 +72,7 @@ char *GTIFTagName(int tag)
 
 char *GTIFValueName(geokey_t key, int value)
 {
-   KeyInfo *info;
+   const KeyInfo *info;
    
    switch (key)
    {
@@ -109,7 +109,7 @@ char *GTIFValueName(geokey_t key, int value)
  */
 
 
-static int FindCode(KeyInfo *info,char *key)
+static int FindCode(const KeyInfo *info,char *key)
 {
    while (info->ki_key>=0 && strcmp(info->ki_name,key) ) info++;
 
@@ -149,7 +149,7 @@ int GTIFTagCode(char *tag)
  */
 int GTIFValueCode(geokey_t key, char *name)
 {
-   KeyInfo *info;
+   const KeyInfo *info;
    
    switch (key)
    {

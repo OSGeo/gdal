@@ -3496,7 +3496,7 @@ int GDALGeoPackageDataset::TestCapability( const char * pszCap )
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
-static const char* apszFuncsWithSideEffects[] =
+static const char* const apszFuncsWithSideEffects[] =
 {
     "CreateSpatialIndex",
     "DisableSpatialIndex",

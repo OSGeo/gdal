@@ -42,7 +42,7 @@ extern void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
 int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform );
 void OGREPSGDatumNameMassage( char ** ppszDatum );
 
-static const char *papszDatumEquiv[] =
+static const char * const apszDatumEquiv[] =
 {
     "Militar_Geographische_Institut",
     "Militar_Geographische_Institute",
@@ -106,12 +106,12 @@ void OGREPSGDatumNameMassage( char ** ppszDatum )
 /*      Search for datum equivelences.  Specific massaged names get     */
 /*      mapped to OpenGIS specified names.                              */
 /* -------------------------------------------------------------------- */
-    for( i = 0; papszDatumEquiv[i] != NULL; i += 2 )
+    for( i = 0; apszDatumEquiv[i] != NULL; i += 2 )
     {
-        if( EQUAL(*ppszDatum,papszDatumEquiv[i]) )
+        if( EQUAL(*ppszDatum,apszDatumEquiv[i]) )
         {
             CPLFree( *ppszDatum );
-            *ppszDatum = CPLStrdup( papszDatumEquiv[i+1] );
+            *ppszDatum = CPLStrdup( apszDatumEquiv[i+1] );
             break;
         }
     }
@@ -1179,7 +1179,7 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
     OGRAxisOrientation eOAxis1 = OAO_Other, eOAxis2 = OAO_Other;
     int iAO;
-    static int anCodes[7] = { -1, 9907, 9909, 9906, 9908, -1, -1 };
+    static const int anCodes[7] = { -1, 9907, 9909, 9906, 9908, -1, -1 };
 
     for( iAO = 0; iAO < 7; iAO++ )
     {

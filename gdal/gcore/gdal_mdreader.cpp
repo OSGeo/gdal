@@ -54,7 +54,7 @@ CPL_CVSID("$Id$");
  * The RPC parameters names
  */
 
-static const char *apszRPCTXTSingleValItems[] =
+static const char * const apszRPCTXTSingleValItems[] =
 {
     RPC_LINE_OFF,
     RPC_SAMP_OFF,
@@ -69,7 +69,7 @@ static const char *apszRPCTXTSingleValItems[] =
     NULL
 };
 
-static const char *apszRPCTXT20ValItems[] =
+static const char * const apszRPCTXT20ValItems[] =
 {
     RPC_LINE_NUM_COEFF,
     RPC_LINE_DEN_COEFF,
@@ -481,7 +481,7 @@ CPLString CPLStripQuotes(const CPLString& sString)
 /*                          GDALLoadRPBFile()                           */
 /************************************************************************/
 
-static const char *apszRPBMap[] = {
+static const char * const apszRPBMap[] = {
     apszRPCTXTSingleValItems[0], "IMAGE.lineOffset",
     apszRPCTXTSingleValItems[1], "IMAGE.sampOffset",
     apszRPCTXTSingleValItems[2], "IMAGE.latOffset",
@@ -879,7 +879,7 @@ static bool GDAL_IMD_AA2R( char ***ppapszIMD )
 /* -------------------------------------------------------------------- */
 /*      remove a bunch of fields.                                       */
 /* -------------------------------------------------------------------- */
-    static const char *apszToRemove[] = {
+    static const char * const apszToRemove[] = {
         "productCatalogId",
         "childCatalogId",
         "productType",
@@ -901,7 +901,7 @@ static bool GDAL_IMD_AA2R( char ***ppapszIMD )
 /* -------------------------------------------------------------------- */
 /*      Replace various min/mean/max with just the mean.                */
 /* -------------------------------------------------------------------- */
-    static const char *keylist[] = {
+    static const char * const keylist[] = {
         "CollectedRowGSD",
         "CollectedColGSD",
         "SunAz",

@@ -1390,15 +1390,15 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /*                    OGRPGIsKnownGeomFuncPrefix()                      */
 /************************************************************************/
 
-static const char* papszKnownGeomFuncPrefixes[] = {
+static const char* const apszKnownGeomFuncPrefixes[] = {
     "ST_AsBinary", "BinaryBase64", "ST_AsEWKT", "ST_AsEWKB", "EWKBBase64",
     "ST_AsText", "AsBinary", "asEWKT", "asEWKB", "asText" };
 static int OGRPGIsKnownGeomFuncPrefix(const char* pszFieldName)
 {
-    for(size_t i=0; i<sizeof(papszKnownGeomFuncPrefixes) / sizeof(char*); i++)
+    for(size_t i=0; i<sizeof(apszKnownGeomFuncPrefixes) / sizeof(char*); i++)
     {
-        if( EQUALN(pszFieldName, papszKnownGeomFuncPrefixes[i],
-                   static_cast<int>(strlen(papszKnownGeomFuncPrefixes[i]))) )
+        if( EQUALN(pszFieldName, apszKnownGeomFuncPrefixes[i],
+                   static_cast<int>(strlen(apszKnownGeomFuncPrefixes[i]))) )
             return static_cast<int>(i);
     }
     return -1;
@@ -1442,11 +1442,11 @@ void OGRPGLayer::CreateMapFromFieldNameToIndex(PGresult* hResult,
                 {
                     int iKnownPrefix = OGRPGIsKnownGeomFuncPrefix(pszName);
                     if( iKnownPrefix >= 0 &&
-                        pszName[ strlen(papszKnownGeomFuncPrefixes[iKnownPrefix]) ] == '_' )
+                        pszName[ strlen(apszKnownGeomFuncPrefixes[iKnownPrefix]) ] == '_' )
                     {
                         panMapFieldNameToGeomIndex[iField] =
                             poFeatureDefn->GetGeomFieldIndex(pszName +
-                            strlen(papszKnownGeomFuncPrefixes[iKnownPrefix]) + 1);
+                            strlen(apszKnownGeomFuncPrefixes[iKnownPrefix]) + 1);
                     }
                 }
             }
@@ -2093,10 +2093,10 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
                 new OGRPGGeomFieldDefn(this, oField.GetNameRef());
             if( iGeomFuncPrefix >= 0 &&
                 oField.GetNameRef()[strlen(
-                    papszKnownGeomFuncPrefixes[iGeomFuncPrefix])] == '_' )
+                    apszKnownGeomFuncPrefixes[iGeomFuncPrefix])] == '_' )
             {
                 poGeomFieldDefn->SetName( oField.GetNameRef() +
-                    strlen(papszKnownGeomFuncPrefixes[iGeomFuncPrefix]) + 1 );
+                    strlen(apszKnownGeomFuncPrefixes[iGeomFuncPrefix]) + 1 );
             }
             if (nTypeOID == poDS->GetGeographyOID())
             {

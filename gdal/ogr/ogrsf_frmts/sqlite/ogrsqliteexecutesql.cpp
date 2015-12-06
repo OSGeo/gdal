@@ -220,7 +220,7 @@ static void OGR2SQLITEAddLayer( const char*& pszStart, int& nNum,
 /*                         StartsAsSQLITEKeyWord()                      */
 /************************************************************************/
 
-static const char* apszKeywords[] =  {
+static const char* const apszKeywords[] =  {
     "WHERE", "GROUP", "ORDER", "JOIN", "UNION", "INTERSECT", "EXCEPT", "LIMIT"
 };
 

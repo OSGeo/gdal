@@ -563,7 +563,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
           // Add the font name. Name it MstnFont<FONTNUMBER> if not available
           // in the font list. #3392
-          static const char *papszFontList[] =
+          static const char * const papszFontList[] =
           { "STANDARD", "WORKING", "FANCY", "ENGINEERING", "NEWZERO", "STENCEL", //0-5
             "USTN_FANCY", "COMPRESSED", "STENCEQ", NULL, "hand", "ARCH", //6-11
             "ARCHB", NULL, NULL, "IGES1001", "IGES1002", "IGES1003", //12-17
@@ -932,7 +932,7 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
             dfCharHeight = poLabel->Size(bDefault)/1000.0;
 
         /* get font id */
-        static const char  *papszFontNumbers[] =
+        static const char  * const papszFontNumbers[] =
           { "STANDARD=0", "WORKING=1", "FANCY=2", "ENGINEERING=3", "NEWZERO=4",
             "STENCEL=5", "USTN_FANCY=7", "COMPRESSED=8", "STENCEQ=9", "hand=10",
             "ARCH=11", "ARCHB=12", "IGES1001=15", "IGES1002=16", "IGES1003=17", 

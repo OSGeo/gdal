@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 /* why would fipszone and zone be paramers when they relate to a composite
    projection which renders done into a non-zoned projection? */
 
-static const char *papszParameters[] =
+static const char * const papszParameters[] =
 {
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_SCALE_FACTOR,
@@ -77,7 +77,7 @@ static const char *papszParameters[] =
 // underscores instead of spaces.  Should we use the EPSG names were available?
 // Plate-Caree has an accent in the spec!
 
-static const char *papszProjectionSupported[] =
+static const char * const papszProjectionSupported[] =
 {
     SRS_PT_CASSINI_SOLDNER,
     SRS_PT_BONNE,
@@ -136,7 +136,7 @@ static const char *papszProjectionSupported[] =
     NULL
 };
 
-static const char *papszProjectionUnsupported[] =
+static const char * const papszProjectionUnsupported[] =
 {
     SRS_PT_NEW_ZEALAND_MAP_GRID,
     SRS_PT_TUNISIA_MINING_GRID,
@@ -146,7 +146,7 @@ static const char *papszProjectionUnsupported[] =
 /*
 ** List of supported projections with the PARAMETERS[] acceptable for each.
 */
-static const char *papszProjWithParms[] = {
+static const char * const papszProjWithParms[] = {
 
     SRS_PT_TRANSVERSE_MERCATOR,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -532,7 +532,7 @@ static const char *papszProjWithParms[] = {
     NULL
 };
 
-static const char *papszAliasGroupList[] = {
+static const char * const papszAliasGroupList[] = {
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_LATITUDE_OF_CENTER,
     NULL,

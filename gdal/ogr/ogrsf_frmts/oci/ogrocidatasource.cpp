@@ -33,7 +33,7 @@
 
 CPL_CVSID("$Id$");
 
-static int anEPSGOracleMapping[] = 
+static const int anEPSGOracleMapping[] = 
 {
     /* Oracle SRID, EPSG GCS/PCS Code */
     

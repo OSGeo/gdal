@@ -66,7 +66,7 @@ CPL_C_END
 
 static int   FindCodeFromDict( const char* pszDictFile, const char* CSName, char* code );
 
-static const char *apszProjMapping[] = {
+static const char * const apszProjMapping[] = {
     "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     "Cassini", SRS_PT_CASSINI_SOLDNER,
     "Equidistant_Cylindrical", SRS_PT_EQUIRECTANGULAR,
@@ -80,39 +80,39 @@ static const char *apszProjMapping[] = {
     "Gauss_Kruger", SRS_PT_TRANSVERSE_MERCATOR,
     NULL, NULL }; 
  
-static const char *apszAlbersMapping[] = {
+static const char * const apszAlbersMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
     "Central_Parallel", SRS_PP_LATITUDE_OF_CENTER,
     NULL, NULL };
 
-static const char *apszECMapping[] = {
+static const char * const apszECMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER, 
     NULL, NULL };
 
-static const char *apszPolarStereographicMapping[] = {
+static const char * const apszPolarStereographicMapping[] = {
     SRS_PP_STANDARD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
-static const char *apszOrthographicMapping[] = {
+static const char * const apszOrthographicMapping[] = {
     "Longitude_Of_Center", SRS_PP_CENTRAL_MERIDIAN,
     "Latitude_Of_Center", SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
-static const char *apszLambertConformalConicMapping[] = {
+static const char * const apszLambertConformalConicMapping[] = {
     "Central_Parallel", SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
 static char **papszDatumMapping = NULL;
 static CPLMutex* hDatumMappingMutex = NULL;
  
-static const char *apszDefaultDatumMapping[] = {
+static const char * const apszDefaultDatumMapping[] = {
     "6267", "North_American_1927", SRS_DN_NAD27,
     "6269", "North_American_1983", SRS_DN_NAD83,
     NULL, NULL, NULL }; 
 
-static const char *apszSpheroidMapping[] = {
+static const char * const apszSpheroidMapping[] = {
     "WGS_84", "WGS_1984",
     "WGS_72", "WGS_1972",
     "GRS_1967_Modified", "GRS_1967_Truncated",
@@ -120,7 +120,7 @@ static const char *apszSpheroidMapping[] = {
     "Everest_1830_1937_Adjustment", "Everest_Adjustment_1937",
     NULL, NULL }; 
  
-static const char *apszUnitMapping[] = {
+static const char * const apszUnitMapping[] = {
     "Meter", "meter",
     "Meter", "metre",
     "Foot", "foot",
@@ -1157,7 +1157,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Force Unnamed to Unknown for most common locations.             */
 /* -------------------------------------------------------------------- */
-        static const char *apszUnknownMapping[] = { 
+        static const char * const apszUnknownMapping[] = { 
             "Unknown", "Unnamed",
             NULL, NULL 
         };
@@ -2318,7 +2318,7 @@ int AddParamBasedOnPrjName( OGRSpatialReference* pOgr, const char* pszProjection
 /************************************************************************/
 int RemapGeogCSName( OGRSpatialReference* pOgr, const char *pszGeogCSName )
 {
-    static const char *keyNamesG[] = {
+    static const char * const keyNamesG[] = {
         "GEOGCS"};
     int ret = -1;
 

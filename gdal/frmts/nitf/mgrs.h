@@ -111,10 +111,11 @@
 extern "C" {
   #endif
 
-
+#ifdef unused
   long Set_MGRS_Parameters(double a,
                            double f,
                            char   *Ellipsoid_Code);
+#endif
 /*
  * The function Set_MGRS_Parameters receives the ellipsoid parameters and sets
  * the corresponding state variables. If any errors occur, the error code(s)
