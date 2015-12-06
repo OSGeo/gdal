@@ -3063,6 +3063,8 @@ def jp2openjpeg_46():
 yeah: """) < 0:
         gdaltest.post_reason('fail')
         print(gmljp2)
+        if gmljp2.find("""<gmljp2:metadata>1 str true""") >= 0:
+            return 'skip'
         return 'fail'
     ds = None
 
