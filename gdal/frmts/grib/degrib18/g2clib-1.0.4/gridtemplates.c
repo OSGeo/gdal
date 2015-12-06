@@ -134,18 +134,18 @@ xxtemplate *getgridtemplate(g2int number)
 !
 !$$$*/
 {
-           g2int index;
+           g2int l_index;
            xxtemplate *new;
 
-           index=getgridindex(number);
+           l_index=getgridindex(number);
 
-           if (index != -1) {
+           if (l_index != -1) {
               new=(xxtemplate *)malloc(sizeof(xxtemplate));
               new->type=3;
-              new->num=templatesgrid[index].template_num;
-              new->maplen=templatesgrid[index].mapgridlen;
-              new->needext=templatesgrid[index].needext;
-              new->map=(g2int *)templatesgrid[index].mapgrid;
+              new->num=templatesgrid[l_index].template_num;
+              new->maplen=templatesgrid[l_index].mapgridlen;
+              new->needext=templatesgrid[l_index].needext;
+              new->map=(g2int *)templatesgrid[l_index].mapgrid;
               new->extlen=0;
               new->ext=0;        //NULL
               return(new);
@@ -192,10 +192,10 @@ xxtemplate *extgridtemplate(g2int number,g2int *list)
 !$$$*/
 {
            xxtemplate *new;
-           g2int index,i;
+           g2int l_index,i;
 
-           index=getgridindex(number);
-           if (index == -1) return(0);
+           l_index=getgridindex(number);
+           if (l_index == -1) return(0);
 
            new=getgridtemplate(number);
 
