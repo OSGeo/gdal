@@ -443,6 +443,49 @@ AC_SUBST(AVXFLAGS,$AVXFLAGS)
 AC_SUBST(HAVE_AVX_AT_COMPILE_TIME,$HAVE_AVX_AT_COMPILE_TIME)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for --enable-lto
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([to enable LTO (link time optimization) build])
+
+AC_ARG_ENABLE(lto,
+              AS_HELP_STRING([--enable-lto],
+                             [enable LTO(link time optimization) (disabled by default)]))
+
+CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
+CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+
+if test "x$enable_lto" = "xyes" ; then
+
+  dnl remove existing -g.
+
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-g //"` 
+  CFLAGS=`echo "$CFLAGS" | sed "s/-g //"` 
+
+  dnl add -flto
+
+  CXXFLAGS="$CXXFLAGS -flto"
+  CFLAGS="$CFLAGS -flto"
+  LDFLAGS="$LDFLAGS -flto"
+
+  dnl in case we have avx available by default, then we can compile everything
+  dnl with -flto
+  if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
+    if test "$AVXFLAGS" = ""; then
+        CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
+        CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+    fi
+  fi
+
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_SUBST(CFLAGS_NO_LTO_IF_AVX_NONDEFAULT,$CFLAGS_NO_LTO_IF_AVX_NONDEFAULT)
+AC_SUBST(CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT,$CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT)
+
+dnl ---------------------------------------------------------------------------
 dnl Check if we need -lws2_32
 dnl ---------------------------------------------------------------------------
 
