@@ -978,12 +978,12 @@ GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 /**
  * \brief Fetch a format specific internally meaningful handle.
  *
- * This method is the same as the C GDALGetInternalHandle() method. 
+ * This method is the same as the C GDALGetInternalHandle() method.
  *
  * @param pszHandleName the handle name desired.  The meaningful names
  * will be specific to the file format.
  *
- * @return the desired handle value, or NULL if not recognised/supported.
+ * @return the desired handle value, or NULL if not recognized/supported.
  */
 
 void *GDALDataset::GetInternalHandle( CPL_UNUSED const char * pszHandleName )
@@ -2864,12 +2864,12 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
     {
         if( oOpenInfo.bStatOK )
             CPLError( CE_Failure, CPLE_OpenFailed,
-                    "`%s' not recognised as a supported file format.\n",
+                    "`%s' not recognized as a supported file format.\n",
                     pszFilename );
         else
             CPLError( CE_Failure, CPLE_OpenFailed,
                     "`%s' does not exist in the file system,\n"
-                    "and is not recognised as a supported dataset name.\n",
+                    "and is not recognized as a supported dataset name.\n",
                     pszFilename );
     }
 
@@ -5442,7 +5442,7 @@ GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
     GDALSQLParseInfo* psParseInfo = (GDALSQLParseInfo*)CPLCalloc(1, sizeof(GDALSQLParseInfo));
 
 /* -------------------------------------------------------------------- */
-/*      Validate that all the source tables are recognised, count       */
+/*      Validate that all the source tables are recognized, count       */
 /*      fields.                                                         */
 /* -------------------------------------------------------------------- */
     int  nFieldCount = 0, iTable, iField;
