@@ -2556,7 +2556,7 @@ void JPGDatasetCommon::CheckForMask()
         goto end;
 
 /* -------------------------------------------------------------------- */
-/*      If that seems ok, seek back, and verify that just preceeding    */
+/*      If that seems okay, seek back, and verify that just preceding   */
 /*      the bitmask is an apparent end-of-jpeg-data marker.             */
 /* -------------------------------------------------------------------- */
     GByte abyEOD[2];

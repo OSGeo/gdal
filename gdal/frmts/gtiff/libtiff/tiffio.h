@@ -208,7 +208,7 @@ struct _TIFFRGBAImage {
 	uint16 orientation;                     /* image orientation */
 	uint16 req_orientation;                 /* requested orientation */
 	uint16 photometric;                     /* image photometric interp */
-	uint16* redcmap;                        /* colormap pallete */
+	uint16* redcmap;                        /* colormap palette */
 	uint16* greencmap;
 	uint16* bluecmap;
 	/* get image data routine */

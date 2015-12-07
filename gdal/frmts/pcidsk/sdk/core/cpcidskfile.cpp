@@ -1099,9 +1099,9 @@ void CPCIDSKFile::ExtendFile( uint64 blocks_requested, bool prezero )
     {
         std::vector<uint8> zeros;
         uint64 blocks_to_zero = blocks_requested;
-        
+
         zeros.resize( 512 * 32 );
-        
+
         while( blocks_to_zero > 0 )
         {
             uint64 this_time = blocks_to_zero;

@@ -1232,7 +1232,7 @@ Shapefile driver:
  * add check not to cut unicode character while cut the string lengnt for field max length during SetFeature
  * avoid reading whole .shx at open time for /vsicurl/
  * add SHAPE_REWIND_ON_WRITE configuration option that can be set to NO to disable correction of ring winding order on write. Useful when dealing with MultiPolygon that are MultiPatch objects in fact (#5888)
- * Make ENCODING layer creation option prioritary over SHAPE_ENCODING config. option
+ * Make ENCODING layer creation option proprietary over SHAPE_ENCODING config. option
 
 SOSI driver:
  * remove error noise (#5710)
@@ -2071,7 +2071,7 @@ Python bindings:
  * fix ref-counting of callable passed to gdal.PushErrorHandler() that could cause segfaults (#5186)
  * make gdal_array.NumericTypeCodeToGDALTypeCode accept numpy dtype arguments (#5223)
  * add default xoff,yoff,xsize,ysize values to ReadRaster calls
- * make ogr.CreateGeometryFromWkt() and SpatialReference.ImportFromWkt() propery validate their argument (#5302)
+ * make ogr.CreateGeometryFromWkt() and SpatialReference.ImportFromWkt() properly validate their argument (#5302)
 
 = GDAL/OGR 1.10.0 Release Notes (r23656 to r25905) =
 
@@ -2552,7 +2552,7 @@ Core:
  * OGRDataSource::CopyLayer(): take into account field renaming by output driver (e.g. Shapefile driver that might truncated field names) (#4667)
  * OGRLayer::FilterGeometry() : speed-up improvement in some cases and  use GEOSPreparedIntersects() when available (r23953, r25268)
  * OGRLayer::SetNextByIndex(): return OGRERR_FAILURE if index < 0
- * OGRLineString::setPoint( int iPoint, OGRPoint * poPoint ) : avoid promotting the line to 25D if the point is only 2D (#4688)
+ * OGRLineString::setPoint( int iPoint, OGRPoint * poPoint ) : avoid promoting the line to 25D if the point is only 2D (#4688)
  * OGRGeometry::Centroid(): make it work properly on POINT EMPTY with latest SVN geos version
  * Add reversePoints() method on linestring
 
@@ -2992,7 +2992,7 @@ Port:
  * CPLMiniXML: emit warnings when encountering non-conformant XML that is however accepted by the parser
  * add CPLBase64Encode(); move cpl_base64.h contents to cpl_string.h
  * Use CRITICAL_SECTION instead of Mutex on win32
- * CPLHTTPFetch(): Add a CLOSE_PERSISTENT option to close the persistant sessions
+ * CPLHTTPFetch(): Add a CLOSE_PERSISTENT option to close the persistent sessions
  * CPLHTTPFetch(): Add support for "NEGOTIATE" http auth mechanism
  * CPLHTTPFetch(): Add a CUSTOMREQUEST option
  * VSIBufferedReaderHandle: fix Eof()
@@ -3772,7 +3772,7 @@ SVG driver:
 S57 driver:
  * Add support for Dutch inland ENCs (#3881)
  * Allow up to 65536 attributes, use GUInt16 for iAttr (#3881)
- * Be cautious of case where end piont of a line segment has an invalid RCID
+ * Be cautious of case where end point of a line segment has an invalid RCID
  * Correct handling of update that need to existing SG2D into an existing feature without it (#4332)
 
 VRT driver:
@@ -4780,7 +4780,7 @@ Build (Windows) :
  * Trap failures in subdirectories and stop build
 
 Build (Unix) :
- * Use proper object file names when building prerequsites lists (#1878)
+ * Use proper object file names when building prerequisites lists (#1878)
  * Updated man page generation
  * Add new ./configure test to check that the GCC 4.1 built-in functions for atomic memory access are really available
  * Handle external libz (#2942)
@@ -5461,7 +5461,7 @@ CSharp bindings :
  * Add typemaps to support custom CPLErrorHandler via C# swig bindings
 
 Perl bindings :
- * in Polygonize make a local copy of the parameters as they are potentionally edited
+ * in Polygonize make a local copy of the parameters as they are potentially edited
 
 Python bindings :
  * Add support for Python 3.X. Compatibility with Python 2.X preserved (#3265)
@@ -6886,7 +6886,7 @@ Multithreading:
  - Lots of work done to implement support for multiple threads reading
    from distinct GDALDataset objects at the same time. 
 
-GDALRasterBand / Persistant Auxiliary Metadata (PAM):
+GDALRasterBand / Persistent Auxiliary Metadata (PAM):
  - Support for preserving a variety of metadata in a supporting XML file. 
  - GDALRasterBand now supports "remembering" histograms, and has a concept
    of the default histogram. 

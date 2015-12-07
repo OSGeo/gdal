@@ -420,7 +420,7 @@ static int GRIB2Inventory2to7 (sChar sectNum, DataSource &fp, sInt4 gribLen,
    double fstSurfValue; /* Value of first fixed surface. */
    sInt4 value;         /* The scaled value from GRIB2 file. */
    sChar factor;        /* The scaled factor from GRIB2 file */
-   sChar scale;         /* Surface scale as opposed to probility factor. */
+   sChar scale;         /* Surface scale as opposed to probability factor. */
    uChar sndSurfType;   /* Type of the second fixed surface. */
    double sndSurfValue; /* Value of second fixed surface. */
    sChar f_sndValue;    /* flag if SndValue is valid. */
@@ -801,7 +801,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
  *          after we know we have a GRIB file, we don't want "trailing" bytes
  *          to break the program.
  *   8/2003 AAT: switched fileLen to only be computed for an error message.
- *   8/2003 AAT: curTot no longer serves a purpse.
+ *   8/2003 AAT: curTot no longer serves a purpose.
  *   5/2004 AAT: Added a check for section number 2..8 for the repeated
  *          section (otherwise error)
  *  10/2004 AAT: Added ability to inventory TDLP records.

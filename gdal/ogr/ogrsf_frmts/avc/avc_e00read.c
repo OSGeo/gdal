@@ -1197,7 +1197,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
                                                            papszCoverDir);
 
     /*-----------------------------------------------------------------
-     * At this point, we should have read the coverage precsion... and if
+     * At this point, we should have read the coverage precision... and if
      * we haven't yet then we'll just use single by default.
      * We'll need cPrecisionCode for some of the sections that follow.
      *----------------------------------------------------------------*/

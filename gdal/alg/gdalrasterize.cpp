@@ -1101,7 +1101,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  *
  * @param nBufXSize width of the output data array in pixels.
  *
- * @param nBufYSize height of the output data array in pixels. 
+ * @param nBufYSize height of the output data array in pixels.
  *
  * @param eBufType data type of the output data array.
  *
@@ -1115,20 +1115,20 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  *
  * @param nLayerCount the number of layers being passed in pahLayers array.
  *
- * @param pahLayers the array of layers to burn in. 
+ * @param pahLayers the array of layers to burn in.
  *
  * @param pszDstProjection WKT defining the coordinate system of the target
  * raster.
  *
  * @param padfDstGeoTransform geotransformation matrix of the target raster.
  *
- * @param pfnTransformer transformation to apply to geometries to put into 
+ * @param pfnTransformer transformation to apply to geometries to put into
  * pixel/line coordinates on raster.  If NULL a geotransform based one will
  * be created internally.
  *
  * @param pTransformArg callback data for transformer.
  *
- * @param dfBurnValue the value to burn into the raster.  
+ * @param dfBurnValue the value to burn into the raster.
  *
  * @param papszOptions special options controlling rasterization:
  * <dl>
@@ -1136,7 +1136,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  * used for a burn in value. The value will be burned into all output
  * bands. If specified, padfLayerBurnValues will not be used and can be a NULL
  * pointer.</dd>
- * <dt>"ALL_TOUCHED":</dt> <dd>May be set to TRUE to set all pixels touched 
+ * <dt>"ALL_TOUCHED":</dt> <dd>May be set to TRUE to set all pixels touched
  * by the line or polygons, not just those whose center is within the polygon
  * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</dd>
  * </dl>
@@ -1146,7 +1146,9 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  * is. This is implemented properly only for points and lines for now. Polygons
  * will be burned using the Z value from the first point. The M value may
  * be supported in the future.</dd>
- * <dt>"MERGE_ALG":</dt> <dd>May be REPLACE (the default) or ADD.  REPLACE results in overwriting of value, while ADD adds the new value to the existing raster, suitable for heatmaps for instance.</dd>
+ * <dt>"MERGE_ALG":</dt> <dd>May be REPLACE (the default) or ADD.  REPLACE
+ * results in overwriting of value, while ADD adds the new value to the
+ * existing raster, suitable for heatmaps for instance.</dd>
  * </dl>
  *
  * @param pfnProgress the progress function to report completion.
@@ -1163,7 +1165,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
                                int nLayerCount, OGRLayerH *pahLayers,
                                const char *pszDstProjection,
                                double *padfDstGeoTransform,
-                               GDALTransformerFunc pfnTransformer, 
+                               GDALTransformerFunc pfnTransformer,
                                void *pTransformArg, double dfBurnValue,
                                char **papszOptions,
                                GDALProgressFunc pfnProgress,
@@ -1171,7 +1173,8 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 
 {
 #ifndef OGR_ENABLED
-    CPLError(CE_Failure, CPLE_NotSupported, "GDALRasterizeLayersBuf() unimplemented in a non OGR build");
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GDALRasterizeLayersBuf() unimplemented in a non OGR build" );
     return CE_Failure;
 #else
 /* -------------------------------------------------------------------- */
@@ -1180,7 +1183,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 /* -------------------------------------------------------------------- */
     if( nPixelSpace == 0 )
         nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
-    
+
     if( nLineSpace == 0 )
         nLineSpace = nPixelSpace * nBufXSize;
 
@@ -1205,7 +1208,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
     }
 
 /* ==================================================================== */
-/*      Read thes pecified layers transfoming and rasterizing           */
+/*      Read the specified layers transfoming and rasterizing           */
 /*      geometries.                                                     */
 /* ==================================================================== */
     CPLErr      eErr = CE_None;
@@ -1291,7 +1294,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 
             if ( pszBurnAttribute )
                 dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
-            
+
             gv_rasterize_one_shape( (unsigned char *) pData, 0,
                                     nBufXSize, nBufYSize,
                                     1, eBufType, bAllTouched, poGeom,
@@ -1316,7 +1319,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
             pfnTransformer = NULL;
         }
     }
-    
+
     return eErr;
 #endif /* def OGR_ENABLED */
 }

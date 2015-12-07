@@ -921,7 +921,7 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable (
     std::string *poKmlStyleKml,
     const char *pszMyStylePath)
 {
-    
+
     /***** parse the kml into the dom *****/
 
     std::string oKmlErrors;
@@ -929,30 +929,29 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable (
 
     if ( !poKmlRoot ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "ERROR Parseing style kml %s :%s",
+                   "ERROR parsing style kml %s :%s",
                    pszStylePath, oKmlErrors.c_str (  ) );
         return false;
     }
-    
+
     ContainerPtr poKmlContainer;
 
     if ( !( poKmlContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlRoot ) ) ) {
         return false;
     }
-    
+
     ParseStyles ( AsDocument ( poKmlContainer ), &m_poStyleTable );
     pszStylePath = CPLStrdup(pszMyStylePath);
-    
-        
+
     return true;
 }
 
 /******************************************************************************
  method to open a kml file
- 
+
  Args:          pszFilename file to open
                 bUpdate     update mode
- 
+
  Returns:       True on success, false on failure
 
 ******************************************************************************/
@@ -1002,7 +1001,7 @@ int OGRLIBKMLDataSource::OpenKml (
 
     if ( !poKmlRoot ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "ERROR Parseing kml %s :%s",
+                   "ERROR parsing kml %s :%s",
                    pszFilename, oKmlErrors.c_str (  ) );
         delete poOgrSRS;
 
@@ -1011,9 +1010,10 @@ int OGRLIBKMLDataSource::OpenKml (
 
     /***** get the container from root  *****/
 
-    if ( !( m_poKmlDSContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlRoot ) ) ) {
+    if ( !( m_poKmlDSContainer = GetContainerFromRoot ( m_poKmlFactory,
+                                                        poKmlRoot ) ) ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "ERROR Parseing kml %s :%s %s",
+                   "ERROR parsing kml %s :%s %s",
                    pszFilename, "This file does not fit the OGR model,",
                    "there is no container element at the root." );
         delete poOgrSRS;
@@ -1115,7 +1115,7 @@ int OGRLIBKMLDataSource::OpenKmz (
 
     if ( !poKmlDocKmlRoot ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "ERROR Parseing kml layer %s from %s :%s",
+                   "ERROR parsing kml layer %s from %s :%s",
                    oKmlKmlPath.c_str (  ),
                    pszFilename, oKmlErrors.c_str (  ) );
         delete poOgrSRS;
@@ -1127,9 +1127,10 @@ int OGRLIBKMLDataSource::OpenKmz (
 
     ContainerPtr poKmlContainer;
 
-    if (!(poKmlContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlDocKmlRoot ))) {
+    if (!(poKmlContainer = GetContainerFromRoot ( m_poKmlFactory,
+                                                  poKmlDocKmlRoot ))) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "ERROR Parseing %s from %s :%s",
+                   "ERROR parsing %s from %s :%s",
                    oKmlKmlPath.c_str (  ),
                    pszFilename, "kml contains no Containers" );
         delete poOgrSRS;
@@ -1186,7 +1187,7 @@ int OGRLIBKMLDataSource::OpenKmz (
 
                 if ( !poKmlLyrRoot ) {
                     CPLError ( CE_Failure, CPLE_OpenFailed,
-                               "ERROR Parseing kml layer %s from %s :%s",
+                               "ERROR parseing kml layer %s from %s :%s",
                                poKmlHref->get_path (  ).c_str (  ),
                                pszFilename, oKmlErrors.c_str (  ) );
                     delete poKmlHref;
@@ -1202,7 +1203,7 @@ int OGRLIBKMLDataSource::OpenKmz (
                 if ( !poKmlLyrContainer )
                 {
                     CPLError ( CE_Failure, CPLE_OpenFailed,
-                               "ERROR Parseing kml layer %s from %s :%s",
+                               "ERROR parsing kml layer %s from %s :%s",
                                poKmlHref->get_path (  ).c_str (  ),
                                pszFilename, oKmlErrors.c_str (  ) );
                     delete poKmlHref;
@@ -1350,7 +1351,7 @@ int OGRLIBKMLDataSource::OpenDir (
 
         if ( !poKmlRoot ) {
             CPLError ( CE_Failure, CPLE_OpenFailed,
-                       "ERROR Parseing kml layer %s from %s :%s",
+                       "ERROR parsing kml layer %s from %s :%s",
                        osFilePath.c_str(), pszFilename, oKmlErrors.c_str (  ) );
 
             continue;
@@ -1360,9 +1361,10 @@ int OGRLIBKMLDataSource::OpenDir (
 
         ContainerPtr poKmlContainer;
 
-        if ( !( poKmlContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlRoot ) ) ) {
+        if ( !( poKmlContainer = GetContainerFromRoot ( m_poKmlFactory,
+                                                        poKmlRoot ) ) ) {
             CPLError ( CE_Failure, CPLE_OpenFailed,
-                       "ERROR Parseing kml %s :%s %s",
+                       "ERROR parsing kml %s :%s %s",
                        pszFilename,
                        "This file does not fit the OGR model,",
                        "there is no container element at the root." );

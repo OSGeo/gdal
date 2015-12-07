@@ -2331,7 +2331,7 @@ static void Ugly2English (UglyStringType * ugly)
  *
  * RETURNS: int
  *  0 = No problems
- * -1 = Had difficulties parseing the Ugly string.
+ * -1 = Had difficulties parsing the ugly string.
  *
  * HISTORY
  *   5/2003 Arthur Taylor (MDL/RSIS): Created.

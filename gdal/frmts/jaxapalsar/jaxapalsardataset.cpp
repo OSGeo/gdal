@@ -530,7 +530,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     /* Check that this actually is a JAXA PALSAR product */
     if ( !PALSARJaxaDataset::Identify(poOpenInfo) )
         return NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -541,7 +541,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
                   " datasets.\n" );
         return NULL;
     }
-    
+
     PALSARJaxaDataset *poDS = new PALSARJaxaDataset();
 
     /* Get the suffix of the filename, we'll need this */

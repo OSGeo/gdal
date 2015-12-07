@@ -193,7 +193,7 @@ identified format as efficiently as possible, since many drivers may be
 invoked with files of the wrong format before the correct driver is 
 reached.  In this particular Open() we just test the file extension but this
 is generally a poor way of identifying a file format.  If available, checking
-"magic header values" or something similar is preferrable. 
+"magic header values" or something similar is preferable.
 
 In the case of the SPF format, update in place is not supported, 
 so we always fail if bUpdate is FALSE. 

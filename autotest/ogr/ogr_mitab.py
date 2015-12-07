@@ -395,7 +395,7 @@ def ogr_mitab_12():
     return 'success'
 
 ###############################################################################
-# Verify that field widths and precisions are propogated correctly in TAB
+# Verify that field widths and precisions are propagated correctly in TAB.
 
 def ogr_mitab_13():
 
@@ -445,7 +445,7 @@ def ogr_mitab_13():
     return 'success'
 
 ###############################################################################
-# Verify that field widths and precisions are propogated correctly in MIF
+# Verify that field widths and precisions are propagated correctly in MIF.
 
 def ogr_mitab_14():
 

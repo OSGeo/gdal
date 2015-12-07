@@ -410,7 +410,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Propogate some specific structural metadata as options if it    */
+/*      Propagate some specific structural metadata as options if it    */
 /*      appears to be supported by the target driver and the caller     */
 /*      didn't provide values.                                          */
 /* -------------------------------------------------------------------- */

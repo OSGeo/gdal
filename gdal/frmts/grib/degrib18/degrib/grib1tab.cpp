@@ -6240,7 +6240,7 @@ const GRIB1ParmTable parm_table_dwd_203[256] = {
    /* 56 */ {"min_temp", "minimum temperature", "C", UC_NONE},
    /* 57 */ {"var57", "undefined", "-", UC_NONE},
    /* 58 */ {"clo", "value of isolation of clothes", "1", UC_NONE},
-   /* 59 */ {"pmva", "predected mean vote (angepasst)", "1", UC_NONE},
+   /* 59 */ {"pmva", "predicted mean vote (angepasst)", "1", UC_NONE},
    /* 60 */ {"feeled_t", "feeled temperature", "C", UC_NONE},
    /* 61 */ {"sea_temper", "sea temperature", "C", UC_NONE},
    /* 62 */ {"var62", "undefined", "-", UC_NONE},

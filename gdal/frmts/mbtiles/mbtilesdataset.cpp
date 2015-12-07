@@ -574,7 +574,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine,
     int i;
 
     /* See https://github.com/mapbox/utfgrid-spec/blob/master/1.0/utfgrid.md */
-    /* for the explanation of the following processings */
+    /* for the explanation of the following process */
 
     pszSQL = CPLSPrintf("SELECT grid FROM grids WHERE "
                         "zoom_level = %d AND tile_column = %d AND tile_row = %d",

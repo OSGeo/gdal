@@ -212,9 +212,9 @@ typedef struct NumericVar
 /*
 * get_str_from_var() -
 *
-*	Convert a var to text representation (guts of numeric_out).
-*	CAUTION: var's contents may be modified by rounding!
-*	Returns a palloc'd string.
+*       Convert a var to text representation (guts of numeric_out).
+*       CAUTION: var's contents may be modified by rounding!
+*       Returns a malloc'd string.
 */
 static char *
 OGRPGGetStrFromBinaryNumeric(NumericVar *var)
@@ -226,7 +226,7 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
         int			d;
         NumericDigit dig;
         NumericDigit d1;
-        
+
         int dscale = var->dscale;
 
         /*
@@ -264,9 +264,10 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
                 {
                         dig = (d < var->ndigits) ? var->digits[d] : 0;
                         CPL_MSBPTR16(&dig);
-                        /* In the first digit, suppress extra leading decimal zeroes */
+                        /* In the first digit, suppress extra leading
+                           decimal zeroes */
                         {
-                                bool		putit = (d > 0);
+                                bool putit = (d > 0);
 
                                 d1 = dig / 1000;
                                 dig -= d1 * 1000;
@@ -287,8 +288,8 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
                         }
                 }
         }
-        
-                /*
+
+        /*
         * If requested, output a decimal point and all the digits that follow it.
         * We initially put out a multiple of DEC_DIGITS digits, then truncate if
         * needed.

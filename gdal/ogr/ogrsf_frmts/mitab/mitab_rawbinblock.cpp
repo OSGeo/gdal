@@ -516,10 +516,10 @@ int     TABRawBinBlock::GotoByteRel(int nOffset)
  *
  * bOffsetIsEndOfData is set to TRUE to indicate that the nOffset
  * to which we are attempting to go is the end of the used data in this
- * block (we are positioninig ourselves to append data), so if the nOffset 
- * corresponds to the beginning of a 512 bytes block then we should really 
- * be positioning ourselves at the end of the block that ends at this 
- * address instead of at the beginning of the blocks that starts at this 
+ * block (we are positioning ourselves to append data), so if the nOffset
+ * corresponds to the beginning of a 512 bytes block then we should really
+ * be positioning ourselves at the end of the block that ends at this
+ * address instead of at the beginning of the blocks that starts at this
  * address. This case can happen when going back and forth to write collection
  * objects to a Coordblock and is documented in bug 1657.
  *

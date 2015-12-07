@@ -36,7 +36,7 @@
 CPL_CVSID("$Id$");
 
 /* ==================================================================== */
-/*      The CSVTable is a persistant set of info about an open CSV      */
+/*      The CSVTable is a persistent set of info about an open CSV      */
 /*      table.  While it doesn't currently maintain a record index,     */
 /*      or in-memory copy of the table, it could be changed to do so    */
 /*      in the future.                                                  */

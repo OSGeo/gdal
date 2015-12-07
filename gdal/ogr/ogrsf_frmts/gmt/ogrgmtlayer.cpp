@@ -879,7 +879,7 @@ OGRErr OGRGmtLayer::ICreateFeature( OGRFeature *poFeature )
                 pszEscapedVal = 
                     CPLEscapeString( pszRawValue, 
                                      -1, CPLES_BackslashQuotable );
-                
+
                 osFieldData += "\"";
                 osFieldData += pszEscapedVal;
                 osFieldData += "\"";
@@ -902,7 +902,7 @@ OGRErr OGRGmtLayer::ICreateFeature( OGRFeature *poFeature )
 /*                           WriteGeometry()                            */
 /*                                                                      */
 /*      Write a geometry to the file.  If bHaveAngle is TRUE it         */
-/*      means the angle bracket preceeding the point stream has         */
+/*      means the angle bracket preceding the point stream has          */
 /*      already been written out.                                       */
 /*                                                                      */
 /*      We use the C API for geometry access because of it's            */
@@ -919,7 +919,7 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
     {
         int iGeom;
         OGRErr eErr = OGRERR_NONE;
-        
+
         for( iGeom = 0; 
              iGeom < OGR_G_GetGeometryCount(hGeom) && eErr == OGRERR_NONE;
              iGeom++ )

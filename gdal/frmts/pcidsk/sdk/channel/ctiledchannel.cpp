@@ -918,7 +918,7 @@ void CTiledChannel::JPEGCompressBlock( PCIDSKBuffer &oDecompressedData,
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      Make the output buffer plent big to hold any conceivable        */
+/*      Make the output buffer plenty big to hold any conceivable       */
 /*      result.                                                         */
 /* -------------------------------------------------------------------- */
     oCompressedData.SetSize( oDecompressedData.buffer_size * 2 + 1000 );

@@ -2853,7 +2853,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
 
         TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6*nGCPCount, padfTiePoints);
         CPLFree( padfTiePoints );
-    } 
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write RPC                                                       */
@@ -2876,7 +2876,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
     VSIFCloseL(fpL);
 
 /* -------------------------------------------------------------------- */
-/*      Read back from the memory buffer.  It would be preferrable      */
+/*      Read back from the memory buffer.  It would be preferable       */
 /*      to be able to "steal" the memory buffer, but there isn't        */
 /*      currently any support for this.                                 */
 /* -------------------------------------------------------------------- */

@@ -6453,10 +6453,10 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 	    /* -------------- */
 	    if (projcode == GCTP_GEO)
 	    {
-	        /*allow map to span dateline */
+	        /* allow map to span dateline */
 	        lonrad0 = EHconvAng(upleftpt[0], HDFE_DMS_RAD);
 	        lonrad1 = EHconvAng(lowrightpt[0], HDFE_DMS_RAD);
-		/* if time-line is paased */
+		/* if time-line is passed */
 		if(lonrad < lonrad1)
 		  {
 		    if (lonrad < lonrad0) lonrad += 2.0 * M_PI;
@@ -7051,8 +7051,8 @@ GDtangentpnts(int32 projcode, float64 projparm[], float64 cornerlon[],
     float64         homDyDtheta();	/* Oblique Mercator  Dy/Dtheta */
 #endif
 
-    /* Conpute pi (double precsion) */
-    /* ---------------------------- */
+    /* Compute pi (double precision) */
+    /* ----------------------------- */
     dpi = atan(1.0) * 4;
 
 

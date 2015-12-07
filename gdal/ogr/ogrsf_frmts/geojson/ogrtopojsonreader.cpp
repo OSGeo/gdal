@@ -514,7 +514,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     if( NULL == poGJObject_ )
     {
         CPLDebug( "TopoJSON",
-                  "Missing parset TopoJSON data. Forgot to call Parse()?" );
+                  "Missing parsed TopoJSON data. Forgot to call Parse()?" );
         return;
     }
 

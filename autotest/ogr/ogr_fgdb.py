@@ -103,7 +103,6 @@ def ogr_fgdb_1():
     options = ['COLUMN_TYPES=smallint=esriFieldTypeSmallInteger,float=esriFieldTypeSingle,guid=esriFieldTypeGUID,xml=esriFieldTypeXML']
 
     for data in datalist:
-        #import pdb; pdb.set_trace()
         if data[1] == ogr.wkbNone:
             lyr = ds.CreateLayer(data[0], geom_type=data[1], options = options )
         elif data[0] == 'multipatch':

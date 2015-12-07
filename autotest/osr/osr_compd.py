@@ -356,7 +356,7 @@ def osr_compd_7():
         UNIT["foot",0.304800609601219],
         AXIS["Up",UP],
         AUTHORITY["EPSG","5703"]]]"""
-        
+
     wkt = srs.ExportToPrettyWkt() 
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:

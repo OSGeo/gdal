@@ -4666,7 +4666,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     int *paDimIds  = reinterpret_cast<int *>( CPLCalloc(nd, sizeof( int ) ) );
 
-    // X, Y, Z postion in array
+    // X, Y, Z position in array
     int *panBandDimPos
         = reinterpret_cast<int *>( CPLCalloc( nd, sizeof( int ) ) );
 
@@ -5754,11 +5754,11 @@ int netCDFDataset::DefVarDeflate(
 {
 #ifdef NETCDF_HAS_NC4
     if ( eCompress == NCDF_COMPRESS_DEFLATE ) {
-        // must set chunk size to avoid huge performace hit (set bChunkingArg=TRUE)
+        // Must set chunk size to avoid huge performance hit (set bChunkingArg=TRUE)
         // perhaps another solution it to change the chunk cache?
         // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf.html#Chunk-Cache   
-        // TODO make sure this is ok
-        CPLDebug( "GDAL_netCDF", 
+        // TODO: make sure this is okay.
+        CPLDebug( "GDAL_netCDF",
                   "DefVarDeflate( %d, %d ) nZlevel=%d",
                   nVarId, bChunkingArg, nZLevel );
 

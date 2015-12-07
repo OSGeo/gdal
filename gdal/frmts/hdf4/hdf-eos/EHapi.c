@@ -1703,7 +1703,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
     char           *metaArr[2];	/* Array of metadata positions */
     char           *colon;	/* Colon position */
     char           *colon2;	/* 2nd colon position */
-    char           *slash;	/* Slash postion */
+    char           *slash;	/* Slash position */
     char           *utlstr;	/* Utility string */
     char           *utlstr2;	/* Utility string 2 */
 
@@ -2302,8 +2302,8 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
     /* --------------------------------------- */
     seglen = (int)strlen(utlstr);
 
-    /* Get offset of entry postion within existing metadata */
-    /* ---------------------------------------------------- */
+    /* Get offset of entry position within existing metadata */
+    /* ----------------------------------------------------- */
     offset = (int)(metaptr - metabuf);
 
 

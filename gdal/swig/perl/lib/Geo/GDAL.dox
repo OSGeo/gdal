@@ -1307,7 +1307,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @return a new Geo::GDAL::ColorTable object
 
 ## @method $GetPaletteInterpretation()
-# @return paletter interpretation (string)
+# @return palette interpretation (string)
 
 ## @method $GetCount()
 # @return The number of colors in this color table.

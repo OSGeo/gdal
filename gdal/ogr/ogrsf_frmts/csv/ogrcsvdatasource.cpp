@@ -591,9 +591,10 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
             chDelimiter = ' ';
         else
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                  "SEPARATOR=%s not understood, use one of COMMA, SEMICOLON, SPACE or TAB.",
-                  pszDelimiter );
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "SEPARATOR=%s not understood, use one of "
+                      "COMMA, SEMICOLON, SPACE or TAB.",
+                      pszDelimiter );
         }
     }
 
@@ -603,13 +604,13 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
     nLayers++;
     papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
                                              sizeof(void*) * nLayers);
-    
+
     papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, NULL, osFilename,
                                              TRUE, TRUE, chDelimiter );
     papoLayers[nLayers-1]->BuildFeatureDefn();
 
 /* -------------------------------------------------------------------- */
-/*      Was a partiuclar CRLF order requested?                          */
+/*      Was a particular CRLF order requested?                          */
 /* -------------------------------------------------------------------- */
     const char *pszCRLFFormat = CSLFetchNameValue( papszOptions, "LINEFORMAT");
     int bUseCRLF;
@@ -637,7 +638,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
         bUseCRLF = FALSE;
 #endif
     }
-    
+
     papoLayers[nLayers-1]->SetCRLF( bUseCRLF );
 
 /* -------------------------------------------------------------------- */

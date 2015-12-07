@@ -1519,8 +1519,8 @@ CPLString OGRElasticLayer::BuildMap() {
 
     CPLString jsonMap(json_object_to_json_string(map));
     json_object_put(map);
-    
-    // Got personnaly caught by that...
+
+    // Got personally caught by that...
     if( CSLCount(m_papszStoredFields) == 1 &&
         (EQUAL(m_papszStoredFields[0], "YES") || EQUAL(m_papszStoredFields[0], "TRUE")) &&
         m_poFeatureDefn->GetFieldIndex(m_papszStoredFields[0]) < 0 )

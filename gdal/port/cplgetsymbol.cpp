@@ -68,7 +68,7 @@ CPL_CVSID("$Id$");
  *  <li> Attempt to look for the library in non-standard
  *    locations.
  *  <li> Attempt to try variations on the symbol name, like
- *    pre-prending or post-pending an underscore.
+ *    pre-pending or post-pending an underscore.
  * </ul>
  *
  * Some of these issues may be worked on in the future.
