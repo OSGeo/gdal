@@ -456,8 +456,8 @@ string DODSDataset::SubConstraint( string raw_constraint,
 /*      candidates.  After the first we only accept additional          */
 /*      objects as bands if they match the size of the original.        */
 /*                                                                      */
-/*      Auto-recognision rules will presumably evolve over time to      */
-/*      recognise different common configurations and to support        */
+/*      Auto-recognition rules will presumably evolve over time to      */
+/*      recognize different common configurations and to support        */
 /*      more variations.                                                */
 /************************************************************************/
 

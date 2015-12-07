@@ -334,8 +334,8 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
             AttitudeSeg_t *attitudeSeg
                 = SRITModel->OrbitPtr->AttitudeSeg;
 
-	    ndata = SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine;
-       
+            ndata = SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine;
+
             for (i=0; i<ndata; i++)
             {
                 SRITModel->Hdeltat.push_back(
@@ -359,14 +359,14 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /************************************************************************/
 /**
   * Translate a SRITInfo_t into binary data.
-  * Translate a SRITInfo_t into the corresponding block of          
-  * binary data.  This function is expected to be used by           
-  * ranslators such as iisopen.c (VISTA) so that our satellite     
-  * models can be converted into some opaque serialized form.       
-  * Translate a RFInfo_t into the corresponding block of binary data. 
+  * Translate a SRITInfo_t into the corresponding block of
+  * binary data.  This function is expected to be used by
+  * translators such as iisopen.c (VISTA) so that our satellite
+  * models can be converted into some opaque serialized form.
+  * Translate a RFInfo_t into the corresponding block of binary data.
   *
-  * @param  SRITModel	     Satellite Model structure.
-  * @param  pnBinaryLength	Length of binary data.
+  * @param  SRITModel        Satellite Model structure.
+  * @param  pnBinaryLength   Length of binary data.
   * @return Binary data for a  Satellite Model structure.
   */
 void

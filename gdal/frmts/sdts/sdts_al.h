@@ -213,7 +213,7 @@ public:
 
     void        ApplyATID( DDFField * );
 
-    /** Dump reable description of feature to indicated stream. */
+    /** Dump readable description of feature to indicated stream. */
     virtual void Dump( FILE * ) = 0;
 };
 

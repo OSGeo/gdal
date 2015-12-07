@@ -1340,7 +1340,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    uInt4 sectLen;       /* Length in bytes of the current section. */
    short int ESF;       /* Power of 2 scaling factor. */
    uInt4 uli_temp;      /* Used to store sInt4s (temporarily) */
-   double refVal;       /* The refrence value for the grid, also the minimum
+   double refVal;       /* The reference value for the grid, also the minimum
                          * value. */
    uChar numBits;       /* # of bits for a single element of data. */
    uChar numUnusedBit;  /* # of extra bits at end of record. */

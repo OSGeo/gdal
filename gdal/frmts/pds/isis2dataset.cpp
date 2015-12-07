@@ -1055,7 +1055,7 @@ int ISIS2Dataset::WriteQUBE_Information(
 /*      osRasterFile : name of raster file but if it is empty we        */
 /*                     have only one file with an attached label        */
 /*      sObjectTag : QUBE, IMAGE or SPECTRAL_QUBE                       */
-/*      bRelaunch : flag to allow recursiv call                         */
+/*      bRelaunch : flag to allow recursive call                        */
 /************************************************************************/
 
 int ISIS2Dataset::WriteLabel(

@@ -146,7 +146,7 @@ GDALDriverManager::~GDALDriverManager()
     /* datasets, which defeat some "design" of the proxy pool */
     GDALDatasetPoolPreventDestroy();
 
-    /* First begin by requesting each reamining dataset to drop any reference */
+    /* First begin by requesting each remaining dataset to drop any reference */
     /* to other datasets */
     bool bHasDroppedRef = false;
 

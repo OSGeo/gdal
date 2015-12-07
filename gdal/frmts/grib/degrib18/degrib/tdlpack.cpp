@@ -3913,7 +3913,7 @@ static int GroupPack (double *Src, sInt4 **Dst, sInt4 numData,
       li_secMiss = (sInt4) (*secMiss * SCALE_MISSING + .5);
    }
 
-   /* Reason this is after TDL_ScaleData is we don't want to reoder the
+   /* Reason this is after TDL_ScaleData is we don't want to reorder the
     * caller's copy of the data. */
    if (f_grid) {
       TDL_ReorderGrid (Data, NX, NY);

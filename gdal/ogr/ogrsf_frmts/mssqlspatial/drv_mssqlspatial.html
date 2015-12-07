@@ -8,7 +8,7 @@
 <h1>MSSQLSpatial - Microsoft SQL Server Spatial Database</h1>
 
 <p>This driver implements support for access to spatial tables in Microsoft SQL 
-    Server 2008+ which contains the geometry and geography data types to repesent 
+    Server 2008+ which contains the geometry and geography data types to represent 
     the geometry columns.</p>
 
 <h2>Connecting to a database</h2>
@@ -70,13 +70,15 @@ existing database.</P>
 
 <ul>
 <li>
-<b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to 
-one of "geometry" or "geography". If this option is not specified the default value is "geometry". 
-    So as to create the geometry column with &quot;geography&quot; type, this parameter should 
-    be set &quot;geography&quot;. In this case the layer must have a valid spatial referece of 
-    one of the geography coordinate systems defined in the <b>
-    sys.spatial_reference_systems</b> SQL Server metadata table. Projected 
-    coordinate systems are not supported in this case.</li>
+<b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to
+one of "geometry" or "geography". If this option is not specified the
+default value is "geometry".  So as to create the geometry column with
+&quot;geography&quot; type, this parameter should be set
+&quot;geography&quot;. In this case the layer must have a valid
+spatial reference of one of the geography coordinate systems defined
+in the <b> sys.spatial_reference_systems</b> SQL Server metadata
+table. Projected coordinate systems are not supported in this
+case.</li>
 <li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
 desired name to be destroyed before creating the requested layer.</li>
 <li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this

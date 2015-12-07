@@ -1874,7 +1874,7 @@ void NITFDataset::CheckGeoSDEInfo()
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "MAPLOB Unit=%3.3s not regonised, geolocation may be wrong.",
+                  "MAPLOB Unit=%3.3s not recognized, geolocation may be wrong.",
                   pszMAPLOB+0 );
     }
 

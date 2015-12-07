@@ -211,14 +211,14 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
     if( nRecLevel == 32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Too many recursiong level (%d) while parsing KML geometry.",
-                    nRecLevel );
+                  "Too many recursion levels (%d) while parsing KML geometry.",
+                  nRecLevel );
         return FALSE;
     }
 
     //CPLDebug("KML", "%s<%s>", genSpaces(), sName_.c_str());
     //nDepth ++;
-    
+
     if(sName_.compare("Point") == 0)
         eType_ = Point;
     else if(sName_.compare("LineString") == 0)

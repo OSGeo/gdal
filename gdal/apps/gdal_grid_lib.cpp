@@ -261,7 +261,7 @@ static void ProcessGeometry( OGRPoint *poGeom, OGRGeometry *poClipSrc,
 /************************************************************************/
 /*                       ProcessCommonGeometry()                        */
 /*                                                                      */
-/*  Process recursivelly geometry and extract points                    */
+/*  Process recursively geometry and extract points.                    */
 /************************************************************************/
 
 static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,

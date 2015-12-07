@@ -1410,7 +1410,7 @@ int main( int nArgc, char ** papszArgv )
         }
     }
 
-    
+
     if(stOper == op_create)
     {
 #ifdef HAVE_GEOS_PROJECT
@@ -1424,7 +1424,7 @@ int main( int nArgc, char ** papszArgv )
             Usage("no position field provided");
         else  if (dfStep == -100000000)
             Usage("no step provided");
-            
+
     /* -------------------------------------------------------------------- */
     /*      Open data source.                                               */
     /* -------------------------------------------------------------------- */
@@ -1442,7 +1442,7 @@ int main( int nArgc, char ** papszArgv )
         if( poLnDS == NULL )
         {
             OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
-            
+
             fprintf( stderr, "FAILURE:\n"
                     "Unable to open path datasource `%s' with the following drivers.\n",
                     pszLineDataSource);

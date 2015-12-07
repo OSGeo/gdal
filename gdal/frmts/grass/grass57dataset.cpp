@@ -41,7 +41,7 @@ extern "C" {
 #ifdef __cplusplus
 #undef class
 #endif
-    
+
 #include <grass/version.h>
 #include <grass/gprojects.h>
 #include <grass/gis.h>

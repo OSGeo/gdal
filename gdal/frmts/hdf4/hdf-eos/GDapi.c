@@ -20,17 +20,17 @@ REVISIONS:
 
 Aug 31, 1999  Abe Taaheri    Changed memory allocation for utility strings to
                              the size of UTLSTR_MAX_SIZE.
-			     Added error check for memory unavailibilty in 
+			     Added error check for memory unavailibilty in
 			     several functions.
-			     Added check for NULL metabuf returned from 
-			     EHmeta... functions. NULL pointer retruned from 
+			     Added check for NULL metabuf returned from
+			     EHmeta... functions. NULL pointer returned from
 			     EHmeta... functions indicate that memory could not
 			     be allocated for metabuf.
-Jun  27, 2000  Abe Taaheri   Added support for EASE grid that uses 
+Jun  27, 2000  Abe Taaheri   Added support for EASE grid that uses
                              Behrmann Cylinderical Equal Area (BCEA) projection
 Oct  23, 2000  Abe Taaheri   Updated for ISINUS projection, so that both codes
                              31 and 99 can be used for this projection.
-Jan  15, 2003   Abe Taaheri  Modified for generalization of EASE Grid. 
+Jan  15, 2003   Abe Taaheri  Modified for generalization of EASE Grid.
 
 Jun  05, 2003 Bruce Beaumont / Abe Taaheri
 

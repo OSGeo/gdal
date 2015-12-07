@@ -1718,9 +1718,9 @@ static void CPLVirtualMemManagerThread(void* unused_param)
         }
         else
         {
-            /* Warn the segfault handler that we have finished our job */
-            /* but that the fault didn't occur in a memory range that is under */
-            /* our responsability */
+            // Warn the segfault handler that we have finished our job
+            // but that the fault didn't occur in a memory range that
+            // is under our responsibility.
             CPLError(CE_Failure, CPLE_AppDefined,
                      "CPLVirtualMemManagerThread: no mapping found");
             assert(write(pVirtualMemManager->pipefd_from_thread[1],

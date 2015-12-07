@@ -458,19 +458,19 @@ static bool GDALRPCGetHeightAtLongLat( const GDALRPCTransformInfo *psTransform,
  * Model. A Rigorous Projection Model expresses the mapping of the image space 
  * coordinates of rows and columns (r,c) onto the object space reference 
  * surface geodetic coordinates (long, lat, height).
- * 
- * RPC supports a generic description of the Rigorous Projection Models. The 
- * approximation used by GDAL (RPC00) is a set of rational polynomials exp 
- * ressing the normalized row and column values, (rn , cn), as a function of
- *  normalized geodetic latitude, longitude, and height, (P, L, H), given a 
+ *
+ * RPC supports a generic description of the Rigorous Projection Models. The
+ * approximation used by GDAL (RPC00) is a set of rational polynomials
+ * expressing the normalized row and column values, (rn , cn), as a function of
+ * normalized geodetic latitude, longitude, and height, (P, L, H), given a
  * set of normalized polynomial coefficients (LINE_NUM_COEF_n, LINE_DEN_COEF_n,
- *  SAMP_NUM_COEF_n, SAMP_DEN_COEF_n). Normalized values, rather than actual 
- * values are used in order to minimize introduction of errors during the 
- * calculations. The transformation between row and column values (r,c), and 
- * normalized row and column values (rn, cn), and between the geodetic 
- * latitude, longitude, and height and normalized geodetic latitude, 
- * longitude, and height (P, L, H), is defined by a set of normalizing 
- * translations (offsets) and scales that ensure all values are contained i 
+ * SAMP_NUM_COEF_n, SAMP_DEN_COEF_n). Normalized values, rather than actual
+ * values are used in order to minimize introduction of errors during the
+ * calculations. The transformation between row and column values (r,c), and
+ * normalized row and column values (rn, cn), and between the geodetic
+ * latitude, longitude, and height and normalized geodetic latitude,
+ * longitude, and height (P, L, H), is defined by a set of normalizing
+ * translations (offsets) and scales that ensure all values are contained i
  * the range -1 to +1.
  *
  * This function creates a GDALTransformFunc compatible transformer 

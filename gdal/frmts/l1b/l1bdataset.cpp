@@ -853,7 +853,7 @@ void L1BDataset::ProcessRecordHeaders()
 
 /* -------------------------------------------------------------------- */
 /*      Pick a skip factor so that we will get roughly 20 lines         */
-/*      worth of GCPs.  That should give respectible coverage on all    */
+/*      worth of GCPs.  That should give respectable coverage on all    */
 /*      but the longest swaths.                                         */
 /* -------------------------------------------------------------------- */
     int nTargetLines;

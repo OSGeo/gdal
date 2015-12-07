@@ -8432,14 +8432,14 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     int   nPenId;
     const char* pszPenId;
 
-    // Use the Style Manager to retreive all the information we need.
+    // Use the Style Manager to retrieve all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
     OGRStyleTool *poStylePart = NULL;
 
     // Init the StyleMgr with the StyleString.
     poStyleMgr->InitStyleString(pszStyleString);
 
-    // Retreive the Pen info.
+    // Retrieve the Pen info.
     numParts = poStyleMgr->GetPartCount();
     for(i=0; i<numParts; i++)
     {
@@ -8527,7 +8527,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     }
     else
     {
-        // If no Pen Id, use the Pen Pattern to retreive the Id.
+        // If no Pen Id, use the Pen Pattern to retrieve the Id.
         pszPenPattern = poPenStyle->Pattern(bIsNull);
         if (bIsNull)
             pszPenPattern = NULL;
@@ -8672,8 +8672,7 @@ const char *ITABFeatureBrush::GetBrushStyleString()
     }
 
      return pszStyle;
-    
-}  
+}
 
 
 /**********************************************************************
@@ -8693,14 +8692,14 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     const char *pszBrushColor;
     int nBrushColor;
 
-    // Use the Style Manager to retreive all the information we need.
+    // Use the Style Manager to retrieve all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
     OGRStyleTool *poStylePart = NULL;
 
     // Init the StyleMgr with the StyleString.
     poStyleMgr->InitStyleString(pszStyleString);
 
-    // Retreive the Brush info.
+    // Retrieve the Brush info.
     numParts = poStyleMgr->GetPartCount();
     for(i=0; i<numParts; i++)
     {
@@ -8941,10 +8940,9 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
                         m_sSymbolDef.nPointSize,
                         m_sSymbolDef.nSymbolNo,
                         nOGRStyle);
-     
+
     return pszStyle;
-    
-}  
+}
 
 /**********************************************************************
  *                   ITABFeatureSymbol::SetSymbolFromStyleString()
@@ -8964,14 +8962,14 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
 
     double dSymbolSize;
 
-    // Use the Style Manager to retreive all the information we need.
+    // Use the Style Manager to retrieve all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
     OGRStyleTool *poStylePart = NULL;
 
     // Init the StyleMgr with the StyleString.
     poStyleMgr->InitStyleString(pszStyleString);
 
-    // Retreive the Symbol info.
+    // Retrieve the Symbol info.
     numParts = poStyleMgr->GetPartCount();
     for(i=0; i<numParts; i++)
     {

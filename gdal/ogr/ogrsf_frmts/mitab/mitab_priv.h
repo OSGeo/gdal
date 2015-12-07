@@ -1968,7 +1968,7 @@ class TABRelation
 /*---------------------------------------------------------------------
  *                      class MIDDATAFile
  *
- * Class to handle a file pointer with a copy of the latest readed line
+ * Class to handle a file pointer with a copy of the latest read line.
  *
  *--------------------------------------------------------------------*/
 

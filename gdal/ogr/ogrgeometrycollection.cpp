@@ -444,12 +444,12 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
                                                      OGRwkbVariant eWkbVariant )
 
 {
-    /* Arbitrary value, but certainly large enough for reasonable usages ! */
+    /* Arbitrary value, but certainly large enough for reasonable use cases. */
     if( nRecLevel == 32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Too many recursiong level (%d) while parsing WKB geometry.",
-                    nRecLevel );
+                  "Too many recursion levels (%d) while parsing WKB geometry.",
+                  nRecLevel );
         return OGRERR_CORRUPT_DATA;
     }
 
@@ -627,7 +627,7 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
 
         nOffset += papoGeoms[iGeom]->WkbSize();
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -642,8 +642,8 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput, int nRec
     if( nRecLevel == 32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Too many recursiong level (%d) while parsing WKT geometry.",
-                    nRecLevel );
+                  "Too many recursion levels (%d) while parsing WKT geometry.",
+                  nRecLevel );
         return OGRERR_CORRUPT_DATA;
     }
 

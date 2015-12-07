@@ -787,7 +787,7 @@ int CPLIsFilenameRelative( const char *pszFilename )
  *
  * @param pszBaseDir the name of the directory relative to which the path 
  * should be computed.  pszBaseDir may be NULL in which case the original
- * target is returned without relitivizing.
+ * target is returned without relativizing.
  *
  * @param pszTarget the filename to be changed to be relative to pszBaseDir.
  *

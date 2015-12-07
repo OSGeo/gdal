@@ -181,7 +181,7 @@ OGR_L_GetNextFeature(OGRLayerH hLayer)
 
 Fetch the next available feature from this layer.
 
-The returned feature becomes the responsiblity of the caller to delete
+The returned feature becomes the responsibility of the caller to delete
 with OGR_F_Destroy(). It is critical that all features associated with
 an OGRLayer (more specifically an OGRFeatureDefn) be deleted before
 that layer/datasource is deleted.

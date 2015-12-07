@@ -110,6 +110,7 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 #define LEADER_RADIOMETRIC_DATA_RECORD_TC  QuadToTC( 18, 50, 18, 20 )
 #define LEADER_MAP_PROJ_RECORD_TC          QuadToTC( 10, 20, 31, 20 )
 
+// TODO: recond?
 /* JERS from Japan has MAP_PROJ recond with different identifiers */
 /* see CEOS-SAR-CCT Iss/Rev: 2/0 February 10, 1989 */
 #define LEADER_MAP_PROJ_RECORD_JERS_TC         QuadToTC( 18, 20, 18, 20 )

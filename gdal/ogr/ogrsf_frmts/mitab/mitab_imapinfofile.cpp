@@ -285,7 +285,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
  *                   IMapInfoFile::GetNextFeature()
  *
  * Standard OGR GetNextFeature implementation.  This method is used
- * to retreive the next OGRFeature.
+ * to retrieve the next OGRFeature.
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetNextFeature()
 {

@@ -312,9 +312,10 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                                                           poDataBlockCurrent->GetFeatureCount() + 1);
                 if (poNewFeature->SetProperties(pszLine)) {
                     if (AddFeature(poDataBlockCurrent, poNewFeature) != OGRERR_NONE) {
-                        CPLDebug("OGR-VFK", 
-                                 "%s: duplicated VFK data recored skipped (line %d).\n%s\n",
-                                 pszBlockName, iLine, pszLine);
+                        CPLDebug( "OGR-VFK",
+                                  "%s: duplicated VFK data record skipped "
+                                  "(line %d).\n%s\n",
+                                  pszBlockName, iLine, pszLine);
                         poDataBlockCurrent->SetIncRecordCount(RecordDuplicated);
                     }
                     else {

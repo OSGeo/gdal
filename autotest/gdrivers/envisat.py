@@ -129,7 +129,7 @@ class TestEnvisat:
         return 'success'
 
     def test_envisat_3( self ):
-        # regrassion test for #3160 and #3709
+        # Regression test for #3160 and #3709.
 
         if not self.download_file():
             return 'skip'

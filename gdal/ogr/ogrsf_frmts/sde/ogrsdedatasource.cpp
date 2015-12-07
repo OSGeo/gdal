@@ -1138,8 +1138,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         CleanupLayerCreation(pszLayerName);
         return NULL;
     }
-    
-    
+
 /* -------------------------------------------------------------------- */
 /*      Spatially enable the newly created table                        */
 /* -------------------------------------------------------------------- */
@@ -1148,7 +1147,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
                                OGR_SDE_LAYER_CO_AVG_PTS );
 
     SE_layerinfo_free( hLayerInfo );
-    
+
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_layer_create" );
@@ -1161,7 +1160,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     char                szQualifiedTable[SE_QUALIFIED_TABLE_NAME];
     SE_REGINFO          hRegInfo;
-    
+
     nSDEErr = SE_reginfo_create( &hRegInfo );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -1169,7 +1168,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         CleanupLayerCreation(pszLayerName);
         return NULL;
     }
-    
+
     nSDEErr = SE_registration_get_info( hConnection, pszLayerName,
                                         hRegInfo );
     if( nSDEErr != SE_SUCCESS )
@@ -1179,7 +1178,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         CleanupLayerCreation(pszLayerName);
         return NULL;
     }
-    
+
     nSDEErr = SE_reginfo_set_creation_keyword( hRegInfo, pszDbtuneKeyword );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -1198,7 +1197,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         CleanupLayerCreation(pszLayerName);
         return NULL;
     }
-    
+
     /*
      * If the layer creation option 'MULTIVERSION' is set, enable
      * multi-versioning for this layer
@@ -1215,7 +1214,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
             return NULL;
         }
     }
-    
+
     nSDEErr = SE_registration_alter( hConnection, hRegInfo );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -1224,7 +1223,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         CleanupLayerCreation(pszLayerName);
         return NULL;
     }
-    
+
     nSDEErr = SE_reginfo_get_table_name( hRegInfo, szQualifiedTable );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -1236,15 +1235,14 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
 
     SE_reginfo_free( hRegInfo );
     SE_coordref_free( hCoordRef );
-    
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRSDELayer *poLayer;
 
     poLayer = new OGRSDELayer( this, bDSUpdate );
-    
+
     if( !poLayer->Initialize( szQualifiedTable, pszExpectedFIDName,
                               pszGeometryName) )
     {

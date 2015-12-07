@@ -572,7 +572,7 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
     }
 
     // ----------------------------------------------------------------
-    // Realocate the decompressed Buffer 
+    // Reallocate the decompressed buffer.
     // ----------------------------------------------------------------
 
     if( eFormat == AdaptiveRGB ||

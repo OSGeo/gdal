@@ -160,7 +160,7 @@ OGRErr OSRExportToERM( OGRSpatialReferenceH hSRS,
  * Convert coordinate system to ERMapper format.
  *
  * @param pszProj 32 character buffer to receive projection name.
- * @param pszDatum 32 character buffer to recieve datum name.
+ * @param pszDatum 32 character buffer to receive datum name.
  * @param pszUnits 32 character buffer to receive units name.
  *
  * @return OGRERR_NONE on success, OGRERR_SRS_UNSUPPORTED if not translation is
