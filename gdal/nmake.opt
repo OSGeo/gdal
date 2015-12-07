@@ -37,9 +37,8 @@
 # 1600 = 10.0(2010)
 # 1500 = 9.0 (2008)
 # 1400 = 8.0 (2005) - specific compilation flags, different from older VC++
-# 1310 = 7.1 (2003)
-# 1300 = 7.0 (2002)
-# 1200 = 6.0
+# 1310 = 7.1 (2003) # is it still supported ?
+# 1300 = 7.0 (2002) # is it still supported ?
 #
 !IFNDEF MSVC_VER
 #assume msvc VS2008.
