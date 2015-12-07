@@ -225,10 +225,10 @@ extern "C" {
 /* -------------------------------------------------------------------- */
 #ifndef DISABLE_CVSID
 #  if defined(__GNUC__) && __GNUC__ >= 4
-#    define SHP_CVSID(string)     static char cpl_cvsid[] __attribute__((used)) = string;
+#    define SHP_CVSID(string)     static const char cpl_cvsid[] __attribute__((used)) = string;
 #  else
-#    define SHP_CVSID(string)     static char cpl_cvsid[] = string; \
-static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
+#    define SHP_CVSID(string)     static const char cpl_cvsid[] = string; \
+static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #  endif
 #else
 #  define SHP_CVSID(string)
