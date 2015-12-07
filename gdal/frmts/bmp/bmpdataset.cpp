@@ -381,7 +381,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         {
             // Colour triplets in BMP file organized in reverse order:
             // blue, green, red. When we have 32-bit BMP the forth byte
-            // in quadriplet should be discarded as it has no meaning.
+            // in quadruplet should be discarded as it has no meaning.
             // That is why we always use 3 byte count in the following
             // pabyTemp index.
             ((GByte *) pImage)[i] = *pabyTemp;

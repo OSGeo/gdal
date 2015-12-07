@@ -5019,7 +5019,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.test41' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.table36_base' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.table36_inherited' )
-    # Drop 'AutoTest-schema' (here, double qoutes are required)
+    # Drop 'AutoTest-schema' (here, double quotes are required)
     gdaltest.pg_ds.ExecuteSQL( 'DROP SCHEMA \"AutoTest-schema\" CASCADE')
     gdal.PopErrorHandler()
 

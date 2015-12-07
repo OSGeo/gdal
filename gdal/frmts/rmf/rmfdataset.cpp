@@ -354,7 +354,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 // Colour triplets in RMF file organized in reverse order:
                 // blue, green, red. When we have 32-bit RMF the forth byte
-                // in quadriplet should be discarded as it has no meaning.
+                // in quadruplet should be discarded as it has no meaning.
                 // That is why we always use 3 byte count in the following
                 // pabyTemp index.
                 reinterpret_cast<GByte *>( pImage )[i] =

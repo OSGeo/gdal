@@ -270,7 +270,7 @@ typedef size_t (*VSIWriteFunction)(const void* ptr, size_t size, size_t nmemb, F
 void CPL_DLL VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream );
 
 /* ==================================================================== */
-/*      Time quering.                                                   */
+/*      Time querying.                                                  */
 /* ==================================================================== */
 
 unsigned long CPL_DLL VSITime( unsigned long * );
