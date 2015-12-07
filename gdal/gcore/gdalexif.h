@@ -209,7 +209,7 @@ typedef enum {
         TIFF_FLOAT      = 11,   /* !32-bit IEEE floating point */
         TIFF_DOUBLE     = 12,   /* !64-bit IEEE floating point */
         TIFF_IFD        = 13    /* %32-bit unsigned integer (offset) */
-} TIFFDataType;
+} GDALEXIFTIFFDataType;
 
 /*
  * TIFF Image File Directories are comprised of a table of field
@@ -230,7 +230,7 @@ typedef struct {
 } GDALEXIFTIFFDirEntry;
 
 CPL_C_START
-extern	int TIFFDataWidth(TIFFDataType);    /* table of tag datatype widths */
+extern	int TIFFDataWidth(GDALEXIFTIFFDataType);    /* table of tag datatype widths */
 extern	void TIFFSwabShort(GUInt16*);
 extern	void TIFFSwabLong(GUInt32*);
 extern	void TIFFSwabDouble(double*);

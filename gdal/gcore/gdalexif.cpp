@@ -357,7 +357,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /* -------------------------------------------------------------------- */
 /*      Print tags                                                      */
 /* -------------------------------------------------------------------- */
-        int nDataWidth = TIFFDataWidth((TIFFDataType) poTIFFDirEntry->tdir_type);
+        int nDataWidth = TIFFDataWidth((GDALEXIFTIFFDataType) poTIFFDirEntry->tdir_type);
         space = poTIFFDirEntry->tdir_count * nDataWidth;
 
         /* Previous multiplication could overflow, hence this additional check */
