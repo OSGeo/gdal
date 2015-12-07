@@ -53,7 +53,7 @@ def basic_test_2():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('non_existing_ds', gdal.GA_Update)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`non_existing_ds\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
+    if ds is None and gdal.GetLastErrorMsg() == '`non_existing_ds\' does not exist in the file system,\nand is not recognized as a supported dataset name.\n':
         return 'success'
     else:
         return 'fail'
@@ -62,7 +62,7 @@ def basic_test_3():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
+    if ds is None and gdal.GetLastErrorMsg() == '`\' does not exist in the file system,\nand is not recognized as a supported dataset name.\n':
         return 'success'
     else:
         return 'fail'
@@ -71,7 +71,7 @@ def basic_test_4():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('', gdal.GA_Update)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
+    if ds is None and gdal.GetLastErrorMsg() == '`\' does not exist in the file system,\nand is not recognized as a supported dataset name.\n':
         return 'success'
     else:
         return 'fail'
@@ -80,7 +80,7 @@ def basic_test_5():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('data/doctype.xml', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`data/doctype.xml\' not recognised as a supported file format.\n':
+    if ds is None and gdal.GetLastErrorMsg() == '`data/doctype.xml\' not recognized as a supported file format.\n':
         return 'success'
     else:
         return 'fail'
@@ -106,7 +106,7 @@ def basic_test_7_internal():
     except:
         # Special case: we should still be able to get the error message
         # until we call a new GDAL function
-        if gdal.GetLastErrorMsg() != '`non_existing_ds\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
+        if gdal.GetLastErrorMsg() != '`non_existing_ds\' does not exist in the file system,\nand is not recognized as a supported dataset name.\n':
             gdaltest.post_reason('did not get expected error message')
             return 'fail'
 
