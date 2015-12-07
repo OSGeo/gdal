@@ -1107,7 +1107,7 @@
     <PropertyDefn>
       <Name>CisloDomovni</Name>
       <ElementPath>CislaDomovni|CisloDomovni</ElementPath>
-      <Type>Integer</Type>
+      <Type>IntegerList</Type>
     </PropertyDefn>
     <!-- Jedna z parcel, na nichž je stavební objekt postaven, zvolená
          pro identifikaci objektu (tzv. definiční parcela) -->
