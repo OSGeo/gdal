@@ -2,7 +2,7 @@
 #include "csfimpl.h"
 
 
-static const char *errolist[ERRORNO]={
+static const char * const errolist[ERRORNO]={
 "No error",
 "File could not be opened or does not exist",
 "File is not a PCRaster file",

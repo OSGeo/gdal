@@ -4,7 +4,7 @@
 #include "csfimpl.h"
 
 
-static const char *openModes[3] = {
+static const char * const openModes[3] = {
 	S_READ,
 	S_WRITE,
 	S_READ_WRITE
