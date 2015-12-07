@@ -40,7 +40,7 @@
 #endif
 
 typedef struct {
-   char *abrev, *name;
+   const char *abrev, *name;
    uChar number;
 } WxTable;
 
@@ -60,7 +60,7 @@ enum {
 /* SA -> Snowfall aob freezing */
 /* LC -> Caution Advised on area Lakes */
 /*   {"WG", "Frequent Gusts", WX_WG},*/
-WxTable WxCode[] = {
+static const WxTable WxCode[] = {
    /* 0 */ {"<NoWx>", "No Weather", WX_NOWX},
    /* Dry Obstruction to visibility. */
    /* 14 */ {"K", "Smoke", WX_K},
@@ -109,7 +109,7 @@ enum {
    COV_INTER, COV_BRIEF, COV_UNKNOWN
 };
 
-WxTable WxCover[] = {
+static const WxTable WxCover[] = {
    /* 0 */ {"<NoCov>", "No Coverage/Probability", COV_NOCOV},
    /* 1 */ {"Iso", "Isolated", COV_ISO},
    /* 2 */ {"Sct", "Scattered", COV_SCT},
@@ -133,7 +133,7 @@ WxTable WxCover[] = {
 
 enum { INT_NOINT, INT_DD, INT_D, INT_M, INT_P, INT_UNKNOWN };
 
-WxTable WxIntens[] = {
+static const WxTable WxIntens[] = {
    /* 0 */ {"<NoInten>", "No Intensity", INT_NOINT},
    /* 1 */ {"--", "Very Light", INT_DD},
    /* 2 */ {"-", "Light", INT_D},
@@ -147,7 +147,7 @@ enum {
    VIS_96, VIS_128, VIS_160, VIS_192, VIS_224, VIS_UNKNOWN = 255
 };
 
-WxTable WxVisib[] = {
+static const WxTable WxVisib[] = {
    /* 0 */ {"<NoVis>", "255", VIS_NOVIS},
    /* 1 */ {"0SM", "0", VIS_0},
    /* 2 */ {"1/4SM", "8", VIS_8},
@@ -174,7 +174,7 @@ enum {
 
 /* Note: HazCode currently can handle up to (21 + 4) different WxAttrib
  * numbers because it is stored in a "sInt4" (2^31 = 21,47,48,36,48) */
-WxTable WxAttrib[] = {
+static const WxTable WxAttrib[] = {
    /* 0 */ {"", "None", HAZ_NOHAZ},
    /* 1 */ {"FL", "Frequent Lightning", HAZ_FL},
    /* 2 */ {"GW", "Gusty Winds", HAZ_GW},
@@ -2033,7 +2033,7 @@ static void InitUglyString (UglyStringType * ugly)
  * NOTES
  *****************************************************************************
  */
-static int FindInTable (WxTable * table, int tableLen, char *data, uChar *ans)
+static int FindInTable (const WxTable * table, int tableLen, char *data, uChar *ans)
 {
    int i;               /* Index used to walk through the table. */
 
