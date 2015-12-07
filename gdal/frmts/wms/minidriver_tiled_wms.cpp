@@ -34,7 +34,7 @@
 
 CPP_GDALWMSMiniDriverFactory(TiledWMS)
 
-static char SIG[]="GDAL_WMS TiledWMS: ";
+static const char SIG[]="GDAL_WMS TiledWMS: ";
 
 /*
  *\brief Read a number from an xml element
