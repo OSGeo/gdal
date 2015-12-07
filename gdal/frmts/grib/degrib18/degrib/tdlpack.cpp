@@ -3408,7 +3408,7 @@ static void shiftGroup (sInt4 *Data,
          /* See if that affects any of the previous groups. */
          for (j = i + 1; j < numGroup; j++) {
             if (group[j].num != 0) {
-               G1.start = G1.start;
+               /*G1.start = G1. start;*/ /* self-assignment... */
                G1.num = group[i - 1].num + group[j].num;
                G1.min = (group[i - 1].min < group[j].min) ?
                      group[i - 1].min : group[j].min;
