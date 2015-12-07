@@ -36,6 +36,7 @@
 
 CPL_CVSID("$Id$");
 
+namespace OGRODS {
 
 /************************************************************************/
 /*                          ODSCellEvaluator                            */
@@ -994,8 +995,8 @@ void OGRODSDataSource::AnalyseFile()
     AnalyseSettings();
 
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
-    XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
+    XML_SetElementHandler(oParser, OGRODS::startElementCbk, OGRODS::endElementCbk);
+    XML_SetCharacterDataHandler(oParser, OGRODS::dataHandlerCbk);
     XML_SetUserData(oParser, this);
 
     nDepth = 0;
@@ -1167,8 +1168,8 @@ void OGRODSDataSource::AnalyseSettings()
         return;
 
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementStylesCbk, ::endElementStylesCbk);
-    XML_SetCharacterDataHandler(oParser, ::dataHandlerStylesCbk);
+    XML_SetElementHandler(oParser, OGRODS::startElementStylesCbk, OGRODS::endElementStylesCbk);
+    XML_SetCharacterDataHandler(oParser, OGRODS::dataHandlerStylesCbk);
     XML_SetUserData(oParser, this);
 
     nDepth = 0;
@@ -1961,3 +1962,5 @@ int ODSCellEvaluator::Evaluate(int nRow, int nCol)
 
     return TRUE;
 }
+
+} /* end of OGRODS namespace */

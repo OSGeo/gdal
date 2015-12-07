@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+namespace OGRXLSX {
+
 /************************************************************************/
 /*                            OGRXLSXLayer()                            */
 /************************************************************************/
@@ -950,8 +952,8 @@ void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer* poLayer, int nSheetId)
     int bUpdatedBackup = bUpdated;
 
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
-    XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
+    XML_SetElementHandler(oParser, OGRXLSX::startElementCbk, OGRXLSX::endElementCbk);
+    XML_SetCharacterDataHandler(oParser, OGRXLSX::dataHandlerCbk);
     XML_SetUserData(oParser, this);
 
     VSIFSeekL( fp, 0, SEEK_SET );
@@ -1110,8 +1112,8 @@ void OGRXLSXDataSource::AnalyseSharedStrings(VSILFILE* fpSharedStrings)
         return;
 
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementSSCbk, ::endElementSSCbk);
-    XML_SetCharacterDataHandler(oParser, ::dataHandlerSSCbk);
+    XML_SetElementHandler(oParser, OGRXLSX::startElementSSCbk, OGRXLSX::endElementSSCbk);
+    XML_SetCharacterDataHandler(oParser, OGRXLSX::dataHandlerSSCbk);
     XML_SetUserData(oParser, this);
 
     VSIFSeekL( fpSharedStrings, 0, SEEK_SET );
@@ -1197,7 +1199,7 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
 void OGRXLSXDataSource::AnalyseWorkbook(VSILFILE* fpWorkbook)
 {
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementWBCbk, NULL);
+    XML_SetElementHandler(oParser, OGRXLSX::startElementWBCbk, NULL);
     XML_SetUserData(oParser, this);
 
     VSIFSeekL( fpWorkbook, 0, SEEK_SET );
@@ -1344,7 +1346,7 @@ void OGRXLSXDataSource::AnalyseStyles(VSILFILE* fpStyles)
         return;
 
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementStylesCbk, ::endElementStylesCbk);
+    XML_SetElementHandler(oParser, OGRXLSX::startElementStylesCbk, OGRXLSX::endElementStylesCbk);
     XML_SetUserData(oParser, this);
 
     VSIFSeekL( fpStyles, 0, SEEK_SET );
@@ -2032,3 +2034,5 @@ void OGRXLSXDataSource::FlushCache()
 
     return;
 }
+
+} /* end of OGRXLSX namespace */

@@ -227,7 +227,7 @@ typedef struct {
         GUInt16          tdir_type;      /* data type; see below */
         GUInt32          tdir_count;     /* number of items; length in spec */
         GUInt32          tdir_offset;    /* byte offset to field data */
-} TIFFDirEntry;
+} GDALEXIFTIFFDirEntry;
 
 CPL_C_START
 extern	int TIFFDataWidth(TIFFDataType);    /* table of tag datatype widths */

@@ -39,6 +39,8 @@
 #include <string>
 #include <map>
 
+namespace OGRXLSX {
+
 /************************************************************************/
 /*                             OGRXLSXLayer                             */
 /************************************************************************/
@@ -253,6 +255,8 @@ class OGRXLSXDataSource : public OGRDataSource
     void                SetUpdated() { bUpdated = TRUE; }
 };
 
+} /* end of OGRXLSX namespace */
+
 /************************************************************************/
 /*                             OGRXLSXDriver                             */
 /************************************************************************/
@@ -269,8 +273,6 @@ class OGRXLSXDriver : public OGRSFDriver
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
     virtual OGRErr      DeleteDataSource( const char *pszName );
-    
 };
-
 
 #endif /* ndef OGR_XLSX_H_INCLUDED */

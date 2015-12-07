@@ -86,6 +86,8 @@ void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
 static const int N_MAX_REGIONS = 1000;
 static const int DOWNLOAD_CHUNK_SIZE = 16384;
 
+namespace {
+
 typedef enum
 {
     EXIST_UNKNOWN = -1,
@@ -116,6 +118,28 @@ typedef struct
     char           *pData;
 } CachedRegion;
 
+typedef struct
+{
+    char*           pBuffer;
+    size_t          nSize;
+    bool            bIsHTTP;
+    bool            bIsInHeader;
+    bool            bMultiRange;
+    vsi_l_offset    nStartOffset;
+    vsi_l_offset    nEndOffset;
+    int             nHTTPCode;
+    vsi_l_offset    nContentLength;
+    bool            bFoundContentRange;
+    bool            bError;
+    bool            bDownloadHeaderOnly;
+
+    VSILFILE           *fp; 
+    VSICurlReadCbkFunc  pfnReadCbk;
+    void               *pReadCbkUserData;
+    bool                bInterrupted;
+} WriteFuncStruct;
+
+} /* end of anoymous namespace */
 
 static const char* VSICurlGetCacheFileName()
 {
@@ -467,28 +491,6 @@ void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
 }
-
-
-typedef struct
-{
-    char*           pBuffer;
-    size_t          nSize;
-    bool            bIsHTTP;
-    bool            bIsInHeader;
-    bool            bMultiRange;
-    vsi_l_offset    nStartOffset;
-    vsi_l_offset    nEndOffset;
-    int             nHTTPCode;
-    vsi_l_offset    nContentLength;
-    bool            bFoundContentRange;
-    bool            bError;
-    bool            bDownloadHeaderOnly;
-
-    VSILFILE           *fp; 
-    VSICurlReadCbkFunc  pfnReadCbk;
-    void               *pReadCbkUserData;
-    bool                bInterrupted;
-} WriteFuncStruct;
 
 /************************************************************************/
 /*                    VSICURLInitWriteFuncStruct()                      */

@@ -34,6 +34,8 @@ CPL_CVSID("$Id$");
 
 extern "C" void RegisterOGRXLSX();
 
+using namespace OGRXLSX;
+
 // g++ -DHAVE_EXPAT -g -Wall -fPIC ogr/ogrsf_frmts/xlsx/*.cpp -shared -o ogr_XLSX.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/mem -Iogr/ogrsf_frmts/xlsx -L. -lgdal
 
 /************************************************************************/

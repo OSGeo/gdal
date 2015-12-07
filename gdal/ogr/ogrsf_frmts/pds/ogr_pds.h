@@ -33,6 +33,8 @@
 #include "ogrsf_frmts.h"
 #include "nasakeywordhandler.h"
 
+namespace OGRPDS {
+
 /************************************************************************/
 /*                              OGRPDSLayer                             */
 /************************************************************************/
@@ -99,6 +101,8 @@ class OGRPDSLayer : public OGRLayer
 
     virtual OGRErr              SetNextByIndex( GIntBig nIndex );
 };
+
+} /* end of OGRPDS namespace */
 
 /************************************************************************/
 /*                           OGRPDSDataSource                           */

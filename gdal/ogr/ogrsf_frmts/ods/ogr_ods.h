@@ -39,6 +39,8 @@
 #include <string>
 #include <set>
 
+namespace OGRODS {
+
 /************************************************************************/
 /*                             OGRODSLayer                              */
 /************************************************************************/
@@ -217,6 +219,8 @@ class OGRODSDataSource : public OGRDataSource
     void                SetUpdated() { bUpdated = TRUE; }
 };
 
+} /* end of OGRODS namespace */
+
 /************************************************************************/
 /*                             OGRODSDriver                             */
 /************************************************************************/
@@ -234,6 +238,5 @@ class OGRODSDriver : public OGRSFDriver
                                              char ** = NULL );
     virtual OGRErr      DeleteDataSource( const char *pszName );
 };
-
 
 #endif /* ndef OGR_ODS_H_INCLUDED */
