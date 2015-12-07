@@ -817,6 +817,8 @@ LIBZ_SETTING
 RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS
 RENAME_INTERNAL_LIBTIFF_SYMBOLS
 HAVE_HIDE_INTERNAL_SYMBOLS
+CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT
+CFLAGS_NO_LTO_IF_AVX_NONDEFAULT
 HAVE_AVX_AT_COMPILE_TIME
 AVXFLAGS
 HAVE_SSE_AT_COMPILE_TIME
@@ -931,6 +933,7 @@ with_unix_stdio_64
 enable_debug
 with_sse
 with_avx
+enable_lto
 with_hide_internal_symbols
 with_rename_internal_libtiff_symbols
 with_rename_internal_libgeotiff_symbols
@@ -1666,6 +1669,8 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-debug          enable debugging (disabled by default)
+  --enable-lto            enable LTO(link time optimization) (disabled by
+                          default)
   --disable-rpath         do not hardcode runtime library paths
   --enable-pdf-plugin     enable PDF driver as a plugin (included in libgdal
                           by default)
@@ -18373,6 +18378,49 @@ fi
 AVXFLAGS=$AVXFLAGS
 
 HAVE_AVX_AT_COMPILE_TIME=$HAVE_AVX_AT_COMPILE_TIME
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking to enable LTO (link time optimization) build" >&5
+$as_echo_n "checking to enable LTO (link time optimization) build... " >&6; }
+
+# Check whether --enable-lto was given.
+if test "${enable_lto+set}" = set; then :
+  enableval=$enable_lto;
+fi
+
+
+CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
+CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+
+if test "x$enable_lto" = "xyes" ; then
+
+
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-g //"`
+  CFLAGS=`echo "$CFLAGS" | sed "s/-g //"`
+
+
+  CXXFLAGS="$CXXFLAGS -flto"
+  CFLAGS="$CFLAGS -flto"
+  LDFLAGS="$LDFLAGS -flto"
+
+      if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
+    if test "$AVXFLAGS" = ""; then
+        CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
+        CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+    fi
+  fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+CFLAGS_NO_LTO_IF_AVX_NONDEFAULT=$CFLAGS_NO_LTO_IF_AVX_NONDEFAULT
+
+CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT=$CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT
 
 
 
