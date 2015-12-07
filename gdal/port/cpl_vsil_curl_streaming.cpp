@@ -136,6 +136,8 @@ void RingBuffer::Read(void* pBuffer, size_t nSize)
 
 /************************************************************************/
 
+namespace {
+
 typedef enum
 {
     EXIST_UNKNOWN = -1,
@@ -153,6 +155,18 @@ typedef struct
     unsigned int    nChecksumOfFirst1024Bytes;
 #endif
 } CachedFileProp;
+
+typedef struct
+{
+    char*           pBuffer;
+    size_t          nSize;
+    int             bIsHTTP;
+    int             bIsInHeader;
+    int             nHTTPCode;
+    int             bDownloadHeaderOnly;
+} WriteFuncStruct;
+
+} /* end of anoymous namespace */
 
 /************************************************************************/
 /*                       VSICurlStreamingFSHandler                      */
@@ -406,16 +420,6 @@ int VSICurlStreamingHandle::Seek( vsi_l_offset nOffset, int nWhence )
     bEOF = FALSE;
     return 0;
 }
-
-typedef struct
-{
-    char*           pBuffer;
-    size_t          nSize;
-    int             bIsHTTP;
-    int             bIsInHeader;
-    int             nHTTPCode;
-    int             bDownloadHeaderOnly;
-} WriteFuncStruct;
 
 /************************************************************************/
 /*                  VSICURLStreamingInitWriteFuncStruct()                */

@@ -58,11 +58,7 @@ void OGR2SQLITE_Register()
 #define VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 //#define DEBUG_OGR2SQLITE
 
-#if defined(SPATIALITE_AMALGAMATION)
 #include "ogrsqlite3ext.h"
-#else
-#include "sqlite3ext.h"
-#endif
 
 /* Declaration of sqlite3_api structure */
 static SQLITE_EXTENSION_INIT1

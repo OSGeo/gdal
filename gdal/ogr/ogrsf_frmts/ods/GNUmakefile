@@ -2,7 +2,7 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=	ogrodsdriver.o ogrodsdatasource.o ods_formula.o ods_formula_parser.o ods_formula_node.o
+OBJ	=	ogrodsdriver.o ogrodsdatasource.o ods_formula.o ods_formula_node.o
 
 ifeq ($(HAVE_EXPAT),yes)
 CPPFLAGS +=   -DHAVE_EXPAT

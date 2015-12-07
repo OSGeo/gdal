@@ -65,6 +65,8 @@
 #define HAVE_SQLITE3_PREPARE_V2
 #endif
 
+#ifndef DO_NOT_INCLUDE_SQLITE_CLASSES
+
 #define UNINITIALIZED_SRID  -2
 
 /************************************************************************/
@@ -832,6 +834,8 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
 
     void                ReloadLayers();
 };
+
+#endif /* DO_NOT_INCLUDE_SQLITE_CLASSES */
 
 /* To escape literals. The returned string doesn't contain the surrounding single quotes */
 CPLString OGRSQLiteEscape( const char *pszLiteral );

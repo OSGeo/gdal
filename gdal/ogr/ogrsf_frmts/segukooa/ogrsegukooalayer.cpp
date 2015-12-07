@@ -75,11 +75,13 @@ OGRFeature *OGRSEGUKOOABaseLayer::GetNextFeature()
 /*                         OGRUKOOAP190Layer()                          */
 /************************************************************************/
 
+namespace {
 typedef struct
 {
     const char*     pszName;
     OGRFieldType    eType;
 } FieldDesc;
+} /* end of anonymous namespace */
 
 static const FieldDesc UKOOAP190Fields[] =
 {

@@ -4,10 +4,10 @@
  * Project:  JPEG JFIF Driver
  * Purpose:  Implement JPEG read/write io indirection through VSI.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *           Code partially derived from libjpeg jdatasrc.c and jdatadst.c.
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,20 +28,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef VSIDATAIO_H_INCLUDED
-#define VSIDATAIO_H_INCLUDED
+#if defined(JPEG_DUAL_MODE_8_12)
+#define LIBJPEG_12_PATH   "libjpeg12/jpeglib.h" 
 
-#include "cpl_vsi.h"
+#define jpeg_vsiio_src    jpeg_vsiio_src_12
+#define jpeg_vsiio_dest   jpeg_vsiio_dest_12
+#define my_source_mgr     my_source_mgr_12
+#define my_src_ptr        my_src_ptr_12
+#define my_destination_mgr my_destination_mgr_12
+#define my_dest_ptr      my_dest_ptr_12
 
-CPL_C_START
-#ifdef LIBJPEG_12_PATH
-#  include LIBJPEG_12_PATH
-#else
-#  include "jpeglib.h"
+#include "vsidataio.cpp"
+
 #endif
-CPL_C_END
-
-void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile);
-void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
-
-#endif // VSIDATAIO_H_INCLUDED

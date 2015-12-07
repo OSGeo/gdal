@@ -199,8 +199,6 @@ public:
     virtual ~IODSCellEvaluator() {}
 };
 
-int ods_formulaparse( ods_formula_parse_context *context );
-int ods_formulalex( ods_formula_node **ppNode, ods_formula_parse_context *context );
 ods_formula_node* ods_formula_compile( const char *expr );
 
 typedef struct

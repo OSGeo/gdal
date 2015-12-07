@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+namespace OGRPDS {
+
 /************************************************************************/
 /*                           OGRPDSLayer()                              */
 /************************************************************************/
@@ -740,3 +742,5 @@ OGRErr OGRPDSLayer::SetNextByIndex( GIntBig nIndex )
     VSIFSeekL( fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET );
     return OGRERR_NONE;
 }
+
+} /* end of OGRPDS namespace */
