@@ -1274,7 +1274,7 @@ const char* GeoRasterDataset::GetProjectionRef( void )
         /*
          * Ignores the WKT from Oracle and use the one from GDAL's
          * EPSG tables. That would ensure that other drivers/software
-         * will recognizize the parameters.
+         * will recognize the parameters.
          */
 
         if( oSRS.exportToWkt( &pszProjection ) == OGRERR_NONE )

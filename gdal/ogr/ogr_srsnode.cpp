@@ -339,7 +339,7 @@ void OGR_SRSNode::SetValue( const char * pszNewValue )
 /**
  * Make a duplicate of this node, and it's children.
  *
- * @return a new node tree, which becomes the responsiblity of the caller.
+ * @return a new node tree, which becomes the responsibility of the caller.
  */
 
 OGR_SRSNode *OGR_SRSNode::Clone() const
@@ -374,7 +374,7 @@ int OGR_SRSNode::NeedsQuoting() const
     // needs to be quoted even though it appears well behaved.
     if( poParent != NULL && EQUAL(poParent->GetValue(),"AUTHORITY") )
         return TRUE;
-    
+
     // As per bugzilla bug 294, the OGC spec says the direction
     // values for the AXIS keywords should *not* be quoted.
     if( poParent != NULL && EQUAL(poParent->GetValue(),"AXIS") 

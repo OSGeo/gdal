@@ -1903,8 +1903,8 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
     if( nRecLevel == 32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Too many recursiong level (%d) while parsing FGF geometry.",
-                    nRecLevel );
+                  "Too many recursion levels (%d) while parsing FGF geometry.",
+                  nRecLevel );
         return OGRERR_CORRUPT_DATA;
     }
 

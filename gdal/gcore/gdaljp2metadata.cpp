@@ -459,8 +459,8 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                     GDALJP2Box oResBox( fpVSIL );
 
                     oResBox.ReadFirstChild( &oSubBox );
-                    
-                    // we will use either the resd or resc box, which ever
+
+                    // We will use either the resd or resc box, which ever
                     // happens to be first.  Should we prefer resd?
                     unsigned char *pabyResData = NULL;
                     if( oResBox.GetDataLength() == 10 &&
@@ -468,7 +468,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                     {
                         int nVertNum, nVertDen, nVertExp;
                         int nHorzNum, nHorzDen, nHorzExp;
-                        
+
                         nVertNum = pabyResData[0] * 256 + pabyResData[1];
                         nVertDen = pabyResData[2] * 256 + pabyResData[3];
                         nHorzNum = pabyResData[4] * 256 + pabyResData[5];
@@ -1601,7 +1601,7 @@ static CPLXMLNode* GDALGMLJP2GetXMLRoot(CPLXMLNode* psNode)
 
 static void GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(CPLXMLNode* psRoot)
 {
-    /* GML 3.2 SF profile recommands the feature collection type to derive */
+    /* GML 3.2 SF profile recommends the feature collection type to derive */
     /* from gml:AbstractGML to prevent it to be included in another feature */
     /* collection, but this is what we want to do. So patch that... */
 

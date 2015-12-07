@@ -278,7 +278,7 @@ public class gdal:public static int Unlink(String fileName)
  * This function will "escape" a variety of special characters
  * to make the string suitable to embed within a string constant
  * or to write within a text stream but in a form that can be
- * reconstitued to it's original form.  The escaping will even preserve
+ * reconstituted to it's original form.  The escaping will even preserve
  * zero bytes allowing preservation of raw binary data.
  * <ul>
  * <li>gdalconst.CPLES_BackslashQuotable(0): This scheme turns a binary string into 
@@ -2042,7 +2042,7 @@ public class Dataset:public java.util.Vector GetGCPs()
  * <p>
  * This method assigns the passed set of GCPs to this dataset, as well as
  * setting their coordinate system.  Internally copies are made of the
- * coordinate system and list of points, so the caller remains resposible for
+ * coordinate system and list of points, so the caller remains responsible for
  * deallocating these arguments if appropriate. 
  * <p>
  * Most formats do not support setting of GCPs, even formats that can 
@@ -8970,7 +8970,7 @@ public class Geometry:public boolean Intersect(Geometry other)
  * Do these features intersect?
  * <p>
  * Determines whether two geometries intersect.  If GEOS is enabled, then
- * this is done in rigerous fashion otherwise true is returned if the
+ * this is done in rigorous fashion otherwise true is returned if the
  * envelopes (bounding boxes) of the two features overlap.
  * <p>
  * The geom argument may be safely null, but in this case the method
@@ -10144,7 +10144,7 @@ public class ogr:public static Geometry ForceToMultiLineString(Geometry geom)
 /* Class SpatialReference */
 
 /**
- * This class respresents a OpenGIS Spatial Reference System, and contains
+ * This class represents an OpenGIS Spatial Reference System, and contains
  * methods for converting between this object organization and well known
  * text (WKT) format.  This object is reference counted as one instance of
  * the object is normally shared between many Geometry objects.

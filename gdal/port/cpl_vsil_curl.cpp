@@ -936,7 +936,7 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_TYPE, &content_type);
 
     if (ENABLE_DEBUG)
-        CPLDebug("VSICURL", "Got reponse_code=%ld", response_code);
+        CPLDebug("VSICURL", "Got response_code=%ld", response_code);
 
     if ((response_code != 200 && response_code != 206 &&
          response_code != 225 && response_code != 226 && response_code != 426) || sWriteFuncHeaderData.bError)

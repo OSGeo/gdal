@@ -1163,7 +1163,7 @@ def ogr_shape_28():
 
     file = open("tmp/hugedbf.dbf", "rb+")
 
-    # Set recourd count to 24,000,000
+    # Set record count to 24,000,000
     file.seek(4, 0)
     file.write("\x00".encode('latin1'))
     file.write("\x36".encode('latin1'))

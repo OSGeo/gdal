@@ -7,7 +7,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2002, i3 - information integration and imaging 
+ * Copyright (c) 2002, i3 - information integration and imaging
  *                          Fort Collin, CO
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
  *

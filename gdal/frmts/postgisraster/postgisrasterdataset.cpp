@@ -1568,12 +1568,12 @@ void PostGISRasterDataset::BuildBands(BandMetadata * poBandMetaData,
 
 /***********************************************************************
  * \brief Construct just one dataset from all the results fetched.
- * 
- * This method is not very elegant. It's strongly attached to 
+ *
+ * This method is not very elegant. It's strongly attached to
  * SetRasterProperties (it assumes poResult is not NULL, and the actual
  * results are stored at fixed positions). I just did it to avoid a
  * huge SetRasterProperties method.
- * 
+ *
  * I know, this could be avoided in a better way. Like implementing a
  * wrapper to raise queries and get results without all the checking
  * overhead. I'd like to do it, someday...
@@ -1581,26 +1581,25 @@ void PostGISRasterDataset::BuildBands(BandMetadata * poBandMetaData,
 GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
     PGresult * poResult)
 {
-    
+
     /*******************************************************************
-     * We first get the band metadata. So we'll can use it as metadata 
-     * for all the sources. 
-     * 
+     * We first get the band metadata. So we'll can use it as metadata
+     * for all the sources.
+     *
      * We just fetch the band metadata from 1 tile. So, we assume that:
      * - All the bands have the same data type
      * - All the bands have the same NODATA value
-     * 
-     * It's user's resposibility to ensure the requested table fit in
+     *
+     * It's user's responsibility to ensure the requested table fit in
      * this schema. He/she may use the 'where' clause to ensure this
      ******************************************************************/
     int nBandsFetched = 0;
     BandMetadata * poBandMetaData = GetBandsMetadata(&nBandsFetched);
-   
-    
+
     /*******************************************************************
      * Now, we can iterate over the input query's results (metadata 
      * from all the database tiles). 
-     * 
+     *
      * In this iteration, we will construct the dataset GeoTransform 
      * array and we will add each tile's band as source for each of our
      * rasterbands. 
@@ -1615,7 +1614,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
      * tile's geotransform. And we don't need to construct sources for 
      * the raster bands. We just read from the unique tile we have. So, 
      * we avoid all the VRT stuff.
-     * 
+     *
      * TODO: For some reason, the implementation of IRasterIO in
      * PostGISRasterRasterBand class causes a segmentation fault when
      * tries to call GDALRasterBand::IRasterIO. This call intends to

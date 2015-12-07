@@ -206,7 +206,7 @@ static const WxTable WxAttrib[] = {
  *   To use the same weather table scheme used by Marc Saccucci in
  * makeWxImageCodes() in the NDFD source tree.  The purpose of both
  * procedures is to simplify the weather string (aka ugly string) to a single
- * integral code number, which contains the most releavent weather.  The
+ * integral code number, which contains the most relevant weather.  The
  * intent is to create a simpler field which can more readily be viewed as
  * an image.
  *
@@ -1760,7 +1760,7 @@ static int NDFD_CodeIntens4 (int inten1, int inten2)
  *   To use the same weather table scheme used by Mark Armstrong in
  * makeWxImageCodes().  The purpose of both procedures is to simplify the
  * weather string (aka ugly string) to a single integral code number, which
- * contains the most releavent weather.  The intent is to create a simpler
+ * contains the most relevant weather.  The intent is to create a simpler
  * field which can more readily be viewed as an image.
  *
  * ARGUMENTS

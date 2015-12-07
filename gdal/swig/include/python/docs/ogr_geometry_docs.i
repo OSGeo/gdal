@@ -50,9 +50,9 @@ hGeom, OGRGeometryH hOtherGeom)
 
 Do these features intersect?
 
-Currently this is not implemented in a rigerous fashion, and generally
+Currently this is not implemented in a rigorous fashion, and generally
 just tests whether the envelopes of the two features intersect.
-Eventually this will be made rigerous.
+Eventually this will be made rigorous.
 
 This function is the same as the CPP method OGRGeometry::Intersects.
 

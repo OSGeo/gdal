@@ -937,7 +937,7 @@ DGifGetLZCodes(GifFileType * GifFile,
 
 /******************************************************************************
  * The LZ decompression input routine:
- * This routine is responsable for the decompression of the bit stream from
+ * This routine is responsible for the decompression of the bit stream from
  * 8 bits (bytes) packets, into the real codes.
  * Returns GIF_OK if read successfully.
  *****************************************************************************/

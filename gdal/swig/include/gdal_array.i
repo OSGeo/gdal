@@ -943,7 +943,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
         }
         else
         {
-            // so there isn't rubbush in the 1 char strings
+            // so there isn't rubbish in the 1 char strings
             PyArray_FILLWBYTE(pOutArray, 0);
         }
 

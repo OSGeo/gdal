@@ -117,10 +117,10 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /* -------------------------------------------------------------------- */
     if( pnType != NULL )
         *pnType = nType;
-    
+
     if( pnLevel != NULL )
         *pnLevel = nLevel;
-    
+
     return TRUE;
 }
 
@@ -128,14 +128,14 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /************************************************************************/
 /*                          DGNGetRawExtents()                          */
 /*                                                                      */
-/*      Returns FALSE if the element type does not have reconisable     */
+/*      Returns FALSE if the element type does not have recognizable    */
 /*      element extents, other TRUE and the extents will be updated.    */
 /*                                                                      */
 /*      It is assumed the raw element data has been loaded into the     */
 /*      working area by DGNLoadRawElement().                            */
 /************************************************************************/
 
-static int 
+static int
 DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
                   GUInt32 *pnXMin, GUInt32 *pnYMin, GUInt32 *pnZMin, 
                   GUInt32 *pnXMax, GUInt32 *pnYMax, GUInt32 *pnZMax )

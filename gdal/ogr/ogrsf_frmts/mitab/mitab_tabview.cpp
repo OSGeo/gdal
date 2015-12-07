@@ -859,8 +859,8 @@ GIntBig TABView::GetNextFeatureId(GIntBig nPrevId)
  *
  * Fill and return a TABFeature object for the specified feature id.
  *
- * The retruned pointer is a reference to an object owned and maintained
- * by this TABView object.  It should not be altered or freed by the 
+ * The returned pointer is a reference to an object owned and maintained
+ * by this TABView object.  It should not be altered or freed by the
  * caller and its contents is guaranteed to be valid only until the next
  * call to GetFeatureRef() or Close().
  *
@@ -870,9 +870,9 @@ GIntBig TABView::GetNextFeatureId(GIntBig nPrevId)
  **********************************************************************/
 TABFeature *TABView::GetFeatureRef(GIntBig nFeatureId)
 {
-    
+
     /*-----------------------------------------------------------------
-     * Make sure file is opened 
+     * Make sure file is open.
      *----------------------------------------------------------------*/
     if (m_poRelation == NULL)
     {
@@ -1584,7 +1584,7 @@ int  TABRelation::CreateRelFields()
  *
  * Fill and return a TABFeature object for the specified feature id.
  *
- * The retuned pointer is a new TABFeature that will have to be freed
+ * The returned pointer is a new TABFeature that will have to be freed
  * by the caller.
  *
  * Returns NULL if the specified feature id does not exist of if an
@@ -1592,8 +1592,8 @@ int  TABRelation::CreateRelFields()
  * report the reason of the failure.
  *
  * __TODO__ The current implementation fetches the features from each table
- * and creates a 3rd feature to merge them.  There would be room for 
- * optimization, at least by avoiding the duplication of the geometry 
+ * and creates a 3rd feature to merge them.  There would be room for
+ * optimization, at least by avoiding the duplication of the geometry
  * which can be big sometimes... but this would imply changes at the
  * lower-level in the lib. and we won't go there yet.
  **********************************************************************/

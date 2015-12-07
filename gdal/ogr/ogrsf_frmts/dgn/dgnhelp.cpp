@@ -658,7 +658,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    psCell->rnghigh.x, psCell->rnghigh.y, psCell->rnghigh.z );
           fprintf( fp, "  origin=(%.5f,%.5f,%.5f)\n",
                    psCell->origin.x, psCell->origin.y, psCell->origin.z);
-          
+
           if( psInfo->dimension == 2 )
               fprintf( fp, "  xscale=%g, yscale=%g, rotation=%g\n",
                        psCell->xscale, psCell->yscale, psCell->rotation );

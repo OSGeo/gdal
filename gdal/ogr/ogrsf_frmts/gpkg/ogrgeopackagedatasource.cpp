@@ -2155,7 +2155,7 @@ int GDALGeoPackageDataset::CreateMetadataTables()
         "BEFORE UPDATE OF 'reference_scope' ON 'gpkg_metadata_reference' "
         "FOR EACH ROW BEGIN "
         "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
-        "violates constraint: referrence_scope must be one of \"geopackage\", "
+        "violates constraint: reference_scope must be one of \"geopackage\", "
         "\"table\", \"column\", \"row\", \"row/col\"') "
         "WHERE NOT NEW.reference_scope IN "
         "('geopackage','table','column','row','row/col'); "

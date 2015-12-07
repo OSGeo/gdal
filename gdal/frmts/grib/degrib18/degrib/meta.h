@@ -442,7 +442,7 @@ enum { GS5_SIMPLE = 0, GS5_CMPLX = 2, GS5_CMPLXSEC = 3, GS5_JPEG2000 = 40,
 };
 typedef struct {
    sInt4 packType;           /* What kind of packing was used. */
-   float refVal;             /* The refrence value for the grid, also the
+   float refVal;             /* The reference value for the grid, also the
                               * minimum value? */
    short int ESF;            /* Power of 2 scaling factor. */
    short int DSF;            /* Decimal Scale Factor */

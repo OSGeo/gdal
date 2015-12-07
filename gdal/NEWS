@@ -567,7 +567,7 @@ Algorithms:
  * Warper: fix GDALSuggestedWarpOutput() wrong extent in some circumstances (e.g. dataset of big dimension with world coordinates) (#5693)
  * Warper: fix integer overflow when reprojecting into an area with (part of) bounds completely outside of the source projection (#5789)
  * Warper: add min,max,med,q1 and q3 resampling algorithms (#5868)
- * Warper: add a SRC_COORD_PRECISION warping option to help getting more reproducable output when -wm parameter changes (#5925)
+ * Warper: add a SRC_COORD_PRECISION warping option to help getting more reproducible output when -wm parameter changes (#5925)
  * Warper: fix failure in GDALSuggestedWarpOut2() when top-left and bottom-right corners tranform to the same point (#5980)
  * GDALReprojectImage(): takes into account nodata values set on destination dataset
  * Median cut and dithering: optimizations and enhancements to deal with 8-bit precision (only if using internal interface for now)
@@ -2392,7 +2392,7 @@ JPEG driver:
  * When there are no external overviews built, take advantage of the nature of JPEG compression to expose overviews of level 2, 4 and 8
  * Don't return junk content when requesting xml:XMP but no XMP metadata is present (#4593)
  * add a INTERNAL_MASK creation option to be able to disable appending the ZLib mask if not needed
- * add support for creating a JPEG loss-less file starting with the recentlish IJG libjpeg v9
+ * add support for creating a JPEG loss-less file starting with the recent IJG libjpeg v9
    (with -co ARITHMETIC=yes -co BLOCK=1 -co COLOR_TRANSFORM=RGB1)
 
 JPEG2000 driver:
@@ -4954,7 +4954,7 @@ ECW driver:
  * Enable the JP2ECW driver to open JP2 files with the VSILAPI
  * Fix build with MSVC2008  (#2850)
  * Fix memory overwrite while zooming an ECW image (#2934)
- * Speed-up de-registeration of the driver that can take up to 3 seconds (#3134)
+ * Speed-up de-registration of the driver that can take up to 3 seconds (#3134)
 
 EHDR driver:
  * Add color table update.  Add limited support for floating point
@@ -5992,7 +5992,7 @@ WCS driver:
  * Strip namespaces off DescribeCoverage response (early), and add a bug
 workaround for GeoServer WCS 1.1 responses.
  * Correct wcs 1.1 band identification logic
- * URL encode format and coverage name.  Improve error recognision.
+ * URL encode format and coverage name.  Improve error recognition.
  * GridOffset should be top left corner of pixel center oriented bounds
 
 WMS driver:
@@ -7680,7 +7680,7 @@ GDAL 1.1.8 - Overview of Changes
 
  o Lots of work on VRT format.  
 
- o ECW: Fixed bug with reading a more than full resultion.
+ o ECW: Fixed bug with reading a more than full resolution.
 
  o Envisat driver now supports AATSR TOA and MERIS data.
 

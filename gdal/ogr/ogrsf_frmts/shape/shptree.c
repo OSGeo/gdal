@@ -646,7 +646,7 @@ SHPTreeFindLikelyShapes( SHPTree * hTree,
 /************************************************************************/
 /*                          SHPTreeNodeTrim()                           */
 /*                                                                      */
-/*      This is the recurve version of SHPTreeTrimExtraNodes() that     */
+/*      This is the recursive version of SHPTreeTrimExtraNodes() that   */
 /*      walks the tree cleaning it up.                                  */
 /************************************************************************/
 

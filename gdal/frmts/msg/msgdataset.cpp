@@ -475,9 +475,8 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-        
-    MSGDataset  *poGDS = (MSGDataset *) poDS;
 
+    MSGDataset  *poGDS = (MSGDataset *) poDS;
 
     int iBytesPerPixel = 1;
     if (eDataType == GDT_UInt16)

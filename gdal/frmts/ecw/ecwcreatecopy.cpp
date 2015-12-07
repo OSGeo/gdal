@@ -809,17 +809,17 @@ CPLErr GDALECWCompressor::Initialize(
         if( pszOption != NULL )
             SetParameter( CNCSJP2FileView::JP2_COMPRESS_INCLUDE_SOP, 
                                       (bool) CSLTestBoolean( pszOption ) );
-    
+
         pszOption = CSLFetchNameValue(papszOptions, "INCLUDE_EPH");
         if( pszOption != NULL )
             SetParameter( CNCSJP2FileView::JP2_COMPRESS_INCLUDE_EPH, 
                                       (bool) CSLTestBoolean( pszOption ) );
-    
+
         pszOption = CSLFetchNameValue(papszOptions, "PROGRESSION");
         if( pszOption != NULL && EQUAL(pszOption,"LRCP") )
             SetParameter( 
                 CNCSJP2FileView::JP2_COMPRESS_PROGRESSION_LRCP );
-                                  
+
         else if( pszOption != NULL && EQUAL(pszOption,"RLCP") )
             SetParameter( 
                 CNCSJP2FileView::JP2_COMPRESS_PROGRESSION_RLCP );

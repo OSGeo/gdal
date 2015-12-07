@@ -377,7 +377,7 @@ void kml2featurestyle (
 
             OGRStyleMgr *poOgrSM = new OGRStyleMgr;
 
-            /***** if were resolveing style the feature  *****/
+            /***** if were resolving style the feature *****/
             /***** might already have styling to add too *****/
 
             const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );

@@ -306,16 +306,16 @@ bool OGRGRASSLayer::StopDbDriver()
 #else
     if ( kill (poDriver->pid, SIGINT) != 0 ) 
     {
-	if ( kill (poDriver->pid, SIGKILL) != 0 ) 
-	{
-	    CPLError( CE_Failure, CPLE_AppDefined, "Cannot stop database "
-		      "driver pid = %d", poDriver->pid );
-	}
+        if ( kill (poDriver->pid, SIGKILL) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Cannot stop database "
+                      "driver pid = %d", poDriver->pid );
+        }
     }
 #endif
-	    
+
     bCursorOpened = false;
-    
+
     return true;
 }
 
@@ -325,16 +325,16 @@ bool OGRGRASSLayer::StopDbDriver()
 void OGRGRASSLayer::ResetReading()
 {
     iNextId = 0;
-    
+
     if ( bCursorOpened ) {
-	ResetSequentialCursor();
+        ResetSequentialCursor();
     }
 }
 
 /************************************************************************/
 /*                           SetNextByIndex()                           */
 /*                                                                      */
-/*      If we already have an FID list, we can easily resposition       */
+/*      If we already have an FID list, we can easily reposition        */
 /*      ourselves in it.                                                */
 /************************************************************************/
 OGRErr OGRGRASSLayer::SetNextByIndex( GIntBig nIndex )
@@ -343,7 +343,7 @@ OGRErr OGRGRASSLayer::SetNextByIndex( GIntBig nIndex )
     {
 	iNextId = 0;
 	int count = 0;
-	
+
 	while ( true ) {
 	    if( iNextId >= nTotalCount ) break;
 	    if ( count == nIndex ) break;
@@ -352,7 +352,7 @@ OGRErr OGRGRASSLayer::SetNextByIndex( GIntBig nIndex )
 	    if( pszQuery != NULL && !paQueryMatch[iNextId] ) {
 		iNextId++;
 		continue;
-	    }
+            }
 
 	    // Spatial
 	    if( m_poFilterGeom && !paSpatialMatch[iNextId] ) {
@@ -360,7 +360,7 @@ OGRErr OGRGRASSLayer::SetNextByIndex( GIntBig nIndex )
 		continue;
 	    }
 	    count++;
-	}
+        }
     }
 
     iNextId = nIndex;

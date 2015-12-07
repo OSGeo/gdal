@@ -883,8 +883,9 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
     if( nRecLevel == 32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Too many recursiong level (%d) while parsing Spatialite geometry.",
-                    nRecLevel );
+                  "Too many recursion levels (%d) while parsing "
+                  "Spatialite geometry.",
+                  nRecLevel );
         return OGRERR_CORRUPT_DATA;
     }
 

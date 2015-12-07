@@ -1117,7 +1117,7 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( GIntBig nFID )
 
     if (oStatement.GetRowCountAffected() < 1)
         return OGRERR_NON_EXISTING_FEATURE;
-    
+
     return OGRERR_NONE;
 }
 
@@ -1136,14 +1136,15 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
                   "NULL pointer to OGRFeature passed to CreateFeature()." );
         return OGRERR_FAILURE;
     }
-    
+
     ClearStatement();
 
     CPLODBCStatement oStatement( poDS->GetSession() );
 
-    /* the fid values are retieved from the source layer */
+    /* the fid values are retrieved from the source layer */
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL && bIsIdentityFid )
-        oStatement.Appendf("SET IDENTITY_INSERT [%s].[%s] ON;", pszSchemaName, pszTableName );
+        oStatement.Appendf( "SET IDENTITY_INSERT [%s].[%s] ON;",
+                            pszSchemaName, pszTableName );
 
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */

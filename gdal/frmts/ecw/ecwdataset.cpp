@@ -418,7 +418,8 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
             error = NCSEcwInitStatistics(&pNewStatistics, nStatsBandCount, bucketCounts);
             if (!error.Success()){
                 CPLError( CE_Warning, CPLE_AppDefined,
-                            "NCSEcwInitStatistics failed in ECWRasterBand::SetDefaultHistogram (realocate)." );
+                          "NCSEcwInitStatistics failed in "
+                          "ECWRasterBand::SetDefaultHistogram (reallocate)." );
                 return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
             }
             //we need to copy existing statistics.
@@ -1028,9 +1029,10 @@ ECWDataset::~ECWDataset()
         #13 0x00007fffb7551c61 in GDALDestroy () at gdaldllmain.cpp:80
         #14 0x00007ffff7de990e in _dl_fini () at dl-fini.c:254
     */
-    // Not replicable with similar test in C++, but this might be just a matter of luck related
-    // to the order in which the libraries are unloaded, so just don't try
-    // to delete poFileView from the GDAL destructor.
+    // Not reproducible with similar test in C++, but this might be
+    // just a matter of luck related to the order in which the
+    // libraries are unloaded, so just don't try to delete poFileView
+    // from the GDAL destructor.
     if( poFileView != NULL && !GDALIsInGlobalDestructor() )
     {
         VSIIOStream *poUnderlyingIOStream = (VSIIOStream *)NULL;

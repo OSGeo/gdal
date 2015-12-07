@@ -1214,7 +1214,7 @@ def ogr_mitab_27():
 
     lyr.DeleteFeature(f.GetFID())
     ds = None
-    
+
     ds = ogr.Open(filename, update = 1)
     lyr = ds.GetLayer(0)
     # SetFeature() on a deleted feature
@@ -1241,7 +1241,7 @@ def ogr_mitab_27():
     stat = gdal.VSIStatL(filename[0:-3]+"map")
     old_size = stat.size
 
-    # This used to trigger a bug: when using SetFeature() repeatly, we
+    # This used to trigger a bug: when using SetFeature() repeatedly, we
     # can create object blocks in the .map that are made only of deleted
     # objects.
     ds = ogr.Open(filename, update = 1)
@@ -1259,7 +1259,7 @@ def ogr_mitab_27():
     if stat.size != old_size:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     ds = ogr.Open(filename, update = 1)
     lyr = ds.GetLayer(0)
 

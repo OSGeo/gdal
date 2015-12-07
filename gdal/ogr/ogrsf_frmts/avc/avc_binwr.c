@@ -1648,7 +1648,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
  *            "../<covername>/<subclassname>.<ext>"
  *
  *    e.g. The table named "TEST.PATCOUNTY" would be stored in the file
- *         "../test/county.pat" (this path is realtive to the info directory)
+ *         "../test/county.pat" (this path is relative to the info directory)
  *
  *  When the <SUBCLASSNAME> is not present, then the name of the data file
  *  will be the "../<covername>/<ext>.adf"

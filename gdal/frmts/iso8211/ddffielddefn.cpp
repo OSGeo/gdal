@@ -575,7 +575,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
     while( pszSrc[iSrc] != '\0' )
     {
         /* This is presumably an extra level of brackets around some
-           binary stuff related to rescaning which we don't care to do
+           binary stuff related to rescanning which we don't care to do
            (see 6.4.3.3 of the standard.  We just strip off the extra
            layer of brackets */
         if( (iSrc == 0 || pszSrc[iSrc-1] == ',') && pszSrc[iSrc] == '(' )
@@ -591,7 +591,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
 
             strcat( pszDest, pszExpandedContents );
             iDst = strlen(pszDest);
-            
+
             iSrc = iSrc + strlen(pszContents) + 2;
 
             CPLFree( pszContents );

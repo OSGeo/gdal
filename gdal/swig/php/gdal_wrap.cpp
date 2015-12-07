@@ -2212,7 +2212,7 @@ int  ComputeMedianCutPCT ( GDALRasterBandShadow *red,
                                           colors,
                                           callback,
                                           callback_data);
-    
+
     return err;
 }
 
@@ -2234,7 +2234,7 @@ int  DitherRGB2PCT ( GDALRasterBandShadow *red,
                                   colors,
                                   callback,
                                   callback_data);
-    
+
     return err;
 }
 
@@ -2261,7 +2261,7 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                                      callback,
                                      callback_data,
                                      NULL);
-    
+
     return err;
 }
 

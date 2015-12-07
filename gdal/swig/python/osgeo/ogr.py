@@ -1369,7 +1369,7 @@ class Layer(MajorObject):
 
         nFeatureId:  the feature id of the feature to read.
 
-        an handle to a feature now owned by the caller, or NULL on failure. 
+        an handle to a feature now owned by the caller, or NULL on failure.
         """
         return _ogr.Layer_GetFeature(self, *args)
 
@@ -1382,7 +1382,7 @@ class Layer(MajorObject):
 
         Fetch the next available feature from this layer.
 
-        The returned feature becomes the responsiblity of the caller to delete
+        The returned feature becomes the responsibility of the caller to delete
         with OGR_F_Destroy(). It is critical that all features associated with
         an OGRLayer (more specifically an OGRFeatureDefn) be deleted before
         that layer/datasource is deleted.
@@ -1402,7 +1402,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer from which feature are read.
 
-        an handle to a feature, or NULL if no more features are available. 
+        an handle to a feature, or NULL if no more features are available.
         """
         return _ogr.Layer_GetNextFeature(self, *args)
 
@@ -4949,9 +4949,9 @@ class Geometry(_object):
 
         Do these features intersect?
 
-        Currently this is not implemented in a rigerous fashion, and generally
+        Currently this is not implemented in a rigorous fashion, and generally
         just tests whether the envelopes of the two features intersect.
-        Eventually this will be made rigerous.
+        Eventually this will be made rigorous.
 
         This function is the same as the CPP method OGRGeometry::Intersects.
 

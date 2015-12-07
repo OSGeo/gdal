@@ -1597,9 +1597,9 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
 
         /*---------------------------------------------------------
          * And now proceed to the next section...
-         * OK, I don't really like recursivity either... but it was
+         * OK, I don't really like recursion, but it was
          * the simplest way to do this, and anyways we should never
-         * have more than one level of recursivity.
+         * have more than one level of recursion.
          *--------------------------------------------------------*/
         if (psInfo->bReadAllSections)
             psInfo->iCurSection++;
@@ -1874,9 +1874,9 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
             /*---------------------------------------------------------
              * Finished returning the last lines of the section...
              * proceed to the next section...
-             * OK, I don't really like recursivity either... but it was
+             * OK, I don't really like recursivion, but it was
              * the simplest way to do this, and anyways we should never
-             * have more than one level of recursivity.
+             * have more than one level of recursion.
              *--------------------------------------------------------*/
             if (psInfo->bReadAllSections)
                 psInfo->iCurSection++;
