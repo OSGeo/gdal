@@ -292,7 +292,7 @@ not be done : the specified SRID is used as such.</p></li>
 A list of (String) columns that must be compressed with ZLib DEFLATE algorithm. This might be beneficial
 for databases that have big string blobs. However, use with care, since the value of such columns
 will be seen as compressed binary content with other SQLite utilities (or previous OGR versions).
-With OGR, when inserting, modifying or queryings compressed columns, compression/decompression is done transparently.
+With OGR, when inserting, modifying or querying compressed columns, compression/decompression is done transparently.
 However, such columns cannot be (easily) queried with an attribute filter or WHERE clause.
 Note: in table definition, such columns have the "VARCHAR_deflate" declaration type.</p></li>
 

@@ -163,7 +163,7 @@ static int ErrnoFromGetLastError(DWORD dwError = 0)
         err = ENOSPC;
         break;
     case ERROR_HANDLE_EOF:          /* Reached the end of the file. */
-        err = 0; /* There is no errno quivalent, in the errno.h */
+        err = 0; /* There is no errno equivalent in the errno.h */
         break;
     default:
         err = 0;

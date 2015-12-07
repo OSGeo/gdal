@@ -1372,7 +1372,7 @@ void CPLODBCStatement::Clear()
  * Fetch column definitions for a table.
  *
  * The SQLColumn() method is used to fetch the definitions for the columns
- * of a table (or other queriable object such as a view).  The column
+ * of a table (or other queryable object such as a view).  The column
  * definitions are digested and used to populate the CPLODBCStatement
  * column definitions essentially as if a "SELECT * FROM tablename" had
  * been done; however, no resultset will be available.
