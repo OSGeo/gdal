@@ -739,7 +739,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 
 /* -------------------------------------------------------------------- */
 /*      Do we know where the requested line is?  If not, read all       */
-/*      the preceeding ones to "find" our line.                         */
+/*      the preceding ones to "find" our line.                          */
 /* -------------------------------------------------------------------- */
     if( nScanline < 0 || nScanline >= psInfo->nYSize )
     {

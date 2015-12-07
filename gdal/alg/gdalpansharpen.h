@@ -78,7 +78,7 @@ typedef struct
     /** Array of nInputSpectralBands input spectral bands. The spectral band have
      *  generally a coarser resolution than the panchromatic band, but they
      *  are assumed to have the same spatial extent (and projection) at that point.
-     *  Necessary spatial adjustments must be done priorly, for example by wrapping
+     *  Necessary spatial adjustments must be done beforehand, for example by wrapping
      *  inside a VRT dataset.
      */
     GDALRasterBandH     *pahInputSpectralBands;

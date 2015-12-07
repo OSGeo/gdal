@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Image Warper
- * Purpose:  Implements a rational polynomail (RPC) based transformer. 
+ * Purpose:  Implements a rational polynomial (RPC) based transformer.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************

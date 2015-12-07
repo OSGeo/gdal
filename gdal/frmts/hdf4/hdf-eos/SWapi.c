@@ -2184,7 +2184,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
     char            swathname[80];	/* Swath name */
     char            errbuf1[128];	/* Error message buffer 1 */
     char            errbuf2[128];	/* Error message buffer 2 */
-    char            compparmbuf[128];	/* Compression parmeter string buffer */
+    char            compparmbuf[128];	/* Compression parameter string buffer */
 
     char           *HDFcomp[5] = {"HDFE_COMP_NONE", "HDFE_COMP_RLE",
 	"HDFE_COMP_NBIT", "HDFE_COMP_SKPHUFF",

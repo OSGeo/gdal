@@ -1251,7 +1251,7 @@ png_check_keyword(png_structp png_ptr, png_charp key, png_charpp new_key)
    *new_key = (png_charp)png_malloc_warn(png_ptr, (png_uint_32)(key_len + 2));
    if (*new_key == NULL)
    {
-      png_warning(png_ptr, "Out of memory while procesing keyword");
+      png_warning(png_ptr, "Out of memory while processing keyword");
       return ((png_size_t)0);
    }
 

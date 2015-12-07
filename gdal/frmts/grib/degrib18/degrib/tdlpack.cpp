@@ -1521,7 +1521,7 @@ int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,
       return -1;
    }
 
-   /* Preceeding was in degrib2, next part is specific to TDLP. */
+   /* Preceding was in degrib2, next part is specific to TDLP. */
    curLoc = 8;
    if (ReadTDLPSect1 (c_ipack + curLoc, tdlpLen, &curLoc, &(meta->pdsTdlp),
                       &f_gds, &f_bms, &DSF, &BSF) != 0) {

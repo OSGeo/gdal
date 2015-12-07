@@ -683,6 +683,8 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 
             if (record->FindField( "QUV" ) != NULL )
             {
+                // TODO: Translate to English or state why this should not be in
+                // English.
                 //Date de production du produit : QAL.QUV.DAT1
                 //Num�ro d'�dition  du produit : QAL.QUV.EDN
 
@@ -690,7 +692,6 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
                 if (bSuccess)
                 {
                     CPLDebug("SRP", "EDN=%d", EDN);
-                    //char pszValue[5];
                     sprintf(pszValue, "%d", EDN);
                     SetMetadataItem( "SRP_EDN", pszValue );
                 }

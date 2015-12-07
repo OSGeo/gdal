@@ -1115,7 +1115,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG, int bReturnExtendedCTCode )
 /************************************************************************/
 /*                            SetGTParmIds()                            */
 /*                                                                      */
-/*      This is hardcoded logic to set the GeoTIFF parmaeter            */
+/*      This is hardcoded logic to set the GeoTIFF parameter            */
 /*      identifiers for all the EPSG supported projections.  As the     */
 /*      trf_method.csv table grows with new projections, this code      */
 /*      will need to be updated.                                        */

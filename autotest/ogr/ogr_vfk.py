@@ -169,33 +169,33 @@ def ogr_vfk_4():
     if length != 10:
         gdaltest.post_reason('did not get expected length, got %d' % length)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
 # Read features from layer 'HP', check geometry type
 
 def ogr_vfk_5():
-    
+
     if gdaltest.vfk_drv is None:
        return 'skip'
-    
+
     gdaltest.vfk_layer_hp = gdaltest.vfk_ds.GetLayerByName('HP')
-    
+
     if not gdaltest.vfk_layer_hp != 'HP':
         gdaltest.post_reason('did not get expected layer name "HP"')
         return 'fail'
-    
+
     geom_type = gdaltest.vfk_layer_hp.GetGeomType()
 
     if geom_type != ogr.wkbLineString:
         gdaltest.post_reason('did not get expected geometry type, got %d' % geom_type)
         return 'fail'
-    
+
     return 'success'
- 
+
 ###############################################################################
-# Re-Open file (test .db persistance)
+# Re-Open file (test .db persistence)
 
 def ogr_vfk_6():
 
@@ -206,24 +206,24 @@ def ogr_vfk_6():
     gdaltest.vfk_layer_sobr = None
     gdaltest.vfk_ds = None
     gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
-    
+
     if gdaltest.vfk_ds is None:
         return 'fail'
-    
+
     if gdaltest.vfk_ds.GetLayerCount() != 61:
         gdaltest.post_reason('expected exactly 61 layers!')
         return 'fail'
-    
+
     gdaltest.vfk_layer_par = gdaltest.vfk_ds.GetLayer(0)
-    
+
     if gdaltest.vfk_layer_par is None:
         gdaltest.post_reason('cannot get first layer')
         return 'fail'
-    
+
     if gdaltest.vfk_layer_par.GetName() != 'PAR':
         gdaltest.post_reason('did not get expected layer name "PAR"')
         return 'fail'
-    
+
     defn = gdaltest.vfk_layer_par.GetLayerDefn()
     if defn.GetFieldCount() != 28:
         gdaltest.post_reason('did not get expected number of fields, got %d' % defn.GetFieldCount())

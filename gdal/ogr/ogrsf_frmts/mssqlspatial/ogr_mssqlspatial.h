@@ -97,7 +97,7 @@ class OGRMSSQLGeometryParser
 {
 protected:    
     unsigned char* pszData;
-    /* serialization propeties */
+    /* serialization properties */
     char chProps;
     /* point array */
     int nPointSize;

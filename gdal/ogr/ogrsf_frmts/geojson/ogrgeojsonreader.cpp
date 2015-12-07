@@ -100,7 +100,7 @@ void OGRGeoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     if( NULL == poGJObject_ )
     {
         CPLDebug( "GeoJSON",
-                  "Missing parset GeoJSON data. Forgot to call Parse()?" );
+                  "Missing parsed GeoJSON data. Forgot to call Parse()?" );
         return;
     }
 

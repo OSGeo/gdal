@@ -198,7 +198,7 @@ public:
     virtual void Clear();
 protected:
     /**
-     * @brief Method to create best paht tree.
+     * @brief Method to create best path tree.
      *
      * Calculates and builds the best path tree with the Dijkstra
      * algorithm starting from the nFID. Method takes in account the blocking

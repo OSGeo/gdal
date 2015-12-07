@@ -1630,7 +1630,7 @@ const char *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
                 return pszTREData + 11;
             }
 
-            /* Found a prevoius one - skip it ... */
+            /* Found a previous one - skip it ... */
             nTreIndex--;
         }
 

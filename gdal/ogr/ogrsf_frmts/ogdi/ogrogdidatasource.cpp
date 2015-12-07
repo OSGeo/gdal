@@ -88,7 +88,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
     char *pszWorkingName;
 
     CPLAssert( m_nLayers == 0 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Parse the dataset name.                                         */
 /*      i.e.                                                            */
@@ -104,13 +104,13 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         pszFamily = strrchr(pszWorkingName, ':');
 
         // Don't treat drive name colon as family separator.  It is assumed
-        // that drive names are on character long, and preceeded by a 
+        // that drive names are on character long, and preceded by a
         // forward or backward slash.
         if( pszFamily < pszWorkingName+2 
             || pszFamily[-2] == '/'
             || pszFamily[-2] == '\\' )
             pszFamily = NULL;
-        
+
         if (pszFamily && pszFamily != pszWorkingName + 4)
         {
             *pszFamily = '\0';

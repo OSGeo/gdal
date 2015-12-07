@@ -318,7 +318,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
     }
 
 /* -------------------------------------------------------------------- */
-/*      We will use a new enumerator for the second pass primariliy     */
+/*      We will use a new enumerator for the second pass primarily      */
 /*      so we can preserve the first pass map.                          */
 /* -------------------------------------------------------------------- */
     GDALRasterPolygonEnumerator oSecondEnum( nConnectedness );

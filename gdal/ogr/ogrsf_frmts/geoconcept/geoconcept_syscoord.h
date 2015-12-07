@@ -88,6 +88,7 @@ struct _tDatumInfo_GCSRS {
 
 struct _tProjectionInfo_GCSRS {
   const char *pszProjName;
+  /* TODO: Translate to English. */
   int         nSphere;/*
                        * 1 = sphere de courbure
                        * 2 = sphere equatoriale

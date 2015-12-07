@@ -717,7 +717,7 @@ def hfa_rotated_write():
     wkt = ds.GetProjection()
     if not gdaltest.equal_srs_from_wkt( expected_wkt, wkt ):
         return 'fail'
-    
+
     ds = None
 
     gdal.GetDriverByName( 'HFA' ).Delete( 'tmp/rot.img' )
@@ -1016,9 +1016,9 @@ def hfa_excluded_values():
 
 
     return 'success'
-    
+
 ###############################################################################
-# verify that we propogate nodata to overviews in .img/.rrd format.
+# verify that we propagate nodata to overviews in .img/.rrd format.
 
 def hfa_ov_nodata():
 
@@ -1040,7 +1040,7 @@ def hfa_ov_nodata():
     if ovb.GetMaskFlags() != gdal.GMF_NODATA:
         gdaltest.post_reason( 'mask flag not as expected.' )
         return 'fail'
-    
+
     # Confirm that a .ovr file was *not* produced.
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:

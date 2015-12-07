@@ -874,12 +874,12 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
           case GMLPT_Integer64:
             pszTypeName = "Integer";
             break;
-            
+
           case GMLPT_Real:
           case GMLPT_Float:
             pszTypeName = "Real";
             break;
-            
+
           case GMLPT_Complex:
             pszTypeName = "Complex";
             break;
@@ -898,13 +898,13 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             pszTypeName = "StringList";
             break;
 
-          /* should not happen in practise for now because this is not */
+          /* should not happen in practice for now because this is not */
           /* autodetected */
           case GMLPT_FeatureProperty:
             pszTypeName = "FeatureProperty";
             break;
 
-          /* should not happen in practise for now because this is not */
+          /* should not happen in practice for now because this is not */
           /* autodetected */
           case GMLPT_FeaturePropertyList:
             pszTypeName = "FeaturePropertyList";

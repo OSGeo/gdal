@@ -1315,14 +1315,14 @@ int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord ** papoGroup,
         /*
          * this logic assumes we always get a point geometry with a CPOLY
          * but that isn't always true, for instance with BL2000 data.  The
-         * preceed check will handle this case.
+         * preceeding check will handle this case.
          */
         if( papoGroup[iRec-1]->GetType() != NRT_GEOMETRY )
             return TRUE;
         else
             return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Is this a "feature" defining record?  If so break out if it     */
 /*      isn't the first record in the group.                            */

@@ -628,7 +628,7 @@ format. Also some information writed to the stdout.
 <dt> <b>-of</b><em>field_name</em>:</dt><dd> The field name for storing the 
     uniq values of input lines</dd>
 <dt> <b>-s</b><em>step</em>:</dt><dd> The part size in linear units</dd>
-<dt> <b>-get_pos</b>:</dt><dd> Return linear referenced postion for input X, Y</dd>
+<dt> <b>-get_pos</b>:</dt><dd> Return linear referenced position for input X, Y</dd>
 <dt> <b>-x</b><em>long</em>:</dt><dd> Input X coordinate</dd>
 <dt> <b>-y</b><em>lat</em>:</dt><dd> Input Y coordinate</dd>
 <dt> <b>-get_coord</b>:</dt><dd> Return point on path for input linear distance</dd>

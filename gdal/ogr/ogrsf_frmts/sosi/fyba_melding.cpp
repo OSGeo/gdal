@@ -57,7 +57,7 @@ void LC_StartMessage(const char *pszFilnavn)
 {
 }
 
-void LC_ShowMessage(double prosent)
+void LC_ShowMessage(double prosent) // TODO: prosent?
 {
 }
 

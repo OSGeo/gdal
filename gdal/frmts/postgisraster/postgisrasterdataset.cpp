@@ -818,11 +818,11 @@ GBool PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset* poRTDS)
 
         int bHasNoData = FALSE;
         double dfBandNoDataValue = prb->GetNoDataValue(&bHasNoData);
-            
+
         PostGISRasterTileRasterBand * prtb =
             (PostGISRasterTileRasterBand *)
                 poRTDS->GetRasterBand(iBand + 1);
-            
+
         prb->AddComplexSource(prtb, 0, 0, 
             poRTDS->GetRasterXSize(),
             poRTDS->GetRasterYSize(),
@@ -832,7 +832,7 @@ GBool PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset* poRTDS)
 
         prtb->poSource = prb->papoSources[prb->nSources-1];
     }
-    
+
     return true;
 }
 

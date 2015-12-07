@@ -45,7 +45,8 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /************************************************************************/
 
 /**
-Compute the proximity of all pixels in the image to a set of pixels in the source image.
+Compute the proximity of all pixels in the image to a set of pixels in
+the source image.
 
 This function attempts to compute the proximity of all pixels in
 the image to a set of pixels in the source image.  The following
@@ -56,7 +57,7 @@ that target pixels are set to the value corresponding to a distance
 of zero.
 
 The progress function args may be NULL or a valid progress reporting function
-such as GDALTermProgress/NULL. 
+such as GDALTermProgress/NULL.
 
 Options:
 

@@ -35,7 +35,7 @@
 
 CPL_CVSID("$Id$");
 
-/* why would fipszone and zone be paramers when they relate to a composite
+/* why would fipszone and zone be parameters when they relate to a composite
    projection which renders done into a non-zoned projection? */
 
 static const char * const papszParameters[] =

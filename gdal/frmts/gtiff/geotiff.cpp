@@ -9298,7 +9298,7 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
 
     if( !TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
         nPhotometric = PHOTOMETRIC_MINISBLACK;
-    
+
     if( nCompression == COMPRESSION_JPEG 
         && nPhotometric == PHOTOMETRIC_YCBCR 
         && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
@@ -9312,7 +9312,7 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Propogate any quality settings.                                 */
+/*      Propagate any quality settings.                                 */
 /* -------------------------------------------------------------------- */
     if( GetAccess() == GA_Update )
     {

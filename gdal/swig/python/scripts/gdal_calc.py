@@ -274,8 +274,8 @@ def doit(opts, args):
                     print("evaluation of calculation %s failed" %(opts.calc))
                     raise
 
-                # propogate nodata values 
-                # (set nodata cells to zero then add nodata value to these cells)
+                # Propagate nodata values (set nodata cells to zero
+                # then add nodata value to these cells).
                 myResult = ((1*(myNDVs==0))*myResult) + (myOutNDV*myNDVs)
 
                 # write data block to the output file
