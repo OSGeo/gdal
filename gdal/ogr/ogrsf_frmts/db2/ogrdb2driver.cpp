@@ -35,8 +35,10 @@
 
 static int OGRDB2DriverIdentify( GDALOpenInfo* poOpenInfo )
 {
+#ifdef DEBUG_DB2
     CPLDebug( "OGRDB2DriverIdentify", "pszFilename: '%s'",
               poOpenInfo->pszFilename);
+#endif
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, DB2ODBC_PREFIX) )
         return TRUE;
 
@@ -49,8 +51,10 @@ static int OGRDB2DriverIdentify( GDALOpenInfo* poOpenInfo )
 
 static GDALDataset *OGRDB2DriverOpen( GDALOpenInfo* poOpenInfo )
 {
+#ifdef DEBUG_DB2
     CPLDebug( "OGRDB2DriverOpen", "pszFilename: '%s'",
               poOpenInfo->pszFilename);
+#endif
     if( !OGRDB2DriverIdentify(poOpenInfo) )
         return NULL;
 
@@ -77,8 +81,9 @@ static GDALDataset* OGRDB2DriverCreate( const char * pszFilename,
                                         char **papszOptions )
 {
     OGRDB2DataSource   *poDS = new OGRDB2DataSource();
+#ifdef DEBUG_DB2
     CPLDebug( "OGRDB2DriverCreate", "pszFilename: '%s'", pszFilename);
-
+#endif
     if( !poDS->Create( pszFilename, nXSize, nYSize,
                        nBands, eDT, papszOptions ) )
     {
@@ -96,7 +101,9 @@ static GDALDataset* OGRDB2DriverCreate( const char * pszFilename,
 static CPLErr OGRDB2DriverDelete( const char *pszFilename )
 
 {
+#ifdef DEBUG_DB2
     CPLDebug( "OGRDB2DriverDelete", "pszFilename: '%s'", pszFilename);
+#endif
     if( VSIUnlink(pszFilename) == 0 )
         return CE_None;
     else
@@ -113,7 +120,7 @@ void RegisterOGRDB2()
     GDALDriver *poDriver;
     CPLDebug( "OGR_DB2Driver::RegisterOGRDB2", "");
 
-    if (GDALGetDriverByName("DB2") != NULL) return;
+    if (GDALGetDriverByName("DB2ODBC") != NULL) return;
 
     poDriver = new GDALDriver();
     poDriver->SetDescription( "DB2ODBC" );
@@ -188,7 +195,6 @@ void RegisterOGRDB2()
     poDriver->pfnCreate = OGRDB2DriverCreate;
     poDriver->pfnDelete = OGRDB2DriverDelete;
 
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
