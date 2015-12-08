@@ -786,7 +786,10 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     if (STARTS_WITH_CI(papszToken[0], "LINE"))
     {
         if (CSLCount(papszToken) != 5)
+        {
+          CSLDestroy(papszToken);
           return -1;
+        }
 
         poLine = new OGRLineString();
         poLine->setNumPoints(2);
