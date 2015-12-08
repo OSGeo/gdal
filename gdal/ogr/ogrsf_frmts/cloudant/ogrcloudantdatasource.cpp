@@ -338,9 +338,8 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
 
             if (pszEpsg != NULL)
             {
-                const char * pszUrn = "urn:ogc:def:crs:epsg::";
-                CPLStrlcpy(szSrid, pszUrn, sizeof(szSrid));
-                if (CPLStrlcpy(szSrid + sizeof(pszUrn), pszEpsg, sizeof(szSrid)) >= sizeof(szSrid))
+                if( snprintf(szSrid, sizeof(szSrid), "urn:ogc:def:crs:epsg::%s",
+                             pszEpsg) >= (int)sizeof(szSrid) )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "Unable to parse SRID");
                     return NULL;
