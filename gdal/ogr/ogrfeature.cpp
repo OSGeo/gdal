@@ -74,12 +74,13 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
     papoGeometries = (OGRGeometry **) VSI_CALLOC_VERBOSE( poDefn->GetGeomFieldCount(),
                                         sizeof(OGRGeometry*) );
 
-    if( pauFields == NULL && poDefn->GetFieldCount() != 0 )
-        return;
-    for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+    if( pauFields != NULL )
     {
-        pauFields[i].Set.nMarker1 = OGRUnsetMarker;
-        pauFields[i].Set.nMarker2 = OGRUnsetMarker;
+        for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+        {
+            pauFields[i].Set.nMarker1 = OGRUnsetMarker;
+            pauFields[i].Set.nMarker2 = OGRUnsetMarker;
+        }
     }
 }
 
