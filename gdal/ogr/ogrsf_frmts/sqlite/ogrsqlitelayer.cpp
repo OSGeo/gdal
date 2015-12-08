@@ -149,7 +149,7 @@ void OGRSQLiteLayer::Finalize()
 // will be called by OGRSQLiteDataSource::Open once (pszTableName == NULL)
 // -  setting the basic DatabaseType
 //  also by OGRSQLiteDataSource::GetLayerByName 
-// and OGRSpatialiteLayer::GetSpatialiteLayerType
+// and OGRSQLiteEditableLayer::GetSpatialiteLayerType
 // -- calls this for a Layer that has not been found. (pszTableName != NULL)
 /******************************************************************************/
 OGRSQLiteDatabaseType OGRSQLiteLayer::GetSQLiteDatabaseType(OGRSQLiteDataSource *poDS)
@@ -161,7 +161,7 @@ OGRSQLiteDatabaseType OGRSQLiteLayer::GetSQLiteDatabaseType(OGRSQLiteDataSource 
     //--------------------------------------
     // First check if OGR Specific
     //--------------------------------------
-    osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' AND tbl_name='geometry_columns') AND (sql LIKE '%%geometry_format%%'))");
+    osSQL="SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' AND tbl_name='geometry_columns') AND (sql LIKE '%geometry_format%'))";
     sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
     sqlite3_free_table(papszResult);
     papszResult = NULL;
@@ -171,8 +171,8 @@ OGRSQLiteDatabaseType OGRSQLiteLayer::GetSQLiteDatabaseType(OGRSQLiteDataSource 
     }
     else
     { // check if  spatialite specific
-     osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' OR type = 'view') AND");
-     osSQL += CPLSPrintf( " (tbl_name = 'geometry_columns' OR  tbl_name = 'views_geometry_columns' OR tbl_name='vector_layers'))");
+     osSQL = "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' OR type = 'view') AND";
+     osSQL += " (tbl_name = 'geometry_columns' OR  tbl_name = 'views_geometry_columns' OR tbl_name='vector_layers'))";
      sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
      sqlite3_free_table(papszResult);
      papszResult = NULL;
@@ -191,14 +191,14 @@ OGRSQLiteDatabaseType OGRSQLiteLayer::GetSQLiteDatabaseType(OGRSQLiteDataSource 
       // there a known samples of pre-spatialite 4.* that has been changed by a spatialite 4.* software
       // - have a 'layer_statistics' with valid values, and 'vector_layers_statistics' with NULL values
       // https://github.com/geopaparazzi/Spatialite-Tasks-with-Sql-Scripts/wiki/Spatialite-test-databases-geopaparazzi-specific
-      osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' AND tbl_name='geometry_columns') AND (sql LIKE '%%geometry_type%%'))");
+      osSQL = "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' AND tbl_name='geometry_columns') AND (sql LIKE '%geometry_type%'))";
       sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
       sqlite3_free_table(papszResult);
       papszResult = NULL;
       if( nRowCount > 0 )
       { // spatialite 4.0 until present
        eSQLiteDatabaseType=OSDBT_SpatialTable_4;
-       osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='raster_coverages')");
+       osSQL = "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='raster_coverages')";
        sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
        sqlite3_free_table(papszResult);
        papszResult = NULL;
@@ -209,7 +209,7 @@ OGRSQLiteDatabaseType OGRSQLiteLayer::GetSQLiteDatabaseType(OGRSQLiteDataSource 
       }
       else
       {
-       osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='topologies')");
+       osSQL = "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='topologies')";
        sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
        sqlite3_free_table(papszResult);
        papszResult = NULL;
@@ -219,7 +219,7 @@ OGRSQLiteDatabaseType OGRSQLiteLayer::GetSQLiteDatabaseType(OGRSQLiteDataSource 
        }
        else
        {
-        osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='networks')");
+        osSQL = "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='networks')";
         sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
         sqlite3_free_table(papszResult);
         papszResult = NULL;
@@ -229,7 +229,7 @@ OGRSQLiteDatabaseType OGRSQLiteLayer::GetSQLiteDatabaseType(OGRSQLiteDataSource 
         }
         else
         {
-         osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='raster_pyramids')");
+         osSQL = "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='raster_pyramids')";
          sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
          sqlite3_free_table(papszResult);
          papszResult = NULL;
@@ -243,8 +243,8 @@ OGRSQLiteDatabaseType OGRSQLiteLayer::GetSQLiteDatabaseType(OGRSQLiteDataSource 
      }
      else
      { // 
-      osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' OR type = 'view') AND");
-      osSQL += CPLSPrintf( " (tbl_name = 'metadata' OR  tbl_name = 'map' OR tbl_name='images' OR tbl_name='view'))");
+      osSQL = "SELECT tbl_name FROM sqlite_master WHERE ((type = 'table' OR type = 'view') AND";
+      osSQL += " (tbl_name = 'metadata' OR  tbl_name = 'map' OR tbl_name='images' OR tbl_name='view'))";
       sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
       sqlite3_free_table(papszResult);
       papszResult = NULL;
@@ -258,7 +258,7 @@ OGRSQLiteDatabaseType OGRSQLiteLayer::GetSQLiteDatabaseType(OGRSQLiteDataSource 
       }
       else
       { // This is taken care of in an extra 'gpkd' ogr class
-       osSQL = CPLSPrintf( "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='gpkg_contents')");
+       osSQL = "SELECT tbl_name FROM sqlite_master WHERE (type = 'table' AND tbl_name='gpkg_contents')";
        sqlite3_get_table( poDS->GetDB(),osSQL.c_str(),&papszResult, &nRowCount, &nColCount,NULL );
        sqlite3_free_table(papszResult);
        papszResult = NULL;

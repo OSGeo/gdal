@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Implements OGRSpatialiteViewLayer class, access to an existing spatialite view.
+ * Purpose:  Implements OGRSQLiteViewLayer class, access to an existing spatialite view.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -35,11 +35,11 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                        OGRSpatialiteViewLayer()                         */
+/*                        OGRSQLiteViewLayer()                         */
 /************************************************************************/
 
-OGRSpatialiteViewLayer::OGRSpatialiteViewLayer( OGRSQLiteDataSource *poDSIn )
-{ // start tasks (non-db) are done in OGRSpatialiteLayer(), which runs first
+OGRSQLiteViewLayer::OGRSQLiteViewLayer( OGRSQLiteDataSource *poDSIn )
+{ // start tasks (non-db) are done in OGRSQLiteEditableLayer(), which runs first
     poDS = poDSIn;
     /* SpatiaLite v.2.4.0 (or any subsequent) is required
        to support 2.5D: if an obsolete version of the library
@@ -52,23 +52,23 @@ OGRSpatialiteViewLayer::OGRSpatialiteViewLayer( OGRSQLiteDataSource *poDSIn )
 }
 
 /************************************************************************/
-/*                        ~OGRSpatialiteViewLayer()                        */
+/*                        ~OGRSQLiteViewLayer()                        */
 /************************************************************************/
 
-OGRSpatialiteViewLayer::~OGRSpatialiteViewLayer()
-{ // clean up done in ~OGRSpatialiteLayer()
+OGRSQLiteViewLayer::~OGRSQLiteViewLayer()
+{ // clean up done in ~OGRSQLiteEditableLayer()
 }
 
 /************************************************************************/
-/*                             Initialize()       [move this to :done in OGRSpatialiteLayer]              */
+/*                             Initialize()       [move this to :done in OGRSQLiteEditableLayer]              */
 /************************************************************************/
 
-CPLErr OGRSpatialiteViewLayer::Initialize( const char *pszViewName,
-                                       OGRSpatialiteLayerType eSpatialiteLayerType,
+CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
+                                       OGRSQLiteLayerType eSQLiteLayerType,
                                        int bDeferredCreation)
 {
-   // CPLDebug( "OGR", "-I-> OGRSpatialiteViewLayer::Initialize(%s): layer_type=[%d] database_type=[%d]", pszViewName, eSpatialiteLayerType,poDS->GetDatabaseType());
-   return OGRSpatialiteLayer::Initialize(pszViewName,eSpatialiteLayerType,bDeferredCreation);
+   // CPLDebug( "OGR", "-I-> OGRSQLiteViewLayer::Initialize(%s): layer_type=[%d] database_type=[%d]", pszViewName, eSQLiteLayerType,poDS->GetDatabaseType());
+   return OGRSQLiteEditableLayer::Initialize(pszViewName,eSQLiteLayerType,bDeferredCreation);
 }
 // Start of View specfic functions
 /************************************************************************/
@@ -87,7 +87,7 @@ CPLErr OGRSpatialiteViewLayer::Initialize( const char *pszViewName,
 /* --- returning either                                                     */
 /* ---- 'pszGeomCol' or 'osUnderlyingGeometryColumn' */
 /************************************************************************/
-const char * OGRSpatialiteViewLayer::GetGeometryTable()
+const char * OGRSQLiteViewLayer::GetGeometryTable()
 { // View specific function
     if (pszEscapedUnderlyingTableName != NULL)
      return pszEscapedUnderlyingTableName;
@@ -99,11 +99,29 @@ const char * OGRSpatialiteViewLayer::GetGeometryTable()
 /* - this will NOT be the RowId of the table                            */
 /* -- defined in views_geometry_columns [osUnderlyingGeometryColumn]    */
 /************************************************************************/
-const char * OGRSpatialiteViewLayer::GetEscapedRowId()
+const char * OGRSQLiteViewLayer::GetEscapedRowId()
 { // View specific function
     CPLString osSQL;
     osSQL.Printf( "\"%s\"", OGRSQLiteEscapeName(pszFIDColumn).c_str());
     return osSQL.c_str();
+}
+/************************************************************************/
+/*                           IsViewLayer()                          */
+/************************************************************************/
+
+int OGRSQLiteViewLayer::IsViewLayer()
+{
+ switch (eSQLiteLayerType)
+ {
+  case OSLLT_OGRSpatialView:
+  case OSLLT_SpatialView_3:
+  case OSLLT_SpatialView_4:
+   return TRUE;
+  break;
+  default:
+   return FALSE;
+  break;
+ }
 }
 
 

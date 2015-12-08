@@ -239,7 +239,7 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     {
         if( papoLayers[iLayer]->IsTableLayer() )
         {
-            OGRSpatialiteTableLayer* poLayer = (OGRSpatialiteTableLayer*) papoLayers[iLayer];
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
             poLayer->RunDeferredCreationIfNecessary();
             poLayer->CreateSpatialIndexIfNecessary();
         }
@@ -278,7 +278,7 @@ void OGRSQLiteDataSource::SaveStatistics()
     {
         if( papoLayers[i]->IsTableLayer() )
         {
-            OGRSpatialiteTableLayer* poLayer = (OGRSpatialiteTableLayer*) papoLayers[i];
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[i];
             int nSaveRet = poLayer->SaveStatistics();
             if( nSaveRet >= 0)
             {
@@ -1127,12 +1127,12 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
     char **papszResult;
     int nRowCount, iRow, nColCount;
     int bOGRSpatialiteLayout=FALSE;
-    OGRSpatialiteLayerType eSpatialiteLayerTypeTable = OSLLT_Unknown;
-    OGRSpatialiteLayerType eSpatialiteLayerTypeView = OSLLT_Unknown;
-    OGRSpatialiteLayerType eSpatialiteLayerTypeShape = OSLLT_Unknown;
-    OGRSpatialiteLayerType eSpatialiteLayerTypeXL = OSLLT_Unknown;
+    OGRSQLiteLayerType eSQLiteLayerTypeTable = OSLLT_Unknown;
+    OGRSQLiteLayerType eSQLiteLayerTypeView = OSLLT_Unknown;
+    OGRSQLiteLayerType eSQLiteLayerTypeShape = OSLLT_Unknown;
+    OGRSQLiteLayerType eSQLiteLayerTypeXL = OSLLT_Unknown;
     CPLHashSet* hSet = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
-    // OGRSpatialiteLayerType::GetSQLiteLayerType will determined the basic DatabaseType [this->eDatabaseType]
+    // OGRSQLiteLayerType::GetSQLiteLayerType will determined the basic DatabaseType [this->eDatabaseType]
     // - Spatialite Specific [version 1.0a,2.0 will not be recognized, due to lack of any admin-tables]
     this->eDatabaseType=OGRSQLiteLayer::GetSQLiteDatabaseType(this);
     switch (this->eDatabaseType)
@@ -1141,7 +1141,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
      {
       osSQL = CPLSPrintf( "SELECT f_table_name, f_geometry_column, geometry_type, coord_dimension, geometry_format, srid  FROM geometry_columns");
       bOGRSpatialiteLayout=TRUE;
-      eSpatialiteLayerTypeTable=OSLLT_OGRSpatialTable;
+      eSQLiteLayerTypeTable=OSLLT_OGRSpatialTable;
       CPLDebug("SQLITE", "OGR style SQLite DB found !");    
      }
      break;
@@ -1152,15 +1152,15 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
       bIsSpatiaLiteDB = TRUE;
       if (this->eDatabaseType == OSDBT_SpatialTable_2)
       { // if only 'geometry_columns': Version 2.1 until 2.3.1
-      eSpatialiteLayerTypeTable=OSLLT_SpatialTable_2;
-      eSpatialiteLayerTypeShape=OSLLT_SpatialVirtualShape_2;
+      eSQLiteLayerTypeTable=OSLLT_SpatialTable_2;
+      eSQLiteLayerTypeShape=OSLLT_SpatialVirtualShape_2;
       }
       else
       { // if 'views_geometry_columns'  exists 2.4 to 3.0.1
-       eSpatialiteLayerTypeTable=OSLLT_SpatialTable_3;
-       eSpatialiteLayerTypeView = OSLLT_SpatialView_3;
-       eSpatialiteLayerTypeShape=OSLLT_SpatialVirtualShape_3;
-       eSpatialiteLayerTypeXL=OSLLT_SpatialVirtualXL_3;
+       eSQLiteLayerTypeTable=OSLLT_SpatialTable_3;
+       eSQLiteLayerTypeView = OSLLT_SpatialView_3;
+       eSQLiteLayerTypeShape=OSLLT_SpatialVirtualShape_3;
+       eSQLiteLayerTypeXL=OSLLT_SpatialVirtualXL_3;
       }
       // spatialite 2.1 to 3.0.1 - 'type' 
       osSQL = CPLSPrintf( "SELECT f_table_name, f_geometry_column, type, coord_dimension, srid, spatial_index_enabled FROM geometry_columns");
@@ -1178,10 +1178,10 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
       bIsSpatiaLiteDB = TRUE;
       bSpatialite4Layout = TRUE;
       nUndefinedSRID = 0;
-      eSpatialiteLayerTypeTable=OSLLT_SpatialTable_4;
-      eSpatialiteLayerTypeView = OSLLT_SpatialView_4;
-      eSpatialiteLayerTypeShape=OSLLT_SpatialVirtualShape_4;
-      eSpatialiteLayerTypeXL=OSLLT_SpatialVirtualXL_4;
+      eSQLiteLayerTypeTable=OSLLT_SpatialTable_4;
+      eSQLiteLayerTypeView = OSLLT_SpatialView_4;
+      eSQLiteLayerTypeShape=OSLLT_SpatialVirtualShape_4;
+      eSQLiteLayerTypeXL=OSLLT_SpatialVirtualXL_4;
       osSQL = CPLSPrintf( "SELECT f_table_name, f_geometry_column, geometry_type, coord_dimension, srid,spatial_index_enabled FROM geometry_columns");
       if ((this->eDatabaseType == OSDBT_Rasterlite2_Tables) || (this->eDatabaseType == OSDBT_SpatialTopology_Tables) ||
            (this->eDatabaseType == OSDBT_SpatialTopology_Networks))
@@ -1229,7 +1229,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
                aoMapTableToSetOfGeomCols[pszTableName].insert(CPLString(pszGeomCol).tolower());
 
             if( GDALDataset::GetLayerByName(pszTableName) == NULL )
-                OpenTable( pszTableName,eSpatialiteLayerTypeTable);
+                OpenTable( pszTableName,eSQLiteLayerTypeTable);
 
             if (bListAllTables)
                 CPLHashSetInsert(hSet, CPLStrdup(pszTableName));
@@ -1256,12 +1256,12 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
                         (strstr(pszSQL, "VirtualShape") || strstr(pszSQL, "VirtualXL"))) ||
                     (bListVirtualOGRLayers && strstr(pszSQL, "VirtualOGR")) )
                    {
-                    OGRSpatialiteLayerType eSpatialiteLayerTypeVirtual = eSpatialiteLayerTypeShape;
+                    OGRSQLiteLayerType eSQLiteLayerTypeVirtual = eSQLiteLayerTypeShape;
                     if (strstr(pszSQL, "VirtualXL"))
-                     eSpatialiteLayerTypeVirtual = eSpatialiteLayerTypeXL;
+                     eSQLiteLayerTypeVirtual = eSQLiteLayerTypeXL;
                     if (strstr(pszSQL, "VirtualOGR"))
-                     eSpatialiteLayerTypeVirtual = OSLLT_OGRVirtualTable;
-                    OpenVirtualTable(pszName,eSpatialiteLayerTypeVirtual, pszSQL);
+                     eSQLiteLayerTypeVirtual = OSLLT_OGRVirtualTable;
+                    OpenVirtualTable(pszName,eSQLiteLayerTypeVirtual, pszSQL);
                     if (bListAllTables)
                         CPLHashSetInsert(hSet, CPLStrdup(pszName));
                    }
@@ -1319,7 +1319,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         /* -------------------------------------------------------------------- */
         /*      Detect spatial views  [minimal view query]                             */
         /* -------------------------------------------------------------------- */        
-        switch (eSpatialiteLayerTypeView)
+        switch (eSQLiteLayerTypeView)
         { // - no SpatialViews between 1.0a and 2.3.1
          case OSLLT_SpatialView_3:
          case OSLLT_SpatialView_4:
@@ -1354,10 +1354,10 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
                     pszTableName == NULL ||
                     pszGeometryColumn == NULL)
                  continue;
-                // OGRSpatialiteLayerType::Initialize will make 
+                // OGRSQLiteLayerType::Initialize will make 
                 // - complete version specific checks
                 // - complete view/table/field checks
-                OpenView( pszViewName, eSpatialiteLayerTypeView);
+                OpenView( pszViewName, eSQLiteLayerTypeView);
 
                 if (bListAllTables)
                     CPLHashSetInsert(hSet, CPLStrdup(pszViewName));
@@ -1485,7 +1485,7 @@ all_tables:
     {
         const char* pszTableName = papszResult[iRow+1];
         if (CPLHashSetLookup(hSet, pszTableName) == NULL)
-            OpenTable( pszTableName,eSpatialiteLayerTypeTable );
+            OpenTable( pszTableName,eSQLiteLayerTypeTable );
     }
     
     sqlite3_free_table(papszResult);
@@ -1496,7 +1496,7 @@ all_tables:
 /*                          OpenVirtualTable()                          */
 /************************************************************************/
 
-int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, OGRSpatialiteLayerType eSpatialiteLayerTypeTable,const char* pszSQL)
+int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, OGRSQLiteLayerType eSQLiteLayerTypeTable,const char* pszSQL)
 {
     int nSRID = nUndefinedSRID;
     const char* pszVirtualShape = strstr(pszSQL, "VirtualShape");
@@ -1516,7 +1516,7 @@ int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, OGRSpatialiteLaye
         }
     }
 
-    if (OpenTable(pszName, eSpatialiteLayerTypeTable))
+    if (OpenTable(pszName, eSQLiteLayerTypeTable))
     {
         OGRSQLiteLayer* poLayer = papoLayers[nLayers-1];
         if( poLayer->GetLayerDefn()->GetGeomFieldCount() == 1 )
@@ -1552,16 +1552,16 @@ int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, OGRSpatialiteLaye
 /************************************************************************/
 
 int OGRSQLiteDataSource::OpenTable( const char *pszTableName,
-                                    OGRSpatialiteLayerType eSpatialiteLayerTypeTable)
+                                    OGRSQLiteLayerType eSQLiteLayerTypeTable)
 
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRSpatialiteTableLayer  *poLayer;
+    OGRSQLiteTableLayer  *poLayer;
 
-    poLayer = new OGRSpatialiteTableLayer( this );
-    if( poLayer->Initialize( pszTableName,eSpatialiteLayerTypeTable, FALSE) != CE_None )
+    poLayer = new OGRSQLiteTableLayer( this );
+    if( poLayer->Initialize( pszTableName,eSQLiteLayerTypeTable, FALSE) != CE_None )
     {
         delete poLayer;
         return FALSE;
@@ -1582,16 +1582,16 @@ int OGRSQLiteDataSource::OpenTable( const char *pszTableName,
 /************************************************************************/
 
 int OGRSQLiteDataSource::OpenView( const char *pszViewName,
-                                   OGRSpatialiteLayerType eSpatialiteLayerTypeView)
+                                   OGRSQLiteLayerType eSQLiteLayerTypeView)
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRSpatialiteViewLayer  *poLayer;
+    OGRSQLiteViewLayer  *poLayer;
 
-    poLayer = new OGRSpatialiteViewLayer( this );
+    poLayer = new OGRSQLiteViewLayer( this );
 
-    if( poLayer->Initialize( pszViewName,eSpatialiteLayerTypeView) != CE_None )
+    if( poLayer->Initialize( pszViewName,eSQLiteLayerTypeView) != CE_None )
     {
         delete poLayer;
         return FALSE;
@@ -1662,35 +1662,35 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
     if( poLayer != NULL )
         return poLayer;
 
-    OGRSpatialiteLayerType eSpatialiteLayerType=OGRSpatialiteLayer::GetSpatialiteLayerType(this,pszLayerName,this->eDatabaseType);
-    if ( eSpatialiteLayerType == OSLLT_Unknown)
+    OGRSQLiteLayerType eSQLiteLayerType=OGRSQLiteEditableLayer::GetSpatialiteLayerType(this,pszLayerName,this->eDatabaseType);
+    if ( eSQLiteLayerType == OSLLT_Unknown)
     { // The goal is to retrieve a Layer, a geometry-field may not yet have been created, so GetSQLiteLayerType will return OSLLT_Unknown
      switch (eDatabaseType)
      { // check if Database is Spatial-Capable and set the VectorLayerType as default table-type - so that a geometry can be added to the layer
       case OSDBT_OGRSpatialTable:
-       eSpatialiteLayerType = OSLLT_OGRSpatialTable;
+       eSQLiteLayerType = OSLLT_OGRSpatialTable;
       break;
       case OSDBT_SpatialTable_2:
-       eSpatialiteLayerType = OSLLT_SpatialTable_2;
+       eSQLiteLayerType = OSLLT_SpatialTable_2;
       break;
       case OSDBT_SpatialTable_3:
-       eSpatialiteLayerType = OSLLT_SpatialTable_3;
+       eSQLiteLayerType = OSLLT_SpatialTable_3;
       break;
       case OSDBT_Rasterlite1_Tables:
-       eSpatialiteLayerType = OSLLT_Rasterlite1_Table;
+       eSQLiteLayerType = OSLLT_Rasterlite1_Table;
       break;
       case OSDBT_SpatialTable_4:
-       eSpatialiteLayerType = OSLLT_SpatialTable_4;
+       eSQLiteLayerType = OSLLT_SpatialTable_4;
       break;
       case OSDBT_Rasterlite2_Tables:
-       eSpatialiteLayerType = OSLLT_Rasterlite2_Table;
+       eSQLiteLayerType = OSLLT_Rasterlite2_Table;
       break;
       default:
        return NULL;
       break;
      }
     }
-    switch (eSpatialiteLayerType)
+    switch (eSQLiteLayerType)
     { // Insure that the correct Open-routine is called
      case OSDBT_OGRSpatialTable:
      case OSDBT_SpatialTable_2:
@@ -1699,7 +1699,7 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
      case OSDBT_Rasterlite2_Tables:
      case OSDBT_Rasterlite1_Tables:
      {
-      if( !OpenTable(pszLayerName,eSpatialiteLayerType) )
+      if( !OpenTable(pszLayerName,eSQLiteLayerType) )
         return NULL;
      }
      break;
@@ -1707,13 +1707,13 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
      case OSLLT_SpatialView_3:
      case OSLLT_SpatialView_4:
      {
-      if( !OpenView(pszLayerName,eSpatialiteLayerType) )
+      if( !OpenView(pszLayerName,eSQLiteLayerType) )
         return NULL;
      }
      break;
      case OSLLT_SpatialVirtualXL_3:
      case OSLLT_SpatialVirtualXL_4:
-      if( !OpenVirtualTable(pszLayerName,eSpatialiteLayerType,"VirtualXL") )
+      if( !OpenVirtualTable(pszLayerName,eSQLiteLayerType,"VirtualXL") )
         return NULL;
      break;
      case OSLLT_OGRVirtualTable:
@@ -1721,14 +1721,14 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
      case OSLLT_SpatialVirtualShape_3:
      case OSLLT_SpatialVirtualShape_4:
      {
-      if (eSpatialiteLayerType == OSLLT_OGRVirtualTable)
+      if (eSQLiteLayerType == OSLLT_OGRVirtualTable)
       {
-       if( !OpenVirtualTable(pszLayerName,eSpatialiteLayerType,"VirtualOGR") )
+       if( !OpenVirtualTable(pszLayerName,eSQLiteLayerType,"VirtualOGR") )
         return NULL;
       }
       else
       {
-       if( !OpenVirtualTable(pszLayerName,eSpatialiteLayerType,"VirtualShape") )
+       if( !OpenVirtualTable(pszLayerName,eSQLiteLayerType,"VirtualShape") )
         return NULL;
       }
      }
@@ -1774,7 +1774,7 @@ void OGRSQLiteDataSource::FlushCache()
     {
         if( papoLayers[iLayer]->IsTableLayer() )
         {
-            OGRSpatialiteTableLayer* poLayer = (OGRSpatialiteTableLayer*) papoLayers[iLayer];
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
             poLayer->RunDeferredCreationIfNecessary();
             poLayer->CreateSpatialIndexIfNecessary();
         }
@@ -1809,7 +1809,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         if( papoLayers[iLayer]->IsTableLayer() )
         {
-            OGRSpatialiteTableLayer* poLayer = (OGRSpatialiteTableLayer*) papoLayers[iLayer];
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
             poLayer->RunDeferredCreationIfNecessary();
             poLayer->CreateSpatialIndexIfNecessary();
         }
@@ -1872,7 +1872,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
         {
             if( papoLayers[i]->IsTableLayer() )
             {
-                OGRSpatialiteTableLayer* poLayer = (OGRSpatialiteTableLayer*) papoLayers[i];
+                OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[i];
                 if ( !(poLayer->AreStatisticsValid()) ||
                      poLayer->DoStatisticsNeedToBeFlushed())
                 {
@@ -1889,7 +1889,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
             {
                 if( papoLayers[i]->IsTableLayer() )
                 {
-                    OGRSpatialiteTableLayer* poLayer = (OGRSpatialiteTableLayer*) papoLayers[i];
+                    OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[i];
                     poLayer->ForceStatisticsToBeFlushed();
                 }
             }
@@ -2077,7 +2077,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     {
         if( papoLayers[iLayer]->IsTableLayer() )
         {
-            OGRSpatialiteTableLayer* poLayer = (OGRSpatialiteTableLayer*) papoLayers[iLayer];
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
             poLayer->RunDeferredCreationIfNecessary();
         }
     }
@@ -2246,9 +2246,9 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRSpatialiteTableLayer     *poLayer;
+    OGRSQLiteTableLayer     *poLayer;
 
-    poLayer = new OGRSpatialiteTableLayer( this );
+    poLayer = new OGRSQLiteTableLayer( this );
 
     poLayer->Initialize( pszLayerName, OSLLT_Unknown, TRUE ) ;
     poLayer->SetCreationParameters( osFIDColumnName, eType, pszGeomFormat,
@@ -2547,7 +2547,7 @@ OGRErr OGRSQLiteDataSource::CommitTransaction()
         {
             if( papoLayers[iLayer]->IsTableLayer() )
             {
-                OGRSpatialiteTableLayer* poLayer = (OGRSpatialiteTableLayer*) papoLayers[iLayer];
+                OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
                 poLayer->RunDeferredCreationIfNecessary();
                 //poLayer->CreateSpatialIndexIfNecessary();
             }
@@ -2585,7 +2585,7 @@ OGRErr OGRSQLiteDataSource::RollbackTransaction()
         {
             if( papoLayers[iLayer]->IsTableLayer() )
             {
-                OGRSpatialiteTableLayer* poLayer = (OGRSpatialiteTableLayer*) papoLayers[iLayer];
+                OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
                 poLayer->RunDeferredCreationIfNecessary();
                 poLayer->CreateSpatialIndexIfNecessary();
             }

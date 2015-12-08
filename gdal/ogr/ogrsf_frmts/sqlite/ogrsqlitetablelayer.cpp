@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Implements OGRSpatialiteTableLayer class, access to an existing table.
+ * Purpose:  Implements OGRSQLiteTableLayer class, access to an existing table.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -40,11 +40,11 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                        OGRSpatialiteTableLayer()                         */
+/*                        OGRSQLiteTableLayer()                         */
 /************************************************************************/
 
-OGRSpatialiteTableLayer::OGRSpatialiteTableLayer( OGRSQLiteDataSource *poDSIn )
-{ // start tasks (non-db) are done in OGRSpatialiteLayer(), which runs first
+OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
+{ // start tasks (non-db) are done in OGRSQLiteEditableLayer(), which runs first
  poDS = poDSIn;
      /* SpatiaLite v.2.4.0 (or any subsequent) is required
        to support 2.5D: if an obsolete version of the library
@@ -55,20 +55,20 @@ OGRSpatialiteTableLayer::OGRSpatialiteTableLayer( OGRSQLiteDataSource *poDSIn )
 }
 
 /************************************************************************/
-/*                        ~OGRSpatialiteTableLayer()                        */
+/*                        ~OGRSQLiteTableLayer()                        */
 /************************************************************************/
 
-OGRSpatialiteTableLayer::~OGRSpatialiteTableLayer()
-{ // cleanup done in ~OGRSpatialiteLayer()
+OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
+{ // cleanup done in ~OGRSQLiteEditableLayer()
 }
 
 /************************************************************************/
-/*                             Initialize()  [done in OGRSpatialiteLayer]              */
+/*                             Initialize()  [done in OGRSQLiteEditableLayer]              */
 /************************************************************************/
-CPLErr OGRSpatialiteTableLayer::Initialize( const char *pszTableName, 
-                                        OGRSpatialiteLayerType eSpatialiteLayerType,
+CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName, 
+                                        OGRSQLiteLayerType eSQLiteLayerType,
                                         int bDeferredCreation )
 {
- // CPLDebug( "OGR", "-I-> OGRSpatialiteTableLayer::Initialize(%s): layer_type=[%d] database_type=[%d]", pszTableName, eSpatialiteLayerType,poDS->GetDatabaseType());
- return OGRSpatialiteLayer::Initialize(pszTableName,eSpatialiteLayerType,bDeferredCreation);
+ // CPLDebug( "OGR", "-I-> OGRSQLiteTableLayer::Initialize(%s): layer_type=[%d] database_type=[%d]", pszTableName, eSQLiteLayerType,poDS->GetDatabaseType());
+ return OGRSQLiteEditableLayer::Initialize(pszTableName,eSQLiteLayerType,bDeferredCreation);
 }

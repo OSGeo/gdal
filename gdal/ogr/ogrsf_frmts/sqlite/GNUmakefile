@@ -2,8 +2,8 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=	ogrsqlitedatasource.o ogrsqlitelayer.o  ogrspatialitelayer.o ogrsqlitedriver.o \
-		ogrspatialitetablelayer.o ogrspatialiteviewlayer.o ogrsqliteselectlayer.o ogrsqlitesinglefeaturelayer.o \
+OBJ	=	ogrsqlitedatasource.o ogrsqlitelayer.o  ogrsqliteeditablelayer.o ogrsqlitedriver.o \
+		ogrsqlitetablelayer.o ogrsqliteviewlayer.o ogrsqliteselectlayer.o ogrsqlitesinglefeaturelayer.o \
 		ogrsqlitevfs.o ogrsqlitevirtualogr.o ogrsqliteexecutesql.o ogrsqliteapiroutines.o
 
 ifeq ($(HAVE_SPATIALITE),yes)
