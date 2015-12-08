@@ -381,11 +381,11 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
         /* extract equivalent number of looks */
         VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH + 
                   EFFECTIVE_LOOKS_AZIMUTH_OFFSET, SEEK_SET );
-        char pszENL[17];
+        char szENL[17];
         double dfENL;
         READ_CHAR_FLOAT(dfENL, 16, fp);
-        snprintf( pszENL, sizeof(pszENL), "%-16.1f", dfENL );
-        poDS->SetMetadataItem( "AZIMUTH_LOOKS", pszENL );
+        snprintf( szENL, sizeof(szENL), "%-16.1f", dfENL );
+        poDS->SetMetadataItem( "AZIMUTH_LOOKS", szENL );
 
         /* extract pixel spacings */
         VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH +

@@ -585,9 +585,9 @@ CPLErr ILWISDataset::WriteGeoReference()
                 {
                     if (iBand == 0)
                       WriteElement("MapList", "GeoRef", osFileName, sBaseName + ".grf");
-                    char pszName[100];
-                    snprintf(pszName, sizeof(pszName), "%s_band_%d", sBaseName.c_str(),iBand + 1 );
-                    string pszODFName = string(CPLFormFilename(sPath.c_str(),pszName,"mpr"));
+                    char szName[100];
+                    snprintf(szName, sizeof(szName), "%s_band_%d", sBaseName.c_str(),iBand + 1 );
+                    string pszODFName = string(CPLFormFilename(sPath.c_str(),szName,"mpr"));
                     WriteElement("Map", "GeoRef", pszODFName, sBaseName + ".grf");
                 }
             }
