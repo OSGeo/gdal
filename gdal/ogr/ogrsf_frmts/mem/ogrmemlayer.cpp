@@ -313,6 +313,14 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
                     sizeof(OGRFeature *) * (size_t)(nNewCount - m_nMaxFeatureCount) );
             m_nMaxFeatureCount = nNewCount;
         }
+#ifdef DEBUG
+        /* Just to please Coverity. Cannot happen */
+        if( m_papoFeatures == NULL )
+        {
+            delete poFeatureCloned;
+            return OGRERR_FAILURE;
+        }
+#endif
 
         if( m_papoFeatures[nFID] != NULL )
         {
