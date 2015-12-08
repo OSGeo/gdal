@@ -772,7 +772,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #define CPL_WARN_DEPRECATED_IF_GDAL_COMPILATION(x)
 #endif
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__APPLE__)
 CPL_C_START
 #ifdef WARN_STANDARD_PRINTF
 int vsnprintf(char *str, size_t size, const char* fmt, va_list args) CPL_WARN_DEPRECATED("Use CPLvsnprintf() instead");
@@ -782,7 +782,7 @@ int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WAR
 int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use snprintf() or CPLsnprintf() instead");
 #endif
 CPL_C_END
-#endif /* _MSC_VER */
+#endif /* !defined(_MSC_VER) && !defined(__APPLE__) */
 
 #if defined(MAKE_SANITIZE_HAPPY) || !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
 #define CPL_CPU_REQUIRES_ALIGNED_ACCESS
