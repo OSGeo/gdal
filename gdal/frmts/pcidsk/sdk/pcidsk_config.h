@@ -95,4 +95,8 @@ extern "C" int CPLsnprintf(char *str, size_t size, const char* fmt, ...);
 #endif
 #endif
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#  define snprintf _snprintf
+#endif
+
 #endif // PCIDSK_CONFIG_H_INCLUDED
