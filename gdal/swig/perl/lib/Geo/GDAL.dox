@@ -554,17 +554,18 @@
 # @return a list of the names of the layers this data source provides.
 
 ## @method Geo::OGR::Layer CreateLayer(%params)
-# @brief Create a new layer into this data source.
+# @brief Create a new vector layer into this dataset.
 #
 # @param %params Named parameters:
 # - \a Name (scalar) name for the new layer.
-# - \a Fields (array reference) a list of field definitions as in 
+# - \a Fields (array reference) a list of (scalar and geometry) field definitions as in 
 # Geo::OGR::Layer::CreateField.
 # - \a ApproxOK (boolean value, default is true) a flag, which is forwarded to Geo::OGR::Layer::CreateField.
 # - \a Options (hash reference) driver specific hash of layer creation options.
-# - \a Schema (hash reference, deprecated) may contain keys Name, Fields, GeomFields, GeometryType.
+# - \a Schema (hash reference, deprecated, use \a Fields and \a Name) may contain keys Name, Fields, GeomFields, GeometryType.
 # - \a SRS (scalar, deprecated) the spatial reference for the default geometry field.
-# - \a GeometryType (scalar) the type of the default geometry field (if only one geometry field).
+# - \a GeometryType (scalar) the type of the default geometry field
+# (if only one geometry field). Default is 'Unknown'.
 #
 # @note If Fields or Schema|Fields is not given, a default geometry
 # field (Name => '', GeometryType => 'Unknown') is created. The type

@@ -37,21 +37,13 @@
     size_t callback_fwrite(const void *ptr, size_t size, size_t nmemb,
                            FILE *stream)
     {
-        int count, ret;
         dSP;
         ENTER;
         SAVETMPS;
         PUSHMARK(SP);
         XPUSHs(sv_2mortal(newSVpv((const char*)ptr, size*nmemb)));
         PUTBACK;
-        count = call_sv(VSIStdoutSetRedirectionFct, G_SCALAR);
-        SPAGAIN;
-        if (count != 1) {
-            fprintf(stderr, "The callback must return only one value.\n");
-            return 0; /* interrupt */
-        }
-        ret = POPi;
-        PUTBACK;
+        call_sv(VSIStdoutSetRedirectionFct, G_DISCARD);
         FREETMPS;
         LEAVE;
         return size*nmemb;
