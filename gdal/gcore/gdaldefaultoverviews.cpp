@@ -193,15 +193,21 @@ void GDALDefaultOverviews::OverviewScan()
             osOvrFilename.Printf( "%s.ovr", pszInitName );
         }
 
-        bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
+        std::vector<char> achOvrFilename;
+        achOvrFilename.resize(osOvrFilename.size() + 1);
+        memcpy(&(achOvrFilename[0]), osOvrFilename.c_str(), osOvrFilename.size() + 1);
+        bExists = CPLCheckForFile( &achOvrFilename[0], 
                                    papszInitSiblingFiles );
+        osOvrFilename = &achOvrFilename[0];
 
 #if !defined(WIN32)
         if( !bInitNameIsOVR && !bExists && !papszInitSiblingFiles )
         {
             osOvrFilename.Printf( "%s.OVR", pszInitName );
-            bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
+            memcpy(&(achOvrFilename[0]), osOvrFilename.c_str(), osOvrFilename.size() + 1);
+            bExists = CPLCheckForFile( &achOvrFilename[0], 
                                        papszInitSiblingFiles );
+            osOvrFilename = &achOvrFilename[0];
             if( !bExists )
                 osOvrFilename.Printf( "%s.ovr", pszInitName );
         }
@@ -1073,15 +1079,21 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
         return FALSE;
     osMskFilename.Printf( "%s.msk", pszBasename );
 
-    int bExists = CPLCheckForFile( (char *) osMskFilename.c_str(), 
+    std::vector<char> achMskFilename;
+    achMskFilename.resize(osMskFilename.size() + 1);
+    memcpy(&(achMskFilename[0]), osMskFilename.c_str(), osMskFilename.size() + 1);
+    int bExists = CPLCheckForFile( &achMskFilename[0], 
                                    papszSiblingFiles );
+    osMskFilename = &achMskFilename[0];
 
 #if !defined(WIN32)
     if( !bExists && !papszSiblingFiles )
     {
         osMskFilename.Printf( "%s.MSK", pszBasename );
-        bExists = CPLCheckForFile( (char *) osMskFilename.c_str(), 
+        memcpy(&(achMskFilename[0]), osMskFilename.c_str(), osMskFilename.size() + 1);
+        bExists = CPLCheckForFile( &achMskFilename[0], 
                                    papszSiblingFiles );
+        osMskFilename = &achMskFilename[0];
     }
 #endif
 
