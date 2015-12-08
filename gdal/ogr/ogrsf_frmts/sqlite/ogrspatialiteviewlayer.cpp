@@ -72,8 +72,20 @@ CPLErr OGRSpatialiteViewLayer::Initialize( const char *pszViewName,
 }
 // Start of View specfic functions
 /************************************************************************/
-/*                            GetGeometryTable()      - for SpatialViews,                       */
-/* the Table-Name that the geometry fields belongs to will be returned */
+/*                            GetGeometryTable()      - for SpatialViews,                      */
+/* the Table-Name that the geometry fields belongs to will be returned  */
+/* - this function MUST be used when                                    */
+/* -- INSERT, UPDATE and DELETE are being used                          */
+/* --- ISetFeature,ICreateFeature,DeleteFeature                         */
+/* --- otherwise will cause a OGRERR_NON_EXISTING_FEATURE error         */
+/* - or anywhere else where   */
+/* -- information from the Underlying TABLE is needed                   */
+/* - EstablishFeatureDefn,GetSpatialWhere,:GetFeatureCount */
+/* Note: ICreateFeature trigger logic */
+/* - at the moment the triggers for the  Underlying TABLE remain */
+/* -- if this is needed, a ':GetGeometryTableColumn' will be needed */
+/* --- returning either                                                     */
+/* ---- 'pszGeomCol' or 'osUnderlyingGeometryColumn' */
 /************************************************************************/
 const char * OGRSpatialiteViewLayer::GetGeometryTable()
 { // View specific function
@@ -83,7 +95,9 @@ const char * OGRSpatialiteViewLayer::GetGeometryTable()
 }
 /************************************************************************/
 /*                            GetEscapedRowId      - for SpatialViews,                       */
-/* the primary key of the view - as defined in  views_geometry_columns */
+/* the primary key of the view - as defined in  views_geometry_columns  */
+/* - this will NOT be the RowId of the table                            */
+/* -- defined in views_geometry_columns [osUnderlyingGeometryColumn]    */
 /************************************************************************/
 const char * OGRSpatialiteViewLayer::GetEscapedRowId()
 { // View specific function
