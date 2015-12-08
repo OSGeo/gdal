@@ -7762,7 +7762,7 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
         if (projcode == GCTP_SOM && projparm[11] != 0)
         {
             Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
-            snprintf(utlbuf, sizeof(utlbuf), "%s%s", "_BLKSOM:", gridname);
+            snprintf(utlbuf, 128, "%s%s", "_BLKSOM:", gridname);
 	    status = GDreadattr(gridID, utlbuf, offset);
 
             somupleftpt[0] = upleftpt[0];
