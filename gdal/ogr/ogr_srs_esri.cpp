@@ -1230,9 +1230,9 @@ OGRErr OGRSpatialReference::morphToESRI()
         {
             char szUTMName[128];
             if( bNorth )
-                sprintf( szUTMName, "%s_UTM_Zone_%dN", pszUTMPrefix, nZone );
+                snprintf( szUTMName, sizeof(szUTMName), "%s_UTM_Zone_%dN", pszUTMPrefix, nZone );
             else
-                sprintf( szUTMName, "%s_UTM_Zone_%dS", pszUTMPrefix, nZone );
+                snprintf( szUTMName, sizeof(szUTMName), "%s_UTM_Zone_%dS", pszUTMPrefix, nZone );
               
             if( poProjCSNodeChild )
                 poProjCSNodeChild->SetValue( szUTMName );
@@ -2013,7 +2013,7 @@ int RemapImgWGSProjcsName( OGRSpatialReference* pOgr, const char* pszProjCSName,
     if(EQUAL(pszProgCSName, "WGS_1972") || EQUAL(pszProgCSName, "WGS_1984") )
     {
         char* newName = (char *) CPLMalloc(strlen(pszProjCSName) + 10);
-        sprintf( newName, "%s_", pszProgCSName );
+        snprintf( newName, strlen(pszProjCSName) + 10, "%s_", pszProgCSName );
         strcat(newName, pszProjCSName);
         SetNewName( pOgr, "PROJCS", newName );
         CPLFree( newName );
@@ -2457,7 +2457,7 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
     if(searchCode > 0)
     {
         char codeS[10];
-        sprintf(codeS, "%d", (int)searchCode);
+        snprintf(codeS, sizeof(codeS), "%d", (int)searchCode);
         return importFromDict( "esri_StatePlane_extra.wkt", codeS);
     }
     return OGRERR_FAILURE;
@@ -2500,7 +2500,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, dou
         if(unitsName != NULL && !EQUAL(unitsName, "meters"))
             k += 100;
         char codeS[10];
-        sprintf(codeS, "%d", k);
+        snprintf(codeS, sizeof(codeS), "%d", k);
         return importFromDict( "esri_Wisconsin_extra.wkt", codeS);
     }
     return OGRERR_FAILURE;

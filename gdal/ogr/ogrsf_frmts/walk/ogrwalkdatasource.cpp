@@ -79,7 +79,9 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
         const char *pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
         pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
 
-        sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+        snprintf( pszDSN,
+                  strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
+                  pszDSNStringTemplate,  pszNewName );
     }
 
 /* -------------------------------------------------------------------- */

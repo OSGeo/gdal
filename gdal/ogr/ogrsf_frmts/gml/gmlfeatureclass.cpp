@@ -760,7 +760,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
                 if( wkbHasZ(eType) ) osStr += "Z";
                 CPLCreateXMLNode( psPDefnNode, CXT_Comment, osStr.c_str() );
 
-                sprintf( szValue, "%d", eType );
+                snprintf( szValue, sizeof(szValue), "%d", eType );
                 CPLCreateXMLElementAndValue( psPDefnNode, "Type", szValue );
             }
         }
@@ -787,7 +787,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             if( wkbHasZ(eType) ) osStr += "Z";
             CPLCreateXMLNode( psRoot, CXT_Comment, osStr.c_str() );
 
-            sprintf( szValue, "%d", eType );
+            snprintf( szValue, sizeof(szValue), "%d", eType );
             CPLCreateXMLElementAndValue( psRoot, "GeometryType", szValue );
         }
     }
@@ -815,7 +815,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         {
             char szValue[128];
 
-            sprintf( szValue, CPL_FRMT_GIB, m_nFeatureCount );
+            snprintf( szValue, sizeof(szValue), CPL_FRMT_GIB, m_nFeatureCount );
             CPLCreateXMLElementAndValue( psDSI, "FeatureCount", szValue );
         }
 
@@ -924,22 +924,22 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         if( EQUAL(pszTypeName,"String") )
         {
             char szMaxLength[48];
-            sprintf(szMaxLength, "%d", poPDefn->GetWidth());
+            snprintf(szMaxLength, sizeof(szMaxLength), "%d", poPDefn->GetWidth());
             CPLCreateXMLElementAndValue ( psPDefnNode, "Width", szMaxLength );
         }
         if( poPDefn->GetWidth() > 0 && EQUAL(pszTypeName,"Integer") )
         {
             char szLength[48];
-            sprintf(szLength, "%d", poPDefn->GetWidth());
+            snprintf(szLength, sizeof(szLength), "%d", poPDefn->GetWidth());
             CPLCreateXMLElementAndValue ( psPDefnNode, "Width", szLength );
         }
         if( poPDefn->GetWidth() > 0 && EQUAL(pszTypeName,"Real") )
         {
             char szLength[48];
-            sprintf(szLength, "%d", poPDefn->GetWidth());
+            snprintf(szLength, sizeof(szLength), "%d", poPDefn->GetWidth());
             CPLCreateXMLElementAndValue ( psPDefnNode, "Width", szLength );
             char szPrecision[48];
-            sprintf(szPrecision, "%d", poPDefn->GetPrecision());
+            snprintf(szPrecision, sizeof(szPrecision), "%d", poPDefn->GetPrecision());
             CPLCreateXMLElementAndValue ( psPDefnNode, "Precision", szPrecision );
         }
     }

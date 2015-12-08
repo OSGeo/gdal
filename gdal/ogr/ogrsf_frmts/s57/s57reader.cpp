@@ -1028,7 +1028,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Apply the LNAM to the object.                                   */
 /* -------------------------------------------------------------------- */
-    sprintf( szLNAM, "%04X%08X%04X",
+    snprintf( szLNAM, sizeof(szLNAM), "%04X%08X%04X",
              poFeature->GetFieldAsInteger( "AGEN" ),
              poFeature->GetFieldAsInteger( "FIDN" ),
              poFeature->GetFieldAsInteger( "FIDS" ) );
@@ -1072,7 +1072,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
             return;
         }
 
-        sprintf( szLNAM, "%02X%02X%02X%02X%02X%02X%02X%02X",
+        snprintf( szLNAM, sizeof(szLNAM), "%02X%02X%02X%02X%02X%02X%02X%02X",
                  pabyData[1], pabyData[0], /* AGEN */
                  pabyData[5], pabyData[4], pabyData[3], pabyData[2], /* FIDN */
                  pabyData[7], pabyData[6] );
@@ -3246,7 +3246,7 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         if( 1 <= iUpdate &&  iUpdate < 10 )
         {
             char buf[2];
-            sprintf( buf, "%i", iUpdate );
+            snprintf( buf, sizeof(buf), "%i", iUpdate );
             extension.append("00");
             extension.append(buf);
             dirname.append(buf);
@@ -3254,7 +3254,7 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         else if( 10 <= iUpdate && iUpdate < 100 )
         {
             char buf[3];
-            sprintf( buf, "%i", iUpdate );
+            snprintf( buf, sizeof(buf), "%i", iUpdate );
             extension.append("0");
             extension.append(buf);
             dirname.append(buf);
@@ -3262,7 +3262,7 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         else if( 100 <= iUpdate && iUpdate < 1000 )
         {
             char buf[4];
-            sprintf( buf, "%i", iUpdate );
+            snprintf( buf, sizeof(buf), "%i", iUpdate );
             extension.append(buf);
             dirname.append(buf);
         }

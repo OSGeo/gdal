@@ -209,10 +209,10 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPathIn )
     CPLXMLNode *psDSTree = CPLCreateXMLNode( NULL, CXT_Element, "VRTDataset" );
 
     char szNumber[128];
-    sprintf( szNumber, "%d", GetRasterXSize() );
+    snprintf( szNumber, sizeof(szNumber), "%d", GetRasterXSize() );
     CPLSetXMLValue( psDSTree, "#rasterXSize", szNumber );
 
-    sprintf( szNumber, "%d", GetRasterYSize() );
+    snprintf( szNumber, sizeof(szNumber), "%d", GetRasterYSize() );
     CPLSetXMLValue( psDSTree, "#rasterYSize", szNumber );
 
  /* -------------------------------------------------------------------- */

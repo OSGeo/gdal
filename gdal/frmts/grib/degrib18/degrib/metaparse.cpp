@@ -2638,7 +2638,7 @@ void FreqPrint (char **ans, double *Data, sInt4 DataLen, sInt4 Nx,
    qsort (freq, numFreq, sizeof (freq[0]), freqCompare);
 
    mallocSprintf (ans, "%s | count\n", comment);
-   sprintf (format, "%%.%df | %%d\n", decimal);
+   snprintf (format, sizeof(format), "%%.%df | %%d\n", decimal);
    for (i = 0; i < numFreq; i++) {
       reallocSprintf (ans, format, myRound (freq[i].value, decimal),
                       freq[i].cnt);

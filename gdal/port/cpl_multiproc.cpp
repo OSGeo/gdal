@@ -1612,8 +1612,9 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 /*      the stub implementation the target file does not even need      */
 /*      to exist to be locked.                                          */
 /* -------------------------------------------------------------------- */
-    pszLockFilename = (char *) CPLMalloc(strlen(pszPath) + 30);
-    sprintf( pszLockFilename, "%s.lock", pszPath );
+    const size_t nLen = strlen(pszPath) + 30;
+    pszLockFilename = (char *) CPLMalloc(nLen);
+    snprintf( pszLockFilename, nLen, "%s.lock", pszPath );
 
     fpLock = fopen( pszLockFilename, "r" );
     while( fpLock != NULL && dfWaitInSeconds > 0.0 )

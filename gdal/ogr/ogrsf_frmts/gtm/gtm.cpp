@@ -343,9 +343,9 @@ bool GTM::isValid()
     if (buffer[0] == 0x1f && ((unsigned char*)buffer)[1] == 0x8b &&
         !STARTS_WITH(pszFilename, "/vsigzip/"))
     {
-        char* pszGZIPFileName = (char*)CPLMalloc(
-                           strlen("/vsigzip/") + strlen(pszFilename) + 1);
-        sprintf(pszGZIPFileName, "/vsigzip/%s", pszFilename);
+        const size_t nLen = strlen("/vsigzip/") + strlen(pszFilename) + 1;
+        char* pszGZIPFileName = (char*)CPLMalloc(nLen);
+        snprintf(pszGZIPFileName, nLen, "/vsigzip/%s", pszFilename);
         VSILFILE* fp = VSIFOpenL(pszGZIPFileName, "rb");
         if (fp)
         {

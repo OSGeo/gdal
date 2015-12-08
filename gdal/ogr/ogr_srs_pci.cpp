@@ -234,7 +234,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             int nCode = atoi(pszEM+1);
 
             if( nCode >= -99 && nCode <= 999 )
-                sprintf( szEarthModel, "%c%03d", toupper(*pszEM), nCode );
+                snprintf( szEarthModel, sizeof(szEarthModel), "%c%03d", toupper(*pszEM), nCode );
 
             break;
         }

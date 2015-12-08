@@ -1583,7 +1583,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
             /* eCurFieldType = OFTString; */
             sCurField.String = achGUIDBuffer;
             /*78563412BC9AF0DE1234567890ABCDEF --> {12345678-9ABC-DEF0-1234-567890ABCDEF} */
-            sprintf(achGUIDBuffer,
+            snprintf(achGUIDBuffer, sizeof(achGUIDBuffer),
                     "{%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
                     pabyIterVals[3], pabyIterVals[2], pabyIterVals[1], pabyIterVals[0],
                     pabyIterVals[5], pabyIterVals[4],

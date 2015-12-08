@@ -2038,13 +2038,7 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
 
       default:
       {
-          // OGRThreadSafety: This static is judged to be a very low risk 
-          // for thread safety because it is only used in case of error, 
-          // and the worst that can happen is reporting the wrong code
-          // in the generated message.
-          static char szWorkName[33];
-          sprintf( szWorkName, "Unrecognised: %d", (int) eType );
-          return szWorkName;
+          return CPLSPrintf( "Unrecognised: %d", (int) eType );
       }
     }
 }

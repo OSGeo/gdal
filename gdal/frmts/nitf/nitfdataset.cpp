@@ -1339,73 +1339,73 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     if( psImage && bHasRPC00 )
     {
         char szValue[1280];
-        CPLsprintf( szValue, "%.16g", sRPCInfo.LINE_OFF );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.LINE_OFF );
         poDS->SetMetadataItem( "LINE_OFF", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", sRPCInfo.LINE_SCALE );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.LINE_SCALE );
         poDS->SetMetadataItem( "LINE_SCALE", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", sRPCInfo.SAMP_OFF );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.SAMP_OFF );
         poDS->SetMetadataItem( "SAMP_OFF", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", sRPCInfo.SAMP_SCALE );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.SAMP_SCALE );
         poDS->SetMetadataItem( "SAMP_SCALE", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", sRPCInfo.LONG_OFF );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.LONG_OFF );
         poDS->SetMetadataItem( "LONG_OFF", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", sRPCInfo.LONG_SCALE );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.LONG_SCALE );
         poDS->SetMetadataItem( "LONG_SCALE", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", sRPCInfo.LAT_OFF );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.LAT_OFF );
         poDS->SetMetadataItem( "LAT_OFF", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", sRPCInfo.LAT_SCALE );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.LAT_SCALE );
         poDS->SetMetadataItem( "LAT_SCALE", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", sRPCInfo.HEIGHT_OFF );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.HEIGHT_OFF );
         poDS->SetMetadataItem( "HEIGHT_OFF", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", sRPCInfo.HEIGHT_SCALE );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.HEIGHT_SCALE );
         poDS->SetMetadataItem( "HEIGHT_SCALE", szValue, "RPC" );
 
         szValue[0] = '\0'; 
         for( int i = 0; i < 20; i++ )
-            CPLsprintf( szValue+strlen(szValue), "%.16g ",  
+            CPLsnprintf( szValue+strlen(szValue), sizeof(szValue) - strlen(szValue), "%.16g ",  
                      sRPCInfo.LINE_NUM_COEFF[i] );
         poDS->SetMetadataItem( "LINE_NUM_COEFF", szValue, "RPC" );
 
         szValue[0] = '\0'; 
         for( int i = 0; i < 20; i++ )
-            CPLsprintf( szValue+strlen(szValue), "%.16g ",  
+            CPLsnprintf( szValue+strlen(szValue), sizeof(szValue) - strlen(szValue), "%.16g ",  
                      sRPCInfo.LINE_DEN_COEFF[i] );
         poDS->SetMetadataItem( "LINE_DEN_COEFF", szValue, "RPC" );
 
         szValue[0] = '\0'; 
         for( int i = 0; i < 20; i++ )
-            CPLsprintf( szValue+strlen(szValue), "%.16g ",  
+            CPLsnprintf( szValue+strlen(szValue), sizeof(szValue) - strlen(szValue), "%.16g ",  
                      sRPCInfo.SAMP_NUM_COEFF[i] );
         poDS->SetMetadataItem( "SAMP_NUM_COEFF", szValue, "RPC" );
 
         szValue[0] = '\0'; 
         for( int i = 0; i < 20; i++ )
-            CPLsprintf( szValue+strlen(szValue), "%.16g ",  
+            CPLsnprintf( szValue+strlen(szValue), sizeof(szValue) - strlen(szValue), "%.16g ",  
                      sRPCInfo.SAMP_DEN_COEFF[i] );
         poDS->SetMetadataItem( "SAMP_DEN_COEFF", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", 
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", 
                  sRPCInfo.LONG_OFF - ( sRPCInfo.LONG_SCALE / 2.0 ) );
         poDS->SetMetadataItem( "MIN_LONG", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g",
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g",
                  sRPCInfo.LONG_OFF + ( sRPCInfo.LONG_SCALE / 2.0 ) );
         poDS->SetMetadataItem( "MAX_LONG", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", 
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", 
                  sRPCInfo.LAT_OFF - ( sRPCInfo.LAT_SCALE / 2.0 ) );
         poDS->SetMetadataItem( "MIN_LAT", szValue, "RPC" );
 
-        CPLsprintf( szValue, "%.16g", 
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", 
                  sRPCInfo.LAT_OFF + ( sRPCInfo.LAT_SCALE / 2.0 ) );
         poDS->SetMetadataItem( "MAX_LAT", szValue, "RPC" );
     }
@@ -2318,7 +2318,7 @@ void NITFDataset::InitializeNITFDESs()
 
             char buffer[20];
 
-            sprintf(buffer, "%d", nDESDataSize);
+            snprintf(buffer, sizeof(buffer), "%d", nDESDataSize);
 
             std::string desSubheaderStr(buffer);
             desSubheaderStr.append(" ");
@@ -2423,9 +2423,10 @@ void NITFDataset::InitializeNITFTREs()
                                               nThisTRESize + 5,
                                               CPLES_BackslashQuotable );
 
+            const size_t nLineLen = strlen(szTag)+strlen(pszEscapedData)+2;
             char * pszLine = reinterpret_cast<char *>(
-                CPLMalloc( strlen(szTag)+strlen(pszEscapedData)+2 ) );
-            sprintf( pszLine, "%s=%s", szTag, pszEscapedData );
+                CPLMalloc( nLineLen ) );
+            snprintf( pszLine, nLineLen, "%s=%s", szTag, pszEscapedData );
             aosList.AddString(pszLine);
             CPLFree(pszLine);
             pszLine        = NULL;
@@ -2552,7 +2553,7 @@ void NITFDataset::InitializeNITFMetadata()
 
         char buffer[20];
 
-        sprintf(buffer, "%d", nImageSubheaderLen);
+        snprintf(buffer, sizeof(buffer), "%d", nImageSubheaderLen);
 
         std::string imageSubheaderStr(buffer);
         imageSubheaderStr.append(" ");
@@ -2847,7 +2848,7 @@ void NITFDataset::InitializeTREMetadata()
             int nCountUnique = 2;
             while(oSpecialMD.GetMetadataItem( szUniqueTag, "TRE") != NULL)
             {
-                sprintf(szUniqueTag, "%s_%d", szTag, nCountUnique);
+                snprintf(szUniqueTag, sizeof(szUniqueTag), "%s_%d", szTag, nCountUnique);
                 nCountUnique ++;
             }
             oSpecialMD.SetMetadataItem( szUniqueTag, pszEscapedData, "TRE" );
@@ -2905,7 +2906,7 @@ void NITFDataset::InitializeTREMetadata()
             int nCountUnique = 2;
             while(oSpecialMD.GetMetadataItem( szUniqueTag, "TRE") != NULL)
             {
-                sprintf(szUniqueTag, "%s_%d", szTREName, nCountUnique);
+                snprintf(szUniqueTag, sizeof(szUniqueTag), "%s_%d", szTREName, nCountUnique);
                 nCountUnique ++;
             }
             oSpecialMD.SetMetadataItem( szUniqueTag, pszEscapedData, "TRE" );
@@ -4240,16 +4241,14 @@ NITFDataset::NITFCreateCopy(
 /*      Write GEOLOB TRE                                                */
 /* -------------------------------------------------------------------- */
                 char szGEOLOB[48+1];
-                char* pszGEOLOB = szGEOLOB;
                 const double dfARV = 360.0 / adfGeoTransform[1];
                 const double dfBRV = 360.0 / -adfGeoTransform[5];
                 const double dfLSO = adfGeoTransform[0];
                 const double dfPSO = adfGeoTransform[3];
-                sprintf(pszGEOLOB, "%09d", static_cast<int>(dfARV + 0.5)); pszGEOLOB += 9;
-                sprintf(pszGEOLOB, "%09d", static_cast<int>(dfBRV + 0.5)); pszGEOLOB += 9;
-                sprintf(pszGEOLOB, "%#+015.10f", dfLSO); pszGEOLOB += 15;
-                sprintf(pszGEOLOB, "%#+015.10f", dfPSO); pszGEOLOB += 15;
-                CPLAssert(pszGEOLOB == szGEOLOB + 48);
+                snprintf(szGEOLOB + 9, sizeof(szGEOLOB) - 9, "%09d", static_cast<int>(dfARV + 0.5));
+                snprintf(szGEOLOB + 9+9, sizeof(szGEOLOB) - (9+9), "%09d", static_cast<int>(dfBRV + 0.5));
+                snprintf(szGEOLOB + 9+9+15, sizeof(szGEOLOB) - (9+9+15), "%#+015.10f", dfLSO);
+                snprintf(szGEOLOB + 9+9+15+15, sizeof(szGEOLOB) - (9+9+15+15), "%#+015.10f", dfPSO);
 
                 CPLString osGEOLOB("TRE=GEOLOB=");
                 osGEOLOB += szGEOLOB;
@@ -4752,7 +4751,7 @@ static void NITFPatchImageLength( const char *pszFilename,
             // We emit in wxyz format with an implicit decimal place
             // between wx and yz as per spec for lossy compression. 
             // We really should have a special case for lossless compression.
-            sprintf( szCOMRAT, "%04d", static_cast<int>( dfRate * 100 ));
+            snprintf( szCOMRAT, sizeof(szCOMRAT), "%04d", static_cast<int>( dfRate * 100 ));
         }
         else if( EQUAL(pszIC, "C3") || EQUAL(pszIC, "M3") ) /* jpeg */
         {
@@ -4864,27 +4863,27 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
         // Error checking
         if (pszSlocRow == NULL)
         {
-            sprintf(errorMessage, "NITF graphic segment writing error: SLOC_ROW for segment %d is not defined",i);
+            snprintf(errorMessage, sizeof(errorMessage), "NITF graphic segment writing error: SLOC_ROW for segment %d is not defined",i);
             break;
         }
         if (pszSlocCol == NULL)
         {
-            sprintf(errorMessage, "NITF graphic segment writing error: SLOC_COL for segment %d is not defined",i);
+            snprintf(errorMessage, sizeof(errorMessage), "NITF graphic segment writing error: SLOC_COL for segment %d is not defined",i);
             break;
         }
         if (pszSdlvl == NULL)
         {
-            sprintf(errorMessage, "NITF graphic segment writing error: SDLVL for segment %d is not defined", i);
+            snprintf(errorMessage, sizeof(errorMessage), "NITF graphic segment writing error: SDLVL for segment %d is not defined", i);
             break;
         }
         if (pszSalvl == NULL)
         {
-            sprintf(errorMessage, "NITF graphic segment writing error: SALVLfor segment %d is not defined", i);
+            snprintf(errorMessage, sizeof(errorMessage), "NITF graphic segment writing error: SALVLfor segment %d is not defined", i);
             break;
         }
         if (pszData == NULL)
         {
-            sprintf(errorMessage, "NITF graphic segment writing error: DATA for segment %d is not defined", i);
+            snprintf(errorMessage, sizeof(errorMessage), "NITF graphic segment writing error: DATA for segment %d is not defined", i);
             break;
         }
 
@@ -4940,7 +4939,7 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
         /* -------------------------------------------------------------------- */
         /*      Update the subheader and data size info in the file header.     */
         /* -------------------------------------------------------------------- */
-        sprintf( pachLS + nCgmHdrEntrySz * i, "%04d%06d",
+        snprintf( pachLS + nCgmHdrEntrySz * i, nCgmHdrEntrySz + 1, "%04d%06d",
                  static_cast<int>( sizeof(achGSH) ), nCGMSize );
 
         CPLFree(pszCgmToWrite);
@@ -5218,7 +5217,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Update the subheader and data size info in the file header.     */
 /* -------------------------------------------------------------------- */
-        sprintf( pachLT + 9*iTextSeg+0, "%04d%05d",
+        snprintf( pachLT + 9*iTextSeg+0, iTextSeg+1, "%04d%05d",
                  static_cast<int>( sizeof( achTSH ) ), nTextLength );
 
         iTextSeg++;
@@ -5696,7 +5695,8 @@ void GDALRegister_NITF()
     for(unsigned int i=0; apszFieldsBLOCKA[i] != NULL; i+=3)
     {
         char szFieldDescription[128];
-        sprintf(szFieldDescription, "   <Option name='BLOCKA_%s_*' type='string' maxsize='%d'/>",
+        snprintf(szFieldDescription, sizeof(szFieldDescription),
+                 "   <Option name='BLOCKA_%s_*' type='string' maxsize='%d'/>",
                 apszFieldsBLOCKA[i], atoi(apszFieldsBLOCKA[i+2]));
         osCreationOptions += szFieldDescription;
     }

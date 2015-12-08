@@ -1020,9 +1020,9 @@ int NTFFileReader::ProcessAttValue( const char *pszValType,
 /* -------------------------------------------------------------------- */
     else if( psAttDesc->finter[0] == 'I' )
     {
-        static char    szIntString[30];
+        static char    szIntString[30]; // FIXME thread unsafe
 
-        sprintf( szIntString, "%d", atoi(pszRawValue) );
+        snprintf( szIntString, sizeof(szIntString), "%d", atoi(pszRawValue) );
 
         *ppszAttValue = szIntString;
     }
@@ -1146,7 +1146,7 @@ int NTFFileReader::ApplyAttributeValue( OGRFeature * poFeature, int iField,
     {
         char    szDescFieldName[256];
 
-        sprintf( szDescFieldName, "%s_DESC", 
+        snprintf( szDescFieldName, sizeof(szDescFieldName), "%s_DESC", 
                  poFeature->GetDefnRef()->GetFieldDefn(iField)->GetNameRef() );
         poFeature->SetField( szDescFieldName, pszCodeDesc );
     }

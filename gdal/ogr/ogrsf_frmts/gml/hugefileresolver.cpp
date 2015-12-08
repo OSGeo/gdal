@@ -1924,8 +1924,8 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
         /* refusing to allocate more than 1GB */
         if( cache_size > 1024 * 1024 )
             cache_size = 1024 * 1024;
-        char sqlPragma[1024];
-        sprintf( sqlPragma, "PRAGMA cache_size = %d", cache_size );
+        char sqlPragma[64];
+        snprintf( sqlPragma, sizeof(sqlPragma), "PRAGMA cache_size = %d", cache_size );
         rc = sqlite3_exec( hDB, sqlPragma, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {

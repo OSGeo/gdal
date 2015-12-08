@@ -184,7 +184,7 @@ void ECRGTOCDataset::AddSubDataset( const char* pszFilename,
     char	szName[80];
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
-    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, 
               CPLSPrintf( "ECRG_TOC_ENTRY:%s:%s:%s:%s",
@@ -192,7 +192,7 @@ void ECRGTOCDataset::AddSubDataset( const char* pszFilename,
                           LaunderString(pszDiscId).c_str(),
                           LaunderString(pszScale).c_str(), pszFilename ) );
 
-    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
     papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName,
             CPLSPrintf( "Product %s, disc %s, scale %s", pszProductTitle, pszDiscId, pszScale));

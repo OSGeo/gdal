@@ -120,7 +120,7 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
 {
     char szPtrValue[128];
 
-    sprintf( szPtrValue, "%p", pfnParser );
+    snprintf( szPtrValue, sizeof(szPtrValue), "%p", pfnParser );
     papszSourceParsers = CSLSetNameValue( papszSourceParsers, 
                                           pszElementName, szPtrValue );
 }

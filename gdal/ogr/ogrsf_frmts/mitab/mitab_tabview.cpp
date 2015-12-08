@@ -762,7 +762,7 @@ int TABView::Close()
         TABAdjustFilenameExtension(pszFile);
         VSIUnlink(pszFile);
 
-        sprintf(pszFile, "%s2.id", m_pszFname);
+        snprintf(pszFile, strlen(pszFile)+1, "%s2.id", m_pszFname);
         TABAdjustFilenameExtension(pszFile);
         VSIUnlink(pszFile);
 
@@ -1525,11 +1525,12 @@ int  TABRelation::CreateRelFields()
      * already exists then we'll try to generate a unique name.
      *----------------------------------------------------------------*/
     m_pszMainFieldName = CPLStrdup("MI_Refnum      ");
+    const size_t nLen = strlen(m_pszMainFieldName) + 1;
     strcpy(m_pszMainFieldName, "MI_Refnum");
     i = 1;
     while(m_poDefn->GetFieldIndex(m_pszMainFieldName) >= 0)
     {
-        sprintf(m_pszMainFieldName, "MI_Refnum_%d", i++);
+        snprintf(m_pszMainFieldName, nLen, "MI_Refnum_%d", i++);
     }
     m_pszRelFieldName = CPLStrdup(m_pszMainFieldName);
 

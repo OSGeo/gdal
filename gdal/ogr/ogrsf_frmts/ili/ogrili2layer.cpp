@@ -125,18 +125,16 @@ GIntBig OGRILI2Layer::GetFeatureCount( int bForce )
     }
 }
 
-static char* d2str(double val)
+static const char* d2str(double val)
 {
-    static char strbuf[255];
     if( val == (int) val )
-        sprintf( strbuf, "%d", (int) val );
+        return CPLSPrintf("%d", (int) val );
     else if( fabs(val) < 370 )
-        CPLsprintf( strbuf, "%.16g", val );
+        return CPLSPrintf("%.16g", val );
     else if( fabs(val) > 100000000.0  )
-        CPLsprintf( strbuf, "%.16g", val );
+        return CPLSPrintf("%.16g", val );
     else
-        CPLsprintf( strbuf, "%.3f", val );
-    return strbuf;
+        return CPLSPrintf("%.3f", val );
 }
 
 static void AppendCoordinateList( OGRLineString *poLine, VSILFILE* fp )
@@ -272,7 +270,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
 /************************************************************************/
 
 OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
-    static char         szTempBuffer[80];
+    char         szTempBuffer[80];
     const char* tid;
     int iField = 0;
     if (poFeatureDefn->GetFieldCount() && EQUAL(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "TID"))
@@ -282,7 +280,7 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
     }
     else
     {
-        sprintf( szTempBuffer, CPL_FRMT_GIB, poFeature->GetFID() );
+        snprintf( szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, poFeature->GetFID() );
         tid = szTempBuffer;
     }
 

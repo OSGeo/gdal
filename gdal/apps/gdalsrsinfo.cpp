@@ -515,9 +515,9 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget )
 
     /* support gzipped file */
     if ( strstr( pszFileCSV,".gz") != NULL )
-        sprintf( szTemp, "/vsigzip/%s", pszFilename);
+        snprintf( szTemp, sizeof(szTemp), "/vsigzip/%s", pszFilename);
     else
-        sprintf( szTemp, "%s", pszFilename);
+        snprintf( szTemp, sizeof(szTemp), "%s", pszFilename);
 
     CPLDebug( "gdalsrsinfo", "SearchCSVForWKT() using file %s",
               szTemp );

@@ -4075,7 +4075,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
     if (strcmp(pszSQLCommand, "GetBytesRead()") == 0)
     {
         char szVal[64];
-        sprintf(szVal, CPL_FRMT_GUIB, OSM_GetBytesRead(psParser));
+        snprintf(szVal, sizeof(szVal), CPL_FRMT_GUIB, OSM_GetBytesRead(psParser));
         return new OGROSMSingleFeatureLayer( "GetBytesRead", szVal );
     }
 

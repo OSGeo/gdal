@@ -538,7 +538,7 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
 
   // Create the file - to force creation, we prepend the name with '!'
   char* extFilename = new char[strlen(pszFilename) + 10];  // 10 for margin!
-  sprintf(extFilename, "!%s", pszFilename);
+  snprintf(extFilename, strlen(pszFilename) + 10, "!%s", pszFilename);
   fits_create_file(&hFITS, extFilename, &status);
   delete[] extFilename;
   if (status) {

@@ -1199,7 +1199,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                         CPL_MSBPTR64(&dfVal);
                         OGRPGdt2timeFloat8(dfVal, &nHour, &nMinute, &nSecond, &dfsec);
                     }
-                    sprintf(szTime, "%02d:%02d:%02d", nHour, nMinute, nSecond);
+                    snprintf(szTime, sizeof(szTime), "%02d:%02d:%02d", nHour, nMinute, nSecond);
                     poFeature->SetField( iOGRField, szTime);
                 }
                 else if ( nTypeOID == TIMESTAMPOID || nTypeOID == TIMESTAMPTZOID )
@@ -1734,7 +1734,8 @@ char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
 {
     char* pszTextBuf;
 
-    pszTextBuf = (char *) CPLMalloc(nLen*5+1);
+    const size_t nTextBufLen = nLen*5+1;
+    pszTextBuf = (char *) CPLMalloc(nTextBufLen);
 
     int  iSrc, iDst=0;
 
@@ -1743,7 +1744,7 @@ char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
         if( pabyData[iSrc] < 40 || pabyData[iSrc] > 126
             || pabyData[iSrc] == '\\' )
         {
-            sprintf( pszTextBuf+iDst, "\\\\%03o", pabyData[iSrc] );
+            snprintf( pszTextBuf+iDst, nTextBufLen-iDst, "\\\\%03o", pabyData[iSrc] );
             iDst += 5;
         }
         else

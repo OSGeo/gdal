@@ -101,9 +101,10 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
             CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
 
             // Set ODBCSYSINI variable pointing to HOME location
-            pszEnvIni = (char *)CPLMalloc( strlen(pszEnvHome) + 12 );
+            const size_t nLen = strlen(pszEnvHome) + 12;
+            pszEnvIni = (char *)CPLMalloc( nLen );
 
-            sprintf( pszEnvIni, "ODBCSYSINI=%s", pszEnvHome );
+            snprintf( pszEnvIni, nLen, "ODBCSYSINI=%s", pszEnvHome );
             /* a 'man putenv' shows that we cannot free pszEnvIni */
             /* because the pointer is used directly by putenv in old glibc */
             putenv( pszEnvIni );
@@ -1238,9 +1239,9 @@ void CPLODBCStatement::AppendEscaped( const char *pszText )
 void CPLODBCStatement::Append( int nValue )
 
 {
-    char szFormattedValue[100];
+    char szFormattedValue[32];
 
-    sprintf( szFormattedValue, "%d", nValue );
+    snprintf( szFormattedValue, sizeof(szFormattedValue), "%d", nValue );
     Append( szFormattedValue );
 }
 
@@ -1261,7 +1262,7 @@ void CPLODBCStatement::Append( double dfValue )
 {
     char szFormattedValue[100];
 
-    sprintf( szFormattedValue, "%24g", dfValue );
+    snprintf( szFormattedValue, sizeof(szFormattedValue), "%24g", dfValue );
     Append( szFormattedValue );
 }
 

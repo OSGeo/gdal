@@ -225,7 +225,7 @@ retry_read_header:
         GetMD( psFile, pachHeader, 286,   5, FSCOP  );
         GetMD( psFile, pachHeader, 291,   5, FSCPYS );
         GetMD( psFile, pachHeader, 296,   1, ENCRYP );
-        sprintf( szWork, "%3d,%3d,%3d", 
+        snprintf( szWork, sizeof(szWork), "%3d,%3d,%3d", 
                  ((GByte *)pachHeader)[297], 
                  ((GByte *)pachHeader)[298], 
                  ((GByte *)pachHeader)[299] );
@@ -1238,13 +1238,13 @@ static int NITFWriteTRE( VSILFILE* fp,
         return FALSE;
     }
 
-    sprintf( szTemp, "%05d", nOldOffset + 11 + nTREDataSize );
+    snprintf( szTemp, sizeof(szTemp), "%05d", nOldOffset + 11 + nTREDataSize );
     PLACE( nOffsetUDIDL + 5, IXSHDL, szTemp );
 
 /* -------------------------------------------------------------------- */
 /*      Create TRE prefix.                                              */
 /* -------------------------------------------------------------------- */
-    sprintf( szTemp, "%-6s%05d", 
+    snprintf( szTemp, sizeof(szTemp), "%-6s%05d", 
              pszTREName, nTREDataSize );
     VSIFSeekL(fp, nOffsetUDIDL + 10 + nOldOffset, SEEK_SET);
     VSIFWriteL(szTemp, 11, 1, fp);
@@ -1372,7 +1372,7 @@ static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
             int  iSize = atoi(apszFields[iField*3+2]);
             const char *pszValue;
 
-            sprintf( szFullFieldName, "BLOCKA_%s_%02d",
+            snprintf( szFullFieldName, sizeof(szFullFieldName), "BLOCKA_%s_%02d",
                      apszFields[iField*3 + 0], iBlock );
 
             pszValue = CSLFetchNameValue( papszOptions, szFullFieldName );
@@ -2427,9 +2427,9 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     {
                         if (bHasValidPercentD)
                         {
-                            char* szTmp = (char*)CPLMalloc(
-                                            strlen(pszMDSubPrefix) + 10 + 1);
-                            sprintf(szTmp, pszMDSubPrefix, iIter + 1);
+                            const size_t nTmpLen = strlen(pszMDSubPrefix) + 10 + 1;
+                            char* szTmp = (char*)CPLMalloc(nTmpLen);
+                            snprintf(szTmp, nTmpLen, pszMDSubPrefix, iIter + 1);
                             pszMDNewPrefix = CPLStrdup(CPLSPrintf("%s%s",
                                                        pszMDPrefix, szTmp));
                             CPLFree(szTmp);

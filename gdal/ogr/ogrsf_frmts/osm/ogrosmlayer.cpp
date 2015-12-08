@@ -550,7 +550,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
         if( bHasOSMId )
         {
             char szID[32];
-            sprintf(szID, CPL_FRMT_GIB, nID );
+            snprintf(szID, sizeof(szID), CPL_FRMT_GIB, nID );
             poFeature->SetField(nIndexOSMId, szID);
         }
     }
@@ -561,7 +561,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
         if( nIndexOSMWayId >= 0 )
         {
             char szID[32];
-            sprintf(szID, CPL_FRMT_GIB, nID );
+            snprintf(szID, sizeof(szID), CPL_FRMT_GIB, nID );
             poFeature->SetField(nIndexOSMWayId, szID );
         }
     }

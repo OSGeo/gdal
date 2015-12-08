@@ -220,7 +220,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
             {
                 char       fullFilename[2048];
 
-                sprintf( fullFilename, "%s%c%s", 
+                snprintf( fullFilename, sizeof(fullFilename), "%s%c%s", 
                          pszFilename,
 #ifdef WIN32
                          '\\',
@@ -522,7 +522,7 @@ void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
         if( iSequenceNumber++ == -1 )
             strncpy( szCandidateName, poNewReader->GetTileName(), 10 );
         else
-            sprintf( szCandidateName, "%010d", iSequenceNumber );
+            snprintf( szCandidateName, sizeof(szCandidateName), "%010d", iSequenceNumber );
 
         for( int iReader = 0; iReader < nNTFFileCount && bIsUnique; iReader++ )
         {

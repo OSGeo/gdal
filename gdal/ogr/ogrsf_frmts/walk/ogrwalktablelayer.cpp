@@ -94,7 +94,7 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     char* pszFeatureTableName = (char *) CPLMalloc(strlen(pszLayerName)+10);
 
-    sprintf(pszFeatureTableName, "%sFeatures", pszLayerName);
+    snprintf(pszFeatureTableName, strlen(pszLayerName)+10, "%sFeatures", pszLayerName);
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */

@@ -711,7 +711,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
             if( nDatum >= 6000 )
             {
                 char szName[32];
-                sprintf( szName, "EPSG:%d", nDatum-2000 );
+                snprintf( szName, sizeof(szName), "EPSG:%d", nDatum-2000 );
                 oSRS.SetWellKnownGeogCS( szName );
             }
             else

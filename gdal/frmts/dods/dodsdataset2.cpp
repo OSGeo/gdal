@@ -366,7 +366,7 @@ DODSDataset::connect_to_server() throw(Error)
     {
         static char szDODS_CONF[1000];
             
-        sprintf( szDODS_CONF, "DODS_CONF=%.980s", 
+        snprintf( szDODS_CONF, sizeof(szDODS_CONF), "DODS_CONF=%.980s", 
                  CPLGetConfigOption( "DODS_CONF", "" ) );
         putenv( szDODS_CONF );
     }

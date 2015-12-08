@@ -183,6 +183,7 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
     char szBasename[20];
     char *pszFilename;
     AIGTileInfo *psTInfo;
+    const size_t nFilenameLen = strlen(psInfo->pszCoverName)+40;
 
 /* -------------------------------------------------------------------- */
 /*      Identify our tile.                                              */
@@ -203,17 +204,17 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 /*      Compute the basename.                                           */
 /* -------------------------------------------------------------------- */
     if( iTileY == 0 )
-        sprintf( szBasename, "w%03d001", iTileX + 1 );
+        snprintf( szBasename, sizeof(szBasename), "w%03d001", iTileX + 1 );
     else if( iTileY == 1 )
-        sprintf( szBasename, "w%03d000", iTileX + 1 );
+        snprintf( szBasename, sizeof(szBasename), "w%03d000", iTileX + 1 );
     else
-        sprintf( szBasename, "z%03d%03d", iTileX + 1, iTileY - 1 );
+        snprintf( szBasename, sizeof(szBasename), "z%03d%03d", iTileX + 1, iTileY - 1 );
     
 /* -------------------------------------------------------------------- */
 /*      Open the file w001001.adf file itself.                          */
 /* -------------------------------------------------------------------- */
-    pszFilename = (char *) CPLMalloc(strlen(psInfo->pszCoverName)+40);
-    sprintf( pszFilename, "%s/%s.adf", psInfo->pszCoverName, szBasename );
+    pszFilename = (char *) CPLMalloc(nFilenameLen);
+    snprintf( pszFilename, nFilenameLen, "%s/%s.adf", psInfo->pszCoverName, szBasename );
 
     psTInfo->fpGrid = AIGLLOpen( pszFilename, "rb" );
     psTInfo->bTriedToLoad = TRUE;

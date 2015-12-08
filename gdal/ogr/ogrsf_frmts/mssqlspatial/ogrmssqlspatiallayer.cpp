@@ -603,7 +603,8 @@ char* OGRMSSQLSpatialLayer::GByteArrayToHexString( const GByte* pabyData, int nL
 {
     char* pszTextBuf;
 
-    pszTextBuf = (char *) CPLMalloc(nLen*2+3);
+    const size_t nTextBufLen = nLen*2+3;
+    pszTextBuf = (char *) CPLMalloc(nTextBufLen);
 
     int  iSrc, iDst=0;
 
@@ -611,12 +612,12 @@ char* OGRMSSQLSpatialLayer::GByteArrayToHexString( const GByte* pabyData, int nL
     {
         if( iSrc == 0 )
         {
-            sprintf( pszTextBuf+iDst, "0x%02x", pabyData[iSrc] );
+            snprintf( pszTextBuf+iDst, nTextBufLen-iDst, "0x%02x", pabyData[iSrc] );
             iDst += 4;
         }
         else
         {
-            sprintf( pszTextBuf+iDst, "%02x", pabyData[iSrc] );
+            snprintf( pszTextBuf+iDst, nTextBufLen-iDst, "%02x", pabyData[iSrc] );
             iDst += 2;
         }
     }

@@ -703,7 +703,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
         {
             char szID[32];
 
-            sprintf(szID,"%d",ngcp+1);
+            snprintf( szID, sizeof(szID), "%d",ngcp+1);
             if (itransposed == 1)
             {
                 if (ngcp < 4)

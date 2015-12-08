@@ -58,11 +58,11 @@ void GDALWMSMetaDataset::AddSubDataset(const char* pszName,
     char    szName[80];
     int     nCount = CSLCount(papszSubDatasets ) / 2;
 
-    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
     papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, pszName );
 
-    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
     papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, pszDesc);
 }

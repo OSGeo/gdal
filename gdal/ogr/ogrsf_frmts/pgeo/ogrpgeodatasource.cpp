@@ -127,7 +127,9 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
             return FALSE;
         }
         pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-        sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+        snprintf( pszDSN,
+                  strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
+                  pszDSNStringTemplate,  pszNewName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -144,7 +146,9 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
             pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
             CPLFree( pszDSN );
             pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-            sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+            snprintf( pszDSN,
+                     strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
+                     pszDSNStringTemplate,  pszNewName );
             CPLDebug( "PGeo", "EstablishSession(%s)", pszDSN );
             if( oSession.EstablishSession( pszDSN, NULL, NULL ) )
             {

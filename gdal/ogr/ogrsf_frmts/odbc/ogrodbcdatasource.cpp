@@ -130,7 +130,9 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
         return FALSE;
     }
     char* pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-    sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+    snprintf( pszDSN,
+              strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
+              pszDSNStringTemplate,  pszNewName );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize based on the DSN.                                    */
@@ -146,7 +148,9 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
             pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
             CPLFree( pszDSN );
             pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-            sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+            snprintf( pszDSN,
+                      strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
+                      pszDSNStringTemplate,  pszNewName );
             CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
             if( oSession.EstablishSession( pszDSN, NULL, NULL ) )
             {

@@ -137,32 +137,32 @@ char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
         switch ( eDataType )
         {
             case GDT_Byte:
-                sprintf( pszField, "%d%s",
+                snprintf( pszField, iFieldSize + 1, "%d%s",
                          reinterpret_cast<GByte *>(
                              const_cast<void *>( paDataArray ) )[i],
                          (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_UInt16:
-                sprintf( pszField, "%u%s",
+                snprintf( pszField, iFieldSize + 1, "%u%s",
                          reinterpret_cast<GUInt16 *>(
                              const_cast<void *>(  paDataArray ) )[i],
                          (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Int16:
             default:
-                sprintf( pszField, "%d%s",
+                snprintf( pszField, iFieldSize + 1, "%d%s",
                          reinterpret_cast<GInt16 *>(
                              const_cast<void *>(  paDataArray ) )[i],
                          (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_UInt32:
-                sprintf( pszField, "%u%s",
+                snprintf( pszField, iFieldSize + 1, "%u%s",
                          reinterpret_cast<GUInt32 *>(
                              const_cast<void *>(  paDataArray ) )[i],
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Int32:
-                sprintf( pszField, "%d%s",
+                snprintf( pszField, iFieldSize + 1, "%d%s",
                          reinterpret_cast<GInt32 *>(
                                 const_cast<void *>(  paDataArray ) )[i],
                          (i < nValues - 1)?pszDelimiter:"" );
@@ -925,7 +925,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                 char **papszFields = CSLTokenizeString2( pszFieldList, ",",
                                                          CSLT_HONOURSTRINGS );
 
-                char szTemp[8192];
+                char szTemp[256];
                 for( int32 j = 0; j < nFields; j++ )
                 {
                     SWfieldinfo( hSW, papszFields[j], &iRank, aiDimSizes,
@@ -936,7 +936,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
                     // Add field to the list of GDAL subdatasets
                     const int nCount = CSLCount( poDS->papszSubDatasets ) / 2;
-                    sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
+                    snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME", nCount + 1 );
                     // We will use the field index as an identificator.
                     poDS->papszSubDatasets =
                         CSLSetNameValue( poDS->papszSubDatasets, szTemp,
@@ -944,7 +944,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                                            poOpenInfo->pszFilename,
                                            papszSwaths[i], papszFields[j]) );
 
-                    sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
+                    snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC", nCount + 1 );
                     char *pszString = SPrintArray( GDT_UInt32, aiDimSizes,
                                                    iRank, "x" );
                     poDS->papszSubDatasets =
@@ -1036,7 +1036,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                 char **papszFields = CSLTokenizeString2( pszFieldList, ",",
                                                   CSLT_HONOURSTRINGS );
 
-                char szTemp[8192];
+                char szTemp[256];
                 for( int32 j = 0; j < nFields; j++ )
                 {
                     GDfieldinfo( hGD, papszFields[j], &iRank, aiDimSizes,
@@ -1047,7 +1047,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
                     // Add field to the list of GDAL subdatasets
                     const int nCount = CSLCount( poDS->papszSubDatasets ) / 2;
-                    sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
+                    snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME", nCount + 1 );
                     // We will use the field index as an identificator.
                     poDS->papszSubDatasets =
                         CSLSetNameValue(poDS->papszSubDatasets, szTemp,
@@ -1055,7 +1055,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                                             poOpenInfo->pszFilename,
                                             papszGrids[i], papszFields[j]));
 
-                    sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
+                    snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC", nCount + 1 );
                     char *pszString = SPrintArray( GDT_UInt32, aiDimSizes,
                                                    iRank, "x" );
                     poDS->papszSubDatasets =
@@ -1095,7 +1095,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         if ( SDfileinfo( poDS->hSD, &nDatasets, &nAttrs ) != 0 )
             return NULL;
 
-        char szTemp[8192];
+        char szTemp[256];
         const char *pszName = NULL;
 
         for( int32 i = 0; i < nDatasets; i++ )
@@ -1117,7 +1117,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
             // Add datasets with multiple dimensions to the list of GDAL subdatasets
             const int nCount = CSLCount( poDS->papszSubDatasets ) / 2;
-            sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
+            snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME", nCount + 1 );
             // We will use SDS index as an identificator, because SDS names
             // are not unique. Filename also needed for further file opening
             poDS->papszSubDatasets = CSLSetNameValue(
@@ -1126,7 +1126,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                   CPLSPrintf( "HDF4_SDS:%s:\"%s\":%ld", poDS->pszSubdatasetType,
                               poOpenInfo->pszFilename,
                               static_cast<long>( i ) ) );
-            sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
+            snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC", nCount + 1 );
             char *pszString = SPrintArray( GDT_UInt32, aiDimSizes, iRank, "x" );
             poDS->papszSubDatasets = CSLSetNameValue(
                 poDS->papszSubDatasets,
@@ -1163,7 +1163,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        char szTemp[8192];
+        char szTemp[256];
         for( int32 i = 0; i < poDS->nImages; i++ )
         {
             const int32 iGR = GRselect( poDS->hGR, i );
@@ -1183,12 +1183,12 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                 return NULL;
             }
             const int nCount = CSLCount( poDS->papszSubDatasets ) / 2;
-            sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
+            snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME", nCount + 1 );
             poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets,
                 szTemp,CPLSPrintf( "HDF4_GR:UNKNOWN:\"%s\":%ld",
                                    poOpenInfo->pszFilename,
                                    static_cast<long>( i ) ) );
-            sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
+            snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC", nCount + 1 );
             char *pszString = SPrintArray( GDT_UInt32, aiDimSizes, 2, "x" );
             poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets,
                 szTemp, CPLSPrintf( "[%sx%ld] %s (%s)", pszString,

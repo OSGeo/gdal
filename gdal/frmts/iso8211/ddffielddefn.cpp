@@ -221,13 +221,15 @@ int DDFFieldDefn::GenerateDDREntry( char **ppachData,
     (*ppachData)[6] = ' ';
     (*ppachData)[7] = ' ';
     (*ppachData)[8] = ' ';
-    sprintf( *ppachData + 9, "%s%c%s", 
+    snprintf( *ppachData + 9, *pnLength+1 - 9, "%s%c%s", 
              _fieldName, DDF_UNIT_TERMINATOR, _arrayDescr );
 
     if( strlen(_formatControls) > 0 )
-        sprintf( *ppachData + strlen(*ppachData), "%c%s",
+        snprintf( *ppachData + strlen(*ppachData),
+                  *pnLength+1 - strlen(*ppachData), "%c%s",
                  DDF_UNIT_TERMINATOR, _formatControls );
-    sprintf( *ppachData + strlen(*ppachData), "%c", DDF_FIELD_TERMINATOR );
+    snprintf( *ppachData + strlen(*ppachData),
+              *pnLength+1 - strlen(*ppachData), "%c", DDF_FIELD_TERMINATOR );
 
     return TRUE;
 }

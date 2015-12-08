@@ -793,12 +793,13 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
     char	*pszHDRFilename;
     VSILFILE	*fp;
     GByte	abyData[308];
+    const size_t nHDRFilenameLen = strlen(pszCoverName)+30;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file hdr.adf file.                                     */
 /* -------------------------------------------------------------------- */
-    pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+30);
-    sprintf( pszHDRFilename, "%s/hdr.adf", pszCoverName );
+    pszHDRFilename = (char *) CPLMalloc(nHDRFilenameLen);
+    snprintf( pszHDRFilename, nHDRFilenameLen, "%s/hdr.adf", pszCoverName );
 
     fp = AIGLLOpen( pszHDRFilename, "rb" );
     
@@ -871,12 +872,13 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     GInt32	nValue;
     GUInt32	*panIndex;
     GByte       abyHeader[8];
+    const size_t nHDRFilenameLen = strlen(psInfo->pszCoverName)+40;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file hdr.adf file.                                     */
 /* -------------------------------------------------------------------- */
-    pszHDRFilename = (char *) CPLMalloc(strlen(psInfo->pszCoverName)+40);
-    sprintf( pszHDRFilename, "%s/%sx.adf", psInfo->pszCoverName, pszBasename );
+    pszHDRFilename = (char *) CPLMalloc(nHDRFilenameLen);
+    snprintf( pszHDRFilename, nHDRFilenameLen, "%s/%sx.adf", psInfo->pszCoverName, pszBasename );
 
     fp = AIGLLOpen( pszHDRFilename, "rb" );
     
@@ -998,12 +1000,13 @@ CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
     char	*pszHDRFilename;
     VSILFILE	*fp;
     double	adfBound[4];
+    const size_t nHDRFilenameLen = strlen(pszCoverName)+40;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file dblbnd.adf file.                                  */
 /* -------------------------------------------------------------------- */
-    pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+40);
-    sprintf( pszHDRFilename, "%s/dblbnd.adf", pszCoverName );
+    pszHDRFilename = (char *) CPLMalloc(nHDRFilenameLen);
+    snprintf( pszHDRFilename, nHDRFilenameLen, "%s/dblbnd.adf", pszCoverName );
 
     fp = AIGLLOpen( pszHDRFilename, "rb" );
     
@@ -1057,6 +1060,7 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
     char	*pszHDRFilename;
     VSILFILE	*fp;
     double	adfStats[4];
+    const size_t nHDRFilenameLen = strlen(pszCoverName)+40;
 
     psInfo->dfMin = 0.0;
     psInfo->dfMax = 0.0;
@@ -1066,8 +1070,8 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file sta.adf file.                                     */
 /* -------------------------------------------------------------------- */
-    pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+40);
-    sprintf( pszHDRFilename, "%s/sta.adf", pszCoverName );
+    pszHDRFilename = (char *) CPLMalloc(nHDRFilenameLen);
+    snprintf( pszHDRFilename, nHDRFilenameLen, "%s/sta.adf", pszCoverName );
 
     fp = AIGLLOpen( pszHDRFilename, "rb" );
     

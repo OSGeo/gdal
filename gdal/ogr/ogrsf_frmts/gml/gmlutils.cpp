@@ -331,12 +331,12 @@ char* GML_GetSRSName(const OGRSpatialReference* poSRS, bool bLongSRS, bool *pbCo
 
                 if (bLongSRS)
                 {
-                    sprintf( szSrsName, " srsName=\"urn:ogc:def:crs:%s::%s\"",
+                    snprintf( szSrsName, sizeof(szSrsName), " srsName=\"urn:ogc:def:crs:%s::%s\"",
                         pszAuthName, pszAuthCode );
                 }
                 else
                 {
-                    sprintf( szSrsName, " srsName=\"%s:%s\"",
+                    snprintf( szSrsName, sizeof(szSrsName), " srsName=\"%s:%s\"",
                             pszAuthName, pszAuthCode );
                 }
             }

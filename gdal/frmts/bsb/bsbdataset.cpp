@@ -616,7 +616,7 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
 
                 CPLFree( pasGCPList[nGCPCount].pszId );
                 char	szName[50];
-                sprintf( szName, "GCP_%d", nGCPCount+1 );
+                snprintf( szName, sizeof(szName), "GCP_%d", nGCPCount+1 );
                 pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
 
                 nGCPCount++;
@@ -679,7 +679,7 @@ void BSBDataset::ScanForGCPsBSB()
             else
             {
                 char szName[50];
-                sprintf( szName, "GCP_%d", nGCPCount+1 );
+                snprintf( szName, sizeof(szName), "GCP_%d", nGCPCount+1 );
                 pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
             }
 

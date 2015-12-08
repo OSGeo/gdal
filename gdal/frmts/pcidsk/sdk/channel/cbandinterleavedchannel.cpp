@@ -356,7 +356,7 @@ void CBandInterleavedChannel
                                      "Long external channel filename link.", 
                                      SEG_SYS, 1 );
 
-            sprintf( link_filename, "LNK %4d", link_segment );
+            snprintf( link_filename, sizeof(link_filename), "LNK %4d", link_segment );
             IHi2_filename = link_filename;
         }
 

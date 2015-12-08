@@ -1458,9 +1458,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 
     char szSRSName[100];
     if( nEPSGCode != 0 )
-        sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
+        snprintf( szSRSName, sizeof(szSRSName), "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
     else
-        strcpy( szSRSName, 
+        snprintf( szSRSName, sizeof(szSRSName), "%s",
                 "gmljp2://xml/CRSDictionary.gml#ogrcrs1" );
 
     // Compute bounding box
@@ -2239,12 +2239,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         if( nEPSGCode != 0 )
         {
             if( bCRSURL )
-                sprintf( szSRSName, "http://www.opengis.net/def/crs/EPSG/0/%d", nEPSGCode );
+                snprintf( szSRSName, sizeof(szSRSName),
+                          "http://www.opengis.net/def/crs/EPSG/0/%d", nEPSGCode );
             else
-                sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
+                snprintf( szSRSName, sizeof(szSRSName),
+                          "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
         }
         else
-            strcpy( szSRSName, 
+            snprintf( szSRSName, sizeof(szSRSName), "%s",
                     "gmljp2://xml/CRSDictionary.gml#ogrcrs1" );
 
         osGridCoverage.Printf(

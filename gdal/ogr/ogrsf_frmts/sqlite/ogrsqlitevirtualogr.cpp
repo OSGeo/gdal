@@ -1318,7 +1318,7 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
             poFeature->GetFieldAsDateTime(nCol, &nYear, &nMonth, &nDay,
                                           &nHour, &nMinute, &nSecond, &nTZ);
             char szBuffer[64];
-            sprintf(szBuffer, "%04d-%02d-%02d", nYear, nMonth, nDay);
+            snprintf(szBuffer, sizeof(szBuffer), "%04d-%02d-%02d", nYear, nMonth, nDay);
             sqlite3_result_text(pContext,
                                 szBuffer,
                                 -1, SQLITE_TRANSIENT);
@@ -1333,9 +1333,9 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
                                         &nHour, &nMinute, &fSecond, &nTZ );
             char szBuffer[64];
             if( OGR_GET_MS(fSecond) != 0 )
-                sprintf(szBuffer, "%02d:%02d:%06.3f", nHour, nMinute, fSecond);
+                snprintf(szBuffer, sizeof(szBuffer), "%02d:%02d:%06.3f", nHour, nMinute, fSecond);
             else
-                sprintf(szBuffer, "%02d:%02d:%02d", nHour, nMinute, (int)fSecond);
+                snprintf(szBuffer, sizeof(szBuffer), "%02d:%02d:%02d", nHour, nMinute, (int)fSecond);
             sqlite3_result_text(pContext,
                                 szBuffer,
                                 -1, SQLITE_TRANSIENT);

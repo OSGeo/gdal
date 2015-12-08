@@ -315,7 +315,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox(
     }
 
     if( nEPSGCode != 0 )
-        sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
+        snprintf( szSRSName, sizeof(szSRSName), "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
     else
         strcpy( szSRSName, 
                 "gmljp2://xml/CRSDictionary.gml#ogrcrs1" );
@@ -325,7 +325,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox(
 /* -------------------------------------------------------------------- */
     char szDoc[4000];
 
-    CPLsprintf( szDoc, 
+    CPLsnprintf( szDoc, sizeof(szDoc),
 "<gml:FeatureCollection\n"
 "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
 "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
@@ -392,7 +392,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox(
         {
             pszDictBox = (char *) CPLMalloc(strlen(pszGMLDef) + 4000);
             
-            sprintf( pszDictBox, 
+            snprintf( pszDictBox, strlen(pszGMLDef) + 4000,
 "<gml:Dictionary gml:id=\"CRSU1\" \n"
 "        xmlns:gml=\"http://www.opengis.net/gml\"\n"
 "        xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"

@@ -796,12 +796,12 @@ GIntBig HFAEntry::GetBigIntField( const char *pszFieldPath, CPLErr *peErr )
 {
     char szFullFieldPath[1024];
 
-    sprintf( szFullFieldPath, "%s[0]", pszFieldPath );
+    snprintf( szFullFieldPath, sizeof(szFullFieldPath), "%s[0]", pszFieldPath );
     const GUInt32 nLower = GetIntField( szFullFieldPath, peErr );
     if( peErr != NULL && *peErr != CE_None )
         return 0;
 
-    sprintf( szFullFieldPath, "%s[1]", pszFieldPath );
+    snprintf( szFullFieldPath, sizeof(szFullFieldPath), "%s[1]", pszFieldPath );
     const GUInt32 nUpper = GetIntField( szFullFieldPath, peErr );
     if( peErr != NULL && *peErr != CE_None )
         return 0;

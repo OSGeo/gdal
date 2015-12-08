@@ -2131,7 +2131,7 @@ void HFARasterBand::ReadAuxMetadata()
                       break;
 
                   char szValueAsString[100];
-                  CPLsprintf( szValueAsString, "%.14g", dfValue );
+                  CPLsnprintf( szValueAsString, sizeof(szValueAsString), "%.14g", dfValue );
 
                   if( iValue > 0 )
                       osValueList += ",";
@@ -2156,7 +2156,7 @@ void HFARasterBand::ReadAuxMetadata()
                       break;
 
                   char szValueAsString[100];
-                  sprintf( szValueAsString, "%d", nValue );
+                  snprintf( szValueAsString, sizeof(szValueAsString), "%d", nValue );
 
                   if( iValue > 0 )
                       osValueList += ",";

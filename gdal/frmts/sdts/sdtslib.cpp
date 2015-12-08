@@ -167,7 +167,7 @@ int SDTSModId::Set( DDFField *poField )
 const char * SDTSModId::GetName()
 
 {
-    sprintf( szName, "%s:%d", szModule, nRecord );
+    snprintf( szName, sizeof(szName), "%s:%d", szModule, nRecord );
 
     return szName;
 }

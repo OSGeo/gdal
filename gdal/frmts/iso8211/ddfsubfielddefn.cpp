@@ -868,7 +868,7 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
     int nSize;
     char szWork[30];
 
-    sprintf( szWork, "%d", nNewValue );
+    snprintf( szWork, sizeof(szWork), "%d", nNewValue );
 
     if( bIsVariable )
     {

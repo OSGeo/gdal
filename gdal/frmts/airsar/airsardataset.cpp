@@ -491,7 +491,7 @@ char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset,
 /* -------------------------------------------------------------------- */
         char szPrefixedKeyName[55];
 
-        sprintf( szPrefixedKeyName, "%s_%s", pszPrefix, szLine );
+        snprintf( szPrefixedKeyName, sizeof(szPrefixedKeyName), "%s_%s", pszPrefix, szLine );
 
         papszHeadInfo = 
             CSLSetNameValue( papszHeadInfo, szPrefixedKeyName, szLine+iValue );

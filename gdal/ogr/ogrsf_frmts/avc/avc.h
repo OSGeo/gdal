@@ -823,7 +823,7 @@ AVCTableDef *_AVCDupTableDef(AVCTableDef *psSrcDef);
 
 GBool AVCFileExists(const char *pszPath, const char *pszName);
 char *AVCAdjustCaseSensitiveFilename(char *pszFname);
-int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
+int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType eType,
                        double dValue);
 
 /*=====================================================================

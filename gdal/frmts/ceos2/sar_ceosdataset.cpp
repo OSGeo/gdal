@@ -1538,7 +1538,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
     {
         char         szId[32];
 
-        sprintf( szId, "%d", i+1 );
+        snprintf( szId, sizeof(szId), "%d", i+1 );
         pasGCPList[i].pszId = CPLStrdup( szId );
 
         GetCeosField( record, 1073+32*i, "A16", szField );
@@ -1620,7 +1620,7 @@ void SAR_CEOSDataset::ScanForGCPs()
                 CPLFree( pasGCPList[nGCPCount].pszId );
 
                 char szId[32];
-                sprintf( szId, "%d", nGCPCount+1 );
+                snprintf( szId, sizeof(szId), "%d", nGCPCount+1 );
                 pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
 
                 pasGCPList[nGCPCount].dfGCPX = nLong / 1000000.0;
@@ -1743,7 +1743,8 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 char    szMadeBasename[32];
 
-                sprintf( szMadeBasename, CeosExtension[e][iFile], nBand );
+                snprintf( szMadeBasename, sizeof(szMadeBasename),
+                          CeosExtension[e][iFile], nBand );
                 pszFilename = CPLStrdup(
                     CPLFormFilename(pszPath,szMadeBasename, pszExtension));
             }
@@ -1765,11 +1766,11 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 char szThisExtension[32];
 
                 if( strlen(pszExtension) > 3 )
-                    sprintf( szThisExtension, "%s%s", 
+                    snprintf( szThisExtension, sizeof(szThisExtension), "%s%s", 
                              CeosExtension[e][iFile], 
                              pszExtension+3 );
                 else
-                    sprintf( szThisExtension, "%s", 
+                    snprintf( szThisExtension, sizeof(szThisExtension), "%s", 
                              CeosExtension[e][iFile] );
 
                 pszFilename = CPLStrdup(

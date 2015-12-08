@@ -2003,7 +2003,8 @@ CPLString WFS_EscapeURL(const char* pszURL)
         else
         {
             char szPercentEncoded[10];
-            sprintf( szPercentEncoded, "%%%02X", ((unsigned char*)pszURL)[i] );
+            snprintf( szPercentEncoded, sizeof(szPercentEncoded),
+                      "%%%02X", ((unsigned char*)pszURL)[i] );
             osEscapedURL += szPercentEncoded;
         }
     }

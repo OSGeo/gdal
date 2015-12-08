@@ -345,7 +345,7 @@ void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
                                   jpeg_compress_struct& sCInfo)
 {
     char szTmpFilename[128];
-    sprintf(szTmpFilename, "/vsimem/tables_%p", &sDInfo);
+    snprintf(szTmpFilename, sizeof(szTmpFilename), "/vsimem/tables_%p", &sDInfo);
     VSILFILE* fpTABLES = VSIFOpenL(szTmpFilename, "wb+");
     
     uint16  nPhotometric;

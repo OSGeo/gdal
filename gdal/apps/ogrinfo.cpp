@@ -212,14 +212,18 @@ int main( int nArgc, char ** papszArgv )
         else if( STARTS_WITH_CI(papszArgv[iArg], "-fields=") )
         {
             char* pszTemp = (char*)CPLMalloc(32 + strlen(papszArgv[iArg]));
-            sprintf(pszTemp, "DISPLAY_FIELDS=%s", papszArgv[iArg] + strlen("-fields="));
+            snprintf(pszTemp,
+                    32 + strlen(papszArgv[iArg]),
+                    "DISPLAY_FIELDS=%s", papszArgv[iArg] + strlen("-fields="));
             papszOptions = CSLAddString(papszOptions, pszTemp);
             CPLFree(pszTemp);
         }
         else if( STARTS_WITH_CI(papszArgv[iArg], "-geom=") )
         {
             char* pszTemp = (char*)CPLMalloc(32 + strlen(papszArgv[iArg]));
-            sprintf(pszTemp, "DISPLAY_GEOMETRY=%s", papszArgv[iArg] + strlen("-geom="));
+            snprintf(pszTemp,
+                    32 + strlen(papszArgv[iArg]),
+                    "DISPLAY_GEOMETRY=%s", papszArgv[iArg] + strlen("-geom="));
             papszOptions = CSLAddString(papszOptions, pszTemp);
             CPLFree(pszTemp);
         }

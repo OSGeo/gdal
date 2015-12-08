@@ -57,17 +57,17 @@ OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
     
     szTableName[0] = '\0';
     if( m_psSection->eType == AVCFilePAL )
-        sprintf( szTableName, "%s.PAT", poDS->GetCoverageName() );
+        snprintf( szTableName, sizeof(szTableName), "%s.PAT", poDS->GetCoverageName() );
     else if( m_psSection->eType == AVCFileRPL )
-        sprintf( szTableName, "%s.PAT%s", poDS->GetCoverageName(),
+        snprintf( szTableName, sizeof(szTableName), "%s.PAT%s", poDS->GetCoverageName(),
                  m_psSection->pszName );
     else if( m_psSection->eType == AVCFileARC )
-        sprintf( szTableName, "%s.AAT", poDS->GetCoverageName() );
+        snprintf( szTableName, sizeof(szTableName), "%s.AAT", poDS->GetCoverageName() );
     else if( m_psSection->eType == AVCFileLAB )
     {
         AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
 
-        sprintf( szTableName, "%s.PAT", poDS->GetCoverageName() );
+        snprintf( szTableName, sizeof(szTableName), "%s.PAT", poDS->GetCoverageName() );
 
         for( int iSection = 0; iSection < psInfo->numSections; iSection++ )
         {
@@ -343,7 +343,7 @@ int OGRAVCBinLayer::CheckSetupTable()
     AVCE00Section *l_psSection = NULL;
     char	  szPaddedName[65];
     
-    sprintf( szPaddedName, "%s%32s", szTableName, " " );
+    snprintf( szPaddedName, sizeof(szPaddedName), "%s%32s", szTableName, " " );
     szPaddedName[32] = '\0';
 
     for( iSection = 0; iSection < psInfo->numSections; iSection++ )

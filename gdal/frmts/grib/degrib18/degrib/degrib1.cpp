@@ -681,11 +681,15 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
    strcpy (inv->element, varName);
    inv->unitName = (char *) malloc ((1 + 2 + strlen (varUnit)) *
                                     sizeof (char));
-   sprintf (inv->unitName, "[%s]", varUnit);
+   snprintf (inv->unitName, (1 + 2 + strlen (varUnit)) *
+                                    sizeof (char), "[%s]", varUnit);
    inv->comment = (char *) malloc ((1 + strlen (varComment) +
                                     strlen (varUnit) + 2 + 1) *
                                    sizeof (char));
-   sprintf (inv->comment, "%s [%s]", varComment, varUnit);
+   snprintf (inv->comment, (1 + strlen (varComment) +
+                                    strlen (varUnit) + 2 + 1) *
+                                   sizeof (char),
+             "%s [%s]", varComment, varUnit);
 
    GRIB1_Table3LookUp (&(pdsMeta), &(inv->shortFstLevel),
                        &(inv->longFstLevel));
@@ -1787,12 +1791,19 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    meta->unitName = (char *) realloc ((void *) (meta->unitName),
                                       (1 + 2 + strlen (varUnit)) *
                                       sizeof (char));
-   sprintf (meta->unitName, "[%s]", varUnit);
+   snprintf (meta->unitName,
+            (1 + 2 + strlen (varUnit)) *
+                                      sizeof (char),
+            "[%s]", varUnit);
    meta->comment = (char *) realloc ((void *) (meta->comment),
                                      (1 + strlen (varComment) +
                                       strlen (varUnit)
                                       + 2 + 1) * sizeof (char));
-   sprintf (meta->comment, "%s [%s]", varComment, varUnit);
+   snprintf (meta->comment,
+            (1 + strlen (varComment) +
+                                      strlen (varUnit)
+                                      + 2 + 1) * sizeof (char),
+            "%s [%s]", varComment, varUnit);
 
    if (ComputeUnit (meta->convert, meta->unitName, f_unit, &unitM, &unitB,
                     unitName) == 0) {

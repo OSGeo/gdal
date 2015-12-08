@@ -364,7 +364,7 @@ void OGRDXFLayer::FormatDimension( CPLString &osText, double dfValue )
     // to spend the effort.  See QCAD's rs_dimlinear.cpp and related files
     // for example.  
 
-    sprintf(szFormat, "%%.%df", nPrecision );
+    snprintf(szFormat, sizeof(szFormat), "%%.%df", nPrecision );
     CPLsnprintf(szBuffer, sizeof(szBuffer), szFormat, dfValue);
     osText = szBuffer;
 }

@@ -60,6 +60,7 @@ typedef struct
 {
     char	*key;
     char	*value;
+    size_t      value_len;
     char	*units;
     char	*literal_line;
     int         value_offset;
@@ -253,7 +254,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
     {
         char	error_buf[2048];
 
-        sprintf( error_buf, 
+        snprintf( error_buf, sizeof(error_buf), 
                  "Unable to open file \"%s\" in EnvisatFile_Open().", 
                  filename );
 
@@ -477,7 +478,7 @@ int EnvisatFile_Create( EnvisatFile **self_ptr,
     {
         char	error_buf[2048];
 
-        sprintf( error_buf, 
+        snprintf( error_buf, sizeof(error_buf), 
                  "Unable to open file \"%s\" in EnvisatFile_Create().", 
                  template_file );
 
@@ -503,7 +504,7 @@ int EnvisatFile_Create( EnvisatFile **self_ptr,
     {
         char	error_buf[2048];
 
-        sprintf( error_buf, 
+        snprintf( error_buf, sizeof(error_buf), 
                  "Unable to open file \"%s\" in EnvisatFile_Create().", 
                  filename );
 
@@ -645,22 +646,26 @@ static int EnvisatFile_RewriteHeader( EnvisatFile *self )
         if( key_index == -1 )
             continue;
 
-        sprintf( dsdh_entries[key_index]->value, "%+021d", 
+        snprintf( dsdh_entries[key_index]->value,
+                  dsdh_entries[key_index]->value_len, "%+021d", 
                  self->ds_info[dsd]->ds_offset );
 
         key_index = S_NameValueList_FindKey( "DS_SIZE", 
                                              dsdh_count, dsdh_entries );
-        sprintf( dsdh_entries[key_index]->value, "%+021d", 
+        snprintf( dsdh_entries[key_index]->value,
+                  dsdh_entries[key_index]->value_len, "%+021d", 
                  self->ds_info[dsd]->ds_size );
 
         key_index = S_NameValueList_FindKey( "NUM_DSR", 
                                              dsdh_count, dsdh_entries );
-        sprintf( dsdh_entries[key_index]->value, "%+011d", 
+        snprintf( dsdh_entries[key_index]->value,
+                  dsdh_entries[key_index]->value_len, "%+011d", 
                  self->ds_info[dsd]->num_dsr );
 
         key_index = S_NameValueList_FindKey( "DSR_SIZE", 
                                              dsdh_count, dsdh_entries );
-        sprintf( dsdh_entries[key_index]->value, "%+011d", 
+        snprintf( dsdh_entries[key_index]->value,
+                  dsdh_entries[key_index]->value_len, "%+011d", 
                  self->ds_info[dsd]->dsr_size );
 
         if( S_NameValueList_Rewrite( self->fp, dsdh_count, dsdh_entries )
@@ -932,7 +937,7 @@ int EnvisatFile_SetKeyValueAsString( EnvisatFile *self,
     {
         char	error_buf[2048];
 
-        sprintf( error_buf, 
+        snprintf( error_buf, sizeof(error_buf),
                  "Unable to set header field \"%s\", field not found.", 
                  key );
 
@@ -1050,7 +1055,7 @@ int EnvisatFile_SetKeyValueAsInt( EnvisatFile *self,
     {
         char	error_buf[2048];
 
-        sprintf( error_buf, 
+        snprintf( error_buf, sizeof(error_buf), 
                  "Unable to set header field \"%s\", field not found.", 
                  key );
 
@@ -1058,8 +1063,8 @@ int EnvisatFile_SetKeyValueAsInt( EnvisatFile *self,
         return FAILURE;
     }
 
-    sprintf( format, "%%+0%dd", (int) strlen(prototype_value) );
-    sprintf( string_value, format, value );
+    snprintf( format, sizeof(format), "%%+0%dd", (int) strlen(prototype_value) );
+    snprintf( string_value, sizeof(string_value), format, value );
 
     return EnvisatFile_SetKeyValueAsString( self, mph_or_sph, key, string_value );
 }
@@ -1163,7 +1168,7 @@ int EnvisatFile_SetKeyValueAsDouble( EnvisatFile *self,
     {
         char	error_buf[2048];
 
-        sprintf( error_buf, 
+        snprintf( error_buf, sizeof(error_buf), 
                  "Unable to set header field \"%s\", field not found.", 
                  key );
 
@@ -1174,8 +1179,8 @@ int EnvisatFile_SetKeyValueAsDouble( EnvisatFile *self,
     length = (int)strlen(prototype_value);
     if( prototype_value[length-4] == 'E' )
     {
-        sprintf( format, "%%+%dE", length-4 );
-        sprintf( string_value, format, value );
+        snprintf( format, sizeof(format), "%%+%dE", length-4 );
+        snprintf( string_value, sizeof(string_value), format, value );
     }
     else
     {
@@ -1810,6 +1815,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
 
             line[src_char] = '\0';
             entry->value = CPLStrdup(line + equal_index + 2);
+            entry->value_len = strlen(entry->value)+1;
             entry->value_offset += 1;
         }
 
@@ -1838,6 +1844,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
 
             line[src_char] = '\0';
             entry->value = CPLStrdup( line + equal_index + 1 );
+            entry->value_len = strlen(entry->value)+1;
         }
 
         /*

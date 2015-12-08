@@ -709,11 +709,11 @@ void RasterliteDataset::AddSubDataset( const char* pszDSName)
     char	szName[80];
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
-    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, pszDSName);
 
-    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, pszDSName);
 }

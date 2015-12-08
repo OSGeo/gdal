@@ -1767,7 +1767,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
                 {
                     char szName[128];
 
-                    sprintf( szName, "%s_LIST", 
+                    snprintf( szName, sizeof(szName), "%s_LIST", 
                              poClass->papszAttrNames[iGAtt] );
 
                     OGRFieldDefn oFieldDefnL( szName, OFTString );

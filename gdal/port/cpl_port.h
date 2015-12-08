@@ -766,11 +766,23 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #endif
 #endif
 
+#if defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
+#define CPL_WARN_DEPRECATED_IF_GDAL_COMPILATION(x) CPL_WARN_DEPRECATED(x)
+#else
+#define CPL_WARN_DEPRECATED_IF_GDAL_COMPILATION(x)
+#endif
+
+#ifndef _MSC_VER
+CPL_C_START
 #ifdef WARN_STANDARD_PRINTF
 int vsnprintf(char *str, size_t size, const char* fmt, va_list args) CPL_WARN_DEPRECATED("Use CPLvsnprintf() instead");
 int snprintf(char *str, size_t size, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(3,4) CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
-int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use CPLsprintf() instead");
+int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
+#elif defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
+int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use snprintf() or CPLsnprintf() instead");
 #endif
+CPL_C_END
+#endif /* _MSC_VER */
 
 #if defined(MAKE_SANITIZE_HAPPY) || !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
 #define CPL_CPU_REQUIRES_ALIGNED_ACCESS

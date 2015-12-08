@@ -324,7 +324,7 @@ static void AddGenericAttributes( NTFFileReader * poReader,
         char  szListName[128];
         int   iListField;
 
-        sprintf( szListName, "%s_LIST", 
+        snprintf( szListName, sizeof(szListName), "%s_LIST", 
                  poFeature->GetFieldDefnRef(iField)->GetNameRef() );
         iListField = poFeature->GetFieldIndex( szListName );
 

@@ -535,7 +535,7 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
         CPLXMLNode *psCol
             = CPLCreateXMLNode( psTree, CXT_Element, "FieldDefn" );
 
-        sprintf( szValue, "%d", iCol );
+        snprintf( szValue, sizeof(szValue), "%d", iCol );
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psCol, CXT_Attribute, "index" ), 
             CXT_Text, szValue );
@@ -543,10 +543,10 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
         CPLCreateXMLElementAndValue( psCol, "Name", 
                                      GetNameOfCol(iCol) );
 
-        sprintf( szValue, "%d", (int) GetTypeOfCol(iCol) );
+        snprintf( szValue, sizeof(szValue), "%d", (int) GetTypeOfCol(iCol) );
         CPLCreateXMLElementAndValue( psCol, "Type", szValue );
 
-        sprintf( szValue, "%d", (int) GetUsageOfCol(iCol) );
+        snprintf( szValue, sizeof(szValue), "%d", (int) GetUsageOfCol(iCol) );
         CPLCreateXMLElementAndValue( psCol, "Usage", szValue );
     }
 
@@ -566,7 +566,7 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
             psTail->psNext = psRow;
         psTail = psRow;
 
-        sprintf( szValue, "%d", iRow );
+        snprintf( szValue, sizeof(szValue), "%d", iRow );
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psRow, CXT_Attribute, "index" ), 
             CXT_Text, szValue );
@@ -1588,7 +1588,7 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
       {
           char szValue[100];
 
-          sprintf( szValue, "%d", nValue );
+          snprintf( szValue, sizeof(szValue), "%d", nValue );
           aoFields[iField].aosValues[iRow] = szValue;
       }
       break;

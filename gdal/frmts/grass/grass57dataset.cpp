@@ -372,7 +372,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
         char key[200], value[200];
         int rcount = G_colors_count ( &sGrassColors );
 
-        sprintf ( value, "%d", rcount );
+        snprintf ( value, sizeof(value), "%d", rcount );
         this->SetMetadataItem( "COLOR_TABLE_RULES_COUNT", value );
 
         /* Add the rules in reverse order */
@@ -382,8 +382,8 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
 
             G_get_f_color_rule ( &val1, &r1, &g1, &b1, &val2, &r2, &g2, &b2, &sGrassColors, i );
 
-            sprintf ( key, "COLOR_TABLE_RULE_RGB_%d", rcount-i-1 );
-            sprintf ( value, "%e %e %d %d %d %d %d %d", val1, val2, r1, g1, b1, r2, g2, b2 );
+            snprintf ( key, sizeof(key), "COLOR_TABLE_RULE_RGB_%d", rcount-i-1 );
+            snprintf ( value, sizeof(value), "%e %e %d %d %d %d %d %d", val1, val2, r1, g1, b1, r2, g2, b2 );
             this->SetMetadataItem( key, value );
         }
     } else {

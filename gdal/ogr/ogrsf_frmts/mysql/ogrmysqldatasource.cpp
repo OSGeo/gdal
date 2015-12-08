@@ -477,7 +477,7 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
         mysql_free_result( hResult );
     hResult = NULL;   
                         
-    sprintf( szCommand,
+    snprintf( szCommand, sizeof(szCommand),
          "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
          nId );
     

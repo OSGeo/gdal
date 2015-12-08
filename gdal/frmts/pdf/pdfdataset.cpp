@@ -3339,7 +3339,7 @@ void PDFDataset::AddLayer(const char* pszLayerName)
     }
 
     char szFormatName[64];
-    sprintf(szFormatName, "LAYER_%%0%dd_NAME",  nNewIndex >= 100 ? 3 : 2);
+    snprintf(szFormatName, sizeof(szFormatName), "LAYER_%%0%dd_NAME",  nNewIndex >= 100 ? 3 : 2);
 
     osLayerList.AddNameValue(CPLSPrintf(szFormatName, nNewIndex),
                              pszLayerName);
@@ -4357,9 +4357,9 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         for(i=0;i<nPages;i++)
         {
             char szKey[32];
-            sprintf( szKey, "SUBDATASET_%d_NAME", i+1 );
+            snprintf( szKey, sizeof(szKey), "SUBDATASET_%d_NAME", i+1 );
             aosList.AddNameValue(szKey, CPLSPrintf("PDF:%d:%s", i+1, poOpenInfo->pszFilename));
-            sprintf( szKey, "SUBDATASET_%d_DESC", i+1 );
+            snprintf( szKey, sizeof(szKey), "SUBDATASET_%d_DESC", i+1 );
             aosList.AddNameValue(szKey, CPLSPrintf("Page %d of %s", i+1, poOpenInfo->pszFilename));
         }
         poDS->SetMetadata( aosList.List(), "SUBDATASETS" );
@@ -5274,7 +5274,7 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
                     CPLDebug("PDF", "GCP[%d].y = %.16g", i, dfY);
 
                     char    szID[32];
-                    sprintf( szID, "%d", nGCPCount+1 );
+                    snprintf( szID, sizeof(szID), "%d", nGCPCount+1 );
                     pasGCPList[nGCPCount].pszId = CPLStrdup( szID );
                     pasGCPList[nGCPCount].pszInfo = CPLStrdup("");
                     pasGCPList[nGCPCount].dfGCPPixel = dfUserX;
