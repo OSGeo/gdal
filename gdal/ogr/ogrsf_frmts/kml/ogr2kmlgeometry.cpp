@@ -41,7 +41,7 @@
 /*                        MakeKMLCoordinate()                           */
 /************************************************************************/
 
-static void MakeKMLCoordinate( char *pszTarget, 
+static void MakeKMLCoordinate( char *pszTarget, size_t nTargetLen,
                                double x, double y, double z, int b3D )
 
 {
@@ -102,31 +102,32 @@ static void MakeKMLCoordinate( char *pszTarget,
         if( *pszTarget == ' ' )
             *pszTarget = ',';
         pszTarget++;
+        nTargetLen --;
     }
 
 #ifdef notdef
     if( !b3D )
     {
         if( x == (int) x && y == (int) y )
-            sprintf( pszTarget, "%d,%d", (int) x, (int) y );
+            snprintf( pszTarget, nTargetLen, "%d,%d", (int) x, (int) y );
         else if( fabs(x) < 370 && fabs(y) < 370 )
-            CPLsprintf( pszTarget, "%.16g,%.16g", x, y );
+            CPLsnprintf( pszTarget, nTargetLen, "%.16g,%.16g", x, y );
         else if( fabs(x) > 100000000.0 || fabs(y) > 100000000.0 )
-            CPLsprintf( pszTarget, "%.16g,%.16g", x, y );
+            CPLsnprintf( pszTarget, nTargetLen, "%.16g,%.16g", x, y );
         else
-            CPLsprintf( pszTarget, "%.3f,%.3f", x, y );
+            CPLsnprintf( pszTarget, nTargetLen, "%.3f,%.3f", x, y );
     }
     else
     {
         if( x == (int) x && y == (int) y && z == (int) z )
-            sprintf( pszTarget, "%d,%d,%d", (int) x, (int) y, (int) z );
+            snprintf( pszTarget, nTargetLen, "%d,%d,%d", (int) x, (int) y, (int) z );
         else if( fabs(x) < 370 && fabs(y) < 370 )
-            CPLsprintf( pszTarget, "%.16g,%.16g,%.16g", x, y, z );
+            CPLsnprintf( pszTarget, nTargetLen, "%.16g,%.16g,%.16g", x, y, z );
         else if( fabs(x) > 100000000.0 || fabs(y) > 100000000.0 
                  || fabs(z) > 100000000.0 )
-            CPLsprintf( pszTarget, "%.16g,%.16g,%.16g", x, y, z );
+            CPLsnprintf( pszTarget, nTargetLen, "%.16g,%.16g,%.16g", x, y, z );
         else
-            CPLsprintf( pszTarget, "%.3f,%.3f,%.3f", x, y, z );
+            CPLsnprintf( pszTarget, nTargetLen, "%.3f,%.3f,%.3f", x, y, z );
     }
 #endif
 }
@@ -181,7 +182,7 @@ static void AppendCoordinateList( OGRLineString *poLine,
 
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
-        MakeKMLCoordinate( szCoordinate, 
+        MakeKMLCoordinate( szCoordinate, sizeof(szCoordinate),
                            poLine->getX(iPoint),
                            poLine->getY(iPoint),
                            poLine->getZ(iPoint),
@@ -227,13 +228,13 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
         }
         else
         {
-            MakeKMLCoordinate( szCoordinate, 
+            MakeKMLCoordinate( szCoordinate, sizeof(szCoordinate),
                             poPoint->getX(), poPoint->getY(), 0.0, FALSE );
 
             _GrowBuffer( *pnLength + strlen(szCoordinate) + 60, 
                         ppszText, pnMaxLength );
 
-            sprintf( *ppszText + *pnLength, 
+            snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength,
                     "<Point><coordinates>%s</coordinates></Point>",
                     szCoordinate );
 
@@ -248,7 +249,7 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
         char szCoordinate[256] = { 0 };
         OGRPoint *poPoint = static_cast<OGRPoint*>(poGeometry);
 
-        MakeKMLCoordinate( szCoordinate, 
+        MakeKMLCoordinate( szCoordinate, sizeof(szCoordinate),
                            poPoint->getX(), poPoint->getY(), poPoint->getZ(), 
                            TRUE );
                            
@@ -257,7 +258,7 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
             _GrowBuffer( *pnLength + strlen(szCoordinate) + 70, 
                          ppszText, pnMaxLength );
 
-            sprintf( *ppszText + *pnLength,  
+            snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength,
                      "<Point><coordinates>%s</coordinates></Point>",
                      szCoordinate );
         }
@@ -267,7 +268,7 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
                          + strlen(szAltitudeMode) + 70, 
                          ppszText, pnMaxLength );
 
-            sprintf( *ppszText + *pnLength,  
+            snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength,
                      "<Point>%s<coordinates>%s</coordinates></Point>", 
                      szAltitudeMode, szCoordinate ); 
         }
@@ -486,7 +487,8 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
 
     if (NULL != pszAltitudeMode && strlen(pszAltitudeMode) < 128 - (29 + 1))
     {
-        sprintf(szAltitudeMode, "<altitudeMode>%s</altitudeMode>", pszAltitudeMode); 
+        snprintf(szAltitudeMode, sizeof(szAltitudeMode),
+                 "<altitudeMode>%s</altitudeMode>", pszAltitudeMode); 
     }
     else 
     {

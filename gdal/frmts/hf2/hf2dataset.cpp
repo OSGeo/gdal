@@ -570,7 +570,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
             else if (nEPSGDatumCode >= 6000)
             {
                 char szName[32];
-                sprintf( szName, "EPSG:%d", nEPSGDatumCode-2000 );
+                snprintf( szName, sizeof(szName), "EPSG:%d", nEPSGDatumCode-2000 );
                 oSRS.SetWellKnownGeogCS( szName );
                 bHasSRS = true;
             }

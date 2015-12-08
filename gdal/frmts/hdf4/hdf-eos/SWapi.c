@@ -386,7 +386,7 @@ SWcreate(int32 fid, char *swathname)
 
 		/* Establish Swath in Structural MetaData Block */
 		/* -------------------------------------------- */
-		sprintf(utlbuf, "%s%ld%s%s%s",
+		snprintf(utlbuf, sizeof(utlbuf), "%s%ld%s%s%s",
 			"\tGROUP=SWATH_", (long)nSwath + 1,
 			"\n\t\tSwathName=\"", swathname, "\"\n");
 
@@ -402,7 +402,7 @@ SWcreate(int32 fid, char *swathname)
 		strcat(utlbuf, "\t\tEND_GROUP=DataField\n");
 		strcat(utlbuf, "\t\tGROUP=MergedFields\n");
 		strcat(utlbuf, "\t\tEND_GROUP=MergedFields\n");
-		sprintf(utlbuf2, "%s%ld%s",
+		snprintf(utlbuf2, sizeof(utlbuf2), "%s%ld%s",
 			"\tEND_GROUP=SWATH_", (long)nSwath + 1, "\n");
 		strcat(utlbuf, utlbuf2);
 
@@ -1021,7 +1021,7 @@ SWdiminfo(int32 swathID, char *dimname)
 	}  
 
 	/* Search for dimension name (surrounded by quotes) */
-	sprintf(utlstr, "%s%s%s", "\"", dimname, "\"\n");
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", dimname, "\"\n");
 	metaptrs[0] = strstr(metaptrs[0], utlstr);
 
 	/*
@@ -1141,7 +1141,7 @@ SWmapinfo(int32 swathID, char *geodim, char *datadim, int32 * offset,
 	}
 
 	/* Search for mapping - GeoDim/DataDim (surrounded by quotes) */
-	sprintf(utlstr, "%s%s%s%s%s", "\t\t\t\tGeoDimension=\"", geodim,
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s%s%s", "\t\t\t\tGeoDimension=\"", geodim,
 		"\"\n\t\t\t\tDataDimension=\"", datadim, "\"\n");
 	metaptrs[0] = strstr(metaptrs[0], utlstr);
 
@@ -1247,7 +1247,7 @@ SWidxmapinfo(int32 swathID, char *geodim, char *datadim, int32 l_index[])
     if (status == 0)
     {
 	/* Find Index Mapping Vdata with Swath Attributes Vgroup */
-	sprintf(utlbuf, "%s%s%s%s", "INDXMAP:", geodim, "/", datadim);
+	snprintf(utlbuf, sizeof(utlbuf), "%s%s%s%s", "INDXMAP:", geodim, "/", datadim);
 	vgid = SWXSwath[swathID % idOffset].VIDTable[2];
 	vdataID = EHgetid(fid, vgid, utlbuf, 1, "r");
 
@@ -1352,7 +1352,7 @@ SWcompinfo(int32 swathID, char *fieldname, int32 * compcode, intn compparm[])
 	    return(-1);
 	}
 	/* Search for field */
-	sprintf(utlstr, "%s%s%s", "\"", fieldname, "\"\n");
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"\n");
 	metaptrs[0] = strstr(metaptrs[0], utlstr);
 
 	/* If not found then search in "GeoField" section */
@@ -1369,7 +1369,7 @@ SWcompinfo(int32 swathID, char *fieldname, int32 * compcode, intn compparm[])
 		return(-1);
 	    }
 	    /* Search for field */
-	    sprintf(utlstr, "%s%s%s", "\"", fieldname, "\"\n");
+	    snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"\n");
 	    metaptrs[0] = strstr(metaptrs[0], utlstr);
 	}
 
@@ -1578,7 +1578,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 
 
     /* Search for field */
-    sprintf(utlstr, "%s%s%s", "\"", fieldname, "\"\n");
+    snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"\n");
     metaptrs[0] = strstr(metaptrs[0], utlstr);
 
     /* If field found ... */
@@ -1881,7 +1881,7 @@ SWdefdimmap(int32 swathID, char *geodim, char *datadim, int32 offset,
 	/* ------------------------------------------ */
 	if (status == 0)
 	{
-	    sprintf(mapname, "%s%s%s", geodim, "/", datadim);
+	    snprintf(mapname, sizeof(mapname), "%s%s%s", geodim, "/", datadim);
 	    metadata[0] = offset;
 	    metadata[1] = increment;
 
@@ -1996,7 +1996,7 @@ SWdefidxmap(int32 swathID, char *geodim, char *datadim, int32 l_index[])
 	    }
 
 	    /* Name: "INDXMAP:" + geodim + "/" + datadim */
-	    sprintf(utlbuf, "%s%s%s%s", "INDXMAP:", geodim, "/", datadim);
+	    snprintf(utlbuf, sizeof(utlbuf), "%s%s%s%s", "INDXMAP:", geodim, "/", datadim);
 
 	    vdataID = VSattach(fid, -1, "w");
 	    VSsetname(vdataID, utlbuf);
@@ -2019,7 +2019,7 @@ SWdefidxmap(int32 swathID, char *geodim, char *datadim, int32 l_index[])
 
 
 	    /* Write to Structural Metadata */
-	    sprintf(mapname, "%s%s%s", geodim, "/", datadim);
+	    snprintf(mapname, sizeof(mapname), "%s%s%s", geodim, "/", datadim);
 	    Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
 	    status = EHinsertmeta(sdInterfaceID, swathname, "s", 2L,
 				  mapname, &dum);
@@ -2709,14 +2709,14 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 
 	    /* Setup metadata string */
 	    /* --------------------- */
-	    sprintf(utlbuf, "%s%s%s", fieldname, ":", dimlist);
+	    snprintf(utlbuf, sizeof(utlbuf), "%s%s%s", fieldname, ":", dimlist);
 
 
 	    /* Setup compression metadata */
 	    /* -------------------------- */
 	    if (compcode != HDFE_COMP_NONE)
 	    {
-		sprintf(utlbuf2,
+		snprintf(utlbuf2, sizeof(utlbuf2),
 			"%s%s",
 			":\n\t\t\t\tCompressionType=", HDFcomp[compcode]);
 
@@ -2724,7 +2724,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 		{
 		case HDFE_COMP_NBIT:
 
-		    sprintf(compparmbuf,
+		    snprintf(compparmbuf, sizeof(compparmbuf),
 			    "%s%d,%d,%d,%d%s",
 			    "\n\t\t\t\tCompressionParams=(",
 			    SWXSwath[sID].compparm[0],
@@ -2737,7 +2737,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 
 		case HDFE_COMP_DEFLATE:
 
-		    sprintf(compparmbuf,
+		    snprintf(compparmbuf, sizeof(compparmbuf),
 			    "%s%d",
 			    "\n\t\t\t\tDeflateLevel=",
 			    SWXSwath[sID].compparm[0]);
@@ -2931,7 +2931,7 @@ SWwritegeometa(int32 swathID, char *fieldname, char *dimlist,
     {
 	/* Setup and write field metadata */
 	/* ------------------------------ */
-	sprintf(utlbuf, "%s%s%s", fieldname, ":", dimlist);
+	snprintf(utlbuf, sizeof(utlbuf), "%s%s%s", fieldname, ":", dimlist);
 
 	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
 	status = EHinsertmeta(sdInterfaceID, swathname, "s", 3L,
@@ -2996,7 +2996,7 @@ SWwritedatameta(int32 swathID, char *fieldname, char *dimlist,
     {
 	/* Setup and write field metadata */
 	/* ------------------------------ */
-	sprintf(utlbuf, "%s%s%s", fieldname, ":", dimlist);
+	snprintf(utlbuf, sizeof(utlbuf), "%s%s%s", fieldname, ":", dimlist);
 
 	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
 	status = EHinsertmeta(sdInterfaceID, swathname, "s", 4L,
@@ -4568,7 +4568,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 
 		/* Search for Merged field name */
 		/* ---------------------------- */
-		sprintf(utlstr, "%s%s%s", "MergedFieldName=\"",
+		snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "MergedFieldName=\"",
 			name, "\"\n");
 		metaptrs[0] = strstr(metaptrs[0], utlstr);
 
@@ -4577,7 +4577,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 		/* ----------------------------------- */
 		if (metaptrs[0] == NULL)
 		{
-		    sprintf(utlstr, "%s%s%s", "OBJECT=\"", name, "\"\n");
+		    snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "OBJECT=\"", name, "\"\n");
 		    metaptrs[0] = strstr(oldmetaptr, utlstr);
 		}
 
@@ -4588,7 +4588,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 		name[strlen(name) - 2] = 0;
 
 		/* Search for desired field within merged field list */
-		sprintf(utlstr, "%s%s%s", "\"", fieldname, "\"");
+		snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"");
 		dum = EHstrwithin(utlstr, name, ',');
 
 		free(metabuf);
@@ -10357,7 +10357,7 @@ SWdetach(int32 swathID)
 		     */
 		    if (k == 0 && cmbfldcnt > 0)
 		    {
-			sprintf(dimbuf2, "%s%s_%ld", "MRGDIM:",
+			snprintf(dimbuf2, sizeof(dimbuf2), "%s%s_%ld", "MRGDIM:",
 				swathname, (long)dims[0]);
 		    }
 		    else
@@ -11334,7 +11334,7 @@ SWgeomapinfo(int32 swathID, char *geodim)
 	    return(-1);
 	}
 	/* Search for mapping - GeoDim/DataDim (surrounded by quotes) */
-	sprintf(utlstrr, "%s%s%s", "\t\t\t\tGeoDimension=\"", geodim,
+	snprintf(utlstrr, UTLSTR_MAX_SIZE, "%s%s%s", "\t\t\t\tGeoDimension=\"", geodim,
 		"\"\n\t\t\t\tDataDimension=");
 	metaptrsr[0] = strstr(metaptrsr[0], utlstrr);
 	
@@ -11348,7 +11348,7 @@ SWgeomapinfo(int32 swathID, char *geodim)
 	    return(-1);
 	}
 	/* Search for mapping - GeoDim/DataDim (surrounded by quotes) */
-	sprintf(utlstri, "%s%s%s", "\t\t\t\tGeoDimension=\"", geodim,
+	snprintf(utlstri, UTLSTR_MAX_SIZE, "%s%s%s", "\t\t\t\tGeoDimension=\"", geodim,
 		"\"\n\t\t\t\tDataDimension=");
 	metaptrsi[0] = strstr(metaptrsi[0], utlstri);
 

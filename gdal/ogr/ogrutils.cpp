@@ -53,7 +53,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
     int i;
     int nTruncations = 0;
     char szFormat[16];
-    sprintf(szFormat, "%%.%d%c", nPrecision, chConversionSpecifier);
+    snprintf(szFormat, sizeof(szFormat), "%%.%d%c", nPrecision, chConversionSpecifier);
 
     int ret = CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
     /* Windows CRT doesn't conform with C99 and return -1 when buffer is truncated */
@@ -137,7 +137,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
             {
                 nPrecision --;
                 nTruncations ++;
-                sprintf(szFormat, "%%.%d%c", nPrecision, chConversionSpecifier);
+                snprintf(szFormat, sizeof(szFormat), "%%.%d%c", nPrecision, chConversionSpecifier);
                 CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
                 if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
                     return;
@@ -155,7 +155,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
             {
                 nPrecision --;
                 nTruncations ++;
-                sprintf(szFormat, "%%.%d%c", nPrecision, chConversionSpecifier);
+                snprintf(szFormat, sizeof(szFormat), "%%.%d%c", nPrecision, chConversionSpecifier);
                 CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
                 if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
                     return;

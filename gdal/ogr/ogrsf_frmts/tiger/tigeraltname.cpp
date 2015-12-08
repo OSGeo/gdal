@@ -162,7 +162,7 @@ OGRErr TigerAltName::CreateFeature( OGRFeature *poFeature )
     {
         char    szWork[9];
         
-        sprintf( szWork, "%8d", panValue[i] );
+        snprintf( szWork, sizeof(szWork), "%8d", panValue[i] );
         strncpy( szRecord + 18 + 8 * i, szWork, 8 );
     }
 

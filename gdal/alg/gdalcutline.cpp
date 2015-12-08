@@ -349,7 +349,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     char *apszOptions[] = { szDataPointer, NULL };
 
     memset( szDataPointer, 0, sizeof(szDataPointer) );
-    sprintf( szDataPointer, "DATAPOINTER=" );
+    snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
     CPLPrintPointer( szDataPointer+strlen(szDataPointer), 
                      pabyPolyMask, 
                      static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );

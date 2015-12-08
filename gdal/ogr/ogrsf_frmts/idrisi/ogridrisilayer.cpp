@@ -199,7 +199,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
     char szKey[32];
 
     iCurField = 0;
-    sprintf(szKey, "field %d ", iCurField);
+    snprintf(szKey, sizeof(szKey), "field %d ", iCurField);
 
     char** papszIter = papszADC;
     const char* pszLine;
@@ -236,7 +236,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
                 poFeatureDefn->AddFieldDefn( &oFieldDefn );
 
             iCurField ++;
-            sprintf(szKey, "field %d ", iCurField);
+            snprintf(szKey, sizeof(szKey), "field %d ", iCurField);
         }
 
         papszIter++;

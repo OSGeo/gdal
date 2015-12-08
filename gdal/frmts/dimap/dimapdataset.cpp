@@ -650,7 +650,7 @@ int DIMAPDataset::ReadImageInformation()
 
             nGCPCount++ ;
 
-            sprintf( szID, "%d", nGCPCount );
+            snprintf( szID, sizeof(szID), "%d", nGCPCount );
             psGCP->pszId = CPLStrdup( szID );
             psGCP->pszInfo = CPLStrdup("");
             psGCP->dfGCPPixel = 

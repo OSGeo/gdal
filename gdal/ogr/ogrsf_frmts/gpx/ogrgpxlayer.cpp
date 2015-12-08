@@ -211,15 +211,15 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
             for(int i=1;i<=nMaxLinks;i++)
             {
                 char szFieldName[32];
-                sprintf(szFieldName, "link%d_href", i);
+                snprintf(szFieldName, sizeof(szFieldName), "link%d_href", i);
                 OGRFieldDefn oFieldLinkHref( szFieldName, OFTString );
                 poFeatureDefn->AddFieldDefn( &oFieldLinkHref );
                 
-                sprintf(szFieldName, "link%d_text", i);
+                snprintf(szFieldName, sizeof(szFieldName), "link%d_text", i);
                 OGRFieldDefn oFieldLinkText( szFieldName, OFTString );
                 poFeatureDefn->AddFieldDefn( &oFieldLinkText );
                 
-                sprintf(szFieldName, "link%d_type", i);
+                snprintf(szFieldName, sizeof(szFieldName), "link%d_type", i);
                 OGRFieldDefn oFieldLinkType( szFieldName, OFTString );
                 poFeatureDefn->AddFieldDefn( &oFieldLinkType );
             }
@@ -276,15 +276,15 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         for(int i=1;i<=nMaxLinks;i++)
         {
             char szFieldName[32];
-            sprintf(szFieldName, "link%d_href", i);
+            snprintf(szFieldName, sizeof(szFieldName), "link%d_href", i);
             OGRFieldDefn oFieldLinkHref( szFieldName, OFTString );
             poFeatureDefn->AddFieldDefn( &oFieldLinkHref );
             
-            sprintf(szFieldName, "link%d_text", i);
+            snprintf(szFieldName, sizeof(szFieldName), "link%d_text", i);
             OGRFieldDefn oFieldLinkText( szFieldName, OFTString );
             poFeatureDefn->AddFieldDefn( &oFieldLinkText );
             
-            sprintf(szFieldName, "link%d_type", i);
+            snprintf(szFieldName, sizeof(szFieldName), "link%d_type", i);
             OGRFieldDefn oFieldLinkType( szFieldName, OFTString );
             poFeatureDefn->AddFieldDefn( &oFieldLinkType );
         }
@@ -688,7 +688,7 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                         strcmp(ppszAttr[0], "href") == 0)
                     {
                         char szFieldName[32];
-                        sprintf(szFieldName, "link%d_href", iCountLink);
+                        snprintf(szFieldName, sizeof(szFieldName), "link%d_href", iCountLink);
                         iCurrentField = poFeatureDefn->GetFieldIndex(szFieldName);
                         poFeature->SetField( iCurrentField, ppszAttr[1]);
                     }
@@ -743,13 +743,13 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             {
                 if (strcmp(pszName, "type") == 0)
                 {
-                    sprintf(szFieldName, "link%d_type", iCountLink);
+                    snprintf(szFieldName, sizeof(szFieldName), "link%d_type", iCountLink);
                     iCurrentField = poFeatureDefn->GetFieldIndex(szFieldName);
                     pszSubElementName = CPLStrdup(pszName);
                 }
                 else if (strcmp(pszName, "text") == 0)
                 {
-                    sprintf(szFieldName, "link%d_text", iCountLink);
+                    snprintf(szFieldName, sizeof(szFieldName), "link%d_text", iCountLink);
                     iCurrentField = poFeatureDefn->GetFieldIndex(szFieldName);
                     pszSubElementName = CPLStrdup(pszName);
                 }

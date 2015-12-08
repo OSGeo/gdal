@@ -2776,7 +2776,7 @@ static bool _FetchDblFromMD( char **papszMD, const char *pszKey,
 {
     char szFullKey[200];
 
-    sprintf( szFullKey, "%s", pszKey );
+    snprintf( szFullKey, sizeof(szFullKey), "%s", pszKey );
 
     const char *pszValue = CSLFetchNameValue( papszMD, szFullKey );
 

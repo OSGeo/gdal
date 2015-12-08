@@ -221,7 +221,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
         {
             CPLFree( psColDef->field_name );
             psColDef->field_name = (char *) CPLMalloc(40);
-            sprintf( psColDef->field_name, "FIELD_%d", poDefn->GetFieldCount()+1 );
+            snprintf( psColDef->field_name, 40, "FIELD_%d", poDefn->GetFieldCount()+1 );
         }
 
         if( psColDef->field_alias != NULL )

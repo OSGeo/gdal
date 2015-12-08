@@ -1316,7 +1316,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
             && sTABProj.adDatumParams[3] == 0.0
             && sTABProj.adDatumParams[4] == 0.0 )
         {
-            sprintf( szDatumName,
+            snprintf( szDatumName, sizeof(szDatumName), 
                      "MIF 999,%d,%.15g,%.15g,%.15g", 
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX, 
@@ -1325,7 +1325,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
         }
         else
         {
-            sprintf( szDatumName,
+            snprintf( szDatumName, sizeof(szDatumName), 
                      "MIF 9999,%d,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g",
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX, 
@@ -1383,7 +1383,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     }
     else
     {
-        sprintf( szDatumName, "MIF %d", psDatumInfo->nMapInfoDatumID );
+        snprintf( szDatumName, sizeof(szDatumName), "MIF %d", psDatumInfo->nMapInfoDatumID );
     }
 
     /*-----------------------------------------------------------------

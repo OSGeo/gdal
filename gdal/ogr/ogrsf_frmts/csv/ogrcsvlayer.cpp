@@ -566,7 +566,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                 break;
             }
             pszFieldName = szFieldNameBuffer;
-            sprintf( szFieldNameBuffer, "field_%d", iField+1 );
+            snprintf( szFieldNameBuffer, sizeof(szFieldNameBuffer), "field_%d", iField+1 );
         }
 
         OGRFieldDefn oField(pszFieldName, OFTString);

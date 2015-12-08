@@ -225,7 +225,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
                 if( EQUAL(papszRow[1],pszUserid) )
                     strcpy( szFullTableName, papszRow[0] );
                 else
-                    sprintf( szFullTableName, "%s.%s", 
+                    snprintf( szFullTableName, sizeof(szFullTableName), "%s.%s", 
                              papszRow[1], papszRow[0] );
 
                 if( CSLFindString( papszTableList, szFullTableName ) == -1 )
@@ -530,7 +530,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     if( CSLFetchNameValue( papszOptions, "SRID" ) != NULL )
         strcpy( szSRSId, CSLFetchNameValue( papszOptions, "SRID" ) );     
     else if( poSRS != NULL )
-        sprintf( szSRSId, "%d", FetchSRSId( poSRS ) );
+        snprintf( szSRSId, sizeof(szSRSId), "%d", FetchSRSId( poSRS ) );
     else
         strcpy( szSRSId, "NULL" );
 
@@ -560,14 +560,14 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     {
         if (eType == wkbNone)
         {
-            sprintf( szCommand,
+            snprintf( szCommand, sizeof(szCommand),
                      "CREATE TABLE \"%s\" ( "
                      "%s INTEGER PRIMARY KEY)",
                      pszSafeLayerName, pszExpectedFIDName);
         }
         else
         {
-            sprintf( szCommand,
+            snprintf( szCommand, sizeof(szCommand),
                      "CREATE TABLE \"%s\" ( "
                      "%s INTEGER PRIMARY KEY, "
                      "%s %s%s )",
@@ -775,7 +775,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
     OGROCIStatement oStatement( GetSession() );
     char            szSelect[200], **papszResult;
 
-    sprintf( szSelect, 
+    snprintf( szSelect, sizeof(szSelect),
              "SELECT WKTEXT, AUTH_SRID, AUTH_NAME FROM MDSYS.CS_SRS "
              "WHERE SRID = %d AND WKTEXT IS NOT NULL", nId );
 

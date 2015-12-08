@@ -791,7 +791,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (iPartialCell < 1)
            iPartialCell=1;
     }
-    sprintf(szPartialCell,"%02d",iPartialCell);
+    snprintf( szPartialCell, sizeof(szPartialCell), "%02d",iPartialCell);
     DTEDSetMetadata(psDTED, DTEDMD_PARTIALCELL_DSI, szPartialCell); 
 
 /* -------------------------------------------------------------------- */

@@ -323,14 +323,14 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
          * Lazy way to build the INFO path: simply add "../info/"...
          * this could probably be improved!
          *------------------------------------------------------------*/
-        psInfo->pszInfoPath = (char*)CPLMalloc((strlen(psInfo->pszCoverPath)+9)
-                                               *sizeof(char));
+        size_t nInfoPathLen = strlen(psInfo->pszCoverPath)+9;
+        psInfo->pszInfoPath = (char*)CPLMalloc(nInfoPathLen);
 #ifdef WIN32
 #  define AVC_INFOPATH "..\\info\\"
 #else
 #  define AVC_INFOPATH "../info/"
 #endif
-        sprintf(psInfo->pszInfoPath, "%s%s", psInfo->pszCoverPath, 
+        snprintf(psInfo->pszInfoPath, nInfoPathLen, "%s%s", psInfo->pszCoverPath, 
                                              AVC_INFOPATH);
 
         /*-------------------------------------------------------------
@@ -505,8 +505,8 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
      *----------------------------------------------------------------*/
     if (strlen(szOldExt) == 3)
     {
-        sprintf(szSysId, "%s#", szOldName);
-        sprintf(szUserId, "%s-ID", szOldName);
+        snprintf(szSysId, sizeof(szSysId), "%s#", szOldName);
+        snprintf(szUserId, sizeof(szUserId),"%s-ID", szOldName);
 
         for(i=0; i<psTableDef->numFields; i++)
         {
@@ -516,11 +516,15 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
 
             if (EQUAL(psTableDef->pasFieldDef[i].szName, szSysId))
             {
-                sprintf(psTableDef->pasFieldDef[i].szName, "%s#", szNewName);
+                snprintf(psTableDef->pasFieldDef[i].szName,
+                         sizeof(psTableDef->pasFieldDef[i].szName),
+                         "%s#", szNewName);
             }
             else if (EQUAL(psTableDef->pasFieldDef[i].szName, szUserId))
             {
-                sprintf(psTableDef->pasFieldDef[i].szName, "%s-ID", szNewName);
+                snprintf(psTableDef->pasFieldDef[i].szName,
+                         sizeof(psTableDef->pasFieldDef[i].szName),
+                         "%s-ID", szNewName);
             }
         }
     }
@@ -528,7 +532,8 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
     /*-----------------------------------------------------------------
      * Build new table name
      *----------------------------------------------------------------*/
-    sprintf(psTableDef->szTableName, "%s.%s", szNewName, szOldExt);
+    snprintf(psTableDef->szTableName,
+             sizeof(psTableDef->szTableName), "%s.%s", szNewName, szOldExt);
 
 }
 
@@ -602,7 +607,7 @@ int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
             CPLError(CE_Failure, CPLE_IllegalArg, 
                      "Invalid TX6/TX7 subclass name \"%s\"", pszLine);
         else
-            sprintf(szFname, "%s.txt", pszLine);
+            snprintf(szFname, sizeof(szFname), "%s.txt", pszLine);
         break;
       case AVCFileRPL:
       /* For RPL and RXP: the filename is region_name.pal or region_name.rxp
@@ -611,14 +616,14 @@ int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
             CPLError(CE_Failure, CPLE_IllegalArg, 
                      "Invalid RPL region name \"%s\"", pszLine);
         else
-            sprintf(szFname, "%s.pal", pszLine);
+            snprintf(szFname, sizeof(szFname), "%s.pal", pszLine);
         break;
       case AVCFileRXP:
         if (strlen(pszLine) > 30 || strchr(pszLine, ' ') != NULL)
             CPLError(CE_Failure, CPLE_IllegalArg, 
                      "Invalid RXP name \"%s\"", pszLine);
         else
-            sprintf(szFname, "%s.rxp", pszLine);
+            snprintf(szFname, sizeof(szFname), "%s.rxp", pszLine);
         break;
       case AVCFileTABLE:
         /*-------------------------------------------------------------

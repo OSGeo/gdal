@@ -295,7 +295,7 @@ bool WriteElement(string sSection, string sEntry,
         return false;
 
     char strdouble[45];
-    sprintf(strdouble, "%d", nValue);
+    snprintf(strdouble, sizeof(strdouble), "%d", nValue);
     string sValue = string(strdouble);
     return WriteElement(sSection, sEntry, fn, sValue) != 0;
 }
@@ -922,12 +922,12 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
     {
         if ( nBands > 1 )
         {
-            char pszBandName[100];
-            sprintf(pszBandName, "%s_band_%d", pszBaseName.c_str(),iBand + 1 );
-            pszODFName = string(pszBandName) + ".mpr";
-            pszDataBaseName = string(pszBandName);
-            sprintf(pszBandName, "Map%d", iBand);
-            WriteElement("MapList", string(pszBandName), string(pszFileName), pszODFName);
+            char szBandName[100];
+            snprintf(szBandName, sizeof(szBandName), "%s_band_%d", pszBaseName.c_str(),iBand + 1 );
+            pszODFName = string(szBandName) + ".mpr";
+            pszDataBaseName = string(szBandName);
+            snprintf(szBandName, sizeof(szBandName), "Map%d", iBand);
+            WriteElement("MapList", string(szBandName), string(pszFileName), pszODFName);
             pszODFName = CPLFormFilename(pszPath.c_str(),pszDataBaseName.c_str(),"mpr");
         }
 /* -------------------------------------------------------------------- */
@@ -1097,10 +1097,10 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
         else
         {
-            char pszName[100];
-            sprintf(pszName, "%s_band_%d", pszBaseName.c_str(),iBand + 1 );
-            pszODFName = string(CPLFormFilename(pszPath.c_str(),pszName,"mpr"));
-            pszDataBaseName = string(pszName);
+            char szName[100];
+            snprintf(szName, sizeof(szName), "%s_band_%d", pszBaseName.c_str(),iBand + 1 );
+            pszODFName = string(CPLFormFilename(pszPath.c_str(),szName,"mpr"));
+            pszDataBaseName = string(szName);
         }
 /* -------------------------------------------------------------------- */
 /*      Write data definition file for each band (.mpr)                 */
@@ -1117,7 +1117,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             // only write a range if we got a correct one from the source dataset (otherwise ILWIS can't show the map properly)
             char strdouble[45];
-            CPLsprintf(strdouble, "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
+            CPLsnprintf(strdouble, sizeof(strdouble), "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
             string range = string(strdouble);
             WriteElement("BaseMap", "Range", pszODFName, range);
         }
@@ -1236,7 +1236,7 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn )
     {
         //Form the band name
         char cBandName[45];
-        sprintf( cBandName, "Map%d", nBand-1);
+        snprintf( cBandName, sizeof(cBandName), "Map%d", nBand-1);
         sBandName = ReadElement("MapList", string(cBandName), string(poDSIn->osFileName));
         string sInputPath = string(CPLGetPath( poDSIn->osFileName));	
         string sBandPath = string(CPLGetPath( sBandName.c_str()));

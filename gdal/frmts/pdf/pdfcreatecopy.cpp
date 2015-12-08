@@ -3761,7 +3761,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
             poJPEGDriver = (GDALDriver*) GDALGetDriverByName("JPEG");
             if (poJPEGDriver != NULL && nJPEGQuality > 0)
                 papszOptions = CSLAddString(papszOptions, CPLSPrintf("QUALITY=%d", nJPEGQuality));
-            sprintf(szTmp, "/vsimem/pdftemp/%p.jpg", this);
+            snprintf(szTmp, sizeof(szTmp), "/vsimem/pdftemp/%p.jpg", this);
         }
         else
         {
@@ -3801,7 +3801,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                 if (pszJPEG2000_DRIVER == NULL || EQUAL(pszJPEG2000_DRIVER, "JPEG2000"))
                     poJPEGDriver = (GDALDriver*) GDALGetDriverByName("JPEG2000");
             }
-            sprintf(szTmp, "/vsimem/pdftemp/%p.jp2", this);
+            snprintf(szTmp, sizeof(szTmp), "/vsimem/pdftemp/%p.jp2", this);
         }
 
         if( poJPEGDriver == NULL )

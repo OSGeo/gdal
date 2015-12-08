@@ -77,13 +77,13 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
         {
             if (i < (int) (sizeof(iKnowHowToCount)/sizeof(iKnowHowToCount[0])) )
             {
-                sprintf(tmp, "%s ID", iKnowHowToCount[i]);
+                snprintf(tmp, sizeof(tmp), "%s ID", iKnowHowToCount[i]);
                 OGRFieldDefn oFieldID(tmp, OFTString );
                 poFeatureDefn->AddFieldDefn( &oFieldID );
             }
             else
             {
-                sprintf(tmp, "%dth ID", i+1);
+                snprintf(tmp, sizeof(tmp), "%dth ID", i+1);
                 OGRFieldDefn oFieldID(tmp, OFTString );
                 poFeatureDefn->AddFieldDefn( &oFieldID );
             }

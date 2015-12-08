@@ -464,14 +464,14 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
 
 		/* Establish Grid in Structural MetaData Block */
 		/* -------------------------------------------- */
-		sprintf(header, "%s%d%s%s%s%s%d%s%s%d%s",
+		snprintf(header, sizeof(header), "%s%d%s%s%s%s%d%s%s%d%s",
 			"\tGROUP=GRID_", (int)(nGrid + 1),
 			"\n\t\tGridName=\"", gridname, "\"\n",
 			"\t\tXDim=", (int)xdimsize, "\n",
 			"\t\tYDim=", (int)ydimsize, "\n");
 
 
-		sprintf(footer,
+		snprintf(footer, sizeof(footer), 
 			"%s%s%s%s%s%s%s%d%s",
 			"\t\tGROUP=Dimension\n",
 			"\t\tEND_GROUP=Dimension\n",
@@ -494,14 +494,14 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
 		}
 		else
 		{
-		    CPLsprintf(refstr1, "%s%f%s%f%s",
+		    CPLsnprintf(refstr1, sizeof(refstr1), "%s%f%s%f%s",
 			    "(", upleftpt[0], ",", upleftpt[1], ")");
 
-		    CPLsprintf(refstr2, "%s%f%s%f%s",
+		    CPLsnprintf(refstr2, sizeof(refstr2), "%s%f%s%f%s",
 			    "(", lowrightpt[0], ",", lowrightpt[1], ")");
 		}
 
-		sprintf(utlbuf,
+		snprintf(utlbuf, sizeof(utlbuf),
 			"%s%s%s%s%s%s%s%s",
 			header,
 			"\t\tUpperLeftPointMtrs=", refstr1, "\n",
@@ -1061,13 +1061,13 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 		    /* if projparm[i] is integer ... */
 		    if ((int32) projparm[i] == projparm[i])
 		    {
-			sprintf(utlbuf, "%d%s",
+			snprintf(utlbuf, sizeof(utlbuf), "%d%s",
 				(int) projparm[i], ",");
 		    }
 		    /* else projparm[i] is non-zero floating point ... */
 		    else
 		    {
-			CPLsprintf(utlbuf, "%f%s",	projparm[i], ",");
+			CPLsnprintf(utlbuf, sizeof(utlbuf), "%f%s",	projparm[i], ",");
 		    }
 		}
 		strcat(projparmbuf, utlbuf);
@@ -1091,13 +1091,13 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 	/* --------------------- */
 	if (projcode == GCTP_GEO)
 	{
-	    sprintf(utlbuf,
+	    snprintf(utlbuf, sizeof(utlbuf),
 		    "%s%s%s",
 		    "\t\tProjection=", Projections[projx].projname, "\n");
 	}
 	else if (projcode == GCTP_UTM || projcode == GCTP_SPCS)
 	{
-	    sprintf(utlbuf,
+	    snprintf(utlbuf, sizeof(utlbuf),
 		    "%s%s%s%s%d%s%s%d%s",
 		    "\t\tProjection=", Projections[projx].projname, "\n",
 		    "\t\tZoneCode=", (int)zonecode, "\n",
@@ -1105,7 +1105,7 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 	}
 	else
 	{
-	    sprintf(utlbuf,
+	    snprintf(utlbuf, sizeof(utlbuf),
 		    "%s%s%s%s%s%s%s%d%s",
 		    "\t\tProjection=", Projections[projx].projname, "\n",
 		    "\t\tProjParams=", projparmbuf, "\n",
@@ -1186,7 +1186,7 @@ GDblkSOMoffset(int32 gridID, float32 offset[], int32 count, char *code)
 	if (projcode == GCTP_SOM && projparm[11] != 0)
 	{
 	    Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
-	    sprintf(utlbuf, "%s%s", "_BLKSOM:", gridname);
+	    snprintf(utlbuf, sizeof(utlbuf),"%s%s", "_BLKSOM:", gridname);
 
 	    /* Write offset values as attribute */
 	    if (strcmp(code, "w") == 0)
@@ -1432,7 +1432,7 @@ GDdeforigin(int32 gridID, int32 origincode)
 	/* ------------------------------------------------------- */
 	if (origincode >= 0 && origincode < (int32)sizeof(originNames))
 	{
-	    sprintf(utlbuf, "%s%s%s",
+	    snprintf(utlbuf, sizeof(utlbuf),"%s%s%s",
 		    "\t\tGridOrigin=", originNames[origincode], "\n");
 
 	    Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
@@ -1504,7 +1504,7 @@ GDdefpixreg(int32 gridID, int32 pixregcode)
 	/* -------------------------------------------------------- */
 	if (pixregcode >= 0 && pixregcode < (int32)sizeof(pixregNames))
 	{
-	    sprintf(utlbuf, "%s%s%s",
+	    snprintf(utlbuf, sizeof(utlbuf),"%s%s%s",
 		    "\t\tPixelRegistration=", pixregNames[pixregcode], "\n");
 
 	    Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
@@ -1614,7 +1614,7 @@ GDdiminfo(int32 gridID, char *dimname)
 
 	/* Search for dimension name (surrounded by quotes) */
 	/* ------------------------------------------------ */
-	sprintf(utlstr, "%s%s%s", "\"", dimname, "\"\n");
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", dimname, "\"\n");
 	metaptrs[0] = strstr(metaptrs[0], utlstr);
 
 	/*
@@ -2381,7 +2381,7 @@ GDcompinfo(int32 gridID, char *fieldname, int32 * compcode, intn compparm[])
 
 
 	/* Search for field */
-	sprintf(utlstr, "%s%s%s", "\"", fieldname, "\"\n");
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"\n");
 	metaptrs[0] = strstr(metaptrs[0], utlstr);
 
 
@@ -2579,7 +2579,7 @@ GDfieldinfo(int32 gridID, char *fieldname, int32 * rank, int32 dims[],
 
 
 	/* Search for field */
-	sprintf(utlstr, "%s%s%s", "\"", fieldname, "\"\n");
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"\n");
 	metaptrs[0] = strstr(metaptrs[0], utlstr);
 
 	/* If field found ... */
@@ -3327,14 +3327,14 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 
 	    /* Setup metadata string */
 	    /* --------------------- */
-	    sprintf(utlbuf, "%s%s%s", fieldname, ":", dimlist0);
+	    snprintf(utlbuf, sizeof(utlbuf), "%s%s%s", fieldname, ":", dimlist0);
 
 
 	    /* Setup compression metadata */
 	    /* -------------------------- */
 	    if (compcode != HDFE_COMP_NONE)
 	    {
-		sprintf(utlbuf2,
+		snprintf(utlbuf2, sizeof(utlbuf2),
 			"%s%s",
 			":\n\t\t\t\tCompressionType=", HDFcomp[compcode]);
 
@@ -3342,7 +3342,7 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 		{
 		case HDFE_COMP_NBIT:
 
-		    sprintf(parmbuf,
+		    snprintf(parmbuf, sizeof(parmbuf),
 			    "%s%d,%d,%d,%d%s",
 			    "\n\t\t\t\tCompressionParams=(",
 			    GDXGrid[gID].compparm[0],
@@ -3355,7 +3355,7 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 
 		case HDFE_COMP_DEFLATE:
 
-		    sprintf(parmbuf,
+		    snprintf(parmbuf, sizeof(parmbuf),
 			    "%s%d",
 			    "\n\t\t\t\tDeflateLevel=",
 			    GDXGrid[gID].compparm[0]);
@@ -3374,20 +3374,20 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 	    {
 		if (compcode == HDFE_COMP_NONE)
 		{
-		    sprintf(utlbuf2, "%s%d",
+		    snprintf(utlbuf2, sizeof(utlbuf2), "%s%d",
 			    ":\n\t\t\t\tTilingDimensions=(",
 			    (int)GDXGrid[gID].tiledims[0]);
 		}
 		else
 		{
-		    sprintf(utlbuf2, "%s%d",
+		    snprintf(utlbuf2, sizeof(utlbuf2), "%s%d",
 			    "\n\t\t\t\tTilingDimensions=(",
 			    (int)GDXGrid[gID].tiledims[0]);
 		}
 
 		for (i = 1; i < GDXGrid[gID].tilerank; i++)
 		{
-		    sprintf(parmbuf, ",%d", (int)GDXGrid[gID].tiledims[i]);
+		    snprintf(parmbuf, sizeof(parmbuf), ",%d", (int)GDXGrid[gID].tiledims[i]);
 		    strcat(utlbuf2, parmbuf);
 		}
 		strcat(utlbuf2, ")");
@@ -3471,7 +3471,7 @@ GDwritefieldmeta(int32 gridID, char *fieldname, char *dimlist,
 
     if (status == 0)
     {
-	sprintf(utlbuf, "%s%s%s", fieldname, ":", dimlist);
+	snprintf(utlbuf, sizeof(utlbuf), "%s%s%s", fieldname, ":", dimlist);
 
 	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
 	status = EHinsertmeta(sdInterfaceID, gridname, "g", 4L,
@@ -3608,7 +3608,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 
 		/* Search for Merged field name */
 		/* ---------------------------- */
-		sprintf(utlstr, "%s%s%s", "MergedFieldName=\"",
+		snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "MergedFieldName=\"",
 			name, "\"\n");
 		metaptr = strstr(metaptr, utlstr);
 
@@ -3617,7 +3617,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 		/* ----------------------------------- */
 		if (metaptr == NULL)
 		{
-		    sprintf(utlstr, "%s%s%s", "OBJECT=\"", name, "\"\n");
+		    snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "OBJECT=\"", name, "\"\n");
 		    metaptr = strstr(oldmetaptr, utlstr);
 		}
 #endif
@@ -3631,7 +3631,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 
 		/* Search for desired field within merged field list */
 		/* ------------------------------------------------- */
-		sprintf(utlstr, "%s%s%s", "\"", fieldname, "\"");
+		snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"");
 		dum = EHstrwithin(utlstr, name, ',');
 
 		free(metabuf);
@@ -5524,7 +5524,7 @@ GDdetach(int32 gridID)
 
 		    if (k == 0 && rank > 2 && cmbfldcnt > 0)
 		    {
-			sprintf(dimbuf2, "%s%s_%d", "MRGDIM:",
+			snprintf(dimbuf2, sizeof(dimbuf2), "%s%s_%d", "MRGDIM:",
 				gridname, (int)dims[0]);
 		    }
 		    else
@@ -7762,7 +7762,7 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
         if (projcode == GCTP_SOM && projparm[11] != 0)
         {
             Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
-            sprintf(utlbuf, "%s%s", "_BLKSOM:", gridname);
+            snprintf(utlbuf, sizeof(utlbuf), "%s%s", "_BLKSOM:", gridname);
 	    status = GDreadattr(gridID, utlbuf, offset);
 
             somupleftpt[0] = upleftpt[0];
@@ -8336,7 +8336,7 @@ GDregioninfo(int32 gridID, int32 regionID, char *fieldname,
 	    {
 		status = -1;
 		HEpush(DFE_GENAPP, "GDregioninfo", __FILE__, __LINE__);
-		sprintf(errbuf, "%s%s", errM1, errM2);
+		snprintf(errbuf, sizeof(errbuf), "%s%s", errM1, errM2);
 		HEreport(errbuf, fieldname);
 	    }
 	}
@@ -8595,7 +8595,7 @@ GDextractregion(int32 gridID, int32 regionID, char *fieldname,
 	    {
 		status = -1;
 		HEpush(DFE_GENAPP, "GDextractregion", __FILE__, __LINE__);
-		sprintf(errbuf, "%s%s", errM1, errM2);
+		snprintf(errbuf, sizeof(errbuf), "%s%s", errM1, errM2);
 		HEreport(errbuf, fieldname);
 	    }
 	}

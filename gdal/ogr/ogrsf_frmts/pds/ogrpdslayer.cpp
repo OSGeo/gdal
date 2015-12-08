@@ -107,7 +107,7 @@ OGRPDSLayer::OGRPDSLayer(   CPLString osTableIDIn,
                 pszStr ++;
             }
             char szFieldName[32];
-            sprintf(szFieldName, "field_%d",
+            snprintf(szFieldName, sizeof(szFieldName), "field_%d",
                     poFeatureDefn->GetFieldCount() + 1);
             OGRFieldDefn oFieldDefn(szFieldName, eFieldType);
             poFeatureDefn->AddFieldDefn(&oFieldDefn);

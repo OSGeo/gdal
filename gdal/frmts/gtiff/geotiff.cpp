@@ -8635,7 +8635,7 @@ static void AppendMetadataItem( CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
 
     if( nBand > 0 )
     {
-        sprintf( szBandId, "%d", nBand - 1 );
+        snprintf( szBandId, sizeof(szBandId), "%d", nBand - 1 );
         CPLCreateXMLNode( CPLCreateXMLNode( psItem,CXT_Attribute,"sample"),
                           CXT_Text, szBandId );
     }
@@ -11203,7 +11203,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             {
                 char	szID[32];
 
-                sprintf( szID, "%d", iGCP+1 );
+                snprintf( szID, sizeof(szID), "%d", iGCP+1 );
                 pasGCPList[iGCP].pszId = CPLStrdup( szID );
                 pasGCPList[iGCP].pszInfo = CPLStrdup("");
                 pasGCPList[iGCP].dfGCPPixel = padfTiePoints[iGCP*6+0];
@@ -11267,7 +11267,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         {
             if( TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &nShort ) )
             {
-                sprintf( szWorkMDI, "%d", nShort );
+                snprintf( szWorkMDI, sizeof(szWorkMDI), "%d", nShort );
                 SetMetadataItem( asTIFFTags[iTag].pszTagName, szWorkMDI );
             }
         }
@@ -11276,13 +11276,13 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( TIFFGetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, &nShort ) )
     {
         if( nShort == RESUNIT_NONE )
-            sprintf( szWorkMDI, "%d (unitless)", nShort );
+            snprintf( szWorkMDI, sizeof(szWorkMDI), "%d (unitless)", nShort );
         else if( nShort == RESUNIT_INCH )
-            sprintf( szWorkMDI, "%d (pixels/inch)", nShort );
+            snprintf( szWorkMDI, sizeof(szWorkMDI), "%d (pixels/inch)", nShort );
         else if( nShort == RESUNIT_CENTIMETER )
-            sprintf( szWorkMDI, "%d (pixels/cm)", nShort );
+            snprintf( szWorkMDI, sizeof(szWorkMDI), "%d (pixels/cm)", nShort );
         else
-            sprintf( szWorkMDI, "%d", nShort );
+            snprintf( szWorkMDI, sizeof(szWorkMDI), "%d", nShort );
         SetMetadataItem( "TIFFTAG_RESOLUTIONUNIT", szWorkMDI );
     }
 
@@ -14963,7 +14963,7 @@ void GDALRegister_GTiff()
 /* -------------------------------------------------------------------- */
 /*      Build full creation option list.                                */
 /* -------------------------------------------------------------------- */
-        sprintf( szCreateOptions, "%s%s%s", 
+        snprintf( szCreateOptions, sizeof(szCreateOptions), "%s%s%s", 
 "<CreationOptionList>"
 "   <Option name='COMPRESS' type='string-select'>",
                  szOptionalCompressItems,

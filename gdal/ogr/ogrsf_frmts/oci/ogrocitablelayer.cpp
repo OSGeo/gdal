@@ -932,7 +932,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
-    sprintf( pszCommand, "INSERT INTO \"%s\"(\"", poFeatureDefn->GetName() );
+    snprintf( pszCommand, nCommandBufSize, "INSERT INTO \"%s\"(\"", poFeatureDefn->GetName() );
 
     if( poFeature->GetGeometryRef() != NULL )
     {
@@ -960,7 +960,8 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         else
             strcat( pszCommand, "\",\"" );
 
-        sprintf( pszCommand + strlen(pszCommand), "%s",
+        snprintf( pszCommand + strlen(pszCommand),
+                  nCommandBufSize - strlen(pszCommand), "%s",
                  poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
     }
 
@@ -981,19 +982,19 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         if( nSRID == -1 )
             strcpy( szSRID, "NULL" );
         else
-            sprintf( szSRID, "%d", nSRID );
+            snprintf( szSRID, sizeof(szSRID), "%d", nSRID );
 
         if( wkbFlatten(poGeometry->getGeometryType()) == wkbPoint )
         {
             OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
             if( nDimension == 2 )
-                CPLsprintf( szSDO_GEOMETRY,
+                CPLsnprintf( szSDO_GEOMETRY, sizeof(szSDO_GEOMETRY),
                          "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,0),NULL,NULL)",
                          SDO_GEOMETRY, 2001, szSRID, 
                          poPoint->getX(), poPoint->getY() );
             else
-                CPLsprintf( szSDO_GEOMETRY, 
+                CPLsnprintf( szSDO_GEOMETRY, sizeof(szSDO_GEOMETRY),
                          "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,%.16g),NULL,NULL)",
                          SDO_GEOMETRY, 3001, szSRID, 
                          poPoint->getX(), poPoint->getY(), poPoint->getZ() );
@@ -1004,11 +1005,11 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
 
             if( TranslateToSDOGeometry( poFeature->GetGeometryRef(), &nGType )
                 == OGRERR_NONE )
-                sprintf( szSDO_GEOMETRY, 
+                CPLsnprintf( szSDO_GEOMETRY, sizeof(szSDO_GEOMETRY),
                          "%s(%d,%s,NULL,:elem_info,:ordinates)", 
                          SDO_GEOMETRY, nGType, szSRID );
             else
-                sprintf( szSDO_GEOMETRY, "NULL" );
+                CPLsnprintf( szSDO_GEOMETRY, sizeof(szSDO_GEOMETRY),"NULL" );
         }
 
         if( strlen(pszCommand) + strlen(szSDO_GEOMETRY) 
@@ -1047,7 +1048,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
             nFID = iNextFIDToWrite++;
             poFeature->SetFID( nFID );
         }
-        sprintf( pszCommand+nOffset, CPL_FRMT_GIB, nFID );
+        snprintf( pszCommand+nOffset, nCommandBufSize - nOffset, CPL_FRMT_GIB, nFID );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1424,7 +1425,7 @@ GIntBig OGROCITableLayer::GetFeatureCount( int bForce )
     char               szCommand[1024];
     char               **papszResult;
 
-    sprintf( szCommand, "SELECT COUNT(*) FROM %s %s", 
+    snprintf( szCommand, sizeof(szCommand), "SELECT COUNT(*) FROM %s %s", 
              poFeatureDefn->GetName(), pszWHERE );
 
     oGetCount.Execute( szCommand );
@@ -1754,7 +1755,7 @@ int OGROCITableLayer::AllocAndBindForWrite()
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(i);
         char szFieldPlaceholderName[80];
 
-        sprintf( szFieldPlaceholderName, ":field_%d", i );
+        snprintf( szFieldPlaceholderName, sizeof(szFieldPlaceholderName), ":field_%d", i );
 
         papaeWriteFieldInd[i] = (OCIInd *) 
             CPLCalloc(sizeof(OCIInd), nWriteCacheMax );
@@ -2129,9 +2130,9 @@ void OGROCITableLayer::CreateSpatialIndex()
         char  szIndexName[20];
 
         if( strlen(poFeatureDefn->GetName()) < 15 )
-            sprintf( szIndexName, "%s_idx", poFeatureDefn->GetName() );
+            snprintf( szIndexName, sizeof(szIndexName), "%s_idx", poFeatureDefn->GetName() );
         else if( strlen(poFeatureDefn->GetName()) < 17 )
-            sprintf( szIndexName, "%si", poFeatureDefn->GetName() );
+            snprintf( szIndexName, sizeof(szIndexName), "%si", poFeatureDefn->GetName() );
         else
         {
             int i, nHash = 0;
@@ -2140,7 +2141,7 @@ void OGROCITableLayer::CreateSpatialIndex()
             for( i = 0; pszSrcName[i] != '\0'; i++ )
                 nHash = (nHash + i * pszSrcName[i]) % 987651;
 
-            sprintf( szIndexName, "OSI_%d", nHash );
+            snprintf( szIndexName, sizeof(szIndexName), "OSI_%d", nHash );
         }
 
         poDS->GetSession()->CleanName( szIndexName );

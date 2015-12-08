@@ -764,14 +764,18 @@ void GDALDriverManager::AutoLoadDrivers()
             if( STARTS_WITH_CI(papszFiles[iFile], "gdal_") )
             {
                 pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
-                sprintf( pszFuncName, "GDALRegister_%s", 
-                     CPLGetBasename(papszFiles[iFile]) + strlen("gdal_") );
+                snprintf( pszFuncName,
+                          strlen(papszFiles[iFile])+20,
+                          "GDALRegister_%s", 
+                        CPLGetBasename(papszFiles[iFile]) + strlen("gdal_") );
             }
             else if ( STARTS_WITH_CI(papszFiles[iFile], "ogr_") )
             {
                 pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
-                sprintf( pszFuncName, "RegisterOGR%s", 
-                     CPLGetBasename(papszFiles[iFile]) + strlen("ogr_") );
+                snprintf( pszFuncName,
+                         strlen(papszFiles[iFile])+20,
+                         "RegisterOGR%s", 
+                         CPLGetBasename(papszFiles[iFile]) + strlen("ogr_") );
             }
             else
                 continue;

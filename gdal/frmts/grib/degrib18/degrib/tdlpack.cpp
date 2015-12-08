@@ -336,43 +336,43 @@ void PrintPDS_TDLP (pdsTDLPType * pds)
 
    Print ("PDS-TDLP", "Reference Time", Prt_S, buffer);
    Print ("PDS-TDLP", "Plain Language", Prt_S, pds->Descriptor);
-   sprintf (buffer, "%09d", pds->ID1);
+   snprintf(buffer, sizeof(buffer), "%09d", pds->ID1);
    Print ("PDS-TDLP", "ID 1", Prt_S, buffer);
-   sprintf (buffer, "%09d", pds->ID2);
+   snprintf(buffer, sizeof(buffer), "%09d", pds->ID2);
    Print ("PDS-TDLP", "ID 2", Prt_S, buffer);
-   sprintf (buffer, "%09d", pds->ID3);
+   snprintf(buffer, sizeof(buffer), "%09d", pds->ID3);
    Print ("PDS-TDLP", "ID 3", Prt_S, buffer);
    Print ("PDS-TDLP", "ID 4", Prt_D, pds->ID4);
    Print ("PDS-TDLP", "Model or Process Number", Prt_D, pds->procNum);
    Print ("PDS-TDLP", "Sequence Number", Prt_D, pds->seqNum);
 
-   sprintf (buffer, "%03d", pds->CCC);
+   snprintf(buffer, sizeof(buffer), "%03d", pds->CCC);
    Print ("PDS-TDLP", "ID1-CCC", Prt_S, buffer);
-   sprintf (buffer, "%03d", pds->FFF);
+   snprintf(buffer, sizeof(buffer), "%03d", pds->FFF);
    Print ("PDS-TDLP", "ID1-FFF", Prt_S, buffer);
    Print ("PDS-TDLP", "ID1-B", Prt_DS, pds->B,
           TDLP_TableLookUp (TDLP_B_Table, sizeof (TDLP_B_Table), pds->B));
-   sprintf (buffer, "%02d", pds->DD);
+   snprintf(buffer, sizeof(buffer), "%02d", pds->DD);
    Print ("PDS-TDLP", "ID1-DD", Prt_SS, buffer,
           TDLP_TableLookUp (TDLP_DD_Table, sizeof (TDLP_DD_Table), pds->DD));
 
    Print ("PDS-TDLP", "ID2-V", Prt_DS, pds->V,
           TDLP_TableLookUp (TDLP_V_Table, sizeof (TDLP_V_Table), pds->V));
-   sprintf (buffer, "%04d", pds->LLLL);
+   snprintf(buffer, sizeof(buffer), "%04d", pds->LLLL);
    Print ("PDS-TDLP", "ID2-LLLL", Prt_S, buffer);
-   sprintf (buffer, "%04d", pds->UUUU);
+   snprintf(buffer, sizeof(buffer), "%04d", pds->UUUU);
    Print ("PDS-TDLP", "ID2-UUUU", Prt_S, buffer);
 
    if (pds->Oper != 0) {
       Print ("PDS-TDLP", "ID3-T", Prt_DS, pds->T,
              TDLP_TableLookUp (TDLP_T_Table, sizeof (TDLP_T_Table), pds->T));
-      sprintf (buffer, "%02d", pds->RR);
+      snprintf(buffer, sizeof(buffer), "%02d", pds->RR);
       Print ("PDS-TDLP", "ID3-RR", Prt_SS, buffer,
              "Run time offset in hours");
       Print ("PDS-TDLP", "ID3-Oper", Prt_DS, pds->Oper,
              TDLP_TableLookUp (TDLP_Oper_Table, sizeof (TDLP_Oper_Table),
                                pds->Oper));
-      sprintf (buffer, "%02d", pds->HH);
+      snprintf(buffer, sizeof(buffer), "%02d", pds->HH);
       Print ("PDS-TDLP", "ID3-HH", Prt_SS, buffer,
              "Number of hours between variables");
    } else {
@@ -380,7 +380,7 @@ void PrintPDS_TDLP (pdsTDLPType * pds)
              TDLP_TableLookUp (TDLP_Oper_Table, sizeof (TDLP_Oper_Table),
                                pds->Oper));
    }
-   sprintf (buffer, "%03d", pds->ttt);
+   snprintf(buffer, sizeof(buffer), "%03d", pds->ttt);
    Print ("PDS-TDLP", "ID3-ttt", Prt_SS, buffer, "Forecast Projection");
 
    Print ("PDS-TDLP", "ID4-thresh", Prt_F, pds->thresh);

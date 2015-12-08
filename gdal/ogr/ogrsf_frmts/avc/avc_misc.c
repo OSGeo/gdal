@@ -208,9 +208,9 @@ GBool AVCFileExists(const char *pszPath, const char *pszName)
     GBool       bFileExists = FALSE;
     FILE        *fp;
 
-    pszBuf = (char*)CPLMalloc((strlen(pszPath)+strlen(pszName)+1)*
-                              sizeof(char));
-    sprintf(pszBuf, "%s%s", pszPath, pszName);
+    pszBuf = (char*)CPLMalloc(strlen(pszPath)+strlen(pszName)+1);
+    snprintf(pszBuf,
+             strlen(pszPath)+strlen(pszName)+1, "%s%s", pszPath, pszName);
 
     AVCAdjustCaseSensitiveFilename(pszBuf);
 
@@ -418,7 +418,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
  *
  * The function returns the number of characters added to the buffer.
  **********************************************************************/
-int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
+int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType eType,
                         double dValue)
 {
     static int numExpDigits=-1;
@@ -435,7 +435,7 @@ int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
         char szBuf[50];
         int  i;
 
-        sprintf(szBuf, "%10.7E", 123.45);
+        CPLsnprintf(szBuf, sizeof(szBuf), "%10.7E", 123.45);
         numExpDigits = 0;
         for(i=(int)strlen(szBuf)-1; i>0; i--)
         {
@@ -447,6 +447,7 @@ int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
 
     /* We will append the value at the end of the current buffer contents.
      */
+    nBufLen -= strlen(pszBuf);
     pszBuf = pszBuf+strlen(pszBuf);
 
     if (dValue < 0.0)
@@ -465,22 +466,22 @@ int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
     if (nPrecision == AVC_FORMAT_DBF_FLOAT)
     {
         /* Float stored in DBF table in PC coverages */
-        sprintf(pszBuf+1, "%9.6E", dValue);
+        CPLsnprintf(pszBuf+1, nBufLen-1, "%9.6E", dValue);
         nLen = 13;
     }
     else if (nPrecision == AVC_DOUBLE_PREC && eType == AVCFileTABLE)
     {
-        sprintf(pszBuf+1, "%20.17E", dValue);
+        CPLsnprintf(pszBuf+1, nBufLen-1,"%20.17E", dValue);
         nLen = 24;
     }
     else if (nPrecision == AVC_DOUBLE_PREC)
     {
-        sprintf(pszBuf+1, "%17.14E", dValue);
+        CPLsnprintf(pszBuf+1, nBufLen-1,"%17.14E", dValue);
         nLen = 21;
     }
     else 
     {
-        sprintf(pszBuf+1, "%10.7E", dValue);
+        CPLsnprintf(pszBuf+1, nBufLen-1,"%10.7E", dValue);
         nLen = 14;
     }
 

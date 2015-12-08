@@ -135,11 +135,11 @@ static void addURN( CPLXMLNode *psTarget,
     char szURN[200];
     CPLAssert( strlen(pszAuthority)+strlen(pszObjectType) < sizeof(szURN)-30 );
 
-    sprintf( szURN, "urn:ogc:def:%s:%s:%s:", 
+    snprintf( szURN, sizeof(szURN), "urn:ogc:def:%s:%s:%s:", 
              pszObjectType, pszAuthority, pszVersion );
 
     if( nCode != 0 )
-        sprintf( szURN + strlen(szURN), "%d", nCode );
+        snprintf( szURN + strlen(szURN), sizeof(szURN) - strlen(szURN), "%d", nCode );
 
     CPLCreateXMLNode(
         CPLCreateXMLNode( psTarget, CXT_Attribute, "xlink:href" ),
@@ -194,7 +194,7 @@ static CPLXMLNode *addAuthorityIDBlock( CPLXMLNode *psTarget,
     char szURN[200];
     CPLAssert( strlen(pszAuthority)+strlen(pszObjectType) < sizeof(szURN)-30 );
 
-    sprintf( szURN, "urn:ogc:def:%s:%s:%s:", 
+    snprintf( szURN, sizeof(szURN), "urn:ogc:def:%s:%s:%s:", 
              pszObjectType, pszAuthority, pszVersion );
 
 /* -------------------------------------------------------------------- */
@@ -220,7 +220,7 @@ static CPLXMLNode *addAuthorityIDBlock( CPLXMLNode *psTarget,
 /*      Attach code value to name node.                                 */
 /* -------------------------------------------------------------------- */
     char szCode[32];
-    sprintf( szCode, "%d", nCode );
+    snprintf( szCode, sizeof(szCode), "%d", nCode );
 
     CPLCreateXMLNode( psName, CXT_Text, szCode );
 
@@ -240,7 +240,7 @@ static void addGMLId( CPLXMLNode *psParent )
     static int nNextGMLId = 1;
     char   szIdText[40];
 
-    sprintf( szIdText, "ogrcrs%d", nNextGMLId++ );
+    snprintf( szIdText, sizeof(szIdText), "ogrcrs%d", nNextGMLId++ );
 
     /* psId =  */
     CPLCreateXMLNode(

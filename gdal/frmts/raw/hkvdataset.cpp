@@ -915,14 +915,14 @@ void HKVDataset::ProcessGeorefGCP( char **papszGeorefIn, const char *pszBase,
 /*      Fetch the GCP from the string list.                             */
 /* -------------------------------------------------------------------- */
     char szFieldName[128];
-    sprintf( szFieldName, "%s.latitude", pszBase );
+    snprintf( szFieldName, sizeof(szFieldName), "%s.latitude", pszBase );
     double dfLat;
     if( CSLFetchNameValue(papszGeorefIn, szFieldName) == NULL )
         return;
     else
         dfLat = CPLAtof(CSLFetchNameValue(papszGeorefIn, szFieldName));
 
-    sprintf( szFieldName, "%s.longitude", pszBase );
+    snprintf( szFieldName, sizeof(szFieldName), "%s.longitude", pszBase );
     double dfLong;
     if( CSLFetchNameValue(papszGeorefIn, szFieldName) == NULL )
         return;
@@ -1427,10 +1427,11 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Build the overview filename, as blob file = "_ovr".             */
 /* -------------------------------------------------------------------- */
+    const size_t nOvrFilenameLen = strlen( pszFilename ) + 5;
     char *pszOvrFilename = reinterpret_cast<char *>(
-        CPLMalloc( strlen( pszFilename ) + 5 ) );
+        CPLMalloc( nOvrFilenameLen ) );
 
-    sprintf( pszOvrFilename, "%s_ovr", pszFilename );
+    snprintf( pszOvrFilename, nOvrFilenameLen, "%s_ovr", pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Define the bands.                                               */

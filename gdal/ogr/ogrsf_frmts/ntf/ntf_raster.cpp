@@ -237,7 +237,7 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
 {
     char        szLayerName[128];
 
-    sprintf( szLayerName, "DTM_%s", poReaderIn->GetTileName() );
+    snprintf( szLayerName, sizeof(szLayerName), "DTM_%s", poReaderIn->GetTileName() );
     poFeatureDefn = new OGRFeatureDefn( szLayerName );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint25D );

@@ -159,7 +159,7 @@ size_t CPL_DLL CPLStrnlen (const char *pszStr, size_t nMaxLen);
 /* -------------------------------------------------------------------- */
 int CPL_DLL CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args) CPL_PRINT_FUNC_FORMAT (3, 0);
 int CPL_DLL CPLsnprintf(char *str, size_t size, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(3,4);
-int CPL_DLL CPLsprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3);
+int CPL_DLL CPLsprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED_IF_GDAL_COMPILATION("Use CPLsnprintf instead");
 int CPL_DLL CPLprintf(const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(1, 2);
 int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...) CPL_SCAN_FUNC_FORMAT(2, 3); /* caution: only works with limited number of formats */
 

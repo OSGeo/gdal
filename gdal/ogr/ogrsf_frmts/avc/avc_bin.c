@@ -216,9 +216,9 @@ AVCBinFile *AVCBinReadOpen(const char *pszPath, const char *pszName,
     psFile->eFileType = eFileType;
     psFile->eCoverType = eCoverType;
 
-    psFile->pszFilename = (char*)CPLMalloc((strlen(pszPath)+strlen(pszName)+1)*
-                                           sizeof(char));
-    sprintf(psFile->pszFilename, "%s%s", pszPath, pszName);
+    psFile->pszFilename = (char*)CPLMalloc(strlen(pszPath)+strlen(pszName)+1);
+    snprintf(psFile->pszFilename,
+             strlen(pszPath)+strlen(pszName)+1, "%s%s", pszPath, pszName);
 
     AVCAdjustCaseSensitiveFilename(psFile->pszFilename);
 
@@ -1222,9 +1222,8 @@ AVCBinFile *_AVCBinReadOpenPrj(const char *pszPath, const char *pszName)
     /*-----------------------------------------------------------------
      * Load the PRJ file contents into a stringlist.
      *----------------------------------------------------------------*/
-    pszFname = (char*)CPLMalloc((strlen(pszPath)+strlen(pszName)+1)*
-                                sizeof(char));
-    sprintf(pszFname, "%s%s", pszPath, pszName);
+    pszFname = (char*)CPLMalloc(strlen(pszPath)+strlen(pszName)+1);
+    snprintf(pszFname, strlen(pszPath)+strlen(pszName)+1, "%s%s", pszPath, pszName);
 
     papszPrj = CSLLoad(pszFname);
 
@@ -1743,25 +1742,32 @@ GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
                                  const char *pszBasename,
                                  const char *pszDatOrNit,
                                  AVCCoverType eCoverType,
-                                 char *pszRetFname)
+                                 char *pszRetFname,
+                                 size_t nRetFnameLen)
 {
     GBool       bFilesExist = FALSE;
     char        *pszBuf = NULL;
     VSIStatBuf  sStatBuf;
+    size_t      nBufLen;
 
     if (pszRetFname)
-        pszBuf = pszRetFname;
-    else
-        pszBuf = (char*)CPLMalloc((strlen(pszInfoPath)+strlen(pszBasename)+10)*
-                                  sizeof(char));
-
-    if (eCoverType == AVCCoverWeird)
     {
-        sprintf(pszBuf, "%s%s%s", pszInfoPath, pszBasename, pszDatOrNit);
+        pszBuf = pszRetFname;
+        nBufLen = nRetFnameLen;
     }
     else
     {
-        sprintf(pszBuf, "%s%s.%s", pszInfoPath, pszBasename, pszDatOrNit);
+        nBufLen = strlen(pszInfoPath)+strlen(pszBasename)+10;
+        pszBuf = (char*)CPLMalloc(nBufLen);
+    }
+
+    if (eCoverType == AVCCoverWeird)
+    {
+        snprintf(pszBuf, nBufLen, "%s%s%s", pszInfoPath, pszBasename, pszDatOrNit);
+    }
+    else
+    {
+        snprintf(pszBuf, nBufLen, "%s%s.%s", pszInfoPath, pszBasename, pszDatOrNit);
     }
 
     AVCAdjustCaseSensitiveFilename(pszBuf);
@@ -1805,9 +1811,9 @@ GBool _AVCBinReadInfoFileExists(const char *pszInfoPath,
 {
 
     return (_AVCBinReadGetInfoFilename(pszInfoPath, pszBasename, 
-                                       "dat", eCoverType, NULL) == TRUE &&
+                                       "dat", eCoverType, NULL, 0) == TRUE &&
             _AVCBinReadGetInfoFilename(pszInfoPath, pszBasename, 
-                                       "nit", eCoverType, NULL) == TRUE);
+                                       "nit", eCoverType, NULL, 0) == TRUE);
 
 }
 
@@ -1857,7 +1863,7 @@ char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
      * letters extension.
      *----------------------------------------------------------------*/
     if (pszCoverName != NULL)
-        sprintf(szNameToFind, "%-.28s.", pszCoverName);
+        snprintf(szNameToFind, sizeof(szNameToFind), "%-.28s.", pszCoverName);
     nLen = (int)strlen(szNameToFind);
 
     /*----------------------------------------------------------------- 
@@ -1865,11 +1871,11 @@ char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
      * to our list.
      * In AVCCoverWeird, the file is called "arcdr9"
      *----------------------------------------------------------------*/
-    pszFname = (char*)CPLMalloc((strlen(pszInfoPath)+9)*sizeof(char));
+    pszFname = (char*)CPLMalloc(strlen(pszInfoPath)+9);
     if (eCoverType == AVCCoverWeird)
-        sprintf(pszFname, "%sarcdr9", pszInfoPath);
+        snprintf(pszFname, strlen(pszInfoPath)+9, "%sarcdr9", pszInfoPath);
     else
-        sprintf(pszFname, "%sarc.dir", pszInfoPath);
+        snprintf(pszFname, strlen(pszInfoPath)+9, "%sarc.dir", pszInfoPath);
 
     AVCAdjustCaseSensitiveFilename(pszFname);
 
@@ -1932,20 +1938,22 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     char          *pszFname;
     GBool          bFound;
     int            i;
+    size_t         nFnameLen;
 
     sTableDef.pasFieldDef = NULL;
 
     /* Alloc a buffer big enough for the longest possible filename...
      */
-    pszFname = (char*)CPLMalloc((strlen(pszInfoPath)+81)*sizeof(char));
+    nFnameLen = strlen(pszInfoPath)+81;
+    pszFname = (char*)CPLMalloc(nFnameLen);
 
     /*-----------------------------------------------------------------
      * Fetch info about this table from the "arc.dir"
      *----------------------------------------------------------------*/
     if (eCoverType == AVCCoverWeird)
-        sprintf(pszFname, "%sarcdr9", pszInfoPath);
+        snprintf(pszFname, nFnameLen, "%sarcdr9", pszInfoPath);
     else
-        sprintf(pszFname, "%sarc.dir", pszInfoPath);
+        snprintf(pszFname, nFnameLen, "%sarc.dir", pszInfoPath);
 
     AVCAdjustCaseSensitiveFilename(pszFname);
 
@@ -1990,7 +1998,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
          * Read the path to the data file from the arc####.dat file
          *------------------------------------------------------------*/
         _AVCBinReadGetInfoFilename(pszInfoPath, sTableDef.szInfoFile,
-                                   "dat", eCoverType, pszFname);
+                                   "dat", eCoverType, pszFname, nFnameLen);
         AVCAdjustCaseSensitiveFilename(pszFname);
     
         hFile = AVCRawBinOpen(pszFname, "r", AVC_COVER_BYTE_ORDER(eCoverType),
@@ -2028,7 +2036,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
          * Note: sTableDef.szDataFile must be relative to info directory
          *------------------------------------------------------------*/
         _AVCBinReadGetInfoFilename(pszInfoPath, sTableDef.szInfoFile,
-                                   "dat", eCoverType, pszFname);
+                                   "dat", eCoverType, pszFname, nFnameLen);
         snprintf(sTableDef.szDataFile, sizeof(sTableDef.szDataFile), "%s", pszFname+strlen(pszInfoPath));
    }
 
@@ -2036,7 +2044,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
      * Read the table field definitions from the "arc####.nit" file.
      *----------------------------------------------------------------*/
     _AVCBinReadGetInfoFilename(pszInfoPath, sTableDef.szInfoFile,
-                               "nit", eCoverType, pszFname);
+                               "nit", eCoverType, pszFname, nFnameLen);
     AVCAdjustCaseSensitiveFilename(pszFname);
 
     hFile = AVCRawBinOpen(pszFname, "r", AVC_COVER_BYTE_ORDER(eCoverType),
@@ -2102,7 +2110,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     {
         VSIStatBuf      sStatBuf;
 
-        sprintf(pszFname, "%s%s", pszInfoPath, sTableDef.szDataFile);
+        snprintf(pszFname, nFnameLen, "%s%s", pszInfoPath, sTableDef.szDataFile);
         AVCAdjustCaseSensitiveFilename(pszFname);
 
         hFile = AVCRawBinOpen(pszFname, "r", AVC_COVER_BYTE_ORDER(eCoverType),
@@ -2352,7 +2360,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
     psTableDef = (AVCTableDef*)CPLCalloc(1, sizeof(AVCTableDef));
     psFile->hdr.psTableDef = psTableDef;
 
-    sprintf(psTableDef->szTableName, "%-32.32s", pszArcInfoTableName);
+    snprintf(psTableDef->szTableName, sizeof(psTableDef->szTableName), "%-32.32s", pszArcInfoTableName);
 
     psTableDef->numFields = (GInt16)DBFGetFieldCount(hDBFFile);
 

@@ -489,9 +489,9 @@ static void WriteRightJustified(VSILFILE* fp, double dfValue, int nWidth,
 {
     char szFormat[32];
     if (nDecimals >= 0)
-        sprintf(szFormat, "%%.%df", nDecimals);
+        snprintf(szFormat, sizeof(szFormat), "%%.%df", nDecimals);
     else
-        sprintf(szFormat, "%%g");
+        snprintf(szFormat, sizeof(szFormat), "%%g");
     char* pszValue = const_cast<char *>( CPLSPrintf(szFormat, dfValue) );
     char* pszE = strchr(pszValue, 'e');
     if (pszE)
@@ -499,7 +499,7 @@ static void WriteRightJustified(VSILFILE* fp, double dfValue, int nWidth,
 
     if( static_cast<int>( strlen(pszValue) ) > nWidth)
     {
-        sprintf(szFormat, "%%.%dg", nDecimals);
+        snprintf(szFormat, sizeof(szFormat), "%%.%dg", nDecimals);
         pszValue = const_cast<char *>( CPLSPrintf(szFormat, dfValue) );
         pszE = strchr(pszValue, 'e');
         if (pszE)

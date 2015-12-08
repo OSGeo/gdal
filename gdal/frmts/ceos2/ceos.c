@@ -261,22 +261,22 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
     case 'i':
     case 'I':
 	/* Integer data type */
-	sprintf( printf_format,"%%%s%c",format+1, 'd');
-	sprintf( temp_buf, printf_format, *(int *) value);
+	snprintf( printf_format, sizeof(printf_format), "%%%s%c",format+1, 'd');
+	snprintf( temp_buf, field_size+1, printf_format, *(int *) value);
 	break;
 
     case 'f':
     case 'F':
 	/* Double precision floating point data type */
-	sprintf(printf_format, "%%%s%c", format+1, 'g');
-	sprintf(temp_buf, printf_format, *(double *)value);
+	snprintf( printf_format, sizeof(printf_format), "%%%s%c", format+1, 'g');
+	snprintf( temp_buf, field_size+1, printf_format, *(double *)value);
 	break;
 
     case 'e':
     case 'E':
 	/* Double precision floating point data type (forced exponent) */
-	sprintf(printf_format,"%%%s%c", format+1, 'e');
-	sprintf(temp_buf, printf_format, *(double *)value);
+	snprintf( printf_format, sizeof(printf_format), "%%%s%c", format+1, 'e');
+	snprintf( temp_buf, field_size+1, printf_format, *(double *)value);
 	break;
 
     case 'a':
@@ -301,7 +301,7 @@ void SetIntCeosField(CeosRecord_t *record, int32 start_byte, int32 length, int32
     int integer_value = value;
     char total_len[12];   /* 12 because 2^32 -> 4294967296 + I + null */
 
-    sprintf(total_len,"I%d",length);
+    snprintf(total_len,sizeof(total_len),"I%d",length);
     SetCeosField(record,start_byte,total_len,&integer_value);
 }
 

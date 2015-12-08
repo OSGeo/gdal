@@ -411,7 +411,7 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData)
 
     OGRSQLiteVFSAppDataStruct* pVFSAppData =
         (OGRSQLiteVFSAppDataStruct*) CPLCalloc(1, sizeof(OGRSQLiteVFSAppDataStruct));
-    sprintf(pVFSAppData->szVFSName, "OGRSQLITEVFS_%p", pVFSAppData);
+    snprintf(pVFSAppData->szVFSName, sizeof(pVFSAppData->szVFSName), "OGRSQLITEVFS_%p", pVFSAppData);
     pVFSAppData->pDefaultVFS = pDefaultVFS;
     pVFSAppData->pfn = pfn;
     pVFSAppData->pfnUserData = pfnUserData;

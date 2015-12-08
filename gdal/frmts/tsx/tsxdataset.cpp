@@ -397,7 +397,7 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
          nGCPCount++ ;
 
          char szID[32];
-         sprintf( szID, "%d", nGCPCount );
+         snprintf( szID, sizeof(szID), "%d", nGCPCount );
          psGCP->pszId = CPLStrdup( szID );
          psGCP->pszInfo = CPLStrdup("");
          psGCP->dfGCPPixel = CPLAtof(CPLGetXMLValue(psNode,"col","0"));

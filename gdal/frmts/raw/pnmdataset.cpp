@@ -385,9 +385,9 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
     memset( szHeader, 0, sizeof(szHeader) );
 
     if( nBands == 3 )
-        sprintf( szHeader, "P6\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
+        snprintf( szHeader, sizeof(szHeader), "P6\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
     else
-        sprintf( szHeader, "P5\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
+        snprintf( szHeader, sizeof(szHeader), "P5\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
 
     bool bOK = VSIFWriteL( reinterpret_cast<void *>( szHeader ),
                 strlen(szHeader) + 2, 1, fp ) == 1;

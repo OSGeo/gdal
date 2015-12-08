@@ -250,8 +250,8 @@ void PCIDSKBuffer::Put( uint64 value, int offset, int size )
     char fmt[64];
     char wrk[128];
 
-    sprintf( fmt, "%%%d%sd", size, PCIDSK_FRMT_64_WITHOUT_PREFIX );
-    sprintf( wrk, fmt, value );
+    snprintf( fmt, sizeof(fmt), "%%%d%sd", size, PCIDSK_FRMT_64_WITHOUT_PREFIX );
+    snprintf( wrk, sizeof(wrk), fmt, value );
 
     Put( wrk, offset, size );
 }

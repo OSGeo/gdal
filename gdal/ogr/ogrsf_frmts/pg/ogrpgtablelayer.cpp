@@ -727,7 +727,9 @@ void OGRPGTableLayer::BuildFullQueryStatement()
     pszQueryStatement = (char *)
         CPLMalloc(strlen(osFields)+strlen(osWHERE)
                   +strlen(pszSqlTableName) + 40);
-    sprintf( pszQueryStatement,
+    snprintf( pszQueryStatement,
+              strlen(osFields)+strlen(osWHERE)
+                  +strlen(pszSqlTableName) + 40,
              "SELECT %s FROM %s %s",
              osFields.c_str(), pszSqlTableName, osWHERE.c_str() );
 }
@@ -2720,7 +2722,7 @@ OGRErr OGRPGTableLayer::StartCopy()
     size_t size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
-    sprintf( pszCommand,
+    snprintf( pszCommand, size,
              "COPY %s (%s) FROM STDIN;",
              pszSqlTableName, osFields.c_str() );
 

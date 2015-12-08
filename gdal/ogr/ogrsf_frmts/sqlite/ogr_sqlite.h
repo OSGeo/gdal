@@ -355,11 +355,12 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     OGRErr              RecomputeOrdinals();
 
     OGRErr              AddColumnAncientMethod( OGRFieldDefn& oField);
-    void                AddColumnDef(char* pszNewFieldList,
+    void                AddColumnDef(char* pszNewFieldList, size_t nBufLen,
                                      OGRFieldDefn* poFldDefn);
 
     void                InitFieldListForRecrerate(char* & pszNewFieldList,
                                                   char* & pszFieldListForSelect,
+                                                  size_t& nBufLenOut,
                                                   int nExtraSpace = 0);
     OGRErr              RecreateTable(const char* pszFieldListForSelect,
                                       const char* pszNewFieldList,

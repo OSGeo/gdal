@@ -2163,7 +2163,7 @@ int ComputeUnit (int convert, char *origName, sChar f_unit, double *unitM,
             origName[strlen (origName) - 2] = '\0';
             if (strlen (origName) > 21)
                origName[21] = '\0';
-            sprintf (name, "[%s]", origName + 7);
+            snprintf (name, 15, "[%s]", origName + 7);
             *unitM = -10; /* M = -10 => take 10^(x) */
             *unitB = 0;
             return 0;
@@ -2484,13 +2484,13 @@ void ParseLevelName (unsigned short int center, unsigned short int subcenter,
    *shortLevelName = NULL;
    free (*longLevelName);
    *longLevelName = NULL;
-   sprintf (valBuff, "%f", value);
+   snprintf (valBuff, sizeof(valBuff), "%f", value);
    strTrimRight (valBuff, '0');
    if (valBuff[strlen (valBuff) - 1] == '.') {
       valBuff[strlen (valBuff) - 1] = '\0';
    }
    if (f_sndValue) {
-      sprintf (sndBuff, "%f", sndValue);
+      snprintf (sndBuff, sizeof(sndBuff), "%f", sndValue);
       strTrimRight (sndBuff, '0');
       if (sndBuff[strlen (sndBuff) - 1] == '.') {
          sndBuff[strlen (sndBuff) - 1] = '\0';

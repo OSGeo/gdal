@@ -137,7 +137,7 @@ static int DTEDPtStreamNewTile( DTEDPtStream *psStream,
     else
         chEWHemi = 'e';
 
-    sprintf( szFile, "%c%03d%c%03d.dt%d", 
+    snprintf( szFile, sizeof(szFile), "%c%03d%c%03d.dt%d", 
              chEWHemi, ABS(nCrLong), chNSHemi, ABS(nCrLat),
              psStream->nLevel );
 

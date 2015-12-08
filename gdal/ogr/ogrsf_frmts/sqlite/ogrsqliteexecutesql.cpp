@@ -722,7 +722,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                                 CPL_UNUSED const char *pszDialect )
 {
     char* pszTmpDBName = (char*) CPLMalloc(256);
-    sprintf(pszTmpDBName, "/vsimem/ogr2sqlite/temp_%p.db", pszTmpDBName);
+    snprintf(pszTmpDBName, 256, "/vsimem/ogr2sqlite/temp_%p.db", pszTmpDBName);
 
     OGRSQLiteDataSource* poSQLiteDS = NULL;
     int nRet;
@@ -759,8 +759,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
         {
             bTried = TRUE;
             char* pszCachedFilename = (char*) CPLMalloc(256);
-            // TODO: Is this sprintf safe?
-            sprintf(pszCachedFilename, "/vsimem/ogr2sqlite/reference_%p.db",
+            snprintf(pszCachedFilename, 256, "/vsimem/ogr2sqlite/reference_%p.db",
                     pszCachedFilename);
             char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
             OGRSQLiteDataSource* poCachedDS = new OGRSQLiteDataSource();

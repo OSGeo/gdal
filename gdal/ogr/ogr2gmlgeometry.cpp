@@ -245,7 +245,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 60 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        sprintf( *ppszText + *pnLength, 
+        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength, 
                 "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
                  szAttributes, szCoordinate );
 
@@ -266,7 +266,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        sprintf( *ppszText + *pnLength, 
+        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength, 
                 "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
                  szAttributes, szCoordinate );
 
@@ -283,18 +283,19 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         // Buffer for tag name + srsName attribute if set
         const size_t nLineTagLength = 16;
         char* pszLineTagName = NULL;
-        pszLineTagName = (char *) CPLMalloc( nLineTagLength + nAttrsLength + 1 );
+        const size_t nLineTagNameBufLen = nLineTagLength + nAttrsLength + 1;
+        pszLineTagName = (char *) CPLMalloc( nLineTagNameBufLen );
 
         if( bRing )
         {
-            sprintf( pszLineTagName, "<gml:LinearRing%s>", szAttributes );
+            snprintf( pszLineTagName, nLineTagNameBufLen, "<gml:LinearRing%s>", szAttributes );
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           pszLineTagName );
         }
         else
         {
-            sprintf( pszLineTagName, "<gml:LineString%s>", szAttributes );
+            snprintf( pszLineTagName, nLineTagNameBufLen, "<gml:LineString%s>", szAttributes );
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           pszLineTagName );
@@ -324,10 +325,11 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         // Buffer for polygon tag name + srsName attribute if set
         const size_t nPolyTagLength = 13;
         char* pszPolyTagName = NULL;
-        pszPolyTagName = (char *) CPLMalloc( nPolyTagLength + nAttrsLength + 1 );
+        const size_t nPolyTagNameBufLen = nPolyTagLength + nAttrsLength + 1;
+        pszPolyTagName = (char *) CPLMalloc( nPolyTagNameBufLen );
 
         // Compose Polygon tag with or without srsName attribute
-        sprintf( pszPolyTagName, "<gml:Polygon%s>", szAttributes );
+        snprintf( pszPolyTagName, nPolyTagNameBufLen, "<gml:Polygon%s>", szAttributes );
 
         AppendString( ppszText, pnLength, pnMaxLength,
                       pszPolyTagName );
@@ -390,32 +392,36 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
         if( eFType == wkbMultiPolygon )
         {
-            pszElemOpen = (char *) CPLMalloc( 13 + nAttrsLength + 1 );
-            sprintf( pszElemOpen, "MultiPolygon%s>", szAttributes );
+            const size_t nBufLen = 13 + nAttrsLength + 1;
+            pszElemOpen = (char *) CPLMalloc( nBufLen );
+            snprintf( pszElemOpen, nBufLen, "MultiPolygon%s>", szAttributes );
 
             pszElemClose = "MultiPolygon>";
             pszMemberElem = "polygonMember>";
         }
         else if( eFType == wkbMultiLineString )
         {
-            pszElemOpen = (char *) CPLMalloc( 16 + nAttrsLength + 1 );
-            sprintf( pszElemOpen, "MultiLineString%s>", szAttributes );
+            const size_t nBufLen = 16 + nAttrsLength + 1;
+            pszElemOpen = (char *) CPLMalloc( nBufLen );
+            snprintf( pszElemOpen, nBufLen, "MultiLineString%s>", szAttributes );
 
             pszElemClose = "MultiLineString>";
             pszMemberElem = "lineStringMember>";
         }
         else if( eFType == wkbMultiPoint )
         {
-            pszElemOpen = (char *) CPLMalloc( 11 + nAttrsLength + 1 );
-            sprintf( pszElemOpen, "MultiPoint%s>", szAttributes );
+            const size_t nBufLen = 11 + nAttrsLength + 1;
+            pszElemOpen = (char *) CPLMalloc( nBufLen );
+            snprintf( pszElemOpen, nBufLen, "MultiPoint%s>", szAttributes );
 
             pszElemClose = "MultiPoint>";
             pszMemberElem = "pointMember>";
         }
         else
         {
-            pszElemOpen = (char *) CPLMalloc( 19 + nAttrsLength + 1 );
-            sprintf( pszElemOpen, "MultiGeometry%s>", szAttributes );
+            const size_t nBufLen = 19 + nAttrsLength + 1;
+            pszElemOpen = (char *) CPLMalloc( nBufLen );
+            snprintf( pszElemOpen, nBufLen, "MultiGeometry%s>", szAttributes );
 
             pszElemClose = "MultiGeometry>";
             pszMemberElem = "geometryMember>";
@@ -708,7 +714,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 60 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        sprintf( *ppszText + *pnLength,
+        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength,
                 "<gml:Point%s><gml:pos>%s</gml:pos></gml:Point>",
                  szAttributes, szCoordinate );
 
@@ -732,7 +738,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        sprintf( *ppszText + *pnLength,
+        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength,
                 "<gml:Point%s><gml:pos>%s</gml:pos></gml:Point>",
                  szAttributes, szCoordinate );
 
@@ -764,7 +770,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             // Buffer for tag name + srsName attribute if set
             const size_t nLineTagLength = 16;
             char* pszLineTagName = NULL;
-            pszLineTagName = (char *) CPLMalloc( nLineTagLength + nAttrsLength + 1 );
+            const size_t nLineTagNameBufLen = nLineTagLength + nAttrsLength + 1;
+            pszLineTagName = (char *) CPLMalloc( nLineTagNameBufLen );
 
             if( bRing )
             {
@@ -774,7 +781,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             }
             else
             {
-                sprintf( pszLineTagName, "<gml:LineString%s>", szAttributes );
+                snprintf( pszLineTagName, nLineTagNameBufLen, "<gml:LineString%s>", szAttributes );
 
                 AppendString( ppszText, pnLength, pnMaxLength,
                             pszLineTagName );
@@ -885,10 +892,11 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         // Buffer for polygon tag name + srsName attribute if set
         const size_t nPolyTagLength = 13;
         char* pszPolyTagName = NULL;
-        pszPolyTagName = (char *) CPLMalloc( nPolyTagLength + nAttrsLength + 1 );
+        const size_t nPolyTagNameBufLen = nPolyTagLength + nAttrsLength + 1;
+        pszPolyTagName = (char *) CPLMalloc( nPolyTagNameBufLen );
 
         // Compose Polygon tag with or without srsName attribute
-        sprintf( pszPolyTagName, "<gml:Polygon%s>", szAttributes );
+        snprintf( pszPolyTagName, nPolyTagNameBufLen, "<gml:Polygon%s>", szAttributes );
 
         AppendString( ppszText, pnLength, pnMaxLength,
                       pszPolyTagName );
@@ -956,32 +964,36 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 
         if( eFType == wkbMultiPolygon || eFType == wkbMultiSurface )
         {
-            pszElemOpen = (char *) CPLMalloc( 13 + nAttrsLength + 1 );
-            sprintf( pszElemOpen, "MultiSurface%s>", szAttributes );
+            const size_t nBufLen = 13 + nAttrsLength + 1;
+            pszElemOpen = (char *) CPLMalloc( nBufLen );
+            snprintf( pszElemOpen, nBufLen, "MultiSurface%s>", szAttributes );
 
             pszElemClose = "MultiSurface>";
             pszMemberElem = "surfaceMember>";
         }
         else if( eFType == wkbMultiLineString || eFType == wkbMultiCurve )
         {
-            pszElemOpen = (char *) CPLMalloc( 16 + nAttrsLength + 1 );
-            sprintf( pszElemOpen, "MultiCurve%s>", szAttributes );
+            const size_t nBufLen = 16 + nAttrsLength + 1;
+            pszElemOpen = (char *) CPLMalloc( nBufLen );
+            snprintf( pszElemOpen, nBufLen, "MultiCurve%s>", szAttributes );
 
             pszElemClose = "MultiCurve>";
             pszMemberElem = "curveMember>";
         }
         else if( eFType == wkbMultiPoint )
         {
-            pszElemOpen = (char *) CPLMalloc( 11 + nAttrsLength + 1 );
-            sprintf( pszElemOpen, "MultiPoint%s>", szAttributes );
+            const size_t nBufLen = 11 + nAttrsLength + 1;
+            pszElemOpen = (char *) CPLMalloc( nBufLen );
+            snprintf( pszElemOpen, nBufLen, "MultiPoint%s>", szAttributes );
 
             pszElemClose = "MultiPoint>";
             pszMemberElem = "pointMember>";
         }
         else
         {
-            pszElemOpen = (char *) CPLMalloc( 19 + nAttrsLength + 1 );
-            sprintf( pszElemOpen, "MultiGeometry%s>", szAttributes );
+            const size_t nBufLen = 19 + nAttrsLength + 1;
+            pszElemOpen = (char *) CPLMalloc( nBufLen );
+            snprintf( pszElemOpen, nBufLen, "MultiGeometry%s>", szAttributes );
 
             pszElemClose = "MultiGeometry>";
             pszMemberElem = "geometryMember>";

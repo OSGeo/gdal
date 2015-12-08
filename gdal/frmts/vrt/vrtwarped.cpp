@@ -1218,8 +1218,9 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPathIn )
         char *pszOverviewList;
         if( m_nOverviewCount != nSrcDSOvrCount )
         {
+            const size_t nLen = m_nOverviewCount*8 + 10;
             pszOverviewList = reinterpret_cast<char *>(
-                CPLMalloc( m_nOverviewCount*8 + 10 ) );
+                CPLMalloc( nLen ) );
             pszOverviewList[0] = '\0';
             for( int iOverview = 0; iOverview < m_nOverviewCount; iOverview++ )
             {
@@ -1228,7 +1229,8 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPathIn )
                     / static_cast<double>(
                         m_papoOverviews[iOverview]->GetRasterXSize() ) );
 
-                sprintf( pszOverviewList + strlen(pszOverviewList), 
+                snprintf( pszOverviewList + strlen(pszOverviewList),
+                          nLen - strlen(pszOverviewList),
                          "%d ", nOvFactor );
             }
 

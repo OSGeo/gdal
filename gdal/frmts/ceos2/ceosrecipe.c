@@ -700,12 +700,12 @@ static void ExtractInt(CeosRecord_t *record, int type, unsigned int offset, unsi
     switch(type)
     {
     case CEOS_REC_TYP_A:
-	sprintf( format, "A%u", length );
+	snprintf( format, sizeof(format), "A%u", length );
 	GetCeosField( record, offset, format,  buffer );
 	*value = atoi( buffer );
 	break;
     case CEOS_REC_TYP_B:
-	sprintf( format, "B%u", length );
+	snprintf( format, sizeof(format), "B%u", length );
 #ifdef notdef
 	GetCeosField( record, offset, format, buffer );
 	if( length <= 4 )
@@ -717,7 +717,7 @@ static void ExtractInt(CeosRecord_t *record, int type, unsigned int offset, unsi
 #endif
 	break;
     case CEOS_REC_TYP_I:
-	sprintf( format, "I%u", length );
+	snprintf( format, sizeof(format), "I%u", length );
 	GetCeosField( record, offset, format, value );
 	break;
     }
@@ -735,7 +735,7 @@ static char *ExtractString( CeosRecord_t *record, unsigned int offset, unsigned 
 	string = HMalloc( length + 1 );
     }
 
-    sprintf( format, "A%u", length );
+    snprintf( format, sizeof(format), "A%u", length );
 
     GetCeosField( record, offset, format, string );
 

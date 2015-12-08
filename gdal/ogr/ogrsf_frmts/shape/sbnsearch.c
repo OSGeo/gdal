@@ -230,7 +230,8 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
     if (nShapeCount < 0 || nShapeCount > 256000000 )
     {
         char szErrorMsg[64];
-        sprintf(szErrorMsg, "Invalid shape count in .sbn : %d", nShapeCount );
+        snprintf(szErrorMsg, sizeof(szErrorMsg),
+                "Invalid shape count in .sbn : %d", nShapeCount );
         hSBN->sHooks.Error( szErrorMsg );
         SBNCloseDiskTree(hSBN);
         return NULL;
@@ -279,7 +280,7 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
         nNodeDescCount < 0 || nNodeDescCount > nMaxNodes )
     {
         char szErrorMsg[64];
-        sprintf(szErrorMsg,
+        snprintf(szErrorMsg, sizeof(szErrorMsg),
                 "Invalid node descriptor size in .sbn : %d", nNodeDescSize );
         hSBN->sHooks.Error( szErrorMsg );
         SBNCloseDiskTree(hSBN);

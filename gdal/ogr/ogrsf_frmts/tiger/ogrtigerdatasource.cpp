@@ -733,15 +733,16 @@ char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
 /* -------------------------------------------------------------------- */
 /*      Build the filename.                                             */
 /* -------------------------------------------------------------------- */
-    pszFilename = (char *) CPLMalloc(strlen(GetDirPath())
+    const size_t nFilenameLen = strlen(GetDirPath())
                                      + strlen(pszModuleName)
-                                     + strlen(pszExtension) + 10);
+                                     + strlen(pszExtension) + 10;
+    pszFilename = (char *) CPLMalloc(nFilenameLen);
 
     if( strlen(GetDirPath()) == 0 )
-        sprintf( pszFilename, "%s%s",
+        snprintf( pszFilename, nFilenameLen, "%s%s",
                  pszModuleName, pszExtension );
     else
-        sprintf( pszFilename, "%s/%s%s",
+        snprintf( pszFilename, nFilenameLen, "%s/%s%s",
                  GetDirPath(), pszModuleName, pszExtension );
 
     return pszFilename;

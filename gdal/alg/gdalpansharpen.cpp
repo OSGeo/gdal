@@ -1068,8 +1068,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         char* apszOptions[4];
         char szBuffer0[64], szBuffer1[64], szBuffer2[64];
 
-        sprintf(szBuffer1, "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nDataTypeSize);
-        sprintf(szBuffer2, "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nXSizeExtract);
+        snprintf(szBuffer1, sizeof(szBuffer1), "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nDataTypeSize);
+        snprintf(szBuffer2, sizeof(szBuffer2), "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nXSizeExtract);
         apszOptions[0] = szBuffer0;
         apszOptions[1] = szBuffer1;
         apszOptions[2] = szBuffer2;
@@ -1082,7 +1082,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                        pSpectralBuffer + (size_t)i * nDataTypeSize * nXSizeExtract * nYSizeExtract, sizeof(szBuffer));
             szBuffer[nRet] = 0;
             
-            sprintf(szBuffer0, "DATAPOINTER=%s", szBuffer);
+            snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
             
             poMEMDS->AddBand(eWorkDataType, apszOptions);
 

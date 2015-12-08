@@ -393,8 +393,8 @@ void MFFDataset::ScanForGCPs()
         }
 
         char szLatName[40], szLongName[40];
-        sprintf( szLatName, "%s_LATITUDE", pszBase );
-        sprintf( szLongName, "%s_LONGITUDE", pszBase );
+        snprintf( szLatName, sizeof(szLatName), "%s_LATITUDE", pszBase );
+        snprintf( szLongName, sizeof(szLongName), "%s_LONGITUDE", pszBase );
 
         if( CSLFetchNameValue(papszHdrLines, szLatName) != NULL
             && CSLFetchNameValue(papszHdrLines, szLongName) != NULL )
@@ -427,7 +427,7 @@ void MFFDataset::ScanForGCPs()
     for( int i = 0; i < NUM_GCPS; i++ )
     {
         char	szName[25];
-        sprintf( szName, "GCP%d", i+1 );
+        snprintf( szName, sizeof(szName), "GCP%d", i+1 );
         if( CSLFetchNameValue( papszHdrLines, szName ) == NULL )
             continue;
 
@@ -1134,15 +1134,15 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
         char       szExtension[4];
 
         if( eType == GDT_Byte )
-            sprintf( szExtension, "b%02d", iBand );
+            snprintf( szExtension, sizeof(szExtension), "b%02d", iBand );
         else if( eType == GDT_UInt16 )
-            sprintf( szExtension, "i%02d", iBand );
+            snprintf( szExtension, sizeof(szExtension), "i%02d", iBand );
         else if( eType == GDT_Float32 )
-            sprintf( szExtension, "r%02d", iBand );
+            snprintf( szExtension, sizeof(szExtension),  "r%02d", iBand );
         else if( eType == GDT_CInt16 )
-            sprintf( szExtension, "j%02d", iBand );
+            snprintf( szExtension, sizeof(szExtension), "j%02d", iBand );
         else if( eType == GDT_CFloat32 )
-            sprintf( szExtension, "x%02d", iBand );
+            snprintf( szExtension, sizeof(szExtension), "x%02d", iBand );
 
         pszFilename = CPLFormFilename( NULL, pszBaseFilename, szExtension );
         fp = VSIFOpenL( pszFilename, "wb" );

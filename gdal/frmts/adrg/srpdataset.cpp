@@ -632,9 +632,9 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
     nRasterXSize = NFC * 128;
     nRasterYSize = NFL * 128;
     
-    char pszValue[32];
-    sprintf(pszValue, "%d", SCA);
-    SetMetadataItem( "SRP_SCA", pszValue );
+    char szValue[32];
+    snprintf(szValue, sizeof(szValue), "%d", SCA);
+    SetMetadataItem( "SRP_SCA", szValue );
     
     nBands = 1;
     for( i = 0; i < nBands; i++ )
@@ -692,8 +692,8 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
                 if (bSuccess)
                 {
                     CPLDebug("SRP", "EDN=%d", EDN);
-                    sprintf(pszValue, "%d", EDN);
-                    SetMetadataItem( "SRP_EDN", pszValue );
+                    snprintf(szValue, sizeof(szValue), "%d", EDN);
+                    SetMetadataItem( "SRP_EDN", szValue );
                 }
 
 
@@ -783,8 +783,8 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
         CPLFree( pszWKT );
     }
 
-    sprintf(pszValue, "%d", ZNA);
-    SetMetadataItem( "SRP_ZNA", pszValue );
+    snprintf(szValue, sizeof(szValue), "%d", ZNA);
+    SetMetadataItem( "SRP_ZNA", szValue );
 
     return TRUE;
 }
@@ -838,11 +838,11 @@ void SRPDataset::AddSubDataset( const char* pszGENFileName, const char* pszIMGFi
     osSubDatasetName += ",";
     osSubDatasetName += pszIMGFileName;
 
-    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
+    snprintf(szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, osSubDatasetName);
 
-    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
+    snprintf(szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, osSubDatasetName);
 }
@@ -1206,9 +1206,9 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
                 if (bSuccess)
                 {
                     CPLDebug("SRP", "Record EDN %d",EDN);
-                    char pszValue[5];
-                    sprintf(pszValue, "%d", EDN);
-                    SetMetadataItem( "SRP_EDN", pszValue );
+                    char szValue[5];
+                    snprintf(szValue, sizeof(szValue), "%d", EDN);
+                    SetMetadataItem( "SRP_EDN", szValue );
                 }
 
 

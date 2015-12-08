@@ -1402,8 +1402,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               char szFormat[20];
               char szValue[32];
               int nFieldWidth = poFieldDefn->GetWidth();
-              sprintf(szFormat, "%%%d" CPL_FRMT_GB_WITHOUT_PREFIX "d", MIN(nFieldWidth, (int)sizeof(szValue)-1));
-              sprintf(szValue, szFormat, poFeature->GetFieldAsInteger64(iField) );
+              snprintf(szFormat, sizeof(szFormat), "%%%d" CPL_FRMT_GB_WITHOUT_PREFIX "d", MIN(nFieldWidth, (int)sizeof(szValue)-1));
+              snprintf(szValue, sizeof(szValue), szFormat, poFeature->GetFieldAsInteger64(iField) );
               int nStrLen = static_cast<int>(strlen(szValue));
               if( nStrLen > nFieldWidth )
               {

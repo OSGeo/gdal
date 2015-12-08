@@ -303,14 +303,14 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
          * Lazy way to build the INFO path: simply add "../info/"...
          * this could probably be improved!
          *------------------------------------------------------------*/
-        psInfo->pszInfoPath =(char*)CPLMalloc((strlen(psInfo->pszCoverPath)+9)*
-                                           sizeof(char));
+        size_t nInfoPathLen = strlen(psInfo->pszCoverPath)+9;
+        psInfo->pszInfoPath =(char*)CPLMalloc(nInfoPathLen);
 #ifdef WIN32
 #  define AVC_INFOPATH "..\\info\\"
 #else
 #  define AVC_INFOPATH "../info/"
 #endif
-        sprintf(psInfo->pszInfoPath, "%s%s", psInfo->pszCoverPath, 
+        snprintf(psInfo->pszInfoPath, nInfoPathLen, "%s%s", psInfo->pszCoverPath, 
                                              AVC_INFOPATH);
 
         AVCAdjustCaseSensitiveFilename(psInfo->pszInfoPath);

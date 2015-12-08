@@ -428,19 +428,19 @@ int DDFModule::Create( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     char achLeader[25];
 
-    sprintf( achLeader+0, "%05d", (int) _recLength );
+    snprintf( achLeader+0, sizeof(achLeader)-0, "%05d", (int) _recLength );
     achLeader[5] = _interchangeLevel;
     achLeader[6] = _leaderIden;
     achLeader[7] = _inlineCodeExtensionIndicator;
     achLeader[8] = _versionNumber;
     achLeader[9] = _appIndicator;
-    sprintf( achLeader+10, "%02d", (int) _fieldControlLength );
-    sprintf( achLeader+12, "%05d", (int) _fieldAreaStart );
+    snprintf( achLeader+10, sizeof(achLeader)-10, "%02d", (int) _fieldControlLength );
+    snprintf( achLeader+12, sizeof(achLeader)-12, "%05d", (int) _fieldAreaStart );
     strncpy( achLeader+17, _extendedCharSet, 3 );
-    sprintf( achLeader+20, "%1d", (int) _sizeFieldLength );
-    sprintf( achLeader+21, "%1d", (int) _sizeFieldPos );
+    snprintf( achLeader+20, sizeof(achLeader)-20, "%1d", (int) _sizeFieldLength );
+    snprintf( achLeader+21, sizeof(achLeader)-21, "%1d", (int) _sizeFieldPos );
     achLeader[22] = '0';
-    sprintf( achLeader+23, "%1d", (int) _sizeFieldTag );
+    snprintf( achLeader+23, sizeof(achLeader)-23, "%1d", (int) _sizeFieldTag );
     int bRet = VSIFWriteL( achLeader, 24, 1, fpDDF ) > 0;
 
 /* -------------------------------------------------------------------- */
@@ -459,11 +459,13 @@ int DDFModule::Create( const char *pszFilename )
 
         CPLAssert( (int)strlen(papoFieldDefns[iField]->GetName()) == _sizeFieldTag );
         strcpy( achDirEntry, papoFieldDefns[iField]->GetName() );
-        sprintf(szFormat, "%%0%dd", (int)_sizeFieldLength);
-        sprintf( achDirEntry + _sizeFieldTag, szFormat, nLength );
-        sprintf(szFormat, "%%0%dd", (int)_sizeFieldTag);
-        sprintf( achDirEntry + _sizeFieldTag + _sizeFieldLength, 
-                 szFormat, nOffset );
+        snprintf(szFormat, sizeof(szFormat), "%%0%dd", (int)_sizeFieldLength);
+        snprintf( achDirEntry + _sizeFieldTag, sizeof(achDirEntry) - _sizeFieldTag,
+                  szFormat, nLength );
+        snprintf(szFormat, sizeof(szFormat), "%%0%dd", (int)_sizeFieldTag);
+        snprintf( achDirEntry + _sizeFieldTag + _sizeFieldLength,
+                  sizeof(achDirEntry) - _sizeFieldTag - _sizeFieldLength,
+                  szFormat, nOffset );
         nOffset += nLength;
 
         bRet &= VSIFWriteL( achDirEntry, _sizeFieldLength + _sizeFieldPos + _sizeFieldTag, 1, fpDDF ) > 0;

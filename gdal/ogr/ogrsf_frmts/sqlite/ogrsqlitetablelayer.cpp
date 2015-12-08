@@ -1653,6 +1653,7 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
 
 void OGRSQLiteTableLayer::InitFieldListForRecrerate(char* & pszNewFieldList,
                                                     char* & pszFieldListForSelect,
+                                                    size_t& nBufLenOut,
                                                     int nExtraSpace)
 {
     int iField;
@@ -1673,14 +1674,15 @@ void OGRSQLiteTableLayer::InitFieldListForRecrerate(char* & pszNewFieldList,
         nFieldListLen += 70 + 2 * strlen(poFeatureDefn->GetGeomFieldDefn(iField)->GetNameRef());
     }
 
+    nBufLenOut = nFieldListLen;
     pszFieldListForSelect = (char *) CPLCalloc(1,nFieldListLen);
     pszNewFieldList = (char *) CPLCalloc(1,nFieldListLen);
 
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
-    sprintf( pszFieldListForSelect, "\"%s\"", pszFIDColumn ? OGRSQLiteEscapeName(pszFIDColumn).c_str() : "OGC_FID" );
-    sprintf( pszNewFieldList, "\"%s\" INTEGER PRIMARY KEY",pszFIDColumn ? OGRSQLiteEscapeName(pszFIDColumn).c_str() : "OGC_FID" );
+    snprintf( pszFieldListForSelect, nFieldListLen, "\"%s\"", pszFIDColumn ? OGRSQLiteEscapeName(pszFIDColumn).c_str() : "OGC_FID" );
+    snprintf( pszNewFieldList, nFieldListLen, "\"%s\" INTEGER PRIMARY KEY",pszFIDColumn ? OGRSQLiteEscapeName(pszFIDColumn).c_str() : "OGC_FID" );
 
     for( iField = 0; iField < poFeatureDefn->GetGeomFieldCount(); iField++ )
     {
@@ -1709,17 +1711,19 @@ void OGRSQLiteTableLayer::InitFieldListForRecrerate(char* & pszNewFieldList,
 /*                         AddColumnDef()                               */
 /************************************************************************/
 
-void OGRSQLiteTableLayer::AddColumnDef(char* pszNewFieldList,
+void OGRSQLiteTableLayer::AddColumnDef(char* pszNewFieldList, size_t nBufLen,
                                        OGRFieldDefn* poFldDefn)
 {
-    sprintf( pszNewFieldList+strlen(pszNewFieldList), 
+    snprintf( pszNewFieldList+strlen(pszNewFieldList), nBufLen-strlen(pszNewFieldList),
              ", '%s' %s", OGRSQLiteEscape(poFldDefn->GetNameRef()).c_str(),
              FieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
     if( !poFldDefn->IsNullable() )
-        sprintf( pszNewFieldList+strlen(pszNewFieldList), " NOT NULL" );
+        snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                 nBufLen-strlen(pszNewFieldList), " NOT NULL" );
     if( poFldDefn->GetDefault() != NULL && !poFldDefn->IsDefaultDriverSpecific() )
     {
-        sprintf( pszNewFieldList+strlen(pszNewFieldList), " DEFAULT %s",
+        snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                 nBufLen-strlen(pszNewFieldList), " DEFAULT %s",
                  poFldDefn->GetDefault() );
     }
 }
@@ -1736,8 +1740,9 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 /* -------------------------------------------------------------------- */
     int iField;
     char *pszOldFieldList, *pszNewFieldList;
+    size_t nBufLen = 0;
 
-    InitFieldListForRecrerate(pszNewFieldList, pszOldFieldList,
+    InitFieldListForRecrerate(pszNewFieldList, pszOldFieldList,nBufLen,
                               static_cast<int>(strlen( oField.GetNameRef() )));
 
 /* -------------------------------------------------------------------- */
@@ -1756,10 +1761,10 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
         if( EQUAL(poFldDefn->GetNameRef(),pszFIDColumn ? pszFIDColumn : "OGC_FID") )
             continue;
 
-        sprintf( pszOldFieldList+strlen(pszOldFieldList), 
+        snprintf( pszOldFieldList+strlen(pszOldFieldList), nBufLen-strlen(pszOldFieldList),
                  ", \"%s\"", OGRSQLiteEscapeName(poFldDefn->GetNameRef()).c_str() );
 
-        AddColumnDef(pszNewFieldList, poFldDefn);
+        AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
 
         iNextOrdinal++;
     }
@@ -1767,7 +1772,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 /* -------------------------------------------------------------------- */
 /*      Add the new field.                                              */
 /* -------------------------------------------------------------------- */
-    AddColumnDef(pszNewFieldList, &oField);
+    AddColumnDef(pszNewFieldList, nBufLen, &oField);
 
 /* ==================================================================== */
 /*      Backup, destroy, recreate and repopulate the table.  SQLite     */
@@ -2043,7 +2048,9 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
 /* -------------------------------------------------------------------- */
     int iField;
     char *pszNewFieldList, *pszFieldListForSelect;
-    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect);
+    size_t nBufLen = 0;
+
+    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect, nBufLen);
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
@@ -2052,10 +2059,11 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
         if (iField == iFieldToDelete)
             continue;
 
-        sprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+        snprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+                  nBufLen-strlen(pszFieldListForSelect),
                  ", \"%s\"", OGRSQLiteEscapeName(poFldDefn->GetNameRef()).c_str() );
 
-        AddColumnDef(pszNewFieldList, poFldDefn);
+        AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2118,7 +2126,10 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
 /* -------------------------------------------------------------------- */
     int iField;
     char *pszNewFieldList, *pszFieldListForSelect;
+    size_t nBufLen = 0;
+
     InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect,
+                              nBufLen,
                               static_cast<int>(strlen(poNewFieldDefn->GetNameRef())) +
                               50 +
                               (poNewFieldDefn->GetDefault() ? static_cast<int>(strlen(poNewFieldDefn->GetDefault())) : 0)
@@ -2128,7 +2139,8 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
     {
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(iField);
 
-        sprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+        snprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+                 nBufLen-strlen(pszFieldListForSelect),
                  ", \"%s\"", OGRSQLiteEscapeName(poFldDefn->GetNameRef()).c_str() );
 
         if (iField == iFieldToAlter)
@@ -2152,7 +2164,8 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
                 oTmpFieldDefn.SetDefault(poNewFieldDefn->GetDefault());
             }
 
-            sprintf( pszNewFieldList+strlen(pszNewFieldList),
+            snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                      nBufLen-strlen(pszNewFieldList),
                     ", '%s' %s",
                     OGRSQLiteEscape(oTmpFieldDefn.GetNameRef()).c_str(),
                     FieldDefnToSQliteFieldDefn(&oTmpFieldDefn).c_str() );
@@ -2160,19 +2173,22 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
                  oTmpFieldDefn.GetType() == OFTString &&
                  CSLFindString(papszCompressedColumns, poFldDefn->GetNameRef()) >= 0 )
             {
-                sprintf( pszNewFieldList+strlen(pszNewFieldList), "_deflate");
+                snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                         nBufLen-strlen(pszNewFieldList), "_deflate");
             }
             if( !oTmpFieldDefn.IsNullable() )
-                sprintf( pszNewFieldList+strlen(pszNewFieldList), " NOT NULL" );
+                snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                          nBufLen-strlen(pszNewFieldList)," NOT NULL" );
             if( oTmpFieldDefn.GetDefault() )
             {
-                sprintf( pszNewFieldList+strlen(pszNewFieldList), " DEFAULT %s",
+                snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                         nBufLen-strlen(pszNewFieldList)," DEFAULT %s",
                          oTmpFieldDefn.GetDefault());
             }
         }
         else
         {
-            AddColumnDef(pszNewFieldList, poFldDefn);
+            AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
         }
     }
 
@@ -2269,16 +2285,19 @@ OGRErr OGRSQLiteTableLayer::ReorderFields( int* panMap )
 /* -------------------------------------------------------------------- */
     int iField;
     char *pszNewFieldList, *pszFieldListForSelect;
-    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect);
+    size_t nBufLen;
+
+    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect, nBufLen);
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(panMap[iField]);
 
-        sprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+        snprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+                  nBufLen - strlen(pszFieldListForSelect),
                  ", \"%s\"", OGRSQLiteEscapeName(poFldDefn->GetNameRef()).c_str() );
 
-        AddColumnDef(pszNewFieldList, poFldDefn);
+        AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2456,7 +2475,7 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                     poFeature->GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
                                                 &nHour, &nMinute, &nSecond, &nTZ);
                     char szBuffer[64];
-                    sprintf(szBuffer, "%04d-%02d-%02d", nYear, nMonth, nDay);
+                    snprintf(szBuffer, sizeof(szBuffer), "%04d-%02d-%02d", nYear, nMonth, nDay);
                     rc = sqlite3_bind_text(hStmtIn, nBindField++,
                                            szBuffer, -1, SQLITE_TRANSIENT);
                     break;
@@ -2470,9 +2489,9 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                                                 &nHour, &nMinute, &fSecond, &nTZ );
                     char szBuffer[64];
                     if( OGR_GET_MS(fSecond) != 0 )
-                        sprintf(szBuffer, "%02d:%02d:%06.3f", nHour, nMinute, fSecond);
+                        snprintf(szBuffer, sizeof(szBuffer), "%02d:%02d:%06.3f", nHour, nMinute, fSecond);
                     else
-                        sprintf(szBuffer, "%02d:%02d:%02d", nHour, nMinute, (int)fSecond);
+                        snprintf(szBuffer, sizeof(szBuffer), "%02d:%02d:%02d", nHour, nMinute, (int)fSecond);
                     rc = sqlite3_bind_text(hStmtIn, nBindField++,
                                            szBuffer, -1, SQLITE_TRANSIENT);
                     break;

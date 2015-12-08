@@ -1785,7 +1785,7 @@ const char *TABDATFile::ReadDateField(int nWidth)
     if ((status = ReadDateField(nWidth, &nYear, &nMonth, &nDay)) == -1)
        return "";
 
-    sprintf(m_szBuffer, "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
+    snprintf(m_szBuffer, sizeof(m_szBuffer), "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
   
     return m_szBuffer;
 }
@@ -1849,7 +1849,7 @@ const char *TABDATFile::ReadTimeField(int nWidth)
     if ((status = ReadTimeField(nWidth, &nHour, &nMinute, &nSecond, &nMS)) == -1)
        return "";
 
-    sprintf(m_szBuffer, "%2.2d%2.2d%2.2d%3.3d", nHour, nMinute, nSecond, nMS);
+    snprintf(m_szBuffer, sizeof(m_szBuffer), "%2.2d%2.2d%2.2d%3.3d", nHour, nMinute, nSecond, nMS);
     
     return m_szBuffer;
 }
@@ -1922,7 +1922,7 @@ const char *TABDATFile::ReadDateTimeField(int nWidth)
                                     &nMinute, &nSecond, &nMS)) == -1)
        return "";
 
-    sprintf(m_szBuffer, "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d", 
+    snprintf(m_szBuffer, sizeof(m_szBuffer), "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d", 
             nYear, nMonth, nDay, nHour, nMinute, nSecond, nMS);
 
     return m_szBuffer;
@@ -2574,7 +2574,7 @@ int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
     char szFormat[10];
     const char *pszVal;
 
-    sprintf(szFormat, "%%%d.%df", nWidth, nPrec);
+    snprintf(szFormat, sizeof(szFormat), "%%%d.%df", nWidth, nPrec);
     pszVal = CPLSPrintf(szFormat, dValue);
     if ((int)strlen(pszVal) > nWidth)
         pszVal += strlen(pszVal) - nWidth;

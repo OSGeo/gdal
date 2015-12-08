@@ -378,7 +378,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         if( STARTS_WITH(options.c_str(), "TILED") )
         {
             char sis_filename[65];
-            sprintf( sis_filename, "/SIS=%d", chan_index );
+            snprintf( sis_filename, sizeof(sis_filename), "/SIS=%d", chan_index );
             ih.Put( sis_filename, 64, 64 );
 
             // IHi.6.7 - IHi.6.10
@@ -493,7 +493,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
             // file, and adds ".nnn" based on the band. 
             std::string band_filename = filename;
             char ext[5];
-            sprintf( ext, ".%03d", chan_index+1 );
+            snprintf( ext, sizeof(ext), ".%03d", chan_index+1 );
             
             size_t last_dot = band_filename.find_last_of(".");
             if( last_dot != std::string::npos 

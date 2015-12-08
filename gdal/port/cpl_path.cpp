@@ -626,7 +626,7 @@ const char *CPLFormCIFilename( const char * pszPath,
     else if( pszExtension[0] != '.' && strlen(pszExtension) > 0 )
         pszAddedExtSep = ".";
 
-    sprintf( pszFilename, "%s%s%s", 
+    snprintf( pszFilename, nLen, "%s%s%s", 
              pszBasename, pszAddedExtSep, pszExtension );
 
     const char *pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );

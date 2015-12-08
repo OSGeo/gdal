@@ -1644,7 +1644,7 @@ OGRFeature *OGRVRTLayer::GetFeature( GIntBig nFeatureId )
         char* pszFIDQuery = (char*)CPLMalloc(strlen(pszFID) + 64);
 
         poSrcLayer->ResetReading();
-        sprintf( pszFIDQuery, "%s = " CPL_FRMT_GIB, pszFID, nFeatureId );
+        snprintf( pszFIDQuery, strlen(pszFID) + 64, "%s = " CPL_FRMT_GIB, pszFID, nFeatureId );
         poSrcLayer->SetSpatialFilter( NULL );
         poSrcLayer->SetAttributeFilter( pszFIDQuery );
         CPLFree(pszFIDQuery);

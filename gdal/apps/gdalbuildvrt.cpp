@@ -423,8 +423,8 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
         if ( nSubdataset < 0 )
         {
             int count = 1;
-            char subdatasetNameKey[256];
-            sprintf(subdatasetNameKey, "SUBDATASET_%d_NAME", count);
+            char subdatasetNameKey[80];
+            snprintf(subdatasetNameKey, sizeof(subdatasetNameKey), "SUBDATASET_%d_NAME", count);
             while(*papszMetadata != NULL)
             {
                 if (EQUALN(*papszMetadata, subdatasetNameKey, strlen(subdatasetNameKey)))
@@ -433,14 +433,14 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
                     ppszInputFilenames[nInputFiles++] =
                             CPLStrdup(*papszMetadata+strlen(subdatasetNameKey)+1);
                     count++;
-                    sprintf(subdatasetNameKey, "SUBDATASET_%d_NAME", count);
+                    snprintf(subdatasetNameKey, sizeof(subdatasetNameKey), "SUBDATASET_%d_NAME", count);
                 }
                 papszMetadata++;
             }
         }
         else
         {
-            char        subdatasetNameKey[256];
+            char        subdatasetNameKey[80];
             const char  *pszSubdatasetName;
 
             snprintf( subdatasetNameKey, sizeof(subdatasetNameKey),

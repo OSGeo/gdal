@@ -601,12 +601,14 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML( const char *pszVRTPath )
             CXT_Text, "0" );
 
     const int nCoefCount = m_nKernelSize * m_nKernelSize;
+    const size_t nBufLen = nCoefCount * 32;
     char *pszKernelCoefs = reinterpret_cast<char *>(
-        CPLMalloc(nCoefCount * 32) );
+        CPLMalloc(nBufLen) );
 
     strcpy( pszKernelCoefs, "" );
     for( int iCoef = 0; iCoef < nCoefCount; iCoef++ )
-        CPLsprintf( pszKernelCoefs + strlen(pszKernelCoefs), 
+        CPLsnprintf( pszKernelCoefs + strlen(pszKernelCoefs),
+                     nBufLen - strlen(pszKernelCoefs),
                  "%.8g ", m_padfKernelCoefs[iCoef] );
 
     CPLSetXMLValue( psKernel, "Size", CPLSPrintf( "%d", m_nKernelSize ) );

@@ -1180,7 +1180,7 @@ const char *DGNTypeToName( int nType )
         return "3D Solid Header";
 
       default:
-        sprintf( szNumericResult, "%d", nType );
+        snprintf( szNumericResult, sizeof(szNumericResult), "%d", nType );
         return szNumericResult;
     }
 }

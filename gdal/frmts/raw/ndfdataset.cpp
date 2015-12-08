@@ -268,14 +268,14 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
         char szKey[100];
-        sprintf( szKey, "BAND%d_FILENAME", iBand+1 );
+        snprintf( szKey, sizeof(szKey), "BAND%d_FILENAME", iBand+1 );
         CPLString osFilename = poDS->Get(szKey,"");
 
         // NDF1 file do not include the band filenames.
         if( osFilename.size() == 0 )
         {
             char szBandExtension[15];
-            sprintf( szBandExtension, "I%d", iBand+1 );
+            snprintf( szBandExtension, sizeof(szBandExtension), "I%d", iBand+1 );
             osFilename = CPLResetExtension( poOpenInfo->pszFilename, 
                                             szBandExtension );
         }
@@ -302,13 +302,13 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
             new RawRasterBand( poDS, iBand+1, fpRaw, 0, 1, poDS->nRasterXSize,
                                GDT_Byte, TRUE, TRUE );
 
-        sprintf( szKey, "BAND%d_NAME", iBand+1 );
+        snprintf( szKey, sizeof(szKey), "BAND%d_NAME", iBand+1 );
         poBand->SetDescription( poDS->Get(szKey, "") );
 
-        sprintf( szKey, "BAND%d_WAVELENGTHS", iBand+1 );
+        snprintf( szKey, sizeof(szKey), "BAND%d_WAVELENGTHS", iBand+1 );
         poBand->SetMetadataItem( "WAVELENGTHS", poDS->Get(szKey,"") );
 
-        sprintf( szKey, "BAND%d_RADIOMETRIC_GAINS/BIAS", iBand+1 );
+        snprintf( szKey, sizeof(szKey), "BAND%d_RADIOMETRIC_GAINS/BIAS", iBand+1 );
         poBand->SetMetadataItem( "RADIOMETRIC_GAINS_BIAS", 
                                  poDS->Get(szKey,"") );
 

@@ -1417,7 +1417,7 @@ const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
     {
         char	szFieldName[40];
 
-        sprintf( szFieldName, "proParams[%d]", i );
+        snprintf( szFieldName, sizeof(szFieldName), "proParams[%d]", i );
         psProParms->proParams[i] = poMIEntry->GetDoubleField(szFieldName);
     }
 
@@ -1572,7 +1572,7 @@ const Eprj_Datum *HFAGetDatum( HFAHandle hHFA )
     {
         char	szFieldName[30];
 
-        sprintf( szFieldName, "params[%d]", i );
+        snprintf( szFieldName, sizeof(szFieldName), "params[%d]", i );
         psDatum->params[i] = poMIEntry->GetDoubleField(szFieldName);
     }
 
@@ -2304,7 +2304,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
     }
 
     // the first value in the entry below gives the number of pixels within a block
-    sprintf( szLDict, "{%d:%cdata,}RasterDMS,.", nBlockSize*nBlockSize, chBandType );
+    snprintf( szLDict, sizeof(szLDict), "{%d:%cdata,}RasterDMS,.", nBlockSize*nBlockSize, chBandType );
 
     poEhfa_Layer = new HFAEntry( psInfo, "Ehfa_Layer", "Ehfa_Layer",
                                  poEimg_Layer );
@@ -2455,7 +2455,7 @@ HFAHandle HFACreate( const char * pszFilename,
     {
         char		szName[128];
 
-        sprintf( szName, "Layer_%d", iBand + 1 );
+        snprintf( szName, sizeof(szName), "Layer_%d", iBand + 1 );
 
         if( !HFACreateLayer( psInfo, psInfo->poRoot, szName, FALSE, nBlockSize,
                              bCreateCompressed, bCreateLargeRaster, bCreateAux,
@@ -3667,7 +3667,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
         {
             char	szFieldName[60];
 
-            sprintf( szFieldName, "earthModel.datum.params[%d]", i );
+            snprintf( szFieldName, sizeof(szFieldName), "earthModel.datum.params[%d]", i );
             sDatum.params[i] = poProjInfo->GetDoubleField(szFieldName);
         }
 
@@ -3691,7 +3691,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
         {
             char	szFieldName[40];
 
-            sprintf( szFieldName, "projectionObject.proParams[%d]", i );
+            snprintf( szFieldName, sizeof(szFieldName), "projectionObject.proParams[%d]", i );
             sPro.proParams[i] = poProjInfo->GetDoubleField(szFieldName);
         }
 

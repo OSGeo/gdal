@@ -233,7 +233,8 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_DataIndices()
             {
                 char msg[100];
 
-                sprintf( msg, "Conflict for block %d, held by at least data index '%d'.\n",
+                snprintf( msg,  sizeof(msg),
+                          "Conflict for block %d, held by at least data index '%d'.\n",
                          (*map)[i], section );
 
                 report += msg;
@@ -271,7 +272,8 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_ShapeIndices()
         {
             char msg[100];
 
-            sprintf( msg, "ShapeID %d is used for shape %d and %d!\n", 
+            snprintf( msg, sizeof(msg),
+                      "ShapeID %d is used for shape %d and %d!\n", 
                      shape_index_ids[toff], 
                      toff, id_map[shape_index_ids[toff]]);
             report += msg;

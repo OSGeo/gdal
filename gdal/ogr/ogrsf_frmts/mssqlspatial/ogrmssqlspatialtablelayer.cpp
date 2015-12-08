@@ -775,14 +775,14 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     if( oField.GetType() == OFTInteger )
     {
         if( oField.GetWidth() > 0 && bPreservePrecision )
-            sprintf( szFieldType, "numeric(%d,0)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,0)", oField.GetWidth() );
         else
             strcpy( szFieldType, "int" );
     }
     else if( oField.GetType() == OFTInteger64 )
     {
         if( oField.GetWidth() > 0 && bPreservePrecision )
-            sprintf( szFieldType, "numeric(%d,0)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,0)", oField.GetWidth() );
         else
             strcpy( szFieldType, "bigint" );
     }
@@ -790,7 +790,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     {
         if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
             && bPreservePrecision )
-            sprintf( szFieldType, "numeric(%d,%d)",
+            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,%d)",
                      oField.GetWidth(), oField.GetPrecision() );
         else
             strcpy( szFieldType, "float" );
@@ -800,7 +800,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         if( oField.GetWidth() == 0 || !bPreservePrecision )
             strcpy( szFieldType, "nvarchar(MAX)" );
         else
-            sprintf( szFieldType, "nvarchar(%d)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "nvarchar(%d)", oField.GetWidth() );
     }
     else if( oField.GetType() == OFTDate )
     {

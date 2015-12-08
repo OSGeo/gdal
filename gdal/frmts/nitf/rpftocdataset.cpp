@@ -654,12 +654,12 @@ void RPFTOCDataset::AddSubDataset( const char* pszFilename,  RPFTocEntry* tocEnt
     char	szName[80];
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
-    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, 
               CPLSPrintf( "NITF_TOC_ENTRY:%s:%s", MakeTOCEntryName(tocEntry), pszFilename ) );
 
-    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
     if (tocEntry->seriesName && tocEntry->seriesAbbreviation)
         papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName,

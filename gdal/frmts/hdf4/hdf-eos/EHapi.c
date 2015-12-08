@@ -180,7 +180,7 @@ EHopen(char *filename, intn access)
 		{
 		    /* Set HDFEOS version number in file */
 		    /* --------------------------------- */
-		    sprintf(hdfeosVersion, "%s%s", "HDFEOS_V",
+		    snprintf(hdfeosVersion, sizeof(hdfeosVersion), "%s%s", "HDFEOS_V",
 			    HDFEOSVERSION1);
 		    SDsetattr(sdInterfaceID, "HDFEOSVersion", DFNT_CHAR8,
 			      (int)strlen(hdfeosVersion), hdfeosVersion);
@@ -223,7 +223,7 @@ EHopen(char *filename, intn access)
 		    fid = -1;
 		    status = -1;
 		    HEpush(DFE_FNF, "EHopen", __FILE__, __LINE__);
-		    sprintf(errbuf, "%s%s%s", "\"", filename,
+		    snprintf(errbuf, sizeof(errbuf), "%s%s%s", "\"", filename,
 			    "\" cannot be created.");
 		    HEreport("%s\n", errbuf);
 		}
@@ -248,7 +248,7 @@ EHopen(char *filename, intn access)
                 if((HDFfid == -1) && (errno == 150 || errno == 151))
                     {
                     HEpush(DFE_FNF, "EHopen", __FILE__, __LINE__);
-                    sprintf(errbuf, "\"%s\" cannot be opened for READ/WRITE access, will retry %d times.", filename,  (MAX_RETRIES - retryCount - 1));
+                    snprintf(errbuf, sizeof(errbuf), "\"%s\" cannot be opened for READ/WRITE access, will retry %d times.", filename,  (MAX_RETRIES - retryCount - 1));
                     HEreport("%s\n", errbuf);
                     }
                 retryCount++;
@@ -275,7 +275,7 @@ EHopen(char *filename, intn access)
 		      attrIndex = SDfindattr(sdInterfaceID, "HDFEOSVersion");
 		      if (attrIndex == -1)
 			{
-			  sprintf(hdfeosVersion, "%s%s", "HDFEOS_V",
+			  snprintf(hdfeosVersion, sizeof(hdfeosVersion), "%s%s", "HDFEOS_V",
 				  HDFEOSVERSION1);
 			  SDsetattr(sdInterfaceID, "HDFEOSVersion", DFNT_CHAR8,
 				    (int)strlen(hdfeosVersion), hdfeosVersion);
@@ -318,7 +318,7 @@ EHopen(char *filename, intn access)
                         fid = -1;
                         status = -1;
                         HEpush(DFE_FNF, "EHopen", __FILE__, __LINE__);
-                        sprintf(errbuf, "%s%s%s", "\"", filename,
+                        snprintf(errbuf, sizeof(errbuf), "%s%s%s", "\"", filename,
                             "\" cannot be opened for read/write access.");
                         HEreport("%s\n", errbuf);
                     }
@@ -329,7 +329,7 @@ EHopen(char *filename, intn access)
 		    fid = -1;
 		    status = -1;
 		    HEpush(DFE_FNF, "EHopen", __FILE__, __LINE__);
-		    sprintf(errbuf, "%s%s%s", "\"", filename,
+		    snprintf(errbuf, sizeof(errbuf), "%s%s%s", "\"", filename,
 			    "\" cannot be opened for RDWR access.");
 		    HEreport("%s\n", errbuf);
 		}
@@ -355,7 +355,7 @@ EHopen(char *filename, intn access)
                 if((HDFfid == -1) && (errno == 150 || errno == 151))
                     {
                     HEpush(DFE_FNF, "EHopen", __FILE__, __LINE__);
-                    sprintf(errbuf, "\"%s\" cannot be opened for READONLY access, will retry %d times.", filename,  (MAX_RETRIES - retryCount - 1));
+                    snprintf(errbuf, sizeof(errbuf), "\"%s\" cannot be opened for READONLY access, will retry %d times.", filename,  (MAX_RETRIES - retryCount - 1));
                     HEreport("%s\n", errbuf);
                     }
                 retryCount++;
@@ -397,7 +397,7 @@ EHopen(char *filename, intn access)
                             fid = -1;
                             status = -1;
                             HEpush(DFE_FNF, "EHopen", __FILE__, __LINE__);
-                            sprintf(errbuf, "%s%s%s", "\"", filename,
+                            snprintf(errbuf, sizeof(errbuf), "%s%s%s", "\"", filename,
                             "\" cannot be opened for read access.");
                             HEreport("%s\n", errbuf);
                         }
@@ -1732,7 +1732,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
     {
 	/* Search for "StructMetadata.x" attribute */
 	/* --------------------------------------- */
-	sprintf(utlstr, "%s%d", "StructMetadata.", (int)nmeta);
+	snprintf(utlstr, UTLSTRSIZE, "%s%d", "StructMetadata.", (int)nmeta);
 	attrIndex = SDfindattr(sdInterfaceID, utlstr);
 
 
@@ -1764,7 +1764,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
     /* ------------------------ */
     for (i = 0; i < nmeta; i++)
     {
-	sprintf(utlstr, "%s%d", "StructMetadata.", i);
+	snprintf(utlstr, UTLSTRSIZE, "%s%d", "StructMetadata.", i);
 	attrIndex = SDfindattr(sdInterfaceID, utlstr);
 	metalen = (int)strlen(metabuf);
 	SDreadattr(sdInterfaceID, attrIndex, metabuf + metalen);
@@ -1810,13 +1810,13 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* ---------------------------------------------------- */
 	if (strcmp(structcode, "s") == 0)
 	{
-	    sprintf(utlstr, "%s%s", "SwathName=\"", structname);
+	    snprintf(utlstr, UTLSTRSIZE, "%s%s", "SwathName=\"", structname);
 	} else if (strcmp(structcode, "g") == 0)
 	{
-	    sprintf(utlstr, "%s%s", "GridName=\"", structname);
+	    snprintf(utlstr, UTLSTRSIZE, "%s%s", "GridName=\"", structname);
 	} else if (strcmp(structcode, "p") == 0)
 	{
-	    sprintf(utlstr, "%s%s", "PointName=\"", structname);
+	    snprintf(utlstr, UTLSTRSIZE, "%s%s", "PointName=\"", structname);
 	}
 	/* Do string search */
 	/* ---------------- */
@@ -1829,7 +1829,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	 */
 	if (metaptr == NULL)
 	{
-	    sprintf(utlstr, "%s%s", "GROUP=\"", structname);
+	    snprintf(utlstr, UTLSTRSIZE, "%s%s", "GROUP=\"", structname);
 	    metaptr = strstr(prevmetaptr, utlstr);
 	}
     }
@@ -1900,7 +1900,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
 	/* Build metadata entry string */
 	/* --------------------------- */
-	sprintf(utlstr, "%s%d%s%s%s%d%s%d%s",
+	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%d%s%d%s",
                 "\t\t\tOBJECT=Dimension_", (int)count,
 		"\n\t\t\t\tDimensionName=\"", &metastr[0],
 		"\"\n\t\t\t\tSize=", (int)metadata[0],
@@ -1936,7 +1936,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
 	/* Build metadata entry string */
 	/* --------------------------- */
-	sprintf(utlstr, "%s%d%s%s%s%s%s%d%s%d%s%d%s",
+	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%d%s%d%s%d%s",
 		"\t\t\tOBJECT=DimensionMap_", (int)count,
 		"\n\t\t\t\tGeoDimension=\"", &metastr[0],
 		"\"\n\t\t\t\tDataDimension=\"", &metastr[slen[0] + 1],
@@ -1974,7 +1974,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
 	/* Build metadata entry string */
 	/* --------------------------- */
-	sprintf(utlstr, "%s%d%s%s%s%s%s%d%s",
+	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%d%s",
 		"\t\t\tOBJECT=IndexDimensionMap_", (int)count,
 		"\n\t\t\t\tGeoDimension=\"", &metastr[0],
 		"\"\n\t\t\t\tDataDimension=\"", &metastr[slen[0] + 1],
@@ -2022,7 +2022,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
 	/* Build metadata entry string */
 	/* --------------------------- */
-	sprintf(utlstr, "%s%d%s%s%s%s%s%s",
+	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%s",
 		"\t\t\tOBJECT=GeoField_", (int)count,
 		"\n\t\t\t\tGeoFieldName=\"", metastr,
 		"\"\n\t\t\t\tDataType=", type,
@@ -2037,7 +2037,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	}
 	/* Add END_OBJECT terminator to metadata string */
 	/* -------------------------------------------- */
-	sprintf(utlstr2, "%s%d%s",
+	snprintf(utlstr2, UTLSTRSIZE, "%s%d%s",
 		"\n\t\t\tEND_OBJECT=GeoField_", (int)count, "\n");
 	strcat(utlstr, utlstr2);
 
@@ -2084,7 +2084,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
 	/* Build metadata entry string */
 	/* --------------------------- */
-	sprintf(utlstr, "%s%d%s%s%s%s%s%s",
+	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%s",
 		"\t\t\tOBJECT=DataField_", (int)count,
 		"\n\t\t\t\tDataFieldName=\"", metastr,
 		"\"\n\t\t\t\tDataType=", type,
@@ -2099,7 +2099,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	}
 	/* Add END_OBJECT terminator to metadata string */
 	/* -------------------------------------------- */
-	sprintf(utlstr2, "%s%d%s",
+	snprintf(utlstr2, UTLSTRSIZE, "%s%d%s",
 		"\n\t\t\tEND_OBJECT=DataField_", (int)count, "\n");
 	strcat(utlstr, utlstr2);
 
@@ -2139,7 +2139,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
 	/* Build metadata entry string */
 	/* --------------------------- */
-	sprintf(utlstr, "%s%d%s%s%s%s%s%s%d%s",
+	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%s%d%s",
 		"\t\t\tOBJECT=MergedFields_", (int)count,
 		"\n\t\t\t\tMergedFieldName=\"", metastr, "\"",
 		"\n\t\t\t\tFieldList=", utlstr2,
@@ -2169,7 +2169,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
 	/* Build metadata entry string */
 	/* --------------------------- */
-	sprintf(utlstr, "%s%d%s%s%s%d%s",
+	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%d%s",
 		"\t\t\tGROUP=Level_", (int)count,
 		"\n\t\t\t\tLevelName=\"", metastr,
 		"\"\n\t\t\tEND_GROUP=Level_", (int)count, "\n");
@@ -2205,7 +2205,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
 	/* Build metadata entry string */
 	/* --------------------------- */
-	sprintf(utlstr, "%s%d%s%s%s%s%s%d%s%d%s",
+	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%d%s%d%s",
 		"\t\t\t\tOBJECT=PointField_", (int)count,
 		"\n\t\t\t\t\tPointFieldName=\"", metastr,
 		"\"\n\t\t\t\t\tDataType=", type,
@@ -2249,7 +2249,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
 	/* Build metadata entry string */
 	/* --------------------------- */
-	sprintf(utlstr, "%s%d%s%s%s%s%s%s%s%d%s",
+	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%s%s%d%s",
 		"\t\t\tOBJECT=LevelLink_", (int)count,
 		"\n\t\t\t\tParent=\"", metastr,
 		"\"\n\t\t\t\tChild=\"", slash + 1,
@@ -2354,7 +2354,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
     /* --------------------------------- */
     for (i = 0; i < nmeta; i++)
     {
-	sprintf(utlstr, "%s%d", "StructMetadata.", i);
+	snprintf(utlstr, UTLSTRSIZE, "%s%d", "StructMetadata.", i);
 	SDsetattr(sdInterfaceID, utlstr, DFNT_CHAR8,
 		  32000, metabuf + i * 32000);
     }
@@ -2523,7 +2523,7 @@ EHmetagroup(int32 sdInterfaceID, char *structname, char *structcode,
     {
 	/* Search for "StructMetadata.x" attribute */
 	/* --------------------------------------- */
-	sprintf(utlstr, "%s%d", "StructMetadata.", (int)nmeta);
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%d", "StructMetadata.", (int)nmeta);
 	attrIndex = SDfindattr(sdInterfaceID, utlstr);
 
 
@@ -2555,7 +2555,7 @@ EHmetagroup(int32 sdInterfaceID, char *structname, char *structcode,
     /* ------------------------ */
     for (i = 0; i < nmeta; i++)
     {
-	sprintf(utlstr, "%s%d", "StructMetadata.", i);
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%d", "StructMetadata.", i);
 	attrIndex = SDfindattr(sdInterfaceID, utlstr);
 	metalen = (int)strlen(metabuf);
 	SDreadattr(sdInterfaceID, attrIndex, metabuf + metalen);
@@ -2597,13 +2597,13 @@ EHmetagroup(int32 sdInterfaceID, char *structname, char *structcode,
     /* ---------------------------------------------------- */
     if (strcmp(structcode, "s") == 0)
     {
-	sprintf(utlstr, "%s%s", "SwathName=\"", structname);
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "SwathName=\"", structname);
     } else if (strcmp(structcode, "g") == 0)
     {
-	sprintf(utlstr, "%s%s", "GridName=\"", structname);
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "GridName=\"", structname);
     } else if (strcmp(structcode, "p") == 0)
     {
-	sprintf(utlstr, "%s%s", "PointName=\"", structname);
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "PointName=\"", structname);
     }
     /* Do string search */
     /* ---------------- */
@@ -2616,23 +2616,23 @@ EHmetagroup(int32 sdInterfaceID, char *structname, char *structcode,
      */
     if (metaptr == NULL)
     {
-	sprintf(utlstr, "%s%s", "GROUP=\"", structname);
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "GROUP=\"", structname);
 	metaptr = strstr(prevmetaptr, utlstr);
     }
     /* Find group within structure */
     /* --------------------------- */
     if (groupname != NULL)
     {
-	sprintf(utlstr, "%s%s", "GROUP=", groupname);
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "GROUP=", groupname);
 	metaptr = strstr(metaptr, utlstr);
 
-	sprintf(utlstr, "%s%s", "\t\tEND_GROUP=", groupname);
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "\t\tEND_GROUP=", groupname);
 	endptr = strstr(metaptr, utlstr);
     } else
     {
 	/* If groupname == NULL then find end of structure in metadata */
 	/* ----------------------------------------------------------- */
-	sprintf(utlstr, "%s", "\n\tEND_GROUP=");
+	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s", "\n\tEND_GROUP=");
 	endptr = strstr(metaptr, utlstr);
     }
 

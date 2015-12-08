@@ -518,7 +518,8 @@ void VFKReader::AddInfo(const char *pszLine)
     }
     else {
         /* max. number of duplicated keys can be 101 */
-        char *pszKeyUniq = (char *) CPLMalloc(strlen(pszKey) + 5);
+        const size_t nLen = strlen(pszKey) + 5;
+        char *pszKeyUniq = (char *) CPLMalloc(nLen);
 
         int nCount = 1; /* assuming at least one match */
         for(std::map<CPLString, CPLString>::iterator i = poInfo.begin();
@@ -529,7 +530,7 @@ void VFKReader::AddInfo(const char *pszLine)
                 nCount += 1;
         }
 
-        sprintf(pszKeyUniq, "%s_%d", pszKey, nCount);
+        snprintf(pszKeyUniq, nLen, "%s_%d", pszKey, nCount);
         poInfo[pszKeyUniq] = pszValueEnc;
         CPLFree(pszKeyUniq);
     }

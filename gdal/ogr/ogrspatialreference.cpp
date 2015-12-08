@@ -62,7 +62,7 @@ void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue )
         && (strcmp(pszStrBuf+nLen-6,"999999") == 0
             || strcmp(pszStrBuf+nLen-6,"000001") == 0) )
     {
-        CPLsprintf( pszStrBuf, "%.15g", dfValue );
+        CPLsnprintf( pszStrBuf, size, "%.15g", dfValue );
     }
 
     // Force to user periods regardless of locale.
@@ -873,7 +873,7 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
     char        szValue[64];
 
     if( ABS(dfValue - (int) dfValue) == 0.0 )
-        sprintf( szValue, "%d", (int) dfValue );
+        snprintf( szValue, sizeof(szValue), "%d", (int) dfValue );
     else
         OGRsnPrintDouble( szValue, sizeof(szValue), dfValue );
 
@@ -1212,7 +1212,7 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
         return OGRERR_FAILURE;
 
     if( dfInMeters == (int) dfInMeters )
-        sprintf( szValue, "%d", (int) dfInMeters );
+        snprintf( szValue, sizeof(szValue), "%d", (int) dfInMeters );
     else
       OGRsnPrintDouble( szValue, sizeof(szValue), dfInMeters );
 
@@ -2540,7 +2540,7 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
         while (iComponentUrl != -1)
         {
             char searchStr[5];
-            sprintf(searchStr, "&%d=", iComponentUrl);
+            snprintf(searchStr, sizeof(searchStr), "&%d=", iComponentUrl);
             
             const char* pszUrlEnd = strstr(pszCur, searchStr);
             
@@ -5533,9 +5533,9 @@ OGRErr OGRSpatialReference::SetUTM( int nZone, int bNorth )
         char    szUTMName[128];
 
         if( bNorth )
-            sprintf( szUTMName, "UTM Zone %d, Northern Hemisphere", nZone );
+            snprintf( szUTMName, sizeof(szUTMName), "UTM Zone %d, Northern Hemisphere", nZone );
         else
-            sprintf( szUTMName, "UTM Zone %d, Southern Hemisphere", nZone );
+            snprintf( szUTMName, sizeof(szUTMName), "UTM Zone %d, Southern Hemisphere", nZone );
 
         SetNode( "PROJCS", szUTMName );
     }
@@ -5769,7 +5769,7 @@ OGRErr OGRSpatialReference::SetAuthority( const char *pszTargetKey,
     char   szCode[32];
     OGR_SRSNode *poAuthNode;
 
-    sprintf( szCode, "%d", nCode );
+    snprintf( szCode, sizeof(szCode), "%d", nCode );
 
     poAuthNode = new OGR_SRSNode( "AUTHORITY" );
     poAuthNode->AddChild( new OGR_SRSNode( pszAuthority ) );
