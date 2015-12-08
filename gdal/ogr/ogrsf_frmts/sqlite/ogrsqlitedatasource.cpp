@@ -1275,7 +1275,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
                 sqlite3_free( pszErrMsg );
             }
             sqlite3_free_table(papszResult);
-       }
+        }
 
        if (bListAllTables)
             goto all_tables;            
@@ -1291,21 +1291,25 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         /* Only enables write-mode if linked against SpatiaLite */
         if( IsSpatialiteLoaded() )
         {
-           iSpatialiteVersion = GetSpatialiteVersionNumber();
+            iSpatialiteVersion = GetSpatialiteVersionNumber();
         }
         else if( bUpdate )
         {
-           CPLDebug("SQLITE", "SpatiaLite%s DB found, "
+            CPLError(CE_Failure, CPLE_AppDefined, "SpatiaLite%s DB found, "
                      "but updating tables disabled because no linking against spatialite library !",
                      (bSpatialite4Layout) ? " v4" : "");
-            bUpdate = FALSE;
+            sqlite3_free_table(papszResult);
+            CPLHashSetDestroy(hSet);
+            return FALSE;
         }
         if (bSpatialite4Layout && bUpdate && iSpatialiteVersion > 0 && iSpatialiteVersion < 40)
         {
-            CPLDebug("SQLITE", "SpatiaLite v4 DB found, "
+            CPLError(CE_Failure, CPLE_AppDefined, "SpatiaLite v4 DB found, "
                      "but updating tables disabled because runtime spatialite library is v%.1f !",
                      iSpatialiteVersion / 10.0);
-            bUpdate = FALSE;
+            sqlite3_free_table(papszResult);
+            CPLHashSetDestroy(hSet);
+            return FALSE;
         }
         else
         {
@@ -1334,7 +1338,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
          break;
         }
         if ( rc == SQLITE_OK )
-        { 
+        {
             for( iRow = 0; iRow < nRowCount; iRow++ )
             {
                 char **papszRow = papszResult + iRow * 5 + 5;
@@ -1442,9 +1446,10 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
           }
         // -- end - RasterLite2 and Spatialite-Topology support --
         if (bListAllTables)
-         goto all_tables;
+             goto all_tables;
        }
-       CPLHashSetDestroy(hSet);   
+       CPLHashSetDestroy(hSet);
+       
        return TRUE;
       }
      }     
