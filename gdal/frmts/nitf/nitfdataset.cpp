@@ -4245,10 +4245,10 @@ NITFDataset::NITFCreateCopy(
                 const double dfBRV = 360.0 / -adfGeoTransform[5];
                 const double dfLSO = adfGeoTransform[0];
                 const double dfPSO = adfGeoTransform[3];
-                snprintf(szGEOLOB + 9, sizeof(szGEOLOB) - 9, "%09d", static_cast<int>(dfARV + 0.5));
-                snprintf(szGEOLOB + 9+9, sizeof(szGEOLOB) - (9+9), "%09d", static_cast<int>(dfBRV + 0.5));
-                snprintf(szGEOLOB + 9+9+15, sizeof(szGEOLOB) - (9+9+15), "%#+015.10f", dfLSO);
-                snprintf(szGEOLOB + 9+9+15+15, sizeof(szGEOLOB) - (9+9+15+15), "%#+015.10f", dfPSO);
+                snprintf(szGEOLOB, sizeof(szGEOLOB), "%09d", static_cast<int>(dfARV + 0.5));
+                snprintf(szGEOLOB + 9, sizeof(szGEOLOB) - (9), "%09d", static_cast<int>(dfBRV + 0.5));
+                snprintf(szGEOLOB + 9+9, sizeof(szGEOLOB) - (9+9), "%#+015.10f", dfLSO);
+                snprintf(szGEOLOB + 9+9+15, sizeof(szGEOLOB) - (9+9+15), "%#+015.10f", dfPSO);
 
                 CPLString osGEOLOB("TRE=GEOLOB=");
                 osGEOLOB += szGEOLOB;
@@ -5217,7 +5217,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Update the subheader and data size info in the file header.     */
 /* -------------------------------------------------------------------- */
-        snprintf( pachLT + 9*iTextSeg+0, iTextSeg+1, "%04d%05d",
+        snprintf( pachLT + 9*iTextSeg+0, 9+1, "%04d%05d",
                  static_cast<int>( sizeof( achTSH ) ), nTextLength );
 
         iTextSeg++;
