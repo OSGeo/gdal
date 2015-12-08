@@ -111,7 +111,7 @@ void MetadataSegment::FetchGroupMetadata( const char *group, int id,
     char key_prefix[200];
     size_t  prefix_len;
 
-    std::snprintf( key_prefix, sizeof(key_prefix), "METADATA_%s_%d_", group, id );
+    snprintf( key_prefix, sizeof(key_prefix), "METADATA_%s_%d_", group, id );
     prefix_len = std::strlen(key_prefix);
 
 /* -------------------------------------------------------------------- */
@@ -175,7 +175,7 @@ void MetadataSegment::SetGroupMetadataValue( const char *group, int id,
 
     char key_prefix[200];
 
-    std::snprintf( key_prefix, sizeof(key_prefix), "METADATA_%s_%d_", group, id );
+    snprintf( key_prefix, sizeof(key_prefix), "METADATA_%s_%d_", group, id );
 
     std::string full_key;
 
