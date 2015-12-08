@@ -473,7 +473,6 @@ class OGRSQLiteEditableLayer : public OGRSQLiteLayer
 
     char               *pszCreationGeomFormat;    
     int                 iFIDAsRegularColumnIndex; 
-    virtual int         IsViewLayer();
 
   public:
                         OGRSQLiteEditableLayer();
@@ -576,6 +575,7 @@ class OGRSQLiteViewLayer : public OGRSQLiteEditableLayer
 {
     virtual const char     *GetGeometryTable();
     virtual const char     *GetEscapedRowId();
+    virtual int            IsViewLayer();
   public:
                         OGRSQLiteViewLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteViewLayer();

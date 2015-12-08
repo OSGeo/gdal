@@ -108,7 +108,6 @@ const char * OGRSQLiteViewLayer::GetEscapedRowId()
 /************************************************************************/
 /*                           IsViewLayer()                          */
 /************************************************************************/
-
 int OGRSQLiteViewLayer::IsViewLayer()
 {
  switch (eSQLiteLayerType)
@@ -123,5 +122,5 @@ int OGRSQLiteViewLayer::IsViewLayer()
   break;
  }
 }
-
+/************************************************************************/
 
