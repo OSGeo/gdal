@@ -645,7 +645,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/mongoclient.lib  $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-1_55.lib   $(BOOST_LIB_PATH)\libboost_system-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-1_55.lib   $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-1_55.lib
 
 # For a static build of mongoclient, only building the driver as a plugin succeeded
-# The libmongoclient_s.lib file had to be renamed without the _s prefix to enable successfull linking
+# The libmongoclient_s.lib file had to be renamed without the _s prefix to enable successful linking
 # It was built with: c:\Python27\Scripts\scons.bat --32 --prefix=c:\users\even\dev\mongo-client-install --cpppath=c:\users\even\dev\boost_1_55_0_32bit --libpath=c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0 install
 # MONGODB_PLUGIN = YES
 # MONGODB_INC = c:/users/even/dev/mongo-client-install/include

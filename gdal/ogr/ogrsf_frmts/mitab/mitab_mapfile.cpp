@@ -76,7 +76,7 @@
  *
  * Revision 1.34  2006/11/20 20:05:58  dmorissette
  * First pass at improving generation of spatial index in .map file (bug 1585)
- * New methods for insertion and splittung in the spatial index are done.
+ * New methods for insertion and splitting the spatial index are done.
  * Also implemented a method to dump the spatial index to .mif/.mid
  * Still need to implement splitting of TABMapObjectBlock to get optimal
  * results.
@@ -535,7 +535,7 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
     }
 
     /*-----------------------------------------------------------------
-     * Make sure all previous calls succeded.
+     * Make sure all previous calls succeeded.
      *----------------------------------------------------------------*/
     if (CPLGetLastErrorNo() != 0)
     {

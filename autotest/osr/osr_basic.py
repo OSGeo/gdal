@@ -169,7 +169,7 @@ def osr_basic_3():
                                   % (srs.GetAuthorityName( auth[0] ),
                                      auth[0]) )
             return 'fail'
-        
+
         if str(srs.GetAuthorityCode( auth[0] )) != auth[1]:
             gdaltest.post_reason( 'Got code %s instead of %s for %s' \
                                   % (srs.GetAuthorityCode( auth[0] ),
@@ -177,7 +177,7 @@ def osr_basic_3():
             return 'fail'
 
     if srs.GetAuthorityName( 'PROJCS' ) is not None:
-        gdaltest.post_reason( 'Got a PROJCS Authority but we shouldnt' )
+        gdaltest.post_reason( 'Got a PROJCS Authority but we should not' )
         return 'fail'
 
     if str(srs.GetAuthorityCode( 'PROJCS|UNIT' )) is '9001':
@@ -187,7 +187,7 @@ def osr_basic_3():
     if srs.GetLinearUnitsName() != 'Foot':
         gdaltest.post_reason( 'Didnt get Foot linear units' )
         return 'fail'
-    
+
     return 'success'
 
 
@@ -196,12 +196,12 @@ def osr_basic_3():
 # and verify that the TOWGS84 parameters are preserved.
 
 def osr_basic_4():
-    
+
     srs = osr.SpatialReference()
     srs.SetGS( cm = -117.0, fe = 100000.0, fn = 100000 )
     srs.SetGeogCS( 'Test GCS', 'Test Datum', 'WGS84', 
                    osr.SRS_WGS84_SEMIMAJOR, osr.SRS_WGS84_INVFLATTENING )
-    
+
     srs.SetTOWGS84( 1, 2, 3 )
 
     if srs.GetTOWGS84() != (1,2,3,0,0,0,0):
@@ -209,7 +209,7 @@ def osr_basic_4():
         return 'fail'
 
     proj4 = srs.ExportToProj4()
-    
+
     srs2 = osr.SpatialReference()
     srs2.ImportFromProj4( proj4 )
 

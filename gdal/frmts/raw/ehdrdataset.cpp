@@ -832,9 +832,9 @@ CPLErr EHdrDataset::ReadSTX()
               if (bNoDataSet && dfNoData == poBand->dfMin)
               {
                   /* Triggered by /vsicurl/http://eros.usgs.gov/archive/nslrsda/GeoTowns/HongKong/srtm/n22e113.zip/n22e113.bil */
-                  CPLDebug("EHDr", "Ignoring .stx file where min == nodata. "
-                           "The nodata value shouldn't be taken into account "
-                           "in minimum value computation.");
+                  CPLDebug( "EHDr", "Ignoring .stx file where min == nodata. "
+                            "The nodata value should not be taken into account "
+                            "in minimum value computation.");
                   CSLDestroy( papszTokens );
                   papszTokens = NULL;
                   break;

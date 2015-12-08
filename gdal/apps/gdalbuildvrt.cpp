@@ -553,8 +553,8 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
     {
         if(_nBands < nMaxBandNo)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                        "Skipping %s as it has no sush bands", dsFileName);
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Skipping %s as it has no such bands", dsFileName);
             return FALSE;
         }
         else

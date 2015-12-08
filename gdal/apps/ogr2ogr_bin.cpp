@@ -351,7 +351,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "                (long. = +/- 180deg)\n" 
             " -datelineoffset: offset from dateline in degrees\n"
             "                (default long. = +/- 10deg,\n"
-            "                geometries within 170deg to -170deg will be splited)\n" 
+            "                geometries within 170deg to -170deg will be split)\n" 
             " -sql statement: Execute given SQL statement and save result.\n"
             " -dialect value: select a dialect, usually OGRSQL to avoid native sql.\n"
             " -skipfailures: skip features or layers that fail to convert\n"

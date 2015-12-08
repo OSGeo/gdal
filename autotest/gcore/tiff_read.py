@@ -60,8 +60,8 @@ init_list = [ \
     ('cfloat32.tif', 1, 5028, None),
     ('cfloat64.tif', 1, 5028, None),
 # The following four related partial final strip/tiles (#1179)
-    ('separate_tiled.tif', 2, 15234, None), 
-    ('seperate_strip.tif', 2, 15234, None),
+    ('separate_tiled.tif', 2, 15234, None),
+    ('seperate_strip.tif', 2, 15234, None),  # TODO: Spelling.
     ('contig_tiled.tif', 2, 15234, None),
     ('contig_strip.tif', 2, 15234, None),
     ('empty1bit.tif', 1, 0, None)]
@@ -71,7 +71,7 @@ init_list = [ \
 
 def tiff_read_off():
 
-    # Test absolute/offset directory access 
+    # Test absolute/offset directory access.
     ds = gdal.Open('GTIFF_DIR:off:408:data/byte.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
         return 'fail'

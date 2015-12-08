@@ -1100,7 +1100,7 @@ void HDF5ImageDataset::CaptureCSKGeolocation(int iProductType)
 
 /**
 * Get Geotransform information for COSMO-SKYMED files
-* In case of sucess it stores the transformation
+* In case of success it stores the transformation
 * in adfGeoTransform. In case of failure it doesn't
 * modify adfGeoTransform
 * @param iProductType type of CSK subproduct, see HDF5CSKProduct

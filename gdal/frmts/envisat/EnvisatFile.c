@@ -1794,7 +1794,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
 
         /*
          * Capture the key.  We take everything up to the equal sign.  There
-         * shouldn't be any white space, but if so, we take it as part of the
+         * should not be any white space, but if so, we take it as part of the
          * key.
          */
         equal_index = (int)(strstr(line, "=") - line);

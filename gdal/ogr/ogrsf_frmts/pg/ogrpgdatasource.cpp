@@ -1375,11 +1375,12 @@ OGRErr OGRPGDataSource::DeleteLayer( int iLayer )
 
     if( bHavePostGIS  && sPostGISVersion.nMajor < 2)
     {
-        /* This is unnecessary if the layer is not a geometry table, or an inherited geometry table */
-        /* but it shouldn't hurt */
+        // This is unnecessary if the layer is not a geometry table,
+        // or an inherited geometry table but it should not hurt.
         osCommand.Printf(
-                 "DELETE FROM geometry_columns WHERE f_table_name='%s' and f_table_schema='%s'",
-                 osTableName.c_str(), osSchemaName.c_str() );
+            "DELETE FROM geometry_columns WHERE f_table_name='%s' and "
+            "f_table_schema='%s'",
+            osTableName.c_str(), osSchemaName.c_str() );
 
         hResult = OGRPG_PQexec( hPGConn, osCommand.c_str() );
         OGRPGClearResult( hResult );

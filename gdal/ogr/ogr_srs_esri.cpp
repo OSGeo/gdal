@@ -1770,7 +1770,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
     GetRoot()->applyRemapper( "PROJECTION", 
                               (char **)apszProjMapping,
                               (char **)apszProjMapping+1, 2 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Translate DATUM keywords that are misnamed.                     */
 /* -------------------------------------------------------------------- */
@@ -1823,7 +1823,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
             {
                 const char *pszFilename = NULL;
                 char **papszRecord = NULL;
-                
+
                 /* look for GEOGCS corresponding to this datum */
                 pszFilename = CSVFilename("gcs.csv");
                 papszRecord = CSVScanFileByName( pszFilename, "DATUM_CODE",  
@@ -1840,7 +1840,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                                      CSVGetFileFieldId(pszFilename,"COORD_REF_SYS_CODE")) );
                     // int bDeprecated = atoi( CSLGetField( papszRecord,
                     //                                      CSVGetFileFieldId(pszFilename,"DEPRECATED")) );
-                    
+
                     CPLDebug( "OGR_ESRI", "morphFromESRI() got GEOGCS node #%d", nGeogCS );
 
                     // if ( nGeogCS >= 1 && bDeprecated == 0 )
@@ -1848,7 +1848,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
                     {
                         OGRSpatialReference oSRSTemp;
                         if ( oSRSTemp.importFromEPSG( nGeogCS ) == OGRERR_NONE )
-                        {                        
+                        {
                             /* make clone of GEOGCS and strip CT parms for testing */
                             OGRSpatialReference *poSRSTemp2 = NULL;
                             bool bIsSame = false;

@@ -321,7 +321,7 @@ double GTIFAngleStringToDD( const char * pszAngle, int nUOMAngle )
     {
         dfAngle = GTIFAtof(pszAngle) / 3600;
     }
-    else /* decimal degrees ... some cases missing but seeminly never used */
+    else /* decimal degrees ... some cases missing but seemingly never used */
     {
         CPLAssert( nUOMAngle == 9102 || nUOMAngle == KvUserDefined
                    || nUOMAngle == 0 );
@@ -2147,7 +2147,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 
 This function reads the coordinate system definition from a GeoTIFF file,
 and <i>normalizes</i> it into a set of component information using 
-definitions from CSV (Comma Seperated Value ASCII) files derived from 
+definitions from CSV (Comma Separated Value ASCII) files derived from 
 EPSG tables.  This function is intended to simplify correct support for
 reading files with defined PCS (Projected Coordinate System) codes that
 wouldn't otherwise be directly known by application software by reducing
@@ -2221,7 +2221,7 @@ Projection Linear Units: 9003/US survey foot (0.304801m)
 </pre>
 
 Note that GTIFGetDefn() does not inspect or return the tiepoints and scale.
-This must be handled seperately as it normally would.  It is intended to
+This must be handled separately as it normally would.  It is intended to
 simplify capture and normalization of the coordinate system definition.  
 Note that GTIFGetDefn() also does the following things:
 

@@ -121,7 +121,7 @@ typedef struct
     uLong64 rest_read_compressed; /* number of byte to be decompressed */
     uLong64 rest_read_uncompressed;/*number of byte to be obtained after decomp */
     zlib_filefunc_def z_filefunc;
-    voidpf filestream;        /* io structore of the zipfile */
+    voidpf filestream;        /* IO structure of the zipfile */
     uLong compression_method;   /* compression method (0==store) */
     uLong64 byte_before_the_zipfile;/* byte before the zipfile, (>0 for sfx)*/
     int   raw;
@@ -133,7 +133,7 @@ typedef struct
 typedef struct
 {
     zlib_filefunc_def z_filefunc;
-    voidpf filestream;        /* io structore of the zipfile */
+    voidpf filestream;        /* IO structure of the zipfile */
     unz_global_info gi;       /* public global information */
     uLong64 byte_before_the_zipfile;/* byte before the zipfile, (>0 for sfx)*/
     uLong64 num_file;             /* number of the current file in the zipfile*/
@@ -167,7 +167,7 @@ typedef struct
 /* ===========================================================================
      Read a byte from a gz_stream; update next_in and avail_in. Return EOF
    for end of file.
-   IN assertion: the stream s has been sucessfully opened for reading.
+   IN assertion: the stream s has been successfully opened for reading.
 */
 
 

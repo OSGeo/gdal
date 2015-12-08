@@ -786,14 +786,14 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer (
 }
 
 /******************************************************************************
- method to parse multiple layers out of a container
+ Method to parse multiple layers out of a container.
 
  Args:          poKmlContainer  pointer to the container to parse
                 poOgrSRS        SRS to use when creating the layer
- 
+
  Returns:       number of features in the container that are not another
                 container
-                
+
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::ParseLayers (
@@ -809,7 +809,7 @@ int OGRLIBKMLDataSource::ParseLayers (
 
     size_t nKmlFeatures = poKmlContainer->get_feature_array_size (  );
 
-    /***** loop over the container to seperate the style, layers, etc *****/
+    /***** loop over the container to separate the style, layers, etc *****/
 
     size_t iKmlFeature;
 
@@ -1228,19 +1228,19 @@ int OGRLIBKMLDataSource::OpenKmz (
     }
 
     /***** if the doc.kml has links store it so if were in update mode we can write it *****/
-    
+
     if ( nLinks ) {
         m_poKmlDocKml = poKmlContainer;
         m_poKmlDocKmlRoot = poKmlDocKmlRoot;
     }
-        
+
     /***** if the doc.kml has no links treat it as a normal kml file *****/
 
     else {
 
-        /* todo there could still be a seperate styles file in the kmz
+        /* TODO: There could still be a separate styles file in the KMZ
            if there is this would be a layer style table IF its only a single
-           layer
+           layer.
          */
 
         /***** get the styles *****/
@@ -1256,7 +1256,8 @@ int OGRLIBKMLDataSource::OpenKmz (
         if ( nPlacemarks && !nLayers ) {
             AddLayer ( CPLGetBasename ( pszFilename ),
                        poOgrSRS, wkbUnknown,
-                       this, poKmlDocKmlRoot, poKmlContainer, pszFilename, FALSE, bUpdateIn, 1 );
+                       this, poKmlDocKmlRoot, poKmlContainer,
+                       pszFilename, FALSE, bUpdateIn, 1 );
         }
     }
 

@@ -187,7 +187,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
     {
         dfAngle = CPLAtof(pszAngle) / 3600;
     }
-    else /* decimal degrees ... some cases missing but seeminly never used */
+    else /* decimal degrees ... some cases missing but seemingly never used */
     {
         CPLAssert( nUOMAngle == 9102 || nUOMAngle == 0 );
 

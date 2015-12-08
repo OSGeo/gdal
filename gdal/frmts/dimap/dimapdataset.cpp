@@ -989,7 +989,7 @@ int DIMAPDataset::ReadImageInformation2()
                             /* BAND_ID is: B0, B1, .... P */
                             if (!EQUAL(psTag->psChild->pszValue, "P")) 
                             {
-                                if (strlen(psTag->psChild->pszValue) < 2) /* shouldn't happen */
+                                if (strlen(psTag->psChild->pszValue) < 2) /* should not happen */
                                 {
                                     CPLError(CE_Warning, CPLE_AppDefined,
                                         "Bad BAND_INDEX value : %s", psTag->psChild->pszValue);

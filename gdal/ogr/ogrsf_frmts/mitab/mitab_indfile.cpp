@@ -1459,8 +1459,8 @@ int TABINDNode::CommitToFile()
  * has on its parent.
  *
  * If bAddInThisNodeOnly=TRUE, then the entry is added only locally and
- * we do not try to update the child node.  This is used when the parent 
- * of a node that is being splitted has to be updated.
+ * we do not try to update the child node.  This is used when the parent
+ * of a node that is being split has to be updated.
  *
  * bInsertAfterCurChild forces the insertion to happen immediately after
  * the m_nCurIndexEntry.  This works only when bAddInThisNodeOnly=TRUE.

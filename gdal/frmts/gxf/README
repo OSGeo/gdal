@@ -28,7 +28,7 @@ GXF Irregularities
 
  o I reprojected gxf_text.gxf to lat/long producing latlong.gxf.  This
    file contains a #MAP_PROJECTION of "NAD83 / UTM zone 19N" even though
-   everything is in degrees.  Why?  Shouldn't it read "Geographic"?
+   everything is in degrees.  Why?  Should it read "Geographic"?
 
 
 

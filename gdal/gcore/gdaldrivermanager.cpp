@@ -207,7 +207,7 @@ GDALDriverManager::~GDALDriverManager()
     PamCleanProxyDB();
 
 /* -------------------------------------------------------------------- */
-/*      Blow away all the finder hints paths.  We really shouldn't      */
+/*      Blow away all the finder hints paths.  We really should not     */
 /*      be doing all of them, but it is currently hard to keep track    */
 /*      of those that actually belong to us.                            */
 /* -------------------------------------------------------------------- */

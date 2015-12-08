@@ -605,7 +605,7 @@ def mask_14():
 
     try:
         os.stat('tmp/byte_with_mask.tif.msk')
-        gdaltest.post_reason( 'tmp/byte_with_mask.tif.msk shouldn not exist' )
+        gdaltest.post_reason( 'tmp/byte_with_mask.tif.msk should not exist' )
         return 'fail'
     except:
         pass
@@ -706,7 +706,7 @@ def mask_and_ovr(order, method):
 
     try:
         os.stat('tmp/byte_with_ovr_and_mask.tif.msk')
-        gdaltest.post_reason( 'tmp/byte_with_mask.tif.msk shouldn not exist' )
+        gdaltest.post_reason( 'tmp/byte_with_mask.tif.msk should not exist' )
         return 'fail'
     except:
         pass

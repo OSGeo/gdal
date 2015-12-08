@@ -619,7 +619,7 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
 /*      from a call at the end of the Open() method, and some calls     */
 /*      may have already marked the PAM info as dirty (for instance     */
 /*      setting metadata), but really everything to this point is       */
-/*      reproducible, and so the PAM info shouldn't really be           */
+/*      reproducible, and so the PAM info should not really be          */
 /*      thought of as dirty.                                            */
 /* -------------------------------------------------------------------- */
     nPamFlags &= ~GPF_DIRTY;

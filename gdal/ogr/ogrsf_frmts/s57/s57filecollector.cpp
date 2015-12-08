@@ -127,7 +127,7 @@ char **S57FileCollector( const char *pszDataset )
 /* -------------------------------------------------------------------- */
     char        *pszCatDir = CPLStrdup( CPLGetPath( pszDataset ) );
     char        *pszRootDir = NULL;
-    
+
     if( CPLStat( CPLFormFilename(pszCatDir,"ENC_ROOT",NULL), &sStatBuf ) == 0
         && VSI_ISDIR(sStatBuf.st_mode) )
     {
@@ -145,7 +145,7 @@ char **S57FileCollector( const char *pszDataset )
 
 /* -------------------------------------------------------------------- */
 /*      We have a catalog.  Scan it for data files, those with an       */
-/*      IMPL of BIN.  Shouldn't there be a better way of testing        */
+/*      IMPL of BIN.  Is there be a better way of testing               */
 /*      whether a file is a data file or another catalog file?          */
 /* -------------------------------------------------------------------- */
     for( ; poRecord != NULL; poRecord = oModule.ReadRecord() )
@@ -166,7 +166,7 @@ char **S57FileCollector( const char *pszDataset )
             {
                 pszWholePath = CPLFormFilename( pszRootDir, pszFile, NULL );
             }
-                
+
             if( CPLStat( pszWholePath, &sStatBuf ) != 0 )
             {
                 CPLError( CE_Warning, CPLE_OpenFailed,

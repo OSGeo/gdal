@@ -3957,7 +3957,7 @@ OGRLayer *GDALDataset::ICreateLayer( const char * pszName,
 
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateLayer() not supported by this dataset." );
-              
+
     return NULL;
 }
 
@@ -3979,12 +3979,12 @@ OGRLayer *GDALDataset::ICreateLayer( const char * pszName,
  deprecated OGR_DS_CopyLayer().
 
  In GDAL 1.X, this method used to be in the OGRDataSource class.
- 
+
  @param poSrcLayer source layer.
  @param pszNewName the name of the layer to create.
  @param papszOptions a StringList of name=value options.  Options are driver
                      specific. There is a common option to set output layer
-                     spatial reference: DST_SRSWKT. The option shoulde be in
+                     spatial reference: DST_SRSWKT. The option should be in
                      WKT format.
 
  @return an handle to the layer, or NULL if an error occurs.

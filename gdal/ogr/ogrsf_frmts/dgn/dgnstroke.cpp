@@ -43,7 +43,7 @@ static void ComputePointOnArc2D( double dfPrimary, double dfSecondary,
                                  double *pdfX, double *pdfY )
 
 {
-    //dfAxisRotation and dfAngle are suposed to be in Radians
+    // dfAxisRotation and dfAngle are supposed to be in Radians
     double      dfCosRotation = cos(dfAxisRotation);
     double      dfSinRotation = sin(dfAxisRotation);
     double      dfEllipseX = dfPrimary * cos(dfAngle);

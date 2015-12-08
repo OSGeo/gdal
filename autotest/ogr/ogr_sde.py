@@ -227,14 +227,14 @@ def ogr_sde_6():
     if gdaltest.sde_dr is None:
         return 'skip'
 
-    base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (sde_server, sde_port, sde_db, sde_user, sde_password)
+    base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (
+        sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
 
     l1 = ds.GetLayerByName('SDE.TPOLY')
     extent = l1.GetExtent(force=0)
     if extent != (0.0, 2147483645.0, 0.0, 2147483645.0):
         gdaltest.post_reason("unforced extent did not equal expected value")
-        
 
     extent = l1.GetExtent(force=1)
     if extent !=     (478316.0, 481645.0, 4762881.0, 4765611.0):
@@ -247,35 +247,38 @@ def ogr_sde_7():
     if gdaltest.sde_dr is None:
         return 'skip'
 
-    base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (sde_server, sde_port, sde_db, sde_user, sde_password)
+    base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (
+        sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
 
     l1 = ds.GetLayerByName('SDE.TPOLY2')
     if l1:
-        gdaltest.post_reason("we got a layer when we shouldn't have")
+        gdaltest.post_reason("we got a layer when we should not have")
 
     ds.Destroy()
 
     default = 'DEFAULT'
     gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
 
-    default = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, default)
+    default = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (
+        sde_server, sde_port, sde_db, sde_user, sde_password, default)
     ds = ogr.Open(default, update=1)
 
     l1 = ds.GetLayerByName('SDE.TPOLY2')
     if l1:
-        gdaltest.post_reason("we got a layer when we shouldn't have")
+        gdaltest.post_reason("we got a layer when we should not have")
     ds.Destroy()
 
     default = 'DEFAULT'
     gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
 
-    default = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
+    default = 'SDE:%s,%s,%s,%s,%s' % (
+        sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(default)
 
     l1 = ds.GetLayerByName('SDE.TPOLY2')
     if l1:
-        gdaltest.post_reason("we got a layer when we shouldn't have")
+        gdaltest.post_reason("we got a layer when we should not have")
     ds.Destroy()
 
 

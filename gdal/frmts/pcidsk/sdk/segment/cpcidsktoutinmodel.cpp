@@ -116,15 +116,14 @@ void CPCIDSKToutinModelSegment::Load()
     seg_data.SetSize((int)data_size - 1024);
     
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
-    
+
     SRITInfo_t* poInfo = BinaryToSRITInfo();
 
     mpoInfo = poInfo;
-    
+
     // We've now loaded the structure up with data. Mark it as being loaded 
     // properly.
     loaded_ = true;
-    
 }
 
 /**
@@ -145,7 +144,7 @@ void CPCIDSKToutinModelSegment::Write(void)
 }
 
 /**
- * Synchronize the segement, if it was modified then
+ * Synchronize the segment, if it was modified then
  * write it into disk.
  */
 void CPCIDSKToutinModelSegment::Synchronize()

@@ -149,7 +149,7 @@ typedef struct
 typedef struct
 {
     zlib_filefunc_def z_filefunc;
-    voidpf filestream;        /* io structore of the zipfile */
+    voidpf filestream;        /* IO structure of the zipfile */
     linkedlist_data central_dir;/* datablock with central dir in construction*/
     int  in_opened_file_inzip;  /* 1 if a file in the zip is currently writ.*/
     curfile_info ci;            /* info on the file currently writing */

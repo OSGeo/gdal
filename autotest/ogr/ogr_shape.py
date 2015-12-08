@@ -3823,7 +3823,7 @@ def ogr_shape_81():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Writes a shorter geometry, so .shp shouldn't change size
+    # Writes a shorter geometry, so .shp should not change size.
     size_before = size_after
     f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(3 3,4 4)'))
     lyr.SetFeature(f)

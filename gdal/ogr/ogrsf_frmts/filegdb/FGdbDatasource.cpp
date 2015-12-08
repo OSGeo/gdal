@@ -106,7 +106,8 @@ int FGdbDataSource::FixIndexes()
         if( poOpenFileGDBDS == NULL || poOpenFileGDBDS->GetLayer(0) == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot open %s with OpenFileGDB driver. Shouldn't happen. Some layers will be corrupted",
+                     "Cannot open %s with OpenFileGDB driver. "
+                     "Should not happen. Some layers will be corrupted",
                      pszSystemCatalog);
             bRet = FALSE;
         }
@@ -126,7 +127,8 @@ int FGdbDataSource::FixIndexes()
                 OGRFeature* poF = poLayer->GetNextFeature();
                 if( poF == NULL )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Cannot find filename for layer %s",
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot find filename for layer %s",
                              m_layers[i]->GetName());
                     bRet = FALSE;
                 }

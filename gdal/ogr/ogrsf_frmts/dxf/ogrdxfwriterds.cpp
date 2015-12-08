@@ -373,7 +373,7 @@ int OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
         }
 
         // If we are at the end of the BLOCKS section, consider inserting
-        // suplementary blocks. 
+        // supplementary blocks.
         if( nCode == 0 && osSection == "BLOCKS" && EQUAL(szLineBuf,"ENDSEC") 
             && poBlocksLayer != NULL )
         {

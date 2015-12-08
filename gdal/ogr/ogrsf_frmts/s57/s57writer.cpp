@@ -831,7 +831,7 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
     OGRFeatureDefn *poFDefn = poFeature->GetDefnRef();
 
 /* -------------------------------------------------------------------- */
-/*      We handle primitives in a seperate method.                      */
+/*      We handle primitives in a separate method.                      */
 /* -------------------------------------------------------------------- */
     if( EQUAL(poFDefn->GetName(),OGRN_VI) 
         || EQUAL(poFDefn->GetName(),OGRN_VC) 

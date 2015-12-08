@@ -5949,7 +5949,8 @@ def tiff_write_138():
 
     # Test that consecutive IWriteBlock() calls for the same block but in
     # different bands only generate a single tile write, and not 3 rewrites
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_138.tif', 10, 1, 3, options = ['COMPRESS=DEFLATE'])
+    ds = gdal.GetDriverByName('GTiff').Create(
+        '/vsimem/tiff_write_138.tif', 10, 1, 3, options = ['COMPRESS=DEFLATE'])
     ds.GetRasterBand(1).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
     ds.GetRasterBand(1).FlushCache()
     ds.GetRasterBand(2).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
@@ -5966,11 +5967,13 @@ def tiff_write_138():
 
     # Test fix for #5999
 
-    # Create a file with a huge block that will satuurate the block cache
-    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_138_saturate.tif', gdal.GetCacheMax(), 1)
+    # Create a file with a huge block that will saturate the block cache.
+    tmp_ds = gdal.GetDriverByName('GTiff').Create(
+        '/vsimem/tiff_write_138_saturate.tif', gdal.GetCacheMax(), 1)
     tmp_ds = None
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_138.tif', 10, 1, 3, options = ['COMPRESS=DEFLATE'])
+    ds = gdal.GetDriverByName('GTiff').Create(
+        '/vsimem/tiff_write_138.tif', 10, 1, 3, options = ['COMPRESS=DEFLATE'])
     ds.GetRasterBand(1).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
     ds.GetRasterBand(2).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
     ds.GetRasterBand(3).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)

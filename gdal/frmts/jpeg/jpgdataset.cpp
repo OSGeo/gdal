@@ -1408,7 +1408,7 @@ void JPGDatasetCommon::InitInternalOverviews()
             VSIFSeekL( fpImage, nCurOffset, SEEK_SET );
         }
 
-        /* libjpeg-6b only suppports 2, 4 and 8 scale denominators */
+        /* libjpeg-6b only supports 2, 4 and 8 scale denominators */
         /* TODO: Later versions support more */
 
         int nImplicitOverviews = 0;

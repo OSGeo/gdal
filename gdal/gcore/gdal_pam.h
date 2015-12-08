@@ -77,7 +77,7 @@ class GDALPamRasterBand;
 /* ==================================================================== */
 /*      GDALDatasetPamInfo                                              */
 /*                                                                      */
-/*      We make these things a seperate structure of information        */
+/*      We make these things a separate structure of information        */
 /*      primarily so we can modify it without altering the size of      */
 /*      the GDALPamDataset.  It is an effort to reduce ABI churn for    */
 /*      driver plugins.                                                 */
@@ -189,7 +189,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 /* ==================================================================== */
 /*      GDALRasterBandPamInfo                                           */
 /*                                                                      */
-/*      We make these things a seperate structure of information        */
+/*      We make these things a separate structure of information        */
 /*      primarily so we can modify it without altering the size of      */
 /*      the GDALPamDataset.  It is an effort to reduce ABI churn for    */
 /*      driver plugins.                                                 */

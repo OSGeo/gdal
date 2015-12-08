@@ -1978,12 +1978,12 @@ GBool PostGISRasterDataset::SetRasterProperties
     GBool bNeedToCheckWholeTable = false;
 
     /*******************************************************************
-     * Get the extent and the maximum number of bands of the requested 
+     * Get the extent and the maximum number of bands of the requested
      * raster-
-     * 
-     * TODO: The extent of rotated rasters could be a problem. We'll 
-     * need a ST_RotatedExtent function in PostGIS. Without that 
-     * function, we shouldn't allow rotated rasters
+     *
+     * TODO: The extent of rotated rasters could be a problem. We will
+     * need a ST_RotatedExtent function in PostGIS. Without that
+     * function, we should not allow rotated rasters.
      ******************************************************************/
     if (pszWhere != NULL) {
         osCommand.Printf(
@@ -1995,7 +1995,7 @@ GBool PostGISRasterDataset::SetRasterProperties
             pszColumn, pszColumn, pszColumn, pszColumn, pszColumn,
             pszSchema, pszTable, pszWhere, 
             pszColumn);
-            
+
 #ifdef DEBUG_QUERY
         CPLDebug("PostGIS_Raster", 
         "PostGISRasterDataset::SetRasterProperties(): First query: %s", 
@@ -2004,9 +2004,9 @@ GBool PostGISRasterDataset::SetRasterProperties
 
         poResult = PQexec(poConn, osCommand.c_str());
     }
-    
+
     else {
-        
+
         /**
          * Optimization: First, check raster_columns view (it makes 
          * things faster. See ticket #5046)
@@ -2353,10 +2353,10 @@ GBool PostGISRasterDataset::SetRasterProperties
 
             osCommand.Printf("select %s, st_metadata(%s) from %s.%s",
                 pszPrimaryKeyName, pszColumn, pszSchema, pszTable);
-                        
-            // srid shouldn't be necessary. It was previously checked
+
+            // srid should not be necessary. It was previously checked
         }
-        
+
         else {
             osCommand.Printf("select %s, st_metadata(%s) from %s.%s "
                 "where %s", pszPrimaryKeyName, pszColumn, pszSchema, 

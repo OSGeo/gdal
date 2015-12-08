@@ -858,8 +858,8 @@ static StyleSelectorPtr StyleFromStyleURL(
 
     if ( *pszUrl == '#' && poStyleTable ) {
 
-        /***** searh the style table for the style we *****/
-        /***** want and copy it back into the table   *****/
+        /***** Search the style table for the style we *****/
+        /***** want and copy it back into the table.   *****/
 
         const char *pszTest = NULL;
         pszTest = poStyleTable->Find ( pszUrl + 1 );
@@ -960,7 +960,7 @@ static StyleSelectorPtr StyleFromStyleURL(
         }
     }
 
-    /***** FIXME add suport here for relative links inside kml *****/
+    /***** FIXME Add support here for relative links inside KML. *****/
 
     CPLFree ( pszUrl );
     CPLFree ( pszStyleMapId );
@@ -987,7 +987,7 @@ StyleSelectorPtr StyleFromStyleMap(
         PairPtr myPair = poKmlStyleMap->get_pair_array_at(i);
 
         /***** is it the right one of the pair? *****/
-        
+
         if ( myPair->get_key() == nStyleMapKey ) {
             
             if (myPair->has_styleselector())

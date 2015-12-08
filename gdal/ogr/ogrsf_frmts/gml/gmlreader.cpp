@@ -283,7 +283,8 @@ bool GMLReader::SetupParser()
 #endif
     if (bRet < 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SetupParser(): shouldn't happen");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "SetupParser(): should not happen");
         return false;
     }
 

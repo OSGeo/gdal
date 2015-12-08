@@ -713,14 +713,14 @@ by the OGRSFDriverManager.
  This method implements sequential access to the features of a layer.  The
  ResetReading() method can be used to start at the beginning again.  
 
- Features returned by GetNextFeature() may or may not be affected by concurrent
- modifications depending on drivers. A guaranteed way of seing modifications in
- effect is to call ResetReading() on layers where GetNextFeature() has been called,
- before reading again.
- Structural changes in layers (field addition, deletion, ...) when a read is in
- progress may or may not be possible depending on drivers.
- If a transaction is committed/aborted, the current sequential reading may or may not be
- valid after that operation and a call to ResetReading() might be needed.
+ Features returned by GetNextFeature() may or may not be affected by
+ concurrent modifications depending on drivers. A guaranteed way of seeing
+ modifications in effect is to call ResetReading() on layers where
+ GetNextFeature() has been called, before reading again.  Structural changes
+ in layers (field addition, deletion, ...) when a read is in progress may or
+ may not be possible depending on drivers.  If a transaction is
+ committed/aborted, the current sequential reading may or may not be valid
+ after that operation and a call to ResetReading() might be needed.
 
  This method is the same as the C function OGR_L_GetNextFeature().
 
@@ -746,14 +746,14 @@ by the OGRSFDriverManager.
  The OGR_L_ResetReading() function can be used to start at the beginning 
  again.
 
- Features returned by OGR_GetNextFeature() may or may not be affected by concurrent
- modifications depending on drivers. A guaranteed way of seing modifications in
- effect is to call OGR_L_ResetReading() on layers where OGR_GetNextFeature() has been called,
- before reading again.
- Structural changes in layers (field addition, deletion, ...) when a read is in
- progress may or may not be possible depending on drivers.
- If a transaction is committed/aborted, the current sequential reading may or may not be
- valid after that operation and a call to OGR_L_ResetReading() might be needed.
+ Features returned by OGR_GetNextFeature() may or may not be affected by
+ concurrent modifications depending on drivers. A guaranteed way of seeing
+ modifications in effect is to call OGR_L_ResetReading() on layers where
+ OGR_GetNextFeature() has been called, before reading again.  Structural
+ changes in layers (field addition, deletion, ...) when a read is in progress
+ may or may not be possible depending on drivers.  If a transaction is
+ committed/aborted, the current sequential reading may or may not be valid
+ after that operation and a call to OGR_L_ResetReading() might be needed.
 
  This function is the same as the C++ method OGRLayer::GetNextFeature().
 

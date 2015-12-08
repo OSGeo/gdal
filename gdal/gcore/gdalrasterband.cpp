@@ -2424,7 +2424,7 @@ const char * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH hBand )
  *
  * @param pszNewValue the new unit type value.
  *
- * @return CE_None on success or CE_Failure if not succuessful, or
+ * @return CE_None on success or CE_Failure if not successful, or
  * unsupported.
  */
 

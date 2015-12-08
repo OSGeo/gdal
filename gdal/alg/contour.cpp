@@ -1421,22 +1421,22 @@ CPLErr OGRContourWriter( double dfLevel,
  *
  * ALGORITHM RULES
 
-For contouring purposes raster pixel values are assumed to represent a point 
-value at the center of the corresponding pixel region.  For the purpose of 
+For contouring purposes raster pixel values are assumed to represent a point
+value at the center of the corresponding pixel region.  For the purpose of
 contour generation we virtually connect each pixel center to the values to
 the left, right, top and bottom.  We assume that the pixel value is linearly
 interpolated between the pixel centers along each line, and determine where
-(if any) contour lines will appear along these line segements.  Then the
-contour crossings are connected.  
+(if any) contour lines will appear along these line segments.  Then the
+contour crossings are connected.
 
-This means that contour lines' nodes won't actually be on pixel edges, but 
-rather along vertical and horizontal lines connecting the pixel centers. 
+This means that contour lines' nodes will not actually be on pixel edges, but
+rather along vertical and horizontal lines connecting the pixel centers.
 
 \verbatim
 General Case:
 
       5 |                  | 3
-     -- + ---------------- + -- 
+     -- + ---------------- + --
         |                  |
         |                  |
         |                  |
@@ -1444,36 +1444,36 @@ General Case:
      10 +                  |
         |\                 |
         | \                |
-     -- + -+-------------- + -- 
+     -- + -+-------------- + --
      12 |  10              | 1
 
 
 Saddle Point:
 
       5 |                  | 12
-     -- + -------------+-- + -- 
+     -- + -------------+-- + --
         |               \  |
         |                 \|
-        |                  + 
+        |                  +
         |                  |
         +                  |
         |\                 |
         | \                |
-     -- + -+-------------- + -- 
+     -- + -+-------------- + --
      12 |                  | 1
 
 or:
 
       5 |                  | 12
-     -- + -------------+-- + -- 
+     -- + -------------+-- + --
         |          __/     |
         |      ___/        |
-        |  ___/          __+ 
+        |  ___/          __+
         | /           __/  |
         +'         __/     |
         |       __/        |
         |   ,__/           |
-     -- + -+-------------- + -- 
+     -- + -+-------------- + --
      12 |                  | 1
 \endverbatim
 
