@@ -149,7 +149,8 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
         return NULL;
 
     VRTSourceParser pfnParser = reinterpret_cast<VRTSourceParser>
-                        (CPLScanPointer(pszParserFunc, strlen(pszParserFunc)));
+                        (CPLScanPointer(pszParserFunc,
+                                        static_cast<int>(strlen(pszParserFunc))));
 
     if( pfnParser == NULL )
         return NULL;
