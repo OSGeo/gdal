@@ -1766,6 +1766,7 @@ int TABINDNode::SplitNode()
                                 GetNodeBlockPtr(), m_nNextNodePtr)!= 0 ||
             poNewNode->SetFieldType(m_eFieldType) != 0 )
         {
+            delete poNewNode;
             return -1;
         }
 
@@ -1782,6 +1783,7 @@ int TABINDNode::SplitNode()
                 poTmpNode->CommitToFile() != 0)
             {
                 delete poTmpNode;
+                delete poNewNode;
                 return -1;
             }
             delete poTmpNode;
@@ -1794,7 +1796,10 @@ int TABINDNode::SplitNode()
 
         if (poNewNode->SetNodeBufferDirectly(numInNode2, 
                                         m_poDataBlock->GetCurDataPtr()) != 0)
+        {
+            delete poNewNode;
             return -1;
+        }
 
 #ifdef DEBUG
         // Just in case, reset space previously used by moved entries
@@ -1810,7 +1815,10 @@ int TABINDNode::SplitNode()
                                                     GetNodeBlockPtr(),
                                                     poNewNode->GetNodeKey(),
                                         poNewNode->GetNodeBlockPtr(), 1) != 0)
+            {
+                delete poNewNode;
                 return -1;
+            }
         }
 
     }
@@ -1855,7 +1863,10 @@ int TABINDNode::SplitNode()
 
         if (poNewNode->SetNodeBufferDirectly(numInNode1, 
                                         m_poDataBlock->GetCurDataPtr()) != 0)
+        {
+            delete poNewNode;
             return -1;
+        }
 
         // Shift the second half of the entries to beginning of buffer
         memmove (m_poDataBlock->GetCurDataPtr(),
@@ -1879,7 +1890,10 @@ int TABINDNode::SplitNode()
                                                   poNewNode->GetNodeBlockPtr(),
                                                     GetNodeKey(),
                                                     GetNodeBlockPtr(), 2) != 0)
+            {
+                delete poNewNode;
                 return -1;
+            }
         }
 
     }
@@ -1896,7 +1910,10 @@ int TABINDNode::SplitNode()
      * Flush and destroy temporary node
      *----------------------------------------------------------------*/
     if (poNewNode->CommitToFile() != 0)
+    {
+        delete poNewNode;
         return -1;
+    }
 
     delete poNewNode;
 
