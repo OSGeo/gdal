@@ -63,7 +63,7 @@ enum RecordType { RecordValid, RecordSkipped, RecordDuplicated };
 /************************************************************************/
 /*                              VFKProperty                             */
 /************************************************************************/
-class CPL_DLL VFKProperty
+class VFKProperty
 {
 private:
     bool                    m_bIsNull;
@@ -92,7 +92,7 @@ public:
 /************************************************************************/
 /*                              IVFKFeature                              */
 /************************************************************************/
-class CPL_DLL IVFKFeature
+class IVFKFeature
 {
 protected:
     IVFKDataBlock            *m_poDataBlock;
@@ -129,7 +129,7 @@ public:
 /************************************************************************/
 /*                              VFKFeature                              */
 /************************************************************************/
-class CPL_DLL VFKFeature : public IVFKFeature
+class VFKFeature : public IVFKFeature
 {
 private:
     typedef std::vector<VFKProperty> VFKPropertyList;
@@ -160,7 +160,7 @@ public:
 /************************************************************************/
 /*                              VFKFeatureSQLite                        */
 /************************************************************************/
-class CPL_DLL VFKFeatureSQLite : public IVFKFeature
+class VFKFeatureSQLite : public IVFKFeature
 {
 private:
     int                  m_iRowId;           /* rowid in DB */
@@ -187,7 +187,7 @@ public:
 /************************************************************************/
 /*                              VFKPropertyDefn                         */
 /************************************************************************/
-class CPL_DLL VFKPropertyDefn
+class VFKPropertyDefn
 {
 private:
     char             *m_pszName;
@@ -215,7 +215,7 @@ public:
 /************************************************************************/
 /*                              IVFKDataBlock                           */
 /************************************************************************/
-class CPL_DLL IVFKDataBlock
+class IVFKDataBlock
 {
 private:
     IVFKFeature      **m_papoFeature;
@@ -288,7 +288,7 @@ public:
 /************************************************************************/
 /*                              VFKDataBlock                            */
 /************************************************************************/
-class CPL_DLL VFKDataBlock : public IVFKDataBlock
+class VFKDataBlock : public IVFKDataBlock
 {
 private:
     int                LoadGeometryPoint();
@@ -309,7 +309,7 @@ public:
 /************************************************************************/
 /*                              VFKDataBlockSQLite                      */
 /************************************************************************/
-class CPL_DLL VFKDataBlockSQLite : public IVFKDataBlock
+class VFKDataBlockSQLite : public IVFKDataBlock
 {
 private:
     bool                 SetGeometryLineString(VFKFeatureSQLite *, OGRLineString *,
@@ -341,7 +341,7 @@ public:
 /************************************************************************/
 /*                              IVFKReader                              */
 /************************************************************************/
-class CPL_DLL IVFKReader
+class IVFKReader
 {
 private:
     virtual void AddInfo(const char *) = 0;
