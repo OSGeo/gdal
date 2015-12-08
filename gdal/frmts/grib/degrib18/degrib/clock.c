@@ -486,7 +486,8 @@ int Clock_NumDay (int month, int day, sInt4 year, char f_tot)
  * NOTES
  *****************************************************************************
  */
-static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
+#define SIZEOF_BUFFER   100
+static void Clock_FormatParse (char buffer[SIZEOF_BUFFER], sInt4 sec, float floatSec,
                                sInt4 totDay, sInt4 year, int month, int day,
                                char format)
 {
@@ -510,57 +511,57 @@ static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
    switch (format) {
       case 'd':
          dy = (Clock_NumDay (month, 1, year, 1) - 1);
-         snprintf(buffer, sizeof(buffer), "%02d", day - dy);
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", day - dy);
          return;
       case 'm':
-         snprintf(buffer, sizeof(buffer), "%02d", month);
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", month);
          return;
       case 'E':
-         snprintf(buffer, sizeof(buffer), "%2d", month);
+         snprintf(buffer, SIZEOF_BUFFER, "%2d", month);
          return;
       case 'Y':
-         snprintf(buffer, sizeof(buffer), "%04d", year);
+         snprintf(buffer, SIZEOF_BUFFER, "%04d", year);
          return;
       case 'H':
-         snprintf(buffer, sizeof(buffer), "%02d", (int) ((sec % 86400L) / 3600));
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", (int) ((sec % 86400L) / 3600));
          return;
       case 'G':
-         snprintf(buffer, sizeof(buffer), "%2d", (int) ((sec % 86400L) / 3600));
+         snprintf(buffer, SIZEOF_BUFFER, "%2d", (int) ((sec % 86400L) / 3600));
          return;
       case 'M':
-         snprintf(buffer, sizeof(buffer), "%02d", (int) ((sec % 3600) / 60));
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", (int) ((sec % 3600) / 60));
          return;
       case 'S':
-         snprintf(buffer, sizeof(buffer), "%02d", (int) (sec % 60));
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", (int) (sec % 60));
          return;
       case 'f':
-         snprintf(buffer, sizeof(buffer), "%05.2f", ((int) (sec % 60)) + floatSec);
+         snprintf(buffer, SIZEOF_BUFFER, "%05.2f", ((int) (sec % 60)) + floatSec);
          return;
       case 'n':
-         snprintf(buffer, sizeof(buffer), "\n");
+         snprintf(buffer, SIZEOF_BUFFER, "\n");
          return;
       case '%':
-         snprintf(buffer, sizeof(buffer), "%%");
+         snprintf(buffer, SIZEOF_BUFFER, "%%");
          return;
       case 't':
-         snprintf(buffer, sizeof(buffer), "\t");
+         snprintf(buffer, SIZEOF_BUFFER, "\t");
          return;
       case 'y':
-         snprintf(buffer, sizeof(buffer), "%02d", (int) (year % 100));
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", (int) (year % 100));
          return;
       case 'I':
          i = ((sec % 43200L) / 3600);
          if (i == 0) {
-            snprintf(buffer, sizeof(buffer), "12");
+            snprintf(buffer, SIZEOF_BUFFER, "12");
          } else {
-            snprintf(buffer, sizeof(buffer), "%02d", i);
+            snprintf(buffer, SIZEOF_BUFFER, "%02d", i);
          }
          return;
       case 'p':
          if (((sec % 86400L) / 3600) >= 12) {
-            snprintf(buffer, sizeof(buffer), "PM");
+            snprintf(buffer, SIZEOF_BUFFER, "PM");
          } else {
-            snprintf(buffer, sizeof(buffer), "AM");
+            snprintf(buffer, SIZEOF_BUFFER, "AM");
          }
          return;
       case 'B':
@@ -579,28 +580,28 @@ static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
          buffer[3] = '\0';
          return;
       case 'w':
-         snprintf(buffer, sizeof(buffer), "%d", (int) ((4 + totDay) % 7));
+         snprintf(buffer, SIZEOF_BUFFER, "%d", (int) ((4 + totDay) % 7));
          return;
       case 'j':
-         snprintf(buffer, sizeof(buffer), "%03d", day + 1);
+         snprintf(buffer, SIZEOF_BUFFER, "%03d", day + 1);
          return;
       case 'e':
          dy = (Clock_NumDay (month, 1, year, 1) - 1);
-         snprintf(buffer, sizeof(buffer), "%d", (int) (day - dy));
+         snprintf(buffer, SIZEOF_BUFFER, "%d", (int) (day - dy));
          return;
       case 'W':
          i = (1 - ((4 + totDay - day) % 7)) % 7;
          if (day < i)
-            snprintf(buffer, sizeof(buffer), "00");
+            snprintf(buffer, SIZEOF_BUFFER, "00");
          else
-            snprintf(buffer, sizeof(buffer), "%02d", ((day - i) / 7) + 1);
+            snprintf(buffer, SIZEOF_BUFFER, "%02d", ((day - i) / 7) + 1);
          return;
       case 'U':
          i = (-((4 + totDay - day) % 7)) % 7;
          if (day < i)
-            snprintf(buffer, sizeof(buffer), "00");
+            snprintf(buffer, SIZEOF_BUFFER, "00");
          else
-            snprintf(buffer, sizeof(buffer), "%02d", ((day - i) / 7) + 1);
+            snprintf(buffer, SIZEOF_BUFFER, "%02d", ((day - i) / 7) + 1);
          return;
       case 'D':
          Clock_FormatParse (buffer, sec, floatSec, totDay, year, month,
@@ -678,7 +679,7 @@ static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
          }
          return;
       default:
-         snprintf(buffer, sizeof(buffer), "unknown %c", format);
+         snprintf(buffer, SIZEOF_BUFFER, "unknown %c", format);
          return;
    }
 }
@@ -1863,7 +1864,7 @@ void Clock_PrintDateNumber (double l_clock, char buffer[15])
 
    Clock_PrintDate (l_clock, &year, &month, &day, &hour, &min, &d_sec);
    sec = (int) d_sec;
-   snprintf(buffer, sizeof(buffer), "%04d%02d%02d%02d%02d%02d", year, month, day, hour, min,
+   snprintf(buffer, 15, "%04d%02d%02d%02d%02d%02d", year, month, day, hour, min,
             sec);
 }
 
