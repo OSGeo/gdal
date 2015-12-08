@@ -160,6 +160,7 @@ class WCSRasterBand : public GDALPamRasterBand
 WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn, int iOverviewIn )
 
 {
+    poDS = poDSIn;
     poODS = poDSIn;
     this->nBand = nBandIn;
 
