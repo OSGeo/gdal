@@ -1321,13 +1321,13 @@ sub WriteTile {
     $yoff //= 0;
     my $xsize = @{$data->[0]};
     if ($xsize > $self->{XSize} - $xoff) {
-        warn "Buffer XSize too large ($xsize) for this raster band (width = $self->{XSize}).";
+        warn "Buffer XSize too large ($xsize) for this raster band (width = $self->{XSize}, offset = $xoff).";
         $xsize = $self->{XSize} - $xoff;
     }
     my $ysize = @{$data};
     if ($ysize > $self->{YSize} - $yoff) {
         $ysize = $self->{YSize} - $yoff;
-        warn "Buffer YSize too large ($ysize) for this raster band (height = $self->{YSize}).";
+        warn "Buffer YSize too large ($ysize) for this raster band (height = $self->{YSize}, offset = $yoff).";
     }
     my $pc = Geo::GDAL::PackCharacter($self->{DataType});
     for my $i (0..$ysize-1) {
