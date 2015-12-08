@@ -60,7 +60,7 @@ def ogr_db2_check_driver():
         pass
 
     if ogrtest.db2_drv is None:
-        return 'fail'
+        return 'skip'
 
     return 'success'
 
