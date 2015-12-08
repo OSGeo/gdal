@@ -162,7 +162,7 @@ static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
     if (byPoint == 0)
     {
         char szBuf[16];
-        sprintf(szBuf, "%.1f", 1.0);
+        snprintf(szBuf, sizeof(szBuf), "%.1f", 1.0);
         byPoint = szBuf[1];
     }
     if (point != byPoint)
