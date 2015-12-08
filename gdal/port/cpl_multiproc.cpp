@@ -546,7 +546,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 /*      to exist to be locked.                                          */
 /* -------------------------------------------------------------------- */
     pszLockFilename = (char *) CPLMalloc(strlen(pszPath) + 30);
-    sprintf( pszLockFilename, "%s.lock", pszPath );
+    snprintf( pszLockFilename, strlen(pszPath) + 30, "%s.lock", pszPath );
 
     fpLock = fopen( pszLockFilename, "r" );
     while( fpLock != NULL && dfWaitInSeconds > 0.0 )
@@ -1005,7 +1005,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 
 {
     char *pszLockFilename = (char *) CPLMalloc(strlen(pszPath) + 30);
-    sprintf( pszLockFilename, "%s.lock", pszPath );
+    snprintf( pszLockFilename, strlen(pszPath) + 30, "%s.lock", pszPath );
 
     HANDLE hLockFile =
         CreateFile( pszLockFilename, GENERIC_WRITE, 0, NULL,CREATE_NEW,
