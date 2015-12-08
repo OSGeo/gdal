@@ -75,12 +75,12 @@ void PCIDSK::LibJPEG_DecompressBlock(
     struct jpeg_source_mgr	sSrcMgr;
     struct jpeg_error_mgr	sErrMgr;
 
-    int				i;
+    int i;
 
 /* -------------------------------------------------------------------- */
 /*      Setup the buffer we will compress into.  We make it pretty      */
 /*      big to ensure there is space.  The calling function will        */
-/*      free it as soon as it is done so this shouldn't hurt much.      */
+/*      free it as soon as it is done so this should not hurt much.     */
 /* -------------------------------------------------------------------- */
     sSrcMgr.init_source = _DummySrcMgrMethod;
     sSrcMgr.fill_input_buffer = (boolean (*)(j_decompress_ptr))

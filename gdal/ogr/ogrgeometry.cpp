@@ -2819,14 +2819,14 @@ OGRGeometryH OGR_G_GetBoundary( OGRGeometryH hTarget )
  *
  * Builds a new geometry containing the buffer region around the geometry
  * on which it is invoked.  The buffer is a polygon containing the region within
- * the buffer distance of the original geometry.  
+ * the buffer distance of the original geometry.
  *
  * Some buffer sections are properly described as curves, but are converted to
- * approximate polygons.  The nQuadSegs parameter can be used to control how many
- * segements should be used to define a 90 degree curve - a quadrant of a circle. 
- * A value of 30 is a reasonable default.  Large values result in large numbers
- * of vertices in the resulting buffer geometry while small numbers reduce the 
- * accuracy of the result. 
+ * approximate polygons.  The nQuadSegs parameter can be used to control how
+ * many segments should be used to define a 90 degree curve - a quadrant of a
+ * circle.  A value of 30 is a reasonable default.  Large values result in
+ * large numbers of vertices in the resulting buffer geometry while small
+ * numbers reduce the accuracy of the result.
  *
  * This method is the same as the C function OGR_G_Buffer().
  *
@@ -2892,14 +2892,14 @@ OGRGeometry *OGRGeometry::Buffer( UNUSED_IF_NO_GEOS double dfDist,
  *
  * Builds a new geometry containing the buffer region around the geometry
  * on which it is invoked.  The buffer is a polygon containing the region within
- * the buffer distance of the original geometry.  
+ * the buffer distance of the original geometry.
  *
  * Some buffer sections are properly described as curves, but are converted to
- * approximate polygons.  The nQuadSegs parameter can be used to control how many
- * segements should be used to define a 90 degree curve - a quadrant of a circle. 
- * A value of 30 is a reasonable default.  Large values result in large numbers
- * of vertices in the resulting buffer geometry while small numbers reduce the 
- * accuracy of the result. 
+ * approximate polygons.  The nQuadSegs parameter can be used to control how
+ * many segments should be used to define a 90 degree curve - a quadrant of a
+ * circle.  A value of 30 is a reasonable default.  Large values result in
+ * large numbers of vertices in the resulting buffer geometry while small
+ * numbers reduce the accuracy of the result.
  *
  * This function is the same as the C++ method OGRGeometry::Buffer().
  *

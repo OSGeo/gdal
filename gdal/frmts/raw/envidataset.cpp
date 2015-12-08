@@ -404,16 +404,16 @@ void ENVIDataset::FlushCache()
     switch (interleave)
     {
       case BIP:
-        pszInterleaving = "bip";		    // interleaved by pixel
+        pszInterleaving = "bip";  // interleaved by pixel
         break;
       case BIL:
-        pszInterleaving = "bil";		    // interleaved by line
+        pszInterleaving = "bil";  // interleaved by line
         break;
       case BSQ:
-        pszInterleaving = "bsq";		// band sequental by default
+        pszInterleaving = "bsq";  // band sequential by default
         break;
       default:
-    	pszInterleaving = "bsq";
+        pszInterleaving = "bsq";
         break;
     }
     bOK &= VSIFPrintfL( fp, "interleave = %s\n", pszInterleaving) >= 0;
@@ -2621,21 +2621,21 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 
     bRet = VSIFPrintfL( fp, "ENVI\n" ) > 0;
     bRet &= VSIFPrintfL( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
-		nXSize, nYSize, nBands ) > 0;
+                         nXSize, nYSize, nBands ) > 0;
     bRet &= VSIFPrintfL( fp, "header offset = 0\nfile type = ENVI Standard\n" ) > 0;
     bRet &= VSIFPrintfL( fp, "data type = %d\n", iENVIType ) > 0;
-    const char	*pszInterleaving = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
+    const char *pszInterleaving = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
     if ( pszInterleaving )
     {
-	if ( STARTS_WITH_CI(pszInterleaving, "bip") )
-	    pszInterleaving = "bip";		    // interleaved by pixel
-	else if ( STARTS_WITH_CI(pszInterleaving, "bil") )
-	    pszInterleaving = "bil";		    // interleaved by line
-	else
-	    pszInterleaving = "bsq";		// band sequental by default
+        if ( STARTS_WITH_CI(pszInterleaving, "bip") )
+            pszInterleaving = "bip";  // interleaved by pixel
+        else if ( STARTS_WITH_CI(pszInterleaving, "bil") )
+            pszInterleaving = "bil";  // interleaved by line
+        else
+            pszInterleaving = "bsq";  // band sequential by default
     }
     else
-	pszInterleaving = "bsq";
+        pszInterleaving = "bsq";
     bRet &= VSIFPrintfL( fp, "interleave = %s\n", pszInterleaving) > 0;
     bRet &= VSIFPrintfL( fp, "byte order = %d\n", iBigEndian ) > 0;
 

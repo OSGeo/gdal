@@ -117,7 +117,7 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
 GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
 {
     //  -------------------------------------------------------------------
-    //  It shouldn't have an open file pointer
+    //  It should not have an open file pointer.
     //  -------------------------------------------------------------------
 
     if( poOpenInfo->fpL != NULL )
@@ -922,7 +922,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
         }
 
         // ----------------------------------------------------------------
-        //  Copy statitics information, without median and mode
+        //  Copy statistics information, without median and mode.
         // ----------------------------------------------------------------
 
         if( poSrcBand->GetStatistics( false, false, &dfMin, &dfMax,
@@ -937,7 +937,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
         }
 
         // ----------------------------------------------------------------
-        //  Copy statitics metadata information, including median and mode
+        //  Copy statistics metadata information, including median and mode.
         // ----------------------------------------------------------------
 
         const char *pszMin     = poSrcBand->GetMetadataItem( "STATISTICS_MINIMUM" );

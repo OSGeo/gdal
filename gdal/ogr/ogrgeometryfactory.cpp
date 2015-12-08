@@ -3496,7 +3496,7 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
     double R, cx, cy, alpha0, alpha1, alpha2;
 
     /* So as to make sure the same curve followed in both direction results */
-    /* in perfectly(=binary identical) symetrical points */
+    /* in perfectly(=binary identical) symmetrical points. */
     if( OGRGF_NeedSwithArcOrder(x0,y0,x2,y2) )
     {
         OGRLineString* poLS = curveToLineString(x2,y2,z2,x1,y1,z1,x0,y0,z0,
@@ -3599,7 +3599,7 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
             /* bits of the x,y of the first 2 computed points (so 32 bits), */
             /* then put 0xFF, and on the last couple points put again the */
             /* angle but in reverse order, so that overall the low-significant bits */
-            /* of all the points are symetrical w.r.t the mid-point */
+            /* of all the points are symmetrical w.r.t the mid-point */
             double dfRatio = (alpha1 - alpha0) / (alpha2 - alpha0);
             GUInt32 nAlphaRatio = (GUInt32)(0.5 + HIDDEN_ALPHA_SCALE * dfRatio);
             GUInt16 nAlphaRatioLow = nAlphaRatio & HIDDEN_ALPHA_HALF_MASK;

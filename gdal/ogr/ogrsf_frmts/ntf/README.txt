@@ -166,10 +166,10 @@ following steps are required:
    be cloned from an existing translate function, and the attribute mapping
    in the NTFReader::ApplyAttributeValues() call can be modified. 
 
-Occationally existing products will change slightly.  This may result in a
+Occasionally existing products will change slightly.  This may result in a
 slight change to the detection logic in NTFFileReader::Open() and changes
 in the list of user attributes associated with the layer.  If the differences
-are signifiant it may be necessary to define a whole new product family 
+are significant it may be necessary to define a whole new product family 
 type (as is done for Code Point Plus vs. Code Point). 
 
 Generic Products
@@ -178,7 +178,7 @@ Generic Products
 In situations where a file is not identified as being part of an existing
 known product it will be treated generically.  In this case the entire dataset
 is scanned to establish what features have what attributes.  Because of this,
-opening a generic dataset can be much slower than opening a recognised dataset.
+opening a generic dataset can be much slower than opening a recognized dataset.
 Based on this scan a list of generic features (layers) are defined from the 
 following set:
 

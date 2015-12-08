@@ -2141,7 +2141,7 @@ static int power (uInt4 val, int extra)
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *         min = The min value found (Output)
@@ -2196,7 +2196,7 @@ static char findMaxMin2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *         min = The min value found (Output)
  *         max = The max value found (Output)
@@ -2249,7 +2249,7 @@ static char findMaxMin1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *  Data = The data. (Input)
  * start = The starting index in data (Input)
- *  stop = The stoping index in data (Input)
+ *  stop = The stopping index in data (Input)
  *   min = The min value found (Output)
  *   max = The max value found (Output)
  *
@@ -2291,7 +2291,7 @@ static void findMaxMin0 (sInt4 *Data, int start, int stop, sInt4 *min,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *       range = The range to use (Input)
@@ -2355,7 +2355,7 @@ static void findGroup2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is out of the range (Output)
@@ -2418,7 +2418,7 @@ static void findGroup1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  *       range = The range to use (Input)
  *       split = The first index that is out of the range (Output)
  *         min = The min value for the group. (Output)
@@ -2471,7 +2471,7 @@ static void findGroup0 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *       range = The range to use (Input)
@@ -2535,7 +2535,7 @@ static void findGroupRev2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is still in the range (Output)
@@ -2598,7 +2598,7 @@ static void findGroupRev1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is still in the range (Output)

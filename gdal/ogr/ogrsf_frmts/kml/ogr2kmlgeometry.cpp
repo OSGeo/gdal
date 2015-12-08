@@ -478,7 +478,7 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
     size_t nMaxLength = 1;
     char szAltitudeMode[128]; 
 
-    // TODO - mloskot: Shouldn't we use VALIDATE_POINTER1 here?
+    // TODO - mloskot: Should we use VALIDATE_POINTER1 here?
     if( hGeometry == NULL )
         return CPLStrdup( "" );
 
@@ -501,7 +501,7 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
         CPLFree( pszText );
         return NULL;
     }
-    
+
     return pszText;
 }
 

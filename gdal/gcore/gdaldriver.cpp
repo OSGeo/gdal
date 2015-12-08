@@ -447,7 +447,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
                                               apszOptItems[iOptItem], 
                                               pszValue );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create destination dataset.                                     */
 /* -------------------------------------------------------------------- */
@@ -459,7 +459,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     poDstDS = Create( pszFilename, nXSize, nYSize, 
                       nBands, eType, papszCreateOptions );
-                      
+
     CSLDestroy(papszCreateOptions);
 
     if( poDstDS == NULL )
@@ -469,7 +469,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     {
         if( GetMetadataItem(GDAL_DCAP_RASTER) != NULL )
         {
-            /* Shouldn't happen for a well-behaved driver */
+            /* Should not happen for a well-behaved driver */
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Output driver created only %d bands whereas %d were expected",
                      nDstBands, nBands);

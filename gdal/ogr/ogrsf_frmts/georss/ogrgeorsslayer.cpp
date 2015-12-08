@@ -406,7 +406,7 @@ void OGRGeoRSSLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     }
     else if (bInSimpleGeometry || bInGeoLat || bInGeoLong)
     {
-        /* Shouldn't happen for a valid document */
+        /* Should not happen for a valid document. */
     }
     else if (IS_LAT_ELEMENT(pszName))
     {
@@ -684,7 +684,7 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
     {
         if (currentDepth > geometryDepth)
         {
-            /* Shouldn't happen for a valid document */
+            /* Should not happen for a valid document */
         }
         else
         {

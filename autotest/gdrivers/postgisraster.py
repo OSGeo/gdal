@@ -338,9 +338,10 @@ def postgisraster_test_create_copy_and_delete_phases():
         gdaltest.post_reason( 'Could not open reduced dataset (1).' )
         return 'fail'
     elif len(src_md) != 100:
-        # The length of the metadata contains two pcs of 
+        # The length of the metadata contains two pcs of
         # information per raster, so 50 rasters remaining = 100 keys
-        gdaltest.post_reason( 'Expected 100 keys of metadata for 50 subadataset rasters.' )
+        gdaltest.post_reason(
+            'Expected 100 keys of metadata for 50 subdataset rasters.' )
         print(len(src_md))
         return 'fail'
 

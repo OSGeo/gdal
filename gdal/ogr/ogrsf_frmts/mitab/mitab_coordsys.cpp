@@ -17,10 +17,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -47,7 +47,7 @@
  * Fixed memory leaks in mitab_capi.cpp and mitab_coordsys.cpp
  *
  * Revision 1.37  2010-07-05 17:20:14  aboudreault
- * Added Krovak projection suppoprt (bug 2230)
+ * Added Krovak projection support (bug 2230)
  *
  * Revision 1.36  2007-11-21 21:15:45  dmorissette
  * Fix asDatumInfoList[] and asSpheroidInfoList[] defns/refs (bug 1826)

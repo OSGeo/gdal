@@ -116,7 +116,7 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
         }
 
         if (iLayer == nLayerCount)
-            /* shouldn't happen with an ideal driver */
+            /* should not happen with an ideal driver */
             poDstLayer = NULL;
     }
 

@@ -1796,7 +1796,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                   "Ignored for a remote_resource"],
                 "namespace": "http://example.com",
 
-                "#schema_location_doc": ["Value of the substitued schemaLocation. ",
+                "#schema_location_doc": ["Value of the substituted schemaLocation. ",
                                          "Typically a schema box label (link)",
                                          "Ignored for a remote_resource"],
                 "schema_location": "gmljp2://xml/schema_0.xsd",
@@ -2374,7 +2374,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 }
                 else if( aoMetadata[i].bParentCoverageCollection )
                 {
-                    /*  Insert the gmlcov:metadata link as the next sibbling of */
+                    /* Insert the gmlcov:metadata link as the next sibling of */
                     /* GMLJP2CoverageCollection.rangeType */
                     CPLXMLNode* psRangeType =
                         CPLGetXMLNode(psGMLJP2CoverageCollection, "gmlcov:rangeType");

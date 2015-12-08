@@ -157,11 +157,11 @@ extern void json_tokener_set_flags(struct json_tokener *tok, int flags);
  * Be sure to check the type with json_object_is_type() or
  * json_object_get_type() before using the object.
  *
- * @b XXX this shouldn't use internal fields:
+ * @b XXX this should not use internal fields:
  * Trailing characters after the parsed value do not automatically cause an 
  * error.  It is up to the caller to decide whether to treat this as an
  * error or to handle the additional characters, perhaps by parsing another
- * json value starting from that point.
+ * JSON value starting from that point.
  *
  * Extra characters can be detected by comparing the tok->char_offset against
  * the length of the last len parameter passed in.

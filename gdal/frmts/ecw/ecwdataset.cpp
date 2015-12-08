@@ -1807,7 +1807,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
 
     if( bUseOldBandRasterIOImplementation )
-        /* Sanity check. Shouldn't happen */
+        /* Sanity check. Should not happen */
         return CE_Failure;
     int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
 

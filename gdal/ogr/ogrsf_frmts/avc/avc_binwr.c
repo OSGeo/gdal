@@ -1582,7 +1582,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
         /* Not found... Use the next logical table index */
         nTableIndex++;
 
-        /* We're already at EOF so we shouldn't need to fseek here, but
+        /* We are already at EOF so we should not need to fseek here, but
          * ANSI-C requires that a file positioning function be called 
          * between read and writes... this had never been a problem before
          * on any system except with NT4 network drives.

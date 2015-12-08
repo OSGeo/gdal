@@ -208,7 +208,7 @@ void CPCIDSKFile::Synchronize()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Ensure the file is synhronized to disk.                         */
+/*      Ensure the file is synchronized to disk.                        */
 /* -------------------------------------------------------------------- */
     MutexHolder oHolder( io_mutex );
 

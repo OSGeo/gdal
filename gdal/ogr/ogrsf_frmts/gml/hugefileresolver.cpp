@@ -94,7 +94,7 @@ struct huge_href
     struct huge_href    *pNext;
 };
 
-/* an internal helper struct supporying GML rewriting */
+/* an internal helper struct supporting GML rewriting */
 struct huge_child
 {
     CPLXMLNode          *psChild;

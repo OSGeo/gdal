@@ -6212,7 +6212,7 @@ int GTiffDataset::GetJPEGOverviewCount()
         return 0;
     }
 
-    /* libjpeg-6b only suppports 2, 4 and 8 scale denominators */
+    /* libjpeg-6b only supports 2, 4 and 8 scale denominators */
     /* TODO: Later versions support more */
     for(int i = 2; i >= 0; i--)
     {
@@ -6591,7 +6591,7 @@ void GTiffDataset::InitCompressionThreads(char** papszOptions)
                     // is not set in tif_flags
                     // (if using TIFFWriteEncodedStrip/Tile first, TIFFWriteBufferSetup()
                     // is automatically called)
-                    // This shoud likely rather fixed in libtiff itself...
+                    // This should likely rather fixed in libtiff itself...
                     TIFFWriteBufferSetup(hTIFF, NULL, (size_t)-1);
                 }
             }

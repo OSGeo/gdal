@@ -100,7 +100,7 @@ int fitGetDataType(GDALDataType eDataType) {
 
 
 int fitGetColorModel(GDALColorInterp colorInterp, int nBands) {
-    // XXX - shoould check colorInterp for all bands, not just first one
+    // XXX - Should check colorInterp for all bands, not just first one.
 
     switch(colorInterp) {
     case GCI_GrayIndex:

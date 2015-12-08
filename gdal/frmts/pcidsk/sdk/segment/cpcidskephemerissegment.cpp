@@ -58,7 +58,7 @@ namespace
  * Ephemeris Segment constructor
  * @param fileIn the PCIDSK file
  * @param segmentIn the segment index
- * @param segment_pointer the segement pointer
+ * @param segment_pointer the segment pointer
  * @param bLoad true to load the segment, else false (default true)
  */
 CPCIDSKEphemerisSegment::CPCIDSKEphemerisSegment(PCIDSKFile *fileIn, 
@@ -103,13 +103,12 @@ void CPCIDSKEphemerisSegment::Load()
         loaded_ = true;
         return ;
     }
-    
+
     mpoEphemeris = BinaryToEphemeris(0);
 
     // We've now loaded the structure up with data. Mark it as being loaded 
     // properly.
     loaded_ = true;
-    
 }
 
 /**
@@ -131,7 +130,7 @@ void CPCIDSKEphemerisSegment::Write(void)
 }
 
 /**
- * Synchronize the segement, if it was modified then
+ * Synchronize the segment, if it was modified then
  * write it into disk.
  */
 void CPCIDSKEphemerisSegment::Synchronize()

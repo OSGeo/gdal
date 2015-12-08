@@ -971,10 +971,10 @@ OGRErr OSRSetAngularUnits( OGRSpatialReferenceH hSRS,
  *
  * This method does the same thing as the C function OSRGetAngularUnits().
  *
- * @param ppszName a pointer to be updated with the pointer to the 
- * units name.  The returned value remains internal to the OGRSpatialReference
- * and shouldn't be freed, or modified.  It may be invalidated on the next
- * OGRSpatialReference call. 
+ * @param ppszName a pointer to be updated with the pointer to the units name.
+ * The returned value remains internal to the OGRSpatialReference and should
+ * not be freed, or modified.  It may be invalidated on the next
+ * OGRSpatialReference call.
  *
  * @return the value to multiply by angular distances to transform them to 
  * radians.
@@ -987,20 +987,20 @@ double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
 
     if( ppszName != NULL )
         *ppszName = (char* ) "degree";
-        
+
     if( poCS == NULL )
         return CPLAtof(SRS_UA_DEGREE_CONV);
 
     for( int iChild = 0; iChild < poCS->GetChildCount(); iChild++ )
     {
         const OGR_SRSNode     *poChild = poCS->GetChild(iChild);
-        
+
         if( EQUAL(poChild->GetValue(),"UNIT")
             && poChild->GetChildCount() >= 2 )
         {
             if( ppszName != NULL )
                 *ppszName = (char *) poChild->GetChild(0)->GetValue();
-            
+
             return CPLAtof( poChild->GetChild(1)->GetValue() );
         }
     }
@@ -1265,20 +1265,20 @@ OGRErr OSRSetTargetLinearUnits( OGRSpatialReferenceH hSRS,
 /************************************************************************/
 
 /**
- * \brief Fetch linear projection units. 
+ * \brief Fetch linear projection units.
  *
  * If no units are available, a value of "Meters" and 1.0 will be assumed.
- * This method only checks directly under the PROJCS, GEOCCS or LOCAL_CS node 
+ * This method only checks directly under the PROJCS, GEOCCS or LOCAL_CS node
  * for units.
  *
  * This method does the same thing as the C function OSRGetLinearUnits()/
  *
- * @param ppszName a pointer to be updated with the pointer to the 
- * units name.  The returned value remains internal to the OGRSpatialReference
- * and shouldn't be freed, or modified.  It may be invalidated on the next
- * OGRSpatialReference call. 
+ * @param ppszName a pointer to be updated with the pointer to the units name.
+ * The returned value remains internal to the OGRSpatialReference and should
+ * not be freed, or modified.  It may be invalidated on the next
+ * OGRSpatialReference call.
  *
- * @return the value to multiply by linear distances to transform them to 
+ * @return the value to multiply by linear distances to transform them to
  * meters.
  */
 
@@ -1293,12 +1293,12 @@ double OGRSpatialReference::GetLinearUnits( char ** ppszName ) const
 /************************************************************************/
 
 /**
- * \brief Fetch linear projection units. 
+ * \brief Fetch linear projection units.
  *
  * This function is the same as OGRSpatialReference::GetLinearUnits()
  */
 double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
-    
+
 {
     VALIDATE_POINTER1( hSRS, "OSRGetLinearUnits", 0 );
 
@@ -1310,19 +1310,19 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
 /************************************************************************/
 
 /**
- * \brief Fetch linear units for target. 
+ * \brief Fetch linear units for target.
  *
  * If no units are available, a value of "Meters" and 1.0 will be assumed.
  *
  * This method does the same thing as the C function OSRGetTargetLinearUnits()/
  *
- * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS".
- * @param ppszName a pointer to be updated with the pointer to the
- * units name.  The returned value remains internal to the OGRSpatialReference
- * and shouldn't be freed, or modified.  It may be invalidated on the next
+ * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS".  @param
+ * ppszName a pointer to be updated with the pointer to the units name.  The
+ * returned value remains internal to the OGRSpatialReference and should not
+ * be freed, or modified.  It may be invalidated on the next
  * OGRSpatialReference call.
  *
- * @return the value to multiply by linear distances to transform them to 
+ * @return the value to multiply by linear distances to transform them to
  * meters.
  *
  * @since OGR 1.9.0

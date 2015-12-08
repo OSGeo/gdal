@@ -3326,8 +3326,9 @@ int NITFDataset::ScanJPEGQLevel( GUIntBig *pnDataStart )
     *pnDataStart += nOffset;
 
     if( nOffset > 0 )
-        CPLDebug( "NITF", 
-                  "JPEG data stream at offset %d from start of data segement, NSIF?", 
+        CPLDebug( "NITF",
+                  "JPEG data stream at offset %d from start of data segment, "
+                  "NSIF?",
                   nOffset );
 
 /* -------------------------------------------------------------------- */
@@ -5043,7 +5044,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
     /* -------------------------------------------------------------------- */
     /*      Confirm that the NUMT in the file header already matches the    */
-    /*      number of text segements we want to write, and that the         */
+    /*      number of text segments we want to write, and that the          */
     /*      segment header/data size info is blank.                         */
     /* -------------------------------------------------------------------- */
     char achNUMT[4];

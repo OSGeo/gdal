@@ -356,7 +356,7 @@ EGifPutImageDesc(GifFileType * GifFile,
     }
 
     /* Put the image descriptor into the file: */
-    Buf[0] = ',';    /* Image seperator character. */
+    Buf[0] = ',';    /* Image separator character. */
 #ifndef DEBUG_NO_PREFIX
     WRITE(GifFile, Buf, 1);
 #endif /* DEBUG_NO_PREFIX */

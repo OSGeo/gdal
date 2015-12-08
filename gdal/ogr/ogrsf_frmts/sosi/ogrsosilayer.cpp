@@ -170,20 +170,27 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             long nRefCount;
             LC_GRF_STATUS oGrfStat;
 
-            LC_InitGetRefFlate(&oGrfStat); /* Iterate through all objects that constitute this area */
+            // Iterate through all objects that constitute this area.
+            LC_InitGetRefFlate(&oGrfStat);
             nRefCount = LC_GetRefFlate(&oGrfStat, GRF_YTRE, &nRefNr, &nRefStatus, 1);
             while (nRefCount > 0) {
-                if (poParent->papoBuiltGeometries[nRefNr] == NULL) { /* this shouldn't happen under normal operation */
-                    CPLError( CE_Fatal, CPLE_AppDefined, "Feature %li referenced by %li, but it was not initialized.", nRefNr, oNextSerial.lNr);
+                if (poParent->papoBuiltGeometries[nRefNr] == NULL) {
+                    // This should not happen under normal operation.
+                    CPLError( CE_Fatal, CPLE_AppDefined,
+                              "Feature %li referenced by %li, but it was not "
+                              "initialized.", nRefNr, oNextSerial.lNr);
                     return NULL;
                 }
-                OGRLineString *poCurve = (OGRLineString*)(poParent->papoBuiltGeometries[nRefNr]);
+                OGRLineString *poCurve
+                    = (OGRLineString*)(poParent->papoBuiltGeometries[nRefNr]);
                 if (nRefStatus == LC_MED_DIG) {         /* clockwise */
                     poOuter->addSubLineString(poCurve);
                 } else if (nRefStatus == LC_MOT_DIG) {  /* counter-clockwise */
                     poOuter->addSubLineString(poCurve,poCurve->getNumPoints()-1,0);
                 } else {
-                    CPLError( CE_Failure, CPLE_OpenFailed, "Island (OEY) encountered, but not yet supported.");
+                    CPLError( CE_Failure, CPLE_OpenFailed,
+                              "Island (OEY) encountered, "
+                              "but not yet supported.");
                     return NULL;
                 }
                 nRefCount = LC_GetRefFlate(&oGrfStat, GRF_YTRE, &nRefNr, &nRefStatus, 1);

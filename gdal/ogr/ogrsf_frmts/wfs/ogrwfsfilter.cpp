@@ -270,9 +270,9 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
 
         return TRUE;
     }
-    
+
     if( poExpr->eNodeType != SNT_OPERATION )
-        return FALSE; /* shouldn't happen */
+        return FALSE; // Should not happen.
 
     if( poExpr->nOperation == SWQ_NOT )
     {

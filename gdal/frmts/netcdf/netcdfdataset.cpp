@@ -3468,7 +3468,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             NCDF_ERR(status);
 
             /* Various projection attributes */
-            // PDS: keep in synch with SetProjection function
+            // PDS: keep in sync with SetProjection function
             NCDFWriteProjAttribs(poPROJCS, pszProjName, cdfid, NCDFVarID);
         }
         else 
@@ -6167,7 +6167,7 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                             else {
                                 CPLError( CE_Failure, CPLE_NotSupported, 
                                           "NetCDF driver export of LCC-1SP with no standard_parallel1 "
-                                          "and no latitude_of_origin is not suported (bug #3324).");
+                                          "and no latitude_of_origin is not supported (bug #3324).");
                             }
                         }
                     }

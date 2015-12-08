@@ -139,7 +139,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 }
             }
 
-            // To make Coverity happy. Shouldn't happen by design
+            // To make Coverity happy. Should not happen by design.
             if( pabySrcBlock == NULL )
             {
                 CPLAssert(FALSE);
@@ -480,7 +480,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     }*/
                 }
 
-                // To make Coverity happy. Shouldn't happen by design
+                // To make Coverity happy. Should not happen by design.
                 if( pabyDstBlock == NULL )
                 {
                     CPLAssert(FALSE);
@@ -609,7 +609,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     pabySrcBlock = (GByte *) poBlock->GetDataRef();
                 }
 
-                // To make Coverity happy. Shouldn't happen by design
+                // To make Coverity happy.  Should not happen by design.
                 if( pabySrcBlock == NULL )
                 {
                     CPLAssert(FALSE);

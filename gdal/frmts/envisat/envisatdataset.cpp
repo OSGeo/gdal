@@ -400,7 +400,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
 
 {
 /* -------------------------------------------------------------------- */
-/*      Do we have a meaningful geolocation grid?  Seach for a          */
+/*      Do we have a meaningful geolocation grid?  Search for a         */
 /*      DS_TYPE=A and a name containing "geolocation" or "tie           */
 /*      points".                                                        */
 /* -------------------------------------------------------------------- */

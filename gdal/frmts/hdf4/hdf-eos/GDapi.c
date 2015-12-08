@@ -567,7 +567,7 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
 |                                                                             |
 |  INPUTS:                                                                    |
 |  fid            int32               HDF-EOS file id                         |
-|  gridname       char                grid sructure name                      |
+|  gridname       char                grid structure name                     |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |

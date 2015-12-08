@@ -599,7 +599,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                     dfY += dfStepY;
                     dfVariant += dfDeltaVariant * dfStepX;
                 }
-            } // next step along sement.
+            } // next step along segment.
 
         } // next segment
     } // next part

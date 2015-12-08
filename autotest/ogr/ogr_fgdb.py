@@ -1206,7 +1206,7 @@ def ogr_fgdb_19():
         return 'fail'
     ds2 = None
 
-    # Successfull StartTransaction() finally !
+    # Successful StartTransaction() finally!
     lyr = ds.GetLayer(0)
     lyr = ds.GetLayer(0) # again
     old_count = lyr.GetFeatureCount()
@@ -1916,7 +1916,7 @@ def ogr_fgdb_20():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # This FID exists as a FGDB ID, but shouldn't be user visible
+    # This FID exists as a FGDB ID, but should not be user visible.
     f.SetFID(3)
     ret = lyr.SetFeature(f)
     if ret != ogr.OGRERR_NON_EXISTING_FEATURE:

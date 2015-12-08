@@ -572,7 +572,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
 
 /* -------------------------------------------------------------------- */
 /*      Are we going to use the direct access DB mechanism, or the      */
-/*      spatiallly cached (dumb reader) mechanism.                      */
+/*      spatially cached (dumb reader) mechanism.                       */
 /* -------------------------------------------------------------------- */
     bUseCaching = !STARTS_WITH_CI(pszReaderName, "SDE") 
                && !STARTS_WITH_CI(pszReaderName, "ORACLE");

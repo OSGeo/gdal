@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPCIDSKBinarySegment class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
  * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
@@ -42,7 +42,7 @@ using namespace PCIDSK;
  * Binary Segment constructor
  * @param[in,out] fileIn the PCIDSK file
  * @param[in] segmentIn the segment index
- * @param[in] segment_pointer the segement pointer
+ * @param[in] segment_pointer the segment pointer
  * @param[in] bLoad true to load the segment, else false (default true)
  */
 CPCIDSKBinarySegment::CPCIDSKBinarySegment(PCIDSKFile *fileIn, 
@@ -75,12 +75,11 @@ void CPCIDSKBinarySegment::Load()
     }
 
     seg_data.SetSize((int)data_size - 1024);
-    
+
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
-    
+
     // Mark it as being loaded properly.
     loaded_ = true;
-    
 }
 
 /**
@@ -99,7 +98,7 @@ void CPCIDSKBinarySegment::Write(void)
 }
 
 /**
- * Synchronize the segement, if it was modified then
+ * Synchronize the segment, if it was modified then
  * write it into disk.
  */
 void CPCIDSKBinarySegment::Synchronize()

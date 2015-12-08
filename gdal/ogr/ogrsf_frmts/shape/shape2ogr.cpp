@@ -917,7 +917,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
              * OGR splits it as YYYY/MM/DD, so 2 additional characters are
              * required.
              * Is this a correct assumption? What about time part of date?
-             * Shouldn't this format look as datetime: YYYY/MM/DD HH:MM:SS
+             * Should this format look as datetime: YYYY/MM/DD HH:MM:SS
              * with 4 additional characters?
              */
             oField.SetWidth( nWidth + 2 );

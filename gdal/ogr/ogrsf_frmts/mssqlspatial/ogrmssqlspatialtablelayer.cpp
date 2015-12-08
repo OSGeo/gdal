@@ -418,7 +418,7 @@ void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
                        pszSchemaName, pszTableName, pszGeomColumn, 
                        pszSchemaName, pszTableName, pszGeomColumn, 
                        pszSchemaName, pszTableName );
-    
+
     if( !oStatement.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 

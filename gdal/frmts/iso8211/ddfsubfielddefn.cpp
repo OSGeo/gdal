@@ -144,7 +144,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
                            pszFormatString+2 );
                 return FALSE;
             }
-            
+
             nFormatWidth = atoi(pszFormatString+2) / 8;
             eBinaryFormat = SInt; // good default, works for SDTS.
 
@@ -153,7 +153,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
             else
                 eType = DDFBinaryString;
         }
-        
+
         // or do we have a binary type indicator? (is it binary)
         else
         {
@@ -168,8 +168,8 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
         break;
 
       case 'X':
-        // 'X' is extra space, and shouldn't be directly assigned to a
-        // subfield ... I haven't encountered it in use yet though.
+        // 'X' is extra space, and should not be directly assigned to a
+        // subfield ... I have not encountered it in use yet though.
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Format type of `%c' not supported.\n",
                   pszFormatString[0] );

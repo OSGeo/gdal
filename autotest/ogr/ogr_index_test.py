@@ -225,21 +225,21 @@ def ogr_index_9():
     gdaltest.s_ds.ExecuteSQL( 'DROP INDEX ON join_t USING skey' )
 
     gdaltest.s_lyr.SetAttributeFilter( 'SKEY = 5' )
-    
+
     expect = [ 'Value 5' ]
 
     tr = ogrtest.check_features_against_list( gdaltest.s_lyr, 'VALUE', expect )
     if not tr:
         return 'fail'
-    
+
     gdaltest.s_ds.Release()
-    
+
     # After dataset closing, check that the index files do not exist after
     # dropping the index
     for filename in ['join_t.idm','join_t.ind']:
         try:
             os.stat(filename)
-            gdaltest.post_reason("%s shouldn't exist" % filename)
+            gdaltest.post_reason("%s should not exist" % filename)
             return 'fail'
         except:
             pass
@@ -248,7 +248,7 @@ def ogr_index_9():
     gdaltest.s_ds = ogr.OpenShared( 'join_t.dbf', update = 1 )
     gdaltest.s_ds.ExecuteSQL( 'CREATE INDEX ON join_t USING value' )
     gdaltest.s_ds.Release()
-    
+
     for filename in ['join_t.idm','join_t.ind']:
         try:
             os.stat(filename)
@@ -508,17 +508,19 @@ def ogr_index_cleanup():
     for filename in ['join_t.idm','join_t.ind']:
         try:
             os.stat(filename)
-            gdaltest.post_reason("%s shouldn't exist" % filename)
+            gdaltest.post_reason("%s should not exist" % filename)
             return 'fail'
         except:
             pass
 
-    ogr.GetDriverByName( 'ESRI Shapefile' ).DeleteDataSource( 'tmp/ogr_index_10.shp' )
-    ogr.GetDriverByName( 'ESRI Shapefile' ).DeleteDataSource( 'tmp/ogr_index_11.dbf' )
+    ogr.GetDriverByName( 'ESRI Shapefile' ).DeleteDataSource(
+        'tmp/ogr_index_10.shp' )
+    ogr.GetDriverByName( 'ESRI Shapefile' ).DeleteDataSource(
+        'tmp/ogr_index_11.dbf' )
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_index_1,
     ogr_index_2,
     ogr_index_3,

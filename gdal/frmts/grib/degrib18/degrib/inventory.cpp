@@ -789,7 +789,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
  *   9/2002 Arthur Taylor (MDL/RSIS): Created.
  *  11/2002 AAT: Revised.
  *  12/2002 (TK,AC,TB,&MS): Code Review.
- *   3/2003 AAT: Corrected some satelite type mistakes.
+ *   3/2003 AAT: Corrected some satellite type mistakes.
  *   3/2003 AAT: Implemented multiple grid inventories in the same GRIB2
  *          message.
  *   4/2003 AAT: Started adding GRIB1 support

@@ -1988,7 +1988,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
         CPLFree( pszLayerName );
         return NULL;
     }
-    
+
     CPLString osGeometryName;
     const char* pszGeometryNameIn = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if( pszGeometryNameIn == NULL )
@@ -2016,8 +2016,8 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
         return NULL;
     }
 
-    /* Shouldn't happen since a spatialite DB should be opened in read-only mode */
-    /* if libspatialite isn't loaded */
+    // Should not happen since a spatialite DB should be opened in
+    // read-only mode if libspatialite is not loaded.
     if (bIsSpatiaLiteDB && !IsSpatialiteLoaded())
     {
         CPLError( CE_Failure, CPLE_NotSupported,

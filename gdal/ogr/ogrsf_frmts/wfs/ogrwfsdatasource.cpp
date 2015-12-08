@@ -1916,11 +1916,13 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
 
                     if (bFoundComplexType && bFoundElement)
                     {
-                        OGRFeatureDefn* poSrcFDefn = poLayer->ParseSchema(psSchemaForLayer);
+                        OGRFeatureDefn* poSrcFDefn
+                            = poLayer->ParseSchema(psSchemaForLayer);
                         if (poSrcFDefn)
                         {
                             poLayer->BuildLayerDefn(poSrcFDefn);
-                            SaveLayerSchema(poLayer->GetName(), psSchemaForLayer);
+                            SaveLayerSchema(poLayer->GetName(),
+                                            psSchemaForLayer);
                         }
                     }
 
@@ -1928,7 +1930,9 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
                 }
                 else
                 {
-                    CPLDebug("WFS", "Found several time schema for layer %s in server response. Shouldn't happen",
+                    CPLDebug( "WFS",
+                              "Found several time schema for layer %s in "
+                              "server response. Should not happen",
                              poClass->GetName());
                 }
             }
@@ -1938,7 +1942,9 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
 
     if (nLayersFound != nLayersToFetch)
     {
-        CPLDebug("WFS", "Turn off loading of multiple layer definitions at a single time");
+        CPLDebug( "WFS",
+                  "Turn off loading of multiple layer definitions at a "
+                  "single time");
         bLoadMultipleLayerDefn = FALSE;
     }
 

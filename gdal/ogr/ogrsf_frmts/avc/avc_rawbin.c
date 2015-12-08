@@ -602,7 +602,7 @@ void  AVCRawBinWriteDouble(AVCRawBinFile *psFile, double dValue)
 /**********************************************************************
  *                          AVCRawBinWriteZeros()
  *
- * Write a number of zeros (sepcified in bytes) at the current position 
+ * Write a number of zeros (specified in bytes) at the current position 
  * in the file.
  *
  * If a problem happens, then CPLError() will be called and 

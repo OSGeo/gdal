@@ -163,7 +163,7 @@ AC_CHECK_TYPES([int8, int16, int32],,,
 
 dnl We need the following lines for libtiff too.
 HAVE_IEEEFP=1
-AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the floating point format suported by the machine])
+AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the floating point format supported by the machine])
 
 dnl Check the native cpu bit order (also libtiff stuff).
 AC_MSG_CHECKING([native cpu bit order])

@@ -607,7 +607,8 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
   	               (EQUAL( map_proj_name, "Orthographic" )) || 
 	               (EQUAL( map_proj_name, "Stereographic" )) || 
 	               (EQUAL( map_proj_name, "Sinusoidal" )) ) {
-            //isis uses the sphereical equation for these projections so force a sphere
+            // ISIS uses the spherical equation for these projections
+            // so force a sphere.
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
                             semi_major, 0.0, 
                             "Reference_Meridian", 0.0 );

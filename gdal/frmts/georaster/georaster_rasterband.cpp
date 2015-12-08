@@ -780,7 +780,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     }
 
     // ----------------------------------------------------------
-    // Create the RAT and the SELECT statemet based on fields description
+    // Create the RAT and the SELECT statement based on fields description.
     // ----------------------------------------------------------
 
     int   iCol = 0;

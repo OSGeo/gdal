@@ -2044,7 +2044,7 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteInt32(m_nCoordBlockPtr);    // pointer into coord block
     poObjBlock->WriteInt32(m_nNumMultiPoints);   // no. points in multi point
     poObjBlock->WriteInt32(nRegionDataSizeMI);   // size of region data inc. section hdrs
-    poObjBlock->WriteInt32(nPolylineDataSizeMI); // size of Mpolyline data inc. sction hdrs
+    poObjBlock->WriteInt32(nPolylineDataSizeMI); // size of Mpolyline data inc. section hdrs
 
     if (nVersion < 800)
     {

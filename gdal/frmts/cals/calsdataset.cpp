@@ -488,7 +488,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
                                            papszOptions);
     if( poDS == NULL )
     {
-        // Shouldn't happen normally (except if CCITTFAX4 not available)
+        // Should not happen normally (except if CCITTFAX4 not available)
         CSLDestroy(papszOptions);
         return NULL;
     }
