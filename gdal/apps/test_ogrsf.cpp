@@ -1171,6 +1171,9 @@ static const char* GetLayerNameForSQL( GDALDataset* poDS, const char* pszLayerNa
     if (EQUAL(poDS->GetDriverName(), "SQLAnywhere"))
         return pszLayerName;
 
+    if (EQUAL(poDS->GetDriverName(), "DB2ODBC"))
+        return pszLayerName;
+        
     return CPLSPrintf("\"%s\"", pszLayerName);
 }
 
