@@ -1751,7 +1751,7 @@ Core:
  * OGRGeometryFactory::organizePolygons(): optimization in ONLY_CCW case
  * OGRGeometryFactory::organizePolygons(): Add an experimental mode : CCW_INNER_JUST_AFTER_CW_OUTER
  * OGRLineString::segmentize() : do not set 0 as z for interpolated points, but the z from the previous point
- * OGRLineString::setNumPoints() : add an optional argument to avoid zeroizing the arrays
+ * OGRLineString::setNumPoints(): add an optional argument to avoid zeroing the arrays
  * Add OGRLineString::setZ()
  * Add OGRLineString::Project() and OGRLineString::getSubline()
  * OGRPolygon: add stealExteriorRing() and stealInteriorRing(int iRing)

@@ -101,9 +101,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize;
 
                 /* Is this a partial tile at right and/or bottom edges of */
-                /* the raster, and that is going to be completely written ? */
-                /* If so, don't load it from storage, but zeroized it so that */
-                /* the content outsize of the validity area is initialized */
+                /* the raster, and that is going to be completely written? */
+                /* If so, do not load it from storage, but zero it so that */
+                /* the content outsize of the validity area is initialized. */
                 bool bMemZeroBuffer = false;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff == 0 && nXSize == nBlockXSize &&
@@ -280,9 +280,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
 
                 /* Is this a partial tile at right and/or bottom edges of */
-                /* the raster, and that is going to be completely written ? */
-                /* If so, don't load it from storage, but zeroized it so that */
-                /* the content outsize of the validity area is initialized */
+                /* the raster, and that is going to be completely written? */
+                /* If so, do not load it from storage, but zero it so that */
+                /* the content outsize of the validity area is initialized. */
                 bool bMemZeroBuffer = false;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff <= nLBlockX * nBlockXSize &&
