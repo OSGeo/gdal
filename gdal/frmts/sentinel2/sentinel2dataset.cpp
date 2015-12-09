@@ -1692,7 +1692,10 @@ static void SENTINEL2SetBandMetadata(GDALRasterBand* poBand,
         const SENTINEL2_L2A_BandDescription* psL2ABandDesc =
                                         SENTINEL2GetL2ABandDesc(osBandName);
         if(psL2ABandDesc != NULL )
+        {
+            osBandDesc += ", ";
             osBandDesc += psL2ABandDesc->pszBandDescription;
+        }
 
         poBand->SetMetadataItem("BANDNAME", osBandName);
     }
