@@ -1438,7 +1438,7 @@ int WCSDataset::ExtractGridInfo()
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognised GridCRS.GridType value '%s',\n"
+                  "Unrecognized GridCRS.GridType value '%s',\n"
                   "unable to process WCS coverage.",
                   pszGridType );
         CSLDestroy( papszOffsetTokens );

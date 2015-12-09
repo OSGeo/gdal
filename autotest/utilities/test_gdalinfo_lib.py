@@ -48,7 +48,7 @@ def test_gdalinfo_lib_1():
         gdaltest.post_reason('did not get expected string.')
         print(ret)
         return 'fail'
-    
+
     return 'success' 
 
 ###############################################################################
@@ -75,7 +75,7 @@ def test_gdalinfo_lib_3():
 
     ret = gdal.Info(ds, format = 'json')
     if 'TRE' in ret['metadata']:
-        gdaltest.post_reason( 'unexpectingly got extra MD.' )
+        gdaltest.post_reason( 'got unexpected extra MD.' )
         print(ret)
         return 'fail'
 
@@ -94,7 +94,7 @@ def test_gdalinfo_lib_3():
 def test_gdalinfo_lib_4():
 
     ds = gdal.Open('../gdrivers/data/byte_with_xmp.tif')
-    
+
     ret = gdal.Info(ds, allMetadata = True, format = 'json')
     if 'xml:XMP' not in ret['metadata']:
         print(ret)

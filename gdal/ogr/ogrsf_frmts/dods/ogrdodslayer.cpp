@@ -74,8 +74,8 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
             poSRS = new OGRSpatialReference();
             if( poSRS->SetFromUserInput( oMValue.c_str() ) != OGRERR_NONE )
             {
-                CPLError( CE_Warning, CPLE_AppDefined, 
-                          "Ignoring unreconised SRS '%s'", 
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Ignoring unrecognized SRS '%s'",
                           oMValue.c_str() );
                 delete poSRS;
                 poSRS = NULL;

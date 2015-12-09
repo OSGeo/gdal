@@ -144,7 +144,7 @@
  * Added new datums/ellipsoid from MapInfo V6.0
  *
  * Revision 1.20  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.19  2000/02/07 17:43:17  daniel
  * Fixed offset in parsing of custom datum string in SetSpatialRef()

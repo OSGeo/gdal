@@ -1229,7 +1229,7 @@ PixarLogClose(TIFF* tif)
 {
 	TIFFDirectory *td = &tif->tif_dir;
 
-	/* In a really sneaky (and really incorrect, and untruthfull, and
+	/* In a really sneaky (and really incorrect, and untruthful, and
 	 * troublesome, and error-prone) maneuver that completely goes against
 	 * the spirit of TIFF, and breaks TIFF, on close, we covertly
 	 * modify both bitspersample and sampleformat in the directory to

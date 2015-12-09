@@ -84,7 +84,7 @@
  * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
  *
  * Revision 1.7  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.6  2000/02/28 17:12:22  daniel
  * Write support for joined tables and indexed fields

@@ -607,7 +607,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
     if( nSDEErr != SE_SUCCESS) {
         poDS->IssueSDEError( nSDEErr, "SE_stream_query_with_info" );
         return FALSE;
-    }    
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Free query resources.                                           */
@@ -632,11 +632,11 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
 
             if( EQUAL(pszOrder, "ATTRIBUTE_FIRST") )
                 nSearchOrder = SE_ATTRIBUTE_FIRST;
-            else 
+            else
             {
                 if( !EQUAL(pszOrder, "SPATIAL_FIRST") )
-                    CPLError( CE_Warning, CPLE_AppDefined, 
-                              "Unrecognised OGR_SDE_SEARCHORDER value of %s.",
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Unrecognized OGR_SDE_SEARCHORDER value of %s.",
                               pszOrder );
                 nSearchOrder = SE_SPATIAL_FIRST;
             }

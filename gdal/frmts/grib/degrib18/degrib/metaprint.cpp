@@ -946,7 +946,7 @@ static int PrintPDS2 (grib_MetaData *meta, sChar f_unit)
  *   4/2003 Arthur Taylor (MDL/RSIS): Created.
  *  10/2005 AAT: Adjusted to take center, subcenter as we moved that out of
  *               the pdsG1 type.
- *  11/2005 AAT: Added f_utit variable.
+ *  11/2005 AAT: Added f_unit variable.
  *
  * NOTES
  *****************************************************************************

@@ -2273,7 +2273,7 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
     if( !STARTS_WITH_CI(pszAuthority, "OGC") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "URN %s has unrecognised authority.",
+                  "URN %s has unrecognized authority.",
                   pszURN );
         return OGRERR_FAILURE;
     }
@@ -7235,7 +7235,7 @@ OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis,
             *peOrientation = OAO_Other;
         else
         {
-            CPLDebug( "OSR", "Unrecognised orientation value '%s'.",
+            CPLDebug( "OSR", "Unrecognized orientation value '%s'.",
                       pszOrientation );
         }
     }

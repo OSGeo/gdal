@@ -56,12 +56,12 @@ NTFRecord::NTFRecord( FILE * fp )
         return;
 
 /* ==================================================================== */
-/*      Read lines untill we get to one without a continuation mark.    */
+/*      Read lines until we get to one without a continuation mark.     */
 /* ==================================================================== */
     char      szLine[MAX_RECORD_LEN+3];
     int       nNewLength;
 
-    do { 
+    do {
         nNewLength = ReadPhysicalLine( fp, szLine );
         if( nNewLength == -1 || nNewLength == -2 )
             break;

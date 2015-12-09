@@ -139,7 +139,7 @@ public class gdal:public static void Debug(String msg_class, String message)
  * Push a new error handler.
  *
  * This pushes a new error handler on the thread-local error handler
- * stack.  This handler will be used untill removed with gdal.PopErrorHandler().
+ * stack.  This handler will be used until removed with gdal.PopErrorHandler().
  *
  * @param callbackName handler function name : "CPLQuietErrorHandler", "CPLDefaultErrorHandler", "CPLLoggingErrorHandler"
  */
@@ -149,7 +149,7 @@ public class gdal:public static int PushErrorHandler(String callbackName)
  * Push the quiet error handler.
  *
  * This pushes a new error handler on the thread-local error handler
- * stack.  This handler will be used untill removed with gdal.PopErrorHandler().
+ * stack.  This handler will be used until removed with gdal.PopErrorHandler().
  *
  * @since Java bindings 1.7.0
  */
@@ -7149,7 +7149,7 @@ is uncertain, though it might still be UTF-8.<p>
  @param cap the name of the capability to test.
 
  @return true if the layer has the requested capability, or false otherwise.
-Layers will return false for any unrecognised capabilities.<p>
+Layers will return false for any unrecognized capabilities.<p>
 
 */
 public class Layer:public boolean TestCapability(String cap)
@@ -8792,7 +8792,7 @@ public class Geometry:public String GetGeometryName()
  * <p>
  * This function returns an handle to a geometry within the container.
  * The returned geometry remains owned by the container, and should not be
- * modified.  The handle is only valid untill the next change to the
+ * modified.  The handle is only valid until the next change to the
  * geometry container.  Use Clone() to make a copy.
  * <p>
  * This function relates to the SFCOM 

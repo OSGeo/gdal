@@ -1,4 +1,4 @@
-# pkg.m4 - Macros to locate and utilise pkg-config.            -*- Autoconf -*-
+# pkg.m4 - Macros to locate and utilize pkg-config.            -*- Autoconf -*-
 # 
 # Copyright © 2004 Scott James Remnant <scott@netsplit.com>.
 #

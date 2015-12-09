@@ -195,8 +195,8 @@ void OGRCreateFromMultiPatchPart(OGRMultiPolygon *poMP,
         }
     }
     else
-        CPLDebug( "OGR", "Unrecognised parttype %d, ignored.",
-                nPartType );
+        CPLDebug( "OGR", "Unrecognized parttype %d, ignored.",
+                  nPartType );
 }
 
 /************************************************************************/

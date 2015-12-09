@@ -481,8 +481,9 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 if( nGeomType != 0 && !(nFlattenGeomType >= wkbPoint && nFlattenGeomType <= wkbMultiSurface) )
                 {
                     nGeomType = wkbUnknown;
-                    CPLError(CE_Warning, CPLE_AppDefined, "Unrecognised geometry type : %s",
-                            pszType);
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Unrecognized geometry type : %s",
+                              pszType);
                 }
                 else if( nGeomType == 0 )
                     nGeomType = OGRFromOGCGeomType(pszType);
@@ -557,8 +558,9 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 else if( nGeomType != 0 && !(nFlattenGeomType >= wkbPoint && nFlattenGeomType <= wkbMultiSurface) )
                 {
                     nGeomType = wkbUnknown;
-                    CPLError(CE_Warning, CPLE_AppDefined, "Unrecognised geometry type : %s",
-                            pszGeometryType);
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Unrecognized geometry type : %s",
+                              pszGeometryType);
                 }
                 else if( nGeomType == 0 )
                     nGeomType = OGRFromOGCGeomType(pszGeometryType);
@@ -701,8 +703,8 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 poPDefn->SetType( GMLPT_FeaturePropertyList );
             else
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Unrecognised property type %s.", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Unrecognized property type %s.",
                           pszType );
                 delete poPDefn;
                 return false;

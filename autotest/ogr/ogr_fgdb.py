@@ -562,7 +562,7 @@ def ogr_fgdb_9():
 
     in_names = [ 'FROM', # reserved keyword
                  '1NUMBER', # starting with a number
-                 'WITH SPACE AND !$*!- special characters', # unallowed characters
+                 'WITH SPACE AND !$*!- special characters', # banned characters
                  'sde_foo', # reserved prefixes
                  _160char, # OK
                  _160char + 'A', # too long

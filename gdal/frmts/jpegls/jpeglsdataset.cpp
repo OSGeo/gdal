@@ -281,12 +281,13 @@ CPLErr JPEGLSDataset::Uncompress()
     }
 
 
-    JLS_ERROR eError = JpegLsDecode(pabyUncompressedData, nUncompressedSize, pabyCompressedData, nFileSize, NULL);
+    JLS_ERROR eError = JpegLsDecode( pabyUncompressedData, nUncompressedSize,
+                                     pabyCompressedData, nFileSize, NULL);
     if (eError != OK)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                    "Uncompression of data failed : %s",
-                    JPEGLSGetErrorAsString(eError));
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Decompression of data failed : %s",
+                  JPEGLSGetErrorAsString(eError) );
         VSIFree(pabyCompressedData);
         VSIFree(pabyUncompressedData);
         pabyUncompressedData = NULL;

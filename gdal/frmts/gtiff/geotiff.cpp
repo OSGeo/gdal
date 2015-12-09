@@ -5165,7 +5165,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 {
 /* -------------------------------------------------------------------- */
 /*      Special case for 24bit data which is pre-byteswapped since      */
-/*      the size falls on a byte boundary ... ugg (#2361).              */
+/*      the size falls on a byte boundary ... ugh (#2361).              */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB
                     poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
@@ -5314,7 +5314,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 {
 /* -------------------------------------------------------------------- */
 /*      Special case for 24bit data which is pre-byteswapped since      */
-/*      the size falls on a byte boundary ... ugg (#2361).              */
+/*      the size falls on a byte boundary ... ugh (#2361).              */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB
                     poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
@@ -5509,7 +5509,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 if( (iBitOffset & 0x7) == 0 )
                 {
                     /* starting on byte boundary */
-                    
+
                     ((GUInt16 *) pImage)[iPixel++] = 
                         (poGDS->pabyBlockBuf[iByte] << 4)
                         | (poGDS->pabyBlockBuf[iByte+1] >> 4);
@@ -5517,7 +5517,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 else
                 {
                     /* starting off byte boundary */
-                    
+
                     ((GUInt16 *) pImage)[iPixel++] = 
                         ((poGDS->pabyBlockBuf[iByte] & 0xf) << 8)
                         | (poGDS->pabyBlockBuf[iByte+1]);
@@ -5529,7 +5529,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 /* -------------------------------------------------------------------- */
 /*      Special case for 24bit data which is pre-byteswapped since      */
-/*      the size falls on a byte boundary ... ugg (#2361).              */
+/*      the size falls on a byte boundary ... ugh (#2361).              */
 /* -------------------------------------------------------------------- */
     else if( poGDS->nBitsPerSample == 24 )
     {
@@ -13110,7 +13110,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* when CreateCopy'ing() from a JPEG dataset, and asking for COMPRESS=JPEG, */
     /* use DCT coefficients (unless other options are incompatible, like strip/tile dimensions, */
     /* specifying JPEG_QUALITY option, incompatible PHOTOMETRIC with the source colorspace, etc...) */
-    /* to avoid the lossy steps involved by uncompression/recompression */
+    /* to avoid the lossy steps involved by decompression/recompression */
     if (!bDirectCopyFromJPEG && GTIFF_CanCopyFromJPEG(poSrcDS, papszCreateOptions))
     {
         CPLDebug("GTiff", "Using special copy mode from a JPEG dataset");

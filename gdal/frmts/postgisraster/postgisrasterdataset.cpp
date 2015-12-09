@@ -1782,25 +1782,25 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
     nRasterXSize = (int) 
         fabs(rint((xmax - xmin) / 
             adfGeoTransform[GEOTRSFRM_WE_RES]));
-    
+
     nRasterYSize = (int) 
         fabs(rint((ymax - ymin) / 
             adfGeoTransform[GEOTRSFRM_NS_RES]));
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("PostGIS_Raster", 
+    CPLDebug( "PostGIS_Raster",
         "PostGISRasterDataset::ConstructOneDatasetFromTiles: "
         "Raster size: (%d, %d), ",nRasterXSize, nRasterYSize);
 #endif
 
     if (nRasterXSize <= 0 || nRasterYSize <= 0) {
-        ReportError(CE_Failure, CPLE_AppDefined, 
+        ReportError(CE_Failure, CPLE_AppDefined,
             "Computed PostGIS Raster dimension is invalid. You've "
-            "probably specified unappropriate resolution.");
-        
+            "probably specified inappropriate resolution." );
+
         return false;
     }
-    
+
     /*******************************************************************
      * Now construct the dataset bands
      ******************************************************************/
@@ -1809,7 +1809,6 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
     // And free bandmetadata
     VSIFree(poBandMetaData);
 
-    
     /*******************************************************************
      * Finally, add complex sources and create a quadtree index for them
      ******************************************************************/
@@ -2316,30 +2315,32 @@ GBool PostGISRasterDataset::SetRasterProperties
                 nRasterXSize = (int) 
                     fabs(rint((xmax - xmin) / 
                         adfGeoTransform[GEOTRSFRM_WE_RES]));
-                
+
                 nRasterYSize = (int) 
                     fabs(rint((ymax - ymin) / 
                         adfGeoTransform[GEOTRSFRM_NS_RES]));
 
             #ifdef DEBUG_VERBOSE
-                CPLDebug("PostGIS_Raster", 
+                CPLDebug( "PostGIS_Raster",
                     "PostGISRasterDataset::ConstructOneDatasetFromTiles: "
                     "Raster size: (%d, %d), ",nRasterXSize, nRasterYSize);
             #endif
 
                 if (nRasterXSize <= 0 || nRasterYSize <= 0) {
-                    ReportError(CE_Failure, CPLE_AppDefined, 
-                        "Computed PostGIS Raster dimension is invalid. You've "
-                        "probably specified unappropriate resolution.");
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Computed PostGIS Raster dimension is invalid. You "
+                        "have probably specified an inappropriate "
+                        "resolution." );
 
                     return false;
                 }
 
                 bBuildQuadTreeDynamically = true;
 
-                /*******************************************************************
+                /**************************************************************
                 * Now construct the dataset bands
-                ******************************************************************/
+                ***************************************************************/
                 int nBandsFetched = 0;
                 BandMetadata * poBandMetaData = GetBandsMetadata(&nBandsFetched);
 

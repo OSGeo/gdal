@@ -352,7 +352,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
     // IHi.2 - Filename storing image.
     if( STARTS_WITH(interleaving, "FILE") )
-        ih.Put( "<unintialized>", 64, 64 );
+        ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
     
     if( externallink )
     {
@@ -399,7 +399,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
          chan_index++ )
     {
         ih.Put( "", 160, 8 );
-        ih.Put( "<unintialized>", 64, 64 );
+        ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
         ih.Put( "", 250, 40 );
 
         interfaces->io->Write( ih.buffer, 1024, 1, io_handle );

@@ -2085,7 +2085,7 @@ OGRErr OGROCITableLayer::FlushPendingFeatures()
 /*                             SyncToDisk()                             */
 /*                                                                      */
 /*      Perhaps we should also be putting the metadata into a           */
-/*      useable state?                                                  */
+/*      usable state?                                                   */
 /************************************************************************/
 
 OGRErr OGROCITableLayer::SyncToDisk()

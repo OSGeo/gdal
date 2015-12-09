@@ -25227,7 +25227,7 @@ static PyMethodDef SwigMethods[] = {
 		"pszCap:  the name of the capability to test.\n"
 		"\n"
 		"TRUE if the layer has the requested capability, or FALSE otherwise.\n"
-		"OGRLayers will return FALSE for any unrecognised capabilities. \n"
+		"OGRLayers will return FALSE for any unrecognized capabilities. \n"
 		""},
 	 { (char *)"Layer_CreateField", (PyCFunction) _wrap_Layer_CreateField, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Layer_CreateField(Layer self, FieldDefn field_def, int approx_ok=1) -> OGRErr\n"

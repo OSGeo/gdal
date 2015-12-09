@@ -499,7 +499,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                        "VRTRasterBand of unrecognised subclass '%s'.",
+                        "VRTRasterBand of unrecognized subclass '%s'.",
                         pszSubclass );
             break;
         }

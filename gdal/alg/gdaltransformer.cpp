@@ -3317,7 +3317,7 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                    "Unrecognised element '%s' GDALDeserializeTransformer",
+                    "Unrecognized element '%s' GDALDeserializeTransformer",
                     psTree->pszValue );
         }
     }

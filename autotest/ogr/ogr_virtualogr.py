@@ -78,7 +78,7 @@ def ogr_virtualogr_1():
         gdaltest.post_reason('failed')
         return 'fail'
 
-    # Unexisting dataset
+    # Nonexistent dataset
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('foo')"):
         gdaltest.post_reason('failed')
         return 'fail'
@@ -110,7 +110,7 @@ def ogr_virtualogr_1():
         gdaltest.post_reason('failed')
         return 'fail'
 
-    # Unexisting layer
+    # Nonexistent layer
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'foo')"):
         gdaltest.post_reason('failed')
         return 'fail'

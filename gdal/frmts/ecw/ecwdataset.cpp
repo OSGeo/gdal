@@ -312,7 +312,7 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
                 (*ppanHistogram)[i] = (GUIntBig) bandStats.Histogram[i];
             }
             //JTO: this is not perfect as You can't tell who wrote the histogram !!! 
-            //It will offset it unnecesarilly for files with hists not modified by GDAL. 
+            //It will offset it unnecessarily for files with hists not modified by GDAL. 
             double dfHalfBucket = (bandStats.fMaxHist -  bandStats.fMinHist) / (2 * (*pnBuckets - 1));
             if ( pdfMin != NULL ){
                 *pdfMin = bandStats.fMinHist - dfHalfBucket;
@@ -3226,11 +3226,11 @@ const char* ECWGetColorSpaceName(NCSFileColorSpace colorSpace)
         case NCSCS_MULTIBAND:
             return "MULTIBAND"; break;
         case NCSCS_sRGB:
-            return  "RGB"; break;
+            return "RGB"; break;
         case NCSCS_YCbCr:
             return "YCbCr"; break;
         default:
-            return  "unrecognised";
+            return "unrecognized";
     }
 }
 /************************************************************************/

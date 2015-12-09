@@ -2572,8 +2572,8 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unrecognised filesystem object : '%s'.",
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unrecognized filesystem object : '%s'.",
                   pszOldPath );
         return -1;
     }

@@ -683,10 +683,10 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
  *
  * This function returns an handle to a geometry within the container.
  * The returned geometry remains owned by the container, and should not be
- * modified.  The handle is only valid untill the next change to the
+ * modified.  The handle is only valid until the next change to the
  * geometry container.  Use OGR_G_Clone() to make a copy.
  *
- * This function relates to the SFCOM 
+ * This function relates to the SFCOM
  * IGeometryCollection::get_Geometry() method.
  *
  * This function is the same as the CPP method 

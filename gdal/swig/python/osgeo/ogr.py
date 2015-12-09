@@ -1748,7 +1748,7 @@ class Layer(MajorObject):
         pszCap:  the name of the capability to test.
 
         TRUE if the layer has the requested capability, or FALSE otherwise.
-        OGRLayers will return FALSE for any unrecognised capabilities. 
+        OGRLayers will return FALSE for any unrecognized capabilities.
         """
         return _ogr.Layer_TestCapability(self, *args)
 

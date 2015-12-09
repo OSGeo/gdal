@@ -4132,7 +4132,7 @@ GXF driver:
    is assumed by the geotransform.  (#3816).
 
 HDF4 driver:
- * Prevent reading unexisting subdatasets
+ * Prevent reading nonexistent subdatasets
  * Allow reading 1D subdatasets, in particular for GEOLOC bands
  * Workaround strange test that swaps xsize, ysize and nbands for the particular
    case of the dataset of ticket #3316
@@ -5006,7 +5006,7 @@ GeoTIFF driver :
  * Changes to units handling.  (#2755)
  * Optimize opening speed by deferring fetching the coordinate system till GetProjectionRef (#2957)
  * Optimize GTiffRasterBand::IReadBlock() for multi-band interleaved case.
- * Avoid uncesserary re-writing the TIFF directory (#3021)
+ * Avoid unnecessary re-writing the TIFF directory (#3021)
  * Use official value for inverse flattening of the WGS84 ellipsoid (#2787)
  * Add metadata domain for XML documents (#2786)
  * Make GTiff driver friendly with files with huge number of bands and pixel interleaving (#2838)

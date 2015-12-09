@@ -247,7 +247,7 @@ int OGRGeometryCollection::getNumGeometries() const
  *
  * This method returns a pointer to an geometry within the container.  The
  * returned geometry remains owned by the container, and should not be
- * modified.  The pointer is only valid untill the next change to the
+ * modified.  The pointer is only valid until the next change to the
  * geometry container.  Use IGeometry::clone() to make a copy.
  *
  * This method relates to the SFCOM IGeometryCollection::get_Geometry() method.

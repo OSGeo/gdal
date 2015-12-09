@@ -391,7 +391,7 @@ def main( argv=None ):
             i = i + 4
 
         elif arg[:1] == '-':
-            print('Unrecognised command option: %s' % arg)
+            print('Unrecognized command option: %s' % arg)
             Usage()
             sys.exit( 1 )
 

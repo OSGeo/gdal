@@ -1033,8 +1033,8 @@ def nitf_40():
         return 'fail'
     ds = None
 
-    # Check that it is indeed at a very far offset, and that the NITF driver hasn't
-    # put it somewhere else due to unvoluntary cast to 32bit integer...
+    # Check that it is indeed at a very far offset, and that the NITF driver
+    # has not put it somewhere else due to involuntary cast to 32bit integer.
     blockWidth = 256
     blockHeight = 256
     nBlockx = int((width+blockWidth-1)/blockWidth)

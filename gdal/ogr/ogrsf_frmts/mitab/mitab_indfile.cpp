@@ -475,7 +475,7 @@ int TABINDFile::WriteHeader()
             if (poRootNode->GetSubTreeDepth() > 255)
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed,
-                         "Index no %d is too large and will not be useable. "
+                         "Index no %d is too large and will not be usable. "
                          "(SubTreeDepth = %d, cannot exceed 255).",
                          iIndex+1, poRootNode->GetSubTreeDepth());
                 return -1;

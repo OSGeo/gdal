@@ -236,13 +236,13 @@ from OGC specifications. Implies <b>METADATA=YES</b>.<br>
 Please note: (Starting with GDAL 1.9.0) OGR must be linked against <i>libspatialite</i> in order to support
 insert/write on SpatiaLite; if not, <i>read-only</i> mode is enforced.<br>
 Attempting to perform any insert/write on SpatiaLite skipping the appropriate library support simply produces broken (corrupted) DB-files.<br>
-Important notice: when the underlaying <i>libspatialite</i> is v.2.3.1 (or any previous
+Important notice: when the underlying <i>libspatialite</i> is v.2.3.1 (or any previous
 version) any Geometry will be casted to 2D [XY], because earlier versions of this library
 are simply able to support 2D [XY] dimensions. Version 2.4.0 (or any subsequent) is required in order to support 2.5D [XYZ].</p></li>
 
 <li><p><b>INIT_WITH_EPSG=YES/NO</b>: (Starting with GDAL 1.8.0) Insert the content of the EPSG CSV files
 into the spatial_ref_sys table. Defaults to NO for regular SQLite databases</b>.<br>
-Please note: if <b>SPATIALITE=YES</b> and the underlaying <i>libspatialite</i> is v2.4 or v3.X,
+Please note: if <b>SPATIALITE=YES</b> and the underlying <i>libspatialite</i> is v2.4 or v3.X,
 <b>INIT_WITH_EPSG</b> is ignored; those library versions will unconditionally load the EPSG 
 dataset into the spatial_ref_sys table when creating a new DB (<i>self-initialization</i>). Starting
 with libspatialite 4.0, INIT_WITH_EPSG defaults to YES, but can be set to NO.</p></li>

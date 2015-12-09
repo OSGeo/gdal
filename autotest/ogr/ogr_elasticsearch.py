@@ -63,13 +63,13 @@ def ogr_elasticsearch_init():
 ###############################################################################
 # Test writing into an nonexistent ElasticSearch datastore.
 
-def ogr_elasticsearch_unexisting_server():
+def ogr_elasticsearch_nonexistent_server():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.CreateDataSource(
-            '/vsimem/non_existing_host')
+            '/vsimem/nonexistent_host')
     if ds is not None:
         gdaltest.post_reason(
             'managed to open nonexistent ElasticSearch datastore.')
@@ -1398,9 +1398,9 @@ def ogr_elasticsearch_8():
 def ogr_elasticsearch_cleanup():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
-    
+
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
-    
+
     for f in gdal.ReadDir('/vsimem/fakeelasticsearch'):
         gdal.Unlink('/vsimem/fakeelasticsearch/' + f)
 
@@ -1409,7 +1409,7 @@ def ogr_elasticsearch_cleanup():
 
 gdaltest_list = [
     ogr_elasticsearch_init,
-    ogr_elasticsearch_unexisting_server,
+    ogr_elasticsearch_nonexistent_server,
     ogr_elasticsearch_1,
     ogr_elasticsearch_2,
     ogr_elasticsearch_3,

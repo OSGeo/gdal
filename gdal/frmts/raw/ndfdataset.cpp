@@ -354,7 +354,8 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unrecognised datum name in NLAPS/NDF file:%s, assuming WGS84.", 
+                  "Unrecognized datum name in NLAPS/NDF file:%s, "
+                  "assuming WGS84.",
                   osDatum.c_str() );
         oSRS.SetWellKnownGeogCS( "WGS84" );
     }

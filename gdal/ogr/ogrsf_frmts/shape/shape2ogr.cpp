@@ -397,7 +397,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                                       psShape->padfX[nPartStart], 
                                       psShape->padfY[nPartStart], 
                                       psShape->padfZ[nPartStart] );
-                        
+
                     poPoly->addRingDirectly( poRing );
                     poMP->addGeometryDirectly( poPoly );
                 }
@@ -422,7 +422,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                     CreateLinearRing( psShape, iPart, TRUE ) );
             }
             else
-                CPLDebug( "OGR", "Unrecognised parttype %d, ignored.", 
+                CPLDebug( "OGR", "Unrecognized parttype %d, ignored.",
                           psShape->panPartType[iPart] );
         }
 
@@ -447,7 +447,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 
         /* nothing returned */
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup shape, and set feature id.                              */
 /* -------------------------------------------------------------------- */

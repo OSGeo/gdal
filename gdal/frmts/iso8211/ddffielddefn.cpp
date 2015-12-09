@@ -251,7 +251,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
     int         nCharsConsumed;
 
     poModule = poModuleIn;
-    
+
     pszTag = CPLStrdup( pszTagIn );
 
 /* -------------------------------------------------------------------- */
@@ -277,8 +277,8 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
         break;
 
       default:
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unrecognised data_struct_code value %c.\n"
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unrecognized data_struct_code value %c.\n"
                   "Field %s initialization incorrect.",
                   pachFieldArea[0], pszTag );
         _data_struct_code = dsc_elementary;
@@ -290,39 +290,39 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
       case '0':
         _data_type_code = dtc_char_string;
         break;
-        
+
       case '1':
         _data_type_code = dtc_implicit_point;
         break;
-        
+
       case '2':
         _data_type_code = dtc_explicit_point;
         break;
-        
+
       case '3':
         _data_type_code = dtc_explicit_point_scaled;
         break;
-        
+
       case '4':
         _data_type_code = dtc_char_bit_string;
         break;
-        
+
       case '5':
         _data_type_code = dtc_bit_string;
         break;
-        
+
       case '6':
         _data_type_code = dtc_mixed_data_type;
         break;
 
       default:
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unrecognised data_type_code value %c.\n"
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unrecognized data_type_code value %c.\n"
                   "Field %s initialization incorrect.",
                   pachFieldArea[1], pszTag );
         _data_type_code = dtc_char_string;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Capture the field name, description (sub field names), and      */
 /*      format statements.                                              */
@@ -334,14 +334,14 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
                           DDF_UNIT_TERMINATOR, DDF_FIELD_TERMINATOR,
                           &nCharsConsumed );
     iFDOffset += nCharsConsumed;
-    
+
     _arrayDescr =
         DDFFetchVariable( pachFieldArea + iFDOffset,
                           nFieldEntrySize - iFDOffset,
                           DDF_UNIT_TERMINATOR, DDF_FIELD_TERMINATOR, 
                           &nCharsConsumed );
     iFDOffset += nCharsConsumed;
-    
+
     _formatControls =
         DDFFetchVariable( pachFieldArea + iFDOffset,
                           nFieldEntrySize - iFDOffset,

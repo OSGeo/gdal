@@ -1204,7 +1204,7 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
                 return "";
             }
         }
-        
+
         if(  poExpr->table_index == secondary_table )
         {
             OGRFieldDefn* poSecondaryFieldDefn =
@@ -1218,9 +1218,9 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
 
     if( poExpr->eNodeType == SNT_OPERATION )
     {
-        /* -------------------------------------------------------------------- */
-        /*      Operation - start by unparsing all the subexpressions.          */
-        /* -------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------- */
+        /*      Operation - start by unparsing all the subexpressions.       */
+        /* ----------------------------------------------------------------- */
         std::vector<char*> apszSubExpr;
         int i;
 
@@ -1239,9 +1239,9 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
 
         CPLString osExpr = poExpr->UnparseOperationFromUnparsedSubExpr(&apszSubExpr[0]);
 
-        /* -------------------------------------------------------------------- */
-        /*      cleanup subexpressions.                                         */
-        /* -------------------------------------------------------------------- */
+        /* ----------------------------------------------------------------- */
+        /*      cleanup subexpressions.                                      */
+        /* ----------------------------------------------------------------- */
         for( i = 0; i < poExpr->nSubExprCount; i++ )
             CPLFree( apszSubExpr[i] );
 

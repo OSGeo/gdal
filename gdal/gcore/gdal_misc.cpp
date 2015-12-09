@@ -2752,7 +2752,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         }
 
 /* -------------------------------------------------------------------- */
-/*      carry through unrecognised options.                             */
+/*      Carry through unrecognized options.                             */
 /* -------------------------------------------------------------------- */
         else
         {

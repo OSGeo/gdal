@@ -61,7 +61,7 @@ DDFSubfieldDefn::ExtractStringValue(), or DDFSubfieldDefn::ExtractFloatValue().
 Note that there is no object instantiated for individual subfields of a
 DDFField.  Instead the application extracts a pointer to the subfields
 raw data, and then uses the DDFSubfieldDefn for that subfield to extract
-a useable value from the raw data.<p>
+a usable value from the raw data.<p>
 
 Once the end of the file has been encountered (DDFModule::ReadRecord() returns
 NULL), the DDFModule should be deleted, which will close the file, and

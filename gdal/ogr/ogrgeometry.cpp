@@ -2038,7 +2038,7 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
 
       default:
       {
-          return CPLSPrintf( "Unrecognised: %d", (int) eType );
+          return CPLSPrintf( "Unrecognized: %d", (int) eType );
       }
     }
 }
