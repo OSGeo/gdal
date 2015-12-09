@@ -532,10 +532,6 @@ class OGRSQLiteEditableLayer : public OGRSQLiteLayer
                                 { bDeferredSpatialIndexCreation = bFlag; }
     void                SetCompressedColumns( const char* pszCompressedColumns );
 
-    int                 CreateSpatialIndex(int iGeomCol);
-
-    void                CreateSpatialIndexIfNecessary();
-
     void                InitFeatureCount();
     int                 DoStatisticsNeedToBeFlushed();
     void                ForceStatisticsToBeFlushed();
@@ -548,8 +544,10 @@ class OGRSQLiteEditableLayer : public OGRSQLiteLayer
     virtual int          HasFastSpatialFilter(int iGeomCol);
     virtual CPLString    GetSpatialWhere(int iGeomCol,
                                          OGRGeometry* poFilterGeom);
-
-    OGRErr               RunDeferredCreationIfNecessary();
+    // Table specific functions
+    virtual void        CreateSpatialIndexIfNecessary() {return;};
+    virtual int         CreateSpatialIndex(CPL_UNUSED int iGeomCol) {return OGRERR_NONE;};
+    virtual OGRErr      RunDeferredCreationIfNecessary() {return OGRERR_NONE;};
 };
 
 /************************************************************************/
@@ -565,7 +563,10 @@ class OGRSQLiteTableLayer : public OGRSQLiteEditableLayer
     CPLErr              Initialize( const char *pszTableName, 
                                     OGRSQLiteLayerType eSQLiteLayerType,
                                     int bDeferredCreation = FALSE );      
-    virtual int          IsTableLayer() { return TRUE; }                              
+    virtual int          IsTableLayer() { return TRUE; }   
+    virtual void        CreateSpatialIndexIfNecessary();
+    virtual int         CreateSpatialIndex(int iGeomCol);
+    virtual OGRErr      RunDeferredCreationIfNecessary();                    
 };
 
 /************************************************************************/
@@ -575,7 +576,7 @@ class OGRSQLiteViewLayer : public OGRSQLiteEditableLayer
 {
     virtual const char     *GetGeometryTable();
     virtual const char     *GetEscapedRowId();
-    virtual int            IsViewLayer();
+    virtual int            IsViewLayer() { return TRUE; };
   public:
                         OGRSQLiteViewLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteViewLayer();

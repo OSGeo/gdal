@@ -60,7 +60,10 @@ OGRSQLiteViewLayer::~OGRSQLiteViewLayer()
 }
 
 /************************************************************************/
-/*                             Initialize()       [move this to :done in OGRSQLiteEditableLayer]              */
+/*                             Initialize()                             */
+/* Note:                                                                */
+/* - when compleated the LayerType is known                             */
+/* -- and the validity checked and CE_Failure returned if NOT true      */
 /************************************************************************/
 
 CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
@@ -104,23 +107,6 @@ const char * OGRSQLiteViewLayer::GetEscapedRowId()
     CPLString osSQL;
     osSQL.Printf( "\"%s\"", OGRSQLiteEscapeName(pszFIDColumn).c_str());
     return osSQL.c_str();
-}
-/************************************************************************/
-/*                           IsViewLayer()                          */
-/************************************************************************/
-int OGRSQLiteViewLayer::IsViewLayer()
-{
- switch (eSQLiteLayerType)
- {
-  case OSLLT_OGRSpatialView:
-  case OSLLT_SpatialView_3:
-  case OSLLT_SpatialView_4:
-   return TRUE;
-  break;
-  default:
-   return FALSE;
-  break;
- }
 }
 /************************************************************************/
 
