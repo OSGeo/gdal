@@ -114,9 +114,9 @@ static inline void gst_swapbytes(void * value, int size)
 #define swapped_fwrite(ptr, size, nitems, stream) \
 	fwrite(ptr, size, nitems, stream)
 
-#define gst_swap64( vlaue )
-#define gst_swap32( vlaue )
-#define gst_swap16( vlaue )
+#define gst_swap64( value )
+#define gst_swap32( value )
+#define gst_swap16( value )
 #define gst_swapbytes( value, size )
 #define gst_swapb( value )
 

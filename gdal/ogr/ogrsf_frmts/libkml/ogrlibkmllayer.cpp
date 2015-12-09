@@ -69,7 +69,7 @@ using kmldom::DeletePtr;
 CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName)
 {
     CPLString osName(pszName);
-    /* (Approximate) validation rules for a valic NCName */
+    /* (Approximate) validation rules for a valid NCName */
     for(size_t i = 0; i < osName.size(); i++)
     {
         char ch = osName[i];
