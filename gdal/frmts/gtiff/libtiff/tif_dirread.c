@@ -3663,7 +3663,7 @@ TIFFReadDirectory(TIFF* tif)
 				 * DataType and SampleFormat tags are supposed to be
 				 * written as one value/sample, but some vendors
 				 * incorrectly write one value only -- so we accept
-				 * that as well (yech). Other vendors write correct
+				 * that as well (yuck). Other vendors write correct
 				 * value for NumberOfSamples, but incorrect one for
 				 * BitsPerSample and friends, and we will read this
 				 * too.
