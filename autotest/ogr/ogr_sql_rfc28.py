@@ -211,6 +211,7 @@ def ogr_rfc28_9():
     else:
         return 'fail'
 
+# TODO: unparse quoting?
 ###############################################################################
 # test quoted names for funky columns in SELECT WHERE (confirm unparse quoting)
 

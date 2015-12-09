@@ -195,11 +195,11 @@ int main( int nArgc, char ** papszArgv )
 
     else
     {
-        fprintf( stderr, "Unrecognised module name: %s\n", pszMODN );
+        fprintf( stderr, "Unrecognized module name: %s\n", pszMODN );
     }
 
     CPLFree( pszShapefile );
-}    
+}
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif
@@ -215,13 +215,13 @@ static void WriteLineShapefile( const char * pszShapefile,
 
 {
     SDTSLineReader      *poLineReader;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Fetch a reference to the indexed Pointgon reader.                */
 /* -------------------------------------------------------------------- */
     poLineReader = (SDTSLineReader *) 
         poTransfer->GetLayerIndexedReader( poTransfer->FindLayer( pszMODN ) );
-    
+
     if( poLineReader == NULL )
     {
         fprintf( stderr, "Failed to open %s.\n",

@@ -2404,8 +2404,8 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
     }
     else
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "Unrecognised jpeg_color_space value of %d.\n", 
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Unrecognized jpeg_color_space value of %d.\n",
                   poDS->sDInfo.jpeg_color_space );
         delete poDS;
         return NULL;

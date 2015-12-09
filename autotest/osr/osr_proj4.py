@@ -134,7 +134,7 @@ def osr_proj4_3():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         srs.ExportToProj4()
         gdal.PopErrorHandler()
-        
+
     except RuntimeError:
         gdal.PopErrorHandler()
 
@@ -145,21 +145,21 @@ def osr_proj4_3():
     return 'fail'
 
 ###############################################################################
-# Verify that unrecognised projections return an error, not those
+# Verify that unrecognized projections return an error, not those
 # annoying ellipsoid-only results.
 #
 
 def osr_proj4_4():
-    
+
     srs = osr.SpatialReference()
     srs.SetFromUserInput( '+proj=utm +zone=11 +datum=WGS84' )
     srs.SetAttrValue( 'PROJCS|PROJECTION', 'FakeTransverseMercator' )
-    
+
     try:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         srs.ExportToProj4()
         gdal.PopErrorHandler()
-        
+
     except RuntimeError:
         gdal.PopErrorHandler()
 
@@ -174,7 +174,7 @@ def osr_proj4_4():
 #
 
 def osr_proj4_5():
-    
+
     srs = osr.SpatialReference()
 
     srs.ImportFromProj4( '+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356515 +towgs84=-168,-60,320,0,0,0,0 +pm=paris +units=m +no_defs' )

@@ -51,7 +51,8 @@ g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld)
 
       ifld=(g2int *)calloc(ndpts,sizeof(g2int));
       if ( ifld == 0 ) {
-         fprintf(stderr,"Could not allocate space in simunpack.\n  Data field NOT upacked.\n");
+         fprintf(stderr,"Could not allocate space in simunpack.\n"
+                 "Data field NOT unpacked.\n");
          return(1);
       }
 

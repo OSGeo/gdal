@@ -413,7 +413,7 @@ def ogr_basic_9():
                          [ ogr.wkbMultiLineString25D, "3D Multi Line String"],
                          [ ogr.wkbMultiPolygon25D, "3D Multi Polygon"],
                          [ ogr.wkbGeometryCollection25D, "3D Geometry Collection"],
-                         [ 123456, "Unrecognised: 123456" ]
+                         [ 123456, "Unrecognized: 123456" ]
                        ]
 
     for geom_type_tuple in geom_type_tuples:

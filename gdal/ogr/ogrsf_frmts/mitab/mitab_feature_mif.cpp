@@ -113,7 +113,7 @@
  * Include OGR StyleString stuff (implemented by Stephane)
  *
  * Revision 1.15  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.14  2000/09/19 17:23:53  daniel
  * Maintain and/or compute valid region and polyline center/label point

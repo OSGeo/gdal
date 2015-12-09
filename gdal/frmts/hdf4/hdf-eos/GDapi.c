@@ -20,7 +20,7 @@ REVISIONS:
 
 Aug 31, 1999  Abe Taaheri    Changed memory allocation for utility strings to
                              the size of UTLSTR_MAX_SIZE.
-			     Added error check for memory unavailibilty in
+			     Added error check for memory unavailability in
 			     several functions.
 			     Added check for NULL metabuf returned from
 			     EHmeta... functions. NULL pointer returned from
@@ -6489,7 +6489,7 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 		    function cproj.c of GCTP) */
 		else {
 		  /* if projection is BCEA normalize x and y by cell size and
-		     measure it from the uperleft corner of the grid */
+		     measure it from the upperleft corner of the grid */
 		  
 		  /* Compute scaled distance to point from origin */
 		  /* -------------------------------------------- */

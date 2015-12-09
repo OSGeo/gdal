@@ -1314,10 +1314,11 @@ void ENVIDataset::SetENVIDatum( OGRSpatialReference *poSRS,
         poSRS->SetWellKnownGeogCS( "EPSG:4004" );
     else if( EQUAL(pszENVIDatumName, "Clark 1866") )
         poSRS->SetWellKnownGeogCS( "EPSG:4008" );
-    else 
+    else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unrecognised datum '%s', defaulting to WGS84.", pszENVIDatumName);
+                  "Unrecognized datum '%s', defaulting to WGS84.",
+                  pszENVIDatumName);
         poSRS->SetWellKnownGeogCS( "WGS84" );
     }
 }

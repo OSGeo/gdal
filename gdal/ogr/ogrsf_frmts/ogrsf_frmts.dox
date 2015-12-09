@@ -1767,7 +1767,7 @@ writing curve geometries or may return such geometries. (GDAL 2.0).
  @param pszCap the name of the capability to test.
 
  @return TRUE if the layer has the requested capability, or FALSE otherwise.
-OGRLayers will return FALSE for any unrecognised capabilities.<p>
+OGRLayers will return FALSE for any unrecognized capabilities.<p>
 
 */
 
@@ -1862,7 +1862,7 @@ writing curve geometries or may return such geometries. (GDAL 2.0).
  @param pszCap the name of the capability to test.
 
  @return TRUE if the layer has the requested capability, or FALSE otherwise.
-OGRLayers will return FALSE for any unrecognised capabilities.<p>
+OGRLayers will return FALSE for any unrecognized capabilities.<p>
 
 */
 

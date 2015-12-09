@@ -618,7 +618,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
         && !EQUAL(poRoot->GetValue(),"COMPD_CS"))
     {
         CPLDebug( "OGRSpatialReference::Validate",
-                  "Unrecognised root node `%s'\n",
+                  "Unrecognized root node `%s'\n",
                   poRoot->GetValue() );
         return OGRERR_CORRUPT_DATA;
     }
@@ -876,16 +876,16 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                               "PARAMETER has wrong number of children (%d),"
                               "not 2 as expected.\n",
                               poNode->GetChildCount() );
-                    
+
                     return OGRERR_CORRUPT_DATA;
                 }
                 else if( CSLFindString( (char **)papszParameters,
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
-                              "Unrecognised PARAMETER `%s'.\n",
+                              "Unrecognized PARAMETER `%s'.\n",
                               poNode->GetChild(0)->GetValue() );
-                    
+
                     return OGRERR_UNSUPPORTED_SRS;
                 }
             }
@@ -897,7 +897,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                               "PROJECTION has wrong number of children (%d),"
                               "not 1 or 2 as expected.\n",
                               poNode->GetChildCount() );
-                    
+
                     return OGRERR_CORRUPT_DATA;
                 }
                 else if( CSLFindString( (char **)papszProjectionSupported,
@@ -906,18 +906,18 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
-                              "Unrecognised PROJECTION `%s'.\n",
+                              "Unrecognized PROJECTION `%s'.\n",
                               poNode->GetChild(0)->GetValue() );
-                    
+
                     return OGRERR_UNSUPPORTED_SRS;
                 }
                 else if( CSLFindString( (char **)papszProjectionSupported,
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
-                              "Unsupported, but recognised PROJECTION `%s'.\n",
+                              "Unsupported, but recognized PROJECTION `%s'.\n",
                               poNode->GetChild(0)->GetValue() );
-                    
+
                     return OGRERR_UNSUPPORTED_SRS;
                 }
 

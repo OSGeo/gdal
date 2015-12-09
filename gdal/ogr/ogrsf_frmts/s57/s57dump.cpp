@@ -136,14 +136,14 @@ int main( int nArgc, char ** papszArgv )
             {
                 if( anClassList[i] == 0 )
                     continue;
-                
+
                 if( poClassContentExplorer->SelectClass( i ) )
                 {
                     printf( "%d: %s/%s\n",
                             i,
                             poClassContentExplorer->GetAcronym(),
                             poClassContentExplorer->GetDescription() );
-                    
+
                     oReader.AddFeatureDefn(
                         S57GenerateObjectClassDefn( &oRegistrar, 
                                                     poClassContentExplorer,
@@ -151,7 +151,7 @@ int main( int nArgc, char ** papszArgv )
                 }
                 else
                 {
-                    printf( "%d: unrecognised ... treat as generic.\n", i );
+                    printf( "%d: unrecognized ... treat as generic.\n", i );
                     bGeneric = TRUE;
                 }
             }

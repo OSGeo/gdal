@@ -1244,8 +1244,9 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
 
                 if( !DecompressSector(abyRawSector, nSectorSize, pabySector) )
                 {
-                    CPLError(CE_Failure,  CPLE_AppDefined,
-                            "Error while uncompressing sector for node " CPL_FRMT_GIB, id);
+                    CPLError( CE_Failure,  CPLE_AppDefined,
+                              "Error while uncompressing sector for node "
+                              CPL_FRMT_GIB, id );
                     continue;
                     // FIXME ?
                 }

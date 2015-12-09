@@ -475,7 +475,7 @@ static CPLErr GDALRasterizeOptions(char **papszOptions,
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unrecognised value '%s' for BURN_VALUE_FROM.", 
+                      "Unrecognized value '%s' for BURN_VALUE_FROM.",
                       pszOpt );
             return CE_Failure;
         }
@@ -495,7 +495,7 @@ static CPLErr GDALRasterizeOptions(char **papszOptions,
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unrecognised value '%s' for MERGE_ALG.", 
+                      "Unrecognized value '%s' for MERGE_ALG.",
                       pszOpt );
             return CE_Failure;
         }

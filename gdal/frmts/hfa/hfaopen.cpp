@@ -2284,7 +2284,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
     else if( eDataType == EPT_s16 )
         chBandType = 'S';
     else if( eDataType == EPT_u32 )
-        // for some reason erdas imagine expects an L for unsinged 32 bit ints
+        // for some reason erdas imagine expects an L for unsigned 32 bit ints
         // otherwise it gives strange "out of memory errors"
         chBandType = 'L';
     else if( eDataType == EPT_s32 )

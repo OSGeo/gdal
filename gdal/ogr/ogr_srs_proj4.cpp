@@ -938,8 +938,8 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
     else if( strstr(pszProj4,"wktext") != NULL )
     {
-        // Fake out a projected coordinate system for otherwise 
-        // unrecognised projections for which we are already planning
+        // Fake out a projected coordinate system for otherwise
+        // unrecognized projections for which we are already planning
         // to embed the actual PROJ.4 string via extension node.
         SetProjection( "custom_proj4" );
     }

@@ -1001,8 +1001,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         nSpectralXSize = 1;
     if( nSpectralYSize == 0 )
         nSpectralYSize = 1;
-    
-    // When upstampling, extract the multispectral data at
+
+    // When upsampling, extract the multispectral data at
     // full resolution in a temp buffer, and then do the upsampling.
     if( nSpectralXSize < nXSize && nSpectralYSize < nYSize &&
         eResampleAlg != GRIORA_NearestNeighbour && nYSize > 1 )
@@ -1026,7 +1026,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             nXSizeExtract = aMSBands[0]->GetXSize() - nXOffExtract;
         if( nYOffExtract + nYSizeExtract > aMSBands[0]->GetYSize() )
             nYSizeExtract = aMSBands[0]->GetYSize() - nYOffExtract;
-        
+
         GByte* pSpectralBuffer = (GByte*)VSI_MALLOC3_VERBOSE(nXSizeExtract, nYSizeExtract,
                             psOptions->nInputSpectralBands * nDataTypeSize);
         if( pSpectralBuffer == NULL )
@@ -1035,7 +1035,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             VSIFree(pPanBuffer);
             return CE_Failure;
         }
-        
+
         if( anInputBands.size() )
         {
             // Use dataset RasterIO when possible

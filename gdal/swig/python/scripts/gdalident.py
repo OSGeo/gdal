@@ -58,7 +58,7 @@ def ProcessTarget( target, recursive, report_failure, filelist = None ):
     if driver is not None:
         print('%s: %s' % (target, driver.ShortName))
     elif report_failure:
-        print('%s: unrecognised' % target)
+        print('%s: unrecognized' % target)
 
     if recursive and driver is None:
         try:
@@ -71,7 +71,7 @@ def ProcessTarget( target, recursive, report_failure, filelist = None ):
             for item in subfilelist:
                 subtarget = os.path.join(target,item)
                 ProcessTarget( subtarget, 1, report_failure, subfilelist )
-            
+
 # =============================================================================
 # 	Mainline
 # =============================================================================

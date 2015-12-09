@@ -265,7 +265,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognised image data type %d, with BytesPerSample=%d.\n",
+                  "Unrecognized image data type %d, with BytesPerSample=%d.\n",
                   nDIPExDataType, nBytesPerSample );
         return NULL;
     }

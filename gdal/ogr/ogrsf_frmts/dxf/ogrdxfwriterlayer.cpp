@@ -810,7 +810,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         WriteCore( poFeature );
         WriteValue( 100, "AcDbEntity" );
     }
-    
+
     delete poTool;
 
     return OGRERR_NONE;

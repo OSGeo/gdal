@@ -242,8 +242,8 @@ int OGRGFTTableLayer::FetchDescribe()
     {
         iLatitudeField = iLongitudeField = -1;
 
-        /* In the unauthentified case, we try to parse the first record to */
-        /* autodetect the geometry field */
+        /* In the unauthenticated case, we try to parse the first record to */
+        /* auto-detect the geometry field. */
         OGRwkbGeometryType eType = wkbUnknown;
         if (aosHeaderAndFirstDataLine.size() == 2)
         {

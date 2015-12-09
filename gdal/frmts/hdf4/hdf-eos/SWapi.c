@@ -20,7 +20,7 @@ REVISIONS:
 
 Aug 31, 1999  Abe Taaheri    Changed memory allocation for utility strings to
                              the size of UTLSTR_MAX_SIZE.
-			     Added error check for memory unavailibilty in
+			     Added error check for memory unavailability in
 			     several functions.
 			     Added check for NULL metabuf returned from
 			     EHmeta... functions. NULL pointer returned from

@@ -206,7 +206,7 @@ if __name__ == '__main__':
             i = i + 4
 
         elif arg[:1] == '-':
-            print ('Unrecognised command option: ', arg)
+            print ('Unrecognized command option: ', arg)
             Usage()
             sys.exit( 1 )
 

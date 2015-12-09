@@ -42,7 +42,7 @@
  * expanded tabs
  *
  * Revision 1.2  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.1  2000/09/19 17:19:40  daniel
  * Initial Revision

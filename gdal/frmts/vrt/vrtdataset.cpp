@@ -405,7 +405,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
             //    poBand = new VRTPansharpenedRasterBand( this, 0 );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "VRTRasterBand of unrecognised subclass '%s'.",
+                          "VRTRasterBand of unrecognized subclass '%s'.",
                           pszSubclass );
 
             if( poBand != NULL
@@ -448,7 +448,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                 poBand = new VRTPansharpenedRasterBand( this, l_nBands+1 );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "VRTRasterBand of unrecognised subclass '%s'.",
+                          "VRTRasterBand of unrecognized subclass '%s'.",
                           pszSubclass );
 
             if( poBand != NULL 

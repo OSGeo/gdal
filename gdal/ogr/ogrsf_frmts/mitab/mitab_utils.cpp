@@ -64,7 +64,7 @@
  * Don't filter chars in TABCleanFieldName() if we're on a DBCS system
  *
  * Revision 1.14  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.13  2000/09/20 18:35:51  daniel
  * Fixed TABAdjustFilenameExtension() to also handle basename and path

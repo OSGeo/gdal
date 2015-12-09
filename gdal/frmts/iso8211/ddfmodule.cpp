@@ -592,7 +592,7 @@ DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
  * @return A pointer to a DDFRecord object is returned, or NULL if a read
  * error, or end of file occurs.  The returned record is owned by the
  * module, and should not be deleted by the application.  The record is
- * only valid untill the next ReadRecord() at which point it is overwritten.
+ * only valid until the next ReadRecord() at which point it is overwritten.
  */
 
 DDFRecord *DDFModule::ReadRecord()

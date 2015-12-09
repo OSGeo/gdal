@@ -1558,7 +1558,7 @@ void OGRODSDataSource::FlushCache()
         return;
     }
 
-    /* Write uncopressed mimetype */
+    /* Write uncompressed mimetype */
     char** papszOptions = CSLAddString(NULL, "COMPRESSED=NO");
     if( CPLCreateFileInZip(hZIP, "mimetype", papszOptions ) != CE_None )
     {

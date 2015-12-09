@@ -1155,8 +1155,9 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
 
     if (nRasterXSize == 0 || nRasterYSize == 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                  "Computed VRT dimension is invalid. You've probably specified unappropriate resolution.");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Computed VRT dimension is invalid. You've probably "
+                  "specified inappropriate resolution.");
         return CE_Failure;
     }
 
