@@ -654,7 +654,7 @@ struct qhT {
   vertexT *newvertex_list; /* list of vertices in newfacet_list, to vertex_tail
                              all vertices have 'newlist' set */
   int   num_facets;       /* number of facets in facet_list
-                             includes visble faces (num_visible) */
+                             includes visible faces (num_visible) */
   int   num_vertices;     /* number of vertices in facet_list */
   int   num_outside;      /* number of points in outsidesets (for tracing and RANDOMoutside)
                                includes coplanar outsideset points for NARROWhull/qh_outcoplanar() */

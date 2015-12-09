@@ -65,13 +65,12 @@ namespace pcr {
   \param     v the value to be tested.
   \return    True if value \a v is a missing value.
 
-    the generic isMV(const T& v) is not implemented, only the specializations
+    The generic isMV(const T& v) is not implemented, only the specializations.
 
-  
-  \todo      Zet alle dingen met een bepaald type,isMV, setMv, isType in
-             een zgn. struct trait
-             zie cast drama als isMV mist voor INT2 in BandMapTest::Open2
-             Zie numeric_limit discussie in Josuttis
+  TODO: Check translation of todo to English.
+  \todo      Put all things with a certain type, SMF, set Mv isType in a so-called.
+             Struct trait see cast drama as isMV fog INT2 in BandMapTest::Open2.
+             See numeric_limit discussion in Josuttis.
 */
   template<typename T> bool isMV(const T& v);
 /*!

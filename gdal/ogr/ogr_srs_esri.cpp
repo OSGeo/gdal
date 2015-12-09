@@ -663,8 +663,8 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      ArcGIS and related products now use a varient of Well Known     */
-/*      Text.  Try to recognise this and ingest it.  WKT is usually     */
+/*      ArcGIS and related products now use a variant of Well Known     */
+/*      Text.  Try to recognize this and ingest it.  WKT is usually     */
 /*      all on one line, but we will accept multi-line formats and      */
 /*      concatenate.                                                    */
 /* -------------------------------------------------------------------- */
@@ -706,7 +706,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     else if( EQUAL(osProj,"GEOGRAPHIC") )
     {
     }
-    
+
     else if( EQUAL(osProj,"utm") )
     {
         if( (int) OSR_GDV( papszPrj, "zone", 0.0 ) != 0 )

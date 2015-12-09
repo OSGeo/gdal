@@ -278,10 +278,10 @@ void CPL_DLL *CPLVirtualMemGetAddr(CPLVirtualMem* ctxt);
  */
 size_t CPL_DLL CPLVirtualMemGetSize(CPLVirtualMem* ctxt);
 
-/** Return if the virtal memory mapping is a direct file mapping.
+/** Return if the virtual memory mapping is a direct file mapping.
  *
  * @param ctxt context returned by CPLVirtualMemNew().
- * @return TRUE if the virtal memory mapping is a direct file mapping.
+ * @return TRUE if the virtual memory mapping is a direct file mapping.
  *
  * @since GDAL 1.11
  */

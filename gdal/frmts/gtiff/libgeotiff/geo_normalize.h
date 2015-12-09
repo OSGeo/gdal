@@ -113,7 +113,7 @@ typedef struct {
     short	Projection;
 
     /** GeoTIFF identifier for underlying projection method.  While some of
-      these values have corresponding vlaues in EPSG (Projection field),
+      these values have corresponding values in EPSG (Projection field),
       others do not.  For example CT_TransverseMercator. */
     short	CTProjection;   
 

@@ -1420,7 +1420,7 @@ public class gdal:public static Dataset OpenShared(String name)
  * exotic drivers this may not refer to a physical file, but instead contain
  * information for the driver on how to access a dataset.
  *
- * @param fileList a veector of strings.
+ * @param fileList a vector of strings.
  * These strings are filenames that are auxiliary to the main filename. The passed
  * value may be null.
  *

@@ -49,7 +49,7 @@ enum operation
     op_rule,        /** add connect rule */
     op_autoconnect, /** try to connect features base on their tolerance */
     op_delete,      /** delete network */
-    op_change_st    /** change veertext or edge blocking state */
+    op_change_st    /** change vertex or edge blocking state */
 };
 
 /************************************************************************/

@@ -3276,12 +3276,15 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             hDS_Y = GDALOpenShared( pszDSName, GA_ReadOnly );
 
         if ( hDS_X != NULL && hDS_Y != NULL ) {
-            nBand = MAX(1,atoi(CSLFetchNameValueDef( papszGeolocationInfo, "X_BAND", "0" )));
+            nBand = MAX(1,atoi(CSLFetchNameValueDef( papszGeolocationInfo,
+                                                     "X_BAND", "0" )));
             hBand_X = GDALGetRasterBand( hDS_X, nBand );
-            nBand = MAX(1,atoi(CSLFetchNameValueDef( papszGeolocationInfo, "Y_BAND", "0" )));
+            nBand = MAX(1,atoi(CSLFetchNameValueDef( papszGeolocationInfo,
+                                                     "Y_BAND", "0" )));
             hBand_Y = GDALGetRasterBand( hDS_Y, nBand );
 
-            /* if geoloc bands are found do basic vaidation based on their dimensions */
+            // If geoloc bands are found, do basic validation based on their
+            // dimensions.
             if ( hBand_X != NULL && hBand_Y != NULL ) {
 
                 int nXSize_XBand = GDALGetRasterXSize( hDS_X );
@@ -3292,7 +3295,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                 /* TODO 1D geolocation arrays not implemented */
                 if ( (nYSize_XBand == 1) && (nYSize_YBand == 1) ) {
                     bHasGeoloc = false;
-                    CPLDebug( "GDAL_netCDF", 
+                    CPLDebug( "GDAL_netCDF",
                               "1D GEOLOCATION arrays not supported yet" );
                 }
                 /* 2D bands must have same sizes as the raster bands */
@@ -3301,8 +3304,9 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                           (nXSize_YBand != nRasterXSize) ||
                           (nYSize_YBand != nRasterYSize) ) {
                     bHasGeoloc = false;
-                    CPLDebug( "GDAL_netCDF", 
-                              "GEOLOCATION array sizes (%dx%d %dx%d) differ from raster (%dx%d), not supported",
+                    CPLDebug( "GDAL_netCDF",
+                              "GEOLOCATION array sizes (%dx%d %dx%d) differ "
+                              "from raster (%dx%d), not supported",
                               nXSize_XBand, nYSize_XBand, nXSize_YBand, nYSize_YBand,
                               nRasterXSize, nRasterYSize );
                 }

@@ -502,7 +502,7 @@ SWattach(int32 fid, char *swathname)
     int32           swathID = -1;	/* HDF-EOS swath ID */
     int32          *tags;	/* Pnt to Vgroup object tags array */
     int32          *refs;	/* Pnt to Vgroup object refs array */
-    int32           dum;	/* dummy varible */
+    int32           dum;	/* dummy variable */
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           nObjects;	/* # of objects in Vgroup */
     int32           nSDS;	/* SDS counter */

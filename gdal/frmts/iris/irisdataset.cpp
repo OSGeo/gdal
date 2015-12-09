@@ -413,7 +413,7 @@ void IRISDataset::LoadProjection()
     float fFlattening;
     float fPolarRadius;
     
-    if(fEquatorialRadius == 0){ // if Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS verions)
+    if(fEquatorialRadius == 0){ // if Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS versions)
         fEquatorialRadius = 6371000;
         fPolarRadius = fEquatorialRadius;
         fInvFlattening = 0;

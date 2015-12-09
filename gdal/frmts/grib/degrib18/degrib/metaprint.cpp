@@ -440,7 +440,7 @@ static void PrintSect4_Category (grib_MetaData *meta)
  *
  * HISTORY
  *   9/2002 Arthur Taylor (MDL/RSIS): Created.
- *   2/2003 AAT: Adjusted the interpretation of the scale vactor and value.
+ *   2/2003 AAT: Adjusted the interpretation of the scale vector and value.
  *          to be consistent with what Matt found from email conversations
  *          with WMO GRIB2 experts.
  *   2/2003 AAT: Switched from: value / pow (10, factor)
