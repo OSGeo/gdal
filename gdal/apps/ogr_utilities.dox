@@ -594,7 +594,7 @@ The ogrlineref program can be used to create a linear reference - a file contain
 a segments of special length (e.g. 1 km in reference units) and get coordinates, 
 linear referenced distances or sublines (subpaths) from this file. The utility not
 required the M or Z values in geometry. The results can be stored in any OGR supported 
-format. Also some information writed to the stdout.  
+format. Also some information is written to the stdout.
 
 <dl>
 <dt><b>\-\-help-general</b>:</dt><dd> Show the usage.</dd>

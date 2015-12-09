@@ -174,7 +174,7 @@ int EGifCloseFile(GifFileType * GifFile);
 #define E_GIF_ERR_NOT_ENOUGH_MEM 7
 #define E_GIF_ERR_DISK_IS_FULL   8
 #define E_GIF_ERR_CLOSE_FAILED   9
-#define E_GIF_ERR_NOT_WRITEABLE  10
+#define E_GIF_ERR_NOT_WRITEABLE  10  /* TODO: Spelling.  Fix upstream and deprecate. */
 
 /******************************************************************************
  * O.K., here are the routines one can access in order to decode GIF file:     

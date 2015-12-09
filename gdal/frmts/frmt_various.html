@@ -1087,12 +1087,13 @@ Subdatasets:
 </pre>
 
 
-<p>In some situations, <a href="frmt_nitf.html">NITF</a> tiles inside a subdataset don't share the same palettes.
-The RPFTOC driver will do its best to remap palettes to the reported palette by gdalinfo (which
-is the palette of the first tile of the subdataset).
-In situations where it wouldn't give a good result, you can try to set the RPFTOC_FORCE_RGBA
-environment variable to TRUE before opening the subdataset. This will cause the driver to expose
-the subdataset as a RGBA dataset, instead of a paletted one.</p>
+<p>In some situations, <a href="frmt_nitf.html">NITF</a> tiles inside a
+subdataset don't share the same palettes.  The RPFTOC driver will do its best
+to remap palettes to the reported palette by gdalinfo (which is the palette of
+the first tile of the subdataset).  In situations where it would not give a
+good result, you can try to set the RPFTOC_FORCE_RGBA environment variable to
+TRUE before opening the subdataset. This will cause the driver to expose the
+subdataset as a RGBA dataset, instead of a paletted one.</p>
 
 <p>It is possible to build external overviews for a subdataset. The overview for the first subdataset
 will be named A.TOC.1.ovr for example, for the second dataset it will be A.TOC.2.ovr, etc.

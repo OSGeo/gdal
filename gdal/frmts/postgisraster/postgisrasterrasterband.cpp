@@ -50,7 +50,7 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
     this->poDS = poDSIn;
     this->bIsOffline = bIsOfflineIn;
     this->nBand = nBandIn;
-    
+
     this->eDataType = eDataTypeIn;
     this->m_bNoDataValueSet = bNoDataValueSetIn;
     this->m_dfNoDataValue = dfNodata;
@@ -63,13 +63,13 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
     nRasterYSize = poDS->GetRasterYSize();
 
     /*******************************************************************
-     * Finally, set the block size. We apply the same logic than in VRT 
+     * Finally, set the block size. We apply the same logic than in VRT
      * driver.
-     * 
+     *
      * We limit the size of a block with MAX_BLOCK_SIZE here to prevent
      * arrangements of just one big tile.
-     * 
-     * This value is just used in case whe only have 1 tile in the
+     *
+     * This value is just used in case we only have 1 tile in the
      * table. Otherwise, the reading operations are performed by the
      * sources, not the PostGISRasterBand object itself.
      ******************************************************************/
@@ -80,11 +80,11 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
     CPLDebug("PostGIS_Raster", 
         "PostGISRasterRasterBand constructor: Band created (srid = %d)", 
         poDS->nSrid);
-    
+
     CPLDebug("PostGIS_Raster", 
         "PostGISRasterRasterBand constructor: Band size: (%d X %d)", 
         nRasterXSize, nRasterYSize);
-        
+
     CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::Constructor: "
         "Block size (%dx%d)", this->nBlockXSize, this->nBlockYSize);
 #endif

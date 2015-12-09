@@ -228,8 +228,8 @@ private:
     /* GTM is not a contiguous file. We need two temporary files because
        trackpoints and tracks are stored separated and we don't know in
        advance how many trackpoints and tracks the new file will
-       have. So, we create temporary file and append the at the end of
-       the gtm file whe everything is done, that is, in the
+       have. So, we create temporary file and append at the end of
+       the gtm file when everything is done, that is, in the
        destructor. */
     VSILFILE* fpTmpTrackpoints;
     char* pszTmpTrackpoints;

@@ -1040,7 +1040,7 @@ GML driver:
  * Fix incorrect geometry cast when reading GML topogeometries (#5715)
  * VFR: fix ST_Z type (changes) -- list all layers
  * VFR: include also non-spatial (removed) features (ZaniklePrvky) in type ST_Z (changes)
- * VFR: use String when 32-bit integer wasn't wide enough
+ * VFR: use String when 32-bit integer was not wide enough
  * VFR: add support for UVOH file type
  * VFR: add missing support for OriginalniHraniceOmpv geometry
  * VFR: update GFS files to RFC31 (OGR 64bit Integer Fields and FIDs)
@@ -1481,7 +1481,7 @@ Utilities:
  * gdal_translate: use floor() to compute image coordinates from world coordinates when specifying -projwin (useful when extracting from left or top of upper-left corner, which generate negative image coordinates) (#5367)
  * gdaltindex: remove annoying warning 'Warning 1: Field location of width 255 truncated to 254' (#5121)
  * gdaltindex: add -src_srs_name and -src_srs_format to go with MapServer RFC100; add also a -f and -lyr_name options to be able to create a non-shapefile tileindex
- * gdalwarp: Fix segfault where metadata values weren't being nullchecked properly during conflict resolution (#5069)
+ * gdalwarp: Fix segfault where metadata values were not being nullchecked properly during conflict resolution (#5069)
  * gdalwarp: honor -s_srs when using cutline (#5081)
  * gdalwarp: copy nodata values from source to dest if -dstnodata is not given ; add option to not set dest nodata with -dstnodata None (#5087)
  * gdalwarp: do not return a non-zero exit status for warnings

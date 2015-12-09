@@ -211,7 +211,7 @@ int  GenerateRootKml(const char* filename,
     if( pszOverlayName == NULL )
         pszOverlayName = tmpfilename;
 
-    // If we haven't writen any features yet, output the layer's schema
+    // If we have not written any features yet, output the layer's schema.
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(fp, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
     VSIFPrintfL(fp, "\t<Document>\n");

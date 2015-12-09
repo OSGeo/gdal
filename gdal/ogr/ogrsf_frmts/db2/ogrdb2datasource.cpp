@@ -858,9 +858,9 @@ int OGRDB2DataSource::Open( const char * pszNewName, int bUpdate,
                      papszTableNames[iTable],
                      papszGeomColumnNames[iTable], papszTypes[iTable],
                      papszSRIds[iTable]);
-            // if srid isn't defined it was probably because the table
-            // wasn't registered.
-            // in that case, try to get it from the actual data table
+            // If srid is not defined it was probably because the table
+            // was not registered.
+            // In that case, try to get it from the actual data table.
             if (nSRId < 0) {
                 CPLODBCStatement oStmt( &oSession );
                 oStmt.Appendf( "select db2gse.st_srsid(%s) from %s.%s "

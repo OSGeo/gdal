@@ -542,8 +542,8 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
 
 CPLErr ILWISDataset::WriteGeoReference()
 {
-    //check wheather we should write out a georeference file. 
-    //dataset must be north up 
+    // Check whether we should write out a georeference file.
+    // Dataset must be north up.
     if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
         || adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0 )
@@ -1043,8 +1043,8 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     double adfGeoTransform[6];
     string georef = "none.grf";
 
-    //check wheather we should create georeference file. 
-    //source dataset must be north up 
+    // Check whether we should create georeference file.
+    // Source dataset must be north up.
     if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None
         && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
             || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0

@@ -391,7 +391,7 @@ SHPTreeNodeAddShapeId( SHPTreeNode * psTreeNode, SHPObject * psObject,
     int		i;
     
 /* -------------------------------------------------------------------- */
-/*      If there are subnodes, then consider wiether this object        */
+/*      If there are subnodes, then consider whether this object        */
 /*      will fit in them.                                               */
 /* -------------------------------------------------------------------- */
     if( nMaxDepth > 1 && psTreeNode->nSubNodes > 0 )

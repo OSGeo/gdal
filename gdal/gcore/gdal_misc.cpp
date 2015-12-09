@@ -1122,8 +1122,8 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
     {
         if ( pnGCPCount && ppasGCPs )
         {
-            CPLDebug( "GDAL", 
-                "GDALLoadOziMapFile(%s) found file, wasn't able to derive a\n"
+            CPLDebug( "GDAL",
+                "GDALLoadOziMapFile(%s) found file, was not able to derive a\n"
                 "first order geotransform.  Using points as GCPs.",
                 pszFilename );
 
@@ -1306,8 +1306,8 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
     {
         if (pnGCPCount && ppasGCPs)
         {
-            CPLDebug( "GDAL", 
-                "GDALLoadTabFile(%s) found file, wasn't able to derive a\n"
+            CPLDebug( "GDAL",
+                "GDALLoadTabFile(%s) found file, was not able to derive a\n"
                 "first order geotransform.  Using points as GCPs.",
                 pszFilename );
 
@@ -2646,7 +2646,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_OPEN, FALSE ) )
                 printf( "  Supports: Open() - Open existing dataset.\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
-                printf( "  Supports: Create() - Create writeable dataset.\n" );
+                printf( "  Supports: Create() - Create writable dataset.\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )
                 printf( "  Supports: CreateCopy() - Create dataset by copying another.\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_VIRTUALIO, FALSE ) )

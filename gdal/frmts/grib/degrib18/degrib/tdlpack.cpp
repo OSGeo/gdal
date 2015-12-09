@@ -4071,7 +4071,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    short int si_temp;   /* Temporary variable (short int). */
    double d_temp;       /* Temporary variable (double). */
    char buffer[6];      /* Used to write reserved values */
-   uChar pbuf;          /* A buffer of bits that weren't written to disk */
+   uChar pbuf;          /* A buffer of bits that were not written to disk */
    sChar pbufLoc;       /* Where in pbuf to add more bits. */
 
    commentLen = static_cast<int>(strlen (comment));

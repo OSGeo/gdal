@@ -270,7 +270,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
             /* Attempt to read past EOF... generate an error.
              *
              * Note: AVCRawBinEOF() can set bDisableReadBytesEOFError=TRUE
-             *       to disable the error message whils it is testing
+             *       to disable the error message while it is testing
              *       for EOF.
              *
              * TODO: We are not resetting the buffer. Also, there is no easy

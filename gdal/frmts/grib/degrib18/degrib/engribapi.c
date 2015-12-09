@@ -724,7 +724,7 @@ int fillSect4_0 (enGribMeta *en, uShort2 tmplNum, uChar cat, uChar subCat,
  *
  * RETURNS: int
  *    > 0 (length of section 4).
- *    -1 if not template 4.1, or fillSect4_0 wasn't already called.
+ *    -1 if not template 4.1, or fillSect4_0 was not already called.
  *
  *  4/2006 Arthur Taylor (MDL): Created.
  *
@@ -763,7 +763,7 @@ int fillSect4_1 (enGribMeta *en, uShort2 tmplNum, uChar typeEnsemble,
  *
  * RETURNS: int
  *    > 0 (length of section 4).
- *    -1 if not template 4.2, or fillSect4_0 wasn't already called.
+ *    -1 if not template 4.2, or fillSect4_0 was not already called.
  *
  *  4/2006 Arthur Taylor (MDL): Created.
  *
@@ -811,7 +811,7 @@ int fillSect4_2 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
  *
  * RETURNS: int
  *    > 0 (length of section 4).
- *    -1 if not template 4.5, or fillSect4_0 wasn't already called.
+ *    -1 if not template 4.5, or fillSect4_0 was not already called.
  *
  *  4/2006 Arthur Taylor (MDL): Created.
  *
@@ -872,7 +872,7 @@ int fillSect4_5 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
  *
  * RETURNS: int
  *    > 0 (length of section 4).
- *    -1 if not template 4.8, or fillSect4_0 wasn't already called.
+ *    -1 if not template 4.8, or fillSect4_0 was not already called.
  *    -4 can only handle 1 and only 1 time interval
  *
  *  4/2006 Arthur Taylor (MDL): Created.
@@ -952,7 +952,7 @@ int fillSect4_8 (enGribMeta *en, uShort2 tmplNum, sInt4 endYear, int endMonth,
  *
  * RETURNS: int
  *    > 0 (length of section 4).
- *    -1 if not template 4.9, or fillSect4_0 wasn't already called.
+ *    -1 if not template 4.9, or fillSect4_0 was not already called.
  *    -4 can only handle 1 and only 1 time interval
  *
  *  4/2006 Arthur Taylor (MDL): Created.
@@ -1040,7 +1040,7 @@ int fillSect4_9 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
  *
  * RETURNS: int
  *    > 0 (length of section 4).
- *    -1 if not template 4.9, or fillSect4_0 wasn't already called.
+ *    -1 if not template 4.9, or fillSect4_0 was not already called.
  *    -4 can only handle 1 and only 1 time interval
  *
  *  5/2006 Arthur Taylor (MDL): Created.
@@ -1111,7 +1111,7 @@ int fillSect4_10 (enGribMeta *en, uShort2 tmplNum, int percentile,
  *
  * RETURNS: int
  *    > 0 (length of section 4).
- *    -1 if not template 4.12, or fillSect4_0 wasn't already called.
+ *    -1 if not template 4.12, or fillSect4_0 was not already called.
  *    -4 can only handle 1 and only 1 time interval
  *
  *  4/2006 Arthur Taylor (MDL): Created.

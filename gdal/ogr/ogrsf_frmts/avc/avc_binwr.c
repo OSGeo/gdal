@@ -393,7 +393,7 @@ int AVCBinWriteHeader(AVCBinFile *psFile)
 /**********************************************************************
  *                          AVCBinWriteClose()
  *
- * Close a coverage file opened for wirting, and release all memory 
+ * Close a coverage file opened for writing, and release all memory
  * (object strcut., buffers, etc.) associated with this file.
  **********************************************************************/
 
@@ -2075,7 +2075,7 @@ AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
  * (This function is for internal library use... external calls should
  * go to AVCBinWriteClose() instead)
  *
- * Close an info table opened for wirting, and release all memory 
+ * Close an info table opened for writing, and release all memory
  * (object struct., buffers, etc.) associated with this file.
  **********************************************************************/
 static void    _AVCBinWriteCloseTable(AVCBinFile *psFile)

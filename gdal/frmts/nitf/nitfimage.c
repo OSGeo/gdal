@@ -2383,7 +2383,7 @@ int NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo *psICHIP )
     }
     else
     {
-        fprintf( stdout, "Chip is already de-warpped?\n" );
+        fprintf( stdout, "Chip is already de-warped?\n" );
     }
 
     return TRUE;
@@ -3254,7 +3254,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
             /* Image of http://trac.osgeo.org/gdal/ticket/3848 has incorrect */
             /* RPFHDR offset, but all other locations are correct... */
             /* So if we find LID_CoverageSectionSubheader and LID_CompressionLookupSubsection */
-            /* we check weither their content is valid */
+            /* we check whether their content is valid. */
             int bFoundValidLocation = FALSE;
             for( i = 0; i < psImage->nLocCount; i++ )
             {

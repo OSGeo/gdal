@@ -1142,8 +1142,8 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDSIn, int nBandIn) :
 
 GTiffRasterBand::~GTiffRasterBand()
 {
-    /* So that any future DropReferenceVirtualMem() will not try to access the */
-    /* raster band object, but this wouldn't conform the advertized contract */
+    // So that any future DropReferenceVirtualMem() will not try to access the
+    // raster band object, but this would not conform the advertised contract.
     if( aSetPSelf.size() != 0 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -13693,8 +13693,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Second chance : now that we have a PAM dataset, it is possible  */
-/*      to write metadata that we couldn't be writen as TIFF tag        */
+/*      Second chance: now that we have a PAM dataset, it is possible   */
+/*      to write metadata that we could not write as a TIFF tag.        */
 /* -------------------------------------------------------------------- */
     if (!bHasWrittenMDInGeotiffTAG && !bStreaming)
         GTiffDataset::WriteMetadata( poDS, hTIFF, TRUE, pszProfile,
