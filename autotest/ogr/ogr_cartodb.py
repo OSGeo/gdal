@@ -684,7 +684,7 @@ Error""")
     if lyr.CreateField(fld_defn) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-
+   
     fld_defn = ogr.FieldDefn('boolfield', ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTBoolean)
     
@@ -692,6 +692,11 @@ Error""")
         """{"rows":[],
             "fields":{}}""")
     if lyr.CreateField(fld_defn) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    fld_pos = lyr.GetLayerDefn().GetFieldIndex(fld_defn.GetName());
+    if lyr.DeleteField(fld_pos) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
 

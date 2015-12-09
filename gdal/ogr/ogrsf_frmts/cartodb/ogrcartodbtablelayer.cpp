@@ -521,6 +521,50 @@ OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 }
 
 /************************************************************************/
+/*                            DeleteField()                             */
+/************************************************************************/
+
+OGRErr OGRCARTODBTableLayer::DeleteField( int iField )
+{
+    CPLString           osSQL;
+	
+    if (!poDS->IsReadWrite())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Operation not available in read-only mode");
+        return OGRERR_FAILURE;
+    }
+    
+    if (iField < 0 || iField >= poFeatureDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+				 "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+	
+    if( eDeferedInsertState == INSERT_MULTIPLE_FEATURE )
+    {
+        if( FlushDeferedInsert() != OGRERR_NONE )
+            return OGRERR_FAILURE;
+    }
+	
+/* -------------------------------------------------------------------- */
+/*      Drop the field.                                           */
+/* -------------------------------------------------------------------- */
+
+    osSQL.Printf( "ALTER TABLE %s DROP COLUMN %s",
+				 OGRCARTODBEscapeIdentifier(osName).c_str(),
+				 OGRCARTODBEscapeIdentifier(poFeatureDefn->GetFieldDefn(iField)->GetNameRef()).c_str() );
+	
+    json_object* poObj = poDS->RunSQL(osSQL);
+	if( poObj == NULL )
+		return OGRERR_FAILURE;
+	json_object_put(poObj);
+	
+    return poFeatureDefn->DeleteFieldDefn( iField );
+}
+
+/************************************************************************/
 /*                           ICreateFeature()                            */
 /************************************************************************/
 
