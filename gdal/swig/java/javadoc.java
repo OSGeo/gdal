@@ -6649,7 +6649,7 @@ public class Layer:public int AlterFieldDefn( int iField, FieldDefn newFieldDefn
  <p>
  Returns the extent (MBR) of the data in the layer.  If force is 0,
  and it would be expensive to establish the extent then a RuntimeException
- will be throwned indicating that the extent isn't know.  If force is 
+ will be thrown indicating that the extent is not known.  If force is 
  1 then some implementations will actually scan the entire layer once
  to compute the MBR of all the features in the layer.
  <p>
@@ -11303,7 +11303,7 @@ public class SpatialReference:public int SetGeocCS()
  * <p>
  * This method is will ensure a GEOCCS node is created as the root,
  * and set the provided name on it.  If used on a GEOGCS coordinate system,
- * the DATUM and PRIMEM nodes from the GEOGCS will be tarnsferred over to
+ * the DATUM and PRIMEM nodes from the GEOGCS will be transferred over to
  * the GEOGCS.
  *
  * @param name the user visible name to assign. Not used as a key. May be null

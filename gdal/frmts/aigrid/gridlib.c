@@ -107,7 +107,7 @@ CPLErr AIGProcessIntConstBlock( GByte *pabyCur, int nDataSize, int nMin,
 /************************************************************************/
 /*                         AIGProcess32bitRawBlock()                    */
 /*                                                                      */
-/*      Process a block using ``20'' (thirtytwo bit) raw format.        */
+/*      Process a block using ``20'' (thirty two bit) raw format.        */
 /************************************************************************/
 
 static 

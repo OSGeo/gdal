@@ -1172,7 +1172,7 @@ struct png_struct_def
 #endif
 
 #if defined(PNG_READ_SHIFT_SUPPORTED) || defined(PNG_WRITE_SHIFT_SUPPORTED)
-   png_color_8 shift PNG_DEPSTRUCT;         /* shift for significant bit tranformation */
+   png_color_8 shift PNG_DEPSTRUCT;         /* shift for significant bit transformation */
 #endif
 
 #if defined(PNG_tRNS_SUPPORTED) || defined(PNG_READ_BACKGROUND_SUPPORTED) \

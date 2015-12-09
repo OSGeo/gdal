@@ -1611,7 +1611,7 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
     }
 
     /*-----------------------------------------------------------------
-     * Check for errors... if any error happened, tehn return NULL
+     * Check for errors... if any error happened, then return NULL.
      *----------------------------------------------------------------*/
     if (CPLGetLastErrorNo() != 0)
     {

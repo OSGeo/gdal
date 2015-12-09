@@ -2103,7 +2103,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
                         psRRDInfo->pszFilename, GetBandName(),
                         nOverviewLevel );
 
-    // TODO: Need to add to end of array (thats pretty hard).
+    // TODO: Need to add to end of array (that is pretty hard).
     if( poRRDNamesList->SetStringField( szName, osLayerName ) != CE_None )
     {
         poRRDNamesList->MakeData( poRRDNamesList->GetDataSize() + 3000 );

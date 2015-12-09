@@ -5235,7 +5235,7 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
         {
             adfCTM[i] = Get(poCTM, i);
             /* Nullify rotation terms that are significantly smaller than */
-            /* scaling termes */
+            /* scaling terms. */
             if ((i == 1 || i == 2) && fabs(adfCTM[i]) < fabs(adfCTM[0]) * 1e-10)
                 adfCTM[i] = 0;
             CPLDebug("PDF", "CTM[%d] = %.16g", i, adfCTM[i]);

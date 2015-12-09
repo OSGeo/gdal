@@ -111,7 +111,7 @@ class ProjTest:
             return 'fail'
 
         ######################################################################
-        # Tranform source point to destination SRS.
+        # Transform source point to destination SRS.
         
         result = ct.TransformPoint( self.src_xyz[0], self.src_xyz[1], self.src_xyz[2] )
 

@@ -312,7 +312,7 @@ struct GDALVectorTranslateOptions
     /*! pointer to the progress data variable */
     void *pProgressData;
 
-    /*! whether layer and feature native data must be transfered */
+    /*! Whether layer and feature native data must be transferred. */
     bool bNativeData;
 };
 

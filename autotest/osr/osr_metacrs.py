@@ -126,7 +126,7 @@ class MetaCRSTest:
             return 'fail'
 
         ######################################################################
-        # Tranform source point to destination SRS, swapping EPSG GEOGCS
+        # Transform source point to destination SRS, swapping EPSG GEOGCS
         # axes if needed.
 
         if self.src_srs.EPSGTreatsAsLatLong():

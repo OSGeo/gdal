@@ -484,21 +484,21 @@ void EnvisatDataset::ScanForGCPs_MERIS()
         /* Not good but we can still extract some of the TPS, can we? */
     }
 
-    /* check TP records spacing */
-    if ((1+(arTP.getFirstOffset()+arTP.getLastOffset()+GetRasterYSize()-1) 
+    /* Check TP record spacing */
+    if ((1+(arTP.getFirstOffset()+arTP.getLastOffset()+GetRasterYSize()-1)
            / nLinesPerTiePoint ) != arTP.getDSRCount() )
     {
-        CPLDebug( "EnvisatDataset", "Not enough tieponts per column! "
-            "received=%d expected=%d", nTPPerColumn , 
-                1 + (arTP.getFirstOffset()+arTP.getLastOffset()+
-                      GetRasterYSize()-1) / nLinesPerTiePoint ) ; 
-        return;  // That is far more serious - we risk misplaces TPs.
+        CPLDebug( "EnvisatDataset", "Not enough tiepoints per column! "
+                  "received=%d expected=%d", nTPPerColumn ,
+                  1 + (arTP.getFirstOffset()+arTP.getLastOffset()+
+                       GetRasterYSize()-1) / nLinesPerTiePoint ) ;
+        return;  // That is far more serious - we risk misplacing TPs.
     }
 
     bool isBrowseProduct;
     if ( 50*nTPPerLine + 13 == nDSRSize ) /* regular product */
     {
-        isBrowseProduct = false ; 
+        isBrowseProduct = false ;
     }
     else if ( 8*nTPPerLine + 13 == nDSRSize ) /* browse product */
     {

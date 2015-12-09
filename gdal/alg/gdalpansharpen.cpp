@@ -336,7 +336,7 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
             }
         }
     }
-    
+
     // Setup thread pool
     int nThreads = psOptions->nThreads;
     if( nThreads == -1 )
@@ -354,7 +354,7 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
     }
     if( nThreads > 1 )
     {
-        CPLDebug("PANSHARPEN", "Using %d theads", nThreads);
+        CPLDebug("PANSHARPEN", "Using %d threads", nThreads);
         poThreadPool = new (std::nothrow) CPLWorkerThreadPool();
         if( poThreadPool == NULL ||
             !poThreadPool->Setup( nThreads, NULL, NULL ) )
@@ -363,7 +363,7 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
             poThreadPool = NULL;
         }
     }
-    
+
     GDALRIOResampleAlg eResampleAlg = psOptions->eResampleAlg;
     if( eResampleAlg != GRIORA_NearestNeighbour )
     {
@@ -378,7 +378,7 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
 
         GDALGetResampleFunction(pszResampling, &nKernelRadius);
     }
-    
+
     return CE_None;
 }
 

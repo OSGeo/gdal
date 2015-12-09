@@ -213,7 +213,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
             AttrTable *poAttr = poTable->get_attr_table( dv_i );
             string target_container = poAttr->get_attr( "target_container" );
             BaseType *poVar = poDDS->var( target_container.c_str() );
-            
+
             if( poVar == NULL )
             {
                 CPLError( CE_Warning, CPLE_AppDefined, 
@@ -234,9 +234,9 @@ int OGRDODSDataSource::Open( const char * pszNewName )
                                                poAttr) );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
-/*      Walk through the DODS variables looking for easily targetted    */
+/*      Walk through the DODS variables looking for easily targeted     */
 /*      ones.  Eventually this will need to be driven by the AIS info.  */
 /* -------------------------------------------------------------------- */
     if( nLayers == 0 )
@@ -246,7 +246,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         for( v_i = poDDS->var_begin(); v_i != poDDS->var_end(); v_i++ )
         {
             BaseType *poVar = *v_i;
-            
+
             if( poVar->type() == dods_sequence_c )
                 AddLayer( new OGRDODSSequenceLayer(this,poVar->name().c_str(),
                                                    NULL) );

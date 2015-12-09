@@ -293,7 +293,7 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
     }
 
     // -------------------------------------------------------------
-    // Calculate Concatened Tranformation Matrix based on Orientation
+    // Calculate Concatenated Transformation Matrix based on Orientation
     // -------------------------------------------------------------
 
     double adfConcat[16];

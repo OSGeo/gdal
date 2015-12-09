@@ -2998,7 +2998,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
 
     CPLString osSQL;
 
-    /* Test consistency between result layer and traditionnal layer */
+    /* Test consistency between result layer and traditional layer */
     LOG_ACTION(poLayer->ResetReading());
     poLayerFeat = LOG_ACTION(poLayer->GetNextFeature());
 

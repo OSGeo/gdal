@@ -274,7 +274,7 @@ int OGRFeatureQuery::CanUseIndex( OGRLayer *poLayer )
     swq_expr_node *psExpr = (swq_expr_node *) pSWQExpr;
 
 /* -------------------------------------------------------------------- */
-/*      Do we have an index on the targetted layer?                     */
+/*      Do we have an index on the targeted layer?                      */
 /* -------------------------------------------------------------------- */
     if ( poLayer->GetIndex() == FALSE )
         return FALSE;
@@ -358,7 +358,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
         *peErr = OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
-/*      Do we have an index on the targetted layer?                     */
+/*      Do we have an index on the targeted layer?                      */
 /* -------------------------------------------------------------------- */
     if ( poLayer->GetIndex() == NULL )
         return NULL;

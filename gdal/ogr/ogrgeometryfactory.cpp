@@ -746,7 +746,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
 
 /* -------------------------------------------------------------------- */
 /*      Eventually we should try to split the polygon into component    */
-/*      island polygons.  But thats alot of work and can be put off.    */
+/*      island polygons.  But that is a lot of work and can be put off. */
 /* -------------------------------------------------------------------- */
     if( eGeomType != wkbPolygon )
         return poGeom;

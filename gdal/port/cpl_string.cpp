@@ -2597,7 +2597,7 @@ if (CPLStrlcat(szDest, "cde", sizeof(szDest)) >= sizeof(szDest))
  * @param nDestSize size of destination buffer (including space for the
  *         NUL terminator character)
  *
- * @return the thoretical length of the destination string after concatenation
+ * @return the theoretical length of the destination string after concatenation
  *         (=strlen(pszDest_before) + strlen(pszSrc)).
  *         If strlen(pszDest_before) >= nDestSize, then it returns
  *         nDestSize + strlen(pszSrc)
