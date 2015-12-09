@@ -3673,7 +3673,7 @@ def ogr_shape_78():
     fd.SetPrecision(1)
     lyr.CreateField(fd)
 
-    # Integer values up to 2^53 can be exactly tansported into a double.
+    # Integer values up to 2^53 can be exactly converted into a double.
     gdal.ErrorReset()
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('dblfield', (2**53) * 1.0)

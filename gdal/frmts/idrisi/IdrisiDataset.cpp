@@ -2278,7 +2278,7 @@ GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
     poDefaultRAT->CreateColumn( "Class_name", GFT_String,  GFU_Name );
 
     // ----------------------------------------------------------
-    // Loop throught the Category Names
+    // Loop through the Category Names.
     // ----------------------------------------------------------
 
     GDALColorEntry sEntry;

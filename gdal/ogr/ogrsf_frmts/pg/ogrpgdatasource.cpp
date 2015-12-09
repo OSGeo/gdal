@@ -710,8 +710,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     /* bytea hex format */
     if (sPostgreSQLVersion.nMajor >= 9)
     {
-        /* Starting with PostgreSQL 9.0, the default output format for values of type bytea */
-        /* is hex, whereas we traditionnaly expect escape */
+        // Starting with PostgreSQL 9.0, the default output format for values
+        // of type bytea is hex, whereas we traditionally expect escape.
         hResult = OGRPG_PQexec(hPGConn, "SET bytea_output TO escape");
         OGRPGClearResult( hResult );
     }

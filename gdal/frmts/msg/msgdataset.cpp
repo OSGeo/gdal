@@ -694,12 +694,13 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow, int iCol, MSGDataset* poGDS)
 {
-	int iIndex = iChannel - 1; // just for speed optimization
+  int iIndex = iChannel - 1; // just for speed optimization
 
   double rSlope = poGDS->rCalibrationSlope[iIndex];
   double rOffset = poGDS->rCalibrationOffset[iIndex];
-  
-  if (poGDS->command.cDataConversion == 'T') // reflectance for visual bands, temperatore for IR bands
+
+  // Reflectance for visual bands, temperature for IR bands.
+  if (poGDS->command.cDataConversion == 'T')
   {
     double rRadiance = rOffset + (iDN * rSlope);
 

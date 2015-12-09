@@ -48,9 +48,9 @@ static const TDLP_TableType TDLP_V_Table[4] = {
 };
 
 static const TDLP_TableType TDLP_T_Table[3] = {
-   /* 0 */ {0, "No nolinear tranform"},
+   /* 0 */ {0, "No nolinear transform"},  // TODO: "No no"?
    /* 1 */ {1, "Square transform"},
-   /* 2 */ {2, "Square root tranform"},
+   /* 2 */ {2, "Square root transform"},
 };
 
 static const TDLP_TableType TDLP_Oper_Table[9] = {

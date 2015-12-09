@@ -1417,9 +1417,9 @@ int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                poPointHdr->m_nB);
 
     /*-------------------------------------------------------------
-     * Symbol Angle, in thenths of degree.
-     * Contrary to arc start/end angles, no conversion based on 
-     * origin quadrant is required here
+     * Symbol Angle, in tenths of degree.
+     * Contrary to arc start/end angles, no conversion based on
+     * origin quadrant is required here.
      *------------------------------------------------------------*/
     m_dAngle       = poPointHdr->m_nAngle/10.0;
 
@@ -1509,9 +1509,9 @@ int TABFontPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poPointHdr->m_nB = (GByte)COLOR_B(m_sSymbolDef.rgbColor);
 
     /*-------------------------------------------------------------
-     * Symbol Angle, in thenths of degree.
-     * Contrary to arc start/end angles, no conversion based on 
-     * origin quadrant is required here
+     * Symbol Angle, in tenths of degree.
+     * Contrary to arc start/end angles, no conversion based on
+     * origin quadrant is required here.
      *------------------------------------------------------------*/
     poPointHdr->m_nAngle = (GInt16)ROUND_INT(m_dAngle * 10.0);
 
@@ -5446,9 +5446,9 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     m_nTextAlignment = poTextHdr->m_nTextAlignment; // just./spacing/arrow
 
     /*-------------------------------------------------------------
-     * Text Angle, in thenths of degree.
-     * Contrary to arc start/end angles, no conversion based on 
-     * origin quadrant is required here
+     * Text Angle, in tenths of degree.
+     * Contrary to arc start/end angles, no conversion based on
+     * origin quadrant is required here.
      *------------------------------------------------------------*/
     m_dAngle       = poTextHdr->m_nAngle/10.0;
 
@@ -5689,9 +5689,9 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poTextHdr->m_nTextAlignment = m_nTextAlignment;   // just./spacing/arrow
 
     /*-----------------------------------------------------------------
-     * Text Angle, (written in thenths of degrees)
-     * Contrary to arc start/end angles, no conversion based on 
-     * origin quadrant is required here
+     * Text Angle, (written in tenths of degrees)
+     * Contrary to arc start/end angles, no conversion based on
+     * origin quadrant is required here.
      *----------------------------------------------------------------*/
     poTextHdr->m_nAngle = ROUND_INT(m_dAngle*10.0);
 
@@ -5714,7 +5714,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      *----------------------------------------------------------------*/
     double dXMin, dYMin, dXMax, dYMax;
     // Make sure Feature MBR is in sync with other params
- 
+
     UpdateMBR();
     GetMBR(dXMin, dYMin, dXMax, dYMax);
 

@@ -4524,7 +4524,7 @@ OGRGeometryH OGR_G_DelaunayTriangulation( OGRGeometryH hThis, double dfTolerance
  * A new geometry object is created and returned containing a collection
  * of reassembled Polygons: NULL will be returned if the input collection
  * doesn't corresponds to a MultiLinestring, or when reassembling Edges
- * into Polygons is impossible due to topogical inconsistencies.
+ * into Polygons is impossible due to topological inconsistencies.
  *
  * This method is the same as the C function OGR_G_Polygonize().
  *
@@ -4618,7 +4618,7 @@ OGRGeometry *OGRGeometry::Polygonize() const
  * A new geometry object is created and returned containing a collection
  * of reassembled Polygons: NULL will be returned if the input collection
  * doesn't corresponds to a MultiLinestring, or when reassembling Edges
- * into Polygons is impossible due to topogical inconsistencies.  
+ * into Polygons is impossible due to topological inconsistencies.
  *
  * This function is the same as the C++ method OGRGeometry::Polygonize().
  *

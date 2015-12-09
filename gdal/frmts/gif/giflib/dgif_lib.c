@@ -805,10 +805,10 @@ DGifDecompressLine(GifFileType * GifFile,
                 /* This is simple - its pixel scalar, so add it to output: */
                 Line[i++] = CrntCode;
             } else {
-                /* Its a code to needed to be traced: trace the linked list
+                /* It is a code to that needs to be traced: trace the linked list
                  * until the prefix is a pixel, while pushing the suffix
-                 * pixels on our stack. If we done, pop the stack in reverse
-                 * (thats what stack is good for!) order to output.  */
+                 * pixels on our stack. If we are done, pop the stack in reverse
+                 * (that is what stacks are good for!) order to output. */
                 if (Prefix[CrntCode] == NO_SUCH_CODE) {
                     CrntPrefix = LastCode;
 

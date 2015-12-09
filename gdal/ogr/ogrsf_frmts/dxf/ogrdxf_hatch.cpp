@@ -530,5 +530,3 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
     }
     return OGRERR_NONE;
 }
-
-    

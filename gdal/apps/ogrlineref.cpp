@@ -44,6 +44,7 @@
 #define FIELD_FINISH "end"
 #define FIELD_SCALE_FACTOR "scale"
 #define DELTA 0.00000001 //- delta
+// TODO: TOLLERANCE -> TOLERANCE
 #define TOLLERANCE 0.00008983153
 
 #if defined(HAVE_GEOS)

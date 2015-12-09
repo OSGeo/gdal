@@ -256,7 +256,7 @@ void CPLCleanupSetlocaleMutex(void);
 CPL_C_END
 
 /* -------------------------------------------------------------------- */
-/*      C++ object for temporariliy forcing a LC_NUMERIC locale to "C". */
+/*      C++ object for temporarily forcing a LC_NUMERIC locale to "C".  */
 /* -------------------------------------------------------------------- */
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)

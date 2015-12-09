@@ -883,7 +883,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     }
 
 /* ==================================================================== */
-/*      Read the specified layers transfoming and rasterizing           */
+/*      Read the specified layers transforming and rasterizing          */
 /*      geometries.                                                     */
 /* ==================================================================== */
     CPLErr      eErr = CE_None;
@@ -1208,7 +1208,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
     }
 
 /* ==================================================================== */
-/*      Read the specified layers transfoming and rasterizing           */
+/*      Read the specified layers transforming and rasterizing          */
 /*      geometries.                                                     */
 /* ==================================================================== */
     CPLErr      eErr = CE_None;

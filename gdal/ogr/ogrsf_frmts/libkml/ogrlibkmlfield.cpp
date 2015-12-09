@@ -699,8 +699,10 @@ void field2kml (
                             !(isGX == TRUE && static_cast<kmldom::GxAltitudeModeEnum>(iAltitudeMode) == kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR) &&
                             CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
                         {
-                            CPLError(CE_Warning, CPLE_NotSupported,
-                                "altitudeMode!=clampToGround && altitudeMode!=clampToSeaFloor unsupported with tesselate=1");
+                            CPLError( CE_Warning, CPLE_NotSupported,
+                                      "altitudeMode!=clampToGround && "
+                                      "altitudeMode!=clampToSeaFloor "
+                                      "unsupported with tessellate=1" );
                         }
                         else
                         {

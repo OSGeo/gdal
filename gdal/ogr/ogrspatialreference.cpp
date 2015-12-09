@@ -2977,15 +2977,15 @@ OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
 /**
  * \brief Set the user visible GEOCCS name.
  *
- * This method is the same as the C function OSRSetGeocCS(). 
+ * This method is the same as the C function OSRSetGeocCS().
 
  * This method will ensure a GEOCCS node is created as the root,
- * and set the provided name on it.  If used on a GEOGCS coordinate system, 
- * the DATUM and PRIMEM nodes from the GEOGCS will be tarnsferred over to 
- * the GEOGCS. 
+ * and set the provided name on it.  If used on a GEOGCS coordinate system,
+ * the DATUM and PRIMEM nodes from the GEOGCS will be transferred over to
+ * the GEOGCS.
  *
  * @param pszName the user visible name to assign.  Not used as a key.
- * 
+ *
  * @return OGRERR_NONE on success.
  *
  * @since OGR 1.9.0

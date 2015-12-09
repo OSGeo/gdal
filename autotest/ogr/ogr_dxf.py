@@ -473,7 +473,7 @@ def ogr_dxf_12():
 def ogr_dxf_13():
 
     ds = ogr.Open( 'data/polyline_smooth.dxf' )
-    
+
     layer = ds.GetLayer(0)
 
     feat = layer.GetNextFeature()
@@ -495,19 +495,19 @@ def ogr_dxf_13():
         gdaltest.post_reason( 'envelope area not as expected, got %g.' % area )
         return 'fail'
 
-    # Check for specific number of points from tesselated arc(s).
-    # Note that this number depends on the tesselation algorithm and
+    # Check for specific number of points from tessellated arc(s).
+    # Note that this number depends on the tessellation algorithm and
     # possibly the default global arc_stepsize variable; therefore it is
     # not guaranteed to remain constant even if the input DXF file is constant.
     # If you retain this test, you may need to update the point count if
-    # changes are made to the aforementioned items. Ideally, one would test 
-    # only that more points are returned than in the original polyline, and 
+    # changes are made to the aforementioned items. Ideally, one would test
+    # only that more points are returned than in the original polyline, and
     # that the points lie along (or reasonably close to) said path.
 
     if geom.GetPointCount() != 146:
         gdaltest.post_reason( 'did not get expected number of points, got %d' % (geom.GetPointCount()) )
         return 'fail'
-    
+
     if abs(geom.GetX(0)-251297.8179) > 0.001 \
        or abs(geom.GetY(0)-412226.8286) > 0.001:
         gdaltest.post_reason( 'first point (%g,%g) not expected location.' \

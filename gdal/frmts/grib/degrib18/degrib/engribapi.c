@@ -734,7 +734,7 @@ int fillSect4_0 (enGribMeta *en, uShort2 tmplNum, uChar cat, uChar subCat,
 int fillSect4_1 (enGribMeta *en, uShort2 tmplNum, uChar typeEnsemble,
                  uChar perturbNum, uChar numFcsts)
 {
-   /* ensemble tempate (1) */
+   /* Ensemble template (1) */
    if (tmplNum != 1) {
       /* This is specifically for template 4.1 */
       return -1;
